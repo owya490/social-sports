@@ -1,0 +1,76 @@
+{
+    "events": [
+        {
+            "eventId": "string",
+            "startDate": "date",
+            "duration": "time",
+            "location": "address",
+            "capacity": "integer",
+            "price": "double",
+            "registrationDeadline": "date",
+            "organiserId": "string",
+            "name": "string",
+            "description": "string",
+            "image": "some form of storage",
+            "eventTags": ["list of tags"],
+            "isActive": "boolean",
+            "attendees": [
+                {
+                    "userId": "string"
+                }
+            ]
+        }
+
+    ],
+    "users": [
+        {
+            "userId": "string",
+            "firstName": "string",
+            "surname": "string",
+            "location": "string",
+            "contactInformation": {
+                "mobile": "mobile number",
+                "email": "string"
+            },
+            "activeBookings": [
+                {
+                    "eventId": "string"
+                }
+            ]
+        }
+    ],
+    "bookings": {
+        "eventId": [
+            {
+                "bookingId": "string",
+                "eventId": "string",
+                "userId": "string"
+            }   
+        ]
+    },
+    "comments": {
+        "eventId": [
+            {
+                "commentId": "string",
+                "userId": "string",
+                "eventId": "string",
+                "timePosted": "string",
+                "content": "string"
+            }
+        ]
+    },
+    "notifications": {
+    },
+    "paymentInformation": [
+        {
+            "userId": "string",
+            "paymentInformation": ""
+        }
+    ],
+    "tags": {
+        "sport": [],
+        "difficulty": [],
+        "length": [],
+        "competitionType": []
+    }
+}
