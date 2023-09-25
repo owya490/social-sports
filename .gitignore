@@ -1,3 +1,6 @@
 node_modules
 */venv/lib/*
 */venv/bin/*
+*/.DS_Store/*
+*/.next/*
+public/.DS_Store
