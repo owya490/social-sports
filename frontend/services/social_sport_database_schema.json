@@ -3,20 +3,21 @@
         {
             "eventId": "string",
             "startDate": "date",
-            "duration": "time",
+            "endDate": "time",
             "location": "address",
             "capacity": "integer",
+            "vacancy": "integer",
             "price": "double",
             "registrationDeadline": "date",
             "organiserId": "string",
             "name": "string",
-            "description": "string",
+            "description": "rich text field",
             "image": "some form of storage",
             "eventTags": ["list of tags"],
             "isActive": "boolean",
             "attendees": [
                 {
-                    "userId": "string"
+                    "email": "string"
                 }
             ]
         }
