@@ -1,4 +1,4 @@
-// File: /Users/richardpeng/VS Code/social-sports/frontend/app/layout.tsx
+// File: C:\Users\Felodxse\Desktop\VSCode\social-sports\frontend\app\layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
