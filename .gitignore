@@ -1,3 +1,7 @@
 node_modules
 */venv/lib/*
 */venv/bin/*
+node_modules/
+.next/
+.swc/
+.*.env
