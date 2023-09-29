@@ -1,3 +1,4 @@
+import Navbar from "@components/Navbar";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
@@ -23,7 +24,11 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <body className={`${inter.className} ${roboto_condensed.variable}`}>
+            <body
+                className={`${inter.className} ${roboto_condensed.variable} bg-[#F6F7F8]`}
+            >
+                <Navbar />
+
                 {children}
             </body>
         </html>
