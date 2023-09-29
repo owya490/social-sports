@@ -1,4 +1,4 @@
-// File: C:\Users\Felodxse\Desktop\VSCode\social-sports\frontend\app\event\[id]\page.tsx
+// File: /Users/richardpeng/VS Code/social-sports/frontend/app/event/[id]/page.tsx
 import * as entry from '../../../../../app/event/[id]/page.js'
 import type { ResolvingMetadata } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
