@@ -1,7 +1,7 @@
-import { DollarSignIcon } from "@/svgs/DollarSignIcon";
-import { LocationIcon } from "@/svgs/LocationIcon";
 import Image from "next/image";
 import DP from "./../../public/images/Ashley & Owen.png";
+import Coin from "./../../svgs/coin.svg";
+import Location from "./../../svgs/location.svg";
 
 export default function Navbar() {
     return (
@@ -26,13 +26,16 @@ export default function Navbar() {
             </div>
             <div className="pl-2 my-4 space-y-3">
                 <div className="flex items-center">
-                    <LocationIcon />
+                    {/* <LocationIcon /> */}
+                    <Image src={Location} alt="coin" className="w-5" />
                     <p className="ml-1 font-light text-xs">
                         North Ryde RSL, NSW
                     </p>
                 </div>
                 <div className="flex items-center">
-                    <DollarSignIcon />
+                    {/* <DollarSignIcon /> */}
+                    <Image src={Coin} alt="coin" className="w-5" />
+
                     <p className="ml-1 font-light text-xs">
                         $30.00 AUD per person
                     </p>
