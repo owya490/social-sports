@@ -3,7 +3,7 @@ import DP from "./../../public/images/Ashley & Owen.png";
 import Coin from "./../../svgs/coin.svg";
 import Location from "./../../svgs/location.svg";
 
-export default function Navbar() {
+export default function RecommendedEvents() {
     return (
         <div className="bg-white rounded-xl border max-w-1/4 p-4">
             <h4 className="font-bold text-gray-500 text-xs">

@@ -1,21 +1,11 @@
 import Image from "next/image";
-import DP from "./../public/images/Ashley & Owen.png";
-import Logo from "./../public/images/Logo.png";
-import SearchBar from "./SearchBar";
+import DP from "./../../public/images/Ashley & Owen.png";
+import Logo from "./../../public/images/Logo.png";
 
-// import { Roboto_Condensed } from "next/font/google";
-
-// const roboto_condensed = Roboto_Condensed({
-//     weight: "300",
-//     subsets: ["latin"],
-//     display: "swap",
-//     variable: "--font-roboto-condensed",
-// });
-
-export default function Navbar() {
+export default function MobileNavbar() {
     return (
         <div className="bg-white drop-shadow-lg fixed top-0 w-screen z-50">
-            <div className="flex items-center py-2 px-10">
+            <div className="flex items-center py-2 px-4">
                 <Image
                     src={Logo}
                     alt="Logo"
@@ -23,15 +13,11 @@ export default function Navbar() {
                     height={50}
                     className="w-12 mx-1"
                 />
-                <h1 className="font-robotocondensed text-3xl font-extrabold mr-20">
+                <h1 className="font-robotocondensed text-2xl font-extrabold mr-20">
                     SOCIAL SPORTS
                 </h1>
 
-                <SearchBar />
                 <div className="flex ml-auto items-center">
-                    <button className=" border border-black px-3 py-2 rounded-full mx-5">
-                        Create Event
-                    </button>
                     <button className=" border border-black rounded-full w-10 h-10">
                         <Image
                             src={DP}

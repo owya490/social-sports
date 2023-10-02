@@ -1,3 +1,5 @@
+import MobileNavbar from "@/components/mobile/MobileNavbar";
+import Footer from "@components/Footer";
 import Navbar from "@components/Navbar";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
@@ -27,9 +29,14 @@ export default function RootLayout({
             <body
                 className={`${inter.className} ${roboto_condensed.variable} bg-[#F6F7F8]`}
             >
-                <Navbar />
-
+                <div className="hidden md:block">
+                    <Navbar />
+                </div>
+                <div className="md:hidden">
+                    <MobileNavbar />
+                </div>
                 {children}
+                <Footer />
             </body>
         </html>
     );
