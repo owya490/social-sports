@@ -14,7 +14,7 @@ jobs:
       - name: type check
         run: cd frontend && npm install
       - name: linting
-        run: npm run lint
+        run: cd frontend && npm run lint
       - name: react tests
         run: cd frontend && npm test
   frontend_testing:
@@ -24,6 +24,6 @@ jobs:
       - name: type check
         run: cd frontend && npm install
       - name: linting
-        run: npm run lint
+        run: cd frontend && npm run lint
       - name: react tests
         run: cd frontend && npm test
