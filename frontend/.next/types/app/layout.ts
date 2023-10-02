@@ -1,4 +1,4 @@
-// File: /home/brianwang/personalProjects/trillion_dollar_unicorn/social-sports/frontend/app/layout.tsx
+// File: C:\Users\danie\social-sports\frontend\app\layout.tsx
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
