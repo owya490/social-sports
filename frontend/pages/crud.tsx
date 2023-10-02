@@ -55,19 +55,18 @@ function Test() {
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setEventName(event.target.value);
     };
-    // const handleAddUser = async () => {
-    //     // Add user logic
-    //     try {
-    //         const userData = {
-    //             firstName: userName, // Replace with the actual user data
-    //             activeBookings: []
-    //         };
-    //         await userCreate(userData);
-    //         setUserName(""); // Clear the input field after adding
-    //     } catch (error) {
-    //         console.error(error);
-    //     }
-    // };
+    const handleAddUser = async () => {
+        // Add user logic
+        try {
+            const userData = {
+                firstName: userName, // Replace with the actual user data
+            };
+            await userCreate(userData);
+            setUserName(""); // Clear the input field after adding
+        } catch (error) {
+            console.error(error);
+        }
+    };
     const handleAddEvent = async () => {
         if (eventName.trim() === "") {
             return; // Prevent adding an empty event name
