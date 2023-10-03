@@ -27,13 +27,6 @@ module.exports = {
       xs: "100px",
       ...defaultTheme.screens,
     },
-  },
-  plugins: [],
-};
-
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  theme: {
     extend: {
       screens: {
         "3xl": "1600px",
