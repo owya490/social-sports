@@ -1,9 +1,8 @@
 export default function EventDetails({ params }: any) {
   return (
     <div className="h-screen bg-white text-black">
-      <h1>yoohoo {params.id}</h1>
       <h2>
-        <div className="grid grid-cols-6 mx-[12vw] gap-[7vw]">
+        <div className="grid 2xl:grid-cols-6 3xl:grid-cols-5 mx-[12vw] gap-[7vw]">
           <div className="col-start-1 col-span-4">
             <img
               src="https://scontent.fsyd12-1.fna.fbcdn.net/v/t39.30808-6/382212432_10211670144306980_1350597476851969910_n.jpg?stp=dst-jpg_s2048x2048&_nc_cat=105&ccb=1-7&_nc_sid=934829&_nc_ohc=tO_myhWlB0IAX_uP997&_nc_ht=scontent.fsyd12-1.fna&oh=00_AfBM_X3TpYtoNzE3qHApfwLViLHgUdVOvCCjuKVRhpmA9Q&oe=651DC064"
