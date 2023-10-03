@@ -49,14 +49,14 @@ export default function EventDetails({ params }: any) {
           </div>
           <div className="h-fit col-start-5 col-span-2 border border-1 rounded-[20px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]">
             <p
-              className="font-semibold text-4xl text-center mb-10"
+              className="font-semibold text-4xl text-center mb-10 ml-3 mr-3"
               style={{ marginTop: "45px" }}
             >
               Event Details
             </p>
-            <div className="flex justify-center">
+            <div className="flex justify-start">
               <div className="w-fit ">
-                <div className="flex items-center mb-5">
+                <div className="flex items-center mb-5 ml-[9.5%]">
                   <img
                     src="https://static.vecteezy.com/system/resources/previews/005/988/959/non_2x/calendar-icon-free-vector.jpg"
                     alt="Event Image"
@@ -64,7 +64,7 @@ export default function EventDetails({ params }: any) {
                   />
                   <p className="text-lg">Saturday, 23 September, 2023</p>
                 </div>
-                <div className="flex items-center mb-5">
+                <div className="flex items-center mb-5 ml-[9.5%]">
                   <img
                     src="https://t3.ftcdn.net/jpg/05/29/73/96/360_F_529739662_yRW6APsQg3PaJGQ6afQL8hDdod0OR1re.jpg"
                     alt="Event Image"
@@ -72,7 +72,7 @@ export default function EventDetails({ params }: any) {
                   />
                   <p className="text-lg">8:00 - 10:00 pm AEST</p>
                 </div>
-                <div className="flex items-center mb-5">
+                <div className="flex items-center mb-5 ml-[9.5%]">
                   <img
                     src="https://previews.123rf.com/images/giamportone/giamportone1802/giamportone180200009/95977351-map-pin-icon-location-symbol-outline-vector-illustration.jpg"
                     alt="Event Image"
@@ -80,7 +80,7 @@ export default function EventDetails({ params }: any) {
                   />
                   <p className="text-lg">North Ryde RSL, NSW</p>
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center ml-[9.5%]">
                   <img
                     src="https://thumbs.dreamstime.com/b/dollar-sign-dollar-sign-icon-dollar-sign-dollar-sign-icon-vector-illustration-graphic-web-design-170432064.jpg"
                     alt="Event Image"
