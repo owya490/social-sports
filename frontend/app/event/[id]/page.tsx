@@ -2,19 +2,19 @@ export default function EventDetails({ params }: any) {
   return (
     <div className="h-screen bg-white text-black">
       <h2>
-        <div className="grid grid-cols-1 lg:grid-rows-2 lg:grid-col-2 2xl:grid-cols-6 3xl:grid-cols-5 mx-[5vw] gap-x-[7vw]">
-          <div className="lg:mx-[7vw] h-fit col-start-1 col-span-1 lg:col-span-2 2xl:col-span-4 3xl:col-span-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-6 mx-[5vw] lg:mx-[2vw] 2xl:mx-[5vw] gap-x-[2vw] 3xl:ml-[8vw]">
+          <div className="lg:mx-[7vw] 2xl:mx-[0vw] 2xl:ml-[7vw] h-fit lg:h-full 2xl:w-fit col-start-1 col-span-1 lg:col-span-2 2xl:col-span-4 2xl:row-start-1">
             <img
               src="https://scontent.fsyd12-1.fna.fbcdn.net/v/t39.30808-6/382212432_10211670144306980_1350597476851969910_n.jpg?stp=dst-jpg_s2048x2048&_nc_cat=105&ccb=1-7&_nc_sid=934829&_nc_ohc=tO_myhWlB0IAX_uP997&_nc_ht=scontent.fsyd12-1.fna&oh=00_AfBM_X3TpYtoNzE3qHApfwLViLHgUdVOvCCjuKVRhpmA9Q&oe=651DC064"
-              className="object-cover zoom lg:object-cover w-full h-[30vh] lg:h-3/5 rounded-3xl"
+              className="object-cover lg:object-cover w-full h-[30vh] lg:h-full 2xl:h-fit rounded-3xl"
               alt="..."
             />
           </div>
-          <div className="lg:mx-[7vw] h-fit col-start-1  lg:row-start-2 2xl:row-span-4 3xl:row-span-4">
-            <div className="text-2xl 2xl:text-3xl ml-6 mt-7 mr-6">
+          <div className="lg:ml-[7vw] h-fit lg:w-fit col-start-1 lg:col-span-1 2xl:col-span-4">
+            <div className="text-2xl lg:text-3xl 2xl:text-4xl ml-6 mt-7 mr-6">
               <p>Sydney Thunder Volleyball Women's Training</p>
             </div>
-            <div className="space-y-3.5 text-md 2xl:text-lg ml-3 mr-3 mt-6 mb-10">
+            <div className="space-y-3.5 text-md lg:text-lg 2xl:text-xl ml-3 mr-3 mt-6 mb-10">
               <p>
                 Women’s sessions are for female players who are looking to
                 increase their skill and will be focused solely on training and
@@ -53,16 +53,13 @@ export default function EventDetails({ params }: any) {
               </div>
             </div>
           </div>
-          <div className="lg:mx-[7vw] h-fit xs:col-start-1 lg:row-start-2 lg:col-start-2 2xl:col-start-5 3xl:col-start-5 border border-1 rounded-[20px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)]">
-            <p
-              className="font-semibold xs:text-2xl lg:text-4xl text-center mb-10 ml-3 mr-3"
-              style={{ marginTop: "45px" }}
-            >
+          <div className="lg:mr-[8vw] 2xl:mr-[7vw] lg:ml-5 h-fit lg:w-8/9  xs:col-start-1 lg:col-start-2 lg:col-span-1 2xl:row-start-1 2xl:row-span-2 2xl:col-start-5 2xl:col-span-2 border border-1 rounded-[20px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)] lg:mt-7 2xl:mt-0 3xl:mr-[8vw]">
+            <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl text-center mb-10 lg:mb-8 ml-3 mr-3 mt-9 lg:mt-7 2xl:mt-12 2xl:mb-10">
               Event Details
             </p>
             <div className="flex justify-start">
-              <div className="w-fit ">
-                <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[9.5%]">
+              <div className="w-full">
+                <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
                   <img
                     src="https://static.vecteezy.com/system/resources/previews/005/988/959/non_2x/calendar-icon-free-vector.jpg"
                     alt="Event Image"
@@ -72,7 +69,7 @@ export default function EventDetails({ params }: any) {
                     Saturday, 23 September, 2023
                   </p>
                 </div>
-                <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[9.5%]">
+                <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
                   <img
                     src="https://t3.ftcdn.net/jpg/05/29/73/96/360_F_529739662_yRW6APsQg3PaJGQ6afQL8hDdod0OR1re.jpg"
                     alt="Event Image"
@@ -82,7 +79,7 @@ export default function EventDetails({ params }: any) {
                     8:00 - 10:00 pm AEST
                   </p>
                 </div>
-                <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[9.5%]">
+                <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
                   <img
                     src="https://previews.123rf.com/images/giamportone/giamportone1802/giamportone180200009/95977351-map-pin-icon-location-symbol-outline-vector-illustration.jpg"
                     alt="Event Image"
@@ -92,7 +89,7 @@ export default function EventDetails({ params }: any) {
                     North Ryde RSL, NSW
                   </p>
                 </div>
-                <div className="flex items-center ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[9.5%]">
+                <div className="flex items-center ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
                   <img
                     src="https://thumbs.dreamstime.com/b/dollar-sign-dollar-sign-icon-dollar-sign-dollar-sign-icon-vector-illustration-graphic-web-design-170432064.jpg"
                     alt="Event Image"
