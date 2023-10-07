@@ -12,7 +12,9 @@
     "@types/react": "^18.2.21",
     "firebase": "^10.4.0",
     "next": "^13.4.19",
-    "tailwind": "^4.0.0"
+    "tailwind": "^4.0.0",
+    "uuid": "^9.0.1",
+    "uuidv4": "^6.2.13"
   },
   "devDependencies": {
     "@types/node": "20.6.3",
