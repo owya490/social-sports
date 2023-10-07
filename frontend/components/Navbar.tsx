@@ -29,7 +29,12 @@ export default function Navbar() {
 
                 <SearchBar />
                 <div className="flex ml-auto items-center">
-                    <button className=" border border-black px-3 py-2 rounded-full mx-5">
+                    <button
+                        className=" border border-black px-3 py-2 rounded-full mx-5"
+                        onChange={(e) => {
+                            window.open("https://www.google.com", "_self");
+                        }}
+                    >
                         Create Event
                     </button>
                     <button className=" border border-black rounded-full w-10 h-10">
