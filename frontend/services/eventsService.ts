@@ -27,7 +27,7 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
 export async function getEventById(eventId: EventId): Promise<EventData> {
     try {
         const eventDoc = await getDoc(doc(db, "event", eventId));
-        const event = (await eventDoc.data()) as EventData;
+        const event = eventDoc.data() as EventData;
         return event;
     } catch (error) {
         console.log(error);
