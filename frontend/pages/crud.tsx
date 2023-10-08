@@ -6,8 +6,8 @@ import {
   deleteEvent,
   updateEventByName,
   deleteEventByName,
-} from '@/services/eventsCrud';
-import { userCreate, getAllUsers } from '@/services/usersCrud';
+} from '@/services/eventsService';
+import { userCreate, getAllUsers } from '@/services/usersService';
 import { handleSignUp } from '@/services/auth';
 
 interface EventData {

@@ -1,13 +1,4 @@
-import {
-    collection,
-    doc,
-    addDoc,
-    getDocs,
-    updateDoc,
-    deleteDoc,
-    query,
-    where,
-} from "firebase/firestore";
+import { addDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 
 interface userData {
@@ -26,7 +17,7 @@ interface userData {
     ];
 }
 
-export async function userCreate(data: userData) {
+export async function createUser(data: userData) {
     try {
         const docRef = await addDoc(collection(db, "Users"), data);
     } catch (error) {
