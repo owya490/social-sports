@@ -1,3 +1,4 @@
+import Footer from "@/components/Footer";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@components/Navbar";
 import type { Metadata } from "next";
@@ -35,7 +36,7 @@ export default function RootLayout({
                     <MobileNavbar />
                 </div>
                 {children}
-                {/* <Footer /> */}
+                <Footer />
             </body>
         </html>
     );
