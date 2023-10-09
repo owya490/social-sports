@@ -1,5 +1,13 @@
 import { NewUserData, UserData, UserId } from "@/interfaces/UserTypes";
-import { addDoc, collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+    addDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    deleteDoc,
+    updateDoc,
+} from "firebase/firestore";
 import { db } from "./firebase";
 
 export async function createUser(data: NewUserData): Promise<UserId> {
@@ -33,6 +41,29 @@ export async function getAllUsers(): Promise<UserData[]> {
         });
 
         return usersData;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
+export async function deleteUser(userId: UserId): Promise<void> {
+    try {
+        const userDocRef = doc(db, "Users", userId);
+        await deleteDoc(userDocRef);
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
+export async function updateUser(
+    userId: UserId,
+    newData: Partial<UserData>
+): Promise<void> {
+    try {
+        const userDocRef = doc(db, "Users", userId);
+        await updateDoc(userDocRef, newData);
     } catch (error) {
         console.error(error);
         throw error;
