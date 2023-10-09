@@ -1,5 +1,4 @@
 import MobileNavbar from "@/components/mobile/MobileNavbar";
-import Footer from "@components/Footer";
 import Navbar from "@components/Navbar";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
@@ -36,7 +35,7 @@ export default function RootLayout({
                     <MobileNavbar />
                 </div>
                 {children}
-                <Footer />
+                {/* <Footer /> */}
             </body>
         </html>
     );
