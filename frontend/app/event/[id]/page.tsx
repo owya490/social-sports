@@ -1,60 +1,31 @@
-export default function EventDetails({ params }: any) {
-    return (
-        <div className="h-screen bg-white text-black">
-            <h1>yoohoo {params.id}</h1>
-            <h2>
-                <div className="grid grid-rows-2 gap-10 grid-cols-9">
-                    <div className="row-start-1 col-start-2 col-span-4 border border-1">
-                        <img
-                            src="https://imageio.forbes.com/specials-images/imageserve/5d35eacaf1176b0008974b54/0x0.jpg?format=jpg&crop=4560,2565,x790,y784,safe&width=1200"
-                            className="object-cover w-full h-full"
-                            alt="..."
-                        />
-                    </div>
-                    <div className="row-start-2 col-start-2 col-span-4 border border-1"></div>
-                    <div className="row-start-1 row-span-2 col-start-7 col-span-2 border border-1 text-2xl text-center space-y-10">
-                        <p>Event Details</p>
-                        <div className="flex items-center space-x-5">
-                            <img
-                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTENdUa5gQQRf-NNiyGG-_Exz1ufAe31q2faQ&usqp=CAU"
-                                alt="Event Image"
-                                className="your-image-classes w-4 h-4 ml-8"
-                            />
-                            <p className="text-sm">Saturday, 23 Sunday, 2023</p>
-                        </div>
+import EventBanner from "@/components/events/EventBanner";
+import { EventDetails } from "@/components/events/EventDetails";
+import RecommendedEvents from "@/components/events/RecommendedEvents";
 
-                        <div className="flex items-center space-x-5">
-                            <img
-                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTENdUa5gQQRf-NNiyGG-_Exz1ufAe31q2faQ&usqp=CAU"
-                                alt="Event Image"
-                                className="your-image-classes w-4 h-4 ml-8"
-                            />
-                            <p className="text-sm">Saturday, 23 Sunday, 2023</p>
-                        </div>
-                        <div className="flex items-center space-x-5">
-                            <img
-                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTENdUa5gQQRf-NNiyGG-_Exz1ufAe31q2faQ&usqp=CAU"
-                                alt="Event Image"
-                                className="your-image-classes w-4 h-4 ml-8"
-                            />
-                            <p className="text-sm">Saturday, 23 Sunday, 2023</p>
-                        </div>
-                        <div className="flex items-center space-x-5">
-                            <img
-                                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTENdUa5gQQRf-NNiyGG-_Exz1ufAe31q2faQ&usqp=CAU"
-                                alt="Event Image"
-                                className="your-image-classes w-4 h-4 ml-8"
-                            />
-                            <p className="text-sm">Saturday, 23 Sunday, 2023</p>
-                        </div>
-                        <div className="rounded bg-gray-300 p-4">
-                            GUESTS
-                            <p>1 guest(s)</p>
-                        </div>
-                        <div>$30 x 1 guest(s) $30</div>
+export default function EventPage({ params }: any) {
+    return (
+        <div className="text-black">
+            <EventBanner />
+            <div className="mt-10 mx-[5vw] lg:mx-[2vw] xl:mx-[3vw]">
+                <EventDetails />
+                <div className="mx-4 lg:mx-16">
+                    <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
+                    <div className="flex my-5">
+                        <h5 className="font-bold text-lg">
+                            Similar events nearby
+                        </h5>
+                        <a className="text-sm font-light ml-auto cursor-pointer">
+                            See all
+                        </a>
+                    </div>
+                    <div className="flex space-x-5">
+                        <RecommendedEvents />
+                        <RecommendedEvents />
+                        <RecommendedEvents />
+                        <RecommendedEvents />
                     </div>
                 </div>
-            </h2>
+            </div>
         </div>
     );
 }
