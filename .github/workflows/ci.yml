@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main, set-up-github-actions-pipeline]
+  pull_request:
+    branches: [main]
+
+jobs:
+  crud_testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: type check
+        run: cd frontend && npm install
+      - name: linting
+        run: cd frontend && npm run lint
+      - name: react tests
+        run: cd frontend && npm test
+  frontend_testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: type check
+        run: cd frontend && npm install
+      - name: linting
+        run: cd frontend && npm run lint
+      - name: react tests
+        run: cd frontend && npm test
