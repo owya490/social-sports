@@ -13,12 +13,12 @@ import {
     handleSignUp,
     handleGoogleSignIn,
     handleFacebookSignIn,
-} from "@/services/auth";
+} from "@/services/authService";
 
 interface EventData {
     eventId?: string;
     startDate?: Date;
-    endDate?: string; // Assuming you want to store the time as a string
+    endDate?: Date; // Assuming you want to store the time as a string
     location?: string; // Assuming "address" is a string
     capacity?: number;
     vacancy?: number;

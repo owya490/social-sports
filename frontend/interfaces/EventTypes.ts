@@ -2,7 +2,7 @@ export type EventId = string;
 
 interface AbstractEventData {
     startDate?: Date;
-    endDate?: string; // Assuming you want to store the time as a string
+    endDate?: Date;
     location?: string; // Assuming "address" is a string
     capacity?: number;
     vacancy?: number;
