@@ -27,12 +27,12 @@ export default function EventPage({ params }: any) {
     return (
         <div className="text-black">
             <EventBanner />
-            <div className="mt-10 mx-[5vw] lg:mx-[2vw] 2xl:mx-[5vw]">
-                <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-6 gap-x-[2vw] 3xl:ml-[8vw]">
-                    <div className="lg:mr-[7vw] lg:ml-[7vw] 2xl:mr-[0vw] h-fit lg:h-full 2xl:w-fit col-start-1 col-span-1 lg:col-span-2 2xl:col-span-4 2xl:row-start-1">
+            <div className="mt-10 mx-[5vw] lg:mx-[2vw] xl:mx-[5vw]">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-6 gap-x-[2vw] 3xl:ml-[8vw]">
+                    <div className="lg:mr-[7vw] lg:ml-[7vw] xl:mr-[0vw] h-fit lg:h-full xl:w-fit col-start-1 col-span-1 lg:col-span-2 xl:col-span-4 xl:row-start-1">
                         <EventImage imageSrc={STVWomens} />
                     </div>
-                    <div className="lg:ml-[7vw] h-fit lg:w-fit col-start-1 lg:col-span-1 2xl:col-span-4">
+                    <div className="lg:ml-[7vw] h-fit lg:w-fit col-start-1 lg:col-span-1 xl:col-span-4">
                         <EventDescription
                             title={title}
                             description={description}
@@ -43,7 +43,7 @@ export default function EventPage({ params }: any) {
                             </div>
                         </div>
                     </div>
-                    <div className="lg:mr-[8vw] 2xl:mr-[7vw] lg:ml-5 h-fit lg:w-8/9  xs:col-start-1 lg:col-start-2 lg:col-span-1 2xl:row-start-1 2xl:row-span-2 2xl:col-start-5 2xl:col-span-2 border border-1 rounded-[20px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)] lg:mt-7 2xl:mt-0 3xl:mr-[8vw]">
+                    <div className="lg:mr-[8vw] xl:mr-[7vw] lg:ml-5 h-fit lg:w-8/9  xs:col-start-1 lg:col-start-2 lg:col-span-1 xl:row-start-1 xl:row-span-2 xl:col-start-5 xl:col-span-2  lg:mt-7 xl:mt-0 3xl:mr-[8vw]">
                         <EventPayment
                             date={date}
                             time={time}
