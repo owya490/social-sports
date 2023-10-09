@@ -50,53 +50,49 @@ export default function EventPayment(props: IEventPayment) {
         </div>
       </div>
       <div className="relative flex justify-center">
-        <div>
-          <button
-            type="button"
-            className="text-md lg:text-lg rounded-3xl bg-white p-4 border-[1px] border-black mt-10 w-4/5 h-1/15"
-            style={{
-              textAlign: "left",
-              position: "relative",
-            }}
+        <div
+          className="text-md lg:text-lg rounded-3xl bg-white p-4 border-[1px] border-black mt-10 w-4/5 h-1/15"
+          style={{
+            textAlign: "left",
+            position: "relative",
+          }}
+        >
+          GUESTS
+          <br />
+          <p className="text-sm lg:text-lg">1 guest(s)</p>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-8 w-8 absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer"
+            viewBox="0 0 24 24"
           >
-            GUESTS
-            <br />
-            <p className="text-sm lg:text-lg">1 guest(s)</p>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer"
-              viewBox="0 0 24 24"
-            >
-              <path
-                fillRule="evenodd"
-                d="M9.293 12.293a1 1 0 011.414 0L12 13.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414 1 1 0 011.414 0L12 13.586z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
+            <path
+              fillRule="evenodd"
+              d="M9.293 12.293a1 1 0 011.414 0L12 13.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414 1 1 0 011.414 0L12 13.586z"
+              clipRule="evenodd"
+            />
+          </svg>
         </div>
-
-        <div className="text-md lg:text-lg flex justify-between">
-          <span className="ml-[10%] mt-12">{props.price} x 1 guest(s)?</span>
-          <span className="mr-[10%] mt-12">$30?</span>
-        </div>
-        <div className="px-[10%]">
-          <hr className="px-2 h-0.5 mx-auto my-4 bg-gray-400 border-0 rounded md:my-10 dark:bg-gray-400"></hr>
-        </div>
-        <div className="text-lg lg:text-2xl flex justify-between">
-          <span className="ml-[10%] mt-2">Total</span>
-          <span className="mr-[10%] mt-2">$30?</span>
-        </div>
-        <div className="relative flex justify-center mt-10">
-          <div
-            className="text-lg lg:text-2xl text-white rounded-3xl bg-sky-500/75 p-3 w-4/5 h-1/18 mb-[10%]"
-            style={{
-              textAlign: "center",
-              position: "relative",
-            }}
-          >
-            Book now
-          </div>
+      </div>
+      <div className="text-md lg:text-lg flex justify-between">
+        <span className="ml-[10%] mt-12">{props.price} x 1 guest(s)?</span>
+        <span className="mr-[10%] mt-12">$30?</span>
+      </div>
+      <div className="px-[10%]">
+        <hr className="px-2 h-0.5 mx-auto my-4 bg-gray-400 border-0 rounded md:my-10 dark:bg-gray-400"></hr>
+      </div>
+      <div className="text-lg lg:text-2xl flex justify-between">
+        <span className="ml-[10%] mt-2">Total</span>
+        <span className="mr-[10%] mt-2">$30?</span>
+      </div>
+      <div className="relative flex justify-center mt-10">
+        <div
+          className="text-lg lg:text-2xl text-white rounded-3xl bg-sky-500/75 p-3 w-4/5 h-1/18 mb-[10%]"
+          style={{
+            textAlign: "center",
+            position: "relative",
+          }}
+        >
+          Book now
         </div>
       </div>
     </>
