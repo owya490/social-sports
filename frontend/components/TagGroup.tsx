@@ -1,15 +1,15 @@
 import Tag, { ITag } from "./Tag";
 
 interface ITagGroup {
-  tags: ITag[];
+    tags: ITag[];
 }
 
 export function TagGroup(props: ITagGroup) {
-  return (
-    <>
-      {props.tags.map((tag) => {
-        return <Tag label={tag.label} url={tag.url} />;
-      })}
-    </>
-  );
+    return (
+        <>
+            {props.tags.map((tag, idx) => {
+                return <Tag key={idx} label={tag.label} url={tag.url} />;
+            })}
+        </>
+    );
 }

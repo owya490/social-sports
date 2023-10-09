@@ -11,7 +11,7 @@ export default function RecommendedEvents() {
                             SAT, SEPT 23 · 20:00 AEST
                         </p>
                         <h1 className="text-3xl md:text-4xl">
-                            Sydney Thunder Men's Volleyball
+                            Sydney Thunder Men&apos;s Volleyball
                         </h1>
 
                         <div className="block md:flex items-center pt-2 pb-4 pl-1">
