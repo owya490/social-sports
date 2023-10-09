@@ -56,9 +56,9 @@ export default function Event() {
                     </div>
                     <div className="flex space-x-5">
                         <RecommendedEvents />
-                        {/* <RecommendedEvents /> */}
-                        {/* <RecommendedEvents />
-                    <RecommendedEvents /> */}
+                        <RecommendedEvents />
+                        <RecommendedEvents />
+                        <RecommendedEvents />
                     </div>
                 </div>
             </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import DP from "./../public/images/Ashley & Owen.png";
 import Logo from "./../public/images/Logo.png";
