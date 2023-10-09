@@ -32,7 +32,6 @@ interface EventData {
     isActive?: boolean;
     attendees?: { email: string }[];
 }
-
 interface userData {
     userId?: string;
     firstName: string;
@@ -48,7 +47,6 @@ interface userData {
         }
     ];
 }
-
 function Test() {
     const [eventName, setEventName] = useState<string>("");
     const [eventNameToUpdate, setEventNameToUpdate] = useState<string>("");
@@ -81,7 +79,6 @@ function Test() {
         if (eventName.trim() === "") {
             return; // Prevent adding an empty event name
         }
-
         try {
             const eventData = { name: eventName };
             await createEvent(eventData);
@@ -94,7 +91,6 @@ function Test() {
         if (eventNameToUpdate.trim() === "") {
             return; // Prevent updating with an empty eventId
         }
-
         try {
             const updatedData: Partial<EventData> = { name: eventName };
             await updateEventByName(eventNameToUpdate, {
@@ -106,12 +102,10 @@ function Test() {
             console.error(error);
         }
     };
-
     const handleDeleteEvent = async () => {
         if (eventNameToDelete.trim() === "") {
             return; // Prevent deleting with an empty eventId
         }
-
         try {
             await deleteEventByName(eventNameToDelete);
             setEventNameToDelete(""); // Clear the input field after deleting
@@ -119,23 +113,45 @@ function Test() {
             console.error(error);
         }
     };
-
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setUserAuthData({ ...userAuthData, email: e.target.value });
+    };
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setUserAuthData({ ...userAuthData, password: e.target.value });
+    };
+    const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setUserAuthData({ ...userAuthData, firstName: e.target.value });
+    };
+    const handleLogin = async (event: React.FormEvent) => {
+        event.preventDefault();
+        try {
+            console.log(userAuthData);
+            handleSignUp(userAuthData);
+            // Handle successful signup, e.g., show a success message or redirect the user
+            console.log("User signed up successfully!");
+        } catch (error) {
+            // Handle signup errors, e.g., display an error message
+            console.error("Error signing up:", error);
+        }
+    };
     useEffect(() => {
         // Fetch and set the events when the component mounts
         async function fetchEvents() {
             try {
                 const eventsData = await getAllEvents();
+                const usersData = await getAllUsers();
                 if (eventsData) {
                     setEvents(eventsData);
+                }
+                if (usersData) {
+                    setUsers(usersData);
                 }
             } catch (error) {
                 console.error(error);
             }
         }
-
         fetchEvents();
     }, []);
-
     return (
         <div>
             <h1>This is the /test page</h1>
@@ -146,7 +162,6 @@ function Test() {
                 onChange={handleInputChange}
             />
             <button onClick={handleAddEvent}>Add Event</button>
-
             <h2>Update Event:</h2>
             <input
                 type="text"
@@ -161,7 +176,6 @@ function Test() {
                 onChange={(event) => setEventNameToChange(event.target.value)}
             />
             <button onClick={handleUpdateEvent}>Update Event</button>
-
             <h2>Delete Event:</h2>
             <input
                 type="text"
@@ -176,8 +190,69 @@ function Test() {
                     <li key={index}>{event.name}</li>
                 ))}
             </ul>
+            <h2>Add user</h2>
+            <input
+                type="text"
+                placeholder="Enter UserName"
+                value={userName}
+                onChange={(event) => setUserName(event.target.value)}
+            />
+            <button onClick={handleAddUser}>Add user</button>
+            <div>
+                <h2>Sign Up</h2>
+                <form onSubmit={handleLogin}>
+                    <div>
+                        <label>Email:</label>
+                        <input
+                            type="email"
+                            name="email"
+                            value={userAuthData.email}
+                            onChange={handleEmailChange}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label>Password:</label>
+                        <input
+                            type="password"
+                            name="password"
+                            value={userAuthData.password}
+                            onChange={handlePasswordChange}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label>First Name:</label>
+                        <input
+                            type="text"
+                            name="firstName"
+                            value={userAuthData.firstName}
+                            onChange={handleFirstNameChange}
+                            required
+                        />
+                    </div>
+                    <button type="submit">Sign Up</button>
+                </form>
+            </div>
+            <h2>All Users:</h2>
+            <ul>
+                {users.map((user, index) => (
+                    <li key={index}>{user.firstName}</li>
+                ))}
+            </ul>
+            <div>
+                <h2>Google Sign In</h2>
+                <button onClick={handleGoogleSignIn}>
+                    Sign In with Google
+                </button>
+            </div>
+            <div>
+                <h2>Facebook Sign In</h2>
+                <button onClick={handleFacebookSignIn}>
+                    Sign In with Facebook
+                </button>
+            </div>
         </div>
     );
 }
-
 export default Test;
