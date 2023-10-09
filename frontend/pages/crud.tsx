@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import {
     createEvent,
     getAllEvents,
@@ -8,7 +9,11 @@ import {
     deleteEventByName,
 } from "@/services/eventsService";
 import { createUser, getAllUsers } from "@/services/usersService";
-import { handleSignUp } from "@/services/auth";
+import {
+    handleSignUp,
+    handleGoogleSignIn,
+    handleFacebookSignIn,
+} from "@/services/auth";
 
 interface EventData {
     eventId?: string;
@@ -57,7 +62,6 @@ function Test() {
         password: "",
         firstName: "",
     });
-
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setEventName(event.target.value);
     };
@@ -249,6 +253,18 @@ function Test() {
                     <li key={index}>{user.firstName}</li>
                 ))}
             </ul>
+            <div>
+                <h2>Google Sign In</h2>
+                <button onClick={handleGoogleSignIn}>
+                    Sign In with Google
+                </button>
+            </div>
+            <div>
+                <h2>Facebook Sign In</h2>
+                <button onClick={handleFacebookSignIn}>
+                    Sign In with Facebook
+                </button>
+            </div>
         </div>
     );
 }
