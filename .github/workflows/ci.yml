@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, set-up-github-actions-pipeline]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   crud_testing:
