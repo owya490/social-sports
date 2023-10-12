@@ -1,6 +1,6 @@
 export default function Footer() {
     return (
-        <footer className="bg-white lg:grid lg:grid-cols-5 mt-20">
+        <footer className="bg-white lg:grid lg:grid-cols-5 mt-20 bottom-0 w-full">
             <div className="relative block h-32 lg:col-span-2 lg:h-full">
                 <img
                     src="https://img.freepik.com/premium-photo/colorful-poster-with-dragon-it_925376-14120.jpg"
