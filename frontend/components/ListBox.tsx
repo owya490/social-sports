@@ -11,7 +11,7 @@ const people = [
   { name: "4 Guests" },
   { name: "5 Guests" },
   { name: "6 Guests" },
-  { name: "7 Guest" },
+  { name: "7 Guests" },
   { name: "8 Guests" },
   { name: "9 Guests" },
   { name: "10 Guests" },
@@ -25,12 +25,12 @@ export default function ListBox() {
   return (
     <div className="rounded-3xl p-[10%] mb-5 w-full">
       <Listbox value={selected} onChange={setSelected}>
-        <div className="relative mt-1">
+        <div className="relative">
           <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
-            <span className="block truncate">{selected.name}</span>
-            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+            <span className="block truncate text-md lg:text-lg">{selected.name}</span>
+            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-tops pr-2">
               <ChevronUpDownIcon
-                className="h-5 w-5 text-gray-400"
+                className="h-7 w-7 text-gray-400 mt-1 lg:mt-2"
                 aria-hidden="true"
               />
             </span>
@@ -41,7 +41,7 @@ export default function ListBox() {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Listbox.Options className="absolute mt-1 max-h-80 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Listbox.Options className="absolute max-h-[160px] md:max-h-[200px] 2xl:max-h-[210px] w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               {people.map((person, personIdx) => (
                 <Listbox.Option
                   key={personIdx}

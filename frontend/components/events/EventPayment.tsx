@@ -76,7 +76,7 @@ export default function EventPayment(props: IEventPayment) {
           </svg>
         </div>
       </div> */}
-      <div className="relative flex justify-center">
+      <div className="relative flex justify-center mt-[-5%] mb-[-5%] lg:mt-[-4%]">
           <ListBox />
       </div>
 
