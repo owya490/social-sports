@@ -2,9 +2,13 @@ import { TagGroup } from "@/components/TagGroup";
 import EventDescription from "@/components/events/EventDescription";
 import EventImage from "@/components/events/EventImage";
 import EventPayment from "@/components/events/EventPayment";
-import STVWomens from "../../public/images/stvvvv.jpg";
+import { EventData } from "@/interfaces/EventTypes";
 
-export function EventDetails() {
+interface IEventDetails {
+    eventData: EventData;
+}
+
+export function EventDetails(props: IEventDetails) {
     const title = "Sydney Thunder Volleyball Women's Training";
     const description = [
         "Women’s sessions are for female players who are looking to increase their skill and will be focused solely on training and building game experience.",
@@ -22,14 +26,17 @@ export function EventDetails() {
     const time = "8:00 - 10:00 pm AEST";
     const location = "North Ryde RSL, NSW";
     const price = "$30";
-
+    const { eventData } = props;
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-6 gap-x-[2vw] 3xl:ml-[8vw]">
             <div className="lg:mr-[7vw] lg:ml-[5vw] xl:mr-[0vw] h-fit lg:h-full xl:w-fit col-start-1 col-span-1 lg:col-span-2 xl:col-span-4 xl:row-start-1">
-                <EventImage imageSrc={STVWomens} />
+                <EventImage imageSrc={eventData.image} />
             </div>
             <div className="lg:ml-[5vw] h-fit lg:w-fit col-start-1 lg:col-span-1 xl:col-span-4">
-                <EventDescription title={title} description={description} />
+                <EventDescription
+                    title={eventData.name}
+                    description={[eventData.description]} // TODO make firebase take string
+                />
                 <div className="flex">
                     <div className="hidden lg:block">
                         <TagGroup tags={tags} />
@@ -38,10 +45,9 @@ export function EventDetails() {
             </div>
             <div className="lg:mr-[8vw] xl:mr-[4vw] lg:ml-5 h-fit lg:w-8/9  xs:col-start-1 lg:col-start-2 lg:col-span-1 xl:row-start-1 xl:row-span-2 xl:col-start-5 xl:col-span-2  lg:mt-7 xl:mt-0 3xl:mr-[8vw]">
                 <EventPayment
-                    date={date}
-                    time={time}
-                    location={location}
-                    price={price}
+                    date={eventData.startDate}
+                    location={eventData.location}
+                    price={eventData.price}
                 />
             </div>
         </div>

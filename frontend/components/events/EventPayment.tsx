@@ -1,8 +1,13 @@
+import {
+    timestampToTimeOfDay,
+    timestampeToDateString,
+} from "@/services/datetimeUtils";
+import { Timestamp } from "firebase/firestore";
+
 interface IEventPayment {
-    date: string;
-    time: string;
+    date: Timestamp;
     location: string;
-    price: string;
+    price: number;
 }
 
 export default function EventPayment(props: IEventPayment) {
@@ -20,7 +25,7 @@ export default function EventPayment(props: IEventPayment) {
                             className="your-image-classes w-12 h-12 mr-2"
                         />
                         <p className="text-md lg:text-lg mr-[5%]">
-                            {props.date}
+                            {timestampeToDateString(props.date)}
                         </p>
                     </div>
                     <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
@@ -30,7 +35,7 @@ export default function EventPayment(props: IEventPayment) {
                             className="your-image-classes w-12 h-12 mr-2"
                         />
                         <p className="text-md lg:text-lg mr-[5%]">
-                            {props.time}
+                            {timestampToTimeOfDay(props.date)}
                         </p>
                     </div>
                     <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
@@ -50,7 +55,7 @@ export default function EventPayment(props: IEventPayment) {
                             className="your-image-classes w-12 h-12 mr-2"
                         />
                         <p className="text-md lg:text-lg mr-[5%]">
-                            {props.price} AUD per person
+                            ${props.price} AUD per person
                         </p>
                     </div>
                 </div>
@@ -81,16 +86,16 @@ export default function EventPayment(props: IEventPayment) {
             </div>
             <div className="text-md lg:text-lg flex justify-between">
                 <span className="ml-[10%] mt-12">
-                    {props.price} x 1 guest(s)?
+                    {props.price} x 1 guest(s)
                 </span>
-                <span className="mr-[10%] mt-12">$30?</span>
+                <span className="mr-[10%] mt-12">$30</span>
             </div>
             <div className="px-[10%]">
                 <hr className="px-2 h-0.5 mx-auto my-4 bg-gray-400 border-0 rounded md:my-10 dark:bg-gray-400"></hr>
             </div>
             <div className="text-lg lg:text-2xl flex justify-between">
                 <span className="ml-[10%] mt-2">Total</span>
-                <span className="mr-[10%] mt-2">$30?</span>
+                <span className="mr-[10%] mt-2">$30</span>
             </div>
             <div className="relative flex justify-center mt-10">
                 <div

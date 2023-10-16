@@ -1,23 +1,36 @@
+"use client";
+import { EventId } from "@/interfaces/EventTypes";
+import { UserData } from "@/interfaces/UserTypes";
 import Image from "next/image";
-import DP from "./../public/images/Ashley & Owen.png";
-import ACERS from "./../public/images/acers.jpeg";
-import GG from "./../public/images/gg.jpeg";
-import PRO from "./../public/images/provolley.png";
-import STV from "./../public/images/stv_image.jpeg";
-import STVWOMEN from "./../public/images/stvvvv.jpg";
-import v1 from "./../public/images/vball1.webp";
-import v2 from "./../public/images/vball2.webp";
-import v3 from "./../public/images/vball3.webp";
 import Coin from "./../svgs/coin.svg";
 import Location from "./../svgs/location.svg";
 
-export default function EventCard() {
-    const num = Math.floor(Math.random() * (7 - 0 + 1) + 0);
-    const list = [GG, STV, STVWOMEN, PRO, ACERS, v1, v2, v3];
+import { useRouter } from "next/navigation";
+
+interface IEventCard {
+    eventId: EventId;
+    image: string;
+    name: string;
+    organiser: UserData;
+    startTime: Date;
+    location: string;
+    price: number;
+    vacancy: number;
+}
+
+export default function EventCard(props: IEventCard) {
+    const router = useRouter();
+
     return (
-        <div className="bg-white rounded-xl min-w-xs max-w-xs">
+        <button
+            className="bg-white rounded-xl min-w-xs max-w-xs text-left"
+            onClick={() => {
+                router.push(`/event/${props.eventId}`);
+            }}
+        >
             <Image
-                src={list[num]}
+                // src={list[num]}
+                src={props.image}
                 height={0}
                 width={0}
                 alt="stvImage"
@@ -26,20 +39,24 @@ export default function EventCard() {
             <div className="p-4">
                 <h4 className="font-bold text-gray-500 text-xs">
                     SAT, SEPT 23 · 20:00 AEST
+                    {/* {props.startTime} */}
                 </h4>
                 <h2 className="text-xl font-bold mb-1 mt-1">
-                    Sydney Thunder Volleyball Men’s Training
+                    {/* Sydney Thunder Volleyball Men’s Training */}
+                    {props.name}
                 </h2>
                 <div className="flex ml-0.5 items-center">
                     <Image
-                        src={DP}
+                        // src={DP}
+                        src={props.organiser.profilePicture}
                         alt="DP"
                         width={50}
                         height={50}
                         className="rounded-full w-4 h-4"
                     />
                     <p className="text-xs font-light ml-1">
-                        Hosted by Tzeyen Rossiter
+                        {/* Hosted by Tzeyen Rossiter */}
+                        {`Hosted by ${props.organiser.firstName} ${props.organiser.surname}`}
                     </p>
                 </div>
                 <div className="mt-4 mb-7 space-y-3">
@@ -47,7 +64,8 @@ export default function EventCard() {
                         {/* <LocationIcon /> */}
                         <Image src={Location} alt="coin" className="w-5" />
                         <p className="ml-1 font-light text-sm">
-                            North Ryde RSL, NSW
+                            {/* North Ryde RSL, NSW */}
+                            {props.location}
                         </p>
                     </div>
                     <div className="flex items-center">
@@ -55,19 +73,21 @@ export default function EventCard() {
                         <Image src={Coin} alt="coin" className="w-5" />
 
                         <p className="ml-1 font-light text-sm">
-                            $30.00 AUD per person
+                            {/* $30.00 AUD per person */}
+                            {`$${props.price} AUD per person`}
                         </p>
                     </div>
                 </div>
                 <div className="flex items-center">
                     <p className="text-sm font-light text-gray-500">
-                        5 spots left
+                        {/* 5 spots left */}
+                        {`${props.vacancy} spots left`}
                     </p>
                     <button className="ml-auto rounded-full bg-[#30ADFF] py-1 px-2 text-white">
                         <h2 className="text-sm">Book Now</h2>
                     </button>
                 </div>
             </div>
-        </div>
+        </button>
     );
 }
