@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import {
     createEvent,
@@ -14,6 +14,7 @@ import {
     handleGoogleSignIn,
     handleFacebookSignIn,
 } from "@/services/authService";
+import { getEventImageUrls, getUsersImageUrls, uploadUserImage } from '@/services/imageService';
 
 interface EventData {
     eventId?: string;
@@ -134,6 +135,37 @@ function Test() {
             console.error("Error signing up:", error);
         }
     };
+
+    // State to hold the entered user ID and selected image file
+    const [userId, setUserId] = useState<string>("");
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+    // Handle user ID input change
+    const handleUserIdChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setUserId(event.target.value);
+    };
+
+    // Handle file input change
+    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+        }
+    };
+
+    // Handle image upload
+    const handleUpload = async () => {
+        if (selectedFile && userId) {
+            try {
+                const url = await uploadUserImage(userId, selectedFile);
+                console.log("Uploaded image URL:", url);
+                setSelectedFile(null); // Clear the selected file after uploading
+            } catch (error) {
+                console.error("Error uploading image:", error);
+            }
+        }
+    };
+
     useEffect(() => {
         // Fetch and set the events when the component mounts
         async function fetchEvents() {
@@ -251,6 +283,33 @@ function Test() {
                 <button onClick={handleFacebookSignIn}>
                     Sign In with Facebook
                 </button>
+            </div>
+            <h2>Image Service</h2>
+            <div>
+                <button
+                    onClick={() => {
+                        console.log(getUsersImageUrls("stv"));
+                    }}
+                >
+                    {" "}
+                    User Images{" "}
+                </button>
+                <button
+                    onClick={() => {
+                        console.log(getEventImageUrls("1"));
+                    }}
+                >
+                    {" "}
+                    Event Images{" "}
+                </button>
+                <input
+                    type="text"
+                    placeholder="Enter user ID"
+                    value={userId}
+                    onChange={handleUserIdChange}
+                />
+                <input type="file" onChange={handleFileChange} />
+                <button onClick={handleUpload}>Upload Image</button>
             </div>
         </div>
     );
