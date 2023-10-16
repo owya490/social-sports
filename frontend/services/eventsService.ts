@@ -43,7 +43,9 @@ export async function getAllEvents(): Promise<EventData[]> {
         const eventsData: EventData[] = [];
 
         eventsSnapshot.forEach((doc) => {
-            eventsData.push(doc.data() as EventData);
+            const eventData = doc.data() as EventData;
+            eventData.eventId = doc.id;
+            eventsData.push(eventData);
         });
 
         return eventsData;
