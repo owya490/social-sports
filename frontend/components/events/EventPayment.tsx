@@ -1,13 +1,21 @@
+"use client";
+import { useState } from "react";
 import ListBox from "../ListBox";
 
 interface IEventPayment {
   date: string;
   time: string;
   location: string;
-  price: string;
+  price: number;
 }
 
 export default function EventPayment(props: IEventPayment) {
+  const [guestCount, setGuestCount] = useState("");
+
+  const handleGuestCountChange = (count: string) => {
+    setGuestCount(count);
+  };
+
   return (
     <div className="border border-1 rounded-[20px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)] bg-white">
       <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl text-center mb-10 lg:mb-8 ml-3 mr-3 mt-9 lg:mt-7 2xl:mt-12 2xl:mb-10">
@@ -46,50 +54,30 @@ export default function EventPayment(props: IEventPayment) {
               className="your-image-classes w-12 h-12 mr-2"
             />
             <p className="text-md lg:text-lg mr-[5%]">
-              {props.price} AUD per person
+              ${props.price} AUD per person
             </p>
           </div>
         </div>
       </div>
-
-      {/* <div className="relative flex justify-center">
-        <div
-          className="text-md lg:text-lg rounded-3xl bg-white p-4 border-[1px] border-black mt-10 w-4/5 h-1/15"
-          style={{
-            textAlign: "left",
-            position: "relative",
-          }}
-        >
-          GUESTS
-          <br />
-          <p className="text-sm lg:text-lg">1 guest(s)</p>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8 absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer"
-            viewBox="0 0 24 24"
-          >
-            <path
-              fillRule="evenodd"
-              d="M9.293 12.293a1 1 0 011.414 0L12 13.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414 1 1 0 011.414 0L12 13.586z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </div>
-      </div> */}
       <div className="relative flex justify-center mt-[-5%] mb-[-5%] lg:mt-[-4%]">
-          <ListBox />
+        <ListBox onGuestCountChange={handleGuestCountChange} />
       </div>
-
       <div className="text-md lg:text-lg flex justify-between">
-        <span className="ml-[10%] ">{props.price} x 1 guest(s)?</span>
-        <span className="mr-[10%] ">$30?</span>
+        <span className="ml-[10%] ">
+          {props.price} x {guestCount}
+        </span>
+        <span className="mr-[10%] ">
+          ${props.price * parseFloat(guestCount)}
+        </span>
       </div>
       <div className="px-[10%]">
         <hr className="px-2 h-0.5 mx-auto my-4 bg-gray-400 border-0 rounded md:my-10 dark:bg-gray-400"></hr>
       </div>
       <div className="text-lg lg:text-2xl flex justify-between">
         <span className="ml-[10%] mt-2">Total</span>
-        <span className="mr-[10%] mt-2">$30?</span>
+        <span className="mr-[10%] mt-2">
+          ${props.price * parseFloat(guestCount)}
+        </span>
       </div>
       <div className="relative flex justify-center mt-10">
         <div

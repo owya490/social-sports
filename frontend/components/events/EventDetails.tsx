@@ -21,7 +21,7 @@ export function EventDetails() {
     const date = "Saturday, 23 September, 2023";
     const time = "8:00 - 10:00 pm AEST";
     const location = "North Ryde RSL, NSW";
-    const price = "$30";
+    const price = 30;
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-6 gap-x-[2vw] 3xl:ml-[8vw]">
