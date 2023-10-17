@@ -64,7 +64,7 @@ export default function EventPayment(props: IEventPayment) {
       </div>
       <div className="text-md lg:text-lg flex justify-between">
         <span className="ml-[10%] ">
-          {props.price} x {guestCount}
+          ${props.price} x {guestCount}
         </span>
         <span className="mr-[10%] ">
           ${props.price * parseFloat(guestCount)}
