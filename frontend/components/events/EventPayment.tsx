@@ -1,6 +1,6 @@
 import {
     timestampToTimeOfDay,
-    timestampeToDateString,
+    timestampToDateString,
 } from "@/services/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 
@@ -25,7 +25,7 @@ export default function EventPayment(props: IEventPayment) {
                             className="your-image-classes w-12 h-12 mr-2"
                         />
                         <p className="text-md lg:text-lg mr-[5%]">
-                            {timestampeToDateString(props.date)}
+                            {timestampToDateString(props.date)}
                         </p>
                     </div>
                     <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">

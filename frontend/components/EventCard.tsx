@@ -5,6 +5,11 @@ import Image from "next/image";
 import Coin from "./../svgs/coin.svg";
 import Location from "./../svgs/location.svg";
 
+import {
+    timestampToDateString,
+    timestampToTimeOfDay24Hour,
+} from "@/services/datetimeUtils";
+import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
 interface IEventCard {
@@ -12,7 +17,7 @@ interface IEventCard {
     image: string;
     name: string;
     organiser: UserData;
-    startTime: Date;
+    startTime: Timestamp;
     location: string;
     price: number;
     vacancy: number;
@@ -38,7 +43,10 @@ export default function EventCard(props: IEventCard) {
             />
             <div className="p-4">
                 <h4 className="font-bold text-gray-500 text-xs">
-                    SAT, SEPT 23 · 20:00 AEST
+                    {`${timestampToDateString(
+                        props.startTime
+                    )} · ${timestampToTimeOfDay24Hour(props.startTime)} AEST`}
+                    {/* SAT, SEPT 23 · 20:00 AEST */}
                     {/* {props.startTime} */}
                 </h4>
                 <h2 className="text-xl font-bold mb-1 mt-1">
