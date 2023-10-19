@@ -5,12 +5,9 @@ import Image from "next/image";
 import Coin from "./../svgs/coin.svg";
 import Location from "./../svgs/location.svg";
 
-import {
-    timestampToDateString,
-    timestampToTimeOfDay24Hour,
-} from "@/services/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import { timestampToEventCardDateString } from "@/services/datetimeUtils";
 
 interface IEventCard {
     eventId: EventId;
@@ -43,9 +40,7 @@ export default function EventCard(props: IEventCard) {
             />
             <div className="p-4">
                 <h4 className="font-bold text-gray-500 text-xs">
-                    {`${timestampToDateString(
-                        props.startTime
-                    )} · ${timestampToTimeOfDay24Hour(props.startTime)} AEST`}
+                    {timestampToEventCardDateString(props.startTime)}
                     {/* SAT, SEPT 23 · 20:00 AEST */}
                     {/* {props.startTime} */}
                 </h4>

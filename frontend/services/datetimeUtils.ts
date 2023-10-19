@@ -19,10 +19,18 @@ export function timestampToTimeOfDay24Hour(timestamp: Timestamp) {
     let date = timestamp.toDate();
     const hours = date.getHours();
     const minutes = date.getMinutes();
-    return `${hours}:${minutes}`;
+    return `${hours < 10 ? `0${hours}` : hours}:${
+        minutes < 10 ? `0${hours}` : hours
+    }`;
 }
 
 export function timestampToDateString(timestamp: Timestamp) {
     let date = timestamp.toDate();
     return date.toDateString();
+}
+
+export function timestampToEventCardDateString(timestamp: Timestamp) {
+    return `${timestampToDateString(
+        timestamp
+    ).toUpperCase()} · ${timestampToTimeOfDay24Hour(timestamp)} AEST`;
 }
