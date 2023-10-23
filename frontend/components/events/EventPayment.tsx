@@ -7,14 +7,17 @@ interface IEventPayment {
   time: string;
   location: string;
   price: number;
+  space: number;
 }
 
 export default function EventPayment(props: IEventPayment) {
-  const [guestCount, setGuestCount] = useState("");
+  const [guestCount, setGuestCount] = useState(""); 
 
   const handleGuestCountChange = (count: string) => {
     setGuestCount(count);
   };
+
+  const guestCountValue = parseInt(guestCount.split(" ")[0]);
 
   return (
     <div className="border border-1 rounded-[20px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)] bg-white">
@@ -60,13 +63,16 @@ export default function EventPayment(props: IEventPayment) {
         </div>
       </div>
       <div className="relative flex justify-center mt-[-5%] mb-[-5%] lg:mt-[-4%]">
-        <ListBox onGuestCountChange={handleGuestCountChange} />
+        <ListBox
+          onGuestCountChange={handleGuestCountChange}
+          space={props.space}
+        />
       </div>
       <div className="text-md lg:text-lg flex justify-between">
         <span className="ml-[10%] ">
-          ${props.price} x {guestCount}
+          ${props.price} x {guestCount} 
         </span>
-        <span className="mr-[10%] ">
+        <span className="mr-[10%]   ">
           ${props.price * parseFloat(guestCount)}
         </span>
       </div>
