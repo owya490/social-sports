@@ -1,7 +1,6 @@
 import Image from "next/image";
 import DP from "./../../public/images/Ashley & Owen.png";
 
-
 export default function RecommendedEvents() {
   return (
     <div className="bg-white border-b-black border-1 border w-screen px-5 md:px-10 pt-16 shadow-lg">
@@ -12,7 +11,7 @@ export default function RecommendedEvents() {
               SAT, SEPT 23 · 20:00 AEST
             </p>
             <h1 className="text-3xl md:text-4xl">
-              Sydney Thunder Men&apos;s Volleyball
+              Sydney Thunder Women's Volleyball
             </h1>
 
             <div className="block md:flex items-center pt-2 pb-4 pl-1">
