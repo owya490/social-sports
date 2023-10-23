@@ -4,7 +4,7 @@ export default function SearchBar() {
     return (
         <div className="flex border border-1 border-black rounded-full width h-10 pl-5 pr-0.5 w-fit items-center bg-white drop-shadow-md">
             <input
-                className="h-9"
+                className="h-9 border-0"
                 type="text"
                 placeholder="Search Event"
                 style={{
@@ -13,7 +13,7 @@ export default function SearchBar() {
             ></input>
             <div className="h-full bg-black w-[1px] mx-2"></div>
             <input
-                className="h-9"
+                className="h-9 border-0"
                 type="text"
                 placeholder="Sydney, AU"
                 style={{

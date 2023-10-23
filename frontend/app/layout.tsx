@@ -29,7 +29,7 @@ export default function RootLayout({
             <body
                 className={`${inter.className} ${roboto_condensed.variable} bg-[#F6F7F8]`}
             >
-                <div className="hidden md:block">
+                <div className="hidden md:block mt-24">
                     <Navbar />
                 </div>
                 <div className="md:hidden">
