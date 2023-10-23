@@ -62,7 +62,7 @@ export default function EventPayment(props: IEventPayment) {
           </div>
         </div>
       </div>
-      <div className="relative flex justify-center mt-[-5%] mb-[-5%] lg:mt-[-4%]">
+      <div className="relative flex justify-center mt-[-4%] mb-[-4%] lg:mt-[-3%]">
         <ListBox
           onGuestCountChange={handleGuestCountChange}
           space={props.space}
