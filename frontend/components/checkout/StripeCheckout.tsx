@@ -18,23 +18,30 @@ export default function StripeCheckout() {
 
     const [loading, setLoading] = useState(true);
 
-    var response = {
-        clientSecret: ""
-            // "cs_test_a1KdArCrXPWzoj1gHxKy9bPQ02iSIAQGnMSkGeQEXG…gYScpJ3dgYWx3YGZxSmtGamh1aWBxbGprJz8nZGlyZHx2J3gl",
-    };
+    // var response = {
+    //     clientSecret: ""
+    //         // "cs_test_a1KdArCrXPWzoj1gHxKy9bPQ02iSIAQGnMSkGeQEXG…gYScpJ3dgYWx3YGZxSmtGamh1aWBxbGprJz8nZGlyZHx2J3gl",
+    // };
 
+    const data = {
+        name: "owen",
+        price: 2000,
+        quantity: 5,
+    };
     useEffect(() => {
-        fetch("https://stripe-checkout-7aikp3s36a-uc.a.run.app").then(
-            async (data) => {
-                const json = await data.json();
-                console.log(json);
-                response = json;
-                setClientSecret(json);
-                console.log(response);
-                setLoading(false);
-                return json;
-            }
-        );
+        fetch("https://stripe-checkout-7aikp3s36a-uc.a.run.app", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        }).then(async (data) => {
+            const json = await data.json();
+            console.log(json);
+            // response = json;
+            setClientSecret(json);
+            // console.log(response);
+            setLoading(false);
+            return json;
+        });
     }, []);
 
     return loading ? (
