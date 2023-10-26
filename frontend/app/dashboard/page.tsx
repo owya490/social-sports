@@ -23,9 +23,9 @@ export default function Dashboard() {
     ) : (
         <div className="pt-20 mx-[05vw] lg:mx-[3vw] xl:mx-[2vw]">
             <div className="flex flex-wrap justify-center">
-                {eventData.map((event) => {
+                {eventData.map((event, eventIdx) => {
                     return (
-                        <div className="m-4">
+                        <div className="m-4" key={eventIdx}>
                             <EventCard
                                 eventId={event.eventId}
                                 image={event.image}
