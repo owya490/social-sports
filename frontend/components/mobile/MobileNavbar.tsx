@@ -1,5 +1,6 @@
+"use client";
 import Image from "next/image";
-import DP from "./../../public/images/Ashley & Owen.png";
+import ProfilePic from "../ProfilePic";
 import Logo from "./../../public/images/Logo.png";
 
 export default function MobileNavbar() {
@@ -18,15 +19,7 @@ export default function MobileNavbar() {
                 </h1>
 
                 <div className="flex ml-auto items-center">
-                    <button className=" border border-black rounded-full w-10 h-10">
-                        <Image
-                            src={DP}
-                            alt="DP"
-                            width={50}
-                            height={50}
-                            className="rounded-full w-10 h-10"
-                        />
-                    </button>
+                    <ProfilePic />
                 </div>
 
                 {/* <div className="rounded-full w-10 h-10 bg-red-200 ml-auto"></div> */}

@@ -28,6 +28,7 @@ export default function EventPage({ params }: any) {
             .finally(() => {
                 setLoading(false);
             });
+        // eslint-disable-next-line
     }, []);
 
     return loading ? (

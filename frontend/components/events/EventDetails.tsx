@@ -18,12 +18,6 @@ export function EventDetails(props: IEventDetails) {
     //     "These sessions are built to representative level volleyball. This session is focused for women in the Sydney Thunder Volleyball Women’s Representative Team however all women at an advanced level are welcome to join. This session will have STV’s Head Coach Lead the session and will be focused on improving skills as an individual and as a team.",
     //     "Limited spots are available!",
     // ];
-    const tags = [
-        { name: "Volleyball" },
-        { name: "Women's Volleyball", url: "https://www.google.com" },
-        { name: "Sydney Thunder Volleyball", url: "https://www.google.com" },
-        { name: "Advanced", url: "https://www.google.com" },
-    ];
     const { eventData } = props;
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-6 gap-x-[2vw] 3xl:ml-[8vw]">
@@ -46,6 +40,7 @@ export function EventDetails(props: IEventDetails) {
                     date={eventData.startDate}
                     location={eventData.location}
                     price={eventData.price}
+                    vacancy={eventData.vacancy}
                 />
             </div>
         </div>

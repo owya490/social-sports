@@ -1,4 +1,3 @@
-import { EventData } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
