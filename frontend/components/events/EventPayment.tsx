@@ -2,12 +2,17 @@
 import { useState } from "react";
 import ListBox from "../ListBox";
 
+import {
+    timestampToTimeOfDay,
+    timestampToDateString,
+} from "@/services/datetimeUtils";
+import { Timestamp } from "firebase/firestore";
+
 interface IEventPayment {
-  date: string;
-  time: string;
-  location: string;
-  price: number;
-  space: number;
+    date: Timestamp;
+    location: string;
+    price: number;
+    vacancy: number;
 }
 
 export default function EventPayment(props: IEventPayment) {
@@ -32,7 +37,7 @@ export default function EventPayment(props: IEventPayment) {
               alt="Event Image"
               className="your-image-classes w-12 h-12 mr-2"
             />
-            <p className="text-md lg:text-lg mr-[5%]">{props.date}</p>
+            <p className="text-md lg:text-lg mr-[5%]">{timestampToDateString(props.date)}</p>
           </div>
           <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
             <img
@@ -40,7 +45,7 @@ export default function EventPayment(props: IEventPayment) {
               alt="Event Image"
               className="your-image-classes w-12 h-12 mr-2"
             />
-            <p className="text-md lg:text-lg mr-[5%]">{props.time}</p>
+            <p className="text-md lg:text-lg mr-[5%]">{timestampToTimeOfDay(props.date)}</p>
           </div>
           <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
             <img
@@ -65,7 +70,7 @@ export default function EventPayment(props: IEventPayment) {
       <div className="relative flex justify-center mt-[-4%] mb-[-4%] lg:mt-[-3%]">
         <ListBox
           onGuestCountChange={handleGuestCountChange}
-          space={props.space}
+          space={props.vacancy}
         />
       </div>
       <div className="text-md lg:text-lg flex justify-between">

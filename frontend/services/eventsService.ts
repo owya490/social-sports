@@ -1,64 +1,86 @@
 import {
-    collection,
-    doc,
+    EventData,
+    EventDataWithoutOrganiser,
+    EventId,
+    NewEventData,
+} from "@/interfaces/EventTypes";
+import {
     addDoc,
-    getDocs,
-    updateDoc,
+    collection,
     deleteDoc,
+    doc,
+    getDoc,
+    getDocs,
     query,
+    updateDoc,
     where,
 } from "firebase/firestore";
 import { db } from "./firebase";
-
-interface EventData {
-    eventId?: string;
-    startDate?: Date;
-    endDate?: string; // Assuming you want to store the time as a string
-    location?: string; // Assuming "address" is a string
-    capacity?: number;
-    vacancy?: number;
-    price?: number;
-    registrationDeadline?: Date;
-    organiserId?: string;
-    name: string;
-    description?: string; // Assuming "rich text field" is a string
-    image?: string; // Assuming you store the image URL or path as a string
-    eventTags?: string[]; // Assuming "list of tags" is an array of strings
-    isActive?: boolean;
-    attendees?: { email: string }[];
-}
+import { getUserById } from "./usersService";
 
 //Function to create a Event
-export async function eventCreate(data: EventData) {
+export async function createEvent(data: NewEventData): Promise<EventId> {
     try {
         const docRef = await addDoc(collection(db, "Events"), data);
         console.log("test");
+        return docRef.id;
     } catch (error) {
         console.error(error);
+        throw error;
+    }
+}
+
+export async function getEventById(eventId: EventId): Promise<EventData> {
+    try {
+        const eventDoc = await getDoc(doc(db, "Events", eventId));
+        // console.log(eventDoc);
+        const eventWithoutOrganiser =
+            eventDoc.data() as EventDataWithoutOrganiser;
+        const event: EventData = {
+            ...eventWithoutOrganiser,
+            organiser: await getUserById(eventWithoutOrganiser.organiserId),
+        };
+        return event;
+    } catch (error) {
+        console.log(error);
+        throw error;
     }
 }
 
 // Function to retrieve all events
-export async function getAllEvents() {
+export async function getAllEvents(): Promise<EventData[]> {
     try {
         const eventCollectionRef = collection(db, "Events");
         const eventsSnapshot = await getDocs(eventCollectionRef);
+        const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
         const eventsData: EventData[] = [];
+        // await addDoc(collection(db, "Events"), eventsSnapshot.docs[0].data());
 
         eventsSnapshot.forEach((doc) => {
-            eventsData.push(doc.data() as EventData);
+            const eventData = doc.data() as EventDataWithoutOrganiser;
+            eventData.eventId = doc.id;
+            eventsDataWithoutOrganiser.push(eventData);
         });
+
+        for (const event of eventsDataWithoutOrganiser) {
+            const organiser = await getUserById(event.organiserId);
+            eventsData.push({
+                ...event,
+                organiser: organiser,
+            });
+        }
 
         return eventsData;
     } catch (error) {
         console.error(error);
+        throw error;
     }
 }
 
 export async function updateEvent(
     eventId: string,
     updatedData: Partial<EventData>
-) {
+): Promise<void> {
     try {
         const eventRef = doc(db, "Events", eventId);
         await updateDoc(eventRef, updatedData);
@@ -92,7 +114,7 @@ export async function updateEventByName(
     }
 }
 
-export async function deleteEvent(eventId: string) {
+export async function deleteEvent(eventId: EventId): Promise<void> {
     try {
         const eventRef = doc(db, "Events", eventId);
         await deleteDoc(eventRef);
@@ -102,7 +124,7 @@ export async function deleteEvent(eventId: string) {
     }
 }
 
-export async function deleteEventByName(eventName: string) {
+export async function deleteEventByName(eventName: string): Promise<void> {
     try {
         const eventCollectionRef = collection(db, "Events");
         const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
