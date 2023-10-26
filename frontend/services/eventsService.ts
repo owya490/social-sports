@@ -1,4 +1,9 @@
-import { EventData, EventId, NewEventData } from "@/interfaces/EventTypes";
+import {
+    EventData,
+    EventDataWithoutOrganiser,
+    EventId,
+    NewEventData,
+} from "@/interfaces/EventTypes";
 import {
     addDoc,
     collection,
@@ -11,6 +16,7 @@ import {
     where,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { getUserById } from "./usersService";
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
@@ -26,8 +32,14 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
 
 export async function getEventById(eventId: EventId): Promise<EventData> {
     try {
-        const eventDoc = await getDoc(doc(db, "event", eventId));
-        const event = eventDoc.data() as EventData;
+        const eventDoc = await getDoc(doc(db, "Events", eventId));
+        // console.log(eventDoc);
+        const eventWithoutOrganiser =
+            eventDoc.data() as EventDataWithoutOrganiser;
+        const event: EventData = {
+            ...eventWithoutOrganiser,
+            organiser: await getUserById(eventWithoutOrganiser.organiserId),
+        };
         return event;
     } catch (error) {
         console.log(error);
@@ -40,13 +52,23 @@ export async function getAllEvents(): Promise<EventData[]> {
     try {
         const eventCollectionRef = collection(db, "Events");
         const eventsSnapshot = await getDocs(eventCollectionRef);
+        const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
         const eventsData: EventData[] = [];
+        // await addDoc(collection(db, "Events"), eventsSnapshot.docs[0].data());
 
         eventsSnapshot.forEach((doc) => {
-            const eventData = doc.data() as EventData;
+            const eventData = doc.data() as EventDataWithoutOrganiser;
             eventData.eventId = doc.id;
-            eventsData.push(eventData);
+            eventsDataWithoutOrganiser.push(eventData);
         });
+
+        for (const event of eventsDataWithoutOrganiser) {
+            const organiser = await getUserById(event.organiserId);
+            eventsData.push({
+                ...event,
+                organiser: organiser,
+            });
+        }
 
         return eventsData;
     } catch (error) {

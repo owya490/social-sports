@@ -2,7 +2,7 @@ export type UserId = string;
 
 interface AbstractUserData {
     firstName: string;
-    surname?: string;
+    surname: string;
     location?: string;
     contactInformation?: {
         mobile: number;
@@ -13,6 +13,7 @@ interface AbstractUserData {
             eventId: string;
         }
     ];
+    profilePicture: string;
 }
 
 export interface NewUserData extends AbstractUserData {}
@@ -20,3 +21,10 @@ export interface NewUserData extends AbstractUserData {}
 export interface UserData extends AbstractUserData {
     userId: UserId;
 }
+
+export const EmptyUserData: UserData = {
+    userId: "",
+    firstName: "",
+    profilePicture: "",
+    surname: ""
+};
