@@ -6,7 +6,7 @@ import Location from "./../../svgs/location.svg";
 
 export default function RecommendedEvents() {
     return (
-        <div className="bg-white rounded-xl border max-w-1/4">
+        <div className="bg-white rounded-xl border max-w-xs">
             <Image
                 src={STV}
                 alt="stv"
