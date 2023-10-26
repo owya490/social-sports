@@ -27,7 +27,6 @@ export default function Footer() {
 
                         <ul className="mt-8 space-y-1 text-sm text-gray-700">
                             <li>Monday to Friday: 10am - 5pm</li>
-                            {/* <li>Weekend: 10am - 3pm</li> */}
                         </ul>
 
                         <ul className="mt-8 flex gap-6">
@@ -182,24 +181,6 @@ export default function Footer() {
                                         Create Event
                                     </a>
                                 </li>
-
-                                {/* <li>
-                                    <a
-                                        href="#"
-                                        className="text-gray-700 transition hover:opacity-75"
-                                    >
-                                        HR Consulting
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a
-                                        href="#"
-                                        className="text-gray-700 transition hover:opacity-75"
-                                    >
-                                        SEO Optimisation
-                                    </a>
-                                </li> */}
                             </ul>
                         </div>
 
@@ -224,15 +205,6 @@ export default function Footer() {
                                         Meet the Team
                                     </a>
                                 </li>
-
-                                {/* <li>
-                                    <a
-                                        href="#"
-                                        className="text-gray-700 transition hover:opacity-75"
-                                    >
-                                        Accounts Review
-                                    </a>
-                                </li> */}
                             </ul>
                         </div>
                     </div>
