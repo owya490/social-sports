@@ -11,3 +11,5 @@ node_modules
 .*.env
 */.next/*
 .next
+functions/social-sports-firebase-dev-credentials.json
+functions/__pycache__/*
