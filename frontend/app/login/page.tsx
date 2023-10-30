@@ -2,20 +2,23 @@
 import React, { useState } from "react";
 
 export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         try {
-            const response = await fetch('https://yourbackenddomain.com/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
+            const response = await fetch(
+                "https://yourbackenddomain.com/api/login",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ email, password }),
+                }
+            );
 
             const data = await response.json();
 
@@ -39,10 +42,7 @@ export default function Login() {
             </div>
 
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-                <form
-                    className="space-y-6"
-                    onSubmit={handleSubmit}
-                >
+                <form className="space-y-6" onSubmit={handleSubmit}>
                     <div>
                         <label
                             htmlFor="email"
@@ -108,7 +108,7 @@ export default function Login() {
                 <p className="mt-10 text-center text-sm text-gray-500">
                     Not a member?{" "}
                     <a
-                        href="#"
+                        href="/register"
                         className="font-semibold leading-6 text-[#30ADFF] hover:underline"
                     >
                         Register here
