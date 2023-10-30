@@ -65,13 +65,13 @@ cred = credentials.Certificate('./social-sports-firebase-dev-credentials.json')
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
-TYPESENSE_SEARCH_ONLY_API_KEY = os.getenv('TYPESENSE_SEARCH_ONLY_API_KEY')
-print("typesense api key", TYPESENSE_SEARCH_ONLY_API_KEY)
+TYPESENSE_ADMIN_API_KEY = os.getenv('TYPESENSE_ADMIN_API_KEY')
+print("typesense api key", TYPESENSE_ADMIN_API_KEY)
 
 # Initialise the Typesense client
 # Information below can be found in confluence - Typesense Search API Keys
 ts_client = typesense.Client({
-    'api_key': TYPESENSE_SEARCH_ONLY_API_KEY,
+    'api_key': TYPESENSE_ADMIN_API_KEY,
     'nodes': [{
         'host': 'e7klnhfmoidgu0cvp-1.a1.typesense.net',
         'port': '443',
