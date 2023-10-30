@@ -13,8 +13,10 @@ import {
   MapPinIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
+import Link from "next/link";
 
 interface IEventPayment {
+  eventId: string;
   date: Timestamp;
   location: string;
   price: number;
@@ -81,7 +83,14 @@ export default function EventPayment(props: IEventPayment) {
         <span className="mr-[10%] mt-2">${props.price * guestCount}</span>
       </div>
       <div className="relative flex justify-center mt-10">
-        <div
+        <Link
+          href={{
+            pathname: "/checkout",
+            query: {
+              eventId: props.eventId,
+              quantity: guestCount,
+            },
+          }}
           className="text-lg lg:text-2xl text-white rounded-3xl bg-sky-500/75 p-3 w-4/5 h-1/18 mb-[10%]"
           style={{
             textAlign: "center",
@@ -89,7 +98,7 @@ export default function EventPayment(props: IEventPayment) {
           }}
         >
           Book now
-        </div>
+        </Link>
       </div>
     </div>
   );
