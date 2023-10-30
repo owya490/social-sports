@@ -22,8 +22,7 @@ export default function Register() {
         try {
             handleSignUp(userData);
         } catch (error) {
-            console.error("An error occurred:", error);
-            // Handle errors related to the fetch request.
+            console.error("Error:", error);
         }
     };
 
@@ -167,7 +166,7 @@ export default function Register() {
                     <div>
                         <button
                             type="submit"
-                            className="flex w-full justify-center rounded-md bg-[#30ADFF] px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 group-invalid:pointer-events-none group-invalid:opacity-30"
+                            className="flex w-full justify-center rounded-md bg-[#30ADFF] px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 "
                         >
                             Register
                         </button>
