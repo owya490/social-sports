@@ -21,7 +21,7 @@ export default function Dashboard() {
   return loading ? (
     <Loading />
   ) : (
-    <div className="pt-20 mx-[05vw] lg:mx-[3vw] xl:mx-[2vw]">
+    <div className="pt-20 pb-10 mx-[05vw] lg:mx-[3vw] xl:mx-[2vw]">
       <div className="flex flex-wrap justify-center">
         {eventData.map((event, eventIdx) => {
           return (

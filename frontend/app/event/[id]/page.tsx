@@ -41,7 +41,7 @@ export default function EventPage({ params }: any) {
         organiser={eventData.organiser}
         vacancy={eventData.vacancy}
       />
-      <div className="mt-10 mx-[5vw] lg:mx-[2vw] xl:mx-[3vw]">
+      <div className="mt-10 mb-10 mx-[5vw] lg:mx-[2vw] xl:mx-[3vw]">
         <EventDetails eventData={eventData} eventTags={eventTags} />
         <div className="mx-4 lg:mx-16">
           <div className="w-full bg-gray-300 h-[1px] mt-10"></div>

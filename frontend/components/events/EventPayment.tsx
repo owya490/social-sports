@@ -6,6 +6,12 @@ import {
   timestampToDateString,
   timestampToTimeOfDay,
 } from "@/services/datetimeUtils";
+import {
+  CalendarDaysIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  MapPinIcon,
+} from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 
@@ -34,39 +40,23 @@ export default function EventPayment(props: IEventPayment) {
       <div className="flex justify-start">
         <div className="w-full">
           <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
-            <img
-              src="https://static.vecteezy.com/system/resources/previews/005/988/959/non_2x/calendar-icon-free-vector.jpg"
-              alt="Event Image"
-              className="your-image-classes w-12 h-12 mr-2"
-            />
+            <CalendarDaysIcon className="w-10 mr-2" />
             <p className="text-md lg:text-lg mr-[5%]">
               {timestampToDateString(props.date)}
             </p>
           </div>
           <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
-            <img
-              src="https://t3.ftcdn.net/jpg/05/29/73/96/360_F_529739662_yRW6APsQg3PaJGQ6afQL8hDdod0OR1re.jpg"
-              alt="Event Image"
-              className="your-image-classes w-12 h-12 mr-2"
-            />
+            <ClockIcon className="w-10 mr-2" />
             <p className="text-md lg:text-lg mr-[5%]">
               {timestampToTimeOfDay(props.date)}
             </p>
           </div>
           <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
-            <img
-              src="https://previews.123rf.com/images/giamportone/giamportone1802/giamportone180200009/95977351-map-pin-icon-location-symbol-outline-vector-illustration.jpg"
-              alt="Event Image"
-              className="your-image-classes w-12 h-12 mr-2"
-            />
+            <MapPinIcon className="w-10 mr-2" />
             <p className="text-md lg:text-lg mr-[5%]">{props.location}</p>
           </div>
           <div className="flex items-center ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
-            <img
-              src="https://thumbs.dreamstime.com/b/dollar-sign-dollar-sign-icon-dollar-sign-dollar-sign-icon-vector-illustration-graphic-web-design-170432064.jpg"
-              alt="Event Image"
-              className="your-image-classes w-12 h-12 mr-2"
-            />
+            <CurrencyDollarIcon className="w-10 mr-2" />
             <p className="text-md lg:text-lg mr-[5%]">
               ${props.price} AUD per person
             </p>
