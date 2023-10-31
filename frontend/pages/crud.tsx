@@ -14,7 +14,11 @@ import {
     handleGoogleSignIn,
     handleFacebookSignIn,
 } from "@/services/authService";
-import { getEventImageUrls, getUsersImageUrls, uploadUserImage } from '@/services/imageService';
+import {
+    getEventImageUrls,
+    getUsersImageUrls,
+    uploadUserImage,
+} from "@/services/imageService";
 
 interface EventData {
     eventId?: string;
@@ -59,6 +63,8 @@ function Test() {
     const [userAuthData, setUserAuthData] = useState({
         email: "",
         password: "",
+    });
+    const [userInfoData, setUserInfoData] = useState({
         firstName: "",
     });
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,13 +127,13 @@ function Test() {
         setUserAuthData({ ...userAuthData, password: e.target.value });
     };
     const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setUserAuthData({ ...userAuthData, firstName: e.target.value });
+        setUserInfoData({ ...userInfoData, firstName: e.target.value });
     };
     const handleLogin = async (event: React.FormEvent) => {
         event.preventDefault();
         try {
             console.log(userAuthData);
-            handleSignUp(userAuthData);
+            handleSignUp(userAuthData, userInfoData);
             // Handle successful signup, e.g., show a success message or redirect the user
             console.log("User signed up successfully!");
         } catch (error) {
@@ -258,7 +264,7 @@ function Test() {
                         <input
                             type="text"
                             name="firstName"
-                            value={userAuthData.firstName}
+                            value={userInfoData.firstName}
                             onChange={handleFirstNameChange}
                             required
                         />

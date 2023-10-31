@@ -1,35 +1,20 @@
 "use client";
+import { handleLogin } from "@/services/authService";
 import React, { useState } from "react";
 
 export default function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [userData, setUserData] = useState({
+        email: "",
+        password: "",
+    });
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         try {
-            const response = await fetch(
-                "https://yourbackenddomain.com/api/login",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ email, password }),
-                }
-            );
-
-            const data = await response.json();
-
-            if (data.success) {
-                // Handle successful login, e.g., redirecting to a dashboard or saving the token.
-            } else {
-                // Handle error from backend or show the user an error message.
-            }
+            handleLogin(userData);
         } catch (error) {
-            console.error("An error occurred:", error);
-            // Handle errors related to the fetch request.
+            console.error("Error:", error);
         }
     };
 
@@ -58,8 +43,13 @@ export default function Login() {
                                 autoComplete="email"
                                 required
                                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#30ADFF] sm:text-sm sm:leading-6"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                value={userData.email}
+                                onChange={(e) =>
+                                    setUserData({
+                                        ...userData,
+                                        email: e.target.value,
+                                    })
+                                }
                             />
                         </div>
                     </div>
@@ -89,8 +79,13 @@ export default function Login() {
                                 autoComplete="current-password"
                                 required
                                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#30ADFF] sm:text-sm sm:leading-6"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                value={userData.password}
+                                onChange={(e) =>
+                                    setUserData({
+                                        ...userData,
+                                        password: e.target.value,
+                                    })
+                                }
                             />
                         </div>
                     </div>

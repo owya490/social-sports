@@ -3,9 +3,11 @@ import React, { useState } from "react";
 import { handleSignUp } from "@/services/authService";
 
 export default function Register() {
-    const [userData, setUserData] = useState({
+    const [userAuthData, setUserAuthData] = useState({
         email: "",
         password: "",
+    });
+    const [userInfoData, setUserInfoData] = useState({
         firstName: "",
     });
     const [repeatPassword, setRepeatPassword] = useState("");
@@ -14,13 +16,13 @@ export default function Register() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        if (userData.password !== repeatPassword) {
+        if (userAuthData.password !== repeatPassword) {
             setPasswordMismatch(true);
             return;
         }
 
         try {
-            handleSignUp(userData);
+            handleSignUp(userAuthData, userInfoData);
         } catch (error) {
             console.error("Error:", error);
         }
@@ -74,11 +76,11 @@ export default function Register() {
                                 name="first-name"
                                 type="text"
                                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#30ADFF] sm:text-sm sm:leading-6"
-                                value={userData.firstName}
+                                value={userInfoData.firstName}
                                 required
                                 onChange={(e) =>
-                                    setUserData({
-                                        ...userData,
+                                    setUserInfoData({
+                                        ...userInfoData,
                                         firstName: e.target.value,
                                     })
                                 }
@@ -100,10 +102,10 @@ export default function Register() {
                                 autoComplete="email"
                                 required
                                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#30ADFF] sm:text-sm sm:leading-6"
-                                value={userData.email}
+                                value={userAuthData.email}
                                 onChange={(e) =>
-                                    setUserData({
-                                        ...userData,
+                                    setUserAuthData({
+                                        ...userAuthData,
                                         email: e.target.value,
                                     })
                                 }
@@ -128,10 +130,10 @@ export default function Register() {
                                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#30ADFF] sm:text-sm sm:leading-6"
                                 required
                                 pattern=".{6,}"
-                                value={userData.password}
+                                value={userAuthData.password}
                                 onChange={(e) =>
-                                    setUserData({
-                                        ...userData,
+                                    setUserAuthData({
+                                        ...userAuthData,
                                         password: e.target.value,
                                     })
                                 }
