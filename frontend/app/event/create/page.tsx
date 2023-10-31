@@ -3,6 +3,7 @@
 // CreateEvent.jsx
 import React, { useState } from "react";
 import CreateEventTimeline from "@/components/events/create/CreateEventTimeline";
+import CreateEventCost from "@/components/events/create/CreateEventCost";
 import Button from "@/components/Button";
 
 export default function CreateEvent() {
@@ -27,6 +28,8 @@ export default function CreateEvent() {
                 currentStep={currentStep}
                 totalSteps={totalSteps}
             />
+            <CreateEventCost />{" "}
+            {/* Include the CreateEventCost component here */}
             <Button
                 currentStep={currentStep}
                 totalSteps={totalSteps}
