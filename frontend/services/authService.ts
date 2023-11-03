@@ -1,28 +1,14 @@
-import React, { useState } from "react";
-import {
-    collection,
-    doc,
-    addDoc,
-    setDoc,
-    getDoc,
-    getDocs,
-    updateDoc,
-    deleteDoc,
-    query,
-    where,
-} from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import {
     createUserWithEmailAndPassword,
-    updateProfile,
     signInWithEmailAndPassword,
     signInWithPopup,
     GoogleAuthProvider,
     FacebookAuthProvider,
-    getAuth,
     UserCredential,
-    setPersistence,
+    signOut,
 } from "firebase/auth";
-import { auth, db } from "./firebase";
+import { auth, authUser, db } from "./firebase";
 
 interface userAuthData {
     email: string;
@@ -51,6 +37,25 @@ export async function handleSignUp(data: userAuthData) {
     }
 }
 
+export async function handleSignOut() {
+    try {
+        await signOut(auth);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function handleEmailAndPasswordSignIn(
+    email: string,
+    password: string
+) {
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 export async function handleGoogleSignIn() {
     try {
         const provider = new GoogleAuthProvider();
@@ -65,8 +70,8 @@ export async function handleGoogleSignIn() {
         const userDoc = await getDoc(userDocRef);
         if (!userDoc.exists()) {
             const userDataToSet = {
-                firstName: userCredential.user.displayName || "John", // Use a default name if Google doesn't provide one
-                // add more fields here
+                firstName: userCredential.user.displayName,
+                // TODO: add more fields here
             };
             await setDoc(userDocRef, userDataToSet);
         }
@@ -91,8 +96,8 @@ export async function handleFacebookSignIn() {
         const userDoc = await getDoc(userDocRef);
         if (!userDoc.exists()) {
             const userDataToSet = {
-                firstName: userCredential.user.displayName || "John", // Use a default name if Facebook doesn't provide one
-                // add more fields here
+                firstName: userCredential.user.displayName,
+                // TODO: add more fields here
             };
             await setDoc(userDocRef, userDataToSet);
         }
@@ -101,4 +106,12 @@ export async function handleFacebookSignIn() {
     } catch (error) {
         console.log(error);
     }
+}
+
+/**
+ * Utility function determining whether any user is logged in or not.
+ * @returns boolean
+ */
+export function isLoggedIn(): boolean {
+    return authUser !== null;
 }

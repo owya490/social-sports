@@ -1,6 +1,6 @@
-export default function crud() {
-    return <></>;
-}
+// // export default function crud() {
+// //     return <></>;
+// // }
 // import React, { useState, useEffect, ChangeEvent } from "react";
 // import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 // import {
@@ -17,7 +17,11 @@ export default function crud() {
 //     handleGoogleSignIn,
 //     handleFacebookSignIn,
 // } from "@/services/authService";
-// import { getEventImageUrls, getUsersImageUrls, uploadUserImage } from '@/services/imageService';
+// import {
+//     getEventImageUrls,
+//     getUsersImageUrls,
+//     uploadUserImage,
+// } from "@/services/imageService";
 
 // interface EventData {
 //     eventId?: string;
