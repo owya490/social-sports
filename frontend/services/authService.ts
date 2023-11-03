@@ -10,13 +10,13 @@ import {
 } from "firebase/auth";
 import { auth, authUser, db } from "./firebase";
 
-interface userAuthData {
+export interface userAuthData {
     email: string;
     password: string;
     firstName: string;
 }
 
-export async function handleSignUp(data: userAuthData) {
+export async function handleEmailAndPasswordSignUp(data: userAuthData) {
     try {
         // Create a new user with email and password
         const userCredential: UserCredential =
