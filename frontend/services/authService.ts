@@ -20,6 +20,7 @@ import {
     FacebookAuthProvider,
     getAuth,
     UserCredential,
+    setPersistence,
 } from "firebase/auth";
 import { auth, db } from "./firebase";
 
