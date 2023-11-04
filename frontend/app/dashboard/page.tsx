@@ -23,7 +23,9 @@ export default function Dashboard() {
   ) : (
     <div className="pt-20 pb-10 mx-[05vw] lg:mx-[3vw] xl:mx-[2vw]">
       <div className="flex flex-wrap justify-center">
-        {eventData.map((event, eventIdx) => {
+        {eventData.sort((event1, event2) => {
+          if (event1.acc)
+        }).map((event, eventIdx) => {
           return (
             <div className="m-4" key={eventIdx}>
               <EventCard
