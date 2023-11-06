@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend
-          npm install
+          npm ci
       - name: Linting
         run: |
           cd frontend
@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend
-          npm install
+          npm ci
       - name: Linting
         run: |
           cd frontend
