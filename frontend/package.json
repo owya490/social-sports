@@ -11,7 +11,7 @@
     },
     "dependencies": {
         "@headlessui/react": "^1.7.17",
-        "@tailwindcss/forms": "^0.5.6",
+        "@heroicons/react": "^2.0.18",
         "@types/react": "^18.2.21",
         "dotenv": "^16.3.1",
         "firebase": "^10.4.0",
@@ -29,6 +29,7 @@
         "@types/jest": "^29.5.5",
         "@types/node": "20.8.3",
         "autoprefixer": "^10.4.16",
+        "encoding": "^0.1.13",
         "eslint": "8.50.0",
         "eslint-config-next": "13.5.3",
         "jest": "^29.7.0",
