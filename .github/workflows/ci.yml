@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - '*' # Use this to match all branches
+      - '*'
   pull_request:
     branches:
       - '*'
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2 # Use v2 for better compatibility
+        uses: actions/checkout@v2
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2 # Use v2 for better compatibility
+        uses: actions/checkout@v2
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
