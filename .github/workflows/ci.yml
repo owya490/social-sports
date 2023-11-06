@@ -2,28 +2,53 @@ name: CI
 
 on:
   push:
-    branches: [*]
+    branches:
+      - '*' # Use this to match all branches
   pull_request:
-    branches: [*]
+    branches:
+      - '*'
 
 jobs:
   crud_testing:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: type check
-        run: cd frontend && npm install
-      - name: linting
-        run: cd frontend && npm run lint
-      - name: react tests
-        run: cd frontend && npm test
+      - name: Checkout code
+        uses: actions/checkout@v2 # Use v2 for better compatibility
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
+      - name: Linting
+        run: |
+          cd frontend
+          npm run lint
+      - name: React tests
+        run: |
+          cd frontend
+          npm test
+
   frontend_testing:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: type check
-        run: cd frontend && npm install
-      - name: linting
-        run: cd frontend && npm run lint
-      - name: react tests
-        run: cd frontend && npm test
+      - name: Checkout code
+        uses: actions/checkout@v2 # Use v2 for better compatibility
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
+      - name: Linting
+        run: |
+          cd frontend
+          npm run lint
+      - name: React tests
+        run: |
+          cd frontend
+          npm test
