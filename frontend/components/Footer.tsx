@@ -8,6 +8,8 @@ export default function Footer() {
                     src="https://img.freepik.com/premium-photo/colorful-poster-with-dragon-it_925376-14120.jpg"
                     alt=""
                     className="absolute inset-0 h-full w-full object-cover"
+                    width={0}
+                    height={0}
                 />
             </div>
 
