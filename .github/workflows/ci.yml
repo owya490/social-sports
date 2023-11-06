@@ -13,16 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v1
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v1
         with:
           node-version: 14
       - name: Install dependencies
         run: |
           cd frontend
           npm update
-          npm ci
+          npm install
       - name: Linting
         run: |
           cd frontend
@@ -36,16 +36,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v1
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v1
         with:
           node-version: 14
       - name: Install dependencies
         run: |
           cd frontend
           npm update
-          npm ci
+          npm install
       - name: Linting
         run: |
           cd frontend
