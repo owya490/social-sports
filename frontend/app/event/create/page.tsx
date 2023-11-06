@@ -1,9 +1,7 @@
-"use client";
-
-// CreateEvent.jsx
 import React, { useState } from "react";
 import CreateEventTimeline from "@/components/events/create/CreateEventTimeline";
 import CreateEventCost from "@/components/events/create/CreateEventCost";
+import TextField from "@/components/events/create/TextField";
 import Button from "@/components/Button";
 
 export default function CreateEvent() {
@@ -28,8 +26,19 @@ export default function CreateEvent() {
                 currentStep={currentStep}
                 totalSteps={totalSteps}
             />
-            <CreateEventCost />{" "}
-            {/* Include the CreateEventCost component here */}
+            <CreateEventCost />
+            {currentStep === 1 && (
+                <TextField
+                    label="Field 1 Label"
+                    placeholder="Field 1 Placeholder"
+                />
+            )}
+            {currentStep === 2 && (
+                <TextField
+                    label="Field 2 Label"
+                    placeholder="Field 2 Placeholder"
+                />
+            )}
             <Button
                 currentStep={currentStep}
                 totalSteps={totalSteps}
