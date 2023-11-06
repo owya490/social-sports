@@ -1,6 +1,6 @@
-// // export default function crud() {
-// //     return <></>;
-// // }
+export default function crud() {
+    return <></>;
+}
 // import React, { useState, useEffect, ChangeEvent } from "react";
 // import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 // import {
