@@ -1,8 +1,3 @@
-//@ts-ignore
-global.performance = global.performance || {
-    now: () => new Date().getTime(),
-};
-
 import Footer from "@/components/Footer";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
