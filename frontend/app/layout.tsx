@@ -4,7 +4,7 @@ import Navbar from "@/components/navbar/Navbar";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
-import LoginTest from "@/components/LoginTest";
+import LoginDemo from "@/components/LoginDemo";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -38,9 +38,6 @@ export default function RootLayout({
                 </div>
                 {children}
                 <Footer />
-                <div>
-                    <LoginTest />
-                </div>
             </body>
         </html>
     );

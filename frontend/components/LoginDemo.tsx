@@ -8,7 +8,7 @@ import {
 import { authUser } from "@/services/firebase";
 import React from "react";
 
-const LoginTest = () => {
+const LoginDemo = () => {
     return (
         <div>
             <button
@@ -39,4 +39,4 @@ const LoginTest = () => {
     );
 };
 
-export default LoginTest;
+export default LoginDemo;
