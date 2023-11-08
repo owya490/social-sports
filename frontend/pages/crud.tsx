@@ -7,6 +7,7 @@ import {
     deleteEvent,
     updateEventByName,
     deleteEventByName,
+    searchEventsByKeyword,
 } from "@/services/eventsService";
 import { createUser, getAllUsers } from "@/services/usersService";
 import {
@@ -14,7 +15,11 @@ import {
     handleGoogleSignIn,
     handleFacebookSignIn,
 } from "@/services/authService";
-import { getEventImageUrls, getUsersImageUrls, uploadUserImage } from '@/services/imageService';
+import {
+    getEventImageUrls,
+    getUsersImageUrls,
+    uploadUserImage,
+} from "@/services/imageService";
 
 interface EventData {
     eventId?: string;
@@ -61,8 +66,18 @@ function Test() {
         password: "",
         firstName: "",
     });
+    const [searchTerm, setSearchTerm] = useState<string>("");
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setEventName(event.target.value);
+    };
+    const handleSearch = async () => {
+        try {
+            const foundEvents = await searchEventsByKeyword(searchTerm);
+            setEvents(foundEvents);
+            console.log(foundEvents);
+        } catch (error) {
+            console.error(error);
+        }
     };
     const handleAddUser = async () => {
         // Add user logic
@@ -310,6 +325,14 @@ function Test() {
                 />
                 <input type="file" onChange={handleFileChange} />
                 <button onClick={handleUpload}>Upload Image</button>
+                <span></span>
+                <input
+                    type="text"
+                    placeholder="Search by Event Name or Description"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                />
+                <button onClick={handleSearch}>Search</button>
             </div>
         </div>
     );
