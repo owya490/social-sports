@@ -107,18 +107,18 @@ function Test() {
             registrationDeadline: new Date(
                 endDate.getTime() - 3 * 24 * 60 * 60 * 1000
             ), // 3 days before the event
-            organiserId: `organiser${index}`, // Unique organiser ID
+            organiserId: `g9s1a1t3b7LJi8bswkd0`, // Unique organiser ID
             name: `Sample Event ${index}`, // Unique event name
             description: `Description for Sample Event ${index}.`,
             image: `https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fstv%2F364809572_6651230408261559_5428994326794147594_n.png.jpeg?alt=media&token=9020aa75-976a-430f-a96e-d763f5b4bada`, // Unique image URL
-            eventTags: [`tag${index}`, `tag${index + 1}`], // Unique tags
+            eventTags: "msgwG49QgLodKiG1Ktez", // Unique tags
             isActive: index % 2 === 0, // Alternate isActive status
         };
     }
 
     async function createSampleEvents(): Promise<string[]> {
         const eventIds: string[] = [];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 5; i++) {
             const eventData = generateSampleEventData(i);
             try {
                 const eventId = await createEvent(eventData);
