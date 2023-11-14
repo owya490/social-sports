@@ -1,5 +1,6 @@
 "use client";
 import EventCard from "@/components/EventCard";
+import FilterDialog from "@/components/FilterDialog";
 import Loading from "@/components/Loading";
 import { EventData } from "@/interfaces/EventTypes";
 import { getAllEvents } from "@/services/eventsService";
@@ -40,6 +41,7 @@ export default function Dashboard() {
           );
         })}
       </div>
+      <FilterDialog />
     </div>
   );
 }
