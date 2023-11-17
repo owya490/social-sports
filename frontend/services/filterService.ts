@@ -1,4 +1,5 @@
 import {
+  QueryFieldFilterConstraint,
   Timestamp,
   collection,
   getDocs,
@@ -11,6 +12,44 @@ import { EventData } from "@/interfaces/EventTypes";
 
 const NUM_DOCS_QUERY_LIMIT = 15;
 
+export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
+  const whereClauseList: QueryFieldFilterConstraint[] = [];
+  Object.keys(filterFieldsMap).forEach(async (key: string) => {
+    switch (key) {
+      case "startDate":
+        let startDate: Timestamp = filterFieldsMap["startDate"].startDate;
+        let endDate: Timestamp | null = null;
+        if ("endDate" in filterFieldsMap["startDate"]) {
+          endDate = filterFieldsMap["startDate"].endDate;
+        }
+        await createWhereClauseEventDate(whereClauseList, startDate, endDate);
+
+      case "price":
+        if ("price" in filterFieldsMap) {
+          let minPrice: number | null = null;
+          if ("minPrice" in filterFieldsMap["price"]) {
+            minPrice = filterFieldsMap["price"].minPrice;
+          }
+
+          let maxPrice: number | null = null;
+          if ("maxPrice" in filterFieldsMap["price"]) {
+            maxPrice = filterFieldsMap["price"].maxPrice;
+          }
+
+          await createWhereClauseEventPrice(
+            whereClauseList,
+            minPrice,
+            maxPrice
+          );
+        }
+
+      // TODO: add more filters here
+    }
+  });
+
+  return await filterEventsByWhereClauses(whereClauseList);
+}
+
 /**
  * Retrieves the events from the firebase database filtered by
  * a startDate and an optional endDate.
@@ -19,18 +58,11 @@ const NUM_DOCS_QUERY_LIMIT = 15;
  * @param endDate: Optional<Timestamp>
  * @returns EventData[]
  */
-export async function filterEventsByDateRange(
-  startDate: Timestamp,
-  endDate?: Timestamp
+async function filterEventsByWhereClauses(
+  whereClauseList: QueryFieldFilterConstraint[]
 ): Promise<EventData[]> {
   try {
     const eventsRef = collection(db, "Events");
-
-    // TODO: need to make the where clause list modular to work amongst multiple filters.
-    const whereClauseList = [where("startDate", ">=", startDate)];
-    if (endDate) {
-      whereClauseList.push(where("endDate", "<=", endDate));
-    }
 
     const filterEventsQuery = query(
       eventsRef,
@@ -53,3 +85,35 @@ export async function filterEventsByDateRange(
     throw error;
   }
 }
+
+async function createWhereClauseEventDate(
+  currWhereClauseList: QueryFieldFilterConstraint[],
+  startDate: Timestamp,
+  endDate: Timestamp | null
+) {
+  currWhereClauseList.push(where("startDate", ">=", startDate));
+  if (endDate) {
+    currWhereClauseList.push(where("endDate", "<=", endDate));
+  }
+}
+
+async function createWhereClauseEventPrice(
+  currWhereClauseList: QueryFieldFilterConstraint[],
+  minPrice: number | null,
+  maxPrice: number | null
+) {
+  if (!minPrice && !maxPrice) {
+    throw new Error(
+      "No minPrice and no maxPrice provided. Please provide at least one!"
+    );
+  }
+
+  if (minPrice) {
+    currWhereClauseList.push(where("price", ">=", minPrice));
+  }
+  if (maxPrice) {
+    currWhereClauseList.push(where("price", "<=", maxPrice));
+  }
+}
+
+// TODO: add more createWhereClause functions here
