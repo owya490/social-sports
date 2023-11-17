@@ -12,6 +12,13 @@ import { EventData } from "@/interfaces/EventTypes";
 
 const NUM_DOCS_QUERY_LIMIT = 15;
 
+/**
+ * Returns a filtered list of up to 15 events from the firebase storage.
+ *
+ * @param filterFieldsMap: Map where the key is the event field name as seen in firebase.
+ * See full documentation here: https://owenyang.atlassian.net/wiki/spaces/SD/pages/20414465/Firebase+Event+Filtering
+ * @returns EventData[]
+ */
 export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
   const whereClauseList: QueryFieldFilterConstraint[] = [];
   Object.keys(filterFieldsMap).forEach(async (key: string) => {
@@ -86,6 +93,15 @@ async function filterEventsByWhereClauses(
   }
 }
 
+/**
+ * Helper function for the backend filter service.
+ * Creates and appends a query where clause based on startDate onto the currWhereClauseList
+ * Call this function to add the respective filter.
+ *
+ * @param currWhereClauseList
+ * @param startDate
+ * @param endDate
+ */
 async function createWhereClauseEventDate(
   currWhereClauseList: QueryFieldFilterConstraint[],
   startDate: Timestamp,
@@ -97,6 +113,15 @@ async function createWhereClauseEventDate(
   }
 }
 
+/**
+ * Helper function for the backend filter service.
+ * Creates an appends a query where clause based on price onto the currWhereClauseList
+ * Call this function to add the respective filter.
+ *
+ * @param currWhereClauseList
+ * @param minPrice
+ * @param maxPrice
+ */
 async function createWhereClauseEventPrice(
   currWhereClauseList: QueryFieldFilterConstraint[],
   minPrice: number | null,
