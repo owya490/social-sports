@@ -11,6 +11,14 @@ import { EventData } from "@/interfaces/EventTypes";
 
 const NUM_DOCS_QUERY_LIMIT = 15;
 
+/**
+ * Retrieves the events from the firebase database filtered by
+ * a startDate and an optional endDate.
+ *
+ * @param startDate: Timestamp
+ * @param endDate: Optional<Timestamp>
+ * @returns EventData[]
+ */
 export async function filterEventsByDateRange(
   startDate: Timestamp,
   endDate?: Timestamp
@@ -19,9 +27,9 @@ export async function filterEventsByDateRange(
     const eventsRef = collection(db, "Events");
 
     // TODO: need to make the where clause list modular to work amongst multiple filters.
-    const whereClauseList = [where("startdate", ">=", startDate)];
+    const whereClauseList = [where("startDate", ">=", startDate)];
     if (endDate) {
-      whereClauseList.push(where("enddate", "<=", endDate));
+      whereClauseList.push(where("endDate", "<=", endDate));
     }
 
     const filterEventsQuery = query(
