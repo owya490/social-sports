@@ -90,7 +90,15 @@ export default function MyModal() {
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
-                        <p className="text-lg font-bold">Max Price</p>
+                        <p
+                          className={
+                            priceFilterEnabled
+                              ? "text-lg font-bold"
+                              : "text-lg font-bold text-gray-500"
+                          }
+                        >
+                          Max Price
+                        </p>
                         <Checkbox
                           className="h-4"
                           crossOrigin={undefined}
@@ -133,7 +141,15 @@ export default function MyModal() {
                     </div>
                     <div className="pb-5">
                       <div className="flex items-center">
-                        <p className="text-lg font-bold">Date Range</p>
+                        <p
+                          className={
+                            dateFilterEnabled
+                              ? "text-lg font-bold"
+                              : "text-lg font-bold text-gray-500"
+                          }
+                        >
+                          Date Range
+                        </p>
                         <Checkbox
                           className="h-4"
                           crossOrigin={undefined}
