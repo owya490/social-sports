@@ -24,24 +24,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-<<<<<<< HEAD
-    return (
-        <html lang="en">
-            <body
-                className={`${inter.className} ${roboto_condensed.variable} bg-[#F6F7F8]`}
-            >
-                <div className="hidden md:block mt-24">
-                    <Navbar />
-                </div>
-                <div className="md:hidden">
-                    <MobileNavbar />
-                </div>
-                {children}
-                <Footer />
-            </body>
-        </html>
-    );
-=======
   return (
     <html lang="en">
       <body
@@ -58,5 +40,4 @@ export default function RootLayout({
       </body>
     </html>
   );
->>>>>>> 2bc22682982c5bb83c7cb82a4983c8e192a9a964
 }
