@@ -62,7 +62,7 @@ export default function EventPayment(props: IEventPayment) {
         </div>
       </div>
       <div className="px-[10%]">
-        <hr className="px-2 h-0.5 mx-auto my-4 bg-gray-400 border-0 rounded md:my-10 dark:bg-gray-400"></hr>
+        <hr className="px-2 h-0.5 mx-auto bg-gray-400 border-0 rounded my-10 dark:bg-gray-400"></hr>
       </div>
       <div className="relative flex justify-center mt-6 mb-6">
         <a href="#">
