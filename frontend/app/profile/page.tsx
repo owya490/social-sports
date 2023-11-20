@@ -8,20 +8,26 @@ const truncatedLastName = lastName ? lastName.slice(0, 1) : "";
 const location = "Sydney, Australia";
 const phoneNumber = "0468368618";
 const email = "owya490@gmail.com";
-const birthday = "23rd July 2002";
+const birthday = "23/07/2002";
 const age = 21;
 const password = "danielinthesky";
 
 export default function Profile() {
   return (
-    <div className="mt-[100px] mb-[5%] mx-10 grid grid-cols-1 lg:grid-cols-3 gap-x-[10vw] gap-y-[5vw] lg:gap-y-[1vw] px-5 lg:px-10">
+    <div className="mt-[100px] mb-[5%] mx-10 grid grid-cols-1 lg:grid-cols-5 gap-x-[10vw] lg:gap-x-[2vw] gap-y-[5vw] lg:gap-y-[1vw] px-5 lg:px-10">
       <div
-        className="col-start-1 col-span-1 lg:row-span-2 border border-gray-500 max-w-[300px] min-w-[150px] row align-items-center"
+        className="col-start-1 col-span-1 lg:row-span-2 border border-gray-500 max-w-[250px] min-w-[200px]"
         style={{ borderRadius: "20px" }}
       >
-        <div className="flex justify-center mt-5 h-fit">
-          <div className="rounded-full border border-black overflow-hidden w-100 h-100">
-            <Image src={DP} alt="DP" width={100} height={100} />
+        <div className="grid justify-center mt-5 h-fit">
+          <div className="rounded-full border border-black overflow-hidden relative">
+            <Image
+              src={DP}
+              alt="DP"
+              width={150}
+              height={150}
+              className="w-150 h-150"
+            />
           </div>
         </div>
         <div className="flex justify-center mt-5 text-2xl font-semibold">
@@ -29,13 +35,11 @@ export default function Profile() {
         </div>
         <div className="flex justify-center mt-3 mb-5 text-lg ">{location}</div>
       </div>
-      <div className="col-start-1 col-span-1 lg:col-start-2 lg:col-span-2 h-[30px] mt-5 lg:mt-0">
-        <div className="flex justify-center">
-          <p className="text-2xl lg:text-3xl">Account Details</p>
+      <div className="col-start-1 col-span-1 lg:col-start-3 lg:col-span-3 mt-5 lg:mt-0">
+        <div className="flex justify-center lg:justify-start text-3xl lg:text-4xl font-semibold">
+          Profile Details
         </div>
-      </div>
-      <div className="col-start-1 col-span-1 lg:col-start-2 lg:col-span-2 ">
-        <div className="text-lg flex justify-center">
+        <div className="flex justify-center lg:justify-start text-lg mt-5">
           <ul>
             <li>
               <strong>Name:</strong> {firstName} {lastName}
@@ -56,6 +60,14 @@ export default function Profile() {
               <strong>Password:</strong> {password}
             </li>
           </ul>
+        </div>
+        <div className="flex justify-center lg:justify-start mt-5 mb-3">
+          <button
+            type="button"
+            className=" text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-med px-6 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          >
+            Edit
+          </button>
         </div>
       </div>
     </div>
