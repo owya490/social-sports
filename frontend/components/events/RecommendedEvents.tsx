@@ -20,17 +20,8 @@ export default function RecommendedEvents() {
         <h2 className="text-xl font-bold my-2">
           Sydney Thunder Volleyball Men’s Training
         </h2>
-        <div className="flex items-center ml-1">
-          <Image
-            src={DP}
-            alt="DP"
-            width={50}
-            height={50}
-            className="rounded-full w-4 h-4"
-          />
-          <p className="text-xs font-light ml-1">Hosted by Tzeyen Rossiter</p>
-        </div>
-        <div className="pl-2 my-4 space-y-3">
+        <p className="text-xs font-light">- Hosted by Tzeyen Rossiter</p>
+        <div className="my-2 space-y-1">
           <div className="flex items-center">
             <MapPinIcon className="w-5" />
             <p className="ml-1 font-light text-xs">North Ryde RSL, NSW</p>
