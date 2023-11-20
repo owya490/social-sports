@@ -61,35 +61,21 @@ export default function EventPayment(props: IEventPayment) {
           </div>
         </div>
       </div>
-      <div className="relative flex justify-center mt-[-4%] mb-[-4%] lg:mt-[-3%]">
-        <EventPaymentListBox
-          onGuestCountChange={handleGuestCountChange}
-          vacancy={props.vacancy}
-        />
-      </div>
-      <div className="text-md lg:text-lg flex justify-between">
-        <span className="ml-[10%] ">
-          ${props.price} x {guestCount}
-        </span>
-        <span className="mr-[10%]   ">${props.price * guestCount}</span>
-      </div>
       <div className="px-[10%]">
         <hr className="px-2 h-0.5 mx-auto my-4 bg-gray-400 border-0 rounded md:my-10 dark:bg-gray-400"></hr>
       </div>
-      <div className="text-lg lg:text-2xl flex justify-between">
-        <span className="ml-[10%] mt-2">Total</span>
-        <span className="mr-[10%] mt-2">${props.price * guestCount}</span>
-      </div>
-      <div className="relative flex justify-center mt-10">
-        <div
-          className="text-lg lg:text-2xl text-white rounded-3xl bg-sky-500/75 p-3 w-4/5 h-1/18 mb-[10%]"
-          style={{
-            textAlign: "center",
-            position: "relative",
-          }}
-        >
-          Book now
-        </div>
+      <div className="relative flex justify-center mt-6 mb-6">
+        <a href="#">
+          <div
+            className="text-lg lg:text-2xl text-white rounded-3xl bg-sky-500/75 px-8 py-4 "
+            style={{
+              textAlign: "center",
+              position: "relative",
+            }}
+          >
+            Contact Now
+          </div>
+        </a>
       </div>
     </div>
   );
