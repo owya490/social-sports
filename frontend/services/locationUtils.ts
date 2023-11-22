@@ -1,13 +1,9 @@
 import axios from "axios";
-
-interface NominatimResponse {
-  lat: string;
-  lon: string;
-}
+import geofire from "geofire-common";
 
 export async function getLocationCoordinates(
   locationName: string
-): Promise<{ lat: number; lon: number }> {
+): Promise<{ lat: number; lng: number }> {
   try {
     const response = await axios.get(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
@@ -16,8 +12,8 @@ export async function getLocationCoordinates(
     );
 
     if (response.data.length > 0) {
-      const { lat, lon } = response.data[0];
-      return { lat: parseFloat(lat), lon: parseFloat(lon) };
+      const { lat, lng } = response.data[0];
+      return { lat: parseFloat(lat), lng: parseFloat(lng) };
     } else {
       throw new Error("Location not found");
     }
@@ -25,4 +21,15 @@ export async function getLocationCoordinates(
     console.error("Error geocoding location:", error);
     throw error;
   }
+}
+
+export function getGeoHashForLatLong(lat: number, lng: number): string {
+  return geofire.geohashForLocation([lat, lng]);
+}
+
+export function getGeoHashQueryBounds(
+  center: geofire.Geopoint,
+  radiusInM: number
+): geofire.GeohashRange[] {
+  return geofire.geohashQueryBounds(center, radiusInM);
 }

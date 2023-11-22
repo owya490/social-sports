@@ -2,13 +2,22 @@ import {
   QueryFieldFilterConstraint,
   Timestamp,
   collection,
+  endAt,
   getDocs,
   limit,
+  orderBy,
   query,
+  startAt,
   where,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { EventData } from "@/interfaces/EventTypes";
+import geofire from "geofire-common";
+
+interface ProximityInfo {
+  center: geofire.Geopoint;
+  radiusInM: number;
+}
 
 const NUM_DOCS_QUERY_LIMIT = 15;
 
@@ -54,7 +63,7 @@ export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
     }
   });
 
-  return await filterEventsByWhereClauses(whereClauseList);
+  return await filterEventsByWhereClausesAndProximity(whereClauseList);
 }
 
 /**
@@ -65,13 +74,14 @@ export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
  * @param endDate: Optional<Timestamp>
  * @returns EventData[]
  */
-async function filterEventsByWhereClauses(
-  whereClauseList: QueryFieldFilterConstraint[]
+async function filterEventsByWhereClausesAndProximity(
+  whereClauseList: QueryFieldFilterConstraint[],
+  proximityInfo?: ProximityInfo
 ): Promise<EventData[]> {
   try {
     const eventsRef = collection(db, "Events");
 
-    const filterEventsQuery = query(
+    let filterEventsQuery = query(
       eventsRef,
       ...whereClauseList,
       limit(NUM_DOCS_QUERY_LIMIT)
