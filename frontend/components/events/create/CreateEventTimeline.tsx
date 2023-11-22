@@ -1,56 +1,92 @@
 import React from "react";
+import { Stepper, Step, Button, Typography } from "@material-tailwind/react";
+import {
+    CogIcon,
+    UserIcon,
+    BuildingLibraryIcon,
+} from "@heroicons/react/24/outline";
 
-interface CreateEventTimelineProps {
-    currentStep: number;
-    totalSteps: number;
-}
+export function CreateEventTimeline() {
+    const [activeStep, setActiveStep] = React.useState(0);
+    const [isLastStep, setIsLastStep] = React.useState(false);
+    const [isFirstStep, setIsFirstStep] = React.useState(false);
 
-function CreateEventTimeline({
-    currentStep,
-    totalSteps,
-}: CreateEventTimelineProps) {
-    const stepLabels = [
-        "Basic Information",
-        "Relevant Tags",
-        "Description and Image",
-        "Create the Event",
-    ];
+    const handleNext = () => !isLastStep && setActiveStep((cur) => cur + 1);
+    const handlePrev = () => !isFirstStep && setActiveStep((cur) => cur - 1);
 
     return (
-        <div className="mt-20 relative">
-            <ol className="flex items-center w-full text-sm font-medium text-center text-gray-500 dark:text-gray-400 sm:text-base">
-                {stepLabels.map((label, index) => (
-                    <li
-                        key={index}
-                        className={`flex md:w-full items-center flex-col relative ${
-                            currentStep === index + 1
-                                ? "text-black"
-                                : "text-gray-500 dark:text-gray-400"
-                        }`}
-                    >
-                        <span
-                            className={`flex items-center justify-center border border-black after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-200 dark:after:text-gray-500 rounded-full w-8 h-8 ${
-                                currentStep === index + 1
-                                    ? "bg-blue-600 dark:bg-blue-500"
-                                    : "bg-gray-300 dark:bg-gray-400"
-                            } text-black`}
+        <div className="w-full px-24 py-4">
+            <Stepper
+                activeStep={activeStep}
+                isLastStep={(value) => setIsLastStep(value)}
+                isFirstStep={(value) => setIsFirstStep(value)}
+            >
+                <Step onClick={() => setActiveStep(0)}>
+                    <div className="flex items-center justify-center">
+                        <UserIcon className="h-5 w-5 text-gray-500" />
+                    </div>
+                    <div className="absolute -bottom-[4.5rem] w-max text-center mt-2">
+                        <Typography
+                            variant="h6"
+                            color={activeStep === 0 ? "blue-gray" : "black"}
                         >
-                            {index + 1}
-                        </span>
-                        <span
-                            className={
-                                currentStep === index + 1
-                                    ? "text-black"
-                                    : "text-gray-500 dark:text-gray-400"
-                            }
+                            Step 1
+                        </Typography>
+                        <Typography
+                            color={activeStep === 0 ? "blue-gray" : "black"}
+                            className="font-normal"
                         >
-                            {label}
-                        </span>
-                    </li>
-                ))}
-            </ol>
+                            Details about your account.
+                        </Typography>
+                    </div>
+                </Step>
+                <Step onClick={() => setActiveStep(1)}>
+                    <div className="flex items-center justify-center">
+                        <CogIcon className="h-5 w-5 text-gray-500" />
+                    </div>
+                    <div className="absolute -bottom-[4.5rem] w-max text-center mt-2">
+                        <Typography
+                            variant="h6"
+                            color={activeStep === 1 ? "blue-gray" : "black"}
+                        >
+                            Step 2
+                        </Typography>
+                        <Typography
+                            color={activeStep === 1 ? "blue-gray" : "black"}
+                            className="font-normal"
+                        >
+                            Details about your account.
+                        </Typography>
+                    </div>
+                </Step>
+                <Step onClick={() => setActiveStep(2)}>
+                    <div className="flex items-center justify-center">
+                        <BuildingLibraryIcon className="h-5 w-5 text-gray-500" />
+                    </div>
+                    <div className="absolute -bottom-[4.5rem] w-max text-center mt-2">
+                        <Typography
+                            variant="h6"
+                            color={activeStep === 2 ? "blue-gray" : "black"}
+                        >
+                            Step 3
+                        </Typography>
+                        <Typography
+                            color={activeStep === 2 ? "blue-gray" : "black"}
+                            className="font-normal"
+                        >
+                            Details about your account.
+                        </Typography>
+                    </div>
+                </Step>
+            </Stepper>
+            <div className="mt-32 flex justify-between ">
+                <Button className="border-black border"onClick={handlePrev} disabled={isFirstStep}>
+                    Prev
+                </Button>
+                <Button onClick={handleNext} disabled={isLastStep}>
+                    Next
+                </Button>
+            </div>
         </div>
     );
 }
-
-export default CreateEventTimeline;

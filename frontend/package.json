@@ -12,7 +12,7 @@
     "dependencies": {
         "@headlessui/react": "^1.7.17",
         "@heroicons/react": "^2.0.18",
-        "@material-tailwind/react": "^2.1.2",
+        "@material-tailwind/react": "^2.1.4",
         "@types/react": "^18.2.21",
         "dotenv": "^16.3.1",
         "firebase": "^10.4.0",
