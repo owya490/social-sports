@@ -28,10 +28,9 @@ export default function Dashboard() {
                 .finally(() => {
                     setLoading(false);
                 });
-        } else if (event === "") {
-            // search location
-        } else if (location === "") {
-            searchEventsByKeyword(event)
+        } else {
+            console.log("check");
+            searchEventsByKeyword(event, location)
                 .then((events) => {
                     setEventData(events);
                 })

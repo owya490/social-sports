@@ -28,11 +28,12 @@ function tokenizeText(text: string): string[] {
 export async function createEvent(data: NewEventData): Promise<EventId> {
     try {
         const nameTokens = tokenizeText(data.name);
-
+        const locationTokens = tokenizeText(data.location);
         // Add the tokens to the event data
         const eventDataWithTokens = {
             ...data,
             nameTokens,
+            locationTokens,
         };
         const docRef = await addDoc(
             collection(db, "Events"),
@@ -47,41 +48,125 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
 }
 
 export async function searchEventsByKeyword(
-    keyword: string
+    nameKeyword: string,
+    locationKeyword: string
 ): Promise<EventData[]> {
     try {
-        const eventCollectionRef = collection(db, "Events");
+        console.log(nameKeyword, locationKeyword);
+        if (locationKeyword == "" && nameKeyword != "") {
+            console.log("NAMEEEEEEEEEEEEEEEE");
+            const eventCollectionRef = collection(db, "Events");
 
-        // Standardize the keyword and tokenize it
-        const searchKeyword = tokenizeText(keyword).map((word) =>
-            word.toLowerCase()
-        );
+            // Standardize the keyword and tokenize it
+            const searchKeyword = tokenizeText(nameKeyword).map((word) =>
+                word.toLowerCase()
+            );
 
-        // Build an array of queries for each tokenized keyword
-        const queries = searchKeyword.map((token) =>
-            query(
-                eventCollectionRef,
-                where("nameTokens", "array-contains", token)
-            )
-        );
+            // Build an array of queries for each tokenized keyword
+            const queries = searchKeyword.map((token) =>
+                query(
+                    eventCollectionRef,
+                    where("nameTokens", "array-contains", token)
+                )
+            );
 
-        const eventsData: EventData[] = [];
+            const eventsData: EventData[] = [];
 
-        for (const q of queries) {
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((eventDoc) => {
-                const eventData = eventDoc.data() as EventData;
-                eventData.eventId = eventDoc.id;
-                if (!eventsData.some((e) => e.eventId === eventData.eventId)) {
-                    const organiser = getUserById(eventData.organiserId);
-                    eventData.organiser = organiser;
-                    eventsData.push(eventData);
-                }
-            });
+            for (const q of queries) {
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((eventDoc) => {
+                    const eventData = eventDoc.data() as EventData;
+                    eventData.eventId = eventDoc.id;
+                    if (
+                        !eventsData.some((e) => e.eventId === eventData.eventId)
+                    ) {
+                        const organiser = getUserById(eventData.organiserId);
+                        eventData.organiser = organiser;
+                        eventsData.push(eventData);
+                    }
+                });
+            }
+            console.log("FLAG");
+            console.log(eventsData);
+            return eventsData;
         }
-        console.log("FLAG");
-        console.log(eventsData);
-        return eventsData;
+        if (locationKeyword != "" && nameKeyword == "") {
+            console.log("THIS SHOULD BE WORKING");
+            const eventCollectionRef = collection(db, "Events");
+
+            // Standardize the keyword and tokenize it
+            const searchKeyword = tokenizeText(locationKeyword).map((word) =>
+                word.toLowerCase()
+            );
+
+            // Build an array of queries for each tokenized keyword
+            const queries = searchKeyword.map((token) =>
+                query(
+                    eventCollectionRef,
+                    where("locationTokens", "array-contains", token)
+                )
+            );
+
+            const eventsData: EventData[] = [];
+
+            for (const q of queries) {
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((eventDoc) => {
+                    const eventData = eventDoc.data() as EventData;
+                    eventData.eventId = eventDoc.id;
+                    if (
+                        !eventsData.some((e) => e.eventId === eventData.eventId)
+                    ) {
+                        const organiser = getUserById(eventData.organiserId);
+                        eventData.organiser = organiser;
+                        eventsData.push(eventData);
+                    }
+                });
+            }
+            console.log("FLAG");
+            console.log(eventsData);
+            return eventsData;
+        }
+        if (locationKeyword != "" && nameKeyword != "") {
+            console.log(3);
+            const eventCollectionRef = collection(db, "Events");
+            const searchLocationKeyword = tokenizeText(locationKeyword).map(
+                (word) => word.toLowerCase()
+            );
+            const searchNameKeyword = tokenizeText(nameKeyword).map((word) =>
+                word.toLowerCase()
+            );
+            const nameQueries = searchNameKeyword.map((token) =>
+                query(
+                    eventCollectionRef,
+                    where("nameTokens", "array-contains", token)
+                )
+            );
+            const locationQueries = searchLocationKeyword.map((token) =>
+                query(
+                    eventCollectionRef,
+                    where("locationTokens", "array-contains", token)
+                )
+            );
+            const allQueries = [...nameQueries, ...locationQueries];
+            const eventsData: EventData[] = [];
+
+            for (const q of allQueries) {
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((eventDoc) => {
+                    const eventData = eventDoc.data() as EventData;
+                    eventData.eventId = eventDoc.id;
+                    if (
+                        !eventsData.some((e) => e.eventId === eventData.eventId)
+                    ) {
+                        // Assuming getUserById is a synchronous function, otherwise you need to await it
+                        const organiser = getUserById(eventData.organiserId);
+                        eventData.organiser = organiser;
+                        eventsData.push(eventData);
+                    }
+                });
+            }
+        }
     } catch (error) {
         console.error(error);
         throw error;
