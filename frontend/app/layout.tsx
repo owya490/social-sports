@@ -1,9 +1,10 @@
 import Footer from "@/components/Footer";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
-import Navbar from "@components/Navbar";
+import Navbar from "@/components/navbar/Navbar";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
+import LoginDemo from "@/components/LoginDemo";
 
 const inter = Inter({ subsets: ["latin"] });
 

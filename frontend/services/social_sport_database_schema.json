@@ -33,6 +33,8 @@
                 "mobile": "mobile number",
                 "email": "string"
             },
+            "password": "string",
+            "dob": "date",
             "activeBookings": [
                 {
                     "eventId": "string"
