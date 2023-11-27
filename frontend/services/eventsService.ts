@@ -14,16 +14,74 @@ import {
     query,
     updateDoc,
     where,
+    or,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { getUserById } from "./usersService";
 
+function tokenizeText(text: string): string[] {
+    // Split the text into words, convert to lowercase, and filter out empty strings
+    return text.toLowerCase().split(/\s+/).filter(Boolean);
+}
+
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
     try {
-        const docRef = await addDoc(collection(db, "Events"), data);
+        const nameTokens = tokenizeText(data.name);
+
+        // Add the tokens to the event data
+        const eventDataWithTokens = {
+            ...data,
+            nameTokens,
+        };
+        const docRef = await addDoc(
+            collection(db, "Events"),
+            eventDataWithTokens
+        );
         console.log("test");
         return docRef.id;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
+export async function searchEventsByKeyword(
+    keyword: string
+): Promise<EventData[]> {
+    try {
+        const eventCollectionRef = collection(db, "Events");
+
+        // Standardize the keyword and tokenize it
+        const searchKeyword = tokenizeText(keyword).map((word) =>
+            word.toLowerCase()
+        );
+
+        // Build an array of queries for each tokenized keyword
+        const queries = searchKeyword.map((token) =>
+            query(
+                eventCollectionRef,
+                where("nameTokens", "array-contains", token)
+            )
+        );
+
+        const eventsData: EventData[] = [];
+
+        for (const q of queries) {
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((eventDoc) => {
+                const eventData = eventDoc.data() as EventData;
+                eventData.eventId = eventDoc.id;
+                if (!eventsData.some((e) => e.eventId === eventData.eventId)) {
+                    const organiser = getUserById(eventData.organiserId);
+                    eventData.organiser = organiser;
+                    eventsData.push(eventData);
+                }
+            });
+        }
+        console.log("FLAG");
+        console.log(eventsData);
+        return eventsData;
     } catch (error) {
         console.error(error);
         throw error;
@@ -69,7 +127,7 @@ export async function getAllEvents(): Promise<EventData[]> {
                 organiser: organiser,
             });
         }
-
+        console.log(eventsData);
         return eventsData;
     } catch (error) {
         console.error(error);

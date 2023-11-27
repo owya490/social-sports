@@ -1,8 +1,6 @@
-export default function crud() {
-    return <></>;
-}
 // import React, { useState, useEffect, ChangeEvent } from "react";
 // import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+// import { EventId, NewEventData } from "@/interfaces/EventTypes";
 // import {
 //     createEvent,
 //     getAllEvents,
@@ -10,6 +8,7 @@ export default function crud() {
 //     deleteEvent,
 //     updateEventByName,
 //     deleteEventByName,
+//     searchEventsByKeyword,
 // } from "@/services/eventsService";
 // import { createUser, getAllUsers } from "@/services/usersService";
 // import {
@@ -68,9 +67,69 @@ export default function crud() {
 //         password: "",
 //         firstName: "",
 //     });
+//     const [searchTerm, setSearchTerm] = useState<string>("");
 //     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 //         setEventName(event.target.value);
 //     };
+//     const handleSearch = async () => {
+//         try {
+//             const foundEvents = await searchEventsByKeyword(searchTerm);
+//             setEvents(foundEvents);
+//             console.log(foundEvents);
+//         } catch (error) {
+//             console.error(error);
+//         }
+//     };
+//     const handleCreateSampleEvents = async () => {
+//         try {
+//             const createdEventIds = await createSampleEvents();
+//             console.log("Created events with IDs:", createdEventIds);
+//             // You can also fetch and update the events list here if needed
+//         } catch (error) {
+//             console.error("Error creating sample events:", error);
+//         }
+//     };
+//     function generateSampleEventData(index: number): NewEventData {
+//         // Generate unique data for each event
+//         const startDate = new Date();
+//         startDate.setDate(startDate.getDate() + index); // Different start date for each event
+
+//         const endDate = new Date(startDate);
+//         endDate.setDate(endDate.getDate() + 1); // End date is one day after start date
+
+//         return {
+//             startDate: startDate,
+//             endDate: endDate,
+//             location: `Location ${index}`, // Unique location name
+//             capacity: 100 + index * 10, // Increment capacity
+//             vacancy: 100 + index * 5, // Increment vacancy
+//             price: 20 + index, // Increment price
+//             registrationDeadline: new Date(
+//                 endDate.getTime() - 3 * 24 * 60 * 60 * 1000
+//             ), // 3 days before the event
+//             organiserId: `g9s1a1t3b7LJi8bswkd0`, // Unique organiser ID
+//             name: `Sample Event ${index}`, // Unique event name
+//             description: `Description for Sample Event ${index}.`,
+//             image: `https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fstv%2F364809572_6651230408261559_5428994326794147594_n.png.jpeg?alt=media&token=9020aa75-976a-430f-a96e-d763f5b4bada`, // Unique image URL
+//             eventTags: "msgwG49QgLodKiG1Ktez", // Unique tags
+//             isActive: index % 2 === 0, // Alternate isActive status
+//         };
+//     }
+
+//     async function createSampleEvents(): Promise<string[]> {
+//         const eventIds: string[] = [];
+//         for (let i = 0; i < 5; i++) {
+//             const eventData = generateSampleEventData(i);
+//             try {
+//                 const eventId = await createEvent(eventData);
+//                 eventIds.push(eventId);
+//             } catch (error) {
+//                 console.error("Failed to create event:", error);
+//             }
+//         }
+//         return eventIds;
+//     }
+
 //     const handleAddUser = async () => {
 //         // Add user logic
 //         try {
@@ -317,6 +376,18 @@ export default function crud() {
 //                 />
 //                 <input type="file" onChange={handleFileChange} />
 //                 <button onClick={handleUpload}>Upload Image</button>
+//                 <span></span>
+//                 <input
+//                     type="text"
+//                     placeholder="Search by Event Name or Description"
+//                     value={searchTerm}
+//                     onChange={(event) => setSearchTerm(event.target.value)}
+//                 />
+//                 <button onClick={handleSearch}>Search</button>
+//                 <h2>Create Sample Events:</h2>
+//                 <button onClick={handleCreateSampleEvents}>
+//                     Create Sample Events
+//                 </button>
 //             </div>
 //         </div>
 //     );

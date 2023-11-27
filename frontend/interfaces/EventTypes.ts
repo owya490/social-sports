@@ -13,11 +13,12 @@ interface AbstractEventData {
     organiserId: string;
     registrationDeadline: Timestamp;
     name: string;
-    description: string; // Assuming "rich text field" is a string
+    nameTokens?: string[];
+    description?: string; // Assuming "rich text field" is a string
     image: string; // Assuming you store the image URL or path as a string
-    eventTags: string[]; // Assuming "list of tags" is an array of strings
-    isActive: boolean;
-    attendees: { email: string }[];
+    eventTags?: string[]; // Assuming "list of tags" is an array of strings
+    isActive?: boolean;
+    attendees?: { email: string }[];
 }
 
 export interface NewEventData extends AbstractEventData {}
