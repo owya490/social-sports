@@ -1,4 +1,7 @@
-import { AdjustmentsHorizontalIcon } from "@heroicons/react/24/outline";
+import {
+  AdjustmentsHorizontalIcon,
+  ChevronDoubleRightIcon,
+} from "@heroicons/react/24/outline";
 import BadmintonImage from "./../../public/images/badminton.png";
 import BaseballImage from "./../../public/images/baseball.png";
 import BasketballImage from "./../../public/images/basketball.png";
@@ -10,14 +13,6 @@ import VolleyballImage from "./../../public/images/volleyball.png";
 import FilterIcon from "./FilterIcon";
 
 export default function FilterBanner() {
-  // const icons = [
-  //   VolleyballImage,
-  //   BadmintonImage,
-  //   BasketballImage,
-  //   SoccerImage,
-  //   TennisImage,
-  //   PingPongImage,
-  // ];
   const icons = {
     Volleyball: { image: VolleyballImage, style: "w-8 h-8" },
     Badminton: { image: BadmintonImage, style: "w-8 h-8" },
@@ -29,18 +24,32 @@ export default function FilterBanner() {
     Baseball: { image: BaseballImage, style: "w-8 h-8" },
   };
   return (
-    <div className="pt-16 bg-white px-5">
+    <div className="pt-16 bg-white px-10">
       <div className="h-20 flex items-center mt-2">
-        <div className="overflow-auto flex items-center my-2 mr-10">
-          {Object.entries(icons).map((entry) => {
+        <div className="overflow-auto flex items-center my-2 snap-x">
+          {Object.entries(icons).map((entry, idx) => {
+            if (idx === 0) {
+              return (
+                <FilterIcon
+                  image={entry[1].image}
+                  style={entry[1].style}
+                  name={entry[0]}
+                  isFirst={true}
+                />
+              );
+            }
             return (
               <FilterIcon
                 image={entry[1].image}
                 style={entry[1].style}
                 name={entry[0]}
+                isFirst={false}
               />
             );
           })}
+        </div>
+        <div className="-left-5 ml-2 mr-8">
+          <ChevronDoubleRightIcon className="md:hidden w-5 h-5" />
         </div>
 
         <div className="grow">

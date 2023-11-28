@@ -4,11 +4,16 @@ interface IFilterIcon {
   name: string;
   image: StaticImageData;
   style: string;
+  isFirst: boolean;
 }
 
 export default function FilterIcon(props: IFilterIcon) {
   return (
-    <div className=" min-w-[8rem] flex justify-center">
+    <div
+      className={`${
+        props.isFirst ? "mr-6 md:mr-8" : "min-w-[6rem] md:min-w-[8rem]"
+      } flex justify-center snap-center`}
+    >
       <div>
         <div className="flex justify-center">
           <Image
