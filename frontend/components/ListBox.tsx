@@ -51,7 +51,7 @@ export default function ListBox(props: IListBox) {
                   }}
                   className={({ active }) =>
                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                      active ? "bg-amber-100 text-amber-900" : "text-gray-900"
+                      active ? "bg-blue-100 text-blue-900" : "text-gray-900"
                     }`
                   }
                   value={option}
@@ -66,7 +66,7 @@ export default function ListBox(props: IListBox) {
                         {option.name}
                       </span>
                       {selected ? (
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
                           <CheckIcon className="h-5 w-5" aria-hidden="true" />
                         </span>
                       ) : null}
