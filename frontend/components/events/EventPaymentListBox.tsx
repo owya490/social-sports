@@ -2,19 +2,21 @@
 import ListBox from "../ListBox";
 
 interface IEventPaymentListBox {
-    onGuestCountChange: (count: number) => void;
-    vacancy: number;
+  onGuestCountChange: (count: number) => void;
+  vacancy: number;
 }
 
 export default function EventPaymentListBox(props: IEventPaymentListBox) {
-    const MAX_OPTION_SIZE = 7;
-    const options = [];
+  const MAX_OPTION_SIZE = 7;
+  const options = [];
 
-    for (let i = 1; i <= Math.min(MAX_OPTION_SIZE, props.vacancy); i++) {
-        options.push({ name: `${i} ${i == 1 ? "Guest" : "Guests"}`, value: i });
-    }
+  for (let i = 1; i <= Math.min(MAX_OPTION_SIZE, props.vacancy); i++) {
+    options.push({ name: `${i} ${i == 1 ? "Guest" : "Guests"}`, value: i });
+  }
 
-    return (
-        <ListBox onChangeHandler={props.onGuestCountChange} options={options} />
-    );
+  return (
+    <div className="p-[9%] mb-5 w-full">
+      <ListBox onChangeHandler={props.onGuestCountChange} options={options} />
+    </div>
+  );
 }
