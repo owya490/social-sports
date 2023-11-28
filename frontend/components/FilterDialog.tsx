@@ -1,10 +1,14 @@
 import { Dialog, Transition } from "@headlessui/react";
+import {
+  AdjustmentsHorizontalIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { Checkbox, Slider } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "./ListBox";
 
-export default function MyModal() {
+export default function FitlerDialog() {
   let [isOpen, setIsOpen] = useState(false);
 
   function closeModal() {
@@ -34,9 +38,10 @@ export default function MyModal() {
       <button
         type="button"
         onClick={openModal}
-        className="border-1 border-black border py-1 px-2 rounded-lg"
+        className="text-black flex items-center border border-black px-1 md:px-3 rounded-lg h-10 ml-auto"
       >
-        Filters
+        <p className="hidden md:block">Filters</p>
+        <AdjustmentsHorizontalIcon className="w-7 ml-1" />
       </button>
 
       <Transition appear show={isOpen} as={Fragment}>
@@ -67,9 +72,12 @@ export default function MyModal() {
                 <Dialog.Panel className="w-full max-w-md transform rounded-2xl p-6 bg-white text-left align-middle shadow-xl transition-all">
                   <Dialog.Title
                     as="h3"
-                    className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[1px] border-gray-500 w-full text-center"
+                    className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[1px] border-gray-500 w-full text-center flex justify-center items-center"
                   >
                     Filters
+                    <button className="absolute right-8" onClick={closeModal}>
+                      <XMarkIcon className="h-5 w-5" />
+                    </button>
                   </Dialog.Title>
                   <div className="mt-5 space-y-5">
                     <div className="border-b-[1px] border-gray-300 pb-5">

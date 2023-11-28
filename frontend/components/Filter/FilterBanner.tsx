@@ -1,7 +1,5 @@
-import {
-  AdjustmentsHorizontalIcon,
-  ChevronDoubleRightIcon,
-} from "@heroicons/react/24/outline";
+import { ChevronDoubleRightIcon } from "@heroicons/react/24/outline";
+import FitlerDialog from "../FilterDialog";
 import BadmintonImage from "./../../public/images/badminton.png";
 import BaseballImage from "./../../public/images/baseball.png";
 import BasketballImage from "./../../public/images/basketball.png";
@@ -24,13 +22,14 @@ export default function FilterBanner() {
     Baseball: { image: BaseballImage, style: "w-8 h-8" },
   };
   return (
-    <div className="pt-16 bg-white px-10">
+    <div className="pt-16 bg-white px-5 md:px-10">
       <div className="h-20 flex items-center mt-2">
         <div className="overflow-auto flex items-center my-2 snap-x">
           {Object.entries(icons).map((entry, idx) => {
             if (idx === 0) {
               return (
                 <FilterIcon
+                  key={idx}
                   image={entry[1].image}
                   style={entry[1].style}
                   name={entry[0]}
@@ -40,6 +39,7 @@ export default function FilterBanner() {
             }
             return (
               <FilterIcon
+                key={idx}
                 image={entry[1].image}
                 style={entry[1].style}
                 name={entry[0]}
@@ -53,10 +53,7 @@ export default function FilterBanner() {
         </div>
 
         <div className="grow">
-          <button className="text-black flex items-center border border-black px-3 rounded-lg h-10 ml-auto">
-            Filters
-            <AdjustmentsHorizontalIcon className="w-7 ml-1" />
-          </button>
+          <FitlerDialog />
         </div>
       </div>
     </div>
