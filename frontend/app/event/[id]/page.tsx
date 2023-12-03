@@ -23,11 +23,13 @@ export default function EventPage({ params }: any) {
     getEventById(eventId)
       .then((event) => {
         setEventData(event);
-        event.eventTags.map((tagId) => {
-          getTagById(tagId).then((tag) => {
-            setEventTags([...eventTags, tag]);
+        if (event.eventTags && typeof event.eventTags === "object") {
+          event.eventTags.map((tagId) => {
+            getTagById(tagId).then((tag) => {
+              setEventTags([...eventTags, tag]);
+            });
           });
-        });
+        }
       })
       .finally(() => {
         setLoading(false);
@@ -53,11 +55,13 @@ export default function EventPage({ params }: any) {
             <h5 className="font-bold text-lg">Similar events nearby</h5>
             <a className="text-sm font-light ml-auto cursor-pointer">See all</a>
           </div>
-          <div className="flex space-x-5">
-            <RecommendedEvents />
-            <RecommendedEvents />
-            <RecommendedEvents />
-            <RecommendedEvents />
+          <div className="flex overflow-x-auto pb-4">
+            <div className="flex space-x-4">
+              <RecommendedEvents />
+              <RecommendedEvents />
+              <RecommendedEvents />
+              <RecommendedEvents />
+            </div>
           </div>
         </div>
       </div>
