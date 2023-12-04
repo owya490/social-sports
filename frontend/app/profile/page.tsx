@@ -1,5 +1,7 @@
+"use client";
 import Image from "next/image";
 import DP from "./../../public/images/Ashley & Owen.png";
+import React, { useState, useEffect } from "react";
 
 const loggedin = true;
 const firstName = "Owen";
@@ -12,7 +14,55 @@ const birthday = "23/07/2002";
 const age = 21;
 const password = "danielinthesky";
 
-export default function Profile() {
+
+const Profile = () => {
+  const [editable, setEditable] = useState(false);
+  const [editedData, setEditedData] = useState({
+    firstName,
+    lastName,
+    location,
+    phoneNumber,
+    email,
+    birthday,
+    password,
+  });
+
+  const handleEditClick = () => {
+    setEditable(!editable);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditedData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handleSaveClick = () => {
+    // Implement functionality
+    setEditable(false);
+  };
+
+  const renderField = (label, value, name, type = "text") => {
+    if (editable) {
+      return (
+        <li key={name}>
+          <strong>{label}:</strong>{" "}
+          <input
+            type={type}
+            name={name}
+            value={editedData[name]}
+            onChange={handleInputChange}
+          />
+        </li>
+      );
+    } else {
+      return (
+        <li key={name}>
+          <strong>{label}:</strong> {value}
+        </li>
+      );
+    }
+  };
+
   return (
     <div className="mt-[100px] mb-[5%] mx-10 grid grid-cols-1 lg:grid-cols-5 gap-x-[10vw] lg:gap-x-[2vw] gap-y-[5vw] lg:gap-y-[1vw] px-5 lg:px-10">
       <div
@@ -39,35 +89,46 @@ export default function Profile() {
         </div>
         <div className="flex justify-center lg:justify-start text-lg mt-5">
           <ul>
-            <li>
-              <strong>Name:</strong> {firstName} {lastName}
-            </li>
-            <li>
-              <strong>Email:</strong> {email}
-            </li>
-            <li>
-              <strong>Phone Number:</strong> {phoneNumber}
-            </li>
-            <li>
-              <strong>Location:</strong> {location}
-            </li>
-            <li>
-              <strong>Date of Birth:</strong> {birthday}
-            </li>
-            {/* <li>
-              <strong>Password:</strong> {password}
-            </li> */}
+            {renderField("Given Name", firstName, "firstName")}
+            {renderField("Surname", lastName, "lastName")}
+            {renderField("Email", email, "email", "email")}
+            {renderField("Phone Number", phoneNumber, "phoneNumber", "tel")}
+            {renderField("Location", location, "location")}
+            {renderField("Date of Birth", birthday, "birthday", "date")}
+            {renderField("Password", password, "password", "password")}
           </ul>
         </div>
         <div className="flex justify-center lg:justify-start my-7">
-          <button
-            type="button"
-            className=" text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-med px-6 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-          >
-            Edit
-          </button>
+          {editable ? (
+            <>
+              <button
+                type="button"
+                onClick={handleSaveClick}
+                className="text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-full text-med px-6 py-2 text-center"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={handleEditClick}
+                className="ml-4 text-white bg-red-500 hover:bg-red-600 focus:ring-4 focus:ring-red-300 font-medium rounded-full text-med px-6 py-2 text-center"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={handleEditClick}
+              className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-med px-6 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            >
+              Edit
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default Profile;
