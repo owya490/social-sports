@@ -12,6 +12,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  increment,
   query,
   updateDoc,
   where,
@@ -143,4 +144,13 @@ export async function deleteEventByName(eventName: string): Promise<void> {
   } catch (error) {
     console.error(error);
   }
+}
+
+export async function incrementEventAccessCountById(
+  eventId: EventId,
+  count: number = 1
+) {
+  updateDoc(doc(db, "Events", eventId), {
+    accessCount: increment(count),
+  });
 }
