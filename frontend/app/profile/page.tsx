@@ -1,31 +1,22 @@
 "use client";
 import Image from "next/image";
 import DP from "./../../public/images/Ashley & Owen.png";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-const loggedin = true;
-const firstName = "Owen";
-const lastName = "Yang";
-const truncatedLastName = lastName ? lastName.slice(0, 1) : "";
-const location = "Sydney, Australia";
-const phoneNumber = "0468368618";
-const email = "owya490@gmail.com";
-const birthday = "23/07/2002";
-const age = 21;
-const password = "danielinthesky";
-
+const initialProfileData = {
+  firstName: "Owen",
+  lastName: "Yang",
+  location: "Sydney, Australia",
+  phoneNumber: "0468368618",
+  email: "owya490@gmail.com",
+  birthday: "23/07/2002",
+  age: 21,
+  password: "danielinthesky",
+};
 
 const Profile = () => {
   const [editable, setEditable] = useState(false);
-  const [editedData, setEditedData] = useState({
-    firstName,
-    lastName,
-    location,
-    phoneNumber,
-    email,
-    birthday,
-    password,
-  });
+  const [editedData, setEditedData] = useState({ ...initialProfileData });
 
   const handleEditClick = () => {
     setEditable(!editable);
@@ -36,12 +27,14 @@ const Profile = () => {
     setEditedData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handleSaveClick = () => {
-    // Implement functionality
-    setEditable(false);
-  };
+const handleSaveClick = () => {
+  // Implement functionality 
+  console.log("Saving changes:", editedData);
+  setEditable(false);
+};
 
-  const renderField = (label, value, name, type = "text") => {
+
+  const renderField = (label, name, type = "text") => {
     if (editable) {
       return (
         <li key={name}>
@@ -57,7 +50,7 @@ const Profile = () => {
     } else {
       return (
         <li key={name}>
-          <strong>{label}:</strong> {value}
+          <strong>{label}:</strong> {editedData[name]}
         </li>
       );
     }
@@ -79,9 +72,12 @@ const Profile = () => {
           />
         </div>
         <div className="flex justify-center mt-5 text-2xl font-semibold">
-          {firstName} {truncatedLastName} , {age}
+          {editedData.firstName} {editedData.lastName?.slice(0, 1)} ,{" "}
+          {editedData.age}
         </div>
-        <div className="flex justify-center mt-3 mb-5 text-lg ">{location}</div>
+        <div className="flex justify-center mt-3 mb-5 text-lg ">
+          {editedData.location}
+        </div>
       </div>
       <div className="col-start-1 col-span-1 lg:col-start-3 lg:col-span-3 mt-5 lg:mt-0">
         <div className="flex justify-center lg:justify-start text-3xl lg:text-4xl font-semibold lg:my-3">
@@ -89,13 +85,13 @@ const Profile = () => {
         </div>
         <div className="flex justify-center lg:justify-start text-lg mt-5">
           <ul>
-            {renderField("Given Name", firstName, "firstName")}
-            {renderField("Surname", lastName, "lastName")}
-            {renderField("Email", email, "email", "email")}
-            {renderField("Phone Number", phoneNumber, "phoneNumber", "tel")}
-            {renderField("Location", location, "location")}
-            {renderField("Date of Birth", birthday, "birthday", "date")}
-            {renderField("Password", password, "password", "password")}
+            {renderField("Given Name", "firstName")}
+            {renderField("Surname", "lastName")}
+            {renderField("Email", "email", "email")}
+            {renderField("Phone Number", "phoneNumber", "tel")}
+            {renderField("Location", "location")}
+            {renderField("Date of Birth", "birthday", "date")}
+            {renderField("Password", "password", "password")}
           </ul>
         </div>
         <div className="flex justify-center lg:justify-start my-7">
