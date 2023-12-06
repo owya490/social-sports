@@ -3,9 +3,10 @@
 
 import React, { useState } from "react";
 import CreateEventTimeline from "@/components/events/create/CreateEventTimeline";
-import CreateEventCost from "@components/events/create/CreateEventCost"
-import { CreateEventPage1 } from "@/components/events/create/CreateEventPage1"; 
+import { CreateEventPage1 } from "@/components/events/create/CreateEventPage1";
 import { CreateEventPage2 } from "@/components/events/create/CreateEventPage2";
+import CreateEventTimeslot from "@/components/events/create/CreateEventTimeslot";
+
 import Button from "@/components/Button";
 
 export default function CreateEvent() {
@@ -30,12 +31,11 @@ export default function CreateEvent() {
                 currentStep={currentStep}
                 totalSteps={totalSteps}
             />
-            
-            
-            {currentStep === 1 && <CreateEventPage1 />} 
-            {currentStep === 2 && <CreateEventPage2/>} 
-            
-           
+
+            {currentStep === 1 && <CreateEventPage1 />}
+            {currentStep === 2 && <CreateEventPage2 />}
+            {currentStep === 3 && <CreateEventTimeslot />}
+
             <Button
                 currentStep={currentStep}
                 totalSteps={totalSteps}
