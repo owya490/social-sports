@@ -15,9 +15,9 @@ const loggedin = false;
 
 export default function ProfilePic() {
   return (
-    <div>
+    <div className="flex items-center">
       <Menu as="div" className="relative inline-block text-left">
-        <div>
+        <div className="flex items-centers">
           <Menu.Button className="inline-flex w-full justify-center">
             <Image
               src={DP}

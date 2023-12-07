@@ -14,12 +14,11 @@ export default function MobileNavbar() {
             alt="Logo"
             width={50}
             height={50}
-            className="w-12 mr-2"
+            className="w-12 mr-4"
           />
         </a>
 
         <div className="w-[50%]">
-          {/* <MobileSearchBar /> */}
           <MobileSearchDialog />
         </div>
         <div className="flex ml-auto items-center">
