@@ -21,7 +21,40 @@ interface ProximityInfo {
 
 const NUM_DOCS_QUERY_LIMIT = 15;
 
+export function filterEventsByPrice(
+  eventDataList: EventData[],
+  minPrice: number | null,
+  maxPrice: number
+): EventData[] {
+  let eventDataListDeepClone = [...eventDataList];
+  if (minPrice !== null) {
+    eventDataListDeepClone = eventDataListDeepClone.filter(
+      (event) => event.price >= minPrice
+    );
+  }
+
+  eventDataListDeepClone = eventDataListDeepClone.filter(
+    (event) => event.price <= maxPrice
+  );
+  return eventDataListDeepClone;
+}
+
+export function filterEventsByDate(
+  eventDataList: EventData[],
+  startDate: Timestamp,
+  endDate: Timestamp
+): EventData[] {
+  let eventDataListDeepClone = [...eventDataList];
+  eventDataListDeepClone = eventDataListDeepClone.filter(
+    (event) =>
+      event.startDate.toMillis() >= startDate.toMillis() &&
+      event.startDate.toMillis() <= endDate.toMillis()
+  );
+  return eventDataListDeepClone;
+}
+
 /**
+ * @deprecated This method does not work and should not be used.
  * Returns a filtered list of up to 15 events from the firebase storage.
  *
  * @param filterFieldsMap: Map where the key is the event field name as seen in firebase.
@@ -67,6 +100,7 @@ export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
 }
 
 /**
+ * @deprecated This method does not work and should not be used.
  * Retrieves the events from the firebase database filtered by
  * a startDate and an optional endDate.
  *
@@ -104,6 +138,7 @@ async function filterEventsByWhereClausesAndProximity(
 }
 
 /**
+ * @deprecated This method does not work and should not be used.
  * Helper function for the backend filter service.
  * Creates and appends a query where clause based on startDate onto the currWhereClauseList
  * Call this function to add the respective filter.
@@ -124,6 +159,7 @@ async function createWhereClauseEventDate(
 }
 
 /**
+ * @deprecated This method does not work and should not be used.
  * Helper function for the backend filter service.
  * Creates an appends a query where clause based on price onto the currWhereClauseList
  * Call this function to add the respective filter.

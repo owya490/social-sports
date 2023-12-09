@@ -7,9 +7,27 @@ import { Checkbox, Slider } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "./ListBox";
+import { EventData } from "@/interfaces/EventTypes";
+import {
+  filterEventsByDate,
+  filterEventsByPrice,
+} from "@/services/filterService";
+import { Timestamp } from "firebase/firestore";
 
-export default function FitlerDialog() {
+type FilterDialogProps = {
+  eventDataList: EventData[];
+  allEventsDataList: EventData[];
+  setEventDataList: React.Dispatch<React.SetStateAction<any>>;
+};
+
+export default function FilterDialog({
+  eventDataList,
+  allEventsDataList,
+  setEventDataList,
+}: FilterDialogProps) {
   let [isOpen, setIsOpen] = useState(false);
+  const [priceFilterEnabled, setPriceFilterEnabled] = useState(false);
+  const [dateFilterEnabled, setDateFilterEnabled] = useState(false);
 
   function closeModal() {
     setIsOpen(false);
@@ -19,19 +37,49 @@ export default function FitlerDialog() {
     setIsOpen(true);
   }
 
+  function applyFilters() {
+    if (priceFilterEnabled) {
+      const newEventDataList = filterEventsByPrice(
+        [...allEventsDataList],
+        null,
+        maxSliderValue
+      );
+      setEventDataList(newEventDataList);
+    }
+    if (dateFilterEnabled && dateRange.startDate && dateRange.endDate) {
+      const newEventDataList = filterEventsByDate(
+        [...allEventsDataList],
+        Timestamp.fromDate(new Date(dateRange.startDate + " 00:00:00")), // TODO: needed to specify maximum time range on particular day.
+        Timestamp.fromDate(new Date(dateRange.endDate + " 23:59:59"))
+      );
+      setEventDataList(newEventDataList);
+    }
+
+    // TODO: add more filters
+
+    closeModal();
+  }
+
   const [maxSliderValue, setMaxSliderValue] = useState(25);
 
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+  }>({
     startDate: null,
     endDate: null,
   });
 
   const handleDateRangeChange = (dateRange: any) => {
-    setDateRange(dateRange);
-  };
+    if (dateRange.startDate && dateRange.endDate) {
+      let timestampDateRange = {
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      };
 
-  const [priceFilterEnabled, setPriceFilterEnabled] = useState(false);
-  const [dateFilterEnabled, setDateFilterEnabled] = useState(false);
+      setDateRange(timestampDateRange);
+    }
+  };
 
   return (
     <>
@@ -198,7 +246,7 @@ export default function FitlerDialog() {
                     <button
                       type="button"
                       className="ml-auto inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                      onClick={closeModal}
+                      onClick={applyFilters}
                     >
                       Apply Filters!
                     </button>
