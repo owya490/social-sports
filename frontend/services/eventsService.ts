@@ -47,10 +47,14 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     }
 }
 
+interface ExtendedEventData extends EventData {
+    tokenMatchCount: number;
+}
+
 export async function searchEventsByKeyword(
     nameKeyword: string,
     locationKeyword: string
-): Promise<EventData[]> {
+): Promise<ExtendedEventData[]> {
     try {
         console.log(nameKeyword, locationKeyword);
         if (locationKeyword == "" && nameKeyword != "") {
@@ -61,31 +65,41 @@ export async function searchEventsByKeyword(
             const searchKeyword = tokenizeText(nameKeyword).map((word) =>
                 word.toLowerCase()
             );
+            const eventTokenMatchCount = new Map<string, number>();
 
             // Build an array of queries for each tokenized keyword
-            const queries = searchKeyword.map((token) =>
-                query(
+            for (const token of searchKeyword) {
+                const q = query(
                     eventCollectionRef,
                     where("nameTokens", "array-contains", token)
-                )
-            );
-
-            const eventsData: EventData[] = [];
-
-            for (const q of queries) {
+                );
+    
                 const querySnapshot = await getDocs(q);
-                querySnapshot.forEach((eventDoc) => {
-                    const eventData = eventDoc.data() as EventData;
-                    eventData.eventId = eventDoc.id;
-                    if (
-                        !eventsData.some((e) => e.eventId === eventData.eventId)
-                    ) {
-                        const organiser = getUserById(eventData.organiserId);
-                        eventData.organiser = organiser;
-                        eventsData.push(eventData);
-                    }
+                querySnapshot.forEach(eventDoc => {
+                    const eventId = eventDoc.id;
+                    const currentCount = eventTokenMatchCount.get(eventId) || 0;
+                    eventTokenMatchCount.set(eventId, currentCount + 1);
                 });
             }
+            const eventsData: ExtendedEventData[] = [];
+
+            const entries = Array.from(eventTokenMatchCount.entries());
+
+        for (const [eventId, count] of entries) {
+            const eventDoc = await getDoc(doc(eventCollectionRef, eventId));
+            if (eventDoc.exists()) {
+                const eventData = eventDoc.data() as EventData;
+                const extendedEventData: ExtendedEventData = {
+                    ...eventData,
+                    eventId: eventId,
+                    tokenMatchCount: count
+                };
+                const organiser = getUserById(eventData.organiserId);
+                eventData.organiser = organiser;
+                eventsData.push(extendedEventData);
+            }
+        }
+            eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
             console.log("FLAG");
             console.log(eventsData);
             return eventsData;
