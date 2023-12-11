@@ -144,23 +144,29 @@ const Profile = () => {
   return (
     <div className="relative mt-[100px] mb-[5%] mx-10 grid grid-cols-1 lg:grid-cols-5 gap-x-[10vw] lg:gap-x-[2vw] gap-y-[5vw] lg:gap-y-[1vw] px-5 lg:px-10">
       <div
-        className="col-start-1 col-span-1 lg:col-span-2 lg:row-span-1 border border-gray-500 w-[250px]"
-        style={{ borderRadius: "20px" }}
+        className="flex justify-center col-start-1 col-span-1 lg:col-span-2 lg:row-span-1"
       >
-        <div className="grid justify-center mt-5">
-          <div className="relative inline-block h-150 w-150 rounded-full object-cover object-center border border-black overflow-hidden">
-            <Image src={DP} alt="DP" width={160} height={160} />
+        <div className="mb-5 text-3xl "></div>
+        <div
+          className="border border-gray-500 w-[250px]"
+          style={{ borderRadius: "20px" }}
+        >
+          <div className="grid justify-center mt-5">
+            <div className="relative inline-block h-150 w-150 rounded-full object-cover object-center border border-black overflow-hidden">
+              <Image src={DP} alt="DP" width={160} height={160} />
+            </div>
+          </div>
+          <div className="flex justify-center mt-5 text-2xl font-semibold">
+            {initialProfileData.firstName}{" "}
+            {initialProfileData.lastName?.slice(0, 1)} ,{" "}
+            {initialProfileData.age}
+          </div>
+          <div className="flex justify-center mt-3 mb-5 text-lg ">
+            {initialProfileData.location}
           </div>
         </div>
-        <div className="flex justify-center mt-5 text-2xl font-semibold">
-          {initialProfileData.firstName}{" "}
-          {initialProfileData.lastName?.slice(0, 1)} , {initialProfileData.age}
-        </div>
-        <div className="flex justify-center mt-3 mb-5 text-lg ">
-          {initialProfileData.location}
-        </div>
       </div>
-      <div className="col-start-1 col-span-1 lg:col-start-3 lg:col-span-3 lg:row-span-2 mt-5 lg:mt-0">
+      <div className="grid justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-3 lg:col-span-3 lg:row-span-2 mt-5 lg:mt-0 lg:ml-10">
         <ul>
           {renderField("Given Name", "firstName")}
           {renderField("Surname", "lastName")}
