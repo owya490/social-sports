@@ -41,11 +41,6 @@ export default function EventBanner(props: IEventBanner) {
             </div>
           </div>
         </div>
-        <div className="flex items-center">
-          <h2 className="ml-auto font-bold text-xl mb-3">
-            {`${props.vacancy} Spots Remaining`}
-          </h2>
-        </div>
       </div>
     </div>
   );

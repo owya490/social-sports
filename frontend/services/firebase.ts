@@ -3,7 +3,13 @@ import firebase from "firebase/app";
 import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import {
+    browserLocalPersistence,
+    getAuth,
+    setPersistence,
+    onAuthStateChanged,
+    User,
+} from "firebase/auth";
 import { getStorage } from "firebase/storage";
 require("dotenv").config();
 
@@ -29,3 +35,14 @@ const app = initializeApp(firebaseConfigDev);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+
+// set persistence to local storage
+setPersistence(auth, browserLocalPersistence);
+
+// Handle changes in user logged in status
+let authUser: User | null = null;
+onAuthStateChanged(auth, (currUser) => {
+    authUser = currUser;
+});
+
+export { authUser };
