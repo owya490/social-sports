@@ -1,11 +1,9 @@
-// Import necessary modules and components
 "use client";
 import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
 import React, { Fragment, useState } from "react";
 import DP from "./../../public/images/Ashley & Owen.png";
 
-// Define initial profile data
 const initialProfileData = {
   firstName: "Owen",
   lastName: "Yang",
@@ -17,44 +15,34 @@ const initialProfileData = {
   password: "danielinthesky",
 };
 
-// Define the Profile component
 const Profile = () => {
-  // State variables to manage the edit mode and edited data
   const [editable, setEditable] = useState(false);
   const [editedData, setEditedData] = useState({ ...initialProfileData });
-
-  // Event handler for the "Edit" button click
   const handleEditClick = () => {
     if (editable) {
-      // Reset editedData to initialProfileData when cancelling edits
       setEditedData({ ...initialProfileData });
     }
     setEditable(!editable);
   };
 
-  // Event handler for input changes in the modal
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    // Special handling for "Date of Birth" field
     if (name === "birthday") {
       setEditedData((prevData) => ({
         ...prevData,
-        birthday: value, // Update the date value directly
+        birthday: value,
       }));
     } else {
       setEditedData((prevData) => ({ ...prevData, [name]: value }));
     }
   };
 
-  // Event handler for the "Save" button click
   const handleSaveClick = () => {
-    // Implement functionality to save changes
     console.log("Saving changes:", editedData);
     setEditable(false);
   };
 
-  // Render each editable field in the modal
   const renderEditableField = (label, name, type = "text") => (
     <div key={name} className="mb-4">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
@@ -62,7 +50,7 @@ const Profile = () => {
         <input
           type={type}
           name={name}
-          value={formatDateForInput(editedData[name])} // Use the editedData value for prefilling
+          value={formatDateForInput(editedData[name])}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
@@ -78,13 +66,11 @@ const Profile = () => {
     </div>
   );
 
-  // Helper function to format date for input (dd-mm-yyyy)
   const formatDateForInput = (dateString) => {
     const [dd, mm, yyyy] = dateString.split("-");
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  // Render each non-editable field using the initialProfileData
   const renderField = (label, name) => (
     <li key={label} className="mb-4">
       <strong className="block text-sm font-medium text-gray-700">
@@ -98,7 +84,6 @@ const Profile = () => {
     </li>
   );
 
-  // Modal content using Headless UI Dialog
   const renderModalContent = () => (
     <Transition.Root show={editable} as={React.Fragment}>
       <Dialog
@@ -106,7 +91,7 @@ const Profile = () => {
         className="fixed inset-0 overflow-y-auto"
         onClose={handleEditClick}
       >
-        <div className="flex items-center justify-center min-h-full">
+        <div className="flex items-center justify-center h-screen">
           <Dialog.Overlay className="fixed inset-0 bg-black/25" />
 
           <Transition.Child
@@ -163,13 +148,9 @@ const Profile = () => {
         style={{ borderRadius: "20px" }}
       >
         <div className="grid justify-center mt-5">
-          <Image
-            src={DP}
-            alt="DP"
-            width={160}
-            height={160}
-            className="relative inline-block h-150 w-150 rounded-full object-cover object-center border border-black overflow-hidden"
-          />
+          <div className="relative inline-block h-150 w-150 rounded-full object-cover object-center border border-black overflow-hidden">
+            <Image src={DP} alt="DP" width={160} height={160} />
+          </div>
         </div>
         <div className="flex justify-center mt-5 text-2xl font-semibold">
           {initialProfileData.firstName}{" "}
