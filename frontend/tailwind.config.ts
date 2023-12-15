@@ -1,5 +1,5 @@
-import withMT from "@material-tailwind/react/utils/withMT";
 import type { Config } from "tailwindcss";
+const withMT = require("@material-tailwind/react/utils/withMT");
 
 const defaultTheme = require("tailwindcss/defaultTheme");
 
@@ -31,3 +31,4 @@ const config: Config = {
 };
 
 export default withMT(config);
+// export default config;

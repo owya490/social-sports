@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import EventPaymentListBox from "./EventPaymentListBox";
 
 import {
   timestampToDateString,
@@ -31,7 +30,7 @@ export default function EventPayment(props: IEventPayment) {
   // const guestCountValue = parseInt(guestCount.split(" ")[0]);
 
   return (
-    <div className="border border-1 rounded-[20px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.4)] bg-white">
+    <div className="border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
       <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl text-center mb-10 lg:mb-8 ml-3 mr-3 mt-9 lg:mt-7 2xl:mt-12 2xl:mb-10">
         Event Details
       </p>
@@ -67,7 +66,7 @@ export default function EventPayment(props: IEventPayment) {
       <div className="relative flex justify-center mt-6 mb-6">
         <a href="#">
           <div
-            className="text-lg lg:text-2xl text-white rounded-3xl bg-sky-500/75 px-8 py-4 "
+            className="text-lg lg:text-2xl rounded-2xl border border-black px-8 py-4"
             style={{
               textAlign: "center",
               position: "relative",

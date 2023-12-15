@@ -27,7 +27,7 @@ export default function Dashboard() {
         <FilterBanner />
       </div>
       <div className="flex justify-center">
-        <div className="pb-10 w-[300px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+        <div className="pb-10 w-[350px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {eventData
               .sort((event1, event2) => {

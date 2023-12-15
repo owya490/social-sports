@@ -23,7 +23,7 @@ export default function FilterBanner() {
   };
   return (
     // <div className="pt-16 bg-white px-5 md:px-[15vw]">
-    <div className="pt-16 bg-white w-[300px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+    <div className="pt-16 bg-white px-4 sm:px-0 w-full sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
       <div className="h-20 flex items-center mt-2">
         <div className="overflow-auto flex items-center my-2 snap-x">
           {Object.entries(icons).map((entry, idx) => {

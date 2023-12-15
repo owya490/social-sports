@@ -1,42 +1,97 @@
-import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
-import DP from "./../../public/images/Ashley & Owen.png";
-import STV from "./../../public/images/stv_image.jpeg";
+import { EventData } from "@/interfaces/EventTypes";
+import EventCard from "../EventCard";
 
-export default function RecommendedEvents() {
+interface IRecommendedEvents {
+  eventData: EventData;
+}
+
+export default function RecommendedEvents(props: IRecommendedEvents) {
+  const { eventData } = props;
   return (
-    <div className="bg-white rounded-xl border flex-none min-w-[20%] sm:min-w-[10%] max-w-[50%] md:max-w-[30%]">
-      <Image
-        src={STV}
-        alt="stv"
-        height={0}
-        width={0}
-        className="rounded-t-xl w-full h-28 object-cover"
-      />
-      <div className="p-4">
-        <h4 className="font-bold text-gray-500 text-xs">
-          SAT, SEPT 23 · 20:00 AEST
-        </h4>
-        <h2 className="text-xl font-bold my-2">
-          Sydney Thunder Volleyball Men’s Training
-        </h2>
-        <p className="text-xs font-light">- Hosted by Tzeyen Rossiter</p>
-        <div className="my-2 space-y-1">
-          <div className="flex items-center">
-            <MapPinIcon className="w-5" />
-            <p className="ml-1 font-light text-xs">North Ryde RSL, NSW</p>
-          </div>
-          <div className="flex items-center">
-            <CurrencyDollarIcon className="w-5" />
-
-            <p className="ml-1 font-light text-xs">$30.00 AUD per person</p>
-          </div>
+    <div className="w-full flex justify-center">
+      <div className="pb-10 w-[350px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+        <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
+        <div className="flex my-5">
+          <h5 className="font-bold text-lg">Similar events nearby</h5>
+          <a className="text-sm font-light ml-auto cursor-pointer">See all</a>
         </div>
-        <div className="flex items-center">
-          <p className="text-sm font-light text-gray-500">5 spots left</p>
-          <button className="ml-auto rounded-full bg-sky-500/75 py-1 px-2 text-white">
-            <h2 className="text-sm">Book Now</h2>
-          </button>
+        <div className="flex overflow-x-auto pb-4 snap-x">
+          <div className="flex space-x-4">
+            <div className="snap-center">
+              <EventCard
+                eventId={eventData.eventId}
+                image={eventData.image}
+                name={eventData.name}
+                organiser={eventData.organiser}
+                startTime={eventData.startDate}
+                location={eventData.location}
+                price={eventData.price}
+                vacancy={eventData.vacancy}
+              />
+            </div>
+            <div className="snap-center">
+              <EventCard
+                eventId={eventData.eventId}
+                image={eventData.image}
+                name={eventData.name}
+                organiser={eventData.organiser}
+                startTime={eventData.startDate}
+                location={eventData.location}
+                price={eventData.price}
+                vacancy={eventData.vacancy}
+              />
+            </div>
+            <div className="snap-center">
+              <EventCard
+                eventId={eventData.eventId}
+                image={eventData.image}
+                name={eventData.name}
+                organiser={eventData.organiser}
+                startTime={eventData.startDate}
+                location={eventData.location}
+                price={eventData.price}
+                vacancy={eventData.vacancy}
+              />
+            </div>
+            <div className="snap-center">
+              <EventCard
+                eventId={eventData.eventId}
+                image={eventData.image}
+                name={eventData.name}
+                organiser={eventData.organiser}
+                startTime={eventData.startDate}
+                location={eventData.location}
+                price={eventData.price}
+                vacancy={eventData.vacancy}
+              />
+            </div>
+
+            <div className="snap-center">
+              <EventCard
+                eventId={eventData.eventId}
+                image={eventData.image}
+                name={eventData.name}
+                organiser={eventData.organiser}
+                startTime={eventData.startDate}
+                location={eventData.location}
+                price={eventData.price}
+                vacancy={eventData.vacancy}
+              />
+            </div>
+
+            <div className="snap-center">
+              <EventCard
+                eventId={eventData.eventId}
+                image={eventData.image}
+                name={eventData.name}
+                organiser={eventData.organiser}
+                startTime={eventData.startDate}
+                location={eventData.location}
+                price={eventData.price}
+                vacancy={eventData.vacancy}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
