@@ -161,7 +161,7 @@ const Profile = () => {
         >
           <div className="grid justify-center mt-5">
             <div className="relative inline-block rounded-full object-cover object-center border border-black overflow-hidden">
-              <Image src={DP} alt="DP" width={160} height={160} />
+              <Image src={DP} alt="DP" width={0} height={0} className="rounded-full object-cover h-52 w-52"/>
             </div>
           </div>
           <div className="flex justify-center mt-5 text-2xl font-semibold">
