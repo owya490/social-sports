@@ -14,6 +14,9 @@ import {
 } from "@/services/filterService";
 import { Timestamp } from "firebase/firestore";
 
+const DAY_START_TIME_STRING = " 00:00:00";
+const DAY_END_TIME_STRING = " 23:59:59";
+
 type FilterDialogProps = {
   eventDataList: EventData[];
   allEventsDataList: EventData[];
@@ -61,8 +64,10 @@ export default function FilterDialog({
     if (dateFilterEnabled && dateRange.startDate && dateRange.endDate) {
       const newEventDataList = filterEventsByDate(
         [...eventDataListToFilter],
-        Timestamp.fromDate(new Date(dateRange.startDate + " 00:00:00")), // TODO: needed to specify maximum time range on particular day.
-        Timestamp.fromDate(new Date(dateRange.endDate + " 23:59:59"))
+        Timestamp.fromDate(
+          new Date(dateRange.startDate + DAY_START_TIME_STRING)
+        ), // TODO: needed to specify maximum time range on particular day.
+        Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
       );
       setEventDataList(newEventDataList);
       hasFiltered = true;
