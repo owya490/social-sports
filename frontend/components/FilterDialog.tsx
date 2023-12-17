@@ -28,6 +28,9 @@ export default function FilterDialog({
   let [isOpen, setIsOpen] = useState(false);
   const [priceFilterEnabled, setPriceFilterEnabled] = useState(false);
   const [dateFilterEnabled, setDateFilterEnabled] = useState(false);
+  const [eventDataListToFilter, setEventDataListToFilter] = useState([
+    ...allEventsDataList,
+  ]);
 
   function closeModal() {
     setIsOpen(false);
@@ -38,25 +41,38 @@ export default function FilterDialog({
   }
 
   function applyFilters() {
+    let hasFiltered: boolean = false;
+    setEventDataListToFilter([...allEventsDataList]);
+
     if (priceFilterEnabled) {
       const newEventDataList = filterEventsByPrice(
-        [...allEventsDataList],
+        [...eventDataListToFilter],
         null,
         maxSliderValue
       );
       setEventDataList(newEventDataList);
+      hasFiltered = true; // signify that we have filtered once
     }
+
+    if (hasFiltered) {
+      setEventDataListToFilter([...eventDataList]);
+    }
+
     if (dateFilterEnabled && dateRange.startDate && dateRange.endDate) {
       const newEventDataList = filterEventsByDate(
-        [...allEventsDataList],
+        [...eventDataListToFilter],
         Timestamp.fromDate(new Date(dateRange.startDate + " 00:00:00")), // TODO: needed to specify maximum time range on particular day.
         Timestamp.fromDate(new Date(dateRange.endDate + " 23:59:59"))
       );
       setEventDataList(newEventDataList);
+      hasFiltered = true;
     }
 
     // TODO: add more filters
 
+    if (!hasFiltered) {
+      setEventDataList([...allEventsDataList]);
+    }
     closeModal();
   }
 
@@ -156,6 +172,7 @@ export default function FilterDialog({
                           Max Price
                         </p>
                         <Checkbox
+                          checked={priceFilterEnabled}
                           className="h-4"
                           crossOrigin={undefined}
                           onChange={() => {
@@ -207,11 +224,13 @@ export default function FilterDialog({
                           Date Range
                         </p>
                         <Checkbox
+                          checked={dateFilterEnabled}
                           className="h-4"
                           crossOrigin={undefined}
-                          onChange={() =>
-                            setDateFilterEnabled(!dateFilterEnabled)
-                          }
+                          onChange={() => {
+                            console.log("price1", dateFilterEnabled);
+                            setDateFilterEnabled(!dateFilterEnabled);
+                          }}
                         />
                       </div>
 
@@ -233,12 +252,10 @@ export default function FilterDialog({
                       className="hover:underline cursor-pointer"
                       onClick={() => {
                         setMaxSliderValue(25);
-                        setPriceFilterEnabled(false);
                         setDateRange({
                           startDate: null,
                           endDate: null,
                         });
-                        setDateFilterEnabled(false);
                       }}
                     >
                       Clear all
