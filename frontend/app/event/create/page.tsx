@@ -1,9 +1,12 @@
 "use client";
+import { BasicForm } from "@/components/events/create/BasicForm";
+import { DescriptionForm } from "@/components/events/create/DescriptionForm";
+import { TagForm } from "@/components/events/create/TagForm";
 import { useMultistepForm } from "@/components/events/create/useMultistepForm";
 
 export default function CreateEvent() {
   const { step, steps, currentStep, isFirstStep, isLastStep, back, next } =
-    useMultistepForm([<div>One</div>, <div>Two</div>, <div>Three</div>]);
+    useMultistepForm([<BasicForm />, <DescriptionForm />, <TagForm />]);
   return (
     <div className="relative border border-black mt-40 m-4 p-8 rounded-xl">
       <form>
