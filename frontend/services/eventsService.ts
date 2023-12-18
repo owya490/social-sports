@@ -73,9 +73,9 @@ export async function searchEventsByKeyword(
                     eventCollectionRef,
                     where("nameTokens", "array-contains", token)
                 );
-    
+
                 const querySnapshot = await getDocs(q);
-                querySnapshot.forEach(eventDoc => {
+                querySnapshot.forEach((eventDoc) => {
                     const eventId = eventDoc.id;
                     const currentCount = eventTokenMatchCount.get(eventId) || 0;
                     eventTokenMatchCount.set(eventId, currentCount + 1);
@@ -85,20 +85,21 @@ export async function searchEventsByKeyword(
 
             const entries = Array.from(eventTokenMatchCount.entries());
 
-        for (const [eventId, count] of entries) {
-            const eventDoc = await getDoc(doc(eventCollectionRef, eventId));
-            if (eventDoc.exists()) {
-                const eventData = eventDoc.data() as EventData;
-                const extendedEventData: ExtendedEventData = {
-                    ...eventData,
-                    eventId: eventId,
-                    tokenMatchCount: count
-                };
-                const organiser = getUserById(eventData.organiserId);
-                eventData.organiser = organiser;
-                eventsData.push(extendedEventData);
+            for (const [eventId, count] of entries) {
+                const eventDoc = await getDoc(doc(eventCollectionRef, eventId));
+                if (eventDoc.exists()) {
+                    const eventData = eventDoc.data() as EventData;
+                    const extendedEventData: ExtendedEventData = {
+                        ...eventData,
+                        eventId: eventId,
+                        tokenMatchCount: count,
+                    };
+                    const organiser = await getUserById(eventData.organiserId);
+                    console.log(organiser);
+                    extendedEventData.organiser = organiser;
+                    eventsData.push(extendedEventData);
+                }
             }
-        }
             eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
             console.log("FLAG");
             console.log(eventsData);

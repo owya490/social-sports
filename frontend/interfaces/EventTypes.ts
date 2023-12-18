@@ -24,7 +24,6 @@ interface AbstractEventData {
 export interface NewEventData extends AbstractEventData {}
 
 export interface EventData extends AbstractEventData {
-    eventData: Promise<UserData>;
     eventId: EventId;
     organiser: UserData;
 }
