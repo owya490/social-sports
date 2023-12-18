@@ -1,7 +1,9 @@
+import { FormWrapper } from "./FormWrapper";
+
 export function TagForm() {
   return (
-    <div>
-      <p>Tags</p>
-    </div>
+    <FormWrapper title="Tags">
+      <p>Tag</p>
+    </FormWrapper>
   );
 }
