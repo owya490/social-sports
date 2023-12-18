@@ -11,6 +11,10 @@ export default function Dashboard() {
     const [eventData, setEventData] = useState<EventData[]>([]);
 
     const getQueryParams = () => {
+        if (typeof window === 'undefined') {
+            // Return some default or empty values when not in a browser environment
+            return { event: '', location: '' };
+        }
         const searchParams = new URLSearchParams(window.location.search);
         return {
             event: searchParams.get("event") || "",
