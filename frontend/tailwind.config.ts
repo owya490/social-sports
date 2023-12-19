@@ -25,6 +25,9 @@ const config: Config = {
         ...defaultTheme.screens,
         "3xl": "2600px",
       },
+      animation: {
+        "spin-slow": "spin 2s linear infinite",
+      },
     },
   },
   plugins: [],
