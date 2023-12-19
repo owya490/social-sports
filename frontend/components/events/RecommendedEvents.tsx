@@ -27,7 +27,7 @@ export default function RecommendedEvents(props: IRecommendedEvents) {
   };
 
   return (
-    <div className="w-full flex justify-center mx-3">
+    <div className="w-full flex justify-center">
       <div className="block">
         <div className="w-full flex justify-center">
           <div className="w-[350px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">

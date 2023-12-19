@@ -24,7 +24,7 @@ export function EventDetails(props: IEventDetails) {
     <div className="flex justify-center w-full">
       <div className="pb-10 w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
         <EventImage imageSrc={eventData.image} />
-        <div className="lg:flex w-full mt-5 mx-3">
+        <div className="lg:flex w-full mt-5">
           <div className="lg:hidden">
             <MobileEventPayment
               date={eventData.startDate}
@@ -34,7 +34,7 @@ export function EventDetails(props: IEventDetails) {
             />
           </div>
 
-          <div className="lg:w-2/3 xl:w-3/4">
+          <div className="mx-2 lg:w-2/3 xl:w-3/4">
             <EventDescription
               title={eventData.name}
               description={[eventData.description]} // TODO make firebase take string
