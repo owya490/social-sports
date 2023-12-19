@@ -1,3 +1,5 @@
+"use client";
+
 import { Dialog, Transition } from "@headlessui/react";
 import {
   AdjustmentsHorizontalIcon,
@@ -13,6 +15,11 @@ import {
   filterEventsByPrice,
 } from "@/services/filterService";
 import { Timestamp } from "firebase/firestore";
+import {
+  getGeoHashQueryBounds,
+  getLocationCoordinates,
+} from "@/services/locationUtils";
+const geofire = require("geofire-common");
 
 const DAY_START_TIME_STRING = " 00:00:00";
 const DAY_END_TIME_STRING = " 23:59:59";
@@ -43,7 +50,7 @@ export default function FilterDialog({
     setIsOpen(true);
   }
 
-  function applyFilters() {
+  async function applyFilters() {
     let hasFiltered: boolean = false;
     setEventDataListToFilter([...allEventsDataList]);
 
@@ -78,6 +85,10 @@ export default function FilterDialog({
     if (!hasFiltered) {
       setEventDataList([...allEventsDataList]);
     }
+
+    const { lat, lng } = await getLocationCoordinates("Sydney NSW Australia");
+    console.log("lat", lat, lng);
+
     closeModal();
   }
 

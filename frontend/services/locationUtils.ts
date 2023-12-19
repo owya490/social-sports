@@ -1,4 +1,7 @@
 import axios from "axios";
+
+// For some reason, need to require geofire-common to use methods???
+const geofireObj = require("geofire-common");
 import geofire from "geofire-common";
 
 export async function getLocationCoordinates(
@@ -12,8 +15,8 @@ export async function getLocationCoordinates(
     );
 
     if (response.data.length > 0) {
-      const { lat, lng } = response.data[0];
-      return { lat: parseFloat(lat), lng: parseFloat(lng) };
+      const { lat, lon } = response.data[0];
+      return { lat: parseFloat(lat), lng: parseFloat(lon) };
     } else {
       throw new Error("Location not found");
     }
@@ -24,12 +27,12 @@ export async function getLocationCoordinates(
 }
 
 export function getGeoHashForLatLong(lat: number, lng: number): string {
-  return geofire.geohashForLocation([lat, lng]);
+  return geofireObj.geohashForLocation([lat, lng]);
 }
 
 export function getGeoHashQueryBounds(
   center: geofire.Geopoint,
   radiusInM: number
 ): geofire.GeohashRange[] {
-  return geofire.geohashQueryBounds(center, radiusInM);
+  return geofireObj.geohashQueryBounds(center, radiusInM);
 }
