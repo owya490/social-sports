@@ -40,7 +40,7 @@ export default function EventCard(props: IEventCard) {
         <h4 className="font-bold text-gray-500 text-xs">
           {timestampToEventCardDateString(props.startTime)}
         </h4>
-        <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden overflow-x-scroll">
+        <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">
           {props.name}
         </h2>
         <div className="flex ml-0.5 items-center">

@@ -1,5 +1,4 @@
-import { ChevronDoubleRightIcon } from "@heroicons/react/24/outline";
-import FitlerDialog from "../FilterDialog";
+import ChevronRightButton from "../utility/ChevronRightButton";
 import BadmintonImage from "./../../public/images/badminton.png";
 import BaseballImage from "./../../public/images/baseball.png";
 import BasketballImage from "./../../public/images/basketball.png";
@@ -8,6 +7,7 @@ import RugbyImage from "./../../public/images/rugby-ball.png";
 import SoccerImage from "./../../public/images/soccer-ball.png";
 import TennisImage from "./../../public/images/tennis-balls.png";
 import VolleyballImage from "./../../public/images/volleyball.png";
+import FitlerDialog from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
 
 export default function FilterBanner() {
@@ -21,11 +21,22 @@ export default function FilterBanner() {
     Oztag: { image: RugbyImage, style: "w-8 h-8" },
     Baseball: { image: BaseballImage, style: "w-8 h-8" },
   };
+
+  const scroll = () => {
+    document.getElementById("filter-overflow")?.scrollBy({
+      top: 0,
+      left: 50,
+      behavior: "smooth",
+    });
+  };
   return (
     // <div className="pt-16 bg-white px-5 md:px-[15vw]">
     <div className="pt-16 bg-white px-4 sm:px-0 w-full sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
       <div className="h-20 flex items-center mt-2">
-        <div className="overflow-auto flex items-center my-2 snap-x">
+        <div
+          id="filter-overflow"
+          className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all"
+        >
           {Object.entries(icons).map((entry, idx) => {
             if (idx === 0) {
               return (
@@ -49,8 +60,14 @@ export default function FilterBanner() {
             );
           })}
         </div>
-        <div className="-left-5 ml-2 mr-8">
-          <ChevronDoubleRightIcon className="md:hidden w-5 h-5" />
+        <div className="-left-5 ml-2 mr-8 xl:hidden">
+          {/* <button
+            className="border border-1 border-black rounded-full p-0.5 flex justify-center items-center"
+            onClick={scroll}
+          >
+            <ChevronRightIcon className="w-4 h-4" />
+          </button> */}
+          <ChevronRightButton handleClick={scroll} />
         </div>
 
         <div className="grow">
