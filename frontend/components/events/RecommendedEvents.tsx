@@ -30,7 +30,7 @@ export default function RecommendedEvents(props: IRecommendedEvents) {
     <div className="w-full flex justify-center mx-3">
       <div className="block">
         <div className="w-full flex justify-center">
-          <div className="pb-10 w-[350px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+          <div className="w-[350px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
             <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
             <div className="flex my-5">
               <h5 className="font-bold text-lg">Similar events nearby</h5>
