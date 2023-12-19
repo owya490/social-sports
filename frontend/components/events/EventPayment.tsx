@@ -30,51 +30,60 @@ export default function EventPayment(props: IEventPayment) {
   // const guestCountValue = parseInt(guestCount.split(" ")[0]);
 
   return (
-    <div className="border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
-      <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl text-center mb-10 lg:mb-8 ml-3 mr-3 mt-9 lg:mt-7 2xl:mt-12 2xl:mb-10">
-        Event Details
-      </p>
-      <div className="flex justify-start">
-        <div className="w-full">
-          <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
-            <CalendarDaysIcon className="w-10 mr-2" />
-            <p className="text-md lg:text-lg mr-[5%]">
-              {timestampToDateString(props.date)}
-            </p>
-          </div>
-          <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
-            <ClockIcon className="w-10 mr-2" />
-            <p className="text-md lg:text-lg mr-[5%]">
-              {timestampToTimeOfDay(props.date)}
-            </p>
-          </div>
-          <div className="flex items-center mb-5 ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
-            <MapPinIcon className="w-10 mr-2" />
-            <p className="text-md lg:text-lg mr-[5%]">{props.location}</p>
-          </div>
-          <div className="flex items-center ml-[6vw] sm:ml-[8vw] md:ml-[8.1%vw] lg:ml-[7.2%] xl:ml-[7.5%] 2xl:ml-[8%]">
-            <CurrencyDollarIcon className="w-10 mr-2" />
-            <p className="text-md lg:text-lg mr-[5%]">
-              ${props.price} AUD per person
-            </p>
+    // <div className="border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
+    <div className="md:border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
+      {/* <div className="mx-[6vw] sm:mx-[8vw] md:mx-[8.1%vw] lg:mx-[7.2%] xl:mx-[7.5%] 2xl:mx-[8%]"> */}
+      <div className="mx-6">
+        <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl mb-5 mt-6 text-center"></p>
+        <div className="flex justify-start">
+          <div className="w-full">
+            <div className="mb-6">
+              <h2 className=" font-semibold">Date and Time</h2>
+              <div className="flex items-center">
+                <CalendarDaysIcon className="w-5 mr-2" />
+                <p className="text-md mr-[5%]">
+                  {timestampToDateString(props.date)}
+                </p>
+              </div>
+              <div className="flex items-center">
+                <ClockIcon className="w-5 mr-2" />
+                <p className="text-md mr-[5%]">
+                  {timestampToTimeOfDay(props.date)}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h2 className=" font-semibold">Location</h2>
+              <div className="flex">
+                <MapPinIcon className="w-5 h-5 mr-2 mt-0.5" />
+                <p className="text-md mr-[5%]">{props.location}</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h2 className=" font-semibold">Price</h2>
+              <div className="flex items-center">
+                <CurrencyDollarIcon className="w-5 h-5 mr-2" />
+                <p className="text-md mr-[5%]">${props.price} AUD per person</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="px-[10%]">
-        <hr className="px-2 h-0.5 mx-auto bg-gray-400 border-0 rounded my-10 dark:bg-gray-400"></hr>
-      </div>
-      <div className="relative flex justify-center mt-6 mb-6">
-        <a href="#">
-          <div
-            className="text-lg lg:text-2xl rounded-2xl border border-black px-8 py-4"
-            style={{
-              textAlign: "center",
-              position: "relative",
-            }}
-          >
-            Contact Now
-          </div>
-        </a>
+        <hr className="px-2 h-0.5 mx-auto bg-gray-400 border-0 rounded dark:bg-gray-400 mb-6"></hr>
+        <div className="relative flex justify-center mb-6 w-full">
+          <a href="#" className="w-full">
+            <div
+              className="text-lg rounded-2xl border border-black w-full py-3"
+              style={{
+                textAlign: "center",
+                position: "relative",
+              }}
+            >
+              Contact Now
+            </div>
+          </a>
+        </div>
       </div>
     </div>
   );

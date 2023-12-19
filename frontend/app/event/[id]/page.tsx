@@ -4,6 +4,7 @@ import Loading from "@/components/Loading";
 import EventBanner from "@/components/events/EventBanner";
 import { EventDetails } from "@/components/events/EventDetails";
 import RecommendedEvents from "@/components/events/RecommendedEvents";
+import MobileEventDetailFooter from "@/components/mobile/MobileEventDetailFooter";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
 import {
@@ -47,10 +48,13 @@ export default function EventPage({ params }: any) {
         organiser={eventData.organiser}
         vacancy={eventData.vacancy}
       />
-      <div className="mt-10 mb-10 mx-3">
+      <div className="mt-5 lg:mt-10 mb-10 mx-3">
         <EventDetails eventData={eventData} eventTags={eventTags} />
 
         <RecommendedEvents eventData={eventData} />
+      </div>
+      <div className="lg:hidden">
+        <MobileEventDetailFooter date={eventData.startDate} />
       </div>
     </div>
   );

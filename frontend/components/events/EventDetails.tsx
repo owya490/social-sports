@@ -3,6 +3,7 @@ import EventImage from "@/components/events/EventImage";
 import { EventData } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
 import { TagGroup } from "../TagGroup";
+import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
 
 interface IEventDetails {
@@ -24,7 +25,16 @@ export function EventDetails(props: IEventDetails) {
       <div className="pb-10 w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
         <EventImage imageSrc={eventData.image} />
         <div className="lg:flex w-full mt-5">
-          <div className="lg:w-2/3">
+          <div className="lg:hidden">
+            <MobileEventPayment
+              date={eventData.startDate}
+              location={eventData.location}
+              price={eventData.price}
+              vacancy={eventData.vacancy}
+            />
+          </div>
+
+          <div className="lg:w-2/3 xl:w-3/4">
             <EventDescription
               title={eventData.name}
               description={[eventData.description]} // TODO make firebase take string
@@ -35,7 +45,7 @@ export function EventDetails(props: IEventDetails) {
               </div>
             </div>
           </div>
-          <div className="lg:w-1/3">
+          <div className="hidden lg:block lg:w-1/3 xl:w-1/4">
             <EventPayment
               date={eventData.startDate}
               location={eventData.location}
