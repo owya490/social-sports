@@ -48,7 +48,7 @@ export default function RecommendedEvents(props: IRecommendedEvents) {
           <div className="pb-10 w-[350px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
             <div
               id="recommended-event-overflow"
-              className="flex overflow-x-auto pb-4 snap-mandatory"
+              className="flex overflow-x-auto pb-4 snap-x snap-mandatory"
             >
               <div className="flex space-x-4">
                 <div className="snap-start">
