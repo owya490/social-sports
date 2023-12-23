@@ -17,7 +17,6 @@ import {
 } from "@/services/filterService";
 import { Timestamp } from "firebase/firestore";
 import { getLocationCoordinates } from "@/services/locationUtils";
-const geofire = require("geofire-common");
 
 const DAY_START_TIME_STRING = " 00:00:00";
 const DAY_END_TIME_STRING = " 23:59:59";
