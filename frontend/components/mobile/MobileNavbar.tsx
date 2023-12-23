@@ -1,10 +1,26 @@
 "use client";
+import { Tag } from "@/interfaces/TagTypes";
+import { getAllTags } from "@/services/tagService";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import ProfilePic from "../navbar/ProfilePic";
 import Logo from "./../../public/images/SportsHubMobileLogo.png";
-import MobileSearchDialog from "./MobileSearchDialog";
+import MobileSearchBar from "./MobileSearchBar";
+import MobileSearchInput from "./MobileSearchInput";
 
 export default function MobileNavbar() {
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const [tags, setTags] = useState<Tag[]>([]);
+  useEffect(() => {
+    console.log("owen");
+    getAllTags().then((tags) => {
+      setTags(tags);
+    });
+  }, []);
+
+  const handleSearchExpanded = () => {
+    setSearchExpanded(!searchExpanded);
+  };
   return (
     <div className="bg-white drop-shadow-lg fixed top-0 w-screen z-50">
       <div className="flex items-center py-2 px-4">
@@ -19,7 +35,13 @@ export default function MobileNavbar() {
         </a>
 
         <div className="w-[50%]">
-          <MobileSearchDialog />
+          <MobileSearchBar openSearchInput={handleSearchExpanded} />
+          {/* <MobileSearchDialog /> */}
+          <MobileSearchInput
+            searchExpanded={searchExpanded}
+            setSearchExpanded={handleSearchExpanded}
+            tags={tags}
+          />
         </div>
         <div className="flex ml-auto items-center">
           <ProfilePic />
