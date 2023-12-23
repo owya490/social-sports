@@ -112,10 +112,10 @@ export default function MobileSearchInput(props: IMobileSearchInput) {
                 No recent searches... go ahead ;)
               </p>
             ) : (
-              recentSearches.map((search) => {
+              recentSearches.map((search, i) => {
                 const splitSearch = search.split(":");
                 return (
-                  <span className="flex items-center my-1">
+                  <span key={i} className="flex items-center my-1">
                     <ClockIcon className="w-4 h-4 mr-1" />
                     <a
                       href="https://google.com"
