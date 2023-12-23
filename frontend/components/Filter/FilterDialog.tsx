@@ -8,8 +8,8 @@ import {
 import { Checkbox, Slider, Input } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
-import ListBox from "./ListBox";
-import { EventData } from "../interfaces/EventTypes";
+import ListBox from "../../components/ListBox";
+import { EventData } from "@/interfaces/EventTypes";
 import {
   filterEventsByDate,
   filterEventsByMaxProximity,
@@ -99,10 +99,6 @@ export default function FilterDialog({
       );
       setEventDataList(newEventDataList);
       hasFiltered = true;
-    }
-
-    if (hasFiltered) {
-      setEventDataListToFilter([...eventDataList]);
     }
 
     if (proximityFilterEnabled && maxProximitySliderValue !== null) {
@@ -306,38 +302,34 @@ export default function FilterDialog({
                           }}
                         />
                       </div>
-                      <div className="w-full mt-5 flex items-center">
-                        <p
-                          className={
-                            proximityFilterEnabled ? "mr-2" : "mr-2 opacity-50"
+                      <p
+                        className={
+                          proximityFilterEnabled ? "mr-2" : "mr-2 opacity-50"
+                        }
+                      >
+                        {maxProximitySliderValue} km
+                      </p>
+                      {proximityFilterEnabled ? (
+                        <Slider
+                          color="blue"
+                          className="h-1"
+                          step={1}
+                          min={0}
+                          max={100}
+                          value={maxProximitySliderValue}
+                          onChange={(e) =>
+                            setMaxProximitySliderValue(parseInt(e.target.value))
                           }
-                        >
-                          {maxProximitySliderValue} km
-                        </p>
-                        {proximityFilterEnabled ? (
-                          <Slider
-                            color="blue"
-                            className="h-1"
-                            step={1}
-                            min={0}
-                            max={100}
-                            value={maxProximitySliderValue}
-                            onChange={(e) =>
-                              setMaxProximitySliderValue(
-                                parseInt(e.target.value)
-                              )
-                            }
-                          />
-                        ) : (
-                          <Slider
-                            color="blue"
-                            className="h-1 opacity-50"
-                            step={1}
-                            min={0}
-                            value={maxProximitySliderValue}
-                          />
-                        )}
-                      </div>
+                        />
+                      ) : (
+                        <Slider
+                          color="blue"
+                          className="h-1 opacity-50"
+                          step={1}
+                          min={0}
+                          value={maxProximitySliderValue}
+                        />
+                      )}
                     </div>
                     <Input
                       variant="outlined"
@@ -357,7 +349,7 @@ export default function FilterDialog({
                           startDate: null,
                           endDate: null,
                         });
-                        setMaxProximitySliderValue(25);
+                        setMaxProximitySliderValue(100);
                       }}
                     >
                       Clear all

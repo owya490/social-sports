@@ -5,7 +5,7 @@ interface IEventDescription {
 
 export default function EventDescription(props: IEventDescription) {
   return (
-    <>
+    <div className="w-full">
       <div className="text-2xl lg:text-3xl 2xl:text-4xl mt-7">
         <h1>{props.title}</h1>
       </div>
@@ -14,6 +14,6 @@ export default function EventDescription(props: IEventDescription) {
           return <p key={idx}>{description}</p>;
         })}
       </div>
-    </>
+    </div>
   );
 }
