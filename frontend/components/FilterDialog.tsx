@@ -5,7 +5,7 @@ import {
   AdjustmentsHorizontalIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Checkbox, Slider } from "@material-tailwind/react";
+import { Checkbox, Slider, Input } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "./ListBox";
@@ -61,6 +61,7 @@ export default function FilterDialog({
       setDateRange(timestampDateRange);
     }
   };
+  const [srcLocation, setSrcLocation] = useState<string>("");
 
   function closeModal() {
     setIsOpen(false);
@@ -101,11 +102,24 @@ export default function FilterDialog({
     }
 
     if (proximityFilterEnabled && maxProximitySliderValue !== null) {
+      const SYDNEY_LAT = -31.9523;
+      const SYDNEY_LNG = 115.8613;
+
+      let srcLat = SYDNEY_LAT;
+      let srcLng = SYDNEY_LNG;
+      try {
+        const { lat, lng } = await getLocationCoordinates(srcLocation);
+        srcLat = lat;
+        srcLng = lng;
+      } catch (error) {
+        console.log(error);
+      }
+
       const newEventDataList = filterEventsByMaxProximity(
         [...eventDataListToFilter],
         maxProximitySliderValue,
-        -31.9523,
-        115.8613
+        srcLat,
+        srcLng
       );
       setEventDataList(newEventDataList);
       hasFiltered = true;
@@ -116,9 +130,6 @@ export default function FilterDialog({
     if (!hasFiltered) {
       setEventDataList([...allEventsDataList]);
     }
-
-    const { lat, lng } = await getLocationCoordinates("Sydney NSW Australia");
-    console.log("lat", lat, lng);
 
     closeModal();
   }
@@ -320,6 +331,13 @@ export default function FilterDialog({
                         />
                       )}
                     </div>
+                    <Input
+                      variant="outlined"
+                      label="Search Location"
+                      crossOrigin="true"
+                      value={srcLocation}
+                      onChange={({ target }) => setSrcLocation(target.value)}
+                    />
                   </div>
 
                   <div className="mt-5 w-full flex items-center">

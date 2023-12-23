@@ -12,7 +12,7 @@
     "dependencies": {
         "@headlessui/react": "^1.7.17",
         "@heroicons/react": "^2.0.18",
-        "@material-tailwind/react": "^2.1.4",
+        "@material-tailwind/react": "^2.1.8",
         "@types/react": "^18.2.21",
         "axios": "^1.6.2",
         "dayjs": "^1.11.10",
