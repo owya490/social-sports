@@ -1,7 +1,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Input } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
-import MobileSearchBar from "./MobileSearchBar";
 
 export default function MobileSearchDialog() {
   let [isOpen, setIsOpen] = useState(false);
@@ -16,7 +15,7 @@ export default function MobileSearchDialog() {
 
   return (
     <>
-      <MobileSearchBar openModal={openModal} />
+      {/* <MobileSearchBar openModal={openModal} /> */}
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
