@@ -49,7 +49,7 @@ export default function FilterDialog({
     endDate: null,
   });
   const [maxProximitySliderValue, setMaxProximitySliderValue] =
-    useState<number>(10); // max proximity in kms.
+    useState<number>(25); // max proximity in kms.
 
   const handleDateRangeChange = (dateRange: any) => {
     if (dateRange.startDate && dateRange.endDate) {
@@ -302,9 +302,9 @@ export default function FilterDialog({
                         <Slider
                           color="blue"
                           className="h-1"
-                          step={50}
+                          step={10}
                           min={0}
-                          max={10000}
+                          max={200}
                           value={maxProximitySliderValue}
                           onChange={(e) =>
                             setMaxProximitySliderValue(parseInt(e.target.value))
