@@ -21,7 +21,6 @@ interface IEventPayment {
 
 export default function MobileEventPayment(props: IEventPayment) {
   return (
-    // <div className="border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
     <div className="mx-2">
       <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl mb-5 mt-5 text-center"></p>
       <div className="flex justify-start">

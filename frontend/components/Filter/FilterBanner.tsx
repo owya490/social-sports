@@ -30,7 +30,6 @@ export default function FilterBanner() {
     });
   };
   return (
-    // <div className="pt-16 bg-white px-5 md:px-[15vw]">
     <div className="pt-16 bg-white px-4 sm:px-0 w-full sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
       <div className="h-20 flex items-center mt-2">
         <div
@@ -61,12 +60,6 @@ export default function FilterBanner() {
           })}
         </div>
         <div className="-left-5 ml-2 mr-8 xl:hidden">
-          {/* <button
-            className="border border-1 border-black rounded-full p-0.5 flex justify-center items-center"
-            onClick={scroll}
-          >
-            <ChevronRightIcon className="w-4 h-4" />
-          </button> */}
           <ChevronRightButton handleClick={scroll} />
         </div>
 

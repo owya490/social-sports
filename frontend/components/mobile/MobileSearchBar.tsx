@@ -1,7 +1,6 @@
 import { SearchIcon } from "@/svgs/SearchIcon";
 
 interface MobileSearchBarProps {
-  // openModal: () => void;
   openSearchInput: () => void;
 }
 

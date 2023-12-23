@@ -30,9 +30,7 @@ export default function EventPayment(props: IEventPayment) {
   // const guestCountValue = parseInt(guestCount.split(" ")[0]);
 
   return (
-    // <div className="border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
     <div className="md:border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
-      {/* <div className="mx-[6vw] sm:mx-[8vw] md:mx-[8.1%vw] lg:mx-[7.2%] xl:mx-[7.5%] 2xl:mx-[8%]"> */}
       <div className="mx-6">
         <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl mb-5 mt-6 text-center"></p>
         <div className="flex justify-start">

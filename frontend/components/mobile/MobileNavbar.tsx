@@ -12,7 +12,6 @@ export default function MobileNavbar() {
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
   useEffect(() => {
-    console.log("owen");
     getAllTags().then((tags) => {
       setTags(tags);
     });
@@ -36,7 +35,6 @@ export default function MobileNavbar() {
 
         <div className="w-[50%]">
           <MobileSearchBar openSearchInput={handleSearchExpanded} />
-          {/* <MobileSearchDialog /> */}
           <MobileSearchInput
             searchExpanded={searchExpanded}
             setSearchExpanded={handleSearchExpanded}
@@ -47,7 +45,6 @@ export default function MobileNavbar() {
           <ProfilePic />
         </div>
       </div>
-      {/* <div className="rounded-full w-10 h-10 bg-red-200 ml-auto"></div> */}
       <div className="h-[1px] bg-black"></div>
     </div>
   );

@@ -25,9 +25,6 @@ export default function MobileSearchInput(props: IMobileSearchInput) {
   useEffect(() => {
     const maybeRecentSearch = sessionStorage.getItem("recentSearches");
     if (maybeRecentSearch) {
-      console.log(maybeRecentSearch);
-      console.log(["owen", "yang"].toString());
-      console.log(Array.from(["owen", "yang"].toString().split(",")));
       setRecentSearches(deserialize_list(maybeRecentSearch));
     }
   }, []);
@@ -67,7 +64,6 @@ export default function MobileSearchInput(props: IMobileSearchInput) {
               const maybePrevSearches =
                 sessionStorage.getItem("recentSearches");
               const currentSearch = searchPhrase + ":" + searchLocation;
-              console.log(currentSearch);
               if (maybePrevSearches) {
                 const prevSearches: string[] =
                   deserialize_list(maybePrevSearches);
@@ -117,7 +113,6 @@ export default function MobileSearchInput(props: IMobileSearchInput) {
               </p>
             ) : (
               recentSearches.map((search) => {
-                console.log(search);
                 const splitSearch = search.split(":");
                 return (
                   <span className="flex items-center my-1">
