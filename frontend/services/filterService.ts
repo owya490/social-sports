@@ -13,6 +13,7 @@ import {
 import { db } from "./firebase";
 import { EventData } from "@/interfaces/EventTypes";
 import geofire from "geofire-common";
+import { getDistanceBetweenTwoCoords } from "./locationUtils";
 
 interface ProximityInfo {
   center: geofire.Geopoint;
@@ -50,6 +51,23 @@ export function filterEventsByDate(
       event.startDate.toMillis() >= startDate.toMillis() &&
       event.startDate.toMillis() <= endDate.toMillis()
   );
+  return eventDataListDeepClone;
+}
+
+export function filterEventsByMaxProximity(
+  eventDataList: EventData[],
+  maxProximity: number,
+  srcLat: number,
+  srcLng: number
+): EventData[] {
+  let eventDataListDeepClone = [...eventDataList];
+  eventDataListDeepClone = eventDataListDeepClone.filter((event) => {
+    const lat1 = event.locationLatLng.lat;
+    const lng1 = event.locationLatLng.lng;
+    return (
+      getDistanceBetweenTwoCoords([lat1, lng1], [srcLat, srcLng]) < maxProximity
+    );
+  });
   return eventDataListDeepClone;
 }
 

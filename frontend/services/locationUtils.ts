@@ -26,13 +26,9 @@ export async function getLocationCoordinates(
   }
 }
 
-export function getGeoHashForLatLong(lat: number, lng: number): string {
-  return geofireObj.geohashForLocation([lat, lng]);
-}
-
-export function getGeoHashQueryBounds(
-  center: geofire.Geopoint,
-  radiusInM: number
-): geofire.GeohashRange[] {
-  return geofireObj.geohashQueryBounds(center, radiusInM);
+export function getDistanceBetweenTwoCoords(
+  [lat1, lng1]: [number, number],
+  [lat2, lng2]: [number, number]
+): number {
+  return geofireObj.distanceBetween([lat1, lng1], [lat2, lng2]);
 }
