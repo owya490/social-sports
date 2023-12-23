@@ -1,9 +1,10 @@
-import { TagGroup } from "@/components/TagGroup";
 import EventDescription from "@/components/events/EventDescription";
 import EventImage from "@/components/events/EventImage";
-import EventPayment from "@/components/events/EventPayment";
 import { EventData } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
+import { TagGroup } from "../TagGroup";
+import MobileEventPayment from "../mobile/MobileEventPayment";
+import EventPayment from "./EventPayment";
 
 interface IEventDetails {
   eventData: EventData;
@@ -20,28 +21,39 @@ export function EventDetails(props: IEventDetails) {
   // ];
   const { eventData } = props;
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-6 gap-x-[2vw] 3xl:ml-[8vw]">
-      <div className="lg:mr-[7vw] lg:ml-[5vw] xl:mr-[0vw] h-fit lg:h-full xl:w-fit col-start-1 col-span-1 lg:col-span-2 xl:col-span-4 xl:row-start-1">
+    <div className="flex justify-center w-full">
+      <div className="pb-10 w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
         <EventImage imageSrc={eventData.image} />
-      </div>
-      <div className="lg:ml-[5vw] h-fit lg:w-fit col-start-1 lg:col-span-1 xl:col-span-4">
-        <EventDescription
-          title={eventData.name}
-          description={[eventData.description]} // TODO make firebase take string
-        />
-        <div className="flex">
-          <div className="hidden lg:block">
-            <TagGroup tags={props.eventTags} />
+        <div className="lg:flex w-full mt-5">
+          <div className="lg:hidden">
+            <MobileEventPayment
+              date={eventData.startDate}
+              location={eventData.location}
+              price={eventData.price}
+              vacancy={eventData.vacancy}
+            />
+          </div>
+
+          <div className="mx-2 lg:w-2/3 xl:w-3/4">
+            <EventDescription
+              title={eventData.name}
+              description={[eventData.description]} // TODO make firebase take string
+            />
+            <div className="flex">
+              <div className="hidden lg:block">
+                <TagGroup tags={props.eventTags} />
+              </div>
+            </div>
+          </div>
+          <div className="hidden lg:block lg:w-1/3 xl:w-1/4">
+            <EventPayment
+              date={eventData.startDate}
+              location={eventData.location}
+              price={eventData.price}
+              vacancy={eventData.vacancy}
+            />
           </div>
         </div>
-      </div>
-      <div className="lg:mr-[8vw] xl:mr-[4vw] lg:ml-5 h-fit lg:w-8/9  xs:col-start-1 lg:col-start-2 lg:col-span-1 xl:row-start-1 xl:row-span-2 xl:col-start-5 xl:col-span-2  lg:mt-7 xl:mt-0 3xl:mr-[8vw]">
-        <EventPayment
-          date={eventData.startDate}
-          location={eventData.location}
-          price={eventData.price}
-          vacancy={eventData.vacancy}
-        />
       </div>
     </div>
   );

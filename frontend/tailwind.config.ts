@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+const withMT = require("@material-tailwind/react/utils/withMT");
 
 const defaultTheme = require("tailwindcss/defaultTheme");
 
@@ -9,6 +10,9 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/react-tailwindcss-datepicker/dist/index.esm.js",
   ],
+  experimental: {
+    optimizeUniversalDefaults: true,
+  },
   theme: {
     extend: {
       fontFamily: {
@@ -24,9 +28,13 @@ const config: Config = {
         ...defaultTheme.screens,
         "3xl": "2600px",
       },
+      animation: {
+        "spin-slow": "spin 2s linear infinite",
+      },
     },
   },
   plugins: [],
 };
 
-export default config;
+export default withMT(config);
+// export default config;
