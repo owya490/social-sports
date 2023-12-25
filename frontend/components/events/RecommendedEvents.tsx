@@ -5,7 +5,7 @@ import STV from "./../../public/images/stv_image.jpeg";
 
 export default function RecommendedEvents() {
   return (
-    <div className="bg-white rounded-xl border max-w-xs">
+    <div className="bg-white rounded-xl border flex-none min-w-[20%] sm:min-w-[10%] max-w-[50%] md:max-w-[30%]">
       <Image
         src={STV}
         alt="stv"
@@ -20,17 +20,8 @@ export default function RecommendedEvents() {
         <h2 className="text-xl font-bold my-2">
           Sydney Thunder Volleyball Men’s Training
         </h2>
-        <div className="flex items-center ml-1">
-          <Image
-            src={DP}
-            alt="DP"
-            width={50}
-            height={50}
-            className="rounded-full w-4 h-4"
-          />
-          <p className="text-xs font-light ml-1">Hosted by Tzeyen Rossiter</p>
-        </div>
-        <div className="pl-2 my-4 space-y-3">
+        <p className="text-xs font-light">- Hosted by Tzeyen Rossiter</p>
+        <div className="my-2 space-y-1">
           <div className="flex items-center">
             <MapPinIcon className="w-5" />
             <p className="ml-1 font-light text-xs">North Ryde RSL, NSW</p>
@@ -43,7 +34,7 @@ export default function RecommendedEvents() {
         </div>
         <div className="flex items-center">
           <p className="text-sm font-light text-gray-500">5 spots left</p>
-          <button className="ml-auto rounded-full bg-[#30ADFF] py-1 px-2 text-white">
+          <button className="ml-auto rounded-full bg-sky-500/75 py-1 px-2 text-white">
             <h2 className="text-sm">Book Now</h2>
           </button>
         </div>
