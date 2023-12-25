@@ -3,6 +3,10 @@ import { BasicForm } from "@/components/events/create/BasicForm";
 import { DescriptionForm } from "@/components/events/create/DescriptionForm";
 import { TagForm } from "@/components/events/create/TagForm";
 import { useMultistepForm } from "@/components/events/create/useMultistepForm";
+import { EventData, NewEventData } from "@/interfaces/EventTypes";
+import { EmptyUserData } from "@/interfaces/UserTypes";
+import { createEvent } from "@/services/eventsService";
+import { Timestamp } from "firebase/firestore";
 import { FormEvent, useState } from "react";
 
 type FormData = {
@@ -14,7 +18,7 @@ type FormData = {
   name: string;
   description: string;
   image: string;
-  // tags: [];
+  tags: string[];
 };
 
 const INITIAL_DATA: FormData = {
@@ -26,8 +30,9 @@ const INITIAL_DATA: FormData = {
   name: "",
   description: "",
   image: "",
-  // tags: [],
+  tags: [],
 };
+
 export default function CreateEvent() {
   const [data, setData] = useState(INITIAL_DATA);
   const { step, steps, currentStep, isFirstStep, isLastStep, back, next } =
@@ -50,7 +55,44 @@ export default function CreateEvent() {
       next();
       return;
     }
-    alert("Account Created!");
+    try {
+      // console.log(createEvent(convertFormDataToEventData(data)));
+      console.log(data);
+      console.log(convertFormDataToEventData(data));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  function convertFormDataToEventData(formData: FormData): NewEventData {
+    // TODO
+    return {
+      startDate: convertToTimestamp(formData.date, formData.time),
+      endDate: convertToTimestamp(formData.date, formData.time),
+      location: formData.location,
+      capacity: formData.people,
+      vacancy: formData.people,
+      price: formData.cost,
+      name: formData.name,
+      description: formData.description,
+      image:
+        "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fstv%2F364809572_6651230408261559_5428994326794147594_n.png.jpeg?alt=media&token=9020aa75-976a-430f-a96e-d763f5b4bada",
+      eventTags: [],
+      isActive: true,
+      attendees: [],
+      accessCount: 0,
+      organiserId: "g9s1a1t3b7LJi8bswkd0",
+      registrationDeadline: Timestamp.now(),
+    };
+  }
+
+  function convertToTimestamp(date: string, time: string): Timestamp {
+    // Conversion logic
+    let tmp = new Date(date);
+    const timeArr = time.split(":");
+    tmp.setHours(parseInt(timeArr[0]));
+    tmp.setMinutes(parseInt(timeArr[1]));
+    return Timestamp.fromDate(tmp);
   }
 
   return (
