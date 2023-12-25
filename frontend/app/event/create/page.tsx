@@ -4,7 +4,6 @@ import { DescriptionForm } from "@/components/events/create/DescriptionForm";
 import { TagForm } from "@/components/events/create/TagForm";
 import { useMultistepForm } from "@/components/events/create/useMultistepForm";
 import { EventData, NewEventData } from "@/interfaces/EventTypes";
-import { EmptyUserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/eventsService";
 import { Timestamp } from "firebase/firestore";
 import { FormEvent, useState } from "react";
@@ -66,6 +65,9 @@ export default function CreateEvent() {
 
   function convertFormDataToEventData(formData: FormData): NewEventData {
     // TODO
+    // Fix end date
+    // Consider a User's ability to select their event image from their uploaded images
+    // Fix organiserId
     return {
       startDate: convertToTimestamp(formData.date, formData.time),
       endDate: convertToTimestamp(formData.date, formData.time),
@@ -87,7 +89,6 @@ export default function CreateEvent() {
   }
 
   function convertToTimestamp(date: string, time: string): Timestamp {
-    // Conversion logic
     let tmp = new Date(date);
     const timeArr = time.split(":");
     tmp.setHours(parseInt(timeArr[0]));
