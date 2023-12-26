@@ -13,7 +13,7 @@ export default function CreateEventTimeslot() {
     const [date, setDate] = React.useState<Date>();
 
     return (
-        <div className="p-24">
+        <div className="p-24 flex flex-col items-center">
             <Popover placement="bottom">
                 <PopoverHandler>
                     <Input
@@ -21,6 +21,7 @@ export default function CreateEventTimeslot() {
                         onChange={() => null}
                         value={date ? format(date, "PPP") : ""}
                         crossOrigin={undefined}
+                        className="rounded-md"
                     />
                 </PopoverHandler>
                 <PopoverContent>
