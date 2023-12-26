@@ -1,19 +1,27 @@
 "use client";
 
 export interface ITag {
-    name: string;
-    url?: string;
+  name: string;
+  url?: string;
+  size?: "sm" | "md" | "lg";
 }
 
 export default function Tag(props: ITag) {
-    return (
-        <button
-            className="text-lg ml-3 mr-3 mb-8 flex sm:inline-flex justify-center items-center px-4 py-1 bg-blue-300 hover:bg-blue-500 text-black font-semibold text-center rounded-md "
-            onClick={() => {
-                window.open(props.url);
-            }}
-        >
-            {props.name}
-        </button>
-    );
+  let sizeStyle = "px-4 py-1 text-lg font-semibold";
+  if (props.size === "sm") {
+    sizeStyle = "px-2 py-0.5 text-sm m-1";
+  } else if (props.size === "lg") {
+    sizeStyle = "px-8 py-2 text-xl font-bold";
+  }
+  return (
+    <button
+      className={`flex sm:inline-flexs items-center overflow-hidden ${sizeStyle} border-black border bg-white hover:bg-black hover:text-white transition-all text-black text-center rounded-md whitespace-nowrap`}
+      onClick={() => {
+        window.open(props.url);
+      }}
+      style={{}}
+    >
+      {props.name}
+    </button>
+  );
 }
