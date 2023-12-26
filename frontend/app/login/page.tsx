@@ -1,18 +1,21 @@
 "use client";
 import { handleEmailAndPasswordSignIn } from "@/services/authService";
 import React, { useState } from "react";
+import { useRouter } from "next/router";
 
 export default function Login() {
   const [userData, setUserData] = useState({
     email: "",
     password: "",
   });
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      handleEmailAndPasswordSignIn(userData.email, userData.password);
+      await handleEmailAndPasswordSignIn(userData.email, userData.password);
+      router.push("/dashboard");
     } catch (error) {
       console.error("Error:", error);
     }
