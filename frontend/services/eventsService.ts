@@ -4,7 +4,9 @@ import {
   EventId,
   NewEventData,
 } from "@/interfaces/EventTypes";
+import { UserData } from "@/interfaces/UserTypes";
 import {
+  Timestamp,
   addDoc,
   collection,
   deleteDoc,
@@ -49,6 +51,24 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
 
 // Function to retrieve all events
 export async function getAllEvents(): Promise<EventData[]> {
+  const currentDate = new Date();
+
+  if (
+    sessionStorage.getItem("eventsData") !== null &&
+    sessionStorage.getItem("lastFetchedEventData") !== null
+  ) {
+    console.log("hello");
+    const lastFetched = new Date(
+      sessionStorage.getItem("lastFetchedEventData")!
+    );
+    console.log(lastFetched);
+    if (currentDate.getUTCMinutes() - lastFetched.getUTCMinutes() < 3) {
+      console.log("owen");
+      console.log(JSON.parse(sessionStorage.getItem("eventsData")!));
+      // return JSON.parse(sessionStorage.getItem("eventsData")!);
+      return getEventsDataFromSessionStorage();
+    }
+  }
   try {
     const eventCollectionRef = collection(db, "Events");
     const eventsSnapshot = await getDocs(eventCollectionRef);
@@ -69,7 +89,9 @@ export async function getAllEvents(): Promise<EventData[]> {
         organiser: organiser,
       });
     }
-
+    sessionStorage.setItem("eventsData", JSON.stringify(eventsData));
+    const currentDateString = currentDate.toUTCString();
+    sessionStorage.setItem("lastFetchedEventData", currentDateString);
     return eventsData;
   } catch (error) {
     console.error(error);
@@ -151,4 +173,47 @@ export async function incrementEventAccessCountById(
   updateDoc(doc(db, "Events", eventId), {
     accessCount: increment(count),
   });
+}
+
+function getEventsDataFromSessionStorage() {
+  const eventsData: EventData[] = JSON.parse(
+    sessionStorage.getItem("eventsData")!
+  );
+  console.log(eventsData);
+  const eventsDataFinal: EventData[] = [];
+  // for (let event in eventsData) {
+  //   console.log(event);
+  // }
+  eventsData.map((event) => {
+    console.log(event);
+    eventsDataFinal.push({
+      eventId: event.eventId,
+      organiser: event.organiser as UserData,
+      startDate: new Timestamp(
+        event.startDate.seconds,
+        event.startDate.nanoseconds
+      ),
+      // endDate: event.endDate as Timestamp,
+      endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
+      location: event.location,
+      capacity: event.capacity,
+      vacancy: event.vacancy,
+      price: event.price,
+      organiserId: event.organiserId,
+      // registrationDeadline: event.registrationDeadline,
+      registrationDeadline: new Timestamp(
+        event.registrationDeadline.seconds,
+        event.registrationDeadline.nanoseconds
+      ),
+      name: event.name,
+      description: event.description,
+      image: event.image,
+      eventTags: event.eventTags,
+      isActive: event.isActive,
+      attendees: event.attendees,
+      accessCount: event.accessCount,
+    });
+  });
+  console.log(eventsDataFinal);
+  return eventsDataFinal;
 }
