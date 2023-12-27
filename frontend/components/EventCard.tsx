@@ -22,8 +22,9 @@ export default function EventCard(props: IEventCard) {
   const router = useRouter();
 
   return (
-    <button
-      className="bg-white rounded-xl min-w-xs max-w-xs text-left"
+    <div
+      className="bg-white rounded-xl w-full text-left border-gray-300 border min-w-[300px]"
+      // className="bg-white rounded-xl basis-3/12 max-w-[25%] w-[100%] text-left border-gray-300 border"
       onClick={() => {
         router.push(`/event/${props.eventId}`);
       }}
@@ -39,7 +40,9 @@ export default function EventCard(props: IEventCard) {
         <h4 className="font-bold text-gray-500 text-xs">
           {timestampToEventCardDateString(props.startTime)}
         </h4>
-        <h2 className="text-xl font-bold mb-1 mt-1">{props.name}</h2>
+        <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">
+          {props.name}
+        </h2>
         <div className="flex ml-0.5 items-center">
           <Image
             src={props.organiser.profilePicture}
@@ -68,11 +71,11 @@ export default function EventCard(props: IEventCard) {
           <p className="text-sm font-light text-gray-500">
             {`${props.vacancy} spots left`}
           </p>
-          <button className="ml-auto rounded-full bg-[#30ADFF] py-1 px-2 text-white">
+          <button className="ml-auto rounded-full border-black border py-1 px-2 text-blackm text-center">
             <h2 className="text-sm">Book Now</h2>
           </button>
         </div>
       </div>
-    </button>
+    </div>
   );
 }

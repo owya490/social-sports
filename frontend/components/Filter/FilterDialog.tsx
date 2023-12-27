@@ -6,7 +6,7 @@ import {
 import { Checkbox, Slider } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
-import ListBox from "./ListBox";
+import ListBox from "../ListBox";
 
 export default function FitlerDialog() {
   let [isOpen, setIsOpen] = useState(false);
