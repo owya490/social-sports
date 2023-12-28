@@ -22,11 +22,11 @@ const geofire = require("geofire-common");
 const DAY_START_TIME_STRING = " 00:00:00";
 const DAY_END_TIME_STRING = " 23:59:59";
 
-type FilterDialogProps = {
+interface FilterDialogProps {
   eventDataList: EventData[];
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
-};
+}
 
 export default function FilterDialog({
   eventDataList,
@@ -213,7 +213,6 @@ export default function FilterDialog({
                           className="h-4"
                           crossOrigin={undefined}
                           onChange={() => {
-                            console.log(priceFilterEnabled);
                             setPriceFilterEnabled(!priceFilterEnabled);
                           }}
                         />
@@ -265,7 +264,6 @@ export default function FilterDialog({
                           className="h-4"
                           crossOrigin={undefined}
                           onChange={() => {
-                            console.log("price1", dateFilterEnabled);
                             setDateFilterEnabled(!dateFilterEnabled);
                           }}
                         />

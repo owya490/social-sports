@@ -11,11 +11,11 @@ import FitlerDialog from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
 import { EventData } from "@/interfaces/EventTypes";
 
-type FilterBannerProps = {
+interface FilterBannerProps {
   eventDataList: EventData[];
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
-};
+}
 
 export default function FilterBanner({
   eventDataList,
