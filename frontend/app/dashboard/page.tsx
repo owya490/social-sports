@@ -23,35 +23,39 @@ export default function Dashboard() {
     <Loading />
   ) : (
     <div>
-      <FilterBanner />
-      <div className="pb-10 mx-[05vw] lg:mx-[3vw] xl:mx-[2vw]">
-        <div className="flex flex-wrap justify-center">
-          {eventData
-            .sort((event1, event2) => {
-              if (event1.accessCount > event2.accessCount) {
-                return 1;
-              }
-              if (event2.accessCount < event2.accessCount) {
-                return -1;
-              }
-              return 0;
-            })
-            .map((event, eventIdx) => {
-              return (
-                <div className="m-4" key={eventIdx}>
-                  <EventCard
-                    eventId={event.eventId}
-                    image={event.image}
-                    name={event.name}
-                    organiser={event.organiser}
-                    startTime={event.startDate}
-                    location={event.location}
-                    price={event.price}
-                    vacancy={event.vacancy}
-                  />
-                </div>
-              );
-            })}
+      <div className="flex justify-center">
+        <FilterBanner />
+      </div>
+      <div className="flex justify-center">
+        <div className="pb-10 w-[350px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {eventData
+              .sort((event1, event2) => {
+                if (event1.accessCount > event2.accessCount) {
+                  return 1;
+                }
+                if (event2.accessCount < event2.accessCount) {
+                  return -1;
+                }
+                return 0;
+              })
+              .map((event, eventIdx) => {
+                return (
+                  <div className="my-4" key={eventIdx}>
+                    <EventCard
+                      eventId={event.eventId}
+                      image={event.image}
+                      name={event.name}
+                      organiser={event.organiser}
+                      startTime={event.startDate}
+                      location={event.location}
+                      price={event.price}
+                      vacancy={event.vacancy}
+                    />
+                  </div>
+                );
+              })}
+          </div>
         </div>
       </div>
     </div>

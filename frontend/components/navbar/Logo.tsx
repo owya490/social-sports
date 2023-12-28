@@ -1,5 +1,5 @@
 import Image from "next/image";
-import LogoImage from "./../../public/images/Logo.png";
+import LogoImage from "./../../public/images/SportsHubLogo.png";
 
 export default function Logo() {
   return (
@@ -7,13 +7,10 @@ export default function Logo() {
       <Image
         src={LogoImage}
         alt="Logo"
-        width={50}
-        height={50}
-        className="w-12 mx-1"
+        width={0}
+        height={0}
+        className="w-80 mr-8"
       />
-      <h1 className="font-robotocondensed text-3xl font-extrabold mr-10">
-        SOCIAL SPORTS
-      </h1>
     </a>
   );
 }

@@ -3,18 +3,18 @@ import { timestampToEventCardDateString } from "@/services/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 
-interface IEventBanenr {
+interface IEventBanner {
   name: string;
   startDate: Timestamp;
   organiser: UserData;
   vacancy: number;
 }
 
-export default function EventBanner(props: IEventBanenr) {
+export default function EventBanner(props: IEventBanner) {
   return (
-    <div className="bg-white border-b-black border-1 border w-screen px-5 md:px-10 pt-20 shadow-lg">
-      <div className="grid md:grid-cols-3">
-        <div className="flex items-center col-span-2">
+    <div className="bg-white border-b-black border-1 border w-screen px-5 md:px-10 pt-20 shadow-lg flex justify-center">
+      <div className="w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+        <div className="flex items-center">
           <div className="mt-3">
             <p className="font-bold text-xs block md:hidden">
               {timestampToEventCardDateString(props.startDate)}

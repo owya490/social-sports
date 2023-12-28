@@ -12,7 +12,7 @@ export default function FilterIcon(props: IFilterIcon) {
     <div
       className={`${
         props.isFirst ? "mr-6 md:mr-8" : "min-w-[6rem] md:min-w-[8rem]"
-      } flex justify-center snap-center`}
+      } flex justify-center snap-start`}
     >
       <div>
         <div className="flex justify-center">
