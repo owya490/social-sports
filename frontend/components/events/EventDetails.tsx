@@ -22,7 +22,7 @@ export function EventDetails(props: IEventDetails) {
   const { eventData } = props;
   return (
     <div className="flex justify-center w-full">
-      <div className="pb-10 w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+      <div className="pb-10 screen-width-primary">
         <EventImage imageSrc={eventData.image} />
         <div className="lg:flex w-full mt-5">
           <div className="lg:hidden">

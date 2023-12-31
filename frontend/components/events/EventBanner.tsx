@@ -13,7 +13,7 @@ interface IEventBanner {
 export default function EventBanner(props: IEventBanner) {
   return (
     <div className="bg-white border-b-black border-1 border w-screen px-5 md:px-10 pt-20 shadow-lg flex justify-center">
-      <div className="w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+      <div className="screen-width-primary">
         <div className="flex items-center">
           <div className="mt-3">
             <p className="font-bold text-xs block md:hidden">

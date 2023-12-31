@@ -21,11 +21,12 @@ import {
 import { db } from "./firebase";
 import { getUserById } from "./usersService";
 
+const EVENTS_REFRESH_MINUTES = 5;
+
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
   try {
     const docRef = await addDoc(collection(db, "Events"), data);
-    console.log("test");
     return docRef.id;
   } catch (error) {
     console.error(error);
@@ -36,7 +37,6 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
 export async function getEventById(eventId: EventId): Promise<EventData> {
   try {
     const eventDoc = await getDoc(doc(db, "Events", eventId));
-    // console.log(eventDoc);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
     const event: EventData = {
       ...eventWithoutOrganiser,
@@ -54,19 +54,16 @@ export async function getAllEvents(): Promise<EventData[]> {
   const currentDate = new Date();
 
   if (
-    sessionStorage.getItem("eventsData") !== null &&
-    sessionStorage.getItem("lastFetchedEventData") !== null
+    localStorage.getItem("eventsData") !== null &&
+    localStorage.getItem("lastFetchedEventData") !== null
   ) {
-    console.log("hello");
-    const lastFetched = new Date(
-      sessionStorage.getItem("lastFetchedEventData")!
-    );
-    console.log(lastFetched);
-    if (currentDate.getUTCMinutes() - lastFetched.getUTCMinutes() < 3) {
-      console.log("owen");
-      console.log(JSON.parse(sessionStorage.getItem("eventsData")!));
-      // return JSON.parse(sessionStorage.getItem("eventsData")!);
-      return getEventsDataFromSessionStorage();
+    const lastFetched = new Date(localStorage.getItem("lastFetchedEventData")!);
+    if (
+      currentDate.getUTCMinutes() - lastFetched.getUTCMinutes() <
+      EVENTS_REFRESH_MINUTES
+    ) {
+      console.log(getEventsDataFromLocalStorage());
+      return getEventsDataFromLocalStorage();
     }
   }
   try {
@@ -74,7 +71,6 @@ export async function getAllEvents(): Promise<EventData[]> {
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
     const eventsData: EventData[] = [];
-    // await addDoc(collection(db, "Events"), eventsSnapshot.docs[0].data());
 
     eventsSnapshot.forEach((doc) => {
       const eventData = doc.data() as EventDataWithoutOrganiser;
@@ -89,9 +85,9 @@ export async function getAllEvents(): Promise<EventData[]> {
         organiser: organiser,
       });
     }
-    sessionStorage.setItem("eventsData", JSON.stringify(eventsData));
+    localStorage.setItem("eventsData", JSON.stringify(eventsData));
     const currentDateString = currentDate.toUTCString();
-    sessionStorage.setItem("lastFetchedEventData", currentDateString);
+    localStorage.setItem("lastFetchedEventData", currentDateString);
     return eventsData;
   } catch (error) {
     console.error(error);
@@ -175,17 +171,12 @@ export async function incrementEventAccessCountById(
   });
 }
 
-function getEventsDataFromSessionStorage() {
+function getEventsDataFromLocalStorage(): EventData[] {
   const eventsData: EventData[] = JSON.parse(
-    sessionStorage.getItem("eventsData")!
+    localStorage.getItem("eventsData")!
   );
-  console.log(eventsData);
   const eventsDataFinal: EventData[] = [];
-  // for (let event in eventsData) {
-  //   console.log(event);
-  // }
   eventsData.map((event) => {
-    console.log(event);
     eventsDataFinal.push({
       eventId: event.eventId,
       organiser: event.organiser as UserData,
@@ -193,14 +184,12 @@ function getEventsDataFromSessionStorage() {
         event.startDate.seconds,
         event.startDate.nanoseconds
       ),
-      // endDate: event.endDate as Timestamp,
       endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
       location: event.location,
       capacity: event.capacity,
       vacancy: event.vacancy,
       price: event.price,
       organiserId: event.organiserId,
-      // registrationDeadline: event.registrationDeadline,
       registrationDeadline: new Timestamp(
         event.registrationDeadline.seconds,
         event.registrationDeadline.nanoseconds
@@ -214,6 +203,5 @@ function getEventsDataFromSessionStorage() {
       accessCount: event.accessCount,
     });
   });
-  console.log(eventsDataFinal);
   return eventsDataFinal;
 }

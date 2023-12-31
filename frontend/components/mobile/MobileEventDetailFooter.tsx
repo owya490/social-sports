@@ -14,7 +14,7 @@ export default function MobileEventDetailFooter(
 ) {
   return (
     <div className="fixed bottom-0 h-16 bg-white w-full z-50 border-t-2 border-gray-300 py-2 px-3 flex justify-center">
-      <div className="w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+      <div className="screen-width-primary">
         {/* <div className="grid grid-cols-2"> */}
         <div className="flex items-center">
           <div className="w-1/2">

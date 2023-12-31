@@ -8,6 +8,7 @@ interface IEventImage {
 export default function EventImage(props: IEventImage) {
   return (
     <Image
+      priority={true}
       src={props.imageSrc}
       alt="..."
       width={0}

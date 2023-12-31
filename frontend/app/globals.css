@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .screen-width-primary {
+    @apply w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1400px];
+  }
+}

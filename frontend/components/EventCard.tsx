@@ -30,6 +30,7 @@ export default function EventCard(props: IEventCard) {
       }}
     >
       <Image
+        priority={true}
         src={props.image}
         height={0}
         width={0}
