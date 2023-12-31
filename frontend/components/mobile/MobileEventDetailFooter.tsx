@@ -35,7 +35,7 @@ export default function MobileEventDetailFooter(
           <div className="relative flex justify-center ml-auto">
             <a href="#">
               <div
-                className="text-lg rounded-2xl border border-black px-4 py-2"
+                className="text-lg rounded-lg border border-black px-4 py-2"
                 style={{
                   textAlign: "center",
                   position: "relative",

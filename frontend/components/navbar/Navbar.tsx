@@ -25,7 +25,7 @@ export default function Navbar() {
         <SearchBar />
         <div className="ml-auto flex items-center">
           <button
-            className="border border-black px-3 py-2 rounded-full mx-5 max-h-[40px] hidden lg:block"
+            className="border border-black px-3 py-2 rounded-lg mx-5 max-h-[40px] hidden lg:block"
             onClick={(e) => {
               window.open("https://www.google.com", "_self");
             }}
