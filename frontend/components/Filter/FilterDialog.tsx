@@ -69,7 +69,6 @@ export default function FilterDialog({
   }
 
   async function applyFilters() {
-    let hasFiltered: boolean = false;
     let filteredEventDataList = [...allEventsDataList];
 
     if (priceFilterEnabled) {
@@ -79,7 +78,6 @@ export default function FilterDialog({
         maxPriceSliderValue
       );
       filteredEventDataList = newEventDataList;
-      hasFiltered = true; // signify that we have filtered once
     }
 
     if (dateFilterEnabled && dateRange.startDate && dateRange.endDate) {
@@ -91,7 +89,6 @@ export default function FilterDialog({
         Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
       );
       filteredEventDataList = newEventDataList;
-      hasFiltered = true;
     }
 
     if (proximityFilterEnabled && maxProximitySliderValue !== null) {
@@ -115,16 +112,11 @@ export default function FilterDialog({
         srcLng
       );
       filteredEventDataList = newEventDataList;
-      hasFiltered = true;
     }
 
     // TODO: add more filters
 
-    if (!hasFiltered) {
-      setEventDataList([...allEventsDataList]);
-    } else {
-      setEventDataList([...filteredEventDataList]);
-    }
+    setEventDataList([...filteredEventDataList]);
 
     closeModal();
   }
