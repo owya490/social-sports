@@ -30,7 +30,7 @@ export default function FilterBanner() {
     });
   };
   return (
-    <div className="pt-16 bg-white px-4 sm:px-0 w-full sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+    <div className="pt-16 bg-white px-4 sm:px-0 screen-width-dashboard">
       <div className="h-20 flex items-center mt-2">
         <div
           id="filter-overflow"
