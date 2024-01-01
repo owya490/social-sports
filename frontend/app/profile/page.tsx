@@ -3,6 +3,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
 import { Fragment, useState } from "react";
 import DP from "./../../public/images/Ashley & Owen.png";
+import eye from "./../../public/images/Eye.png";
 
 const calculateAge = (birthday) => {
   const [day, month, year] = birthday.split("-");
@@ -22,7 +23,7 @@ const calculateAge = (birthday) => {
 };
 
 const initialProfileData = {
-  firstName: "Owen",
+  firstName: "Owenoo",
   lastName: "Yang",
   location: "Sydney, Australia",
   phoneNumber: "0468368618",
@@ -171,46 +172,44 @@ const Profile = () => {
   const editedAge = calculateAge(editedData.birthday);
 
   return (
-    <div className="relative mt-[100px] mb-[5%] mx-10 grid grid-cols-1 lg:grid-cols-5 2xl:grid-cols-7 gap-x-[10vw] lg:gap-x-[2vw] gap-y-[2vw] lg:gap-y-[1vw] 2xl:gap-y-[0.5vw] px-5 lg:px-10">
-      <div className="flex justify-center col-start-1 col-span-1 lg:col-span-5 lg:row-span-1 lg:row-start-1 2xl:col-span-7">
+    <div className="relative mt-[100px] mb-[5%] mx-10 grid grid-cols-1 lg:grid-cols-8 lg:gap-x-[2vw] lg:px-10">
+      <div className="flex justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-5 lg:col-span-4 lg:row-span-1 lg:row-start-1">
         <div
-          className="mb-5 2xl:mb-7 3xl:mb-9 text-3xl lg:text-4xl 3xl:text-5xl"
+          className="flex justify-center mb-5 lg:mb-8 3xl:mb-9 text-3xl lg:text-5xl 3xl:text-5xl"
           style={{ fontWeight: 500 }}
         >
           {initialProfileData.firstName}'s Profile
         </div>
       </div>
-      <div className="flex justify-center col-start-1 col-span-1 lg:col-span-5 lg:row-span-1 lg:row-start-2 2xl:col-span-7">
-        <div className="flex justify-center col-start-1 col-span-1 lg:col-span-5 lg:row-span-1 lg:row-start-2 2xl:col-span-7">
-          <div
-            className="border border-gray-500 w-[250px] lg:h-[250px] lg:w-[auto] 3xl:h-[310px] 3xl:w-[auto] lg:flex lg:items-center justify-center lg:p-4"
-            style={{ borderRadius: "20px" }}
-          >
-            <div className="lg:justify-center flex items-center mx-2 mt-4 lg:mt-0">
-              <Image
-                src={DP}
-                alt="DP"
-                width={0}
-                height={0}
-                className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64"
-              />
+      <div className="flex justify-center w-full lg:justify-end col-start-1 col-span-1 lg:col-span-4 lg:row-span-2 lg:row-start-1 mr-10">
+        <div
+          className=" lg:items-start lg:flex-row border border-gray-500 w-[250px] lg:h-[250px] w-[auto] 3xl:h-[310px] lg:flex lg:items-center lg:p-4"
+          style={{ borderRadius: "20px" }}
+        >
+          <div className="justify-center mx-5 lg:mx-3 mt-4 lg:mt-0">
+            <Image
+              src={DP}
+              alt="DP"
+              width={0}
+              height={0}
+              className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64"
+            />
+          </div>
+          <div className="flex flex-col justify-center lg:ml-3">
+            <div className="flex justify-center lg:justify-start mt-5 2xl:mt-7 3xl:mt-9 text-2xl 3xl:text-4xl font-semibold">
+              <span className="lg:whitespace-no-wrap">
+                {initialProfileData.firstName}{" "}
+                {initialProfileData.lastName?.slice(0, 1)}, {""}
+                {initialProfileData.age}
+              </span>
             </div>
-            <div className="flex flex-col justify-center lg:ml-3">
-              <div className="flex justify-center lg:justify-start mt-5 2xl:mt-7 3xl:mt-9 text-2xl 3xl:text-4xl font-semibold">
-                <span className="lg:whitespace-no-wrap">
-                  {initialProfileData.firstName}{" "}
-                  {initialProfileData.lastName?.slice(0, 1)}, {""}
-                  {initialProfileData.age}
-                </span>
-              </div>
-              <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-xl 3xl:text-2xl">
-                {initialProfileData.location}
-              </div>
+            <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-xl 3xl:text-2xl">
+              {initialProfileData.location}
             </div>
           </div>
         </div>
       </div>
-      {/* <div className="grid justify-center col-start-1 col-span-1 lg:col-start-3 lg:row-start-2 lg:row-span-3 mt-5 lg:mt-0 lg:ml-10 2xl:col-start-4 3xl:text-xl">
+      <div className="grid justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-5 lg:col-span-4 lg:row-start-2 lg:row-span-3 mt-5 lg:mt-0 3xl:text-xl">
         <div
           className="mb-5 2xl:mb-7 3xl:mb-9 text-3xl lg:text-4xl 3xl:text-5xl"
           style={{ fontWeight: 400 }}
@@ -255,7 +254,7 @@ const Profile = () => {
           )}
         </div>
       </div>
-      <div className="lg:flex justify-center lg:justify-end 3xl:justify-center col-start-1 col-span-1 lg:col-span-2 2xl:col-span-3 3xl:col-span-2 lg:col-start-4 lg:row-span-2 lg:row-start-1 2xl:col-start-5 3xl:col-start-5 hidden lg:block">
+      {/* <div className="lg:flex justify-center lg:justify-end 3xl:justify-center col-start-1 col-span-1 lg:col-span-2 2xl:col-span-3 3xl:col-span-2 lg:col-start-4 lg:row-span-2 lg:row-start-1 2xl:col-start-5 3xl:col-start-5 hidden lg:block">
         <div
           className="border border-gray-500 w-[250px] lg:w-[280px] 2xl:w-[400px] 3xl:w-[440px] h-fit lg:mr-5 2xl:mr-10 mt-4 lg:mt-0"
           style={{ borderRadius: "20px" }}
