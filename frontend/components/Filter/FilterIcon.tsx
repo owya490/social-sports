@@ -1,13 +1,13 @@
 import Image, { StaticImageData } from "next/image";
 
-interface IFilterIcon {
+interface FilterIconProps {
   name: string;
   image: StaticImageData;
   style: string;
   isFirst: boolean;
 }
 
-export default function FilterIcon(props: IFilterIcon) {
+export default function FilterIcon(props: FilterIconProps) {
   return (
     <div
       className={`${

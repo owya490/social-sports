@@ -3,7 +3,6 @@ import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
 import { Fragment, useState } from "react";
 import DP from "./../../public/images/Ashley & Owen.png";
-import eye from "./../../public/images/Eye.png";
 
 const calculateAge = (birthday) => {
   const [day, month, year] = birthday.split("-");
@@ -173,7 +172,7 @@ const Profile = () => {
 
   return (
     <div className="relative mt-[100px] mb-[5%] mx-10 grid grid-cols-1 lg:grid-cols-5 2xl:grid-cols-7 gap-x-[10vw] lg:gap-x-[2vw] gap-y-[2vw] lg:gap-y-[1vw] 2xl:gap-y-[0.5vw] px-5 lg:px-10">
-      <div className="flex justify-center col-start-1 col-span-1 lg:col-span-2 lg:row-span-1 lg:row-start-1 2xl:col-start-2">
+      <div className="flex justify-center col-start-1 col-span-1 lg:col-span-5 lg:row-span-1 lg:row-start-1 2xl:col-span-7">
         <div
           className="mb-5 2xl:mb-7 3xl:mb-9 text-3xl lg:text-4xl 3xl:text-5xl"
           style={{ fontWeight: 500 }}
@@ -181,13 +180,13 @@ const Profile = () => {
           {initialProfileData.firstName}'s Profile
         </div>
       </div>
-      <div className="flex justify-center col-start-1 col-span-1 lg:col-span-2 lg:row-span-1 lg:row-start-2 2xl:col-start-2">
-        <div
-          className="border border-gray-500 w-[250px] 2xl-[280px] 3xl:w-[320px]"
-          style={{ borderRadius: "20px" }}
-        >
-          <div className="grid justify-center mt-5">
-            <div className="relative inline-block rounded-full object-cover object-center border border-black overflow-hidden mx-2">
+      <div className="flex justify-center col-start-1 col-span-1 lg:col-span-5 lg:row-span-1 lg:row-start-2 2xl:col-span-7">
+        <div className="flex justify-center col-start-1 col-span-1 lg:col-span-5 lg:row-span-1 lg:row-start-2 2xl:col-span-7">
+          <div
+            className="border border-gray-500 w-[250px] lg:h-[250px] lg:w-[auto] 3xl:h-[310px] 3xl:w-[auto] lg:flex lg:items-center justify-center lg:p-4"
+            style={{ borderRadius: "20px" }}
+          >
+            <div className="lg:justify-center flex items-center mx-2 mt-4 lg:mt-0">
               <Image
                 src={DP}
                 alt="DP"
@@ -196,22 +195,49 @@ const Profile = () => {
                 className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64"
               />
             </div>
-          </div>
-          <div className="flex justify-center mt-5 2xl:mt-7 3xl:mt-9 text-2xl 3xl:text-4xl font-semibold">
-            {initialProfileData.firstName}{" "}
-            {initialProfileData.lastName?.slice(0, 1)}, {initialProfileData.age}
-          </div>
-          <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-lg 2xl:text-xl 3xl:text-2xl">
-            {initialProfileData.location}
+            <div className="flex flex-col justify-center lg:ml-3">
+              <div className="flex justify-center lg:justify-start mt-5 2xl:mt-7 3xl:mt-9 text-2xl 3xl:text-4xl font-semibold">
+                <span className="lg:whitespace-no-wrap">
+                  {initialProfileData.firstName}{" "}
+                  {initialProfileData.lastName?.slice(0, 1)}, {""}
+                  {initialProfileData.age}
+                </span>
+              </div>
+              <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-xl 3xl:text-2xl">
+                {initialProfileData.location}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div className="grid justify-center col-start-1 col-span-1 lg:col-start-3 lg:row-span-3 mt-5 lg:mt-0 lg:ml-10 2xl:col-start-4 3xl:text-xl">
+      {/* <div className="grid justify-center col-start-1 col-span-1 lg:col-start-3 lg:row-start-2 lg:row-span-3 mt-5 lg:mt-0 lg:ml-10 2xl:col-start-4 3xl:text-xl">
+        <div
+          className="mb-5 2xl:mb-7 3xl:mb-9 text-3xl lg:text-4xl 3xl:text-5xl"
+          style={{ fontWeight: 400 }}
+        >
+          Name
+        </div>
         <ul>
           {renderField("Given Name", "firstName")}
           {renderField("Surname", "lastName")}
+        </ul>
+        <div
+          className="mb-5 2xl:mb-7 3xl:mb-9 text-3xl lg:text-4xl 3xl:text-5xl"
+          style={{ fontWeight: 400 }}
+        >
+          Contact Info
+        </div>
+        <ul>
           {renderField("Email", "email")}
           {renderField("Phone Number", "phoneNumber")}
+        </ul>
+        <div
+          className="mb-5 2xl:mb-7 3xl:mb-9 text-3xl lg:text-4xl 3xl:text-5xl"
+          style={{ fontWeight: 400 }}
+        >
+          About Me
+        </div>
+        <ul>
           {renderField("Location", "location")}
           {renderField("Date of Birth", "birthday")}
           {renderField("Password", "password")}{" "}
@@ -254,7 +280,7 @@ const Profile = () => {
             event you are attending.
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

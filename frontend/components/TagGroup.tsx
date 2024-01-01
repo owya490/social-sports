@@ -1,12 +1,12 @@
 import { Tag as TagModel } from "@/interfaces/TagTypes";
 import Tag from "./Tag";
 
-interface ITagGroup {
+interface TagGroupProps {
   tags: TagModel[];
   size?: "sm" | "md" | "lg";
 }
 
-export function TagGroup(props: ITagGroup) {
+export function TagGroup(props: TagGroupProps) {
   return (
     <>
       {props.tags.map((tag, idx) => {

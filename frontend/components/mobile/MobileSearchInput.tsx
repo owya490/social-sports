@@ -10,13 +10,13 @@ import { useEffect, useState } from "react";
 import { TagGroup } from "../TagGroup";
 import { deserialize_list, serialize_list } from "../utility/listUtils";
 
-interface IMobileSearchInput {
+interface MobileSearchInputProps {
   searchExpanded: boolean;
   setSearchExpanded: () => void;
   tags: Tag[];
 }
 
-export default function MobileSearchInput(props: IMobileSearchInput) {
+export default function MobileSearchInput(props: MobileSearchInputProps) {
   const { searchExpanded, setSearchExpanded, tags } = props;
   const [searchPhrase, setSearchPhrase] = useState("");
   const [searchLocation, setSearchLocation] = useState("Sydney");

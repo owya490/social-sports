@@ -1,15 +1,67 @@
+"use client";
+
 import { Dialog, Transition } from "@headlessui/react";
 import {
   AdjustmentsHorizontalIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Checkbox, Slider } from "@material-tailwind/react";
+import { Checkbox, Slider, Input } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
-import ListBox from "../ListBox";
+import ListBox from "../../components/ListBox";
+import { EventData } from "@/interfaces/EventTypes";
+import {
+  filterEventsByDate,
+  filterEventsByMaxProximity,
+  filterEventsByPrice,
+} from "@/services/filterService";
+import { Timestamp } from "firebase/firestore";
+import { getLocationCoordinates } from "@/services/locationUtils";
+const geofire = require("geofire-common");
 
-export default function FitlerDialog() {
+const DAY_START_TIME_STRING = " 00:00:00";
+const DAY_END_TIME_STRING = " 23:59:59";
+
+interface FilterDialogProps {
+  eventDataList: EventData[];
+  allEventsDataList: EventData[];
+  setEventDataList: React.Dispatch<React.SetStateAction<any>>;
+}
+
+export default function FilterDialog({
+  eventDataList,
+  allEventsDataList,
+  setEventDataList,
+}: FilterDialogProps) {
   let [isOpen, setIsOpen] = useState(false);
+  const [priceFilterEnabled, setPriceFilterEnabled] = useState(false);
+  const [dateFilterEnabled, setDateFilterEnabled] = useState(false);
+  const [proximityFilterEnabled, setProximityFilterEnabled] = useState(false);
+  const [eventDataListToFilter, setEventDataListToFilter] = useState([
+    ...allEventsDataList,
+  ]);
+  const [maxPriceSliderValue, setMaxPriceSliderValue] = useState(25);
+  const [dateRange, setDateRange] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+  }>({
+    startDate: null,
+    endDate: null,
+  });
+  const [maxProximitySliderValue, setMaxProximitySliderValue] =
+    useState<number>(25); // max proximity in kms.
+
+  const handleDateRangeChange = (dateRange: any) => {
+    if (dateRange.startDate && dateRange.endDate) {
+      let timestampDateRange = {
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      };
+
+      setDateRange(timestampDateRange);
+    }
+  };
+  const [srcLocation, setSrcLocation] = useState<string>("");
 
   function closeModal() {
     setIsOpen(false);
@@ -19,19 +71,68 @@ export default function FitlerDialog() {
     setIsOpen(true);
   }
 
-  const [maxSliderValue, setMaxSliderValue] = useState(25);
+  async function applyFilters() {
+    let hasFiltered: boolean = false;
+    setEventDataListToFilter([...allEventsDataList]);
 
-  const [dateRange, setDateRange] = useState({
-    startDate: null,
-    endDate: null,
-  });
+    if (priceFilterEnabled) {
+      const newEventDataList = filterEventsByPrice(
+        [...eventDataListToFilter],
+        null,
+        maxPriceSliderValue
+      );
+      setEventDataList(newEventDataList);
+      hasFiltered = true; // signify that we have filtered once
+    }
 
-  const handleDateRangeChange = (dateRange: any) => {
-    setDateRange(dateRange);
-  };
+    if (hasFiltered) {
+      setEventDataListToFilter([...eventDataList]);
+    }
 
-  const [priceFilterEnabled, setPriceFilterEnabled] = useState(false);
-  const [dateFilterEnabled, setDateFilterEnabled] = useState(false);
+    if (dateFilterEnabled && dateRange.startDate && dateRange.endDate) {
+      const newEventDataList = filterEventsByDate(
+        [...eventDataListToFilter],
+        Timestamp.fromDate(
+          new Date(dateRange.startDate + DAY_START_TIME_STRING)
+        ), // TODO: needed to specify maximum time range on particular day.
+        Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
+      );
+      setEventDataList(newEventDataList);
+      hasFiltered = true;
+    }
+
+    if (proximityFilterEnabled && maxProximitySliderValue !== null) {
+      const SYDNEY_LAT = -31.9523;
+      const SYDNEY_LNG = 115.8613;
+
+      let srcLat = SYDNEY_LAT;
+      let srcLng = SYDNEY_LNG;
+      try {
+        const { lat, lng } = await getLocationCoordinates(srcLocation);
+        srcLat = lat;
+        srcLng = lng;
+      } catch (error) {
+        console.log(error);
+      }
+
+      const newEventDataList = filterEventsByMaxProximity(
+        [...eventDataListToFilter],
+        maxProximitySliderValue,
+        srcLat,
+        srcLng
+      );
+      setEventDataList(newEventDataList);
+      hasFiltered = true;
+    }
+
+    // TODO: add more filters
+
+    if (!hasFiltered) {
+      setEventDataList([...allEventsDataList]);
+    }
+
+    closeModal();
+  }
 
   return (
     <>
@@ -108,10 +209,10 @@ export default function FitlerDialog() {
                           Max Price
                         </p>
                         <Checkbox
+                          checked={priceFilterEnabled}
                           className="h-4"
                           crossOrigin={undefined}
                           onChange={() => {
-                            console.log(priceFilterEnabled);
                             setPriceFilterEnabled(!priceFilterEnabled);
                           }}
                         />
@@ -122,7 +223,7 @@ export default function FitlerDialog() {
                             priceFilterEnabled ? "mr-2" : "mr-2 opacity-50"
                           }
                         >
-                          ${maxSliderValue}
+                          ${maxPriceSliderValue}
                         </p>
                         {priceFilterEnabled ? (
                           <Slider
@@ -131,9 +232,9 @@ export default function FitlerDialog() {
                             step={1}
                             min={0}
                             max={100}
-                            value={maxSliderValue}
+                            value={maxPriceSliderValue}
                             onChange={(e) =>
-                              setMaxSliderValue(parseInt(e.target.value))
+                              setMaxPriceSliderValue(parseInt(e.target.value))
                             }
                           />
                         ) : (
@@ -142,7 +243,7 @@ export default function FitlerDialog() {
                             className="h-1 opacity-50"
                             step={1}
                             min={0}
-                            value={maxSliderValue}
+                            value={maxPriceSliderValue}
                           />
                         )}
                       </div>
@@ -159,11 +260,12 @@ export default function FitlerDialog() {
                           Date Range
                         </p>
                         <Checkbox
+                          checked={dateFilterEnabled}
                           className="h-4"
                           crossOrigin={undefined}
-                          onChange={() =>
-                            setDateFilterEnabled(!dateFilterEnabled)
-                          }
+                          onChange={() => {
+                            setDateFilterEnabled(!dateFilterEnabled);
+                          }}
                         />
                       </div>
 
@@ -178,19 +280,74 @@ export default function FitlerDialog() {
                         disabled={!dateFilterEnabled}
                       />
                     </div>
+                    <div className="pb-5">
+                      <div className="flex items-center">
+                        <p
+                          className={
+                            proximityFilterEnabled
+                              ? "text-lg font-bold"
+                              : "text-lg font-bold text-gray-500"
+                          }
+                        >
+                          Max Proximity
+                        </p>
+                        <Checkbox
+                          checked={proximityFilterEnabled}
+                          className="h-4"
+                          crossOrigin={undefined}
+                          onChange={() => {
+                            setProximityFilterEnabled(!proximityFilterEnabled);
+                          }}
+                        />
+                      </div>
+                      <p
+                        className={
+                          proximityFilterEnabled ? "mr-2" : "mr-2 opacity-50"
+                        }
+                      >
+                        {maxProximitySliderValue} km
+                      </p>
+                      {proximityFilterEnabled ? (
+                        <Slider
+                          color="blue"
+                          className="h-1"
+                          step={1}
+                          min={0}
+                          max={100}
+                          value={maxProximitySliderValue}
+                          onChange={(e) =>
+                            setMaxProximitySliderValue(parseInt(e.target.value))
+                          }
+                        />
+                      ) : (
+                        <Slider
+                          color="blue"
+                          className="h-1 opacity-50"
+                          step={1}
+                          min={0}
+                          value={maxProximitySliderValue}
+                        />
+                      )}
+                    </div>
+                    <Input
+                      variant="outlined"
+                      label="Search Location"
+                      crossOrigin="true"
+                      value={srcLocation}
+                      onChange={({ target }) => setSrcLocation(target.value)}
+                    />
                   </div>
 
                   <div className="mt-5 w-full flex items-center">
                     <button
                       className="hover:underline cursor-pointer"
                       onClick={() => {
-                        setMaxSliderValue(25);
-                        setPriceFilterEnabled(false);
+                        setMaxPriceSliderValue(25);
                         setDateRange({
                           startDate: null,
                           endDate: null,
                         });
-                        setDateFilterEnabled(false);
+                        setMaxProximitySliderValue(100);
                       }}
                     >
                       Clear all
@@ -198,7 +355,7 @@ export default function FitlerDialog() {
                     <button
                       type="button"
                       className="ml-auto inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                      onClick={closeModal}
+                      onClick={applyFilters}
                     >
                       Apply Filters!
                     </button>
