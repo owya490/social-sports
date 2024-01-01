@@ -37,9 +37,6 @@ export default function FilterDialog({
   const [priceFilterEnabled, setPriceFilterEnabled] = useState(false);
   const [dateFilterEnabled, setDateFilterEnabled] = useState(false);
   const [proximityFilterEnabled, setProximityFilterEnabled] = useState(false);
-  const [eventDataListToFilter, setEventDataListToFilter] = useState([
-    ...allEventsDataList,
-  ]);
   const [maxPriceSliderValue, setMaxPriceSliderValue] = useState(25);
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
@@ -73,31 +70,27 @@ export default function FilterDialog({
 
   async function applyFilters() {
     let hasFiltered: boolean = false;
-    setEventDataListToFilter([...allEventsDataList]);
+    let filteredEventDataList = [...allEventsDataList];
 
     if (priceFilterEnabled) {
       const newEventDataList = filterEventsByPrice(
-        [...eventDataListToFilter],
+        [...filteredEventDataList],
         null,
         maxPriceSliderValue
       );
-      setEventDataList(newEventDataList);
+      filteredEventDataList = newEventDataList;
       hasFiltered = true; // signify that we have filtered once
-    }
-
-    if (hasFiltered) {
-      setEventDataListToFilter([...eventDataList]);
     }
 
     if (dateFilterEnabled && dateRange.startDate && dateRange.endDate) {
       const newEventDataList = filterEventsByDate(
-        [...eventDataListToFilter],
+        [...filteredEventDataList],
         Timestamp.fromDate(
           new Date(dateRange.startDate + DAY_START_TIME_STRING)
         ), // TODO: needed to specify maximum time range on particular day.
         Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
       );
-      setEventDataList(newEventDataList);
+      filteredEventDataList = newEventDataList;
       hasFiltered = true;
     }
 
@@ -116,12 +109,12 @@ export default function FilterDialog({
       }
 
       const newEventDataList = filterEventsByMaxProximity(
-        [...eventDataListToFilter],
+        [...filteredEventDataList],
         maxProximitySliderValue,
         srcLat,
         srcLng
       );
-      setEventDataList(newEventDataList);
+      filteredEventDataList = newEventDataList;
       hasFiltered = true;
     }
 
@@ -129,6 +122,8 @@ export default function FilterDialog({
 
     if (!hasFiltered) {
       setEventDataList([...allEventsDataList]);
+    } else {
+      setEventDataList([...filteredEventDataList]);
     }
 
     closeModal();
