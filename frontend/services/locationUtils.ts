@@ -1,8 +1,10 @@
 import axios from "axios";
 
 // For some reason, need to require geofire-common to use methods???
-const geofireObj = require("geofire-common");
-import geofire from "geofire-common";
+const geofire = require("geofire-common");
+
+export const SYDNEY_LAT = -33.8688;
+export const SYDNEY_LNG = 151.2093;
 
 export async function getLocationCoordinates(
   locationName: string
@@ -30,5 +32,5 @@ export function getDistanceBetweenTwoCoords(
   [lat1, lng1]: [number, number],
   [lat2, lng2]: [number, number]
 ): number {
-  return geofireObj.distanceBetween([lat1, lng1], [lat2, lng2]);
+  return geofire.distanceBetween([lat1, lng1], [lat2, lng2]);
 }

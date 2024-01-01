@@ -16,8 +16,11 @@ import {
   filterEventsByPrice,
 } from "@/services/filterService";
 import { Timestamp } from "firebase/firestore";
-import { getLocationCoordinates } from "@/services/locationUtils";
-const geofire = require("geofire-common");
+import {
+  SYDNEY_LAT,
+  SYDNEY_LNG,
+  getLocationCoordinates,
+} from "@/services/locationUtils";
 
 const DAY_START_TIME_STRING = " 00:00:00";
 const DAY_END_TIME_STRING = " 23:59:59";
@@ -92,9 +95,6 @@ export default function FilterDialog({
     }
 
     if (proximityFilterEnabled && maxProximitySliderValue !== null) {
-      const SYDNEY_LAT = -31.9523;
-      const SYDNEY_LNG = 115.8613;
-
       let srcLat = SYDNEY_LAT;
       let srcLng = SYDNEY_LNG;
       try {
@@ -219,10 +219,19 @@ export default function FilterDialog({
                             step={1}
                             min={0}
                             max={100}
-                            value={maxPriceSliderValue}
-                            onChange={(e) =>
-                              setMaxPriceSliderValue(parseInt(e.target.value))
+                            defaultValue={
+                              maxPriceSliderValue === 0
+                                ? 0
+                                : maxPriceSliderValue
                             }
+                            value={
+                              maxPriceSliderValue === 0
+                                ? 0
+                                : maxPriceSliderValue
+                            }
+                            onChange={(e) => {
+                              setMaxPriceSliderValue(parseInt(e.target.value));
+                            }}
                           />
                         ) : (
                           <Slider
@@ -230,6 +239,8 @@ export default function FilterDialog({
                             className="h-1 opacity-50"
                             step={1}
                             min={0}
+                            max={100}
+                            defaultValue={maxPriceSliderValue}
                             value={maxPriceSliderValue}
                           />
                         )}
@@ -258,7 +269,6 @@ export default function FilterDialog({
 
                       <Datepicker
                         value={dateRange}
-                        // useRange={false}
                         minDate={new Date()}
                         separator="to"
                         displayFormat={"DD/MM/YYYY"}
@@ -301,7 +311,16 @@ export default function FilterDialog({
                           step={1}
                           min={0}
                           max={100}
-                          value={maxProximitySliderValue}
+                          defaultValue={
+                            maxProximitySliderValue === 0
+                              ? 0
+                              : maxProximitySliderValue
+                          }
+                          value={
+                            maxProximitySliderValue === 0
+                              ? 0
+                              : maxProximitySliderValue
+                          }
                           onChange={(e) =>
                             setMaxProximitySliderValue(parseInt(e.target.value))
                           }
@@ -312,6 +331,8 @@ export default function FilterDialog({
                           className="h-1 opacity-50"
                           step={1}
                           min={0}
+                          max={100}
+                          defaultValue={maxProximitySliderValue}
                           value={maxProximitySliderValue}
                         />
                       )}
