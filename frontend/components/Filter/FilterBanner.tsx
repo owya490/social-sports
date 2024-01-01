@@ -1,3 +1,5 @@
+import { EventData } from "@/interfaces/EventTypes";
+import { useState } from "react";
 import ChevronRightButton from "../utility/ChevronRightButton";
 import BadmintonImage from "./../../public/images/badminton.png";
 import BaseballImage from "./../../public/images/baseball.png";
@@ -9,7 +11,6 @@ import TennisImage from "./../../public/images/tennis-balls.png";
 import VolleyballImage from "./../../public/images/volleyball.png";
 import FitlerDialog from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
-import { EventData } from "@/interfaces/EventTypes";
 
 interface FilterBannerProps {
   eventDataList: EventData[];
@@ -33,6 +34,8 @@ export default function FilterBanner({
     Baseball: { image: BaseballImage, style: "w-8 h-8" },
   };
 
+  const [selectedSport, setSelectedSport] = useState("");
+
   const scroll = () => {
     document.getElementById("filter-overflow")?.scrollBy({
       top: 0,
@@ -40,6 +43,7 @@ export default function FilterBanner({
       behavior: "smooth",
     });
   };
+
   return (
     <div className="pt-16 bg-white px-4 sm:px-0 screen-width-dashboard">
       <div className="h-20 flex items-center mt-2">
@@ -56,6 +60,10 @@ export default function FilterBanner({
                   style={entry[1].style}
                   name={entry[0]}
                   isFirst={true}
+                  setEventDataList={setEventDataList}
+                  allEventsDataList={allEventsDataList}
+                  selectedSport={selectedSport}
+                  setSelectedSport={setSelectedSport}
                 />
               );
             }
@@ -66,6 +74,10 @@ export default function FilterBanner({
                 style={entry[1].style}
                 name={entry[0]}
                 isFirst={false}
+                setEventDataList={setEventDataList}
+                allEventsDataList={allEventsDataList}
+                selectedSport={selectedSport}
+                setSelectedSport={setSelectedSport}
               />
             );
           })}

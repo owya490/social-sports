@@ -12,7 +12,7 @@ export default function Navbar() {
   };
   const [isHome, setIsHome] = useState(true);
   useEffect(() => {
-    setIsHome(window.location.href.includes("/home"));
+    setIsHome(window.location.pathname === "/");
   }, []);
   return (
     <div

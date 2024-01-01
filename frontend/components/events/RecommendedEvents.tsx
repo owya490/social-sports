@@ -6,7 +6,7 @@ import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
 
 interface RecommendedEventsProps {
-  eventData: EventData;
+  eventData?: EventData;
 }
 
 export default function RecommendedEvents(props: RecommendedEventsProps) {

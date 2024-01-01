@@ -22,7 +22,7 @@ import {
 import { db } from "./firebase";
 import { getUserById } from "./usersService";
 
-const EVENTS_REFRESH_MINUTES = 5;
+const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
@@ -59,15 +59,12 @@ export async function getAllEvents(): Promise<EventData[]> {
     localStorage.getItem("lastFetchedEventData") !== null
   ) {
     const lastFetched = new Date(localStorage.getItem("lastFetchedEventData")!);
-    if (
-      currentDate.getUTCMinutes() - lastFetched.getUTCMinutes() <
-      EVENTS_REFRESH_MINUTES
-    ) {
-      console.log(getEventsDataFromLocalStorage());
+    if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
       return getEventsDataFromLocalStorage();
     }
   }
   try {
+    console.log("Getting events from DB");
     const eventCollectionRef = collection(db, "Events");
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
@@ -202,6 +199,11 @@ function getEventsDataFromLocalStorage(): EventData[] {
       isActive: event.isActive,
       attendees: event.attendees,
       accessCount: event.accessCount,
+      sport: event.sport,
+      locationLatLng: {
+        lat: event.locationLatLng.lat,
+        lng: event.locationLatLng.lng,
+      },
     });
   });
   return eventsDataFinal;
