@@ -3,7 +3,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { Fragment, useState } from "react";
 
-interface IListBox {
+interface ListBoxProps {
   onChangeHandler: (e: any) => void;
   options: IOption[];
   textSize?: "xs" | "sm" | "md" | "lg" | "xl";
@@ -14,7 +14,7 @@ export interface IOption {
   value: any;
 }
 
-export default function ListBox(props: IListBox) {
+export default function ListBox(props: ListBoxProps) {
   const [selected, setSelected] = useState(props.options[0]);
 
   return (

@@ -6,12 +6,12 @@ import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
 
-interface IEventDetails {
+interface EventDetailsProps {
   eventData: EventData;
   eventTags: Tag[];
 }
 
-export function EventDetails(props: IEventDetails) {
+export function EventDetails(props: EventDetailsProps) {
   // const title = "Sydney Thunder Volleyball Women's Training";
   // const description = [
   //     "Women’s sessions are for female players who are looking to increase their skill and will be focused solely on training and building game experience.",

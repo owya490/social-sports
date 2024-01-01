@@ -5,11 +5,11 @@ import EventCard from "../EventCard";
 import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
 
-interface IRecommendedEvents {
+interface RecommendedEventsProps {
   eventData: EventData;
 }
 
-export default function RecommendedEvents(props: IRecommendedEvents) {
+export default function RecommendedEvents(props: RecommendedEventsProps) {
   const { eventData } = props;
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
