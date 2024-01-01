@@ -16,8 +16,11 @@ import {
   filterEventsByPrice,
 } from "@/services/filterService";
 import { Timestamp } from "firebase/firestore";
-import { getLocationCoordinates } from "@/services/locationUtils";
-const geofire = require("geofire-common");
+import {
+  SYDNEY_LAT,
+  SYDNEY_LNG,
+  getLocationCoordinates,
+} from "@/services/locationUtils";
 
 const DAY_START_TIME_STRING = " 00:00:00";
 const DAY_END_TIME_STRING = " 23:59:59";
@@ -37,9 +40,6 @@ export default function FilterDialog({
   const [priceFilterEnabled, setPriceFilterEnabled] = useState(false);
   const [dateFilterEnabled, setDateFilterEnabled] = useState(false);
   const [proximityFilterEnabled, setProximityFilterEnabled] = useState(false);
-  const [eventDataListToFilter, setEventDataListToFilter] = useState([
-    ...allEventsDataList,
-  ]);
   const [maxPriceSliderValue, setMaxPriceSliderValue] = useState(25);
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
@@ -72,39 +72,29 @@ export default function FilterDialog({
   }
 
   async function applyFilters() {
-    let hasFiltered: boolean = false;
-    setEventDataListToFilter([...allEventsDataList]);
+    let filteredEventDataList = [...allEventsDataList];
 
     if (priceFilterEnabled) {
       const newEventDataList = filterEventsByPrice(
-        [...eventDataListToFilter],
+        [...filteredEventDataList],
         null,
         maxPriceSliderValue
       );
-      setEventDataList(newEventDataList);
-      hasFiltered = true; // signify that we have filtered once
-    }
-
-    if (hasFiltered) {
-      setEventDataListToFilter([...eventDataList]);
+      filteredEventDataList = newEventDataList;
     }
 
     if (dateFilterEnabled && dateRange.startDate && dateRange.endDate) {
       const newEventDataList = filterEventsByDate(
-        [...eventDataListToFilter],
+        [...filteredEventDataList],
         Timestamp.fromDate(
           new Date(dateRange.startDate + DAY_START_TIME_STRING)
         ), // TODO: needed to specify maximum time range on particular day.
         Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
       );
-      setEventDataList(newEventDataList);
-      hasFiltered = true;
+      filteredEventDataList = newEventDataList;
     }
 
     if (proximityFilterEnabled && maxProximitySliderValue !== null) {
-      const SYDNEY_LAT = -31.9523;
-      const SYDNEY_LNG = 115.8613;
-
       let srcLat = SYDNEY_LAT;
       let srcLng = SYDNEY_LNG;
       try {
@@ -116,20 +106,17 @@ export default function FilterDialog({
       }
 
       const newEventDataList = filterEventsByMaxProximity(
-        [...eventDataListToFilter],
+        [...filteredEventDataList],
         maxProximitySliderValue,
         srcLat,
         srcLng
       );
-      setEventDataList(newEventDataList);
-      hasFiltered = true;
+      filteredEventDataList = newEventDataList;
     }
 
     // TODO: add more filters
 
-    if (!hasFiltered) {
-      setEventDataList([...allEventsDataList]);
-    }
+    setEventDataList([...filteredEventDataList]);
 
     closeModal();
   }
@@ -232,10 +219,19 @@ export default function FilterDialog({
                             step={1}
                             min={0}
                             max={100}
-                            value={maxPriceSliderValue}
-                            onChange={(e) =>
-                              setMaxPriceSliderValue(parseInt(e.target.value))
+                            defaultValue={
+                              maxPriceSliderValue === 0
+                                ? 0
+                                : maxPriceSliderValue
                             }
+                            value={
+                              maxPriceSliderValue === 0
+                                ? 0
+                                : maxPriceSliderValue
+                            }
+                            onChange={(e) => {
+                              setMaxPriceSliderValue(parseInt(e.target.value));
+                            }}
                           />
                         ) : (
                           <Slider
@@ -243,6 +239,8 @@ export default function FilterDialog({
                             className="h-1 opacity-50"
                             step={1}
                             min={0}
+                            max={100}
+                            defaultValue={maxPriceSliderValue}
                             value={maxPriceSliderValue}
                           />
                         )}
@@ -271,7 +269,6 @@ export default function FilterDialog({
 
                       <Datepicker
                         value={dateRange}
-                        // useRange={false}
                         minDate={new Date()}
                         separator="to"
                         displayFormat={"DD/MM/YYYY"}
@@ -314,7 +311,16 @@ export default function FilterDialog({
                           step={1}
                           min={0}
                           max={100}
-                          value={maxProximitySliderValue}
+                          defaultValue={
+                            maxProximitySliderValue === 0
+                              ? 0
+                              : maxProximitySliderValue
+                          }
+                          value={
+                            maxProximitySliderValue === 0
+                              ? 0
+                              : maxProximitySliderValue
+                          }
                           onChange={(e) =>
                             setMaxProximitySliderValue(parseInt(e.target.value))
                           }
@@ -325,6 +331,8 @@ export default function FilterDialog({
                           className="h-1 opacity-50"
                           step={1}
                           min={0}
+                          max={100}
+                          defaultValue={maxProximitySliderValue}
                           value={maxProximitySliderValue}
                         />
                       )}

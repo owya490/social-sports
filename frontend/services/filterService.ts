@@ -2,12 +2,9 @@ import {
   QueryFieldFilterConstraint,
   Timestamp,
   collection,
-  endAt,
   getDocs,
   limit,
-  orderBy,
   query,
-  startAt,
   where,
 } from "firebase/firestore";
 import { db } from "./firebase";
