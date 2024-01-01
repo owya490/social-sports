@@ -6,6 +6,8 @@ import CreateEventTimeline from "@/components/events/create/CreateEventTimeline"
 import { CreateEventPage1 } from "@/components/events/create/CreateEventPage1";
 import { CreateEventPage2 } from "@/components/events/create/CreateEventPage2";
 import CreateEventTimeslot from "@/components/events/create/CreateEventTimeslot";
+import { CreateEventDescription } from "@/components/events/create/CreateEventDescription";
+import ImageUpload from "@/components/ImageUpload"; // Import ImageUpload component
 
 import Button from "@/components/Button";
 
@@ -34,7 +36,13 @@ export default function CreateEvent() {
 
             {currentStep === 1 && <CreateEventPage1 />}
             {currentStep === 2 && <CreateEventPage2 />}
-            {currentStep === 3 && <CreateEventTimeslot />}
+            {currentStep === 3 && (
+                <>
+                    <CreateEventTimeslot />
+                    <ImageUpload /> {/* Render both components at step 3 */}
+                </>
+            )}
+            {currentStep === 4 && <CreateEventDescription />}
 
             <Button
                 currentStep={currentStep}
