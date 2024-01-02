@@ -41,10 +41,7 @@ export default function FilterDialog({
   allEventsDataList,
   setEventDataList,
 }: FilterDialogProps) {
-  let [isOpen, setIsOpen] = useState(false);
-  const [priceFilterEnabled, setPriceFilterEnabled] = useState(true);
-  const [dateFilterEnabled, setDateFilterEnabled] = useState(true);
-  const [proximityFilterEnabled, setProximityFilterEnabled] = useState(true);
+  let [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [maxPriceSliderValue, setMaxPriceSliderValue] =
     useState(DEFAULT_MAX_PRICE);
   const [dateRange, setDateRange] = useState<{
@@ -77,11 +74,11 @@ export default function FilterDialog({
   const [srcLocation, setSrcLocation] = useState<string>("");
 
   function closeModal() {
-    setIsOpen(false);
+    setIsFilterModalOpen(false);
   }
 
   function openModal() {
-    setIsOpen(true);
+    setIsFilterModalOpen(true);
   }
 
   async function applyFilters() {
@@ -155,7 +152,7 @@ export default function FilterDialog({
         <AdjustmentsHorizontalIcon className="w-7 ml-1" />
       </button>
 
-      <Transition appear show={isOpen} as={Fragment}>
+      <Transition appear show={isFilterModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
             as={Fragment}
@@ -209,85 +206,32 @@ export default function FilterDialog({
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
-                        <p
-                          className={
-                            priceFilterEnabled
-                              ? "text-lg font-bold"
-                              : "text-lg font-bold text-gray-500"
-                          }
-                        >
-                          Max Price
-                        </p>
-                        {/* <Checkbox
-                          checked={priceFilterEnabled}
-                          className="h-4"
-                          crossOrigin={undefined}
-                          onChange={() => {
-                            setPriceFilterEnabled(!priceFilterEnabled);
-                          }}
-                        /> */}
+                        <p className={"text-lg font-bold"}>Max Price</p>
                       </div>
                       <div className="w-full mt-3 flex items-center">
-                        <p
-                          className={
-                            priceFilterEnabled ? "mr-2" : "mr-2 opacity-50"
+                        <p className={"mr-2"}>${maxPriceSliderValue}</p>
+
+                        <Slider
+                          color="blue"
+                          className="h-1"
+                          step={1}
+                          min={0}
+                          max={100}
+                          defaultValue={
+                            maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue
                           }
-                        >
-                          ${maxPriceSliderValue}
-                        </p>
-                        {priceFilterEnabled ? (
-                          <Slider
-                            color="blue"
-                            className="h-1"
-                            step={1}
-                            min={0}
-                            max={100}
-                            defaultValue={
-                              maxPriceSliderValue === 0
-                                ? 0
-                                : maxPriceSliderValue
-                            }
-                            value={
-                              maxPriceSliderValue === 0
-                                ? 0
-                                : maxPriceSliderValue
-                            }
-                            onChange={(e) => {
-                              setMaxPriceSliderValue(parseInt(e.target.value));
-                            }}
-                          />
-                        ) : (
-                          <Slider
-                            color="blue"
-                            className="h-1 opacity-50"
-                            step={1}
-                            min={0}
-                            max={100}
-                            defaultValue={maxPriceSliderValue}
-                            value={maxPriceSliderValue}
-                          />
-                        )}
+                          value={
+                            maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue
+                          }
+                          onChange={(e) => {
+                            setMaxPriceSliderValue(parseInt(e.target.value));
+                          }}
+                        />
                       </div>
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
-                        <p
-                          className={
-                            dateFilterEnabled
-                              ? "text-lg font-bold"
-                              : "text-lg font-bold text-gray-500"
-                          }
-                        >
-                          Date Range
-                        </p>
-                        {/* <Checkbox
-                          checked={dateFilterEnabled}
-                          className="h-4"
-                          crossOrigin={undefined}
-                          onChange={() => {
-                            setDateFilterEnabled(!dateFilterEnabled);
-                          }}
-                        /> */}
+                        <p className={"text-lg font-bold"}>Date Range</p>
                       </div>
 
                       <Datepicker
@@ -297,71 +241,34 @@ export default function FilterDialog({
                         displayFormat={"DD/MM/YYYY"}
                         onChange={handleDateRangeChange}
                         inputClassName="border-1 border border-black p-2 rounded-lg w-full mt-2 z-10"
-                        disabled={!dateFilterEnabled}
                       />
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
-                        <p
-                          className={
-                            proximityFilterEnabled
-                              ? "text-lg font-bold"
-                              : "text-lg font-bold text-gray-500"
-                          }
-                        >
-                          Max Proximity
-                        </p>
-                        {/* <Checkbox
-                          checked={proximityFilterEnabled}
-                          className="h-4"
-                          crossOrigin={undefined}
-                          onChange={() => {
-                            setProximityFilterEnabled(!proximityFilterEnabled);
-                          }}
-                        /> */}
+                        <p className={"text-lg font-bold"}>Max Proximity</p>
                       </div>
                       <div className="w-full mt-3 mb-5 flex items-center">
-                        <p
-                          className={
-                            proximityFilterEnabled ? "mr-2" : "mr-2 opacity-50"
+                        <p className={"mr-2"}>{maxProximitySliderValue}km</p>
+                        <Slider
+                          color="blue"
+                          className="h-1 z-0"
+                          step={1}
+                          min={0}
+                          max={100}
+                          defaultValue={
+                            maxProximitySliderValue === 0
+                              ? 0
+                              : maxProximitySliderValue
                           }
-                        >
-                          {maxProximitySliderValue}km
-                        </p>
-                        {proximityFilterEnabled ? (
-                          <Slider
-                            color="blue"
-                            className="h-1 z-0"
-                            step={1}
-                            min={0}
-                            max={100}
-                            defaultValue={
-                              maxProximitySliderValue === 0
-                                ? 0
-                                : maxProximitySliderValue
-                            }
-                            value={
-                              maxProximitySliderValue === 0
-                                ? 0
-                                : maxProximitySliderValue
-                            }
-                            onChange={(e) =>
-                              setMaxProximitySliderValue(
-                                parseInt(e.target.value)
-                              )
-                            }
-                          />
-                        ) : (
-                          <Slider
-                            color="blue"
-                            className="h-1 opacity-50"
-                            step={1}
-                            min={0}
-                            max={100}
-                            defaultValue={maxProximitySliderValue}
-                            value={maxProximitySliderValue}
-                          />
-                        )}
+                          value={
+                            maxProximitySliderValue === 0
+                              ? 0
+                              : maxProximitySliderValue
+                          }
+                          onChange={(e) =>
+                            setMaxProximitySliderValue(parseInt(e.target.value))
+                          }
+                        />
                       </div>
                       <Input
                         shrink={false}
