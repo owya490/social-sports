@@ -1,27 +1,25 @@
 import { Input } from "@material-tailwind/react";
 import { FormWrapper } from "./FormWrapper";
-import { Select, Option } from "@material-tailwind/react";
+import CreateEventCostSlider from "./CreateEventCostSlider";
 
 type BasicData = {
-  //date: string;
-  //time: string;
-  name: string;
-  location: string;
-  //cost: number;
-  //people: number;
+  // date: string;
+  // time: string;
+  // location: string;
+  cost: number;
+  people: number;
 };
-type BasicInfromationProps = BasicData & {
+type CostPage = BasicData & {
   updateField: (fields: Partial<BasicData>) => void;
 };
-export function BasicInformation({
-  //date,
-  //time,
-  name,
-  location,
-  //cost,
-  //people,
+export function CostPage({
+  // date,
+  // time,
+  // location,
+  cost,
+  people,
   updateField,
-}: BasicInfromationProps) {
+}: CostPage) {
   return (
     <FormWrapper title="Basic Event Info">
       {/* <label className="font-semibold">Date</label>
@@ -49,7 +47,7 @@ export function BasicInformation({
         value={location}
         onChange={(e) => updateField({ location: e.target.value })}
       /> */}
-
+{/* 
       <label className="mb-2 text-black text-lg">
                     Name your event
         </label>
@@ -72,22 +70,10 @@ export function BasicInformation({
         value={location}
         onChange={(e) => updateField({ location: e.target.value })}
         className="rounded-md" 
-        />
-    <label className="mb-2 text-black text-lg">
-                    Select the sport
-        </label>
-    <Select 
-      label="Select Sport">
-        <Option>Volleyball</Option>
-        <Option>Badminton</Option>
-        <Option>Basketball</Option>
-        <Option>Soccer</Option>
-        <Option>Tennis</Option>
-        <Option>Table Tennis</Option>
-        <Option>Oztag</Option>
-        <Option>Baseball</Option>
-      </Select>
-      {/* <label className="font-semibold">Cost per person</label>
+        /> */}
+      <CreateEventCostSlider/>
+      <label className="font-semibold">Add custom amount</label>
+      
       <input
         className="border-2 rounded-full p-2"
         required
@@ -104,7 +90,7 @@ export function BasicInformation({
         min={1}
         value={people}
         onChange={(e) => updateField({ people: parseInt(e.target.value) })}
-      /> */}
+      />
     </FormWrapper>
   );
 }

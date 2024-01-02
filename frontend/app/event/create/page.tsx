@@ -1,5 +1,7 @@
 "use client";
-import { BasicForm } from "@/components/events/create/BasicForm";
+import { BasicForm, BasicInformation } from "@/components/events/create/BasicForm";
+import { CostPage } from "@/components/events/create/CostPage";
+import CreateEventStepper from "@/components/events/create/CreateEventStepper";
 import { DescriptionForm } from "@/components/events/create/DescriptionForm";
 import { TagForm } from "@/components/events/create/TagForm";
 import { useMultistepForm } from "@/components/events/create/useMultistepForm";
@@ -12,6 +14,7 @@ type FormData = {
   date: string;
   time: string;
   location: string;
+  sport: string; 
   cost: number;
   people: number;
   name: string;
@@ -24,6 +27,7 @@ const INITIAL_DATA: FormData = {
   date: "",
   time: "",
   location: "",
+  sport:"",
   cost: 0,
   people: 0,
   name: "",
@@ -36,7 +40,8 @@ export default function CreateEvent() {
   const [data, setData] = useState(INITIAL_DATA);
   const { step, steps, currentStep, isFirstStep, isLastStep, back, next } =
     useMultistepForm([
-      <BasicForm {...data} updateField={updateFields} />,
+      <BasicInformation {...data} updateField={updateFields} />,
+      <CostPage {...data} updateField={updateFields} />,
       <DescriptionForm {...data} updateField={updateFields} />,
       <TagForm {...data} updateField={updateFields} />,
     ]);
@@ -99,8 +104,9 @@ export default function CreateEvent() {
   return (
     <div className="relative border border-black m-40 p-8 rounded-xl">
       <form onSubmit={submit}>
+        <CreateEventStepper currentStep={currentStep + 1} totalSteps={3}/>
         <div className="absolute top-2 right-2">
-          {currentStep + 1} / {steps.length}
+          {/* {currentStep + 1} / {steps.length} */}
         </div>
         {step}
         <div className="flex justify-end">

@@ -2,7 +2,7 @@ import { uploadUserImage } from "@/services/imageService";
 import { FormWrapper } from "./FormWrapper";
 
 type DescriptionData = {
-  name: string;
+  //name: string;
   description: string;
   image: string;
 };
@@ -12,7 +12,7 @@ type DescriptionFormProps = DescriptionData & {
 };
 
 export function DescriptionForm({
-  name,
+  //name,
   description,
   image,
   updateField,
@@ -31,14 +31,14 @@ export function DescriptionForm({
 
   return (
     <FormWrapper title="Additional Event Info">
-      <label className="font-semibold">Name of Event</label>
+      {/* <label className="font-semibold">Name of Event</label>
       <input
         className="border-2 rounded-full p-2"
         required
         type="text"
         value={name}
         onChange={(e) => updateField({ name: e.target.value })}
-      />
+      /> */}
       <label className="font-semibold">Description</label>
       <input
         className="border-2 rounded-full p-2"
