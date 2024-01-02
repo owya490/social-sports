@@ -12,6 +12,7 @@ export default function SearchBar() {
     const router = useRouter();
 
     const handleSearchClick = () => {
+        console.log("search")
         const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
         router.push(searchUrl);
     };

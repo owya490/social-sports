@@ -5,10 +5,14 @@ import { EventData } from "@/interfaces/EventTypes";
 import { getAllEvents } from "@/services/eventsService";
 import { useEffect, useState } from "react";
 import { searchEventsByKeyword } from "@/services/eventsService";
+import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation';
 
 export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [eventData, setEventData] = useState<EventData[]>([]);
+    const [currentUrl, setCurrentUrl] = useState(typeof window !== 'undefined' ? window.location.href : '');
+    const searchParams = useSearchParams()
 
     const getQueryParams = () => {
         if (typeof window === 'undefined') {
@@ -21,28 +25,32 @@ export default function Dashboard() {
             location: searchParams.get("location") || "",
         };
     };
-    const { event, location } = getQueryParams();
+
 
     useEffect(() => {
-        if (event === "" && location === "") {
-            getAllEvents()
-                .then((events) => {
-                    setEventData(events);
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
-        } else {
-            console.log("check");
-            searchEventsByKeyword(event, location)
-                .then((events) => {
-                    setEventData(events);
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
+        setLoading(true)
+        console.log("test");
+        const { event, location } = getQueryParams()
+        if (typeof event === 'string' && typeof location === 'string') {
+            if (event === "" && location === "") {
+                getAllEvents()
+                    .then((events) => {
+                        setEventData(events);
+                    })
+                    .finally(() => {
+                        setLoading(false);
+                    });
+            } else {
+                searchEventsByKeyword(event, location)
+                    .then((events) => {
+                        setEventData(events);
+                    })
+                    .finally(() => {
+                        setLoading(false);
+                    });
+            }
         }
-    }, []);
+    },[searchParams] );
 
     return loading ? (
         <Loading />
