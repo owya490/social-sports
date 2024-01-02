@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Fragment, useState } from "react";
 import DP from "./../../public/images/Ashley & Owen.png";
 import eye from "./../../public/images/Eye.png";
+import location from "./../../public/images/location.png";
 
 const calculateAge = (birthday) => {
   const [day, month, year] = birthday.split("-");
@@ -23,7 +24,7 @@ const calculateAge = (birthday) => {
 };
 
 const initialProfileData = {
-  firstName: "Owenoo",
+  firstName: "Reggiestar",
   lastName: "Yang",
   location: "Sydney, Australia",
   phoneNumber: "0468368618",
@@ -172,114 +173,200 @@ const Profile = () => {
   const editedAge = calculateAge(editedData.birthday);
 
   return (
-    <div className="relative mt-[100px] mb-[5%] mx-10 grid grid-cols-1 lg:grid-cols-8 lg:gap-x-[2vw] lg:px-10">
-      <div className="flex justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-5 lg:col-span-4 lg:row-span-1 lg:row-start-1">
-        <div
-          className="flex justify-center mb-5 lg:mb-8 3xl:mb-9 text-3xl lg:text-5xl 3xl:text-5xl"
-          style={{ fontWeight: 500 }}
-        >
-          {initialProfileData.firstName}'s Profile
-        </div>
-      </div>
-      <div className="flex justify-center w-full lg:justify-end col-start-1 col-span-1 lg:col-span-4 lg:row-span-2 lg:row-start-1 mr-10">
-        <div
-          className=" lg:items-start lg:flex-row border border-gray-500 w-[250px] lg:h-[250px] w-[auto] 3xl:h-[310px] lg:flex lg:items-center lg:p-4"
-          style={{ borderRadius: "20px" }}
-        >
-          <div className="justify-center mx-5 lg:mx-3 mt-4 lg:mt-0">
-            <Image
-              src={DP}
-              alt="DP"
-              width={0}
-              height={0}
-              className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64"
-            />
-          </div>
-          <div className="flex flex-col justify-center lg:ml-3">
-            <div className="flex justify-center lg:justify-start mt-5 2xl:mt-7 3xl:mt-9 text-2xl 3xl:text-4xl font-semibold">
-              <span className="lg:whitespace-no-wrap">
-                {initialProfileData.firstName}{" "}
-                {initialProfileData.lastName?.slice(0, 1)}, {""}
-                {initialProfileData.age}
-              </span>
-            </div>
-            <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-xl 3xl:text-2xl">
-              {initialProfileData.location}
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="grid justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-5 lg:col-span-4 lg:row-start-2 lg:row-span-3 mt-5 lg:mt-0 3xl:text-xl">
-        <div
-          className="mb-5 2xl:mb-7 3xl:mb-9 text-3xl lg:text-4xl 3xl:text-5xl"
-          style={{ fontWeight: 400 }}
-        >
-          Name
-        </div>
-        <ul>
-          {renderField("Given Name", "firstName")}
-          {renderField("Surname", "lastName")}
-        </ul>
-        <div
-          className="mb-5 2xl:mb-7 3xl:mb-9 text-3xl lg:text-4xl 3xl:text-5xl"
-          style={{ fontWeight: 400 }}
-        >
-          Contact Info
-        </div>
-        <ul>
-          {renderField("Email", "email")}
-          {renderField("Phone Number", "phoneNumber")}
-        </ul>
-        <div
-          className="mb-5 2xl:mb-7 3xl:mb-9 text-3xl lg:text-4xl 3xl:text-5xl"
-          style={{ fontWeight: 400 }}
-        >
-          About Me
-        </div>
-        <ul>
-          {renderField("Location", "location")}
-          {renderField("Date of Birth", "birthday")}
-          {renderField("Password", "password")}{" "}
-        </ul>
-        <div className="flex justify-center lg:justify-start my-2 3xl:my-4">
-          {renderModalContent()}
-          {!editable && (
-            <button
-              type="button"
-              onClick={handleEditClick}
-              className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+    <div className="w-screen flex justify-center">
+      <div className="w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1400px]">
+        <div className="relative mt-[100px] mb-[5%] grid grid-cols-1 lg:grid-cols-2 lg:gap-x-[3vw]">
+          <div className="flex justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-2 lg:row-span-1 lg:row-start-1">
+            <div
+              className="flex justify-center mb-5 lg:mb-6 text-3xl lg:text-4xl"
+              style={{ fontWeight: 600 }}
             >
-              Edit
-            </button>
-          )}
+              {initialProfileData.firstName}'s Profile
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <div className="flex justify-center w-full h-fit lg:justify-end col-start-1 col-span-1 lg:row-start-1">
+              <div
+                className=" lg:items-start lg:flex-row border border-gray-500 lg:h-[250px] lg:max-w-[500px] lg:w-full 3xl:h-[310px] lg:flex lg:items-center justify-center lg:p-2"
+                style={{ borderRadius: "20px" }}
+              >
+                <div className="justify-center mx-5 lg:mx-3 mt-4 lg:mt-0">
+                  <Image
+                    src={DP}
+                    alt="DP"
+                    width={0}
+                    height={0}
+                    className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64"
+                  />
+                </div>
+                <div className="flex flex-col justify-center lg:ml-3">
+                  <div className="flex justify-center lg:justify-start mt-5 3xl:mt-9 text-2xl 3xl:text-4xl font-semibold">
+                    <span className="lg:whitespace-no-wrap">
+                      {initialProfileData.firstName}{" "}
+                      {initialProfileData.lastName?.slice(0, 1)}, {""}
+                      {initialProfileData.age}
+                    </span>
+                  </div>
+                  <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-xl 3xl:text-2xl">
+                    {initialProfileData.location}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="lg:flex justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-2 hidden lg:block mb-6 mt-6">
+              <div
+                className="border border-gray-500 max-w-[500px] h-fit"
+                style={{ borderRadius: "20px" }}
+              >
+                <div className="ml-6 mt-3">
+                  <Image
+                    src={eye}
+                    alt="eye"
+                    width={0}
+                    height={0}
+                    className="h-9 w-12"
+                  />
+                </div>
+                <div
+                  className="text-2xl 3xl:text-3xl text-bold ml-4 mr-3 my-2 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4"
+                  style={{ fontWeight: "bold" }}
+                >
+                  What info is shared with others?
+                </div>
+                <div className="text-lg 3xl:text-xl ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
+                  Sports Hub only releases contact information to the host of
+                  the event you are attending.
+                </div>
+              </div>
+            </div>
+            <div className="lg:flex justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-3 hidden lg:block mb-6">
+              <div
+                className="border border-gray-500 max-w-[500px] h-fit"
+                style={{ borderRadius: "20px" }}
+              >
+                <div className="ml-7 mt-3">
+                  <Image
+                    src={location}
+                    alt="location"
+                    width={0}
+                    height={0}
+                    className="h-9 w-9"
+                  />
+                </div>
+                <div
+                  className="text-2xl 3xl:text-3xl text-bold ml-4 mr-3 my-2 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4"
+                  style={{ fontWeight: "bold" }}
+                >
+                  What is my location used for?
+                </div>
+                <div className="text-lg 3xl:text-xl ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
+                  Sports Hub uses your location to better recommend you events
+                  that are close to you!
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="grid justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-2 lg:row-start-1 lg:row-span-4 mt-8 lg:mt-16 3xl:mt-20 3xl:text-xl">
+            <div
+              className="mb-5 text-3xl hidden lg:block"
+              style={{
+                fontWeight: 400,
+                borderBottom: "2px solid #ccc",
+                width: "250%",
+              }}
+            >
+              <div className="mb-2">Name</div>
+              {/* <div className="flex justify-center lg:justify-start my-2 3xl:my-4">
+            {renderModalContent()}
+            {!editable && (
+              <button
+                type="button"
+                onClick={handleEditClick}
+                className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              >
+                Edit
+              </button>
+            )}
+          </div> */}
+            </div>
+            <div
+              className="mb-5 text-2xl lg:hidden"
+              style={{
+                fontWeight: 400,
+                borderBottom: "2px solid #ccc",
+                width: "100%",
+              }}
+            >
+              <div className="mb-2">Name</div>
+            </div>
+            <ul>
+              {renderField("Given Name", "firstName")}
+              {renderField("Surname", "lastName")}
+            </ul>
+            <div
+              className="mb-5 text-3xl hidden lg:block"
+              style={{
+                fontWeight: 400,
+                borderBottom: "2px solid #ccc",
+                width: "250%",
+              }}
+            >
+              <div className="mb-2 mt-1">Contact Info</div>
+            </div>
+            <div
+              className="mb-5 text-2xl lg:hidden"
+              style={{
+                fontWeight: 400,
+                borderBottom: "2px solid #ccc",
+                width: "100%",
+              }}
+            >
+              <div className="mb-2 mt-1">Contact Info</div>
+            </div>
+            <ul>
+              {renderField("Email", "email")}
+              {renderField("Phone Number", "phoneNumber")}
+            </ul>
+            <div
+              className="mb-5 text-3xl hidden lg:block"
+              style={{
+                fontWeight: 400,
+                borderBottom: "2px solid #ccc",
+                width: "250%",
+              }}
+            >
+              <div className="mb-2 mt-1">About Me</div>
+            </div>
+            <div
+              className="mb-5 text-2xl lg:hidden"
+              style={{
+                fontWeight: 400,
+                borderBottom: "2px solid #ccc",
+                width: "100%",
+              }}
+            >
+              <div className="mb-2 mt-1">About Me</div>
+            </div>
+            <ul>
+              {renderField("Location", "location")}
+              {renderField("Date of Birth", "birthday")}
+              {renderField("Password", "password")}{" "}
+            </ul>
+            <div className="flex justify-center lg:justify-start my-2 3xl:my-4 lg:hidden">
+              {renderModalContent()}
+              {!editable && (
+                <button
+                  type="button"
+                  onClick={handleEditClick}
+                  className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-      {/* <div className="lg:flex justify-center lg:justify-end 3xl:justify-center col-start-1 col-span-1 lg:col-span-2 2xl:col-span-3 3xl:col-span-2 lg:col-start-4 lg:row-span-2 lg:row-start-1 2xl:col-start-5 3xl:col-start-5 hidden lg:block">
-        <div
-          className="border border-gray-500 w-[250px] lg:w-[280px] 2xl:w-[400px] 3xl:w-[440px] h-fit lg:mr-5 2xl:mr-10 mt-4 lg:mt-0"
-          style={{ borderRadius: "20px" }}
-        >
-          <div className="ml-4 lg:ml-6 2xl:ml-7 mt-3">
-            <Image
-              src={eye}
-              alt="eye"
-              width={0}
-              height={0}
-              className="h-9 w-12"
-            />
-          </div>
-          <div
-            className="text-2xl 3xl:text-3xl text-bold ml-4 mr-3 my-2 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4"
-            style={{ fontWeight: "bold" }}
-          >
-            What info is shared with others?
-          </div>
-          <div className="text-lg 3xl:text-xl ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
-            Sports Hub only releases contact information to the host of the
-            event you are attending.
-          </div>
-        </div>
-      </div> */}
     </div>
   );
 };
