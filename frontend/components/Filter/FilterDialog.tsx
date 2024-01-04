@@ -25,8 +25,10 @@ import { set } from "firebase/database";
 
 const DAY_START_TIME_STRING = " 00:00:00";
 const DAY_END_TIME_STRING = " 23:59:59";
-const DEFAULT_MAX_PRICE = 25;
-const DEFAULT_MAX_PROXIMITY = 25;
+const PRICE_SLIDER_MAX_VALUE = 100;
+const PROXIMITY_SLIDER_MAX_VALUE = 100;
+const DEFAULT_MAX_PRICE = PRICE_SLIDER_MAX_VALUE;
+const DEFAULT_MAX_PROXIMITY = PROXIMITY_SLIDER_MAX_VALUE;
 const DEFAULT_START_DATE = null;
 const DEFAULT_END_DATE = null;
 
@@ -82,19 +84,25 @@ export default function FilterDialog({
   }
 
   async function applyFilters() {
+    const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
+    const isAnyProximityBool =
+      maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
+
     let filteredEventDataList = [...allEventsDataList];
 
     // Filter by MAX PRICE
-    let newEventDataList = filterEventsByPrice(
-      [...filteredEventDataList],
-      null,
-      maxPriceSliderValue
-    );
-    filteredEventDataList = newEventDataList;
+    if (!isAnyPriceBool) {
+      let newEventDataList = filterEventsByPrice(
+        [...filteredEventDataList],
+        null,
+        maxPriceSliderValue
+      );
+      filteredEventDataList = newEventDataList;
+    }
 
     // Filter by DATERANGE
     if (dateRange.startDate && dateRange.endDate) {
-      newEventDataList = filterEventsByDate(
+      let newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
         Timestamp.fromDate(
           new Date(dateRange.startDate + DAY_START_TIME_STRING)
@@ -105,23 +113,25 @@ export default function FilterDialog({
     }
 
     // Filter by MAX PROXIMITY
-    let srcLat = SYDNEY_LAT;
-    let srcLng = SYDNEY_LNG;
-    try {
-      const { lat, lng } = await getLocationCoordinates(srcLocation);
-      srcLat = lat;
-      srcLng = lng;
-    } catch (error) {
-      console.log(error);
-    }
+    if (!isAnyProximityBool) {
+      let srcLat = SYDNEY_LAT;
+      let srcLng = SYDNEY_LNG;
+      try {
+        const { lat, lng } = await getLocationCoordinates(srcLocation);
+        srcLat = lat;
+        srcLng = lng;
+      } catch (error) {
+        console.log(error);
+      }
 
-    newEventDataList = filterEventsByMaxProximity(
-      [...filteredEventDataList],
-      maxProximitySliderValue,
-      srcLat,
-      srcLng
-    );
-    filteredEventDataList = newEventDataList;
+      let newEventDataList = filterEventsByMaxProximity(
+        [...filteredEventDataList],
+        maxProximitySliderValue,
+        srcLat,
+        srcLng
+      );
+      filteredEventDataList = newEventDataList;
+    }
 
     // TODO: add more filters
 
@@ -138,6 +148,7 @@ export default function FilterDialog({
     });
     setMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
     setEventDataList([...allEventsDataList]);
+    setSrcLocation("");
     closeModal();
   }
 
@@ -209,14 +220,19 @@ export default function FilterDialog({
                         <p className={"text-lg font-bold"}>Max Price</p>
                       </div>
                       <div className="w-full mt-3 flex items-center">
-                        <p className={"mr-2"}>${maxPriceSliderValue}</p>
+                        <p className={"mr-2"}>
+                          $
+                          {maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE
+                            ? "ANY"
+                            : maxPriceSliderValue}
+                        </p>
 
                         <Slider
                           color="blue"
                           className="h-1"
                           step={1}
                           min={0}
-                          max={100}
+                          max={PRICE_SLIDER_MAX_VALUE}
                           defaultValue={
                             maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue
                           }
@@ -248,13 +264,18 @@ export default function FilterDialog({
                         <p className={"text-lg font-bold"}>Max Proximity</p>
                       </div>
                       <div className="w-full mt-3 mb-5 flex items-center">
-                        <p className={"mr-2"}>{maxProximitySliderValue}km</p>
+                        <p className={"mr-2"}>
+                          {maxProximitySliderValue ===
+                          PROXIMITY_SLIDER_MAX_VALUE
+                            ? "ANY Distance"
+                            : maxProximitySliderValue + "km"}
+                        </p>
                         <Slider
                           color="blue"
                           className="h-1 z-0"
                           step={1}
                           min={0}
-                          max={100}
+                          max={PROXIMITY_SLIDER_MAX_VALUE}
                           defaultValue={
                             maxProximitySliderValue === 0
                               ? 0
@@ -265,9 +286,11 @@ export default function FilterDialog({
                               ? 0
                               : maxProximitySliderValue
                           }
-                          onChange={(e) =>
-                            setMaxProximitySliderValue(parseInt(e.target.value))
-                          }
+                          onChange={(e) => {
+                            setMaxProximitySliderValue(
+                              parseInt(e.target.value)
+                            );
+                          }}
                         />
                       </div>
                       <Input
