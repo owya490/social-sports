@@ -174,7 +174,7 @@ const Profile = () => {
 
   return (
     <div className="w-screen flex justify-center">
-      <div className="w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1400px]">
+      <div className="w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 3xl:w-[1400px]">
         <div className="relative mt-[100px] mb-[5%] grid grid-cols-1 lg:grid-cols-2 lg:gap-x-[3vw]">
           <div className="flex justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-2 lg:row-span-1 lg:row-start-1">
             <div
@@ -187,7 +187,7 @@ const Profile = () => {
           <div className="flex flex-col">
             <div className="flex justify-center w-full h-fit lg:justify-end col-start-1 col-span-1 lg:row-start-1">
               <div
-                className=" lg:items-start lg:flex-row border border-gray-500 lg:h-[250px] lg:max-w-[500px] lg:w-full 3xl:h-[310px] lg:flex lg:items-center justify-center lg:p-2"
+                className=" lg:items-start lg:flex-row border border-gray-500 lg:h-60 lg:w-full 3xl:h-72 lg:flex lg:items-center justify-center lg:p-2"
                 style={{ borderRadius: "20px" }}
               >
                 <div className="justify-center mx-5 lg:mx-3 mt-4 lg:mt-0">
@@ -215,7 +215,7 @@ const Profile = () => {
             </div>
             <div className="lg:flex justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-2 hidden lg:block mb-6 mt-6">
               <div
-                className="border border-gray-500 max-w-[500px] h-fit"
+                className="border border-gray-500 h-fit"
                 style={{ borderRadius: "20px" }}
               >
                 <div className="ml-6 mt-3">
@@ -239,9 +239,9 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-            <div className="lg:flex justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-3 hidden lg:block mb-6">
+            <div className="lg:flex justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-3 hidden lg:block mb-6 ">
               <div
-                className="border border-gray-500 max-w-[500px] h-fit"
+                className="border border-gray-500 h-fit"
                 style={{ borderRadius: "20px" }}
               >
                 <div className="ml-7 mt-3">
@@ -266,7 +266,7 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          <div className="grid justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-2 lg:row-start-1 lg:row-span-4 mt-8 lg:mt-16 3xl:mt-20 3xl:text-xl">
+          <div className="grid justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-2 lg:row-start-1 lg:row-span-4 mt-6 lg:mt-16 3xl:mt-20 3xl:text-xl ">
             <div
               className="mb-5 text-3xl hidden lg:block"
               style={{
@@ -358,7 +358,7 @@ const Profile = () => {
                 <button
                   type="button"
                   onClick={handleEditClick}
-                  className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                  className="text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3"
                 >
                   Edit
                 </button>
