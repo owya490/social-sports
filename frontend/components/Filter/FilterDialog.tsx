@@ -21,9 +21,14 @@ import {
   SYDNEY_LNG,
   getLocationCoordinates,
 } from "@/services/locationUtils";
+import { set } from "firebase/database";
 
 const DAY_START_TIME_STRING = " 00:00:00";
 const DAY_END_TIME_STRING = " 23:59:59";
+const DEFAULT_MAX_PRICE = 25;
+const DEFAULT_MAX_PROXIMITY = 25;
+const DEFAULT_START_DATE = null;
+const DEFAULT_END_DATE = null;
 
 interface FilterDialogProps {
   eventDataList: EventData[];
@@ -36,20 +41,18 @@ export default function FilterDialog({
   allEventsDataList,
   setEventDataList,
 }: FilterDialogProps) {
-  let [isOpen, setIsOpen] = useState(false);
-  const [priceFilterEnabled, setPriceFilterEnabled] = useState(false);
-  const [dateFilterEnabled, setDateFilterEnabled] = useState(false);
-  const [proximityFilterEnabled, setProximityFilterEnabled] = useState(false);
-  const [maxPriceSliderValue, setMaxPriceSliderValue] = useState(25);
+  let [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [maxPriceSliderValue, setMaxPriceSliderValue] =
+    useState(DEFAULT_MAX_PRICE);
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
   }>({
-    startDate: null,
-    endDate: null,
+    startDate: DEFAULT_START_DATE,
+    endDate: DEFAULT_END_DATE,
   });
   const [maxProximitySliderValue, setMaxProximitySliderValue] =
-    useState<number>(25); // max proximity in kms.
+    useState<number>(DEFAULT_MAX_PROXIMITY); // max proximity in kms.
 
   const handleDateRangeChange = (dateRange: any) => {
     if (dateRange.startDate && dateRange.endDate) {
@@ -59,32 +62,39 @@ export default function FilterDialog({
       };
 
       setDateRange(timestampDateRange);
+    } else {
+      let timestampDateRange = {
+        startDate: DEFAULT_START_DATE,
+        endDate: DEFAULT_END_DATE,
+      };
+
+      setDateRange(timestampDateRange);
     }
   };
   const [srcLocation, setSrcLocation] = useState<string>("");
 
   function closeModal() {
-    setIsOpen(false);
+    setIsFilterModalOpen(false);
   }
 
   function openModal() {
-    setIsOpen(true);
+    setIsFilterModalOpen(true);
   }
 
   async function applyFilters() {
     let filteredEventDataList = [...allEventsDataList];
 
-    if (priceFilterEnabled) {
-      const newEventDataList = filterEventsByPrice(
-        [...filteredEventDataList],
-        null,
-        maxPriceSliderValue
-      );
-      filteredEventDataList = newEventDataList;
-    }
+    // Filter by MAX PRICE
+    let newEventDataList = filterEventsByPrice(
+      [...filteredEventDataList],
+      null,
+      maxPriceSliderValue
+    );
+    filteredEventDataList = newEventDataList;
 
-    if (dateFilterEnabled && dateRange.startDate && dateRange.endDate) {
-      const newEventDataList = filterEventsByDate(
+    // Filter by DATERANGE
+    if (dateRange.startDate && dateRange.endDate) {
+      newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
         Timestamp.fromDate(
           new Date(dateRange.startDate + DAY_START_TIME_STRING)
@@ -94,30 +104,40 @@ export default function FilterDialog({
       filteredEventDataList = newEventDataList;
     }
 
-    if (proximityFilterEnabled && maxProximitySliderValue !== null) {
-      let srcLat = SYDNEY_LAT;
-      let srcLng = SYDNEY_LNG;
-      try {
-        const { lat, lng } = await getLocationCoordinates(srcLocation);
-        srcLat = lat;
-        srcLng = lng;
-      } catch (error) {
-        console.log(error);
-      }
-
-      const newEventDataList = filterEventsByMaxProximity(
-        [...filteredEventDataList],
-        maxProximitySliderValue,
-        srcLat,
-        srcLng
-      );
-      filteredEventDataList = newEventDataList;
+    // Filter by MAX PROXIMITY
+    let srcLat = SYDNEY_LAT;
+    let srcLng = SYDNEY_LNG;
+    try {
+      const { lat, lng } = await getLocationCoordinates(srcLocation);
+      srcLat = lat;
+      srcLng = lng;
+    } catch (error) {
+      console.log(error);
     }
+
+    newEventDataList = filterEventsByMaxProximity(
+      [...filteredEventDataList],
+      maxProximitySliderValue,
+      srcLat,
+      srcLng
+    );
+    filteredEventDataList = newEventDataList;
 
     // TODO: add more filters
 
     setEventDataList([...filteredEventDataList]);
 
+    closeModal();
+  }
+
+  function handleClearAll() {
+    setMaxPriceSliderValue(DEFAULT_MAX_PRICE);
+    setDateRange({
+      startDate: DEFAULT_START_DATE,
+      endDate: DEFAULT_END_DATE,
+    });
+    setMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
+    setEventDataList([...allEventsDataList]);
     closeModal();
   }
 
@@ -132,7 +152,7 @@ export default function FilterDialog({
         <AdjustmentsHorizontalIcon className="w-7 ml-1" />
       </button>
 
-      <Transition appear show={isOpen} as={Fragment}>
+      <Transition appear show={isFilterModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
             as={Fragment}
@@ -186,85 +206,32 @@ export default function FilterDialog({
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
-                        <p
-                          className={
-                            priceFilterEnabled
-                              ? "text-lg font-bold"
-                              : "text-lg font-bold text-gray-500"
+                        <p className={"text-lg font-bold"}>Max Price</p>
+                      </div>
+                      <div className="w-full mt-3 flex items-center">
+                        <p className={"mr-2"}>${maxPriceSliderValue}</p>
+
+                        <Slider
+                          color="blue"
+                          className="h-1"
+                          step={1}
+                          min={0}
+                          max={100}
+                          defaultValue={
+                            maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue
                           }
-                        >
-                          Max Price
-                        </p>
-                        <Checkbox
-                          checked={priceFilterEnabled}
-                          className="h-4"
-                          crossOrigin={undefined}
-                          onChange={() => {
-                            setPriceFilterEnabled(!priceFilterEnabled);
+                          value={
+                            maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue
+                          }
+                          onChange={(e) => {
+                            setMaxPriceSliderValue(parseInt(e.target.value));
                           }}
                         />
-                      </div>
-                      <div className="w-full mt-5 flex items-center">
-                        <p
-                          className={
-                            priceFilterEnabled ? "mr-2" : "mr-2 opacity-50"
-                          }
-                        >
-                          ${maxPriceSliderValue}
-                        </p>
-                        {priceFilterEnabled ? (
-                          <Slider
-                            color="blue"
-                            className="h-1"
-                            step={1}
-                            min={0}
-                            max={100}
-                            defaultValue={
-                              maxPriceSliderValue === 0
-                                ? 0
-                                : maxPriceSliderValue
-                            }
-                            value={
-                              maxPriceSliderValue === 0
-                                ? 0
-                                : maxPriceSliderValue
-                            }
-                            onChange={(e) => {
-                              setMaxPriceSliderValue(parseInt(e.target.value));
-                            }}
-                          />
-                        ) : (
-                          <Slider
-                            color="blue"
-                            className="h-1 opacity-50"
-                            step={1}
-                            min={0}
-                            max={100}
-                            defaultValue={maxPriceSliderValue}
-                            value={maxPriceSliderValue}
-                          />
-                        )}
                       </div>
                     </div>
-                    <div className="pb-5">
+                    <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
-                        <p
-                          className={
-                            dateFilterEnabled
-                              ? "text-lg font-bold"
-                              : "text-lg font-bold text-gray-500"
-                          }
-                        >
-                          Date Range
-                        </p>
-                        <Checkbox
-                          checked={dateFilterEnabled}
-                          className="h-4"
-                          crossOrigin={undefined}
-                          onChange={() => {
-                            setDateFilterEnabled(!dateFilterEnabled);
-                          }}
-                        />
+                        <p className={"text-lg font-bold"}>Date Range</p>
                       </div>
 
                       <Datepicker
@@ -273,41 +240,18 @@ export default function FilterDialog({
                         separator="to"
                         displayFormat={"DD/MM/YYYY"}
                         onChange={handleDateRangeChange}
-                        inputClassName="border-1 border border-black p-2 rounded-lg w-full mt-2"
-                        disabled={!dateFilterEnabled}
+                        inputClassName="border-1 border border-black p-2 rounded-lg w-full mt-2 z-10"
                       />
                     </div>
-                    <div className="pb-5">
+                    <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
-                        <p
-                          className={
-                            proximityFilterEnabled
-                              ? "text-lg font-bold"
-                              : "text-lg font-bold text-gray-500"
-                          }
-                        >
-                          Max Proximity
-                        </p>
-                        <Checkbox
-                          checked={proximityFilterEnabled}
-                          className="h-4"
-                          crossOrigin={undefined}
-                          onChange={() => {
-                            setProximityFilterEnabled(!proximityFilterEnabled);
-                          }}
-                        />
+                        <p className={"text-lg font-bold"}>Max Proximity</p>
                       </div>
-                      <p
-                        className={
-                          proximityFilterEnabled ? "mr-2" : "mr-2 opacity-50"
-                        }
-                      >
-                        {maxProximitySliderValue} km
-                      </p>
-                      {proximityFilterEnabled ? (
+                      <div className="w-full mt-3 mb-5 flex items-center">
+                        <p className={"mr-2"}>{maxProximitySliderValue}km</p>
                         <Slider
                           color="blue"
-                          className="h-1"
+                          className="h-1 z-0"
                           step={1}
                           min={0}
                           max={100}
@@ -325,38 +269,23 @@ export default function FilterDialog({
                             setMaxProximitySliderValue(parseInt(e.target.value))
                           }
                         />
-                      ) : (
-                        <Slider
-                          color="blue"
-                          className="h-1 opacity-50"
-                          step={1}
-                          min={0}
-                          max={100}
-                          defaultValue={maxProximitySliderValue}
-                          value={maxProximitySliderValue}
-                        />
-                      )}
+                      </div>
+                      <Input
+                        shrink={false}
+                        variant="outlined"
+                        label="Search Location"
+                        placeholder="Sydney NSW Australia"
+                        crossOrigin="true"
+                        value={srcLocation}
+                        onChange={({ target }) => setSrcLocation(target.value)}
+                      />
                     </div>
-                    <Input
-                      variant="outlined"
-                      label="Search Location"
-                      crossOrigin="true"
-                      value={srcLocation}
-                      onChange={({ target }) => setSrcLocation(target.value)}
-                    />
                   </div>
 
-                  <div className="mt-5 w-full flex items-center">
+                  <div className="mt-3 w-full flex items-center">
                     <button
                       className="hover:underline cursor-pointer"
-                      onClick={() => {
-                        setMaxPriceSliderValue(25);
-                        setDateRange({
-                          startDate: null,
-                          endDate: null,
-                        });
-                        setMaxProximitySliderValue(100);
-                      }}
+                      onClick={handleClearAll}
                     >
                       Clear all
                     </button>
