@@ -264,10 +264,10 @@ export default function FilterDialog({
                         <p className={"text-lg font-bold"}>Max Proximity</p>
                       </div>
                       <div className="w-full mt-3 mb-5 flex items-center">
-                        <p className={"mr-2"}>
+                        <p className="mr-2 whitespace-nowrap">
                           {maxProximitySliderValue ===
                           PROXIMITY_SLIDER_MAX_VALUE
-                            ? "ANY Distance"
+                            ? "ANY km"
                             : maxProximitySliderValue + "km"}
                         </p>
                         <Slider
