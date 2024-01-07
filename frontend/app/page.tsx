@@ -71,6 +71,7 @@ export default function Home() {
               </div>
               <div>
                 <Image
+                  priority
                   src={HeroImage}
                   height={0}
                   width={0}
