@@ -18,6 +18,7 @@ interface ProximityInfo {
 }
 
 const NUM_DOCS_QUERY_LIMIT = 15;
+export const NO_SPORT_CHOSEN_STRING = "";
 
 export function filterEventsByPrice(
   eventDataList: EventData[],
@@ -72,6 +73,9 @@ export function filterEventsBySport(
   eventDataList: EventData[],
   sportType: string
 ): EventData[] {
+  if (sportType === NO_SPORT_CHOSEN_STRING) {
+    return eventDataList;
+  }
   let eventDataListDeepClone = [...eventDataList];
   eventDataListDeepClone = eventDataListDeepClone.filter(
     (event) => event.sport === sportType

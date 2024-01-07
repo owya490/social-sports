@@ -1,5 +1,8 @@
 import { EventData } from "@/interfaces/EventTypes";
-import { filterEventsBySport } from "@/services/filterService";
+import {
+  NO_SPORT_CHOSEN_STRING,
+  filterEventsBySport,
+} from "@/services/filterService";
 import Image, { StaticImageData } from "next/image";
 
 interface FilterIconProps {
@@ -11,6 +14,7 @@ interface FilterIconProps {
   setEventDataList: (events: EventData[]) => void;
   selectedSport: string;
   setSelectedSport: (sport: string) => void;
+  applyFilters: (selectedSport: string) => Promise<void>;
 }
 
 export default function FilterIcon(props: FilterIconProps) {
@@ -20,17 +24,20 @@ export default function FilterIcon(props: FilterIconProps) {
         props.isFirst ? "mr-6 md:mr-8" : "min-w-[6rem] md:min-w-[8rem]"
       } flex justify-center snap-start`}
       onClick={() => {
+        console.log(
+          "selected sport filter",
+          props.selectedSport,
+          "what",
+          props.name
+        );
         if (props.selectedSport === props.name) {
-          props.setEventDataList(props.allEventsDataList);
-          props.setSelectedSport("");
+          // props.setEventDataList(props.allEventsDataList);
+          console.log("whatttt");
+          props.setSelectedSport(NO_SPORT_CHOSEN_STRING);
+          props.applyFilters(NO_SPORT_CHOSEN_STRING);
         } else {
-          props.setEventDataList(
-            filterEventsBySport(
-              props.allEventsDataList,
-              props.name.toLowerCase()
-            )
-          );
           props.setSelectedSport(props.name);
+          props.applyFilters(props.name);
         }
       }}
     >
