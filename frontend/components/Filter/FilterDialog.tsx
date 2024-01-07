@@ -221,10 +221,9 @@ export default function FilterDialog({
                       </div>
                       <div className="w-full mt-3 flex items-center">
                         <p className={"mr-2"}>
-                          $
                           {maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE
                             ? "ANY"
-                            : maxPriceSliderValue}
+                            : "$" + maxPriceSliderValue}
                         </p>
 
                         <Slider
@@ -267,7 +266,7 @@ export default function FilterDialog({
                         <p className="mr-2 whitespace-nowrap">
                           {maxProximitySliderValue ===
                           PROXIMITY_SLIDER_MAX_VALUE
-                            ? "ANY km"
+                            ? "ANY"
                             : maxProximitySliderValue + "km"}
                         </p>
                         <Slider
