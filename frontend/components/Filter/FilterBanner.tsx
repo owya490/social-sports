@@ -9,19 +9,8 @@ import TennisImage from "./../../public/images/tennis-balls.png";
 import VolleyballImage from "./../../public/images/volleyball.png";
 import FitlerDialog from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
-import { EventData } from "@/interfaces/EventTypes";
 
-interface FilterBannerProps {
-  eventDataList: EventData[];
-  allEventsDataList: EventData[];
-  setEventDataList: React.Dispatch<React.SetStateAction<any>>;
-}
-
-export default function FilterBanner({
-  eventDataList,
-  allEventsDataList,
-  setEventDataList,
-}: FilterBannerProps) {
+export default function FilterBanner() {
   const icons = {
     Volleyball: { image: VolleyballImage, style: "w-8 h-8" },
     Badminton: { image: BadmintonImage, style: "w-8 h-8" },
@@ -75,11 +64,7 @@ export default function FilterBanner({
         </div>
 
         <div className="grow">
-          <FitlerDialog
-            eventDataList={eventDataList}
-            allEventsDataList={allEventsDataList}
-            setEventDataList={setEventDataList}
-          />
+          <FitlerDialog />
         </div>
       </div>
     </div>

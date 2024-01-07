@@ -8,13 +8,11 @@ import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
-  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const [eventDataList, setEventDataList] = useState<EventData[]>([]);
+  const [eventData, setEventData] = useState<EventData[]>([]);
   useEffect(() => {
     getAllEvents()
       .then((events) => {
-        setEventDataList(events);
-        setAllEventsDataList(events);
+        setEventData(events);
       })
       .finally(() => {
         setLoading(false);
@@ -26,16 +24,12 @@ export default function Dashboard() {
   ) : (
     <div>
       <div className="flex justify-center">
-        <FilterBanner
-          eventDataList={eventDataList}
-          allEventsDataList={allEventsDataList}
-          setEventDataList={setEventDataList}
-        />
+        <FilterBanner />
       </div>
       <div className="flex justify-center">
         <div className="pb-10 w-[350px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {eventDataList
+            {eventData
               .sort((event1, event2) => {
                 if (event1.accessCount > event2.accessCount) {
                   return 1;

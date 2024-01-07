@@ -1,10 +1,10 @@
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 
-interface ChevronRightButtonProps {
+interface IChevronRightButton {
   handleClick: () => void;
 }
 
-export default function ChevronRightButton(props: ChevronRightButtonProps) {
+export default function ChevronRightButton(props: IChevronRightButton) {
   return (
     <button
       className="border border-1 border-black h-5 w-5 rounded-full p-0.5 flex justify-center items-center"

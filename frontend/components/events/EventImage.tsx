@@ -1,11 +1,11 @@
 import { URL } from "@/interfaces/Types";
 import Image from "next/image";
 
-interface EventImageProps {
+interface IEventImage {
   imageSrc: URL;
 }
 
-export default function EventImage(props: EventImageProps) {
+export default function EventImage(props: IEventImage) {
   return (
     <Image
       src={props.imageSrc}

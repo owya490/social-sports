@@ -3,17 +3,10 @@ import { EmptyUserData, UserData } from "./UserTypes";
 
 export type EventId = string;
 
-export const INVALID_LAT = -1;
-export const INVALID_LNG = -1;
-
 interface AbstractEventData {
   startDate: Timestamp;
   endDate: Timestamp;
   location: string; // Assuming "address" is a string
-  locationLatLng: {
-    lat: number;
-    lng: number;
-  };
   capacity: number;
   vacancy: number;
   price: number;
@@ -45,10 +38,6 @@ export const EmptyEventData: EventData = {
   startDate: new Timestamp(0, 0),
   endDate: new Timestamp(0, 0),
   location: "",
-  locationLatLng: {
-    lat: INVALID_LAT,
-    lng: INVALID_LNG,
-  },
   capacity: 0,
   vacancy: 0,
   price: 0,

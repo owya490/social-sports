@@ -1,12 +1,12 @@
 "use client";
 
-export interface TagProps {
+export interface ITag {
   name: string;
   url?: string;
   size?: "sm" | "md" | "lg";
 }
 
-export default function Tag(props: TagProps) {
+export default function Tag(props: ITag) {
   let sizeStyle = "px-4 py-1 text-lg font-semibold";
   if (props.size === "sm") {
     sizeStyle = "px-2 py-0.5 text-sm m-1";

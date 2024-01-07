@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { handleEmailAndPasswordSignUp } from "@/services/authService";
-import { useRouter } from "next/navigation";
 
 export default function Register() {
   const [userData, setUserData] = useState({
@@ -9,7 +8,6 @@ export default function Register() {
     password: "",
     firstName: "",
   });
-  const router = useRouter();
 
   const [repeatPassword, setRepeatPassword] = useState("");
   const [passwordMismatch, setPasswordMismatch] = useState(false);
@@ -23,12 +21,8 @@ export default function Register() {
     }
 
     try {
-      await handleEmailAndPasswordSignUp(userData);
-      router.push("/dashboard");
-      console.log("Registered and logged in!");
+      handleEmailAndPasswordSignUp(userData);
     } catch (error) {
-      // TODO fix error handling with a toast notif / smth else
-      alert(error);
       console.error("Error:", error);
     }
   };

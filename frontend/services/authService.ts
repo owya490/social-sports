@@ -32,7 +32,7 @@ export async function handleEmailAndPasswordSignUp(data: userAuthData) {
     await setDoc(userDocRef, userDataToSet);
     console.log("signed in", userCredential);
   } catch (error) {
-    throw error;
+    console.log(error);
   }
 }
 
@@ -40,7 +40,7 @@ export async function handleSignOut() {
   try {
     await signOut(auth);
   } catch (error) {
-    throw error;
+    console.log(error);
   }
 }
 
@@ -51,7 +51,7 @@ export async function handleEmailAndPasswordSignIn(
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
-    throw error;
+    console.log(error);
   }
 }
 

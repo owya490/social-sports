@@ -4,7 +4,6 @@ import {
   EventId,
   NewEventData,
 } from "@/interfaces/EventTypes";
-
 import {
   addDoc,
   collection,
@@ -17,7 +16,6 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-
 import { db } from "./firebase";
 import { getUserById } from "./usersService";
 

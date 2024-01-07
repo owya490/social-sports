@@ -13,14 +13,14 @@ import {
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 
-interface EventPaymentProps {
+interface IEventPayment {
   date: Timestamp;
   location: string;
   price: number;
   vacancy: number;
 }
 
-export default function EventPayment(props: EventPaymentProps) {
+export default function EventPayment(props: IEventPayment) {
   const [guestCount, setGuestCount] = useState(1);
 
   const handleGuestCountChange = (count: number) => {

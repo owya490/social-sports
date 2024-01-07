@@ -12,14 +12,14 @@ import {
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 
-interface EventPaymentProps {
+interface IEventPayment {
   date: Timestamp;
   location: string;
   price: number;
   vacancy: number;
 }
 
-export default function MobileEventPayment(props: EventPaymentProps) {
+export default function MobileEventPayment(props: IEventPayment) {
   return (
     <div className="mx-2">
       <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl mb-5 mt-5 text-center"></p>

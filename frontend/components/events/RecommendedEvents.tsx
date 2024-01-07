@@ -3,11 +3,11 @@ import EventCard from "../EventCard";
 import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
 
-interface RecommendedEventsProps {
+interface IRecommendedEvents {
   eventData: EventData;
 }
 
-export default function RecommendedEvents(props: RecommendedEventsProps) {
+export default function RecommendedEvents(props: IRecommendedEvents) {
   const { eventData } = props;
 
   const scrollLeft = () => {

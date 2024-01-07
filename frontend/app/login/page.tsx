@@ -1,7 +1,7 @@
 "use client";
 import { handleEmailAndPasswordSignIn } from "@/services/authService";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 
 export default function Login() {
   const [userData, setUserData] = useState({
@@ -16,10 +16,7 @@ export default function Login() {
     try {
       await handleEmailAndPasswordSignIn(userData.email, userData.password);
       router.push("/dashboard");
-      alert("Logged in!");
     } catch (error) {
-      // TODO fix error handling with a toast notif / smth else
-      alert(error);
       console.error("Error:", error);
     }
   };
