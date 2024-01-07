@@ -64,7 +64,7 @@ export default function Dashboard() {
           setEventDataList={setEventDataList}
         />
       </div>
-      <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-64">
+      <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit">
         <Alert open={showLoginSuccess} color="green">
           Successfully logged in!
         </Alert>
