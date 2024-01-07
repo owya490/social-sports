@@ -16,9 +16,9 @@ export default function MobileNavbar() {
       setTags(tags);
     });
   }, []);
-  const [isHome, setIsHome] = useState(true);
+  const [isHome, setIsHome] = useState(false);
   useEffect(() => {
-    setIsHome(window.location.pathname === "/");
+    // setIsHome(window.location.pathname === "/");
   }, []);
   const handleSearchExpanded = () => {
     setSearchExpanded(!searchExpanded);

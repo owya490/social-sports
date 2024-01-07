@@ -10,9 +10,9 @@ export default function Navbar() {
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
-  const [isHome, setIsHome] = useState(true);
+  const [isHome, setIsHome] = useState(false);
   useEffect(() => {
-    setIsHome(window.location.pathname === "/");
+    // setIsHome(window.location.pathname === "/");
   }, []);
   return (
     <div

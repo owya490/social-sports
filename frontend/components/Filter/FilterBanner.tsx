@@ -1,3 +1,5 @@
+"use client";
+
 import { EventData } from "@/interfaces/EventTypes";
 import { useState } from "react";
 import ChevronRightButton from "../utility/ChevronRightButton";
@@ -17,23 +19,22 @@ interface FilterBannerProps {
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
 }
+export const icons = {
+  Volleyball: { image: VolleyballImage, style: "w-8 h-8" },
+  Badminton: { image: BadmintonImage, style: "w-8 h-8" },
+  Basketball: { image: BasketballImage, style: "w-8 h-8" },
+  Soccer: { image: SoccerImage, style: "w-8 h-8" },
+  Tennis: { image: TennisImage, style: "w-8 h-8" },
+  "Table Tennis": { image: PingPongImage, style: "w-8 h-8" },
+  Oztag: { image: RugbyImage, style: "w-8 h-8" },
+  Baseball: { image: BaseballImage, style: "w-8 h-8" },
+};
 
 export default function FilterBanner({
   eventDataList,
   allEventsDataList,
   setEventDataList,
 }: FilterBannerProps) {
-  const icons = {
-    Volleyball: { image: VolleyballImage, style: "w-8 h-8" },
-    Badminton: { image: BadmintonImage, style: "w-8 h-8" },
-    Basketball: { image: BasketballImage, style: "w-8 h-8" },
-    Soccer: { image: SoccerImage, style: "w-8 h-8" },
-    Tennis: { image: TennisImage, style: "w-8 h-8" },
-    "Table Tennis": { image: PingPongImage, style: "w-8 h-8" },
-    Oztag: { image: RugbyImage, style: "w-8 h-8" },
-    Baseball: { image: BaseballImage, style: "w-8 h-8" },
-  };
-
   const [selectedSport, setSelectedSport] = useState("");
 
   const scroll = () => {

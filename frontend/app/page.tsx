@@ -1,89 +1,164 @@
 "use client";
-
 import RecommendedEvents from "@/components/events/RecommendedEvents";
+import CreateEventBanner from "@/components/home/CreateEventBanner";
+import LoadingOverlay from "@/components/home/LoadingOverlay";
+import PopularEvents from "@/components/home/PopularEvents";
+import PopularLocations from "@/components/home/PopularLocations";
+import SportIcon from "@/components/home/SportIcon";
+import ChevronRightButton from "@/components/utility/ChevronRightButton";
+import { sleep } from "@/components/utility/sleepUtil";
+import { Input } from "@material-tailwind/react";
 import Image from "next/image";
 import { useEffect } from "react";
-import Logo from "./../public/images/black-logo.png";
+import BadmintonImage from "./../public/images/badminton.png";
+import BaseballImage from "./../public/images/baseball.png";
+import HeroImage from "./../public/images/basketball-hero.png";
+import BasketballImage from "./../public/images/basketball.png";
+import PingPongImage from "./../public/images/ping-pong.png";
+import RugbyImage from "./../public/images/rugby-ball.png";
+import SoccerImage from "./../public/images/soccer-ball.png";
+import TennisImage from "./../public/images/tennis-balls.png";
+import VolleyballArt from "./../public/images/volleyball-digging.png";
+import VolleyballImage from "./../public/images/volleyball.png";
 
 export default function Home() {
-  function sleep(time: number) {
-    return new Promise((resolve) => setTimeout(resolve, time));
-  }
+  const icons = {
+    Volleyball: { image: VolleyballImage },
+    Badminton: { image: BadmintonImage },
+    Basketball: { image: BasketballImage },
+    Soccer: { image: SoccerImage },
+    Tennis: { image: TennisImage },
+    "Table Tennis": { image: PingPongImage },
+    Oztag: { image: RugbyImage },
+    Baseball: { image: BaseballImage },
+  };
+
+  const scroll = () => {
+    document.getElementById("sport-icon-carousel")?.scrollBy({
+      top: 0,
+      left: 50,
+      behavior: "smooth",
+    });
+  };
+
   useEffect(() => {
-    async function animateLogo() {
-      document.getElementById("logo")!.classList.add("rotate-[359deg]");
-      await sleep(1000);
-      // document.getElementById("title")!.classList.remove("hidden");
-      console.log(screen.width);
-      if (screen.width > 768) {
-        document.getElementById("title")!.classList.replace("w-0", "w-[500px]");
-        document.getElementById("logo")!.classList.add("-translate-x-5");
-      } else {
-        document.getElementById("title")!.classList.replace("w-0", "w-40");
-        document.getElementById("logo")!.classList.add("-translate-x-3");
-      }
-      await sleep(2000);
-      document
-        .getElementById("arrow")!
-        .classList.replace("opacity-0", "opacity-100");
+    async function init() {
+      await sleep(2100);
+      document.getElementById("page")!.classList.remove("hidden");
     }
-    animateLogo();
-  }, []);
+    init();
+  });
+
   return (
     <div>
-      {/* <Image
-        src={HeroImage}
-        alt="hero"
-        height={0}
-        width={0}
-        className="w-full object-cover h-screen relative brightness-75"
-      /> */}
-      <div
-        id="background"
-        className="w-full object-cover h-screen relative bg-black transition-all duration-1000"
-      ></div>
-      <div className="absolute top-0 w-full h-screen flex justify-center items-center">
-        {/* <h1 className="text-white font-robotocondensed text-5xl">
-          Your One Stop Social Sport Shop
-        </h1> */}
-        <div>
-          <div className="flex items-center">
-            <Image
-              id="logo"
-              src={Logo}
-              alt={"..."}
-              height={0}
-              width={0}
-              className="transition-all duration-1000 w-10 h-10 md:w-20 md:h-20"
-            />
-            <h1
-              id="title"
-              className="text-white text-2xl md:text-7xl font-bold w-0 transition-all overflow-hidden whitespace-nowrap duration-1000"
+      <LoadingOverlay />
+      <div id="page" className="hidden">
+        <div className="mt-20 w-screen justify-center flex">
+          <div className="screen-width-dashboard">
+            <div className="grid grid-cols-2 mt-8">
+              <div className="w-full flex justify-center items-center">
+                <div>
+                  <h1 className="text-6xl font-extrabold">
+                    Satisfy your Sports Cravings.
+                  </h1>
+                  <p className="font-thin mt-4">
+                    Find your next Social Sports Session right here on{" "}
+                    <a href="/dashboard" className="font-semibold">
+                      Sports Hub.
+                    </a>
+                  </p>
+                </div>
+              </div>
+              <div>
+                <Image
+                  src={HeroImage}
+                  height={0}
+                  width={0}
+                  alt="..."
+                  className="w-full object-cover"
+                />
+              </div>
+            </div>
+            <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
+            <div className="flex my-5">
+              <h5 className="font-bold text-lg">Search by Sports</h5>
+              <a className="text-sm font-light ml-auto cursor-pointer hover:underline">
+                See all
+              </a>
+            </div>
+            <div
+              id="sport-icon-carousel"
+              className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all"
             >
-              SPORTS HUB
-            </h1>
+              {Object.entries(icons).map((entry, idx) => {
+                if (idx === 0) {
+                  return (
+                    <SportIcon
+                      key={idx}
+                      image={entry[1].image}
+                      name={entry[0]}
+                      isFirst={true}
+                    />
+                  );
+                }
+                return (
+                  <SportIcon
+                    key={idx}
+                    image={entry[1].image}
+                    name={entry[0]}
+                    isFirst={false}
+                  />
+                );
+              })}
+            </div>
+            <div className="-left-5 ml-2 mr-8 xl:hidden">
+              <ChevronRightButton handleClick={scroll} />
+            </div>
           </div>
         </div>
-        <div
-          id="arrow"
-          className="opacity-0 absolute bottom-60 md:bottom-96 w-full flex justify-center mt-10 md:mt-16 -translate-x-2 transition-all duration-1000"
-        >
-          <div className="animate-bounce bg-white dark:bg-slate-800 p-2 w-8 h-8 md:w-10 md:h-10 ring-1 ring-slate-900/5 dark:ring-slate-200/20 shadow-lg rounded-full flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-black"
-              fill="none"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-            </svg>
+        <RecommendedEvents />
+        <div></div>
+        <div className="my-36 w-screen flex justify-center">
+          <div className="screen-width-dashboard">
+            <div className="grid grid-cols-3">
+              <div className="col-span-2">
+                <Image
+                  src={VolleyballArt}
+                  height={0}
+                  width={0}
+                  alt="..."
+                  className="ml-auto"
+                />
+              </div>
+              <div className=" flex justify-center items-center ml-5">
+                <div className="h-fit">
+                  <h1 className="text-3xl font-semibold lg:text-4xl">
+                    Subscribe To The <span className="">Newsletter</span>
+                  </h1>
+                  <p className="mt-3 font-thin italic">
+                    be the first to knows when our{" "}
+                    <span className="font-bold">Brand</span> is live
+                  </p>
+
+                  <div className="flex flex-col mt-6 space-y-3 lg:space-y-0 lg:flex-row">
+                    <Input
+                      crossOrigin={undefined}
+                      label="Email Address"
+                      variant="outlined"
+                    />
+                    <button className="w-full px-5 py-2 text-sm tracking-wider uppercase transition-colors duration-300 transform border border-black rounded-lg lg:w-auto lg:mx-4 hover:bg-black hover:text-white">
+                      Subscribe
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+        <PopularLocations />
+        <PopularEvents />
+        <CreateEventBanner />
       </div>
-      <RecommendedEvents />
     </div>
   );
 }

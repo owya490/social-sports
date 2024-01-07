@@ -23,7 +23,7 @@ export default function EventCard(props: EventCardProps) {
 
   return (
     <div
-      className="bg-white rounded-lg w-full text-left border-gray-300 border min-w-[300px] hover:cursor-pointer"
+      className="bg-white rounded-lg w-full text-left border-gray-300 border min-w-[300px] max-w-[350px] hover:cursor-pointer"
       onClick={() => {
         router.push(`/event/${props.eventId}`);
       }}

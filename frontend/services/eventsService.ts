@@ -86,6 +86,8 @@ export async function getAllEvents(): Promise<EventData[]> {
     localStorage.setItem("eventsData", JSON.stringify(eventsData));
     const currentDateString = currentDate.toUTCString();
     localStorage.setItem("lastFetchedEventData", currentDateString);
+    console.log("aidan chee");
+    console.log(eventsData);
     return eventsData;
   } catch (error) {
     console.error(error);
