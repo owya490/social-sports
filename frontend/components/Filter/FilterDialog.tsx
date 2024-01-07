@@ -41,9 +41,13 @@ export default function FilterDialog({
   allEventsDataList,
   setEventDataList,
 }: FilterDialogProps) {
-  let [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  let [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   const [maxPriceSliderValue, setMaxPriceSliderValue] =
-    useState(DEFAULT_MAX_PRICE);
+    useState<number>(DEFAULT_MAX_PRICE);
+  /// Keeps track of what filter values were actually applied.
+  const [appliedMaxPriceSliderValue, setAppliedMaxPriceSliderValue] =
+    useState<number>(DEFAULT_MAX_PRICE);
+
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
@@ -51,8 +55,18 @@ export default function FilterDialog({
     startDate: DEFAULT_START_DATE,
     endDate: DEFAULT_END_DATE,
   });
+  const [appliedDateRange, setAppliedDateRange] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+  }>({
+    startDate: DEFAULT_START_DATE,
+    endDate: DEFAULT_END_DATE,
+  });
+
   const [maxProximitySliderValue, setMaxProximitySliderValue] =
     useState<number>(DEFAULT_MAX_PROXIMITY); // max proximity in kms.
+  const [appliedMaxProximitySliderValue, setAppliedMaxProximitySliderValue] =
+    useState<number>(DEFAULT_MAX_PROXIMITY);
 
   const handleDateRangeChange = (dateRange: any) => {
     if (dateRange.startDate && dateRange.endDate) {
@@ -78,6 +92,9 @@ export default function FilterDialog({
   }
 
   function openModal() {
+    setMaxPriceSliderValue(appliedMaxPriceSliderValue);
+    setMaxProximitySliderValue(appliedMaxProximitySliderValue);
+    setDateRange(appliedDateRange);
     setIsFilterModalOpen(true);
   }
 
@@ -91,6 +108,7 @@ export default function FilterDialog({
       maxPriceSliderValue
     );
     filteredEventDataList = newEventDataList;
+    setAppliedMaxPriceSliderValue(maxPriceSliderValue);
 
     // Filter by DATERANGE
     if (dateRange.startDate && dateRange.endDate) {
@@ -103,6 +121,7 @@ export default function FilterDialog({
       );
       filteredEventDataList = newEventDataList;
     }
+    setAppliedDateRange(dateRange);
 
     // Filter by MAX PROXIMITY
     let srcLat = SYDNEY_LAT;
@@ -122,6 +141,7 @@ export default function FilterDialog({
       srcLng
     );
     filteredEventDataList = newEventDataList;
+    setAppliedMaxProximitySliderValue(maxProximitySliderValue);
 
     // TODO: add more filters
 
@@ -132,11 +152,20 @@ export default function FilterDialog({
 
   function handleClearAll() {
     setMaxPriceSliderValue(DEFAULT_MAX_PRICE);
+    setAppliedMaxPriceSliderValue(DEFAULT_MAX_PRICE);
+
     setDateRange({
       startDate: DEFAULT_START_DATE,
       endDate: DEFAULT_END_DATE,
     });
+    setAppliedDateRange({
+      startDate: DEFAULT_START_DATE,
+      endDate: DEFAULT_END_DATE,
+    });
+
     setMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
+    setAppliedMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
+
     setEventDataList([...allEventsDataList]);
     closeModal();
   }
