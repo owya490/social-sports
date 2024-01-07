@@ -33,6 +33,7 @@ const config: Config = {
       },
     },
   },
+  plugins: [],
 };
 
-export default withMT(conf
+export default withMT(config);

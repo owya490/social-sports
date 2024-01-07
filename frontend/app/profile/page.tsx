@@ -216,12 +216,21 @@ const Profile = () => {
                     />
                     {isHovered && (
                       <div className="absolute inset-0 flex items-center justify-center">
+                        <input
+                          type="file"
+                          id="Image_input"
+                          className="hidden"
+                          accept=".jpg,.jpeg,.png"
+                        />
                         <Image
                           src={Upload}
                           alt="Upload"
                           width={0}
                           height={0}
-                          className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64 opacity-40"
+                          className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64 opacity-60"
+                          onClick={() => {
+                            document.getElementById("Image_input")!.click();
+                          }}
                         />
                       </div>
                     )}
@@ -304,18 +313,6 @@ const Profile = () => {
               }}
             >
               <div className="mb-2">Name</div>
-              {/* <div className="flex justify-center lg:justify-start my-2 3xl:my-4">
-            {renderModalContent()}
-            {!editable && (
-              <button
-                type="button"
-                onClick={handleEditClick}
-                className="text-white bg-blue-500 hover:bg-blue-600 focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-              >
-                Edit
-              </button>
-            )}
-          </div> */}
             </div>
             <div
               className="mb-5 text-2xl lg:hidden"
@@ -326,6 +323,16 @@ const Profile = () => {
               }}
             >
               <div className="mb-2">Name</div>
+              <div className="flex justify-center lg:justify-start my-2 3xl:my-4 hidden lg:block">
+                {renderModalContent()}
+                <button
+                  type="button"
+                  onClick={handleEditClick}
+                  className="text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
             <ul>
               {renderField("Given Name", "firstName")}
@@ -382,15 +389,15 @@ const Profile = () => {
             </ul>
             <div className="flex justify-center lg:justify-start my-2 3xl:my-4 lg:hidden">
               {renderModalContent()}
-              {!editable && (
-                <button
-                  type="button"
-                  onClick={handleEditClick}
-                  className="text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3"
-                >
-                  Edit
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleEditClick}
+                className={`text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 ${
+                  editable && "invisible"
+                }`}
+              >
+                Edit
+              </button>
             </div>
           </div>
         </div>
