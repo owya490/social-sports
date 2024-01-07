@@ -5,6 +5,7 @@ import { Fragment, useState } from "react";
 import DP from "./../../public/images/Ashley & Owen.png";
 import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
+import Upload from "./../../public/images/upload.png";
 
 const calculateAge = (birthday) => {
   const [day, month, year] = birthday.split("-");
@@ -56,6 +57,16 @@ const Profile = () => {
     } else {
       setEditedData((prevData) => ({ ...prevData, [name]: value }));
     }
+  };
+
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
   };
 
   const handleSaveClick = () => {
@@ -190,14 +201,31 @@ const Profile = () => {
                 className=" lg:items-start lg:flex-row border border-gray-500 lg:h-60 lg:w-full 3xl:h-72 lg:flex lg:items-center justify-center lg:p-2"
                 style={{ borderRadius: "20px" }}
               >
-                <div className="justify-center mx-5 lg:mx-3 mt-4 lg:mt-0">
-                  <Image
-                    src={DP}
-                    alt="DP"
-                    width={0}
-                    height={0}
-                    className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64"
-                  />
+                <div className="relative mx-5 lg:mx-3 mt-4 lg:mt-0">
+                  <div
+                    className="hover:bg-gray-200 rounded-full overflow-hidden transition duration-500"
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <Image
+                      src={DP}
+                      alt="DP"
+                      width={0}
+                      height={0}
+                      className="object-cover h-52 w-52 3xl:h-64 3xl:w-64"
+                    />
+                    {isHovered && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Image
+                          src={Upload}
+                          alt="Upload"
+                          width={0}
+                          height={0}
+                          className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64 opacity-40"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col justify-center lg:ml-3">
                   <div className="flex justify-center lg:justify-start mt-5 3xl:mt-9 text-2xl 3xl:text-4xl font-semibold">
