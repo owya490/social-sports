@@ -19,6 +19,8 @@ import {
   or,
   DocumentData,
   Query,
+  CollectionReference,
+  Firestore,
 } from "firebase/firestore";
 
 import { db } from "./firebase";
@@ -71,7 +73,7 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
 
       const eventsData = await processEventData(eventCollectionRef, eventTokenMatchCount);
       eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
-
+      delete eventsData["tokenMathcCount"]
       return eventsData;
   } catch (error) {
       console.error("Error searching events:", error);
@@ -101,7 +103,7 @@ async function processEventData(eventCollectionRef, eventTokenMatchCount) {
   for (const [eventId, count] of eventTokenMatchCount) {
       const eventDoc = await getDoc(doc(eventCollectionRef, eventId));
       if (eventDoc.exists()) {
-
+        
           const eventData = eventDoc.data();
           const extendedEventData = {
               ...eventData,

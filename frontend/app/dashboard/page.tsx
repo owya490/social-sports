@@ -46,7 +46,8 @@ export default function Dashboard() {
           if (event === "" && location === "") {
               getAllEvents()
                   .then((events) => {
-                    setEventDataList(events);
+                      setEventDataList(events);
+                      setAllEventsDataList(events);
                   })
                   .finally(() => {
                       setLoading(false);
@@ -54,7 +55,10 @@ export default function Dashboard() {
           } else {
               searchEventsByKeyword(event, location)
                   .then((events) => {
+                    console.log(events)
                     setEventDataList(events);
+                    console.log("EVENTS")
+                    console.log(eventDataList)
                   })
                   .finally(() => {
                       setLoading(false);
