@@ -7,7 +7,7 @@ import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-interface IEventCard {
+interface EventCardProps {
   eventId: EventId;
   image: string;
   name: string;
@@ -18,7 +18,7 @@ interface IEventCard {
   vacancy: number;
 }
 
-export default function EventCard(props: IEventCard) {
+export default function EventCard(props: EventCardProps) {
   const router = useRouter();
 
   return (
