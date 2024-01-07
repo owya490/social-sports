@@ -15,8 +15,7 @@ export default function Login() {
 
     try {
       await handleEmailAndPasswordSignIn(userData.email, userData.password);
-      router.push("/dashboard");
-      alert("Logged in!");
+      router.push("/dashboard?login=success");
     } catch (error) {
       // TODO fix error handling with a toast notif / smth else
       alert(error);
