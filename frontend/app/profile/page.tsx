@@ -12,7 +12,6 @@ const calculateAge = (birthday) => {
   const birthDate = new Date(`${year}-${month}-${day}`);
   const currentDate = new Date();
   let age = currentDate.getFullYear() - birthDate.getFullYear();
-
   if (
     currentDate.getMonth() < birthDate.getMonth() ||
     (currentDate.getMonth() === birthDate.getMonth() &&
@@ -20,7 +19,6 @@ const calculateAge = (birthday) => {
   ) {
     age--;
   }
-
   return age;
 };
 
@@ -38,7 +36,6 @@ const initialProfileData = {
 const Profile = () => {
   const [editable, setEditable] = useState(false);
   const [editedData, setEditedData] = useState({ ...initialProfileData });
-
   const handleEditClick = () => {
     if (editable) {
       setEditedData({ ...initialProfileData });
@@ -48,7 +45,6 @@ const Profile = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "birthday") {
       setEditedData((prevData) => ({
         ...prevData,
@@ -96,12 +92,10 @@ const Profile = () => {
       )}
     </div>
   );
-
   const formatDateForInput = (dateString) => {
     const [dd, mm, yyyy] = dateString.split("-");
     return `${yyyy}-${mm}-${dd}`;
   };
-
   const renderField = (label, name) => (
     <li key={label} className="mb-4">
       <strong className="block text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">
@@ -114,7 +108,6 @@ const Profile = () => {
       </span>
     </li>
   );
-
   const renderModalContent = () => (
     <Transition appear show={editable} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={handleEditClick}>
@@ -129,7 +122,6 @@ const Profile = () => {
         >
           <div className="fixed inset-0 bg-black/25" />
         </Transition.Child>
-
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
@@ -392,9 +384,10 @@ const Profile = () => {
               <button
                 type="button"
                 onClick={handleEditClick}
-                className={`text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 ${
-                  editable && "invisible"
-                }`}
+                className="text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3"
+                // className={`text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 ${
+                //   editable && "invisible"
+                // }`}
               >
                 Edit
               </button>
