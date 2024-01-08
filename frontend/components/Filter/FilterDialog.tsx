@@ -136,6 +136,7 @@ export default function FilterDialog({
     setAppliedMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
 
     setEventDataList([...allEventsDataList]);
+    setSrcLocation("");
     closeModal();
   }
 
@@ -207,14 +208,18 @@ export default function FilterDialog({
                         <p className={"text-lg font-bold"}>Max Price</p>
                       </div>
                       <div className="w-full mt-3 flex items-center">
-                        <p className={"mr-2"}>${maxPriceSliderValue}</p>
+                        <p className={"mr-2"}>
+                          {maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE
+                            ? "ANY"
+                            : "$" + maxPriceSliderValue}
+                        </p>
 
                         <Slider
                           color="blue"
                           className="h-1"
                           step={1}
                           min={0}
-                          max={100}
+                          max={PRICE_SLIDER_MAX_VALUE}
                           defaultValue={
                             maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue
                           }
@@ -246,13 +251,18 @@ export default function FilterDialog({
                         <p className={"text-lg font-bold"}>Max Proximity</p>
                       </div>
                       <div className="w-full mt-3 mb-5 flex items-center">
-                        <p className={"mr-2"}>{maxProximitySliderValue}km</p>
+                        <p className="mr-2 whitespace-nowrap">
+                          {maxProximitySliderValue ===
+                          PROXIMITY_SLIDER_MAX_VALUE
+                            ? "ANY"
+                            : maxProximitySliderValue + "km"}
+                        </p>
                         <Slider
                           color="blue"
                           className="h-1 z-0"
                           step={1}
                           min={0}
-                          max={100}
+                          max={PROXIMITY_SLIDER_MAX_VALUE}
                           defaultValue={
                             maxProximitySliderValue === 0
                               ? 0
@@ -263,9 +273,11 @@ export default function FilterDialog({
                               ? 0
                               : maxProximitySliderValue
                           }
-                          onChange={(e) =>
-                            setMaxProximitySliderValue(parseInt(e.target.value))
-                          }
+                          onChange={(e) => {
+                            setMaxProximitySliderValue(
+                              parseInt(e.target.value)
+                            );
+                          }}
                         />
                       </div>
                       <Input
