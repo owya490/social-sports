@@ -16,6 +16,8 @@ import FilterDialog, {
   DEFAULT_MAX_PRICE,
   DEFAULT_MAX_PROXIMITY,
   DEFAULT_START_DATE,
+  PRICE_SLIDER_MAX_VALUE,
+  PROXIMITY_SLIDER_MAX_VALUE,
 } from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
 import {
@@ -94,21 +96,26 @@ export default function FilterBanner({
   };
 
   async function applyFilters(selectedSportProp: string) {
-    console.log("selectedSport", selectedSportProp);
+    const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
+    const isAnyProximityBool =
+      maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
+
     let filteredEventDataList = [...allEventsDataList];
 
     // Filter by MAX PRICE
-    let newEventDataList = filterEventsByPrice(
-      [...filteredEventDataList],
-      null,
-      maxPriceSliderValue
-    );
-    filteredEventDataList = newEventDataList;
+    if (!isAnyPriceBool) {
+      let newEventDataList = filterEventsByPrice(
+        [...filteredEventDataList],
+        null,
+        maxPriceSliderValue
+      );
+      filteredEventDataList = newEventDataList;
+    }
     setAppliedMaxPriceSliderValue(maxPriceSliderValue);
 
     // Filter by DATERANGE
     if (dateRange.startDate && dateRange.endDate) {
-      newEventDataList = filterEventsByDate(
+      let newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
         Timestamp.fromDate(
           new Date(dateRange.startDate + DAY_START_TIME_STRING)
@@ -120,27 +127,29 @@ export default function FilterBanner({
     setAppliedDateRange(dateRange);
 
     // Filter by MAX PROXIMITY
-    let srcLat = SYDNEY_LAT;
-    let srcLng = SYDNEY_LNG;
-    try {
-      const { lat, lng } = await getLocationCoordinates(srcLocation);
-      srcLat = lat;
-      srcLng = lng;
-    } catch (error) {
-      console.log(error);
-    }
+    if (!isAnyProximityBool) {
+      let srcLat = SYDNEY_LAT;
+      let srcLng = SYDNEY_LNG;
+      try {
+        const { lat, lng } = await getLocationCoordinates(srcLocation);
+        srcLat = lat;
+        srcLng = lng;
+      } catch (error) {
+        console.log(error);
+      }
 
-    newEventDataList = filterEventsByMaxProximity(
-      [...filteredEventDataList],
-      maxProximitySliderValue,
-      srcLat,
-      srcLng
-    );
-    filteredEventDataList = newEventDataList;
+      let newEventDataList = filterEventsByMaxProximity(
+        [...filteredEventDataList],
+        maxProximitySliderValue,
+        srcLat,
+        srcLng
+      );
+      filteredEventDataList = newEventDataList;
+    }
     setAppliedMaxProximitySliderValue(maxProximitySliderValue);
 
     // Filter by SPORT
-    newEventDataList = filterEventsBySport(
+    let newEventDataList = filterEventsBySport(
       [...filteredEventDataList],
       selectedSportProp
     );

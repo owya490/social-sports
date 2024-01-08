@@ -26,10 +26,12 @@ import { set } from "firebase/database";
 
 export const DAY_START_TIME_STRING = " 00:00:00";
 export const DAY_END_TIME_STRING = " 23:59:59";
-export const DEFAULT_MAX_PRICE = 25;
-export const DEFAULT_MAX_PROXIMITY = 25;
+export const DEFAULT_MAX_PRICE = 100;
+export const DEFAULT_MAX_PROXIMITY = 100;
 export const DEFAULT_START_DATE = null;
 export const DEFAULT_END_DATE = null;
+export const PROXIMITY_SLIDER_MAX_VALUE = 100;
+export const PRICE_SLIDER_MAX_VALUE = 100;
 
 interface FilterDialogProps {
   allEventsDataList: EventData[];
@@ -284,7 +286,6 @@ export default function FilterDialog({
                         shrink={false}
                         variant="outlined"
                         label="Search Location"
-                        placeholder="Sydney NSW Australia"
                         crossOrigin="true"
                         value={srcLocation}
                         onChange={({ target }) => setSrcLocation(target.value)}
