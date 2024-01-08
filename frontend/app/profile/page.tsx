@@ -92,6 +92,7 @@ const Profile = () => {
       )}
     </div>
   );
+
   const formatDateForInput = (dateString) => {
     const [dd, mm, yyyy] = dateString.split("-");
     return `${yyyy}-${mm}-${dd}`;
@@ -108,6 +109,7 @@ const Profile = () => {
       </span>
     </li>
   );
+
   const renderModalContent = () => (
     <Transition appear show={editable} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={handleEditClick}>
@@ -305,6 +307,19 @@ const Profile = () => {
               }}
             >
               <div className="mb-2">Name</div>
+              {/* <div className="flex justify-center lg:justify-start my-2 3xl:my-4 lg:hidden">
+                {renderModalContent()}
+                <button
+                  type="button"
+                  onClick={handleEditClick}
+                  className="text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3"
+                  // className={`text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 ${
+                  //   editable && "invisible"
+                  // }`}
+                >
+                  Edit
+                </button>
+              </div> */}
             </div>
             <div
               className="mb-5 text-2xl lg:hidden"
@@ -315,16 +330,6 @@ const Profile = () => {
               }}
             >
               <div className="mb-2">Name</div>
-              <div className="flex justify-center lg:justify-start my-2 3xl:my-4 hidden lg:block">
-                {renderModalContent()}
-                <button
-                  type="button"
-                  onClick={handleEditClick}
-                  className="text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3"
-                >
-                  Edit
-                </button>
-              </div>
             </div>
             <ul>
               {renderField("Given Name", "firstName")}
