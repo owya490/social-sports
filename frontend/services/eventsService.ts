@@ -26,6 +26,10 @@ const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
+  if (!rateLimitCreateAndUpdateEvents()) {
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
+  }
   try {
     const docRef = await addDoc(collection(db, "Events"), data);
     return docRef.id;
@@ -86,8 +90,6 @@ export async function getAllEvents(): Promise<EventData[]> {
     localStorage.setItem("eventsData", JSON.stringify(eventsData));
     const currentDateString = currentDate.toUTCString();
     localStorage.setItem("lastFetchedEventData", currentDateString);
-    console.log("aidan chee");
-    console.log(eventsData);
     return eventsData;
   } catch (error) {
     console.error(error);
@@ -99,6 +101,10 @@ export async function updateEvent(
   eventId: string,
   updatedData: Partial<EventData>
 ): Promise<void> {
+  if (!rateLimitCreateAndUpdateEvents()) {
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
+  }
   try {
     const eventRef = doc(db, "Events", eventId);
     await updateDoc(eventRef, updatedData);
@@ -111,6 +117,10 @@ export async function updateEventByName(
   eventName: string,
   updatedData: Partial<EventData>
 ) {
+  if (!rateLimitCreateAndUpdateEvents()) {
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
+  }
   try {
     const eventCollectionRef = collection(db, "Events");
     const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
@@ -209,4 +219,48 @@ function getEventsDataFromLocalStorage(): EventData[] {
     });
   });
   return eventsDataFinal;
+}
+
+function rateLimitCreateAndUpdateEvents(): boolean {
+  const now = new Date();
+  const maybeOperationCount5minString =
+    localStorage.getItem("operationCount5min");
+  const maybeLastCreateUpdateOperationTimestampString = localStorage.getItem(
+    "lastCreateUpdateOperationTimestamp"
+  );
+
+  if (
+    maybeOperationCount5minString !== null &&
+    maybeLastCreateUpdateOperationTimestampString !== null
+  ) {
+    const operationCount5min = parseInt(maybeOperationCount5minString);
+    const lastCreateUpdateOperationTimestamp = new Date(
+      maybeLastCreateUpdateOperationTimestampString
+    );
+
+    if (
+      now.valueOf() - lastCreateUpdateOperationTimestamp.valueOf() <
+      EVENTS_REFRESH_MILLIS
+    ) {
+      if (operationCount5min >= 5) {
+        return false;
+      } else {
+        localStorage.setItem(
+          "operationCount5min",
+          (operationCount5min + 1).toString()
+        );
+        return true;
+      }
+    }
+    localStorage.setItem("operationCount5min", "0");
+    localStorage.setItem(
+      "lastCreateUpdateOperationTimestamp",
+      now.toUTCString()
+    );
+    return true;
+  }
+  // allow edit as one is null
+  localStorage.setItem("operationCount5min", "0");
+  localStorage.setItem("lastCreateUpdateOperationTimestamp", now.toUTCString());
+  return true;
 }
