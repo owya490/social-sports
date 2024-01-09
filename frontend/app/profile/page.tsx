@@ -97,12 +97,13 @@ const Profile = () => {
     const [dd, mm, yyyy] = dateString.split("-");
     return `${yyyy}-${mm}-${dd}`;
   };
+
   const renderField = (label, name) => (
-    <li key={label} className="mb-4">
-      <strong className="block text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">
+    <li key={label} className="mb-4 flex justify-between w-full">
+      <strong className="text-lg lg:text-xl 3xl:text-2xl font-medium text-gray-700">
         {label}:
       </strong>
-      <span className="mt-1 text-lg lg:text-xl 3xl:text-2xl">
+      <span className="text-lg lg:text-xl 3xl:text-2xl font-medium text-gray-700">
         {name === "password"
           ? "*".repeat(initialProfileData[name].length)
           : initialProfileData[name]}
@@ -179,25 +180,25 @@ const Profile = () => {
 
   return (
     <div className="w-screen flex justify-center">
-      <div className="w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 3xl:w-[1400px]">
-        <div className="relative mt-[100px] mb-[5%] grid grid-cols-1 lg:grid-cols-2 lg:gap-x-[3vw]">
-          <div className="flex justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-2 lg:row-span-1 lg:row-start-1">
+      <div className="w-screen mx-10 sm:mx-0 sm:w-[400px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 3xl:w-[1400px]">
+        <div className="relative mt-[100px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[3vw]">
+          <div className="flex justify-center md:justify-start col-start-1 col-span-1 md:col-start-2 md:row-span-1 md:row-start-1">
             <div
-              className="flex justify-center mb-5 lg:mb-6 text-3xl lg:text-4xl"
+              className="flex justify-center mb-5 md:mb-6 text-3xl lg:text-4xl"
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}'s Profile
             </div>
           </div>
           <div className="flex flex-col">
-            <div className="flex justify-center w-full h-fit lg:justify-end col-start-1 col-span-1 lg:row-start-1">
+            <div className="flex justify-center w-full h-fit col-start-1 col-span-1 md:row-start-1">
               <div
-                className=" lg:items-start lg:flex-row border border-gray-500 lg:h-60 lg:w-full 3xl:h-72 lg:flex lg:items-center justify-center lg:p-2"
+                className="lg:flex-row border border-gray-500 lg:h-60 w-full 3xl:h-72 lg:flex lg:items-center justify-center md:p-2"
                 style={{ borderRadius: "20px" }}
               >
-                <div className="relative mx-5 lg:mx-3 mt-4 lg:mt-0">
+                <div className="relative mx-5 md:mx-3 mt-4 lg:mt-0">
                   <div
-                    className="hover:bg-gray-200 rounded-full overflow-hidden transition duration-500"
+                    className="hover:bg-gray-200 flex justify-center overflow-hidden transition duration-500"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                   >
@@ -206,7 +207,7 @@ const Profile = () => {
                       alt="DP"
                       width={0}
                       height={0}
-                      className="object-cover h-52 w-52 3xl:h-64 3xl:w-64"
+                      className="object-cover h-52 w-52 3xl:h-64 3xl:w-64 rounded-full"
                     />
                     {isHovered && (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -297,32 +298,9 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          <div className="grid justify-center lg:justify-start col-start-1 col-span-1 lg:col-start-2 lg:row-start-1 lg:row-span-4 mt-6 lg:mt-16 3xl:mt-20 3xl:text-xl ">
+          <div className="justify-start col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-xl">
             <div
-              className="mb-5 text-3xl hidden lg:block"
-              style={{
-                fontWeight: 400,
-                borderBottom: "2px solid #ccc",
-                width: "250%",
-              }}
-            >
-              <div className="mb-2">Name</div>
-              {/* <div className="flex justify-center lg:justify-start my-2 3xl:my-4 lg:hidden">
-                {renderModalContent()}
-                <button
-                  type="button"
-                  onClick={handleEditClick}
-                  className="text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3"
-                  // className={`text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 ${
-                  //   editable && "invisible"
-                  // }`}
-                >
-                  Edit
-                </button>
-              </div> */}
-            </div>
-            <div
-              className="mb-5 text-2xl lg:hidden"
+              className="mb-5 text-2xl lg:text-3xl"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
@@ -331,22 +309,13 @@ const Profile = () => {
             >
               <div className="mb-2">Name</div>
             </div>
-            <ul>
+            <ul className="w-full">
               {renderField("Given Name", "firstName")}
               {renderField("Surname", "lastName")}
             </ul>
+
             <div
-              className="mb-5 text-3xl hidden lg:block"
-              style={{
-                fontWeight: 400,
-                borderBottom: "2px solid #ccc",
-                width: "250%",
-              }}
-            >
-              <div className="mb-2 mt-1">Contact Info</div>
-            </div>
-            <div
-              className="mb-5 text-2xl lg:hidden"
+              className="mb-5 text-2xl lg:text-3xl"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
@@ -355,22 +324,13 @@ const Profile = () => {
             >
               <div className="mb-2 mt-1">Contact Info</div>
             </div>
-            <ul>
+            <ul className="w-full">
               {renderField("Email", "email")}
               {renderField("Phone Number", "phoneNumber")}
             </ul>
+
             <div
-              className="mb-5 text-3xl hidden lg:block"
-              style={{
-                fontWeight: 400,
-                borderBottom: "2px solid #ccc",
-                width: "250%",
-              }}
-            >
-              <div className="mb-2 mt-1">About Me</div>
-            </div>
-            <div
-              className="mb-5 text-2xl lg:hidden"
+              className="mb-5 text-2xl lg:text-3xl"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
@@ -379,12 +339,12 @@ const Profile = () => {
             >
               <div className="mb-2 mt-1">About Me</div>
             </div>
-            <ul>
+            <ul className="w-full">
               {renderField("Location", "location")}
               {renderField("Date of Birth", "birthday")}
-              {renderField("Password", "password")}{" "}
+              {renderField("Password", "password")}
             </ul>
-            <div className="flex justify-center lg:justify-start my-2 3xl:my-4 lg:hidden">
+            <div className="flex justify-start my-8 3xl:my-4">
               {renderModalContent()}
               <button
                 type="button"
