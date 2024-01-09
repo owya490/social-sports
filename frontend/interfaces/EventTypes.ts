@@ -26,6 +26,7 @@ interface AbstractEventData {
   isActive: boolean;
   attendees: { email: string }[];
   accessCount: number;
+  sport: string;
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -61,4 +62,5 @@ export const EmptyEventData: EventData = {
   isActive: false,
   attendees: [],
   accessCount: 0,
+  sport: "",
 };

@@ -8,7 +8,7 @@ export default function LightBulbIcon() {
       viewBox="0 0 512 512"
       xmlSpace="preserve"
       fill="#000000"
-      className="w-10 px-2"
+      className="w-10 h-10 px-2"
     >
       <g id="SVGRepo_bgCarrier" strokeWidth={0} />
       <g

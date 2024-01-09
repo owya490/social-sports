@@ -23,13 +23,13 @@ export default function EventCard(props: EventCardProps) {
 
   return (
     <div
-      className="bg-white rounded-xl w-full text-left border-gray-300 border min-w-[300px]"
-      // className="bg-white rounded-xl basis-3/12 max-w-[25%] w-[100%] text-left border-gray-300 border"
+      className="bg-white rounded-lg w-full text-left border-gray-300 border min-w-[300px] max-w-[350px] hover:cursor-pointer"
       onClick={() => {
         router.push(`/event/${props.eventId}`);
       }}
     >
       <Image
+        priority={true}
         src={props.image}
         height={0}
         width={0}
@@ -71,7 +71,7 @@ export default function EventCard(props: EventCardProps) {
           <p className="text-sm font-light text-gray-500">
             {`${props.vacancy} spots left`}
           </p>
-          <button className="ml-auto rounded-full border-black border py-1 px-2 text-blackm text-center">
+          <button className="ml-auto rounded-lg border-black border py-1 px-2 text-blackm text-center">
             <h2 className="text-sm">Book Now</h2>
           </button>
         </div>
