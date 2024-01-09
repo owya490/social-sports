@@ -9,7 +9,7 @@ interface SportIconProps {
 export default function SportIcon(props: SportIconProps) {
   return (
     <button
-      className={`w-full flex justify-center snap-start`}
+      className={`min-w-[5rem] w-full flex justify-center snap-start`}
       // onClick={() => {}}
     >
       <div>
@@ -19,10 +19,12 @@ export default function SportIcon(props: SportIconProps) {
             width={0}
             height={0}
             alt="volleyballImage"
-            className={`w-12 h-12 flex justify-center`}
+            className="h-8 w-8 md:w-12 md:h-12 flex justify-center"
           />
         </div>
-        <p className="text-lg font-light grow text-center">{props.name}</p>
+        <p className="text-sm md:text-base lg:text-lg font-light grow text-center">
+          {props.name}
+        </p>
       </div>
     </button>
   );

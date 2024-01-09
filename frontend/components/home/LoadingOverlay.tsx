@@ -6,12 +6,13 @@ import Logo from "../../public/images/black-logo.png";
 import { sleep } from "../utility/sleepUtil";
 
 export default function LoadingOverlay() {
+
   useEffect(() => {
+    // Tuned very intricately, please consult Owen before making changes :D
     async function animateLogo() {
+      await sleep(100);
       document.getElementById("logo")!.classList.add("rotate-[359deg]");
       await sleep(1000);
-      // document.getElementById("title")!.classList.remove("hidden");
-      console.log(screen.width);
       if (screen.width > 768) {
         document.getElementById("title")!.classList.replace("w-0", "w-[500px]");
         document.getElementById("logo")!.classList.add("-translate-x-5");
@@ -23,10 +24,6 @@ export default function LoadingOverlay() {
       document.getElementById("overlay")!.classList.add("opacity-0");
       await sleep(1000);
       document.getElementById("overlay")!.classList.add("hidden");
-      // document.getElementById("title")!.classList.add("opacity-0");
-      // document.getElementById("logo")!.classList.add("opacity-0");
-      // await sleep(500);
-      // document.getElementById("background")!.classList.add("opacity-0");
     }
     animateLogo();
   }, []);

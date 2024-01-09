@@ -64,7 +64,7 @@ export default function PopularEvents(props: PopularEventsProps) {
           <div className="hidden sm:block pr-2">
             <ChevronLeftButton handleClick={scrollLeft} />
           </div>
-          <div className="pb-10 screen-width-dashboard">
+          <div className="screen-width-dashboard">
             <div
               id="recommended-event-overflow"
               className="flex overflow-x-auto pb-4 snap-x snap-mandatory"

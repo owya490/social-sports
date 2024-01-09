@@ -20,7 +20,7 @@ export default function PopularLocations() {
   };
 
   return (
-    <div className="w-full flex justify-center mt-44 mb-10">
+    <div className="w-full flex justify-center mt-16 md:mt-44 mb-10">
       <div className="block">
         <div className="w-full flex justify-center">
           <div className="screen-width-dashboard">
@@ -120,7 +120,7 @@ export default function PopularLocations() {
                     className="w-full rounded-lg h-56 object-cover"
                   />
                   <h3 className="absolute z-50 text-2xl font-bold bottom-3 left-3 text-white">
-                    New Castle
+                    Newcastle
                   </h3>
                   <div className="group-hover:bg-black opacity-[60%] absolute h-0 group-hover:h-14 bottom-0 w-full rounded-b-lg transition-all duration-500"></div>
                 </div>
