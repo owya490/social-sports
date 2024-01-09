@@ -72,7 +72,7 @@ export default function FilterDialog({
   }
 
   async function applyFilters() {
-    let filteredEventDataList = [...allEventsDataList];
+    let filteredEventDataList = [...eventDataList];
 
     if (priceFilterEnabled) {
       const newEventDataList = filterEventsByPrice(

@@ -1,21 +1,40 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import React, { useState } from "react";
+import { usePathname, useSearchParams } from 'next/navigation'
+import React, { useState, useEffect } from "react";
 import { SearchIcon } from "@/svgs/SearchIcon";
 import { searchEventsByKeyword } from "@/services/eventsService";
 
 export default function SearchBar() {
   const [event, setEvent] = useState("");
   const [location, setLocation] = useState("");
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const router = useRouter();
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // PLEASE DON"T CHANGE THIS FUNCTION, RIGHT NOW THIS EVENT TRIGGERS ON EVERY INSTANCE BECAUSE I CAN'T FIGURE OUT HOW TO LISTEN FOR URL CHANGES ONLY
+  useEffect(() => {
+    // Function to update state based on URL query parameters
+    console.log("PAGECHANGE")
+    const updateStateFromQuery = () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const event = searchParams.get("event");
+      const location = searchParams.get("location");
+
+      if (event) {setEvent(event) };
+      if (location) {setLocation(location)};
+    };
+    updateStateFromQuery();
+  },[window.location.search]);
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   const handleSearchClick = () => {
       console.log("search")
       const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
       router.push(searchUrl);
   };
-
   return (
       <div className="flex border border-1 border-black rounded-full h-10 pl-5 pr-0.5 w-fit items-center bg-white drop-shadow-md">
           <input

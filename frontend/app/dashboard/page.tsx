@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
   const [eventDataList, setEventDataList] = useState<EventData[]>([]);
+  const [searchDataList, setSearchDataList] = useState<EventData[]>([])
   const [currentUrl, setCurrentUrl] = useState(typeof window !== 'undefined' ? window.location.href : '');
   const searchParams = useSearchParams()
   // useEffect(() => {
@@ -47,6 +48,7 @@ export default function Dashboard() {
               getAllEvents()
                   .then((events) => {
                       setEventDataList(events);
+                      setSearchDataList(events);
                       setAllEventsDataList(events);
                   })
                   .finally(() => {
@@ -57,6 +59,7 @@ export default function Dashboard() {
                   .then((events) => {
                     console.log(events)
                     setEventDataList(events);
+                    setSearchDataList(events);
                     console.log("EVENTS")
                     console.log(eventDataList)
                   })
@@ -73,7 +76,7 @@ export default function Dashboard() {
     <div>
       <div className="flex justify-center">
         <FilterBanner
-          eventDataList={eventDataList}
+          eventDataList={searchDataList}
           allEventsDataList={allEventsDataList}
           setEventDataList={setEventDataList}
         />

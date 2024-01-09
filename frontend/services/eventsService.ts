@@ -4,7 +4,6 @@ import {
   EventId,
   NewEventData,
 } from "@/interfaces/EventTypes";
-
 import {
   addDoc,
   collection,
@@ -73,7 +72,6 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
 
       const eventsData = await processEventData(eventCollectionRef, eventTokenMatchCount);
       eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
-      delete eventsData["tokenMathcCount"]
       return eventsData;
   } catch (error) {
       console.error("Error searching events:", error);
@@ -97,11 +95,18 @@ async function fetchEventTokenMatches(eventCollectionRef: Query<unknown, Documen
   return eventTokenMatchCount;
 }
 
-async function processEventData(eventCollectionRef, eventTokenMatchCount) {
+async function processEventData(eventCollectionRef: CollectionReference<DocumentData, DocumentData> | Firestore, eventTokenMatchCount: Map<any, any>) {
   const eventsData = [];
 
   for (const [eventId, count] of eventTokenMatchCount) {
-      const eventDoc = await getDoc(doc(eventCollectionRef, eventId));
+      let eventDocRef;
+      if (eventCollectionRef instanceof Firestore) {
+        eventDocRef = doc(eventCollectionRef, 'Events', eventId); // Replace 'your_collection_name' with actual collection name
+      } else {
+        eventDocRef = doc(eventCollectionRef, eventId);
+      }
+
+      const eventDoc = await getDoc(eventDocRef);
       if (eventDoc.exists()) {
         
           const eventData = eventDoc.data();
