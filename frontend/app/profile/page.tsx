@@ -344,7 +344,7 @@ const Profile = () => {
               {renderField("Date of Birth", "birthday")}
               {renderField("Password", "password")}
             </ul>
-            <div className="flex justify-start my-8 3xl:my-4">
+            <div className="flex justify-start my-8">
               {renderModalContent()}
               <button
                 type="button"
