@@ -3,8 +3,8 @@ import LightBulbIcon from "@/svgs/LightBulbIcon";
 
 export default function Suggestions() {
   return (
-    <div className=" w-screen h-screen flex justify-center items-center bg-white">
-      <div className="max-w-lg space-y-5">
+    <div className="w-screen flex justify-center items-center bg-white mt-16 md:mt-24 md:mb-8">
+      <div className="max-w-lg space-y-5 p-5 md:p-0">
         <div className="flex justify-center">
           <Logo />
         </div>
