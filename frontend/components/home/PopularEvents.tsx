@@ -16,7 +16,6 @@ export default function PopularEvents(props: PopularEventsProps) {
   useEffect(() => {
     const newRecommendedEvents: EventData[] = [];
     getAllEvents().then((data) => {
-      console.log(newRecommendedEvents);
       newRecommendedEvents.push(data[0]);
       newRecommendedEvents.push(data[1]);
       newRecommendedEvents.push(data[2]);
@@ -25,7 +24,6 @@ export default function PopularEvents(props: PopularEventsProps) {
       newRecommendedEvents.push(data[5]);
       setRecommendedEvents(newRecommendedEvents);
     });
-    console.log("hello");
   }, []);
 
   const scrollLeft = () => {
@@ -48,7 +46,6 @@ export default function PopularEvents(props: PopularEventsProps) {
     <div className="w-full flex justify-center">
       <div className="block">
         <div className="w-full flex justify-center">
-          {/* <div className="w-[350px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]"> */}
           <div className="screen-width-dashboard">
             <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
             <div className="flex my-5">

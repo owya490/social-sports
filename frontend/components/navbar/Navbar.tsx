@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Logo from "./Logo";
 import ProfilePic from "./ProfilePic";
 import SearchBar from "./SearchBar";
@@ -10,16 +10,8 @@ export default function Navbar() {
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
-  const [isHome, setIsHome] = useState(false);
-  useEffect(() => {
-    // setIsHome(window.location.pathname === "/");
-  }, []);
   return (
-    <div
-      className={
-        isHome ? "hidden" : "bg-white drop-shadow-lg fixed top-0 w-screen z-50"
-      }
-    >
+    <div className="bg-white drop-shadow-lg fixed top-0 w-screen z-50">
       <div className="flex items-center py-2 px-5 lg:px-10 xl:px-20">
         <Logo />
         <SearchBar />
