@@ -15,7 +15,7 @@ export default function Suggestions() {
           <span className="flex items-center">
             <LightBulbIcon />
             <h3 className="font-bold text-xl">
-              We Value your Suggestions and Feedback.
+              We value your Suggestions and Feedback.
             </h3>
           </span>
 
