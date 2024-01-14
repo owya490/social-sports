@@ -6,6 +6,7 @@ import {
 import Image, { StaticImageData } from "next/image";
 
 interface FilterIconProps {
+  sportIdentifierString: string;
   name: string;
   image: StaticImageData;
   style: string;
@@ -24,20 +25,12 @@ export default function FilterIcon(props: FilterIconProps) {
         props.isFirst ? "mr-6 md:mr-8" : "min-w-[6rem] md:min-w-[8rem]"
       } flex justify-center snap-start`}
       onClick={() => {
-        console.log(
-          "selected sport filter",
-          props.selectedSport,
-          "what",
-          props.name
-        );
-        if (props.selectedSport === props.name) {
-          // props.setEventDataList(props.allEventsDataList);
-          console.log("whatttt");
+        if (props.selectedSport === props.sportIdentifierString) {
           props.setSelectedSport(NO_SPORT_CHOSEN_STRING);
           props.applyFilters(NO_SPORT_CHOSEN_STRING);
         } else {
-          props.setSelectedSport(props.name);
-          props.applyFilters(props.name);
+          props.setSelectedSport(props.sportIdentifierString);
+          props.applyFilters(props.sportIdentifierString);
         }
       }}
     >
@@ -51,7 +44,7 @@ export default function FilterIcon(props: FilterIconProps) {
             className={`${props.style} ${
               props.selectedSport === ""
                 ? "grayscale-0"
-                : props.selectedSport === props.name
+                : props.selectedSport === props.sportIdentifierString
                 ? "grayscale-0"
                 : "grayscale"
             } flex justify-center`}
