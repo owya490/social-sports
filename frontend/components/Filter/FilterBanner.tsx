@@ -1,3 +1,5 @@
+import { EventData } from "@/interfaces/EventTypes";
+import { useState } from "react";
 import ChevronRightButton from "../utility/ChevronRightButton";
 import BadmintonImage from "./../../public/images/badminton.png";
 import BaseballImage from "./../../public/images/baseball.png";
@@ -7,9 +9,29 @@ import RugbyImage from "./../../public/images/rugby-ball.png";
 import SoccerImage from "./../../public/images/soccer-ball.png";
 import TennisImage from "./../../public/images/tennis-balls.png";
 import VolleyballImage from "./../../public/images/volleyball.png";
-import FitlerDialog from "./FilterDialog";
+import FilterDialog, {
+  DAY_END_TIME_STRING,
+  DAY_START_TIME_STRING,
+  DEFAULT_END_DATE,
+  DEFAULT_MAX_PRICE,
+  DEFAULT_MAX_PROXIMITY,
+  DEFAULT_START_DATE,
+  PRICE_SLIDER_MAX_VALUE,
+  PROXIMITY_SLIDER_MAX_VALUE,
+} from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
-import { EventData } from "@/interfaces/EventTypes";
+import {
+  filterEventsByDate,
+  filterEventsByMaxProximity,
+  filterEventsByPrice,
+  filterEventsBySport,
+} from "@/services/filterService";
+import { Timestamp } from "firebase/firestore";
+import {
+  SYDNEY_LAT,
+  SYDNEY_LNG,
+  getLocationCoordinates,
+} from "@/services/locationUtils";
 
 interface FilterBannerProps {
   eventDataList: EventData[];
@@ -22,6 +44,38 @@ export default function FilterBanner({
   allEventsDataList,
   setEventDataList,
 }: FilterBannerProps) {
+  // States for FilterDialog
+  const [maxPriceSliderValue, setMaxPriceSliderValue] =
+    useState<number>(DEFAULT_MAX_PRICE);
+  /// Keeps track of what filter values were actually applied.
+  const [appliedMaxPriceSliderValue, setAppliedMaxPriceSliderValue] =
+    useState<number>(DEFAULT_MAX_PRICE);
+  const [maxProximitySliderValue, setMaxProximitySliderValue] =
+    useState<number>(DEFAULT_MAX_PROXIMITY); // max proximity in kms.
+  const [appliedMaxProximitySliderValue, setAppliedMaxProximitySliderValue] =
+    useState<number>(DEFAULT_MAX_PROXIMITY);
+  const [dateRange, setDateRange] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+  }>({
+    startDate: DEFAULT_START_DATE,
+    endDate: DEFAULT_END_DATE,
+  });
+  const [appliedDateRange, setAppliedDateRange] = useState<{
+    startDate: string | null;
+    endDate: string | null;
+  }>({
+    startDate: DEFAULT_START_DATE,
+    endDate: DEFAULT_END_DATE,
+  });
+  const [srcLocation, setSrcLocation] = useState<string>("");
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
+  function closeModal() {
+    setIsFilterModalOpen(false);
+  }
+
+  const [selectedSport, setSelectedSport] = useState("");
+
   const icons = {
     Volleyball: { image: VolleyballImage, style: "w-8 h-8" },
     Badminton: { image: BadmintonImage, style: "w-8 h-8" },
@@ -40,8 +94,76 @@ export default function FilterBanner({
       behavior: "smooth",
     });
   };
+
+  async function applyFilters(selectedSportProp: string) {
+    const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
+    const isAnyProximityBool =
+      maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
+
+    let filteredEventDataList = [...allEventsDataList];
+
+    // Filter by MAX PRICE
+    if (!isAnyPriceBool) {
+      let newEventDataList = filterEventsByPrice(
+        [...filteredEventDataList],
+        null,
+        maxPriceSliderValue
+      );
+      filteredEventDataList = newEventDataList;
+    }
+    setAppliedMaxPriceSliderValue(maxPriceSliderValue);
+
+    // Filter by DATERANGE
+    if (dateRange.startDate && dateRange.endDate) {
+      let newEventDataList = filterEventsByDate(
+        [...filteredEventDataList],
+        Timestamp.fromDate(
+          new Date(dateRange.startDate + DAY_START_TIME_STRING)
+        ), // TODO: needed to specify maximum time range on particular day.
+        Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
+      );
+      filteredEventDataList = newEventDataList;
+    }
+    setAppliedDateRange(dateRange);
+
+    // Filter by MAX PROXIMITY
+    if (!isAnyProximityBool) {
+      let srcLat = SYDNEY_LAT;
+      let srcLng = SYDNEY_LNG;
+      try {
+        const { lat, lng } = await getLocationCoordinates(srcLocation);
+        srcLat = lat;
+        srcLng = lng;
+      } catch (error) {
+        console.log(error);
+      }
+
+      let newEventDataList = filterEventsByMaxProximity(
+        [...filteredEventDataList],
+        maxProximitySliderValue,
+        srcLat,
+        srcLng
+      );
+      filteredEventDataList = newEventDataList;
+    }
+    setAppliedMaxProximitySliderValue(maxProximitySliderValue);
+
+    // Filter by SPORT
+    let newEventDataList = filterEventsBySport(
+      [...filteredEventDataList],
+      selectedSportProp
+    );
+    filteredEventDataList = newEventDataList;
+
+    // TODO: add more filters
+
+    setEventDataList([...filteredEventDataList]);
+    console.log("filteredEvents", filteredEventDataList);
+    closeModal();
+  }
+
   return (
-    <div className="pt-16 bg-white px-4 sm:px-0 w-full sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px]">
+    <div className="pt-16 bg-white px-4 sm:px-0 screen-width-dashboard">
       <div className="h-20 flex items-center mt-2">
         <div
           id="filter-overflow"
@@ -56,6 +178,11 @@ export default function FilterBanner({
                   style={entry[1].style}
                   name={entry[0]}
                   isFirst={true}
+                  setEventDataList={setEventDataList}
+                  allEventsDataList={eventDataList}
+                  selectedSport={selectedSport}
+                  setSelectedSport={setSelectedSport}
+                  applyFilters={applyFilters}
                 />
               );
             }
@@ -66,6 +193,11 @@ export default function FilterBanner({
                 style={entry[1].style}
                 name={entry[0]}
                 isFirst={false}
+                setEventDataList={setEventDataList}
+                allEventsDataList={eventDataList}
+                selectedSport={selectedSport}
+                setSelectedSport={setSelectedSport}
+                applyFilters={() => applyFilters(entry[0])}
               />
             );
           })}
@@ -75,10 +207,29 @@ export default function FilterBanner({
         </div>
 
         <div className="grow">
-          <FitlerDialog
-            eventDataList={eventDataList}
+          <FilterDialog
             allEventsDataList={allEventsDataList}
             setEventDataList={setEventDataList}
+            maxPriceSliderValue={maxPriceSliderValue}
+            setMaxPriceSliderValue={setMaxPriceSliderValue}
+            appliedMaxPriceSliderValue={appliedMaxPriceSliderValue}
+            setAppliedMaxPriceSliderValue={setAppliedMaxPriceSliderValue}
+            maxProximitySliderValue={maxProximitySliderValue}
+            setMaxProximitySliderValue={setMaxProximitySliderValue}
+            appliedMaxProximitySliderValue={appliedMaxProximitySliderValue}
+            setAppliedMaxProximitySliderValue={
+              setAppliedMaxProximitySliderValue
+            }
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            appliedDateRange={appliedDateRange}
+            setAppliedDateRange={setAppliedDateRange}
+            srcLocation={srcLocation}
+            setSrcLocation={setSrcLocation}
+            applyFilters={() => applyFilters(selectedSport)}
+            isFilterModalOpen={isFilterModalOpen}
+            setIsFilterModalOpen={setIsFilterModalOpen}
+            closeModal={closeModal}
           />
         </div>
       </div>

@@ -18,6 +18,11 @@ export default function SearchBar() {
     // Function to update state based on URL query parameters
     console.log("PAGECHANGE")
     const updateStateFromQuery = () => {
+      if (typeof window === 'undefined') {
+          // Return some default or empty values when not in a browser environment
+          setEvent("")
+          setLocation("")
+      }
       const searchParams = new URLSearchParams(window.location.search);
       const event = searchParams.get("event");
       const location = searchParams.get("location");

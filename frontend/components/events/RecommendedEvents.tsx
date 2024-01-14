@@ -1,14 +1,30 @@
 import { EventData } from "@/interfaces/EventTypes";
+import { getAllEvents } from "@/services/eventsService";
+import { useEffect, useState } from "react";
 import EventCard from "../EventCard";
 import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
 
 interface RecommendedEventsProps {
-  eventData: EventData;
+  eventData?: EventData;
 }
 
 export default function RecommendedEvents(props: RecommendedEventsProps) {
   const { eventData } = props;
+  const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
+  useEffect(() => {
+    const newRecommendedEvents: EventData[] = [];
+    getAllEvents().then((data) => {
+      newRecommendedEvents.push(data[0]);
+      newRecommendedEvents.push(data[1]);
+      newRecommendedEvents.push(data[2]);
+      newRecommendedEvents.push(data[3]);
+      newRecommendedEvents.push(data[4]);
+      newRecommendedEvents.push(data[5]);
+    });
+    setRecommendedEvents(newRecommendedEvents);
+    console.log("hello");
+  }, []);
 
   const scrollLeft = () => {
     document.getElementById("recommended-event-overflow")?.scrollBy({
@@ -51,7 +67,23 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
               className="flex overflow-x-auto pb-4 snap-x snap-mandatory"
             >
               <div className="flex space-x-4">
-                <div className="snap-start">
+                {recommendedEvents.map((event, i) => {
+                  return (
+                    <div id={`recommended-event-${i}`} className="snap-start">
+                      <EventCard
+                        eventId={event.eventId}
+                        image={event.image}
+                        name={event.name}
+                        organiser={event.organiser}
+                        startTime={event.startDate}
+                        location={event.location}
+                        price={event.price}
+                        vacancy={event.vacancy}
+                      />
+                    </div>
+                  );
+                })}
+                {/* <div className="snap-start">
                   <EventCard
                     eventId={eventData.eventId}
                     image={eventData.image}
@@ -124,7 +156,7 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
                     price={eventData.price}
                     vacancy={eventData.vacancy}
                   />
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

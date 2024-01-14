@@ -14,6 +14,7 @@ import {
   filterEventsByDate,
   filterEventsByMaxProximity,
   filterEventsByPrice,
+  filterEventsBySport,
 } from "@/services/filterService";
 import { Timestamp } from "firebase/firestore";
 import {
@@ -23,39 +24,78 @@ import {
 } from "@/services/locationUtils";
 import { set } from "firebase/database";
 
-const DAY_START_TIME_STRING = " 00:00:00";
-const DAY_END_TIME_STRING = " 23:59:59";
-const PRICE_SLIDER_MAX_VALUE = 100;
-const PROXIMITY_SLIDER_MAX_VALUE = 100;
-const DEFAULT_MAX_PRICE = PRICE_SLIDER_MAX_VALUE;
-const DEFAULT_MAX_PROXIMITY = PROXIMITY_SLIDER_MAX_VALUE;
-const DEFAULT_START_DATE = null;
-const DEFAULT_END_DATE = null;
+export const DAY_START_TIME_STRING = " 00:00:00";
+export const DAY_END_TIME_STRING = " 23:59:59";
+export const DEFAULT_MAX_PRICE = 100;
+export const DEFAULT_MAX_PROXIMITY = 100;
+export const DEFAULT_START_DATE = null;
+export const DEFAULT_END_DATE = null;
+export const PROXIMITY_SLIDER_MAX_VALUE = 100;
+export const PRICE_SLIDER_MAX_VALUE = 100;
 
 interface FilterDialogProps {
-  eventDataList: EventData[];
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
+  maxPriceSliderValue: number;
+  setMaxPriceSliderValue: React.Dispatch<React.SetStateAction<number>>;
+  appliedMaxPriceSliderValue: number;
+  setAppliedMaxPriceSliderValue: React.Dispatch<React.SetStateAction<number>>;
+  maxProximitySliderValue: number;
+  setMaxProximitySliderValue: React.Dispatch<React.SetStateAction<number>>;
+  appliedMaxProximitySliderValue: number;
+  setAppliedMaxProximitySliderValue: React.Dispatch<
+    React.SetStateAction<number>
+  >;
+  dateRange: {
+    startDate: string | null;
+    endDate: string | null;
+  };
+  setDateRange: React.Dispatch<
+    React.SetStateAction<{
+      startDate: string | null;
+      endDate: string | null;
+    }>
+  >;
+  appliedDateRange: {
+    startDate: string | null;
+    endDate: string | null;
+  };
+  setAppliedDateRange: React.Dispatch<
+    React.SetStateAction<{
+      startDate: string | null;
+      endDate: string | null;
+    }>
+  >;
+  srcLocation: string;
+  setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
+  applyFilters: () => Promise<void>;
+  isFilterModalOpen: boolean;
+  setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  closeModal: () => void;
 }
 
 export default function FilterDialog({
-  eventDataList,
   allEventsDataList,
   setEventDataList,
+  maxPriceSliderValue,
+  setMaxPriceSliderValue,
+  appliedMaxPriceSliderValue,
+  setAppliedMaxPriceSliderValue,
+  maxProximitySliderValue,
+  setMaxProximitySliderValue,
+  appliedMaxProximitySliderValue,
+  setAppliedMaxProximitySliderValue,
+  dateRange,
+  setDateRange,
+  appliedDateRange,
+  setAppliedDateRange,
+  srcLocation,
+  setSrcLocation,
+  applyFilters,
+  isFilterModalOpen,
+  setIsFilterModalOpen,
+  closeModal,
 }: FilterDialogProps) {
-  let [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [maxPriceSliderValue, setMaxPriceSliderValue] =
-    useState(DEFAULT_MAX_PRICE);
-  const [dateRange, setDateRange] = useState<{
-    startDate: string | null;
-    endDate: string | null;
-  }>({
-    startDate: DEFAULT_START_DATE,
-    endDate: DEFAULT_END_DATE,
-  });
-  const [maxProximitySliderValue, setMaxProximitySliderValue] =
-    useState<number>(DEFAULT_MAX_PROXIMITY); // max proximity in kms.
-
   const handleDateRangeChange = (dateRange: any) => {
     if (dateRange.startDate && dateRange.endDate) {
       let timestampDateRange = {
@@ -73,80 +113,30 @@ export default function FilterDialog({
       setDateRange(timestampDateRange);
     }
   };
-  const [srcLocation, setSrcLocation] = useState<string>("");
-
-  function closeModal() {
-    setIsFilterModalOpen(false);
-  }
 
   function openModal() {
+    setMaxPriceSliderValue(appliedMaxPriceSliderValue);
+    setMaxProximitySliderValue(appliedMaxProximitySliderValue);
+    setDateRange(appliedDateRange);
     setIsFilterModalOpen(true);
-  }
-
-  async function applyFilters() {
-    const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
-    const isAnyProximityBool =
-      maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
-
-    let filteredEventDataList = [...allEventsDataList];
-
-    // Filter by MAX PRICE
-    if (!isAnyPriceBool) {
-      let newEventDataList = filterEventsByPrice(
-        [...filteredEventDataList],
-        null,
-        maxPriceSliderValue
-      );
-      filteredEventDataList = newEventDataList;
-    }
-
-    // Filter by DATERANGE
-    if (dateRange.startDate && dateRange.endDate) {
-      let newEventDataList = filterEventsByDate(
-        [...filteredEventDataList],
-        Timestamp.fromDate(
-          new Date(dateRange.startDate + DAY_START_TIME_STRING)
-        ), // TODO: needed to specify maximum time range on particular day.
-        Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
-      );
-      filteredEventDataList = newEventDataList;
-    }
-
-    // Filter by MAX PROXIMITY
-    if (!isAnyProximityBool) {
-      let srcLat = SYDNEY_LAT;
-      let srcLng = SYDNEY_LNG;
-      try {
-        const { lat, lng } = await getLocationCoordinates(srcLocation);
-        srcLat = lat;
-        srcLng = lng;
-      } catch (error) {
-        console.log(error);
-      }
-
-      let newEventDataList = filterEventsByMaxProximity(
-        [...filteredEventDataList],
-        maxProximitySliderValue,
-        srcLat,
-        srcLng
-      );
-      filteredEventDataList = newEventDataList;
-    }
-
-    // TODO: add more filters
-
-    setEventDataList([...filteredEventDataList]);
-
-    closeModal();
   }
 
   function handleClearAll() {
     setMaxPriceSliderValue(DEFAULT_MAX_PRICE);
+    setAppliedMaxPriceSliderValue(DEFAULT_MAX_PRICE);
+
     setDateRange({
       startDate: DEFAULT_START_DATE,
       endDate: DEFAULT_END_DATE,
     });
+    setAppliedDateRange({
+      startDate: DEFAULT_START_DATE,
+      endDate: DEFAULT_END_DATE,
+    });
+
     setMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
+    setAppliedMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
+
     setEventDataList([...allEventsDataList]);
     setSrcLocation("");
     closeModal();
@@ -296,7 +286,6 @@ export default function FilterDialog({
                         shrink={false}
                         variant="outlined"
                         label="Search Location"
-                        placeholder="Sydney NSW Australia"
                         crossOrigin="true"
                         value={srcLocation}
                         onChange={({ target }) => setSrcLocation(target.value)}

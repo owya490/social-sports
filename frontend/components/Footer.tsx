@@ -3,10 +3,18 @@ export default function Footer() {
     <footer className="bg-white lg:grid lg:grid-cols-5 bottom-0 w-full pb-10 lg:pb-0">
       <div className="relative block h-32 lg:col-span-2 lg:h-full">
         <img
-          src="https://img.freepik.com/premium-photo/colorful-poster-with-dragon-it_925376-14120.jpg"
+          // src="https://img.freepik.com/premium-photo/colorful-poster-with-dragon-it_925376-14120.jpg"
+          src="https://wallpapers.com/images/hd/minimalist-sports-1920-x-1080-wallpaper-o5zmbip0p957vjbc.jpg"
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
         />
+        {/* <Image
+          src={FooterImage}
+          alt={"..."}
+          height={0}
+          width={0}
+          className="absolute inset-0 h-full w-full object-cover"
+        /> */}
       </div>
 
       <div className="px-4 py-8 md:py-16 sm:px-6 lg:col-span-3 lg:px-8">

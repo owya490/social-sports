@@ -1,3 +1,4 @@
+import { EventData } from "@/interfaces/EventTypes";
 import {
   QueryFieldFilterConstraint,
   Timestamp,
@@ -7,9 +8,8 @@ import {
   query,
   where,
 } from "firebase/firestore";
-import { db } from "./firebase";
-import { EventData } from "@/interfaces/EventTypes";
 import geofire from "geofire-common";
+import { db } from "./firebase";
 import { getDistanceBetweenTwoCoords } from "./locationUtils";
 
 interface ProximityInfo {
@@ -18,6 +18,7 @@ interface ProximityInfo {
 }
 
 const NUM_DOCS_QUERY_LIMIT = 15;
+export const NO_SPORT_CHOSEN_STRING = "";
 
 export function filterEventsByPrice(
   eventDataList: EventData[],
@@ -65,6 +66,20 @@ export function filterEventsByMaxProximity(
       getDistanceBetweenTwoCoords([lat1, lng1], [srcLat, srcLng]) < maxProximity
     );
   });
+  return eventDataListDeepClone;
+}
+
+export function filterEventsBySport(
+  eventDataList: EventData[],
+  sportType: string
+): EventData[] {
+  if (sportType === NO_SPORT_CHOSEN_STRING) {
+    return eventDataList;
+  }
+  let eventDataListDeepClone = [...eventDataList];
+  eventDataListDeepClone = eventDataListDeepClone.filter(
+    (event) => event.sport === sportType
+  );
   return eventDataListDeepClone;
 }
 
