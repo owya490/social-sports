@@ -37,12 +37,14 @@ interface FilterBannerProps {
   eventDataList: EventData[];
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
+  srcLocation: string;
 }
 
 export default function FilterBanner({
   eventDataList,
   allEventsDataList,
   setEventDataList,
+  srcLocation,
 }: FilterBannerProps) {
   // States for FilterDialog
   const [maxPriceSliderValue, setMaxPriceSliderValue] =
@@ -68,7 +70,7 @@ export default function FilterBanner({
     startDate: DEFAULT_START_DATE,
     endDate: DEFAULT_END_DATE,
   });
-  const [srcLocation, setSrcLocation] = useState<string>("");
+  // const [srcLocation, setSrcLocation] = useState<string>("");
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   function closeModal() {
     setIsFilterModalOpen(false);
@@ -97,11 +99,12 @@ export default function FilterBanner({
 
   async function applyFilters(selectedSportProp: string) {
     const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
-    const isAnyProximityBool =
-      maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
+    // changed it so that instead of it running only if its not max, if locaiton is not ""
+    const isAnyProximityBool = srcLocation !== "";
+      // maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
 
     let filteredEventDataList = [...allEventsDataList];
-
+    console.log(srcLocation);
     // Filter by MAX PRICE
     if (!isAnyPriceBool) {
       let newEventDataList = filterEventsByPrice(
@@ -127,9 +130,11 @@ export default function FilterBanner({
     setAppliedDateRange(dateRange);
 
     // Filter by MAX PROXIMITY
-    if (!isAnyProximityBool) {
+    if (isAnyProximityBool) {
       let srcLat = SYDNEY_LAT;
       let srcLng = SYDNEY_LNG;
+      console.log("LOCATION")
+      console.log(srcLocation)
       try {
         const { lat, lng } = await getLocationCoordinates(srcLocation);
         srcLat = lat;
@@ -161,7 +166,6 @@ export default function FilterBanner({
     console.log("filteredEvents", filteredEventDataList);
     closeModal();
   }
-
   return (
     <div className="pt-16 bg-white px-4 sm:px-0 screen-width-dashboard">
       <div className="h-20 flex items-center mt-2">
@@ -224,8 +228,8 @@ export default function FilterBanner({
             setDateRange={setDateRange}
             appliedDateRange={appliedDateRange}
             setAppliedDateRange={setAppliedDateRange}
-            srcLocation={srcLocation}
-            setSrcLocation={setSrcLocation}
+            // srcLocation={srcLocation}
+            // setSrcLocation={setSrcLocation}
             applyFilters={() => applyFilters(selectedSport)}
             isFilterModalOpen={isFilterModalOpen}
             setIsFilterModalOpen={setIsFilterModalOpen}

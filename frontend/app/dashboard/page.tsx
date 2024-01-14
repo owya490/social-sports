@@ -16,6 +16,7 @@ export default function Dashboard() {
   const [searchDataList, setSearchDataList] = useState<EventData[]>([])
   const [currentUrl, setCurrentUrl] = useState(typeof window !== 'undefined' ? window.location.href : '');
   const searchParams = useSearchParams()
+  const [srcLocation, setSrcLocation] = useState<string>("");
   // useEffect(() => {
   //   getAllEvents()
   //     .then((events) => {
@@ -32,6 +33,7 @@ export default function Dashboard() {
         return { event: '', location: '' };
     }
     const searchParams = new URLSearchParams(window.location.search);
+    setSrcLocation(searchParams.get("location") || "")
     return {
         event: searchParams.get("event") || "",
         location: searchParams.get("location") || "",
@@ -79,6 +81,7 @@ export default function Dashboard() {
           eventDataList={searchDataList}
           allEventsDataList={allEventsDataList}
           setEventDataList={setEventDataList}
+          srcLocation={srcLocation}
         />
       </div>
       <div className="flex justify-center">

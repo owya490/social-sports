@@ -89,8 +89,8 @@ export default function FilterDialog({
   setDateRange,
   appliedDateRange,
   setAppliedDateRange,
-  srcLocation,
-  setSrcLocation,
+  // srcLocation,
+  // setSrcLocation,
   applyFilters,
   isFilterModalOpen,
   setIsFilterModalOpen,
@@ -282,14 +282,14 @@ export default function FilterDialog({
                           }}
                         />
                       </div>
-                      <Input
+                      {/* <Input
                         shrink={false}
                         variant="outlined"
                         label="Search Location"
                         crossOrigin="true"
                         value={srcLocation}
                         onChange={({ target }) => setSrcLocation(target.value)}
-                      />
+                      /> */}
                     </div>
                   </div>
 
