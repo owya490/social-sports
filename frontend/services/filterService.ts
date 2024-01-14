@@ -11,6 +11,7 @@ import {
 import geofire from "geofire-common";
 import { db } from "./firebase";
 import { getDistanceBetweenTwoCoords } from "./locationUtils";
+import { SortByCategory } from "@/components/Filter/FilterDialog";
 
 interface ProximityInfo {
   center: geofire.Geopoint;
@@ -19,6 +20,52 @@ interface ProximityInfo {
 
 const NUM_DOCS_QUERY_LIMIT = 15;
 export const NO_SPORT_CHOSEN_STRING = "";
+
+export function filterEventsBySortBy(
+  eventDataList: EventData[],
+  sortByCategory: SortByCategory
+): EventData[] {
+  let eventDataListDeepClone = [...eventDataList];
+  switch (sortByCategory) {
+    case SortByCategory.HOT:
+      /// TODO: implement measurement of how 'Hot' an event is.
+      /// Currently, it sorts events alphabetically by name.
+      eventDataListDeepClone.sort((eventA, eventB) =>
+        eventA.name.localeCompare(eventB.name)
+      );
+      break;
+
+    case SortByCategory.PRICE_ASCENDING:
+      eventDataListDeepClone.sort(
+        (eventA, eventB) => eventA.price - eventB.price
+      );
+      break;
+
+    case SortByCategory.PRICE_DESCENDING:
+      eventDataListDeepClone.sort(
+        (eventA, eventB) => eventB.price - eventA.price
+      );
+      break;
+
+    case SortByCategory.DATE_ASCENDING:
+      eventDataListDeepClone.sort(
+        (eventA, eventB) =>
+          eventA.startDate.toMillis() - eventB.startDate.toMillis()
+      );
+      break;
+
+    case SortByCategory.DATE_DESCENDING:
+      eventDataListDeepClone.sort(
+        (eventA, eventB) =>
+          eventB.startDate.toMillis() - eventA.startDate.toMillis()
+      );
+      break;
+
+    default:
+      break;
+  }
+  return eventDataListDeepClone;
+}
 
 export function filterEventsByPrice(
   eventDataList: EventData[],

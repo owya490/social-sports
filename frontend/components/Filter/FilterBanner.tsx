@@ -15,15 +15,18 @@ import FilterDialog, {
   DEFAULT_END_DATE,
   DEFAULT_MAX_PRICE,
   DEFAULT_MAX_PROXIMITY,
+  DEFAULT_SORT_BY_CATEGORY,
   DEFAULT_START_DATE,
   PRICE_SLIDER_MAX_VALUE,
   PROXIMITY_SLIDER_MAX_VALUE,
+  SortByCategory,
 } from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
 import {
   filterEventsByDate,
   filterEventsByMaxProximity,
   filterEventsByPrice,
+  filterEventsBySortBy,
   filterEventsBySport,
 } from "@/services/filterService";
 import { Timestamp } from "firebase/firestore";
@@ -45,6 +48,10 @@ export default function FilterBanner({
   setEventDataList,
 }: FilterBannerProps) {
   // States for FilterDialog
+  const [sortByCategoryValue, setSortByCategoryValue] =
+    useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
+  const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
+    useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [maxPriceSliderValue, setMaxPriceSliderValue] =
     useState<number>(DEFAULT_MAX_PRICE);
   /// Keeps track of what filter values were actually applied.
@@ -155,6 +162,14 @@ export default function FilterBanner({
     );
     filteredEventDataList = newEventDataList;
 
+    // Filter by SORT BY
+    newEventDataList = filterEventsBySortBy(
+      [...filteredEventDataList],
+      sortByCategoryValue
+    );
+    filteredEventDataList = newEventDataList;
+    setAppliedSortByCategoryValue(sortByCategoryValue);
+
     // TODO: add more filters
 
     setEventDataList([...filteredEventDataList]);
@@ -210,6 +225,10 @@ export default function FilterBanner({
           <FilterDialog
             allEventsDataList={allEventsDataList}
             setEventDataList={setEventDataList}
+            sortByCategoryValue={sortByCategoryValue}
+            setSortByCategoryValue={setSortByCategoryValue}
+            appliedSortByCategoryValue={appliedSortByCategoryValue}
+            setAppliedSortByCategoryValue={setAppliedSortByCategoryValue}
             maxPriceSliderValue={maxPriceSliderValue}
             setMaxPriceSliderValue={setMaxPriceSliderValue}
             appliedMaxPriceSliderValue={appliedMaxPriceSliderValue}

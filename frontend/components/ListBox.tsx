@@ -2,10 +2,12 @@
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { Fragment, useState } from "react";
+import { SortByCategory } from "./Filter/FilterDialog";
 
 interface ListBoxProps {
   onChangeHandler: (e: any) => void;
   options: IOption[];
+  sortByCategory: SortByCategory;
   textSize?: "xs" | "sm" | "md" | "lg" | "xl";
 }
 
@@ -15,7 +17,7 @@ export interface IOption {
 }
 
 export default function ListBox(props: ListBoxProps) {
-  const [selected, setSelected] = useState(props.options[0]);
+  const [selected, setSelected] = useState(props.options[props.sortByCategory]);
 
   return (
     <div className="rounded-3xl w-full">

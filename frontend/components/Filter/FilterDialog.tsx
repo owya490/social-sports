@@ -5,29 +5,32 @@ import {
   AdjustmentsHorizontalIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Checkbox, Slider, Input } from "@material-tailwind/react";
-import { Fragment, useState } from "react";
+import { Slider, Input } from "@material-tailwind/react";
+import { Fragment } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../../components/ListBox";
 import { EventData } from "@/interfaces/EventTypes";
-import {
-  filterEventsByDate,
-  filterEventsByMaxProximity,
-  filterEventsByPrice,
-  filterEventsBySport,
-} from "@/services/filterService";
-import { Timestamp } from "firebase/firestore";
-import {
-  SYDNEY_LAT,
-  SYDNEY_LNG,
-  getLocationCoordinates,
-} from "@/services/locationUtils";
-import { set } from "firebase/database";
+
+export enum SortByCategory {
+  HOT,
+  TOP_RATED,
+  PRICE_ASCENDING,
+  PRICE_DESCENDING,
+  DATE_ASCENDING,
+  DATE_DESCENDING,
+}
+export const DEFAULT_SORT_BY_CATEGORY = SortByCategory.HOT;
+export const HOT_SORTBY_STRING = "Hot";
+export const TOP_RATED_SORTBY_STRING = "Top Rated";
+export const PRICE_ASCENDING_SORTBY_STRING = "Price Ascending";
+export const PRICE_DESCENDING_SORTBY_STRING = "Price Descending";
+export const DATE_ASCENDING_SORTBY_STRING = "Date Ascending";
+export const DATE_DESCENDING_SORTBY_STRING = "Date Descending";
 
 export const DAY_START_TIME_STRING = " 00:00:00";
 export const DAY_END_TIME_STRING = " 23:59:59";
 export const DEFAULT_MAX_PRICE = 100;
-export const DEFAULT_MAX_PROXIMITY = 100;
+export const DEFAULT_MAX_PROXIMITY = 50;
 export const DEFAULT_START_DATE = null;
 export const DEFAULT_END_DATE = null;
 export const PROXIMITY_SLIDER_MAX_VALUE = 100;
@@ -36,6 +39,12 @@ export const PRICE_SLIDER_MAX_VALUE = 100;
 interface FilterDialogProps {
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
+  sortByCategoryValue: SortByCategory;
+  setSortByCategoryValue: React.Dispatch<React.SetStateAction<SortByCategory>>;
+  appliedSortByCategoryValue: SortByCategory;
+  setAppliedSortByCategoryValue: React.Dispatch<
+    React.SetStateAction<SortByCategory>
+  >;
   maxPriceSliderValue: number;
   setMaxPriceSliderValue: React.Dispatch<React.SetStateAction<number>>;
   appliedMaxPriceSliderValue: number;
@@ -77,6 +86,10 @@ interface FilterDialogProps {
 export default function FilterDialog({
   allEventsDataList,
   setEventDataList,
+  sortByCategoryValue,
+  setSortByCategoryValue,
+  appliedSortByCategoryValue,
+  setAppliedSortByCategoryValue,
   maxPriceSliderValue,
   setMaxPriceSliderValue,
   appliedMaxPriceSliderValue,
@@ -118,6 +131,7 @@ export default function FilterDialog({
     setMaxPriceSliderValue(appliedMaxPriceSliderValue);
     setMaxProximitySliderValue(appliedMaxProximitySliderValue);
     setDateRange(appliedDateRange);
+    setSortByCategoryValue(appliedSortByCategoryValue);
     setIsFilterModalOpen(true);
   }
 
@@ -136,6 +150,9 @@ export default function FilterDialog({
 
     setMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
     setAppliedMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
+
+    setSortByCategoryValue(DEFAULT_SORT_BY_CATEGORY);
+    setAppliedSortByCategoryValue(DEFAULT_SORT_BY_CATEGORY);
 
     setEventDataList([...allEventsDataList]);
     setSrcLocation("");
@@ -194,15 +211,35 @@ export default function FilterDialog({
                       <ListBox
                         onChangeHandler={function (e: any): void {
                           //   throw new Error("Function not implemented.");
+                          setSortByCategoryValue(e);
                         }}
                         options={[
-                          { name: "Hot", value: "1" },
-                          { name: "Top Rated", value: "1" },
-                          { name: "Price Ascending", value: "1" },
-                          { name: "Price Descending", value: "1" },
-                          { name: "Date Ascending", value: "1" },
-                          { name: "Date Descending", value: "1" },
+                          {
+                            name: HOT_SORTBY_STRING,
+                            value: SortByCategory.HOT,
+                          },
+                          {
+                            name: TOP_RATED_SORTBY_STRING,
+                            value: SortByCategory.TOP_RATED,
+                          },
+                          {
+                            name: PRICE_ASCENDING_SORTBY_STRING,
+                            value: SortByCategory.PRICE_ASCENDING,
+                          },
+                          {
+                            name: PRICE_DESCENDING_SORTBY_STRING,
+                            value: SortByCategory.PRICE_DESCENDING,
+                          },
+                          {
+                            name: DATE_ASCENDING_SORTBY_STRING,
+                            value: SortByCategory.DATE_ASCENDING,
+                          },
+                          {
+                            name: DATE_DESCENDING_SORTBY_STRING,
+                            value: SortByCategory.DATE_DESCENDING,
+                          },
                         ]}
+                        sortByCategory={sortByCategoryValue}
                       />
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
@@ -212,7 +249,7 @@ export default function FilterDialog({
                       <div className="w-full mt-3 flex items-center">
                         <p className={"mr-2"}>
                           {maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE
-                            ? "ANY"
+                            ? "$ANY"
                             : "$" + maxPriceSliderValue}
                         </p>
 
@@ -223,9 +260,6 @@ export default function FilterDialog({
                           min={0}
                           max={PRICE_SLIDER_MAX_VALUE}
                           defaultValue={
-                            maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue
-                          }
-                          value={
                             maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue
                           }
                           onChange={(e) => {
@@ -256,7 +290,7 @@ export default function FilterDialog({
                         <p className="mr-2 whitespace-nowrap">
                           {maxProximitySliderValue ===
                           PROXIMITY_SLIDER_MAX_VALUE
-                            ? "ANY"
+                            ? "ANY km"
                             : maxProximitySliderValue + "km"}
                         </p>
                         <Slider
@@ -266,11 +300,6 @@ export default function FilterDialog({
                           min={0}
                           max={PROXIMITY_SLIDER_MAX_VALUE}
                           defaultValue={
-                            maxProximitySliderValue === 0
-                              ? 0
-                              : maxProximitySliderValue
-                          }
-                          value={
                             maxProximitySliderValue === 0
                               ? 0
                               : maxProximitySliderValue
