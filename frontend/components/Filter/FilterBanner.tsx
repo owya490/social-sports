@@ -224,14 +224,16 @@ export default function FilterBanner({
           className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all"
         >
           {Object.entries(icons).map((entry, idx) => {
+            const sportIdentifierString = entry[0];
+            const sportInfo = entry[1];
             if (idx === 0) {
               return (
                 <FilterIcon
                   key={idx}
-                  sportIdentifierString={entry[0]}
-                  image={entry[1].image}
-                  style={entry[1].style}
-                  name={entry[1].sport_name}
+                  sportIdentifierString={sportIdentifierString}
+                  image={sportInfo.image}
+                  style={sportInfo.style}
+                  name={sportInfo.sport_name}
                   isFirst={true}
                   setEventDataList={setEventDataList}
                   allEventsDataList={eventDataList}
@@ -244,10 +246,10 @@ export default function FilterBanner({
             return (
               <FilterIcon
                 key={idx}
-                sportIdentifierString={entry[0]}
-                image={entry[1].image}
-                style={entry[1].style}
-                name={entry[1].sport_name}
+                sportIdentifierString={sportIdentifierString}
+                image={sportInfo.image}
+                style={sportInfo.style}
+                name={sportInfo.sport_name}
                 isFirst={false}
                 setEventDataList={setEventDataList}
                 allEventsDataList={eventDataList}
