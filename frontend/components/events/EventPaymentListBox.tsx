@@ -1,12 +1,12 @@
 "use client";
 import ListBox from "../ListBox";
 
-interface IEventPaymentListBox {
+interface EventPaymentListBoxProps {
   onGuestCountChange: (count: number) => void;
   vacancy: number;
 }
 
-export default function EventPaymentListBox(props: IEventPaymentListBox) {
+export default function EventPaymentListBox(props: EventPaymentListBoxProps) {
   const MAX_OPTION_SIZE = 7;
   const options = [];
 

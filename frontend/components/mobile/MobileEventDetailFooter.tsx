@@ -5,12 +5,12 @@ import {
 import { CalendarDaysIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 
-interface IMobileEventDetailFooter {
+interface MobileEventDetailFooterProps {
   date: Timestamp;
 }
 
 export default function MobileEventDetailFooter(
-  props: IMobileEventDetailFooter
+  props: MobileEventDetailFooterProps
 ) {
   return (
     <div className="fixed bottom-0 h-16 bg-white w-full z-50 border-t-2 border-gray-300 py-2 px-3 flex justify-center">
