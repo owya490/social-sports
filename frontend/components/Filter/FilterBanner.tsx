@@ -10,20 +10,31 @@ import SoccerImage from "./../../public/images/soccer-ball.png";
 import TennisImage from "./../../public/images/tennis-balls.png";
 import VolleyballImage from "./../../public/images/volleyball.png";
 import FilterDialog, {
+  BADMINTON_SPORT_STRING,
+  BASEBALL_SPORT_STRING,
+  BASKETBALL_SPORT_STRING,
   DAY_END_TIME_STRING,
   DAY_START_TIME_STRING,
   DEFAULT_END_DATE,
   DEFAULT_MAX_PRICE,
   DEFAULT_MAX_PROXIMITY,
+  DEFAULT_SORT_BY_CATEGORY,
   DEFAULT_START_DATE,
+  OZTAG_SPORT_STRING,
   PRICE_SLIDER_MAX_VALUE,
   PROXIMITY_SLIDER_MAX_VALUE,
+  SOCCER_SPORT_STRING,
+  SortByCategory,
+  TABLE_TENNIS_SPORT_STRING,
+  TENNIS_SPORT_STRING,
+  VOLLEYBALL_SPORT_STRING,
 } from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
 import {
   filterEventsByDate,
   filterEventsByMaxProximity,
   filterEventsByPrice,
+  filterEventsBySortBy,
   filterEventsBySport,
 } from "@/services/filterService";
 import { Timestamp } from "firebase/firestore";
@@ -47,6 +58,10 @@ export default function FilterBanner({
   srcLocation,
 }: FilterBannerProps) {
   // States for FilterDialog
+  const [sortByCategoryValue, setSortByCategoryValue] =
+    useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
+  const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
+    useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [maxPriceSliderValue, setMaxPriceSliderValue] =
     useState<number>(DEFAULT_MAX_PRICE);
   /// Keeps track of what filter values were actually applied.
@@ -79,14 +94,46 @@ export default function FilterBanner({
   const [selectedSport, setSelectedSport] = useState("");
 
   const icons = {
-    Volleyball: { image: VolleyballImage, style: "w-8 h-8" },
-    Badminton: { image: BadmintonImage, style: "w-8 h-8" },
-    Basketball: { image: BasketballImage, style: "w-8 h-8" },
-    Soccer: { image: SoccerImage, style: "w-8 h-8" },
-    Tennis: { image: TennisImage, style: "w-8 h-8" },
-    "Table Tennis": { image: PingPongImage, style: "w-8 h-8" },
-    Oztag: { image: RugbyImage, style: "w-8 h-8" },
-    Baseball: { image: BaseballImage, style: "w-8 h-8" },
+    volleyball: {
+      image: VolleyballImage,
+      style: "w-8 h-8",
+      sport_name: VOLLEYBALL_SPORT_STRING,
+    },
+    badminton: {
+      image: BadmintonImage,
+      style: "w-8 h-8",
+      sport_name: BADMINTON_SPORT_STRING,
+    },
+    basketball: {
+      image: BasketballImage,
+      style: "w-8 h-8",
+      sport_name: BASKETBALL_SPORT_STRING,
+    },
+    soccer: {
+      image: SoccerImage,
+      style: "w-8 h-8",
+      sport_name: SOCCER_SPORT_STRING,
+    },
+    tennis: {
+      image: TennisImage,
+      style: "w-8 h-8",
+      sport_name: TENNIS_SPORT_STRING,
+    },
+    "table tennis": {
+      image: PingPongImage,
+      style: "w-8 h-8",
+      sport_name: TABLE_TENNIS_SPORT_STRING,
+    },
+    oztag: {
+      image: RugbyImage,
+      style: "w-8 h-8",
+      sport_name: OZTAG_SPORT_STRING,
+    },
+    baseball: {
+      image: BaseballImage,
+      style: "w-8 h-8",
+      sport_name: BASEBALL_SPORT_STRING,
+    },
   };
 
   const scroll = () => {
@@ -160,10 +207,17 @@ export default function FilterBanner({
     );
     filteredEventDataList = newEventDataList;
 
+    // Filter by SORT BY
+    newEventDataList = filterEventsBySortBy(
+      [...filteredEventDataList],
+      sortByCategoryValue
+    );
+    filteredEventDataList = newEventDataList;
+    setAppliedSortByCategoryValue(sortByCategoryValue);
+
     // TODO: add more filters
 
     setEventDataList([...filteredEventDataList]);
-    console.log("filteredEvents", filteredEventDataList);
     closeModal();
   }
   return (
@@ -174,13 +228,16 @@ export default function FilterBanner({
           className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all"
         >
           {Object.entries(icons).map((entry, idx) => {
+            const sportIdentifierString = entry[0];
+            const sportInfo = entry[1];
             if (idx === 0) {
               return (
                 <FilterIcon
                   key={idx}
-                  image={entry[1].image}
-                  style={entry[1].style}
-                  name={entry[0]}
+                  sportIdentifierString={sportIdentifierString}
+                  image={sportInfo.image}
+                  style={sportInfo.style}
+                  name={sportInfo.sport_name}
                   isFirst={true}
                   setEventDataList={setEventDataList}
                   allEventsDataList={eventDataList}
@@ -193,15 +250,16 @@ export default function FilterBanner({
             return (
               <FilterIcon
                 key={idx}
-                image={entry[1].image}
-                style={entry[1].style}
-                name={entry[0]}
+                sportIdentifierString={sportIdentifierString}
+                image={sportInfo.image}
+                style={sportInfo.style}
+                name={sportInfo.sport_name}
                 isFirst={false}
                 setEventDataList={setEventDataList}
                 allEventsDataList={eventDataList}
                 selectedSport={selectedSport}
                 setSelectedSport={setSelectedSport}
-                applyFilters={() => applyFilters(entry[0])}
+                applyFilters={applyFilters}
               />
             );
           })}
@@ -214,6 +272,10 @@ export default function FilterBanner({
           <FilterDialog
             allEventsDataList={allEventsDataList}
             setEventDataList={setEventDataList}
+            sortByCategoryValue={sortByCategoryValue}
+            setSortByCategoryValue={setSortByCategoryValue}
+            appliedSortByCategoryValue={appliedSortByCategoryValue}
+            setAppliedSortByCategoryValue={setAppliedSortByCategoryValue}
             maxPriceSliderValue={maxPriceSliderValue}
             setMaxPriceSliderValue={setMaxPriceSliderValue}
             appliedMaxPriceSliderValue={appliedMaxPriceSliderValue}
