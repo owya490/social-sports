@@ -19,7 +19,7 @@ export default function NewsletterSignup() {
           <h1 className="text-3xl font-semibold lg:text-4xl">
             Subscribe To The <span className="">Newsletter</span>
           </h1>
-          <p className="mt-3 font-thin italic">
+          <p className="mt-3 font-extralight italic">
             be the first to knows when our{" "}
             <span className="font-bold">Brand</span> is live
           </p>
