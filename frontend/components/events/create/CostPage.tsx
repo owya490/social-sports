@@ -21,7 +21,7 @@ export function CostPage({
   updateField,
 }: CostPage) {
   return (
-    <FormWrapper title="Basic Event Info">
+    <FormWrapper title="">
       {/* <label className="font-semibold">Date</label>
       <input
         className="border-2 rounded-full p-2"

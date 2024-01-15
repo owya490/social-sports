@@ -3,28 +3,28 @@ import { FormWrapper } from "./FormWrapper";
 import { Select, Option } from "@material-tailwind/react";
 
 type BasicData = {
-  //date: string;
-  //time: string;
-  name: string;
-  location: string;
-  //cost: number;
-  //people: number;
+    //date: string;
+    //time: string;
+    name: string;
+    location: string;
+    //cost: number;
+    //people: number;
 };
 type BasicInfromationProps = BasicData & {
-  updateField: (fields: Partial<BasicData>) => void;
+    updateField: (fields: Partial<BasicData>) => void;
 };
 export function BasicInformation({
-  //date,
-  //time,
-  name,
-  location,
-  //cost,
-  //people,
-  updateField,
+    //date,
+    //time,
+    name,
+    location,
+    //cost,
+    //people,
+    updateField,
 }: BasicInfromationProps) {
-  return (
-    <FormWrapper title="Basic Event Info">
-      {/* <label className="font-semibold">Date</label>
+    return (
+        <FormWrapper title="">
+            {/* <label className="font-semibold">Date</label>
       <input
         className="border-2 rounded-full p-2"
         autoFocus
@@ -41,7 +41,7 @@ export function BasicInformation({
         value={time}
         onChange={(e) => updateField({ time: e.target.value })}
       /> */}
-      {/* <label className="font-semibold">Location</label>
+            {/* <label className="font-semibold">Location</label>
       <input
         className="border-2 rounded-full p-2"
         required
@@ -50,44 +50,39 @@ export function BasicInformation({
         onChange={(e) => updateField({ location: e.target.value })}
       /> */}
 
-      <label className="mb-2 text-black text-lg">
-                    Name your event
-        </label>
-      <Input
-        label="Event Name" 
-        crossOrigin={undefined}   
-        required
-        value={location}
-        onChange={(e) => updateField({ location: e.target.value })}
-        className="rounded-md" 
-        />
-      
-       <label className="mb-2 text-black text-lg">
-                    Enter your Location
-        </label>
-      <Input
-        label="Location" 
-        crossOrigin={undefined}   
-        required
-        value={location}
-        onChange={(e) => updateField({ location: e.target.value })}
-        className="rounded-md" 
-        />
-    <label className="mb-2 text-black text-lg">
-                    Select the sport
-        </label>
-    <Select 
-      label="Select Sport">
-        <Option>Volleyball</Option>
-        <Option>Badminton</Option>
-        <Option>Basketball</Option>
-        <Option>Soccer</Option>
-        <Option>Tennis</Option>
-        <Option>Table Tennis</Option>
-        <Option>Oztag</Option>
-        <Option>Baseball</Option>
-      </Select>
-      {/* <label className="font-semibold">Cost per person</label>
+            <label className="mb-2 text-black text-lg">Name your event</label>
+            <Input
+                label="Event Name"
+                crossOrigin={undefined}
+                required
+                value={location}
+                onChange={(e) => updateField({ name: e.target.value })}
+                className="rounded-md"
+            />
+
+            <label className="mb-2 text-black text-lg 1-">
+                Enter your Location
+            </label>
+            <Input
+                label="Location"
+                crossOrigin={undefined}
+                required
+                value={location}
+                onChange={(e) => updateField({ location: e.target.value })}
+                className="rounded-md"
+            />
+            <label className="mb-2 text-black text-lg">Select the sport</label>
+            <Select label="Select Sport">
+                <Option>Volleyball</Option>
+                <Option>Badminton</Option>
+                <Option>Basketball</Option>
+                <Option>Soccer</Option>
+                <Option>Tennis</Option>
+                <Option>Table Tennis</Option>
+                <Option>Oztag</Option>
+                <Option>Baseball</Option>
+            </Select>
+            {/* <label className="font-semibold">Cost per person</label>
       <input
         className="border-2 rounded-full p-2"
         required
@@ -105,6 +100,6 @@ export function BasicInformation({
         value={people}
         onChange={(e) => updateField({ people: parseInt(e.target.value) })}
       /> */}
-    </FormWrapper>
-  );
+        </FormWrapper>
+    );
 }
