@@ -109,23 +109,25 @@ const Profile = () => {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const renderField = (label :string, name :string) => (
-    <li key={label} className="mb-4 flex justify-between w-full">
-      <strong className="text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">
-        {label}:
-      </strong>
-      <span
-        className={`text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
-          name === "email" ? "break-all" : ""
-        }`}
-      >
-        {name === "password"
-          ? "*".repeat(initialProfileData[name].length)
-          : initialProfileData[name as keyof initialProfileDataInterface]}
-      </span>
-    </li>
+  const renderField = (label: string, name: string) => (
+    <div key={label} className="mb-4">
+      <div className="flex flex-col md:flex-row md:justify-between w-full">
+        <strong className="text-xs lg:text-lg 3xl:text-xl font-medium text-gray-700">
+          {label}:
+        </strong>
+        <span
+          className={`text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
+            name === "email" ? "break-all" : ""
+          }`}
+        >
+          {name === "password"
+            ? "*".repeat(initialProfileData[name].length)
+            : initialProfileData[name as keyof initialProfileDataInterface]}
+        </span>
+      </div>
+    </div>
   );
-
+  
   const renderModalContent = () => (
     <Transition appear show={editable} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={handleEditClick}>
@@ -194,10 +196,10 @@ const Profile = () => {
   return (
     <div className="w-screen flex justify-center">
       <div className="w-screen mx-10 sm:mx-0 sm:w-[400px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 3xl:w-[1400px]">
-        <div className="relative mt-[120px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[4vw]">
+        <div className="relative mt-[92px] lg:mt-[120px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[4vw]">
           <div className="flex justify-center md:justify-start col-start-1 col-span-1 md:col-start-2 md:row-span-1 md:row-start-1">
             <div
-              className="flex justify-center mb-5 md:mb-5 lg:mb-8 text-3xl lg:text-4xl 3xl:text-5xl"
+              className="flex justify-center mb-5 md:mb-5 lg:mb-8 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl"
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}'s Profile
@@ -324,14 +326,14 @@ const Profile = () => {
           </div>
           <div className="justify-start col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
             <div
-              className="mb-5 text-xl lg:text-2xl"
+              className="mb-2 text-xl lg:text-2xl"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-3 lg:mt-1">Name</div>
+              <div className="mb-1 lg:mt-1">Name</div>
             </div>
             <ul className="w-full">
               {renderField("Given Name", "firstName")}
@@ -339,14 +341,14 @@ const Profile = () => {
             </ul>
 
             <div
-              className="mb-5 text-xl lg:text-2xl"
+              className="mb-2 text-xl lg:text-2xl"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-3 mt-6">Contact Info</div>
+              <div className="mb-1 mt-8">Contact Info</div>
             </div>
             <ul className="w-full">
               {renderField("Email", "email")}
@@ -354,14 +356,14 @@ const Profile = () => {
             </ul>
 
             <div
-              className="mb-5 text-xl lg:text-2xl"
+              className="mb-2 text-xl lg:text-2xl"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-3 mt-6">About Me</div>
+              <div className="mb-1 mt-8">About Me</div>
             </div>
             <ul className="w-full">
               {renderField("Location", "location")}
