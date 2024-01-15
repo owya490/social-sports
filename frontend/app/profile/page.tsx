@@ -27,7 +27,7 @@ const initialProfileData = {
   lastName: "Yang",
   location: "Sydney, Australia",
   phoneNumber: "0468368618",
-  email: "owya490@gmail.com",
+  email: "maxsteelflight@gmail.com",
   birthday: "23-07-2002", // DD-MM-YYYY format
   age: calculateAge("23-07-2002"), // Calculate initial age
   password: "danielinthesky",
@@ -103,7 +103,11 @@ const Profile = () => {
       <strong className="text-lg lg:text-xl 3xl:text-2xl font-medium text-gray-700">
         {label}:
       </strong>
-      <span className="text-lg lg:text-xl 3xl:text-2xl font-medium text-gray-700">
+      <span
+        className={`text-lg lg:text-xl 3xl:text-2xl font-medium text-gray-700 ${
+          name === "email" ? "break-all" : ""
+        }`}
+      >
         {name === "password"
           ? "*".repeat(initialProfileData[name].length)
           : initialProfileData[name]}
@@ -198,17 +202,24 @@ const Profile = () => {
               >
                 <div className="relative mx-5 md:mx-3 mt-4 lg:mt-0">
                   <div
-                    className="hover:bg-gray-200 flex justify-center overflow-hidden transition duration-500"
+                    className="hover:bg-gray-200 flex justify-center transition duration-500 rounded-full relative"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                   >
-                    <Image
-                      src={DP}
-                      alt="DP"
-                      width={0}
-                      height={0}
-                      className="object-cover h-52 w-52 3xl:h-64 3xl:w-64 rounded-full"
-                    />
+                    <div className="relative h-52 w-52 3xl:h-64 3xl:w-64 rounded-full overflow-hidden">
+                      <Image
+                        src={DP}
+                        alt="DP"
+                        width={0}
+                        height={0}
+                        className="object-cover h-full w-full"
+                      />
+                      <div className="absolute bottom-0 inset-x-0">
+                        <div className="flex items-center justify-center bg-black bg-opacity-50 text-white text-lg font-semibold py-2">
+                          Edit
+                        </div>
+                      </div>
+                    </div>
                     {isHovered && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <input
@@ -231,6 +242,7 @@ const Profile = () => {
                     )}
                   </div>
                 </div>
+
                 <div className="flex flex-col justify-center lg:ml-3">
                   <div className="flex justify-center lg:justify-start mt-5 3xl:mt-9 text-2xl 3xl:text-4xl font-semibold">
                     <span className="lg:whitespace-no-wrap">
