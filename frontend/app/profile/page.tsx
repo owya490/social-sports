@@ -7,7 +7,7 @@ import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
 
-const calculateAge = (birthday) => {
+const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
   const birthDate = new Date(`${year}-${month}-${day}`);
   const currentDate = new Date();
@@ -43,8 +43,8 @@ const Profile = () => {
     setEditable(!editable);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (changeEvent) => {
+    const { name, value } = changeEvent.target;
     if (name === "birthday") {
       setEditedData((prevData) => ({
         ...prevData,
