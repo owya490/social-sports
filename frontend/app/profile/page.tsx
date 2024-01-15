@@ -19,10 +19,21 @@ const calculateAge = (birthday: string) => {
   ) {
     age--;
   }
-  return age;
+  return age.toString();
 };
 
-const initialProfileData = {
+interface initialProfileDataInterface {
+  firstName :string;
+  lastName :string;
+  location :string;
+  phoneNumber :string;
+  email :string;
+  birthday :string;
+  age :string;
+  password :string;
+}
+
+const initialProfileData :initialProfileDataInterface = {
   firstName: "Reggiestar",
   lastName: "Yang",
   location: "Sydney, Australia",
@@ -35,8 +46,7 @@ const initialProfileData = {
 
 const Profile = () => {
   const [editable, setEditable] = useState(false);
-  const [editedData, setEditedData] = useState<typeof initialProfileData>({ ...initialProfileData });
-
+  const [editedData, setEditedData] = useState({ ...initialProfileData });
   const handleEditClick = () => {
     if (editable) {
       setEditedData({ ...initialProfileData });
@@ -78,7 +88,7 @@ const Profile = () => {
         <input
           type={type}
           name={name}
-          value={formatDateForInput(editedData[name])}
+          value={formatDateForInput(editedData[name as keyof initialProfileDataInterface])}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
@@ -86,7 +96,7 @@ const Profile = () => {
         <input
           type={type}
           name={name}
-          value={editedData[name]}
+          value={editedData[name as keyof initialProfileDataInterface]}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
@@ -94,7 +104,7 @@ const Profile = () => {
     </div>
   );
 
-  const formatDateForInput = (dateString) => {
+  const formatDateForInput = (dateString :string) => {
     const [dd, mm, yyyy] = dateString.split("-");
     return `${yyyy}-${mm}-${dd}`;
   };
@@ -111,7 +121,7 @@ const Profile = () => {
       >
         {name === "password"
           ? "*".repeat(initialProfileData[name].length)
-          : initialProfileData[name]}
+          : initialProfileData[name as keyof initialProfileDataInterface]}
       </span>
     </li>
   );
