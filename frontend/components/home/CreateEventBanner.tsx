@@ -6,7 +6,7 @@ export default function CreateEventBanner() {
           Create an Event Now!
         </h1>
         <div className="basis-full flex justify-center">
-          <p className="md:w-1/2 text-center text-lg font-extralight mt-7">
+          <p className="md:w-1/2 text-center text-lg font-light mt-7">
             Supercharge your event with the power of Sports Hub! Find players,
             handle bookings and gain outreach all in one complete platform. Try
             it all for free today!

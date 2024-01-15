@@ -9,7 +9,7 @@ export default function Hero() {
           <h1 className="text-6xl font-extrabold">
             Satisfy your Sports Cravings.
           </h1>
-          <p className="font-extralight mt-4">
+          <p className="font-light mt-4">
             Find your next Social Sports Session right here on{" "}
             <a href="/dashboard" className="font-semibold hover:underline">
               Sports Hub.
