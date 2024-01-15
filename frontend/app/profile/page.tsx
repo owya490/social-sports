@@ -1,7 +1,7 @@
 "use client";
 import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
-import { Fragment, useState } from "react";
+import { ChangeEvent, Fragment, useState } from "react";
 import DP from "./../../public/images/Ashley & Owen.png";
 import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
@@ -35,7 +35,8 @@ const initialProfileData = {
 
 const Profile = () => {
   const [editable, setEditable] = useState(false);
-  const [editedData, setEditedData] = useState({ ...initialProfileData });
+  const [editedData, setEditedData] = useState<typeof initialProfileData>({ ...initialProfileData });
+
   const handleEditClick = () => {
     if (editable) {
       setEditedData({ ...initialProfileData });
@@ -43,7 +44,7 @@ const Profile = () => {
     setEditable(!editable);
   };
 
-  const handleInputChange = (changeEvent) => {
+  const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = changeEvent.target;
     if (name === "birthday") {
       setEditedData((prevData) => ({
@@ -54,7 +55,7 @@ const Profile = () => {
       setEditedData((prevData) => ({ ...prevData, [name]: value }));
     }
   };
-
+  
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => {
@@ -70,7 +71,7 @@ const Profile = () => {
     setEditable(false);
   };
 
-  const renderEditableField = (label, name, type = "text") => (
+  const renderEditableField = (label: string, name :string, type = "text") => (
     <div key={name} className="mb-4">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       {type === "date" ? (
@@ -98,7 +99,7 @@ const Profile = () => {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const renderField = (label, name) => (
+  const renderField = (label :string, name :string) => (
     <li key={label} className="mb-4 flex justify-between w-full">
       <strong className="text-lg lg:text-xl 3xl:text-2xl font-medium text-gray-700">
         {label}:
@@ -179,8 +180,6 @@ const Profile = () => {
       </Dialog>
     </Transition>
   );
-
-  const editedAge = calculateAge(editedData.birthday);
 
   return (
     <div className="w-screen flex justify-center">
