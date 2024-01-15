@@ -1,288 +1,326 @@
 import {
-  EventData,
-  EventDataWithoutOrganiser,
-  EventId,
-  NewEventData,
+    EventData,
+    EventDataWithoutOrganiser,
+    EventId,
+    NewEventData,
 } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import {
-  Timestamp,
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  increment,
-  query,
-  updateDoc,
-  where,
-  or,
-  DocumentData,
-  Query,
-  CollectionReference,
-  Firestore,
+    Timestamp,
+    addDoc,
+    collection,
+    deleteDoc,
+    doc,
+    getDoc,
+    getDocs,
+    increment,
+    query,
+    updateDoc,
+    where,
+    or,
+    DocumentData,
+    Query,
+    CollectionReference,
+    Firestore,
 } from "firebase/firestore";
 
 import { db } from "./firebase";
 import { getUserById } from "./usersService";
 import { tokenizeText } from "./eventsUtils";
+import {
+    EMPTY_LOCATION_STRING,
+    EMPTY_SEARCH_STRING,
+} from "@/app/dashboard/page";
 
 const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
-  try {
-  // Simplified object spreading with tokenized values
-  const eventDataWithTokens = {
-    ...data,
-    nameTokens: tokenizeText(data.name),
-    locationTokens: tokenizeText(data.location),
-  };
+    try {
+        // Simplified object spreading with tokenized values
+        const eventDataWithTokens = {
+            ...data,
+            nameTokens: tokenizeText(data.name),
+            locationTokens: tokenizeText(data.location),
+        };
 
-  const docRef = await addDoc(collection(db, "Events"), eventDataWithTokens);
-    return docRef.id;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+        const docRef = await addDoc(
+            collection(db, "Events"),
+            eventDataWithTokens
+        );
+        return docRef.id;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
 }
 
 export async function getEventById(eventId: EventId): Promise<EventData> {
-  try {
-    const eventDoc = await getDoc(doc(db, "Events", eventId));
-    const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
-    const event: EventData = {
-      ...eventWithoutOrganiser,
-      organiser: await getUserById(eventWithoutOrganiser.organiserId),
-    };
-    return event;
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
+    try {
+        const eventDoc = await getDoc(doc(db, "Events", eventId));
+        const eventWithoutOrganiser =
+            eventDoc.data() as EventDataWithoutOrganiser;
+        const event: EventData = {
+            ...eventWithoutOrganiser,
+            organiser: await getUserById(eventWithoutOrganiser.organiserId),
+        };
+        return event;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
-export async function searchEventsByKeyword(nameKeyword: string, locationKeyword: string) {
-  try {
-      if (!nameKeyword && !locationKeyword) {
-          throw new Error("Both nameKeyword and locationKeyword are empty");
-      }
+export async function searchEventsByKeyword(
+    nameKeyword: string,
+    locationKeyword: string
+) {
+    try {
+        if (!nameKeyword && !locationKeyword) {
+            throw new Error("Both nameKeyword and locationKeyword are empty");
+        }
 
-      const eventCollectionRef = collection(db, "Events");
-      const searchKeywords = tokenizeText(nameKeyword);
-      const eventTokenMatchCount = await fetchEventTokenMatches(eventCollectionRef, searchKeywords);
+        const eventCollectionRef = collection(db, "Events");
+        const searchKeywords = tokenizeText(nameKeyword);
+        const eventTokenMatchCount = await fetchEventTokenMatches(
+            eventCollectionRef,
+            searchKeywords
+        );
 
-      const eventsData = await processEventData(eventCollectionRef, eventTokenMatchCount);
-      eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
-      return eventsData;
-  } catch (error) {
-      console.error("Error searching events:", error);
-      throw error;
-  }
+        const eventsData = await processEventData(
+            eventCollectionRef,
+            eventTokenMatchCount
+        );
+        eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
+        return eventsData;
+    } catch (error) {
+        console.error("Error searching events:", error);
+        throw error;
+    }
 }
 
-async function fetchEventTokenMatches(eventCollectionRef: Query<unknown, DocumentData>, searchKeywords: string[]) {
-  const eventTokenMatchCount = new Map();
+async function fetchEventTokenMatches(
+    eventCollectionRef: Query<unknown, DocumentData>,
+    searchKeywords: string[]
+) {
+    const eventTokenMatchCount = new Map();
 
-  for (const token of searchKeywords) {
-      const q = query(eventCollectionRef, where("nameTokens", "array-contains", token));
-      const querySnapshot = await getDocs(q);
+    for (const token of searchKeywords) {
+        const q = query(
+            eventCollectionRef,
+            where("nameTokens", "array-contains", token)
+        );
+        const querySnapshot = await getDocs(q);
 
-      querySnapshot.forEach((eventDoc) => {
-          const eventId = eventDoc.id;
-          eventTokenMatchCount.set(eventId, (eventTokenMatchCount.get(eventId) || 0) + 1);
-      });
-  }
+        querySnapshot.forEach((eventDoc) => {
+            const eventId = eventDoc.id;
+            eventTokenMatchCount.set(
+                eventId,
+                (eventTokenMatchCount.get(eventId) || 0) + 1
+            );
+        });
+    }
 
-  return eventTokenMatchCount;
+    return eventTokenMatchCount;
 }
 
-async function processEventData(eventCollectionRef: CollectionReference<DocumentData, DocumentData> | Firestore, eventTokenMatchCount: Map<any, any>) {
-  const eventsData = [];
+async function processEventData(
+    eventCollectionRef:
+        | CollectionReference<DocumentData, DocumentData>
+        | Firestore,
+    eventTokenMatchCount: Map<any, any>
+) {
+    const eventsData = [];
 
-  for (const [eventId, count] of eventTokenMatchCount) {
-      let eventDocRef;
-      if (eventCollectionRef instanceof Firestore) {
-        eventDocRef = doc(eventCollectionRef, 'Events', eventId); // Replace 'your_collection_name' with actual collection name
-      } else {
-        eventDocRef = doc(eventCollectionRef, eventId);
-      }
+    for (const [eventId, count] of eventTokenMatchCount) {
+        let eventDocRef;
+        if (eventCollectionRef instanceof Firestore) {
+            eventDocRef = doc(eventCollectionRef, "Events", eventId); // Replace 'your_collection_name' with actual collection name
+        } else {
+            eventDocRef = doc(eventCollectionRef, eventId);
+        }
 
-      const eventDoc = await getDoc(eventDocRef);
-      if (eventDoc.exists()) {
-        
-          const eventData = eventDoc.data();
-          const extendedEventData = {
-              ...eventData,
-              eventId,
-              tokenMatchCount: count,
-          };
-          const organiser = await getUserById(eventData.organiserId);
-          console.log(organiser);
-          extendedEventData.organiser = organiser;
-          eventsData.push(extendedEventData);
-      }
-  }
+        const eventDoc = await getDoc(eventDocRef);
+        if (eventDoc.exists()) {
+            const eventData = eventDoc.data();
+            const extendedEventData = {
+                ...eventData,
+                eventId,
+                tokenMatchCount: count,
+            };
+            const organiser = await getUserById(eventData.organiserId);
+            console.log(organiser);
+            extendedEventData.organiser = organiser;
+            eventsData.push(extendedEventData);
+        }
+    }
 
-  return eventsData;
+    return eventsData;
 }
 
 // Function to retrieve all events
 export async function getAllEvents(): Promise<EventData[]> {
-  const currentDate = new Date();
+    const currentDate = new Date();
 
-  if (
-    localStorage.getItem("eventsData") !== null &&
-    localStorage.getItem("lastFetchedEventData") !== null
-  ) {
-    const lastFetched = new Date(localStorage.getItem("lastFetchedEventData")!);
-    if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
-      return getEventsDataFromLocalStorage();
+    if (
+        localStorage.getItem("eventsData") !== null &&
+        localStorage.getItem("lastFetchedEventData") !== null
+    ) {
+        const lastFetched = new Date(
+            localStorage.getItem("lastFetchedEventData")!
+        );
+        if (
+            currentDate.valueOf() - lastFetched.valueOf() <
+            EVENTS_REFRESH_MILLIS
+        ) {
+            return getEventsDataFromLocalStorage();
+        }
     }
-  }
-  try {
-    console.log("Getting events from DB");
-    const eventCollectionRef = collection(db, "Events");
-    const eventsSnapshot = await getDocs(eventCollectionRef);
-    const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
-    const eventsData: EventData[] = [];
+    try {
+        console.log("Getting events from DB");
+        const eventCollectionRef = collection(db, "Events");
+        const eventsSnapshot = await getDocs(eventCollectionRef);
+        const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
+        const eventsData: EventData[] = [];
 
-    eventsSnapshot.forEach((doc) => {
-      const eventData = doc.data() as EventDataWithoutOrganiser;
-      eventData.eventId = doc.id;
-      eventsDataWithoutOrganiser.push(eventData);
-    });
+        eventsSnapshot.forEach((doc) => {
+            const eventData = doc.data() as EventDataWithoutOrganiser;
+            eventData.eventId = doc.id;
+            eventsDataWithoutOrganiser.push(eventData);
+        });
 
-    for (const event of eventsDataWithoutOrganiser) {
-      const organiser = await getUserById(event.organiserId);
-      eventsData.push({
-        ...event,
-        organiser: organiser,
-      });
+        for (const event of eventsDataWithoutOrganiser) {
+            const organiser = await getUserById(event.organiserId);
+            eventsData.push({
+                ...event,
+                organiser: organiser,
+            });
+        }
+        localStorage.setItem("eventsData", JSON.stringify(eventsData));
+        const currentDateString = currentDate.toUTCString();
+        localStorage.setItem("lastFetchedEventData", currentDateString);
+        return eventsData;
+    } catch (error) {
+        console.error(error);
+        throw error;
     }
-    localStorage.setItem("eventsData", JSON.stringify(eventsData));
-    const currentDateString = currentDate.toUTCString();
-    localStorage.setItem("lastFetchedEventData", currentDateString);
-    return eventsData;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
 }
 
 export async function updateEvent(
-  eventId: string,
-  updatedData: Partial<EventData>
+    eventId: string,
+    updatedData: Partial<EventData>
 ): Promise<void> {
-  try {
-    const eventRef = doc(db, "Events", eventId);
-    await updateDoc(eventRef, updatedData);
-  } catch (error) {
-    console.error(error);
-  }
+    try {
+        const eventRef = doc(db, "Events", eventId);
+        await updateDoc(eventRef, updatedData);
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 export async function updateEventByName(
-  eventName: string,
-  updatedData: Partial<EventData>
+    eventName: string,
+    updatedData: Partial<EventData>
 ) {
-  try {
-    const eventCollectionRef = collection(db, "Events");
-    const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
+    try {
+        const eventCollectionRef = collection(db, "Events");
+        const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
 
-    const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(q);
 
-    if (querySnapshot.size === 0) {
-      throw new Error(`Event with name '${eventName}' not found.`);
+        if (querySnapshot.size === 0) {
+            throw new Error(`Event with name '${eventName}' not found.`);
+        }
+
+        // Loop through each event with the same name and update them
+        querySnapshot.forEach(async (eventDoc) => {
+            await updateDoc(eventDoc.ref, updatedData);
+        });
+
+        console.log(`Events with name '${eventName}' updated successfully.`);
+    } catch (error) {
+        console.error(error);
     }
-
-    // Loop through each event with the same name and update them
-    querySnapshot.forEach(async (eventDoc) => {
-      await updateDoc(eventDoc.ref, updatedData);
-    });
-
-    console.log(`Events with name '${eventName}' updated successfully.`);
-  } catch (error) {
-    console.error(error);
-  }
 }
 
 export async function deleteEvent(eventId: EventId): Promise<void> {
-  try {
-    const eventRef = doc(db, "Events", eventId);
-    await deleteDoc(eventRef);
-    console.log(deleteDoc);
-  } catch (error) {
-    console.error(error);
-  }
+    try {
+        const eventRef = doc(db, "Events", eventId);
+        await deleteDoc(eventRef);
+        console.log(deleteDoc);
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 export async function deleteEventByName(eventName: string): Promise<void> {
-  try {
-    const eventCollectionRef = collection(db, "Events");
-    const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
+    try {
+        const eventCollectionRef = collection(db, "Events");
+        const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
 
-    const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(q);
 
-    if (querySnapshot.size === 0) {
-      throw new Error(`Event with name '${eventName}' not found.`);
+        if (querySnapshot.size === 0) {
+            throw new Error(`Event with name '${eventName}' not found.`);
+        }
+        querySnapshot.forEach(async (eventDoc) => {
+            await deleteDoc(eventDoc.ref);
+        });
+
+        console.log(`Events with name '${eventName}' delete successfully.`);
+    } catch (error) {
+        console.error(error);
     }
-    querySnapshot.forEach(async (eventDoc) => {
-      await deleteDoc(eventDoc.ref);
-    });
-
-    console.log(`Events with name '${eventName}' delete successfully.`);
-  } catch (error) {
-    console.error(error);
-  }
 }
 
 export async function incrementEventAccessCountById(
-  eventId: EventId,
-  count: number = 1
+    eventId: EventId,
+    count: number = 1
 ) {
-  updateDoc(doc(db, "Events", eventId), {
-    accessCount: increment(count),
-  });
+    updateDoc(doc(db, "Events", eventId), {
+        accessCount: increment(count),
+    });
 }
 
 function getEventsDataFromLocalStorage(): EventData[] {
-  const eventsData: EventData[] = JSON.parse(
-    localStorage.getItem("eventsData")!
-  );
-  const eventsDataFinal: EventData[] = [];
-  eventsData.map((event) => {
-    eventsDataFinal.push({
-      eventId: event.eventId,
-      organiser: event.organiser as UserData,
-      startDate: new Timestamp(
-        event.startDate.seconds,
-        event.startDate.nanoseconds
-      ),
-      endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
-      location: event.location,
-      capacity: event.capacity,
-      vacancy: event.vacancy,
-      price: event.price,
-      organiserId: event.organiserId,
-      registrationDeadline: new Timestamp(
-        event.registrationDeadline.seconds,
-        event.registrationDeadline.nanoseconds
-      ),
-      name: event.name,
-      description: event.description,
-      image: event.image,
-      eventTags: event.eventTags,
-      isActive: event.isActive,
-      attendees: event.attendees,
-      accessCount: event.accessCount,
-      sport: event.sport,
-      locationLatLng: {
-        lat: event.locationLatLng.lat,
-        lng: event.locationLatLng.lng,
-      },
+    const eventsData: EventData[] = JSON.parse(
+        localStorage.getItem("eventsData")!
+    );
+    const eventsDataFinal: EventData[] = [];
+    eventsData.map((event) => {
+        eventsDataFinal.push({
+            eventId: event.eventId,
+            organiser: event.organiser as UserData,
+            startDate: new Timestamp(
+                event.startDate.seconds,
+                event.startDate.nanoseconds
+            ),
+            endDate: new Timestamp(
+                event.endDate.seconds,
+                event.endDate.nanoseconds
+            ),
+            location: event.location,
+            capacity: event.capacity,
+            vacancy: event.vacancy,
+            price: event.price,
+            organiserId: event.organiserId,
+            registrationDeadline: new Timestamp(
+                event.registrationDeadline.seconds,
+                event.registrationDeadline.nanoseconds
+            ),
+            name: event.name,
+            description: event.description,
+            image: event.image,
+            eventTags: event.eventTags,
+            isActive: event.isActive,
+            attendees: event.attendees,
+            accessCount: event.accessCount,
+            sport: event.sport,
+            locationLatLng: {
+                lat: event.locationLatLng.lat,
+                lng: event.locationLatLng.lng,
+            },
+        });
     });
-  });
-  return eventsDataFinal;
+    return eventsDataFinal;
 }
