@@ -111,11 +111,11 @@ const Profile = () => {
 
   const renderField = (label :string, name :string) => (
     <li key={label} className="mb-4 flex justify-between w-full">
-      <strong className="text-lg lg:text-xl 3xl:text-2xl font-medium text-gray-700">
+      <strong className="text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">
         {label}:
       </strong>
       <span
-        className={`text-lg lg:text-xl 3xl:text-2xl font-medium text-gray-700 ${
+        className={`text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
           name === "email" ? "break-all" : ""
         }`}
       >
@@ -194,10 +194,10 @@ const Profile = () => {
   return (
     <div className="w-screen flex justify-center">
       <div className="w-screen mx-10 sm:mx-0 sm:w-[400px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 3xl:w-[1400px]">
-        <div className="relative mt-[100px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[3vw]">
+        <div className="relative mt-[120px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[4vw]">
           <div className="flex justify-center md:justify-start col-start-1 col-span-1 md:col-start-2 md:row-span-1 md:row-start-1">
             <div
-              className="flex justify-center mb-5 md:mb-6 text-3xl lg:text-4xl"
+              className="flex justify-center mb-5 md:mb-5 lg:mb-8 text-3xl lg:text-4xl 3xl:text-5xl"
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}'s Profile
@@ -211,7 +211,7 @@ const Profile = () => {
               >
                 <div className="relative mx-5 md:mx-3 mt-4 lg:mt-0">
                   <div
-                    className="hover:bg-gray-200 flex justify-center transition duration-500 rounded-full relative"
+                    className="flex justify-center transition duration-500 rounded-full relative"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                   >
@@ -222,6 +222,9 @@ const Profile = () => {
                         width={0}
                         height={0}
                         className="object-cover h-full w-full"
+                        onClick={() => {
+                          document.getElementById("Image_input")!.click();
+                        }}
                       />
                       <div className="absolute bottom-0 inset-x-0">
                         <div className="flex items-center justify-center bg-black bg-opacity-50 text-white text-lg font-semibold py-2">
@@ -253,14 +256,14 @@ const Profile = () => {
                 </div>
 
                 <div className="flex flex-col justify-center lg:ml-3">
-                  <div className="flex justify-center lg:justify-start mt-5 3xl:mt-9 text-2xl 3xl:text-4xl font-semibold">
+                  <div className="flex justify-center lg:justify-start mt-5 3xl:mt-9 text-xl 3xl:text-3xl font-semibold">
                     <span className="lg:whitespace-no-wrap">
                       {initialProfileData.firstName}{" "}
                       {initialProfileData.lastName?.slice(0, 1)}, {""}
                       {initialProfileData.age}
                     </span>
                   </div>
-                  <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-xl 3xl:text-2xl">
+                  <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-lg 3xl:text-xl">
                     {initialProfileData.location}
                   </div>
                 </div>
@@ -281,12 +284,12 @@ const Profile = () => {
                   />
                 </div>
                 <div
-                  className="text-2xl 3xl:text-3xl text-bold ml-4 mr-3 my-2 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4"
+                  className="text-xl 3xl:text-2xl text-bold ml-4 mr-3 my-2 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4"
                   style={{ fontWeight: "bold" }}
                 >
                   What info is shared with others?
                 </div>
-                <div className="text-lg 3xl:text-xl ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
+                <div className="text-md 3xl:text-lg ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
                   Sports Hub only releases contact information to the host of
                   the event you are attending.
                 </div>
@@ -307,28 +310,28 @@ const Profile = () => {
                   />
                 </div>
                 <div
-                  className="text-2xl 3xl:text-3xl text-bold ml-4 mr-3 my-2 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4"
+                  className="text-xl 3xl:text-2xl text-bold ml-4 mr-3 my-2 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4"
                   style={{ fontWeight: "bold" }}
                 >
                   What is my location used for?
                 </div>
-                <div className="text-lg 3xl:text-xl ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
+                <div className="text-md 3xl:text-lg ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
                   Sports Hub uses your location to better recommend you events
                   that are close to you!
                 </div>
               </div>
             </div>
           </div>
-          <div className="justify-start col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-xl">
+          <div className="justify-start col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
             <div
-              className="mb-5 text-2xl lg:text-3xl"
+              className="mb-5 text-xl lg:text-2xl"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-2">Name</div>
+              <div className="mb-3 lg:mt-1">Name</div>
             </div>
             <ul className="w-full">
               {renderField("Given Name", "firstName")}
@@ -336,14 +339,14 @@ const Profile = () => {
             </ul>
 
             <div
-              className="mb-5 text-2xl lg:text-3xl"
+              className="mb-5 text-xl lg:text-2xl"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-2 mt-1">Contact Info</div>
+              <div className="mb-3 mt-6">Contact Info</div>
             </div>
             <ul className="w-full">
               {renderField("Email", "email")}
@@ -351,21 +354,21 @@ const Profile = () => {
             </ul>
 
             <div
-              className="mb-5 text-2xl lg:text-3xl"
+              className="mb-5 text-xl lg:text-2xl"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-2 mt-1">About Me</div>
+              <div className="mb-3 mt-6">About Me</div>
             </div>
             <ul className="w-full">
               {renderField("Location", "location")}
               {renderField("Date of Birth", "birthday")}
               {renderField("Password", "password")}
             </ul>
-            <div className="flex justify-start my-8">
+            <div className="flex justify-start my-6 3xl:my-10">
               {renderModalContent()}
               <button
                 type="button"
