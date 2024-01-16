@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
+import { useUser } from "@/components/utility/UserContext";
 
 export default function Login() {
   const [userData, setUserData] = useState({
