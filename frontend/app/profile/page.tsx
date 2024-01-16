@@ -23,17 +23,17 @@ const calculateAge = (birthday: string) => {
 };
 
 interface initialProfileDataInterface {
-  firstName :string;
-  lastName :string;
-  location :string;
-  phoneNumber :string;
-  email :string;
-  birthday :string;
-  age :string;
-  password :string;
+  firstName: string;
+  lastName: string;
+  location: string;
+  phoneNumber: string;
+  email: string;
+  birthday: string;
+  age: string;
+  password: string;
 }
 
-const initialProfileData :initialProfileDataInterface = {
+const initialProfileData: initialProfileDataInterface = {
   firstName: "Reggiestar",
   lastName: "Yang",
   location: "Sydney, Australia",
@@ -65,7 +65,7 @@ const Profile = () => {
       setEditedData((prevData) => ({ ...prevData, [name]: value }));
     }
   };
-  
+
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => {
@@ -81,14 +81,16 @@ const Profile = () => {
     setEditable(false);
   };
 
-  const renderEditableField = (label: string, name :string, type = "text") => (
+  const renderEditableField = (label: string, name: string, type = "text") => (
     <div key={name} className="mb-4">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       {type === "date" ? (
         <input
           type={type}
           name={name}
-          value={formatDateForInput(editedData[name as keyof initialProfileDataInterface])}
+          value={formatDateForInput(
+            editedData[name as keyof initialProfileDataInterface]
+          )}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
@@ -104,7 +106,7 @@ const Profile = () => {
     </div>
   );
 
-  const formatDateForInput = (dateString :string) => {
+  const formatDateForInput = (dateString: string) => {
     const [dd, mm, yyyy] = dateString.split("-");
     return `${yyyy}-${mm}-${dd}`;
   };
@@ -112,11 +114,11 @@ const Profile = () => {
   const renderField = (label: string, name: string) => (
     <div key={label} className="mb-4">
       <div className="flex flex-col md:flex-row md:justify-between w-full">
-        <strong className="text-xs lg:text-lg 3xl:text-xl font-medium text-gray-700">
+        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">
           {label}:
         </strong>
         <span
-          className={`text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
+          className={`text-md md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
             name === "email" ? "break-all" : ""
           }`}
         >
@@ -127,7 +129,7 @@ const Profile = () => {
       </div>
     </div>
   );
-  
+
   const renderModalContent = () => (
     <Transition appear show={editable} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={handleEditClick}>
@@ -199,7 +201,7 @@ const Profile = () => {
         <div className="relative mt-[92px] lg:mt-[120px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[4vw]">
           <div className="flex justify-center md:justify-start col-start-1 col-span-1 md:col-start-2 md:row-span-1 md:row-start-1">
             <div
-              className="flex justify-center mb-5 md:mb-5 lg:mb-8 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl"
+              className="flex justify-center mb-5 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl"
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}'s Profile
@@ -333,7 +335,7 @@ const Profile = () => {
                 width: "100%",
               }}
             >
-              <div className="mb-1 lg:mt-1">Name</div>
+              <div className="mb-1 md:mb-2 lg:mt-3">Name</div>
             </div>
             <ul className="w-full">
               {renderField("Given Name", "firstName")}
@@ -348,7 +350,9 @@ const Profile = () => {
                 width: "100%",
               }}
             >
-              <div className="mb-1 mt-8">Contact Info</div>
+              <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
+                Contact Info
+              </div>
             </div>
             <ul className="w-full">
               {renderField("Email", "email")}
@@ -363,7 +367,7 @@ const Profile = () => {
                 width: "100%",
               }}
             >
-              <div className="mb-1 mt-8">About Me</div>
+              <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">About Me</div>
             </div>
             <ul className="w-full">
               {renderField("Location", "location")}
