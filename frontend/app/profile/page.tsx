@@ -204,7 +204,7 @@ const Profile = () => {
               className="flex justify-center mb-5 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl"
               style={{ fontWeight: 600 }}
             >
-              {initialProfileData.firstName}'s Profile
+              {initialProfileData.firstName}&apos;s Profile
             </div>
           </div>
           <div className="flex flex-col">
