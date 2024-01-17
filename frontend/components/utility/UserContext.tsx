@@ -36,10 +36,6 @@ export default function UserContext({ children }: { children: any }) {
     return () => unsubscriber();
   }, []);
 
-  useEffect(() => {
-    console.log("User state updated:", user);
-  }, [user]);
-
   return (
     <LoginUserContext.Provider value={{ user, setUser }}>
       {children}
