@@ -16,7 +16,6 @@ export default function UserContext({ children }: { children: any }) {
   const [user, setUser] = useState<UserType>(null);
 
   useEffect(() => {
-    // Listen authenticated user
     const unsubscriber = onAuthStateChanged(auth, async (userAuth) => {
       try {
         if (userAuth) {
@@ -26,6 +25,7 @@ export default function UserContext({ children }: { children: any }) {
           setUser({ uid, email });
           if (userDoc.exists()) {
             console.log("Userdoc: ", userDoc.data());
+            console.log("UserAuth Obj: ", userAuth);
           }
         } else setUser(null);
       } catch (error) {

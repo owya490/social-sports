@@ -11,12 +11,13 @@ import {
 import Image from "next/image";
 import { Fragment, useEffect, useState } from "react";
 import DP from "./../../public/images/Ashley & Owen.png";
-import DefaultDP from "./../../public/images/defaultUser.png";
-import { handleSignOut, isLoggedIn } from "@/services/authService";
+import { handleSignOut } from "@/services/authService";
 import Link from "next/link";
 import { auth } from "@/services/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
+
+// TODO: Update profile icon according to user profile
 
 export default function ProfilePic() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -25,15 +26,12 @@ export default function ProfilePic() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // User is logged in
         setLoggedIn(true);
       } else {
-        // User is not logged in
         setLoggedIn(false);
       }
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
@@ -58,7 +56,7 @@ export default function ProfilePic() {
             Login
           </button>
           <button
-            className="border border-black px-4 py-2 rounded-full max-h-[40px] lg:block whitespace-nowrap ml-4 "
+            className="border border-black px-4 py-2 rounded-full max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block"
             onClick={() => router.push("/register")}
           >
             Register
@@ -71,7 +69,7 @@ export default function ProfilePic() {
             <div className="flex items-centers">
               <Menu.Button className="inline-flex w-full justify-center">
                 <Image
-                  src={isLoggedIn() ? DP : DefaultDP}
+                  src={DP}
                   alt="DP"
                   width={0}
                   height={0}
