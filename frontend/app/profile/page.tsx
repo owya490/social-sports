@@ -1,4 +1,5 @@
 "use client";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
 import { ChangeEvent, Fragment, useState } from "react";
@@ -45,6 +46,16 @@ const initialProfileData: initialProfileDataInterface = {
 };
 
 const Profile = () => {
+  const getAuth()
+    .getUser(uid)
+    .then((userRecord) => {
+      // See the UserRecord reference doc for the contents of userRecord.
+      console.log(`Successfully fetched user data: ${userRecord.toJSON()}`);
+    })
+    .catch((error) => {
+      console.log('Error fetching user data:', error);
+    });
+
   const [editable, setEditable] = useState(false);
   const [editedData, setEditedData] = useState({ ...initialProfileData });
   const handleEditClick = () => {
@@ -76,8 +87,25 @@ const Profile = () => {
     setIsHovered(false);
   };
 
-  const handleSaveClick = () => {
+  const handleSaveClick = async () => {
     console.log("Saving changes:", editedData);
+    const getAuth()
+      .updateUser(uid, {
+        email: 'modifiedUser@example.com',
+        phoneNumber: '+11234567890',
+        emailVerified: true,
+        password: 'newPassword',
+        displayName: 'Jane Doe',
+        photoURL: 'http://www.example.com/12345678/photo.png',
+        disabled: true,
+      })
+      .then((userRecord) => {
+        // See the UserRecord reference doc for the contents of userRecord.
+        console.log('Successfully updated user', userRecord.toJSON());
+      })
+      .catch((error) => {
+        console.log('Error updating user:', error);
+      });
     setEditable(false);
   };
 

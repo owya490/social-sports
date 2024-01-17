@@ -23,6 +23,7 @@
         "geofire-common": "^6.0.0",
         "next": "^13.4.19",
         "react": "^18.2.0",
+        "react-firebase-hooks": "^5.1.1",
         "react-tailwindcss-datepicker": "^1.6.6",
         "tailwind": "^4.0.0",
         "uuid": "^9.0.1",
