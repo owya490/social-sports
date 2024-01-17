@@ -23,7 +23,6 @@ export default function UserContext({ children }: { children: any }) {
           const { uid, email } = userAuth;
           const userDocRef = await doc(db, "Users", uid);
           const userDoc = await getDoc(userDocRef);
-          console.log(userDocRef);
           setUser({ uid, email });
           if (userDoc.exists()) {
             console.log("Userdoc: ", userDoc.data());
@@ -34,7 +33,6 @@ export default function UserContext({ children }: { children: any }) {
         console.error(error);
       }
     });
-    // Unsubscribe auth listener on unmount
     return () => unsubscriber();
   }, []);
 

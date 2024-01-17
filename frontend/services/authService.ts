@@ -39,6 +39,7 @@ export async function handleEmailAndPasswordSignUp(data: userAuthData) {
 export async function handleSignOut() {
   try {
     await signOut(auth);
+    console.log("Signed out!");
   } catch (error) {
     throw error;
   }
