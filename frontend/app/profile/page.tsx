@@ -6,6 +6,7 @@ import DP from "./../../public/images/Ashley & Owen.png";
 import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
+import x from "./../../public/images/x.png";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -31,6 +32,7 @@ interface initialProfileDataInterface {
   birthday: string;
   age: string;
   password: string;
+  gender: string;
 }
 
 const initialProfileData: initialProfileDataInterface = {
@@ -42,6 +44,7 @@ const initialProfileData: initialProfileDataInterface = {
   birthday: "23-07-2002", // DD-MM-YYYY format
   age: calculateAge("23-07-2002"), // Calculate initial age
   password: "danielinthesky",
+  gender: "Male",
 };
 
 const Profile = () => {
@@ -156,35 +159,46 @@ const Profile = () => {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-[90%] top-[6rem] absolute max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all z-50">
-                <Dialog.Title
-                  as="h3"
-                  className="text-xl lg:text-2xl 3xl:text-2xl font-medium leading-6 text-gray-900 mb-3"
-                >
-                  Edit Profile
-                </Dialog.Title>
+                <div className="flex justify-center justify-between mb-3">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-xl lg:text-2xl 3xl:text-2xl font-medium leading-6 text-gray-900 mb-3"
+                  >
+                    Edit Profile
+                  </Dialog.Title>
+                  <div className="flex justify-end ">
+                    <button
+                      type="button"
+                      onClick={handleEditClick}
+                      className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                    >
+                      <Image
+                        src={x}
+                        alt="x"
+                        width={0}
+                        height={0}
+                        className="w-5 h-5 -mt-6"
+                      />
+                    </button>
+                  </div>
+                </div>
                 <div className="space-y-4 text-md lg:text-lg 3xl:text-xl">
                   {renderEditableField("Given Name", "firstName")}
                   {renderEditableField("Surname", "lastName")}
-                  {renderEditableField("Email", "email", "email")}
                   {renderEditableField("Phone Number", "phoneNumber", "tel")}
-                  {renderEditableField("Location", "location")}
+                  {renderEditableField("Email", "email", "email")}
+                  {renderEditableField("Gender", "gender")}
                   {renderEditableField("Date of Birth", "birthday", "date")}
+                  {renderEditableField("Location", "location")}
                   {renderEditableField("Password", "password", "password")}
                 </div>
                 <div className="flex justify-end mt-4">
                   <button
                     type="button"
                     onClick={handleSaveClick}
-                    className="text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-full text-med px-6 py-2 z-50"
+                    className="text-white bg-black font-medium rounded-full text-med px-6 py-2 z-50"
                   >
                     Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleEditClick}
-                    className="ml-4 text-white bg-red-500 hover:bg-red-600 focus:ring-4 focus:ring-red-300 font-medium rounded-full text-med px-6 py-2 z-50"
-                  >
-                    Cancel
                   </button>
                 </div>
               </Dialog.Panel>
@@ -355,8 +369,8 @@ const Profile = () => {
               </div>
             </div>
             <ul className="w-full">
-              {renderField("Email", "email")}
               {renderField("Phone Number", "phoneNumber")}
+              {renderField("Email", "email")}
             </ul>
 
             <div
@@ -370,19 +384,27 @@ const Profile = () => {
               <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">About Me</div>
             </div>
             <ul className="w-full">
-              {renderField("Location", "location")}
+              {renderField("Gender", "gender")}
               {renderField("Date of Birth", "birthday")}
-              {renderField("Password", "password")}
+              {renderField("Location", "location")}
             </ul>
-            <div className="flex justify-start my-6 3xl:my-10">
+            <div
+              className="mb-2 text-xl lg:text-2xl"
+              style={{
+                fontWeight: 400,
+                borderBottom: "2px solid #ccc",
+                width: "100%",
+              }}
+            >
+              <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">Security</div>
+            </div>
+            <ul className="w-full">{renderField("Password", "password")}</ul>
+            <div className="flex justify-start my-6 3xl:my-8">
               {renderModalContent()}
               <button
                 type="button"
                 onClick={handleEditClick}
-                className="text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3"
-                // className={`text-white bg-black font-medium rounded-full text-med px-6 py-2 3xl:px-8 3xl:py-3 ${
-                //   editable && "invisible"
-                // }`}
+                className="text-white bg-black font-medium rounded-full text-med px-6 py-2"
               >
                 Edit
               </button>
