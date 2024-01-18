@@ -58,6 +58,7 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
 
 // Function to retrieve all events
 export async function getAllEvents(): Promise<EventData[]> {
+  eventServiceLogger.info("Getting all events");
   const currentDate = new Date();
 
   if (

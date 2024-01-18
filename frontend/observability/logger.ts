@@ -1,11 +1,4 @@
-import { LogLevel } from "@grafana/faro-web-sdk";
-
-// Extending global window to allow for grafana faro field
-declare global {
-  interface Window {
-    faro: any;
-  }
-}
+import { faro, LogLevel } from "@grafana/faro-web-sdk";
 
 /**
  * To use this class, please instantiate a instance of the Logger for every file you are logging for.
@@ -70,6 +63,6 @@ export class Logger {
       ...this.loggingContext,
       ...loggingContext,
     };
-    window.faro.api.pushLog([log], { context: context });
+    faro.api.pushLog([log], { context: context });
   }
 }
