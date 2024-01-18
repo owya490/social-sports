@@ -64,7 +64,6 @@ export class Logger {
       ...loggingContext,
     };
 
-    faro.api.pushLog([log]);
-    // faro.api.pushLog();
+    faro.api.pushLog([log], context);
   }
 }
