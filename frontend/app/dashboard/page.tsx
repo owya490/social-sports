@@ -36,16 +36,14 @@ export default function Dashboard() {
   }, [router]);
 
   useEffect(() => {
-    let timer: number | undefined; // Specify the type of timer as number
+    let timer: number | undefined;
 
     if (showLoginSuccess) {
       timer = window.setTimeout(() => {
-        // Use window.setTimeout for clarity
         setShowLoginSuccess(false);
       }, 3000);
     }
 
-    // Cleanup function
     return () => {
       if (timer) {
         clearTimeout(timer);
