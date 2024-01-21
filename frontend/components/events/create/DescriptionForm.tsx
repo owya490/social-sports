@@ -2,7 +2,6 @@ import { uploadUserImage } from "@/services/imageService";
 import { FormWrapper } from "./FormWrapper";
 
 type DescriptionData = {
-  
   description: string;
   image: string;
 };
@@ -11,8 +10,7 @@ type DescriptionFormProps = DescriptionData & {
   updateField: (fields: Partial<DescriptionData>) => void;
 };
 
-export function DescriptionForm({
- 
+export function Pre({
   description,
   image,
   updateField,
@@ -30,7 +28,7 @@ export function DescriptionForm({
   };
 
   return (
-    <FormWrapper title="Additional Event Info">
+    <FormWrapper>
       <label className="font-semibold">Description</label>
       <input
         className="border-2 rounded-full p-2"

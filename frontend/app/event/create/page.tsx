@@ -1,9 +1,9 @@
 "use client";
 import { BasicInformation } from "@/components/events/create/BasicForm";
-import { CostPage } from "@/components/events/create/CostPage";
 import CreateEventStepper from "@/components/events/create/CreateEventStepper";
 import { DescriptionForm } from "@/components/events/create/DescriptionForm";
-import { TimeSlot } from "@/components/events/create/TimeSlot";
+import { DescriptionImageForm } from "@/components/events/create/DescriptionImageForm";
+import { TagForm } from "@/components/events/create/TagForm";
 import { useMultistepForm } from "@/components/events/create/useMultistepForm";
 import { NewEventData } from "@/interfaces/EventTypes";
 import { Timestamp } from "firebase/firestore";
@@ -20,10 +20,12 @@ type FormData = {
   description: string;
   image: string;
   tags: string[];
+  startTime: string;
+  endTime: string;
 };
 
 const INITIAL_DATA: FormData = {
-  date: "",
+  date: new Date().toISOString().slice(0, 10),
   time: "",
   location: "",
   sport: "",
@@ -33,6 +35,8 @@ const INITIAL_DATA: FormData = {
   description: "",
   image: "",
   tags: [],
+  startTime: "10:00",
+  endTime: "18:00",
 };
 
 export default function CreateEvent() {
@@ -40,13 +44,8 @@ export default function CreateEvent() {
   const { step, steps, currentStep, isFirstStep, isLastStep, back, next } =
     useMultistepForm([
       <BasicInformation {...data} updateField={updateFields} />,
-      <CostPage {...data} updateField={updateFields} />,
-      <TimeSlot
-        time_start={""}
-        time_finish={""}
-        {...data}
-        updateField={updateFields}
-      />,
+      <TagForm {...data} updateField={updateFields} />,
+      <DescriptionImageForm {...data} updateField={updateFields} />,
       <DescriptionForm {...data} updateField={updateFields} />,
     ]);
 
@@ -112,9 +111,11 @@ export default function CreateEvent() {
 
   return (
     <div className="w-screen flex justify-center">
-      <div className="screen-width-primary">
+      <div className="screen-width-primary my-32">
         <form onSubmit={submit}>
-          <CreateEventStepper currentStep={currentStep + 1} totalSteps={3} />
+          <div className="px-12">
+            <CreateEventStepper activeStep={currentStep} />
+          </div>
           <div className="absolute top-2 right-2">
             {/* {currentStep + 1} / {steps.length} */}
           </div>
@@ -123,7 +124,7 @@ export default function CreateEvent() {
             {!isFirstStep && (
               <button
                 type="button"
-                className="border border-black p-2 rounded-lg mr-2"
+                className="border border-black py-1.5 px-7 rounded-lg mr-2"
                 onClick={back}
               >
                 Back
@@ -132,7 +133,7 @@ export default function CreateEvent() {
             {!isLastStep && (
               <button
                 type="submit"
-                className="border border-black p-2 rounded-lg"
+                className="border border-black py-1.5 px-7 rounded-lg"
               >
                 Next
               </button>
@@ -140,9 +141,9 @@ export default function CreateEvent() {
             {isLastStep && (
               <button
                 type="submit"
-                className="border border-black p-2 rounded-lg"
+                className="border border-black py-1.5 px-7 rounded-lg"
               >
-                Finish
+                Create Event
               </button>
             )}
           </div>

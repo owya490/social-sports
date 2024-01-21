@@ -4,6 +4,7 @@ import Tag from "./Tag";
 interface TagGroupProps {
   tags: TagModel[];
   size?: "sm" | "md" | "lg";
+  spacing?: boolean;
 }
 
 export function TagGroup(props: TagGroupProps) {
@@ -16,6 +17,7 @@ export function TagGroup(props: TagGroupProps) {
             name={tag.name}
             url={tag.url}
             size={props.size ? props.size : "md"}
+            spacing={props.spacing}
           />
         );
       })}

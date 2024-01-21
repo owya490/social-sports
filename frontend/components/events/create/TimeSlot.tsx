@@ -58,7 +58,7 @@ export function TimeSlot({
   };
 
   return (
-    <FormWrapper title="">
+    <FormWrapper >
       <label className="font-semibold">Date</label>
       <input
         className="border-2 rounded-full p-2"

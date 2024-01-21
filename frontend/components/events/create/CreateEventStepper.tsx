@@ -1,53 +1,95 @@
-import React from "react";
+import {
+  CalendarIcon,
+  PhotoIcon,
+  TagIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
+import { Step, Stepper, Typography } from "@material-tailwind/react";
 
-interface CreateEventTimelineProps {
-  currentStep: number;
-  totalSteps: number;
+interface CreateEventStepperProps {
+  activeStep: number;
 }
 
-function CreateEventStepper({ currentStep, totalSteps }: CreateEventTimelineProps) {
+export default function CreateEventStepper({
+  activeStep,
+}: CreateEventStepperProps) {
   const stepLabels = [
     "Basic Information",
     "Relevant Tags",
     "Description and Image",
-    "Create the Event",
+    "Preview and Create",
   ];
 
   return (
-    <div className="mt-36 relative"> {/* Adjusted the margin-top */}
-      <ol className="flex items-center w-full text-sm font-medium text-center text-gray-500 dark:text-gray-400 sm:text-base">
-        {stepLabels.map((label, index) => (
-          <li
-            key={index}
-            className={`flex md:w-full items-center flex-col relative ${
-              currentStep === index + 1
-                ? "text-black"
-                : "text-gray-500 dark:text-gray-400"
-            }`}
+    <Stepper activeStep={activeStep}>
+      <Step onClick={() => {}}>
+        <UserIcon className="h-5 w-5" />
+        <div className="absolute -bottom-[4.5rem] w-max text-center">
+          <Typography
+            variant="h6"
+            color={activeStep === 0 ? "blue-gray" : "gray"}
           >
-            <span
-              className={`flex items-center justify-center border border-black after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-200 dark:after:text-gray-500 rounded-full w-8 h-8 ${
-                currentStep === index + 1
-                  ? "bg-blue-600 dark:bg-blue-500"
-                  : "bg-gray-300 dark:bg-gray-400"
-              } text-black`}
-            >
-              {index + 1}
-            </span>
-            <span
-              className={
-                currentStep === index + 1
-                  ? "text-black"
-                  : "text-gray-500 dark:text-gray-400"
-              }
-            >
-              {label}
-            </span>
-          </li>
-        ))}
-      </ol>
-    </div>
+            Step 1
+          </Typography>
+          <Typography
+            color={activeStep === 0 ? "blue-gray" : "gray"}
+            className="font-normal"
+          >
+            {stepLabels[0]}
+          </Typography>
+        </div>
+      </Step>
+      <Step onClick={() => {}}>
+        <TagIcon className="h-5 w-5" />
+        <div className="absolute -bottom-[4.5rem] w-max text-center">
+          <Typography
+            variant="h6"
+            color={activeStep === 1 ? "blue-gray" : "gray"}
+          >
+            Step 2
+          </Typography>
+          <Typography
+            color={activeStep === 1 ? "blue-gray" : "gray"}
+            className="font-normal"
+          >
+            {stepLabels[1]}
+          </Typography>
+        </div>
+      </Step>
+      <Step onClick={() => {}}>
+        <PhotoIcon className="h-5 w-5" />
+        <div className="absolute -bottom-[4.5rem] w-max text-center">
+          <Typography
+            variant="h6"
+            color={activeStep === 2 ? "blue-gray" : "gray"}
+          >
+            Step 3
+          </Typography>
+          <Typography
+            color={activeStep === 2 ? "blue-gray" : "gray"}
+            className="font-normal"
+          >
+            {stepLabels[2]}
+          </Typography>
+        </div>
+      </Step>
+      <Step onClick={() => {}}>
+        <CalendarIcon className="h-5 w-5" />
+        <div className="absolute -bottom-[4.5rem] w-max text-center">
+          <Typography
+            variant="h6"
+            color={activeStep === 2 ? "blue-gray" : "gray"}
+          >
+            Step 4
+          </Typography>
+          <Typography
+            color={activeStep === 2 ? "blue-gray" : "gray"}
+            className="font-normal"
+          >
+            {stepLabels[3]}
+          </Typography>
+        </div>
+      </Step>
+    </Stepper>
   );
 }
-
-export default CreateEventStepper;
