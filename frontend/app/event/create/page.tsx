@@ -1,13 +1,11 @@
 "use client";
-import { BasicForm, BasicInformation } from "@/components/events/create/BasicForm";
+import { BasicInformation } from "@/components/events/create/BasicForm";
 import { CostPage } from "@/components/events/create/CostPage";
 import CreateEventStepper from "@/components/events/create/CreateEventStepper";
 import { DescriptionForm } from "@/components/events/create/DescriptionForm";
-import { TagForm } from "@/components/events/create/TagForm";
 import { TimeSlot } from "@/components/events/create/TimeSlot";
 import { useMultistepForm } from "@/components/events/create/useMultistepForm";
-import { EventData, NewEventData } from "@/interfaces/EventTypes";
-import { createEvent } from "@/services/eventsService";
+import { NewEventData } from "@/interfaces/EventTypes";
 import { Timestamp } from "firebase/firestore";
 import { FormEvent, useState } from "react";
 
@@ -15,7 +13,7 @@ type FormData = {
   date: string;
   time: string;
   location: string;
-  sport: string; 
+  sport: string;
   cost: number;
   people: number;
   name: string;
@@ -28,7 +26,7 @@ const INITIAL_DATA: FormData = {
   date: "",
   time: "",
   location: "",
-  sport:"",
+  sport: "",
   cost: 0,
   people: 0,
   name: "",
@@ -43,7 +41,12 @@ export default function CreateEvent() {
     useMultistepForm([
       <BasicInformation {...data} updateField={updateFields} />,
       <CostPage {...data} updateField={updateFields} />,
-      <TimeSlot {...data} updateField={updateFields} />,
+      <TimeSlot
+        time_start={""}
+        time_finish={""}
+        {...data}
+        updateField={updateFields}
+      />,
       <DescriptionForm {...data} updateField={updateFields} />,
     ]);
 
@@ -91,6 +94,11 @@ export default function CreateEvent() {
       accessCount: 0,
       organiserId: "g9s1a1t3b7LJi8bswkd0",
       registrationDeadline: Timestamp.now(),
+      locationLatLng: {
+        lat: 0,
+        lng: 0,
+      },
+      sport: "volleyball",
     };
   }
 
@@ -103,41 +111,43 @@ export default function CreateEvent() {
   }
 
   return (
-    <div className="">
-      <form onSubmit={submit}>
-        <CreateEventStepper currentStep={currentStep + 1} totalSteps={3}/>
-        <div className="absolute top-2 right-2">
-          {/* {currentStep + 1} / {steps.length} */}
-        </div>
-        {step}
-        <div className="flex justify-end">
-          {!isFirstStep && (
-            <button
-              type="button"
-              className="border border-black p-2 rounded-lg mr-2"
-              onClick={back}
-            >
-              Back
-            </button>
-          )}
-          {!isLastStep && (
-            <button
-              type="submit"
-              className="border border-black p-2 rounded-lg"
-            >
-              Next
-            </button>
-          )}
-          {isLastStep && (
-            <button
-              type="submit"
-              className="border border-black p-2 rounded-lg"
-            >
-              Finish
-            </button>
-          )}
-        </div>
-      </form>
+    <div className="w-screen flex justify-center">
+      <div className="screen-width-primary">
+        <form onSubmit={submit}>
+          <CreateEventStepper currentStep={currentStep + 1} totalSteps={3} />
+          <div className="absolute top-2 right-2">
+            {/* {currentStep + 1} / {steps.length} */}
+          </div>
+          {step}
+          <div className="flex justify-end">
+            {!isFirstStep && (
+              <button
+                type="button"
+                className="border border-black p-2 rounded-lg mr-2"
+                onClick={back}
+              >
+                Back
+              </button>
+            )}
+            {!isLastStep && (
+              <button
+                type="submit"
+                className="border border-black p-2 rounded-lg"
+              >
+                Next
+              </button>
+            )}
+            {isLastStep && (
+              <button
+                type="submit"
+                className="border border-black p-2 rounded-lg"
+              >
+                Finish
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

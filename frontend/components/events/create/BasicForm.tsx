@@ -1,6 +1,6 @@
 // BasicInformation.tsx
 
-import { Input, Select, Option } from "@material-tailwind/react";
+import { Input, Option, Select } from "@material-tailwind/react";
 import { FormWrapper } from "./FormWrapper";
 
 type BasicData = {
