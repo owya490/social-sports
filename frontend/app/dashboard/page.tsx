@@ -50,7 +50,7 @@ export default function Dashboard() {
         console.log("test");
         const { event, location } = getQueryParams();
         if (typeof event === "string" && typeof location === "string") {
-            if (event === "" && location === "") {
+            if (event === "") {
                 getAllEvents()
                     .then((events) => {
                         setEventDataList(events);
