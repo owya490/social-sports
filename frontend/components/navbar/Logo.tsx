@@ -5,6 +5,7 @@ export default function Logo() {
   return (
     <a href="/dashboard" className="flex items-center">
       <Image
+        priority={true}
         src={LogoImage}
         alt="Logo"
         width={0}
