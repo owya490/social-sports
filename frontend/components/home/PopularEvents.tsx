@@ -6,11 +6,11 @@ import EventCard from "../EventCard";
 import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
 
-interface RecommendedEventsProps {
+interface PopularEventsProps {
   eventData?: EventData;
 }
 
-export default function RecommendedEvents(props: RecommendedEventsProps) {
+export default function PopularEvents(props: PopularEventsProps) {
   const { eventData } = props;
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
           <div className="screen-width-dashboard">
             <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
             <div className="flex my-5">
-              <h5 className="font-bold text-lg">Similar events nearby</h5>
+              <h5 className="font-bold text-lg">Popular events nearby</h5>
               <a className="text-sm font-light ml-auto cursor-pointer hover:underline">
                 See all
               </a>
@@ -61,7 +61,7 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
           <div className="hidden sm:block pr-2">
             <ChevronLeftButton handleClick={scrollLeft} />
           </div>
-          <div className="pb-10 screen-width-dashboard">
+          <div className="screen-width-dashboard">
             <div
               id="recommended-event-overflow"
               className="flex overflow-x-auto pb-4 snap-x snap-mandatory"
@@ -70,9 +70,8 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
                 {recommendedEvents.map((event, i) => {
                   return (
                     <div
-                      key={i}
-                      id={`recommended-event-${i}`}
-                      className="snap-start"
+                      key={`recommended-event-${i}`}
+                      className="snap-start max-w-[300px]"
                     >
                       <EventCard
                         eventId={event.eventId}

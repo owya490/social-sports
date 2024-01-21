@@ -16,19 +16,11 @@ export default function MobileNavbar() {
       setTags(tags);
     });
   }, []);
-  const [isHome, setIsHome] = useState(true);
-  useEffect(() => {
-    setIsHome(window.location.pathname === "/");
-  }, []);
   const handleSearchExpanded = () => {
     setSearchExpanded(!searchExpanded);
   };
   return (
-    <div
-      className={
-        isHome ? "hidden" : "bg-white drop-shadow-lg fixed top-0 w-screen z-50"
-      }
-    >
+    <div className="bg-white drop-shadow-lg fixed top-0 w-screen z-50">
       <div className="flex items-center py-2 px-4">
         <a href="/dashboard">
           <Image

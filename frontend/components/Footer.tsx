@@ -1,9 +1,11 @@
 export default function Footer() {
   return (
-    <footer className="bg-white lg:grid lg:grid-cols-5 bottom-0 w-full pb-10 lg:pb-0">
+    <footer
+      id="footer"
+      className="bg-white lg:grid lg:grid-cols-5 bottom-0 w-full pb-10 lg:pb-0"
+    >
       <div className="relative block h-32 lg:col-span-2 lg:h-full">
         <img
-          // src="https://img.freepik.com/premium-photo/colorful-poster-with-dragon-it_925376-14120.jpg"
           src="https://wallpapers.com/images/hd/minimalist-sports-1920-x-1080-wallpaper-o5zmbip0p957vjbc.jpg"
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
