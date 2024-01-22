@@ -3,8 +3,8 @@ import LightBulbIcon from "@/svgs/LightBulbIcon";
 
 export default function Suggestions() {
   return (
-    <div className="w-screen flex justify-center items-center bg-white mt-16 md:mt-24 md:mb-8">
-      <div className="max-w-lg space-y-5 p-5 md:p-0">
+    <div className="w-screen flex justify-center">
+      <div className="screen-width-primary mx-3 mb-32 mt-20 md:mt-32 md:max-w-lg space-y-5">
         <div className="flex justify-center">
           <Logo />
         </div>
@@ -12,13 +12,12 @@ export default function Suggestions() {
           className="px-7 py-3 leading-normal bg-blue-100 rounded-lg text-center"
           role="alert"
         >
-          <span className="flex items-center">
+          <span className="flex items-center justify-center">
             <LightBulbIcon />
-            <h3 className="font-bold text-xl">
-              We value your Suggestions and Feedback.
+            <h3 className="font-bold text-sm md:text-xl w-2/3">
+              We Value your Suggestions and Feedback.
             </h3>
           </span>
-
           <div className="flex justify-center">
             <p className="w-3/4">
               We appreciate you taking the time to share your thoughts. Please
