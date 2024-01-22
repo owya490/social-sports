@@ -94,7 +94,7 @@ export default function Register() {
                 id="first-name"
                 name="first-name"
                 type="text"
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#30ADFF] sm:text-sm sm:leading-6"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
                 value={userData.firstName}
                 required
                 onChange={(e) =>
@@ -120,7 +120,7 @@ export default function Register() {
                 type="email"
                 autoComplete="email"
                 required
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#30ADFF] sm:text-sm sm:leading-6"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
                 value={userData.email}
                 onChange={(e) =>
                   setUserData({
@@ -146,7 +146,7 @@ export default function Register() {
                 id="password"
                 name="password"
                 type="password"
-                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#30ADFF] sm:text-sm sm:leading-6 ${
+                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 ${
                   passwordMismatch ? "ring-red-400" : ""
                 }`}
                 required
@@ -176,7 +176,7 @@ export default function Register() {
                 id="password-repeat"
                 name="password"
                 type="password"
-                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#30ADFF] sm:text-sm sm:leading-6 ${
+                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 ${
                   passwordMismatch ? "ring-red-400" : ""
                 }`}
                 required
@@ -188,7 +188,7 @@ export default function Register() {
           <div>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-md bg-[#30ADFF] px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 "
+              className="flex w-full justify-center rounded-md bg-black px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-black border-2"
             >
               Register
             </button>
@@ -198,7 +198,7 @@ export default function Register() {
             Have an account?{" "}
             <Link
               href="/login"
-              className="font-semibold leading-6 text-[#30ADFF] hover:underline"
+              className="font-semibold leading-6 text-black hover:underline"
             >
               Login here
             </Link>

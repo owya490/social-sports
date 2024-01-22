@@ -33,11 +33,16 @@ export default function ProfilePic() {
     return () => unsubscribe();
   }, []);
 
+  const handleLogOut = () => {
+    handleSignOut();
+    router.push("/");
+  };
+
   return (
     <div className="ml-auto flex items-center">
       {loggedIn && (
         <button
-          className="border border-black px-4 py-2 rounded-lg mx-3 max-h-[40px] hidden lg:block whitespace-nowrap"
+          className="border border-black px-4 py-2 rounded-lg mx-3 max-h-[40px] hidden lg:block whitespace-nowrap hover:bg-black hover:text-white"
           onClick={() => {
             router.push("/event/create");
           }}
@@ -48,13 +53,13 @@ export default function ProfilePic() {
       {!loggedIn && (
         <div className="flex">
           <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block bg-black text-white whitespace-nowrap ml-4"
+            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block bg-black text-white whitespace-nowrap ml-4 hover:bg-white hover:text-black"
             onClick={() => router.push("/login")}
           >
             Login
           </button>
           <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block"
+            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block hover:bg-black hover:text-white"
             onClick={() => router.push("/register")}
           >
             Register
@@ -85,44 +90,6 @@ export default function ProfilePic() {
               leaveTo="transform opacity-0 scale-95"
             >
               <Menu.Items className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <div className="px-1 py-1">
-                  {!loggedIn && (
-                    <>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <span>
-                            <Link
-                              href="/login"
-                              className={`${
-                                active
-                                  ? "bg-violet-500 text-white"
-                                  : "text-gray-900"
-                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                            >
-                              <ArrowRightOnRectangleIcon className="h-5 mr-2" />
-                              Log In
-                            </Link>
-                          </span>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <Link
-                            href="/register"
-                            className={`${
-                              active
-                                ? "bg-violet-500 text-white"
-                                : "text-gray-900"
-                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                          >
-                            <PencilSquareIcon className="h-5 mr-2" />
-                            Register
-                          </Link>
-                        )}
-                      </Menu.Item>
-                    </>
-                  )}
-                </div>
                 {loggedIn && (
                   <div className="px-1 py-1">
                     <Menu.Item>
@@ -130,9 +97,7 @@ export default function ProfilePic() {
                         <Link
                           href="/profile"
                           className={`${
-                            active
-                              ? "bg-violet-500 text-white"
-                              : "text-gray-900"
+                            active ? "text-white bg-black" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <UserCircleIcon className="h-5 mr-2" />
@@ -145,9 +110,7 @@ export default function ProfilePic() {
                         <Link
                           href="/settings"
                           className={`${
-                            active
-                              ? "bg-violet-500 text-white"
-                              : "text-gray-900"
+                            active ? "text-white bg-black" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <Cog8ToothIcon className="h-5 mr-2" />
@@ -163,7 +126,7 @@ export default function ProfilePic() {
                       <Link
                         href="/help"
                         className={`${
-                          active ? "bg-violet-500 text-white" : "text-gray-900"
+                          active ? "text-white bg-black" : "text-black"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LifebuoyIcon className="h-5 mr-2" />
@@ -176,7 +139,7 @@ export default function ProfilePic() {
                       <Link
                         href="/suggestions"
                         className={`${
-                          active ? "bg-violet-500 text-white" : "text-gray-900"
+                          active ? "text-white bg-black" : "text-black"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LightBulbIcon className="h-5 mr-2" />
@@ -190,12 +153,10 @@ export default function ProfilePic() {
                     <Menu.Item>
                       {({ active }) => (
                         <div
-                          onClick={handleSignOut}
+                          onClick={handleLogOut}
                           className={`${
-                            active
-                              ? "bg-violet-500 text-white"
-                              : "text-gray-900"
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                            active ? "text-white bg-black" : "text-black"
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer`}
                         >
                           <ArrowLeftOnRectangleIcon className="h-5 mr-2" />
                           Log Out
