@@ -34,7 +34,7 @@ export default function ProfilePic() {
   }, []);
 
   return (
-    <>
+    <div className="ml-auto flex items-center">
       {loggedIn && (
         <button
           className="border border-black px-4 py-2 rounded-lg mx-3 max-h-[40px] hidden lg:block whitespace-nowrap"
@@ -48,13 +48,13 @@ export default function ProfilePic() {
       {!loggedIn && (
         <div className="flex">
           <button
-            className="border border-black px-4 py-2 rounded-full max-h-[40px] lg:block bg-black text-white whitespace-nowrap ml-4"
+            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block bg-black text-white whitespace-nowrap ml-4"
             onClick={() => router.push("/login")}
           >
             Login
           </button>
           <button
-            className="border border-black px-4 py-2 rounded-full max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block"
+            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block"
             onClick={() => router.push("/register")}
           >
             Register
@@ -209,6 +209,6 @@ export default function ProfilePic() {
           </Menu>
         </div>
       )}
-    </>
+    </div>
   );
 }

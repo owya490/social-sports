@@ -58,7 +58,7 @@ export default function Register() {
 
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
-      {/* <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <Alert
           open={passwordMismatch}
           onClose={() => setPasswordMismatch(false)}
@@ -78,7 +78,7 @@ export default function Register() {
         <h2 className="mt-[5vh] sm:mt-0 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 ">
           Register your account
         </h2>
-      </div> */}
+      </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form className="space-y-6 group" onSubmit={handleSubmit}>

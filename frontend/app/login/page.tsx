@@ -28,14 +28,14 @@ export default function Login() {
 
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
-      {/* <Alert
+      <Alert
         open={showLoginFailure}
         onClose={() => setShowLoginFailure(false)}
         color="red"
         className="absolute ml-auto mr-auto left-0 right-0 top-24 w-fit"
       >
         Wrong email or password!
-      </Alert> */}
+      </Alert>
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <h1 className="text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
           Sign in to your account
@@ -82,7 +82,7 @@ export default function Login() {
               <div className="text-sm">
                 <Link
                   href="#"
-                  className="font-semibold text-[#30ADFF] hover:underline"
+                  className="font-semibold text-gray-500 hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -111,7 +111,7 @@ export default function Login() {
           <div>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-md bg-[#30ADFF] px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              className="flex w-full justify-center rounded-md bg-black px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
               tabIndex={3}
             >
               Sign in
@@ -123,7 +123,7 @@ export default function Login() {
           Not a member?{" "}
           <Link
             href="/register"
-            className="font-semibold leading-6 text-[#30ADFF] hover:underline"
+            className="font-semibold leading-6 text-black hover:underline"
           >
             Register here
           </Link>

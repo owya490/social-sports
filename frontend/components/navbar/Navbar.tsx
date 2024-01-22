@@ -10,9 +10,7 @@ export default function Navbar() {
       <div className="flex items-center py-2 px-5 lg:px-8 xl:px-12">
         <Logo />
         <SearchBar />
-        <div className="ml-auto flex items-center">
-          <ProfilePic />
-        </div>
+        <ProfilePic />
       </div>
       <div className="h-[1px] bg-black"></div>
     </div>
