@@ -37,4 +37,3 @@ const config: Config = {
 };
 
 export default withMT(config);
-// export default config;

@@ -35,12 +35,12 @@ export default function Login() {
         className="absolute ml-auto mr-auto left-0 right-0 top-24 w-fit"
       >
         Wrong email or password!
-      </Alert>
+      </Alert> */}
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <h1 className="text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
           Sign in to your account
         </h1>
-      </div> */}
+      </div>
 
       <div className="mt-8 mx-auto w-full max-w-sm">
         <form className="space-y-6" onSubmit={handleSubmit}>

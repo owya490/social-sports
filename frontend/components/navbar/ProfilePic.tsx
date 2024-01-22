@@ -17,8 +17,6 @@ import { auth } from "@/services/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
-// TODO: Update profile icon according to user profile
-
 export default function ProfilePic() {
   const [loggedIn, setLoggedIn] = useState(false);
   const router = useRouter();
@@ -39,7 +37,7 @@ export default function ProfilePic() {
     <>
       {loggedIn && (
         <button
-          className="border border-black px-4 py-2 rounded-full mx-3 max-h-[40px] hidden lg:block whitespace-nowrap"
+          className="border border-black px-4 py-2 rounded-lg mx-3 max-h-[40px] hidden lg:block whitespace-nowrap"
           onClick={() => {
             router.push("/event/create");
           }}

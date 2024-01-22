@@ -16,7 +16,6 @@ export default function MobileNavbar() {
       setTags(tags);
     });
   }, []);
-
   const handleSearchExpanded = () => {
     setSearchExpanded(!searchExpanded);
   };
