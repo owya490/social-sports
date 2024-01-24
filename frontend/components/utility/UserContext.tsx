@@ -14,7 +14,6 @@ export const LoginUserContext = createContext<LoginUserContextType>({
   setUser: () => {},
 });
 
-// TODO: Add more fields of what you want to be in the context
 type UserDocType = {
   profilePic: string;
   firstName: string;
@@ -25,12 +24,7 @@ type UserDocType = {
   sport: string;
 };
 
-type UserType =
-  | (UserDocType & {
-      uid: string;
-      email: string | null;
-    })
-  | null;
+type UserType = (UserDocType & { uid: string; email: string | null }) | null;
 
 export default function UserContext({ children }: { children: any }) {
   const [user, setUser] = useState<UserType>(null);
@@ -43,29 +37,13 @@ export default function UserContext({ children }: { children: any }) {
           const userDocRef = await doc(db, "Users", uid);
           const userDoc = await getDoc(userDocRef);
           const userData = userDoc.data() as UserDocType;
-          const {
-            profilePic,
-            firstName,
-            lastName,
-            mobile,
-            dob,
-            location,
-            sport,
-          } = userData;
           setUser({
             uid,
             email,
-            profilePic,
-            firstName,
-            lastName,
-            mobile,
-            dob,
-            location,
-            sport,
+            ...userData,
           });
         } else setUser(null);
       } catch (error) {
-        // Most probably a connection error. Handle appropriately.
         console.error(error);
       }
     });
@@ -79,5 +57,4 @@ export default function UserContext({ children }: { children: any }) {
   );
 }
 
-// Custom hook that shorthands the context!
 export const useUser = () => useContext(LoginUserContext);
