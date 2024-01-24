@@ -12,6 +12,7 @@ import {
   MapPinIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
+import Link from "next/link";
 
 interface EventPaymentProps {
   date: Timestamp;
@@ -70,7 +71,7 @@ export default function EventPayment(props: EventPaymentProps) {
         </div>
         <hr className="px-2 h-0.5 mx-auto bg-gray-400 border-0 rounded dark:bg-gray-400 mb-6"></hr>
         <div className="relative flex justify-center mb-6 w-full">
-          <a href="#" className="w-full">
+          <Link href="#" className="w-full">
             <div
               className="text-lg rounded-2xl border border-black w-full py-3"
               style={{
@@ -80,7 +81,7 @@ export default function EventPayment(props: EventPaymentProps) {
             >
               Contact Now
             </div>
-          </a>
+          </Link>
         </div>
       </div>
     </div>
