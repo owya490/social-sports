@@ -5,19 +5,52 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
+import { useMultistepForm } from "@/components/events/create/useMultistepForm";
+import { BasicRegisterInformation } from "@/components/register/BasicRegisterForm";
+
+type RegisterData = {
+  profilePic: string;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  mobile: string;
+  dob: string;
+  location: string;
+  sport: string;
+};
+
+const INITIAL_DATA: RegisterData = {
+  profilePic: "",
+  email: "",
+  password: "",
+  firstName: "",
+  lastName: "",
+  mobile: "",
+  dob: "",
+  location: "",
+  sport: "",
+};
 
 export default function Register() {
-  const [userData, setUserData] = useState({
-    email: "",
-    password: "",
-    firstName: "",
-  });
+  const [userData, setUserData] = useState(INITIAL_DATA);
   const router = useRouter();
 
   const [repeatPassword, setRepeatPassword] = useState("");
   const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [showRegisterFailure, setShowRegisterFailure] = useState(false);
   const [error, setError] = useState("");
+
+  const { step, steps, currentStep, isFirstStep, isLastStep, back, next } =
+    useMultistepForm([
+      <BasicRegisterInformation {...userData} updateField={updateFields} />,
+    ]);
+
+  function updateFields(fields: Partial<RegisterData>) {
+    setUserData((prev) => {
+      return { ...prev, ...fields };
+    });
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
