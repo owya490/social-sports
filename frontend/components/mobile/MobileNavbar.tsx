@@ -7,6 +7,7 @@ import ProfilePic from "../navbar/ProfilePic";
 import Logo from "./../../public/images/SportsHubMobileLogo.png";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileSearchInput from "./MobileSearchInput";
+import Link from "next/link";
 
 export default function MobileNavbar() {
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -22,7 +23,7 @@ export default function MobileNavbar() {
   return (
     <div className="bg-white drop-shadow-lg fixed top-0 w-screen z-50">
       <div className="flex items-center py-2 px-4">
-        <a href="/dashboard">
+        <Link href="/dashboard">
           <Image
             src={Logo}
             alt="Logo"
@@ -30,7 +31,7 @@ export default function MobileNavbar() {
             height={50}
             className="w-12 mr-4"
           />
-        </a>
+        </Link>
 
         <div className="w-[50%]">
           <MobileSearchBar openSearchInput={handleSearchExpanded} />
