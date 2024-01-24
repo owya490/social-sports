@@ -24,7 +24,7 @@ export function TagForm(props: TagFormProps) {
 
   return (
     <FormWrapper>
-      <div className="my-32">
+      <div className="my-24">
         <label className="text-black text-lg font-semibold">
           Search and select relevant tags?
         </label>

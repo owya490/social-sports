@@ -1,6 +1,7 @@
 import Footer from "@/components/Footer";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
+// import "@mantine/tiptap/styles.css";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
 import "./globals.css";

@@ -1,15 +1,15 @@
 "use client";
 import { BasicInformation } from "@/components/events/create/BasicForm";
 import CreateEventStepper from "@/components/events/create/CreateEventStepper";
-import { DescriptionForm } from "@/components/events/create/DescriptionForm";
 import { DescriptionImageForm } from "@/components/events/create/DescriptionImageForm";
+import { PreviewForm } from "@/components/events/create/PreviewForm";
 import { TagForm } from "@/components/events/create/TagForm";
 import { useMultistepForm } from "@/components/events/create/useMultistepForm";
 import { NewEventData } from "@/interfaces/EventTypes";
 import { Timestamp } from "firebase/firestore";
 import { FormEvent, useState } from "react";
 
-type FormData = {
+export type FormData = {
   date: string;
   time: string;
   location: string;
@@ -46,7 +46,7 @@ export default function CreateEvent() {
       <BasicInformation {...data} updateField={updateFields} />,
       <TagForm {...data} updateField={updateFields} />,
       <DescriptionImageForm {...data} updateField={updateFields} />,
-      <DescriptionForm {...data} updateField={updateFields} />,
+      <PreviewForm form={data} updateField={updateFields} />,
     ]);
 
   function updateFields(fields: Partial<FormData>) {
