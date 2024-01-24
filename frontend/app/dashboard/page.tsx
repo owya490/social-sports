@@ -4,12 +4,17 @@ import FilterBanner from "@/components/Filter/FilterBanner";
 import Loading from "@/components/Loading";
 import { EventData } from "@/interfaces/EventTypes";
 import { getAllEvents } from "@/services/eventsService";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Alert } from "@material-tailwind/react";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
   const [eventDataList, setEventDataList] = useState<EventData[]>([]);
+  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   useEffect(() => {
     getAllEvents()
       .then((events) => {
@@ -21,6 +26,31 @@ export default function Dashboard() {
       });
   }, []);
 
+  useEffect(() => {
+    const login = searchParams?.get("login");
+    if (login === "success") {
+      setShowLoginSuccess(true);
+
+      router.replace("/dashboard");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    let timer: number | undefined;
+
+    if (showLoginSuccess) {
+      timer = window.setTimeout(() => {
+        setShowLoginSuccess(false);
+      }, 3000);
+    }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [showLoginSuccess]);
+
   return loading ? (
     <Loading />
   ) : (
@@ -31,6 +61,11 @@ export default function Dashboard() {
           allEventsDataList={allEventsDataList}
           setEventDataList={setEventDataList}
         />
+      </div>
+      <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit">
+        <Alert open={showLoginSuccess} color="green">
+          Successfully logged in!
+        </Alert>
       </div>
       <div className="flex justify-center">
         <div className="pb-10 screen-width-dashboard">
