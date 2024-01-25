@@ -34,7 +34,7 @@ export default function EventCard(props: EventCardProps) {
         height={0}
         width={0}
         alt="stvImage"
-        className="w-full rounded-t-xl h-36 object-cover"
+        className="w-full rounded-t-lg h-36 object-cover"
       />
       <div className="p-4">
         <h4 className="font-bold text-gray-500 text-xs">

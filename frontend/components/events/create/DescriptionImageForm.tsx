@@ -1,9 +1,12 @@
 import { Input } from "@material-tailwind/react";
+import Image from "next/image";
+import { useState } from "react";
 import DescriptionRichTextEditor from "./DescriptionRichTextEditor";
 import { FormWrapper } from "./FormWrapper";
 
 type BasicData = {
   description: string;
+  image: File | undefined;
 };
 
 type DescriptionImageFormProps = BasicData & {
@@ -12,8 +15,11 @@ type DescriptionImageFormProps = BasicData & {
 
 export function DescriptionImageForm({
   description,
+  image,
   updateField,
 }: DescriptionImageFormProps) {
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+
   const updateDescription = (e: string) => {
     updateField({
       description: e,
@@ -39,12 +45,28 @@ export function DescriptionImageForm({
             Upload a photo as your event cover.
           </label>
           <div className="w-full mt-8">
+            <Image
+              src={imagePreviewUrl}
+              width={0}
+              height={0}
+              alt="imagePreview"
+              className="h-32 w-32"
+            />
             <Input
-              label="Price"
+              label="Image"
               crossOrigin={undefined}
               className="rounded-md"
               size="lg"
+              accept="image/*"
               type="file"
+              onChange={(e) => {
+                if (e.target.files !== null) {
+                  setImagePreviewUrl(URL.createObjectURL(e.target.files![0]));
+                  updateField({
+                    image: e.target.files![0],
+                  });
+                }
+              }}
             />
           </div>
         </div>

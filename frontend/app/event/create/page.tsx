@@ -18,7 +18,7 @@ export type FormData = {
   people: number;
   name: string;
   description: string;
-  image: string;
+  image: File | undefined;
   tags: string[];
   startTime: string;
   endTime: string;
@@ -29,11 +29,11 @@ const INITIAL_DATA: FormData = {
   time: "",
   location: "",
   sport: "",
-  cost: 0,
+  cost: 15,
   people: 0,
   name: "",
   description: "",
-  image: "",
+  image: undefined,
   tags: [],
   startTime: "10:00",
   endTime: "18:00",
@@ -120,7 +120,8 @@ export default function CreateEvent() {
             {/* {currentStep + 1} / {steps.length} */}
           </div>
           {step}
-          <div className="flex justify-end">
+
+          <div className="flex mt-8">
             {!isFirstStep && (
               <button
                 type="button"
@@ -133,7 +134,7 @@ export default function CreateEvent() {
             {!isLastStep && (
               <button
                 type="submit"
-                className="border border-black py-1.5 px-7 rounded-lg"
+                className="border border-black py-1.5 px-7 rounded-lg ml-auto"
               >
                 Next
               </button>
@@ -141,7 +142,7 @@ export default function CreateEvent() {
             {isLastStep && (
               <button
                 type="submit"
-                className="border border-black py-1.5 px-7 rounded-lg"
+                className="border border-black py-1.5 px-7 rounded-lg ml-auto"
               >
                 Create Event
               </button>
