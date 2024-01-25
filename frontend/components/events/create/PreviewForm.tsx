@@ -1,34 +1,25 @@
 import { FormData } from "@/app/event/create/page";
 import EventCard from "@/components/EventCard";
+import { UserData } from "@/interfaces/UserTypes";
 import { Timestamp } from "firebase/firestore";
 import { FormWrapper } from "./FormWrapper";
-import React, { useEffect, useState } from "react";
-import { UserType, useUser } from "../../utility/UserContext";
-import { UserData } from "@/interfaces/UserTypes";
-import { User } from "firebase/auth";
 
 type BasicData = {
   form: FormData;
+  user: UserData;
+  imagePreviewUrl: string;
 };
 
 type PreviewFormProps = BasicData & {
   updateField: (fields: Partial<FormData>) => void;
 };
 
-type PreviewFormContentProps = {
-  user: UserData; // Replace 'any' with the actual type of your user data
-  form: FormData; // Define the type of the 'form' prop
-};
-
-const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
-  user,
+export const PreviewForm = ({
   form,
-}) => {
-  useEffect(() => {
-    // Log the user data to the console when the component mounts
-    console.log(user);
-  }, [user]);
-
+  user,
+  imagePreviewUrl,
+  updateField,
+}: PreviewFormProps) => {
   const dateString = form.date + " " + form.startTime;
   var [datePart, timePart] = dateString.split(" ");
   var [year, month, day] = datePart.split("-");
@@ -58,11 +49,11 @@ const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
         </div>
         <div className="flex flex-col">
           <div className="font-bold">Price of event:</div>
-          {form.cost}
+          {form.price}
         </div>
         <div className="flex flex-col">
           <div className="font-bold">Total capacity of the event:</div>
-          {form.people}
+          {form.capacity}
         </div>
       </div>
 
@@ -70,27 +61,20 @@ const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
         <div className="flex justify-center">
           <EventCard
             eventId=""
-            image="https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fstv%2F364809572_6651230408261559_5428994326794147594_n.png.jpeg?alt=media&token=9020aa75-976a-430f-a96e-d763f5b4bada"
+            image={
+              imagePreviewUrl === ""
+                ? "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5"
+                : imagePreviewUrl
+            }
             name={form.name}
             organiser={user}
             startTime={Timestamp.fromDate(myDate)}
             location={form.location}
-            price={form.cost}
-            vacancy={form.people}
+            price={form.price}
+            vacancy={form.capacity}
           />
         </div>
       </FormWrapper>
     </div>
   );
-};
-
-export const PreviewForm: React.FC<PreviewFormProps> = ({
-  form,
-  updateField,
-}) => {
-  const { user } = useUser();
-
-  console.log(user);
-
-  return <PreviewFormContent user={user} form={form} />;
 };

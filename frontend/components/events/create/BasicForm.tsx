@@ -4,6 +4,8 @@ import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useState } from "react";
 import CreateEventCostSlider from "./CreateEventCostSlider";
+import CustomDateInput from "./CustomDateInput";
+import CustomTimeInput from "./CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
 
 type BasicData = {
@@ -13,8 +15,8 @@ type BasicData = {
   startTime: string;
   endTime: string;
   sport: string;
-  cost: number;
-  people: number;
+  price: number;
+  capacity: number;
 };
 
 type BasicInformationProps = BasicData & {
@@ -28,12 +30,15 @@ export function BasicInformation({
   startTime,
   endTime,
   sport,
-  cost,
-  people,
+  price,
+  capacity,
   updateField,
 }: BasicInformationProps) {
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
+
+  const [priceString, setPriceString] = useState("15");
+  const [capacityString, setCapacityString] = useState("20");
 
   const handleDateChange = (selectedDate: string) => {
     // Validate if the selected date is in the past
@@ -71,11 +76,12 @@ export function BasicInformation({
     updateField({ endTime: selectedTime });
   };
 
-  const [customAmount, setCustomAmount] = useState(cost);
+  const [customAmount, setCustomAmount] = useState(price);
 
   const handleCustomAmountChange = (amount: number) => {
+    amount = Number.isNaN(amount) ? 0 : amount;
     setCustomAmount(amount);
-    updateField({ cost: amount }); // Update the cost field in the parent component
+    updateField({ price: amount }); // Update the cost field in the parent component
   };
 
   return (
@@ -106,12 +112,12 @@ export function BasicInformation({
           </label>
           <div className="flex space-x-2 mt-4">
             <div className="basis-1/2">
-              {/* <CustomDateInput
-              date={date}
-              placeholder="Date"
-              handleChange={handleDateChange}
-            /> */}
-              <Input
+              <CustomDateInput
+                date={date}
+                placeholder="Date"
+                handleChange={handleDateChange}
+              />
+              {/* <Input
                 label="Date"
                 crossOrigin={undefined}
                 required
@@ -120,15 +126,15 @@ export function BasicInformation({
                 className="rounded-md"
                 size="lg"
                 containerProps={{ className: "min-w-[100px]" }}
-              />
+              /> */}
             </div>
             <div className="basis-1/4">
-              {/* <CustomTimeInput
-              value={startTime}
-              placeholder="Start time"
-              handleChange={handleStartTimeChange}
-            /> */}
-              <Input
+              <CustomTimeInput
+                value={startTime}
+                placeholder="Start time"
+                handleChange={handleStartTimeChange}
+              />
+              {/* <Input
                 label="Start time"
                 crossOrigin={undefined}
                 required
@@ -137,15 +143,15 @@ export function BasicInformation({
                 className="rounded-md"
                 size="lg"
                 containerProps={{ className: "min-w-[100px]" }}
-              />
+              /> */}
             </div>
             <div className="basis-1/4">
-              {/* <CustomTimeInput
-              value={endTime}
-              placeholder="End time"
-              handleChange={handleEndTimeChange}
-            /> */}
-              <Input
+              <CustomTimeInput
+                value={endTime}
+                placeholder="End time"
+                handleChange={handleEndTimeChange}
+              />
+              {/* <Input
                 label="End time"
                 crossOrigin={undefined}
                 required
@@ -154,7 +160,7 @@ export function BasicInformation({
                 className="rounded-md"
                 size="lg"
                 containerProps={{ className: "min-w-[100px]" }}
-              />
+              /> */}
             </div>
           </div>
         </div>
@@ -184,6 +190,7 @@ export function BasicInformation({
             <Select
               label="Select Sport"
               size="lg"
+              value={sport}
               onChange={(e) => {
                 updateField({ sport: e });
               }}
@@ -220,10 +227,12 @@ export function BasicInformation({
                 label="Price"
                 crossOrigin={undefined}
                 required
-                value={cost}
-                onChange={(e) =>
-                  handleCustomAmountChange(parseInt(e.target.value))
-                }
+                value={priceString}
+                type="number"
+                onChange={(e) => {
+                  setPriceString(e.target.value);
+                  handleCustomAmountChange(parseInt(e.target.value));
+                }}
                 className="rounded-md"
                 size="lg"
                 icon={<CurrencyDollarIcon />}
@@ -234,10 +243,12 @@ export function BasicInformation({
                 label="Capacity"
                 crossOrigin={undefined}
                 required
-                value={people}
-                onChange={(e) =>
-                  updateField({ people: parseInt(e.target.value) })
-                }
+                value={capacityString}
+                type="number"
+                onChange={(e) => {
+                  setCapacityString(e.target.value);
+                  updateField({ capacity: parseInt(e.target.value) });
+                }}
                 className="rounded-md"
                 size="lg"
               />

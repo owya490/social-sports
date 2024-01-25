@@ -1,9 +1,8 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
-import { auth, db } from "@/services/firebase";
+import { auth } from "@/services/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { EmptyUserData, UserData, UserId } from "../../interfaces/UserTypes";
+import { createContext, useContext, useEffect, useState } from "react";
+import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
 import { getUserById } from "../../services/usersService";
 
 type LoginUserContextType = {
@@ -26,7 +25,9 @@ type UserDocType = {
   sport: string;
 };
 
-export type UserType = (UserData & { uid: string; email: string | null }) | null;
+export type UserType =
+  | (UserData & { uid: string; email: string | null })
+  | null;
 
 export default function UserContext({ children }: { children: any }) {
   const [user, setUser] = useState<UserData>(EmptyUserData);
@@ -40,21 +41,11 @@ export default function UserContext({ children }: { children: any }) {
           // const userDoc = await getDoc(userDocRef);
           // const userData = userDoc.data() as UserDocType;
           const userData = getUserById(uid).then((data) => {
-            console.log("owen");
-            console.log(data);
             setUser({
-              ...data
-            })
-            console.log({
-              uid, email, ...data
-            })
-          })
-          // setUser({
-          //   uid,
-          //   email,
-          //   ...userData,
-          // });
-        };
+              ...data,
+            });
+          });
+        }
       } catch (error) {
         console.error(error);
       }

@@ -5,11 +5,15 @@ import { useEffect } from "react";
 import Logo from "../../public/images/black-logo.png";
 import { sleep } from "../utility/sleepUtil";
 
-export default function LoadingOverlay() {
-
+export default function LoadingOverlay({
+  shouldAnimate,
+}: {
+  shouldAnimate: boolean;
+}) {
   useEffect(() => {
     // Tuned very intricately, please consult Owen before making changes :D
     async function animateLogo() {
+      document.getElementById("logo")!.classList.remove("hidden");
       await sleep(100);
       document.getElementById("logo")!.classList.add("rotate-[359deg]");
       await sleep(1000);
@@ -25,7 +29,19 @@ export default function LoadingOverlay() {
       await sleep(1000);
       document.getElementById("overlay")!.classList.add("hidden");
     }
-    animateLogo();
+
+    async function fadeOverlay() {
+      document.getElementById("overlay")!.classList.add("opacity-0");
+      await sleep(1000);
+      document.getElementById("overlay")!.classList.add("hidden");
+    }
+
+    if (sessionStorage.getItem("animation") === null) {
+      animateLogo();
+    } else {
+      fadeOverlay();
+    }
+    sessionStorage.setItem("animation", "done");
   }, []);
 
   return (
@@ -46,7 +62,7 @@ export default function LoadingOverlay() {
               alt={"..."}
               height={0}
               width={0}
-              className="transition-all duration-1000 w-10 h-10 md:w-20 md:h-20"
+              className="transition-all duration-1000 w-10 h-10 md:w-20 md:h-20 hidden"
             />
             <h1
               id="title"

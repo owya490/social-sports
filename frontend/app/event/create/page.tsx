@@ -5,17 +5,22 @@ import { DescriptionImageForm } from "@/components/events/create/DescriptionImag
 import { PreviewForm } from "@/components/events/create/PreviewForm";
 import { TagForm } from "@/components/events/create/TagForm";
 import { useMultistepForm } from "@/components/events/create/useMultistepForm";
-import { NewEventData } from "@/interfaces/EventTypes";
+import { useUser } from "@/components/utility/UserContext";
+import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { UserData } from "@/interfaces/UserTypes";
+import { createEvent } from "@/services/eventsService";
+import { uploadUserImage } from "@/services/imageService";
+import { getLocationCoordinates } from "@/services/locationUtils";
 import { Timestamp } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 export type FormData = {
   date: string;
-  time: string;
   location: string;
   sport: string;
-  cost: number;
-  people: number;
+  price: number;
+  capacity: number;
   name: string;
   description: string;
   image: File | undefined;
@@ -26,11 +31,10 @@ export type FormData = {
 
 const INITIAL_DATA: FormData = {
   date: new Date().toISOString().slice(0, 10),
-  time: "",
   location: "",
-  sport: "",
-  cost: 15,
-  people: 0,
+  sport: "volleyball",
+  price: 15,
+  capacity: 20,
   name: "",
   description: "",
   image: undefined,
@@ -40,13 +44,27 @@ const INITIAL_DATA: FormData = {
 };
 
 export default function CreateEvent() {
+  const { user } = useUser();
+  const router = useRouter();
+
   const [data, setData] = useState(INITIAL_DATA);
-  const { step, steps, currentStep, isFirstStep, isLastStep, back, next } =
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const { step, currentStep, isFirstStep, isLastStep, back, next } =
     useMultistepForm([
       <BasicInformation {...data} updateField={updateFields} />,
       <TagForm {...data} updateField={updateFields} />,
-      <DescriptionImageForm {...data} updateField={updateFields} />,
-      <PreviewForm form={data} updateField={updateFields} />,
+      <DescriptionImageForm
+        {...data}
+        imagePreviewUrl={imagePreviewUrl}
+        setImagePreviewUrl={setImagePreviewUrl}
+        updateField={updateFields}
+      />,
+      <PreviewForm
+        form={data}
+        user={user}
+        imagePreviewUrl={imagePreviewUrl}
+        updateField={updateFields}
+      />,
     ]);
 
   function updateFields(fields: Partial<FormData>) {
@@ -63,50 +81,85 @@ export default function CreateEvent() {
       return;
     }
     try {
-      // console.log(createEvent(convertFormDataToEventData(data)));
-      console.log(data);
-      console.log(convertFormDataToEventData(data));
+      createEventWorkflow(data, user).then((eventId) => {
+        router.push(`/event/${eventId}`);
+      });
     } catch (e) {
       console.log(e);
     }
   }
 
-  function convertFormDataToEventData(formData: FormData): NewEventData {
+  async function createEventWorkflow(
+    formData: FormData,
+    user: UserData
+  ): Promise<EventId> {
+    var imageUrl =
+      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
+
+    if (formData.image !== undefined) {
+      imageUrl = await uploadUserImage(user.userId, formData.image);
+    }
+    const newEventData = await convertFormDataToEventData(
+      formData,
+      user,
+      imageUrl
+    );
+    return await createEvent(newEventData);
+  }
+
+  async function convertFormDataToEventData(
+    formData: FormData,
+    user: UserData,
+    imageUrl: string
+  ): Promise<NewEventData> {
     // TODO
     // Fix end date
     // Consider a User's ability to select their event image from their uploaded images
     // Fix organiserId
+    const lngLat = await getLocationCoordinates(formData.location);
+
     return {
-      startDate: convertToTimestamp(formData.date, formData.time),
-      endDate: convertToTimestamp(formData.date, formData.time),
+      startDate: convertDateAndTimeStringToTimestamp(
+        formData.date,
+        formData.startTime
+      ),
+      endDate: convertDateAndTimeStringToTimestamp(
+        formData.date,
+        formData.endTime
+      ),
       location: formData.location,
-      capacity: formData.people,
-      vacancy: formData.people,
-      price: formData.cost,
+      capacity: formData.capacity,
+      vacancy: formData.capacity,
+      price: formData.price,
       name: formData.name,
       description: formData.description,
-      image:
-        "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fstv%2F364809572_6651230408261559_5428994326794147594_n.png.jpeg?alt=media&token=9020aa75-976a-430f-a96e-d763f5b4bada",
-      eventTags: [],
+      image: imageUrl,
+      eventTags: formData.tags,
       isActive: true,
       attendees: [],
       accessCount: 0,
-      organiserId: "g9s1a1t3b7LJi8bswkd0",
-      registrationDeadline: Timestamp.now(),
+      organiserId: user.userId,
+      registrationDeadline: convertDateAndTimeStringToTimestamp(
+        formData.date,
+        formData.startTime
+      ),
       locationLatLng: {
-        lat: 0,
-        lng: 0,
+        lat: lngLat.lat,
+        lng: lngLat.lng,
       },
-      sport: "volleyball",
+      sport: formData.sport,
     };
   }
 
-  function convertToTimestamp(date: string, time: string): Timestamp {
-    let tmp = new Date(date);
+  function convertDateAndTimeStringToTimestamp(
+    date: string,
+    time: string
+  ): Timestamp {
+    let dateObject = new Date(date);
     const timeArr = time.split(":");
-    tmp.setHours(parseInt(timeArr[0]));
-    tmp.setMinutes(parseInt(timeArr[1]));
-    return Timestamp.fromDate(tmp);
+    dateObject.setHours(parseInt(timeArr[0]));
+    dateObject.setMinutes(parseInt(timeArr[1]));
+    return Timestamp.fromDate(dateObject);
   }
 
   return (

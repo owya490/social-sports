@@ -1,6 +1,5 @@
 import { MantineProvider } from "@mantine/core";
 import { Link, RichTextEditor } from "@mantine/tiptap";
-// import "@mantine/tiptap/styles.css";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
 import SubScript from "@tiptap/extension-subscript";

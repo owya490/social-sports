@@ -1,12 +1,12 @@
-import { Input } from "@material-tailwind/react";
 import Image from "next/image";
-import { useState } from "react";
 import DescriptionRichTextEditor from "./DescriptionRichTextEditor";
 import { FormWrapper } from "./FormWrapper";
 
 type BasicData = {
   description: string;
   image: File | undefined;
+  imagePreviewUrl: string;
+  setImagePreviewUrl: (v: string) => void;
 };
 
 type DescriptionImageFormProps = BasicData & {
@@ -15,11 +15,10 @@ type DescriptionImageFormProps = BasicData & {
 
 export function DescriptionImageForm({
   description,
-  image,
+  imagePreviewUrl,
+  setImagePreviewUrl,
   updateField,
 }: DescriptionImageFormProps) {
-  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-
   const updateDescription = (e: string) => {
     updateField({
       description: e,
@@ -44,19 +43,21 @@ export function DescriptionImageForm({
           <label className="text-black text-lg font-semibold">
             Upload a photo as your event cover.
           </label>
-          <div className="w-full mt-8">
-            <Image
-              src={imagePreviewUrl}
-              width={0}
-              height={0}
-              alt="imagePreview"
-              className="h-32 w-32"
-            />
-            <Input
-              label="Image"
-              crossOrigin={undefined}
-              className="rounded-md"
-              size="lg"
+          <div className="w-full mt-8 border border-black rounded-lg relative py-3">
+            <h4 className="absolute -top-3 left-3 text-sm px-1 bg-white">
+              Image
+            </h4>
+            {imagePreviewUrl !== "" && (
+              <Image
+                src={imagePreviewUrl}
+                width={0}
+                height={0}
+                alt="imagePreview"
+                className="h-72 w-fit p-4"
+              />
+            )}
+            <input
+              className="rounded-md ml-4"
               accept="image/*"
               type="file"
               onChange={(e) => {
