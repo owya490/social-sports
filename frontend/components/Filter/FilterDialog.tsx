@@ -274,7 +274,7 @@ export default function FilterDialog({
 
                         <Slider
                           color="blue"
-                          className="h-1"
+                          className="h-1 z-0"
                           step={1}
                           min={0}
                           max={PRICE_SLIDER_MAX_VALUE}
