@@ -339,6 +339,8 @@ export default function FilterBanner({
             setAppliedDateRange={setAppliedDateRange}
             srcLocation={srcLocation}
             setSrcLocation={setSrcLocation}
+            selectedSport={selectedSport}
+            setSelectedSport={setSelectedSport}
             applyFilters={() => applyFilters(selectedSport)}
             isFilterModalOpen={isFilterModalOpen}
             setIsFilterModalOpen={setIsFilterModalOpen}

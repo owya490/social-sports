@@ -10,6 +10,8 @@ import { Fragment } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../../components/ListBox";
 import { EventData } from "@/interfaces/EventTypes";
+import { NO_SPORT_CHOSEN_STRING } from "@/services/filterService";
+import { EMPTY_LOCATION_STRING } from "@/app/dashboard/page";
 
 export enum SortByCategory {
   HOT,
@@ -86,6 +88,8 @@ interface FilterDialogProps {
   >;
   srcLocation: string;
   setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
+  selectedSport: string;
+  setSelectedSport: React.Dispatch<React.SetStateAction<string>>;
   applyFilters: () => Promise<void>;
   isFilterModalOpen: boolean;
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -113,6 +117,8 @@ export default function FilterDialog({
   setAppliedDateRange,
   srcLocation,
   setSrcLocation,
+  selectedSport,
+  setSelectedSport,
   applyFilters,
   isFilterModalOpen,
   setIsFilterModalOpen,
@@ -163,8 +169,10 @@ export default function FilterDialog({
     setSortByCategoryValue(DEFAULT_SORT_BY_CATEGORY);
     setAppliedSortByCategoryValue(DEFAULT_SORT_BY_CATEGORY);
 
+    setSelectedSport(NO_SPORT_CHOSEN_STRING);
+
     setEventDataList([...allEventsDataList]);
-    setSrcLocation("");
+    setSrcLocation(EMPTY_LOCATION_STRING);
     closeModal();
   }
 
@@ -217,39 +225,41 @@ export default function FilterDialog({
                   <div className="mt-5 space-y-5">
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <h4 className="text-lg font-bold">Sort By</h4>
-                      <ListBox
-                        onChangeHandler={function (e: any): void {
-                          //   throw new Error("Function not implemented.");
-                          setSortByCategoryValue(e);
-                        }}
-                        options={[
-                          {
-                            name: HOT_SORTBY_STRING,
-                            value: SortByCategory.HOT,
-                          },
-                          {
-                            name: TOP_RATED_SORTBY_STRING,
-                            value: SortByCategory.TOP_RATED,
-                          },
-                          {
-                            name: PRICE_ASCENDING_SORTBY_STRING,
-                            value: SortByCategory.PRICE_ASCENDING,
-                          },
-                          {
-                            name: PRICE_DESCENDING_SORTBY_STRING,
-                            value: SortByCategory.PRICE_DESCENDING,
-                          },
-                          {
-                            name: DATE_ASCENDING_SORTBY_STRING,
-                            value: SortByCategory.DATE_ASCENDING,
-                          },
-                          {
-                            name: DATE_DESCENDING_SORTBY_STRING,
-                            value: SortByCategory.DATE_DESCENDING,
-                          },
-                        ]}
-                        sortByCategory={sortByCategoryValue}
-                      />
+                      <div className="mt-2">
+                        <ListBox
+                          onChangeHandler={function (e: any): void {
+                            //   throw new Error("Function not implemented.");
+                            setSortByCategoryValue(e);
+                          }}
+                          options={[
+                            {
+                              name: HOT_SORTBY_STRING,
+                              value: SortByCategory.HOT,
+                            },
+                            {
+                              name: TOP_RATED_SORTBY_STRING,
+                              value: SortByCategory.TOP_RATED,
+                            },
+                            {
+                              name: PRICE_ASCENDING_SORTBY_STRING,
+                              value: SortByCategory.PRICE_ASCENDING,
+                            },
+                            {
+                              name: PRICE_DESCENDING_SORTBY_STRING,
+                              value: SortByCategory.PRICE_DESCENDING,
+                            },
+                            {
+                              name: DATE_ASCENDING_SORTBY_STRING,
+                              value: SortByCategory.DATE_ASCENDING,
+                            },
+                            {
+                              name: DATE_DESCENDING_SORTBY_STRING,
+                              value: SortByCategory.DATE_DESCENDING,
+                            },
+                          ]}
+                          sortByCategory={sortByCategoryValue}
+                        />
+                      </div>
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
