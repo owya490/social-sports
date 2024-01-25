@@ -11,8 +11,7 @@
   }
 }
 @layer base {
-  ul,
-  ol {
+  .list-style-circle{
     list-style: circle;
   }
 }

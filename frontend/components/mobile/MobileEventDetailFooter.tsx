@@ -4,6 +4,7 @@ import {
 } from "@/services/datetimeUtils";
 import { CalendarDaysIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
+import Link from "next/link";
 
 interface MobileEventDetailFooterProps {
   date: Timestamp;
@@ -33,7 +34,7 @@ export default function MobileEventDetailFooter(
           </div>
 
           <div className="relative flex justify-center ml-auto">
-            <a href="#">
+            <Link href="#">
               <div
                 className="text-lg rounded-lg border border-black px-4 py-2"
                 style={{
@@ -43,7 +44,7 @@ export default function MobileEventDetailFooter(
               >
                 Contact Now
               </div>
-            </a>
+            </Link>
           </div>
         </div>
         {/* </div> */}

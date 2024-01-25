@@ -5,6 +5,7 @@ import Navbar from "@/components/navbar/Navbar";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
+import UserContext from "@/components/utility/UserContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,16 +28,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${roboto_condensed.variable}`}>
-        <div className="hidden md:block">
-          <Navbar />
-        </div>
-        <div className="md:hidden">
-          <MobileNavbar />
-        </div>
-        {children}
-        <Footer />
-      </body>
+      <UserContext>
+        <body className={`${inter.className} ${roboto_condensed.variable}`}>
+          <div className="hidden md:block">
+            <Navbar />
+          </div>
+          <div className="md:hidden">
+            <MobileNavbar />
+          </div>
+          {children}
+          <Footer />
+        </body>
+      </UserContext>
     </html>
   );
 }
