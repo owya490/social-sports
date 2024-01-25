@@ -1,12 +1,14 @@
 "use client";
 import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
-import { ChangeEvent, Fragment, useState } from "react";
+import { ChangeEvent, Fragment, useContext, useEffect, useState } from "react";
 import DP from "./../../public/images/Ashley & Owen.png";
 import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
 import x from "./../../public/images/x.png";
+import { useUser } from "@/components/utility/UserContext";
+import { LoginUserContext } from "@/components/utility/UserContext";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -50,13 +52,21 @@ const initialProfileData: initialProfileDataInterface = {
 const Profile = () => {
   const [editable, setEditable] = useState(false);
   const [editedData, setEditedData] = useState({ ...initialProfileData });
+  const { user: contextUser, setUser: setContextUser } = useUser()
   const handleEditClick = () => {
     if (editable) {
       setEditedData({ ...initialProfileData });
     }
     setEditable(!editable);
   };
+  useEffect(() => {
 
+    if (contextUser) {
+      setContextUser(contextUser);
+      console.log(contextUser);
+    }
+
+  }, [contextUser]); 
   const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = changeEvent.target;
     if (name === "birthday") {
