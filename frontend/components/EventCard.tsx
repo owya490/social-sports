@@ -20,6 +20,10 @@ interface EventCardProps {
 
 export default function EventCard(props: EventCardProps) {
   const router = useRouter();
+  console.log(
+    "ashley"
+  );
+  console.log(props.organiser);
 
   return (
     <div
