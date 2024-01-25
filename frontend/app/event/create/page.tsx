@@ -46,6 +46,7 @@ const INITIAL_DATA: FormData = {
 export default function CreateEvent() {
   const { user } = useUser();
   const router = useRouter();
+  const showForm = user.userId !== "";
 
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
@@ -164,45 +165,51 @@ export default function CreateEvent() {
 
   return (
     <div className="w-screen flex justify-center">
-      <div className="screen-width-primary my-32">
-        <form onSubmit={submit}>
-          <div className="px-12">
-            <CreateEventStepper activeStep={currentStep} />
-          </div>
-          <div className="absolute top-2 right-2">
-            {/* {currentStep + 1} / {steps.length} */}
-          </div>
-          {step}
+      {!showForm ? (
+        <div className="h-screen w-full flex justify-center items-center">
+          Please Login/ Register to Access
+        </div>
+      ) : (
+        <div className="screen-width-primary my-32">
+          <form onSubmit={submit}>
+            <div className="px-12">
+              <CreateEventStepper activeStep={currentStep} />
+            </div>
+            <div className="absolute top-2 right-2">
+              {/* {currentStep + 1} / {steps.length} */}
+            </div>
+            {step}
 
-          <div className="flex mt-8">
-            {!isFirstStep && (
-              <button
-                type="button"
-                className="border border-black py-1.5 px-7 rounded-lg mr-2"
-                onClick={back}
-              >
-                Back
-              </button>
-            )}
-            {!isLastStep && (
-              <button
-                type="submit"
-                className="border border-black py-1.5 px-7 rounded-lg ml-auto"
-              >
-                Next
-              </button>
-            )}
-            {isLastStep && (
-              <button
-                type="submit"
-                className="border border-black py-1.5 px-7 rounded-lg ml-auto"
-              >
-                Create Event
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
+            <div className="flex mt-8">
+              {!isFirstStep && (
+                <button
+                  type="button"
+                  className="border border-black py-1.5 px-7 rounded-lg mr-2"
+                  onClick={back}
+                >
+                  Back
+                </button>
+              )}
+              {!isLastStep && (
+                <button
+                  type="submit"
+                  className="border border-black py-1.5 px-7 rounded-lg ml-auto"
+                >
+                  Next
+                </button>
+              )}
+              {isLastStep && (
+                <button
+                  type="submit"
+                  className="border border-black py-1.5 px-7 rounded-lg ml-auto"
+                >
+                  Create Event
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
