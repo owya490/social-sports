@@ -29,30 +29,30 @@ interface initialProfileDataInterface {
   firstName: string;
   lastName: string;
   location: string;
-  phoneNumber: string;
+  mobile: string;
   email: string;
-  birthday: string;
+  dob: string;
   age: string;
   password: string;
   gender: string;
 }
 
-const initialProfileData: initialProfileDataInterface = {
-  firstName: "Reggiestar",
-  lastName: "Yang",
-  location: "Sydney, Australia",
-  phoneNumber: "0468368618",
-  email: "maxsteelflight@gmail.com",
-  birthday: "23-07-2002", // DD-MM-YYYY format
-  age: calculateAge("23-07-2002"), // Calculate initial age
-  password: "danielinthesky",
-  gender: "Male",
-};
+// const initialProfileData: initialProfileDataInterface = {
+//   firstName: "Reggiestar",
+//   lastName: "Yang",
+//   location: "Sydney, Australia",
+//   mobile: "0468368618",
+//   email: "maxsteelflight@gmail.com",
+//   dob: "23-07-2002", // DD-MM-YYYY format
+//   age: calculateAge("23-07-2002"), // Calculate initial age
+//   password: "danielinthesky",
+//   gender: "Male",
+// };
 
 const Profile = () => {
   const [editable, setEditable] = useState(false);
   const [editedData, setEditedData] = useState({ ...initialProfileData });
-  const { user: contextUser, setUser: setContextUser } = useUser()
+  const { user: contextUser, setUser: setContextUser } = useUser();
   const handleEditClick = () => {
     if (editable) {
       setEditedData({ ...initialProfileData });
@@ -60,13 +60,15 @@ const Profile = () => {
     setEditable(!editable);
   };
   useEffect(() => {
-
     if (contextUser) {
       setContextUser(contextUser);
       console.log(contextUser);
     }
+    // else() {
+    //   setContextUser(initialProfileData);
+    // };
+  }, [contextUser]);
 
-  }, [contextUser]); 
   const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = changeEvent.target;
     if (name === "birthday") {
@@ -94,7 +96,7 @@ const Profile = () => {
     setEditable(false);
   };
 
-  const renderEditableField = (label: string, name: string, type = "text") => (
+  const renderEditableField = (label: string, name: keyof initialProfileDataInterface, type = "text") => (
     <div key={name} className="mb-4">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       {type === "date" ? (
@@ -102,7 +104,7 @@ const Profile = () => {
           type={type}
           name={name}
           value={formatDateForInput(
-            editedData[name as keyof initialProfileDataInterface]
+            contextUser[name]
           )}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
@@ -111,13 +113,14 @@ const Profile = () => {
         <input
           type={type}
           name={name}
-          value={editedData[name as keyof initialProfileDataInterface]}
+          value={contextUser[name]}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
       )}
     </div>
   );
+  
 
   const formatDateForInput = (dateString: string) => {
     const [dd, mm, yyyy] = dateString.split("-");
@@ -193,13 +196,13 @@ const Profile = () => {
                   </div>
                 </div>
                 <div className="space-y-4 text-md lg:text-lg 3xl:text-xl">
-                  {renderEditableField("Given Name", "firstName")}
-                  {renderEditableField("Surname", "lastName")}
-                  {renderEditableField("Phone Number", "phoneNumber", "tel")}
+                  {renderEditableField("Given Name", contextUser.firstName)}
+                  {renderEditableField("Surname", contextUser.lastName)}
+                  {renderEditableField("Phone Number", contextUser.mobile)}
                   {renderEditableField("Email", "email", "email")}
                   {renderEditableField("Gender", "gender")}
-                  {renderEditableField("Date of Birth", "birthday", "date")}
-                  {renderEditableField("Location", "location")}
+                  {renderEditableField("Date of Birth", contextUser.dob)}
+                  {renderEditableField("Location", contextUser.location)}
                   {renderEditableField("Password", "password", "password")}
                 </div>
                 <div className="flex justify-end mt-4">
