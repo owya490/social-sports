@@ -1,5 +1,6 @@
 import Image from "next/image";
 import HeroImage from "./../../public/images/basketball-hero.png";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -11,9 +12,9 @@ export default function Hero() {
           </h1>
           <p className="font-light mt-4">
             Find your next Social Sports Session right here on{" "}
-            <a href="/dashboard" className="font-semibold hover:underline">
+            <Link href="/dashboard" className="font-semibold hover:underline">
               Sports Hub.
-            </a>
+            </Link>
           </p>
         </div>
       </div>
