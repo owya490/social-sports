@@ -10,9 +10,6 @@ import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/EventCard";
 import { Alert } from "@material-tailwind/react";
 
-export const EMPTY_SEARCH_STRING = "";
-export const EMPTY_LOCATION_STRING = "";
-
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);

@@ -11,7 +11,6 @@ import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../../components/ListBox";
 import { EventData } from "@/interfaces/EventTypes";
 import { NO_SPORT_CHOSEN_STRING } from "@/services/filterService";
-import { EMPTY_LOCATION_STRING } from "@/app/dashboard/page";
 
 export enum SortByCategory {
   HOT,
@@ -46,6 +45,8 @@ export const TENNIS_SPORT_STRING = "Tennis";
 export const TABLE_TENNIS_SPORT_STRING = "Table Tennis";
 export const OZTAG_SPORT_STRING = "Oztag";
 export const BASEBALL_SPORT_STRING = "Baseball";
+
+export const EMPTY_LOCATION_STRING = "";
 
 interface FilterDialogProps {
   allEventsDataList: EventData[];
