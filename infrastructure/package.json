@@ -1,0 +1,17 @@
+{
+  "name": "infrastructure",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.1",
+    "libsodium-wrappers": "^0.7.13",
+    "octokit": "^3.1.2"
+  },
+  "type": "module"
+}
