@@ -55,6 +55,11 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (!isLastStep) {
+      next();
+      return;
+    }
+
     if (userData.password !== repeatPassword) {
       setPasswordMismatch(true);
       setShowRegisterFailure(false);
@@ -88,6 +93,9 @@ export default function Register() {
       console.error("Error:", error);
     }
   };
+
+  // TODO: Implement the Event stepper and each step and buttons below
+  // Start by moving the stuff below to another component that is wrapped by the FormWrapper for each step
 
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
