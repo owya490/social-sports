@@ -4,7 +4,7 @@
  */
 
 import dotenv from "dotenv";
-import { Octokit, App } from "octokit";
+import { Octokit } from "octokit";
 import _sodium from "libsodium-wrappers";
 
 dotenv.config({ path: "../../frontend/.env" });
