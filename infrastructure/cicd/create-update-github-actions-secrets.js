@@ -1,3 +1,8 @@
+/**
+ * RUN THIS FILE EVERYTIME YOU WANT TO UPDATE GITHUB SECRETS AFTER CHANGING
+ * ENVIRONMENT VARARIABLE FILE.
+ */
+
 import dotenv from "dotenv";
 import { Octokit, App } from "octokit";
 import _sodium from "libsodium-wrappers";
@@ -67,20 +72,6 @@ const envVariableListDev = [
 for (const { secretName, secretValue } of envVariableListDev) {
   await createUpdateRepositorySecret(secretName, secretValue);
 }
-
-// const getResp = await octokit.request(
-//   `GET /repos/${SOCIAL_SPORTS_REPO_OWNER}/${SOCIAL_SPORTS_REPO_NAME}/actions/secrets/FIREBASE_DEV_API_KEY`,
-//   {
-//     owner: SOCIAL_SPORTS_REPO_OWNER,
-//     repo: SOCIAL_SPORTS_REPO_NAME,
-//     secret_name: "FIREBASE_DEV_API_KEY",
-//     headers: {
-//       "X-GitHub-Api-Version": "2022-11-28",
-//     },
-//   }
-// );
-
-// console.log(getResp);
 
 ////////////////////////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS //
