@@ -7,8 +7,9 @@ import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
 import x from "./../../public/images/x.png";
-import { useUser } from "@/components/utility/UserContext";
+import UserContext, { useUser } from "@/components/utility/UserContext";
 import { LoginUserContext } from "@/components/utility/UserContext";
+import { UserData } from "@/interfaces/UserTypes";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -27,9 +28,9 @@ const calculateAge = (birthday: string) => {
 
 interface initialProfileDataInterface {
   firstName: string;
-  lastName: string;
+  surname: string;
   location: string;
-  mobile: string;
+  mobile: number;
   email: string;
   dob: string;
   age: string;
@@ -37,21 +38,9 @@ interface initialProfileDataInterface {
   gender: string;
 }
 
-// const initialProfileData: initialProfileDataInterface = {
-//   firstName: "Reggiestar",
-//   lastName: "Yang",
-//   location: "Sydney, Australia",
-//   mobile: "0468368618",
-//   email: "maxsteelflight@gmail.com",
-//   dob: "23-07-2002", // DD-MM-YYYY format
-//   age: calculateAge("23-07-2002"), // Calculate initial age
-//   password: "danielinthesky",
-//   gender: "Male",
-// };
-
 const Profile = () => {
   const [editable, setEditable] = useState(false);
-  const [editedData, setEditedData] = useState({ ...initialProfileData });
+
   const { user: contextUser, setUser: setContextUser } = useUser();
   const handleEditClick = () => {
     if (editable) {
@@ -60,14 +49,27 @@ const Profile = () => {
     setEditable(!editable);
   };
   useEffect(() => {
-    if (contextUser) {
-      setContextUser(contextUser);
-      console.log(contextUser);
-    }
-    // else() {
-    //   setContextUser(initialProfileData);
-    // };
-  }, [contextUser]);
+    console.log(contextUser);
+  }, []);
+
+  const initialProfileData: UserData = {
+    firstName: contextUser?.firstName || "",
+    surname: contextUser?.surname || "",
+    location: contextUser?.location || "",
+    contactInformation: {
+      mobile: contextUser?.contactInformation?.mobile || NaN,
+      email: contextUser?.contactInformation?.email || "",
+    },
+    profilePicture:
+      contextUser?.profilePicture ||
+      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+    dob: contextUser?.dob || "", // DD-MM-YYYY format
+    age: calculateAge(contextUser?.dob || ""), // Calculate initial age
+    password: "danielinthesky",
+    gender: "Male",
+  };
+
+  const [editedData, setEditedData] = useState({ ...initialProfileData });
 
   const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = changeEvent.target;
@@ -96,31 +98,48 @@ const Profile = () => {
     setEditable(false);
   };
 
-  const renderEditableField = (label: string, name: keyof initialProfileDataInterface, type = "text") => (
+  const renderEditableField = (
+    label: string,
+    name: keyof UserData,
+    type = "text"
+  ) => (
     <div key={name} className="mb-4">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       {type === "date" ? (
         <input
           type={type}
           name={name}
-          value={formatDateForInput(
-            contextUser[name]
-          )}
+          value={formatDateForInput(contextUser?.dob || "")}
+          onChange={handleInputChange}
+          className="mt-1 p-2 border rounded-md w-full"
+        />
+      ) : type === "Phone Number" ? (
+        <input
+          type="text" // assuming the mobile field is supposed to be a text input
+          name="contactInformation.mobile" // use the nested path
+          value={contextUser?.contactInformation?.mobile || ""}
+          onChange={handleInputChange}
+          className="mt-1 p-2 border rounded-md w-full"
+        />
+      ) : type === "Email" ? (
+        <input
+          type="text" // assuming the mobile field is supposed to be a text input
+          name="contactInformation.email" // use the nested path
+          value={contextUser?.contactInformation?.email || ""}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
       ) : (
         <input
           type={type}
-          name={name}
-          value={contextUser[name]}
+          name="123123"
+          value="123123"
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
       )}
     </div>
   );
-  
 
   const formatDateForInput = (dateString: string) => {
     const [dd, mm, yyyy] = dateString.split("-");
@@ -138,9 +157,7 @@ const Profile = () => {
             name === "email" ? "break-all" : ""
           }`}
         >
-          {name === "password"
-            ? "*".repeat(initialProfileData[name].length)
-            : initialProfileData[name as keyof initialProfileDataInterface]}
+          {name === "password" ? "********" : initialProfileData[name]}
         </span>
       </div>
     </div>
@@ -196,13 +213,13 @@ const Profile = () => {
                   </div>
                 </div>
                 <div className="space-y-4 text-md lg:text-lg 3xl:text-xl">
-                  {renderEditableField("Given Name", contextUser.firstName)}
-                  {renderEditableField("Surname", contextUser.lastName)}
-                  {renderEditableField("Phone Number", contextUser.mobile)}
-                  {renderEditableField("Email", "email", "email")}
+                  {renderEditableField("Given Name", "firstName")}
+                  {renderEditableField("Surname", "surname")}
+                  {renderEditableField("Phone Number", "surname")},
+                  {renderEditableField("Email", "surname")},
                   {renderEditableField("Gender", "gender")}
-                  {renderEditableField("Date of Birth", contextUser.dob)}
-                  {renderEditableField("Location", contextUser.location)}
+                  {renderEditableField("Date of Birth", "dob")}
+                  {renderEditableField("Location", "location")}
                   {renderEditableField("Password", "password", "password")}
                 </div>
                 <div className="flex justify-end mt-4">
@@ -248,7 +265,7 @@ const Profile = () => {
                   >
                     <div className="relative h-52 w-52 3xl:h-64 3xl:w-64 rounded-full overflow-hidden">
                       <Image
-                        src={DP}
+                        src={initialProfileData.profilePicture}
                         alt="DP"
                         width={0}
                         height={0}
