@@ -26,6 +26,8 @@ jobs:
         run: cd frontend && npm install
       - name: linting
         run: cd frontend && npm run lint
+      - name: test building
+        run: cd frontend && npm run build
       - name: react tests
         run: cd frontend && npm test
   frontend_testing:
@@ -38,5 +40,7 @@ jobs:
         run: cd frontend && npm install
       - name: linting
         run: cd frontend && npm run lint
+      - name: test building
+        run: cd frontend && npm run build
       - name: react tests
         run: cd frontend && npm test
