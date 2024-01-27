@@ -10,6 +10,7 @@ const nextConfig = {
       process.env.FIREBASE_DEV_MESSAGING_SENDER_ID,
     FIREBASE_DEV_APP_ID: process.env.FIREBASE_DEV_APP_ID,
     FIREBASE_DEV_MEASUREMENT_ID: process.env.FIREBASE_DEV_MEASUREMENT_ID,
+    ENVIRONMENT: process.env.ENVIRONMENT,
   },
   images: {
     domains: ["firebasestorage.googleapis.com"],

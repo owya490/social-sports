@@ -7,7 +7,8 @@ import NewsletterSignup from "@/components/home/NewsletterSignup";
 import PopularEvents from "@/components/home/PopularEvents";
 import PopularLocations from "@/components/home/PopularLocations";
 import SearchSport from "@/components/home/SearchSport";
-import { sleep } from "@/components/utility/sleepUtil";
+import getEnvironment from "@/utilities/environment";
+import { sleep } from "@/utilities/sleepUtil";
 import { useEffect } from "react";
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
       document.getElementById("footer")!.classList.remove("hidden");
     }
     init();
+    console.log(getEnvironment());
   });
 
   return (
