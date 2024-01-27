@@ -1,6 +1,7 @@
 import Footer from "@/components/Footer";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
+import UserContext from "@/components/utility/UserContext";
 import GrafanaFaro from "@/observability/GrafanaFaro";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
@@ -28,16 +29,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <GrafanaFaro>
-        <body className={`${inter.className} ${roboto_condensed.variable}`}>
-          <div className="hidden md:block">
-            <Navbar />
-          </div>
-          <div className="md:hidden">
-            <MobileNavbar />
-          </div>
-          {children}
-          <Footer />
-        </body>
+        <UserContext>
+          <body className={`${inter.className} ${roboto_condensed.variable}`}>
+              <div className="hidden md:block">
+                <Navbar />
+              </div>
+              <div className="md:hidden">
+                <MobileNavbar />
+              </div>
+              {children}
+              <Footer />
+            </body>
+        </UserContext>
       </GrafanaFaro>
     </html>
   );

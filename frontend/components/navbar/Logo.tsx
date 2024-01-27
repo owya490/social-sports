@@ -1,9 +1,10 @@
 import Image from "next/image";
 import LogoImage from "./../../public/images/SportsHubLogo.png";
+import Link from "next/link";
 
 export default function Logo() {
   return (
-    <a href="/dashboard" className="flex items-center">
+    <Link href="/dashboard" className="flex items-center">
       <Image
         priority={true}
         src={LogoImage}
@@ -12,6 +13,6 @@ export default function Logo() {
         height={0}
         className="w-80 mr-8"
       />
-    </a>
+    </Link>
   );
 }
