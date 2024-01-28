@@ -19,7 +19,7 @@ export default function GrafanaFaro(props: { children: React.ReactNode }) {
         paused: paused,
         url: url,
         app: {
-          name: "[Production] Sports Hub",
+          name: `[${env.charAt(0) + env.slice(1).toLowerCase()}] Sports Hub`,
           version: "1.0.0",
           environment: "production",
         },
