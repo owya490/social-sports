@@ -11,7 +11,7 @@ import {
   User,
 } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-import getEnvironment, { Environment } from "@/utilities/environment";
+import { getEnvironment, Environment } from "../utilities/environment";
 require("dotenv").config();
 
 // TODO: Add SDKs for Firebase products that you want to use

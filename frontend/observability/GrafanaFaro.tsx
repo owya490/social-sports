@@ -1,5 +1,5 @@
 "use client";
-import getEnvironment, { Environment } from "@/utilities/environment";
+import { getEnvironment, Environment } from "../utilities/environment";
 import type { Faro } from "@grafana/faro-core";
 import { getWebInstrumentations, initializeFaro } from "@grafana/faro-web-sdk";
 import { TracingInstrumentation } from "@grafana/faro-web-tracing";
