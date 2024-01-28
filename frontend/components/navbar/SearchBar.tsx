@@ -12,11 +12,9 @@ export default function SearchBar() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const router = useRouter();
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // PLEASE DON"T CHANGE THIS FUNCTION, RIGHT NOW THIS EVENT TRIGGERS ON EVERY INSTANCE BECAUSE I CAN'T FIGURE OUT HOW TO LISTEN FOR URL CHANGES ONLY
+
     useEffect(() => {
         // Function to update state based on URL query parameters
-        console.log("PAGECHANGE");
         const updateStateFromQuery = () => {
             if (typeof window === "undefined") {
                 // Return some default or empty values when not in a browser environment
@@ -36,8 +34,6 @@ export default function SearchBar() {
         };
         updateStateFromQuery();
     }, [pathname, searchParams]);
-    //   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     const handleSearchClick = () => {
         console.log("search");

@@ -53,16 +53,6 @@ interface FilterBannerProps {
     srcLocation: string;
     setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
 }
-// export const icons = {
-//   Volleyball: { image: VolleyballImage, style: "w-8 h-8" },
-//   Badminton: { image: BadmintonImage, style: "w-8 h-8" },
-//   Basketball: { image: BasketballImage, style: "w-8 h-8" },
-//   Soccer: { image: SoccerImage, style: "w-8 h-8" },
-//   Tennis: { image: TennisImage, style: "w-8 h-8" },
-//   "Table Tennis": { image: PingPongImage, style: "w-8 h-8" },
-//   Oztag: { image: RugbyImage, style: "w-8 h-8" },
-//   Baseball: { image: BaseballImage, style: "w-8 h-8" },
-// };
 
 export default function FilterBanner({
     eventDataList,
@@ -71,40 +61,6 @@ export default function FilterBanner({
     srcLocation,
     setSrcLocation,
 }: FilterBannerProps) {
-    // // States for FilterDialog
-    // const [sortByCategoryValue, setSortByCategoryValue] =
-    //   useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
-    // const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
-    //   useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
-    // const [maxPriceSliderValue, setMaxPriceSliderValue] =
-    //   useState<number>(DEFAULT_MAX_PRICE);
-    // /// Keeps track of what filter values were actually applied.
-    // const [appliedMaxPriceSliderValue, setAppliedMaxPriceSliderValue] =
-    //   useState<number>(DEFAULT_MAX_PRICE);
-    // const [maxProximitySliderValue, setMaxProximitySliderValue] =
-    //   useState<number>(DEFAULT_MAX_PROXIMITY); // max proximity in kms.
-    // const [appliedMaxProximitySliderValue, setAppliedMaxProximitySliderValue] =
-    //   useState<number>(DEFAULT_MAX_PROXIMITY);
-    // const [dateRange, setDateRange] = useState<{
-    //   startDate: string | null;
-    //   endDate: string | null;
-    // }>({
-    //   startDate: DEFAULT_START_DATE,
-    //   endDate: DEFAULT_END_DATE,
-    // });
-    // const [appliedDateRange, setAppliedDateRange] = useState<{
-    //   startDate: string | null;
-    //   endDate: string | null;
-    // }>({
-    //   startDate: DEFAULT_START_DATE,
-    //   endDate: DEFAULT_END_DATE,
-    // });
-    // const [srcLocation, setSrcLocation] = useState<string>("");
-    // const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
-    // function closeModal() {
-    //   setIsFilterModalOpen(false);
-    // }
-    // States for FilterDialog
     const [sortByCategoryValue, setSortByCategoryValue] =
         useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
     const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
@@ -132,7 +88,6 @@ export default function FilterBanner({
         startDate: DEFAULT_START_DATE,
         endDate: DEFAULT_END_DATE,
     });
-    // const [srcLocation, setSrcLocation] = useState<string>("");
     const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
     function closeModal() {
         setIsFilterModalOpen(false);
@@ -194,9 +149,9 @@ export default function FilterBanner({
     async function applyFilters(selectedSportProp: string) {
         const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
         // changed it so that instead of it running only if its not max, if locaiton is not ""
-        const isAnyProximityBool =
-            srcLocation !== "" ||
-            maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
+        const isAnyProximityBool = true
+            // srcLocation === "" ||
+            // maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
 
         let filteredEventDataList = [...eventDataList];
         console.log(srcLocation);
