@@ -29,6 +29,19 @@ const firebaseConfigDev = {
   measurementId: process.env.FIREBASE_DEV_MEASUREMENT_ID,
 };
 
+const firebaseConfigProd = {
+  apiKey: process.env.FIREBASE_PROD_API_KEY,
+  authDomain: process.env.FIREBASE_PROD_AUTH_DOMAIN,
+  databaseURL: process.env.FIREBASE_PROD_DATABASE_URL,
+  projectId: process.env.FIREBASE_PROD_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_PROD_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_PROD_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_PROD_APP_ID,
+  measurementId: process.env.FIREBASE_PROD_MEASUREMENT_ID,
+};
+
+// Obtain from .env file which environment we are currently in
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfigDev);
 // const analytics = getAnalytics(app);
