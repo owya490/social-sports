@@ -11,7 +11,7 @@ import {
 import geofire from "geofire-common";
 import { db } from "./firebase";
 import { getDistanceBetweenTwoCoords } from "./locationUtils";
-import { SortByCategory } from "@/components/Filter/FilterDialog";
+import { SortByCategory } from "../components/Filter/FilterDialog";
 
 interface ProximityInfo {
   center: geofire.Geopoint;
