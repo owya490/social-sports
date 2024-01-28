@@ -1,7 +1,7 @@
 'use client';
 
 import { EventData } from '@/interfaces/EventTypes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ChevronRightButton from '../utility/ChevronRightButton';
 import BadmintonImage from './../../public/images/badminton.png';
 import BaseballImage from './../../public/images/baseball.png';
@@ -52,6 +52,7 @@ interface FilterBannerProps {
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
   srcLocation: string;
   setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
+  triggerFilterApply: boolean;
 }
 
 export default function FilterBanner({
@@ -60,6 +61,7 @@ export default function FilterBanner({
   setEventDataList,
   srcLocation,
   setSrcLocation,
+  triggerFilterApply,
 }: FilterBannerProps) {
   const [sortByCategoryValue, setSortByCategoryValue] =
     useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
@@ -147,9 +149,10 @@ export default function FilterBanner({
   };
 
   async function applyFilters(selectedSportProp: string) {
+    console.log('FILTERING', srcLocation);
     const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
     // changed it so that instead of it running only if its not max, if locaiton is not ""
-    const isAnyProximityBool = true;
+    const isAnyProximityBool = false;
     // srcLocation === "" ||
     // maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
 
@@ -222,6 +225,9 @@ export default function FilterBanner({
     setEventDataList([...filteredEventDataList]);
     closeModal();
   }
+  useEffect(() => {
+    applyFilters(selectedSport);
+  }, [triggerFilterApply]);
   return (
     <div className='pt-16 bg-white px-4 sm:px-0 screen-width-dashboard'>
       <div className='h-20 flex items-center mt-2'>

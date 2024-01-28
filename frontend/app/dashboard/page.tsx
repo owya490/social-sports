@@ -22,6 +22,7 @@ export default function Dashboard() {
   );
   const searchParams = useSearchParams();
   const [srcLocation, setSrcLocation] = useState<string>('');
+  const [triggerFilterApply, setTriggerFilterApply] = useState(false);
   const getQueryParams = () => {
     if (typeof window === 'undefined') {
       // Return some default or empty values when not in a browser environment
@@ -39,8 +40,6 @@ export default function Dashboard() {
     const fetchEvents = async () => {
       const { event, location } = getQueryParams();
       setSrcLocation(location);
-      console.log(event, location);
-      console.log(srcLocation);
       if (typeof event === 'string' && typeof location === 'string') {
         if (event.trim() === '') {
           getAllEvents()
@@ -71,8 +70,12 @@ export default function Dashboard() {
             });
         }
       }
+      if (location.trim() !== '') {
+        setTriggerFilterApply(true);
+      }
     };
     fetchEvents();
+    console.log(srcLocation);
   }, [searchParams]);
 
   useEffect(() => {
@@ -111,6 +114,7 @@ export default function Dashboard() {
           setEventDataList={setEventDataList}
           srcLocation={srcLocation}
           setSrcLocation={setSrcLocation}
+          triggerFilterApply={triggerFilterApply}
         />
       </div>
       <div className='absolute ml-auto mr-auto left-0 right-0 top-32 w-fit'>
