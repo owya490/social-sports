@@ -18,10 +18,22 @@ const nextConfig = {
       process.env.FIREBASE_PROD_MESSENGING_SENDER_ID,
     FIREBASE_PROD_APP_ID: process.env.FIREBASE_PROD_APP_ID,
     FIREBASE_PROD_MEASUREMENT_ID: process.env.FIREBASE_PROD_MEASUREMENT_ID,
+    ENVIRONMENT: process.env.ENVIRONMENT,
   },
   images: {
     domains: ["firebasestorage.googleapis.com"],
     unoptimized: true,
+  },
+  // https://github.com/open-telemetry/opentelemetry-js/issues/4173#issuecomment-1822938936 to prevent console spamming for
+  // Open Telemetry Critical Dependency: the request of a dependency is an expression.
+  webpack: (
+    config,
+    { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }
+  ) => {
+    if (isServer) {
+      config.ignoreWarnings = [{ module: /opentelemetry/ }];
+    }
+    return config;
   },
 };
 

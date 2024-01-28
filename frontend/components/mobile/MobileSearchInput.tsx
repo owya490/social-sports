@@ -8,7 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { TagGroup } from "../TagGroup";
-import { deserialize_list, serialize_list } from "../utility/listUtils";
+import { deserialize_list, serialize_list } from "../../utilities/listUtils";
 import Link from "next/link";
 
 interface MobileSearchInputProps {
