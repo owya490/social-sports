@@ -1,15 +1,13 @@
 "use client";
+import { useUser } from "@/components/utility/UserContext";
+import { UserData } from "@/interfaces/UserTypes";
 import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
-import { ChangeEvent, Fragment, useContext, useEffect, useState } from "react";
-import DP from "./../../public/images/Ashley & Owen.png";
+import { ChangeEvent, Fragment, useEffect, useState } from "react";
 import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
 import x from "./../../public/images/x.png";
-import UserContext, { useUser } from "@/components/utility/UserContext";
-import { LoginUserContext } from "@/components/utility/UserContext";
-import { UserData } from "@/interfaces/UserTypes";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -25,18 +23,6 @@ const calculateAge = (birthday: string) => {
   }
   return age.toString();
 };
-
-interface initialProfileDataInterface {
-  firstName: string;
-  surname: string;
-  location: string;
-  mobile: number;
-  email: string;
-  dob: string;
-  age: string;
-  password: string;
-  gender: string;
-}
 
 const Profile = () => {
   const [editable, setEditable] = useState(false);
@@ -57,16 +43,16 @@ const Profile = () => {
     surname: contextUser?.surname || "",
     location: contextUser?.location || "",
     contactInformation: {
-      mobile: contextUser?.contactInformation?.mobile || NaN,
-      email: contextUser?.contactInformation?.email || "",
+      mobile: "0468368618",
+      email: "aidanys@gmail.com",
     },
     profilePicture:
       contextUser?.profilePicture ||
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
     dob: contextUser?.dob || "", // DD-MM-YYYY format
     age: calculateAge(contextUser?.dob || ""), // Calculate initial age
-    password: "danielinthesky",
-    gender: "Male",
+    gender: contextUser?.gender || "",
+    userId: "",
   };
 
   const [editedData, setEditedData] = useState({ ...initialProfileData });
@@ -105,39 +91,40 @@ const Profile = () => {
   ) => (
     <div key={name} className="mb-4">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
-      {type === "date" ? (
+      {label === "Date of Birth" ? (
         <input
-          type={type}
-          name={name}
+          type="date"
+          name={name as string}
           value={formatDateForInput(contextUser?.dob || "")}
-          onChange={handleInputChange}
-          className="mt-1 p-2 border rounded-md w-full"
-        />
-      ) : type === "Phone Number" ? (
-        <input
-          type="text" // assuming the mobile field is supposed to be a text input
-          name="contactInformation.mobile" // use the nested path
-          value={contextUser?.contactInformation?.mobile || ""}
-          onChange={handleInputChange}
-          className="mt-1 p-2 border rounded-md w-full"
-        />
-      ) : type === "Email" ? (
-        <input
-          type="text" // assuming the mobile field is supposed to be a text input
-          name="contactInformation.email" // use the nested path
-          value={contextUser?.contactInformation?.email || ""}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
       ) : (
         <input
-          type={type}
-          name="123123"
-          value="123123"
+          type="text"
+          name={name as string}
+          value={initialProfileData[name] as string}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
       )}
+    </div>
+  );
+
+  const renderEditableFieldContact = (
+    label: string,
+    name: "mobile" | "email",
+    type = "text"
+  ) => (
+    <div key={name} className="mb-4">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <input
+        type="text"
+        name={`contactInformation.${name}`}
+        value={editedData.contactInformation?.[name] || ""}
+        onChange={handleInputChange}
+        className="mt-1 p-2 border rounded-md w-full"
+      />
     </div>
   );
 
@@ -157,7 +144,26 @@ const Profile = () => {
             name === "email" ? "break-all" : ""
           }`}
         >
-          {name === "password" ? "********" : initialProfileData[name]}
+          {name === "password"
+            ? "********"
+            : (initialProfileData[name as keyof UserData] as string)}
+        </span>
+      </div>
+    </div>
+  );
+
+  const renderFieldContact = (label: string, name: "mobile" | "email") => (
+    <div key={label} className="mb-4">
+      <div className="flex flex-col md:flex-row md:justify-between w-full">
+        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">
+          {label}:
+        </strong>
+        <span
+          className={`text-md md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
+            name === "email" ? "break-all" : ""
+          }`}
+        >
+          {initialProfileData.contactInformation?.[name]}
         </span>
       </div>
     </div>
@@ -189,7 +195,7 @@ const Profile = () => {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-[90%] top-[6rem] absolute max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all z-50">
-                <div className="flex justify-center justify-between mb-3">
+                <div className="flex justify-between mb-3">
                   <Dialog.Title
                     as="h3"
                     className="text-xl lg:text-2xl 3xl:text-2xl font-medium leading-6 text-gray-900 mb-3"
@@ -215,12 +221,11 @@ const Profile = () => {
                 <div className="space-y-4 text-md lg:text-lg 3xl:text-xl">
                   {renderEditableField("Given Name", "firstName")}
                   {renderEditableField("Surname", "surname")}
-                  {renderEditableField("Phone Number", "surname")},
-                  {renderEditableField("Email", "surname")},
+                  {renderEditableFieldContact("Phone Number", "mobile")}
+                  {renderEditableFieldContact("Email", "email")}
                   {renderEditableField("Gender", "gender")}
                   {renderEditableField("Date of Birth", "dob")}
                   {renderEditableField("Location", "location")}
-                  {renderEditableField("Password", "password", "password")}
                 </div>
                 <div className="flex justify-end mt-4">
                   <button
@@ -307,7 +312,7 @@ const Profile = () => {
                   <div className="flex justify-center lg:justify-start mt-5 3xl:mt-9 text-xl 3xl:text-3xl font-semibold">
                     <span className="lg:whitespace-no-wrap">
                       {initialProfileData.firstName}{" "}
-                      {initialProfileData.lastName?.slice(0, 1)}, {""}
+                      {initialProfileData.surname?.slice(0, 1)}, {""}
                       {initialProfileData.age}
                     </span>
                   </div>
@@ -317,7 +322,7 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-            <div className="lg:flex justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-2 hidden lg:block mb-6 mt-6">
+            <div className="justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-2 hidden lg:block mb-6 mt-6">
               <div
                 className="border border-gray-500 h-fit"
                 style={{ borderRadius: "20px" }}
@@ -343,7 +348,7 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-            <div className="lg:flex justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-3 hidden lg:block mb-6 ">
+            <div className="justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-3 hidden lg:block mb-6 ">
               <div
                 className="border border-gray-500 h-fit"
                 style={{ borderRadius: "20px" }}
@@ -399,8 +404,8 @@ const Profile = () => {
               </div>
             </div>
             <ul className="w-full">
-              {renderField("Phone Number", "phoneNumber")}
-              {renderField("Email", "email")}
+              {renderFieldContact("Phone Number", "mobile")}
+              {renderFieldContact("Email", "email")}
             </ul>
 
             <div
