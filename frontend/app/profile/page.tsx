@@ -34,24 +34,42 @@ const Profile = () => {
     }
     setEditable(!editable);
   };
+
   useEffect(() => {
     console.log(contextUser);
-  }, []);
+  }, [contextUser]);
+
+  // const initialProfileData: UserData = {
+  //   firstName: contextUser?.firstName || "",
+  //   surname: contextUser?.surname || "",
+  //   location: contextUser?.location || "",
+  //   contactInformation: {
+  //     mobile: contextUser?.contactInformation?.mobile || "",
+  //     email: contextUser?.contactInformation?.email || "",
+  //   },
+  //   profilePicture:
+  //     contextUser?.profilePicture ||
+  //     "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+  //   dob: contextUser?.dob || "", // DD-MM-YYYY format
+  //   age: calculateAge(contextUser?.dob || ""), // Calculate initial age
+  //   gender: contextUser?.gender || "",
+  //   userId: "",
+  // };
 
   const initialProfileData: UserData = {
-    firstName: contextUser?.firstName || "",
-    surname: contextUser?.surname || "",
-    location: contextUser?.location || "",
+    firstName: "Aidan",
+    surname: "Chee",
+    location: "Syd",
     contactInformation: {
       mobile: "0468368618",
-      email: "aidanys@gmail.com",
+      email: "aidan@gmail.com",
     },
     profilePicture:
       contextUser?.profilePicture ||
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
-    dob: contextUser?.dob || "", // DD-MM-YYYY format
-    age: calculateAge(contextUser?.dob || ""), // Calculate initial age
-    gender: contextUser?.gender || "",
+    dob: "17-02-2002", // DD-MM-YYYY format
+    age: calculateAge("2002-17-02"), // Calculate initial age
+    gender: "Female",
     userId: "",
   };
 
@@ -62,7 +80,7 @@ const Profile = () => {
     if (name === "birthday") {
       setEditedData((prevData) => ({
         ...prevData,
-        birthday: value,
+        dob: value,
       }));
     } else {
       setEditedData((prevData) => ({ ...prevData, [name]: value }));
@@ -95,7 +113,7 @@ const Profile = () => {
         <input
           type="date"
           name={name as string}
-          value={formatDateForInput(contextUser?.dob || "")}
+          value={formatDateForInput(initialProfileData[name] as string)}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
@@ -388,7 +406,7 @@ const Profile = () => {
             </div>
             <ul className="w-full">
               {renderField("Given Name", "firstName")}
-              {renderField("Surname", "lastName")}
+              {renderField("Surname", "surname")}
             </ul>
 
             <div
@@ -420,7 +438,7 @@ const Profile = () => {
             </div>
             <ul className="w-full">
               {renderField("Gender", "gender")}
-              {renderField("Date of Birth", "birthday")}
+              {renderField("Date of Birth", "dob")}
               {renderField("Location", "location")}
             </ul>
             <div
