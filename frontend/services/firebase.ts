@@ -11,6 +11,7 @@ import {
   User,
 } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import getEnvironment, { Environment } from "@/utilities/environment";
 require("dotenv").config();
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -41,9 +42,22 @@ const firebaseConfigProd = {
 };
 
 // Obtain from .env file which environment we are currently in
+let firebaseConfig = firebaseConfigDev;
+switch (getEnvironment()) {
+  case Environment.PREVIEW || Environment.DEVELOPMENT: {
+    firebaseConfig = firebaseConfigDev;
+    break;
+  }
+  case Environment.PRODUCTION: {
+    firebaseConfig = firebaseConfigProd;
+    break;
+  }
+  default: {
+  }
+}
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfigDev);
+const app = initializeApp(firebaseConfig);
 // const analytics = getAnalytics(app);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
