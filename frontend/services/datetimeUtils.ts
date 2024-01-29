@@ -25,7 +25,6 @@ export function timestampToTimeOfDay24Hour(timestamp: Timestamp) {
 }
 
 export function timestampToDateString(timestamp: Timestamp) {
-  console.log(timestamp);
   let date = timestamp.toDate();
   //   let date = new Date(timestamp).toDateString();
   return date.toDateString();
