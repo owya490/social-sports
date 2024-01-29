@@ -81,10 +81,27 @@ const Profile = () => {
       setEditedData((prevData) => ({
         ...prevData,
         dob: value,
+        age: calculateAge(value),
       }));
     } else {
       setEditedData((prevData) => ({ ...prevData, [name]: value }));
     }
+  };
+
+  const handleFileInputChange =
+
+  const handleInputChangeContact = (
+    changeEvent: ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = changeEvent.target;
+    const [parentKey, childKey] = name.split(".");
+    setEditedData((prevData) => ({
+      ...prevData,
+      [parentKey]: {
+        ...prevData[parentKey],
+        [childKey]: value,
+      },
+    }));
   };
 
   const [isHovered, setIsHovered] = useState(false);
@@ -113,7 +130,11 @@ const Profile = () => {
         <input
           type="date"
           name={name as string}
-          value={formatDateForInput(initialProfileData[name] as string)}
+          value={
+            editable
+              ? (editedData[name] as string)
+              : (initialProfileData[name] as string)
+          }
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
@@ -121,7 +142,11 @@ const Profile = () => {
         <input
           type="text"
           name={name as string}
-          value={initialProfileData[name] as string}
+          value={
+            editable
+              ? (editedData[name] as string)
+              : (initialProfileData[name] as string)
+          }
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
@@ -139,8 +164,12 @@ const Profile = () => {
       <input
         type="text"
         name={`contactInformation.${name}`}
-        value={editedData.contactInformation?.[name] || ""}
-        onChange={handleInputChange}
+        value={
+          editable
+            ? (editedData.contactInformation?.[name] as string)
+            : (initialProfileData.contactInformation?.[name] as string)
+        }
+        onChange={handleInputChangeContact}
         className="mt-1 p-2 border rounded-md w-full"
       />
     </div>
@@ -239,8 +268,8 @@ const Profile = () => {
                 <div className="space-y-4 text-md lg:text-lg 3xl:text-xl">
                   {renderEditableField("Given Name", "firstName")}
                   {renderEditableField("Surname", "surname")}
-                  {renderEditableFieldContact("Phone Number", "mobile")}
                   {renderEditableFieldContact("Email", "email")}
+                  {renderEditableFieldContact("Phone Number", "mobile")}
                   {renderEditableField("Gender", "gender")}
                   {renderEditableField("Date of Birth", "dob")}
                   {renderEditableField("Location", "location")}
@@ -309,6 +338,7 @@ const Profile = () => {
                           type="file"
                           id="Image_input"
                           className="hidden"
+                          onChange={handleFileInputChange}
                           accept=".jpg,.jpeg,.png"
                         />
                         <Image
@@ -422,8 +452,8 @@ const Profile = () => {
               </div>
             </div>
             <ul className="w-full">
-              {renderFieldContact("Phone Number", "mobile")}
               {renderFieldContact("Email", "email")}
+              {renderFieldContact("Phone Number", "mobile")}
             </ul>
 
             <div
