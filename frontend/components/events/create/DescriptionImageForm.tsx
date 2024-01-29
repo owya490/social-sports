@@ -1,6 +1,6 @@
 import Image from "next/image";
 import DescriptionRichTextEditor from "./DescriptionRichTextEditor";
-import { FormWrapper } from "./FormWrapper";
+import { FormWrapper } from "./forms/FormWrapper";
 
 type BasicData = {
   description: string;

@@ -1,5 +1,5 @@
 import { FormData } from "@/app/event/create/page";
-import EventCard from "@/components/EventCard";
+import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { Timestamp } from "firebase/firestore";
 import { FormWrapper } from "./FormWrapper";

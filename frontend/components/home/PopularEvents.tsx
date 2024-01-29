@@ -1,11 +1,11 @@
 "use client";
 import { EventData } from "@/interfaces/EventTypes";
 import { getAllEvents } from "@/services/eventsService";
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import EventCard from "../EventCard";
+import EventCard from "../events/EventCard";
 import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
-import Link from "next/link";
 
 interface PopularEventsProps {
   eventData?: EventData;

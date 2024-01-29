@@ -1,11 +1,10 @@
 import Footer from "@/components/Footer";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
-// import "@mantine/tiptap/styles.css";
+import UserContext from "@/components/utility/UserContext";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
-import UserContext from "@/components/utility/UserContext";
 
 const inter = Inter({ subsets: ["latin"] });
 

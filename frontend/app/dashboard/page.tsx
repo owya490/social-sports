@@ -1,12 +1,12 @@
 "use client";
-import EventCard from "@/components/EventCard";
 import FilterBanner from "@/components/Filter/FilterBanner";
 import Loading from "@/components/Loading";
+import EventCard from "@/components/events/EventCard";
 import { EventData } from "@/interfaces/EventTypes";
 import { getAllEvents } from "@/services/eventsService";
+import { Alert } from "@material-tailwind/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Alert } from "@material-tailwind/react";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);

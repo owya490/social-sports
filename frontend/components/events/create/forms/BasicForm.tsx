@@ -3,9 +3,9 @@
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useState } from "react";
-import CreateEventCostSlider from "./CreateEventCostSlider";
-import CustomDateInput from "./CustomDateInput";
-import CustomTimeInput from "./CustomTimeInput";
+import CreateEventCostSlider from "../CreateEventCostSlider";
+import CustomDateInput from "../CustomDateInput";
+import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
 
 type BasicData = {
@@ -117,16 +117,6 @@ export function BasicInformation({
                 placeholder="Date"
                 handleChange={handleDateChange}
               />
-              {/* <Input
-                label="Date"
-                crossOrigin={undefined}
-                required
-                value={date}
-                onChange={(e) => handleDateChange(e.target.value)}
-                className="rounded-md"
-                size="lg"
-                containerProps={{ className: "min-w-[100px]" }}
-              /> */}
             </div>
             <div className="basis-1/4">
               <CustomTimeInput
@@ -134,16 +124,6 @@ export function BasicInformation({
                 placeholder="Start time"
                 handleChange={handleStartTimeChange}
               />
-              {/* <Input
-                label="Start time"
-                crossOrigin={undefined}
-                required
-                value={startTime}
-                onChange={(e) => handleStartTimeChange(e.target.value)}
-                className="rounded-md"
-                size="lg"
-                containerProps={{ className: "min-w-[100px]" }}
-              /> */}
             </div>
             <div className="basis-1/4">
               <CustomTimeInput
@@ -151,16 +131,6 @@ export function BasicInformation({
                 placeholder="End time"
                 handleChange={handleEndTimeChange}
               />
-              {/* <Input
-                label="End time"
-                crossOrigin={undefined}
-                required
-                value={endTime}
-                onChange={(e) => handleEndTimeChange(e.target.value)}
-                className="rounded-md"
-                size="lg"
-                containerProps={{ className: "min-w-[100px]" }}
-              /> */}
             </div>
           </div>
         </div>
