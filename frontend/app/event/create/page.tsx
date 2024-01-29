@@ -1,4 +1,5 @@
 "use client";
+import Loading from "@/components/Loading";
 import CreateEventStepper from "@/components/events/create/CreateEventStepper";
 import { DescriptionImageForm } from "@/components/events/create/DescriptionImageForm";
 import { BasicInformation } from "@/components/events/create/forms/BasicForm";
@@ -48,6 +49,8 @@ export default function CreateEvent() {
   const router = useRouter();
   const showForm = user.userId !== "";
 
+  const [loading, setLoading] = useState(false);
+
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const { step, currentStep, isFirstStep, isLastStep, back, next } =
@@ -94,6 +97,7 @@ export default function CreateEvent() {
     formData: FormData,
     user: UserData
   ): Promise<EventId> {
+    setLoading(true);
     var imageUrl =
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
 
@@ -105,7 +109,9 @@ export default function CreateEvent() {
       user,
       imageUrl
     );
-    return await createEvent(newEventData);
+    const newEventId = await createEvent(newEventData);
+    // setLoading(false);
+    return newEventId;
   }
 
   async function convertFormDataToEventData(
@@ -163,7 +169,9 @@ export default function CreateEvent() {
     return Timestamp.fromDate(dateObject);
   }
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className="w-screen flex justify-center">
       {!showForm ? (
         <div className="h-screen w-full flex justify-center items-center">

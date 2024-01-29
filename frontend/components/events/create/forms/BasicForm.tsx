@@ -78,6 +78,11 @@ export function BasicInformation({
 
   const [customAmount, setCustomAmount] = useState(price);
 
+  const handleEventCostSliderChange = (amount: number) => {
+    handleCustomAmountChange(amount);
+    setPriceString(amount + "");
+  };
+
   const handleCustomAmountChange = (amount: number) => {
     amount = Number.isNaN(amount) ? 0 : amount;
     setCustomAmount(amount);
@@ -188,7 +193,7 @@ export function BasicInformation({
           <div className="w-full px-5">
             <CreateEventCostSlider
               initialCustomAmount={customAmount}
-              onCustomAmountChange={handleCustomAmountChange}
+              onCustomAmountChange={handleEventCostSliderChange}
             />
           </div>
           <div className="w-full flex space-x-3">
