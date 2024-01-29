@@ -42,28 +42,88 @@ const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
   );
 
   return (
-    <div className="md:grid md:grid-cols-2 mt-4 items-start">
-      <div className="flex flex-col items-center mb-12 md:mb-0 md:mt-16">
-        <div className="flex flex-col">
-          <div className="font-bold">Name of event:</div>
-          {form.name}
+    <div className="md:grid md:grid-cols-2 mt-20 items-start mb-8">
+    <div className="justify-start col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
+        <div
+          className="mb-2 text-xl lg:text-2xl"
+          style={{
+            fontWeight: 400,
+            borderBottom: "2px solid #ccc",
+            width: "100%",
+          }}
+        >
+          <div className="mb-1 md:mb-2 lg:mt-3">Name of the Event</div>
         </div>
-        <div className="flex flex-col">
-          <div className="font-bold">Location of event:</div>
-          {form.location}
+        <ul className="w-full">{form.name}</ul>
+
+        <div
+          className="mb-2 text-xl lg:text-2xl"
+          style={{
+            fontWeight: 400,
+            borderBottom: "2px solid #ccc",
+            width: "100%",
+          }}
+        >
+          <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
+            Location of the event
+          </div>
         </div>
-        <div className="flex flex-col">
-          <div className="font-bold">Start Time of event:</div>
-          {form.startTime}
+        <ul className="w-full">{form.location}</ul>
+
+        <div
+          className="mb-2 text-xl lg:text-2xl"
+          style={{
+            fontWeight: 400,
+            borderBottom: "2px solid #ccc",
+            width: "100%",
+          }}
+        >
+          <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
+            Start Time of event
+          </div>
         </div>
-        <div className="flex flex-col">
-          <div className="font-bold">Price of event:</div>
-          {form.cost}
+        <ul className="w-full">{form.startTime}</ul>
+
+        <div
+          className="mb-2 text-xl lg:text-2xl"
+          style={{
+            fontWeight: 400,
+            borderBottom: "2px solid #ccc",
+            width: "100%",
+          }}
+        >
+          <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
+            Price of the Event
+          </div>
         </div>
-        <div className="flex flex-col">
-          <div className="font-bold">Total capacity of the event:</div>
-          {form.people}
+        <ul className="w-full">{form.cost}</ul>
+
+        <div
+          className="mb-2 text-xl lg:text-2xl"
+          style={{
+            fontWeight: 400,
+            borderBottom: "2px solid #ccc",
+            width: "100%",
+          }}
+        >
+          <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
+            Total Capacity of the Event
+          </div>
         </div>
+        <ul className="w-full">{form.people}</ul>
+        <div
+          className="mb-2 text-xl lg:text-2xl"
+          style={{
+            fontWeight: 400,
+            borderBottom: "2px solid #ccc",
+            width: "100%",
+          }}
+        >
+          <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
+            Description of the Event
+          </div>
+        </div>
+        <ul className="w-full">{form.description}</ul>
       </div>
 
       <FormWrapper>
