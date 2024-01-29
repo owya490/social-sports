@@ -6,7 +6,7 @@ export enum Environment {
   PRODUCTION = "PRODUCTION",
 }
 
-export default function getEnvironment() {
+export function getEnvironment() {
   switch (process.env.ENVIRONMENT) {
     case "DEVELOPMENT": {
       return Environment.DEVELOPMENT;
