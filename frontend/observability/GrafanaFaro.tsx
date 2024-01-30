@@ -1,9 +1,9 @@
 "use client";
-import getEnvironment, { Environment } from "@/utilities/environment";
 import type { Faro } from "@grafana/faro-core";
 import { getWebInstrumentations, initializeFaro } from "@grafana/faro-web-sdk";
 import { TracingInstrumentation } from "@grafana/faro-web-tracing";
-import { useLayoutEffect, useRef } from "react";
+import React, { useLayoutEffect, useRef } from "react";
+import { Environment, getEnvironment } from "../utilities/environment";
 
 export default function GrafanaFaro(props: { children: React.ReactNode }) {
   const faroRef = useRef<Faro | null>(null);
@@ -13,17 +13,15 @@ export default function GrafanaFaro(props: { children: React.ReactNode }) {
     let paused = false;
     if (env === Environment.DEVELOPMENT) {
       paused = true;
-      console.log(paused);
-      console.log(url);
     }
     if (!faroRef.current) {
       faroRef.current = initializeFaro({
         paused: paused,
         url: url,
         app: {
-          name: "Sports Hub",
+          name: `[${env.charAt(0) + env.slice(1).toLowerCase()}] Sports Hub`,
           version: "1.0.0",
-          environment: env,
+          environment: "production",
         },
 
         instrumentations: [

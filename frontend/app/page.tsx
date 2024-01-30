@@ -7,9 +7,9 @@ import NewsletterSignup from "@/components/home/NewsletterSignup";
 import PopularEvents from "@/components/home/PopularEvents";
 import PopularLocations from "@/components/home/PopularLocations";
 import SearchSport from "@/components/home/SearchSport";
-import getEnvironment from "@/utilities/environment";
 import { sleep } from "@/utilities/sleepUtil";
 import { useEffect } from "react";
+import { getEnvironment } from "../utilities/environment";
 
 export default function Home() {
   useEffect(() => {
