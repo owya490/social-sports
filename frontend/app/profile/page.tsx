@@ -304,7 +304,7 @@ const Profile = () => {
                     </button>
                   </div>
                 </div>
-                <div className="space-y-4 text-md lg:text-lg 3xl:text-xl">
+                <div className="space-y-4 text-md lg:text-lg 3xl:text-xl -mt-1">
                   {renderEditableField("Given Name", "firstName")}
                   {renderEditableField("Surname", "surname")}
                   {/* {renderEditableFieldContact("Email", "email")} */}
@@ -336,7 +336,7 @@ const Profile = () => {
         <div className="relative mt-[92px] lg:mt-[120px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[4vw]">
           <div className="flex justify-center md:justify-start col-start-1 col-span-1 md:col-start-2 md:row-span-1 md:row-start-1">
             <div
-              className="flex justify-center mb-5 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl"
+              className="flex justify-center mb-4 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl"
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}&apos;s Profile
@@ -430,8 +430,8 @@ const Profile = () => {
                   What info is shared with others?
                 </div>
                 <div className="text-md 3xl:text-lg ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
-                  Sports Hub only releases contact information to the host of
-                  the event you are attending.
+                  Sports Hub only releases your name and contact information to
+                  the host of the event you are attending.
                 </div>
               </div>
             </div>
@@ -462,16 +462,23 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          <div className="justify-start col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
+          <div className="col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
             <div
-              className="mb-2 text-xl lg:text-2xl"
+              className="mb-2 text-xl lg:text-2xl flex justify-between items-center"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-1 md:mb-2 lg:mt-3">Name</div>
+              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Name</div>
+              {/* <div
+                className="flex justify-end text-sm lg:text-md"
+                onClick={handleEditClick}
+              >
+                {renderModalContent()}
+                <u>Edit</u>
+              </div> */}
             </div>
             <ul className="w-full">
               {renderField("Given Name", "firstName")}
@@ -479,16 +486,23 @@ const Profile = () => {
             </ul>
 
             <div
-              className="mb-2 text-xl lg:text-2xl"
+              className="mb-2 text-xl lg:text-2xl flex justify-between items-center"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
+              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">
                 Contact Info
               </div>
+              {/* <div
+                className="flex justify-end text-sm lg:text-md"
+                onClick={handleEditClick}
+              >
+                {renderModalContent()}
+                <u>Edit</u>
+              </div> */}
             </div>
             <ul className="w-full">
               {renderFieldContact("Email", "email")}
@@ -496,21 +510,28 @@ const Profile = () => {
             </ul>
 
             <div
-              className="mb-2 text-xl lg:text-2xl"
+              className="mb-2 text-xl lg:text-2xl flex justify-between items-center"
               style={{
                 fontWeight: 400,
                 borderBottom: "2px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">About Me</div>
+              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">About Me</div>
+              {/* <div
+                className="flex justify-end text-sm lg:text-md"
+                onClick={handleEditClick}
+              >
+                {renderModalContent()}
+                <u>Edit</u>
+              </div> */}
             </div>
             <ul className="w-full">
               {renderField("Gender", "gender")}
               {renderField("Date of Birth", "dob")}
               {renderField("Location", "location")}
             </ul>
-            <div
+            {/* <div
               className="mb-2 text-xl lg:text-2xl"
               style={{
                 fontWeight: 400,
@@ -520,8 +541,8 @@ const Profile = () => {
             >
               <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">Security</div>
             </div>
-            <ul className="w-full">{renderField("Password", "password")}</ul>
-            <div className="flex justify-start my-6 3xl:my-8">
+            <ul className="w-full">{renderField("Password", "password")}</ul> */}
+            {/* <div className="flex justify-start my-6 3xl:my-8">
               {renderModalContent()}
               <button
                 type="button"
@@ -530,7 +551,7 @@ const Profile = () => {
               >
                 Edit
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
