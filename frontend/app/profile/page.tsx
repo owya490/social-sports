@@ -28,35 +28,18 @@ const Profile = () => {
   const [editable, setEditable] = useState(false);
 
   const { user: contextUser, setUser: setContextUser } = useUser();
-  const handleEditClick = () => {
-    if (editable) {
-      setEditedData({ ...initialProfileData });
-    }
-    setEditable(!editable);
+
+  const formatDateForInput = (dateString: string) => {
+    const [dd, mm, yyyy] = dateString.split("-");
+    return `${yyyy}-${mm}-${dd}`;
   };
 
-  useEffect(() => {
-    console.log(contextUser);
-  }, [contextUser]);
+  const formatDateForProfile = (dateString: string) => {
+    const [yyyy, mm, dd] = dateString.split("-");
+    return `${dd}-${mm}-${yyyy}`;
+  };
 
-  // const initialProfileData: UserData = {
-  //   firstName: contextUser?.firstName || "",
-  //   surname: contextUser?.surname || "",
-  //   location: contextUser?.location || "",
-  //   contactInformation: {
-  //     mobile: contextUser?.contactInformation?.mobile || "",
-  //     email: contextUser?.contactInformation?.email || "",
-  //   },
-  //   profilePicture:
-  //     contextUser?.profilePicture ||
-  //     "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
-  //   dob: contextUser?.dob || "", // DD-MM-YYYY format
-  //   age: calculateAge(contextUser?.dob || ""), // Calculate initial age
-  //   gender: contextUser?.gender || "",
-  //   userId: "",
-  // };
-
-  const initialProfileData: UserData = {
+  const [initialProfileData, setInitialProfileData] = useState<UserData>({
     firstName: "Aidan",
     surname: "Chee",
     location: "Syd",
@@ -67,28 +50,50 @@ const Profile = () => {
     profilePicture:
       contextUser?.profilePicture ||
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
-    dob: "17-02-2002", // DD-MM-YYYY format
-    age: calculateAge("2002-17-02"), // Calculate initial age
+    dob: "17-01-2002", // DD-MM-YYYY format
+    age: calculateAge("17-01-2002"), // Calculate initial age
     gender: "Female",
     userId: "",
-  };
 
-  const [editedData, setEditedData] = useState({ ...initialProfileData });
+    // firstName: contextUser?.firstName || "",
+    // surname: contextUser?.surname || "",
+    // location: contextUser?.location || "",
+    // contactInformation: {
+    //   mobile: contextUser?.contactInformation?.mobile || "",
+    //   email: contextUser?.contactInformation?.email || "",
+    // },
+    // profilePicture:
+    //   contextUser?.profilePicture ||
+    //   "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+    // dob: contextUser?.dob || "", // DD-MM-YYYY format
+    // age: calculateAge(contextUser?.dob || ""), // Calculate initial age
+    // gender: contextUser?.gender || "",
+    // userId: "",
+  });
+
+  useEffect(() => {
+    console.log(initialProfileData);
+  }, [initialProfileData]);
 
   const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = changeEvent.target;
-    if (name === "birthday") {
+    if (name === "dob") {
       setEditedData((prevData) => ({
         ...prevData,
-        dob: value,
-        age: calculateAge(value),
+        dob: formatDateForProfile(value),
+        age: calculateAge(formatDateForProfile(value)),
       }));
     } else {
       setEditedData((prevData) => ({ ...prevData, [name]: value }));
     }
   };
 
-  const handleFileInputChange =
+  const handleSelectChange = (changeEvent: ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = changeEvent.target;
+    setEditedData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  // const handleFileInputChange =
 
   const handleInputChangeContact = (
     changeEvent: ChangeEvent<HTMLInputElement>
@@ -114,9 +119,22 @@ const Profile = () => {
     setIsHovered(false);
   };
 
+  const handleEditClick = () => {
+    if (editable) {
+      setEditedData({ ...initialProfileData });
+    }
+    setEditable(!editable);
+  };
+
+  const [editedData, setEditedData] = useState<UserData>({
+    ...initialProfileData,
+  });
+
   const handleSaveClick = () => {
     console.log("Saving changes:", editedData);
     setEditable(false);
+
+    setInitialProfileData({ ...editedData });
   };
 
   const renderEditableField = (
@@ -132,12 +150,27 @@ const Profile = () => {
           name={name as string}
           value={
             editable
-              ? (editedData[name] as string)
-              : (initialProfileData[name] as string)
+              ? formatDateForInput(editedData[name] as string)
+              : formatDateForInput(initialProfileData[name] as string)
           }
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
         />
+      ) : label === "Gender" ? (
+        <select
+          name={name as string}
+          value={
+            editable
+              ? (editedData[name] as string)
+              : (initialProfileData[name] as string)
+          }
+          onChange={handleSelectChange}
+          className="mt-1 p-2 border rounded-md w-full"
+        >
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
       ) : (
         <input
           type="text"
@@ -154,15 +187,16 @@ const Profile = () => {
     </div>
   );
 
-  const renderEditableFieldContact = (
+  const renderEditableFieldMobile = (
     label: string,
-    name: "mobile" | "email",
+    name: "mobile",
     type = "text"
   ) => (
     <div key={name} className="mb-4">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       <input
         type="text"
+        pattern="[0-9]*"
         name={`contactInformation.${name}`}
         value={
           editable
@@ -170,15 +204,20 @@ const Profile = () => {
             : (initialProfileData.contactInformation?.[name] as string)
         }
         onChange={handleInputChangeContact}
+        onKeyDown={(e) => {
+          const key = e.key;
+          if (key === "Backspace" || key === "Delete") {
+            return;
+          }
+          if (!/[0-9]/.test(key)) {
+            e.preventDefault();
+          }
+        }}
+        inputMode="tel"
         className="mt-1 p-2 border rounded-md w-full"
       />
     </div>
   );
-
-  const formatDateForInput = (dateString: string) => {
-    const [dd, mm, yyyy] = dateString.split("-");
-    return `${yyyy}-${mm}-${dd}`;
-  };
 
   const renderField = (label: string, name: string) => (
     <div key={label} className="mb-4">
@@ -268,8 +307,8 @@ const Profile = () => {
                 <div className="space-y-4 text-md lg:text-lg 3xl:text-xl">
                   {renderEditableField("Given Name", "firstName")}
                   {renderEditableField("Surname", "surname")}
-                  {renderEditableFieldContact("Email", "email")}
-                  {renderEditableFieldContact("Phone Number", "mobile")}
+                  {/* {renderEditableFieldContact("Email", "email")} */}
+                  {renderEditableFieldMobile("Phone Number", "mobile")}
                   {renderEditableField("Gender", "gender")}
                   {renderEditableField("Date of Birth", "dob")}
                   {renderEditableField("Location", "location")}
@@ -338,7 +377,7 @@ const Profile = () => {
                           type="file"
                           id="Image_input"
                           className="hidden"
-                          onChange={handleFileInputChange}
+                          // onChange={handleFileInputChange}
                           accept=".jpg,.jpeg,.png"
                         />
                         <Image
