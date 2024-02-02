@@ -11,6 +11,7 @@ import x from "./../../public/images/x.png";
 import { updateUser } from "@/services/usersService";
 import Loading from "@/components/Loading";
 import { sleep } from "@/utilities/sleepUtil";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -28,10 +29,13 @@ const calculateAge = (birthday: string) => {
 };
 
 const Profile = () => {
+  const storage = getStorage();
+
   const [editable, setEditable] = useState(false);
 
+  const [isProfilePictureUpdated, setIsProfilePictureUpdated] = useState(false);
+
   const { user, setUser } = useUser();
-  console.log(user);
 
   const formatDateForInput = (dateString: string) => {
     const [dd, mm, yyyy] = dateString.split("-");
@@ -87,9 +91,6 @@ const Profile = () => {
       });
     }
     setInitialState();
-    // .then(() => {
-    //   setLoading(false);
-    // });
   }, [user]);
 
   useEffect(() => {
@@ -118,7 +119,38 @@ const Profile = () => {
     setEditedData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  // const handleFileInputChange =
+  useEffect(() => {
+    if (isProfilePictureUpdated) {
+      // Call updateUser only when profile picture update is complete
+      updateUser(initialProfileData.userId, editedData);
+      setInitialProfileData({ ...editedData });
+      setIsProfilePictureUpdated(false);
+    }
+  }, [isProfilePictureUpdated, editedData, initialProfileData]);
+
+  const handleFileInputChange = async (event) => {
+    const file = event.target.files[0];
+
+    if (file) {
+      try {       
+        const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${file.name}`);
+
+        await uploadBytes(storageRef, file);
+
+        const downloadURL = await getDownloadURL(storageRef);
+
+        setEditedData(
+          (prevData) =>
+            ({
+              ...prevData,
+              profilePicture: downloadURL,
+            } as UserData)
+        );
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
+    }
+  };
 
   const handleInputChangeMobile = (
     changeEvent: ChangeEvent<HTMLInputElement>
@@ -389,7 +421,7 @@ const Profile = () => {
                           type="file"
                           id="Image_input"
                           className="hidden"
-                          // onChange={handleFileInputChange}
+                          onChange={handleFileInputChange}
                           accept=".jpg,.jpeg,.png"
                         />
                         <Image
