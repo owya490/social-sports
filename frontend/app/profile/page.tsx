@@ -1,6 +1,6 @@
 "use client";
 import { useUser } from "@/components/utility/UserContext";
-import { UserData } from "@/interfaces/UserTypes";
+import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
@@ -8,6 +8,9 @@ import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
 import x from "./../../public/images/x.png";
+import { updateUser } from "@/services/usersService";
+import Loading from "@/components/Loading";
+import { sleep } from "@/utilities/sleepUtil";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -27,7 +30,8 @@ const calculateAge = (birthday: string) => {
 const Profile = () => {
   const [editable, setEditable] = useState(false);
 
-  const { user: contextUser, setUser: setContextUser } = useUser();
+  const { user, setUser } = useUser();
+  console.log(user);
 
   const formatDateForInput = (dateString: string) => {
     const [dd, mm, yyyy] = dateString.split("-");
@@ -39,40 +43,61 @@ const Profile = () => {
     return `${dd}-${mm}-${yyyy}`;
   };
 
-  const [initialProfileData, setInitialProfileData] = useState<UserData>({
-    firstName: "Aidan",
-    surname: "Chee",
-    location: "Syd",
-    contactInformation: {
-      mobile: "0468368618",
-      email: "aidan@gmail.com",
-    },
-    profilePicture:
-      contextUser?.profilePicture ||
-      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
-    dob: "17-01-2002", // DD-MM-YYYY format
-    age: calculateAge("17-01-2002"), // Calculate initial age
-    gender: "Female",
-    userId: "",
+  const [initialProfileData, setInitialProfileData] =
+    useState<UserData>(EmptyUserData);
+  const [editedData, setEditedData] = useState<UserData>(EmptyUserData);
 
-    // firstName: contextUser?.firstName || "",
-    // surname: contextUser?.surname || "",
-    // location: contextUser?.location || "",
-    // contactInformation: {
-    //   mobile: contextUser?.contactInformation?.mobile || "",
-    //   email: contextUser?.contactInformation?.email || "",
-    // },
-    // profilePicture:
-    //   contextUser?.profilePicture ||
-    //   "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
-    // dob: contextUser?.dob || "", // DD-MM-YYYY format
-    // age: calculateAge(contextUser?.dob || ""), // Calculate initial age
-    // gender: contextUser?.gender || "",
-    // userId: "",
-  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log(initialProfileData);
+    window.scrollTo(0, 0);
+
+    async function setInitialState() {
+      setInitialProfileData({
+        firstName: user?.firstName || "",
+        surname: user?.surname || "",
+        location: user?.location || "",
+        contactInformation: {
+          mobile: user?.contactInformation?.mobile || "",
+          email: user?.contactInformation?.email || "",
+        },
+        profilePicture:
+          user?.profilePicture ||
+          "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+        dob: user?.dob || "", // DD-MM-YYYY format
+        age: calculateAge(user?.dob || ""), // Calculate initial age
+        gender: user?.gender || undefined,
+        userId: user?.userId || "",
+      });
+      setEditedData({
+        firstName: user?.firstName || "",
+        surname: user?.surname || "",
+        location: user?.location || "",
+        contactInformation: {
+          mobile: user?.contactInformation?.mobile || "",
+          email: user?.contactInformation?.email || "",
+        },
+        profilePicture:
+          user?.profilePicture ||
+          "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+        dob: user?.dob || "", // DD-MM-YYYY format
+        age: calculateAge(user?.dob || ""), // Calculate initial age
+        gender: user?.gender || undefined,
+        userId: user?.userId || "",
+      });
+    }
+    setInitialState();
+    // .then(() => {
+    //   setLoading(false);
+    // });
+  }, [user]);
+
+  useEffect(() => {
+    if (initialProfileData.firstName !== "") {
+      sleep(1500).then(() => {
+        setLoading(false);
+      });
+    }
   }, [initialProfileData]);
 
   const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
@@ -95,18 +120,16 @@ const Profile = () => {
 
   // const handleFileInputChange =
 
-  const handleInputChangeContact = (
+  const handleInputChangeMobile = (
     changeEvent: ChangeEvent<HTMLInputElement>
   ) => {
-    const { name, value } = changeEvent.target;
-    const [parentKey, childKey] = name.split(".");
-    setEditedData((prevData) => ({
-      ...prevData,
-      [parentKey]: {
-        ...prevData[parentKey],
-        [childKey]: value,
+    setEditedData({
+      ...editedData,
+      contactInformation: {
+        email: editedData.contactInformation!.email,
+        mobile: changeEvent.target.value,
       },
-    }));
+    });
   };
 
   const [isHovered, setIsHovered] = useState(false);
@@ -126,22 +149,14 @@ const Profile = () => {
     setEditable(!editable);
   };
 
-  const [editedData, setEditedData] = useState<UserData>({
-    ...initialProfileData,
-  });
-
   const handleSaveClick = () => {
     console.log("Saving changes:", editedData);
     setEditable(false);
-
+    updateUser(initialProfileData.userId, editedData);
     setInitialProfileData({ ...editedData });
   };
 
-  const renderEditableField = (
-    label: string,
-    name: keyof UserData,
-    type = "text"
-  ) => (
+  const renderEditableField = (label: string, name: keyof UserData) => (
     <div key={name} className="mb-4">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       {label === "Date of Birth" ? (
@@ -187,11 +202,7 @@ const Profile = () => {
     </div>
   );
 
-  const renderEditableFieldMobile = (
-    label: string,
-    name: "mobile",
-    type = "text"
-  ) => (
+  const renderEditableFieldMobile = (label: string, name: "mobile") => (
     <div key={name} className="mb-4">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       <input
@@ -203,7 +214,7 @@ const Profile = () => {
             ? (editedData.contactInformation?.[name] as string)
             : (initialProfileData.contactInformation?.[name] as string)
         }
-        onChange={handleInputChangeContact}
+        onChange={handleInputChangeMobile}
         onKeyDown={(e) => {
           const key = e.key;
           if (key === "Backspace" || key === "Delete") {
@@ -307,7 +318,6 @@ const Profile = () => {
                 <div className="space-y-4 text-md lg:text-lg 3xl:text-xl -mt-1">
                   {renderEditableField("Given Name", "firstName")}
                   {renderEditableField("Surname", "surname")}
-                  {/* {renderEditableFieldContact("Email", "email")} */}
                   {renderEditableFieldMobile("Phone Number", "mobile")}
                   {renderEditableField("Gender", "gender")}
                   {renderEditableField("Date of Birth", "dob")}
@@ -330,7 +340,9 @@ const Profile = () => {
     </Transition>
   );
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className="w-screen flex justify-center">
       <div className="w-screen mx-10 sm:mx-0 sm:w-[400px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 3xl:w-[1400px]">
         <div className="relative mt-[92px] lg:mt-[120px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[4vw]">
@@ -542,7 +554,7 @@ const Profile = () => {
               <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">Security</div>
             </div>
             <ul className="w-full">{renderField("Password", "password")}</ul> */}
-            {/* <div className="flex justify-start my-6 3xl:my-8">
+            <div className="flex justify-start my-6 3xl:my-8">
               {renderModalContent()}
               <button
                 type="button"
@@ -551,7 +563,7 @@ const Profile = () => {
               >
                 Edit
               </button>
-            </div> */}
+            </div>
           </div>
         </div>
       </div>
