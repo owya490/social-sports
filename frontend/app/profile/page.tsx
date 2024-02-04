@@ -43,6 +43,8 @@ const Profile = () => {
 
   const { user, setUser } = useUser();
 
+  const today = new Date();
+
   const formatDateForInput = (dateString: string) => {
     const [dd, mm, yyyy] = dateString.split("-");
     return `${yyyy}-${mm}-${dd}`;
@@ -64,20 +66,20 @@ const Profile = () => {
 
     async function setInitialState() {
       setInitialProfileData({
-        firstName: user?.firstName || "",
-        surname: user?.surname || "",
-        location: user?.location || "",
+        firstName: user?.firstName || "Not Provided",
+        surname: user?.surname || "Not Provided",
+        location: user?.location || "Not Provided",
         contactInformation: {
-          mobile: user?.contactInformation?.mobile || "",
-          email: user?.contactInformation?.email || "",
+          mobile: user?.contactInformation?.mobile || "Not Provided",
+          email: user?.contactInformation?.email || "Not Provided",
         },
         profilePicture:
           user?.profilePicture ||
           "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
-        dob: user?.dob || "", // DD-MM-YYYY format
-        age: calculateAge(user?.dob || ""), // Calculate initial age
+        dob: user?.dob || "Not Provided", // DD-MM-YYYY format
+        age: calculateAge(user?.dob || "") || "Not Provided", // Calculate initial age
         gender: user?.gender || undefined,
-        userId: user?.userId || "",
+        userId: user?.userId || "Not Provided",
       });
       setEditedData({
         firstName: user?.firstName || "",
@@ -110,10 +112,14 @@ const Profile = () => {
   const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = changeEvent.target;
     if (name === "dob") {
+      console.log(`${value}`);
       setEditedData((prevData) => ({
         ...prevData,
-        dob: formatDateForProfile(value),
-        age: calculateAge(formatDateForProfile(value)),
+        dob:
+          typeof value === "undefined"
+            ? "Not Provided"
+            : formatDateForProfile(value),
+        age: value === "NaN" ? "" : calculateAge(formatDateForProfile(value)),
       }));
     } else {
       setEditedData((prevData) => ({ ...prevData, [name]: value }));
@@ -224,6 +230,7 @@ const Profile = () => {
               : formatDateForInput(initialProfileData[name] as string)
           }
           onChange={handleInputChange}
+          max={today.toISOString().split("T")[0]}
           className="mt-1 p-2 border rounded-md w-full"
         />
       ) : label === "Gender" ? (
@@ -237,6 +244,7 @@ const Profile = () => {
           onChange={handleSelectChange}
           className="mt-1 p-2 border rounded-md w-full"
         >
+          <option value="Not Provided">Not Provided</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
           <option value="Other">Other</option>
@@ -466,7 +474,10 @@ const Profile = () => {
                   <div className="flex justify-center lg:justify-start mt-5 3xl:mt-9 text-xl 3xl:text-3xl font-semibold">
                     <span className="lg:whitespace-no-wrap">
                       {initialProfileData.firstName}{" "}
-                      {initialProfileData.surname?.slice(0, 1)}, {""}
+                      {initialProfileData.surname === "Not Provided"
+                        ? ""
+                        : initialProfileData.surname?.slice(0, 1)}
+                      , {""}
                       {initialProfileData.age}
                     </span>
                   </div>

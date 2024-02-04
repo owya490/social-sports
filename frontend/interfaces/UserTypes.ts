@@ -4,7 +4,7 @@ interface AbstractUserData {
   firstName: string;
   surname: string;
   location?: string;
-  gender?: "Male" | "Female" | "Other";
+  gender?: "Male" | "Female" | "Other" | "Not Provided";
   dob?: string;
   age?: string;
   contactInformation?: {

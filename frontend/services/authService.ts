@@ -27,6 +27,8 @@ export async function handleEmailAndPasswordSignUp(data: userAuthData) {
     const userDocRef = doc(db, "Users", userCredential.user.uid);
     const userDataToSet = {
       firstName: data.firstName,
+      contactInformation: { email: data.email },
+
       //add more fields here
     };
     await setDoc(userDocRef, userDataToSet);
