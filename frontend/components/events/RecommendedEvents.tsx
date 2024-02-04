@@ -1,11 +1,11 @@
 "use client";
 import { EventData } from "@/interfaces/EventTypes";
 import { getAllEvents } from "@/services/eventsService";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import EventCard from "../EventCard";
 import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
-import Link from "next/link";
 
 interface RecommendedEventsProps {
   eventData?: EventData;
@@ -17,12 +17,11 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
   useEffect(() => {
     const newRecommendedEvents: EventData[] = [];
     getAllEvents().then((data) => {
-      newRecommendedEvents.push(data[0]);
-      newRecommendedEvents.push(data[1]);
-      newRecommendedEvents.push(data[2]);
-      newRecommendedEvents.push(data[3]);
-      newRecommendedEvents.push(data[4]);
-      newRecommendedEvents.push(data[5]);
+      for (let i = 0; i < 5; i++) {
+        if (data[i] !== undefined) {
+          newRecommendedEvents.push(data[i]);
+        }
+      }
       setRecommendedEvents(newRecommendedEvents);
     });
   }, []);
