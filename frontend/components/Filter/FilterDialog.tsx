@@ -228,8 +228,7 @@ export default function FilterDialog({
                       <h4 className='text-lg font-bold'>Sort By</h4>
                       <div className='mt-2'>
                         <ListBox
-                          // sortByCategory={SortByCategory}
-                          onChangeHandler={function (e: any): void {
+                          onChangeHandler={function (e: SortByCategory): void {
                             //   throw new Error("Function not implemented.");
                             setSortByCategoryValue(e);
                           }}
