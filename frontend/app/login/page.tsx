@@ -1,10 +1,8 @@
 "use client";
 import { handleEmailAndPasswordSignIn } from "@/services/authService";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
-import { useUser } from "@/components/utility/UserContext";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 
 export default function Login() {
   const [userData, setUserData] = useState({
@@ -21,21 +19,22 @@ export default function Login() {
       await handleEmailAndPasswordSignIn(userData.email, userData.password);
       router.push("/dashboard?login=success");
     } catch (error) {
-      setShowLoginFailure(true);
+      // setShowLoginFailure(true);
       console.error("Error:", error);
     }
   };
 
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
-      <Alert
+      {/* <Alert
         open={showLoginFailure}
         onClose={() => setShowLoginFailure(false)}
         color="red"
         className="absolute ml-auto mr-auto left-0 right-0 top-24 w-fit"
       >
         Wrong email or password!
-      </Alert>
+      </Alert> */}
+
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <h1 className="text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
           Sign in to your account
