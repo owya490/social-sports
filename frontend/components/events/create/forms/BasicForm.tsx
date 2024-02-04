@@ -97,8 +97,8 @@ export function BasicInformation({
             What’s the name of your event?
           </label>
           <p className="text-sm mb-5 mt-2">
-            This will be your event’s title. Your title will be used to help
-            create your event’s summary, description, category, and tags – so be
+            This will be your event&apos;s title. Your title will be used to help
+            create your event&apos;s summary, description, category, and tags – so be
             specific!
           </p>
           <Input
@@ -187,7 +187,7 @@ export function BasicInformation({
           </label>
           <p className="text-sm mt-2 mb-5">
             Event price is the cost of each ticket. Event capacity is the total
-            number of tickets you're willing to sell.
+            number of tickets you&apos;re willing to sell.
           </p>
 
           <div className="w-full px-5">
