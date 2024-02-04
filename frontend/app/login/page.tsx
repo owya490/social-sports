@@ -1,10 +1,9 @@
 "use client";
 import { handleEmailAndPasswordSignIn } from "@/services/authService";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
-import { useUser } from "@/components/utility/UserContext";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 
 export default function Login() {
   const [userData, setUserData] = useState({
@@ -36,6 +35,7 @@ export default function Login() {
       >
         Wrong email or password!
       </Alert>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <h1 className="text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
           Sign in to your account
