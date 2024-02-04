@@ -23,7 +23,9 @@ export async function createUser(data: NewUserData): Promise<UserId> {
 export async function getUserById(userId: UserId): Promise<UserData> {
     try {
         const userDoc = await getDoc(doc(db, "Users", userId));
-        return userDoc.data() as UserData;
+        const userData = userDoc.data() as UserData;
+        userData.userId = userId;
+        return userData;
     } catch (error) {
         console.error(error);
         throw error;

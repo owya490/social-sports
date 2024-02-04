@@ -2,13 +2,12 @@
 import { getAllEvents, getEventById } from '@/services/eventsService';
 import { useEffect, useState } from 'react';
 import { searchEventsByKeyword } from '@/services/eventsService';
-import { useRouter } from 'next/navigation';
-import { useSearchParams } from 'next/navigation';
-import { EventData } from '@/interfaces/EventTypes';
-import Loading from '@/components/Loading';
-import FilterBanner from '@/components/Filter/FilterBanner';
-import EventCard from '@/components/EventCard';
 import { Alert } from '@material-tailwind/react';
+import FilterBanner from '@/components/Filter/FilterBanner';
+import Loading from '@/components/Loading';
+import EventCard from '@/components/events/EventCard';
+import { EventData } from '@/interfaces/EventTypes';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);

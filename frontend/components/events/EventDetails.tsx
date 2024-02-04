@@ -37,7 +37,7 @@ export function EventDetails(props: EventDetailsProps) {
           <div className="mx-2 lg:w-2/3 xl:w-3/4">
             <EventDescription
               title={eventData.name}
-              description={[eventData.description]} // TODO make firebase take string
+              description={eventData.description} // TODO make firebase take string
             />
             <div className="flex">
               <div className="hidden lg:block">

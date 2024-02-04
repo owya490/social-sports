@@ -1,13 +1,14 @@
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import {
+  FacebookAuthProvider,
+  GoogleAuthProvider,
+  UserCredential,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
-  GoogleAuthProvider,
-  FacebookAuthProvider,
-  UserCredential,
   signOut,
 } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, authUser, db } from "./firebase";
 
 export interface userAuthData {
@@ -36,9 +37,10 @@ export async function handleEmailAndPasswordSignUp(data: userAuthData) {
   }
 }
 
-export async function handleSignOut() {
+export async function handleSignOut(setUser: (user: UserData) => void) {
   try {
     await signOut(auth);
+    setUser(EmptyUserData);
     console.log("Signed out!");
   } catch (error) {
     throw error;
