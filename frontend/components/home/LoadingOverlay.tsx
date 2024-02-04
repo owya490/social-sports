@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect } from "react";
 import Logo from "../../public/images/black-logo.png";
-import { sleep } from "../utility/sleepUtil";
+import { sleep } from "../../utilities/sleepUtil";
 
 export default function LoadingOverlay({
   shouldAnimate,

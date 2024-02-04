@@ -19,10 +19,12 @@ import {
   where,
 } from "firebase/firestore";
 
+import { Logger } from "@/observability/logger";
 import { db } from "./firebase";
 import { getUserById } from "./usersService";
 
 const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
+const eventServiceLogger = new Logger("eventServiceLogger");
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
@@ -59,6 +61,7 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
 
 // Function to retrieve all events
 export async function getAllEvents(): Promise<EventData[]> {
+  eventServiceLogger.info("Getting all events");
   const currentDate = new Date();
 
   if (
@@ -72,6 +75,7 @@ export async function getAllEvents(): Promise<EventData[]> {
   }
   try {
     console.log("Getting events from DB");
+    eventServiceLogger.info("Getting events from DB");
     const eventCollectionRef = collection(db, "Events");
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];

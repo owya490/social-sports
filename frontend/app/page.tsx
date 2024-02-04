@@ -7,8 +7,9 @@ import NewsletterSignup from "@/components/home/NewsletterSignup";
 import PopularEvents from "@/components/home/PopularEvents";
 import PopularLocations from "@/components/home/PopularLocations";
 import SearchSport from "@/components/home/SearchSport";
-import { sleep } from "@/components/utility/sleepUtil";
+import { sleep } from "@/utilities/sleepUtil";
 import { useEffect, useState } from "react";
+import { getEnvironment } from "../utilities/environment";
 
 export default function Home() {
   const [shouldAnimate, setShouldAnimate] = useState(false);

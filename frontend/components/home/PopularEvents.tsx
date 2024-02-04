@@ -17,12 +17,11 @@ export default function PopularEvents(props: PopularEventsProps) {
   useEffect(() => {
     const newRecommendedEvents: EventData[] = [];
     getAllEvents().then((data) => {
-      newRecommendedEvents.push(data[0]);
-      newRecommendedEvents.push(data[1]);
-      newRecommendedEvents.push(data[2]);
-      newRecommendedEvents.push(data[3]);
-      newRecommendedEvents.push(data[4]);
-      newRecommendedEvents.push(data[5]);
+      for (let i = 0; i < 5; i++) {
+        if (data[i] !== undefined) {
+          newRecommendedEvents.push(data[i]);
+        }
+      }
       setRecommendedEvents(newRecommendedEvents);
     });
   }, []);
