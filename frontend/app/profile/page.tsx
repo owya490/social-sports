@@ -11,7 +11,13 @@ import x from "./../../public/images/x.png";
 import { updateUser } from "@/services/usersService";
 import Loading from "@/components/Loading";
 import { sleep } from "@/utilities/sleepUtil";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -121,19 +127,35 @@ const Profile = () => {
 
   useEffect(() => {
     if (isProfilePictureUpdated) {
-      // Call updateUser only when profile picture update is complete
       updateUser(initialProfileData.userId, editedData);
       setInitialProfileData({ ...editedData });
       setIsProfilePictureUpdated(false);
     }
   }, [isProfilePictureUpdated, editedData, initialProfileData]);
 
-  const handleFileInputChange = async (event) => {
-    const file = event.target.files[0];
+  const handleFileInputChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = event.target?.files;
 
-    if (file) {
-      try {       
-        const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${file.name}`);
+    if (files && files.length > 0) {
+      const file = files[0];
+
+      try {
+        const storageRef = ref(
+          storage,
+          `users/${initialProfileData.userId}/profilepicture/${file.name}`
+        );
+
+        const previousProfilePictureURL = initialProfileData.profilePicture;
+
+        if (previousProfilePictureURL) {
+          const previousProfilePictureRef = ref(
+            storage,
+            previousProfilePictureURL
+          );
+          await deleteObject(previousProfilePictureRef);
+        }
 
         await uploadBytes(storageRef, file);
 
@@ -150,6 +172,7 @@ const Profile = () => {
         console.error("Error uploading file:", error);
       }
     }
+    setIsProfilePictureUpdated(true);
   };
 
   const handleInputChangeMobile = (
