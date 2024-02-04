@@ -20,3 +20,5 @@
 //   let user = auth.currentUser;
 //   user?.delete();
 // });
+
+test('temporary', () => {});
