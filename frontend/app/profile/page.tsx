@@ -112,14 +112,10 @@ const Profile = () => {
   const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = changeEvent.target;
     if (name === "dob") {
-      console.log(`${value}`);
       setEditedData((prevData) => ({
         ...prevData,
-        dob:
-          typeof value === "undefined"
-            ? "Not Provided"
-            : formatDateForProfile(value),
-        age: value === "NaN" ? "" : calculateAge(formatDateForProfile(value)),
+        dob: value == "" ? "Not Provided" : formatDateForProfile(value),
+        age: value == "" ? "" : calculateAge(formatDateForProfile(value)),
       }));
     } else {
       setEditedData((prevData) => ({ ...prevData, [name]: value }));
@@ -477,12 +473,14 @@ const Profile = () => {
                       {initialProfileData.surname === "Not Provided"
                         ? ""
                         : initialProfileData.surname?.slice(0, 1)}
-                      , {""}
-                      {initialProfileData.age}
+                      {initialProfileData.age !== "" &&
+                        `, ${initialProfileData.age}`}
                     </span>
                   </div>
                   <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-lg 3xl:text-xl">
-                    {initialProfileData.location}
+                    {initialProfileData.location === "Not Provided"
+                      ? ""
+                      : initialProfileData.location}
                   </div>
                 </div>
               </div>
