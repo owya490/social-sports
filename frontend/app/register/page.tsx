@@ -1,6 +1,6 @@
 "use client";
 import { handleEmailAndPasswordSignUp } from "@/services/authService";
-// import { Alert } from "@material-tailwind/react";
+import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,7 +59,7 @@ export default function Register() {
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        {/* <Alert
+        <Alert
           open={passwordMismatch}
           onClose={() => setPasswordMismatch(false)}
           color="red"
@@ -74,7 +74,7 @@ export default function Register() {
           className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
         >
           {error}
-        </Alert> */}
+        </Alert>
         <h2 className="mt-[5vh] sm:mt-0 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 ">
           Register your account
         </h2>
