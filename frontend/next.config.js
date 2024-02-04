@@ -21,7 +21,7 @@ const nextConfig = {
     ENVIRONMENT: process.env.ENVIRONMENT,
   },
   images: {
-    domains: ["firebasestorage.googleapis.com"],
+    domains: ['firebasestorage.googleapis.com'],
     unoptimized: true,
   },
   // https://github.com/open-telemetry/opentelemetry-js/issues/4173#issuecomment-1822938936 to prevent console spamming for
@@ -35,6 +35,7 @@ const nextConfig = {
     }
     return config;
   },
+  experimental: { missingSuspenseWithCSRBailout: false },
 };
 
 module.exports = nextConfig;
