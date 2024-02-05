@@ -17,7 +17,9 @@ import {
   uploadBytes,
   getDownloadURL,
   deleteObject,
+  getMetadata,
 } from "firebase/storage";
+import { User } from "firebase/auth";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -66,20 +68,20 @@ const Profile = () => {
 
     async function setInitialState() {
       setInitialProfileData({
-        firstName: user?.firstName || "Not Provided",
-        surname: user?.surname || "Not Provided",
-        location: user?.location || "Not Provided",
+        firstName: user?.firstName || "",
+        surname: user?.surname || "",
+        location: user?.location || "",
         contactInformation: {
-          mobile: user?.contactInformation?.mobile || "Not Provided",
-          email: user?.contactInformation?.email || "Not Provided",
+          mobile: user?.contactInformation?.mobile || "",
+          email: user?.contactInformation?.email || "",
         },
         profilePicture:
           user?.profilePicture ||
           "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
-        dob: user?.dob || "Not Provided", // DD-MM-YYYY format
-        age: calculateAge(user?.dob || "") || "Not Provided", // Calculate initial age
-        gender: user?.gender || undefined,
-        userId: user?.userId || "Not Provided",
+        dob: user?.dob || "", // DD-MM-YYYY format
+        age: calculateAge(user?.dob || "") || "", // Calculate initial age
+        gender: user?.gender || "",
+        userId: user?.userId || "",
       });
       setEditedData({
         firstName: user?.firstName || "",
@@ -94,7 +96,7 @@ const Profile = () => {
           "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
         dob: user?.dob || "", // DD-MM-YYYY format
         age: calculateAge(user?.dob || ""), // Calculate initial age
-        gender: user?.gender || undefined,
+        gender: user?.gender || "",
         userId: user?.userId || "",
       });
     }
@@ -156,25 +158,31 @@ const Profile = () => {
             storage,
             previousProfilePictureURL
           );
-          await deleteObject(previousProfilePictureRef);
+
+          try {
+            await getMetadata(previousProfilePictureRef);
+            await deleteObject(previousProfilePictureRef);
+          } catch (error) {
+            if ((error as any).code !== "storage/object-not-found") {
+              console.error("Error deleting previous profile picture:", error);
+            }
+          }
         }
 
         await uploadBytes(storageRef, file);
 
         const downloadURL = await getDownloadURL(storageRef);
 
-        setEditedData(
-          (prevData) =>
-            ({
-              ...prevData,
-              profilePicture: downloadURL,
-            } as UserData)
-        );
+        setEditedData((prevData) => ({
+          ...prevData,
+          profilePicture: downloadURL,
+        }));
+
+        setIsProfilePictureUpdated(true);
       } catch (error) {
         console.error("Error uploading file:", error);
       }
     }
-    setIsProfilePictureUpdated(true);
   };
 
   const handleInputChangeMobile = (
@@ -200,9 +208,6 @@ const Profile = () => {
   };
 
   const handleEditClick = () => {
-    if (editable) {
-      setEditedData({ ...initialProfileData });
-    }
     setEditable(!editable);
   };
 
@@ -239,8 +244,9 @@ const Profile = () => {
           }
           onChange={handleSelectChange}
           className="mt-1 p-2 border rounded-md w-full"
+          placeholder="Not Provided"
         >
-          <option value="Not Provided">Not Provided</option>
+          <option value="">Not Provided</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
           <option value="Other">Other</option>
@@ -256,6 +262,7 @@ const Profile = () => {
           }
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
+          placeholder="Not Provided"
         />
       )}
     </div>
@@ -285,6 +292,7 @@ const Profile = () => {
         }}
         inputMode="tel"
         className="mt-1 p-2 border rounded-md w-full"
+        placeholder="Not Provided"
       />
     </div>
   );
@@ -300,8 +308,8 @@ const Profile = () => {
             name === "email" ? "break-all" : ""
           }`}
         >
-          {name === "password"
-            ? "********"
+          {(initialProfileData[name as keyof UserData] as string) === ""
+            ? "Not Provided"
             : (initialProfileData[name as keyof UserData] as string)}
         </span>
       </div>
@@ -319,7 +327,9 @@ const Profile = () => {
             name === "email" ? "break-all" : ""
           }`}
         >
-          {initialProfileData.contactInformation?.[name]}
+          {(initialProfileData.contactInformation?.[name] as string) === ""
+            ? "Not Provided"
+            : (initialProfileData.contactInformation?.[name] as string)}
         </span>
       </div>
     </div>
@@ -474,6 +484,8 @@ const Profile = () => {
                         ? ""
                         : initialProfileData.surname?.slice(0, 1)}
                       {initialProfileData.age !== "" &&
+                        initialProfileData.dob !== "Not Provided" &&
+                        initialProfileData.dob !== "" &&
                         `, ${initialProfileData.age}`}
                     </span>
                   </div>
@@ -548,13 +560,6 @@ const Profile = () => {
               }}
             >
               <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Name</div>
-              {/* <div
-                className="flex justify-end text-sm lg:text-md"
-                onClick={handleEditClick}
-              >
-                {renderModalContent()}
-                <u>Edit</u>
-              </div> */}
             </div>
             <ul className="w-full">
               {renderField("Given Name", "firstName")}
@@ -572,13 +577,6 @@ const Profile = () => {
               <div className="mb-1 md:mb-2 lg:mt-1 justify-start">
                 Contact Info
               </div>
-              {/* <div
-                className="flex justify-end text-sm lg:text-md"
-                onClick={handleEditClick}
-              >
-                {renderModalContent()}
-                <u>Edit</u>
-              </div> */}
             </div>
             <ul className="w-full">
               {renderFieldContact("Email", "email")}
@@ -594,30 +592,12 @@ const Profile = () => {
               }}
             >
               <div className="mb-1 md:mb-2 lg:mt-1 justify-start">About Me</div>
-              {/* <div
-                className="flex justify-end text-sm lg:text-md"
-                onClick={handleEditClick}
-              >
-                {renderModalContent()}
-                <u>Edit</u>
-              </div> */}
             </div>
             <ul className="w-full">
               {renderField("Gender", "gender")}
               {renderField("Date of Birth", "dob")}
               {renderField("Location", "location")}
             </ul>
-            {/* <div
-              className="mb-2 text-xl lg:text-2xl"
-              style={{
-                fontWeight: 400,
-                borderBottom: "2px solid #ccc",
-                width: "100%",
-              }}
-            >
-              <div className="mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">Security</div>
-            </div>
-            <ul className="w-full">{renderField("Password", "password")}</ul> */}
             <div className="flex justify-start my-6 3xl:my-8">
               {renderModalContent()}
               <button
