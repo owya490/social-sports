@@ -2,10 +2,11 @@
 import { EventData } from "@/interfaces/EventTypes";
 import { getAllEvents } from "@/services/eventsService";
 import Link from "next/link";
+
 import { useEffect, useState } from "react";
-import EventCard from "../EventCard";
 import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
+import EventCard from "./EventCard";
 
 interface RecommendedEventsProps {
   eventData?: EventData;

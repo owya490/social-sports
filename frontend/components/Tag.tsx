@@ -4,6 +4,7 @@ export interface TagProps {
   name: string;
   url?: string;
   size?: "sm" | "md" | "lg";
+  spacing?: boolean;
 }
 
 export default function Tag(props: TagProps) {
@@ -13,9 +14,14 @@ export default function Tag(props: TagProps) {
   } else if (props.size === "lg") {
     sizeStyle = "px-8 py-2 text-xl font-bold";
   }
+
+  let spacing = "";
+  if (props.spacing) {
+    spacing = "mr-2 mb-2";
+  }
   return (
     <button
-      className={`flex sm:inline-flexs items-center overflow-hidden ${sizeStyle} border-black border bg-white hover:bg-black hover:text-white transition-all text-black text-center rounded-md whitespace-nowrap`}
+      className={`flex sm:inline-flexs items-center overflow-hidden ${sizeStyle} ${spacing} border-black border bg-white hover:bg-black hover:text-white transition-all text-black text-center rounded-md whitespace-nowrap`}
       onClick={() => {
         window.open(props.url);
       }}

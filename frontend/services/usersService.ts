@@ -30,6 +30,15 @@ export async function getUserById(userId: UserId): Promise<UserData> {
     console.error(error);
     throw error;
   }
+    try {
+        const userDoc = await getDoc(doc(db, "Users", userId));
+        const userData = userDoc.data() as UserData;
+        userData.userId = userId;
+        return userData;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
 }
 
 export async function getAllUsers(): Promise<UserData[]> {

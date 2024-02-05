@@ -1,25 +1,26 @@
+import { EmptyUserData } from "@/interfaces/UserTypes";
+import { handleSignOut } from "@/services/authService";
+import { auth } from "@/services/firebase";
 import { Menu, Transition } from "@headlessui/react";
 import {
   ArrowLeftOnRectangleIcon,
-  ArrowRightOnRectangleIcon,
   Cog8ToothIcon,
   LifebuoyIcon,
   LightBulbIcon,
-  PencilSquareIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
-import Image from "next/image";
-import { Fragment, useEffect, useState } from "react";
-import DP from "./../../public/images/Ashley & Owen.png";
-import { handleSignOut } from "@/services/authService";
-import Link from "next/link";
-import { auth } from "@/services/firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Fragment, useEffect, useState } from "react";
+import { useUser } from "../utility/UserContext";
+import DP from "./../../public/images/Ashley & Owen.png";
 
 export default function ProfilePic() {
   const [loggedIn, setLoggedIn] = useState(false);
   const router = useRouter();
+  const { setUser } = useUser();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -34,7 +35,7 @@ export default function ProfilePic() {
   }, []);
 
   const handleLogOut = () => {
-    handleSignOut();
+    handleSignOut(setUser);
     router.push("/");
   };
 

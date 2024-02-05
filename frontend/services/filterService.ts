@@ -1,4 +1,4 @@
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData } from '@/interfaces/EventTypes';
 import {
   QueryFieldFilterConstraint,
   Timestamp,
@@ -7,10 +7,11 @@ import {
   limit,
   query,
   where,
-} from "firebase/firestore";
-import geofire from "geofire-common";
-import { db } from "./firebase";
-import { getDistanceBetweenTwoCoords } from "./locationUtils";
+} from 'firebase/firestore';
+import geofire from 'geofire-common';
+import { db } from './firebase';
+import { getDistanceBetweenTwoCoords } from './locationUtils';
+import { SortByCategory } from '../components/Filter/FilterDialog';
 
 interface ProximityInfo {
   center: geofire.Geopoint;
@@ -18,6 +19,53 @@ interface ProximityInfo {
 }
 
 const NUM_DOCS_QUERY_LIMIT = 15;
+export const NO_SPORT_CHOSEN_STRING = '';
+
+export function filterEventsBySortBy(
+  eventDataList: EventData[],
+  sortByCategory: SortByCategory
+): EventData[] {
+  let eventDataListDeepClone = [...eventDataList];
+  switch (sortByCategory) {
+    case SortByCategory.HOT:
+      /// TODO: implement measurement of how 'Hot' an event is.
+      /// Currently, it sorts events alphabetically by name.
+      eventDataListDeepClone.sort((eventA, eventB) =>
+        eventA.name.localeCompare(eventB.name)
+      );
+      break;
+
+    case SortByCategory.PRICE_ASCENDING:
+      eventDataListDeepClone.sort(
+        (eventA, eventB) => eventA.price - eventB.price
+      );
+      break;
+
+    case SortByCategory.PRICE_DESCENDING:
+      eventDataListDeepClone.sort(
+        (eventA, eventB) => eventB.price - eventA.price
+      );
+      break;
+
+    case SortByCategory.DATE_ASCENDING:
+      eventDataListDeepClone.sort(
+        (eventA, eventB) =>
+          eventA.startDate.toMillis() - eventB.startDate.toMillis()
+      );
+      break;
+
+    case SortByCategory.DATE_DESCENDING:
+      eventDataListDeepClone.sort(
+        (eventA, eventB) =>
+          eventB.startDate.toMillis() - eventA.startDate.toMillis()
+      );
+      break;
+
+    default:
+      break;
+  }
+  return eventDataListDeepClone;
+}
 
 export function filterEventsByPrice(
   eventDataList: EventData[],
@@ -72,6 +120,9 @@ export function filterEventsBySport(
   eventDataList: EventData[],
   sportType: string
 ): EventData[] {
+  if (sportType === NO_SPORT_CHOSEN_STRING) {
+    return eventDataList;
+  }
   let eventDataListDeepClone = [...eventDataList];
   eventDataListDeepClone = eventDataListDeepClone.filter(
     (event) => event.sport === sportType
@@ -91,24 +142,24 @@ export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
   const whereClauseList: QueryFieldFilterConstraint[] = [];
   Object.keys(filterFieldsMap).forEach(async (key: string) => {
     switch (key) {
-      case "startDate":
-        let startDate: Timestamp = filterFieldsMap["startDate"].startDate;
+      case 'startDate':
+        let startDate: Timestamp = filterFieldsMap['startDate'].startDate;
         let endDate: Timestamp | null = null;
-        if ("endDate" in filterFieldsMap["startDate"]) {
-          endDate = filterFieldsMap["startDate"].endDate;
+        if ('endDate' in filterFieldsMap['startDate']) {
+          endDate = filterFieldsMap['startDate'].endDate;
         }
         await createWhereClauseEventDate(whereClauseList, startDate, endDate);
 
-      case "price":
-        if ("price" in filterFieldsMap) {
+      case 'price':
+        if ('price' in filterFieldsMap) {
           let minPrice: number | null = null;
-          if ("minPrice" in filterFieldsMap["price"]) {
-            minPrice = filterFieldsMap["price"].minPrice;
+          if ('minPrice' in filterFieldsMap['price']) {
+            minPrice = filterFieldsMap['price'].minPrice;
           }
 
           let maxPrice: number | null = null;
-          if ("maxPrice" in filterFieldsMap["price"]) {
-            maxPrice = filterFieldsMap["price"].maxPrice;
+          if ('maxPrice' in filterFieldsMap['price']) {
+            maxPrice = filterFieldsMap['price'].maxPrice;
           }
 
           await createWhereClauseEventPrice(
@@ -139,7 +190,7 @@ async function filterEventsByWhereClausesAndProximity(
   proximityInfo?: ProximityInfo
 ): Promise<EventData[]> {
   try {
-    const eventsRef = collection(db, "Events");
+    const eventsRef = collection(db, 'Events');
 
     let filterEventsQuery = query(
       eventsRef,
@@ -178,9 +229,9 @@ async function createWhereClauseEventDate(
   startDate: Timestamp,
   endDate: Timestamp | null
 ) {
-  currWhereClauseList.push(where("startDate", ">=", startDate));
+  currWhereClauseList.push(where('startDate', '>=', startDate));
   if (endDate) {
-    currWhereClauseList.push(where("endDate", "<=", endDate));
+    currWhereClauseList.push(where('endDate', '<=', endDate));
   }
 }
 
@@ -201,15 +252,15 @@ async function createWhereClauseEventPrice(
 ) {
   if (!minPrice && !maxPrice) {
     throw new Error(
-      "No minPrice and no maxPrice provided. Please provide at least one!"
+      'No minPrice and no maxPrice provided. Please provide at least one!'
     );
   }
 
   if (minPrice) {
-    currWhereClauseList.push(where("price", ">=", minPrice));
+    currWhereClauseList.push(where('price', '>=', minPrice));
   }
   if (maxPrice) {
-    currWhereClauseList.push(where("price", "<=", maxPrice));
+    currWhereClauseList.push(where('price', '<=', maxPrice));
   }
 }
 

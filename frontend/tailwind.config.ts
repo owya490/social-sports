@@ -10,9 +10,9 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/react-tailwindcss-datepicker/dist/index.esm.js",
   ],
-  experimental: {
-    optimizeUniversalDefaults: true,
-  },
+  // experimental: {
+  //   optimizeUniversalDefaults: true,
+  // },
   theme: {
     extend: {
       fontFamily: {
