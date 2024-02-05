@@ -117,7 +117,7 @@ export default function CreateEvent() {
             <CreateEventStepper activeStep={currentStep} />
           </div>
           <div className="absolute top-2 right-2">
-            {/* {currentStep + 1} / {steps.length} */}
+            
           </div>
           {step}
           <div className="flex justify-end">

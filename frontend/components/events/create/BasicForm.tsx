@@ -103,39 +103,39 @@ export function BasicInformation({
           />
         </div>
         <div>
-          <label className="text-black text-lg font-semibold">
-            When does your event start and end?
-          </label>
-          <div className="flex space-x-2 mt-4">
-            <div className="basis-1/2">
-              <CustomDateInput
-              date={date}
-              placeholder="Date"
-              required
-              handleChange={handleDateChange}
-            />
-              
-            </div>
-            <div className="basis-1/4">
-              <CustomTimeInput
-              value={startTime}
-              placeholder="Start time"
-              required
-              handleChange={handleStartTimeChange}
-            />
-              
-            </div>
-            <div className="basis-1/4">
-              <CustomTimeInput
-              value={endTime}
-              placeholder="End time"
-              required
-              handleChange={handleEndTimeChange}
-              
-            />
-            </div>
-          </div>
-        </div>
+  <label className="text-black text-lg font-semibold">
+    When does your event start and end?
+  </label>
+  <div className="mt-4 flex flex-col sm:flex-row sm:space-x-2">
+    <div className="mb-2 sm:mb-0 sm:flex-grow">
+      <CustomDateInput
+        date={date}
+        placeholder="Date"
+        required
+        handleChange={handleDateChange}
+      />
+    </div>
+    <div className="flex sm:space-x-2 sm:flex-grow">
+      <div className="basis-1/2">
+        <CustomTimeInput
+          value={startTime}
+          placeholder="Start time"
+          required
+          handleChange={handleStartTimeChange}
+        />
+      </div>
+      <div className="basis-1/2">
+        <CustomTimeInput
+          value={endTime}
+          placeholder="End time"
+          required
+          handleChange={handleEndTimeChange}
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
 
         <div>
           <label className="text-black text-lg font-semibold">
