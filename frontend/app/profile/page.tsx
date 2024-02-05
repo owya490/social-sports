@@ -246,7 +246,7 @@ const Profile = () => {
           className="mt-1 p-2 border rounded-md w-full"
           placeholder="Not Provided"
         >
-          <option value="">Not Provided</option>
+          <option value="">Select</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
           <option value="Other">Other</option>
