@@ -35,3 +35,15 @@ export function timestampToEventCardDateString(timestamp: Timestamp) {
     timestamp
   ).toUpperCase()} · ${timestampToTimeOfDay24Hour(timestamp)} AEST`;
 }
+
+
+export function convertDateAndTimeStringToTimestamp(
+  date: string,
+  time: string
+): Timestamp {
+  let dateObject = new Date(date);
+  const timeArr = time.split(":");
+  dateObject.setHours(parseInt(timeArr[0]));
+  dateObject.setMinutes(parseInt(timeArr[1]));
+  return Timestamp.fromDate(dateObject);
+}

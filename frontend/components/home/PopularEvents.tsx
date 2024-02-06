@@ -81,7 +81,7 @@ export default function PopularEvents(props: PopularEventsProps) {
                         image={event.image}
                         name={event.name}
                         organiser={event.organiser}
-                        startTime={event.startDate}
+                        startDate={event.startDate}
                         location={event.location}
                         price={event.price}
                         vacancy={event.vacancy}

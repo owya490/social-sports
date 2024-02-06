@@ -1,7 +1,7 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { timestampToEventCardDateString } from "@/services/datetimeUtils";
+import { timestampToEventCardDateString } from "@/utilities/datetimeUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
@@ -12,7 +12,7 @@ interface EventCardProps {
   image: string;
   name: string;
   organiser: UserData;
-  startTime: Timestamp;
+  startDate: Timestamp;
   location: string;
   price: number;
   vacancy: number;
@@ -23,7 +23,7 @@ export default function EventCard(props: EventCardProps) {
 
   return (
     <div
-      className="bg-white rounded-lg w-full text-left border-gray-300 border min-w-[300px] max-w-[350px] hover:cursor-pointer"
+      className="bg-white rounded-lg w-full text-left border-gray-300 border min-w-[300px] max-w-[350px] md:max-w-[320px] hover:cursor-pointer"
       onClick={() => {
         router.push(`/event/${props.eventId}`);
       }}
@@ -38,7 +38,7 @@ export default function EventCard(props: EventCardProps) {
       />
       <div className="p-4">
         <h4 className="font-bold text-gray-500 text-xs">
-          {timestampToEventCardDateString(props.startTime)}
+          {timestampToEventCardDateString(props.startDate)}
         </h4>
         <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">
           {props.name}

@@ -68,7 +68,7 @@ export const PreviewForm = ({
             }
             name={form.name}
             organiser={user}
-            startTime={Timestamp.fromDate(myDate)}
+            startDate={Timestamp.fromDate(myDate)}
             location={form.location}
             price={form.price}
             vacancy={form.capacity}
