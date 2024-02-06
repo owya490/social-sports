@@ -3,7 +3,7 @@ import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Dialog, Transition } from "@headlessui/react";
 import Image from "next/image";
-import { ChangeEvent, Fragment, useEffect, useState } from "react";
+import { ChangeEvent, Fragment, useEffect, useRef, useState } from "react";
 import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
@@ -209,6 +209,7 @@ const Profile = () => {
 
   const handleEditClick = () => {
     setEditable(!editable);
+    setEditedData({ ...initialProfileData });
   };
 
   const handleSaveClick = () => {
