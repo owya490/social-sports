@@ -20,6 +20,7 @@ import {
   getMetadata,
 } from "firebase/storage";
 import { User } from "firebase/auth";
+import { storage } from "@/services/firebase";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -75,9 +76,7 @@ const Profile = () => {
           mobile: user?.contactInformation?.mobile || "",
           email: user?.contactInformation?.email || "",
         },
-        profilePicture:
-          user?.profilePicture ||
-          "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=21a27c9b-35ca-490f-9dec-1e8965775317",
+        profilePicture: user?.profilePicture || "",
         dob: user?.dob || "", // DD-MM-YYYY format
         age: calculateAge(user?.dob || "") || "", // Calculate initial age
         gender: user?.gender || "",
@@ -91,9 +90,7 @@ const Profile = () => {
           mobile: user?.contactInformation?.mobile || "",
           email: user?.contactInformation?.email || "",
         },
-        profilePicture:
-          user?.profilePicture ||
-          "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=21a27c9b-35ca-490f-9dec-1e8965775317",
+        profilePicture: user?.profilePicture || "",
         dob: user?.dob || "", // DD-MM-YYYY format
         age: calculateAge(user?.dob || ""), // Calculate initial age
         gender: user?.gender || "",
@@ -111,6 +108,29 @@ const Profile = () => {
       });
     }
   }, [initialProfileData]);
+
+  const defaultProfilePicturePath = "users/generic/generic-profile-photo.webp";
+
+  useEffect(() => {
+    const fetchDefaultProfilePictureURL = async () => {
+      try {
+        const storageRef = ref(storage, defaultProfilePicturePath);
+        const downloadURL = await getDownloadURL(storageRef);
+        setInitialProfileData((prevData) => ({
+          ...prevData,
+          profilePicture: prevData.profilePicture || downloadURL,
+        }));
+        setEditedData((prevData) => ({
+          ...prevData,
+          profilePicture: prevData.profilePicture || downloadURL,
+        }));
+      } catch (error) {
+        console.error("Error fetching default profile picture:", error);
+      }
+    };
+
+    fetchDefaultProfilePictureURL();
+  }, [defaultProfilePicturePath]);
 
   const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = changeEvent.target;
@@ -154,7 +174,10 @@ const Profile = () => {
 
         const previousProfilePictureURL = initialProfileData.profilePicture;
 
-        if (previousProfilePictureURL) {
+        if (
+          previousProfilePictureURL &&
+          !previousProfilePictureURL.includes("generic-profile-photo.webp")
+        ) {
           const previousProfilePictureRef = ref(
             storage,
             previousProfilePictureURL
@@ -178,6 +201,8 @@ const Profile = () => {
           ...prevData,
           profilePicture: downloadURL,
         }));
+
+        setUser({ ...user, profilePicture: downloadURL });
 
         setIsProfilePictureUpdated(true);
       } catch (error) {
@@ -214,7 +239,7 @@ const Profile = () => {
   };
 
   const handleSaveClick = () => {
-    console.log("Saving changes:", editedData);
+    console.log("Saving changes:", initialProfileData);
     setEditable(false);
     updateUser(initialProfileData.userId, editedData);
     setInitialProfileData({ ...editedData });
