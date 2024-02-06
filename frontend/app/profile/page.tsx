@@ -77,7 +77,7 @@ const Profile = () => {
         },
         profilePicture:
           user?.profilePicture ||
-          "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+          "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=21a27c9b-35ca-490f-9dec-1e8965775317",
         dob: user?.dob || "", // DD-MM-YYYY format
         age: calculateAge(user?.dob || "") || "", // Calculate initial age
         gender: user?.gender || "",
@@ -93,7 +93,7 @@ const Profile = () => {
         },
         profilePicture:
           user?.profilePicture ||
-          "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+          "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=21a27c9b-35ca-490f-9dec-1e8965775317",
         dob: user?.dob || "", // DD-MM-YYYY format
         age: calculateAge(user?.dob || ""), // Calculate initial age
         gender: user?.gender || "",
@@ -107,6 +107,7 @@ const Profile = () => {
     if (initialProfileData.firstName !== "") {
       sleep(1500).then(() => {
         setLoading(false);
+        console.log(initialProfileData.profilePicture);
       });
     }
   }, [initialProfileData]);
