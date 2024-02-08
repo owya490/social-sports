@@ -13,7 +13,7 @@ export default function EventImage(props: EventImageProps) {
       alt="..."
       width={0}
       height={0}
-      className="object-cover w-full h-fit max-h-56 sm:max-h-full sm:rounded-3xl"
+      className="object-cover w-full h-[60vh] max-h-56 sm:max-h-full sm:rounded-3xl"
     />
   );
 }

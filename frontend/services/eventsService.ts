@@ -34,14 +34,20 @@ import {
   OZTAG_SPORT_STRING,
 } from '@/components/Filter/FilterDialog';
 
+import { Logger } from '@/observability/logger';
 import { db } from './firebase';
 import { getUserById } from './usersService';
 import { tokenizeText } from './eventsUtils';
 
 const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
+const eventServiceLogger = new Logger('eventServiceLogger');
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
+  if (!rateLimitCreateAndUpdateEvents()) {
+    console.log('Rate Limited!!!');
+    throw 'Rate Limited';
+  }
   try {
     // Simplified object spreading with tokenized values
     const eventDataWithTokens = {
@@ -55,17 +61,6 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
       collection(db, targetCollection),
       eventDataWithTokens
     );
-    return docRef.id;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-  if (!rateLimitCreateAndUpdateEvents()) {
-    console.log('Rate Limited!!!');
-    throw 'Rate Limited';
-  }
-  try {
-    const docRef = await addDoc(collection(db, 'Events'), data);
     return docRef.id;
   } catch (error) {
     console.error(error);
@@ -176,9 +171,21 @@ async function processEventData(
 
 // Function to retrieve all events
 export async function getAllEvents(): Promise<EventData[]> {
+  eventServiceLogger.info('Getting all events');
   const currentDate = new Date();
+
+  if (
+    localStorage.getItem('eventsData') !== null &&
+    localStorage.getItem('lastFetchedEventData') !== null
+  ) {
+    const lastFetched = new Date(localStorage.getItem('lastFetchedEventData')!);
+    if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
+      return getEventsDataFromLocalStorage();
+    }
+  }
   try {
     console.log('Getting events from DB');
+    eventServiceLogger.info('Getting events from DB');
     const eventCollectionRef = collection(db, 'Events');
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
