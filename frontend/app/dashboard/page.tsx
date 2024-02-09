@@ -8,6 +8,8 @@ import Loading from '@/components/Loading';
 import EventCard from '@/components/events/EventCard';
 import { EventData } from '@/interfaces/EventTypes';
 import { useRouter, useSearchParams } from 'next/navigation';
+import noSearchResultLineDrawing from '../../public/images/no-search-result-line-drawing.jpg';
+import Image from 'next/image';
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -150,6 +152,17 @@ export default function Dashboard() {
                   </div>
                 );
               })}
+            {eventDataList.length === 0 ? (
+              <Image
+                src={noSearchResultLineDrawing}
+                alt='noSearchResultLineDrawing'
+                width={0}
+                height={0}
+                className='h-200 w-200'
+              />
+            ) : (
+              <div></div>
+            )}
           </div>
         </div>
       </div>
