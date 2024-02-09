@@ -153,13 +153,15 @@ export default function Dashboard() {
                 );
               })}
             {eventDataList.length === 0 ? (
-              <Image
-                src={noSearchResultLineDrawing}
-                alt='noSearchResultLineDrawing'
-                width={0}
-                height={0}
-                className='h-200 w-200'
-              />
+              <div className=''>
+                <Image
+                  src={noSearchResultLineDrawing}
+                  alt='noSearchResultLineDrawing'
+                  width={600}
+                  height={600}
+                  className='h-100 w-30'
+                />
+              </div>
             ) : (
               <div></div>
             )}
