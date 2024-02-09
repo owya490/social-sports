@@ -60,22 +60,24 @@ export default function CreateEvent() {
 
     if (!isLastStep) {
       next();
+     
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
       return;
     }
+
     try {
-      // console.log(createEvent(convertFormDataToEventData(data)));
+      
       console.log(data);
       console.log(convertFormDataToEventData(data));
     } catch (e) {
       console.log(e);
     }
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // You can use 'auto' instead of 'smooth' for instant scrolling
   }
 
   function convertFormDataToEventData(formData: FormData): NewEventData {
-    // TODO
-    // Fix end date
-    // Consider a User's ability to select their event image from their uploaded images
-    // Fix organiserId
+
     return {
       startDate: convertToTimestamp(formData.date, formData.time),
       endDate: convertToTimestamp(formData.date, formData.time),

@@ -45,17 +45,16 @@ const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
     <div className="md:grid md:grid-cols-2 mt-20 items-start mb-8">
     <div className="justify-start col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
         <div
-          className="mb-2 text-xl lg:text-2xl p-4 md:p-0"
+          className="mb-2 text-xl lg:text-2xl"
           style={{
             fontWeight: 400,
             borderBottom: "2px solid #ccc",
             width: "100%",
-            overflowX: "hidden",
           }}
         >
           <div className="text-sm mb-1 md:mb-2 lg:mt-3">Name of the Event</div>
         </div>
-        <ul className="text-sm w-full" style={{ color: "#777" }}>{form.name}</ul>
+        <ul className="text-sm w-full">{form.name}</ul>
 
         <div
           className="mb-2 text-xl lg:text-2xl"
@@ -69,7 +68,7 @@ const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
             Location of the event
           </div>
         </div>
-        <ul className="text-sm w-full" style={{ color: "#777" }}>{form.location}</ul>
+        <ul className="text-sm w-full">{form.location}</ul>
 
         <div
           className="mb-2 text-xl lg:text-2xl"
@@ -83,7 +82,7 @@ const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
             Start Time of event
           </div>
         </div>
-        <ul className="text-sm w-full"style={{ color: "#777" }}>{form.startTime}</ul>
+        <ul className="text-sm w-full">{form.startTime}</ul>
 
         <div
           className="mb-2 text-xl lg:text-2xl"
@@ -97,7 +96,7 @@ const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
             Price of the Event
           </div>
         </div>
-        <ul className="text-sm w-full"style={{ color: "#777" }}>{form.cost}</ul>
+        <ul className="text-sm w-full">{form.cost}</ul>
 
         <div
           className="mb-2 text-xl lg:text-2xl"
@@ -111,7 +110,7 @@ const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
             Total Capacity of the Event
           </div>
         </div>
-        <ul className ="text-sm w-full"style={{ color: "#777" }}>{form.people}</ul>
+        <ul className ="text-sm w-full">{form.people}</ul>
         <div
           className="mb-2 text-xl lg:text-2xl"
           style={{
@@ -124,7 +123,7 @@ const PreviewFormContent: React.FC<PreviewFormContentProps> = ({
             Description of the Event
           </div>
         </div>
-        <ul className="text-sm w-full"style={{ color: "#777" }}>{form.description}</ul>
+        <ul className="text-sm w-full">{form.description}</ul>
       </div>
 
       <FormWrapper>

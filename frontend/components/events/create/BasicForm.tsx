@@ -107,7 +107,7 @@ export function BasicInformation({
     When does your event start and end?
   </label>
   <div className="mt-4 flex flex-col sm:flex-row sm:space-x-2">
-    <div className="mb-2 sm:mb-0 sm:flex-grow">
+    <div className="sm:mb-2 sm:flex-grow">
       <CustomDateInput
         date={date}
         placeholder="Date"
@@ -115,7 +115,7 @@ export function BasicInformation({
         handleChange={handleDateChange}
       />
     </div>
-    <div className="flex sm:space-x-2 sm:flex-grow">
+    <div className="flex sm:space-x-2 sm:flex-grow mt-6">
       <div className="basis-1/2">
         <CustomTimeInput
           value={startTime}
@@ -187,40 +187,40 @@ export function BasicInformation({
           </p>
 
           <div className="w-full px-5">
-            <CreateEventCostSlider
-              initialCustomAmount={customAmount}
-              onCustomAmountChange={handleCustomAmountChange}
-            />
-          </div>
-          <div className="w-full flex space-x-3">
-            <div className="mt-4 grow">
-              <Input
-                label="Price"
-                crossOrigin={undefined}
-                required
-                value={cost}
-                onChange={(e) =>
-                  handleCustomAmountChange(parseInt(e.target.value))
-                }
-                className="rounded-md"
-                size="lg"
-                icon={<CurrencyDollarIcon />}
-              />
-            </div>
-            <div className="mt-4 grow">
-              <Input
-                label="Capacity"
-                crossOrigin={undefined}
-                required
-                value={people}
-                onChange={(e) =>
-                  updateField({ people: parseInt(e.target.value) })
-                }
-                className="rounded-md"
-                size="lg"
-              />
-            </div>
-          </div>
+  <CreateEventCostSlider
+    initialCustomAmount={customAmount}
+    onCustomAmountChange={handleCustomAmountChange}
+  />
+</div>
+<div className="w-full flex flex-col md:flex-row space-x-3">
+<div className="mt-4 md:mt-4 grow">
+  <Input
+    label="Price"
+    crossOrigin={undefined}
+    required
+    value={cost}
+    onChange={(e) =>
+      handleCustomAmountChange(parseInt(e.target.value))
+    }
+    className="rounded-md w-full"  // Explicitly set width to full
+    size="lg"
+    icon={<CurrencyDollarIcon />}
+  />
+</div>
+<div className="mt-4 my-8 md:mt-4 grow">
+  <Input
+    label="Capacity"
+    crossOrigin={undefined}
+    required
+    value={people}
+    onChange={(e) =>
+      updateField({ people: parseInt(e.target.value) })
+    }
+    className="rounded-md w-full"  // Explicitly set width to full
+    size="lg"
+  />
+</div>
+</div>
         </div>
       </div>
     </FormWrapper>
