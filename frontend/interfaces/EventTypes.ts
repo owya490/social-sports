@@ -65,4 +65,5 @@ export const EmptyEventData: EventData = {
   attendees: [],
   accessCount: 0,
   sport: '',
+  isPrivate: false,
 };

@@ -333,6 +333,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
         lat: event.locationLatLng.lat,
         lng: event.locationLatLng.lng,
       },
+      isPrivate: event.isPrivate,
     });
   });
   return eventsDataFinal;
