@@ -22,6 +22,7 @@ import {
     Query,
     CollectionReference,
     Firestore,
+    DocumentReference,
 } from "firebase/firestore";
 import {
     BADMINTON_SPORT_STRING,
@@ -38,6 +39,7 @@ import { Logger } from "@/observability/logger";
 import { db } from "./firebase";
 import { getUserById } from "./usersService";
 import { tokenizeText } from "./eventsUtils";
+import { timestampToTimeOfDay24Hour } from "./datetimeUtils";
 
 const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
 const eventServiceLogger = new Logger("eventServiceLogger");
@@ -55,10 +57,11 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
             nameTokens: tokenizeText(data.name),
             locationTokens: tokenizeText(data.location),
         };
-        let targetCollection = data.isActive ? "Active" : "Inactive";
-        targetCollection += data.isPrivate ? "PrivateEvents" : "PublicEvents";
+        let isActive = data.isActive ? "Active" : "Inactive";
+        let isPrivate = data.isPrivate ? "Private" : "Public";
         const docRef = await addDoc(
-            collection(db, "Events", targetCollection),
+            // collection(db, "Events", isActive, isPrivate),
+            collection(db, "Events", "Active", "Private"),
             eventDataWithTokens
         );
         return docRef.id;
@@ -68,9 +71,58 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     }
 }
 
+async function findEventDoc(eventId: string): Promise<any> {
+    // Define the subcollection paths to search through
+    const paths = [
+        "Events/Active/Public",
+        "Events/Active/Private",
+        "Events/Inactive/Public",
+        "Events/Inactive/Private",
+    ];
+
+    for (const path of paths) {
+        // Attempt to retrieve the document from the current subcollection
+        const eventDocRef = doc(db, path, eventId);
+        const eventDoc = await getDoc(eventDocRef);
+
+        // Check if the document exists in the current subcollection
+        if (eventDoc.exists()) {
+            return eventDoc;
+        }
+    }
+
+    // Return null or throw an error if the document was not found in any subcollection
+    console.log("Event not found in any subcollection.");
+    throw new Error("No event found in any subcollection");
+}
+
+async function findEventDocRef(eventId: string): Promise<any> {
+    // Define the subcollection paths to search through
+    const paths = [
+        "Events/Active/Public",
+        "Events/Active/Private",
+        "Events/Inactive/Public",
+        "Events/Inactive/Private",
+    ];
+
+    for (const path of paths) {
+        // Attempt to retrieve the document from the current subcollection
+        const eventDocRef = doc(db, path, eventId);
+        const eventDoc = await getDoc(eventDocRef);
+
+        // Check if the document exists in the current subcollection
+        if (eventDoc.exists()) {
+            return eventDocRef;
+        }
+    }
+
+    // Return null or throw an error if the document was not found in any subcollection
+    console.log("Event not found in any subcollection.");
+    throw new Error("No event found in any subcollection");
+}
 export async function getEventById(eventId: EventId): Promise<EventData> {
     try {
-        const eventDoc = await getDoc(doc(db, "Events", eventId));
+        const eventDoc = await findEventDoc(eventId);
         const eventWithoutOrganiser =
             eventDoc.data() as EventDataWithoutOrganiser;
         const event: EventData = {
@@ -170,11 +222,40 @@ async function processEventData(
     return eventsData;
 }
 
-// Function to retrieve all events
-export async function getAllEvents(): Promise<EventData[]> {
-    eventServiceLogger.info("Getting all events");
-    const currentDate = new Date();
+function createEventCollectionRef(isActive: boolean, isPrivate: boolean) {
+    const activeStatus = isActive ? "Active" : "InActive";
+    const privateStatus = isPrivate ? "Private" : "Public";
+    return collection(db, "Events", activeStatus, privateStatus);
+}
 
+export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
+    // If isActive is present, keep its value, otherwise default to true
+    isActive = isActive === undefined ? true : isActive;
+    // Likewise, if isPrivate is present, keep its value, otherwise to false
+    isPrivate = isPrivate === undefined ? false : isPrivate;
+
+    if (isActive && !isPrivate) {
+        const currentDate = new Date();
+        let [success, maybeEventsData] =
+            tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
+        if (success) {
+            return maybeEventsData;
+        }
+        const eventRef = createEventCollectionRef(isActive, isPrivate);
+        const eventsData = await getAllEventsFromCollectionRef(eventRef);
+        localStorage.setItem("eventsData", JSON.stringify(eventsData));
+        const currentDateString = currentDate.toUTCString();
+        localStorage.setItem("lastFetchedEventData", currentDateString);
+        return eventsData;
+    } else {
+        const eventRef = createEventCollectionRef(isActive, isPrivate);
+        return await getAllEventsFromCollectionRef(eventRef);
+    }
+}
+
+function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) {
+    console.log("Trying to get Cached Active Public Events");
+    // If already cached, and within 5 minutes, return cached data, otherwise no-op
     if (
         localStorage.getItem("eventsData") !== null &&
         localStorage.getItem("lastFetchedEventData") !== null
@@ -186,13 +267,20 @@ export async function getAllEvents(): Promise<EventData[]> {
             currentDate.valueOf() - lastFetched.valueOf() <
             EVENTS_REFRESH_MILLIS
         ) {
-            return getEventsDataFromLocalStorage();
+            return [true, getEventsDataFromLocalStorage()];
         }
     }
+    return [false, []];
+}
+
+// Function to retrieve all events
+async function getAllEventsFromCollectionRef(
+    eventCollectionRef: CollectionReference<DocumentData, DocumentData>
+): Promise<EventData[]> {
     try {
         console.log("Getting events from DB");
         eventServiceLogger.info("Getting events from DB");
-        const eventCollectionRef = collection(db, "Events");
+        // const eventCollectionRef = collection(db, "Events");
         const eventsSnapshot = await getDocs(eventCollectionRef);
         const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
         const eventsData: EventData[] = [];
@@ -210,9 +298,6 @@ export async function getAllEvents(): Promise<EventData[]> {
                 organiser: organiser,
             });
         }
-        localStorage.setItem("eventsData", JSON.stringify(eventsData));
-        const currentDateString = currentDate.toUTCString();
-        localStorage.setItem("lastFetchedEventData", currentDateString);
         return eventsData;
     } catch (error) {
         console.error(error);
@@ -220,8 +305,31 @@ export async function getAllEvents(): Promise<EventData[]> {
     }
 }
 
+function createEventDocRef(
+    eventId: EventId,
+    isActive: boolean,
+    isPrivate: boolean
+) {
+    const activeStatus = isActive ? "Active" : "InActive";
+    const privateStatus = isPrivate ? "Private" : "Public";
+    return doc(db, "Events", activeStatus, privateStatus, eventId);
+}
+
 export async function updateEvent(
-    eventId: string,
+    eventId: EventId,
+    updatedData: Partial<EventData>,
+    isActive: boolean,
+    isPrivate: boolean
+) {
+    console.log("updating");
+    return await updateEventFromDocRef(
+        createEventDocRef(eventId, isActive, isPrivate),
+        updatedData
+    );
+}
+
+async function updateEventFromDocRef(
+    eventRef: DocumentReference<DocumentData, DocumentData>,
     updatedData: Partial<EventData>
 ): Promise<void> {
     if (!rateLimitCreateAndUpdateEvents()) {
@@ -229,7 +337,6 @@ export async function updateEvent(
         throw "Rate Limited";
     }
     try {
-        const eventRef = doc(db, "Events", eventId);
         await updateDoc(eventRef, updatedData);
     } catch (error) {
         console.error(error);
@@ -267,7 +374,7 @@ export async function updateEventByName(
 
 export async function deleteEvent(eventId: EventId): Promise<void> {
     try {
-        const eventRef = doc(db, "Events", eventId);
+        const eventRef = await findEventDocRef(eventId);
         await deleteDoc(eventRef);
         console.log(deleteDoc);
     } catch (error) {
@@ -297,9 +404,12 @@ export async function deleteEventByName(eventName: string): Promise<void> {
 
 export async function incrementEventAccessCountById(
     eventId: EventId,
-    count: number = 1
+    count: number = 1,
+    isActive: boolean,
+    isPrivate: boolean
 ) {
-    updateDoc(doc(db, "Events", eventId), {
+    console.log(`${eventId}, ${isActive}, ${isPrivate}`);
+    updateDoc(createEventDocRef(eventId, isActive, isPrivate), {
         accessCount: increment(count),
     });
 }

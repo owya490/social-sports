@@ -8,54 +8,61 @@ import MobileEventDetailFooter from "@/components/mobile/MobileEventDetailFooter
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
 import {
-  getEventById,
-  incrementEventAccessCountById,
+    getEventById,
+    incrementEventAccessCountById,
 } from "@/services/eventsService";
 import { getTagById } from "@/services/tagService";
 import { useEffect, useState } from "react";
 
 export default function EventPage({ params }: any) {
-  const eventId: EventId = params.id;
-  const [loading, setLoading] = useState(true);
-  const [eventData, setEventData] = useState<EventData>(EmptyEventData);
-  const [eventTags, setEventTags] = useState<Tag[]>([]);
-  useEffect(() => {
-    incrementEventAccessCountById(eventId);
-    getEventById(eventId)
-      .then((event) => {
-        setEventData(event);
-        if (event.eventTags && typeof event.eventTags === "object") {
-          event.eventTags.map((tagId) => {
-            getTagById(tagId).then((tag) => {
-              setEventTags([...eventTags, tag]);
+    const eventId: EventId = params.id;
+    const [loading, setLoading] = useState(true);
+    const [eventData, setEventData] = useState<EventData>(EmptyEventData);
+    const [eventTags, setEventTags] = useState<Tag[]>([]);
+    useEffect(() => {
+        getEventById(eventId)
+            .then((event) => {
+                setEventData(event);
+                if (event.eventTags && typeof event.eventTags === "object") {
+                    event.eventTags.map((tagId) => {
+                        getTagById(tagId).then((tag) => {
+                            setEventTags([...eventTags, tag]);
+                        });
+                    });
+                }
+
+                incrementEventAccessCountById(
+                    eventId,
+                    1,
+                    event.isActive,
+                    event.isPrivate
+                );
+            })
+            .finally(() => {
+                setLoading(false);
             });
-          });
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-    // eslint-disable-next-line
-  }, []);
 
-  return loading ? (
-    <Loading />
-  ) : (
-    <div className="text-black">
-      <EventBanner
-        name={eventData.name}
-        startDate={eventData.startDate}
-        organiser={eventData.organiser}
-        vacancy={eventData.vacancy}
-      />
-      <div className="mt-5 lg:mt-10 mb-10">
-        <EventDetails eventData={eventData} eventTags={eventTags} />
+        //  eslint-disable-next-line
+    }, []);
 
-        <RecommendedEvents eventData={eventData} />
-      </div>
-      <div className="lg:hidden">
-        <MobileEventDetailFooter date={eventData.startDate} />
-      </div>
-    </div>
-  );
+    return loading ? (
+        <Loading />
+    ) : (
+        <div className="text-black">
+            <EventBanner
+                name={eventData.name}
+                startDate={eventData.startDate}
+                organiser={eventData.organiser}
+                vacancy={eventData.vacancy}
+            />
+            <div className="mt-5 lg:mt-10 mb-10">
+                <EventDetails eventData={eventData} eventTags={eventTags} />
+
+                <RecommendedEvents eventData={eventData} />
+            </div>
+            <div className="lg:hidden">
+                <MobileEventDetailFooter date={eventData.startDate} />
+            </div>
+        </div>
+    );
 }
