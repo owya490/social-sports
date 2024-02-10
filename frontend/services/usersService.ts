@@ -45,7 +45,14 @@ export async function getAllUsers(): Promise<UserData[]> {
     const userCollectionRef = collection(db, "Users");
     const usersSnapshot = await getDocs(userCollectionRef);
     const usersData: UserData[] = [];
+  try {
+    const userCollectionRef = collection(db, "Users");
+    const usersSnapshot = await getDocs(userCollectionRef);
+    const usersData: UserData[] = [];
 
+    usersSnapshot.forEach((doc) => {
+      usersData.push(doc.data() as UserData);
+    });
     usersSnapshot.forEach((doc) => {
       usersData.push(doc.data() as UserData);
     });
@@ -55,9 +62,21 @@ export async function getAllUsers(): Promise<UserData[]> {
     console.error(error);
     throw error;
   }
+    return usersData;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 export async function deleteUser(userId: UserId): Promise<void> {
+  try {
+    const userDocRef = doc(db, "Users", userId);
+    await deleteDoc(userDocRef);
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
   try {
     const userDocRef = doc(db, "Users", userId);
     await deleteDoc(userDocRef);
