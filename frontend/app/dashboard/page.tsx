@@ -166,7 +166,7 @@ export default function Dashboard() {
           />
 
           <div className='flex justify-center text-gray-600 font-medium text-lg sm:text-2xl text-center'>
-            Sorry, we couldn't find any results
+            Sorry, we couldn&apos;t find any results
           </div>
         </div>
       ) : (
