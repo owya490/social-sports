@@ -3,9 +3,13 @@ import {
   EventDataWithoutOrganiser,
   EventId,
   NewEventData,
-} from '@/interfaces/EventTypes';
-import { UserData } from '@/interfaces/UserTypes';
+} from "@/interfaces/EventTypes";
+import { UserData } from "@/interfaces/UserTypes";
 import {
+  CollectionReference,
+  DocumentData,
+  Firestore,
+  Query,
   Timestamp,
   addDoc,
   collection,
@@ -17,33 +21,22 @@ import {
   query,
   updateDoc,
   where,
-  or,
-  DocumentData,
-  Query,
-  CollectionReference,
-  Firestore,
-} from 'firebase/firestore';
-import {
-  BADMINTON_SPORT_STRING,
-  VOLLEYBALL_SPORT_STRING,
-  BASEBALL_SPORT_STRING,
-  BASKETBALL_SPORT_STRING,
-  SOCCER_SPORT_STRING,
-  TENNIS_SPORT_STRING,
-  TABLE_TENNIS_SPORT_STRING,
-  OZTAG_SPORT_STRING,
-} from '@/components/Filter/FilterDialog';
+} from "firebase/firestore";
 
-import { Logger } from '@/observability/logger';
-import { db } from './firebase';
-import { getUserById } from './usersService';
-import { tokenizeText } from './eventsUtils';
+import { Logger } from "@/observability/logger";
+import { tokenizeText } from "./eventsUtils";
+import { db } from "./firebase";
+import { getUserById } from "./usersService";
 
 const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
-const eventServiceLogger = new Logger('eventServiceLogger');
+const eventServiceLogger = new Logger("eventServiceLogger");
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
+  if (!rateLimitCreateAndUpdateEvents()) {
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
+  }
   try {
     // Simplified object spreading with tokenized values
     const eventDataWithTokens = {
@@ -52,21 +45,10 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
       locationTokens: tokenizeText(data.location),
     };
 
-    const docRef = await addDoc(collection(db, 'Events'), eventDataWithTokens);
-    return docRef.id;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-  if (!rateLimitCreateAndUpdateEvents()) {
-    console.log('Rate Limited!!!');
-    throw 'Rate Limited';
-  }
-  try {
-    const docRef = await addDoc(collection(db, 'Events'), data);
+    const docRef = await addDoc(collection(db, "Events"), eventDataWithTokens);
     // Set last fetched date to really old one to ensure next getAllEvents is a fetch from firebase DB.
-    const beginningDate = new Date('2002-07-23');
-    localStorage.setItem('lastFetchedEventData', beginningDate.toUTCString());
+    const beginningDate = new Date("2002-07-23");
+    localStorage.setItem("lastFetchedEventData", beginningDate.toUTCString());
     return docRef.id;
   } catch (error) {
     console.error(error);
@@ -76,7 +58,7 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
 
 export async function getEventById(eventId: EventId): Promise<EventData> {
   try {
-    const eventDoc = await getDoc(doc(db, 'Events', eventId));
+    const eventDoc = await getDoc(doc(db, "Events", eventId));
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
     const event: EventData = {
       ...eventWithoutOrganiser,
@@ -95,10 +77,10 @@ export async function searchEventsByKeyword(
 ) {
   try {
     if (!nameKeyword && !locationKeyword) {
-      throw new Error('Both nameKeyword and locationKeyword are empty');
+      throw new Error("Both nameKeyword and locationKeyword are empty");
     }
 
-    const eventCollectionRef = collection(db, 'Events');
+    const eventCollectionRef = collection(db, "Events");
     const searchKeywords = tokenizeText(nameKeyword);
     const eventTokenMatchCount: Map<string, number> =
       await fetchEventTokenMatches(eventCollectionRef, searchKeywords);
@@ -110,7 +92,7 @@ export async function searchEventsByKeyword(
     eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
     return eventsData;
   } catch (error) {
-    console.error('Error searching events:', error);
+    console.error("Error searching events:", error);
     throw error;
   }
 }
@@ -124,7 +106,7 @@ async function fetchEventTokenMatches(
   for (const token of searchKeywords) {
     const q = query(
       eventCollectionRef,
-      where('nameTokens', 'array-contains', token)
+      where("nameTokens", "array-contains", token)
     );
     const querySnapshot = await getDocs(q);
 
@@ -151,7 +133,7 @@ async function processEventData(
   for (const [eventId, count] of eventTokenMatchCount) {
     let eventDocRef;
     if (eventCollectionRef instanceof Firestore) {
-      eventDocRef = doc(eventCollectionRef, 'Events', eventId); // Replace 'your_collection_name' with actual collection name
+      eventDocRef = doc(eventCollectionRef, "Events", eventId); // Replace 'your_collection_name' with actual collection name
     } else {
       eventDocRef = doc(eventCollectionRef, eventId);
     }
@@ -177,22 +159,22 @@ async function processEventData(
 
 // Function to retrieve all events
 export async function getAllEvents(): Promise<EventData[]> {
-  eventServiceLogger.info('Getting all events');
+  eventServiceLogger.info("Getting all events");
   const currentDate = new Date();
 
   if (
-    localStorage.getItem('eventsData') !== null &&
-    localStorage.getItem('lastFetchedEventData') !== null
+    localStorage.getItem("eventsData") !== null &&
+    localStorage.getItem("lastFetchedEventData") !== null
   ) {
-    const lastFetched = new Date(localStorage.getItem('lastFetchedEventData')!);
+    const lastFetched = new Date(localStorage.getItem("lastFetchedEventData")!);
     if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
       return getEventsDataFromLocalStorage();
     }
   }
   try {
-    console.log('Getting events from DB');
-    eventServiceLogger.info('Getting events from DB');
-    const eventCollectionRef = collection(db, 'Events');
+    console.log("Getting events from DB");
+    eventServiceLogger.info("Getting events from DB");
+    const eventCollectionRef = collection(db, "Events");
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
     const eventsData: EventData[] = [];
@@ -200,7 +182,9 @@ export async function getAllEvents(): Promise<EventData[]> {
     eventsSnapshot.forEach((doc) => {
       const eventData = doc.data() as EventDataWithoutOrganiser;
       eventData.eventId = doc.id;
-      eventsDataWithoutOrganiser.push(eventData);
+      if (eventData.name !== undefined) {
+        eventsDataWithoutOrganiser.push(eventData);
+      }
     });
 
     for (const event of eventsDataWithoutOrganiser) {
@@ -210,9 +194,9 @@ export async function getAllEvents(): Promise<EventData[]> {
         organiser: organiser,
       });
     }
-    localStorage.setItem('eventsData', JSON.stringify(eventsData));
+    localStorage.setItem("eventsData", JSON.stringify(eventsData));
     const currentDateString = currentDate.toUTCString();
-    localStorage.setItem('lastFetchedEventData', currentDateString);
+    localStorage.setItem("lastFetchedEventData", currentDateString);
     return eventsData;
   } catch (error) {
     console.error(error);
@@ -225,11 +209,11 @@ export async function updateEvent(
   updatedData: Partial<EventData>
 ): Promise<void> {
   if (!rateLimitCreateAndUpdateEvents()) {
-    console.log('Rate Limited!!!');
-    throw 'Rate Limited';
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
   }
   try {
-    const eventRef = doc(db, 'Events', eventId);
+    const eventRef = doc(db, "Events", eventId);
     await updateDoc(eventRef, updatedData);
   } catch (error) {
     console.error(error);
@@ -241,12 +225,12 @@ export async function updateEventByName(
   updatedData: Partial<EventData>
 ) {
   if (!rateLimitCreateAndUpdateEvents()) {
-    console.log('Rate Limited!!!');
-    throw 'Rate Limited';
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
   }
   try {
-    const eventCollectionRef = collection(db, 'Events');
-    const q = query(eventCollectionRef, where('name', '==', eventName)); // Query by event name
+    const eventCollectionRef = collection(db, "Events");
+    const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
 
     const querySnapshot = await getDocs(q);
 
@@ -267,7 +251,7 @@ export async function updateEventByName(
 
 export async function deleteEvent(eventId: EventId): Promise<void> {
   try {
-    const eventRef = doc(db, 'Events', eventId);
+    const eventRef = doc(db, "Events", eventId);
     await deleteDoc(eventRef);
     console.log(deleteDoc);
   } catch (error) {
@@ -277,8 +261,8 @@ export async function deleteEvent(eventId: EventId): Promise<void> {
 
 export async function deleteEventByName(eventName: string): Promise<void> {
   try {
-    const eventCollectionRef = collection(db, 'Events');
-    const q = query(eventCollectionRef, where('name', '==', eventName)); // Query by event name
+    const eventCollectionRef = collection(db, "Events");
+    const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
 
     const querySnapshot = await getDocs(q);
 
@@ -299,14 +283,14 @@ export async function incrementEventAccessCountById(
   eventId: EventId,
   count: number = 1
 ) {
-  updateDoc(doc(db, 'Events', eventId), {
+  updateDoc(doc(db, "Events", eventId), {
     accessCount: increment(count),
   });
 }
 
 function getEventsDataFromLocalStorage(): EventData[] {
   const eventsData: EventData[] = JSON.parse(
-    localStorage.getItem('eventsData')!
+    localStorage.getItem("eventsData")!
   );
   const eventsDataFinal: EventData[] = [];
   eventsData.map((event) => {
@@ -320,7 +304,6 @@ function getEventsDataFromLocalStorage(): EventData[] {
       endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
       location: event.location,
       capacity: event.capacity,
-      vacancy: event.vacancy,
       price: event.price,
       organiserId: event.organiserId,
       registrationDeadline: new Timestamp(
@@ -347,9 +330,9 @@ function getEventsDataFromLocalStorage(): EventData[] {
 function rateLimitCreateAndUpdateEvents(): boolean {
   const now = new Date();
   const maybeOperationCount5minString =
-    localStorage.getItem('operationCount5min');
+    localStorage.getItem("operationCount5min");
   const maybeLastCreateUpdateOperationTimestampString = localStorage.getItem(
-    'lastCreateUpdateOperationTimestamp'
+    "lastCreateUpdateOperationTimestamp"
   );
 
   if (
@@ -369,21 +352,21 @@ function rateLimitCreateAndUpdateEvents(): boolean {
         return false;
       } else {
         localStorage.setItem(
-          'operationCount5min',
+          "operationCount5min",
           (operationCount5min + 1).toString()
         );
         return true;
       }
     }
-    localStorage.setItem('operationCount5min', '0');
+    localStorage.setItem("operationCount5min", "0");
     localStorage.setItem(
-      'lastCreateUpdateOperationTimestamp',
+      "lastCreateUpdateOperationTimestamp",
       now.toUTCString()
     );
     return true;
   }
   // allow edit as one is null
-  localStorage.setItem('operationCount5min', '0');
-  localStorage.setItem('lastCreateUpdateOperationTimestamp', now.toUTCString());
+  localStorage.setItem("operationCount5min", "0");
+  localStorage.setItem("lastCreateUpdateOperationTimestamp", now.toUTCString());
   return true;
 }

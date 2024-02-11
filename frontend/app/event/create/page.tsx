@@ -142,7 +142,7 @@ export default function CreateEvent() {
       ),
       location: formData.location,
       capacity: formData.capacity,
-      vacancy: formData.capacity,
+      // vacancy: formData.capacity,
       price: formData.price,
       name: formData.name,
       description: formData.description,

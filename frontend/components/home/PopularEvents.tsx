@@ -84,7 +84,7 @@ export default function PopularEvents(props: PopularEventsProps) {
                         startDate={event.startDate}
                         location={event.location}
                         price={event.price}
-                        vacancy={event.vacancy}
+                        vacancy={event.capacity - event.attendees.length}
                       />
                     </div>
                   );

@@ -147,7 +147,7 @@ export default function Dashboard() {
                       startDate={event.startDate}
                       location={event.location}
                       price={event.price}
-                      vacancy={event.vacancy}
+                      vacancy={event.capacity - event.attendees.length}
                     />
                   </div>
                 );

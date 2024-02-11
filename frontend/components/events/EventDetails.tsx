@@ -30,7 +30,7 @@ export function EventDetails(props: EventDetailsProps) {
               date={eventData.startDate}
               location={eventData.location}
               price={eventData.price}
-              vacancy={eventData.vacancy}
+              vacancy={eventData.capacity - eventData.attendees.length}
             />
           </div>
 
@@ -50,7 +50,7 @@ export function EventDetails(props: EventDetailsProps) {
               date={eventData.startDate}
               location={eventData.location}
               price={eventData.price}
-              vacancy={eventData.vacancy}
+              vacancy={eventData.capacity - eventData.attendees.length}
             />
           </div>
         </div>

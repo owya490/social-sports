@@ -5,29 +5,39 @@ import EventCard from "@/components/events/EventCard";
 import CustomDateInput from "@/components/events/create/CustomDateInput";
 import CustomTimeInput from "@/components/events/create/CustomTimeInput";
 import DescriptionRichTextEditor from "@/components/events/create/DescriptionRichTextEditor";
+import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
-import { getEventById } from "@/services/eventsService";
+import { getEventById, updateEvent } from "@/services/eventsService";
+import { uploadUserImage } from "@/services/imageService";
 import { getAllTags } from "@/services/tagService";
 import {
-  timestampToDateString,
+  convertDateAndTimeStringToTimestamp,
+  convertTimestampToYYYYMMDDString,
   timestampToTimeOfDay24Hour,
 } from "@/utilities/datetimeUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Button, Input, Option, Select } from "@material-tailwind/react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function EditEvent({ params }: any) {
   const eventId: EventId = params.id;
+  const { user } = useUser();
+  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [tags, setTags] = useState<Tag[]>([]);
 
+  const [dateString, setDateString] = useState("");
+  const [startTimeString, setStartTimeString] = useState("");
+  const [endTimeString, setEndTimeString] = useState("");
   const [priceString, setPriceString] = useState("15");
   const [capacityString, setCapacityString] = useState("20");
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [image, setImage] = useState<File | undefined>(undefined);
 
   useEffect(() => {
     const fetchedEventDataPromise = getEventById(eventId);
@@ -35,18 +45,37 @@ export default function EditEvent({ params }: any) {
 
     Promise.all([fetchedEventDataPromise, fetchedTagsPromise])
       .then(([fetchedEventData, fetchedTags]) => {
+        setImagePreviewUrl(fetchedEventData.image);
         setEventData(fetchedEventData);
         setTags(fetchedTags);
+
+        // Set necessary strings to allow to display on screen
+        setDateString(
+          convertTimestampToYYYYMMDDString(fetchedEventData.startDate)
+        );
+        setStartTimeString(
+          timestampToTimeOfDay24Hour(fetchedEventData.startDate)
+        );
+        setEndTimeString(timestampToTimeOfDay24Hour(fetchedEventData.endDate));
       })
       .then(() => {
         setLoading(false);
       });
-
-    // .then((data) => {
-    //   setImagePreviewUrl(data.image);
-    //   setEventData(data);
-    // });
   }, []);
+
+  async function uploadImageThenUpdateEvent() {
+    setLoading(true);
+    updateEvent(eventId, {
+      ...eventData,
+      image:
+        image === undefined
+          ? eventData.image
+          : await uploadUserImage(user.userId, image),
+    }).then(() => {
+      localStorage.removeItem("lastFetchedEventData");
+      router.push(`/event/${eventId}`);
+    });
+  }
 
   return loading ? (
     <Loading />
@@ -72,7 +101,9 @@ export default function EditEvent({ params }: any) {
                     crossOrigin={undefined}
                     required
                     value={eventData.name}
-                    onChange={() => {}}
+                    onChange={(e) => {
+                      setEventData({ ...eventData, name: e.target.value });
+                    }}
                     className="rounded-md"
                     size="lg"
                   />
@@ -84,23 +115,50 @@ export default function EditEvent({ params }: any) {
                   <div className="flex space-x-2 mt-4">
                     <div className="basis-1/2">
                       <CustomDateInput
-                        date={timestampToDateString(eventData.startDate)}
+                        date={dateString}
                         placeholder="Date"
-                        handleChange={() => {}}
+                        handleChange={(e) => {
+                          setDateString(e);
+                          setEventData({
+                            ...eventData,
+                            startDate: convertDateAndTimeStringToTimestamp(
+                              e,
+                              startTimeString
+                            ),
+                          });
+                        }}
                       />
                     </div>
                     <div className="basis-1/4">
                       <CustomTimeInput
-                        value={timestampToTimeOfDay24Hour(eventData.startDate)}
+                        value={startTimeString}
                         placeholder="Start time"
-                        handleChange={() => {}}
+                        handleChange={(e) => {
+                          setStartTimeString(e);
+                          setEventData({
+                            ...eventData,
+                            startDate: convertDateAndTimeStringToTimestamp(
+                              dateString,
+                              e
+                            ),
+                          });
+                        }}
                       />
                     </div>
                     <div className="basis-1/4">
                       <CustomTimeInput
-                        value={timestampToTimeOfDay24Hour(eventData.endDate)}
+                        value={endTimeString}
                         placeholder="End time"
-                        handleChange={() => {}}
+                        handleChange={(e) => {
+                          setEndTimeString(e);
+                          setEventData({
+                            ...eventData,
+                            endDate: convertDateAndTimeStringToTimestamp(
+                              dateString,
+                              e
+                            ),
+                          });
+                        }}
                       />
                     </div>
                   </div>
@@ -116,7 +174,12 @@ export default function EditEvent({ params }: any) {
                       crossOrigin={undefined}
                       required
                       value={eventData.location}
-                      onChange={() => {}}
+                      onChange={(e) => {
+                        setEventData({
+                          ...eventData,
+                          location: e.target.value,
+                        }); // need to get lat lng in the final submit
+                      }}
                       className="rounded-md"
                       size="lg"
                       icon={<MapPinIcon />}
@@ -132,7 +195,9 @@ export default function EditEvent({ params }: any) {
                       label="Select Sport"
                       size="lg"
                       value={eventData.sport}
-                      onChange={() => {}}
+                      onChange={(e) => {
+                        setEventData({ ...eventData, sport: e! });
+                      }}
                     >
                       <Option value="volleyball">Volleyball</Option>
                       <Option value="badminton">Badminton</Option>
@@ -162,6 +227,12 @@ export default function EditEvent({ params }: any) {
                         value={priceString}
                         type="number"
                         onChange={(e) => {
+                          setEventData({
+                            ...eventData,
+                            price: parseInt(
+                              e.target.value === "" ? "0" : e.target.value
+                            ),
+                          });
                           setPriceString(e.target.value);
                         }}
                         className="rounded-md"
@@ -177,6 +248,12 @@ export default function EditEvent({ params }: any) {
                         value={capacityString}
                         type="number"
                         onChange={(e) => {
+                          setEventData({
+                            ...eventData,
+                            capacity: parseInt(
+                              e.target.value === "" ? "0" : e.target.value
+                            ),
+                          });
                           setCapacityString(e.target.value);
                         }}
                         className="rounded-md"
@@ -193,7 +270,12 @@ export default function EditEvent({ params }: any) {
                   <div className="w-full mt-8">
                     <DescriptionRichTextEditor
                       description={eventData.description}
-                      updateDescription={() => {}}
+                      updateDescription={(e) => {
+                        setEventData({
+                          ...eventData,
+                          description: e,
+                        });
+                      }}
                     />
                   </div>
                 </div>
@@ -219,10 +301,13 @@ export default function EditEvent({ params }: any) {
                       accept="image/*"
                       type="file"
                       onChange={(e) => {
+                        console.log(e.target.files);
                         if (e.target.files !== null) {
+                          console.log(URL.createObjectURL(e.target.files![0]));
                           setImagePreviewUrl(
                             URL.createObjectURL(e.target.files![0])
                           );
+                          setImage(e.target.files[0]);
                         }
                       }}
                     />
@@ -256,11 +341,23 @@ export default function EditEvent({ params }: any) {
                   </div>
                 </div>
               </div>
+              <button
+                className="bg-black rounded-lg py-3 px-4 text-white font-semibold mt-12"
+                onClick={uploadImageThenUpdateEvent}
+              >
+                UPDATE EVENT
+              </button>
             </div>
           </div>
         </div>
         <div className="w-2/5">
-          <EventCard {...eventData} />
+          <div className="sticky top-24 mt-24">
+            <EventCard
+              {...eventData}
+              image={imagePreviewUrl}
+              vacancy={eventData.capacity - eventData.attendees.length}
+            />
+          </div>
         </div>
       </div>
     </div>

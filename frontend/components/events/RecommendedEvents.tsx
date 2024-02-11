@@ -8,12 +8,7 @@ import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
 import EventCard from "./EventCard";
 
-interface RecommendedEventsProps {
-  eventData?: EventData;
-}
-
-export default function RecommendedEvents(props: RecommendedEventsProps) {
-  const { eventData } = props;
+export default function RecommendedEvents() {
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
     const newRecommendedEvents: EventData[] = [];
@@ -85,7 +80,7 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
                         startDate={event.startDate}
                         location={event.location}
                         price={event.price}
-                        vacancy={event.vacancy}
+                        vacancy={event.capacity - event.attendees.length}
                       />
                     </div>
                   );

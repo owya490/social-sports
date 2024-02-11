@@ -1,9 +1,14 @@
+import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/utilities/datetimeUtils";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
+import Link from "next/link";
+import { useUser } from "../utility/UserContext";
 
 interface EventBannerProps {
+  eventId: EventId;
   name: string;
   startDate: Timestamp;
   organiser: UserData;
@@ -11,6 +16,7 @@ interface EventBannerProps {
 }
 
 export default function EventBanner(props: EventBannerProps) {
+  const { user } = useUser();
   return (
     <div className="bg-white border-b-black border-1 border w-screen px-5 md:px-10 pt-20 shadow-lg flex justify-center">
       <div className="screen-width-primary">
@@ -40,6 +46,11 @@ export default function EventBanner(props: EventBannerProps) {
               </p>
             </div>
           </div>
+          {props.organiser.userId === user.userId && (
+            <Link className="ml-auto flex" href={`edit/${props.eventId}`}>
+              <PencilSquareIcon className="w-5 h-5 mr-1" /> <p>Edit</p>
+            </Link>
+          )}
         </div>
       </div>
     </div>
