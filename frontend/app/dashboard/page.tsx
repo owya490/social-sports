@@ -1,15 +1,15 @@
-'use client';
-import { getAllEvents, getEventById } from '@/services/eventsService';
-import { useEffect, useState } from 'react';
-import { searchEventsByKeyword } from '@/services/eventsService';
-import { Alert } from '@material-tailwind/react';
-import FilterBanner from '@/components/Filter/FilterBanner';
-import Loading from '@/components/Loading';
-import EventCard from '@/components/events/EventCard';
-import { EventData } from '@/interfaces/EventTypes';
-import { useRouter, useSearchParams } from 'next/navigation';
-import noSearchResultLineDrawing from '../../public/images/no-search-result-line-drawing.jpg';
-import Image from 'next/image';
+"use client";
+import { getAllEvents, getEventById } from "@/services/eventsService";
+import { useEffect, useState } from "react";
+import { searchEventsByKeyword } from "@/services/eventsService";
+import { Alert } from "@material-tailwind/react";
+import FilterBanner from "@/components/Filter/FilterBanner";
+import Loading from "@/components/Loading";
+import EventCard from "@/components/events/EventCard";
+import { EventData } from "@/interfaces/EventTypes";
+import { useRouter, useSearchParams } from "next/navigation";
+import noSearchResultLineDrawing from "../../public/images/no-search-result-line-drawing.jpg";
+import Image from "next/image";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -19,20 +19,20 @@ export default function Dashboard() {
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
   const router = useRouter();
   const [currentUrl, setCurrentUrl] = useState(
-    typeof window !== 'undefined' ? window.location.href : ''
+    typeof window !== "undefined" ? window.location.href : ""
   );
   const searchParams = useSearchParams();
-  const [srcLocation, setSrcLocation] = useState<string>('');
+  const [srcLocation, setSrcLocation] = useState<string>("");
   const [triggerFilterApply, setTriggerFilterApply] = useState(false);
   const getQueryParams = () => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       // Return some default or empty values when not in a browser environment
-      return { event: '', location: '' };
+      return { event: "", location: "" };
     }
     const searchParams = new URLSearchParams(window.location.search);
     return {
-      event: searchParams.get('event') || '',
-      location: searchParams.get('location') || '',
+      event: searchParams.get("event") || "",
+      location: searchParams.get("location") || "",
     };
   };
 
@@ -41,8 +41,8 @@ export default function Dashboard() {
     const fetchEvents = async () => {
       const { event, location } = getQueryParams();
       setSrcLocation(location);
-      if (typeof event === 'string' && typeof location === 'string') {
-        if (event.trim() === '') {
+      if (typeof event === "string" && typeof location === "string") {
+        if (event.trim() === "") {
           getAllEvents()
             .then((events) => {
               setEventDataList(events);
@@ -71,7 +71,7 @@ export default function Dashboard() {
             });
         }
       }
-      if (location.trim() !== '') {
+      if (location.trim() !== "") {
         setTriggerFilterApply(true);
       }
     };
@@ -80,11 +80,11 @@ export default function Dashboard() {
   }, [searchParams]);
 
   useEffect(() => {
-    const login = searchParams?.get('login');
-    if (login === 'success') {
+    const login = searchParams?.get("login");
+    if (login === "success") {
       setShowLoginSuccess(true);
 
-      router.replace('/dashboard');
+      router.replace("/dashboard");
     }
   }, [router]);
 
@@ -108,7 +108,7 @@ export default function Dashboard() {
     <Loading />
   ) : (
     <div>
-      <div className='flex justify-center'>
+      <div className="flex justify-center">
         <FilterBanner
           eventDataList={searchDataList}
           allEventsDataList={allEventsDataList}
@@ -118,14 +118,14 @@ export default function Dashboard() {
           triggerFilterApply={triggerFilterApply}
         />
       </div>
-      <div className='absolute ml-auto mr-auto left-0 right-0 top-32 w-fit'>
-        <Alert open={showLoginSuccess} color='green'>
+      <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit">
+        <Alert open={showLoginSuccess} color="green">
           Successfully logged in!
         </Alert>
       </div>
-      <div className='flex justify-center'>
-        <div className='pb-10 screen-width-dashboard'>
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8'>
+      <div className="flex justify-center">
+        <div className="pb-10 screen-width-dashboard">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {eventDataList
               .sort((event1, event2) => {
                 if (event1.accessCount > event2.accessCount) {
@@ -138,7 +138,7 @@ export default function Dashboard() {
               })
               .map((event, eventIdx) => {
                 return (
-                  <div className='my-4' key={eventIdx}>
+                  <div className="my-4" key={eventIdx}>
                     <EventCard
                       eventId={event.eventId}
                       image={event.image}
@@ -156,16 +156,16 @@ export default function Dashboard() {
         </div>
       </div>
       {eventDataList.length === 0 ? (
-        <div className='mt-10 mb-16 sm:mt-20 sm:mb-40 mx-6'>
+        <div className="mt-10 mb-16 sm:mt-20 sm:mb-40 mx-6">
           <Image
             src={noSearchResultLineDrawing}
-            alt='noSearchResultLineDrawing'
+            alt="noSearchResultLineDrawing"
             width={500}
             height={300}
-            className='m-auto opacity-60'
+            className="m-auto opacity-60"
           />
 
-          <div className='flex justify-center text-gray-600 font-medium text-lg sm:text-2xl text-center'>
+          <div className="flex justify-center text-gray-600 font-medium text-lg sm:text-2xl text-center">
             Sorry, we couldn&apos;t find any results
           </div>
         </div>
