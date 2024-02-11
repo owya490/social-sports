@@ -152,22 +152,26 @@ export default function Dashboard() {
                   </div>
                 );
               })}
-            {eventDataList.length === 0 ? (
-              <div className=''>
-                <Image
-                  src={noSearchResultLineDrawing}
-                  alt='noSearchResultLineDrawing'
-                  width={600}
-                  height={600}
-                  className='h-100 w-30'
-                />
-              </div>
-            ) : (
-              <div></div>
-            )}
           </div>
         </div>
       </div>
+      {eventDataList.length === 0 ? (
+        <div className='mt-10 mb-16 sm:mt-20 sm:mb-40 mx-6'>
+          <Image
+            src={noSearchResultLineDrawing}
+            alt='noSearchResultLineDrawing'
+            width={500}
+            height={300}
+            className='m-auto opacity-60'
+          />
+
+          <div className='flex justify-center text-gray-600 font-medium text-lg sm:text-2xl text-center'>
+            Sorry, we couldn't find any results
+          </div>
+        </div>
+      ) : (
+        <div></div>
+      )}
     </div>
   );
 }
