@@ -3,10 +3,10 @@
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useState } from "react";
-import CreateEventCostSlider from "./CreateEventCostSlider";
+import CreateEventCostSlider from "../CreateEventCostSlider";
+import CustomDateInput from "../CustomDateInput";
+import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
-import CustomTimeInput from "./CustomTimeInput";
-import CustomDateInput from "./CustomDateInput";
 
 type BasicData = {
   name: string;
@@ -15,8 +15,8 @@ type BasicData = {
   startTime: string;
   endTime: string;
   sport: string;
-  cost: number;
-  people: number;
+  price: number;
+  capacity: number;
 };
 
 type BasicInformationProps = BasicData & {
@@ -30,12 +30,15 @@ export function BasicInformation({
   startTime,
   endTime,
   sport,
-  cost,
-  people,
+  price,
+  capacity,
   updateField,
 }: BasicInformationProps) {
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
+
+  const [priceString, setPriceString] = useState("15");
+  const [capacityString, setCapacityString] = useState("20");
 
   const handleDateChange = (selectedDate: string) => {
     // Validate if the selected date is in the past
@@ -73,11 +76,17 @@ export function BasicInformation({
     updateField({ endTime: selectedTime });
   };
 
-  const [customAmount, setCustomAmount] = useState(cost);
+  const [customAmount, setCustomAmount] = useState(price);
+
+  const handleEventCostSliderChange = (amount: number) => {
+    handleCustomAmountChange(amount);
+    setPriceString(amount + "");
+  };
 
   const handleCustomAmountChange = (amount: number) => {
+    amount = Number.isNaN(amount) ? 0 : amount;
     setCustomAmount(amount);
-    updateField({ cost: amount }); // Update the cost field in the parent component
+    updateField({ price: amount }); // Update the cost field in the parent component
   };
 
   return (
@@ -88,9 +97,9 @@ export function BasicInformation({
             What’s the name of your event?
           </label>
           <p className="text-sm mb-5 mt-2">
-            This will be your event’s title. Your title will be used to help
-            create your event’s summary, description, category, and tags – so be
-            specific!
+            This will be your event&apos;s title. Your title will be used to
+            help create your event&apos;s summary, description, category, and
+            tags – so be specific!
           </p>
           <Input
             label="Event Name"
@@ -102,36 +111,31 @@ export function BasicInformation({
             size="lg"
           />
         </div>
-        <div>
+        <div className="">
   <label className="text-black text-lg font-semibold">
     When does your event start and end?
   </label>
-  <div className="mt-4 flex flex-col sm:flex-row sm:space-x-2">
-    <div className="sm:mb-2 sm:flex-grow">
+  <div className="flex mt-4 flex-col sm:flex-row">
+    <div className="w-full sm:w-1/2">
       <CustomDateInput
         date={date}
         placeholder="Date"
-        required
         handleChange={handleDateChange}
       />
     </div>
-    <div className="flex sm:space-x-2 sm:flex-grow mt-6">
-      <div className="basis-1/2">
-        <CustomTimeInput
-          value={startTime}
-          placeholder="Start time"
-          required
-          handleChange={handleStartTimeChange}
-        />
-      </div>
-      <div className="basis-1/2">
-        <CustomTimeInput
-          value={endTime}
-          placeholder="End time"
-          required
-          handleChange={handleEndTimeChange}
-        />
-      </div>
+    <div className="w-full sm:w-auto sm:ml-4 mt-4 sm:mt-0">
+      <CustomTimeInput
+        value={startTime}
+        placeholder="Start time"
+        handleChange={handleStartTimeChange}
+      />
+    </div>
+    <div className="w-full sm:w-auto sm:ml-4 mt-4 sm:mt-0">
+      <CustomTimeInput
+        value={endTime}
+        placeholder="End time"
+        handleChange={handleEndTimeChange}
+      />
     </div>
   </div>
 </div>
@@ -162,6 +166,7 @@ export function BasicInformation({
             <Select
               label="Select Sport"
               size="lg"
+              value={sport}
               onChange={(e) => {
                 updateField({ sport: e });
               }}
@@ -178,50 +183,56 @@ export function BasicInformation({
           </div>
         </div>
         <div>
-          <label className="text-black text-lg font-semibold">
-            What is the price of the event and max capacity?
-          </label>
-          <p className="text-sm mt-2 mb-5">
-            Event price is the cost of each ticket. Event capacity is the total
-            number of tickets you're willing to sell.
-          </p>
+  <label className="text-black text-lg font-semibold">
+    What is the price of the event and max capacity?
+  </label>
+  <p className="text-sm mt-2 mb-5">
+    Event price is the cost of each ticket. Event capacity is the total
+    number of tickets you&apos;re willing to sell.
+  </p>
 
-          <div className="w-full px-5">
-  <CreateEventCostSlider
-    initialCustomAmount={customAmount}
-    onCustomAmountChange={handleCustomAmountChange}
-  />
+  <div className="w-full px-5">
+    <CreateEventCostSlider
+      initialCustomAmount={customAmount}
+      onCustomAmountChange={handleEventCostSliderChange}
+    />
+  </div>
+  <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3">
+    <div className="w-full md:w-1/2 mt-4 md:mt-0">
+      <Input
+        label="Price"
+        crossOrigin={undefined}
+        required
+        value={priceString}
+        type="number"
+        onChange={(e) => {
+          setPriceString(e.target.value);
+          handleCustomAmountChange(parseInt(e.target.value));
+        }}
+        className="rounded-md"
+        size="lg"
+        icon={<CurrencyDollarIcon />}
+      />
+    </div>
+    <div className="w-full md:w-1/2 mt-4 md:mt-0">
+      <Input
+        label="Capacity"
+        crossOrigin={undefined}
+        required
+        value={capacityString}
+        type="number"
+        onChange={(e) => {
+          setCapacityString(e.target.value);
+          updateField({ capacity: parseInt(e.target.value) });
+        }}
+        className="rounded-md"
+        size="lg"
+      />
+    </div>
+  </div>
 </div>
-<div className="w-full flex flex-col md:flex-row space-x-3">
-<div className="mt-4 md:mt-4 grow">
-  <Input
-    label="Price"
-    crossOrigin={undefined}
-    required
-    value={cost}
-    onChange={(e) =>
-      handleCustomAmountChange(parseInt(e.target.value))
-    }
-    className="rounded-md w-full"  // Explicitly set width to full
-    size="lg"
-    icon={<CurrencyDollarIcon />}
-  />
-</div>
-<div className="mt-4 my-8 md:mt-4 grow">
-  <Input
-    label="Capacity"
-    crossOrigin={undefined}
-    required
-    value={people}
-    onChange={(e) =>
-      updateField({ people: parseInt(e.target.value) })
-    }
-    className="rounded-md w-full"  // Explicitly set width to full
-    size="lg"
-  />
-</div>
-</div>
-        </div>
+
+
       </div>
     </FormWrapper>
   );

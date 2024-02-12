@@ -24,7 +24,7 @@ export default function CreateEventStepper({
     <Stepper activeStep={activeStep}>
       <Step onClick={() => {}}>
         <UserIcon className="h-5 w-5" />
-        <div className={`absolute -bottom-[4.5rem] w-max text-center ${activeStep === 0 ? '' : 'hidden sm:flex sm:flex-col'}`}>
+        <div className={`absolute -bottom-[4.5rem] w-max text-center ${activeStep === 0 ? '' : 'hidden sm:flex sm:flex-col items-center'}`}>
           <Typography
             variant="h6"
             color={activeStep === 0 ? "blue-gray" : "gray"}
@@ -42,7 +42,7 @@ export default function CreateEventStepper({
       </Step>
       <Step onClick={() => {}}>
         <TagIcon className="h-5 w-5" />
-        <div className={`absolute -bottom-[4.5rem] w-max text-center ${activeStep === 1 ? '' : 'hidden sm:flex sm:flex-col'}`}>
+        <div className={`absolute -bottom-[4.5rem] w-max text-center ${activeStep === 1 ? '' : 'hidden sm:flex sm:flex-col items-center'}`}>
           <Typography
             variant="h6"
             color={activeStep === 1 ? "blue-gray" : "gray"}
@@ -60,7 +60,7 @@ export default function CreateEventStepper({
       </Step>
       <Step onClick={() => {}}>
         <PhotoIcon className="h-5 w-5" />
-        <div className={`absolute -bottom-[4.5rem] w-max text-center ${activeStep === 2 ? '' : 'hidden sm:flex sm:flex-col'}`}>
+        <div className={`absolute -bottom-[4.5rem] w-max text-center ${activeStep === 2 ? '' : 'hidden sm:flex sm:flex-col items-center'}`}>
           <Typography
             variant="h6"
             color={activeStep === 2 ? "blue-gray" : "gray"}
@@ -78,7 +78,7 @@ export default function CreateEventStepper({
       </Step>
       <Step onClick={() => {}}>
         <CalendarIcon className="h-5 w-5" />
-        <div className={`absolute -bottom-[4.5rem] w-max text-center ${activeStep === 3 ? '' : 'hidden sm:flex sm:flex-col'}`}>
+        <div className={`absolute -bottom-[4.5rem] w-max text-center ${activeStep === 3 ? '' : 'hidden sm:flex sm:flex-col items-center'}`}>
           <Typography
             variant="h6"
             color={activeStep === 3 ? "blue-gray" : "gray"}

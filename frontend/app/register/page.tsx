@@ -1,10 +1,10 @@
 "use client";
-import React, { useState } from "react";
 import { handleEmailAndPasswordSignUp } from "@/services/authService";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 
 export default function Register() {
   const [userData, setUserData] = useState({

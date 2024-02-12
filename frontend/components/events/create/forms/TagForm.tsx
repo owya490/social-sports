@@ -5,16 +5,13 @@ import { Button, Input } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 import { FormWrapper } from "./FormWrapper";
 
-type BasicData = {
-  cost: number;
-  people: number;
-};
+type BasicData = {};
 
 type TagFormProps = BasicData & {
   updateField: (fields: Partial<BasicData>) => void;
 };
 
-export function TagForm(props: TagFormProps) {
+export function TagForm({}: TagFormProps) {
   const [tags, setTags] = useState<Tag[]>([]);
   useEffect(() => {
     getAllTags().then((data) => {

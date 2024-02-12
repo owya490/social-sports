@@ -7,24 +7,31 @@ import NewsletterSignup from "@/components/home/NewsletterSignup";
 import PopularEvents from "@/components/home/PopularEvents";
 import PopularLocations from "@/components/home/PopularLocations";
 import SearchSport from "@/components/home/SearchSport";
-import { sleep } from "@/components/utility/sleepUtil";
-import { useEffect } from "react";
+import { sleep } from "@/utilities/sleepUtil";
+import { useEffect, useState } from "react";
+import { getEnvironment } from "../utilities/environment";
 
 export default function Home() {
+  const [shouldAnimate, setShouldAnimate] = useState(false);
   useEffect(() => {
     async function init() {
+      document.getElementById("page")!.classList.add("hidden");
       document.getElementById("footer")!.classList.add("hidden");
       await sleep(2200);
       document.getElementById("page")!.classList.remove("hidden");
       document.getElementById("footer")!.classList.remove("hidden");
     }
-    init();
+
+    if (sessionStorage.getItem("animation") === null) {
+      setShouldAnimate(true);
+      init();
+    }
   });
 
   return (
     <div>
-      <LoadingOverlay />
-      <div id="page" className="hidden">
+      <LoadingOverlay shouldAnimate={shouldAnimate} />
+      <div id="page" className="">
         <div className="mt-20 w-screen justify-center flex">
           <div className="screen-width-dashboard">
             <Hero />

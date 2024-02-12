@@ -4,6 +4,7 @@ export function useMultistepForm(steps: ReactElement[]) {
   const [currentStep, setCurrentStep] = useState(0);
 
   function next() {
+    window.scrollTo(0, 0);
     setCurrentStep((i) => {
       if (i >= steps.length - 1) return i;
       return i + 1;
@@ -11,6 +12,7 @@ export function useMultistepForm(steps: ReactElement[]) {
   }
 
   function back() {
+    window.scrollTo(0, 0);
     setCurrentStep((i) => {
       if (i <= 0) return i;
       return i - 1;
@@ -24,7 +26,6 @@ export function useMultistepForm(steps: ReactElement[]) {
   return {
     currentStep,
     step: steps[currentStep],
-    steps,
     goTo,
     next,
     back,
