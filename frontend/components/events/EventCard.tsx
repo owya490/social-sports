@@ -23,7 +23,7 @@ export default function EventCard(props: EventCardProps) {
 
   return (
     <div
-      className="bg-white rounded-lg w-full text-left border-gray-300 border min-w-[300px] max-w-[350px] md:max-w-[320px] hover:cursor-pointer"
+      className="bg-white rounded-lg text-left border-gray-300 border w-full sm:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer"
       onClick={() => {
         router.push(`/event/${props.eventId}`);
       }}
@@ -34,7 +34,7 @@ export default function EventCard(props: EventCardProps) {
         height={0}
         width={0}
         alt="stvImage"
-        className="w-full rounded-t-lg h-36 object-cover"
+        className="w-full rounded-t-lg h-52 xl:h-44 object-cover"
       />
       <div className="p-4">
         <h4 className="font-bold text-gray-500 text-xs">

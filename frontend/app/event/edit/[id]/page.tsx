@@ -10,6 +10,7 @@ import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
 import { getEventById, updateEvent } from "@/services/eventsService";
 import { uploadUserImage } from "@/services/imageService";
+import { getLocationCoordinates } from "@/services/locationUtils";
 import { getAllTags } from "@/services/tagService";
 import {
   convertDateAndTimeStringToTimestamp,
@@ -65,8 +66,13 @@ export default function EditEvent({ params }: any) {
 
   async function uploadImageThenUpdateEvent() {
     setLoading(true);
+    const lngLat = await getLocationCoordinates(eventData.location);
     updateEvent(eventId, {
       ...eventData,
+      locationLatLng: {
+        lat: lngLat.lat,
+        lng: lngLat.lng,
+      },
       image:
         image === undefined
           ? eventData.image

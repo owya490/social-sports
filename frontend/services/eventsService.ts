@@ -46,9 +46,8 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     };
 
     const docRef = await addDoc(collection(db, "Events"), eventDataWithTokens);
-    // Set last fetched date to really old one to ensure next getAllEvents is a fetch from firebase DB.
-    const beginningDate = new Date("2002-07-23");
-    localStorage.setItem("lastFetchedEventData", beginningDate.toUTCString());
+    // Remove lastFetchedEventData to ensure next getAllEvents is a fetch from firebase DB.
+    localStorage.removeItem("lastFetchedEventData");
     return docRef.id;
   } catch (error) {
     console.error(error);
