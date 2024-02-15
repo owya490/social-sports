@@ -155,7 +155,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      {eventDataList.length === 0 ? (
+      {eventDataList.length === 0 && (
         <div className="mt-10 mb-16 sm:mt-20 sm:mb-40 mx-6">
           <Image
             src={noSearchResultLineDrawing}
@@ -169,8 +169,6 @@ export default function Dashboard() {
             Sorry, we couldn&apos;t find any results
           </div>
         </div>
-      ) : (
-        <div></div>
       )}
     </div>
   );
