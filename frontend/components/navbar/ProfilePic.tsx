@@ -10,6 +10,7 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { onAuthStateChanged } from "firebase/auth";
+import { getDownloadURL, ref } from "firebase/storage";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,13 +19,12 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
 import { useUser } from "../utility/UserContext";
-import { getDownloadURL, ref } from "firebase/storage";
 
 export default function ProfilePic() {
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const router = useRouter();
-  const { user, user, setUser } = useUser();
+  const { user, setUser } = useUser();
   const [profilePictureURL, setProfilePictureURL] = useState<string>("");
   const defaultProfilePicturePath = "users/generic/generic-profile-photo.webp";
 

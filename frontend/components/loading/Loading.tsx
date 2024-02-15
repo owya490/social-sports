@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Logo from "./../public/images/SportsHubMobileLogo.png";
+import Logo from "./../../public/images/SportsHubMobileLogo.png";
 interface LoadingProps {
   inline?: boolean;
 }

@@ -1,13 +1,13 @@
 "use client";
 import FilterBanner from "@/components/Filter/FilterBanner";
-import Loading from "@/components/Loading";
 import EventCard from "@/components/events/EventCard";
-import { EventData } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import {
   getAllEvents,
   getEventById,
   searchEventsByKeyword,
 } from "@/services/eventsService";
+import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
@@ -15,13 +15,19 @@ import { useEffect, useLayoutEffect, useState } from "react";
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const [eventDataList, setEventDataList] = useState<EventData[]>([]);
+  const [eventDataList, setEventDataList] = useState<EventData[]>([
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+  ]);
   const [searchDataList, setSearchDataList] = useState<EventData[]>([]);
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
   const router = useRouter();
-  const [currentUrl, setCurrentUrl] = useState(
-    typeof window !== "undefined" ? window.location.href : ""
-  );
   const searchParams = useSearchParams();
   const [srcLocation, setSrcLocation] = useState<string>("");
   const [triggerFilterApply, setTriggerFilterApply] = useState(false);
@@ -38,7 +44,6 @@ export default function Dashboard() {
   };
 
   useLayoutEffect(() => {
-    console.log(document.body.scrollTop);
     window.scrollTo(0, 0);
   });
 
@@ -54,7 +59,8 @@ export default function Dashboard() {
               setSearchDataList(events);
               setAllEventsDataList(events);
             })
-            .finally(() => {
+            .finally(async () => {
+              await sleep(500);
               setLoading(false);
             });
         } else {
@@ -71,7 +77,8 @@ export default function Dashboard() {
               setEventDataList(tempEventDataList);
               setSearchDataList(tempEventDataList);
             })
-            .finally(() => {
+            .finally(async () => {
+              await sleep(500);
               setLoading(false);
             });
         }
@@ -81,7 +88,6 @@ export default function Dashboard() {
       }
     };
     fetchEvents();
-    console.log(srcLocation);
   }, [searchParams]);
 
   useEffect(() => {
@@ -109,9 +115,7 @@ export default function Dashboard() {
     };
   }, [showLoginSuccess]);
 
-  return loading ? (
-    <Loading />
-  ) : (
+  return (
     <div>
       <div className="flex justify-center">
         <FilterBanner
@@ -130,7 +134,7 @@ export default function Dashboard() {
       </div>
       <div className="flex justify-center">
         <div className="pb-10 screen-width-dashboard">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-screen justify-items-center">
             {eventDataList
               .sort((event1, event2) => {
                 if (event1.accessCount > event2.accessCount) {
@@ -143,7 +147,7 @@ export default function Dashboard() {
               })
               .map((event, eventIdx) => {
                 return (
-                  <div className="my-4" key={eventIdx}>
+                  <div className="my-4 w-full" key={eventIdx}>
                     <EventCard
                       eventId={event.eventId}
                       image={event.image}
@@ -153,6 +157,7 @@ export default function Dashboard() {
                       location={event.location}
                       price={event.price}
                       vacancy={event.vacancy}
+                      loading={loading}
                     />
                   </div>
                 );

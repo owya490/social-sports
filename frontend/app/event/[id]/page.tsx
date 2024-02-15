@@ -1,9 +1,9 @@
 "use client";
 
-import Loading from "@/components/Loading";
 import EventBanner from "@/components/events/EventBanner";
 import { EventDetails } from "@/components/events/EventDetails";
 import RecommendedEvents from "@/components/events/RecommendedEvents";
+import Loading from "@/components/loading/Loading";
 import MobileEventDetailFooter from "@/components/mobile/MobileEventDetailFooter";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
