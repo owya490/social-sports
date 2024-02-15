@@ -1,5 +1,5 @@
 import { handleSignOut } from "@/services/authService";
-import { auth } from "@/services/firebase";
+import { auth, storage } from "@/services/firebase";
 import { sleep } from "@/utilities/sleepUtil";
 import { Menu, Transition } from "@headlessui/react";
 import {
@@ -18,12 +18,15 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
 import { useUser } from "../utility/UserContext";
+import { getDownloadURL, ref } from "firebase/storage";
 
 export default function ProfilePic() {
   const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const router = useRouter();
-  const { user, setUser } = useUser();
+  const { user, user, setUser } = useUser();
+  const [profilePictureURL, setProfilePictureURL] = useState<string>("");
+  const defaultProfilePicturePath = "users/generic/generic-profile-photo.webp";
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -38,7 +41,23 @@ export default function ProfilePic() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user?.profilePicture]);
+
+  useEffect(() => {
+    const fetchProfilePictureURL = async () => {
+      if (user?.profilePicture) {
+        const storageRef = ref(storage, defaultProfilePicturePath);
+        try {
+          const url = await getDownloadURL(storageRef);
+          setProfilePictureURL(url);
+        } catch (error) {
+          console.error("Error fetching profile picture URL:", error);
+        }
+      }
+    };
+
+    fetchProfilePictureURL();
+  }, [user?.profilePicture]);
 
   const handleLogOut = () => {
     handleSignOut(setUser);
@@ -93,14 +112,14 @@ export default function ProfilePic() {
         <div className="flex items-center">
           <Menu as="div" className="relative inline-block text-left">
             <div className="flex items-centers">
-              <Menu.Button className="inline-flex w-full justify-center">
+              <Menu.Button className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
                 <Image
                   priority
-                  src={user.profilePicture}
-                  alt="..."
+                  src={user?.profilePicture || profilePictureURL}
+                  alt="DP"
                   width={0}
                   height={0}
-                  className="rounded-full w-10 h-10 border border-black"
+                  className="object-cover h-10 w-10"
                 />
               </Menu.Button>
             </div>
