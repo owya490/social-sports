@@ -10,18 +10,17 @@ import {
   getDoc,
   getDocs,
   query,
-  updateDoc,
   where,
   DocumentData,
   Query,
   CollectionReference,
   Firestore,
-  DocumentReference,
 } from 'firebase/firestore';
 
 import { db } from './firebase';
 import { getUserById } from './usersService';
 import { Logger } from '@/observability/logger';
+import { CollectionPaths, EventPrivacy, EventStatus } from './eventsConstants';
 const eventServiceLogger = new Logger('eventServiceLogger');
 
 export function tokenizeText(text: string): string[] {
@@ -115,7 +114,7 @@ export async function processEventData(
   for (const [eventId, count] of eventTokenMatchCount) {
     let eventDocRef;
     if (eventCollectionRef instanceof Firestore) {
-      eventDocRef = doc(eventCollectionRef, 'Events', eventId); // Replace 'your_collection_name' with actual collection name
+      eventDocRef = doc(eventCollectionRef, CollectionPaths.Events, eventId); // Replace 'your_collection_name' with actual collection name
     } else {
       eventDocRef = doc(eventCollectionRef, eventId);
     }
@@ -143,8 +142,8 @@ export function createEventCollectionRef(
   isActive: boolean,
   isPrivate: boolean
 ) {
-  const activeStatus = isActive ? 'Active' : 'InActive';
-  const privateStatus = isPrivate ? 'Private' : 'Public';
+  const activeStatus = isActive ? EventStatus.Active : EventStatus.Inactive;
+  const privateStatus = isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
   return collection(db, 'Events', activeStatus, privateStatus);
 }
 

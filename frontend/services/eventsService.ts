@@ -4,6 +4,12 @@ import {
   EventId,
   NewEventData,
 } from '@/interfaces/EventTypes';
+import {
+  EventStatus,
+  EventPrivacy,
+  CollectionPaths,
+  LocalStorageKeys,
+} from './eventsConstants';
 import { UserData } from '@/interfaces/UserTypes';
 import {
   Timestamp,
@@ -31,6 +37,7 @@ import {
   createEventDocRef,
   getAllEventsFromCollectionRef,
 } from './eventsUtils';
+import { filterProps } from '@mantine/core';
 
 const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
 
@@ -47,11 +54,10 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
       nameTokens: tokenizeText(data.name),
       locationTokens: tokenizeText(data.location),
     };
-    let isActive = data.isActive ? 'Active' : 'Inactive';
-    let isPrivate = data.isPrivate ? 'Private' : 'Public';
+    let isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
+    let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
     const docRef = await addDoc(
-      // collection(db, "Events", isActive, isPrivate),
-      collection(db, 'Events', 'Active', 'Private'),
+      collection(db, CollectionPaths.Events, isActive, isPrivate),
       eventDataWithTokens
     );
     return docRef.id;
@@ -85,7 +91,12 @@ export async function searchEventsByKeyword(
       throw new Error('Both nameKeyword and locationKeyword are empty');
     }
 
-    const eventCollectionRef = collection(db, 'Events', 'Active', 'Public');
+    const eventCollectionRef = collection(
+      db,
+      CollectionPaths.Events,
+      EventStatus.Active,
+      EventPrivacy.Public
+    );
     const searchKeywords = tokenizeText(nameKeyword);
     const eventTokenMatchCount: Map<string, number> =
       await fetchEventTokenMatches(eventCollectionRef, searchKeywords);
