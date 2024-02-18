@@ -121,10 +121,10 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
 
   if (isActive && !isPrivate) {
     const currentDate = new Date();
-    let [success, maybeEventsData] =
+    let { success, events } =
       tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
     if (success) {
-      return maybeEventsData;
+      return events;
     }
     const eventRef = createEventCollectionRef(isActive, isPrivate);
     const eventsData = await getAllEventsFromCollectionRef(eventRef);
@@ -318,8 +318,8 @@ function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) {
   ) {
     const lastFetched = new Date(localStorage.getItem('lastFetchedEventData')!);
     if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
-      return [true, getEventsDataFromLocalStorage()];
+      return { success: true, events: getEventsDataFromLocalStorage() };
     }
   }
-  return [false, []];
+  return { success: false, events: [] };
 }

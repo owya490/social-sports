@@ -2,24 +2,36 @@ const { onRequest } = require('firebase-functions/v2/https');
 
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
+require('firebase-functions/logger/compat');
 admin.initializeApp();
 
 exports.manualDatabaseUpdate = functions.https.onRequest(async (req, res) => {
   try {
     const eventsSnapshot = await admin
-      .firestore()
-      .collection('ActiveEvents')
+      .collection('Events')
+      .doc('Active')
+      .collection('Public')
       .get();
     const batch = admin.firestore().batch();
-
+    console.log(eventsSnapshot);
     eventsSnapshot.forEach((doc) => {
       if (doc.data().endDate.toDate() < new Date()) {
+        console.log(doc.data());
         const inactiveEventRef = admin
           .firestore()
-          .collection('InactiveEvents')
+          .collection('Events')
+          .doc('InActive')
+          .collection('Public')
           .doc(doc.id);
         batch.set(inactiveEventRef, doc.data());
-        batch.delete(admin.firestore().collection('ActiveEvents').doc(doc.id));
+        batch.delete(
+          admin
+            .firestore()
+            .collection('Events')
+            .doc('Active')
+            .collection('Public')
+            .doc(doc.id)
+        );
       }
     });
 
