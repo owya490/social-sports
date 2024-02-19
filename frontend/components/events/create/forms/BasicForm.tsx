@@ -123,14 +123,14 @@ export function BasicInformation({
         handleChange={handleDateChange}
       />
     </div>
-    <div className="w-full sm:w-auto sm:ml-4 mt-4 sm:mt-0">
+    <div className="w-full lg:basis-1/4 sm:w-auto sm:ml-4 mt-4 sm:mt-0">
       <CustomTimeInput
         value={startTime}
         placeholder="Start time"
         handleChange={handleStartTimeChange}
       />
     </div>
-    <div className="w-full sm:w-auto sm:ml-4 mt-4 sm:mt-0">
+    <div className="w-full lg:basis-1/4 sm:w-auto sm:ml-4 mt-4 sm:mt-0">
       <CustomTimeInput
         value={endTime}
         placeholder="End time"
@@ -198,7 +198,7 @@ export function BasicInformation({
     />
   </div>
   <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3">
-    <div className="w-full md:w-1/2 mt-4 md:mt-0">
+    <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
       <Input
         label="Price"
         crossOrigin={undefined}
