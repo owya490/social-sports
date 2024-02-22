@@ -2,26 +2,26 @@ import {
   EventData,
   EventDataWithoutOrganiser,
   EventId,
-} from '@/interfaces/EventTypes';
+} from "@/interfaces/EventTypes";
 
 import {
+  CollectionReference,
+  DocumentData,
+  Firestore,
+  Query,
   collection,
   doc,
   getDoc,
   getDocs,
   query,
   where,
-  DocumentData,
-  Query,
-  CollectionReference,
-  Firestore,
-} from 'firebase/firestore';
+} from "firebase/firestore";
 
-import { db } from './firebase';
-import { getUserById } from './usersService';
-import { Logger } from '@/observability/logger';
-import { CollectionPaths, EventPrivacy, EventStatus } from './eventsConstants';
-const eventServiceLogger = new Logger('eventServiceLogger');
+import { Logger } from "@/observability/logger";
+import { CollectionPaths, EventPrivacy, EventStatus } from "./eventsConstants";
+import { db } from "./firebase";
+import { getUserById } from "./usersService";
+const eventServiceLogger = new Logger("eventServiceLogger");
 
 export function tokenizeText(text: string): string[] {
   // Split the text into words, convert to lowercase, and filter out empty strings
@@ -31,10 +31,10 @@ export function tokenizeText(text: string): string[] {
 export async function findEventDoc(eventId: string): Promise<any> {
   // Define the subcollection paths to search through
   const paths = [
-    'Events/Active/Public',
-    'Events/Active/Private',
-    'Events/Inactive/Public',
-    'Events/Inactive/Private',
+    "Events/Active/Public",
+    "Events/Active/Private",
+    "Events/Inactive/Public",
+    "Events/Inactive/Private",
   ];
 
   for (const path of paths) {
@@ -49,17 +49,17 @@ export async function findEventDoc(eventId: string): Promise<any> {
   }
 
   // Return null or throw an error if the document was not found in any subcollection
-  console.log('Event not found in any subcollection.');
-  throw new Error('No event found in any subcollection');
+  console.log("Event not found in any subcollection.");
+  throw new Error("No event found in any subcollection");
 }
 
 export async function findEventDocRef(eventId: string): Promise<any> {
   // Define the subcollection paths to search through
   const paths = [
-    'Events/Active/Public',
-    'Events/Active/Private',
-    'Events/Inactive/Public',
-    'Events/Inactive/Private',
+    "Events/Active/Public",
+    "Events/Active/Private",
+    "Events/Inactive/Public",
+    "Events/Inactive/Private",
   ];
 
   for (const path of paths) {
@@ -74,8 +74,8 @@ export async function findEventDocRef(eventId: string): Promise<any> {
   }
 
   // Return null or throw an error if the document was not found in any subcollection
-  console.log('Event not found in any subcollection.');
-  throw new Error('No event found in any subcollection');
+  console.log("Event not found in any subcollection.");
+  throw new Error("No event found in any subcollection");
 }
 
 export async function fetchEventTokenMatches(
@@ -87,7 +87,7 @@ export async function fetchEventTokenMatches(
   for (const token of searchKeywords) {
     const q = query(
       eventCollectionRef,
-      where('nameTokens', 'array-contains', token)
+      where("nameTokens", "array-contains", token)
     );
     const querySnapshot = await getDocs(q);
 
@@ -144,7 +144,7 @@ export function createEventCollectionRef(
 ) {
   const activeStatus = isActive ? EventStatus.Active : EventStatus.Inactive;
   const privateStatus = isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
-  return collection(db, 'Events', activeStatus, privateStatus);
+  return collection(db, "Events", activeStatus, privateStatus);
 }
 
 // Function to retrieve all events
@@ -152,8 +152,8 @@ export async function getAllEventsFromCollectionRef(
   eventCollectionRef: CollectionReference<DocumentData, DocumentData>
 ): Promise<EventData[]> {
   try {
-    console.log('Getting events from DB');
-    eventServiceLogger.info('Getting events from DB');
+    console.log("Getting events from DB");
+    eventServiceLogger.info("Getting events from DB");
     // const eventCollectionRef = collection(db, "Events");
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
@@ -184,7 +184,7 @@ export function createEventDocRef(
   isActive: boolean,
   isPrivate: boolean
 ) {
-  const activeStatus = isActive ? 'Active' : 'InActive';
-  const privateStatus = isPrivate ? 'Private' : 'Public';
-  return doc(db, 'Events', activeStatus, privateStatus, eventId);
+  const activeStatus = isActive ? "Active" : "InActive";
+  const privateStatus = isPrivate ? "Private" : "Public";
+  return doc(db, "Events", activeStatus, privateStatus, eventId);
 }

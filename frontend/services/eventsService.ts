@@ -3,15 +3,11 @@ import {
   EventDataWithoutOrganiser,
   EventId,
   NewEventData,
-} from '@/interfaces/EventTypes';
+} from "@/interfaces/EventTypes";
+import { UserData } from "@/interfaces/UserTypes";
 import {
-  EventStatus,
-  EventPrivacy,
-  CollectionPaths,
-  LocalStorageKeys,
-} from './eventsConstants';
-import { UserData } from '@/interfaces/UserTypes';
-import {
+  DocumentData,
+  DocumentReference,
   Timestamp,
   addDoc,
   collection,
@@ -21,31 +17,29 @@ import {
   query,
   updateDoc,
   where,
-  DocumentData,
-  DocumentReference,
-} from 'firebase/firestore';
+} from "firebase/firestore";
+import { CollectionPaths, EventPrivacy, EventStatus } from "./eventsConstants";
 
-import { db } from './firebase';
-import { getUserById } from './usersService';
 import {
-  tokenizeText,
-  findEventDoc,
-  findEventDocRef,
-  fetchEventTokenMatches,
-  processEventData,
   createEventCollectionRef,
   createEventDocRef,
+  fetchEventTokenMatches,
+  findEventDoc,
+  findEventDocRef,
   getAllEventsFromCollectionRef,
-} from './eventsUtils';
-import { filterProps } from '@mantine/core';
+  processEventData,
+  tokenizeText,
+} from "./eventsUtils";
+import { db } from "./firebase";
+import { getUserById } from "./usersService";
 
 const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
   if (!rateLimitCreateAndUpdateEvents()) {
-    console.log('Rate Limited!!!');
-    throw 'Rate Limited';
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
   }
   try {
     // Simplified object spreading with tokenized values
@@ -88,7 +82,7 @@ export async function searchEventsByKeyword(
 ) {
   try {
     if (!nameKeyword && !locationKeyword) {
-      throw new Error('Both nameKeyword and locationKeyword are empty');
+      throw new Error("Both nameKeyword and locationKeyword are empty");
     }
 
     const eventCollectionRef = collection(
@@ -108,7 +102,7 @@ export async function searchEventsByKeyword(
     eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
     return eventsData;
   } catch (error) {
-    console.error('Error searching events:', error);
+    console.error("Error searching events:", error);
     throw error;
   }
 }
@@ -128,9 +122,9 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
     }
     const eventRef = createEventCollectionRef(isActive, isPrivate);
     const eventsData = await getAllEventsFromCollectionRef(eventRef);
-    localStorage.setItem('eventsData', JSON.stringify(eventsData));
+    localStorage.setItem("eventsData", JSON.stringify(eventsData));
     const currentDateString = currentDate.toUTCString();
-    localStorage.setItem('lastFetchedEventData', currentDateString);
+    localStorage.setItem("lastFetchedEventData", currentDateString);
     return eventsData;
   } else {
     const eventRef = createEventCollectionRef(isActive, isPrivate);
@@ -143,12 +137,12 @@ export async function updateEventByName(
   updatedData: Partial<EventData>
 ) {
   if (!rateLimitCreateAndUpdateEvents()) {
-    console.log('Rate Limited!!!');
-    throw 'Rate Limited';
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
   }
   try {
-    const eventCollectionRef = collection(db, 'Events');
-    const q = query(eventCollectionRef, where('name', '==', eventName)); // Query by event name
+    const eventCollectionRef = collection(db, "Events");
+    const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
 
     const querySnapshot = await getDocs(q);
 
@@ -179,8 +173,8 @@ export async function deleteEvent(eventId: EventId): Promise<void> {
 
 export async function deleteEventByName(eventName: string): Promise<void> {
   try {
-    const eventCollectionRef = collection(db, 'Events');
-    const q = query(eventCollectionRef, where('name', '==', eventName)); // Query by event name
+    const eventCollectionRef = collection(db, "Events");
+    const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
 
     const querySnapshot = await getDocs(q);
 
@@ -211,7 +205,7 @@ export async function incrementEventAccessCountById(
 
 function getEventsDataFromLocalStorage(): EventData[] {
   const eventsData: EventData[] = JSON.parse(
-    localStorage.getItem('eventsData')!
+    localStorage.getItem("eventsData")!
   );
   const eventsDataFinal: EventData[] = [];
   eventsData.map((event) => {
@@ -253,9 +247,9 @@ function getEventsDataFromLocalStorage(): EventData[] {
 function rateLimitCreateAndUpdateEvents(): boolean {
   const now = new Date();
   const maybeOperationCount5minString =
-    localStorage.getItem('operationCount5min');
+    localStorage.getItem("operationCount5min");
   const maybeLastCreateUpdateOperationTimestampString = localStorage.getItem(
-    'lastCreateUpdateOperationTimestamp'
+    "lastCreateUpdateOperationTimestamp"
   );
 
   if (
@@ -275,22 +269,22 @@ function rateLimitCreateAndUpdateEvents(): boolean {
         return false;
       } else {
         localStorage.setItem(
-          'operationCount5min',
+          "operationCount5min",
           (operationCount5min + 1).toString()
         );
         return true;
       }
     }
-    localStorage.setItem('operationCount5min', '0');
+    localStorage.setItem("operationCount5min", "0");
     localStorage.setItem(
-      'lastCreateUpdateOperationTimestamp',
+      "lastCreateUpdateOperationTimestamp",
       now.toUTCString()
     );
     return true;
   }
   // allow edit as one is null
-  localStorage.setItem('operationCount5min', '0');
-  localStorage.setItem('lastCreateUpdateOperationTimestamp', now.toUTCString());
+  localStorage.setItem("operationCount5min", "0");
+  localStorage.setItem("lastCreateUpdateOperationTimestamp", now.toUTCString());
   return true;
 }
 
@@ -299,8 +293,8 @@ export async function updateEventFromDocRef(
   updatedData: Partial<EventData>
 ): Promise<void> {
   if (!rateLimitCreateAndUpdateEvents()) {
-    console.log('Rate Limited!!!');
-    throw 'Rate Limited';
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
   }
   try {
     await updateDoc(eventRef, updatedData);
@@ -310,13 +304,13 @@ export async function updateEventFromDocRef(
 }
 
 function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) {
-  console.log('Trying to get Cached Active Public Events');
+  console.log("Trying to get Cached Active Public Events");
   // If already cached, and within 5 minutes, return cached data, otherwise no-op
   if (
-    localStorage.getItem('eventsData') !== null &&
-    localStorage.getItem('lastFetchedEventData') !== null
+    localStorage.getItem("eventsData") !== null &&
+    localStorage.getItem("lastFetchedEventData") !== null
   ) {
-    const lastFetched = new Date(localStorage.getItem('lastFetchedEventData')!);
+    const lastFetched = new Date(localStorage.getItem("lastFetchedEventData")!);
     if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
       return { success: true, events: getEventsDataFromLocalStorage() };
     }
