@@ -97,9 +97,9 @@ export function BasicInformation({
             What’s the name of your event?
           </label>
           <p className="text-sm mb-5 mt-2">
-            This will be your event&apos;s title. Your title will be used to help
-            create your event&apos;s summary, description, category, and tags – so be
-            specific!
+            This will be your event&apos;s title. Your title will be used to
+            help create your event&apos;s summary, description, category, and
+            tags – so be specific!
           </p>
           <Input
             label="Event Name"
@@ -111,34 +111,35 @@ export function BasicInformation({
             size="lg"
           />
         </div>
-        <div>
-          <label className="text-black text-lg font-semibold">
-            When does your event start and end?
-          </label>
-          <div className="flex space-x-2 mt-4">
-            <div className="basis-1/2">
-              <CustomDateInput
-                date={date}
-                placeholder="Date"
-                handleChange={handleDateChange}
-              />
-            </div>
-            <div className="basis-1/4">
-              <CustomTimeInput
-                value={startTime}
-                placeholder="Start time"
-                handleChange={handleStartTimeChange}
-              />
-            </div>
-            <div className="basis-1/4">
-              <CustomTimeInput
-                value={endTime}
-                placeholder="End time"
-                handleChange={handleEndTimeChange}
-              />
-            </div>
-          </div>
-        </div>
+        <div className="">
+  <label className="text-black text-lg font-semibold">
+    When does your event start and end?
+  </label>
+  <div className="flex mt-4 flex-col sm:flex-row">
+    <div className="w-full sm:w-1/2">
+      <CustomDateInput
+        date={date}
+        placeholder="Date"
+        handleChange={handleDateChange}
+      />
+    </div>
+    <div className="w-full lg:basis-1/4 sm:w-auto sm:ml-4 mt-4 sm:mt-0">
+      <CustomTimeInput
+        value={startTime}
+        placeholder="Start time"
+        handleChange={handleStartTimeChange}
+      />
+    </div>
+    <div className="w-full lg:basis-1/4 sm:w-auto sm:ml-4 mt-4 sm:mt-0">
+      <CustomTimeInput
+        value={endTime}
+        placeholder="End time"
+        handleChange={handleEndTimeChange}
+      />
+    </div>
+  </div>
+</div>
+
 
         <div>
           <label className="text-black text-lg font-semibold">
@@ -182,54 +183,56 @@ export function BasicInformation({
           </div>
         </div>
         <div>
-          <label className="text-black text-lg font-semibold">
-            What is the price of the event and max capacity?
-          </label>
-          <p className="text-sm mt-2 mb-5">
-            Event price is the cost of each ticket. Event capacity is the total
-            number of tickets you&apos;re willing to sell.
-          </p>
+  <label className="text-black text-lg font-semibold">
+    What is the price of the event and max capacity?
+  </label>
+  <p className="text-sm mt-2 mb-5">
+    Event price is the cost of each ticket. Event capacity is the total
+    number of tickets you&apos;re willing to sell.
+  </p>
 
-          <div className="w-full px-5">
-            <CreateEventCostSlider
-              initialCustomAmount={customAmount}
-              onCustomAmountChange={handleEventCostSliderChange}
-            />
-          </div>
-          <div className="w-full flex space-x-3">
-            <div className="mt-4 grow">
-              <Input
-                label="Price"
-                crossOrigin={undefined}
-                required
-                value={priceString}
-                type="number"
-                onChange={(e) => {
-                  setPriceString(e.target.value);
-                  handleCustomAmountChange(parseInt(e.target.value));
-                }}
-                className="rounded-md"
-                size="lg"
-                icon={<CurrencyDollarIcon />}
-              />
-            </div>
-            <div className="mt-4 grow">
-              <Input
-                label="Capacity"
-                crossOrigin={undefined}
-                required
-                value={capacityString}
-                type="number"
-                onChange={(e) => {
-                  setCapacityString(e.target.value);
-                  updateField({ capacity: parseInt(e.target.value) });
-                }}
-                className="rounded-md"
-                size="lg"
-              />
-            </div>
-          </div>
-        </div>
+  <div className="w-full px-5">
+    <CreateEventCostSlider
+      initialCustomAmount={customAmount}
+      onCustomAmountChange={handleEventCostSliderChange}
+    />
+  </div>
+  <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3">
+    <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
+      <Input
+        label="Price"
+        crossOrigin={undefined}
+        required
+        value={priceString}
+        type="number"
+        onChange={(e) => {
+          setPriceString(e.target.value);
+          handleCustomAmountChange(parseInt(e.target.value));
+        }}
+        className="rounded-md"
+        size="lg"
+        icon={<CurrencyDollarIcon />}
+      />
+    </div>
+    <div className="w-full md:w-1/2 mt-4 md:mt-0">
+      <Input
+        label="Capacity"
+        crossOrigin={undefined}
+        required
+        value={capacityString}
+        type="number"
+        onChange={(e) => {
+          setCapacityString(e.target.value);
+          updateField({ capacity: parseInt(e.target.value) });
+        }}
+        className="rounded-md"
+        size="lg"
+      />
+    </div>
+  </div>
+</div>
+
+
       </div>
     </FormWrapper>
   );

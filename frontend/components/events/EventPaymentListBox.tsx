@@ -1,4 +1,5 @@
 "use client";
+import { SortByCategory } from "../Filter/FilterDialog";
 import ListBox from "../ListBox";
 
 interface EventPaymentListBoxProps {
@@ -16,7 +17,11 @@ export default function EventPaymentListBox(props: EventPaymentListBoxProps) {
 
   return (
     <div className="p-[9%] mb-5 w-full">
-      <ListBox onChangeHandler={props.onGuestCountChange} options={options} />
+      <ListBox
+        sortByCategory={SortByCategory.HOT}
+        onChangeHandler={props.onGuestCountChange}
+        options={options}
+      />
     </div>
   );
 }

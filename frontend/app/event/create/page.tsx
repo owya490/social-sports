@@ -14,7 +14,7 @@ import { uploadUserImage } from "@/services/imageService";
 import { getLocationCoordinates } from "@/services/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";78
 
 export type FormData = {
   date: string;
@@ -88,8 +88,11 @@ export default function CreateEvent() {
 
     if (!isLastStep) {
       next();
+     
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
       return;
     }
+
     try {
       createEventWorkflow(data, user).then((eventId) => {
         router.push(`/event/${eventId}`);
@@ -97,6 +100,7 @@ export default function CreateEvent() {
     } catch (e) {
       console.log(e);
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // You can use 'auto' instead of 'smooth' for instant scrolling
   }
 
   async function createEventWorkflow(
@@ -190,7 +194,7 @@ export default function CreateEvent() {
               <CreateEventStepper activeStep={currentStep} />
             </div>
             <div className="absolute top-2 right-2">
-              {/* {currentStep + 1} / {steps.length} */}
+              
             </div>
             {step}
 
