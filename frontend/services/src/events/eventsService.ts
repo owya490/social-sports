@@ -4,11 +4,9 @@ import {
   EventId,
   NewEventData,
 } from "@/interfaces/EventTypes";
-import { UserData } from "@/interfaces/UserTypes";
 import {
   DocumentData,
   DocumentReference,
-  Timestamp,
   addDoc,
   collection,
   deleteDoc,
@@ -18,22 +16,32 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { CollectionPaths, EventPrivacy, EventStatus } from "./eventsConstants";
+import {
+  CollectionPaths,
+  EventPrivacy,
+  EventStatus,
+  LocalStorageKeys,
+} from "./eventsConstants";
 
+import { Logger } from "@/observability/logger";
+import { db } from "../firebase";
+import { getUserById } from "../usersService";
 import {
   createEventCollectionRef,
   createEventDocRef,
   fetchEventTokenMatches,
-  findEventDoc,
   findEventDocRef,
-  getAllEventsFromCollectionRef,
   processEventData,
   tokenizeText,
-} from "./eventsUtils";
-import { db } from "./firebase";
-import { getUserById } from "./usersService";
+} from "./eventsUtils/commonEventsUtils";
+import { rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
+import {
+  findEventDoc,
+  getAllEventsFromCollectionRef,
+  tryGetAllActisvePublicEventsFromLocalStorage,
+} from "./eventsUtils/getEventsUtils";
 
-const EVENTS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 Minutes
+export const eventServiceLogger = new Logger("eventServiceLogger");
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
@@ -122,9 +130,15 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
     }
     const eventRef = createEventCollectionRef(isActive, isPrivate);
     const eventsData = await getAllEventsFromCollectionRef(eventRef);
-    localStorage.setItem("eventsData", JSON.stringify(eventsData));
+    localStorage.setItem(
+      LocalStorageKeys.EventsData,
+      JSON.stringify(eventsData)
+    );
     const currentDateString = currentDate.toUTCString();
-    localStorage.setItem("lastFetchedEventData", currentDateString);
+    localStorage.setItem(
+      LocalStorageKeys.LastFetchedEventData,
+      currentDateString
+    );
     return eventsData;
   } else {
     const eventRef = createEventCollectionRef(isActive, isPrivate);
@@ -141,7 +155,7 @@ export async function updateEventByName(
     throw "Rate Limited";
   }
   try {
-    const eventCollectionRef = collection(db, "Events");
+    const eventCollectionRef = collection(db, CollectionPaths.Events);
     const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
 
     const querySnapshot = await getDocs(q);
@@ -173,7 +187,7 @@ export async function deleteEvent(eventId: EventId): Promise<void> {
 
 export async function deleteEventByName(eventName: string): Promise<void> {
   try {
-    const eventCollectionRef = collection(db, "Events");
+    const eventCollectionRef = collection(db, CollectionPaths.Events);
     const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
 
     const querySnapshot = await getDocs(q);
@@ -203,91 +217,6 @@ export async function incrementEventAccessCountById(
   });
 }
 
-function getEventsDataFromLocalStorage(): EventData[] {
-  const eventsData: EventData[] = JSON.parse(
-    localStorage.getItem("eventsData")!
-  );
-  const eventsDataFinal: EventData[] = [];
-  eventsData.map((event) => {
-    eventsDataFinal.push({
-      eventId: event.eventId,
-      organiser: event.organiser as UserData,
-      startDate: new Timestamp(
-        event.startDate.seconds,
-        event.startDate.nanoseconds
-      ),
-      endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
-      location: event.location,
-      capacity: event.capacity,
-      vacancy: event.vacancy,
-      price: event.price,
-      organiserId: event.organiserId,
-      registrationDeadline: new Timestamp(
-        event.registrationDeadline.seconds,
-        event.registrationDeadline.nanoseconds
-      ),
-      name: event.name,
-      description: event.description,
-      image: event.image,
-      eventTags: event.eventTags,
-      isActive: event.isActive,
-      attendees: event.attendees,
-      accessCount: event.accessCount,
-      sport: event.sport,
-      locationLatLng: {
-        lat: event.locationLatLng.lat,
-        lng: event.locationLatLng.lng,
-      },
-      isPrivate: event.isPrivate,
-    });
-  });
-  return eventsDataFinal;
-}
-
-function rateLimitCreateAndUpdateEvents(): boolean {
-  const now = new Date();
-  const maybeOperationCount5minString =
-    localStorage.getItem("operationCount5min");
-  const maybeLastCreateUpdateOperationTimestampString = localStorage.getItem(
-    "lastCreateUpdateOperationTimestamp"
-  );
-
-  if (
-    maybeOperationCount5minString !== null &&
-    maybeLastCreateUpdateOperationTimestampString !== null
-  ) {
-    const operationCount5min = parseInt(maybeOperationCount5minString);
-    const lastCreateUpdateOperationTimestamp = new Date(
-      maybeLastCreateUpdateOperationTimestampString
-    );
-
-    if (
-      now.valueOf() - lastCreateUpdateOperationTimestamp.valueOf() <
-      EVENTS_REFRESH_MILLIS
-    ) {
-      if (operationCount5min >= 5) {
-        return false;
-      } else {
-        localStorage.setItem(
-          "operationCount5min",
-          (operationCount5min + 1).toString()
-        );
-        return true;
-      }
-    }
-    localStorage.setItem("operationCount5min", "0");
-    localStorage.setItem(
-      "lastCreateUpdateOperationTimestamp",
-      now.toUTCString()
-    );
-    return true;
-  }
-  // allow edit as one is null
-  localStorage.setItem("operationCount5min", "0");
-  localStorage.setItem("lastCreateUpdateOperationTimestamp", now.toUTCString());
-  return true;
-}
-
 export async function updateEventFromDocRef(
   eventRef: DocumentReference<DocumentData, DocumentData>,
   updatedData: Partial<EventData>
@@ -301,19 +230,4 @@ export async function updateEventFromDocRef(
   } catch (error) {
     console.error(error);
   }
-}
-
-function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) {
-  console.log("Trying to get Cached Active Public Events");
-  // If already cached, and within 5 minutes, return cached data, otherwise no-op
-  if (
-    localStorage.getItem("eventsData") !== null &&
-    localStorage.getItem("lastFetchedEventData") !== null
-  ) {
-    const lastFetched = new Date(localStorage.getItem("lastFetchedEventData")!);
-    if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
-      return { success: true, events: getEventsDataFromLocalStorage() };
-    }
-  }
-  return { success: false, events: [] };
 }

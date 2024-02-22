@@ -10,8 +10,8 @@ import { Tag } from "@/interfaces/TagTypes";
 import {
   getEventById,
   incrementEventAccessCountById,
-} from "@/services/eventsService";
-import { getTagById } from "@/services/tagService";
+} from "@/services/src/events/eventsService";
+import { getTagById } from "@/services/src/tagService";
 import { useEffect, useState } from "react";
 
 export default function EventPage({ params }: any) {

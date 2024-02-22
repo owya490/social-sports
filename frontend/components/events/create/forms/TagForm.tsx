@@ -1,6 +1,6 @@
 import { TagGroup } from "@/components/TagGroup";
 import { Tag } from "@/interfaces/TagTypes";
-import { getAllTags } from "@/services/tagService";
+import { getAllTags } from "@/services/src/tagService";
 import { Button, Input } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 import { FormWrapper } from "./FormWrapper";

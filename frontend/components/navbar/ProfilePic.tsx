@@ -1,6 +1,5 @@
-import { EmptyUserData } from "@/interfaces/UserTypes";
-import { handleSignOut } from "@/services/authService";
-import { auth, storage } from "@/services/firebase";
+import { handleSignOut } from "@/services/src/authService";
+import { auth, storage } from "@/services/src/firebase";
 import { Menu, Transition } from "@headlessui/react";
 import {
   ArrowLeftOnRectangleIcon,
@@ -10,12 +9,12 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { onAuthStateChanged } from "firebase/auth";
+import { getDownloadURL, ref } from "firebase/storage";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import { useUser } from "../utility/UserContext";
-import { getDownloadURL, ref } from "firebase/storage";
 
 export default function ProfilePic() {
   const [loggedIn, setLoggedIn] = useState(false);

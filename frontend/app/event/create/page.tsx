@@ -9,9 +9,9 @@ import { useMultistepForm } from "@/components/events/create/forms/useMultistepF
 import { useUser } from "@/components/utility/UserContext";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { createEvent } from "@/services/eventsService";
-import { uploadUserImage } from "@/services/imageService";
-import { getLocationCoordinates } from "@/services/locationUtils";
+import { createEvent } from "@/services/src/events/eventsService";
+import { uploadUserImage } from "@/services/src/imageService";
+import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";

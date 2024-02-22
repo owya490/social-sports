@@ -1,6 +1,6 @@
 "use client";
 import { EventData } from "@/interfaces/EventTypes";
-import { getAllEvents } from "@/services/eventsService";
+import { getAllEvents } from "@/services/src/events/eventsService";
 import Link from "next/link";
 
 import { useEffect, useState } from "react";

@@ -1,8 +1,4 @@
-import {
-  EventData,
-  EventDataWithoutOrganiser,
-  EventId,
-} from "@/interfaces/EventTypes";
+import { EventId } from "@/interfaces/EventTypes";
 
 import {
   CollectionReference,
@@ -17,52 +13,18 @@ import {
   where,
 } from "firebase/firestore";
 
-import { Logger } from "@/observability/logger";
-import { CollectionPaths, EventPrivacy, EventStatus } from "./eventsConstants";
-import { db } from "./firebase";
-import { getUserById } from "./usersService";
-const eventServiceLogger = new Logger("eventServiceLogger");
+import { db } from "../../firebase";
+import { getUserById } from "../../usersService";
+import { CollectionPaths, EVENT_PATHS, EventPrivacy, EventStatus } from "../eventsConstants";
 
 export function tokenizeText(text: string): string[] {
   // Split the text into words, convert to lowercase, and filter out empty strings
   return text.toLowerCase().split(/\s+/).filter(Boolean);
 }
 
-export async function findEventDoc(eventId: string): Promise<any> {
-  // Define the subcollection paths to search through
-  const paths = [
-    "Events/Active/Public",
-    "Events/Active/Private",
-    "Events/Inactive/Public",
-    "Events/Inactive/Private",
-  ];
-
-  for (const path of paths) {
-    // Attempt to retrieve the document from the current subcollection
-    const eventDocRef = doc(db, path, eventId);
-    const eventDoc = await getDoc(eventDocRef);
-
-    // Check if the document exists in the current subcollection
-    if (eventDoc.exists()) {
-      return eventDoc;
-    }
-  }
-
-  // Return null or throw an error if the document was not found in any subcollection
-  console.log("Event not found in any subcollection.");
-  throw new Error("No event found in any subcollection");
-}
-
 export async function findEventDocRef(eventId: string): Promise<any> {
-  // Define the subcollection paths to search through
-  const paths = [
-    "Events/Active/Public",
-    "Events/Active/Private",
-    "Events/Inactive/Public",
-    "Events/Inactive/Private",
-  ];
-
-  for (const path of paths) {
+  // Search through all the paths
+  for (const path of EVENT_PATHS) {
     // Attempt to retrieve the document from the current subcollection
     const eventDocRef = doc(db, path, eventId);
     const eventDoc = await getDoc(eventDocRef);
@@ -129,7 +91,6 @@ export async function processEventData(
         organiser: {},
       };
       const organiser = await getUserById(eventData.organiserId);
-      console.log(organiser);
       extendedEventData.organiser = organiser;
       eventsData.push(extendedEventData);
     }
@@ -144,39 +105,7 @@ export function createEventCollectionRef(
 ) {
   const activeStatus = isActive ? EventStatus.Active : EventStatus.Inactive;
   const privateStatus = isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
-  return collection(db, "Events", activeStatus, privateStatus);
-}
-
-// Function to retrieve all events
-export async function getAllEventsFromCollectionRef(
-  eventCollectionRef: CollectionReference<DocumentData, DocumentData>
-): Promise<EventData[]> {
-  try {
-    console.log("Getting events from DB");
-    eventServiceLogger.info("Getting events from DB");
-    // const eventCollectionRef = collection(db, "Events");
-    const eventsSnapshot = await getDocs(eventCollectionRef);
-    const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
-    const eventsData: EventData[] = [];
-
-    eventsSnapshot.forEach((doc) => {
-      const eventData = doc.data() as EventDataWithoutOrganiser;
-      eventData.eventId = doc.id;
-      eventsDataWithoutOrganiser.push(eventData);
-    });
-
-    for (const event of eventsDataWithoutOrganiser) {
-      const organiser = await getUserById(event.organiserId);
-      eventsData.push({
-        ...event,
-        organiser: organiser,
-      });
-    }
-    return eventsData;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+  return collection(db, CollectionPaths.Events, activeStatus, privateStatus);
 }
 
 export function createEventDocRef(
@@ -184,7 +113,7 @@ export function createEventDocRef(
   isActive: boolean,
   isPrivate: boolean
 ) {
-  const activeStatus = isActive ? "Active" : "InActive";
-  const privateStatus = isPrivate ? "Private" : "Public";
-  return doc(db, "Events", activeStatus, privateStatus, eventId);
+  const activeStatus = isActive ? EventStatus.Active : EventStatus.Inactive;
+  const privateStatus = isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
+  return doc(db, CollectionPaths.Events, activeStatus, privateStatus, eventId);
 }
