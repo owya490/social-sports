@@ -3,7 +3,7 @@
 import {
   timestampToDateString,
   timestampToTimeOfDay,
-} from "@/services/datetimeUtils";
+} from "@/utilities/datetimeUtils";
 import {
   CalendarDaysIcon,
   ClockIcon,

@@ -40,7 +40,7 @@ export default function DescriptionRichTextEditor({
         editor={editor}
         className="list-style-circle min-h-[24rem]"
       >
-        <RichTextEditor.Toolbar sticky stickyOffset={60}>
+        <RichTextEditor.Toolbar>
           <RichTextEditor.ControlsGroup>
             <RichTextEditor.Bold />
             <RichTextEditor.Italic />

@@ -12,7 +12,7 @@ import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/eventsService";
 import { uploadUserImage } from "@/services/imageService";
 import { getLocationCoordinates } from "@/services/locationUtils";
-import { Timestamp } from "firebase/firestore";
+import { convertDateAndTimeStringToTimestamp } from "@/utilities/datetimeUtils";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
@@ -60,7 +60,6 @@ export default function CreateEvent() {
         {...data}
         updateField={updateFields}
       />,
-      <TagForm key="tag-form" {...data} updateField={updateFields} />,
       <DescriptionImageForm
         key="description-image-form"
         {...data}
@@ -68,6 +67,7 @@ export default function CreateEvent() {
         setImagePreviewUrl={setImagePreviewUrl}
         updateField={updateFields}
       />,
+      <TagForm key="tag-form" {...data} updateField={updateFields} />,
       <PreviewForm
         key="preview-form"
         form={data}
@@ -142,7 +142,6 @@ export default function CreateEvent() {
       ),
       location: formData.location,
       capacity: formData.capacity,
-      vacancy: formData.capacity,
       price: formData.price,
       name: formData.name,
       description: formData.description,
@@ -162,17 +161,6 @@ export default function CreateEvent() {
       },
       sport: formData.sport,
     };
-  }
-
-  function convertDateAndTimeStringToTimestamp(
-    date: string,
-    time: string
-  ): Timestamp {
-    let dateObject = new Date(date);
-    const timeArr = time.split(":");
-    dateObject.setHours(parseInt(timeArr[0]));
-    dateObject.setMinutes(parseInt(timeArr[1]));
-    return Timestamp.fromDate(dateObject);
   }
 
   return loading ? (

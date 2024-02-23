@@ -37,9 +37,6 @@ export default function UserContext({ children }: { children: any }) {
       try {
         if (userAuth) {
           const { uid, email } = userAuth;
-          // const userDocRef = await doc(db, "Users", uid);
-          // const userDoc = await getDoc(userDocRef);
-          // const userData = userDoc.data() as UserDocType;
           const userData = getUserById(uid).then((data) => {
             setUser({
               ...data,

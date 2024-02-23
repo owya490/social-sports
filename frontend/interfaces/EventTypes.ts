@@ -1,5 +1,5 @@
 import { Timestamp } from "firebase/firestore";
-import { EmptyUserData, UserData } from "./UserTypes";
+import { EmptyUserData, UserData, UserId } from "./UserTypes";
 
 export type EventId = string;
 
@@ -15,7 +15,6 @@ interface AbstractEventData {
     lng: number;
   };
   capacity: number;
-  vacancy: number;
   price: number;
   organiserId: string;
   registrationDeadline: Timestamp;
@@ -25,7 +24,7 @@ interface AbstractEventData {
   image: string; // Assuming you store the image URL or path as a string
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
-  attendees: { email: string }[];
+  attendees: { userId: UserId; email: string }[];
   accessCount: number;
   sport: string;
 }
@@ -52,7 +51,6 @@ export const EmptyEventData: EventData = {
     lng: INVALID_LNG,
   },
   capacity: 0,
-  vacancy: 0,
   price: 0,
   organiserId: "",
   registrationDeadline: new Timestamp(0, 0),

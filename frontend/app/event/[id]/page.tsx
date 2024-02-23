@@ -43,15 +43,16 @@ export default function EventPage({ params }: any) {
   ) : (
     <div className="text-black">
       <EventBanner
+        eventId={eventId}
         name={eventData.name}
         startDate={eventData.startDate}
         organiser={eventData.organiser}
-        vacancy={eventData.vacancy}
+        vacancy={eventData.capacity - eventData.attendees.length}
       />
       <div className="mt-5 lg:mt-10 mb-10">
         <EventDetails eventData={eventData} eventTags={eventTags} />
 
-        <RecommendedEvents eventData={eventData} />
+        <RecommendedEvents />
       </div>
       <div className="lg:hidden">
         <MobileEventDetailFooter date={eventData.startDate} />
