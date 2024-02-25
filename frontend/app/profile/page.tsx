@@ -19,8 +19,6 @@ import {
   deleteObject,
   getMetadata,
 } from "firebase/storage";
-import { User } from "firebase/auth";
-import { storage } from "@/services/firebase";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
