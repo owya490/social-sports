@@ -2,26 +2,30 @@
 # To get started, simply uncomment the below code or create your own.
 # Deploy with `firebase deploy`
 
+import os
 from datetime import date
 
 import google.cloud.firestore
 from firebase_admin import firestore, initialize_app
 from firebase_functions import https_fn, options
-from google.cloud.firestore import DocumentReference
+from google.cloud import firestore
+from google.cloud.firestore import DocumentReference, Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
 
-initialize_app()
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./functions_key.json"
 
-db: google.cloud.firestore.Client = firestore.client()
 
+app = initialize_app()
+
+db: google.cloud.firestore.Client = firestore.Client(project="socialsports-44162")
 
 @firestore.transactional
-def move_event_to_inactive(old_event_ref: DocumentReference, new_event_ref: DocumentReference):
-  transaction = db.transaction()
+def move_event_to_inactive(transaction: Transaction, old_event_ref: DocumentReference, new_event_ref: DocumentReference):
   
   # Get the event in the transaction to ensure operations are atomic
-  event_dict = old_event_ref.get(transaction=transaction).to_dict()
-  event_dict.update("isActive", False)
+  event_snapshot = old_event_ref.get(transaction=transaction)
+  event_dict = event_snapshot.to_dict()
+  event_dict.update({"isActive", False})
   
   # Set the document in InActive
   transaction.set(new_event_ref, event_dict)
@@ -42,11 +46,14 @@ def move_inactive_events(req: https_fn.Request) -> https_fn.Response:
   for event in public_events:
     event_id = event.id
     event_dict = event.to_dict()
-    event_end_date: Timestamp = event_dict.get("endDate")
+    print(event_dict)
+    print(event_dict.get("endDate"))
+    event_end_date: Timestamp  = event_dict.get("endDate").timestamp_pb()
 
-    if event_end_date.ToDatetime() < today:
+    if event_end_date.ToDatetime().date() < today:
+      transaction = db.transaction()
       # The events datetime is earlier so it has already passed, hence we should move it
-      move_event_to_inactive(public_events_ref.document(event_id), db.collection("Events/InActive/Public").document(event_id))
+      move_event_to_inactive(transaction=transaction, old_event_ref=db.collection("Events/Active/Public").document(event_id), new_event_ref=db.collection("Events/InActive/Public").document(event_id))
 
   # Get all Active Private Events
   private_events_ref = db.collection("Events/Active/Private")
@@ -56,8 +63,9 @@ def move_inactive_events(req: https_fn.Request) -> https_fn.Response:
   for event in private_events:
     event_id = event.id
     event_dict = event.to_dict()
-    event_end_date: Timestamp = event_dict.get("endDate")
+    event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
 
-    if event_end_date.ToDatetime() < today:
+    if event_end_date.ToDatetime().date() < today:
+      transaction = db.transaction()
       # The events datetime is earlier so it has already passed, hence we should move it
-      move_event_to_inactive(private_events_ref.document(event_id), db.collection("Events/InActive/Private").document(event_id))
+      move_event_to_inactive(transaction=transaction, old_event_ref=db.collection("Events/Active/Private").document(event_id), new_event_ref=db.collection("Events/InActive/Private").document(event_id))
