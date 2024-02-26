@@ -26,6 +26,7 @@ export type FormData = {
   description: string;
   image: File | undefined;
   tags: string[];
+  isPrivate: boolean;
   startTime: string;
   endTime: string;
 };
@@ -40,6 +41,7 @@ const INITIAL_DATA: FormData = {
   description: "",
   image: undefined,
   tags: [],
+  isPrivate: false,
   startTime: "10:00",
   endTime: "18:00",
 };
@@ -53,29 +55,24 @@ export default function CreateEvent() {
 
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-  const { step, currentStep, isFirstStep, isLastStep, back, next } =
-    useMultistepForm([
-      <BasicInformation
-        key="basic-form"
-        {...data}
-        updateField={updateFields}
-      />,
-      <TagForm key="tag-form" {...data} updateField={updateFields} />,
-      <DescriptionImageForm
-        key="description-image-form"
-        {...data}
-        imagePreviewUrl={imagePreviewUrl}
-        setImagePreviewUrl={setImagePreviewUrl}
-        updateField={updateFields}
-      />,
-      <PreviewForm
-        key="preview-form"
-        form={data}
-        user={user}
-        imagePreviewUrl={imagePreviewUrl}
-        updateField={updateFields}
-      />,
-    ]);
+  const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
+    <BasicInformation key="basic-form" {...data} updateField={updateFields} />,
+    <TagForm key="tag-form" {...data} updateField={updateFields} />,
+    <DescriptionImageForm
+      key="description-image-form"
+      {...data}
+      imagePreviewUrl={imagePreviewUrl}
+      setImagePreviewUrl={setImagePreviewUrl}
+      updateField={updateFields}
+    />,
+    <PreviewForm
+      key="preview-form"
+      form={data}
+      user={user}
+      imagePreviewUrl={imagePreviewUrl}
+      updateField={updateFields}
+    />,
+  ]);
 
   function updateFields(fields: Partial<FormData>) {
     setData((prev) => {
@@ -99,10 +96,7 @@ export default function CreateEvent() {
     }
   }
 
-  async function createEventWorkflow(
-    formData: FormData,
-    user: UserData
-  ): Promise<EventId> {
+  async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
     setLoading(true);
     var imageUrl =
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
@@ -110,11 +104,7 @@ export default function CreateEvent() {
     if (formData.image !== undefined) {
       imageUrl = await uploadUserImage(user.userId, formData.image);
     }
-    const newEventData = await convertFormDataToEventData(
-      formData,
-      user,
-      imageUrl
-    );
+    const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
     const newEventId = await createEvent(newEventData);
     // setLoading(false);
     return newEventId;
@@ -132,14 +122,8 @@ export default function CreateEvent() {
     const lngLat = await getLocationCoordinates(formData.location);
 
     return {
-      startDate: convertDateAndTimeStringToTimestamp(
-        formData.date,
-        formData.startTime
-      ),
-      endDate: convertDateAndTimeStringToTimestamp(
-        formData.date,
-        formData.endTime
-      ),
+      startDate: convertDateAndTimeStringToTimestamp(formData.date, formData.startTime),
+      endDate: convertDateAndTimeStringToTimestamp(formData.date, formData.endTime),
       location: formData.location,
       capacity: formData.capacity,
       vacancy: formData.capacity,
@@ -153,10 +137,7 @@ export default function CreateEvent() {
       attendees: [],
       accessCount: 0,
       organiserId: user.userId,
-      registrationDeadline: convertDateAndTimeStringToTimestamp(
-        formData.date,
-        formData.startTime
-      ),
+      registrationDeadline: convertDateAndTimeStringToTimestamp(formData.date, formData.startTime),
       locationLatLng: {
         lat: lngLat.lat,
         lng: lngLat.lng,
@@ -165,10 +146,7 @@ export default function CreateEvent() {
     };
   }
 
-  function convertDateAndTimeStringToTimestamp(
-    date: string,
-    time: string
-  ): Timestamp {
+  function convertDateAndTimeStringToTimestamp(date: string, time: string): Timestamp {
     let dateObject = new Date(date);
     const timeArr = time.split(":");
     dateObject.setHours(parseInt(timeArr[0]));
@@ -181,43 +159,29 @@ export default function CreateEvent() {
   ) : (
     <div className="w-screen flex justify-center">
       {!showForm ? (
-        <div className="h-screen w-full flex justify-center items-center">
-          Please Login/ Register to Access
-        </div>
+        <div className="h-screen w-full flex justify-center items-center">Please Login/ Register to Access</div>
       ) : (
         <div className="screen-width-primary my-32">
           <form onSubmit={submit}>
             <div className="px-12">
               <CreateEventStepper activeStep={currentStep} />
             </div>
-            <div className="absolute top-2 right-2">
-              {/* {currentStep + 1} / {steps.length} */}
-            </div>
+            <div className="absolute top-2 right-2">{/* {currentStep + 1} / {steps.length} */}</div>
             {step}
 
             <div className="flex mt-8">
               {!isFirstStep && (
-                <button
-                  type="button"
-                  className="border border-black py-1.5 px-7 rounded-lg mr-2"
-                  onClick={back}
-                >
+                <button type="button" className="border border-black py-1.5 px-7 rounded-lg mr-2" onClick={back}>
                   Back
                 </button>
               )}
               {!isLastStep && (
-                <button
-                  type="submit"
-                  className="border border-black py-1.5 px-7 rounded-lg ml-auto"
-                >
+                <button type="submit" className="border border-black py-1.5 px-7 rounded-lg ml-auto">
                   Next
                 </button>
               )}
               {isLastStep && (
-                <button
-                  type="submit"
-                  className="border border-black py-1.5 px-7 rounded-lg ml-auto"
-                >
+                <button type="submit" className="border border-black py-1.5 px-7 rounded-lg ml-auto">
                   Create Event
                 </button>
               )}
