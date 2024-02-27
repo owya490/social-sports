@@ -16,7 +16,7 @@ jobs:
       - name: Deploy Cloud Functions
         working-directory: functions
         run: |
-          npx firebase-tools --version
+          npx firebase --version
           firebase use project
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json
-          npx firebase-tools deploy --only functions --debug
+          firebase deploy --only functions --debug
