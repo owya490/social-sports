@@ -16,7 +16,7 @@ jobs:
       - name: Deploy Cloud Functions
         working-directory: functions
         run: |
-          python3.1 -m venv venv
+          python3.11 -m venv venv
           . venv/bin/activate
           python3.11 -m pip install -r requirements.txt
           npx firebase-tools --version
