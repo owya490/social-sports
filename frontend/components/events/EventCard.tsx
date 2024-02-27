@@ -22,7 +22,10 @@ interface EventCardProps {
 
 export default function EventCard(props: EventCardProps) {
   if (props.loading === undefined) {
-    props.loading = false;
+    props = {
+      ...props,
+      loading: false,
+    };
   }
   return (
     <Link href={`/event/${props.eventId}`}>
