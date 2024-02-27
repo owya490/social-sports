@@ -1,11 +1,11 @@
 name: Deploy Cloud Functions
 run-name: 🚀 ${{ github.actor }} is deploying all cloud functions
 on:
-  pull_request:
+  [pull_request, push]
 
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
 jobs:
   deploy:
     runs-on: ubuntu-latest
