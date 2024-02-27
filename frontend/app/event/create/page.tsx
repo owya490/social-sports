@@ -1,11 +1,11 @@
 "use client";
-import Loading from "@/components/Loading";
 import CreateEventStepper from "@/components/events/create/CreateEventStepper";
 import { DescriptionImageForm } from "@/components/events/create/DescriptionImageForm";
 import { BasicInformation } from "@/components/events/create/forms/BasicForm";
 import { PreviewForm } from "@/components/events/create/forms/PreviewForm";
 import { TagForm } from "@/components/events/create/forms/TagForm";
 import { useMultistepForm } from "@/components/events/create/forms/useMultistepForm";
+import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
