@@ -16,7 +16,6 @@ jobs:
       - name: Deploy Cloud Functions
         working-directory: functions
         run: |
-          npm install firebase
-          firebase use project
+          npx firebase-tools --version
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json
-          firebase deploy --only functions --debug
+          npx firebase-tools deploy --only functions --debug --project socialsports-44162
