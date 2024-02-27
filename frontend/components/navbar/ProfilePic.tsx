@@ -1,6 +1,6 @@
-import { EmptyUserData } from "@/interfaces/UserTypes";
 import { handleSignOut } from "@/services/authService";
 import { auth, storage } from "@/services/firebase";
+import { sleep } from "@/utilities/sleepUtil";
 import { Menu, Transition } from "@headlessui/react";
 import {
   ArrowLeftOnRectangleIcon,
@@ -10,14 +10,18 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { onAuthStateChanged } from "firebase/auth";
+import { getDownloadURL, ref } from "firebase/storage";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
 import { useUser } from "../utility/UserContext";
-import { getDownloadURL, ref } from "firebase/storage";
 
 export default function ProfilePic() {
+  const [loading, setLoading] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const router = useRouter();
   const { user, setUser } = useUser();
@@ -31,6 +35,9 @@ export default function ProfilePic() {
       } else {
         setLoggedIn(false);
       }
+      sleep(100).then(() => {
+        setLoading(false);
+      });
     });
 
     return () => unsubscribe();
@@ -57,7 +64,23 @@ export default function ProfilePic() {
     router.push("/");
   };
 
-  return (
+  return loading ? (
+    <div className="flex ml-auto">
+      <div className="mr-4">
+        <LoadingSkeletonSmall />
+      </div>
+      <div>
+        <Skeleton
+          circle
+          height={40}
+          width={40}
+          wrapper={({ children }) => {
+            return <div className="flex items-center">{children}</div>;
+          }}
+        />
+      </div>
+    </div>
+  ) : (
     <div className="ml-auto flex items-center">
       {loggedIn && (
         <button
@@ -91,6 +114,7 @@ export default function ProfilePic() {
             <div className="flex items-centers">
               <Menu.Button className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
                 <Image
+                  priority
                   src={user?.profilePicture || profilePictureURL}
                   alt="DP"
                   width={0}
