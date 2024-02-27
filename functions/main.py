@@ -25,7 +25,7 @@ def move_event_to_inactive(transaction: Transaction, old_event_ref: DocumentRefe
   # Get the event in the transaction to ensure operations are atomic
   event_snapshot = old_event_ref.get(transaction=transaction)
   event_dict = event_snapshot.to_dict()
-  event_dict.update({"isActive", False})
+  event_dict.update({"isActive": False})
   
   # Set the document in InActive
   transaction.set(new_event_ref, event_dict)
@@ -69,3 +69,6 @@ def move_inactive_events(req: https_fn.Request) -> https_fn.Response:
       transaction = db.transaction()
       # The events datetime is earlier so it has already passed, hence we should move it
       move_event_to_inactive(transaction=transaction, old_event_ref=db.collection("Events/Active/Private").document(event_id), new_event_ref=db.collection("Events/InActive/Private").document(event_id))
+
+  return https_fn.Response(f"Moved all Public and Private Active Events which are past their end date to Inactive.")
+ 

@@ -178,6 +178,7 @@ export function BasicInformation({
           <div className="mt-4 w-1/2">
             <Select
               size="md"
+              label="Select Visibility"
               value={isPrivateString}
               onChange={(e) => {
                 const privacyValue = e || "Public";
