@@ -17,6 +17,5 @@ jobs:
         working-directory: functions
         run: |
           npx firebase-tools --version
-          python3.11 -m pip install -r requirements.txt
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json
           npx firebase-tools deploy --only functions --debug
