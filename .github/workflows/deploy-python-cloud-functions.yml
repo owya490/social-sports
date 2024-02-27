@@ -1,0 +1,24 @@
+name: Deploy Cloud Functions
+run-name: 🚀 ${{ github.actor }} is deploying all cloud functions
+on:
+  pull_request:
+
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create SA key
+        run: echo '${{ secrets.GCP_SA_DEPLOY_KEY }}' > $HOME/gcloud.json
+      - name: Deploy Cloud Functions
+        working-directory: functions
+        run: |
+          python3.11 -m venv venv
+          . venv/bin/activate
+          npx firebase-tools --version
+          python3.11 -m pip install -r requirements.txt
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json
+          npx firebase-tools deploy --only functions --debug
