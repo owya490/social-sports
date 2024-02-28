@@ -1,0 +1,4 @@
+/venv
+/__pycache__/*
+functions_key.json
+.env
