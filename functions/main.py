@@ -11,6 +11,8 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import DocumentReference, Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./functions_key.json"
 
@@ -72,3 +74,19 @@ def move_inactive_events(req: https_fn.Request) -> https_fn.Response:
 
   return https_fn.Response(f"Moved all Public and Private Active Events which are past their end date to Inactive.")
  
+
+@https_fn.on_request(cors=options.CorsOptions(cors_origins="*", cors_methods=["post"]))
+def send_email(req: https_fn.Request) -> https_fn.Response:
+  message = Mail(
+    from_email='team.sportshub@gmail.com',
+    to_emails='richardpeng914@gmail.com',
+    subject='Sending with Twilio SendGrid is Fun',
+    html_content='<strong>and easy to do anywhere, even with Python</strong>')
+  try:
+    sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    response = sg.send(message)
+    print(response.status_code)
+    print(response.body)
+    print(response.headers)
+  except Exception as e:
+    print(e.message)
