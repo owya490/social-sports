@@ -14,7 +14,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "../../firebase";
-import { getUserById } from "../../usersService";
+import { getUserById } from "../../users/usersService";
 import { CollectionPaths, EVENT_PATHS, EventPrivacy, EventStatus } from "../eventsConstants";
 
 export function tokenizeText(text: string): string[] {
@@ -47,18 +47,12 @@ export async function fetchEventTokenMatches(
   const eventTokenMatchCount: Map<string, number> = new Map();
 
   for (const token of searchKeywords) {
-    const q = query(
-      eventCollectionRef,
-      where("nameTokens", "array-contains", token)
-    );
+    const q = query(eventCollectionRef, where("nameTokens", "array-contains", token));
     const querySnapshot = await getDocs(q);
 
     querySnapshot.forEach((eventDoc) => {
       const eventId = eventDoc.id;
-      eventTokenMatchCount.set(
-        eventId,
-        (eventTokenMatchCount.get(eventId) || 0) + 1
-      );
+      eventTokenMatchCount.set(eventId, (eventTokenMatchCount.get(eventId) || 0) + 1);
     });
   }
 
@@ -66,9 +60,7 @@ export async function fetchEventTokenMatches(
 }
 
 export async function processEventData(
-  eventCollectionRef:
-    | CollectionReference<DocumentData, DocumentData>
-    | Firestore,
+  eventCollectionRef: CollectionReference<DocumentData, DocumentData> | Firestore,
   eventTokenMatchCount: Map<string, number>
 ) {
   const eventsData = [];
@@ -99,20 +91,13 @@ export async function processEventData(
   return eventsData;
 }
 
-export function createEventCollectionRef(
-  isActive: boolean,
-  isPrivate: boolean
-) {
+export function createEventCollectionRef(isActive: boolean, isPrivate: boolean) {
   const activeStatus = isActive ? EventStatus.Active : EventStatus.Inactive;
   const privateStatus = isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
   return collection(db, CollectionPaths.Events, activeStatus, privateStatus);
 }
 
-export function createEventDocRef(
-  eventId: EventId,
-  isActive: boolean,
-  isPrivate: boolean
-) {
+export function createEventDocRef(eventId: EventId, isActive: boolean, isPrivate: boolean) {
   const activeStatus = isActive ? EventStatus.Active : EventStatus.Inactive;
   const privateStatus = isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
   return doc(db, CollectionPaths.Events, activeStatus, privateStatus, eventId);

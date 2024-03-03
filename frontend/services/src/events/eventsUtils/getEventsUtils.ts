@@ -1,20 +1,9 @@
 import { EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import {
-  CollectionReference,
-  DocumentData,
-  Timestamp,
-  doc,
-  getDoc,
-  getDocs,
-} from "firebase/firestore";
+import { CollectionReference, DocumentData, Timestamp, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
-import { getUserById } from "../../usersService";
-import {
-  EVENTS_REFRESH_MILLIS,
-  EVENT_PATHS,
-  LocalStorageKeys,
-} from "../eventsConstants";
+import { getUserById } from "../../users/usersService";
+import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 
 export async function findEventDoc(eventId: string): Promise<any> {
@@ -35,18 +24,14 @@ export async function findEventDoc(eventId: string): Promise<any> {
   throw new Error("No event found in any subcollection");
 }
 
-export function tryGetAllActisvePublicEventsFromLocalStorage(
-  currentDate: Date
-) {
+export function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) {
   console.log("Trying to get Cached Active Public Events");
   // If already cached, and within 5 minutes, return cached data, otherwise no-op
   if (
     localStorage.getItem(LocalStorageKeys.EventsData) !== null &&
     localStorage.getItem(LocalStorageKeys.LastFetchedEventData) !== null
   ) {
-    const lastFetched = new Date(
-      localStorage.getItem(LocalStorageKeys.LastFetchedEventData)!
-    );
+    const lastFetched = new Date(localStorage.getItem(LocalStorageKeys.LastFetchedEventData)!);
     if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
       return { success: true, events: getEventsDataFromLocalStorage() };
     }
@@ -86,28 +71,20 @@ export async function getAllEventsFromCollectionRef(
 }
 
 function getEventsDataFromLocalStorage(): EventData[] {
-  const eventsData: EventData[] = JSON.parse(
-    localStorage.getItem(LocalStorageKeys.EventsData)!
-  );
+  const eventsData: EventData[] = JSON.parse(localStorage.getItem(LocalStorageKeys.EventsData)!);
   const eventsDataFinal: EventData[] = [];
   eventsData.map((event) => {
     eventsDataFinal.push({
       eventId: event.eventId,
       organiser: event.organiser as UserData,
-      startDate: new Timestamp(
-        event.startDate.seconds,
-        event.startDate.nanoseconds
-      ),
+      startDate: new Timestamp(event.startDate.seconds, event.startDate.nanoseconds),
       endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
       location: event.location,
       capacity: event.capacity,
       vacancy: event.vacancy,
       price: event.price,
       organiserId: event.organiserId,
-      registrationDeadline: new Timestamp(
-        event.registrationDeadline.seconds,
-        event.registrationDeadline.nanoseconds
-      ),
+      registrationDeadline: new Timestamp(event.registrationDeadline.seconds, event.registrationDeadline.nanoseconds),
       name: event.name,
       description: event.description,
       image: event.image,

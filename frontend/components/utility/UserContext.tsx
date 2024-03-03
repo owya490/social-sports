@@ -3,7 +3,7 @@ import { auth } from "@/services/src/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
-import { getUserById } from "../../services/src/usersService";
+import { getUserById } from "../../services/src/users/usersService";
 
 type LoginUserContextType = {
   user: UserData;
@@ -25,9 +25,7 @@ type UserDocType = {
   sport: string;
 };
 
-export type UserType =
-  | (UserData & { uid: string; email: string | null })
-  | null;
+export type UserType = (UserData & { uid: string; email: string | null }) | null;
 
 export default function UserContext({ children }: { children: any }) {
   const [user, setUser] = useState<UserData>(EmptyUserData);
@@ -53,11 +51,7 @@ export default function UserContext({ children }: { children: any }) {
     return () => unsubscriber();
   }, []);
 
-  return (
-    <LoginUserContext.Provider value={{ user, setUser }}>
-      {children}
-    </LoginUserContext.Provider>
-  );
+  return <LoginUserContext.Provider value={{ user, setUser }}>{children}</LoginUserContext.Provider>;
 }
 
 export const useUser = () => useContext(LoginUserContext);
