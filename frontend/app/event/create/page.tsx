@@ -56,7 +56,13 @@ export default function CreateEvent() {
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
-    <BasicInformation key="basic-form" {...data} updateField={updateFields} />,
+    <BasicInformation
+      key="basic-form"
+      {...data}
+      updateField={updateFields}
+      user={user}
+      setLoading={setLoading}
+    />,
     <TagForm key="tag-form" {...data} updateField={updateFields} />,
     <DescriptionImageForm
       key="description-image-form"

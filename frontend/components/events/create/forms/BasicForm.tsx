@@ -1,7 +1,10 @@
 // BasicInformation.tsx
 
+import { UserData } from "@/interfaces/UserTypes";
+import { getStripeStandardAccounLink } from "@/services/src/stripeService";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
@@ -21,7 +24,9 @@ type BasicData = {
 };
 
 type BasicInformationProps = BasicData & {
+  user: UserData;
   updateField: (fields: Partial<BasicData>) => void;
+  setLoading: (value: boolean) => void;
 };
 
 export function BasicInformation({
@@ -34,8 +39,11 @@ export function BasicInformation({
   price,
   capacity,
   isPrivate,
+  user,
   updateField,
+  setLoading,
 }: BasicInformationProps) {
+  const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [priceString, setPriceString] = useState("15");
@@ -235,6 +243,25 @@ export function BasicInformation({
                 size="lg"
               />
             </div>
+          </div>
+          <div className="mt-5 p-3 border border-1 border-blue-gray-200 rounded-lg flex-col flex">
+            <h2 className=" text-lg mb-2">Register for Organiser Hub!</h2>
+            <p className="font-light text-sm">Join hundreds of sport societies hosting their events on Sportshub.</p>
+            <p className="font-light text-sm">
+              Leverage the ability to take bookings and payments right through the platform.
+            </p>
+            <button
+              className="ml-auto bg-black px-3 py-1.5 text-white rounded-lg mt-2"
+              type="button"
+              onClick={async () => {
+                setLoading(true);
+                window.scrollTo(0, 0);
+                const link = await getStripeStandardAccounLink(user.userId, "http://localhost:3000/organiser");
+                router.push(link);
+              }}
+            >
+              Register
+            </button>
           </div>
         </div>
       </div>
