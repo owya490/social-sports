@@ -26,7 +26,8 @@ interface AbstractEventData {
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
   isPrivate: boolean;
-  attendees: { email: string }[];
+  attendees: Record<string, number>; // Key is Email and Number is amount of tickets associated with the email
+  attendeesMetadata: Record<string, {names: string[]; phones: string[];}>; // keeping track of an array with names and phones provided
   accessCount: number;
   sport: string;
 }
@@ -62,7 +63,8 @@ export const EmptyEventData: EventData = {
   image: "",
   eventTags: [],
   isActive: false,
-  attendees: [],
+  attendees: {},
+  attendeesMetadata: {},
   accessCount: 0,
   sport: "",
   isPrivate: false,
