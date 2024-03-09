@@ -11,7 +11,7 @@ import Link from "next/link";
 
 export default function OrganiserNavbar() {
   return (
-    <div className="bg-organiser-light-gray drop-shadow-lg fixed left-0 h-screen z-40">
+    <div className="bg-organiser-light-gray drop-shadow-lg fixed left-0 h-screen z-40 pt-16">
       <div className="w-14 flex flex-col mt-6">
         <Link href="/organiser/dashboard">
           <div className="flex justify-center">
