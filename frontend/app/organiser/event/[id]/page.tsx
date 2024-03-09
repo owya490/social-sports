@@ -1,4 +1,6 @@
 import EventBanner from "@/components/events/EventBanner";
+import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
+import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { Timestamp } from "firebase/firestore";
 
@@ -8,6 +10,13 @@ export default function EventPage() {
     <div className="ml-14 mt-16">
       <OrganiserNavbar />
       <EventBanner name={"Volleyball World Cup"} startDate={Timestamp.now()} organiser={""} vacancy={3} />
+      <EventDrilldownStatBanner />
+      <div className="flex flex-row">
+        <div>
+          <EventDrilldownSidePanel />
+        </div>
+        <div>world</div>
+      </div>
     </div>
   );
 }

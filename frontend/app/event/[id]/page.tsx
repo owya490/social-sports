@@ -7,10 +7,7 @@ import Loading from "@/components/loading/Loading";
 import MobileEventDetailFooter from "@/components/mobile/MobileEventDetailFooter";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
-import {
-  getEventById,
-  incrementEventAccessCountById,
-} from "@/services/eventsService";
+import { getEventById, incrementEventAccessCountById } from "@/services/eventsService";
 import { getTagById } from "@/services/tagService";
 import { useEffect, useState } from "react";
 
@@ -41,7 +38,7 @@ export default function EventPage({ params }: any) {
   return loading ? (
     <Loading />
   ) : (
-    <div className="text-black">
+    <div className="text-black mt-16">
       <EventBanner
         name={eventData.name}
         startDate={eventData.startDate}

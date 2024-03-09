@@ -12,7 +12,7 @@ interface EventBannerProps {
 
 export default function EventBanner(props: EventBannerProps) {
   return (
-    <div className="bg-white border-b-black border-1 border w-screen px-5 md:px-10 pt-20 shadow-lg flex justify-center">
+    <div className="bg-white border-b-black border-1 border w-100% px-5 md:px-10 pt-0 shadow-lg flex justify-center">
       <div className="screen-width-primary">
         <div className="flex items-center">
           <div className="mt-3">
