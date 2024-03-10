@@ -1,14 +1,15 @@
-import { NewUserData, UserData, UserId, PublicUserData, PrivateUserData } from "@/interfaces/UserTypes";
+import { NewUserData, UserData, UserId, PublicUserData, PrivateUserData, EmptyUserData } from "@/interfaces/UserTypes";
 import { addDoc, collection, doc, getDoc, getDocs, deleteDoc, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
-// import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
+import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
 
 export async function createUser(data: NewUserData, userId: string) {
   try {
-    // const publicDocRef = await addDoc(collection(db, "PublicUsers"), extractPublicUserData(data));
     console.log("triggered");
     console.log(data, userId);
-    const docRef = await setDoc(doc(db, "Users", userId), data);
+    // const docRef = await setDoc(doc(db, "Users", userId), data);
+    const publicDocRef = await setDoc(doc(db, "Users", "Active", "Public", userId), extractPublicUserData(data));
+    const privateDocRef = await setDoc(doc(db, "Users", "Active", "Private", userId), extractPrivateUserData(data));
     // return docRef.id;
   } catch (error) {
     console.error(error);
@@ -22,6 +23,11 @@ export async function getUserById(userId: UserId): Promise<UserData> {
   }
   try {
     const userDoc = await getDoc(doc(db, "Users", userId));
+    if (!userDoc.exists()) {
+      return EmptyUserData;
+    }
+    console.log("getid", userId);
+    // const userDoc = await getDoc(doc(db, "Users", "Active", "Public", userId));
     const userData = userDoc.data() as UserData;
     userData.userId = userId;
     return userData;
@@ -33,7 +39,7 @@ export async function getUserById(userId: UserId): Promise<UserData> {
 
 export async function getAllUsers(): Promise<UserData[]> {
   try {
-    const userCollectionRef = collection(db, "Users");
+    const userCollectionRef = collection(db, "Users", "Active", "Public");
     const usersSnapshot = await getDocs(userCollectionRef);
     const usersData: UserData[] = [];
 

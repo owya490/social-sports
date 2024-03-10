@@ -22,21 +22,19 @@ interface AbstractUserData {
 }
 
 export interface PublicUserData {
-  userId: UserId;
-  firstName: string;
-  surname: string;
+  firstName?: string;
+  surname?: string;
   gender?: "Male" | "Female" | "Other" | "";
   dob?: string;
   age?: string;
-  profilePicture: string;
+  profilePicture?: string;
 }
 
 export interface PrivateUserData {
-  userId: UserId;
   location?: string;
   contactInformation?: {
-    mobile: string;
-    email: string;
+    mobile?: string;
+    email?: string;
   };
   activeBookings?: Array<{ eventId: string }>;
 }

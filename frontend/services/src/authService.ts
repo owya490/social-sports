@@ -25,7 +25,7 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
     console.log("herererere");
     console.log(userCredential.user.uid);
     if (userCredential.user) {
-      createUser(data, userCredential.user.uid);
+      createUser(data, userCredential.user.uid, data.contactInformation.email);
     } else {
       // Handle the case where userCredential.user is null
       console.error("User authentication failed");
