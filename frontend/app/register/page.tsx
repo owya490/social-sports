@@ -1,48 +1,58 @@
 "use client";
 import React, { useState } from "react";
-import { handleEmailAndPasswordSignUp } from "@/services/authService";
+import {
+  handleEmailAndPasswordSignUp,
+  userAuthData,
+} from "@/services/authService";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import { useMultistepForm } from "@/components/events/create/useMultistepForm";
 import { BasicRegisterInformation } from "@/components/register/BasicRegisterForm";
+import RegisterStepper from "@/components/register/RegisterStepper";
+import { PublicRegisterForm } from "@/components/register/PublicRegisterForm";
+import { uploadUserImage } from "@/services/imageService";
 
 type RegisterData = {
-  profilePic: string;
+  profilePic: File | null;
   email: string;
   password: string;
+  repeatPassword: string;
+  passwordMismatch: boolean;
   firstName: string;
   lastName: string;
   mobile: string;
   dob: string;
   location: string;
   sport: string;
+  gender: string;
 };
 
 const INITIAL_DATA: RegisterData = {
-  profilePic: "",
+  profilePic: null,
   email: "",
   password: "",
+  repeatPassword: "",
+  passwordMismatch: false,
   firstName: "",
   lastName: "",
   mobile: "",
   dob: "",
   location: "",
-  sport: "",
+  sport: "volleyball",
+  gender: "male",
 };
 
 export default function Register() {
   const [userData, setUserData] = useState(INITIAL_DATA);
   const router = useRouter();
 
-  const [repeatPassword, setRepeatPassword] = useState("");
-  const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [showRegisterFailure, setShowRegisterFailure] = useState(false);
   const [error, setError] = useState("");
 
   const { step, steps, currentStep, isFirstStep, isLastStep, back, next } =
     useMultistepForm([
+      <PublicRegisterForm {...userData} updateField={updateFields} />,
       <BasicRegisterInformation {...userData} updateField={updateFields} />,
     ]);
 
@@ -60,18 +70,26 @@ export default function Register() {
       return;
     }
 
-    if (userData.password !== repeatPassword) {
-      setPasswordMismatch(true);
+    if (userData.password !== userData.repeatPassword) {
+      updateFields({ passwordMismatch: true });
       setShowRegisterFailure(false);
       return;
+    } else {
+      updateFields({ passwordMismatch: false });
     }
 
     try {
-      await handleEmailAndPasswordSignUp(userData);
+      const userId = await handleEmailAndPasswordSignUp(
+        convertUserDataToUserAuthData(userData)
+      );
+      console.log(userId);
+      if (userData.profilePic) {
+        uploadUserImage(userId, userData.profilePic);
+      }
       router.push("/dashboard?login=success");
     } catch (error) {
       setShowRegisterFailure(true);
-      setPasswordMismatch(false);
+      updateFields({ passwordMismatch: false });
 
       if (error instanceof FirebaseError) {
         switch (error.code) {
@@ -94,158 +112,78 @@ export default function Register() {
     }
   };
 
-  // TODO: Implement the Event stepper and each step and buttons below
-  // Start by moving the stuff below to another component that is wrapped by the FormWrapper for each step
+  function convertUserDataToUserAuthData(userData: RegisterData): userAuthData {
+    return {
+      email: userData.email,
+      password: userData.password,
+      firstName: userData.firstName,
+      surname: userData.lastName,
+      mobile: userData.mobile,
+      dob: userData.dob,
+      location: userData.location,
+      sport: userData.sport,
+      gender: userData.gender,
+    };
+  }
 
   return (
-    <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <Alert
-          open={passwordMismatch}
-          onClose={() => setPasswordMismatch(false)}
-          color="red"
-          className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
-        >
-          Passwords do not match.
-        </Alert>
-        <Alert
-          open={showRegisterFailure}
-          onClose={() => setShowRegisterFailure(false)}
-          color="red"
-          className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
-        >
-          {error}
-        </Alert>
-        <h2 className="mt-[5vh] sm:mt-0 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 ">
-          Register your account
-        </h2>
-      </div>
+    <div className="flex p-6 min-h-[95vh] flex-1 flex-col mt-20 sm:mt-30">
+      <form onSubmit={handleSubmit}>
+        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+          <Alert
+            open={userData.passwordMismatch}
+            onClose={() => updateFields({ passwordMismatch: false })}
+            color="red"
+            className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+          >
+            Passwords do not match.
+          </Alert>
+          <Alert
+            open={showRegisterFailure}
+            onClose={() => setShowRegisterFailure(false)}
+            color="red"
+            className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+          >
+            {error}
+          </Alert>
+          <h2 className="mt-[5vh] mb-8 sm:mt-0 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 ">
+            Register your account
+          </h2>
+          <div className="mx-16">
+            <RegisterStepper activeStep={currentStep} />
+          </div>
+        </div>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form className="space-y-6 group" onSubmit={handleSubmit}>
-          <div>
-            <label
-              htmlFor="first-name"
-              className="block text-sm font-medium leading-6 text-gray-900"
+        {step}
+
+        <div className="flex justify-end mt-8 sm:mr-4">
+          {!isFirstStep && (
+            <button
+              type="button"
+              className="rounded-md px-7 py-2 text-md font-semibold leading-6 shadow-sm hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-black border mr-4"
+              onClick={back}
             >
-              First Name
-            </label>
-            <div className="mt-2">
-              <input
-                id="first-name"
-                name="first-name"
-                type="text"
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                value={userData.firstName}
-                required
-                onChange={(e) =>
-                  setUserData({
-                    ...userData,
-                    firstName: e.target.value,
-                  })
-                }
-              />
-            </div>
-          </div>
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium leading-6 text-gray-900"
-            >
-              Email address
-            </label>
-            <div className="mt-2">
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                value={userData.email}
-                onChange={(e) =>
-                  setUserData({
-                    ...userData,
-                    email: e.target.value,
-                  })
-                }
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Password (min. 6 characters)
-              </label>
-            </div>
-            <div className="mt-2">
-              <input
-                id="password"
-                name="password"
-                type="password"
-                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 ${
-                  passwordMismatch ? "ring-red-400" : ""
-                }`}
-                required
-                pattern=".{6,}"
-                value={userData.password}
-                onChange={(e) =>
-                  setUserData({
-                    ...userData,
-                    password: e.target.value,
-                  })
-                }
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="password-repeat"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Repeat Password
-              </label>
-            </div>
-            <div className="mt-2">
-              <input
-                id="password-repeat"
-                name="password"
-                type="password"
-                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 ${
-                  passwordMismatch ? "ring-red-400" : ""
-                }`}
-                required
-                onChange={(e) => setRepeatPassword(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
+              Back
+            </button>
+          )}
+          {!isLastStep && (
             <button
               type="submit"
-              className="flex w-full justify-center rounded-md bg-black px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-black border-2"
+              className="rounded-md px-7 py-2 text-md font-semibold leading-6 shadow-sm bg-black text-white hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-black border"
+            >
+              Next
+            </button>
+          )}
+          {isLastStep && (
+            <button
+              type="submit"
+              className="rounded-md px-7 py-2 text-md font-semibold leading-6 shadow-sm bg-black text-white hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-black border"
             >
               Register
             </button>
-          </div>
-
-          <p className="mt-10 text-center text-sm text-gray-500">
-            Have an account?{" "}
-            <Link
-              href="/login"
-              className="font-semibold leading-6 text-black hover:underline"
-            >
-              Login here
-            </Link>
-          </p>
-        </form>
-      </div>
+          )}
+        </div>
+      </form>
     </div>
   );
 }

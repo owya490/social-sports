@@ -11,16 +11,12 @@ interface RegisterStepperProps {
 }
 
 export default function RegisterStepper({ activeStep }: RegisterStepperProps) {
-  const stepLabels = [
-    "Basic Information",
-    "Public Information",
-    "Login Information",
-  ];
+  const stepLabels = ["Public Information", "Basic Information"];
 
   return (
     <Stepper activeStep={activeStep}>
       <Step onClick={() => {}}>
-        <UserIcon className="h-5 w-5" />
+        <PhotoIcon className="h-5 w-5" />
         <div className="absolute -bottom-[4.5rem] w-max text-center">
           <Typography
             variant="h6"
@@ -37,7 +33,7 @@ export default function RegisterStepper({ activeStep }: RegisterStepperProps) {
         </div>
       </Step>
       <Step onClick={() => {}}>
-        <TagIcon className="h-5 w-5" />
+        <UserIcon className="h-5 w-5" />
         <div className="absolute -bottom-[4.5rem] w-max text-center">
           <Typography
             variant="h6"
@@ -50,23 +46,6 @@ export default function RegisterStepper({ activeStep }: RegisterStepperProps) {
             className="font-normal"
           >
             {stepLabels[1]}
-          </Typography>
-        </div>
-      </Step>
-      <Step onClick={() => {}}>
-        <PhotoIcon className="h-5 w-5" />
-        <div className="absolute -bottom-[4.5rem] w-max text-center">
-          <Typography
-            variant="h6"
-            color={activeStep === 2 ? "blue-gray" : "gray"}
-          >
-            Step 3
-          </Typography>
-          <Typography
-            color={activeStep === 2 ? "blue-gray" : "gray"}
-            className="font-normal"
-          >
-            {stepLabels[2]}
           </Typography>
         </div>
       </Step>

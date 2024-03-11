@@ -14,6 +14,12 @@ export interface userAuthData {
   email: string;
   password: string;
   firstName: string;
+  surname: string;
+  mobile: string;
+  dob: string;
+  location: string;
+  sport: string;
+  gender: string;
 }
 
 export async function handleEmailAndPasswordSignUp(data: userAuthData) {
@@ -27,10 +33,16 @@ export async function handleEmailAndPasswordSignUp(data: userAuthData) {
     const userDocRef = doc(db, "Users", userCredential.user.uid);
     const userDataToSet = {
       firstName: data.firstName,
-      //add more fields here
+      surname: data.surname,
+      mobile: data.mobile,
+      dob: data.dob,
+      location: data.location,
+      sport: data.sport,
+      gender: data.gender,
     };
     await setDoc(userDocRef, userDataToSet);
     console.log("signed in", userCredential);
+    return userCredential.user.uid;
   } catch (error) {
     throw error;
   }

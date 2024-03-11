@@ -7,9 +7,5 @@ type FormWrapperProps = {
 };
 
 export function FormWrapper({ children }: FormWrapperProps) {
-  return (
-    <div className="flex w-full justify-center mt-28">
-      <div className="w-2/3 2xl:w-2/5">{children}</div>
-    </div>
-  );
+  return <div className="flex w-full justify-center mt-28">{children}</div>;
 }

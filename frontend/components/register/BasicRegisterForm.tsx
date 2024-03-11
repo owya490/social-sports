@@ -1,17 +1,15 @@
-import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
-import { Input, Option, Select } from "@material-tailwind/react";
-import { useState } from "react";
-import CreateEventCostSlider from "../events/create/CreateEventCostSlider";
+import Link from "next/link";
 import { FormWrapper } from "../events/create/FormWrapper";
 
 type BasicData = {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
+  repeatPassword: string;
+  passwordMismatch: boolean;
   mobile: string;
   dob: string;
   location: string;
+  gender: string;
   sport: string;
 };
 
@@ -22,177 +20,200 @@ type BasicInformationProps = BasicData & {
 export function BasicRegisterInformation({
   email,
   password,
-  firstName,
-  lastName,
+  repeatPassword,
+  passwordMismatch,
   mobile,
   dob,
   location,
+  gender,
   sport,
   updateField,
 }: BasicInformationProps) {
   return (
     <FormWrapper>
-      <div className="space-y-12">
-        <div>
-          <label className="text-black text-lg font-semibold">
-            What’s the name of your event?
-          </label>
-          <p className="text-sm mb-5 mt-2">
-            This will be your event’s title. Your title will be used to help
-            create your event’s summary, description, category, and tags – so be
-            specific!
-          </p>
-          <Input
-            label="Event Name"
-            crossOrigin={undefined}
-            required
-            value={name}
-            onChange={(e) => updateField({ name: e.target.value })}
-            className="rounded-md"
-            size="lg"
-          />
-        </div>
-        <div>
-          <label className="text-black text-lg font-semibold">
-            When does your event start and end?
-          </label>
-          <div className="flex space-x-2 mt-4">
-            <div className="basis-1/2">
-              {/* <CustomDateInput
-              date={date}
-              placeholder="Date"
-              handleChange={handleDateChange}
-            /> */}
-              <Input
-                label="Date"
-                crossOrigin={undefined}
-                required
-                value={date}
-                onChange={(e) => handleDateChange(e.target.value)}
-                className="rounded-md"
-                size="lg"
-                containerProps={{ className: "min-w-[100px]" }}
-              />
-            </div>
-            <div className="basis-1/4">
-              {/* <CustomTimeInput
-              value={startTime}
-              placeholder="Start time"
-              handleChange={handleStartTimeChange}
-            /> */}
-              <Input
-                label="Start time"
-                crossOrigin={undefined}
-                required
-                value={startTime}
-                onChange={(e) => handleStartTimeChange(e.target.value)}
-                className="rounded-md"
-                size="lg"
-                containerProps={{ className: "min-w-[100px]" }}
-              />
-            </div>
-            <div className="basis-1/4">
-              {/* <CustomTimeInput
-              value={endTime}
-              placeholder="End time"
-              handleChange={handleEndTimeChange}
-            /> */}
-              <Input
-                label="End time"
-                crossOrigin={undefined}
-                required
-                value={endTime}
-                onChange={(e) => handleEndTimeChange(e.target.value)}
-                className="rounded-md"
-                size="lg"
-                containerProps={{ className: "min-w-[100px]" }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-black text-lg font-semibold">
-            Where is it located?
-          </label>
-          <div className="mt-4">
-            <Input
-              label="Location"
-              crossOrigin={undefined}
-              required
-              value={location}
-              onChange={(e) => updateField({ location: e.target.value })}
-              className="rounded-md"
-              size="lg"
-              icon={<MapPinIcon />}
-            />
-          </div>
-        </div>
-        <div>
-          <label className="text-black text-lg font-semibold">
-            What Sport is it?
-          </label>
-          <div className="mt-4">
-            <Select
-              label="Select Sport"
-              size="lg"
-              onChange={(e) => {
-                updateField({ sport: e });
-              }}
+      <div className=" w-full sm:max-w-2xl sm:flex gap-x-12 flex-none">
+        <div className="sm:w-1/2 space-y-6">
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium leading-6 text-gray-900"
             >
-              <Option value="volleyball">Volleyball</Option>
-              <Option value="badminton">Badminton</Option>
-              <Option value="basketball">Basketball</Option>
-              <Option value="soccer">Soccer</Option>
-              <Option value="tennis">Tennis</Option>
-              <Option value="table-tennis">Table Tennis</Option>
-              <Option value="oztag">Oztag</Option>
-              <Option value="baseball">Baseball</Option>
-            </Select>
-          </div>
-        </div>
-        <div>
-          <label className="text-black text-lg font-semibold">
-            What is the price of the event and max capacity?
-          </label>
-          <p className="text-sm mt-2 mb-5">
-            Event price is the cost of each ticket. Event capacity is the total
-            number of tickets you're willing to sell.
-          </p>
-
-          <div className="w-full px-5">
-            <CreateEventCostSlider
-              initialCustomAmount={customAmount}
-              onCustomAmountChange={handleCustomAmountChange}
-            />
-          </div>
-          <div className="w-full flex space-x-3">
-            <div className="mt-4 grow">
-              <Input
-                label="Price"
-                crossOrigin={undefined}
+              Email address
+            </label>
+            <div className="mt-2">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
                 required
-                value={cost}
-                onChange={(e) =>
-                  handleCustomAmountChange(parseInt(e.target.value))
-                }
-                className="rounded-md"
-                size="lg"
-                icon={<CurrencyDollarIcon />}
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                value={email}
+                onChange={(e) => updateField({ email: e.target.value })}
               />
             </div>
-            <div className="mt-4 grow">
-              <Input
-                label="Capacity"
-                crossOrigin={undefined}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium leading-6 text-gray-900"
+              >
+                Password (min. 6 characters)
+              </label>
+            </div>
+            <div className="mt-2">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 ${
+                  passwordMismatch ? "ring-red-400" : ""
+                }`}
                 required
-                value={people}
-                onChange={(e) =>
-                  updateField({ people: parseInt(e.target.value) })
-                }
-                className="rounded-md"
-                size="lg"
+                pattern=".{6,}"
+                value={password}
+                onChange={(e) => updateField({ password: e.target.value })}
               />
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="password-repeat"
+                className="block text-sm font-medium leading-6 text-gray-900"
+              >
+                Repeat Password
+              </label>
+            </div>
+            <div className="mt-2">
+              <input
+                id="password-repeat"
+                name="password"
+                type="password"
+                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 ${
+                  passwordMismatch ? "ring-red-400" : ""
+                }`}
+                required
+                value={repeatPassword}
+                onChange={(e) =>
+                  updateField({ repeatPassword: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div>
+            <div>
+              <label
+                htmlFor="gender"
+                className="block text-sm font-medium leading-6 text-gray-900"
+              >
+                Gender
+              </label>
+              <div className="mt-2">
+                <select
+                  id="gender"
+                  name="gender"
+                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                  value={gender}
+                  required
+                  onChange={(e) => updateField({ gender: e.target.value })}
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="sm:w-1/2 space-y-6">
+          <div>
+            <label
+              htmlFor="mobile"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Mobile
+            </label>
+            <div className="mt-2">
+              <input
+                id="mobile"
+                name="mobile"
+                type="text"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                value={mobile}
+                required
+                onChange={(e) => updateField({ mobile: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="dob"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Birthday
+            </label>
+            <div className="mt-2">
+              <input
+                id="dob"
+                name="dob"
+                type="date"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                value={dob}
+                required
+                onChange={(e) => updateField({ dob: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="location"
+              className="block text-sm font-medium leading-6 text-gray-900"
+            >
+              Location
+            </label>
+            <div className="mt-2">
+              <input
+                id="location"
+                name="location"
+                type="text"
+                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                value={location}
+                required
+                onChange={(e) => updateField({ location: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div>
+              <label
+                htmlFor="sport"
+                className="block text-sm font-medium leading-6 text-gray-900"
+              >
+                Sport
+              </label>
+              <div className="mt-2">
+                <select
+                  id="sport"
+                  name="sport"
+                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                  value={sport}
+                  required
+                  onChange={(e) => updateField({ sport: e.target.value })}
+                >
+                  <option value="volleyball">Volleyball</option>
+                  <option value="badminton">Badminton</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
