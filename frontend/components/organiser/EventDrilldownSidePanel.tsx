@@ -6,7 +6,7 @@ interface EventDrilldownSidePanelProps {
 
 const EventDrilldownSidePanel = ({ setCurrSidebarPage }: EventDrilldownSidePanelProps) => {
   return (
-    <div className="bg-organiser-light-gray mx-10 p-8 w-64 rounded-3xl">
+    <div className="bg-organiser-light-gray mr-10 p-8 w-64 rounded-3xl">
       <div className="text-xl font-extrabold">Volleyball World Cup</div>
       <div className="text-organiser-dark-gray-text text-sm font-bold">Sun, 17 March 2024, 10:00am</div>
       <div className="h-20"></div>

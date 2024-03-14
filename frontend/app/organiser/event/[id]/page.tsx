@@ -20,7 +20,7 @@ export default function EventPage() {
       <OrganiserNavbar />
       <EventBanner name={"Volleyball World Cup"} startDate={Timestamp.now()} organiser={""} vacancy={3} />
       <EventDrilldownStatBanner />
-      <div className="flex flex-row">
+      <div className="flex flex-row m-10 max-w-6xl xl:mx-auto">
         <div>
           <EventDrilldownSidePanel setCurrSidebarPage={setCurrSidebarPage} />
         </div>
