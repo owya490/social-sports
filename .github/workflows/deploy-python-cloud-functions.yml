@@ -1,0 +1,27 @@
+name: Deploy Cloud Functions
+run-name: 🚀 ${{ github.actor }} is deploying all cloud functions
+on:
+  [pull_request, push]
+
+  # push:
+  #   branches:
+  #     - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - name: Create SA key
+        run: echo '${{ secrets.GCP_SA_DEPLOY_KEY }}' > $HOME/gcloud.json
+      - name: Deploy Cloud Functions
+        working-directory: functions
+        run: |
+          python3.12 -m venv venv
+          . "/home/runner/work/social-sports/social-sports/functions/venv/bin/activate" && python3.12 -m pip install -r requirements.txt
+          npx firebase-tools --version
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json
+          npx firebase-tools deploy --only functions --debug --project socialsports-44162
