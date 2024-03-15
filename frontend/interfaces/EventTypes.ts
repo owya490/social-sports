@@ -25,6 +25,7 @@ interface AbstractEventData {
   image: string; // Assuming you store the image URL or path as a string
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
+  isPrivate: boolean;
   attendees: { email: string }[];
   accessCount: number;
   sport: string;
@@ -64,4 +65,5 @@ export const EmptyEventData: EventData = {
   attendees: [],
   accessCount: 0,
   sport: "",
+  isPrivate: false,
 };

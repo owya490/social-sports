@@ -1,7 +1,7 @@
 import {
   timestampToDateString,
   timestampToTimeOfDay,
-} from "@/services/datetimeUtils";
+} from "@/services/src/datetimeUtils";
 import { CalendarDaysIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
