@@ -10,9 +10,9 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/react-tailwindcss-datepicker/dist/index.esm.js",
   ],
-  experimental: {
-    optimizeUniversalDefaults: true,
-  },
+  // experimental: {
+  //   optimizeUniversalDefaults: true,
+  // },
   theme: {
     extend: {
       fontFamily: {
@@ -33,8 +33,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/forms")],
 };
 
 export default withMT(config);
-// export default config;

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
+import Link from "next/link";
 
 export default function PopularLocations() {
   const scrollLeft = () => {
@@ -27,9 +28,12 @@ export default function PopularLocations() {
             <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
             <div className="flex my-5">
               <h5 className="font-bold text-lg">Popular Locations</h5>
-              <a className="text-sm font-light ml-auto cursor-pointer hover:underline">
+              <Link
+                href="#"
+                className="text-sm font-light ml-auto cursor-pointer hover:underline"
+              >
                 See all
-              </a>
+              </Link>
             </div>
           </div>
         </div>

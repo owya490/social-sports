@@ -8,7 +8,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { TagGroup } from "../TagGroup";
-import { deserialize_list, serialize_list } from "../utility/listUtils";
+import { deserialize_list, serialize_list } from "../../utilities/listUtils";
+import Link from "next/link";
 
 interface MobileSearchInputProps {
   searchExpanded: boolean;
@@ -117,10 +118,10 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
                 return (
                   <span key={i} className="flex items-center my-1">
                     <ClockIcon className="w-4 h-4 mr-1" />
-                    <a
+                    <Link
                       href="https://google.com"
                       className="font-light text-base"
-                    >{`${splitSearch[0]} - ${splitSearch[1]}`}</a>
+                    >{`${splitSearch[0]} - ${splitSearch[1]}`}</Link>
                   </span>
                 );
               })

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import ChevronRightButton from "../utility/ChevronRightButton";
 import BadmintonImage from "./../../public/images/badminton.png";
 import BaseballImage from "./../../public/images/baseball.png";
@@ -34,9 +35,12 @@ export default function SearchSport() {
       <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
       <div className="flex my-5">
         <h5 className="font-bold text-lg">Search by Sports</h5>
-        <a className="text-sm font-light ml-auto cursor-pointer hover:underline">
+        <Link
+          href="#"
+          className="text-sm font-light ml-auto cursor-pointer hover:underline"
+        >
           See all
-        </a>
+        </Link>
       </div>
       <div className="flex items-center">
         <div
