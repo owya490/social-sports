@@ -1,6 +1,11 @@
 "use client";
-import { useState } from "react";
+import OrganiserEventCard from "@/components/events/OrganiserEventCard";
+import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/eventsService";
+import { sleep } from "@/utilities/sleepUtil";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 export default function Dashboard() {
   const [showSearch, setShowSearch] = useState(true);
@@ -63,6 +68,108 @@ export default function Dashboard() {
     setEndDate("");
   };
 
+  const [loading, setLoading] = useState(true);
+  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
+  const [eventDataList, setEventDataList] = useState<EventData[]>([
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+  ]);
+  const [searchDataList, setSearchDataList] = useState<EventData[]>([]);
+  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [srcLocation, setSrcLocation] = useState<string>("");
+  const [triggerFilterApply, setTriggerFilterApply] = useState(false);
+  const getQueryParams = () => {
+    if (typeof window === "undefined") {
+      // Return some default or empty values when not in a browser environment
+      return { event: "", location: "" };
+    }
+    const searchParams = new URLSearchParams(window.location.search);
+    return {
+      event: searchParams.get("event") || "",
+      location: searchParams.get("location") || "",
+    };
+  };
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  });
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const { event, location } = getQueryParams();
+      setSrcLocation(location);
+      if (typeof event === "string" && typeof location === "string") {
+        if (event.trim() === "") {
+          getAllEvents()
+            .then((events) => {
+              setEventDataList(events);
+              setSearchDataList(events);
+              setAllEventsDataList(events);
+            })
+            .finally(async () => {
+              await sleep(500);
+              setLoading(false);
+            });
+        } else {
+          searchEventsByKeyword(event, location)
+            .then(async (events) => {
+              let tempEventDataList: EventData[] = [];
+              for (const singleEvent of events) {
+                const eventData = await getEventById(singleEvent.eventId);
+                tempEventDataList.push(eventData);
+              }
+              return tempEventDataList;
+            })
+            .then((tempEventDataList: EventData[]) => {
+              setEventDataList(tempEventDataList);
+              setSearchDataList(tempEventDataList);
+            })
+            .finally(async () => {
+              await sleep(500);
+              setLoading(false);
+            });
+        }
+      }
+      if (location.trim() !== "") {
+        setTriggerFilterApply(true);
+      }
+    };
+    fetchEvents();
+  }, [searchParams]);
+
+  useEffect(() => {
+    const login = searchParams?.get("login");
+    if (login === "success") {
+      setShowLoginSuccess(true);
+
+      router.replace("/dashboard");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    let timer: number | undefined;
+
+    if (showLoginSuccess) {
+      timer = window.setTimeout(() => {
+        setShowLoginSuccess(false);
+      }, 3000);
+    }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [showLoginSuccess]);
+
   return (
     <div className="w-screen flex justify-center mt-16 ml-14">
       {/* <OrganiserNavbar /> */}
@@ -73,7 +180,7 @@ export default function Dashboard() {
             <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg">
               <h2 className="text-lg text-center font-semibold mb-4">Filter Events</h2>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
                   Search
                   <span className="cursor-pointer ml-auto" onClick={toggleShowSearch}>
                     {showSearch ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
@@ -94,7 +201,7 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
                   Event Status
                   <span className="cursor-pointer ml-auto" onClick={toggleShowEventStatus}>
                     {showEventStatus ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
@@ -132,7 +239,7 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
                   Event Type
                   <span className="cursor-pointer ml-auto" onClick={toggleShowEventType}>
                     {showEventType ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
@@ -170,7 +277,7 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
                   Price Range
                   <span className="cursor-pointer ml-auto" onClick={toggleShowPriceRange}>
                     {showPriceRange ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
@@ -203,7 +310,7 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
                   Date Range
                   <span className="cursor-pointer ml-auto" onClick={toggleShowDateRange}>
                     {showDateRange ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
@@ -242,7 +349,39 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="col-start-2 col-span-2">
-            <div className="">lol</div>
+            <div className="flex justify-center">
+              <div className="pb-10 screen-width-dashboard">
+                <div className="grid grid-cols-4 gap-8 min-h-screen justify-items-center">
+                  {eventDataList
+                    .sort((event1, event2) => {
+                      if (event1.accessCount > event2.accessCount) {
+                        return 1;
+                      }
+                      if (event2.accessCount < event2.accessCount) {
+                        return -1;
+                      }
+                      return 0;
+                    })
+                    .map((event, eventIdx) => {
+                      return (
+                        <div className="my-4 w-full" key={eventIdx}>
+                          <OrganiserEventCard
+                            eventId={event.eventId}
+                            image={event.image}
+                            name={event.name}
+                            organiser={event.organiser}
+                            startTime={event.startDate}
+                            location={event.location}
+                            price={event.price}
+                            vacancy={event.vacancy}
+                            loading={loading}
+                          />
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
