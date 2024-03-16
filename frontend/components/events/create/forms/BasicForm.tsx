@@ -48,7 +48,6 @@ export function BasicInformation({
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [priceString, setPriceString] = useState("15");
   const [capacityString, setCapacityString] = useState("20");
-  const [isPrivateString, setIsPrivateString] = useState("Public");
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -187,7 +186,7 @@ export function BasicInformation({
             <Select
               size="md"
               label="Select Visibility"
-              value={isPrivateString}
+              value={isPrivate.toString()}
               onChange={(e) => {
                 const privacyValue = e || "Public";
                 handlePrivacyChange(privacyValue);

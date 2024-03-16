@@ -1,4 +1,5 @@
-export default function Event() {
+//aidans
+export default function Dashboard() {
   return (
     <div>
       <h1>helo</h1>

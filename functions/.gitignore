@@ -1,5 +1,6 @@
 /venv
 /__pycache__/
 functions_key.json
-.env
+*.log
 /lib/__pycache__/
+*__pycache__*
