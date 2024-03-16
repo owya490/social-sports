@@ -14,7 +14,7 @@ import {
 } from "firebase/firestore";
 
 import { db } from "../../firebase";
-import { getUserById } from "../../users/usersService";
+import { getPublicUserById } from "../../users/usersService";
 import { CollectionPaths, EVENT_PATHS, EventPrivacy, EventStatus } from "../eventsConstants";
 
 export function tokenizeText(text: string): string[] {
@@ -82,7 +82,7 @@ export async function processEventData(
         tokenMatchCount: count,
         organiser: {},
       };
-      const organiser = await getUserById(eventData.organiserId);
+      const organiser = await getPublicUserById(eventData.organiserId);
       extendedEventData.organiser = organiser;
       eventsData.push(extendedEventData);
     }

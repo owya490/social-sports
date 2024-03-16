@@ -2,7 +2,7 @@ import { User } from "firebase/auth";
 
 export type UserId = string;
 
-interface AbstractUserData {
+export interface AbstractUserData {
   firstName: string;
   surname?: string;
   location?: string;
@@ -18,25 +18,29 @@ interface AbstractUserData {
       eventId: string;
     }
   ];
-  profilePicture?: string;
+  profilePicture: string;
 }
 
 export interface PublicUserData {
-  firstName?: string;
+  firstName: string;
   surname?: string;
   gender?: "Male" | "Female" | "Other" | "";
   dob?: string;
   age?: string;
-  profilePicture?: string;
+  profilePicture: string;
 }
 
 export interface PrivateUserData {
   location?: string;
-  contactInformation?: {
+  contactInformation: {
     mobile?: string;
-    email?: string;
+    email: string;
   };
-  activeBookings?: Array<{ eventId: string }>;
+  activeBookings?: [
+    {
+      eventId: string;
+    }
+  ];
 }
 
 export interface NewUserData extends AbstractUserData {

@@ -1,4 +1,4 @@
-import { EmptyUserData, NewUserData, UserData, userAuthData } from "@/interfaces/UserTypes";
+import { EmptyUserData, NewUserData, UserData } from "@/interfaces/UserTypes";
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
@@ -25,7 +25,7 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
     console.log("herererere");
     console.log(userCredential.user.uid);
     if (userCredential.user) {
-      createUser(data, userCredential.user.uid, data.contactInformation.email);
+      createUser(data, userCredential.user.uid);
     } else {
       // Handle the case where userCredential.user is null
       console.error("User authentication failed");

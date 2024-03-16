@@ -2,7 +2,7 @@ import { EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { CollectionReference, DocumentData, Timestamp, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
-import { getUserById } from "../../users/usersService";
+import { getPublicUserById } from "../../users/usersService";
 import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 
@@ -57,7 +57,7 @@ export async function getAllEventsFromCollectionRef(
     });
 
     for (const event of eventsDataWithoutOrganiser) {
-      const organiser = await getUserById(event.organiserId);
+      const organiser = await getPublicUserById(event.organiserId);
       eventsData.push({
         ...event,
         organiser: organiser,

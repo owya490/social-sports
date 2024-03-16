@@ -15,7 +15,7 @@ import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./
 
 import { Logger } from "@/observability/logger";
 import { db } from "../firebase";
-import { getUserById } from "../users/usersService";
+import { getPublicUserById } from "../users/usersService";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -62,7 +62,7 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
     const event: EventData = {
       ...eventWithoutOrganiser,
-      organiser: await getUserById(eventWithoutOrganiser.organiserId),
+      organiser: await getPublicUserById(eventWithoutOrganiser.organiserId),
     };
     return event;
   } catch (error) {
