@@ -1,17 +1,16 @@
 // Import the functions you need from the SDKs you need
-import firebase from "firebase/app";
 import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
 import {
+  User,
   browserLocalPersistence,
   getAuth,
-  setPersistence,
   onAuthStateChanged,
-  User,
+  setPersistence,
 } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getEnvironment, Environment } from "../utilities/environment";
+import { Environment, getEnvironment } from "../../utilities/environment";
 require("dotenv").config();
 
 // TODO: Add SDKs for Firebase products that you want to use

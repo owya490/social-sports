@@ -1,5 +1,5 @@
 import { UserData } from "@/interfaces/UserTypes";
-import { timestampToEventCardDateString } from "@/services/datetimeUtils";
+import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 

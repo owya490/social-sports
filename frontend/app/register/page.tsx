@@ -1,5 +1,5 @@
 "use client";
-import { handleEmailAndPasswordSignUp } from "@/services/authService";
+import { handleEmailAndPasswordSignUp } from "@/services/src/authService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";
