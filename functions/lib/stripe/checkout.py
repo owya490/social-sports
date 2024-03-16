@@ -4,18 +4,15 @@
 
 import json
 import logging
-import os
 import time
 from dataclasses import dataclass
-from datetime import date
 
 import stripe
 from constants import db
 from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
-from google.cloud.firestore import DocumentReference, Transaction
-from google.protobuf.timestamp_pb2 import Timestamp
+from google.cloud.firestore import Transaction
 from lib.stripe.commons import ERROR_URL
 
 
@@ -97,7 +94,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
   # 4. obtain price and organiser stripe account id again from db
   price = event.get("price")
   organiser_stripe_account_id = organiser.get("stripeAccount")
-  
+
   # 4a. check if the price exists for this event
   if (price == None or not isinstance(price, int) or price <= 1): # we don't want events to be less than stripe fees
     logging.error(f"Provided event {event_ref.path} does not have a valid price. Returning status=500")
