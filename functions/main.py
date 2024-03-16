@@ -300,7 +300,7 @@ def restock_tickets_after_expired_checkout(transaction: Transaction, event_id: s
 @https_fn.on_request(cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]))
 def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Response:
   payload = req.get_json()
-  sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
+  sig_header = req.META["HTTP_STRIPE_SIGNATURE"]
   event = None
 
   try:
