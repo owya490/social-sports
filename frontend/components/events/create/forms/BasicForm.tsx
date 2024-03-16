@@ -220,7 +220,7 @@ export function BasicInformation({
                 type="number"
                 onChange={(e) => {
                   var value = parseInt(e.target.value);
-                  if (value < 1) {
+                  if (value < 1 && value !== 0) {
                     value = 1;
                   }
                   setPriceString(`${value}`);
