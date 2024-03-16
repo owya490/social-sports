@@ -8,6 +8,7 @@ import time
 from datetime import date
 
 import stripe
+from constants import db
 from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore

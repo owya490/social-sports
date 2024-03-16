@@ -219,8 +219,12 @@ export function BasicInformation({
                 value={priceString}
                 type="number"
                 onChange={(e) => {
-                  setPriceString(e.target.value);
-                  handleCustomAmountChange(parseInt(e.target.value));
+                  var value = parseInt(e.target.value);
+                  if (value < 1) {
+                    value = 1;
+                  }
+                  setPriceString(`${value}`);
+                  handleCustomAmountChange(value);
                 }}
                 className="rounded-md"
                 size="lg"
