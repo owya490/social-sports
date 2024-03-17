@@ -6,6 +6,7 @@ import { sleep } from "@/utilities/sleepUtil";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
+import OrganiserNa
 
 export default function Dashboard() {
   const [showSearch, setShowSearch] = useState(true);
@@ -171,12 +172,12 @@ export default function Dashboard() {
   }, [showLoginSuccess]);
 
   return (
-    <div className="w-screen flex justify-center mt-16 ml-14">
-      {/* <OrganiserNavbar /> */}
-      <div className="w-screen mx-10">
+    <div className="w-screen mt-16 ml-14 md:w-[700px] lg:w-[1000px] xl:w-[1200px] 2xl:w-[1500px] 3xl:w-[1700px]">
+      <OrganiserNavbar />
+      <div className="w-screen">
         <div className="text-6xl my-12">Event Dashboard</div>
-        <div className="flex flex-cols-3">
-          <div className="col-start-1 col-span-1 max-w-sm">
+        <div className="flex flex-cols-2 gap-12">
+          <div className="col-start-1 col-span-1 w-[360px]">
             <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg">
               <h2 className="text-lg text-center font-semibold mb-4">Filter Events</h2>
               <div className="mb-4">
@@ -310,7 +311,7 @@ export default function Dashboard() {
                 )}
               </div>
               <div className="mb-4">
-                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
+                <label className="text-sm font-medium text-gray-700 mb-1 flex items-center min-w-[325px]">
                   Date Range
                   <span className="cursor-pointer ml-auto" onClick={toggleShowDateRange}>
                     {showDateRange ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
@@ -348,38 +349,36 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-          <div className="col-start-2 col-span-2">
+          <div className="col-start-2">
             <div className="flex justify-center">
-              <div className="pb-10 screen-width-dashboard">
-                <div className="grid grid-cols-4 gap-8 min-h-screen justify-items-center">
-                  {eventDataList
-                    .sort((event1, event2) => {
-                      if (event1.accessCount > event2.accessCount) {
-                        return 1;
-                      }
-                      if (event2.accessCount < event2.accessCount) {
-                        return -1;
-                      }
-                      return 0;
-                    })
-                    .map((event, eventIdx) => {
-                      return (
-                        <div className="my-4 w-full" key={eventIdx}>
-                          <OrganiserEventCard
-                            eventId={event.eventId}
-                            image={event.image}
-                            name={event.name}
-                            organiser={event.organiser}
-                            startTime={event.startDate}
-                            location={event.location}
-                            price={event.price}
-                            vacancy={event.vacancy}
-                            loading={loading}
-                          />
-                        </div>
-                      );
-                    })}
-                </div>
+              <div className="grid grid-cols-3 justify-items-center">
+                {eventDataList
+                  .sort((event1, event2) => {
+                    if (event1.accessCount > event2.accessCount) {
+                      return 1;
+                    }
+                    if (event2.accessCount < event2.accessCount) {
+                      return -1;
+                    }
+                    return 0;
+                  })
+                  .map((event, eventIdx) => {
+                    return (
+                      <div className="mb-8 w-full" key={eventIdx}>
+                        <OrganiserEventCard
+                          eventId={event.eventId}
+                          image={event.image}
+                          name={event.name}
+                          organiser={event.organiser}
+                          startTime={event.startDate}
+                          location={event.location}
+                          price={event.price}
+                          vacancy={event.vacancy}
+                          loading={loading}
+                        />
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           </div>
