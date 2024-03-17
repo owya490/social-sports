@@ -1,12 +1,12 @@
 "use client";
 import OrganiserEventCard from "@/components/events/OrganiserEventCard";
+import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
-import OrganiserNa
 
 export default function Dashboard() {
   const [showSearch, setShowSearch] = useState(true);
@@ -174,10 +174,10 @@ export default function Dashboard() {
   return (
     <div className="w-screen mt-16 ml-14 md:w-[700px] lg:w-[1000px] xl:w-[1200px] 2xl:w-[1500px] 3xl:w-[1700px]">
       <OrganiserNavbar />
-      <div className="w-screen">
+      <div className="w-screen px-16 py-4">
         <div className="text-6xl my-12">Event Dashboard</div>
-        <div className="flex flex-cols-2 gap-12">
-          <div className="col-start-1 col-span-1 w-[360px]">
+        <div className="flex gap-8">
+          <div className="w-[360px]">
             <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg">
               <h2 className="text-lg text-center font-semibold mb-4">Filter Events</h2>
               <div className="mb-4">
@@ -296,7 +296,7 @@ export default function Dashboard() {
                       value={minPrice}
                       onChange={(e) => setMinPrice(e.target.value.replace(/[^0-9.]/g, ""))}
                     />
-                    <span className="text-gray-700 mx-4">to</span>
+                    <span className="text-gray-700 mx-2">to</span>
                     <span className="text-gray-700 mr-2">$</span>
                     <input
                       type="text"
@@ -328,7 +328,7 @@ export default function Dashboard() {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                     />
-                    <span className="text-gray-700 mx-4">to</span>
+                    <span className="text-gray-700 mx-2">to</span>
                     <input
                       type="date"
                       id="endDate"
@@ -349,37 +349,35 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-          <div className="col-start-2">
-            <div className="flex justify-center">
-              <div className="grid grid-cols-3 justify-items-center">
-                {eventDataList
-                  .sort((event1, event2) => {
-                    if (event1.accessCount > event2.accessCount) {
-                      return 1;
-                    }
-                    if (event2.accessCount < event2.accessCount) {
-                      return -1;
-                    }
-                    return 0;
-                  })
-                  .map((event, eventIdx) => {
-                    return (
-                      <div className="mb-8 w-full" key={eventIdx}>
-                        <OrganiserEventCard
-                          eventId={event.eventId}
-                          image={event.image}
-                          name={event.name}
-                          organiser={event.organiser}
-                          startTime={event.startDate}
-                          location={event.location}
-                          price={event.price}
-                          vacancy={event.vacancy}
-                          loading={loading}
-                        />
-                      </div>
-                    );
-                  })}
-              </div>
+          <div className="flex justify-center">
+            <div className="grid lg:grid-cols-3 3xl:grid-cols-4 gap-x-8 justify-items-center">
+              {eventDataList
+                .sort((event1, event2) => {
+                  if (event1.accessCount > event2.accessCount) {
+                    return 1;
+                  }
+                  if (event2.accessCount < event2.accessCount) {
+                    return -1;
+                  }
+                  return 0;
+                })
+                .map((event, eventIdx) => {
+                  return (
+                    <div className="mb-8 w-full" key={eventIdx}>
+                      <OrganiserEventCard
+                        eventId={event.eventId}
+                        image={event.image}
+                        name={event.name}
+                        organiser={event.organiser}
+                        startTime={event.startDate}
+                        location={event.location}
+                        price={event.price}
+                        vacancy={event.vacancy}
+                        loading={loading}
+                      />
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>
