@@ -1,13 +1,5 @@
-import { NewUserData, UserData, UserId } from "@/interfaces/UserTypes";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  deleteDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { EmptyUserData, NewUserData, UserData, UserId } from "@/interfaces/UserTypes";
+import { addDoc, collection, doc, getDoc, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 export async function createUser(data: NewUserData): Promise<UserId> {
@@ -21,6 +13,21 @@ export async function createUser(data: NewUserData): Promise<UserId> {
 }
 
 export async function getUserById(userId: UserId): Promise<UserData> {
+  if (userId === undefined) {
+    throw Error;
+  }
+  try {
+    const userDoc = await getDoc(doc(db, "Users", userId));
+    if (!userDoc.exists()) {
+      return EmptyUserData;
+    }
+    const userData = userDoc.data() as UserData;
+    userData.userId = userId;
+    return userData;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
   try {
     const userDoc = await getDoc(doc(db, "Users", userId));
     const userData = userDoc.data() as UserData;
@@ -30,15 +37,6 @@ export async function getUserById(userId: UserId): Promise<UserData> {
     console.error(error);
     throw error;
   }
-    try {
-        const userDoc = await getDoc(doc(db, "Users", userId));
-        const userData = userDoc.data() as UserData;
-        userData.userId = userId;
-        return userData;
-    } catch (error) {
-        console.error(error);
-        throw error;
-    }
 }
 
 export async function getAllUsers(): Promise<UserData[]> {
@@ -68,10 +66,7 @@ export async function deleteUser(userId: UserId): Promise<void> {
   }
 }
 
-export async function updateUser(
-  userId: UserId,
-  newData: Partial<UserData>
-): Promise<void> {
+export async function updateUser(userId: UserId, newData: Partial<UserData>): Promise<void> {
   try {
     console.log(db, userId);
     const userDocRef = doc(db, "Users", userId);

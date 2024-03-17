@@ -1,13 +1,13 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { timestampToEventCardDateString } from "@/services/datetimeUtils";
+import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
 
-interface OrganiserEventCardProps {
+export interface OrganiserEventCardProps {
   eventId: EventId;
   image: string;
   name: string;
