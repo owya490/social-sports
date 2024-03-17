@@ -10,8 +10,8 @@ import { Tag } from "@/interfaces/TagTypes";
 import {
   getEventById,
   incrementEventAccessCountById,
-} from "@/services/eventsService";
-import { getTagById } from "@/services/tagService";
+} from "@/services/src/events/eventsService";
+import { getTagById } from "@/services/src/tagService";
 import { useEffect, useState } from "react";
 
 export default function EventPage({ params }: any) {
@@ -20,7 +20,6 @@ export default function EventPage({ params }: any) {
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [eventTags, setEventTags] = useState<Tag[]>([]);
   useEffect(() => {
-    incrementEventAccessCountById(eventId);
     getEventById(eventId)
       .then((event) => {
         setEventData(event);
@@ -31,11 +30,19 @@ export default function EventPage({ params }: any) {
             });
           });
         }
+
+        incrementEventAccessCountById(
+          eventId,
+          1,
+          event.isActive,
+          event.isPrivate
+        );
       })
       .finally(() => {
         setLoading(false);
       });
-    // eslint-disable-next-line
+
+    //  eslint-disable-next-line
   }, []);
 
   return loading ? (

@@ -1,7 +1,7 @@
 "use client";
 import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
-import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/eventsService";
+import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { useRouter, useSearchParams } from "next/navigation";

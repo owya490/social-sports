@@ -1,7 +1,7 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { timestampToEventCardDateString } from "@/services/datetimeUtils";
+import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
@@ -36,14 +36,6 @@ export default function EventCard(props: EventCardProps) {
           </div>
         ) : (
           <>
-            {/* <Image
-              priority={true}
-              src={props.image}
-              height={0}
-              width={0}
-              alt="stvImage"
-              className="w-full rounded-t-lg h-36 object-cover"
-            /> */}
             <div
               className="h-36 w-full object-cover rounded-t-lg"
               style={{

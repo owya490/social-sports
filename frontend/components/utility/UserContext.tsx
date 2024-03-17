@@ -1,9 +1,9 @@
 "use client";
-import { auth } from "@/services/firebase";
+import { auth } from "@/services/src/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
-import { getUserById } from "../../services/usersService";
+import { getUserById } from "../../services/src/usersService";
 
 type LoginUserContextType = {
   user: UserData;

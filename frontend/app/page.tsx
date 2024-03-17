@@ -9,7 +9,6 @@ import PopularLocations from "@/components/home/PopularLocations";
 import SearchSport from "@/components/home/SearchSport";
 import { sleep } from "@/utilities/sleepUtil";
 import { useEffect, useState } from "react";
-import { getEnvironment } from "../utilities/environment";
 
 export default function Home() {
   const [shouldAnimate, setShouldAnimate] = useState(false);
@@ -26,7 +25,7 @@ export default function Home() {
       setShouldAnimate(true);
       init();
     }
-  });
+  }, []);
 
   return (
     <div>
