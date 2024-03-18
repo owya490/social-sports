@@ -12,8 +12,8 @@ import Link from "next/link";
 
 export default function OrganiserNavbar() {
   return (
-    <div className="bg-organiser-light-gray drop-shadow-lg fixed left-0 h-screen z-40 mt-6">
-      <div className="w-14 flex flex-col mt-6 space-y-10">
+    <div className="bg-organiser-light-gray drop-shadow-lg fixed left-0 h-screen z-40">
+      <div className="w-14 flex flex-col mt-14 space-y-10">
         <Link href="/organiser/dashboard">
           <div className="flex justify-center">
             <HomeIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />

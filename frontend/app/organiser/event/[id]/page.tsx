@@ -19,16 +19,18 @@ export default function EventPage() {
     <div className="ml-14 mt-16">
       <OrganiserNavbar />
       <EventBanner name={"Volleyball World Cup"} startDate={Timestamp.now()} organiser={""} vacancy={3} />
-      <EventDrilldownStatBanner />
-      <div className="flex flex-row m-10 max-w-6xl xl:mx-auto">
-        <div>
-          <EventDrilldownSidePanel setCurrSidebarPage={setCurrSidebarPage} />
-        </div>
-        <div className="mx-auto w-full mx-20">
-          {currSidebarPage === "Details" && <EventDrilldownDetailsPage />}
-          {currSidebarPage === "Manage Attendees" && <EventDrilldownManageAttendeesPage />}
-          {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
-          {currSidebarPage === "Share" && <EventDrilldownSharePage />}
+      <div className="p-10">
+        <EventDrilldownStatBanner />
+        <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
+          <div>
+            <EventDrilldownSidePanel setCurrSidebarPage={setCurrSidebarPage} />
+          </div>
+          <div className="mx-auto w-full mx-20">
+            {currSidebarPage === "Details" && <EventDrilldownDetailsPage />}
+            {currSidebarPage === "Manage Attendees" && <EventDrilldownManageAttendeesPage />}
+            {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
+            {currSidebarPage === "Share" && <EventDrilldownSharePage />}
+          </div>
         </div>
       </div>
     </div>

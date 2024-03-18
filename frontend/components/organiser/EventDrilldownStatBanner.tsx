@@ -3,7 +3,7 @@ import React from "react";
 const EventDrilldownStatBanner = () => {
   return (
     <div className="">
-      <div className="bg-organiser-light-gray p-10 m-10 rounded-3xl flex justify-between flex-row space-x-6 max-w-6xl xl:mx-auto">
+      <div className="bg-organiser-light-gray p-10 m-0 rounded-3xl flex justify-between flex-row space-x-6 max-w-6xl xl:mx-auto">
         <div className="text-center basis-1/3 flex flex-col justify-center">
           <div className="text-lg">Net Sales</div>
           <div className="font-extrabold text-3xl">A$50.12</div>
