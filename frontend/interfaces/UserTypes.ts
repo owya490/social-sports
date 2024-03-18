@@ -21,7 +21,7 @@ export interface AbstractUserData {
   profilePicture: string;
 }
 
-export interface PublicUserData {
+export interface PublicUserData extends AbstractUserData {
   firstName: string;
   surname?: string;
   gender?: "Male" | "Female" | "Other" | "";
@@ -30,7 +30,7 @@ export interface PublicUserData {
   profilePicture: string;
 }
 
-export interface PrivateUserData {
+export interface PrivateUserData extends AbstractUserData {
   location?: string;
   contactInformation: {
     mobile?: string;

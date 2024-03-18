@@ -38,7 +38,7 @@ export default function UserContext({ children }: { children: any }) {
           // const userDocRef = await doc(db, "Users", uid);
           // const userDoc = await getDoc(userDocRef);
           // const userData = userDoc.data() as UserDocType;
-          const userData = getFullUserById(uid).then((data: any) => {
+          const userData = getFullUserById(uid).then((data: UserData) => {
             setUser({
               ...data,
             });
