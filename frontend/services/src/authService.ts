@@ -11,7 +11,6 @@ import {
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, authUser, db } from "./firebase";
 import { createUser } from "./users/usersService";
-import { create } from "domain";
 
 export async function handleEmailAndPasswordSignUp(data: NewUserData) {
   try {
@@ -22,7 +21,6 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
       data.contactInformation.email,
       data.password
     );
-    console.log("herererere");
     console.log(userCredential.user.uid);
     if (userCredential.user) {
       createUser(data, userCredential.user.uid);

@@ -5,12 +5,11 @@ import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/crea
 
 export async function createUser(data: NewUserData, userId: string) {
   try {
-    console.log("triggered");
     console.log(data, userId);
     // const docRef = await setDoc(doc(db, "Users", userId), data);
     const publicDocRef = await setDoc(doc(db, "Users", "Active", "Public", userId), extractPublicUserData(data));
     const privateDocRef = await setDoc(doc(db, "Users", "Active", "Private", userId), extractPrivateUserData(data));
-    // return docRef.id;
+    // return docRef.id;np
   } catch (error) {
     console.error(error);
     throw error;
@@ -27,7 +26,6 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
     if (!userDoc.exists()) {
       return EmptyUserData;
     }
-    console.log("getid", userId);
     const userData = userDoc.data() as UserData;
     userData.userId = userId;
     return userData;
@@ -62,35 +60,23 @@ export async function getFullUserById(userId: UserId): Promise<UserData> {
   }
 }
 
-export async function getAllUsers(): Promise<UserData[]> {
-  try {
-    const userCollectionRef = collection(db, "Users", "Active", "Public");
-    const usersSnapshot = await getDocs(userCollectionRef);
-    const usersData: UserData[] = [];
-
-    usersSnapshot.forEach((doc) => {
-      usersData.push(doc.data() as UserData);
-    });
-
-    return usersData;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-}
-
 export async function deleteUser(userId: UserId): Promise<void> {
   try {
-    const userDocRef = doc(db, "Users", userId);
-    await deleteDoc(userDocRef);
+    const publicUserDocRef = doc(db, "Users", "Active", "Public", userId);
+    const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
+
+    await deleteDoc(publicUserDocRef);
+    await deleteDoc(privateUserDocRef);
+
+    console.log(`User with ID ${userId} deleted successfully.`);
   } catch (error) {
-    console.error(error);
+    console.error(`Error deleting user with ID ${userId}:`, error);
     throw error;
   }
 }
+
 export async function updateUser(userId: UserId, newData: Partial<UserData>): Promise<void> {
   try {
-    console.log(db, userId);
     // Construct references for public and private user data
     const publicUserDocRef = doc(db, "Users", "Active", "Public", userId);
     const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);

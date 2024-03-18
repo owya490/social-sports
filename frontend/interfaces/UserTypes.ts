@@ -2,7 +2,7 @@ import { User } from "firebase/auth";
 
 export type UserId = string;
 
-export interface AbstractUserData {
+interface AbstractUserData {
   firstName: string;
   surname?: string;
   location?: string;
@@ -21,7 +21,7 @@ export interface AbstractUserData {
   profilePicture: string;
 }
 
-export interface PublicUserData extends AbstractUserData {
+export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
   firstName: string;
   surname?: string;
   gender?: "Male" | "Female" | "Other" | "";
@@ -30,7 +30,7 @@ export interface PublicUserData extends AbstractUserData {
   profilePicture: string;
 }
 
-export interface PrivateUserData extends AbstractUserData {
+export interface PrivateUserData extends Omit<AbstractUserData, "contactInformation"> {
   location?: string;
   contactInformation: {
     mobile?: string;
