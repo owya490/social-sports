@@ -35,6 +35,9 @@ const config: Config = {
       organiser: {
         "light-gray": "#F8F8F8",
       },
+      highlight: {
+        "yellow": "#F2B705",
+      }
     },
   },
   plugins: [require("@tailwindcss/forms")],

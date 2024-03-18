@@ -95,13 +95,13 @@ export default function ProfilePic() {
       {!loggedIn && (
         <div className="flex">
           <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block bg-black text-white whitespace-nowrap ml-4 hover:bg-white hover:text-black"
+            className=" px-6 py-2 rounded-lg max-h-[40px] font-semibold lg:block bg-highlight-yellow text-white whitespace-nowrap ml-4 hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
             onClick={() => router.push("/login")}
           >
             Login
           </button>
           <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block hover:bg-black hover:text-white"
+            className="border-2 text-highlight-yellow font-semibold border-highlight-yellow px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block hover:bg-highlight-yellow hover:text-white"
             onClick={() => router.push("/register")}
           >
             Register

@@ -37,27 +37,27 @@ export default function Dashboard() {
             <div className="bg-organiser-light-gray p-8 rounded-2xl">
               <h1 className="text-2xl font-semibold">Finish setting up</h1>
               <ul className="list-disc ml-6 mt-4 space-y-2 text-lg">
-                <li>Add a description</li>
-                <li>Add a picture</li>
-                <li>Add a Stripe account</li>
-                <li>New registrations on your event!</li>
-                <li>More...</li>
+                <li className="hover:underline hover:cursor-pointer">Add a description</li>
+                <li className="hover:underline hover:cursor-pointer">Add a picture</li>
+                <li className="hover:underline hover:cursor-pointer">Add a Stripe account</li>
+                <li className="hover:underline hover:cursor-pointer">New registrations on your event!</li>
+                <li className="hover:underline hover:cursor-pointer">More...</li>
               </ul>
             </div>
             <div className="flex mt-8">
-              <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-24 mr-8 rounded-2xl hover:bg-gray-800 hover:text-white hover:cursor-pointer">
+              <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-24 mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                 <p className="">Create an event template</p>
               </div>
-              <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-24 rounded-2xl hover:bg-gray-800 hover:text-white hover:cursor-pointer">
+              <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-24 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                 <p className="">Edit your profile</p>
               </div>
             </div>
             <div className="flex mt-8">
-              <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-16 mr-8 rounded-2xl hover:bg-gray-800 hover:text-white hover:cursor-pointer">
+              <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-16 mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                 <p>No. of Upcoming Events</p>
                 <p>12</p>
               </div>
-              <div className="flex-1 text-center font-semibold text-2xl bg-organiser-light-gray px-8 py-16 rounded-2xl hover:bg-gray-800 hover:text-white hover:cursor-pointer">
+              <div className="flex-1 text-center font-semibold text-2xl bg-organiser-light-gray px-8 py-16 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                 <p>Tickets Sold</p>
                 <p>100</p>
               </div>
@@ -65,7 +65,16 @@ export default function Dashboard() {
           </div>
           <div className="bg-organiser-light-gray p-8 rounded-2xl w-1/3">
             <h1 className="text-2xl font-bold text-center">Upcoming Events</h1>
-            {/* <OrganiserEventCard {...sampleEvent}></OrganiserEventCard> */}
+            {/* <OrganiserEventCard
+              eventId={sampleEvent.eventId}
+              image={sampleEvent.image}
+              name={sampleEvent.name}
+              organiser={sampleEvent.organiser}
+              startTime={sampleEvent.startTime}
+              location={sampleEvent.location}
+              price={sampleEvent.price}
+              vacancy={sampleEvent.vacancy}
+            /> */}
           </div>
         </div>
       </div>
