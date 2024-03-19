@@ -26,8 +26,8 @@ export const DATE_DESCENDING_SORTBY_STRING = "Date Descending";
 export const DEFAULT_SEARCH = "";
 export const DEFAULT_EVENT_STATUS = "";
 export const DEFAULT_EVENT_TYPE = "";
-export const DEFAULT_MIN_PRICE = "";
-export const DEFAULT_MAX_PRICE = "";
+export const DEFAULT_MIN_PRICE = null;
+export const DEFAULT_MAX_PRICE = null;
 export const DEFAULT_START_DATE = "";
 export const DEFAULT_END_DATE = "";
 export const DAY_START_TIME_STRING = " 00:00:00";
@@ -35,43 +35,15 @@ export const DAY_END_TIME_STRING = " 23:59:59";
 
 export const EMPTY_LOCATION_STRING = "";
 
-export const [showSortBy, setShowSortBy] = useState(true);
-export const [showSearch, setShowSearch] = useState(true);
-export const [showEventStatus, setShowEventStatus] = useState(true);
-export const [showEventType, setShowEventType] = useState(true);
-export const [showPriceRange, setShowPriceRange] = useState(true);
-export const [showDateRange, setShowDateRange] = useState(true);
-
-export const toggleShowSortBy = () => {
-  setShowSearch(!showSortBy);
-};
-export const toggleShowSearch = () => {
-  setShowSearch(!showSearch);
-};
-export const toggleShowEventStatus = () => {
-  setShowEventStatus(!showEventStatus);
-};
-export const toggleShowEventType = () => {
-  setShowEventType(!showEventType);
-};
-export const toggleShowPriceRange = () => {
-  setShowPriceRange(!showPriceRange);
-};
-export const toggleShowDateRange = () => {
-  setShowDateRange(!showDateRange);
-};
-
 interface OrganiserFilterDialogProps {
   eventDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
 
   sortByCategoryValue: SortByCategory;
   setSortByCategoryValue: React.Dispatch<React.SetStateAction<SortByCategory>>;
-  appliedSortByCategoryValue: SortByCategory;
-  setAppliedSortByCategoryValue: React.Dispatch<React.SetStateAction<SortByCategory>>;
 
-  searchValue: string | undefined;
-  setSearchValue: React.Dispatch<React.SetStateAction<string | undefined>>;
+  searchValue: string;
+  setSearchValue: React.Dispatch<React.SetStateAction<string>>;
 
   eventStatusValue: string;
   setEventStatusValue: React.Dispatch<React.SetStateAction<string>>;
@@ -79,26 +51,17 @@ interface OrganiserFilterDialogProps {
   eventTypeValue: string;
   setEventTypeValue: React.Dispatch<React.SetStateAction<string>>;
 
-  minPriceValue: string;
-  setMinPriceValue: React.Dispatch<React.SetStateAction<string>>;
-  maxPriceValue: string;
-  setMaxPriceValue: React.Dispatch<React.SetStateAction<string>>;
+  minPriceValue: number | null;
+  setMinPriceValue: React.Dispatch<React.SetStateAction<number | null>>;
+
+  maxPriceValue: number | null;
+  setMaxPriceValue: React.Dispatch<React.SetStateAction<number | null>>;
 
   dateRange: {
     startDate: string;
     endDate: string;
   };
   setDateRange: React.Dispatch<
-    React.SetStateAction<{
-      startDate: string;
-      endDate: string;
-    }>
-  >;
-  appliedDateRange: {
-    startDate: string;
-    endDate: string;
-  };
-  setAppliedDateRange: React.Dispatch<
     React.SetStateAction<{
       startDate: string;
       endDate: string;
@@ -112,8 +75,6 @@ export default function OrganiserFilterDialog({
   setEventDataList,
   sortByCategoryValue,
   setSortByCategoryValue,
-  appliedSortByCategoryValue,
-  setAppliedSortByCategoryValue,
   searchValue,
   setSearchValue,
   eventStatusValue,
@@ -126,10 +87,34 @@ export default function OrganiserFilterDialog({
   setMaxPriceValue,
   dateRange,
   setDateRange,
-  appliedDateRange,
-  setAppliedDateRange,
   applyFilters,
 }: OrganiserFilterDialogProps) {
+  const [showSortBy, setShowSortBy] = useState(true);
+  const [showSearch, setShowSearch] = useState(true);
+  const [showEventStatus, setShowEventStatus] = useState(true);
+  const [showEventType, setShowEventType] = useState(true);
+  const [showPriceRange, setShowPriceRange] = useState(true);
+  const [showDateRange, setShowDateRange] = useState(true);
+
+  const toggleShowSortBy = () => {
+    setShowSortBy(!showSortBy);
+  };
+  const toggleShowSearch = () => {
+    setShowSearch(!showSearch);
+  };
+  const toggleShowEventStatus = () => {
+    setShowEventStatus(!showEventStatus);
+  };
+  const toggleShowEventType = () => {
+    setShowEventType(!showEventType);
+  };
+  const toggleShowPriceRange = () => {
+    setShowPriceRange(!showPriceRange);
+  };
+  const toggleShowDateRange = () => {
+    setShowDateRange(!showDateRange);
+  };
+
   const handleDateRangeChange = (dateRange: any) => {
     if (dateRange.startDate && dateRange.endDate) {
       let timestampDateRange = {
@@ -149,21 +134,16 @@ export default function OrganiserFilterDialog({
   };
 
   function handleClearAll() {
+    setSortByCategoryValue(DEFAULT_SORT_BY_CATEGORY);
     setSearchValue(DEFAULT_SEARCH);
     setEventStatusValue(DEFAULT_EVENT_STATUS);
     setEventTypeValue(DEFAULT_EVENT_TYPE);
     setMinPriceValue(DEFAULT_MIN_PRICE);
     setMaxPriceValue(DEFAULT_MAX_PRICE);
-
     setDateRange({
       startDate: DEFAULT_START_DATE,
       endDate: DEFAULT_END_DATE,
     });
-    setAppliedDateRange({
-      startDate: DEFAULT_START_DATE,
-      endDate: DEFAULT_END_DATE,
-    });
-
     setEventDataList([...eventDataList]);
   }
 
@@ -174,7 +154,7 @@ export default function OrganiserFilterDialog({
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
             Sort By
-            <span className="cursor-pointer ml-auto" onClick={toggleShowSearch}>
+            <span className="cursor-pointer ml-auto" onClick={toggleShowSortBy}>
               {showSortBy ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
             </span>
           </label>
@@ -191,6 +171,14 @@ export default function OrganiserFilterDialog({
                 {
                   name: TOP_RATED_SORTBY_STRING,
                   value: SortByCategory.TOP_RATED,
+                },
+                {
+                  name: PRICE_ASCENDING_SORTBY_STRING,
+                  value: SortByCategory.PRICE_ASCENDING,
+                },
+                {
+                  name: PRICE_DESCENDING_SORTBY_STRING,
+                  value: SortByCategory.PRICE_DESCENDING,
                 },
                 {
                   name: DATE_ASCENDING_SORTBY_STRING,
@@ -318,8 +306,11 @@ export default function OrganiserFilterDialog({
                 name="minPrice"
                 placeholder="Min"
                 className="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
-                value={minPriceValue}
-                onChange={(e) => setMinPriceValue(e.target.value.replace(/[^0-9.]/g, ""))}
+                value={minPriceValue !== null ? minPriceValue.toString() : ""}
+                onChange={(e) => {
+                  const newValue = parseFloat(e.target.value);
+                  setMinPriceValue(isNaN(newValue) ? null : newValue);
+                }}
               />
               <span className="text-gray-700 mx-2">to</span>
               <span className="text-gray-700 mr-2">$</span>
@@ -329,8 +320,11 @@ export default function OrganiserFilterDialog({
                 name="maxPrice"
                 placeholder="Max"
                 className="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
-                value={maxPriceValue}
-                onChange={(e) => setMaxPriceValue(e.target.value.replace(/[^0-9.]/g, ""))}
+                value={maxPriceValue !== null ? maxPriceValue.toString() : ""}
+                onChange={(e) => {
+                  const newValue = parseFloat(e.target.value);
+                  setMaxPriceValue(isNaN(newValue) ? null : newValue);
+                }}
               />
             </div>
           )}
@@ -349,7 +343,7 @@ export default function OrganiserFilterDialog({
                 separator="to"
                 displayFormat={"DD/MM/YYYY"}
                 onChange={handleDateRangeChange}
-                inputClassName="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+                inputClassName="z-50 w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
               />
             </div>
           )}

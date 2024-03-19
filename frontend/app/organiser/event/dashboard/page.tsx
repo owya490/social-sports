@@ -1,15 +1,86 @@
 "use client";
+import OrganiserFilterDialog, {
+  DAY_END_TIME_STRING,
+  DAY_START_TIME_STRING,
+  DEFAULT_END_DATE,
+  DEFAULT_EVENT_STATUS,
+  DEFAULT_EVENT_TYPE,
+  DEFAULT_MAX_PRICE,
+  DEFAULT_MIN_PRICE,
+  DEFAULT_SEARCH,
+  DEFAULT_SORT_BY_CATEGORY,
+  DEFAULT_START_DATE,
+  SortByCategory,
+} from "@/components/Filter/OrganiserFilterDialog";
 import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
+import { filterEventsByDate, filterEventsByPrice, filterEventsBySortBy } from "@/services/src/filterService";
 import { sleep } from "@/utilities/sleepUtil";
+import { Timestamp } from "firebase/firestore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
-import OrganiserFilterDialog from "@/components/Filter/OrganiserFilterDialog";
-import { filterEventsByDate, filterEventsByPrice, filterEventsBySortBy } from "@/services/src/filterService";
 
 export default function OrganiserDashboard() {
+  const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
+  const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
+    useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
+  const [searchValue, setSearchValue] = useState<string>(DEFAULT_SEARCH);
+  const [eventStatusValue, setEventStatusValue] = useState<string>(DEFAULT_EVENT_STATUS);
+  const [eventTypeValue, setEventTypeValue] = useState<string>(DEFAULT_EVENT_TYPE);
+  const [minPriceValue, setMinPriceValue] = useState<number | null>(DEFAULT_MIN_PRICE);
+  const [appliedMinPriceValue, setAppliedMinPriceValue] = useState<number | null>(DEFAULT_MIN_PRICE);
+  const [maxPriceValue, setMaxPriceValue] = useState<number | null>(DEFAULT_MAX_PRICE);
+  const [appliedMaxPriceValue, setAppliedMaxPriceValue] = useState<number | null>(DEFAULT_MAX_PRICE);
+  const [dateRange, setDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  }>({
+    startDate: DEFAULT_START_DATE,
+    endDate: DEFAULT_END_DATE,
+  });
+  const [appliedDateRange, setAppliedDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  }>({
+    startDate: DEFAULT_START_DATE,
+    endDate: DEFAULT_END_DATE,
+  });
+
+  async function applyFilters() {
+    let filteredEventDataList = [...eventDataList];
+
+    // Filter by PRICE
+    let minPrice = minPriceValue !== null ? minPriceValue : 0;
+    let maxPrice = maxPriceValue !== null ? maxPriceValue : 1000;
+
+    if (minPriceValue !== null || maxPriceValue !== null) {
+      let newEventDataList = filterEventsByPrice([...filteredEventDataList], minPrice, maxPrice);
+      filteredEventDataList = newEventDataList;
+    }
+    setAppliedMinPriceValue(minPriceValue);
+    setAppliedMaxPriceValue(maxPriceValue);
+
+    // Filter by DATERANGE
+    if (dateRange.startDate && dateRange.endDate) {
+      let newEventDataList = filterEventsByDate(
+        [...filteredEventDataList],
+        Timestamp.fromDate(new Date(dateRange.startDate + DAY_START_TIME_STRING)),
+        Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
+      );
+      filteredEventDataList = newEventDataList;
+    }
+    setAppliedDateRange(dateRange);
+
+    // Filter by SORT BY
+    let newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
+    filteredEventDataList = newEventDataList;
+    setAppliedSortByCategoryValue(sortByCategoryValue);
+
+    setEventDataList([...filteredEventDataList]);
+  }
+
   const [loading, setLoading] = useState(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
   const [eventDataList, setEventDataList] = useState<EventData[]>([
@@ -122,8 +193,6 @@ export default function OrganiserDashboard() {
           setEventDataList={setEventDataList}
           sortByCategoryValue={sortByCategoryValue}
           setSortByCategoryValue={setSortByCategoryValue}
-          appliedSortByCategoryValue={appliedSortByCategoryValue}
-          setAppliedSortByCategoryValue={setAppliedSortByCategoryValue}
           searchValue={searchValue}
           setSearchValue={setSearchValue}
           eventStatusValue={eventStatusValue}
@@ -136,11 +205,9 @@ export default function OrganiserDashboard() {
           setMaxPriceValue={setMaxPriceValue}
           dateRange={dateRange}
           setDateRange={setDateRange}
-          appliedDateRange={appliedDateRange}
-          setAppliedDateRange={setAppliedDateRange}
           applyFilters={applyFilters}
         />
-        <div className="grid grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 justify-items-center max-h-screen overflow-y-auto mb-60 px-4">
+        <div className="z-40 grid grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 justify-items-center max-h-screen overflow-y-auto mb-60 px-4">
           {eventDataList
             .sort((event1, event2) => {
               if (event1.accessCount > event2.accessCount) {
