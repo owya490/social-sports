@@ -1,6 +1,7 @@
 "use client";
 
 import EventBanner from "@/components/events/EventBanner";
+import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
 import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
 import EventDrilldownManageAttendeesPage from "@/components/organiser/EventDrilldownManageAttendeesPage";
@@ -18,7 +19,7 @@ export default function EventPage() {
   return (
     <div className="ml-14 mt-16">
       <OrganiserNavbar />
-      <EventBanner name={"Volleyball World Cup"} startDate={Timestamp.now()} organiser={""} vacancy={3} />
+      <EventDrilldownBanner name={"Volleyball World Cup"} startDate={Timestamp.now()} organiser={""} vacancy={3} />
       <div className="p-10">
         <EventDrilldownStatBanner />
         <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
