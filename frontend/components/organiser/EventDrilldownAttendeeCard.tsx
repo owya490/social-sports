@@ -5,11 +5,13 @@ interface EventDrilldownAttendeeCardProps {
   name: string;
   email: string;
   number: string;
+  tickets: number;
 }
 
-const EventDrilldownAttendeeCard = ({ name, email, number }: EventDrilldownAttendeeCardProps) => {
+const EventDrilldownAttendeeCard = ({ tickets, name, email, number }: EventDrilldownAttendeeCardProps) => {
   return (
-    <div className="grid grid-flow-col justify-stretch py-2 grid-cols-6 flex items-center">
+    <div className="grid grid-flow-col justify-stretch py-2 grid-cols-7 flex items-center">
+      <div className="col-span-1">{tickets}</div>
       <div className="flex flex-row items-center col-span-2">
         <UserCircleIcon className="stroke-1 w-10 mr-2" />
         <div className="">{name}</div>
