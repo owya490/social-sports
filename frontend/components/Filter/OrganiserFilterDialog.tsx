@@ -2,7 +2,7 @@
 
 import { EventData } from "@/interfaces/EventTypes";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../ListBox";
 
@@ -30,6 +30,10 @@ export const DEFAULT_MIN_PRICE = null;
 export const DEFAULT_MAX_PRICE = null;
 export const DEFAULT_START_DATE = "";
 export const DEFAULT_END_DATE = "";
+export const defaultDateRange = {
+  startDate: DEFAULT_START_DATE,
+  endDate: DEFAULT_END_DATE,
+};
 export const DAY_START_TIME_STRING = " 00:00:00";
 export const DAY_END_TIME_STRING = " 23:59:59";
 
@@ -115,6 +119,12 @@ export default function OrganiserFilterDialog({
     setShowDateRange(!showDateRange);
   };
 
+  const [sortByKey, setSortByKey] = useState(0);
+
+  const updateSortByKey = () => {
+    setSortByKey((prevKey) => prevKey + 1);
+  };
+
   const handleDateRangeChange = (dateRange: any) => {
     if (dateRange.startDate && dateRange.endDate) {
       let timestampDateRange = {
@@ -133,8 +143,29 @@ export default function OrganiserFilterDialog({
     }
   };
 
+  const [datepickerKey, setDatepickerKey] = useState(0);
+
+  const updateDatepickerKey = () => {
+    setDatepickerKey((prevKey) => prevKey + 1);
+  };
+
+  const DatepickerComponent = useMemo(
+    () => (
+      <Datepicker
+        key={datepickerKey}
+        value={dateRange}
+        separator="to"
+        displayFormat={"DD/MM/YYYY"}
+        onChange={handleDateRangeChange}
+        inputClassName="z-9999 w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+      />
+    ),
+    [datepickerKey, dateRange]
+  );
+
   function handleClearAll() {
     setSortByCategoryValue(DEFAULT_SORT_BY_CATEGORY);
+    updateSortByKey();
     setSearchValue(DEFAULT_SEARCH);
     setEventStatusValue(DEFAULT_EVENT_STATUS);
     setEventTypeValue(DEFAULT_EVENT_TYPE);
@@ -144,8 +175,20 @@ export default function OrganiserFilterDialog({
       startDate: DEFAULT_START_DATE,
       endDate: DEFAULT_END_DATE,
     });
+    updateDatepickerKey();
     setEventDataList([...eventDataList]);
   }
+
+  useEffect(() => {
+    applyFilters();
+  }, [sortByCategoryValue, eventStatusValue, eventTypeValue]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      applyFilters();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [searchValue, minPriceValue, maxPriceValue, dateRange]);
 
   return (
     <div className="w-[360px] mr-2 2xl:mr-6 max-h-screen overflow-y-auto">
@@ -160,6 +203,7 @@ export default function OrganiserFilterDialog({
           </label>
           {showSortBy && (
             <ListBox
+              key={sortByKey}
               onChangeHandler={function (e: any): void {
                 setSortByCategoryValue(e);
               }}
@@ -336,17 +380,7 @@ export default function OrganiserFilterDialog({
               {showDateRange ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
             </span>
           </label>
-          {showDateRange && (
-            <div className="flex justify-start items-center">
-              <Datepicker
-                value={dateRange}
-                separator="to"
-                displayFormat={"DD/MM/YYYY"}
-                onChange={handleDateRangeChange}
-                inputClassName="z-50 w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
-              />
-            </div>
-          )}
+          {showDateRange && <div className="flex justify-start items-center z-50">{DatepickerComponent}</div>}
         </div>
         <div className="mt-5 w-full flex items-center">
           <button className="hover:underline cursor-pointer" onClick={handleClearAll}>
