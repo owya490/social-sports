@@ -2,11 +2,7 @@
 import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
-import {
-  getAllEvents,
-  getEventById,
-  searchEventsByKeyword,
-} from "@/services/eventsService";
+import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -48,7 +44,7 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchEvents = () => {
       const { event, location } = getQueryParams();
       setSrcLocation(location);
       if (typeof event === "string" && typeof location === "string") {
