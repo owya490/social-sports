@@ -24,7 +24,7 @@ export default function EventPage() {
         <EventDrilldownStatBanner />
         <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
           <div>
-            <EventDrilldownSidePanel setCurrSidebarPage={setCurrSidebarPage} />
+            <EventDrilldownSidePanel currSidebarPage={currSidebarPage} setCurrSidebarPage={setCurrSidebarPage} />
           </div>
           <div className="mx-auto w-full mx-20">
             {currSidebarPage === "Details" && <EventDrilldownDetailsPage />}
