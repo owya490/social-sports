@@ -1,13 +1,13 @@
 "use client";
 import { Tag } from "@/interfaces/TagTypes";
-import { getAllTags } from "@/services/tagService";
+import { getAllTags } from "@/services/src/tagService";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import ProfilePic from "../navbar/ProfilePic";
 import Logo from "./../../public/images/SportsHubMobileLogo.png";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileSearchInput from "./MobileSearchInput";
-import Link from "next/link";
 
 export default function MobileNavbar() {
   const [searchExpanded, setSearchExpanded] = useState(false);

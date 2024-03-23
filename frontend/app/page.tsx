@@ -25,7 +25,7 @@ export default function Home() {
       setShouldAnimate(true);
       init();
     }
-  });
+  }, []);
 
   return (
     <div>

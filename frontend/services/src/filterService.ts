@@ -1,4 +1,4 @@
-import { EventData } from '@/interfaces/EventTypes';
+import { EventData } from "@/interfaces/EventTypes";
 import {
   QueryFieldFilterConstraint,
   Timestamp,
@@ -7,11 +7,11 @@ import {
   limit,
   query,
   where,
-} from 'firebase/firestore';
-import geofire from 'geofire-common';
-import { db } from './firebase';
-import { getDistanceBetweenTwoCoords } from './locationUtils';
-import { SortByCategory } from '../components/Filter/FilterDialog';
+} from "firebase/firestore";
+import geofire from "geofire-common";
+import { SortByCategory } from "../../components/Filter/FilterDialog";
+import { db } from "./firebase";
+import { getDistanceBetweenTwoCoords } from "./locationUtils";
 
 interface ProximityInfo {
   center: geofire.Geopoint;
@@ -19,7 +19,7 @@ interface ProximityInfo {
 }
 
 const NUM_DOCS_QUERY_LIMIT = 15;
-export const NO_SPORT_CHOSEN_STRING = '';
+export const NO_SPORT_CHOSEN_STRING = "";
 
 export function filterEventsBySortBy(
   eventDataList: EventData[],
@@ -142,24 +142,24 @@ export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
   const whereClauseList: QueryFieldFilterConstraint[] = [];
   Object.keys(filterFieldsMap).forEach(async (key: string) => {
     switch (key) {
-      case 'startDate':
-        let startDate: Timestamp = filterFieldsMap['startDate'].startDate;
+      case "startDate":
+        let startDate: Timestamp = filterFieldsMap["startDate"].startDate;
         let endDate: Timestamp | null = null;
-        if ('endDate' in filterFieldsMap['startDate']) {
-          endDate = filterFieldsMap['startDate'].endDate;
+        if ("endDate" in filterFieldsMap["startDate"]) {
+          endDate = filterFieldsMap["startDate"].endDate;
         }
         await createWhereClauseEventDate(whereClauseList, startDate, endDate);
 
-      case 'price':
-        if ('price' in filterFieldsMap) {
+      case "price":
+        if ("price" in filterFieldsMap) {
           let minPrice: number | null = null;
-          if ('minPrice' in filterFieldsMap['price']) {
-            minPrice = filterFieldsMap['price'].minPrice;
+          if ("minPrice" in filterFieldsMap["price"]) {
+            minPrice = filterFieldsMap["price"].minPrice;
           }
 
           let maxPrice: number | null = null;
-          if ('maxPrice' in filterFieldsMap['price']) {
-            maxPrice = filterFieldsMap['price'].maxPrice;
+          if ("maxPrice" in filterFieldsMap["price"]) {
+            maxPrice = filterFieldsMap["price"].maxPrice;
           }
 
           await createWhereClauseEventPrice(
@@ -190,7 +190,7 @@ async function filterEventsByWhereClausesAndProximity(
   proximityInfo?: ProximityInfo
 ): Promise<EventData[]> {
   try {
-    const eventsRef = collection(db, 'Events');
+    const eventsRef = collection(db, "Events");
 
     let filterEventsQuery = query(
       eventsRef,
@@ -229,9 +229,9 @@ async function createWhereClauseEventDate(
   startDate: Timestamp,
   endDate: Timestamp | null
 ) {
-  currWhereClauseList.push(where('startDate', '>=', startDate));
+  currWhereClauseList.push(where("startDate", ">=", startDate));
   if (endDate) {
-    currWhereClauseList.push(where('endDate', '<=', endDate));
+    currWhereClauseList.push(where("endDate", "<=", endDate));
   }
 }
 
@@ -252,15 +252,15 @@ async function createWhereClauseEventPrice(
 ) {
   if (!minPrice && !maxPrice) {
     throw new Error(
-      'No minPrice and no maxPrice provided. Please provide at least one!'
+      "No minPrice and no maxPrice provided. Please provide at least one!"
     );
   }
 
   if (minPrice) {
-    currWhereClauseList.push(where('price', '>=', minPrice));
+    currWhereClauseList.push(where("price", ">=", minPrice));
   }
   if (maxPrice) {
-    currWhereClauseList.push(where('price', '<=', maxPrice));
+    currWhereClauseList.push(where("price", "<=", maxPrice));
   }
 }
 

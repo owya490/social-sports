@@ -1,13 +1,13 @@
 "use client";
 
+import { EventData } from "@/interfaces/EventTypes";
+import { NO_SPORT_CHOSEN_STRING } from "@/services/src/filterService";
 import { Dialog, Transition } from "@headlessui/react";
 import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Slider } from "@material-tailwind/react";
 import { Fragment } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../../components/ListBox";
-import { EventData } from "@/interfaces/EventTypes";
-import { NO_SPORT_CHOSEN_STRING } from "@/services/filterService";
 
 export enum SortByCategory {
   HOT, // eslint-disable-line

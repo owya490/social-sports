@@ -1,6 +1,15 @@
 "use client";
 
 import { EventData } from "@/interfaces/EventTypes";
+import {
+  filterEventsByDate,
+  filterEventsByMaxProximity,
+  filterEventsByPrice,
+  filterEventsBySortBy,
+  filterEventsBySport,
+} from "@/services/src/filterService";
+import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/locationUtils";
+import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import ChevronRightButton from "../utility/ChevronRightButton";
 import BadmintonImage from "./../../public/images/badminton.png";
@@ -32,15 +41,6 @@ import FilterDialog, {
   VOLLEYBALL_SPORT_STRING,
 } from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
-import {
-  filterEventsByDate,
-  filterEventsByMaxProximity,
-  filterEventsByPrice,
-  filterEventsBySortBy,
-  filterEventsBySport,
-} from "@/services/filterService";
-import { Timestamp } from "firebase/firestore";
-import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/locationUtils";
 
 interface FilterBannerProps {
   eventDataList: EventData[];
@@ -53,7 +53,7 @@ interface FilterBannerProps {
 
 export default function FilterBanner({
   eventDataList,
-  allEventsDataList, // eslint-disable-line
+  allEventsDataList,
   setEventDataList,
   srcLocation,
   setSrcLocation,
