@@ -44,7 +44,7 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchEvents = () => {
       const { event, location } = getQueryParams();
       setSrcLocation(location);
       if (typeof event === "string" && typeof location === "string") {
