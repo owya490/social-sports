@@ -1,26 +1,24 @@
 "use client";
+import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { updateUser } from "@/services/usersService";
+import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
+import {
+  deleteObject,
+  getDownloadURL,
+  getMetadata,
+  getStorage,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
 import Image from "next/image";
-import { ChangeEvent, Fragment, useEffect, useRef, useState } from "react";
+import { ChangeEvent, Fragment, useEffect, useState } from "react";
 import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
 import x from "./../../public/images/x.png";
-import { updateUser } from "@/services/usersService";
-import Loading from "@/components/Loading";
-import { sleep } from "@/utilities/sleepUtil";
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-  getMetadata,
-} from "firebase/storage";
-import { User } from "firebase/auth";
-import { storage } from "@/services/firebase";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
