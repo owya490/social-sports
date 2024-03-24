@@ -1,9 +1,4 @@
-import {
-  EventData,
-  EventDataWithoutOrganiser,
-  EventId,
-  NewEventData,
-} from "@/interfaces/EventTypes";
+import { EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
@@ -16,12 +11,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import {
-  CollectionPaths,
-  EventPrivacy,
-  EventStatus,
-  LocalStorageKeys,
-} from "./eventsConstants";
+import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
 
 import { Logger } from "@/observability/logger";
 import { db } from "../firebase";
@@ -58,10 +48,7 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     };
     let isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
     let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
-    const docRef = await addDoc(
-      collection(db, CollectionPaths.Events, isActive, isPrivate),
-      eventDataWithTokens
-    );
+    const docRef = await addDoc(collection(db, CollectionPaths.Events, isActive, isPrivate), eventDataWithTokens);
     return docRef.id;
   } catch (error) {
     console.error(error);
@@ -77,6 +64,7 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
       ...eventWithoutOrganiser,
       organiser: await getUserById(eventWithoutOrganiser.organiserId),
     };
+    event.eventId = eventId;
     return event;
   } catch (error) {
     console.log(error);
@@ -84,29 +72,17 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
   }
 }
 
-export async function searchEventsByKeyword(
-  nameKeyword: string,
-  locationKeyword: string
-) {
+export async function searchEventsByKeyword(nameKeyword: string, locationKeyword: string) {
   try {
     if (!nameKeyword && !locationKeyword) {
       throw new Error("Both nameKeyword and locationKeyword are empty");
     }
 
-    const eventCollectionRef = collection(
-      db,
-      CollectionPaths.Events,
-      EventStatus.Active,
-      EventPrivacy.Public
-    );
+    const eventCollectionRef = collection(db, CollectionPaths.Events, EventStatus.Active, EventPrivacy.Public);
     const searchKeywords = tokenizeText(nameKeyword);
-    const eventTokenMatchCount: Map<string, number> =
-      await fetchEventTokenMatches(eventCollectionRef, searchKeywords);
+    const eventTokenMatchCount: Map<string, number> = await fetchEventTokenMatches(eventCollectionRef, searchKeywords);
 
-    const eventsData = await processEventData(
-      eventCollectionRef,
-      eventTokenMatchCount
-    );
+    const eventsData = await processEventData(eventCollectionRef, eventTokenMatchCount);
     eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
     return eventsData;
   } catch (error) {
@@ -123,22 +99,15 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
 
   if (isActive && !isPrivate) {
     const currentDate = new Date();
-    let { success, events } =
-      tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
+    let { success, events } = tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
     if (success) {
       return events;
     }
     const eventRef = createEventCollectionRef(isActive, isPrivate);
     const eventsData = await getAllEventsFromCollectionRef(eventRef);
-    localStorage.setItem(
-      LocalStorageKeys.EventsData,
-      JSON.stringify(eventsData)
-    );
+    localStorage.setItem(LocalStorageKeys.EventsData, JSON.stringify(eventsData));
     const currentDateString = currentDate.toUTCString();
-    localStorage.setItem(
-      LocalStorageKeys.LastFetchedEventData,
-      currentDateString
-    );
+    localStorage.setItem(LocalStorageKeys.LastFetchedEventData, currentDateString);
     return eventsData;
   } else {
     const eventRef = createEventCollectionRef(isActive, isPrivate);
@@ -146,10 +115,7 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   }
 }
 
-export async function updateEventByName(
-  eventName: string,
-  updatedData: Partial<EventData>
-) {
+export async function updateEventByName(eventName: string, updatedData: Partial<EventData>) {
   if (!rateLimitCreateAndUpdateEvents()) {
     console.log("Rate Limited!!!");
     throw "Rate Limited";

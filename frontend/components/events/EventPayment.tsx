@@ -1,27 +1,27 @@
 "use client";
 import { useState } from "react";
 
-import {
-  timestampToDateString,
-  timestampToTimeOfDay,
-} from "@/services/src/datetimeUtils";
-import {
-  CalendarDaysIcon,
-  ClockIcon,
-  CurrencyDollarIcon,
-  MapPinIcon,
-} from "@heroicons/react/24/outline";
+import { EventId } from "@/interfaces/EventTypes";
+import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { getStripeCheckoutFromEventId } from "@/services/src/stripeService";
+import { CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface EventPaymentProps {
   date: Timestamp;
   location: string;
   price: number;
   vacancy: number;
+  stripe: boolean;
+  eventId: EventId;
+  isPrivate: boolean;
+  setLoading: (value: boolean) => void;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
+  const router = useRouter();
   const [guestCount, setGuestCount] = useState(1);
 
   const handleGuestCountChange = (count: number) => {
@@ -40,15 +40,11 @@ export default function EventPayment(props: EventPaymentProps) {
               <h2 className=" font-semibold">Date and Time</h2>
               <div className="flex items-center">
                 <CalendarDaysIcon className="w-5 mr-2" />
-                <p className="text-md mr-[5%]">
-                  {timestampToDateString(props.date)}
-                </p>
+                <p className="text-md mr-[5%]">{timestampToDateString(props.date)}</p>
               </div>
               <div className="flex items-center">
                 <ClockIcon className="w-5 mr-2" />
-                <p className="text-md mr-[5%]">
-                  {timestampToTimeOfDay(props.date)}
-                </p>
+                <p className="text-md mr-[5%]">{timestampToTimeOfDay(props.date)}</p>
               </div>
             </div>
 
@@ -71,17 +67,35 @@ export default function EventPayment(props: EventPaymentProps) {
         </div>
         <hr className="px-2 h-0.5 mx-auto bg-gray-400 border-0 rounded dark:bg-gray-400 mb-6"></hr>
         <div className="relative flex justify-center mb-6 w-full">
-          <Link href="#" className="w-full">
-            <div
+          {props.stripe ? (
+            <button
               className="text-lg rounded-2xl border border-black w-full py-3"
               style={{
                 textAlign: "center",
                 position: "relative",
               }}
+              onClick={async () => {
+                props.setLoading(true);
+                window.scrollTo(0, 0);
+                const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, 1);
+                router.push(link);
+              }}
             >
-              Contact Now
-            </div>
-          </Link>
+              Book Now
+            </button>
+          ) : (
+            <Link href="#" className="w-full">
+              <div
+                className="text-lg rounded-2xl border border-black w-full py-3"
+                style={{
+                  textAlign: "center",
+                  position: "relative",
+                }}
+              >
+                Contact Now
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </div>
