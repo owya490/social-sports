@@ -2,22 +2,17 @@
 # STRIPE WEBHOOKS INTEGRATION #
 ###############################
 
-import json
 import logging
-import os
-import time
 from dataclasses import dataclass
-from datetime import date
 
 import stripe
-from stripe import Customer, ListObject, LineItem
-from constants import db
 from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
-from google.cloud.firestore import DocumentReference, Transaction
-from google.protobuf.timestamp_pb2 import Timestamp
+from google.cloud.firestore import Transaction
+from lib.constants import db
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
+from stripe import Customer, LineItem, ListObject
 
 
 @dataclass
@@ -74,7 +69,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, event_id: 
   # If there are more vacant spots than capacity - total attendees, make the vacancy the lower number
   if event["vacancy"] > event["capacity"] - total_attendees:
     transaction.update(event_ref, {"vacancy": event["capacity"] - total_attendees})
-    logging.warning(f"WARNING!! After reconciling vacancy with new ticket count sold, we detected there was a decrepancy, so setting it to the lower of the two. total_attendees={total_attendees}, event_vacancy={event["vacancy"]}, event_capacity={event["capacity"]}")
+    logging.warning(f"WARNING!! After reconciling vacancy with new ticket count sold, we detected there was a decrepancy, so setting it to the lower of the two. total_attendees={total_attendees}, event_vacancy={event['vacancy']}, event_capacity={event['capacity']}")
 
   return True
 
@@ -96,7 +91,7 @@ def restock_tickets_after_expired_checkout(transaction: Transaction, event_id: s
   transaction.update(event_ref, {"vacancy": firestore.Increment(item.quantity)})
 
 
-@https_fn.on_request(cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]))
+@https_fn.on_request(cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
 def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Response:
   payload = req.get_json()
   sig_header = req.headers["HTTP_STRIPE_SIGNATURE"]

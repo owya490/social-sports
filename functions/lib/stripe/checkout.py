@@ -8,11 +8,11 @@ import time
 from dataclasses import dataclass
 
 import stripe
-from constants import db
 from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
+from lib.constants import db
 from lib.stripe.commons import ERROR_URL
 
 
@@ -36,7 +36,7 @@ class StripeCheckoutRequest:
 # TODO: dataclass for event schema in db
 
 @firestore.transactional
-def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_id: str, quantity: int, is_private: bool, cancel_url: str) -> https_fn.Response:
+def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_id: str, quantity: int, is_private: bool, cancel_url: str):
 
   private_path = "Private" if is_private else "Public"
 
@@ -46,7 +46,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
   # Check if the event exists, if not error out
   if (not maybe_event.exists):
     logging.error(f"Provided event {event_ref.path} does not exist in the database. Returning status=404")
-    return https_fn.Response(json.dumps({"url": ERROR_URL}), status=404)
+    return json.dumps({"url": ERROR_URL})
   
   event = maybe_event.to_dict()
   
@@ -54,7 +54,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
   if (not event.get("paymentsActive")):
     print("Payments not active")
     logging.error(f"Provided event {event_ref.path} does not have payments enabled. Returning status=500")
-    return https_fn.Response(json.dumps({"url": cancel_url}), status=500)
+    return json.dumps({"url": cancel_url})
 
   organiser_id = event.get("organiserId")
   organiser_ref = db.collection("Users").document(organiser_id)
@@ -63,14 +63,14 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
   # Check if the organiser exists, if not error out
   if (not maybe_organiser.exists):
     logging.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not exist in the database. Returning status=404")
-    return https_fn.Response(json.dumps({"url": ERROR_URL}), status=404)
+    return json.dumps({"url": ERROR_URL})
 
   organiser = maybe_organiser.to_dict()
 
   # 2a. check for event organiser has stripe account
   if (organiser.get("stripeAccount") == None):
     logging.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not have a stripe account. Returning status=500")
-    return https_fn.Response(json.dumps({"url": ERROR_URL}), status=500)
+    return json.dumps({"url": ERROR_URL})
   
   # 2b. check if the stripe account is active
   if (organiser.get("stripeAccountActive") == False):
@@ -82,14 +82,14 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
 
     else:
       logging.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not have a active stripe account. charges_enabled={account.charges_enabled} details_submitted={account.details_submitted} Returning status=500")
-      return https_fn.Response(json.dumps({"url": ERROR_URL}), status=500)
+      return json.dumps({"url": ERROR_URL})
 
   # 3. check again with database in transction in the backend if quantity is still available
   vacancy = event.get("vacancy")
 
   if vacancy < quantity:
     logging.warning(f"Provided event {event_ref.path} does not have enough tickets to fulfill this order. quantity_requested={quantity} vacancy={vacancy}")
-    return https_fn.Response(json.dumps({"url": cancel_url}), status=500)
+    return json.dumps({"url": cancel_url})
   
   # 4. obtain price and organiser stripe account id again from db
   price = event.get("price")
@@ -98,7 +98,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
   # 4a. check if the price exists for this event
   if (price == None or not isinstance(price, int) or price <= 1): # we don't want events to be less than stripe fees
     logging.error(f"Provided event {event_ref.path} does not have a valid price. Returning status=500")
-    return https_fn.Response(json.dumps({"url": ERROR_URL}), status=500)
+    return json.dumps({"url": ERROR_URL})
 
   # 5. set the tickets as sold and reduce vacancy (prevent race condition/ over selling, we will release tickets back after cancelled sale)
   transaction.update(event_ref, {"vacancy": vacancy - quantity })
@@ -132,12 +132,12 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
   )
 
   logging.info(f"Creating checkout session {checkout.id} for event {event_ref.path}, linked to {organiser_ref.path} and their stripe account {organiser_stripe_account_id}. Secured {quantity} tickets at ${price}.")
-  return https_fn.Response(json.dumps({"url": checkout.url}), status=200)
+  return json.dumps({"url": checkout.url})
 
 
-@https_fn.on_request(cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]))
-def get_stripe_checkout_url_by_event_id(req: https_fn.Request) -> https_fn.Response:
-  body_data = req.get_json()
+@https_fn.on_call(cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
+def get_stripe_checkout_url_by_event_id(req: https_fn.CallableRequest):
+  body_data = req.data
 
   # Validate the incoming request to contain the necessary fields
   try:
@@ -148,6 +148,4 @@ def get_stripe_checkout_url_by_event_id(req: https_fn.Request) -> https_fn.Respo
 
   transaction = db.transaction()
 
-  checkout_url = create_stripe_checkout_session_by_event_id(transaction, request_data.eventId, request_data.quantity, request_data.isPrivate, request_data.cancelUrl)
-
-  return https_fn.Response(json.dumps({"url": checkout_url}))
+  return create_stripe_checkout_session_by_event_id(transaction, request_data.eventId, request_data.quantity, request_data.isPrivate, request_data.cancelUrl)

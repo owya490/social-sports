@@ -1,23 +1,40 @@
 import { EventId } from "@/interfaces/EventTypes";
+import { Logger } from "@/observability/logger";
 
-const STRIPE_STANDARD_ACCOUNT_ONBOARDING_ENDPOINT = "https://create-stripe-standard-account-7aikp3s36a-uc.a.run.app";
-const STRIPE_GET_CHECKOUT_SESSION_FROM_EVENT_ID = "https://get-stripe-checkout-url-by-event-id-7aikp3s36a-uc.a.run.app";
+import {
+  FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT,
+  FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID,
+  getFirebaseFunctionByName,
+} from "./firebaseFunctionsService";
+
+interface StripeCreateStandardAccountResponse {
+  url: string;
+}
+
+interface StripeGetCheckoutUrlResponse {
+  url: string;
+}
+
+const stripeServiceLogger = new Logger("stripeServiceLogger");
 
 export async function getStripeStandardAccounLink(organiserId: string, returnUrl: string) {
   const content = {
     organiser: organiserId,
     returnUrl: returnUrl,
   };
-  const response = await fetch(STRIPE_STANDARD_ACCOUNT_ONBOARDING_ENDPOINT, {
-    method: "POST",
-    body: JSON.stringify(content),
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", Accept: "application/json" },
-  });
-
-  return response.json().then((data) => {
-    console.log(data);
-    return data["url"];
-  });
+  const createAccountFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT);
+  console.log(createAccountFunction);
+  return createAccountFunction(content)
+    .then((result) => {
+      console.log(result);
+      const data = JSON.parse(result.data as string) as StripeCreateStandardAccountResponse;
+      return data.url;
+    })
+    .catch((error) => {
+      console.log(error);
+      stripeServiceLogger.warn(`Failed to return Stripe create standard account link. error=${error}`);
+      return "/error";
+    });
 }
 
 export async function getStripeCheckoutFromEventId(eventId: EventId, isPrivate: boolean, quantity: number) {
@@ -26,22 +43,14 @@ export async function getStripeCheckoutFromEventId(eventId: EventId, isPrivate: 
     isPrivate: isPrivate,
     quantity: quantity,
   };
-  console.log(content);
-  const response = await fetch(STRIPE_GET_CHECKOUT_SESSION_FROM_EVENT_ID, {
-    method: "POST",
-    // mode: "no-cors",
-    body: JSON.stringify(content),
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      Accept: "application/json",
-      // "Access-Control-Allow-Methods": "POST, GET, OPTIONS, PUT, DELETE",
-      // "Access-Control-Allow-Headers": "Content-Type",
-    },
-  });
-
-  return response.json().then((data) => {
-    console.log(data);
-    return data["url"];
-  });
+  const getStripeCheckoutFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID);
+  return getStripeCheckoutFunction(content)
+    .then((result) => {
+      const data = JSON.parse(result.data as string) as StripeGetCheckoutUrlResponse;
+      return data.url;
+    })
+    .catch((error) => {
+      stripeServiceLogger.warn(`Failed to return Stripe get checkout url link. error=${error}`);
+      return "/error";
+    });
 }

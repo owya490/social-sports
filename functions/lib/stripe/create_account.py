@@ -29,20 +29,20 @@ class CreateStandardStripeAccountRequest:
       
 
 @firestore.transactional
-def check_and_update_organiser_stripe_account(transaction: Transaction, organiser_ref: DocumentReference, return_url: str, refresh_url: str) -> https_fn.Response:
+def check_and_update_organiser_stripe_account(transaction: Transaction, organiser_ref: DocumentReference, return_url: str, refresh_url: str):
 
   # Check if organiser exists and attempt to get details
   maybe_organiser = organiser_ref.get(transaction=transaction)
   if (not maybe_organiser.exists):
     logging.error(f"Provided Organiser {organiser_ref.path} was not found in the database.")
-    return https_fn.Response(json.dumps({"url": ERROR_URL}), status=404)
+    return json.dumps({"url": ERROR_URL})
   
   organiser = maybe_organiser.to_dict()
 
   # If stripe account id exists and is active, return to previous page
   if (organiser.get("stripeAccount") != None and organiser.get("stripeAccountActive") == True):
     logging.info(f"Provided Organiser {organiser_ref.path} already has an active stripe account.")
-    return https_fn.Response(json.dumps({"url": return_url}), status=200)
+    return json.dumps({"url": return_url})
 
   # 1. first check if the calling organiser already has a stripe account
   organiser_stripe_account = organiser.get("stripeAccount")
@@ -57,7 +57,7 @@ def check_and_update_organiser_stripe_account(transaction: Transaction, organise
       type="account_onboarding",
     )
     logging.info(f"Created a new standard stripe account onboarding workflow for the provided organiser {organiser_ref.path}.")
-    return https_fn.Response(json.dumps({"url": link["url"]}), status=200) 
+    return json.dumps({"url": link["url"]})
   
   else:
     # 2b. if they do, check if they need to sign up more
@@ -71,25 +71,25 @@ def check_and_update_organiser_stripe_account(transaction: Transaction, organise
         type="account_onboarding",
       )
       logging.info(f"Reactivating the onboarding workflow for provided organiser {organiser_ref.path} as they didn't complete earlier.")
-      return https_fn.Response(json.dumps({"url": link["url"]}), status=200) 
+      return json.dumps({"url": link["url"]})
 
     else:
       # 3b. they have everything done, so flick switch for stripeAccount done and bring to organiser dashboard 
       transaction.update(organiser_ref, {"stripeAccountActive": True})
       logging.info(f"Provided organiser {organiser_ref.path} already has all charges enabled and details submitted. Activiating their sportshub stripe account.")
-      return https_fn.Response(json.dumps({"url": return_url}), status=200)
+      return json.dumps({"url": return_url})
 
 
-@https_fn.on_request(cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]))
-def create_stripe_standard_account(req: https_fn.Request) -> https_fn.Response:
-  body_data = req.get_json()
+@https_fn.on_call(region="australia-southeast1")
+def create_stripe_standard_account(req: https_fn.CallableRequest):
+  body_data = req.data
   
   # Validate the incoming request to contain the necessary fields
   try:
     request_data = CreateStandardStripeAccountRequest(**body_data)
   except ValueError as v:
     logging.warning(f"Request body did not contain necessary fields. Error was thrown: {v}. Returned status=400")
-    return https_fn.Response(json.dumps({"url": ERROR_URL}), status=400)
+    return json.dumps({"url": ERROR_URL})
 
   transaction = db.transaction()
   organiser_ref = db.collection("Users").document(request_data.organiser)
