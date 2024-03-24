@@ -144,6 +144,7 @@ def get_stripe_checkout_url_by_event_id(req: https_fn.Request) -> https_fn.Respo
     request_data = StripeCheckoutRequest(**body_data)
   except ValueError as v:
     logging.warning(f"Request body did not contain necessary fields. Error was thrown: {v}. Returned status=400")
+    #TODO return early
 
   transaction = db.transaction()
 
