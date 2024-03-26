@@ -1,8 +1,38 @@
+"use client";
+
+import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
+import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
+import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
+import EventDrilldownManageAttendeesPage from "@/components/organiser/EventDrilldownManageAttendeesPage";
+import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
+import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
+import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
+import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import { Timestamp } from "firebase/firestore";
+import { useState } from "react";
+
 //brians
 export default function EventPage() {
+  const [currSidebarPage, setCurrSidebarPage] = useState("Details");
+
   return (
-      <div>
-          <h1>helo</h1>
+    <div className="ml-14 mt-16">
+      <OrganiserNavbar />
+      <EventDrilldownBanner name={"Volleyball World Cup"} startDate={Timestamp.now()} organiser={""} vacancy={3} />
+      <div className="p-10">
+        <EventDrilldownStatBanner />
+        <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
+          <div>
+            <EventDrilldownSidePanel currSidebarPage={currSidebarPage} setCurrSidebarPage={setCurrSidebarPage} />
+          </div>
+          <div className="mx-auto w-full mx-20">
+            {currSidebarPage === "Details" && <EventDrilldownDetailsPage />}
+            {currSidebarPage === "Manage Attendees" && <EventDrilldownManageAttendeesPage />}
+            {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
+            {currSidebarPage === "Share" && <EventDrilldownSharePage />}
+          </div>
+        </div>
       </div>
+    </div>
   );
 }
