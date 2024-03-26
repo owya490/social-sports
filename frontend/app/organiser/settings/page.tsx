@@ -1,4 +1,5 @@
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import OrganiserSettingsAboutCard from "@/components/organiser/OrganiserSettingsAboutCard";
 import OrganiserSettingsStripeCard from "@/components/organiser/OrganiserSettingsStripeCard";
 import React from "react";
 
@@ -9,6 +10,7 @@ const page = () => {
         <OrganiserNavbar />
         <div className="p-10">
           <OrganiserSettingsStripeCard />
+          <OrganiserSettingsAboutCard />
         </div>
       </div>
     </div>
