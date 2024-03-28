@@ -7,45 +7,59 @@ import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsC
 import { eventServiceLogger } from "../eventsService";
 
 export async function findEventDoc(eventId: string): Promise<any> {
-  // Search through the paths
-  for (const path of EVENT_PATHS) {
-    // Attempt to retrieve the document from the current subcollection
-    const eventDocRef = doc(db, path, eventId);
-    const eventDoc = await getDoc(eventDocRef);
+  try {
+    // Search through the paths
+    for (const path of EVENT_PATHS) {
+      // Attempt to retrieve the document from the current subcollection
+      const eventDocRef = doc(db, path, eventId);
+      const eventDoc = await getDoc(eventDocRef);
 
-    // Check if the document exists in the current subcollection
-    if (eventDoc.exists()) {
-      return eventDoc;
+      // Check if the document exists in the current subcollection
+      if (eventDoc.exists()) {
+        eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
+        return eventDoc;
+      }
     }
-  }
 
-  // Return null or throw an error if the document was not found in any subcollection
-  console.log("Event not found in any subcollection.");
-  throw new Error("No event found in any subcollection");
+    // If no document found, log and throw an error
+    eventServiceLogger.debug(`Event document not found in any subcollection for eventId: ${eventId}`);
+    console.log("Event not found in any subcollection.");
+    throw new Error("No event found in any subcollection");
+  } catch (error) {
+    console.error(`Error finding event document for eventId: ${eventId}`, error);
+    eventServiceLogger.error(`Error finding event document for eventId: ${eventId}, ${error}`);
+    throw error;
+  }
 }
 
 export function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) {
-  console.log("Trying to get Cached Active Public Events");
-  // If already cached, and within 5 minutes, return cached data, otherwise no-op
-  if (
-    localStorage.getItem(LocalStorageKeys.EventsData) !== null &&
-    localStorage.getItem(LocalStorageKeys.LastFetchedEventData) !== null
-  ) {
-    const lastFetched = new Date(localStorage.getItem(LocalStorageKeys.LastFetchedEventData)!);
-    if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
-      return { success: true, events: getEventsDataFromLocalStorage() };
-    }
-  }
-  return { success: false, events: [] };
-}
+  try {
+    console.log("Trying to get Cached Active Public Events");
 
+    // If already cached, and within 5 minutes, return cached data, otherwise no-op
+    if (
+      localStorage.getItem(LocalStorageKeys.EventsData) !== null &&
+      localStorage.getItem(LocalStorageKeys.LastFetchedEventData) !== null
+    ) {
+      const lastFetched = new Date(localStorage.getItem(LocalStorageKeys.LastFetchedEventData)!);
+      if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
+        return { success: true, events: getEventsDataFromLocalStorage() };
+      }
+    }
+    eventServiceLogger.debug("tryGetAllActisvePublicEventsFromLocalStorage Success");
+    return { success: false, events: [] };
+  } catch (error) {
+    console.error("Error while trying to get cached active public events:", error);
+    eventServiceLogger.error(`Error while trying to get cached active public events:, ${error}`);
+    throw error;
+  }
+}
 // Function to retrieve all events
 export async function getAllEventsFromCollectionRef(
   eventCollectionRef: CollectionReference<DocumentData, DocumentData>
 ): Promise<EventData[]> {
   try {
     console.log("Getting events from DB");
-    eventServiceLogger.info("Getting events from DB");
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
     const eventsData: EventData[] = [];
@@ -63,9 +77,11 @@ export async function getAllEventsFromCollectionRef(
         organiser: organiser,
       });
     }
+    eventServiceLogger.debug("getAllEventsFromCollectionRef Success");
     return eventsData;
   } catch (error) {
     console.error(error);
+    eventServiceLogger.error(`getAllEventsFromCollectionRef ${error}`);
     throw error;
   }
 }

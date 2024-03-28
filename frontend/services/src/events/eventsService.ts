@@ -39,6 +39,7 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     console.log("Rate Limited!!!");
     throw "Rate Limited";
   }
+  eventServiceLogger.info(`createEvent`);
   try {
     // Simplified object spreading with tokenized values
     const eventDataWithTokens = {
@@ -49,14 +50,17 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     let isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
     let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
     const docRef = await addDoc(collection(db, CollectionPaths.Events, isActive, isPrivate), eventDataWithTokens);
+    eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
     console.error(error);
+    eventServiceLogger.error(`createEvent ${error}`);
     throw error;
   }
 }
 
 export async function getEventById(eventId: EventId): Promise<EventData> {
+  eventServiceLogger.info(`getEventById`);
   try {
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
@@ -67,11 +71,13 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     return event;
   } catch (error) {
     console.log(error);
+    eventServiceLogger.error(`getEventById ${error}`);
     throw error;
   }
 }
 
 export async function searchEventsByKeyword(nameKeyword: string, locationKeyword: string) {
+  eventServiceLogger.info(`searchEventsByKeyword ${nameKeyword}`);
   try {
     if (!nameKeyword && !locationKeyword) {
       throw new Error("Both nameKeyword and locationKeyword are empty");
@@ -83,34 +89,42 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
 
     const eventsData = await processEventData(eventCollectionRef, eventTokenMatchCount);
     eventsData.sort((a, b) => b.tokenMatchCount - a.tokenMatchCount);
+    eventServiceLogger.info(`searchEventsByKeyword success`);
     return eventsData;
   } catch (error) {
     console.error("Error searching events:", error);
+    eventServiceLogger.error(`searchEventsByKeyword ${error}`);
     throw error;
   }
 }
-
 export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
-  // If isActive is present, keep its value, otherwise default to true
-  isActive = isActive === undefined ? true : isActive;
-  // Likewise, if isPrivate is present, keep its value, otherwise to false
-  isPrivate = isPrivate === undefined ? false : isPrivate;
+  eventServiceLogger.info(`getAllEvents`);
+  try {
+    // If isActive is present, keep its value, otherwise default to true
+    isActive = isActive === undefined ? true : isActive;
+    // Likewise, if isPrivate is present, keep its value, otherwise to false
+    isPrivate = isPrivate === undefined ? false : isPrivate;
 
-  if (isActive && !isPrivate) {
-    const currentDate = new Date();
-    let { success, events } = tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
-    if (success) {
-      return events;
+    if (isActive && !isPrivate) {
+      const currentDate = new Date();
+      let { success, events } = tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
+      if (success) {
+        return events;
+      }
+      const eventRef = createEventCollectionRef(isActive, isPrivate);
+      const eventsData = await getAllEventsFromCollectionRef(eventRef);
+      localStorage.setItem(LocalStorageKeys.EventsData, JSON.stringify(eventsData));
+      const currentDateString = currentDate.toUTCString();
+      localStorage.setItem(LocalStorageKeys.LastFetchedEventData, currentDateString);
+      return eventsData;
+    } else {
+      const eventRef = createEventCollectionRef(isActive, isPrivate);
+      return await getAllEventsFromCollectionRef(eventRef);
     }
-    const eventRef = createEventCollectionRef(isActive, isPrivate);
-    const eventsData = await getAllEventsFromCollectionRef(eventRef);
-    localStorage.setItem(LocalStorageKeys.EventsData, JSON.stringify(eventsData));
-    const currentDateString = currentDate.toUTCString();
-    localStorage.setItem(LocalStorageKeys.LastFetchedEventData, currentDateString);
-    return eventsData;
-  } else {
-    const eventRef = createEventCollectionRef(isActive, isPrivate);
-    return await getAllEventsFromCollectionRef(eventRef);
+  } catch (error) {
+    console.error("Error getting all events:", error);
+    eventServiceLogger.error(`Error getting all events ${error}`);
+    throw error;
   }
 }
 
@@ -119,6 +133,7 @@ export async function updateEventByName(eventName: string, updatedData: Partial<
     console.log("Rate Limited!!!");
     throw "Rate Limited";
   }
+  eventServiceLogger.info(`updateEventByName ${eventName}`);
   try {
     const eventCollectionRef = collection(db, CollectionPaths.Events);
     const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
@@ -135,23 +150,30 @@ export async function updateEventByName(eventName: string, updatedData: Partial<
     });
 
     console.log(`Events with name '${eventName}' updated successfully.`);
+    eventServiceLogger.info(`Events with name '${eventName}' updated successfully.`);
   } catch (error) {
+    eventServiceLogger.error(`updateEventByName ${error}`);
     console.error(error);
   }
 }
 
 export async function deleteEvent(eventId: EventId): Promise<void> {
+  eventServiceLogger.info(`deleteEvent ${eventId}`);
   try {
+    eventServiceLogger.info(`Deleting Event ${eventId}`);
     const eventRef = await findEventDocRef(eventId);
     await deleteDoc(eventRef);
+    eventServiceLogger.info(`deleteEvent Succesfull ${eventId}`);
     console.log(deleteDoc);
   } catch (error) {
+    eventServiceLogger.error(`deleteEvent ${error}`);
     console.error(error);
   }
 }
 
 export async function deleteEventByName(eventName: string): Promise<void> {
   try {
+    eventServiceLogger.info(`Deleting Event ${eventName}`);
     const eventCollectionRef = collection(db, CollectionPaths.Events);
     const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
 
@@ -163,9 +185,10 @@ export async function deleteEventByName(eventName: string): Promise<void> {
     querySnapshot.forEach(async (eventDoc) => {
       await deleteDoc(eventDoc.ref);
     });
-
+    eventServiceLogger.info(`Deleting Event by Name successfull ${eventName}`);
     console.log(`Events with name '${eventName}' delete successfully.`);
   } catch (error) {
+    eventServiceLogger.error(`deleteEventbyName ${error}`);
     console.error(error);
   }
 }
@@ -176,23 +199,33 @@ export async function incrementEventAccessCountById(
   isActive: boolean,
   isPrivate: boolean
 ) {
-  console.log(`${eventId}, ${isActive}, ${isPrivate}`);
-  updateDoc(createEventDocRef(eventId, isActive, isPrivate), {
-    accessCount: increment(count),
-  });
+  try {
+    eventServiceLogger.info(`Incrementing ${eventId} by ${count}`);
+    console.log(`${eventId}, ${isActive}, ${isPrivate}`);
+    await updateDoc(createEventDocRef(eventId, isActive, isPrivate), {
+      accessCount: increment(count),
+    });
+  } catch (error) {
+    console.error("Error incrementing event access count:", error);
+    eventServiceLogger.error(`incrementEventAccessCountById ${error}`);
+    // You can handle the error here, such as logging it or throwing it further.
+    throw error;
+  }
 }
 
 export async function updateEventFromDocRef(
   eventRef: DocumentReference<DocumentData, DocumentData>,
   updatedData: Partial<EventData>
 ): Promise<void> {
-  if (!rateLimitCreateAndUpdateEvents()) {
-    console.log("Rate Limited!!!");
-    throw "Rate Limited";
-  }
   try {
+    if (!rateLimitCreateAndUpdateEvents()) {
+      throw "Rate Limited";
+    }
     await updateDoc(eventRef, updatedData);
+    eventServiceLogger.info("Event updated successfully.");
   } catch (error) {
     console.error(error);
+    eventServiceLogger.error(`Error updating event from document reference: ${error}`);
+    throw error;
   }
 }
