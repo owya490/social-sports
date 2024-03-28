@@ -8,12 +8,32 @@ import EventDrilldownSharePage from "@/components/organiser/EventDrilldownShareP
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import { EventData, EventId } from "@/interfaces/EventTypes";
+import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
 import { Timestamp } from "firebase/firestore";
-import { useState } from "react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+
+interface EventPageProps {
+  params: {
+    id: string;
+  };
+}
 
 //brians
-export default function EventPage() {
+export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
+  const [eventData, setEventData] = useState<EventData>();
+
+  const eventId: EventId = params.id;
+  useEffect(() => {
+    getEventById(eventId)
+      .then((event) => setEventData(event))
+      .catch((error) => {
+        console.log("error:", error);
+        eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
+      });
+  }, []);
 
   return (
     <div className="ml-14 mt-16">
