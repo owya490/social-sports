@@ -21,7 +21,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         <Link href="/organiser/dashboard/">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-              currPage === "Dashboard" ? "bg-organiser-darker-light-gray" : ""
+              currPage === "Dashboard" && "bg-organiser-darker-light-gray"
             }`}
           >
             <HomeIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
@@ -30,7 +30,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         <Link href="/organiser/event">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-              currPage === "Event" ? "bg-organiser-darker-light-gray" : ""
+              currPage === "Event" && "bg-organiser-darker-light-gray"
             }`}
           >
             <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
@@ -39,7 +39,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         <Link href="/organiser/event/asdf">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-              currPage === "EventDrilldown" ? "bg-organiser-darker-light-gray" : ""
+              currPage === "EventDrilldown" && "bg-organiser-darker-light-gray"
             }`}
           >
             <BookmarkSquareIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
@@ -48,7 +48,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         <Link href="/organiser/metrics">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-              currPage === "Metrics" ? "bg-organiser-darker-light-gray" : ""
+              currPage === "Metrics" && "bg-organiser-darker-light-gray"
             }`}
           >
             <ChartBarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
@@ -57,7 +57,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         <Link href="/organiser/gallery">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-              currPage === "Gallery" ? "bg-organiser-darker-light-gray" : ""
+              currPage === "Gallery" && "bg-organiser-darker-light-gray"
             }`}
           >
             <CameraIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
@@ -66,7 +66,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         <Link href="/organiser/settings">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-              currPage === "Settings" ? "bg-organiser-darker-light-gray" : ""
+              currPage === "Settings" && "bg-organiser-darker-light-gray"
             }`}
           >
             <UserIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
