@@ -4,7 +4,7 @@ import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 export default function Dashboard() {
   return (
     <div className="ml-14 mt-16">
-      <OrganiserNavbar />
+      <OrganiserNavbar currPage="Dashboard" />
       <h1></h1>
     </div>
   );

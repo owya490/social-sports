@@ -7,8 +7,8 @@ const page = () => {
   return (
     <div className="ml-14 mt-16">
       <div className="max-w-5xl lg:mx-auto">
-        <OrganiserNavbar />
-        <div className="p-10">
+        <OrganiserNavbar currPage="Settings" />
+        <div className="p-10 space-y-4">
           <OrganiserSettingsStripeCard />
           <OrganiserSettingsAboutCard />
         </div>

@@ -17,7 +17,7 @@ export default function EventPage() {
 
   return (
     <div className="ml-14 mt-16">
-      <OrganiserNavbar />
+      <OrganiserNavbar currPage="EventDrilldown" />
       <EventDrilldownBanner name={"Volleyball World Cup"} startDate={Timestamp.now()} organiser={""} vacancy={3} />
       <div className="p-10">
         <EventDrilldownStatBanner />
