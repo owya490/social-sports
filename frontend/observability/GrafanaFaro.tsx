@@ -44,14 +44,12 @@ function getUrlAndEnvironment(): { url: string; env: Environment } {
 
   switch (getEnvironment()) {
     case Environment.PREVIEW: {
-      url =
-        "https://faro-collector-prod-au-southeast-1.grafana.net/collect/6dfb35745e2a9d2aa277fe712536a793";
+      url = "https://faro-collector-prod-au-southeast-1.grafana.net/collect/6dfb35745e2a9d2aa277fe712536a793";
       env = Environment.PREVIEW;
       break;
     }
     case Environment.PRODUCTION: {
-      url =
-        "https://faro-collector-prod-au-southeast-1.grafana.net/collect/641616bbf5ed87939de6443e0e3b08ad";
+      url = "https://faro-collector-prod-au-southeast-1.grafana.net/collect/641616bbf5ed87939de6443e0e3b08ad";
       env = Environment.PRODUCTION;
       break;
     }
