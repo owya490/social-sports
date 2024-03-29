@@ -96,8 +96,13 @@ export async function processEventData(
         tokenMatchCount: count,
         organiser: {},
       };
-      const organiser = await getPublicUserById(eventData.organiserId);
-      extendedEventData.organiser = organiser;
+      try {
+        const organiser = await getPublicUserById(eventData.organiserId);
+        extendedEventData.organiser = organiser;
+      } catch {
+        // this is a no op, we don't want to process fault events with undefined organisers
+        continue;
+      }
       eventsData.push(extendedEventData);
       eventServiceLogger.debug(`Processed event data for eventId: ${eventId}`);
     }

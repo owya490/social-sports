@@ -5,6 +5,9 @@ import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
 import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
+import { useRouter } from "next/navigation";
+
+const router = useRouter();
 
 export async function findEventDoc(eventId: string): Promise<any> {
   try {
@@ -54,6 +57,7 @@ export function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) 
     throw error;
   }
 }
+
 // Function to retrieve all events
 export async function getAllEventsFromCollectionRef(
   eventCollectionRef: CollectionReference<DocumentData, DocumentData>
@@ -71,11 +75,15 @@ export async function getAllEventsFromCollectionRef(
     });
 
     for (const event of eventsDataWithoutOrganiser) {
-      const organiser = await getPublicUserById(event.organiserId);
-      eventsData.push({
-        ...event,
-        organiser: organiser,
-      });
+      try {
+        const organiser = await getPublicUserById(event.organiserId);
+        eventsData.push({
+          ...event,
+          organiser: organiser,
+        });
+      } catch {
+        // this is a no op, we don't include this event in the eventsData list and don't display to frontend.
+      }
     }
     eventServiceLogger.debug("getAllEventsFromCollectionRef Success");
     return eventsData;

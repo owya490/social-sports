@@ -1,6 +1,6 @@
 "use client";
 import { EmptyNewUserData, NewUserData } from "@/interfaces/UserTypes";
-import { handleEmailAndPasswordSignUp } from "@/services/src/authService";
+import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";

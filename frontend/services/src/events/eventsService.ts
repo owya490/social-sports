@@ -1,4 +1,4 @@
-import { EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
@@ -30,8 +30,11 @@ import {
   getAllEventsFromCollectionRef,
   tryGetAllActisvePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
+import { useRouter } from "next/navigation";
+import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
+const router = useRouter();
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
@@ -64,9 +67,16 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
   try {
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
+    // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
+    var organiser: UserData = EmptyUserData;
+    try {
+      organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
+    } catch {
+      router.push("/error");
+    }
     const event: EventData = {
       ...eventWithoutOrganiser,
-      organiser: await getPublicUserById(eventWithoutOrganiser.organiserId),
+      organiser: organiser,
     };
     return event;
   } catch (error) {

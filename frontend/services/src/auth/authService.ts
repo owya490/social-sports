@@ -1,4 +1,5 @@
 import { EmptyUserData, NewUserData, UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
@@ -9,10 +10,14 @@ import {
   signOut,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, authUser, db } from "./firebase";
-import { createUser } from "./users/usersService";
+import { useRouter } from "next/navigation";
+import { auth, authUser, db } from "../firebase";
+import { createUser } from "../users/usersService";
+
+const authServiceLogger = new Logger("authServiceLogger");
 
 export async function handleEmailAndPasswordSignUp(data: NewUserData) {
+  const router = useRouter();
   try {
     // Create a new user with email and password
     console.log(data);
@@ -23,21 +28,13 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
     );
     console.log(userCredential.user.uid);
     if (userCredential.user) {
+      // TODO: we need to check firebase auth if the user is already created, if they are, we don't recreate the user.. figure smth out
       createUser(data, userCredential.user.uid);
     } else {
       // Handle the case where userCredential.user is null
       console.error("User authentication failed");
+      router.push("/error");
     }
-    // createUser(data,userCredential.user.uid);
-    // const userDocRef = doc(db, "Users", userCredential.user.uid);
-    // const userDataToSet = {
-    //   firstName: data.firstName,
-    //   contactInformation: { email: data.email },
-
-    //   //add more fields here
-    // };
-    // await setDoc(userDocRef, userDataToSet);
-    // console.log("signed in", userCredential);
   } catch (error) {
     throw error;
   }

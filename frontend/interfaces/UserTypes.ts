@@ -30,7 +30,7 @@ export interface PublicUserData extends Omit<AbstractUserData, "contactInformati
   profilePicture: string;
 }
 
-export interface PrivateUserData extends Omit<AbstractUserData, "contactInformation"> {
+export interface PrivateUserData extends AbstractUserData {
   location?: string;
   contactInformation: {
     mobile?: string;
