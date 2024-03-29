@@ -49,7 +49,7 @@ export default function OrganiserDashboard() {
   });
 
   async function applyFilters() {
-    let filteredEventDataList = [...eventDataList];
+    let filteredEventDataList = [...allEventsDataList];
 
     // Filter by PRICE
     let minPrice = minPriceValue !== null ? minPriceValue : 0;
@@ -77,7 +77,6 @@ export default function OrganiserDashboard() {
     let newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
     filteredEventDataList = newEventDataList;
     setAppliedSortByCategoryValue(sortByCategoryValue);
-
     setEventDataList([...filteredEventDataList]);
   }
 
@@ -123,6 +122,7 @@ export default function OrganiserDashboard() {
         if (event.trim() === "") {
           getAllEvents()
             .then((events) => {
+              console.log("EVENTTSSSSSS:", events);
               setEventDataList(events);
               setSearchDataList(events);
               setAllEventsDataList(events);
@@ -142,7 +142,7 @@ export default function OrganiserDashboard() {
               return tempEventDataList;
             })
             .then((tempEventDataList: EventData[]) => {
-              setEventDataList(tempEventDataList);
+              // setEventDataList(tempEventDataList);
               setSearchDataList(tempEventDataList);
             })
             .finally(async () => {
@@ -190,6 +190,7 @@ export default function OrganiserDashboard() {
       <div className="flex justify-center h-screen">
         <OrganiserFilterDialog
           eventDataList={eventDataList}
+          allEventsDataList={allEventsDataList}
           setEventDataList={setEventDataList}
           sortByCategoryValue={sortByCategoryValue}
           setSortByCategoryValue={setSortByCategoryValue}
@@ -207,7 +208,7 @@ export default function OrganiserDashboard() {
           setDateRange={setDateRange}
           applyFilters={applyFilters}
         />
-        <div className="z-40 grid grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 justify-items-center max-h-screen overflow-y-auto mb-60 px-4">
+        <div className="z-5 grid grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 justify-items-center max-h-screen overflow-y-auto mb-60 px-4">
           {eventDataList
             .sort((event1, event2) => {
               if (event1.accessCount > event2.accessCount) {

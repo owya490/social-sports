@@ -41,6 +41,7 @@ export const EMPTY_LOCATION_STRING = "";
 
 interface OrganiserFilterDialogProps {
   eventDataList: EventData[];
+  allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
 
   sortByCategoryValue: SortByCategory;
@@ -76,6 +77,7 @@ interface OrganiserFilterDialogProps {
 
 export default function OrganiserFilterDialog({
   eventDataList,
+  allEventsDataList,
   setEventDataList,
   sortByCategoryValue,
   setSortByCategoryValue,
@@ -157,7 +159,7 @@ export default function OrganiserFilterDialog({
         separator="to"
         displayFormat={"DD/MM/YYYY"}
         onChange={handleDateRangeChange}
-        inputClassName="z-9999 w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+        inputClassName="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
       />
     ),
     [datepickerKey, dateRange]
@@ -176,22 +178,23 @@ export default function OrganiserFilterDialog({
       endDate: DEFAULT_END_DATE,
     });
     updateDatepickerKey();
-    setEventDataList([...eventDataList]);
+    console.log("FORTNITE", eventDataList);
+    setEventDataList([...allEventsDataList]);
   }
 
   useEffect(() => {
-    applyFilters();
+    // applyFilters();
   }, [sortByCategoryValue, eventStatusValue, eventTypeValue]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      applyFilters();
+      // applyFilters();
     }, 100);
     return () => clearTimeout(timer);
   }, [searchValue, minPriceValue, maxPriceValue, dateRange]);
 
   return (
-    <div className="w-[360px] mr-2 2xl:mr-6 max-h-screen overflow-y-auto">
+    <div className="w-[360px] mr-2 2xl:mr-6 max-h-screen">
       <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg">
         <h2 className="text-lg text-center font-semibold mb-4">Filter Events</h2>
         <div className="mb-4">
@@ -354,6 +357,7 @@ export default function OrganiserFilterDialog({
                 onChange={(e) => {
                   const newValue = parseFloat(e.target.value);
                   setMinPriceValue(isNaN(newValue) ? null : newValue);
+                  
                 }}
               />
               <span className="text-gray-700 mx-2">to</span>
@@ -368,6 +372,7 @@ export default function OrganiserFilterDialog({
                 onChange={(e) => {
                   const newValue = parseFloat(e.target.value);
                   setMaxPriceValue(isNaN(newValue) ? null : newValue);
+                 
                 }}
               />
             </div>
@@ -383,7 +388,7 @@ export default function OrganiserFilterDialog({
           {showDateRange && <div className="flex justify-start items-center z-50">{DatepickerComponent}</div>}
         </div>
         <div className="mt-5 w-full flex items-center">
-          <button className="hover:underline cursor-pointer" onClick={handleClearAll}>
+          <button className="hover:underline cursor-pointer rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2" onClick={handleClearAll}>
             Clear all
           </button>
           <button
