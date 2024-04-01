@@ -2,7 +2,11 @@
 
 import { useEffect } from "react";
 
-export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+interface ErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
+}
+const Error: React.FC<ErrorProps> = ({ error, reset }) => {
   useEffect(() => {
     // Log the error to an error reporting service
     console.error(error);
@@ -18,4 +22,6 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       </div>
     </div>
   );
-}
+};
+
+export default Error;
