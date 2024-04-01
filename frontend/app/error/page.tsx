@@ -2,16 +2,7 @@
 
 import { useEffect } from "react";
 
-interface ErrorProps {
-  error: Error & { digest?: string };
-  reset: () => void;
-}
-const Error: React.FC<ErrorProps> = ({ error, reset }) => {
-  useEffect(() => {
-    // Log the error to an error reporting service
-    console.error(error);
-  }, [error]);
-
+export default function Error() {
   return (
     <div className="h-screen w-full flex justify-center items-center">
       <div className="text-center">
@@ -22,6 +13,4 @@ const Error: React.FC<ErrorProps> = ({ error, reset }) => {
       </div>
     </div>
   );
-};
-
-export default Error;
+}
