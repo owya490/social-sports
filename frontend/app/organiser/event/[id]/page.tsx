@@ -27,12 +27,12 @@ export default function EventPage({ params }: EventPageProps) {
 
   const eventId: EventId = params.id;
   useEffect(() => {
-    getEventById(eventId)
-      .then((event) => setEventData(event))
-      .catch((error) => {
-        console.log("error:", error);
-        eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
-      });
+    // getEventById(eventId)
+    //   .then((event) => setEventData(event))
+    //   .catch((error) => {
+    //     console.log("error:", error);
+    //     eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
+    //   });
   }, []);
 
   return (
