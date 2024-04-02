@@ -9,6 +9,7 @@ import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePa
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { EventData, EventId } from "@/interfaces/EventTypes";
+import { UserData } from "@/interfaces/UserTypes";
 import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/router";
@@ -35,10 +36,17 @@ export default function EventPage({ params }: EventPageProps) {
     //   });
   }, []);
 
+  let dummyUserData: UserData = { userId: "", firstName: "", surname: "", profilePicture: "" };
+
   return (
     <div className="ml-14 mt-16">
       <OrganiserNavbar currPage="EventDrilldown" />
-      <EventDrilldownBanner name={"Volleyball World Cup"} startDate={Timestamp.now()} organiser={""} vacancy={3} />
+      <EventDrilldownBanner
+        name={"Volleyball World Cup"}
+        startDate={Timestamp.now()}
+        organiser={dummyUserData}
+        vacancy={3}
+      />
       <div className="p-10">
         <EventDrilldownStatBanner />
         <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">

@@ -48,7 +48,7 @@ const EventDrilldownDetailsPage = () => {
             <div>$15</div>
           </div>
         </div>
-        <PencilSquareIcon className="absolute top-2 right-2 w-4 stroke-organiser-title-gray-text" />{" "}
+        <PencilSquareIcon className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text" />{" "}
       </div>
       <div className="h-20 border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 pt-2 relative">
         <div className="text-organiser-title-gray-text font-bold">Event Description</div>
