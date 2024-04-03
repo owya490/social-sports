@@ -122,13 +122,14 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
       "quantity": quantity
     }],
     metadata={
-      "eventId": event_id
+      "eventId": event_id,
+      "isPrivate": is_private
     },
     # payment_intent_data={"application_fee_amount": 123},
     success_url="https://example.com/success",
     cancel_url=cancel_url,
     stripe_account= organiser_stripe_account_id,
-    expires_at=int(time.time() + 300) # Checkout session expires in 5 minutes
+    expires_at=int(time.time() + 1800) # Checkout session expires in 5 minutes
   )
 
   logging.info(f"Creating checkout session {checkout.id} for event {event_ref.path}, linked to {organiser_ref.path} and their stripe account {organiser_stripe_account_id}. Secured {quantity} tickets at ${price}.")
