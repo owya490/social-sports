@@ -1,13 +1,5 @@
 import { EventData } from "@/interfaces/EventTypes";
-import {
-  QueryFieldFilterConstraint,
-  Timestamp,
-  collection,
-  getDocs,
-  limit,
-  query,
-  where,
-} from "firebase/firestore";
+import { QueryFieldFilterConstraint, Timestamp, collection, getDocs, limit, query, where } from "firebase/firestore";
 import geofire from "geofire-common";
 import { SortByCategory } from "../../components/Filter/FilterDialog";
 import { db } from "./firebase";
@@ -21,48 +13,45 @@ interface ProximityInfo {
 const NUM_DOCS_QUERY_LIMIT = 15;
 export const NO_SPORT_CHOSEN_STRING = "";
 
-export function filterEventsBySortBy(
-  eventDataList: EventData[],
-  sortByCategory: SortByCategory
-): EventData[] {
+export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory: SortByCategory): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
   switch (sortByCategory) {
     case SortByCategory.HOT:
       /// TODO: implement measurement of how 'Hot' an event is.
       /// Currently, it sorts events alphabetically by name.
-      eventDataListDeepClone.sort((eventA, eventB) =>
-        eventA.name.localeCompare(eventB.name)
-      );
+      eventDataListDeepClone.sort((eventA, eventB) => eventA.name.localeCompare(eventB.name));
       break;
 
     case SortByCategory.PRICE_ASCENDING:
-      eventDataListDeepClone.sort(
-        (eventA, eventB) => eventA.price - eventB.price
-      );
+      eventDataListDeepClone.sort((eventA, eventB) => eventA.price - eventB.price);
       break;
 
     case SortByCategory.PRICE_DESCENDING:
-      eventDataListDeepClone.sort(
-        (eventA, eventB) => eventB.price - eventA.price
-      );
+      eventDataListDeepClone.sort((eventA, eventB) => eventB.price - eventA.price);
       break;
 
     case SortByCategory.DATE_ASCENDING:
-      eventDataListDeepClone.sort(
-        (eventA, eventB) =>
-          eventA.startDate.toMillis() - eventB.startDate.toMillis()
-      );
+      eventDataListDeepClone.sort((eventA, eventB) => eventA.startDate.toMillis() - eventB.startDate.toMillis());
       break;
 
     case SortByCategory.DATE_DESCENDING:
-      eventDataListDeepClone.sort(
-        (eventA, eventB) =>
-          eventB.startDate.toMillis() - eventA.startDate.toMillis()
-      );
+      eventDataListDeepClone.sort((eventA, eventB) => eventB.startDate.toMillis() - eventA.startDate.toMillis());
       break;
 
     default:
       break;
+  }
+  return eventDataListDeepClone;
+}
+
+export function filterEventsBySearch(eventDataList: EventData[], searchValue: string): EventData[] {
+  let eventDataListDeepClone = [...eventDataList];
+  if (searchValue !== "") {
+    eventDataListDeepClone = eventDataListDeepClone.filter(
+      (event) =>
+        event.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchValue.toLowerCase())
+    );
   }
   return eventDataListDeepClone;
 }
@@ -74,27 +63,17 @@ export function filterEventsByPrice(
 ): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
   if (minPrice !== null) {
-    eventDataListDeepClone = eventDataListDeepClone.filter(
-      (event) => event.price >= minPrice
-    );
+    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price >= minPrice);
   }
 
-  eventDataListDeepClone = eventDataListDeepClone.filter(
-    (event) => event.price <= maxPrice
-  );
+  eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price <= maxPrice);
   return eventDataListDeepClone;
 }
 
-export function filterEventsByDate(
-  eventDataList: EventData[],
-  startDate: Timestamp,
-  endDate: Timestamp
-): EventData[] {
+export function filterEventsByDate(eventDataList: EventData[], startDate: Timestamp, endDate: Timestamp): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
   eventDataListDeepClone = eventDataListDeepClone.filter(
-    (event) =>
-      event.startDate.toMillis() >= startDate.toMillis() &&
-      event.startDate.toMillis() <= endDate.toMillis()
+    (event) => event.startDate.toMillis() >= startDate.toMillis() && event.startDate.toMillis() <= endDate.toMillis()
   );
   return eventDataListDeepClone;
 }
@@ -109,24 +88,17 @@ export function filterEventsByMaxProximity(
   eventDataListDeepClone = eventDataListDeepClone.filter((event) => {
     const lat1 = event.locationLatLng.lat;
     const lng1 = event.locationLatLng.lng;
-    return (
-      getDistanceBetweenTwoCoords([lat1, lng1], [srcLat, srcLng]) < maxProximity
-    );
+    return getDistanceBetweenTwoCoords([lat1, lng1], [srcLat, srcLng]) < maxProximity;
   });
   return eventDataListDeepClone;
 }
 
-export function filterEventsBySport(
-  eventDataList: EventData[],
-  sportType: string
-): EventData[] {
+export function filterEventsBySport(eventDataList: EventData[], sportType: string): EventData[] {
   if (sportType === NO_SPORT_CHOSEN_STRING) {
     return eventDataList;
   }
   let eventDataListDeepClone = [...eventDataList];
-  eventDataListDeepClone = eventDataListDeepClone.filter(
-    (event) => event.sport === sportType
-  );
+  eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.sport === sportType);
   return eventDataListDeepClone;
 }
 
@@ -162,11 +134,7 @@ export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
             maxPrice = filterFieldsMap["price"].maxPrice;
           }
 
-          await createWhereClauseEventPrice(
-            whereClauseList,
-            minPrice,
-            maxPrice
-          );
+          await createWhereClauseEventPrice(whereClauseList, minPrice, maxPrice);
         }
 
       // TODO: add more filters here
@@ -192,11 +160,7 @@ async function filterEventsByWhereClausesAndProximity(
   try {
     const eventsRef = collection(db, "Events");
 
-    let filterEventsQuery = query(
-      eventsRef,
-      ...whereClauseList,
-      limit(NUM_DOCS_QUERY_LIMIT)
-    );
+    let filterEventsQuery = query(eventsRef, ...whereClauseList, limit(NUM_DOCS_QUERY_LIMIT));
 
     const filteredEventsSnapshot = await getDocs(filterEventsQuery);
     const filteredEventsData: EventData[] = [];
@@ -251,9 +215,7 @@ async function createWhereClauseEventPrice(
   maxPrice: number | null
 ) {
   if (!minPrice && !maxPrice) {
-    throw new Error(
-      "No minPrice and no maxPrice provided. Please provide at least one!"
-    );
+    throw new Error("No minPrice and no maxPrice provided. Please provide at least one!");
   }
 
   if (minPrice) {

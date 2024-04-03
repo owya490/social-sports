@@ -16,7 +16,7 @@ import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
-import { filterEventsByDate, filterEventsByPrice, filterEventsBySortBy } from "@/services/src/filterService";
+import { filterEventsByDate, filterEventsByPrice, filterEventsBySearch, filterEventsBySortBy } from "@/services/src/filterService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -51,9 +51,16 @@ export default function OrganiserDashboard() {
   async function applyFilters() {
     let filteredEventDataList = [...allEventsDataList];
 
+    // Filter by SEARCH
+    if (searchValue !== "") {
+      let newEventDataList = filterEventsBySearch([...filteredEventDataList], searchValue);
+      filteredEventDataList = newEventDataList;
+    }
+    setSearchValue(searchValue);
+
     // Filter by PRICE
     let minPrice = minPriceValue !== null ? minPriceValue : 0;
-    let maxPrice = maxPriceValue !== null ? maxPriceValue : 1000;
+    let maxPrice = maxPriceValue !== null ? maxPriceValue : 9999;
 
     if (minPriceValue !== null || maxPriceValue !== null) {
       let newEventDataList = filterEventsByPrice([...filteredEventDataList], minPrice, maxPrice);
@@ -208,7 +215,7 @@ export default function OrganiserDashboard() {
           setDateRange={setDateRange}
           applyFilters={applyFilters}
         />
-        <div className="z-5 grid grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 justify-items-center max-h-screen overflow-y-auto mb-60 px-4">
+        <div className="z-5 grid grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 justify-items-center max-h-screen overflow-y-auto mb-60 px-4  min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px]">
           {eventDataList
             .sort((event1, event2) => {
               if (event1.accessCount > event2.accessCount) {
@@ -221,7 +228,7 @@ export default function OrganiserDashboard() {
             })
             .map((event, eventIdx) => {
               return (
-                <div className="mb-8 w-full" key={eventIdx}>
+                <div className="mb-[30px] w-full" key={eventIdx}>
                   <OrganiserEventCard
                     eventId={event.eventId}
                     image={event.image}

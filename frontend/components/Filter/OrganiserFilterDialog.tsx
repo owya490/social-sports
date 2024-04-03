@@ -182,16 +182,16 @@ export default function OrganiserFilterDialog({
     setEventDataList([...allEventsDataList]);
   }
 
-  useEffect(() => {
-    // applyFilters();
-  }, [sortByCategoryValue, eventStatusValue, eventTypeValue]);
+  // useEffect(() => {
+  //   applyFilters();
+  // }, [sortByCategoryValue, eventStatusValue, eventTypeValue]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // applyFilters();
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [searchValue, minPriceValue, maxPriceValue, dateRange]);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     applyFilters();
+  //   }, 100);
+  //   return () => clearTimeout(timer);
+  // }, [searchValue, minPriceValue, maxPriceValue, dateRange]);
 
   return (
     <div className="w-[360px] mr-2 2xl:mr-6 max-h-screen">
@@ -357,7 +357,6 @@ export default function OrganiserFilterDialog({
                 onChange={(e) => {
                   const newValue = parseFloat(e.target.value);
                   setMinPriceValue(isNaN(newValue) ? null : newValue);
-                  
                 }}
               />
               <span className="text-gray-700 mx-2">to</span>
@@ -372,7 +371,6 @@ export default function OrganiserFilterDialog({
                 onChange={(e) => {
                   const newValue = parseFloat(e.target.value);
                   setMaxPriceValue(isNaN(newValue) ? null : newValue);
-                 
                 }}
               />
             </div>
@@ -388,7 +386,10 @@ export default function OrganiserFilterDialog({
           {showDateRange && <div className="flex justify-start items-center z-50">{DatepickerComponent}</div>}
         </div>
         <div className="mt-5 w-full flex items-center">
-          <button className="hover:underline cursor-pointer rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2" onClick={handleClearAll}>
+          <button
+            className="hover:underline cursor-pointer rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            onClick={handleClearAll}
+          >
             Clear all
           </button>
           <button
