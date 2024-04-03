@@ -66,7 +66,6 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
   try {
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
-    console.log("eventorgainers", eventWithoutOrganiser);
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
     var organiser: UserData = EmptyUserData;
     try {
