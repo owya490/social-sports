@@ -7,10 +7,7 @@ import Loading from "@/components/loading/Loading";
 import MobileEventDetailFooter from "@/components/mobile/MobileEventDetailFooter";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
-import {
-  getEventById,
-  incrementEventAccessCountById,
-} from "@/services/src/events/eventsService";
+import { getEventById, incrementEventAccessCountById } from "@/services/src/events/eventsService";
 import { getTagById } from "@/services/src/tagService";
 import { useEffect, useState } from "react";
 
@@ -31,12 +28,7 @@ export default function EventPage({ params }: any) {
           });
         }
 
-        incrementEventAccessCountById(
-          eventId,
-          1,
-          event.isActive,
-          event.isPrivate
-        );
+        incrementEventAccessCountById(eventId, 1, event.isActive, event.isPrivate);
       })
       .finally(() => {
         setLoading(false);
