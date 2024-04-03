@@ -7,7 +7,7 @@ import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsC
 import { eventServiceLogger } from "../eventsService";
 import { useRouter } from "next/navigation";
 
-const router = useRouter();
+// const router = useRouter();
 
 export async function findEventDoc(eventId: string): Promise<any> {
   try {
