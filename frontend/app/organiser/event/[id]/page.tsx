@@ -36,7 +36,15 @@ export default function EventPage({ params }: EventPageProps) {
     //   });
   }, []);
 
-  let dummyUserData: UserData = { userId: "", firstName: "", surname: "", profilePicture: "" };
+  let dummyUserData: UserData = {
+    userId: "",
+    firstName: "",
+    surname: "",
+    profilePicture: "",
+    contactInformation: {
+      email: "dummy_email",
+    },
+  };
 
   return (
     <div className="ml-14 mt-16">
