@@ -11,8 +11,8 @@ import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
+import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
 interface EventPageProps {
@@ -25,17 +25,10 @@ interface EventPageProps {
 export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [eventData, setEventData] = useState<EventData>();
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const eventId: EventId = params.id;
-  useEffect(() => {
-    // getEventById(eventId)
-    //   .then((event) => setEventData(event))
-    //   .catch((error) => {
-    //     console.log("error:", error);
-    //     eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
-    //   });
-  }, []);
-
+  const [eventName, setEventName] = useState<string>("");
+  const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
   let dummyUserData: UserData = {
     userId: "",
     firstName: "",
@@ -45,15 +38,37 @@ export default function EventPage({ params }: EventPageProps) {
       email: "dummy_email",
     },
   };
+  const [eventOrganiser, setEventOrganiser] = useState<UserData>(dummyUserData);
+  const [eventVacancy, setEventVacancy] = useState<number>(0);
+
+  const eventId: EventId = params.id;
+  useEffect(() => {
+    getEventById(eventId)
+      .then((event) => {
+        setEventData(event);
+        setEventName(event.name);
+        setEventStartDate(event.startDate);
+        setEventOrganiser(event.organiser);
+        setEventVacancy(event.vacancy);
+      })
+      .finally(async () => {
+        await sleep(500);
+        setLoading(false);
+      })
+      .catch((error) => {
+        eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
+      });
+  }, []);
 
   return (
     <div className="ml-14 mt-16">
       <OrganiserNavbar currPage="EventDrilldown" />
       <EventDrilldownBanner
-        name={"Volleyball World Cup"}
-        startDate={Timestamp.now()}
-        organiser={dummyUserData}
-        vacancy={3}
+        name={eventName}
+        startDate={eventStartDate}
+        organiser={eventOrganiser}
+        vacancy={eventVacancy}
+        loading={loading}
       />
       <div className="p-10">
         <EventDrilldownStatBanner />

@@ -62,9 +62,9 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
 }
 
 export async function getEventById(eventId: EventId): Promise<EventData> {
-  eventServiceLogger.info(`getEventById`);
+  eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
-    const router = useRouter();
+    // const router = useRouter();
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
@@ -72,7 +72,7 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
     } catch {
-      router.push("/error");
+      // router.push("/error");
     }
     const event: EventData = {
       ...eventWithoutOrganiser,
@@ -80,7 +80,6 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     };
     return event;
   } catch (error) {
-    console.log(error);
     eventServiceLogger.error(`getEventById ${error}`);
     throw error;
   }
