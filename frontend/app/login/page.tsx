@@ -1,5 +1,5 @@
 "use client";
-import { handleEmailAndPasswordSignIn } from "@/services/src/authService";
+import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -44,10 +44,7 @@ export default function Login() {
       <div className="mt-8 mx-auto w-full max-w-sm">
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium leading-6 text-gray-900"
-            >
+            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
               Email address
             </label>
             <div className="mt-2">
@@ -72,17 +69,11 @@ export default function Login() {
 
           <div>
             <div className="flex items-center justify-between">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
+              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
                 Password
               </label>
               <div className="text-sm">
-                <Link
-                  href="#"
-                  className="font-semibold text-gray-500 hover:underline"
-                >
+                <Link href="#" className="font-semibold text-gray-500 hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -120,10 +111,7 @@ export default function Login() {
 
         <p className="mt-10 text-center text-sm text-gray-500">
           Not a member?{" "}
-          <Link
-            href="/register"
-            className="font-semibold leading-6 text-black hover:underline"
-          >
+          <Link href="/register" className="font-semibold leading-6 text-black hover:underline">
             Register here
           </Link>
         </p>

@@ -2,7 +2,7 @@
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
-import { updateUser } from "@/services/src/usersService";
+import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
 import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
@@ -12,6 +12,7 @@ import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
 import x from "./../../public/images/x.png";
+import { useRouter } from "next/navigation";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -28,6 +29,7 @@ const calculateAge = (birthday: string) => {
 };
 
 const Profile = () => {
+  const router = useRouter();
   const storage = getStorage();
 
   const [editable, setEditable] = useState(false);
@@ -141,7 +143,11 @@ const Profile = () => {
 
   useEffect(() => {
     if (isProfilePictureUpdated) {
-      updateUser(initialProfileData.userId, editedData);
+      try {
+        updateUser(initialProfileData.userId, editedData);
+      } catch {
+        router.push("/error");
+      }
       setInitialProfileData({ ...editedData });
       setIsProfilePictureUpdated(false);
     }
@@ -217,7 +223,11 @@ const Profile = () => {
   const handleSaveClick = () => {
     console.log("Saving changes:", initialProfileData);
     setEditable(false);
-    updateUser(initialProfileData.userId, editedData);
+    try {
+      updateUser(initialProfileData.userId, editedData);
+    } catch {
+      router.push("/error");
+    }
     setInitialProfileData({ ...editedData });
   };
 

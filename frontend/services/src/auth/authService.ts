@@ -1,4 +1,5 @@
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyUserData, NewUserData, UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
@@ -9,31 +10,31 @@ import {
   signOut,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, authUser, db } from "./firebase";
+import { useRouter } from "next/navigation";
+import { auth, authUser, db } from "../firebase";
+import { createUser } from "../users/usersService";
 
-export interface userAuthData {
-  email: string;
-  password: string;
-  firstName: string;
-}
+const authServiceLogger = new Logger("authServiceLogger");
 
-export async function handleEmailAndPasswordSignUp(data: userAuthData) {
+export async function handleEmailAndPasswordSignUp(data: NewUserData) {
+  const router = useRouter();
   try {
     // Create a new user with email and password
+    console.log(data);
     const userCredential: UserCredential = await createUserWithEmailAndPassword(
       auth,
-      data.email,
+      data.contactInformation.email,
       data.password
     );
-    const userDocRef = doc(db, "Users", userCredential.user.uid);
-    const userDataToSet = {
-      firstName: data.firstName,
-      contactInformation: { email: data.email },
-
-      //add more fields here
-    };
-    await setDoc(userDocRef, userDataToSet);
-    console.log("signed in", userCredential);
+    console.log(userCredential.user.uid);
+    if (userCredential.user) {
+      // TODO: we need to check firebase auth if the user is already created, if they are, we don't recreate the user.. figure smth out
+      createUser(data, userCredential.user.uid);
+    } else {
+      // Handle the case where userCredential.user is null
+      console.error("User authentication failed");
+      router.push("/error");
+    }
   } catch (error) {
     throw error;
   }
@@ -49,10 +50,7 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
   }
 }
 
-export async function handleEmailAndPasswordSignIn(
-  email: string,
-  password: string
-) {
+export async function handleEmailAndPasswordSignIn(email: string, password: string) {
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
@@ -63,10 +61,7 @@ export async function handleEmailAndPasswordSignIn(
 export async function handleGoogleSignIn() {
   try {
     const provider = new GoogleAuthProvider();
-    const userCredential: UserCredential = await signInWithPopup(
-      auth,
-      provider
-    );
+    const userCredential: UserCredential = await signInWithPopup(auth, provider);
     const userDocRef = doc(db, "Users", userCredential.user.uid);
 
     // Check if the user already exists in your Firestore collection,
@@ -89,10 +84,7 @@ export async function handleGoogleSignIn() {
 export async function handleFacebookSignIn() {
   try {
     const provider = new FacebookAuthProvider();
-    const userCredential: UserCredential = await signInWithPopup(
-      auth,
-      provider
-    );
+    const userCredential: UserCredential = await signInWithPopup(auth, provider);
     const userDocRef = doc(db, "Users", userCredential.user.uid);
 
     // Check if the user already exists in your Firestore collection,
