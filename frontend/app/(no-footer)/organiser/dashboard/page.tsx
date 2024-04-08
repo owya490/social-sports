@@ -27,7 +27,7 @@ let sampleEvent: OrganiserEventCardProps = {
 
 export default function Dashboard() {
   return (
-    <div className="pt-16 pl-14">
+    <div className="pt-16 pl-14 h-full">
       <OrganiserNavbar />
       <div className="py-20 pl-52 pr-64">
         <h1 className="text-5xl font-bold">Organiser Dashboard</h1>
