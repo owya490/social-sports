@@ -82,6 +82,7 @@ export default function CreateEvent() {
 
   function submit(e: FormEvent) {
     e.preventDefault();
+    // const toEmail = e.toEmail
 
     if (!isLastStep) {
       next();
@@ -106,10 +107,50 @@ export default function CreateEvent() {
     }
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
     const newEventId = await createEvent(newEventData);
-    // setLoading(false);
+    try {
+      CreateEmailNotification("richardpeng914@gmail.com", formData, user);
+    } catch (error) {
+      console.log(error);
+    }
+    
     return newEventId;
   }
 
+  async function CreateEmailNotification(toEmail: string, formData: FormData, user: UserData) {
+    const EmailData = {
+      ...formData,
+      to_email: toEmail,
+      first_name: user.firstName,
+      last_name: user.surname,
+      event_name: formData.name,
+      event_location: formData.location,
+      event_startTime: formData.startTime,
+      event_finishTime: formData.endTime,
+      event_sport: formData.sport,
+      event_price: formData.price,
+      event_capacity: formData.capacity,
+      event_isPrivate: formData.isPrivate,
+      event_tags: formData.tags
+    };
+  
+    try {
+      const response = await fetch("https://send-email-7aikp3s36a-uc.a.run.app", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(EmailData),
+      });
+ 
+      if (response.ok) {
+        console.log("Email sent successfully");
+      } else {
+        console.error("Failed to send email. Status:", response.status);
+      }
+    } catch (error) {
+      console.error("An error occurred while sending the email:", error);
+    }
+  }
+  
+  
   async function convertFormDataToEventData(
     formData: FormData,
     user: UserData,

@@ -1,3 +1,5 @@
 /__pycache__/*
 venv/
 functions_key.json
+.env
+sendgrid.env

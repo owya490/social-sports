@@ -31,7 +31,7 @@ export const PreviewForm = ({
     parseInt(hours),
     parseInt(minutes)
   );
-
+  
   return (
     <div className="md:grid md:grid-cols-2 mt-4 items-start">
       <div className="flex flex-col items-center mb-12 md:mb-0 md:mt-16">
@@ -55,6 +55,7 @@ export const PreviewForm = ({
           <div className="font-bold">Total capacity of the event:</div>
           {form.capacity}
         </div>
+        <button className="bg-black" id="dynamicEmailButton">Send Dynamic Email</button>
       </div>
 
       <FormWrapper>
