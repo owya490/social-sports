@@ -1,5 +1,6 @@
 "use client";
-import { handleEmailAndPasswordSignUp } from "@/services/src/authService";
+import { EmptyNewUserData, NewUserData } from "@/interfaces/UserTypes";
+import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";
@@ -7,11 +8,7 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 export default function Register() {
-  const [userData, setUserData] = useState({
-    email: "",
-    password: "",
-    firstName: "",
-  });
+  const [userData, setUserData] = useState<NewUserData>(EmptyNewUserData);
   const router = useRouter();
 
   const [repeatPassword, setRepeatPassword] = useState("");
@@ -83,10 +80,7 @@ export default function Register() {
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form className="space-y-6 group" onSubmit={handleSubmit}>
           <div>
-            <label
-              htmlFor="first-name"
-              className="block text-sm font-medium leading-6 text-gray-900"
-            >
+            <label htmlFor="first-name" className="block text-sm font-medium leading-6 text-gray-900">
               First Name
             </label>
             <div className="mt-2">
@@ -107,10 +101,7 @@ export default function Register() {
             </div>
           </div>
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium leading-6 text-gray-900"
-            >
+            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
               Email address
             </label>
             <div className="mt-2">
@@ -121,11 +112,14 @@ export default function Register() {
                 autoComplete="email"
                 required
                 className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                value={userData.email}
+                value={userData.contactInformation.email}
                 onChange={(e) =>
                   setUserData({
                     ...userData,
-                    email: e.target.value,
+                    contactInformation: {
+                      ...userData.contactInformation,
+                      email: e.target.value,
+                    },
                   })
                 }
               />
@@ -134,10 +128,7 @@ export default function Register() {
 
           <div>
             <div className="flex items-center justify-between">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
+              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
                 Password (min. 6 characters)
               </label>
             </div>
@@ -164,10 +155,7 @@ export default function Register() {
 
           <div>
             <div className="flex items-center justify-between">
-              <label
-                htmlFor="password-repeat"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
+              <label htmlFor="password-repeat" className="block text-sm font-medium leading-6 text-gray-900">
                 Repeat Password
               </label>
             </div>
@@ -196,10 +184,7 @@ export default function Register() {
 
           <p className="mt-10 text-center text-sm text-gray-500">
             Have an account?{" "}
-            <Link
-              href="/login"
-              className="font-semibold leading-6 text-black hover:underline"
-            >
+            <Link href="/login" className="font-semibold leading-6 text-black hover:underline">
               Login here
             </Link>
           </p>

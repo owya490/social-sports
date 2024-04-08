@@ -1,4 +1,4 @@
-import { handleSignOut } from "@/services/src/authService";
+import { handleSignOut } from "@/services/src/auth/authService";
 import { auth, storage } from "@/services/src/firebase";
 import { sleep } from "@/utilities/sleepUtil";
 import { Menu, Transition } from "@headlessui/react";

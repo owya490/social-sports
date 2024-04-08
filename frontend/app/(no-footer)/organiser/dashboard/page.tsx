@@ -4,31 +4,31 @@ import { OrganiserEventCardProps } from "@/components/events/OrganiserEventCard"
 import { Timestamp } from "firebase/firestore";
 import { UserData } from "@/interfaces/UserTypes";
 
-const sampleOrganiser: UserData = {
-  userId: "",
-  firstName: "Sydney Thunder",
-  profilePicture:
-    "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
-  surname: "Volleyball",
-  dob: "",
-};
+// const sampleOrganiser: UserData = {
+//   userId: "",
+//   firstName: "Sydney Thunder",
+//   profilePicture:
+//     "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+//   surname: "Volleyball",
+//   dob: "",
+// };
 
-let sampleEvent: OrganiserEventCardProps = {
-  eventId: "5TMe1IEOYHlITKiR0Dw1",
-  image:
-    "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2F2izGPMqX9OZiXts0tCOcZ3CRPLm1%2F1707660757165_IMG_2602.PNG?alt=media&token=42cd1374-b265-4151-b8c5-2dc9c5deba3a",
-  name: "First Ever Event!",
-  organiser: sampleOrganiser,
-  startTime: Timestamp.now(),
-  location: "Sports Halls",
-  price: 10,
-  vacancy: 8,
-};
+// let sampleEvent: OrganiserEventCardProps = {
+//   eventId: "5TMe1IEOYHlITKiR0Dw1",
+//   image:
+//     "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2F2izGPMqX9OZiXts0tCOcZ3CRPLm1%2F1707660757165_IMG_2602.PNG?alt=media&token=42cd1374-b265-4151-b8c5-2dc9c5deba3a",
+//   name: "First Ever Event!",
+//   organiser: sampleOrganiser,
+//   startTime: Timestamp.now(),
+//   location: "Sports Halls",
+//   price: 10,
+//   vacancy: 8,
+// };
 
 export default function Dashboard() {
   return (
     <div className="pt-16 pl-14 h-full">
-      <OrganiserNavbar />
+      <OrganiserNavbar currPage="Dashboard" />
       <div className="py-20 pl-52 pr-64">
         <h1 className="text-5xl font-bold">Organiser Dashboard</h1>
         <h1 className="pt-4 text-4xl font-semibold text-[#BABABA]">Welcome Edwin</h1>
