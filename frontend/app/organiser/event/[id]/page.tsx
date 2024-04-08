@@ -40,6 +40,12 @@ export default function EventPage({ params }: EventPageProps) {
   };
   const [eventOrganiser, setEventOrganiser] = useState<UserData>(dummyUserData);
   const [eventVacancy, setEventVacancy] = useState<number>(0);
+  const [eventDescription, setEventDescription] = useState<string>("");
+  const [eventLocation, setEventLocation] = useState<string>("");
+  const [eventPrice, setEventPrice] = useState<number>(0);
+  const [eventImage, setEventImage] = useState<string>("");
+  const [eventAccessCount, setEventAccessCount] = useState<number>(0);
+  const [eventCapacity, setEventCapacity] = useState<number>(0);
 
   const eventId: EventId = params.id;
   useEffect(() => {
@@ -50,6 +56,12 @@ export default function EventPage({ params }: EventPageProps) {
         setEventStartDate(event.startDate);
         setEventOrganiser(event.organiser);
         setEventVacancy(event.vacancy);
+        setEventDescription(event.description);
+        setEventLocation(event.location);
+        setEventPrice(event.price);
+        setEventImage(event.image);
+        setEventAccessCount(event.accessCount);
+        setEventCapacity(event.capacity);
       })
       .finally(async () => {
         await sleep(500);
@@ -71,13 +83,35 @@ export default function EventPage({ params }: EventPageProps) {
         loading={loading}
       />
       <div className="p-10">
-        <EventDrilldownStatBanner />
+        <EventDrilldownStatBanner
+          loading={loading}
+          eventAccessCount={eventAccessCount}
+          eventVacancy={eventVacancy}
+          eventCapacity={eventCapacity}
+          eventPrice={eventPrice}
+        />
         <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
           <div>
-            <EventDrilldownSidePanel currSidebarPage={currSidebarPage} setCurrSidebarPage={setCurrSidebarPage} />
+            <EventDrilldownSidePanel
+              loading={loading}
+              currSidebarPage={currSidebarPage}
+              setCurrSidebarPage={setCurrSidebarPage}
+              eventName={eventName}
+              eventStartDate={eventStartDate}
+            />
           </div>
           <div className="mx-auto w-full mx-20">
-            {currSidebarPage === "Details" && <EventDrilldownDetailsPage />}
+            {currSidebarPage === "Details" && (
+              <EventDrilldownDetailsPage
+                loading={loading}
+                eventName={eventName}
+                eventStartdate={eventStartDate}
+                eventDescription={eventDescription}
+                eventLocation={eventLocation}
+                eventPrice={eventPrice}
+                eventImage={eventImage}
+              />
+            )}
             {currSidebarPage === "Manage Attendees" && <EventDrilldownManageAttendeesPage />}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
             {currSidebarPage === "Share" && <EventDrilldownSharePage />}
