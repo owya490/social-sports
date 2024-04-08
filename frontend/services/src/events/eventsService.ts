@@ -64,15 +64,15 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
 export async function getEventById(eventId: EventId): Promise<EventData> {
   eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
-    // const router = useRouter();
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
     var organiser: UserData = EmptyUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
-    } catch {
-      // router.push("/error");
+    } catch (error) {
+      eventServiceLogger.error(`getEventById ${error}`);
+      throw error;
     }
     const event: EventData = {
       ...eventWithoutOrganiser,

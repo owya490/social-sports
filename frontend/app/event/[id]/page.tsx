@@ -9,6 +9,7 @@ import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
 import { getEventById, incrementEventAccessCountById } from "@/services/src/events/eventsService";
 import { getTagById } from "@/services/src/tagService";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function EventPage({ params }: any) {
@@ -16,6 +17,8 @@ export default function EventPage({ params }: any) {
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [eventTags, setEventTags] = useState<Tag[]>([]);
+
+  const router = useRouter();
   useEffect(() => {
     getEventById(eventId)
       .then((event) => {
@@ -32,6 +35,9 @@ export default function EventPage({ params }: any) {
       })
       .finally(() => {
         setLoading(false);
+      })
+      .catch(() => {
+        router.push("/error");
       });
 
     //  eslint-disable-next-line

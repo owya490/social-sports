@@ -13,6 +13,7 @@ import { UserData } from "@/interfaces/UserTypes";
 import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface EventPageProps {
@@ -47,6 +48,8 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
 
+  const router = useRouter();
+
   const eventId: EventId = params.id;
   useEffect(() => {
     getEventById(eventId)
@@ -69,6 +72,7 @@ export default function EventPage({ params }: EventPageProps) {
       })
       .catch((error) => {
         eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
+        router.push("/error");
       });
   }, []);
 
