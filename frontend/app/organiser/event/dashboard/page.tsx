@@ -16,7 +16,14 @@ import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
-import { filterEventsByDate, filterEventsByPrice, filterEventsBySearch, filterEventsBySortBy } from "@/services/src/filterService";
+import {
+  filterEventsByDate,
+  filterEventsByPrice,
+  filterEventsBySearch,
+  filterEventsBySortBy,
+  filterEventsByStatus,
+  filterEventsByType,
+} from "@/services/src/filterService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -57,6 +64,20 @@ export default function OrganiserDashboard() {
       filteredEventDataList = newEventDataList;
     }
     setSearchValue(searchValue);
+
+    // Filter by STATUS
+    if (eventStatusValue !== "") {
+      let newEventDataList = filterEventsByStatus([...filteredEventDataList], eventStatusValue);
+      filteredEventDataList = newEventDataList;
+    }
+    setEventStatusValue(eventStatusValue);
+
+    // Filter by TYPE
+    if (eventTypeValue !== "") {
+      let newEventDataList = filterEventsByType([...filteredEventDataList], eventTypeValue);
+      filteredEventDataList = newEventDataList;
+    }
+    setEventTypeValue(eventTypeValue);
 
     // Filter by PRICE
     let minPrice = minPriceValue !== null ? minPriceValue : 0;
@@ -192,7 +213,7 @@ export default function OrganiserDashboard() {
 
   return (
     <div className="w-screen mt-16 mb-10 ml-7 h-screen max-h-screen overflow-hidden">
-      <OrganiserNavbar />
+      <OrganiserNavbar currPage={""} />
       <div className="text-6xl ml-7 p-10">Event Dashboard</div>
       <div className="flex justify-center h-screen">
         <OrganiserFilterDialog

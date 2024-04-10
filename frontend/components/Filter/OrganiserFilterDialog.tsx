@@ -165,6 +165,28 @@ export default function OrganiserFilterDialog({
     [datepickerKey, dateRange]
   );
 
+  const toggleStatusCheckboxValue = (value: string) => {
+    if (eventStatusValue.includes(value)) {
+      setEventStatusValue(eventStatusValue.replace(value, ""));
+    } else {
+      setEventStatusValue(eventStatusValue + value);
+      if (eventStatusValue.includes("true") && eventStatusValue.includes("false")) {
+        setEventStatusValue("");
+      }
+    }
+  };
+
+  const toggleTypeCheckboxValue = (value: string) => {
+    if (eventTypeValue.includes(value)) {
+      setEventTypeValue(eventTypeValue.replace(value, ""));
+    } else {
+      setEventTypeValue(eventTypeValue + value);
+    }
+    if (eventTypeValue.includes("true") && eventTypeValue.includes("false")) {
+      setEventStatusValue("");
+    }
+  };
+
   function handleClearAll() {
     setSortByCategoryValue(DEFAULT_SORT_BY_CATEGORY);
     updateSortByKey();
@@ -178,7 +200,6 @@ export default function OrganiserFilterDialog({
       endDate: DEFAULT_END_DATE,
     });
     updateDatepickerKey();
-    console.log("FORTNITE", eventDataList);
     setEventDataList([...allEventsDataList]);
   }
 
@@ -277,8 +298,8 @@ export default function OrganiserFilterDialog({
                     name="Past"
                     value="Past"
                     className="mr-2"
-                    checked={eventStatusValue.includes("Past")}
-                    onChange={() => setEventStatusValue("Past")}
+                    checked={eventStatusValue.includes("false")}
+                    onChange={() => toggleStatusCheckboxValue("false")}
                   />
                   Past
                 </label>
@@ -290,8 +311,8 @@ export default function OrganiserFilterDialog({
                     name="Future"
                     value="Future"
                     className="mr-2"
-                    checked={eventStatusValue.includes("Future")}
-                    onChange={() => setEventStatusValue("Future")}
+                    checked={eventStatusValue.includes("true")}
+                    onChange={() => toggleStatusCheckboxValue("true")}
                   />
                   Future
                 </label>
@@ -315,8 +336,8 @@ export default function OrganiserFilterDialog({
                     name="Public"
                     value="Public"
                     className="mr-2"
-                    checked={eventTypeValue.includes("Public")}
-                    onChange={() => setEventTypeValue("Public")}
+                    checked={eventTypeValue.includes("false")}
+                    onChange={() => toggleTypeCheckboxValue("false")}
                   />
                   Public
                 </label>
@@ -328,8 +349,8 @@ export default function OrganiserFilterDialog({
                     name="Private"
                     value="Private"
                     className="mr-2"
-                    checked={eventTypeValue.includes("Private")}
-                    onChange={() => setEventTypeValue("Private")}
+                    checked={eventTypeValue.includes("true")}
+                    onChange={() => toggleTypeCheckboxValue("true")}
                   />
                   Private
                 </label>
