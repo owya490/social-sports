@@ -34,6 +34,9 @@ const config: Config = {
     colors: {
       organiser: {
         "light-gray": "#F8F8F8",
+        "darker-light-gray": "#E8E8E8",
+        "dark-gray-text": "#404040",
+        "title-gray-text": "#969696",
       },
     },
   },
