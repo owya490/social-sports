@@ -4,7 +4,6 @@ import geofire from "geofire-common";
 import { SortByCategory } from "../../components/Filter/FilterDialog";
 import { db } from "./firebase";
 import { getDistanceBetweenTwoCoords } from "./locationUtils";
-
 interface ProximityInfo {
   center: geofire.Geopoint;
   radiusInM: number;
@@ -41,6 +40,16 @@ export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory:
     default:
       break;
   }
+  return eventDataListDeepClone;
+}
+
+export function filterEventsByUID(eventDataList: EventData[], UserId: string): EventData[] {
+  let eventDataListDeepClone = [...eventDataList];
+  eventDataListDeepClone = eventDataListDeepClone.filter(
+      (event) =>
+        event.organiserId === UserId
+    );
+  
   return eventDataListDeepClone;
 }
 

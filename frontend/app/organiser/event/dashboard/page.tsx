@@ -10,6 +10,7 @@ import OrganiserFilterDialog, {
   DEFAULT_SEARCH,
   DEFAULT_SORT_BY_CATEGORY,
   DEFAULT_START_DATE,
+  DEFAULT_UID,
   SortByCategory,
 } from "@/components/Filter/OrganiserFilterDialog";
 import OrganiserEventCard from "@/components/events/OrganiserEventCard";
@@ -23,13 +24,17 @@ import {
   filterEventsBySortBy,
   filterEventsByStatus,
   filterEventsByType,
+  filterEventsByUID,
 } from "@/services/src/filterService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
+import { useUser } from "@/components/utility/UserContext";
 
 export default function OrganiserDashboard() {
+  const { user } = useUser();
+  const [loggedInUserId, setLoggedInUserId] = useState<string>(DEFAULT_UID);
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
     useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
@@ -57,6 +62,13 @@ export default function OrganiserDashboard() {
 
   async function applyFilters() {
     let filteredEventDataList = [...allEventsDataList];
+
+    // Filter by UID
+    if (loggedInUserId) {
+      let newEventDataList = filterEventsByUID([...filteredEventDataList], loggedInUserId);
+      filteredEventDataList = newEventDataList;
+      console.log("no wakas", loggedInUserId);
+    }
 
     // Filter by SEARCH
     if (searchValue !== "") {
@@ -150,7 +162,6 @@ export default function OrganiserDashboard() {
         if (event.trim() === "") {
           getAllEvents()
             .then((events) => {
-              console.log("EVENTTSSSSSS:", events);
               setEventDataList(events);
               setSearchDataList(events);
               setAllEventsDataList(events);
@@ -170,7 +181,6 @@ export default function OrganiserDashboard() {
               return tempEventDataList;
             })
             .then((tempEventDataList: EventData[]) => {
-              // setEventDataList(tempEventDataList);
               setSearchDataList(tempEventDataList);
             })
             .finally(async () => {
@@ -187,13 +197,19 @@ export default function OrganiserDashboard() {
   }, [searchParams]);
 
   useEffect(() => {
+    const userId = user.userId;
+    console.log(user);
+    setLoggedInUserId(userId);
+  }, [user]);
+
+  useEffect(() => {
     const login = searchParams?.get("login");
     if (login === "success") {
       setShowLoginSuccess(true);
 
       router.replace("/organiser/event/dashboard");
     }
-  }, [router]);
+  }, [router, searchParams]);
 
   useEffect(() => {
     let timer: number | undefined;
@@ -210,6 +226,10 @@ export default function OrganiserDashboard() {
       }
     };
   }, [showLoginSuccess]);
+
+  useEffect(() => {
+    applyFilters();
+  }, []);
 
   return (
     <div className="w-screen mt-16 mb-10 ml-7 h-screen max-h-screen overflow-hidden">

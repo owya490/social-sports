@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../ListBox";
 
+
 export enum SortByCategory {
   HOT,
   TOP_RATED,
@@ -23,6 +24,7 @@ export const PRICE_DESCENDING_SORTBY_STRING = "Price Descending";
 export const DATE_ASCENDING_SORTBY_STRING = "Date Ascending";
 export const DATE_DESCENDING_SORTBY_STRING = "Date Descending";
 
+export const DEFAULT_UID = ""
 export const DEFAULT_SEARCH = "";
 export const DEFAULT_EVENT_STATUS = "";
 export const DEFAULT_EVENT_TYPE = "";
@@ -36,7 +38,6 @@ export const defaultDateRange = {
 };
 export const DAY_START_TIME_STRING = " 00:00:00";
 export const DAY_END_TIME_STRING = " 23:59:59";
-
 export const EMPTY_LOCATION_STRING = "";
 
 interface OrganiserFilterDialogProps {
