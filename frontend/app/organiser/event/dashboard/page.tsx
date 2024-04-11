@@ -198,7 +198,7 @@ export default function OrganiserDashboard() {
 
   useEffect(() => {
     const userId = user.userId;
-    console.log(user);
+    console.log("user set", user);
     setLoggedInUserId(userId);
   }, [user]);
 
