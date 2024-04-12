@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../ListBox";
 
-
 export enum SortByCategory {
   HOT,
   TOP_RATED,
@@ -24,7 +23,6 @@ export const PRICE_DESCENDING_SORTBY_STRING = "Price Descending";
 export const DATE_ASCENDING_SORTBY_STRING = "Date Ascending";
 export const DATE_DESCENDING_SORTBY_STRING = "Date Descending";
 
-export const DEFAULT_UID = ""
 export const DEFAULT_SEARCH = "";
 export const DEFAULT_EVENT_STATUS = "";
 export const DEFAULT_EVENT_TYPE = "";
@@ -203,17 +201,6 @@ export default function OrganiserFilterDialog({
     updateDatepickerKey();
     setEventDataList([...allEventsDataList]);
   }
-
-  // useEffect(() => {
-  //   applyFilters();
-  // }, [sortByCategoryValue, eventStatusValue, eventTypeValue]);
-
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     applyFilters();
-  //   }, 100);
-  //   return () => clearTimeout(timer);
-  // }, [searchValue, minPriceValue, maxPriceValue, dateRange]);
 
   return (
     <div className="w-[360px] mr-2 2xl:mr-6 max-h-screen">

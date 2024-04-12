@@ -106,6 +106,42 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
     throw error;
   }
 }
+
+export async function getEventsByUID(organiserId?: string, isActive?: boolean, isPrivate?: boolean) {
+  eventServiceLogger.info(`getEventsByUID for userId: ${organiserId}`);
+  try {
+    // If isActive is present, keep its value, otherwise default to true
+    isActive = isActive === undefined ? true : isActive;
+    // Likewise, if isPrivate is present, keep its value, otherwise to false
+    isPrivate = isPrivate === undefined ? false : isPrivate;
+
+    if (isActive && !isPrivate) {
+      const currentDate = new Date();
+      let { success, events } = tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
+      if (success) {
+        return events;
+      }
+      const eventRef = createEventCollectionRef(isActive, isPrivate);
+      let eventsData = await getAllEventsFromCollectionRef(eventRef);
+      eventsData = eventsData.filter((event) => event.organiserId === organiserId);
+      localStorage.setItem(LocalStorageKeys.EventsData, JSON.stringify(eventsData));
+      const currentDateString = currentDate.toUTCString();
+      localStorage.setItem(LocalStorageKeys.LastFetchedEventData, currentDateString);
+      return eventsData;
+    } else {
+      const eventRef = createEventCollectionRef(isActive, isPrivate);
+      let eventsData = await getAllEventsFromCollectionRef(eventRef);
+      // Filter events by organiserId matching user.userId
+      eventsData = eventsData.filter((event) => event.organiserId === organiserId);
+      return eventsData;
+    }
+  } catch (error) {
+    console.error("Error getting events by UID:", error);
+    eventServiceLogger.error(`Error getting events by UID: ${error}`);
+    throw error;
+  }
+}
+
 export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   eventServiceLogger.info(`getAllEvents`);
   try {

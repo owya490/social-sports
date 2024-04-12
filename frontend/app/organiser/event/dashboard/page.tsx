@@ -10,13 +10,12 @@ import OrganiserFilterDialog, {
   DEFAULT_SEARCH,
   DEFAULT_SORT_BY_CATEGORY,
   DEFAULT_START_DATE,
-  DEFAULT_UID,
   SortByCategory,
 } from "@/components/Filter/OrganiserFilterDialog";
 import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
-import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
+import { getEventById, getEventsByUID, searchEventsByKeyword } from "@/services/src/events/eventsService";
 import {
   filterEventsByDate,
   filterEventsByPrice,
@@ -24,7 +23,6 @@ import {
   filterEventsBySortBy,
   filterEventsByStatus,
   filterEventsByType,
-  filterEventsByUID,
 } from "@/services/src/filterService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
@@ -34,7 +32,6 @@ import { useUser } from "@/components/utility/UserContext";
 
 export default function OrganiserDashboard() {
   const { user } = useUser();
-  const [loggedInUserId, setLoggedInUserId] = useState<string>(DEFAULT_UID);
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
     useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
@@ -62,13 +59,6 @@ export default function OrganiserDashboard() {
 
   async function applyFilters() {
     let filteredEventDataList = [...allEventsDataList];
-
-    // Filter by UID
-    if (loggedInUserId) {
-      let newEventDataList = filterEventsByUID([...filteredEventDataList], loggedInUserId);
-      filteredEventDataList = newEventDataList;
-      console.log("no wakas", loggedInUserId);
-    }
 
     // Filter by SEARCH
     if (searchValue !== "") {
@@ -141,10 +131,11 @@ export default function OrganiserDashboard() {
   const getQueryParams = () => {
     if (typeof window === "undefined") {
       // Return some default or empty values when not in a browser environment
-      return { event: "", location: "" };
+      return { organiserId: "", event: "", location: "" };
     }
     const searchParams = new URLSearchParams(window.location.search);
     return {
+      organiserId: searchParams.get("organiserId") || "",
       event: searchParams.get("event") || "",
       location: searchParams.get("location") || "",
     };
@@ -156,11 +147,12 @@ export default function OrganiserDashboard() {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const { event, location } = getQueryParams();
+      const { organiserId, event, location } = getQueryParams();
       setSrcLocation(location);
-      if (typeof event === "string" && typeof location === "string") {
+      if (typeof organiserId === "string" && typeof event === "string" && typeof location === "string") {
         if (event.trim() === "") {
-          getAllEvents()
+          console.log("numberone");
+          getEventsByUID()
             .then((events) => {
               setEventDataList(events);
               setSearchDataList(events);
@@ -171,6 +163,7 @@ export default function OrganiserDashboard() {
               setLoading(false);
             });
         } else {
+          console.log("numbertwo");
           searchEventsByKeyword(event, location)
             .then(async (events) => {
               let tempEventDataList: EventData[] = [];
@@ -197,12 +190,6 @@ export default function OrganiserDashboard() {
   }, [searchParams]);
 
   useEffect(() => {
-    const userId = user.userId;
-    console.log("user set", user);
-    setLoggedInUserId(userId);
-  }, [user]);
-
-  useEffect(() => {
     const login = searchParams?.get("login");
     if (login === "success") {
       setShowLoginSuccess(true);
@@ -226,10 +213,6 @@ export default function OrganiserDashboard() {
       }
     };
   }, [showLoginSuccess]);
-
-  useEffect(() => {
-    applyFilters();
-  }, []);
 
   return (
     <div className="w-screen mt-16 mb-10 ml-7 h-screen max-h-screen overflow-hidden">
