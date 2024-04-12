@@ -112,9 +112,17 @@ export async function processEventData(
 }
 
 export function createEventCollectionRef(isActive: boolean, isPrivate: boolean) {
+  console.log("createEventCollectionRefcalled");
   const activeStatus = isActive ? EventStatus.Active : EventStatus.Inactive;
   const privateStatus = isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
   const collectionRef = collection(db, CollectionPaths.Events, activeStatus, privateStatus);
+  eventServiceLogger.debug(`Created collection reference: ${collectionRef.path}`);
+  return collectionRef;
+}
+
+export function createEventUIDCollectionRef() {
+  console.log("createEventUIDCollectionRefcalled");
+  const collectionRef = collection(db, CollectionPaths.Events);
   eventServiceLogger.debug(`Created collection reference: ${collectionRef.path}`);
   return collectionRef;
 }

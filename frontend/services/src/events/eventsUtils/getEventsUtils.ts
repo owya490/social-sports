@@ -35,7 +35,7 @@ export async function findEventDoc(eventId: string): Promise<any> {
   }
 }
 
-export function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) {
+export function tryGetAllActivePublicEventsFromLocalStorage(currentDate: Date) {
   try {
     console.log("Trying to get Cached Active Public Events");
 
@@ -49,7 +49,30 @@ export function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) 
         return { success: true, events: getEventsDataFromLocalStorage() };
       }
     }
-    eventServiceLogger.debug("tryGetAllActisvePublicEventsFromLocalStorage Success");
+    eventServiceLogger.debug("tryGetAllActivePublicEventsFromLocalStorage Success");
+    return { success: false, events: [] };
+  } catch (error) {
+    console.error("Error while trying to get cached active public events:", error);
+    eventServiceLogger.error(`Error while trying to get cached active public events:, ${error}`);
+    throw error;
+  }
+}
+
+export function tryGetAllEventsByUIDFromLocalStorage(currentDate: Date) {
+  try {
+    console.log("Trying to get Cached Active Public Events");
+
+    // If already cached, and within 5 minutes, return cached data, otherwise no-op
+    if (
+      localStorage.getItem(LocalStorageKeys.EventsData) !== null &&
+      localStorage.getItem(LocalStorageKeys.LastFetchedEventData) !== null
+    ) {
+      const lastFetched = new Date(localStorage.getItem(LocalStorageKeys.LastFetchedEventData)!);
+      if (currentDate.valueOf() - lastFetched.valueOf() < EVENTS_REFRESH_MILLIS) {
+        return { success: true, events: getEventsDataFromLocalStorage() };
+      }
+    }
+    eventServiceLogger.debug("tryGetAllActivePublicEventsFromLocalStorage Success");
     return { success: false, events: [] };
   } catch (error) {
     console.error("Error while trying to get cached active public events:", error);
@@ -85,6 +108,29 @@ export async function getAllEventsFromCollectionRef(
         // this is a no op, we don't include this event in the eventsData list and don't display to frontend.
       }
     }
+    eventServiceLogger.debug("getAllEventsFromCollectionRef Success");
+    return eventsData;
+  } catch (error) {
+    console.error(error);
+    eventServiceLogger.error(`getAllEventsFromCollectionRef ${error}`);
+    throw error;
+  }
+}
+
+export async function getEventsByUIDFromCollectionRef(
+  eventCollectionRef: CollectionReference<DocumentData, DocumentData>
+): Promise<EventData[]> {
+  try {
+    console.log("Getting events from DB");
+    const eventsSnapshot = await getDocs(eventCollectionRef);
+    const eventsData: EventData[] = [];
+
+    eventsSnapshot.forEach((doc) => {
+      const eventData = doc.data() as EventData;
+      eventData.eventId = doc.id;
+      eventsData.push(eventData);
+    });
+
     eventServiceLogger.debug("getAllEventsFromCollectionRef Success");
     return eventsData;
   } catch (error) {

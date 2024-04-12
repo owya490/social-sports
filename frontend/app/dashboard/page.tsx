@@ -49,6 +49,7 @@ export default function Dashboard() {
       setSrcLocation(location);
       if (typeof event === "string" && typeof location === "string") {
         if (event.trim() === "") {
+          console.log("getallevents");
           getAllEvents()
             .then((events) => {
               setEventDataList(events);
@@ -60,6 +61,7 @@ export default function Dashboard() {
               setLoading(false);
             });
         } else {
+          console.log("search events by keyword");
           searchEventsByKeyword(event, location)
             .then(async (events) => {
               let tempEventDataList: EventData[] = [];

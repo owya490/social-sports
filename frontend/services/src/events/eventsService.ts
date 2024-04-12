@@ -19,6 +19,7 @@ import { getPublicUserById } from "../users/usersService";
 import {
   createEventCollectionRef,
   createEventDocRef,
+  createEventUIDCollectionRef,
   fetchEventTokenMatches,
   findEventDocRef,
   processEventData,
@@ -28,7 +29,9 @@ import { rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils"
 import {
   findEventDoc,
   getAllEventsFromCollectionRef,
-  tryGetAllActisvePublicEventsFromLocalStorage,
+  getEventsByUIDFromCollectionRef,
+  tryGetAllActivePublicEventsFromLocalStorage,
+  tryGetAllEventsByUIDFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
 import { useRouter } from "next/navigation";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
@@ -107,34 +110,18 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
   }
 }
 
-export async function getEventsByUID(organiserId?: string, isActive?: boolean, isPrivate?: boolean) {
+export async function getEventsByUID(organiserId: string) {
   eventServiceLogger.info(`getEventsByUID for userId: ${organiserId}`);
   try {
-    // If isActive is present, keep its value, otherwise default to true
-    isActive = isActive === undefined ? true : isActive;
-    // Likewise, if isPrivate is present, keep its value, otherwise to false
-    isPrivate = isPrivate === undefined ? false : isPrivate;
-
-    if (isActive && !isPrivate) {
-      const currentDate = new Date();
-      let { success, events } = tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
-      if (success) {
-        return events;
-      }
-      const eventRef = createEventCollectionRef(isActive, isPrivate);
-      let eventsData = await getAllEventsFromCollectionRef(eventRef);
-      eventsData = eventsData.filter((event) => event.organiserId === organiserId);
-      localStorage.setItem(LocalStorageKeys.EventsData, JSON.stringify(eventsData));
-      const currentDateString = currentDate.toUTCString();
-      localStorage.setItem(LocalStorageKeys.LastFetchedEventData, currentDateString);
-      return eventsData;
-    } else {
-      const eventRef = createEventCollectionRef(isActive, isPrivate);
-      let eventsData = await getAllEventsFromCollectionRef(eventRef);
-      // Filter events by organiserId matching user.userId
-      eventsData = eventsData.filter((event) => event.organiserId === organiserId);
-      return eventsData;
-    }
+    console.log("uidcalled");
+    const eventRef = createEventUIDCollectionRef();
+    console.log("eventref", eventRef);
+    let eventsData = await getEventsByUIDFromCollectionRef(eventRef);
+    console.log("e1", eventsData);
+    eventsData = eventsData.filter((event) => event.organiserId === organiserId);
+    console.log("first", organiserId);
+    console.log(eventsData);
+    return eventsData;
   } catch (error) {
     console.error("Error getting events by UID:", error);
     eventServiceLogger.error(`Error getting events by UID: ${error}`);
@@ -149,20 +136,24 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
     isActive = isActive === undefined ? true : isActive;
     // Likewise, if isPrivate is present, keep its value, otherwise to false
     isPrivate = isPrivate === undefined ? false : isPrivate;
-
+    console.log("allcalled");
     if (isActive && !isPrivate) {
       const currentDate = new Date();
-      let { success, events } = tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
+      let { success, events } = tryGetAllActivePublicEventsFromLocalStorage(currentDate);
       if (success) {
+        console.log("success");
         return events;
       }
       const eventRef = createEventCollectionRef(isActive, isPrivate);
+      console.log("eventref", eventRef);
       const eventsData = await getAllEventsFromCollectionRef(eventRef);
+      console.log("event data", eventsData);
       localStorage.setItem(LocalStorageKeys.EventsData, JSON.stringify(eventsData));
       const currentDateString = currentDate.toUTCString();
       localStorage.setItem(LocalStorageKeys.LastFetchedEventData, currentDateString);
       return eventsData;
     } else {
+      console.log("else triggered")
       const eventRef = createEventCollectionRef(isActive, isPrivate);
       return await getAllEventsFromCollectionRef(eventRef);
     }

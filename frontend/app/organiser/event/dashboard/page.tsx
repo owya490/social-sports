@@ -15,7 +15,7 @@ import OrganiserFilterDialog, {
 import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
-import { getEventById, getEventsByUID, searchEventsByKeyword } from "@/services/src/events/eventsService";
+import { getAllEvents, getEventById, getEventsByUID, searchEventsByKeyword } from "@/services/src/events/eventsService";
 import {
   filterEventsByDate,
   filterEventsByPrice,
@@ -31,7 +31,6 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import { useUser } from "@/components/utility/UserContext";
 
 export default function OrganiserDashboard() {
-  const { user } = useUser();
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
     useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
@@ -110,6 +109,7 @@ export default function OrganiserDashboard() {
     setEventDataList([...filteredEventDataList]);
   }
 
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
   const [eventDataList, setEventDataList] = useState<EventData[]>([
@@ -131,11 +131,10 @@ export default function OrganiserDashboard() {
   const getQueryParams = () => {
     if (typeof window === "undefined") {
       // Return some default or empty values when not in a browser environment
-      return { organiserId: "", event: "", location: "" };
+      return { event: "", location: "" };
     }
     const searchParams = new URLSearchParams(window.location.search);
     return {
-      organiserId: searchParams.get("organiserId") || "",
       event: searchParams.get("event") || "",
       location: searchParams.get("location") || "",
     };
@@ -146,48 +145,35 @@ export default function OrganiserDashboard() {
   });
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      const { organiserId, event, location } = getQueryParams();
-      setSrcLocation(location);
-      if (typeof organiserId === "string" && typeof event === "string" && typeof location === "string") {
-        if (event.trim() === "") {
-          console.log("numberone");
-          getEventsByUID()
-            .then((events) => {
-              setEventDataList(events);
-              setSearchDataList(events);
-              setAllEventsDataList(events);
-            })
-            .finally(async () => {
-              await sleep(500);
-              setLoading(false);
-            });
-        } else {
-          console.log("numbertwo");
-          searchEventsByKeyword(event, location)
-            .then(async (events) => {
-              let tempEventDataList: EventData[] = [];
-              for (const singleEvent of events) {
-                const eventData = await getEventById(singleEvent.eventId);
-                tempEventDataList.push(eventData);
-              }
-              return tempEventDataList;
-            })
-            .then((tempEventDataList: EventData[]) => {
-              setSearchDataList(tempEventDataList);
-            })
-            .finally(async () => {
-              await sleep(500);
-              setLoading(false);
-            });
+    if (user.userId.trim() !== "") {
+      // Check if user.userId is not empty
+      const fetchEvents = async () => {
+        const { event, location } = getQueryParams();
+        setSrcLocation(location);
+        if (typeof event === "string" && typeof location === "string") {
+          if (event.trim() === "") {
+            console.log("we chillin", user.userId);
+            getEventsByUID(user.userId)
+              .then((events) => {
+                setEventDataList(events);
+                setSearchDataList(events);
+                setAllEventsDataList(events);
+              })
+              .finally(async () => {
+                await sleep(500);
+                setLoading(false);
+              });
+          } else {
+            console.log("its doomed");
+          }
         }
-      }
-      if (location.trim() !== "") {
-        setTriggerFilterApply(true);
-      }
-    };
-    fetchEvents();
-  }, [searchParams]);
+        if (location.trim() !== "") {
+          setTriggerFilterApply(true);
+        }
+      };
+      fetchEvents();
+    }
+  }, [searchParams, user.userId]);
 
   useEffect(() => {
     const login = searchParams?.get("login");
