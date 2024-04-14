@@ -17,7 +17,6 @@ import { createUser } from "../users/usersService";
 const authServiceLogger = new Logger("authServiceLogger");
 
 export async function handleEmailAndPasswordSignUp(data: NewUserData) {
-  const router = useRouter();
   try {
     // Create a new user with email and password
     console.log(data);
@@ -33,7 +32,6 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
     } else {
       // Handle the case where userCredential.user is null
       console.error("User authentication failed");
-      router.push("/error");
     }
   } catch (error) {
     throw error;

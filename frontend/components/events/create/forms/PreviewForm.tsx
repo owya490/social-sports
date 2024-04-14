@@ -1,8 +1,8 @@
-import { FormData } from "@/app/event/create/page";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { Timestamp } from "firebase/firestore";
 import { FormWrapper } from "./FormWrapper";
+import { FormData } from "@/interfaces/FormTypes";
 
 type BasicData = {
   form: FormData;
@@ -14,24 +14,13 @@ type PreviewFormProps = BasicData & {
   updateField: (fields: Partial<FormData>) => void;
 };
 
-export const PreviewForm = ({
-  form,
-  user,
-  imagePreviewUrl,
-  updateField,
-}: PreviewFormProps) => {
+export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: PreviewFormProps) => {
   const dateString = form.date + " " + form.startTime;
   var [datePart, timePart] = dateString.split(" ");
   var [year, month, day] = datePart.split("-");
   var [hours, minutes] = timePart.split(":");
-  var myDate = new Date(
-    parseInt(year),
-    parseInt(month) - 1,
-    parseInt(day),
-    parseInt(hours),
-    parseInt(minutes)
-  );
-  
+  var myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+
   return (
     <div className="md:grid md:grid-cols-2 mt-4 items-start">
       <div className="flex flex-col items-center mb-12 md:mb-0 md:mt-16">
@@ -55,7 +44,6 @@ export const PreviewForm = ({
           <div className="font-bold">Total capacity of the event:</div>
           {form.capacity}
         </div>
-        <button className="bg-black" id="dynamicEmailButton">Send Dynamic Email</button>
       </div>
 
       <FormWrapper>

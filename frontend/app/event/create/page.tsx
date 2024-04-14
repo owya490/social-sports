@@ -15,36 +15,9 @@ import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-
-export type FormData = {
-  date: string;
-  location: string;
-  sport: string;
-  price: number;
-  capacity: number;
-  name: string;
-  description: string;
-  image: File | undefined;
-  tags: string[];
-  isPrivate: boolean;
-  startTime: string;
-  endTime: string;
-};
-
-const INITIAL_DATA: FormData = {
-  date: new Date().toISOString().slice(0, 10),
-  location: "",
-  sport: "volleyball",
-  price: 15,
-  capacity: 20,
-  name: "",
-  description: "",
-  image: undefined,
-  tags: [],
-  isPrivate: false,
-  startTime: "10:00",
-  endTime: "18:00",
-};
+import { CreateEventFormData } from "@/interfaces/FormTypes";
+import { CreateEmailNotification } from "@/services/src/emails/eventsEmail";
+import { EmptyCreateEventFormData } from "@/interfaces/FormTypes";
 
 export default function CreateEvent() {
   const { user } = useUser();
@@ -53,7 +26,7 @@ export default function CreateEvent() {
 
   const [loading, setLoading] = useState(false);
 
-  const [data, setData] = useState(INITIAL_DATA);
+  const [data, setData] = useState(EmptyCreateEventFormData);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
     <BasicInformation key="basic-form" {...data} updateField={updateFields} />,
@@ -74,7 +47,7 @@ export default function CreateEvent() {
     />,
   ]);
 
-  function updateFields(fields: Partial<FormData>) {
+  function updateFields(fields: Partial<CreateEventFormData>) {
     setData((prev) => {
       return { ...prev, ...fields };
     });
@@ -97,7 +70,7 @@ export default function CreateEvent() {
     }
   }
 
-  async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
+  async function createEventWorkflow(formData: CreateEventFormData, user: UserData): Promise<EventId> {
     setLoading(true);
     var imageUrl =
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
@@ -108,51 +81,16 @@ export default function CreateEvent() {
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
     const newEventId = await createEvent(newEventData);
     try {
-      CreateEmailNotification("richardpeng914@gmail.com", formData, user);
+      CreateEmailNotification(formData, user);
     } catch (error) {
       console.log(error);
     }
-    
+
     return newEventId;
   }
 
-  async function CreateEmailNotification(toEmail: string, formData: FormData, user: UserData) {
-    const EmailData = {
-      ...formData,
-      to_email: toEmail,
-      first_name: user.firstName,
-      last_name: user.surname,
-      event_name: formData.name,
-      event_location: formData.location,
-      event_startTime: formData.startTime,
-      event_finishTime: formData.endTime,
-      event_sport: formData.sport,
-      event_price: formData.price,
-      event_capacity: formData.capacity,
-      event_isPrivate: formData.isPrivate,
-      event_tags: formData.tags
-    };
-  
-    try {
-      const response = await fetch("https://send-email-7aikp3s36a-uc.a.run.app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(EmailData),
-      });
- 
-      if (response.ok) {
-        console.log("Email sent successfully");
-      } else {
-        console.error("Failed to send email. Status:", response.status);
-      }
-    } catch (error) {
-      console.error("An error occurred while sending the email:", error);
-    }
-  }
-  
-  
   async function convertFormDataToEventData(
-    formData: FormData,
+    formData: CreateEventFormData,
     user: UserData,
     imageUrl: string
   ): Promise<NewEventData> {
