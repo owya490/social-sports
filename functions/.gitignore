@@ -4,3 +4,8 @@ functions_key.json
 *.log
 /lib/__pycache__/
 *__pycache__*
+__pycache__/
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class

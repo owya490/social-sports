@@ -3,7 +3,7 @@
 #########################
 
 import json
-import logging
+import uuid
 from dataclasses import dataclass
 
 import stripe
@@ -12,6 +12,7 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import DocumentReference, Transaction
 from lib.constants import db
+from lib.logging import Logger
 from lib.stripe.commons import ERROR_URL
 
 REFRESH_URL = "http://localhost:3000/stripe/refreshAccountLink"
@@ -29,19 +30,19 @@ class CreateStandardStripeAccountRequest:
       
 
 @firestore.transactional
-def check_and_update_organiser_stripe_account(transaction: Transaction, organiser_ref: DocumentReference, return_url: str, refresh_url: str):
+def check_and_update_organiser_stripe_account(transaction: Transaction, logger: Logger, organiser_ref: DocumentReference, return_url: str, refresh_url: str):
 
   # Check if organiser exists and attempt to get details
   maybe_organiser = organiser_ref.get(transaction=transaction)
   if (not maybe_organiser.exists):
-    logging.error(f"Provided Organiser {organiser_ref.path} was not found in the database.")
+    logger.error(f"Provided Organiser {organiser_ref.path} was not found in the database.")
     return json.dumps({"url": ERROR_URL})
   
   organiser = maybe_organiser.to_dict()
 
   # If stripe account id exists and is active, return to previous page
   if (organiser.get("stripeAccount") != None and organiser.get("stripeAccountActive") == True):
-    logging.info(f"Provided Organiser {organiser_ref.path} already has an active stripe account.")
+    logger.info(f"Provided Organiser {organiser_ref.path} already has an active stripe account.")
     return json.dumps({"url": return_url})
 
   # 1. first check if the calling organiser already has a stripe account
@@ -56,7 +57,7 @@ def check_and_update_organiser_stripe_account(transaction: Transaction, organise
       return_url=return_url,
       type="account_onboarding",
     )
-    logging.info(f"Created a new standard stripe account onboarding workflow for the provided organiser {organiser_ref.path}.")
+    logger.info(f"Created a new standard stripe account onboarding workflow for the provided organiser {organiser_ref.path}.")
     return json.dumps({"url": link["url"]})
   
   else:
@@ -70,28 +71,33 @@ def check_and_update_organiser_stripe_account(transaction: Transaction, organise
         return_url=return_url,
         type="account_onboarding",
       )
-      logging.info(f"Reactivating the onboarding workflow for provided organiser {organiser_ref.path} as they didn't complete earlier.")
+      logger.info(f"Reactivating the onboarding workflow for provided organiser {organiser_ref.path} as they didn't complete earlier.")
       return json.dumps({"url": link["url"]})
 
     else:
       # 3b. they have everything done, so flick switch for stripeAccount done and bring to organiser dashboard 
       transaction.update(organiser_ref, {"stripeAccountActive": True})
-      logging.info(f"Provided organiser {organiser_ref.path} already has all charges enabled and details submitted. Activiating their sportshub stripe account.")
+      logger.info(f"Provided organiser {organiser_ref.path} already has all charges enabled and details submitted. Activiating their sportshub stripe account.")
       return json.dumps({"url": return_url})
 
 
 @https_fn.on_call(region="australia-southeast1")
 def create_stripe_standard_account(req: https_fn.CallableRequest):
+  uid = str(uuid.uuid4())
+  logger = Logger(f"stripe_create_account_logger_{uid}")
+  logger.add_tag("uuid", uid)
+
   body_data = req.data
   
   # Validate the incoming request to contain the necessary fields
   try:
     request_data = CreateStandardStripeAccountRequest(**body_data)
   except ValueError as v:
-    logging.warning(f"Request body did not contain necessary fields. Error was thrown: {v}. Returned status=400")
+    logger.warning(f"Request body did not contain necessary fields. Error was thrown: {v}. Returned status=400")
     return json.dumps({"url": ERROR_URL})
 
+  logger.add_tag("organiser", request_data.organiser)
+  
   transaction = db.transaction()
   organiser_ref = db.collection("Users").document(request_data.organiser)
-
   return check_and_update_organiser_stripe_account(transaction, organiser_ref, request_data.returnUrl, REFRESH_URL)

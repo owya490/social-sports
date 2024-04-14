@@ -3,8 +3,8 @@
 ###############################
 
 import json
-import logging
 import time
+import uuid
 from dataclasses import dataclass
 
 import stripe
@@ -13,6 +13,7 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import db
+from lib.logging import Logger
 from lib.stripe.commons import ERROR_URL
 
 
@@ -33,11 +34,10 @@ class StripeCheckoutRequest:
     if not isinstance(self.cancelUrl, str):
       raise ValueError("Cancel Url must be provided as a string.")
 
-# TODO: dataclass for event schema in db
 
 @firestore.transactional
-def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_id: str, quantity: int, is_private: bool, cancel_url: str):
-
+def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger: Logger, event_id: str, quantity: int, is_private: bool, cancel_url: str):
+  logger.info(f"Creating stripe checkout session for {event_id} for {quantity} tickets.")
   private_path = "Private" if is_private else "Public"
 
   event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
@@ -45,7 +45,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
 
   # Check if the event exists, if not error out
   if (not maybe_event.exists):
-    logging.error(f"Provided event {event_ref.path} does not exist in the database. Returning status=404")
+    logger.error(f"Provided event {event_ref.path} does not exist in the database. Returning status=404")
     return json.dumps({"url": ERROR_URL})
   
   event = maybe_event.to_dict()
@@ -53,23 +53,24 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
   # 1. check for event is stripe enabled
   if (not event.get("paymentsActive")):
     print("Payments not active")
-    logging.error(f"Provided event {event_ref.path} does not have payments enabled. Returning status=500")
+    logger.error(f"Provided event {event_ref.path} does not have payments enabled. Returning status=500")
     return json.dumps({"url": cancel_url})
 
   organiser_id = event.get("organiserId")
+  logger.info(f"Event with id {event_id} has organiser with id {organiser_id}.")
   organiser_ref = db.collection("Users").document(organiser_id)
   maybe_organiser = organiser_ref.get(transaction=transaction)
   
   # Check if the organiser exists, if not error out
   if (not maybe_organiser.exists):
-    logging.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not exist in the database. Returning status=404")
+    logger.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not exist in the database. Returning status=404")
     return json.dumps({"url": ERROR_URL})
 
   organiser = maybe_organiser.to_dict()
 
   # 2a. check for event organiser has stripe account
   if (organiser.get("stripeAccount") == None):
-    logging.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not have a stripe account. Returning status=500")
+    logger.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not have a stripe account. Returning status=500")
     return json.dumps({"url": ERROR_URL})
   
   # 2b. check if the stripe account is active
@@ -78,17 +79,17 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
     # if its not active, double check to see if this is the n+1 iteration, hence if they have charges enabled and details submitted for stripe, open their account, else error out
     if account.charges_enabled and account.details_submitted:
       transaction.update(organiser_ref, {"stripeAccountActive": True})
-      logging.info(f"Provided organiser {organiser_ref.path} already has all charges enabled and details submitted. Activiating their sportshub stripe account.")
+      logger.info(f"Provided organiser {organiser_ref.path} already has all charges enabled and details submitted. Activiating their sportshub stripe account.")
 
     else:
-      logging.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not have a active stripe account. charges_enabled={account.charges_enabled} details_submitted={account.details_submitted} Returning status=500")
+      logger.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not have a active stripe account. charges_enabled={account.charges_enabled} details_submitted={account.details_submitted} Returning status=500")
       return json.dumps({"url": ERROR_URL})
 
   # 3. check again with database in transction in the backend if quantity is still available
   vacancy = event.get("vacancy")
 
   if vacancy < quantity:
-    logging.warning(f"Provided event {event_ref.path} does not have enough tickets to fulfill this order. quantity_requested={quantity} vacancy={vacancy}")
+    logger.warning(f"Provided event {event_ref.path} does not have enough tickets to fulfill this order. quantity_requested={quantity} vacancy={vacancy}")
     return json.dumps({"url": cancel_url})
   
   # 4. obtain price and organiser stripe account id again from db
@@ -97,12 +98,12 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
 
   # 4a. check if the price exists for this event
   if (price == None or not isinstance(price, int) or price <= 1): # we don't want events to be less than stripe fees
-    logging.error(f"Provided event {event_ref.path} does not have a valid price. Returning status=500")
+    logger.error(f"Provided event {event_ref.path} does not have a valid price. Returning status=500")
     return json.dumps({"url": ERROR_URL})
 
   # 5. set the tickets as sold and reduce vacancy (prevent race condition/ over selling, we will release tickets back after cancelled sale)
   transaction.update(event_ref, {"vacancy": vacancy - quantity })
-  logging.info(f"Securing {quantity} tickets for event {event_ref.path} at ${price}. There are now {vacancy - quantity} tickets left.")
+  logger.info(f"Securing {quantity} tickets for event {event_ref.path} at ${price}. There are now {vacancy - quantity} tickets left.")
 
   # 6. create checkout session with connected account and return link
   checkout = stripe.checkout.Session.create(
@@ -132,21 +133,25 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, event_i
     expires_at=int(time.time() + 1800) # Checkout session expires in 5 minutes
   )
 
-  logging.info(f"Creating checkout session {checkout.id} for event {event_ref.path}, linked to {organiser_ref.path} and their stripe account {organiser_stripe_account_id}. Secured {quantity} tickets at ${price}.")
+  logger.info(f"Creating checkout session {checkout.id} for event {event_ref.path}, linked to {organiser_ref.path} and their stripe account {organiser_stripe_account_id}. Secured {quantity} tickets at ${price}.")
   return json.dumps({"url": checkout.url})
 
 
 @https_fn.on_call(cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
 def get_stripe_checkout_url_by_event_id(req: https_fn.CallableRequest):
+  uid = str(uuid.uuid4())
+  logger = Logger(f"stripe_checkout_logger_{uid}")
+  logger.add_tag("uuid", uid)
+
   body_data = req.data
 
   # Validate the incoming request to contain the necessary fields
   try:
     request_data = StripeCheckoutRequest(**body_data)
   except ValueError as v:
-    logging.warning(f"Request body did not contain necessary fields. Error was thrown: {v}. Returned status=400")
-    #TODO return early
+    logger.warning(f"Request body did not contain necessary fields. Error was thrown: {v}. Returned status=400")
+    return json.dumps({"url": ERROR_URL})
 
+  logger.add_tag("eventId", request_data.eventId)
   transaction = db.transaction()
-
-  return create_stripe_checkout_session_by_event_id(transaction, request_data.eventId, request_data.quantity, request_data.isPrivate, request_data.cancelUrl)
+  return create_stripe_checkout_session_by_event_id(transaction, logger, request_data.eventId, request_data.quantity, request_data.isPrivate, request_data.cancelUrl)
