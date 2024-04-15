@@ -6,6 +6,16 @@ export type EventId = string;
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;
 
+export type EventAttendees = { [emailHash: string]: number };
+
+export type EventAttendeesMetadata = {
+  [emailHash: string]: {
+    email: string;
+    names: string[];
+    phones: string[];
+  };
+};
+
 interface AbstractEventData {
   startDate: Timestamp;
   endDate: Timestamp;
@@ -26,7 +36,8 @@ interface AbstractEventData {
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
   isPrivate: boolean;
-  attendees: { email: string }[];
+  attendees: EventAttendees;
+  attendeesMetadata: EventAttendeesMetadata;
   accessCount: number;
   sport: string;
 }
@@ -62,7 +73,8 @@ export const EmptyEventData: EventData = {
   image: "",
   eventTags: [],
   isActive: false,
-  attendees: [],
+  attendees: {},
+  attendeesMetadata: {},
   accessCount: 0,
   sport: "",
   isPrivate: false,

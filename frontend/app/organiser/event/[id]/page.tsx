@@ -8,7 +8,7 @@ import EventDrilldownSharePage from "@/components/organiser/EventDrilldownShareP
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
-import { EventData, EventId } from "@/interfaces/EventTypes";
+import { EventAttendees, EventAttendeesMetadata, EventData, EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
@@ -47,6 +47,8 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventImage, setEventImage] = useState<string>("");
   const [eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
+  const [eventAttendeesNumTickets, setEventAttendeesNumTickets] = useState<EventAttendees>({});
+  const [eventAttendeesMetadata, setEventAttendeesMetadata] = useState<EventAttendeesMetadata>({});
 
   const router = useRouter();
 
@@ -65,6 +67,8 @@ export default function EventPage({ params }: EventPageProps) {
         setEventImage(event.image);
         setEventAccessCount(event.accessCount);
         setEventCapacity(event.capacity);
+        setEventAttendeesNumTickets(event.attendees);
+        setEventAttendeesMetadata(event.attendeesMetadata);
       })
       .finally(async () => {
         await sleep(500);
@@ -116,7 +120,12 @@ export default function EventPage({ params }: EventPageProps) {
                 eventImage={eventImage}
               />
             )}
-            {currSidebarPage === "Manage Attendees" && <EventDrilldownManageAttendeesPage />}
+            {currSidebarPage === "Manage Attendees" && (
+              <EventDrilldownManageAttendeesPage
+                eventAttendeesNumTickets={eventAttendeesNumTickets}
+                eventAttendeesMetadata={eventAttendeesMetadata}
+              />
+            )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
             {currSidebarPage === "Share" && <EventDrilldownSharePage />}
           </div>

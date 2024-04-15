@@ -115,6 +115,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       eventTags: event.eventTags,
       isActive: event.isActive,
       attendees: event.attendees,
+      attendeesMetadata: event.attendeesMetadata,
       accessCount: event.accessCount,
       sport: event.sport,
       locationLatLng: {
