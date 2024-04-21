@@ -17,7 +17,7 @@ const EventDrilldownAttendeeCard = ({ tickets, name, email, number }: EventDrill
         <div className="">{name}</div>
       </div>
       <div className="col-span-3">{email}</div>
-      <div className="col-span-1">{number}</div>
+      <div className={`col-span-1 ${number === null ? "text-gray-300" : ""}`}>{number === null ? "N/A" : number}</div>
       <EllipsisVerticalIcon className="w-6" />
     </div>
   );
