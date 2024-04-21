@@ -13,6 +13,8 @@ import {
 import Skeleton from "react-loading-skeleton";
 import { Timestamp } from "firebase/firestore";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import EventDescription from "../events/EventDescription";
+import EventDrilldownDescription from "./EventDrilldownDescription";
 
 interface EventDrilldownDetailsPageProps {
   loading: boolean;
@@ -134,7 +136,7 @@ const EventDrilldownDetailsPage = ({
         </div>
         <PencilSquareIcon className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text" />{" "}
       </div>
-      <div className="h-20 border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 pt-2 relative">
+      <div className="pb-3 border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 pt-2 relative">
         <div className="text-organiser-title-gray-text font-bold">Event Description</div>
         <div className="text-sm mt-4">
           {loading ? (
@@ -144,7 +146,7 @@ const EventDrilldownDetailsPage = ({
               }}
             />
           ) : (
-            eventDescription
+            <EventDrilldownDescription description={eventDescription} />
           )}
         </div>
         <PencilSquareIcon className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text" />{" "}
