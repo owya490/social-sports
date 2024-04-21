@@ -8,6 +8,8 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  getAuth,
+  sendPasswordResetEmail
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -108,4 +110,18 @@ export async function handleFacebookSignIn() {
  */
 export function isLoggedIn(): boolean {
   return authUser !== null;
+}
+
+
+export async function resetUserPassword(email: string): Promise<void> {
+  try {
+    // Send password reset email
+    sendPasswordResetEmail(auth, email)
+    // Password reset email sent successfully
+    console.log(`Password reset email sent to ${email}`);
+  } catch (error) {
+    // Handle errors
+    console.error('Error sending password reset email:', error);
+    throw error; // Rethrow the error for the caller to handle if needed
+  }
 }
