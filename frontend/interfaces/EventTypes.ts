@@ -2,6 +2,7 @@ import { Timestamp } from "firebase/firestore";
 import { EmptyUserData, UserData } from "./UserTypes";
 
 export type EventId = string;
+export type StripeCheckoutSessionId = string;
 
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;
@@ -27,9 +28,22 @@ interface AbstractEventData {
   isActive: boolean;
   isPrivate: boolean;
   attendees: Record<string, number>; // Key is Email and Number is amount of tickets associated with the email
-  attendeesMetadata: Record<string, {names: string[]; phones: string[];}>; // keeping track of an array with names and phones provided
+  attendeesMetadata: Record<string, { names: string[]; phones: string[] }>; // keeping track of an array with names and phones provided
   accessCount: number;
   sport: string;
+}
+
+export interface EventsMetadata {
+  eventId: EventId;
+  attendees: Record<string, EventsAttendeeMetadata>;
+  completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
+}
+
+export interface EventsAttendeeMetadata {
+  email: string;
+  names: string[];
+  phones: string[];
+  ticketCount: number;
 }
 
 export interface NewEventData extends AbstractEventData {}

@@ -62,6 +62,7 @@ export const EmptyNewUserData: NewUserData = {
   surname: "",
   dob: "",
 };
+
 export const EmptyUserData: UserData = {
   userId: "",
   firstName: "",
