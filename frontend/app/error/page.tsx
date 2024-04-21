@@ -2,12 +2,7 @@
 
 import { useEffect } from "react";
 
-export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  useEffect(() => {
-    // Log the error to an error reporting service
-    console.error(error);
-  }, [error]);
-
+export default function Error() {
   return (
     <div className="h-screen w-full flex justify-center items-center">
       <div className="text-center">
