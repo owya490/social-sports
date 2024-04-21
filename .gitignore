@@ -12,3 +12,4 @@ node_modules
 */.next/*
 .next
 *.log
+functions/__pycache__/main.cpython-311.pyc

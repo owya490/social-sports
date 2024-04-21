@@ -126,23 +126,6 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
       "phones": list(set(list(current_attendee_phones) + [customer.phone]))
     }
   })
-
-  # # Increment will set the field to the given value if the field does not exist/ not numeric value
-  # transaction.update(event_ref, {f"attendees.{email_hash}": firestore.Increment(item.quantity)})
-  # logger.info("Successfully updated the attendee email ticket count.")
-
-  # # Update our attendee metadata with their names and phone numbers
-  # transaction.update(
-  #   event_ref, 
-  #   {
-  #     f"attendeesMetadata.{email_hash}": {
-  #       "email": customer.email,
-  #       # TODO: fix this, it doesn't work adding names ontop of each other
-  #       "names" : firestore.ArrayUnion([customer.name]),
-  #       "phones": firestore.ArrayUnion([customer.phone])
-  #     } 
-  #   }
-  # )
   logger.info(f"Updated attendee list to reflect newly purchased tickets. email={customer.email}, name={customer.name}")
 
   # Quickly reconcile vacancy while we are at it to ensure there wasn't any discrepancy
