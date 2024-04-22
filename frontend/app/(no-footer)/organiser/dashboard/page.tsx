@@ -3,6 +3,7 @@ import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import { OrganiserEventCardProps } from "@/components/events/OrganiserEventCard";
 import { Timestamp } from "firebase/firestore";
 import { UserData } from "@/interfaces/UserTypes";
+import Link from "next/link";
 
 // const sampleOrganiser: UserData = {
 //   userId: "",
@@ -46,13 +47,17 @@ export default function Dashboard() {
             </div>
             <div className="flex mt-8">
               <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-24 mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                <p className="">Create an event template</p>
+                <Link href="/event/create">
+                  <p className="">Create an event template</p>
+                </Link>
               </div>
               <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-24 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                <p className="">Edit your profile</p>
+                <Link href="/profile">
+                  <p className="">Edit your profile</p>
+                </Link>
               </div>
             </div>
-            <div className="flex mt-8">
+            {/* <div className="flex mt-8">
               <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-16 mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                 <p>No. of Upcoming Events</p>
                 <p>12</p>
@@ -61,7 +66,7 @@ export default function Dashboard() {
                 <p>Tickets Sold</p>
                 <p>100</p>
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="bg-organiser-light-gray p-8 rounded-2xl w-1/3">
             <h1 className="text-2xl font-bold text-center">Upcoming Events</h1>
