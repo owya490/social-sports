@@ -25,16 +25,17 @@ const EventDrilldownManageAttendeesPage = ({
         </div>
         <div className="inline-block w-full h-0.5 my-2 self-stretch bg-organiser-title-gray-text"></div>
         <div className="">
-          {Object.entries(eventAttendeesMetadata).map(([emailHash, value]) => {
-            return (
-              <EventDrilldownAttendeeCard
-                name={value.names[0]}
-                email={value.email}
-                number={value.phones[0]}
-                tickets={eventAttendeesNumTickets[emailHash]}
-              />
-            );
-          })}
+          {eventAttendeesMetadata &&
+            Object.entries(eventAttendeesMetadata).map(([emailHash, value]) => {
+              return (
+                <EventDrilldownAttendeeCard
+                  name={value.names[0]}
+                  email={value.email}
+                  number={value.phones[0]}
+                  tickets={eventAttendeesNumTickets[emailHash]}
+                />
+              );
+            })}
           {/* <EventDrilldownAttendeeCard
             name="Duriana Smith"
             email="duriana.smith456@gmail.com"
