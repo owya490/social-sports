@@ -1,4 +1,4 @@
-import { EmptyEventData, EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
@@ -13,9 +13,11 @@ import {
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
 
+import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { useRouter } from "next/navigation";
 import { db } from "../firebase";
-import { getPublicUserById } from "../users/usersService";
+import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -30,8 +32,6 @@ import {
   getAllEventsFromCollectionRef,
   tryGetAllActisvePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
-import { useRouter } from "next/navigation";
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -52,6 +52,9 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     let isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
     let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
     const docRef = await addDoc(collection(db, CollectionPaths.Events, isActive, isPrivate), eventDataWithTokens);
+    const user = await getPrivateUserById(data.organiserId);
+    user.organiserEvents?.push(docRef.id);
+    await updateUser(data.organiserId, user);
     eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
