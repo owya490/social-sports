@@ -5,6 +5,8 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  doc,
+  getDoc,
   getDocs,
   increment,
   query,
@@ -15,8 +17,8 @@ import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./
 
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { useRouter } from "next/navigation";
 import { db } from "../firebase";
+import { UserNotFoundError } from "../users/userErrors";
 import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import {
   createEventCollectionRef,
@@ -53,7 +55,12 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
     const docRef = await addDoc(collection(db, CollectionPaths.Events, isActive, isPrivate), eventDataWithTokens);
     const user = await getPrivateUserById(data.organiserId);
-    user.organiserEvents?.push(docRef.id);
+    if (user.organiserEvents == undefined) {
+      user.organiserEvents = [docRef.id];
+    } else {
+      user.organiserEvents.push(docRef.id);
+    }
+    console.log("create event user", user);
     await updateUser(data.organiserId, user);
     eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
@@ -135,6 +142,32 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   } catch (error) {
     console.error("Error getting all events:", error);
     eventServiceLogger.error(`Error getting all events ${error}`);
+    throw error;
+  }
+}
+
+export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
+  eventServiceLogger.info(`getOrganiserEvents`);
+  try {
+    const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
+
+    if (!privateDoc.exists()) {
+      throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
+    }
+    const privateData = privateDoc.data();
+    const organiserEvents = privateData?.organiserEvents || [];
+    const eventDataList: EventData[] = [];
+    for (let i = 0; i < organiserEvents.length; i++) {
+      const event = organiserEvents[i];
+      console.log(event); // Or perform any other operation with 'event'
+      const eventData: EventData = await getEventById(event);
+      eventData.eventId = event;
+      eventDataList.push(eventData);
+    }
+    // Return the organiserEvents array
+    console.log(eventDataList);
+    return eventDataList;
+  } catch (error) {
     throw error;
   }
 }

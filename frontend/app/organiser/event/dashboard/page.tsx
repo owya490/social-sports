@@ -1,4 +1,5 @@
 "use client";
+import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 // import OrganiserFilterDialog, {
 //   DAY_END_TIME_STRING,
 //   DAY_START_TIME_STRING,
@@ -12,10 +13,10 @@
 //   DEFAULT_START_DATE,
 //   SortByCategory,
 // } from "@/components/Filter/OrganiserFilterDialog";
-import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { getOrganiserEvents } from "@/services/src/events/eventsService";
 // import {
 //   filterEventsByDate,
 //   filterEventsByPrice,
@@ -142,29 +143,19 @@ export default function OrganiserDashboard() {
   });
 
   useEffect(() => {
-    const login = searchParams?.get("login");
-    if (login === "success") {
-      setShowLoginSuccess(true);
-
-      router.replace("/organiser/event/dashboard");
-    }
-  }, [router, searchParams]);
-
-  useEffect(() => {
-    let timer: number | undefined;
-
-    if (showLoginSuccess) {
-      timer = window.setTimeout(() => {
-        setShowLoginSuccess(false);
-      }, 3000);
-    }
-
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
+    const fetchData = async () => {
+      try {
+        const events = await getOrganiserEvents(user.userId);
+        setEventDataList(events);
+      } catch (error) {
+        // Handle errors here
       }
     };
-  }, [showLoginSuccess]);
+    fetchData();
+    setLoading(false);
+  }, [user]);
+
+  console.log("eventswsss", eventDataList);
 
   return (
     <div className="w-screen mt-16 mb-10 ml-7 h-screen max-h-screen overflow-hidden">
@@ -217,6 +208,12 @@ export default function OrganiserDashboard() {
                     loading={loading}
                   />
                 </div>
+
+                // <div>
+                //   <div>12312312313213</div>
+                //   {event.eventId}
+                //   {event.name}
+                // </div>
               );
             })}
         </div>

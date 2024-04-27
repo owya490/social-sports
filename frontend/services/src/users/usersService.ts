@@ -140,11 +140,15 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>): Pr
 
     // Update public user data
     const publicDataToUpdate = extractPublicUserData(newData);
+
     await updateDoc(publicUserDocRef, publicDataToUpdate);
 
     // Update private user data
     const privateDataToUpdate = extractPrivateUserData(newData);
+
     await updateDoc(privateUserDocRef, privateDataToUpdate);
+    console.log("update pub", publicDataToUpdate);
+    console.log("update pri", privateDataToUpdate);
     userServiceLogger.info(`User updated successfully:", ${userId}`);
   } catch (error) {
     userServiceLogger.error(`Error updating user with ID ${userId}:, ${error}`);
