@@ -1,7 +1,7 @@
 // BasicInformation.tsx
 
 import { UserData } from "@/interfaces/UserTypes";
-import { getStripeStandardAccounLink } from "@/services/src/stripeService";
+import { getStripeStandardAccounLink } from "@/services/src/stripe/stripeService";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,8 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
+import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 
 type BasicData = {
   name: string;
@@ -259,7 +261,7 @@ export function BasicInformation({
               onClick={async () => {
                 setLoading(true);
                 window.scrollTo(0, 0);
-                const link = await getStripeStandardAccounLink(user.userId, "http://localhost:3000/organiser");
+                const link = await getStripeStandardAccounLink(user.userId, getUrlWithCurrentHostname("/organiser"), getRefreshAccountLinkUrl());
                 router.push(link);
               }}
             >

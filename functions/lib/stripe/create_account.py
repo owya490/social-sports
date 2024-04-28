@@ -19,10 +19,13 @@ REFRESH_URL = "http://localhost:3000/stripe/refreshAccountLink"
 
 @dataclass
 class CreateStandardStripeAccountRequest:
+  refreshUrl: str
   returnUrl: str
   organiser: str
   
   def __post_init__(self):
+    if not isinstance(self.refreshUrl, str):
+      raise ValueError("Refresh Url must be provided as a string.")
     if not isinstance(self.returnUrl, str):
       raise ValueError("Return Url must be provided as a string.")
     if not isinstance(self.organiser, str):
@@ -46,8 +49,8 @@ def check_and_update_organiser_stripe_account(transaction: Transaction, logger: 
     return json.dumps({"url": return_url})
 
   # 1. first check if the calling organiser already has a stripe account
-  organiser_stripe_account = organiser.get("stripeAccount")
-  if organiser_stripe_account == None:
+  organiser_stripe_account_id = organiser.get("stripeAccount")
+  if organiser_stripe_account_id is None:
     # 2a. if they dont, make a new stripe account and call account link
     account = stripe.Account.create(type="standard")
     transaction.update(organiser_ref, {"stripeAccount": account.id, "stripeAccountActive": False})
@@ -58,11 +61,11 @@ def check_and_update_organiser_stripe_account(transaction: Transaction, logger: 
       type="account_onboarding",
     )
     logger.info(f"Created a new standard stripe account onboarding workflow for the provided organiser {organiser_ref.path}.")
-    return json.dumps({"url": link["url"]})
+    return json.dumps({"url": link.url})
   
   else:
     # 2b. if they do, check if they need to sign up more
-    account = stripe.Account.retrieve(organiser_stripe_account)
+    account = stripe.Account.retrieve(organiser_stripe_account_id)
     if not account.charges_enabled or not account.details_submitted:
       # 3a. if they have don't have charges enabled or details submitted, then bring back to register page
       link = stripe.AccountLink.create(
@@ -100,4 +103,4 @@ def create_stripe_standard_account(req: https_fn.CallableRequest):
   
   transaction = db.transaction()
   organiser_ref = db.collection("Users").document(request_data.organiser)
-  return check_and_update_organiser_stripe_account(transaction, organiser_ref, request_data.returnUrl, REFRESH_URL)
+  return check_and_update_organiser_stripe_account(transaction, logger, organiser_ref, request_data.returnUrl, request_data.refreshUrl)

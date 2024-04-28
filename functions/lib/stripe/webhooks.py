@@ -39,12 +39,10 @@ class SessionMetadata:
 
 
 def check_if_session_has_been_processed_already(logger: Logger, checkout_session_id: str, event_id: str) -> bool:
-  event_metadata_ref = db.collection(f"EventsMetadata").document(event_id)
-
-  maybe_event_metadata = event_metadata_ref.get()
+  maybe_event_metadata = db.collection(f"EventsMetadata").document(event_id).get()
 
   if (not maybe_event_metadata.exists):
-    logger.error(f"Unable to find event provided in datastore to fulfill purchase. eventId={event_id}, isPrivate={is_private}")
+    logger.error(f"Unable to find event provided in datastore to fulfill purchase. eventId={event_id}")
     return False
   
   event_metadata = maybe_event_metadata.to_dict()
@@ -96,7 +94,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
   }
   # If event metadata already exists, use the exisitng data and increment
   if (maybe_event_metadata.exists):
-    event_metadata = maybe_event_metadata.to_dict()
+    event_metadata = maybe_event_metadata.to_dict() 
 
   logger.info(f"event-metadata {event_metadata}")
 

@@ -79,7 +79,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
     # if its not active, double check to see if this is the n+1 iteration, hence if they have charges enabled and details submitted for stripe, open their account, else error out
     if account.charges_enabled and account.details_submitted:
       transaction.update(organiser_ref, {"stripeAccountActive": True})
-      logger.info(f"Provided organiser {organiser_ref.path} already has all charges enabled and details submitted. Activiating their sportshub stripe account.")
+      logger.info(f"Provided organiser {organiser_ref.path} already has all charges enabled and details submitted. Activating their sportshub stripe account.")
 
     else:
       logger.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not have a active stripe account. charges_enabled={account.charges_enabled} details_submitted={account.details_submitted} Returning status=500")
@@ -97,7 +97,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   organiser_stripe_account_id = organiser.get("stripeAccount")
 
   # 4a. check if the price exists for this event
-  if (price == None or not isinstance(price, int) or price <= 1): # we don't want events to be less than stripe fees
+  if (price == None or not isinstance(price, float) or price <= 1): # we don't want events to be less than stripe fees
     logger.error(f"Provided event {event_ref.path} does not have a valid price. Returning status=500")
     return json.dumps({"url": ERROR_URL})
 
@@ -130,7 +130,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
     success_url="https://example.com/success",
     cancel_url=cancel_url,
     stripe_account= organiser_stripe_account_id,
-    expires_at=int(time.time() + 1800) # Checkout session expires in 5 minutes
+    expires_at=int(time.time() + 1800) # Checkout session expires in 30 minutes (stripe minimum)
   )
 
   logger.info(f"Creating checkout session {checkout.id} for event {event_ref.path}, linked to {organiser_ref.path} and their stripe account {organiser_stripe_account_id}. Secured {quantity} tickets at ${price}.")
@@ -154,4 +154,9 @@ def get_stripe_checkout_url_by_event_id(req: https_fn.CallableRequest):
 
   logger.add_tag("eventId", request_data.eventId)
   transaction = db.transaction()
-  return create_stripe_checkout_session_by_event_id(transaction, logger, request_data.eventId, request_data.quantity, request_data.isPrivate, request_data.cancelUrl)
+  return create_stripe_checkout_session_by_event_id(transaction, 
+                                                    logger, 
+                                                    request_data.eventId, 
+                                                    request_data.quantity, 
+                                                    request_data.isPrivate, 
+                                                    request_data.cancelUrl)

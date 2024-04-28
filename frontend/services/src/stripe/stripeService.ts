@@ -5,7 +5,8 @@ import {
   FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT,
   FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID,
   getFirebaseFunctionByName,
-} from "./firebaseFunctionsService";
+} from "../firebaseFunctionsService";
+import { getUrlWithCurrentHostname } from "../urlUtils";
 
 interface StripeCreateStandardAccountResponse {
   url: string;
@@ -17,16 +18,15 @@ interface StripeGetCheckoutUrlResponse {
 
 const stripeServiceLogger = new Logger("stripeServiceLogger");
 
-export async function getStripeStandardAccounLink(organiserId: string, returnUrl: string) {
+export async function getStripeStandardAccounLink(organiserId: string, returnUrl: string, refreshUrl: string) {
   const content = {
     organiser: organiserId,
     returnUrl: returnUrl,
+    refreshUrl: refreshUrl
   };
   const createAccountFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT);
-  console.log(createAccountFunction);
   return createAccountFunction(content)
     .then((result) => {
-      console.log(result);
       const data = JSON.parse(result.data as string) as StripeCreateStandardAccountResponse;
       return data.url;
     })
@@ -42,7 +42,7 @@ export async function getStripeCheckoutFromEventId(eventId: EventId, isPrivate: 
     eventId: eventId,
     isPrivate: isPrivate,
     quantity: quantity,
-    cancelUrl: `http://localhost:3000/event/${eventId}`,
+    cancelUrl: getUrlWithCurrentHostname(`/event/${eventId}`),
   };
   const getStripeCheckoutFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID);
   return getStripeCheckoutFunction(content)

@@ -25,7 +25,7 @@ class Logger():
     self.logger.info(message, extra={"labels": tags | self.tags})
   
   def warning(self, message, tags={}):
-    self.logger.warn(message, extra={"labels": tags | self.tags})
+    self.logger.warning(message, extra={"labels": tags | self.tags})
   
   def error(self, message, tags={}):
     self.logger.error(message, extra={"labels": tags | self.tags})

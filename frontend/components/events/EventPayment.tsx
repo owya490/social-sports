@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { EventId } from "@/interfaces/EventTypes";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
-import { getStripeCheckoutFromEventId } from "@/services/src/stripeService";
+import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
 import { CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
@@ -22,6 +22,8 @@ interface EventPaymentProps {
 
 export default function EventPayment(props: EventPaymentProps) {
   const router = useRouter();
+
+  // Stub code for SPORTSHUB-77: feature for selecting amount of tickets sold per transaction, as currently defaults to 1.
   const [guestCount, setGuestCount] = useState(1);
 
   const handleGuestCountChange = (count: number) => {
