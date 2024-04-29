@@ -1,10 +1,12 @@
-import { EmptyEventData, EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
   addDoc,
   collection,
   deleteDoc,
+  doc,
+  getDoc,
   getDocs,
   increment,
   query,
@@ -13,9 +15,11 @@ import {
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
 
+import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "../firebase";
-import { getPublicUserById } from "../users/usersService";
+import { UserNotFoundError } from "../users/userErrors";
+import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -30,8 +34,6 @@ import {
   getAllEventsFromCollectionRef,
   tryGetAllActisvePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
-import { useRouter } from "next/navigation";
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -52,6 +54,14 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     let isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
     let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
     const docRef = await addDoc(collection(db, CollectionPaths.Events, isActive, isPrivate), eventDataWithTokens);
+    const user = await getPrivateUserById(data.organiserId);
+    if (user.organiserEvents == undefined) {
+      user.organiserEvents = [docRef.id];
+    } else {
+      user.organiserEvents.push(docRef.id);
+    }
+    console.log("create event user", user);
+    await updateUser(data.organiserId, user);
     eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
@@ -132,6 +142,32 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   } catch (error) {
     console.error("Error getting all events:", error);
     eventServiceLogger.error(`Error getting all events ${error}`);
+    throw error;
+  }
+}
+
+export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
+  eventServiceLogger.info(`getOrganiserEvents`);
+  try {
+    const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
+
+    if (!privateDoc.exists()) {
+      throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
+    }
+    const privateData = privateDoc.data();
+    const organiserEvents = privateData?.organiserEvents || [];
+    const eventDataList: EventData[] = [];
+    for (let i = 0; i < organiserEvents.length; i++) {
+      const event = organiserEvents[i];
+      console.log(event); // Or perform any other operation with 'event'
+      const eventData: EventData = await getEventById(event);
+      eventData.eventId = event;
+      eventDataList.push(eventData);
+    }
+    // Return the organiserEvents array
+    console.log(eventDataList);
+    return eventDataList;
+  } catch (error) {
     throw error;
   }
 }

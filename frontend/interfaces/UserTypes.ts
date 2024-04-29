@@ -1,5 +1,3 @@
-import { User } from "firebase/auth";
-
 export type UserId = string;
 
 interface AbstractUserData {
@@ -19,6 +17,7 @@ interface AbstractUserData {
     }
   ];
   profilePicture: string;
+  organiserEvents?: [string];
 }
 
 export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
