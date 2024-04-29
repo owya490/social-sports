@@ -1,9 +1,14 @@
+"use client";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import { OrganiserEventCardProps } from "@/components/events/OrganiserEventCard";
 import { Timestamp } from "firebase/firestore";
 import { UserData } from "@/interfaces/UserTypes";
 import Link from "next/link";
+import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { useEffect, useState } from "react";
+import { getAllEvents } from "@/services/src/events/eventsService";
+import { sleep } from "@/utilities/sleepUtil";
 
 // const sampleOrganiser: UserData = {
 //   userId: "",
@@ -27,6 +32,34 @@ import Link from "next/link";
 // };
 
 export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
+  const [eventDataList, setEventDataList] = useState<EventData[]>([
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+  ]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      getAllEvents()
+        .then((events) => {
+          setEventDataList(events);
+          setAllEventsDataList(events);
+        })
+        .finally(async () => {
+          await sleep(500);
+          setLoading(false);
+        });
+    };
+    fetchEvents();
+  }, []);
+
   return (
     <div className="pt-16 pl-14 h-full">
       <OrganiserNavbar currPage="Dashboard" />
@@ -57,16 +90,6 @@ export default function Dashboard() {
                 </Link>
               </div>
             </div>
-            {/* <div className="flex mt-8">
-              <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-16 mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                <p>No. of Upcoming Events</p>
-                <p>12</p>
-              </div>
-              <div className="flex-1 text-center font-semibold text-2xl bg-organiser-light-gray px-8 py-16 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                <p>Tickets Sold</p>
-                <p>100</p>
-              </div>
-            </div> */}
           </div>
           <div className="bg-organiser-light-gray p-8 rounded-2xl w-1/3">
             <h1 className="text-2xl font-bold text-center">Upcoming Events</h1>
