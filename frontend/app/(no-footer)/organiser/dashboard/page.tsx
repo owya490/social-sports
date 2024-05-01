@@ -1,75 +1,45 @@
 "use client";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserEventCard from "@/components/events/OrganiserEventCard";
-import { OrganiserEventCardProps } from "@/components/events/OrganiserEventCard";
 import { Timestamp } from "firebase/firestore";
 import { UserData } from "@/interfaces/UserTypes";
 import Link from "next/link";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { useEffect, useState } from "react";
-import { getAllEvents } from "@/services/src/events/eventsService";
+import { getAllEvents, getOrganiserEvents } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
-
-// const sampleOrganiser: UserData = {
-//   userId: "",
-//   firstName: "Sydney Thunder",
-//   profilePicture:
-//     "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
-//   surname: "Volleyball",
-//   dob: "",
-// };
-
-// let sampleEvent: OrganiserEventCardProps = {
-//   eventId: "5TMe1IEOYHlITKiR0Dw1",
-//   image:
-//     "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2F2izGPMqX9OZiXts0tCOcZ3CRPLm1%2F1707660757165_IMG_2602.PNG?alt=media&token=42cd1374-b265-4151-b8c5-2dc9c5deba3a",
-//   name: "First Ever Event!",
-//   organiser: sampleOrganiser,
-//   startTime: Timestamp.now(),
-//   location: "Sports Halls",
-//   price: 10,
-//   vacancy: 8,
-// };
+import { useUser } from "@/components/utility/UserContext";
 
 export default function Dashboard() {
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
-  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const [eventDataList, setEventDataList] = useState<EventData[]>([
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ]);
+  const [eventDataList, setEventDataList] = useState<EventData[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
-      getAllEvents()
-        .then((events) => {
-          setEventDataList(events);
-          setAllEventsDataList(events);
-        })
-        .finally(async () => {
-          await sleep(500);
-          setLoading(false);
-        });
+      try {
+        const events = await getOrganiserEvents(user.userId);
+        setEventDataList(events);
+      } catch (error) {
+        // Handle errors here
+      } finally {
+        setLoading(false);
+      }
     };
     fetchEvents();
-  }, []);
+    console.log(eventDataList);
+  }, [user]);
 
   return (
     <div className="pt-16 pl-14 h-full">
       <OrganiserNavbar currPage="Dashboard" />
-      <div className="py-20 pl-52 pr-64">
+      <div className="py-20 pl-32 pr-44 xl:pl-52 md:pr-64">
         <h1 className="text-5xl font-bold">Organiser Dashboard</h1>
         <h1 className="pt-4 text-4xl font-semibold text-[#BABABA]">Welcome Edwin</h1>
         <div className="flex w-full mt-8">
           <div className="grow mr-8">
             <div className="bg-organiser-light-gray p-8 rounded-2xl">
-              <h1 className="text-2xl font-semibold">Finish setting up</h1>
+              <h1 className="text-2xl font-bold">Finish setting up</h1>
               <ul className="list-disc ml-6 mt-4 space-y-2 text-lg">
                 <li className="hover:underline hover:cursor-pointer">Add a description</li>
                 <li className="hover:underline hover:cursor-pointer">Add a picture</li>
@@ -91,18 +61,40 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          <div className="bg-organiser-light-gray p-8 rounded-2xl w-1/3">
-            <h1 className="text-2xl font-bold text-center">Upcoming Events</h1>
-            {/* <OrganiserEventCard
-              eventId={sampleEvent.eventId}
-              image={sampleEvent.image}
-              name={sampleEvent.name}
-              organiser={sampleEvent.organiser}
-              startTime={sampleEvent.startTime}
-              location={sampleEvent.location}
-              price={sampleEvent.price}
-              vacancy={sampleEvent.vacancy}
-            /> */}
+          <div className="">
+            <div className="bg-organiser-light-gray p-4 rounded-2xl mb-6">
+              <h1 className="text-2xl font-bold text-center">Upcoming Events</h1>
+            </div>
+            <div className="">
+              {eventDataList
+                .sort((event1, event2) => {
+                  // TODO: Fix sort, need the soonest event first
+                  // if (event1.accessCount > event2.accessCount) {
+                  //   return 1;
+                  // }
+                  // if (event2.accessCount < event2.accessCount) {
+                  //   return -1;
+                  // }
+                  return 0;
+                })
+                .map((event, eventIdx) => {
+                  return (
+                    <div key={eventIdx}>
+                      <OrganiserEventCard
+                        eventId={event.eventId}
+                        image={event.image}
+                        name={event.name}
+                        organiser={event.organiser}
+                        startTime={event.startDate}
+                        location={event.location}
+                        price={event.price}
+                        vacancy={event.vacancy}
+                        loading={loading}
+                      />
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         </div>
       </div>
