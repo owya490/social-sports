@@ -80,6 +80,24 @@ export default function EventPage({ params }: EventPageProps) {
       });
   }, []);
 
+  useEffect(() => {
+    window.onscroll = () => {
+      if (window.scrollY > 310) {
+        document.getElementById("side-panel")!.classList.add("fixed");
+        document.getElementById("side-panel")!.classList.add("top-[110px]");
+        document.getElementById("event-drilldown-details-page")!.classList.add("ml-[296px]");
+      } else if (window.scrollY <= 310) {
+        document.getElementById("side-panel")!.classList.remove("fixed");
+        document.getElementById("side-panel")!.classList.remove("top-[110px]");
+        document.getElementById("event-drilldown-details-page")!.classList.remove("ml-[296px]");
+      }
+    };
+
+    return () => {
+      window.onscroll = null;
+    };
+  }, []);
+
   return (
     <div className="ml-14 mt-16">
       <OrganiserNavbar currPage="EventDrilldown" />
@@ -99,7 +117,7 @@ export default function EventPage({ params }: EventPageProps) {
           eventPrice={eventPrice}
         />
         <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
-          <div>
+          <div id="side-panel" className="z-50">
             <EventDrilldownSidePanel
               loading={loading}
               currSidebarPage={currSidebarPage}
@@ -108,7 +126,7 @@ export default function EventPage({ params }: EventPageProps) {
               eventStartDate={eventStartDate}
             />
           </div>
-          <div className="mx-auto w-full mx-20">
+          <div id="event-drilldown-details-page" className="mx-auto w-full mx-20 ml-[296px]">
             {currSidebarPage === "Details" && (
               <EventDrilldownDetailsPage
                 loading={loading}
