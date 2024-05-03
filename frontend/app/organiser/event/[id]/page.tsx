@@ -126,7 +126,7 @@ export default function EventPage({ params }: EventPageProps) {
               eventStartDate={eventStartDate}
             />
           </div>
-          <div id="event-drilldown-details-page" className="mx-auto w-full mx-20 ml-[296px]">
+          <div id="event-drilldown-details-page" className="mx-auto w-full mx-20">
             {currSidebarPage === "Details" && (
               <EventDrilldownDetailsPage
                 loading={loading}
