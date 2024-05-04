@@ -1,8 +1,6 @@
 import Image from "next/image";
 import React from "react";
 
-import BannerImage from "../../public/images/vball1.webp";
-import EditIcon from "../../public/images/edit-icon.svg";
 import {
   CalendarDaysIcon,
   ClockIcon,
