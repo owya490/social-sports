@@ -11,7 +11,6 @@ import {
 import Skeleton from "react-loading-skeleton";
 import { Timestamp } from "firebase/firestore";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
-import EventDescription from "../events/EventDescription";
 import EventDrilldownDescription from "./EventDrilldownDescription";
 
 interface EventDrilldownDetailsPageProps {

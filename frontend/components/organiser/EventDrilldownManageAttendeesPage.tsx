@@ -1,4 +1,4 @@
-import { EllipsisVerticalIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import React from "react";
 import EventDrilldownAttendeeCard from "./EventDrilldownAttendeeCard";
 import { EventAttendees, EventAttendeesMetadata } from "@/interfaces/EventTypes";
