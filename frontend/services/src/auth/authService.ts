@@ -10,14 +10,14 @@ import {
   signOut,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-// import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { auth, authUser, db } from "../firebase";
 import { createUser } from "../users/usersService";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
 export async function handleEmailAndPasswordSignUp(data: NewUserData) {
-  // const router = useRouter();
+  const router = useRouter();
   try {
     // Create a new user with email and password
     console.log(data);
@@ -33,7 +33,7 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
     } else {
       // Handle the case where userCredential.user is null
       console.error("User authentication failed");
-      // router.push("/error");
+      router.push("/error");
     }
   } catch (error) {
     throw error;
