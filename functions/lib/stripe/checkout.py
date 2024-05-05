@@ -154,9 +154,5 @@ def get_stripe_checkout_url_by_event_id(req: https_fn.CallableRequest):
 
   logger.add_tag("eventId", request_data.eventId)
   transaction = db.transaction()
-  return create_stripe_checkout_session_by_event_id(transaction, 
-                                                    logger, 
-                                                    request_data.eventId, 
-                                                    request_data.quantity, 
-                                                    request_data.isPrivate, 
-                                                    request_data.cancelUrl)
+  return create_stripe_checkout_session_by_event_id(transaction, logger, request_data.eventId, 
+                                                    request_data.quantity, request_data.isPrivate, request_data.cancelUrl)

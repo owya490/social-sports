@@ -15,8 +15,6 @@ from lib.constants import db
 from lib.logging import Logger
 from lib.stripe.commons import ERROR_URL
 
-REFRESH_URL = "http://localhost:3000/stripe/refreshAccountLink"
-
 @dataclass
 class CreateStandardStripeAccountRequest:
   refreshUrl: str
