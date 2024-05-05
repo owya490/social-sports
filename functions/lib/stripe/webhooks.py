@@ -89,6 +89,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
 
   maybe_event_metadata = event_metadata_ref.get(transaction=transaction)
   event_metadata = {
+    "organiserId": event["organiserId"],
     "attendees": {},
     "completedStripeCheckoutSessionIds": []
   }
