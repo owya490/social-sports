@@ -117,7 +117,7 @@ export default function EventPage({ params }: EventPageProps) {
           eventPrice={eventPrice}
         />
         <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
-          <div id="side-panel" className="z-50">
+          <div id="side-panel" className="z-20">
             <EventDrilldownSidePanel
               loading={loading}
               currSidebarPage={currSidebarPage}
