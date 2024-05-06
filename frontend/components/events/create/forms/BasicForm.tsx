@@ -17,6 +17,7 @@ type BasicData = {
   sport: string;
   price: number;
   capacity: number;
+  isPrivate: boolean;
 };
 
 type BasicInformationProps = BasicData & {
@@ -32,14 +33,22 @@ export function BasicInformation({
   sport,
   price,
   capacity,
+  isPrivate,
   updateField,
 }: BasicInformationProps) {
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
-
   const [priceString, setPriceString] = useState("15");
   const [capacityString, setCapacityString] = useState("20");
 
+  const handlePrivacyChange = (value: string) => {
+    if (value === "Public") {
+      updateField({ isPrivate: false });
+    }
+    if (value === "Private") {
+      updateField({ isPrivate: true });
+    }
+  };
   const handleDateChange = (selectedDate: string) => {
     // Validate if the selected date is in the past
     const currentDate = new Date();
@@ -93,13 +102,10 @@ export function BasicInformation({
     <FormWrapper>
       <div className="space-y-12">
         <div>
-          <label className="text-black text-lg font-semibold">
-            What’s the name of your event?
-          </label>
+          <label className="text-black text-lg font-semibold">What’s the name of your event?</label>
           <p className="text-sm mb-5 mt-2">
-            This will be your event&apos;s title. Your title will be used to
-            help create your event&apos;s summary, description, category, and
-            tags – so be specific!
+            This will be your event&apos;s title. Your title will be used to help create your event&apos;s summary,
+            description, category, and tags – so be specific!
           </p>
           <Input
             label="Event Name"
@@ -111,40 +117,37 @@ export function BasicInformation({
             size="lg"
           />
         </div>
-        <div className="">
-  <label className="text-black text-lg font-semibold">
-    When does your event start and end?
-  </label>
-  <div className="flex mt-4 flex-col sm:flex-row">
-    <div className="w-full sm:w-1/2">
-      <CustomDateInput
-        date={date}
-        placeholder="Date"
-        handleChange={handleDateChange}
-      />
-    </div>
-    <div className="w-full lg:basis-1/4 sm:w-auto sm:ml-4 mt-4 sm:mt-0">
-      <CustomTimeInput
-        value={startTime}
-        placeholder="Start time"
-        handleChange={handleStartTimeChange}
-      />
-    </div>
-    <div className="w-full lg:basis-1/4 sm:w-auto sm:ml-4 mt-4 sm:mt-0">
-      <CustomTimeInput
-        value={endTime}
-        placeholder="End time"
-        handleChange={handleEndTimeChange}
-      />
-    </div>
-  </div>
-</div>
-
-
         <div>
           <label className="text-black text-lg font-semibold">
-            Where is it located?
+            When does your event start and end?
           </label>
+          <div className="flex space-x-2 mt-4">
+            <div className="basis-1/2">
+              <CustomDateInput
+                date={date}
+                placeholder="Date"
+                handleChange={handleDateChange}
+              />
+            </div>
+            <div className="basis-1/4">
+              <CustomTimeInput
+                value={startTime}
+                placeholder="Start time"
+                handleChange={handleStartTimeChange}
+              />
+            </div>
+            <div className="basis-1/4">
+              <CustomTimeInput
+                value={endTime}
+                placeholder="End time"
+                handleChange={handleEndTimeChange}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-black text-lg font-semibold">Where is it located?</label>
           <div className="mt-4">
             <Input
               label="Location"
@@ -159,9 +162,7 @@ export function BasicInformation({
           </div>
         </div>
         <div>
-          <label className="text-black text-lg font-semibold">
-            What Sport is it?
-          </label>
+          <label className="text-black text-lg font-semibold">What Sport is it?</label>
           <div className="mt-4">
             <Select
               label="Select Sport"
@@ -183,13 +184,13 @@ export function BasicInformation({
           </div>
         </div>
         <div>
-  <label className="text-black text-lg font-semibold">
-    What is the price of the event and max capacity?
-  </label>
-  <p className="text-sm mt-2 mb-5">
-    Event price is the cost of each ticket. Event capacity is the total
-    number of tickets you&apos;re willing to sell.
-  </p>
+          <label className="text-black text-lg font-semibold">
+            What is the price of the event and max capacity?
+          </label>
+          <p className="text-sm mt-2 mb-5">
+            Event price is the cost of each ticket. Event capacity is the total
+            number of tickets you&apos;re willing to sell.
+          </p>
 
   <div className="w-full px-5">
     <CreateEventCostSlider

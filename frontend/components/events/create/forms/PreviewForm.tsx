@@ -14,128 +14,64 @@ type PreviewFormProps = BasicData & {
   updateField: (fields: Partial<FormData>) => void;
 };
 
-export const PreviewForm = ({
-  form,
-  user,
-  imagePreviewUrl,
-  updateField,
-}: PreviewFormProps) => {
+export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: PreviewFormProps) => {
   const dateString = form.date + " " + form.startTime;
   var [datePart, timePart] = dateString.split(" ");
   var [year, month, day] = datePart.split("-");
   var [hours, minutes] = timePart.split(":");
-  var myDate = new Date(
-    parseInt(year),
-    parseInt(month) - 1,
-    parseInt(day),
-    parseInt(hours),
-    parseInt(minutes)
-  );
+  var myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
 
   return (
-    <div className="md:grid md:grid-cols-2 mt-20 items-start mb-8">
-      <div className="justify-start col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg ml-8 md:ml-4 sm:ml-8">
-        <div
-          className="mb-2 text-xl lg:text-2xl"
-          style={{
-            fontWeight: 400,
-            borderBottom: "2px solid #ccc",
-            width: "100%",
-          }}
-        >
-          <div className="text-sm mb-1 md:mb-2 lg:mt-3">Name of the Event</div>
-        </div>
-        <ul className="text-sm w-full">{form.name}</ul>
+    <div className="md:grid md:grid-cols-3 gap-6 mt-20 items-start mb-8">
+      <div className="col-span-1 mt-6">
+        <div className="text-xl lg:text-xl font-semibold mb-2 border-b-2 border-gray-300 pb-1">Name</div>
+        <p className="text-m">{form.name}</p>
 
-        <div
-          className="mb-2 text-xl lg:text-2xl"
-          style={{
-            fontWeight: 400,
-            borderBottom: "2px solid #ccc",
-            width: "100%",
-          }}
-        >
-          <div className="text-sm mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
-            Location of the event
-          </div>
-        </div>
-        <ul className="text-sm w-full">{form.location}</ul>
+        <div className="text-xl lg:text-xl font-semibold mt-6 mb-2 border-b-2 border-gray-300 pb-1">Location</div>
+        <p className="text-m">{form.location}</p>
 
-        <div
-          className="mb-2 text-xl lg:text-2xl"
-          style={{
-            fontWeight: 400,
-            borderBottom: "2px solid #ccc",
-            width: "100%",
-          }}
-        >
-          <div className="text-sm mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
-            Start Time of event
-          </div>
+        <div className="text-xl lg:text-xl font-semibold mt-6 mb-2 border-b-2 border-gray-300 pb-1">
+          Details of Time
         </div>
-        <ul className="text-sm w-full">{form.startTime}</ul>
-
-        <div
-          className="mb-2 text-xl lg:text-2xl"
-          style={{
-            fontWeight: 400,
-            borderBottom: "2px solid #ccc",
-            width: "100%",
-          }}
-        >
-          <div className="text-sm mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
-            Price of the Event
-          </div>
+        <div className="flex justify-between">
+          <p className="text-m">Time Start: </p>
+          <p className="text-m">{form.startTime}</p>
         </div>
-        <ul className="text-sm w-full">{form.price}</ul>
-
-        <div
-          className="mb-2 text-xl lg:text-2xl"
-          style={{
-            fontWeight: 400,
-            borderBottom: "2px solid #ccc",
-            width: "100%",
-          }}
-        >
-          <div className="text-sm mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
-            Total Capacity of the Event
-          </div>
+        <div className="flex justify-between">
+          <p className="text-m">Time End: </p>
+          <p className="text-m">{form.endTime} </p>
         </div>
-        <ul className="text-sm w-full">{form.capacity}</ul>
-
-        <div
-          className="mb-2 text-xl lg:text-2xl"
-          style={{
-            fontWeight: 400,
-            borderBottom: "2px solid #ccc",
-            width: "100%",
-          }}
-        >
-          <div className="text-sm mb-1 md:mb-2 mt-6 md:mt-4 lg:mt-8">
-            Description of the Event
-          </div>
-        </div>
-        <ul className="text-sm w-full">{form.description}</ul>
+        <div className="text-xl lg:text-xl font-semibold mt-6 mb-2 border-b-2 border-gray-300 pb-1">Sport</div>
+        <p className="text-m">{form.sport}</p>
       </div>
 
-      <FormWrapper>
-        <div className="flex justify-center">
-          <EventCard
-            eventId=""
-            image={
-              imagePreviewUrl === ""
-                ? "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5"
-                : imagePreviewUrl
-            }
-            name={form.name}
-            organiser={user}
-            startTime={Timestamp.fromDate(myDate)}
-            location={form.location}
-            price={form.price}
-            vacancy={form.capacity}
-          />
-        </div>
-      </FormWrapper>
+      <div className="col-span-1 mt-6">
+        <div className="text-xl lg:text-xl font-semibold mb-2 border-b-2 border-gray-300 pb-1">Price</div>
+        <p className="text-m">{form.price}</p>
+
+        <div className="text-xl lg:text-xl font-semibold mt-6 mb-2 border-b-2 border-gray-300 pb-1">Capacity</div>
+        <p className="text-m">{form.capacity}</p>
+
+        <div className="text-xl lg:text-xl font-semibold mt-6 mb-2 border-b-2 border-gray-300 pb-1">Description</div>
+        <div className="text-m" dangerouslySetInnerHTML={{ __html: form.description }}></div>
+      </div>
+
+      <div className="col-span-1 mt-6 mx-10">
+        <EventCard
+          eventId=""
+          image={
+            imagePreviewUrl === ""
+              ? "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5"
+              : imagePreviewUrl
+          }
+          name={form.name}
+          organiser={user}
+          startTime={Timestamp.fromDate(myDate)}
+          location={form.location}
+          price={form.price}
+          vacancy={form.capacity}
+        />
+      </div>
     </div>
   );
 };
