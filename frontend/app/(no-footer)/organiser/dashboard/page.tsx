@@ -1,10 +1,10 @@
 "use client";
+import { useEffect, useState } from "react";
+import { Timestamp } from "firebase/firestore";
+import Link from "next/link";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserEventCard from "@/components/events/OrganiserEventCard";
-import Link from "next/link";
-import { Timestamp } from "firebase/firestore";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
-import { useEffect, useState } from "react";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import { useUser } from "@/components/utility/UserContext";
 
