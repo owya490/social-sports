@@ -14,7 +14,7 @@ import { uploadUserImage } from "@/services/src/imageService";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";78
+import { FormEvent, useState } from "react";
 
 export type FormData = {
   date: string;
