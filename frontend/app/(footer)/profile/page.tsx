@@ -8,10 +8,10 @@ import { Dialog, Transition } from "@headlessui/react";
 import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
 import Image from "next/image";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
-import eye from "./../../public/images/Eye.png";
-import location from "./../../public/images/location.png";
-import Upload from "./../../public/images/upload.png";
-import x from "./../../public/images/x.png";
+import eye from "@/public/images/Eye.png";
+import location from "@/public/images/location.png";
+import Upload from "@/public/images/upload.png";
+import x from "@/public/images/x.png";
 import { useRouter } from "next/navigation";
 
 const calculateAge = (birthday: string) => {
