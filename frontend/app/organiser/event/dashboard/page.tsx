@@ -193,7 +193,7 @@ export default function OrganiserDashboard() {
             })
             .map((event, eventIdx) => {
               return (
-                <div className="mb-[30px] w-full" key={eventIdx}>
+                <div className="w-full mb-4" key={eventIdx}>
                   <OrganiserEventCard
                     eventId={event.eventId}
                     image={event.image}
