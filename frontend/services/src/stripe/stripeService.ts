@@ -22,7 +22,7 @@ export async function getStripeStandardAccounLink(organiserId: string, returnUrl
   const content = {
     organiser: organiserId,
     returnUrl: returnUrl,
-    refreshUrl: refreshUrl
+    refreshUrl: refreshUrl,
   };
   const createAccountFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT);
   return createAccountFunction(content)

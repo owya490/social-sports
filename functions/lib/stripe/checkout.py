@@ -97,7 +97,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   organiser_stripe_account_id = organiser.get("stripeAccount")
 
   # 4a. check if the price exists for this event
-  if (price == None or not isinstance(price, float) or price <= 1): # we don't want events to be less than stripe fees
+  if (price == None or not isinstance(price, int) or price <= 1): # we don't want events to be less than stripe fees
     logger.error(f"Provided event {event_ref.path} does not have a valid price. Returning status=500")
     return json.dumps({"url": ERROR_URL})
 
@@ -127,7 +127,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
       "isPrivate": is_private
     },
     # payment_intent_data={"application_fee_amount": 123},
-    success_url="https://example.com/success",
+    success_url="https://example.com/success", # TODO need to update to a static success page
     cancel_url=cancel_url,
     stripe_account= organiser_stripe_account_id,
     expires_at=int(time.time() + 1800) # Checkout session expires in 30 minutes (stripe minimum)
