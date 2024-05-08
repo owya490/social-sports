@@ -7,6 +7,7 @@ import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import { useUser } from "@/components/utility/UserContext";
+import OrganiserCheckbox from "@/components/organiser/OrganiserCheckbox";
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -16,10 +17,13 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const events = await getOrganiserEvents(user.userId);
+        const events = (await getOrganiserEvents(user.userId)).filter((event) => {
+          return event.startDate.seconds - Timestamp.now().seconds > 0;
+        });
         setEventDataList(events);
       } catch (error) {
         // Handle errors here
+        console.error("getOrganiserEvents: " + error);
       } finally {
         setLoading(false);
       }
@@ -30,21 +34,18 @@ export default function Dashboard() {
   return (
     <div className="pt-16 pl-14 max-h-screen">
       <OrganiserNavbar currPage="Dashboard" />
-      <div className="py-20 flex justify-center">
+      <div className="py-16 flex justify-center">
         <div>
           <h1 className="text-5xl font-bold">Organiser Dashboard</h1>
-          <h1 className="pt-4 text-4xl font-semibold text-[#BABABA]">Welcome Edwin</h1>
+          <h1 className="pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
           <div className="flex w-full mt-8">
             <div className="grow mr-8 max-h-[60vh]">
               <div className="bg-organiser-light-gray p-8 rounded-2xl">
                 <h1 className="text-2xl font-bold">Finish setting up</h1>
-                <ul className="list-disc ml-6 mt-4 space-y-2 text-lg">
-                  <li className="hover:underline hover:cursor-pointer">Add a description</li>
-                  <li className="hover:underline hover:cursor-pointer">Add a picture</li>
-                  <li className="hover:underline hover:cursor-pointer">Add a Stripe account</li>
-                  <li className="hover:underline hover:cursor-pointer">New registrations on your event!</li>
-                  <li className="hover:underline hover:cursor-pointer">More...</li>
-                </ul>
+                <OrganiserCheckbox label="Add a picture" link="/profile" />
+                <OrganiserCheckbox label="Add a description" link="/profile" />
+                <OrganiserCheckbox label="Add a Stripe account" link="/" />
+                <OrganiserCheckbox label="New registrations on your event!" link="/" />
               </div>
               <div className="flex mt-8">
                 <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-24 mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
@@ -92,6 +93,7 @@ export default function Dashboard() {
                       </div>
                     );
                   })}
+                {eventDataList.length == 0 && <div>No Upcoming Events</div>}
               </div>
             </div>
           </div>
