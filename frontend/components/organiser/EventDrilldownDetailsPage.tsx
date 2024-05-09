@@ -1,14 +1,17 @@
 import {
   CalendarDaysIcon,
+  CheckIcon,
   ClockIcon,
   CurrencyDollarIcon,
   MapPinIcon,
   PencilSquareIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
-import CloseIcon from "@mui/icons-material/Close";
-import DoneIcon from "@mui/icons-material/Done";
-import IconButton from "@mui/material/IconButton";
+
 import TextField from "@mui/material/TextField";
+
+import DescriptionRichTextEditor from "../events/create/DescriptionRichTextEditor";
+
 import Image from "next/image";
 import { useState } from "react";
 import BannerImage from "../../public/images/vball1.webp";
@@ -17,7 +20,6 @@ const EventDrilldownDetailsPage = () => {
   const [editTitle, setEditTitle] = useState(false);
   const [newEditTitle, setNewEditTitle] = useState("Volleyball World Cup");
   const [title, setTitle] = useState("Volleyball World Cup");
-  console.log(editTitle);
 
   const handleTitleUpdate = () => {
     setTitle(newEditTitle);
@@ -25,9 +27,24 @@ const EventDrilldownDetailsPage = () => {
     setEditTitle(false);
   };
 
-  const handleCancelEdit = () => {
+  const handleCancelTitle = () => {
     setNewEditTitle(title);
     setEditTitle(false);
+  };
+
+  const [editDescription, setEditDescription] = useState(false);
+  const [newEditDescription, setNewEditDescription] = useState("This is a rich text field");
+  const [description, setDescription] = useState("This is a rich text field");
+
+  const handleDescriptionUpdate = () => {
+    setDescription(newEditDescription);
+    // Update to firestore
+    setEditDescription(false);
+  };
+
+  const handleCancelDescription = () => {
+    setNewEditDescription(description);
+    setEditDescription(false);
   };
 
   return (
@@ -45,33 +62,29 @@ const EventDrilldownDetailsPage = () => {
         <div className="text-organiser-title-gray-text font-bold">
           Event Name
           {editTitle ? (
-            <>
+            <div className="flex">
               <TextField
                 value={newEditTitle}
                 variant="standard"
                 fullWidth
-                inputProps={{ style: { fontSize: "1.25rem", color: "#333" } }} // Match styling here
+                inputProps={{ style: { fontSize: "1.25rem", color: "#333" } }}
                 onChange={(e) => {
                   setNewEditTitle(e.target.value);
                 }}
               />
-              <IconButton
-                className="absolute w-5 stroke-organiser-title-gray-text cursor-pointer"
+              <CheckIcon
+                className="w-9 stroke-organiser-title-gray-text cursor-pointer"
                 onClick={() => {
                   handleTitleUpdate();
                 }}
-              >
-                <DoneIcon />
-              </IconButton>
-              <IconButton
-                className="w-5 stroke-organiser-title-gray-text cursor-pointer"
+              />
+              <XMarkIcon
+                className="w-9 stroke-organiser-title-gray-text cursor-pointer"
                 onClick={() => {
-                  handleCancelEdit();
+                  handleCancelTitle();
                 }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </>
+              />
+            </div>
           ) : (
             <div className="font-bold text-2xl">
               {newEditTitle}
@@ -106,9 +119,42 @@ const EventDrilldownDetailsPage = () => {
         <PencilSquareIcon className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text" />{" "}
       </div>
       <div className="h-20 border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 pt-2 relative">
-        <div className="text-organiser-title-gray-text font-bold">Event Description</div>
-        <div className="text-sm mt-4">This is a rich text field</div>
-        <PencilSquareIcon className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text" />{" "}
+        <div className="text-organiser-title-gray-text font-bold">
+          Event Description
+          {editDescription ? (
+            <div className="flex">
+              {/* <TextField
+                value={newEditDescription}
+                variant="standard"
+                fullWidth
+                onChange={(e) => {
+                  setNewEditDescription(e.target.value);
+                }}
+              /> */}
+              <DescriptionRichTextEditor description={newEditDescription} updateDescription={setNewEditDescription} />
+              <CheckIcon
+                className="w-9 stroke-organiser-title-gray-text cursor-pointer"
+                onClick={() => {
+                  handleDescriptionUpdate();
+                }}
+              />
+              <XMarkIcon
+                className="w-9 stroke-organiser-title-gray-text cursor-pointer"
+                onClick={() => {
+                  handleCancelDescription();
+                }}
+              />
+            </div>
+          ) : (
+            <div className="text-sm mt-4">
+              {newEditDescription}
+              <PencilSquareIcon
+                className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
+                onClick={() => setEditDescription(true)}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
