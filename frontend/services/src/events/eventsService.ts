@@ -62,7 +62,7 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
 }
 
 export async function getEventById(eventId: EventId): Promise<EventData> {
-  eventServiceLogger.info(`getEventById`);
+  eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
@@ -70,8 +70,14 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     var organiser: UserData = EmptyUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
+<<<<<<< HEAD
     } catch {
       console.log("error finding user");
+=======
+    } catch (error) {
+      eventServiceLogger.error(`getEventById ${error}`);
+      throw error;
+>>>>>>> 15ce93efb0a88419f57cb426842b0c747f5d2d93
     }
     const event: EventData = {
       ...eventWithoutOrganiser,
