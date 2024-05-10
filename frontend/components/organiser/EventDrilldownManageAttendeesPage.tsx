@@ -27,7 +27,7 @@ const EventDrilldownManageAttendeesPage = ({
             onClick={() => setIsFilterModalOpen(true)}
           >
             <PlusIcon className="mr-2 h-5 w-5 text-violet-200 hover:text-violet-100" />
-            Invite
+            Add Attendee
           </div>
         </div>
       </div>

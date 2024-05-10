@@ -42,7 +42,7 @@ const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalO
                     as="h3"
                     className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[0px] border-gray-500 w-full text-center flex justify-center items-center"
                   >
-                    Invite
+                    Add Attendee
                   </Dialog.Title>
 
                   <div className="">
@@ -63,7 +63,7 @@ const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalO
                       className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
                       onClick={() => inviteAttendee(inviteEmail)}
                     >
-                      Send invite
+                      Add Attendee
                     </div>
                   </div>
                 </Dialog.Panel>
