@@ -2,7 +2,7 @@ import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/outline";
 import React, { useState } from "react";
 import EventDrilldownAttendeeCard from "./EventDrilldownAttendeeCard";
 import { EventAttendees, EventAttendeesMetadata } from "@/interfaces/EventTypes";
-import InviteAttendeeDialog from "./attendee/InviteAttendeeDialog";
+import InviteAttendeeDialog from "./attendee/AddAttendeeDialog";
 
 interface EventDrilldownManageAttendeesPageProps {
   eventAttendeesNumTickets: EventAttendees;
