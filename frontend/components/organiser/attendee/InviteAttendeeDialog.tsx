@@ -1,5 +1,14 @@
 import { inviteAttendee } from "@/services/src/organiser/organiserService";
-import { Dialog, Transition } from "@headlessui/react";
+import {
+  Dialog,
+  Transition,
+  Description,
+  DialogTitle,
+  Checkbox,
+  TransitionChild,
+  DialogPanel,
+} from "@headlessui/react";
+import { CheckIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import React, { Fragment, useState } from "react";
 
 interface InviteAttendeeDialogProps {
@@ -10,11 +19,12 @@ interface InviteAttendeeDialogProps {
 
 const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalOpen }: InviteAttendeeDialogProps) => {
   const [inviteEmail, setInviteEmail] = useState<string>("");
+  const [enabled, setEnabled] = useState(true);
   return (
     <div>
       <Transition appear show={isFilterModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-30" onClose={closeModal}>
-          <Transition.Child
+          <TransitionChild
             as={Fragment}
             enter="ease-out duration-300"
             enterFrom="opacity-0"
@@ -24,11 +34,11 @@ const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalO
             leaveTo="opacity-0"
           >
             <div className="fixed inset-0 bg-black/25" />
-          </Transition.Child>
+          </TransitionChild>
 
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
+              <TransitionChild
                 as={Fragment}
                 enter="ease-out duration-300"
                 enterFrom="opacity-0 scale-95"
@@ -37,13 +47,21 @@ const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalO
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform rounded-2xl p-6 bg-white text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title
+                <DialogPanel className="w-full max-w-md transform rounded-2xl p-6 bg-white text-left align-middle shadow-xl transition-all">
+                  <DialogTitle
                     as="h3"
                     className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[0px] border-gray-500 w-full text-center flex justify-center items-center"
                   >
                     Add Attendee
-                  </Dialog.Title>
+                  </DialogTitle>
+                  <Description className="font-semibold text-organiser-title-gray-text p-4 rounded-lg border-0 bg-yellow-100 mb-2 text-sm">
+                    <div className="flex flex-row">
+                      <div>NOTE: The event organiser and attendee will need to organise their own payment.</div>
+                      <div className="content-center ml-4">
+                        <ExclamationCircleIcon className="h-8" />
+                      </div>
+                    </div>
+                  </Description>
 
                   <div className="">
                     <input
@@ -66,8 +84,8 @@ const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalO
                       Add Attendee
                     </div>
                   </div>
-                </Dialog.Panel>
-              </Transition.Child>
+                </DialogPanel>
+              </TransitionChild>
             </div>
           </div>
         </Dialog>
