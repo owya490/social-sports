@@ -2,21 +2,29 @@ import { removeAttendee } from "@/services/src/organiser/organiserService";
 import { Menu, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon, UserCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import React, { Fragment } from "react";
+import React, { Fragment, useState } from "react";
+import RemoveAttendeeDialog from "./attendee/RemoveAttendeeDialog";
+import Image from "next/image";
 
 interface EventDrilldownAttendeeCardProps {
   name: string;
+  image: string;
   email: string;
   number: string;
   tickets: number;
 }
 
-const EventDrilldownAttendeeCard = ({ tickets, name, email, number }: EventDrilldownAttendeeCardProps) => {
+const EventDrilldownAttendeeCard = ({ tickets, name, email, number, image }: EventDrilldownAttendeeCardProps) => {
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
+  function closeModal() {
+    setIsFilterModalOpen(false);
+  }
   return (
     <div className="grid grid-flow-col justify-stretch py-2 grid-cols-7 flex items-center">
       <div className="col-span-1 w-14 text-center">{tickets}</div>
       <div className="flex flex-row items-center col-span-2">
-        <UserCircleIcon className="stroke-1 w-10 mr-2" />
+        <Image src={image} alt="" width={100} height={100} className="w-10 rounded-full" />
+        {/* <UserCircleIcon className="stroke-1 w-10 mr-2" /> */}
         <div className="">{name}</div>
       </div>
       <div className="col-span-3">{email}</div>
@@ -59,7 +67,7 @@ const EventDrilldownAttendeeCard = ({ tickets, name, email, number }: EventDrill
                     className={`${
                       active ? "text-white bg-black" : "text-black"
                     } group flex w-full items-center rounded-md px-2 py-2 text-sm hover:cursor-pointer`}
-                    onClick={() => removeAttendee(email)}
+                    onClick={() => setIsFilterModalOpen(true)}
                   >
                     <XMarkIcon className="h-5 mr-2" />
                     Remove attendee
@@ -70,6 +78,14 @@ const EventDrilldownAttendeeCard = ({ tickets, name, email, number }: EventDrill
           </Menu.Items>
         </Transition>
       </Menu>
+      <div className="grow">
+        <RemoveAttendeeDialog
+          setIsFilterModalOpen={setIsFilterModalOpen}
+          closeModal={closeModal}
+          isFilterModalOpen={isFilterModalOpen}
+          email={email}
+        />
+      </div>
     </div>
   );
 };

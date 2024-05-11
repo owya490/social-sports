@@ -1,15 +1,21 @@
-import { inviteAttendee } from "@/services/src/organiser/organiserService";
+import { inviteAttendee, removeAttendee } from "@/services/src/organiser/organiserService";
 import { Dialog, Transition, Description, DialogTitle, TransitionChild, DialogPanel } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import React, { Fragment, useState } from "react";
 
-interface InviteAttendeeDialogProps {
+interface RemoveAttendeeDialogProps {
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
   isFilterModalOpen: boolean;
+  email: string;
 }
 
-const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalOpen }: InviteAttendeeDialogProps) => {
+const RemoveAttendeeDialog = ({
+  setIsFilterModalOpen,
+  closeModal,
+  isFilterModalOpen,
+  email,
+}: RemoveAttendeeDialogProps) => {
   const [inviteEmail, setInviteEmail] = useState<string>("");
   const [enabled, setEnabled] = useState(true);
   return (
@@ -44,36 +50,27 @@ const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalO
                     as="h3"
                     className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[0px] border-gray-500 w-full text-center flex justify-center items-center"
                   >
-                    Add Attendee
+                    Remove Attendee
                   </DialogTitle>
-                  <Description className="font-semibold text-organiser-title-gray-text p-4 rounded-lg border-0 bg-yellow-100 mb-2 text-sm">
+                  <Description className="font-semibold text-organiser-title-gray-text p-4 rounded-lg bg-yellow-100 mb-2 text-sm">
                     <div className="flex flex-row">
-                      <div>NOTE: The event organiser and attendee will need to organise their own payment.</div>
+                      <div>IMPORTANT: The event organiser and attendee will need to organise their own payment.</div>
                       <div className="content-center ml-4">
                         <ExclamationCircleIcon className="h-8" />
                       </div>
                     </div>
                   </Description>
+                  <Description className=" text-organiser-dark-gray-text p-2 mb-2 text-sm">
+                    You are about to remove
+                    <span className="font-semibold"> {email}</span>.
+                  </Description>
 
-                  <div className="">
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      tabIndex={1}
-                      required
-                      className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                      placeholder="Attendee email"
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                    />
-                  </div>
                   <div className="mt-2 float-right">
                     <div
                       className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
-                      onClick={() => inviteAttendee(inviteEmail)}
+                      onClick={() => removeAttendee(email)}
                     >
-                      Add Attendee
+                      Remove Attendee
                     </div>
                   </div>
                 </DialogPanel>
@@ -86,4 +83,4 @@ const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalO
   );
 };
 
-export default InviteAttendeeDialog;
+export default RemoveAttendeeDialog;
