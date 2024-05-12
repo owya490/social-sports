@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import {
   CalendarDaysIcon,
   CheckIcon,
@@ -9,6 +7,8 @@ import {
   PencilSquareIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import Image from "next/image";
+import { useEffect } from "react";
 
 import TextField from "@mui/material/TextField";
 
@@ -38,8 +38,15 @@ const EventDrilldownDetailsPage = ({
   eventImage,
 }: EventDrilldownDetailsPageProps) => {
   const [editTitle, setEditTitle] = useState(false);
-  const [newEditTitle, setNewEditTitle] = useState(eventName);
-  const [title, setTitle] = useState(eventName);
+  const [newEditTitle, setNewEditTitle] = useState("");
+  const [title, setTitle] = useState("");
+
+  useEffect(() => {
+    if (eventName) {
+      setTitle(eventName);
+      setNewEditTitle(eventName);
+    }
+  }, [eventName]);
 
   const handleTitleUpdate = () => {
     setTitle(newEditTitle);
@@ -52,9 +59,99 @@ const EventDrilldownDetailsPage = ({
     setEditTitle(false);
   };
 
+  const [editDate, setEditDate] = useState(false);
+  const [newEditDate, setNewEditDate] = useState("");
+  const [date, setDate] = useState("");
+
+  const [editTime, setEditTime] = useState(false);
+  const [newEditTime, setNewEditTime] = useState("");
+  const [time, setTime] = useState("");
+
+  useEffect(() => {
+    if (eventStartdate) {
+      const dateString = timestampToDateString(eventStartdate);
+      const timeString = timestampToTimeOfDay(eventStartdate);
+      setDate(`${dateString} ${timeString}`);
+      setNewEditDate(`${dateString} ${timeString}`);
+    }
+  }, [eventStartdate]);
+
+  const handleDateUpdate = () => {
+    setDate(newEditDate);
+    // Update to firestore
+    setEditDate(false);
+  };
+
+  const handleCancelDate = () => {
+    setNewEditDate(date);
+    setEditDate(false);
+  };
+
+  const handleTimeUpdate = () => {
+    setTime(newEditTime);
+    // Update to firestore
+    setEditTime(false);
+  };
+
+  const handleCancelTime = () => {
+    setNewEditTime(time);
+    setEditTime(false);
+  };
+
+  const [editLocation, setEditLocation] = useState(false);
+  const [newEditLocation, setNewEditLocation] = useState("");
+  const [location, setLocation] = useState("");
+
+  useEffect(() => {
+    if (eventLocation) {
+      setLocation(eventLocation);
+      setNewEditLocation(eventLocation);
+    }
+  }, [eventLocation]);
+
+  const handleLocationUpdate = () => {
+    setLocation(newEditLocation);
+    // Update to firestore
+    setEditLocation(false);
+  };
+
+  const handleCancelLocation = () => {
+    setNewEditLocation(location);
+    setEditLocation(false);
+  };
+
+  const [editPrice, setEditPrice] = useState(false);
+  const [newEditPrice, setNewEditPrice] = useState(0);
+  const [price, setPrice] = useState(0);
+
+  useEffect(() => {
+    if (eventPrice) {
+      setPrice(eventPrice);
+      setNewEditPrice(eventPrice);
+    }
+  }, [eventPrice]);
+
+  const handlePriceUpdate = () => {
+    setPrice(newEditPrice);
+    // Update to firestore
+    setEditPrice(false);
+  };
+
+  const handleCancelPrice = () => {
+    setNewEditPrice(price);
+    setEditPrice(false);
+  };
+
   const [editDescription, setEditDescription] = useState(false);
   const [newEditDescription, setNewEditDescription] = useState(eventDescription);
   const [description, setDescription] = useState(eventDescription);
+
+  useEffect(() => {
+    if (eventDescription) {
+      setDescription(eventDescription);
+      setNewEditDescription(eventDescription);
+    }
+  }, [eventDescription]);
 
   const handleDescriptionUpdate = () => {
     setDescription(newEditDescription);
@@ -201,7 +298,7 @@ const EventDrilldownDetailsPage = ({
         </div>
         <PencilSquareIcon className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text" />{" "}
       </div>
-      <div className="h-20 border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 pt-2 relative">
+      <div className="min-h-20 border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 pt-2 relative h-fit">
         <div className="text-organiser-title-gray-text font-bold">
           Event Description
           {loading ? (
