@@ -1,13 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics";
-import {
-  User,
-  browserLocalPersistence,
-  getAuth,
-  onAuthStateChanged,
-  setPersistence,
-} from "firebase/auth";
+import { User, browserLocalPersistence, getAuth, onAuthStateChanged, setPersistence, signOut } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { Environment, getEnvironment } from "../../utilities/environment";
@@ -68,7 +62,13 @@ setPersistence(auth, browserLocalPersistence);
 // Handle changes in user logged in status
 let authUser: User | null = null;
 onAuthStateChanged(auth, (currUser) => {
-  authUser = currUser;
+  if (auth.currentUser) {
+    if (auth.currentUser?.emailVerified) {
+      authUser = currUser;
+    } else {
+      signOut(auth);
+    }
+  }
 });
 
 export { authUser };
