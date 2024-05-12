@@ -30,9 +30,10 @@ export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory:
       break;
 
     /// TODO: implement measurement of how an event is 'TOP_RATED'.
-    /// Currently sorting events by alphabetical order of their name.
+    /// Currently sorting by upcoming events with most views.
     case SortByCategory.TOP_RATED:
-      eventDataListDeepClone.sort((eventA, eventB) => eventA.name.localeCompare(eventB.name));
+      eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.startDate > Timestamp.now());
+      eventDataListDeepClone.sort((eventA, eventB) => eventB.accessCount - eventA.accessCount);
       break;
 
     case SortByCategory.PRICE_ASCENDING:
