@@ -18,11 +18,19 @@ export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory:
   switch (sortByCategory) {
     case SortByCategory.HOT:
       /// TODO: implement measurement of how 'Hot' an event is.
-      /// Will use the accessCount to sort
-      eventDataListDeepClone.sort((eventA, eventB) => eventB.accessCount - eventA.accessCount);
+      /// Will currently use 1/3 of accessCount, 1/3 of tickets sold, and 1/3 of % full an event is to sort.
+      eventDataListDeepClone.sort((eventA, eventB) => {
+        const accessCountDiff = eventB.accessCount - eventA.accessCount;
+        const ticketsSoldDiff = eventB.capacity - eventB.vacancy - (eventA.capacity - eventA.vacancy);
+        const eventAPercentageSold = (eventA.capacity - eventA.vacancy) / eventA.capacity;
+        const eventBPercentageSold = (eventB.capacity - eventB.vacancy) / eventB.capacity;
+        const eventPercentageSoldDiff = eventBPercentageSold - eventAPercentageSold;
+        return accessCountDiff + ticketsSoldDiff + eventPercentageSoldDiff;
+      });
       break;
 
     /// TODO: implement measurement of how an event is 'TOP_RATED'.
+    /// Currently sorting events by alphabetical order of their name.
     case SortByCategory.TOP_RATED:
       eventDataListDeepClone.sort((eventA, eventB) => eventA.name.localeCompare(eventB.name));
       break;
