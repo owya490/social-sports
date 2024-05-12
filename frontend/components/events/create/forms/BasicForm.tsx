@@ -2,6 +2,8 @@
 
 import { UserData } from "@/interfaces/UserTypes";
 import { getStripeStandardAccounLink } from "@/services/src/stripe/stripeService";
+import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
@@ -10,8 +12,6 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
-import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
-import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 
 type BasicData = {
   name: string;
@@ -23,6 +23,7 @@ type BasicData = {
   price: number;
   capacity: number;
   isPrivate: boolean;
+  paymentsActive: boolean;
 };
 
 type BasicInformationProps = BasicData & {
@@ -41,6 +42,7 @@ export function BasicInformation({
   price,
   capacity,
   isPrivate,
+  paymentsActive,
   user,
   updateField,
   setLoading,
@@ -106,6 +108,10 @@ export function BasicInformation({
     amount = Number.isNaN(amount) ? 0 : amount;
     setCustomAmount(amount);
     updateField({ price: amount }); // Update the cost field in the parent component
+  };
+
+  const handlePaymentsActiveChange = (paymentsActive: string) => {
+    updateField({ paymentsActive: paymentsActive.toLowerCase() === "true" });
   };
 
   return (
@@ -188,7 +194,7 @@ export function BasicInformation({
             <Select
               size="md"
               label="Select Visibility"
-              value={isPrivate.toString()}
+              value={isPrivate ? "Private" : "Public"}
               onChange={(e) => {
                 const privacyValue = e || "Public";
                 handlePrivacyChange(privacyValue);
@@ -249,6 +255,30 @@ export function BasicInformation({
               />
             </div>
           </div>
+        </div>
+        {user.stripeAccountActive ? (
+          <div>
+            <label className="text-black text-lg font-semibold">Is your event accepting payments?</label>
+            <p className="text-sm mb-5 mt-2">
+              If you are accepting payments, ensure your Stripe account is fully setup. Funds transfer will occur
+              through Stripe.
+            </p>
+            <div className="mt-4 w-1/2">
+              <Select
+                size="md"
+                label="Accepting Payments"
+                value={paymentsActive.toString()}
+                onChange={(e) => {
+                  const paymentsActive = e || "false";
+                  handlePaymentsActiveChange(paymentsActive);
+                }}
+              >
+                <Option value="false">False</Option>
+                <Option value="true">True</Option>
+              </Select>
+            </div>
+          </div>
+        ) : (
           <div className="mt-5 p-3 border border-1 border-blue-gray-200 rounded-lg flex-col flex">
             <h2 className=" text-lg mb-2">Register for Organiser Hub!</h2>
             <p className="font-light text-sm">Join hundreds of sport societies hosting their events on Sportshub.</p>
@@ -261,14 +291,18 @@ export function BasicInformation({
               onClick={async () => {
                 setLoading(true);
                 window.scrollTo(0, 0);
-                const link = await getStripeStandardAccounLink(user.userId, getUrlWithCurrentHostname("/organiser"), getRefreshAccountLinkUrl());
+                const link = await getStripeStandardAccounLink(
+                  user.userId,
+                  getUrlWithCurrentHostname("/organiser"),
+                  getRefreshAccountLinkUrl()
+                );
                 router.push(link);
               }}
             >
               Register
             </button>
           </div>
-        </div>
+        )}
       </div>
     </FormWrapper>
   );

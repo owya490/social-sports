@@ -29,6 +29,7 @@ export type FormData = {
   isPrivate: boolean;
   startTime: string;
   endTime: string;
+  paymentsActive: boolean;
 };
 
 const INITIAL_DATA: FormData = {
@@ -44,6 +45,7 @@ const INITIAL_DATA: FormData = {
   isPrivate: false,
   startTime: "10:00",
   endTime: "18:00",
+  paymentsActive: false,
 };
 
 export default function CreateEvent() {
@@ -56,13 +58,7 @@ export default function CreateEvent() {
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
-    <BasicInformation
-      key="basic-form"
-      {...data}
-      updateField={updateFields}
-      user={user}
-      setLoading={setLoading}
-    />,
+    <BasicInformation key="basic-form" {...data} updateField={updateFields} user={user} setLoading={setLoading} />,
     <TagForm key="tag-form" {...data} updateField={updateFields} />,
     <DescriptionImageForm
       key="description-image-form"

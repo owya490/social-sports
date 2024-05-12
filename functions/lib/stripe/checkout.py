@@ -58,7 +58,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
 
   organiser_id = event.get("organiserId")
   logger.info(f"Event with id {event_id} has organiser with id {organiser_id}.")
-  organiser_ref = db.collection("Users").document(organiser_id)
+  organiser_ref = db.collection("Users/Active/Private").document(organiser_id)
   maybe_organiser = organiser_ref.get(transaction=transaction)
   
   # Check if the organiser exists, if not error out
