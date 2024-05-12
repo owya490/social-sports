@@ -18,7 +18,12 @@ export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory:
   switch (sortByCategory) {
     case SortByCategory.HOT:
       /// TODO: implement measurement of how 'Hot' an event is.
-      /// Currently, it sorts events alphabetically by name.
+      /// Will use the accessCount to sort
+      eventDataListDeepClone.sort((eventA, eventB) => eventB.accessCount - eventA.accessCount);
+      break;
+
+    /// TODO: implement measurement of how an event is 'TOP_RATED'.
+    case SortByCategory.TOP_RATED:
       eventDataListDeepClone.sort((eventA, eventB) => eventA.name.localeCompare(eventB.name));
       break;
 
