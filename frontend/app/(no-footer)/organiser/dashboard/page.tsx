@@ -13,7 +13,7 @@ import LoadingSkeletonOrganiserName from "@/components/loading/LoadingSkeletonOr
 export default function Dashboard() {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
-  const [eventDataList, setEventDataList] = useState<EventData[]>([EmptyEventData]);
+  const [eventDataList, setEventDataList] = useState<EventData[]>([EmptyEventData, EmptyEventData]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -41,8 +41,8 @@ export default function Dashboard() {
           ) : (
             <h1 className="pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
           )}
-          <div className="flex w-full mt-8">
-            <div className="grow mr-8 max-h-[60vh]">
+          <div className="flex w-full mt-8 max-h-[60vh]">
+            <div className="grow mr-8 flex flex-col">
               <div className="bg-organiser-light-gray p-8 rounded-2xl">
                 <h1 className="text-2xl font-bold">Finish setting up</h1>
                 <OrganiserCheckbox label="Add a picture" link="/profile" />
@@ -50,38 +50,44 @@ export default function Dashboard() {
                 <OrganiserCheckbox label="Add a Stripe account" link="/" />
                 <OrganiserCheckbox label="New registrations on your event!" link="/" />
               </div>
-              <div className="flex mt-8">
-                <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-24 mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                  <Link href="/event/create">
-                    <p>Create an event template</p>
-                  </Link>
+              <div className="flex mt-8 grow">
+                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                  <div className="h-full flex text-center items-center">
+                    <Link href="/event/create">
+                      <p>Create an event template</p>
+                    </Link>
+                  </div>
                 </div>
-                <div className="flex-1 text-center align-middle font-semibold text-2xl bg-organiser-light-gray px-8 py-24 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                  <Link href="/profile">
-                    <p>Edit your profile</p>
-                  </Link>
+                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                  <div className="h-full flex justify-center items-center">
+                    <Link href="/profile">
+                      <p>Edit your profile</p>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="max-h-[60vh] overflow-auto rounded-2xl">
-              <div className="bg-organiser-light-gray p-4 rounded-2xl">
-                <h1 className="text-2xl font-bold text-center px-10">Upcoming Events</h1>
+            <div className="overflow-auto">
+              <div className="bg-organiser-light-gray py-4 rounded-2xl">
+                <h1 className="text-2xl font-bold text-center w-full sm:w-[300px] xl:w-[290px] 2xl:w-[320px]">
+                  Upcoming Events
+                </h1>
               </div>
               <div>
                 {eventDataList
                   .sort((event1, event2) => {
                     const seconds = Timestamp.now().seconds;
                     if (event1.startDate.seconds - seconds < event2.startDate.seconds - seconds) {
-                      return 1;
+                      return -1;
                     }
                     if (event1.startDate.seconds - seconds > event2.startDate.seconds - seconds) {
-                      return -1;
+                      return 1;
                     }
                     return 0;
                   })
                   .map((event, eventIdx) => {
                     return (
-                      <div key={eventIdx} className="mt-6">
+                      <div key={eventIdx} className="mt-8">
                         <OrganiserEventCard
                           eventId={event.eventId}
                           image={event.image}
@@ -97,7 +103,7 @@ export default function Dashboard() {
                     );
                   })}
                 {eventDataList.length == 0 && (
-                  <div className="bg-organiser-light-gray p-4 rounded-2xl mt-8 py-40">
+                  <div className="bg-organiser-light-gray p-4 rounded-2xl mt-8 min-h-full h-full">
                     <h1 className="text-2xl font-normal text-center">No Events 😔</h1>
                   </div>
                 )}
