@@ -8,6 +8,7 @@ import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import { useUser } from "@/components/utility/UserContext";
 import OrganiserCheckbox from "@/components/organiser/OrganiserCheckbox";
+import LoadingSkeletonOrganiserName from "@/components/loading/LoadingSkeletonOrganiserName";
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -21,11 +22,9 @@ export default function Dashboard() {
           return event.startDate.seconds - Timestamp.now().seconds > 0;
         });
         setEventDataList(events);
-      } catch (error) {
-        // Handle errors here
-        console.error("getOrganiserEvents: " + error);
-      } finally {
         setLoading(false);
+      } catch (error) {
+        console.error("getOrganiserEvents() Error: " + error);
       }
     };
     fetchEvents();
@@ -37,7 +36,11 @@ export default function Dashboard() {
       <div className="py-16 flex justify-center">
         <div>
           <h1 className="text-5xl font-bold">Organiser Dashboard</h1>
-          <h1 className="pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
+          {loading ? (
+            <LoadingSkeletonOrganiserName />
+          ) : (
+            <h1 className="pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
+          )}
           <div className="flex w-full mt-8">
             <div className="grow mr-8 max-h-[60vh]">
               <div className="bg-organiser-light-gray p-8 rounded-2xl">
@@ -60,9 +63,9 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="max-h-[60vh] overflow-scroll rounded-2xl">
+            <div className="max-h-[60vh] overflow-auto rounded-2xl">
               <div className="bg-organiser-light-gray p-4 rounded-2xl">
-                <h1 className="text-2xl font-bold text-center">Upcoming Events</h1>
+                <h1 className="text-2xl font-bold text-center px-10">Upcoming Events</h1>
               </div>
               <div>
                 {eventDataList
@@ -93,7 +96,11 @@ export default function Dashboard() {
                       </div>
                     );
                   })}
-                {eventDataList.length == 0 && <div>No Upcoming Events</div>}
+                {eventDataList.length == 0 && (
+                  <div className="bg-organiser-light-gray p-4 rounded-2xl mt-8 py-40">
+                    <h1 className="text-2xl font-normal text-center">No Events 😔</h1>
+                  </div>
+                )}
               </div>
             </div>
           </div>

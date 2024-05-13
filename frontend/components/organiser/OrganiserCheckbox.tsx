@@ -9,7 +9,7 @@ export default function OrganiserCheckbox(props: OrganiserCheckboxProps) {
   return (
     <div className="flex items-center">
       <Checkbox
-        className="checked:bg-highlight-yellow checked:hover:bg-highlight-yellow text-highlight-yellow focus:outline-none focus:ring-0 checked:border-0"
+        className="bg-organiser-light-gray checked:bg-highlight-yellow checked:hover:bg-highlight-yellow text-highlight-yellow focus:outline-none focus:ring-0 checked:border-0 checked:ring-0"
         crossOrigin={undefined}
       />
       <Link href={props.link} className="">
