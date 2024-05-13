@@ -17,6 +17,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchEvents = async () => {
+      if (user.userId == "") {
+        return;
+      }
       try {
         const events = (await getOrganiserEvents(user.userId)).filter((event) => {
           return event.startDate.seconds - Timestamp.now().seconds > 0;
