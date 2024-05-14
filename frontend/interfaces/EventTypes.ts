@@ -37,13 +37,8 @@ interface AbstractEventData {
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
   isPrivate: boolean;
-<<<<<<< HEAD
-  attendees: Record<string, number>; // Key is Email and Number is amount of tickets associated with the email
-  attendeesMetadata: Record<string, { names: string[]; phones: string[] }>; // keeping track of an array with names and phones provided
-=======
   attendees: EventAttendees;
   attendeesMetadata: EventAttendeesMetadata;
->>>>>>> 15ce93efb0a88419f57cb426842b0c747f5d2d93
   accessCount: number;
   sport: string;
 }

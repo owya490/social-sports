@@ -10,8 +10,9 @@ import {
 import Image from "next/image";
 import { useEffect } from "react";
 
-import TextField from "@mui/material/TextField";
+import { Input } from "@material-tailwind/react";
 
+import OrganiserEventDescription from "@/components/events/OrganiserEventDescription";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
@@ -196,15 +197,20 @@ const EventDrilldownDetailsPage = ({
           ) : (
             <>
               {editTitle ? (
-                <div className="flex">
-                  <TextField
+                <div className="flex my-2">
+                  <Input
                     value={newEditTitle}
                     variant="standard"
-                    fullWidth
-                    inputProps={{ style: { fontSize: "1.25rem", color: "#333" } }}
+                    style={{
+                      fontSize: "1.5rem",
+                      color: "#333",
+                      width: "100%",
+                      height: "90%",
+                    }}
                     onChange={(e) => {
                       setNewEditTitle(e.target.value);
                     }}
+                    crossOrigin={false}
                   />
                   <CheckIcon
                     className="w-9 stroke-organiser-title-gray-text cursor-pointer"
@@ -220,7 +226,7 @@ const EventDrilldownDetailsPage = ({
                   />
                 </div>
               ) : (
-                <div className="font-bold text-2xl">
+                <div className="font-bold text-2xl my-1">
                   {newEditTitle}
                   <PencilSquareIcon
                     className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
@@ -310,7 +316,7 @@ const EventDrilldownDetailsPage = ({
           ) : (
             <>
               {editDescription ? (
-                <div className="flex">
+                <div className="flex my-2">
                   <DescriptionRichTextEditor
                     description={newEditDescription}
                     updateDescription={setNewEditDescription}
@@ -329,8 +335,8 @@ const EventDrilldownDetailsPage = ({
                   />
                 </div>
               ) : (
-                <div className="text-sm mt-4">
-                  {newEditDescription}
+                <div className="text-sm my-2">
+                  <OrganiserEventDescription description={newEditDescription} />
                   <PencilSquareIcon
                     className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
                     onClick={() => setEditDescription(true)}
