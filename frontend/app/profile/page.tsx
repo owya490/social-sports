@@ -58,7 +58,7 @@ const Profile = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    async function setInitialState() {
+    function setInitialState() {
       setInitialProfileData({
         firstName: user?.firstName || "",
         surname: user?.surname || "",
