@@ -1,12 +1,14 @@
 "use client";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { searchEventsByKeyword, getAllEvents, getEventById } from "@/services/src/events/eventsService";
+import { Alert } from "@material-tailwind/react";
 import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
-import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
-import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
-import { sleep } from "@/utilities/sleepUtil";
-import { Alert } from "@material-tailwind/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useLayoutEffect, useState } from "react";
+import noSearchResultLineDrawing from "../../public/images/no-search-result-line-drawing.jpg";
+import Image from "next/image";
+import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { sleep } from "@/utilities/sleepUtil";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
@@ -130,35 +132,53 @@ export default function Dashboard() {
       </div>
       <div className="flex justify-center">
         <div className="pb-10 screen-width-dashboard">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-screen justify-items-center">
-            {eventDataList
-              .sort((event1, event2) => {
-                if (event1.accessCount > event2.accessCount) {
-                  return 1;
-                }
-                if (event2.accessCount < event2.accessCount) {
-                  return -1;
-                }
-                return 0;
-              })
-              .map((event, eventIdx) => {
-                return (
-                  <div className="my-4 w-full" key={eventIdx}>
-                    <EventCard
-                      eventId={event.eventId}
-                      image={event.image}
-                      name={event.name}
-                      organiser={event.organiser}
-                      startTime={event.startDate}
-                      location={event.location}
-                      price={event.price}
-                      vacancy={event.vacancy}
-                      loading={loading}
-                    />
-                  </div>
-                );
-              })}
-          </div>
+          {eventDataList.length === 0 ? (
+            <div className="flex justify-center">
+              <div>
+                <Image
+                  src={noSearchResultLineDrawing}
+                  alt="noSearchResultLineDrawing"
+                  width={500}
+                  height={300}
+                  className="opacity-60"
+                />
+
+                <div className="flex justify-center text-gray-600 font-medium text-lg sm:text-2xl text-center">
+                  Sorry, we couldn&apos;t find any results
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-screen justify-items-center">
+              {eventDataList
+                .sort((event1, event2) => {
+                  if (event1.accessCount > event2.accessCount) {
+                    return 1;
+                  }
+                  if (event2.accessCount < event2.accessCount) {
+                    return -1;
+                  }
+                  return 0;
+                })
+                .map((event, eventIdx) => {
+                  return (
+                    <div className="my-4 w-full" key={eventIdx}>
+                      <EventCard
+                        eventId={event.eventId}
+                        image={event.image}
+                        name={event.name}
+                        organiser={event.organiser}
+                        startTime={event.startDate}
+                        location={event.location}
+                        price={event.price}
+                        vacancy={event.vacancy}
+                        loading={loading}
+                      />
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
       </div>
     </div>
