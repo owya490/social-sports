@@ -157,11 +157,10 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
     const privateData = privateDoc.data();
     const organiserEvents = privateData?.organiserEvents || [];
     const eventDataList: EventData[] = [];
-    for (let i = 0; i < organiserEvents.length; i++) {
-      const event = organiserEvents[i];
-      console.log(event); // Or perform any other operation with 'event'
-      const eventData: EventData = await getEventById(event);
-      eventData.eventId = event;
+    for (const eventId of organiserEvents) {
+      console.log(eventId); // Or perform any other operation with 'eventId'
+      const eventData: EventData = await getEventById(eventId);
+      eventData.eventId = eventId;
       eventDataList.push(eventData);
     }
     // Return the organiserEvents array

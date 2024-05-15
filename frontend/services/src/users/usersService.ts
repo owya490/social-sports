@@ -49,7 +49,7 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
 export async function getPrivateUserById(userId: UserId): Promise<UserData> {
   userServiceLogger.info(`Fetching private user by ID:, ${userId}`);
   console.log(userId);
-  if (userId === undefined) {
+  if (userId === undefined || userId === null) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
     throw new UserNotFoundError(userId, "UserId is undefined");
   }

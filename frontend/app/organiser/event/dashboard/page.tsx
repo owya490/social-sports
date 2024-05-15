@@ -26,7 +26,6 @@ import {
   filterEventsByType,
 } from "@/services/src/filterService";
 import { Timestamp } from "firebase/firestore";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 
 export default function OrganiserDashboard() {
@@ -59,36 +58,30 @@ export default function OrganiserDashboard() {
     let filteredEventDataList = [...allEventsDataList];
 
     // Filter by SEARCH
-    if (searchValue !== "") {
+    if (searchValue !== DEFAULT_SEARCH) {
       let newEventDataList = filterEventsBySearch([...filteredEventDataList], searchValue);
       filteredEventDataList = newEventDataList;
     }
-    setSearchValue(searchValue);
-
     // Filter by STATUS
-    if (eventStatusValue !== "") {
+    if (eventStatusValue !== DEFAULT_EVENT_STATUS) {
       let newEventDataList = filterEventsByStatus([...filteredEventDataList], eventStatusValue);
       filteredEventDataList = newEventDataList;
     }
-    setEventStatusValue(eventStatusValue);
 
     // Filter by TYPE
-    if (eventTypeValue !== "") {
+    if (eventTypeValue !== DEFAULT_EVENT_TYPE) {
       let newEventDataList = filterEventsByType([...filteredEventDataList], eventTypeValue);
       filteredEventDataList = newEventDataList;
     }
-    setEventTypeValue(eventTypeValue);
 
     // Filter by PRICE
-    let minPrice = minPriceValue !== null ? minPriceValue : 0;
-    let maxPrice = maxPriceValue !== null ? maxPriceValue : 9999;
+    let minPrice = minPriceValue !== DEFAULT_MIN_PRICE ? minPriceValue : 0;
+    let maxPrice = maxPriceValue !== DEFAULT_MAX_PRICE ? maxPriceValue : 9999;
 
-    if (minPriceValue !== null || maxPriceValue !== null) {
+    if (minPriceValue !== DEFAULT_MIN_PRICE || maxPriceValue !== DEFAULT_MAX_PRICE) {
       let newEventDataList = filterEventsByPrice([...filteredEventDataList], minPrice, maxPrice);
       filteredEventDataList = newEventDataList;
     }
-    setAppliedMinPriceValue(minPriceValue);
-    setAppliedMaxPriceValue(maxPriceValue);
 
     // Filter by DATERANGE
     if (dateRange.startDate && dateRange.endDate) {
@@ -99,7 +92,6 @@ export default function OrganiserDashboard() {
       );
       filteredEventDataList = newEventDataList;
     }
-    setAppliedDateRange(dateRange);
 
     // Filter by SORT BY
     let newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
@@ -119,23 +111,6 @@ export default function OrganiserDashboard() {
     EmptyEventData,
     EmptyEventData,
   ]);
-  const [searchDataList, setSearchDataList] = useState<EventData[]>([]);
-  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [srcLocation, setSrcLocation] = useState<string>("");
-  const [triggerFilterApply, setTriggerFilterApply] = useState(false);
-  const getQueryParams = () => {
-    if (typeof window === "undefined") {
-      // Return some default or empty values when not in a browser environment
-      return { event: "", location: "" };
-    }
-    const searchParams = new URLSearchParams(window.location.search);
-    return {
-      event: searchParams.get("event") || "",
-      location: searchParams.get("location") || "",
-    };
-  };
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
@@ -180,7 +155,7 @@ export default function OrganiserDashboard() {
           setDateRange={setDateRange}
           applyFilters={applyFilters}
         />
-        <div className="z-5 grid grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 justify-items-center max-h-screen overflow-y-auto mb-60 px-4  min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px]">
+        <div className="z-5 grid grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 gap-y-2 2xl:gap-y-5 justify-items-center max-h-screen overflow-y-auto px-4 min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-fit">
           {eventDataList
             .sort((event1, event2) => {
               if (event1.accessCount > event2.accessCount) {
@@ -193,7 +168,7 @@ export default function OrganiserDashboard() {
             })
             .map((event, eventIdx) => {
               return (
-                <div className="w-full mb-4" key={eventIdx}>
+                <div className="w-full" key={eventIdx}>
                   <OrganiserEventCard
                     eventId={event.eventId}
                     image={event.image}
