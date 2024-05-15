@@ -1,24 +1,18 @@
 "use client";
+import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { updateUser } from "@/services/src/users/usersService";
+import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
+import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
 import Image from "next/image";
-import { ChangeEvent, Fragment, useEffect, useRef, useState } from "react";
+import { ChangeEvent, Fragment, useEffect, useState } from "react";
 import eye from "./../../public/images/Eye.png";
 import location from "./../../public/images/location.png";
 import Upload from "./../../public/images/upload.png";
 import x from "./../../public/images/x.png";
-import { updateUser } from "@/services/usersService";
-import Loading from "@/components/Loading";
-import { sleep } from "@/utilities/sleepUtil";
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-  getMetadata,
-} from "firebase/storage";
+import { useRouter } from "next/navigation";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -27,8 +21,7 @@ const calculateAge = (birthday: string) => {
   let age = currentDate.getFullYear() - birthDate.getFullYear();
   if (
     currentDate.getMonth() < birthDate.getMonth() ||
-    (currentDate.getMonth() === birthDate.getMonth() &&
-      currentDate.getDate() < birthDate.getDate())
+    (currentDate.getMonth() === birthDate.getMonth() && currentDate.getDate() < birthDate.getDate())
   ) {
     age--;
   }
@@ -36,6 +29,7 @@ const calculateAge = (birthday: string) => {
 };
 
 const Profile = () => {
+  const router = useRouter();
   const storage = getStorage();
 
   const [editable, setEditable] = useState(false);
@@ -56,8 +50,7 @@ const Profile = () => {
     return `${dd}-${mm}-${yyyy}`;
   };
 
-  const [initialProfileData, setInitialProfileData] =
-    useState<UserData>(EmptyUserData);
+  const [initialProfileData, setInitialProfileData] = useState<UserData>(EmptyUserData);
   const [editedData, setEditedData] = useState<UserData>(EmptyUserData);
 
   const [loading, setLoading] = useState(true);
@@ -150,36 +143,29 @@ const Profile = () => {
 
   useEffect(() => {
     if (isProfilePictureUpdated) {
-      updateUser(initialProfileData.userId, editedData);
+      try {
+        updateUser(initialProfileData.userId, editedData);
+      } catch {
+        router.push("/error");
+      }
       setInitialProfileData({ ...editedData });
       setIsProfilePictureUpdated(false);
     }
   }, [isProfilePictureUpdated, editedData, initialProfileData]);
 
-  const handleFileInputChange = async (
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target?.files;
 
     if (files && files.length > 0) {
       const file = files[0];
 
       try {
-        const storageRef = ref(
-          storage,
-          `users/${initialProfileData.userId}/profilepicture/${file.name}`
-        );
+        const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${file.name}`);
 
         const previousProfilePictureURL = initialProfileData.profilePicture;
 
-        if (
-          previousProfilePictureURL &&
-          !previousProfilePictureURL.includes("generic-profile-photo.webp")
-        ) {
-          const previousProfilePictureRef = ref(
-            storage,
-            previousProfilePictureURL
-          );
+        if (previousProfilePictureURL && !previousProfilePictureURL.includes("generic-profile-photo.webp")) {
+          const previousProfilePictureRef = ref(storage, previousProfilePictureURL);
 
           try {
             await getMetadata(previousProfilePictureRef);
@@ -209,9 +195,7 @@ const Profile = () => {
     }
   };
 
-  const handleInputChangeMobile = (
-    changeEvent: ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleInputChangeMobile = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     setEditedData({
       ...editedData,
       contactInformation: {
@@ -239,7 +223,11 @@ const Profile = () => {
   const handleSaveClick = () => {
     console.log("Saving changes:", initialProfileData);
     setEditable(false);
-    updateUser(initialProfileData.userId, editedData);
+    try {
+      updateUser(initialProfileData.userId, editedData);
+    } catch {
+      router.push("/error");
+    }
     setInitialProfileData({ ...editedData });
   };
 
@@ -262,11 +250,7 @@ const Profile = () => {
       ) : label === "Gender" ? (
         <select
           name={name as string}
-          value={
-            editable
-              ? (editedData[name] as string)
-              : (initialProfileData[name] as string)
-          }
+          value={editable ? (editedData[name] as string) : (initialProfileData[name] as string)}
           onChange={handleSelectChange}
           className="mt-1 p-2 border rounded-md w-full"
           placeholder="Not Provided"
@@ -280,11 +264,7 @@ const Profile = () => {
         <input
           type="text"
           name={name as string}
-          value={
-            editable
-              ? (editedData[name] as string)
-              : (initialProfileData[name] as string)
-          }
+          value={editable ? (editedData[name] as string) : (initialProfileData[name] as string)}
           onChange={handleInputChange}
           className="mt-1 p-2 border rounded-md w-full"
           placeholder="Not Provided"
@@ -325,9 +305,7 @@ const Profile = () => {
   const renderField = (label: string, name: string) => (
     <div key={label} className="mb-4">
       <div className="flex flex-col md:flex-row md:justify-between w-full">
-        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">
-          {label}:
-        </strong>
+        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">{label}:</strong>
         <span
           className={`text-md md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
             name === "email" ? "break-all" : ""
@@ -344,9 +322,7 @@ const Profile = () => {
   const renderFieldContact = (label: string, name: "mobile" | "email") => (
     <div key={label} className="mb-4">
       <div className="flex flex-col md:flex-row md:justify-between w-full">
-        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">
-          {label}:
-        </strong>
+        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">{label}:</strong>
         <span
           className={`text-md md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
             name === "email" ? "break-all" : ""
@@ -399,13 +375,7 @@ const Profile = () => {
                       onClick={handleEditClick}
                       className="text-gray-500 hover:text-gray-700 focus:outline-none"
                     >
-                      <Image
-                        src={x}
-                        alt="x"
-                        width={0}
-                        height={0}
-                        className="w-5 h-5 -mt-6"
-                      />
+                      <Image src={x} alt="x" width={0} height={0} className="w-5 h-5 -mt-6" />
                     </button>
                   </div>
                 </div>
@@ -505,9 +475,7 @@ const Profile = () => {
                   <div className="flex justify-center lg:justify-start mt-5 3xl:mt-9 text-xl 3xl:text-3xl font-semibold">
                     <span className="lg:whitespace-no-wrap">
                       {initialProfileData.firstName}{" "}
-                      {initialProfileData.surname === "Not Provided"
-                        ? ""
-                        : initialProfileData.surname?.slice(0, 1)}
+                      {initialProfileData.surname === "Not Provided" ? "" : initialProfileData.surname?.slice(0, 1)}
                       {initialProfileData.age !== "" &&
                         initialProfileData.dob !== "Not Provided" &&
                         initialProfileData.dob !== "" &&
@@ -515,26 +483,15 @@ const Profile = () => {
                     </span>
                   </div>
                   <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-lg 3xl:text-xl">
-                    {initialProfileData.location === "Not Provided"
-                      ? ""
-                      : initialProfileData.location}
+                    {initialProfileData.location === "Not Provided" ? "" : initialProfileData.location}
                   </div>
                 </div>
               </div>
             </div>
             <div className="justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-2 hidden lg:block mb-6 mt-6">
-              <div
-                className="border border-gray-500 h-fit"
-                style={{ borderRadius: "20px" }}
-              >
+              <div className="border border-gray-500 h-fit" style={{ borderRadius: "20px" }}>
                 <div className="ml-6 mt-3">
-                  <Image
-                    src={eye}
-                    alt="eye"
-                    width={0}
-                    height={0}
-                    className="h-9 w-12"
-                  />
+                  <Image src={eye} alt="eye" width={0} height={0} className="h-9 w-12" />
                 </div>
                 <div
                   className="text-xl 3xl:text-2xl text-bold ml-4 mr-3 my-2 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4"
@@ -543,24 +500,14 @@ const Profile = () => {
                   What info is shared with others?
                 </div>
                 <div className="text-md 3xl:text-lg ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
-                  Sports Hub only releases your name and contact information to
-                  the host of the event you are attending.
+                  Sports Hub only releases your name and contact information to the host of the event you are attending.
                 </div>
               </div>
             </div>
             <div className="justify-end col-start-1 col-span-1 lg:row-span-1 lg:row-start-3 hidden lg:block mb-6 ">
-              <div
-                className="border border-gray-500 h-fit"
-                style={{ borderRadius: "20px" }}
-              >
+              <div className="border border-gray-500 h-fit" style={{ borderRadius: "20px" }}>
                 <div className="ml-7 mt-3">
-                  <Image
-                    src={location}
-                    alt="location"
-                    width={0}
-                    height={0}
-                    className="h-9 w-9"
-                  />
+                  <Image src={location} alt="location" width={0} height={0} className="h-9 w-9" />
                 </div>
                 <div
                   className="text-xl 3xl:text-2xl text-bold ml-4 mr-3 my-2 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4"
@@ -569,8 +516,7 @@ const Profile = () => {
                   What is my location used for?
                 </div>
                 <div className="text-md 3xl:text-lg ml-4 mr-3 my-3 lg:mr-5 lg:ml-6 3xl:mr-6 3xl:ml-7 3xl:my-4">
-                  Sports Hub uses your location to better recommend you events
-                  that are close to you!
+                  Sports Hub uses your location to better recommend you events that are close to you!
                 </div>
               </div>
             </div>
@@ -599,9 +545,7 @@ const Profile = () => {
                 width: "100%",
               }}
             >
-              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">
-                Contact Info
-              </div>
+              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Contact Info</div>
             </div>
             <ul className="w-full">
               {renderFieldContact("Email", "email")}

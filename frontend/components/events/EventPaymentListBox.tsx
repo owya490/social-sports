@@ -17,11 +17,7 @@ export default function EventPaymentListBox(props: EventPaymentListBoxProps) {
 
   return (
     <div className="p-[9%] mb-5 w-full">
-      <ListBox
-        sortByCategory={SortByCategory.HOT}
-        onChangeHandler={props.onGuestCountChange}
-        options={options}
-      />
+      <ListBox sortByCategory={SortByCategory.HOT} onChangeHandler={props.onGuestCountChange} options={options} />
     </div>
   );
 }
