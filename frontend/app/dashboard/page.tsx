@@ -123,15 +123,15 @@ export default function Dashboard() {
       </div>
       <div className="flex justify-center">
         <div className="pb-10 screen-width-dashboard">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 border-2">
+          <div className="flex justify-center">
             {eventDataList.length === 0 ? (
-              <div className="border-2">
+              <div className="">
                 <Image
                   src={noSearchResultLineDrawing}
                   alt="noSearchResultLineDrawing"
                   width={500}
                   height={300}
-                  className="m-auto opacity-60"
+                  className="opacity-60"
                 />
 
                 <div className="flex justify-center text-gray-600 font-medium text-lg sm:text-2xl text-center">
@@ -169,21 +169,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      {/* {eventDataList.length === 0 && (
-        <div className="mt-10 mb-16 sm:mt-20 sm:mb-40 mx-6">
-          <Image
-            src={noSearchResultLineDrawing}
-            alt="noSearchResultLineDrawing"
-            width={500}
-            height={300}
-            className="m-auto opacity-60"
-          />
-
-          <div className="flex justify-center text-gray-600 font-medium text-lg sm:text-2xl text-center">
-            Sorry, we couldn&apos;t find any results
-          </div>
-        </div>
-      )} */}
     </div>
   );
 }
