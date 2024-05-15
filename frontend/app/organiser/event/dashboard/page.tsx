@@ -133,56 +133,60 @@ export default function OrganiserDashboard() {
   return (
     <div className="w-screen mt-16 mb-10 ml-7 h-screen max-h-screen overflow-hidden">
       <OrganiserNavbar currPage={""} />
-      <div className="text-6xl ml-7 p-10">Event Dashboard</div>
-      <div className="flex justify-center h-screen">
-        <OrganiserFilterDialog
-          eventDataList={eventDataList}
-          allEventsDataList={allEventsDataList}
-          setEventDataList={setEventDataList}
-          sortByCategoryValue={sortByCategoryValue}
-          setSortByCategoryValue={setSortByCategoryValue}
-          searchValue={searchValue}
-          setSearchValue={setSearchValue}
-          eventStatusValue={eventStatusValue}
-          setEventStatusValue={setEventStatusValue}
-          eventTypeValue={eventTypeValue}
-          setEventTypeValue={setEventTypeValue}
-          minPriceValue={minPriceValue}
-          setMinPriceValue={setMinPriceValue}
-          maxPriceValue={maxPriceValue}
-          setMaxPriceValue={setMaxPriceValue}
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          applyFilters={applyFilters}
-        />
-        <div className="z-5 grid grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 gap-y-2 2xl:gap-y-5 justify-items-center max-h-screen overflow-y-auto px-4 min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-fit">
-          {eventDataList
-            .sort((event1, event2) => {
-              if (event1.accessCount > event2.accessCount) {
-                return 1;
-              }
-              if (event2.accessCount < event2.accessCount) {
-                return -1;
-              }
-              return 0;
-            })
-            .map((event, eventIdx) => {
-              return (
-                <div className="w-full" key={eventIdx}>
-                  <OrganiserEventCard
-                    eventId={event.eventId}
-                    image={event.image}
-                    name={event.name}
-                    organiser={event.organiser}
-                    startTime={event.startDate}
-                    location={event.location}
-                    price={event.price}
-                    vacancy={event.vacancy}
-                    loading={loading}
-                  />
-                </div>
-              );
-            })}
+      <div className="flex justify-center">
+        <div className="flex flex-col items-start">
+          <div className="text-6xl my-6">Event Dashboard</div>
+          <div className="flex flex-row h-screen">
+            <OrganiserFilterDialog
+              eventDataList={eventDataList}
+              allEventsDataList={allEventsDataList}
+              setEventDataList={setEventDataList}
+              sortByCategoryValue={sortByCategoryValue}
+              setSortByCategoryValue={setSortByCategoryValue}
+              searchValue={searchValue}
+              setSearchValue={setSearchValue}
+              eventStatusValue={eventStatusValue}
+              setEventStatusValue={setEventStatusValue}
+              eventTypeValue={eventTypeValue}
+              setEventTypeValue={setEventTypeValue}
+              minPriceValue={minPriceValue}
+              setMinPriceValue={setMinPriceValue}
+              maxPriceValue={maxPriceValue}
+              setMaxPriceValue={setMaxPriceValue}
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+              applyFilters={applyFilters}
+            />
+            <div className="z-5 grid grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 gap-y-2 2xl:gap-y-5 justify-items-center max-h-screen overflow-y-auto px-4 min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-fit">
+              {eventDataList
+                .sort((event1, event2) => {
+                  if (event1.accessCount > event2.accessCount) {
+                    return 1;
+                  }
+                  if (event2.accessCount < event2.accessCount) {
+                    return -1;
+                  }
+                  return 0;
+                })
+                .map((event, eventIdx) => {
+                  return (
+                    <div className="w-full" key={eventIdx}>
+                      <OrganiserEventCard
+                        eventId={event.eventId}
+                        image={event.image}
+                        name={event.name}
+                        organiser={event.organiser}
+                        startTime={event.startDate}
+                        location={event.location}
+                        price={event.price}
+                        vacancy={event.vacancy}
+                        loading={loading}
+                      />
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
