@@ -54,6 +54,7 @@ const EventDrilldownManageAttendeesPage = ({
                   email={value.email}
                   number={value.phones[0]}
                   tickets={eventAttendeesNumTickets[emailHash]}
+                  key={emailHash}
                 />
               );
             })}
