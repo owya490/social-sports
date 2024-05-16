@@ -113,35 +113,21 @@ export function BasicInformation({
             required
             value={name}
             onChange={(e) => updateField({ name: e.target.value })}
-            className="rounded-md"
+            className="rounded-md focus:ring-0"
             size="lg"
           />
         </div>
         <div>
-          <label className="text-black text-lg font-semibold">
-            When does your event start and end?
-          </label>
-          <div className="flex space-x-2 mt-4">
+          <label className="text-black text-lg font-semibold">When does your event start and end?</label>
+          <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
             <div className="basis-1/2">
-              <CustomDateInput
-                date={date}
-                placeholder="Date"
-                handleChange={handleDateChange}
-              />
+              <CustomDateInput date={date} placeholder="Date" handleChange={handleDateChange} />
             </div>
             <div className="basis-1/4">
-              <CustomTimeInput
-                value={startTime}
-                placeholder="Start time"
-                handleChange={handleStartTimeChange}
-              />
+              <CustomTimeInput value={startTime} placeholder="Start time" handleChange={handleStartTimeChange} />
             </div>
             <div className="basis-1/4">
-              <CustomTimeInput
-                value={endTime}
-                placeholder="End time"
-                handleChange={handleEndTimeChange}
-              />
+              <CustomTimeInput value={endTime} placeholder="End time" handleChange={handleEndTimeChange} />
             </div>
           </div>
         </div>
@@ -155,7 +141,7 @@ export function BasicInformation({
               required
               value={location}
               onChange={(e) => updateField({ location: e.target.value })}
-              className="rounded-md"
+              className="rounded-md focus:ring-0"
               size="lg"
               icon={<MapPinIcon />}
             />
@@ -184,56 +170,52 @@ export function BasicInformation({
           </div>
         </div>
         <div>
-          <label className="text-black text-lg font-semibold">
-            What is the price of the event and max capacity?
-          </label>
+          <label className="text-black text-lg font-semibold">What is the price of the event and max capacity?</label>
           <p className="text-sm mt-2 mb-5">
-            Event price is the cost of each ticket. Event capacity is the total
-            number of tickets you&apos;re willing to sell.
+            Event price is the cost of each ticket. Event capacity is the total number of tickets you&apos;re willing to
+            sell.
           </p>
 
-  <div className="w-full px-5">
-    <CreateEventCostSlider
-      initialCustomAmount={customAmount}
-      onCustomAmountChange={handleEventCostSliderChange}
-    />
-  </div>
-  <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3">
-    <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
-      <Input
-        label="Price"
-        crossOrigin={undefined}
-        required
-        value={priceString}
-        type="number"
-        onChange={(e) => {
-          setPriceString(e.target.value);
-          handleCustomAmountChange(parseInt(e.target.value));
-        }}
-        className="rounded-md"
-        size="lg"
-        icon={<CurrencyDollarIcon />}
-      />
-    </div>
-    <div className="w-full md:w-1/2 mt-4 md:mt-0">
-      <Input
-        label="Capacity"
-        crossOrigin={undefined}
-        required
-        value={capacityString}
-        type="number"
-        onChange={(e) => {
-          setCapacityString(e.target.value);
-          updateField({ capacity: parseInt(e.target.value) });
-        }}
-        className="rounded-md"
-        size="lg"
-      />
-    </div>
-  </div>
-</div>
-
-
+          <div className="w-full px-5">
+            <CreateEventCostSlider
+              initialCustomAmount={customAmount}
+              onCustomAmountChange={handleEventCostSliderChange}
+            />
+          </div>
+          <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3">
+            <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
+              <Input
+                label="Price"
+                crossOrigin={undefined}
+                required
+                value={priceString}
+                type="number"
+                onChange={(e) => {
+                  setPriceString(e.target.value);
+                  handleCustomAmountChange(parseInt(e.target.value));
+                }}
+                className="rounded-md focus:ring-0"
+                size="lg"
+                icon={<CurrencyDollarIcon />}
+              />
+            </div>
+            <div className="w-full md:w-1/2 mt-4 md:mt-0">
+              <Input
+                label="Capacity"
+                crossOrigin={undefined}
+                required
+                value={capacityString}
+                type="number"
+                onChange={(e) => {
+                  setCapacityString(e.target.value);
+                  updateField({ capacity: parseInt(e.target.value) });
+                }}
+                className="rounded-md focus:ring-0"
+                size="lg"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </FormWrapper>
   );
