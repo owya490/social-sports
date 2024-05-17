@@ -71,7 +71,7 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
         </div>
       </div>
       <div className="mx-2 col-span-1 flex justify-center lg:justify-end xl:justify-center">
-        <div>
+        <div className="w-full md:w-fit">
           <div className="text-lg lg:text-lg font-bold mb-2 text-gray-600 text-center">Your post preview:</div>
           <EventCard
             eventId=""

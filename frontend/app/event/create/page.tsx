@@ -161,7 +161,7 @@ export default function CreateEvent() {
   return loading ? (
     <Loading />
   ) : (
-    <div className="w-screen flex justify-center">
+    <div className="flex justify-center">
       {!showForm ? (
         <div className="h-screen w-full flex justify-center items-center">Please Login/ Register to Access</div>
       ) : (
