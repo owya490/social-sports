@@ -63,7 +63,7 @@ export default function PopularEvents(props: PopularEventsProps) {
           </div>
           <div className="screen-width-dashboard">
             <div id="recommended-event-overflow" className="flex overflow-x-auto pb-4 snap-x snap-mandatory">
-              <div className="flex space-x-4">
+              <div className="flex space-x-2 xl:space-x-8">
                 {recommendedEvents.map((event, i) => {
                   return (
                     <div key={`recommended-event-${i}`} className="snap-start w-[300px]">
