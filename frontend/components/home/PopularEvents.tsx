@@ -50,10 +50,7 @@ export default function PopularEvents(props: PopularEventsProps) {
             <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
             <div className="flex my-5">
               <h5 className="font-bold text-lg">Popular events nearby</h5>
-              <Link
-                href="#"
-                className="text-sm font-light ml-auto cursor-pointer hover:underline"
-              >
+              <Link href="#" className="text-sm font-light ml-auto cursor-pointer hover:underline">
                 See all
               </Link>
             </div>
@@ -65,17 +62,11 @@ export default function PopularEvents(props: PopularEventsProps) {
             <ChevronLeftButton handleClick={scrollLeft} />
           </div>
           <div className="screen-width-dashboard">
-            <div
-              id="recommended-event-overflow"
-              className="flex overflow-x-auto pb-4 snap-x snap-mandatory"
-            >
+            <div id="recommended-event-overflow" className="flex overflow-x-auto pb-4 snap-x snap-mandatory">
               <div className="flex space-x-4">
                 {recommendedEvents.map((event, i) => {
                   return (
-                    <div
-                      key={`recommended-event-${i}`}
-                      className="snap-start max-w-[300px]"
-                    >
+                    <div key={`recommended-event-${i}`} className="snap-start w-[300px]">
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}
