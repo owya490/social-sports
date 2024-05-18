@@ -43,6 +43,7 @@ export async function getStripeCheckoutFromEventId(eventId: EventId, isPrivate: 
     isPrivate: isPrivate,
     quantity: quantity,
     cancelUrl: getUrlWithCurrentHostname(`/event/${eventId}`),
+    successUrl: getUrlWithCurrentHostname(`/event/success/${eventId}`),
   };
   const getStripeCheckoutFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID);
   return getStripeCheckoutFunction(content)

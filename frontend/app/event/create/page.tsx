@@ -107,8 +107,12 @@ export default function CreateEvent() {
       imageUrl = await uploadUserImage(user.userId, formData.image);
     }
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
-    const newEventId = await createEvent(newEventData);
-    // setLoading(false);
+    let newEventId = "";
+    try {
+      newEventId = await createEvent(newEventData);
+    } catch (error) {
+      router.push("/error");
+    }
     return newEventId;
   }
 
@@ -146,6 +150,7 @@ export default function CreateEvent() {
         lng: lngLat.lng,
       },
       sport: formData.sport,
+      paymentsActive: formData.paymentsActive,
     };
   }
 
