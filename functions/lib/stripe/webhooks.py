@@ -47,6 +47,9 @@ def check_if_session_has_been_processed_already(transaction: Transaction, logger
   
   event_metadata = maybe_event_metadata.to_dict()
 
+  if None is event_metadata.get("completedStripeCheckoutSessionIds"):
+    return False
+
   if checkout_session_id in event_metadata.get("completedStripeCheckoutSessionIds"):
     return True
   
@@ -90,7 +93,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
   maybe_event_metadata = event_metadata_ref.get(transaction=transaction)
   event_metadata = {
     "organiserId": event["organiserId"],
-    "attendees": {},
+    "purchaserMap": {},
     "completedStripeCheckoutSessionIds": []
   }
   # If event metadata already exists, use the exisitng data and increment
@@ -99,47 +102,48 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
 
   logger.info(f"event-metadata {event_metadata}")
 
-  if event_metadata.get("attendees") == None:
-    event_metadata["attendees"] = {}
+  if event_metadata.get("purchaserMap") == None:
+    event_metadata["purchaserMap"] = {}
 
 
-  # If the attendee doesn't exist, add base template so we don't null pointer
-  if event_metadata["attendees"].get(email_hash) == None:
-    event_metadata["attendees"][email_hash] = {
+  # If the purchaser doesn't exist, add base template so we don't null pointer
+  if event_metadata["purchaserMap"].get(email_hash) == None:
+    event_metadata["purchaserMap"][email_hash] = {
       "email": "",
-      "ticketCount": 0,
-      "names": [],
-      "phones": []
+      "attendees": {},
+      "totalTicketCount": 0
     }
   
   # Get names and phones already added, if it doesn't exist, start new list
-  current_attendee_names = [] if event_metadata["attendees"][email_hash].get("names") == None else event_metadata["attendees"][email_hash]["names"]
-  current_attendee_phones = [] if event_metadata["attendees"][email_hash].get("phones") == None else event_metadata["attendees"][email_hash]["phones"]
-
-  transaction.update(event_metadata_ref, {
-    f"attendees.{email_hash}": {
-      "email": customer.email,
-      "ticketCount": event_metadata["attendees"][email_hash]["ticketCount"] + item.quantity,
-      # Gets the Union without duplicates
-      "names": list(set(list(current_attendee_names) + [customer.name])),
-      "phones": list(set(list(current_attendee_phones) + [customer.phone]))
+  # current_attendee_names = [] if event_metadata["attendees"][email_hash].get("names") == None else event_metadata["attendees"][email_hash]["names"]
+  # current_attendee_phones = [] if event_metadata["attendees"][email_hash].get("phones") == None else event_metadata["attendees"][email_hash]["phones"]
+  purchaser = event_metadata["purchaserMap"][email_hash]
+  purchaser["email"] = customer.email
+  purchaser["totalTicketCount"] += item.quantity
+  maybe_current_attendee = event_metadata["purchaserMap"][email_hash]["attendees"].get(customer.name)
+  if maybe_current_attendee == None:
+    purchaser["attendees"][customer.name] = {"phone": customer.phone, "ticketCount": item.quantity}
+  else:
+    purchaser["attendees"][customer.name] = {
+      "phone": customer.phone,
+      "ticketCount": purchaser["attendees"][customer.name]["ticketCount"] + item.quantity
     }
-  })
+  
+  body = {
+    f"purchaserMap.{email_hash}": purchaser,
+    "completeTicketCount": firestore.Increment(item.quantity)
+  }
+
+  if (maybe_event_metadata.exists):
+    transaction.update(event_metadata_ref, body)
+  else:
+    transaction.set(event_metadata_ref, body)
+
   logger.info(f"Updated attendee list to reflect newly purchased tickets. email={customer.email}, name={customer.name}")
-
-  # Quickly reconcile vacancy while we are at it to ensure there wasn't any discrepancy
-  total_attendees = item.quantity # start the total at the new sold tickets
-  for metadata in event_metadata["attendees"].values():
-    total_attendees += metadata["ticketCount"]
-
-  # If there are more vacant spots than capacity - total attendees, make the vacancy the lower number
-  if event["vacancy"] > event["capacity"] - total_attendees:
-    transaction.update(event_ref, {"vacancy": event["capacity"] - total_attendees})
-    logger.warning(f"WARNING!! After reconciling vacancy with new ticket count sold, we detected there was a decrepancy, so setting it to the lower of the two. total_attendees={total_attendees}, event_vacancy={event['vacancy']}, event_capacity={event['capacity']}")
 
   # Lastly, we want to record the checkout session id of this webhook event, so we have an idempotency in our operations
   transaction.update(
-    event_metadata_ref, 
+    event_metadata_ref,
     {
       "completedStripeCheckoutSessionIds": firestore.ArrayUnion([checkout_session_id])
     }
