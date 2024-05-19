@@ -35,7 +35,7 @@ export async function findEventDoc(eventId: string): Promise<any> {
   }
 }
 
-export function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) {
+export function tryGetAllActivePublicEventsFromLocalStorage(currentDate: Date) {
   try {
     console.log("Trying to get Cached Active Public Events");
 

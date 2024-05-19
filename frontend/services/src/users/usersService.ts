@@ -28,12 +28,19 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
   try {
+    // try find in local storage
+    // return immediately if we find it in local storage
+
     const userDoc = await getDoc(doc(db, "Users", "Active", "Public", userId));
     if (!userDoc.exists()) {
       throw new UserNotFoundError(userId);
     }
     const userData = userDoc.data() as UserData;
     userData.userId = userId;
+
+    // set local storage with data
+    // then return the value in local storage
+
     return userData;
   } catch (error) {
     if (error instanceof UserNotFoundError) {

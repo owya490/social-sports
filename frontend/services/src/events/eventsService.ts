@@ -28,7 +28,7 @@ import { rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils"
 import {
   findEventDoc,
   getAllEventsFromCollectionRef,
-  tryGetAllActisvePublicEventsFromLocalStorage,
+  tryGetAllActivePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
 import { useRouter } from "next/navigation";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
@@ -115,7 +115,7 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
 
     if (isActive && !isPrivate) {
       const currentDate = new Date();
-      let { success, events } = tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
+      let { success, events } = tryGetAllActivePublicEventsFromLocalStorage(currentDate);
       if (success) {
         return events;
       }
