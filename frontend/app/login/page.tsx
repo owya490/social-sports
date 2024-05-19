@@ -1,9 +1,11 @@
 "use client";
+import Loading from "@/components/loading/Loading";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function Login() {
   const [userData, setUserData] = useState({
@@ -24,6 +26,13 @@ export default function Login() {
       console.error("Error:", error);
     }
   };
+
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  if (!isClient) return <Loading />;
 
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
@@ -94,6 +103,7 @@ export default function Login() {
                     password: e.target.value,
                   })
                 }
+                suppressHydrationWarning={true}
               />
             </div>
           </div>
@@ -109,12 +119,12 @@ export default function Login() {
           </div>
         </form>
 
-        <p className="mt-10 text-center text-sm text-gray-500">
+        <div className="mt-10 text-center text-sm text-gray-500">
           Not a member?{" "}
           <Link href="/register" className="font-semibold leading-6 text-black hover:underline">
             Register here
           </Link>
-        </p>
+        </div>
       </div>
     </div>
   );
