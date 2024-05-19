@@ -27,7 +27,6 @@ export default function Register() {
 
     try {
       await handleEmailAndPasswordSignUp(userData);
-      router.push("/dashboard?login=success");
     } catch (error) {
       setShowRegisterFailure(true);
       setPasswordMismatch(false);
@@ -53,6 +52,13 @@ export default function Register() {
     }
   };
 
+  const handleAlertClose = () => {
+    setShowRegisterFailure(false);
+    if (error == "This email is already in use.") {
+      router.push("/login");
+    }
+  };
+
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
@@ -66,7 +72,7 @@ export default function Register() {
         </Alert>
         <Alert
           open={showRegisterFailure}
-          onClose={() => setShowRegisterFailure(false)}
+          onClose={() => handleAlertClose()}
           color="red"
           className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
         >

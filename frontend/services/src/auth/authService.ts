@@ -12,61 +12,37 @@ import {
   sendPasswordResetEmail,
   sendSignInLinkToEmail,
   sendEmailVerification,
+  deleteUser,
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { auth, authUser, db } from "../firebase";
-import { createUser } from "../users/usersService";
+import { createUser, getPublicUserById } from "../users/usersService";
 import { verify } from "crypto";
 import { CodeBracketIcon } from "@heroicons/react/24/outline";
+import { FirebaseError } from "@firebase/util";
+import { isInstanceOf } from "@grafana/faro-web-sdk";
+import { UserNotFoundError } from "../users/userErrors";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
 export async function handleEmailAndPasswordSignUp(data: NewUserData) {
+  let userCredential; // Declare userCredential outside the try block to access it in the catch block
+
   try {
     // Create a new user with email and password
-    console.log(data);
-    const userCredential: UserCredential = await createUserWithEmailAndPassword(
-      auth,
-      data.contactInformation.email,
-      data.password
-    );
-    console.log(auth.currentUser?.emailVerified);
+    userCredential = await createUserWithEmailAndPassword(auth, data.contactInformation.email, data.password);
+
+    // Send email verification
     await sendEmailVerification(userCredential.user, actionCodeSettings);
-    console.log("Email verification sent");
+    console.log("Email verification sent. Please verify your email before logging in.");
 
-    // Wait for the authentication state to change with a timeout of 30 minutes
-    await waitForEmailVerification(); // 30 minutes in milliseconds
-
-    // Once the email is verified, proceed with user creation
-    if (auth.currentUser?.emailVerified) {
-      try {
-        if (userCredential.user) {
-          // TODO: Handle user creation
-          createUser(data, userCredential.user.uid);
-        } else {
-          console.error("User authentication failed");
-        }
-      } catch (error) {
-        throw error;
-      }
-    }
+    // Save user data temporarily in your database
+    await saveTempUserData(userCredential.user.uid, data);
   } catch (error) {
+    console.error("Error during sign-up:", error);
     throw error;
   }
-}
-
-// Function to wait for authentication state change with a timeout
-async function waitForEmailVerification() {
-  return new Promise<void>((resolve, reject) => {
-    const unsubscribe = auth.onAuthStateChanged(() => {
-      if (auth.currentUser && auth.currentUser.emailVerified) {
-        console.log("verified");
-        unsubscribe(); // Stop listening
-        resolve();
-      }
-    });
-  });
 }
 
 export async function handleSignOut(setUser: (user: UserData) => void) {
@@ -81,11 +57,60 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
 
 export async function handleEmailAndPasswordSignIn(email: string, password: string) {
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-    console.log(auth.currentUser?.emailVerified);
-  } catch (error) {
-    throw error;
+    const userCredential: UserCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log("isverified", userCredential.user.emailVerified);
+    // Check if the user's email is verified
+    if (userCredential.user.emailVerified) {
+      console.log("Email is verified. Logging in...");
+
+      try {
+        const userExist = await getPublicUserById(userCredential.user.uid);
+      } catch (error: unknown) {
+        // Retrieve the temporary user data
+        if (error instanceof UserNotFoundError) {
+          const userData = await getTempUserData(userCredential.user.uid);
+          // Handle user creation if temporary user data exists
+          if (userData) {
+            await createUser(userData, userCredential.user.uid);
+            deleteTempUserData(userCredential.user.uid);
+          } else {
+            console.error("User data not found after email verification.");
+            throw new Error("User data not found.");
+          }
+        }
+      }
+    } else {
+      console.error("Email is not verified. Please verify your email before logging in.");
+      await sendEmailVerification(userCredential.user, actionCodeSettings);
+      throw new Error("Email is not verified. We have sent another Verification Email");
+    }
+  } catch (error: unknown) {
+    if (error instanceof FirebaseError) {
+      throw new Error(error.code);
+    }
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
   }
+}
+
+export async function saveTempUserData(userId: string, data: NewUserData) {
+  await setDoc(doc(db, "TempUsers", userId), data);
+}
+
+export async function getTempUserData(userId: string): Promise<NewUserData | null> {
+  const docRef = doc(db, "TempUsers", userId); // Get a reference to the document
+  const docSnap = await getDoc(docRef); // Retrieve the document snapshot
+
+  if (docSnap.exists()) {
+    return docSnap.data() as NewUserData;
+  } else {
+    return null;
+  }
+}
+
+async function deleteTempUserData(userId: string) {
+  await deleteDoc(doc(db, "TempUsers", userId));
 }
 
 export async function handleGoogleSignIn() {
@@ -145,7 +170,7 @@ export function isLoggedIn(): boolean {
 const actionCodeSettings = {
   // URL you want to redirect back to. The domain (www.example.com) for this
   // URL must be in the authorized domains list in the Firebase Console.
-  url: "http://localhost:3000/register/emailVerification",
+  url: "http://localhost:3000/login",
 };
 
 export async function resetUserPassword(email: string): Promise<void> {
