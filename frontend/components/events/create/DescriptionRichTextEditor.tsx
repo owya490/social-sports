@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { MantineProvider } from "@mantine/core";
 import { Link, RichTextEditor } from "@mantine/tiptap";
 import Superscript from "@tiptap/extension-superscript";
@@ -16,6 +17,8 @@ export default function DescriptionRichTextEditor({
   description: string;
   updateDescription: (e: string) => void;
 }) {
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth <= 768);
+
   const editor = useEditor({
     editable: true,
     extensions: [
@@ -34,8 +37,18 @@ export default function DescriptionRichTextEditor({
     },
   });
 
-  // Function to determine if the screen is small
-  const isSmallScreen = () => window.innerWidth <= 768;
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   return (
     <MantineProvider>
@@ -48,7 +61,7 @@ export default function DescriptionRichTextEditor({
             <RichTextEditor.Strikethrough />
             <RichTextEditor.Highlight />
             <RichTextEditor.ClearFormatting />
-            {isSmallScreen() ? null : (
+            {!isSmallScreen && (
               <>
                 <RichTextEditor.H1 />
                 <RichTextEditor.H2 />
@@ -59,7 +72,7 @@ export default function DescriptionRichTextEditor({
           </RichTextEditor.ControlsGroup>
 
           <RichTextEditor.ControlsGroup>
-            {isSmallScreen() ? null : (
+            {!isSmallScreen && (
               <>
                 <RichTextEditor.Blockquote />
                 <RichTextEditor.Hr />
@@ -71,7 +84,7 @@ export default function DescriptionRichTextEditor({
           </RichTextEditor.ControlsGroup>
 
           <RichTextEditor.ControlsGroup>
-            {isSmallScreen() ? null : (
+            {!isSmallScreen && (
               <>
                 <RichTextEditor.Link />
                 <RichTextEditor.Unlink />
@@ -80,7 +93,7 @@ export default function DescriptionRichTextEditor({
           </RichTextEditor.ControlsGroup>
 
           <RichTextEditor.ControlsGroup>
-            {isSmallScreen() ? null : (
+            {!isSmallScreen && (
               <>
                 <RichTextEditor.AlignLeft />
                 <RichTextEditor.AlignCenter />
