@@ -152,19 +152,18 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
     const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
 
     if (!privateDoc.exists()) {
-      throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
+      throw new UserNotFoundError(userId);
     }
     const privateData = privateDoc.data();
     const organiserEvents = privateData?.organiserEvents || [];
     const eventDataList: EventData[] = [];
     for (const eventId of organiserEvents) {
-      console.log(eventId); // Or perform any other operation with 'eventId'
       const eventData: EventData = await getEventById(eventId);
       eventData.eventId = eventId;
       eventDataList.push(eventData);
     }
     // Return the organiserEvents array
-    console.log(eventDataList);
+    eventServiceLogger.info(`Fetching private user by ID:, ${userId}, ${eventDataList}`);
     return eventDataList;
   } catch (error) {
     throw error;
@@ -173,7 +172,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
 
 export async function updateEventByName(eventName: string, updatedData: Partial<EventData>) {
   if (!rateLimitCreateAndUpdateEvents()) {
-    console.log("Rate Limited!!!");
+    eventServiceLogger.info(`Rate Limited!, ${eventName}`);
     throw "Rate Limited";
   }
   eventServiceLogger.info(`updateEventByName ${eventName}`);

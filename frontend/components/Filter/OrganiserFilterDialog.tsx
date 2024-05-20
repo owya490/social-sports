@@ -169,7 +169,7 @@ export default function OrganiserFilterDialog({
       setEventStatusValue(eventStatusValue.replace(value, ""));
     } else {
       setEventStatusValue(eventStatusValue + value);
-      if (eventStatusValue.includes("true") && eventStatusValue.includes("false")) {
+      if (eventStatusValue.includes("past") && eventStatusValue.includes("future")) {
         setEventStatusValue("");
       }
     }
@@ -181,7 +181,7 @@ export default function OrganiserFilterDialog({
     } else {
       setEventTypeValue(eventTypeValue + value);
     }
-    if (eventTypeValue.includes("true") && eventTypeValue.includes("false")) {
+    if (eventTypeValue.includes("public") && eventTypeValue.includes("private")) {
       setEventStatusValue("");
     }
   };
@@ -286,8 +286,8 @@ export default function OrganiserFilterDialog({
                     name="Past"
                     value="Past"
                     className="mr-2"
-                    checked={eventStatusValue.includes("false")}
-                    onChange={() => toggleStatusCheckboxValue("false")}
+                    checked={eventStatusValue.includes("past")}
+                    onChange={() => toggleStatusCheckboxValue("past")}
                   />
                   Past
                 </label>
@@ -299,8 +299,8 @@ export default function OrganiserFilterDialog({
                     name="Future"
                     value="Future"
                     className="mr-2"
-                    checked={eventStatusValue.includes("true")}
-                    onChange={() => toggleStatusCheckboxValue("true")}
+                    checked={eventStatusValue.includes("future")}
+                    onChange={() => toggleStatusCheckboxValue("future")}
                   />
                   Future
                 </label>
@@ -324,8 +324,8 @@ export default function OrganiserFilterDialog({
                     name="Public"
                     value="Public"
                     className="mr-2"
-                    checked={eventTypeValue.includes("false")}
-                    onChange={() => toggleTypeCheckboxValue("false")}
+                    checked={eventTypeValue.includes("public")}
+                    onChange={() => toggleTypeCheckboxValue("public")}
                   />
                   Public
                 </label>
@@ -337,8 +337,8 @@ export default function OrganiserFilterDialog({
                     name="Private"
                     value="Private"
                     className="mr-2"
-                    checked={eventTypeValue.includes("true")}
-                    onChange={() => toggleTypeCheckboxValue("true")}
+                    checked={eventTypeValue.includes("private")}
+                    onChange={() => toggleTypeCheckboxValue("private")}
                   />
                   Private
                 </label>

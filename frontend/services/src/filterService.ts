@@ -72,16 +72,20 @@ export function filterEventsBySearch(eventDataList: EventData[], searchValue: st
 
 export function filterEventsByStatus(eventDataList: EventData[], eventStatusValue: string): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
-  if (eventStatusValue !== "" && eventStatusValue !== "truefalse" && eventStatusValue !== "falsetrue") {
-    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.isActive === eval(eventStatusValue));
+  if (eventStatusValue === "past") {
+    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.isActive === false);
+  } else if (eventStatusValue === "future") {
+    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.isActive === true);
   }
   return eventDataListDeepClone;
 }
 
 export function filterEventsByType(eventDataList: EventData[], eventTypeValue: string): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
-  if (eventTypeValue !== "" && eventTypeValue !== "truefalse" && eventTypeValue !== "falsetrue") {
-    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.isPrivate === eval(eventTypeValue));
+  if (eventTypeValue === "private") {
+    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.isPrivate === true);
+  } else if (eventTypeValue === "public") {
+    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.isPrivate === false);
   }
   return eventDataListDeepClone;
 }
