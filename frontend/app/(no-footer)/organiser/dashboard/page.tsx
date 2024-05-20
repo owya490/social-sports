@@ -1,5 +1,5 @@
 "use client";
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
@@ -31,6 +31,12 @@ export default function Dashboard() {
         const events = (await getOrganiserEvents(user.userId)).filter((event) => {
           return event.startDate.seconds - Timestamp.now().seconds > 0;
         });
+        let checklist = localStorage.getItem("checklist");
+        if (checklist != null) {
+          checklist = JSON.parse(checklist);
+          setChecklist(checklist);
+        }
+
         setEventDataList(events);
         setLoading(false);
       } catch (error) {
@@ -39,6 +45,10 @@ export default function Dashboard() {
     };
     fetchEvents();
   }, [user]);
+
+  useEffect(() => {
+    localStorage.setItem("checklist", JSON.stringify(checklist));
+  }, [checklist]);
 
   const handleCheck = (idx: number) => {
     setChecklist(
