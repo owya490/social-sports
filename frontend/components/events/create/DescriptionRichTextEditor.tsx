@@ -1,5 +1,11 @@
 import { MantineProvider } from "@mantine/core";
 import { Link, RichTextEditor } from "@mantine/tiptap";
+import Superscript from "@tiptap/extension-superscript";
+import Highlight from "@tiptap/extension-highlight";
+import Placeholder from "@tiptap/extension-placeholder";
+import SubScript from "@tiptap/extension-subscript";
+import TextAlign from "@tiptap/extension-text-align";
+import Underline from "@tiptap/extension-underline";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
@@ -12,7 +18,16 @@ export default function DescriptionRichTextEditor({
 }) {
   const editor = useEditor({
     editable: true,
-    extensions: [StarterKit, Link],
+    extensions: [
+      StarterKit,
+      Underline,
+      Link,
+      Superscript,
+      SubScript,
+      Highlight,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Placeholder.configure({ placeholder: "Write your description in here!" }),
+    ],
     content: description,
     onUpdate: ({ editor }) => {
       updateDescription(editor.getHTML());
@@ -24,10 +39,7 @@ export default function DescriptionRichTextEditor({
 
   return (
     <MantineProvider>
-      <RichTextEditor
-        editor={editor}
-        className="list-style-circle min-h-[24rem]"
-      >
+      <RichTextEditor editor={editor} className="list-style-circle min-h-[24rem]">
         <RichTextEditor.Toolbar sticky stickyOffset={60}>
           <RichTextEditor.ControlsGroup>
             <RichTextEditor.Bold />
@@ -47,23 +59,23 @@ export default function DescriptionRichTextEditor({
           </RichTextEditor.ControlsGroup>
 
           <RichTextEditor.ControlsGroup>
-          {isSmallScreen() ? null : (
+            {isSmallScreen() ? null : (
               <>
-            <RichTextEditor.Blockquote />
-            <RichTextEditor.Hr />
-            <RichTextEditor.BulletList />
-            <RichTextEditor.Subscript />
-            <RichTextEditor.Superscript />
-            </>
+                <RichTextEditor.Blockquote />
+                <RichTextEditor.Hr />
+                <RichTextEditor.BulletList />
+                <RichTextEditor.Subscript />
+                <RichTextEditor.Superscript />
+              </>
             )}
           </RichTextEditor.ControlsGroup>
 
           <RichTextEditor.ControlsGroup>
-          {isSmallScreen() ? null : (
+            {isSmallScreen() ? null : (
               <>
-            <RichTextEditor.Link />
-            <RichTextEditor.Unlink />
-            </>
+                <RichTextEditor.Link />
+                <RichTextEditor.Unlink />
+              </>
             )}
           </RichTextEditor.ControlsGroup>
 

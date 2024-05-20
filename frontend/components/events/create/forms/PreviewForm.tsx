@@ -41,6 +41,11 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
           <p className="text-m">Time End: </p>
           <p className="text-m">{form.endTime} </p>
         </div>
+        <div className="text-xl lg:text-xl font-semibold mt-6 mb-2 border-b-2 border-gray-300 pb-1">
+          Date
+         
+        </div>
+ <p className="text-m">{form.date}</p>
         <div className="text-xl lg:text-xl font-semibold mt-6 mb-2 border-b-2 border-gray-300 pb-1">Sport</div>
         <p className="text-m">{form.sport}</p>
       </div>

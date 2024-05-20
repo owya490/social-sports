@@ -24,7 +24,7 @@ export default function CreateEventStepper({
     <Stepper activeStep={activeStep}>
       <Step onClick={() => {}}>
         <UserIcon className="h-5 w-5" />
-        <div className={`absolute -bottom-[4.5rem] w-max text-center ${activeStep === 0 ? '' : 'hidden sm:flex sm:flex-col items-center'}`}>
+        <div className={"absolute -bottom-[4.5rem] w-max text-center ${activeStep === 0 ? '' : 'hidden sm:flex sm:flex-col items-center'}"}>
           <Typography
             variant="h6"
             color={activeStep === 0 ? "blue-gray" : "gray"}

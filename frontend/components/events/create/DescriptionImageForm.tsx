@@ -74,7 +74,7 @@ export function DescriptionImageForm({
             <h4 className="absolute -top-3 left-3 text-sm px-1 bg-white">
               Image
             </h4>
-            {imagePreviewUrl !== '' && (
+            {imagePreviewUrl !== "" && (
               <Image
                 src={imagePreviewUrl}
                 width={0}
@@ -106,7 +106,7 @@ export function DescriptionImageForm({
               type="file"
               onChange={(e) => {
                 if (e.target.files !== null) {
-                  setImagePreviewUrl(URL.createObjectURL(e.target.files[0]));
+                  setImagePreviewUrl(URL.createObjectURL(e.target.files![0]));
                   updateField({
                     image: e.target.files[0],
                   });
