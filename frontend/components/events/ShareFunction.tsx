@@ -2,6 +2,7 @@ import React, { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
 import { Dialog, Transition } from "@headlessui/react";
 import share_arrow from "../../public/images/share_arrow.png";
+import email_icon from "../..public/images/email_icon.png";
 
 const ShareFunction = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -43,7 +44,7 @@ ${currentURL}`;
     }
   };
 
-  const highlightURL = (event: { preventDefault: () => void; stopPropagation: () => void; }) => {
+  const highlightURL = (event: { preventDefault: () => void; stopPropagation: () => void }) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -113,11 +114,11 @@ ${currentURL}`;
                         </svg>
                       </li>
                       <li className="cursor-pointer" onClick={handleEmailShare} title="Share via Email">
-                        <svg className="h-10 w-10" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path
-                            d="M20.64 3.2H3.36C2.608 3.2 2 3.808 2 4.56v14.88C2 20.192 2.608 20.8 3.36 20.8h17.28c.752 0 1.36-.608 1.36-1.36V4.56c0-.752-.608-1.36-1.36-1.36zM3.36 2h17.28C21.824 2 23 3.176 23 4.56v14.88C23 21.824 21.824 23 20.64 23H3.36C2.176 23 1 21.824 1 19.44V4.56C1 3.176 2.176 2 3.36 2zm9.36 11.62L4.5 7.82h15l-8.16 5.8c-.16.12-.4.12-.54 0zM3.5 8.85v9.44l6.64-4.72L3.5 8.85zm17 9.44V8.85l-6.64 4.72 6.64 4.72z"
-                          />
-                        </svg>
+                        <img
+                          src={`/images/email_iconic.jpeg`}
+                          alt="Share via Email"
+                          className="h-12 w-10"
+                        />
                       </li>
                     </ul>
                     <p id="url" onClick={highlightURL} className="mb-4 cursor-pointer">
