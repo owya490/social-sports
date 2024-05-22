@@ -70,9 +70,8 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     var organiser: UserData = EmptyUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
-    } catch (error) {
-      eventServiceLogger.error(`getEventById ${error}`);
-      throw error;
+    } catch {
+      console.log("error finding user");
     }
     const event: EventData = {
       ...eventWithoutOrganiser,
