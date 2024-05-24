@@ -20,7 +20,17 @@ export default function Dashboard() {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [eventDataList, setEventDataList] = useState<EventData[]>([EmptyEventData, EmptyEventData]);
-  const [checklist, setChecklist] = useState(initialChecklist);
+  const [checklist, setChecklist] = useState(() => {
+    if (typeof window !== "undefined") {
+      const temp = localStorage.getItem("checklist");
+      if (temp == null) {
+        return initialChecklist;
+      } else {
+        const checklist = JSON.parse(temp);
+        return checklist;
+      }
+    }
+  });
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -31,11 +41,6 @@ export default function Dashboard() {
         const events = (await getOrganiserEvents(user.userId)).filter((event) => {
           return event.startDate.seconds - Timestamp.now().seconds > 0;
         });
-        let checklist = localStorage.getItem("checklist");
-        if (checklist != null) {
-          checklist = JSON.parse(checklist);
-          setChecklist(checklist);
-        }
 
         setEventDataList(events);
         setLoading(false);
@@ -52,7 +57,7 @@ export default function Dashboard() {
 
   const handleCheck = (idx: number) => {
     setChecklist(
-      checklist.map((check) => {
+      checklist.map((check: { id: number; checked: any }) => {
         if (check.id == idx) {
           return { ...check, checked: !check.checked };
         } else {
@@ -77,7 +82,7 @@ export default function Dashboard() {
             <div className="grow mr-8 flex flex-col">
               <div className="bg-organiser-light-gray p-8 rounded-2xl">
                 <h1 className="text-2xl font-bold">Finish setting up</h1>
-                {checklist.map((checkbox) => (
+                {checklist.map((checkbox: { id: number; label: string; link: string; checked: boolean }) => (
                   <OrganiserCheckbox
                     key={checkbox.id}
                     label={checkbox.label}
