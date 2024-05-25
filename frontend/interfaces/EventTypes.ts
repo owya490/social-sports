@@ -1,7 +1,8 @@
 import { Timestamp } from "firebase/firestore";
-import { EmptyUserData, UserData } from "./UserTypes";
+import { EmptyUserData, UserData, UserId } from "./UserTypes";
 
 export type EventId = string;
+export type StripeCheckoutSessionId = string;
 
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;
@@ -26,9 +27,11 @@ interface AbstractEventData {
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
   isPrivate: boolean;
-  attendees: { email: string }[];
+  attendees: Record<string, number>; // Key is Email and Number is amount of tickets associated with the email
+  attendeesMetadata: Record<string, { names: string[]; phones: string[] }>; // keeping track of an array with names and phones provided
   accessCount: number;
   sport: string;
+  paymentsActive: boolean;
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -62,8 +65,33 @@ export const EmptyEventData: EventData = {
   image: "",
   eventTags: [],
   isActive: false,
-  attendees: [],
+  attendees: {},
+  attendeesMetadata: {},
   accessCount: 0,
   sport: "",
   isPrivate: false,
+  paymentsActive: false,
 };
+
+export interface EventMetadata {
+  eventId?: EventId;
+  purchaserMap: Record<EmailHash, Purchaser>;
+  completeTicketCount: number;
+  completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
+  organiserId: UserId;
+}
+
+export interface Purchaser {
+  email: string;
+  attendees: Record<Name, Attendee>;
+  totalTicketCount: number;
+}
+
+export interface Attendee {
+  name: Name;
+  phone: string;
+  ticketCount: number;
+}
+
+type Name = string;
+type EmailHash = string;

@@ -29,6 +29,7 @@ export type FormData = {
   isPrivate: boolean;
   startTime: string;
   endTime: string;
+  paymentsActive: boolean;
 };
 
 const INITIAL_DATA: FormData = {
@@ -44,6 +45,7 @@ const INITIAL_DATA: FormData = {
   isPrivate: false,
   startTime: "10:00",
   endTime: "18:00",
+  paymentsActive: false,
 };
 
 export default function CreateEvent() {
@@ -56,7 +58,7 @@ export default function CreateEvent() {
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
-    <BasicInformation key="basic-form" {...data} updateField={updateFields} />,
+    <BasicInformation key="basic-form" {...data} updateField={updateFields} user={user} setLoading={setLoading} />,
     <TagForm key="tag-form" {...data} updateField={updateFields} />,
     <DescriptionImageForm
       key="description-image-form"
@@ -105,8 +107,12 @@ export default function CreateEvent() {
       imageUrl = await uploadUserImage(user.userId, formData.image);
     }
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
-    const newEventId = await createEvent(newEventData);
-    // setLoading(false);
+    let newEventId = "";
+    try {
+      newEventId = await createEvent(newEventData);
+    } catch (error) {
+      router.push("/error");
+    }
     return newEventId;
   }
 
@@ -134,7 +140,8 @@ export default function CreateEvent() {
       eventTags: formData.tags,
       isActive: true,
       isPrivate: false,
-      attendees: [],
+      attendees: {},
+      attendeesMetadata: {},
       accessCount: 0,
       organiserId: user.userId,
       registrationDeadline: convertDateAndTimeStringToTimestamp(formData.date, formData.startTime),
@@ -143,6 +150,7 @@ export default function CreateEvent() {
         lng: lngLat.lng,
       },
       sport: formData.sport,
+      paymentsActive: formData.paymentsActive,
     };
   }
 
