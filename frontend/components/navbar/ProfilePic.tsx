@@ -84,7 +84,7 @@ export default function ProfilePic() {
     <div className="ml-auto flex items-center">
       {loggedIn && (
         <button
-          className="border border-black px-4 py-2 rounded-lg mx-3 max-h-[40px] hidden lg:block whitespace-nowrap hover:bg-black hover:text-white"
+          className="px-4 py-2 rounded-lg mx-3 max-h-[40px] font-semibold hidden lg:block whitespace-nowrap  bg-highlight-yellow text-white hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
           onClick={() => {
             router.push("/event/create");
           }}
@@ -140,7 +140,7 @@ export default function ProfilePic() {
                         <Link
                           href="/profile"
                           className={`${
-                            active ? "text-white bg-black" : "text-black"
+                            active ? "text-white bg-highlight-yellow" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <UserCircleIcon className="h-5 mr-2" />
@@ -153,7 +153,7 @@ export default function ProfilePic() {
                         <Link
                           href="/settings"
                           className={`${
-                            active ? "text-white bg-black" : "text-black"
+                            active ? "text-white bg-highlight-yellow" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <Cog8ToothIcon className="h-5 mr-2" />
@@ -169,7 +169,7 @@ export default function ProfilePic() {
                       <Link
                         href="/help"
                         className={`${
-                          active ? "text-white bg-black" : "text-black"
+                          active ? "text-white bg-highlight-yellow" : "text-black"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LifebuoyIcon className="h-5 mr-2" />
@@ -182,7 +182,7 @@ export default function ProfilePic() {
                       <Link
                         href="/suggestions"
                         className={`${
-                          active ? "text-white bg-black" : "text-black"
+                          active ? "text-white bg-highlight-yellow" : "text-black"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LightBulbIcon className="h-5 mr-2" />
@@ -198,7 +198,7 @@ export default function ProfilePic() {
                         <div
                           onClick={handleLogOut}
                           className={`${
-                            active ? "text-white bg-black" : "text-black"
+                            active ? "text-white bg-highlight-yellow" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer`}
                         >
                           <ArrowLeftOnRectangleIcon className="h-5 mr-2" />
