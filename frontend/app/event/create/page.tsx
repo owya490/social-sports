@@ -49,7 +49,7 @@ const INITIAL_DATA: FormData = {
 export default function CreateEvent() {
   const { user } = useUser();
   const router = useRouter();
-  const showForm = user.userId !== "";
+  const showForm = user.userId !== "" && user.userId !== "loading";
 
   const [loading, setLoading] = useState(false);
 
@@ -159,7 +159,7 @@ export default function CreateEvent() {
   ) : (
     <div className="w-screen flex justify-center">
       {!showForm ? (
-        <div className="h-screen w-full flex justify-center items-center">Please Login/ Register to Access</div>
+        <Loading />
       ) : (
         <div className="screen-width-primary my-32">
           <form onSubmit={submit}>

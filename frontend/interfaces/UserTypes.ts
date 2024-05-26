@@ -1,5 +1,3 @@
-import { User } from "firebase/auth";
-
 export type UserId = string;
 
 interface AbstractUserData {
@@ -64,6 +62,18 @@ export const EmptyNewUserData: NewUserData = {
 };
 export const EmptyUserData: UserData = {
   userId: "",
+  firstName: "",
+  contactInformation: {
+    email: "",
+  },
+  profilePicture:
+    "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+  surname: "",
+  dob: "",
+};
+
+export const LoadingUserData: UserData = {
+  userId: "loading",
   firstName: "",
   contactInformation: {
     email: "",

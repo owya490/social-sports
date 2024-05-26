@@ -1,4 +1,4 @@
-import { EmptyUserData, NewUserData, UserData } from "@/interfaces/UserTypes";
+import { NewUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import {
   FacebookAuthProvider,
@@ -11,7 +11,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 // import { useRouter } from "next/navigation";
-import { auth, authUser, db } from "../firebase";
+import { auth, db } from "../firebase";
 import { createUser } from "../users/usersService";
 
 const authServiceLogger = new Logger("authServiceLogger");
@@ -40,10 +40,10 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
   }
 }
 
-export async function handleSignOut(setUser: (user: UserData) => void) {
+export async function handleSignOut(logUserOut: () => void) {
   try {
     await signOut(auth);
-    setUser(EmptyUserData);
+    logUserOut();
     console.log("Signed out!");
   } catch (error) {
     throw error;
@@ -52,7 +52,9 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
 
 export async function handleEmailAndPasswordSignIn(email: string, password: string) {
   try {
+    console.log("before" + auth.currentUser);
     await signInWithEmailAndPassword(auth, email, password);
+    console.log("after" + auth.currentUser);
   } catch (error) {
     throw error;
   }
@@ -102,12 +104,4 @@ export async function handleFacebookSignIn() {
   } catch (error) {
     console.log(error);
   }
-}
-
-/**
- * Utility function determining whether any user is logged in or not.
- * @returns boolean
- */
-export function isLoggedIn(): boolean {
-  return authUser !== null;
 }

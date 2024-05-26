@@ -6,7 +6,7 @@ export enum Environment {
   PRODUCTION = "PRODUCTION",
 }
 
-export function getEnvironment() {
+export function getEnvironment(): Environment {
   switch (process.env.ENVIRONMENT) {
     case "DEVELOPMENT": {
       return Environment.DEVELOPMENT;
@@ -17,5 +17,12 @@ export function getEnvironment() {
     case "PRODUCTION": {
       return Environment.PRODUCTION;
     }
+    default: {
+      return Environment.DEVELOPMENT;
+    }
   }
+}
+
+export function isProduction(): boolean {
+  return getEnvironment() === Environment.PRODUCTION;
 }

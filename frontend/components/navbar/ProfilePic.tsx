@@ -1,5 +1,5 @@
 import { handleSignOut } from "@/services/src/auth/authService";
-import { auth, storage } from "@/services/src/firebase";
+import { storage } from "@/services/src/firebase";
 import { sleep } from "@/utilities/sleepUtil";
 import { Menu, Transition } from "@headlessui/react";
 import {
@@ -9,7 +9,6 @@ import {
   LightBulbIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
-import { onAuthStateChanged } from "firebase/auth";
 import { getDownloadURL, ref } from "firebase/storage";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,27 +20,11 @@ import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
 import { useUser } from "../utility/UserContext";
 
 export default function ProfilePic() {
-  const [loading, setLoading] = useState(true);
-  const [loggedIn, setLoggedIn] = useState(false);
   const router = useRouter();
-  const { user, setUser } = useUser();
+  const { user, isLoggedIn, logUserOut } = useUser();
+  const [loading, setLoading] = useState(user.userId !== "loading");
   const [profilePictureURL, setProfilePictureURL] = useState<string>("");
   const defaultProfilePicturePath = "users/generic/generic-profile-photo.webp";
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setLoggedIn(true);
-      } else {
-        setLoggedIn(false);
-      }
-      sleep(100).then(() => {
-        setLoading(false);
-      });
-    });
-
-    return () => unsubscribe();
-  }, [user?.profilePicture]);
 
   useEffect(() => {
     const fetchProfilePictureURL = async () => {
@@ -60,7 +43,7 @@ export default function ProfilePic() {
   }, [user?.profilePicture]);
 
   const handleLogOut = () => {
-    handleSignOut(setUser);
+    handleSignOut(logUserOut);
     router.push("/");
   };
 
@@ -82,7 +65,7 @@ export default function ProfilePic() {
     </div>
   ) : (
     <div className="ml-auto flex items-center">
-      {loggedIn && (
+      {isLoggedIn() && (
         <button
           className="border border-black px-4 py-2 rounded-lg mx-3 max-h-[40px] hidden lg:block whitespace-nowrap hover:bg-black hover:text-white"
           onClick={() => {
@@ -92,7 +75,7 @@ export default function ProfilePic() {
           Create Event
         </button>
       )}
-      {!loggedIn && (
+      {!isLoggedIn() && (
         <div className="flex">
           <button
             className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block bg-black text-white whitespace-nowrap ml-4 hover:bg-white hover:text-black"
@@ -108,7 +91,7 @@ export default function ProfilePic() {
           </button>
         </div>
       )}
-      {loggedIn && (
+      {isLoggedIn() && (
         <div className="flex items-center">
           <Menu as="div" className="relative inline-block text-left">
             <div className="flex items-centers">
@@ -133,7 +116,7 @@ export default function ProfilePic() {
               leaveTo="transform opacity-0 scale-95"
             >
               <Menu.Items className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                {loggedIn && (
+                {isLoggedIn() && (
                   <div className="px-1 py-1">
                     <Menu.Item>
                       {({ active }) => (
@@ -191,7 +174,7 @@ export default function ProfilePic() {
                     )}
                   </Menu.Item>
                 </div>
-                {loggedIn && (
+                {isLoggedIn() && (
                   <div className="px-1 py-1">
                     <Menu.Item>
                       {({ active }) => (

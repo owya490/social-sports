@@ -31,7 +31,7 @@ export default function Login() {
   useEffect(() => {
     setIsClient(true);
   }, []);
-  
+
   if (!isClient) return <Loading />;
 
   return (
