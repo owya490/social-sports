@@ -54,7 +54,7 @@ export default function EventPage({ params }: any) {
         vacancy={eventData.vacancy}
       />
       <div className="mt-5 lg:mt-10 mb-10">
-        <EventDetails eventData={eventData} eventTags={eventTags} />
+        <EventDetails eventData={eventData} eventTags={eventTags} setLoading={setLoading} />
 
         <RecommendedEvents eventData={eventData} />
       </div>
