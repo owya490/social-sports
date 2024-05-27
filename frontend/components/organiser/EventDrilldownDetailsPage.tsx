@@ -72,8 +72,10 @@ const EventDrilldownDetailsPage = ({
     if (eventStartdate) {
       const dateString = timestampToDateString(eventStartdate);
       const timeString = timestampToTimeOfDay(eventStartdate);
-      setDate(`${dateString} ${timeString}`);
-      setNewEditDate(`${dateString} ${timeString}`);
+      setDate(`${dateString}`);
+      setNewEditDate(`${dateString}`);
+      setTime(`${timeString}`);
+      setNewEditTime(`${timeString}`);
     }
   }, [eventStartdate]);
 
@@ -185,7 +187,7 @@ const EventDrilldownDetailsPage = ({
           />
         )}
       </div>
-      <div className="h-20 border-organiser-darker-light-gray border-solid border-2 rounded-3xl px-4 pt-2 relative">
+      <div className="h-fit border-organiser-darker-light-gray border-solid border-2 rounded-3xl px-4 pt-2 relative">
         <div className="text-organiser-title-gray-text font-bold">
           Event Name
           {loading ? (
@@ -197,15 +199,14 @@ const EventDrilldownDetailsPage = ({
           ) : (
             <>
               {editTitle ? (
-                <div className="flex my-2">
+                <div className="flex my-1">
                   <Input
                     value={newEditTitle}
-                    variant="standard"
                     style={{
                       fontSize: "1.5rem",
-                      color: "#333",
+                      // color: "#333",
                       width: "100%",
-                      height: "90%",
+                      height: "85%",
                     }}
                     onChange={(e) => {
                       setNewEditTitle(e.target.value);
@@ -213,13 +214,13 @@ const EventDrilldownDetailsPage = ({
                     crossOrigin={false}
                   />
                   <CheckIcon
-                    className="w-9 stroke-organiser-title-gray-text cursor-pointer"
+                    className="absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer"
                     onClick={() => {
                       handleTitleUpdate();
                     }}
                   />
                   <XMarkIcon
-                    className="w-9 stroke-organiser-title-gray-text cursor-pointer"
+                    className="absolute top-2 right-2 w-7 stroke-organiser-title-gray-text cursor-pointer"
                     onClick={() => {
                       handleCancelTitle();
                     }}
@@ -252,7 +253,24 @@ const EventDrilldownDetailsPage = ({
                   }}
                 />
               ) : (
-                timestampToDateString(eventStartdate)
+                <>
+                  {editDate ? (
+                    <div className="flex my-1">
+                      <Input
+                        value={newEditDate}
+                        style={{
+                          width: "100%",
+                        }}
+                        onChange={(e) => {
+                          setNewEditDate(e.target.value);
+                        }}
+                        crossOrigin={false}
+                      />
+                    </div>
+                  ) : (
+                    <div>{newEditDate}</div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -267,7 +285,24 @@ const EventDrilldownDetailsPage = ({
                   }}
                 />
               ) : (
-                timestampToTimeOfDay(eventStartdate)
+                <>
+                  {editDate ? (
+                    <div className="flex my-1">
+                      <Input
+                        value={newEditTime}
+                        style={{
+                          width: "100%",
+                        }}
+                        onChange={(e) => {
+                          setNewEditTime(e.target.value);
+                        }}
+                        crossOrigin={false}
+                      />
+                    </div>
+                  ) : (
+                    <div>{newEditTime}</div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -282,7 +317,24 @@ const EventDrilldownDetailsPage = ({
                   }}
                 />
               ) : (
-                eventLocation
+                <>
+                  {editLocation ? (
+                    <div className="flex my-1">
+                      <Input
+                        value={newEditLocation}
+                        style={{
+                          width: "100%",
+                        }}
+                        onChange={(e) => {
+                          setNewEditLocation(e.target.value);
+                        }}
+                        crossOrigin={false}
+                      />
+                    </div>
+                  ) : (
+                    <div>{newEditLocation}</div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -297,12 +349,57 @@ const EventDrilldownDetailsPage = ({
                   }}
                 />
               ) : (
-                `$${eventPrice}`
+                <>
+                  {editPrice ? (
+                    <div className="flex my-1">
+                      <Input
+                        value={newEditPrice}
+                        style={{
+                          width: "100%",
+                        }}
+                        onChange={(e) => {
+                          setNewEditPrice(Number(e.target.value));
+                        }}
+                        crossOrigin={false}
+                      />
+                      <CheckIcon
+                        className="absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer"
+                        onClick={() => {
+                          handleDateUpdate();
+                          handleTimeUpdate();
+                          handleLocationUpdate();
+                          handlePriceUpdate();
+                        }}
+                      />
+                      <XMarkIcon
+                        className="absolute top-2 right-2 w-7 stroke-organiser-title-gray-text cursor-pointer"
+                        onClick={() => {
+                          handleCancelDate();
+                          handleCancelTime();
+                          handleCancelLocation();
+                          handleCancelPrice();
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      ${newEditPrice}
+                      <PencilSquareIcon
+                        className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
+                        onClick={() => {
+                          setEditDate(true);
+                          setEditTime(true);
+                          setEditLocation(true);
+                          setEditPrice(true);
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
         </div>
-        <PencilSquareIcon className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text" />{" "}
       </div>
       <div className="min-h-20 border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 pt-2 relative h-fit">
         <div className="text-organiser-title-gray-text font-bold">
@@ -322,13 +419,13 @@ const EventDrilldownDetailsPage = ({
                     updateDescription={setNewEditDescription}
                   />
                   <CheckIcon
-                    className="w-9 stroke-organiser-title-gray-text cursor-pointer"
+                    className="absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer"
                     onClick={() => {
                       handleDescriptionUpdate();
                     }}
                   />
                   <XMarkIcon
-                    className="w-9 stroke-organiser-title-gray-text cursor-pointer"
+                    className="absolute top-2 right-2 w-7 stroke-organiser-title-gray-text cursor-pointer"
                     onClick={() => {
                       handleCancelDescription();
                     }}
