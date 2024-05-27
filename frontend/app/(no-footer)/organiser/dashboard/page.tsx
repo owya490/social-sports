@@ -137,18 +137,18 @@ export default function Dashboard() {
               </div>
               <div className="flex mt-8 grow min-h-[10vh]">
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                  <div className="h-full flex justify-center items-center">
-                    <Link href="/event/create">
+                  <Link href="/event/create">
+                    <div className="h-full flex justify-center items-center">
                       <p>Create an event</p>
-                    </Link>
-                  </div>
+                    </div>
+                  </Link>
                 </div>
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                  <div className="h-full flex justify-center items-center">
-                    <Link href="/profile">
+                  <Link href="/profile">
+                    <div className="h-full flex justify-center items-center">
                       <p>Edit your profile</p>
-                    </Link>
-                  </div>
+                    </div>
+                  </Link>
                 </div>
               </div>
             </div>
