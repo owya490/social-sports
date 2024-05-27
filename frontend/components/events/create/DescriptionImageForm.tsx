@@ -66,7 +66,7 @@ export function DescriptionImageForm({
             />
           </div>
         </div>
-        <div>
+        {/* <div>
           <label className="text-black text-lg font-semibold">
             Upload a photo as your event cover.
           </label>
@@ -114,7 +114,7 @@ export function DescriptionImageForm({
               }}
             />
           </div>
-        </div>
+        </div> */}
       </div>
     </FormWrapper>
   );
