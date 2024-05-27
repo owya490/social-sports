@@ -25,9 +25,18 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
     <div className="lg:grid lg:grid-cols-3 mt-20 space-y-6">
       <div className="md:grid md:grid-cols-2 gap-6 mt-0 items-start mb-8 md:col-span-2 space-y-6">
         <div className="col-span-1 mt-6 mx-2 space-y-6">
-          <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Name</div>
-            <p className="text-m">{form.name}</p>
+        <div>
+            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">
+              Name and Date
+            </div>
+            <div className="flex justify-between">
+              <p className="text-m">Name: </p>
+              <p className="text-m">{form.name}</p>
+            </div>
+            <div className="flex justify-between">
+              <p className="text-m">Date: </p>
+              <p className="text-m">{form.date} </p>
+            </div>
           </div>
           <div>
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Location</div>
@@ -62,10 +71,6 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
           <div>
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Capacity</div>
             <p className="text-m">{form.capacity}</p>
-          </div>
-          <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Date</div>
-            <p className="text-m">{form.date}</p>
           </div>
         </div>
 
