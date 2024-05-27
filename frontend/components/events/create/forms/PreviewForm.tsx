@@ -63,6 +63,10 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Capacity</div>
             <p className="text-m">{form.capacity}</p>
           </div>
+          <div>
+            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Date</div>
+            <p className="text-m">{form.date}</p>
+          </div>
         </div>
 
         <div className="col-span-2 mx-2">

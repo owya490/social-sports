@@ -182,7 +182,7 @@ export function BasicInformation({
               onCustomAmountChange={handleEventCostSliderChange}
             />
           </div>
-          <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3">
+          <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3 my-6">
             <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
               <Input
                 label="Price"
@@ -214,7 +214,28 @@ export function BasicInformation({
                 size="lg"
               />
             </div>
-          </div>
+                </div>
+
+            <div>
+              <label className="text-black text-lg font-semibold">Is your event Private?</label>
+              <p className="text-sm mb-5 mt-2">
+                Private Events will not be shown on the public dashboard and will be invite only
+              </p>
+              <div className="mt-4">
+                <Select
+                  size="md"
+                  label="Select Visibility"
+                  value={isPrivate.toString()}
+                  onChange={(e) => {
+                    const privacyValue = e || "Public";
+                    handlePrivacyChange(privacyValue);
+                  }}
+                >
+                  <Option value="Public">Public</Option>
+                  <Option value="Private">Private</Option>
+                </Select>
+              </div>
+            </div>
         </div>
       </div>
     </FormWrapper>
