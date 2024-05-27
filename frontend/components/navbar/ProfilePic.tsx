@@ -147,7 +147,7 @@ export default function ProfilePic() {
                     <MenuItem>
                       <Link
                         href="/settings"
-                        className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:text-black`}
+                        className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:bg-black`}
                       >
                         <Cog8ToothIcon className="h-5 mr-2" />
                         Settings

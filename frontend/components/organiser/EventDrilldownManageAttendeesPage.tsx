@@ -58,42 +58,6 @@ const EventDrilldownManageAttendeesPage = ({
                 />
               );
             })}
-          {/* <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={2}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          /> */}
         </div>
       </div>
       <div className="grow">
