@@ -7,7 +7,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signOut,
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 // import { useRouter } from "next/navigation";
@@ -35,16 +34,6 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
       console.error("User authentication failed");
       // router.push("/error");
     }
-  } catch (error) {
-    throw error;
-  }
-}
-
-export async function handleSignOut(logUserOut: () => void) {
-  try {
-    await signOut(auth);
-    logUserOut();
-    console.log("Signed out!");
   } catch (error) {
     throw error;
   }

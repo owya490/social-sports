@@ -1,6 +1,4 @@
-import { handleSignOut } from "@/services/src/auth/authService";
 import { storage } from "@/services/src/firebase";
-import { sleep } from "@/utilities/sleepUtil";
 import { Menu, Transition } from "@headlessui/react";
 import {
   ArrowLeftOnRectangleIcon,
@@ -22,7 +20,7 @@ import { useUser } from "../utility/UserContext";
 export default function ProfilePic() {
   const router = useRouter();
   const { user, isLoggedIn, logUserOut } = useUser();
-  const [loading, setLoading] = useState(user.userId !== "loading");
+  const [loading, setLoading] = useState(user.userId === "loading");
   const [profilePictureURL, setProfilePictureURL] = useState<string>("");
   const defaultProfilePicturePath = "users/generic/generic-profile-photo.webp";
 
@@ -42,8 +40,12 @@ export default function ProfilePic() {
     fetchProfilePictureURL();
   }, [user?.profilePicture]);
 
+  useEffect(() => {
+    setLoading(user.userId === "loading");
+  }, [user]);
+
   const handleLogOut = () => {
-    handleSignOut(logUserOut);
+    logUserOut();
     router.push("/");
   };
 

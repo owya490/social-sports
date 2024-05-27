@@ -1,6 +1,6 @@
 "use client";
 import { auth } from "@/services/src/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { createContext, useContext, useLayoutEffect, useState } from "react";
 import { EmptyUserData, LoadingUserData, UserData } from "../../interfaces/UserTypes";
 import { getFullUserByIdForUserContextWithRetries } from "../../services/src/users/usersService";
@@ -46,8 +46,14 @@ export default function UserContext({ children }: { children: any }) {
     return user.userId !== "";
   }
 
-  function logUserOut() {
-    setUser(EmptyUserData);
+  async function logUserOut() {
+    try {
+      await signOut(auth);
+      setUser(EmptyUserData);
+      console.log("Signed out!");
+    } catch (error) {
+      throw error;
+    }
   }
 
   return <LoginUserContext.Provider value={{ user, isLoggedIn, logUserOut }}>{children}</LoginUserContext.Provider>;

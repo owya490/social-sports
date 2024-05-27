@@ -17,7 +17,6 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     try {
       await handleEmailAndPasswordSignIn(userData.email, userData.password);
       router.push("/dashboard?login=success");
