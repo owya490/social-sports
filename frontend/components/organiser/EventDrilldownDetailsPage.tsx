@@ -13,7 +13,12 @@ import { useEffect } from "react";
 import { Input } from "@material-tailwind/react";
 
 import OrganiserEventDescription from "@/components/events/OrganiserEventDescription";
-import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import {
+  formatTimeTo12Hour,
+  formatTimeTo24Hour,
+  timestampToDateString,
+  timestampToTimeOfDay,
+} from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -257,6 +262,7 @@ const EventDrilldownDetailsPage = ({
                   {editDate ? (
                     <div className="flex my-1">
                       <Input
+                        type="date"
                         value={newEditDate}
                         style={{
                           width: "100%",
@@ -289,12 +295,13 @@ const EventDrilldownDetailsPage = ({
                   {editDate ? (
                     <div className="flex my-1">
                       <Input
-                        value={newEditTime}
+                        type="time"
+                        value={formatTimeTo24Hour(newEditTime)}
                         style={{
                           width: "100%",
                         }}
                         onChange={(e) => {
-                          setNewEditTime(e.target.value);
+                          setNewEditTime(formatTimeTo12Hour(e.target.value));
                         }}
                         crossOrigin={false}
                       />
@@ -353,6 +360,7 @@ const EventDrilldownDetailsPage = ({
                   {editPrice ? (
                     <div className="flex my-1">
                       <Input
+                        type="number"
                         value={newEditPrice}
                         style={{
                           width: "100%",
