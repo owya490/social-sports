@@ -23,6 +23,7 @@ class StripeCheckoutRequest:
   isPrivate: bool
   quantity: int
   cancelUrl: str
+  successUrl: str
 
   def __post_init__(self):
     if not isinstance(self.eventId, str):
@@ -33,10 +34,12 @@ class StripeCheckoutRequest:
       raise ValueError("Quantity must be provided as a integer.")
     if not isinstance(self.cancelUrl, str):
       raise ValueError("Cancel Url must be provided as a string.")
+    if not isinstance(self.successUrl, str):
+      raise ValueError("Success Url must be provided as a string.")
 
 
 @firestore.transactional
-def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger: Logger, event_id: str, quantity: int, is_private: bool, cancel_url: str):
+def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger: Logger, event_id: str, quantity: int, is_private: bool, cancel_url: str, success_url: str):
   logger.info(f"Creating stripe checkout session for {event_id} for {quantity} tickets.")
   private_path = "Private" if is_private else "Public"
 
@@ -58,7 +61,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
 
   organiser_id = event.get("organiserId")
   logger.info(f"Event with id {event_id} has organiser with id {organiser_id}.")
-  organiser_ref = db.collection("Users").document(organiser_id)
+  organiser_ref = db.collection("Users/Active/Private").document(organiser_id)
   maybe_organiser = organiser_ref.get(transaction=transaction)
   
   # Check if the organiser exists, if not error out
@@ -97,7 +100,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   organiser_stripe_account_id = organiser.get("stripeAccount")
 
   # 4a. check if the price exists for this event
-  if (price == None or not isinstance(price, float) or price <= 1): # we don't want events to be less than stripe fees
+  if (price == None or not isinstance(price, int) or price <= 1): # we don't want events to be less than stripe fees
     logger.error(f"Provided event {event_ref.path} does not have a valid price. Returning status=500")
     return json.dumps({"url": ERROR_URL})
 
@@ -127,7 +130,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
       "isPrivate": is_private
     },
     # payment_intent_data={"application_fee_amount": 123},
-    success_url="https://example.com/success",
+    success_url=success_url, # TODO need to update to a static success page
     cancel_url=cancel_url,
     stripe_account= organiser_stripe_account_id,
     expires_at=int(time.time() + 1800) # Checkout session expires in 30 minutes (stripe minimum)
@@ -154,5 +157,5 @@ def get_stripe_checkout_url_by_event_id(req: https_fn.CallableRequest):
 
   logger.add_tag("eventId", request_data.eventId)
   transaction = db.transaction()
-  return create_stripe_checkout_session_by_event_id(transaction, logger, request_data.eventId, 
-                                                    request_data.quantity, request_data.isPrivate, request_data.cancelUrl)
+  return create_stripe_checkout_session_by_event_id(transaction, logger, request_data.eventId, request_data.quantity, 
+                                                    request_data.isPrivate, request_data.cancelUrl, request_data.successUrl)

@@ -5,7 +5,6 @@ import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
 import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
-import { useRouter } from "next/navigation";
 
 // const router = useRouter();
 
@@ -123,6 +122,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
         lng: event.locationLatLng.lng,
       },
       isPrivate: event.isPrivate,
+      paymentsActive: event.paymentsActive,
     });
   });
   return eventsDataFinal;

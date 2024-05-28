@@ -1,5 +1,5 @@
 import { Timestamp } from "firebase/firestore";
-import { EmptyUserData, UserData } from "./UserTypes";
+import { EmptyUserData, UserData, UserId } from "./UserTypes";
 
 export type EventId = string;
 export type StripeCheckoutSessionId = string;
@@ -41,19 +41,7 @@ interface AbstractEventData {
   attendeesMetadata: EventAttendeesMetadata;
   accessCount: number;
   sport: string;
-}
-
-export interface EventsMetadata {
-  eventId: EventId;
-  attendees: Record<string, EventsAttendeeMetadata>;
-  completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
-}
-
-export interface EventsAttendeeMetadata {
-  email: string;
-  names: string[];
-  phones: string[];
-  ticketCount: number;
+  paymentsActive: boolean;
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -92,4 +80,28 @@ export const EmptyEventData: EventData = {
   accessCount: 0,
   sport: "",
   isPrivate: false,
+  paymentsActive: false,
 };
+
+export interface EventMetadata {
+  eventId?: EventId;
+  purchaserMap: Record<EmailHash, Purchaser>;
+  completeTicketCount: number;
+  completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
+  organiserId: UserId;
+}
+
+export interface Purchaser {
+  email: string;
+  attendees: Record<Name, Attendee>;
+  totalTicketCount: number;
+}
+
+export interface Attendee {
+  name: Name;
+  phone: string;
+  ticketCount: number;
+}
+
+type Name = string;
+type EmailHash = string;

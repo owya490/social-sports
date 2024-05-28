@@ -100,5 +100,5 @@ def create_stripe_standard_account(req: https_fn.CallableRequest):
   logger.add_tag("organiser", request_data.organiser)
   
   transaction = db.transaction()
-  organiser_ref = db.collection("Users").document(request_data.organiser)
+  organiser_ref = db.collection("Users/Active/Private").document(request_data.organiser)
   return check_and_update_organiser_stripe_account(transaction, logger, organiser_ref, request_data.returnUrl, request_data.refreshUrl)

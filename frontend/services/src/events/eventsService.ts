@@ -1,18 +1,21 @@
-import { EmptyEventData, EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
-  addDoc,
+  WriteBatch,
   collection,
   deleteDoc,
+  doc,
   getDocs,
   increment,
   query,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
 
+import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "../firebase";
 import { getPublicUserById } from "../users/usersService";
@@ -24,14 +27,12 @@ import {
   processEventData,
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
-import { rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
+import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
 import {
   findEventDoc,
   getAllEventsFromCollectionRef,
   tryGetAllActisvePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
-import { useRouter } from "next/navigation";
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -51,12 +52,29 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     };
     let isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
     let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
-    const docRef = await addDoc(collection(db, CollectionPaths.Events, isActive, isPrivate), eventDataWithTokens);
+
+    const batch = writeBatch(db);
+    const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate));
+    batch.set(docRef, eventDataWithTokens);
+    createEventMetadata(batch, docRef.id, data);
+    batch.commit();
     eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
     console.error(error);
     eventServiceLogger.error(`createEvent ${error}`);
+    throw error;
+  }
+}
+
+export async function createEventMetadata(batch: WriteBatch, eventId: EventId, data: NewEventData) {
+  try {
+    const eventMetadata = extractEventsMetadataFields(data);
+    const docRef = doc(db, CollectionPaths.EventsMetadata, eventId);
+    batch.set(docRef, eventMetadata);
+    eventServiceLogger.info(`createEventMetadata succedded for ${eventId}`);
+  } catch (error) {
+    eventServiceLogger.error(`An error occured in createEventMetadata for ${eventId} error=${error}`);
     throw error;
   }
 }
