@@ -14,6 +14,8 @@ import { Input } from "@material-tailwind/react";
 
 import OrganiserEventDescription from "@/components/events/OrganiserEventDescription";
 import {
+  formatDateToString,
+  formatStringToDate,
   formatTimeTo12Hour,
   formatTimeTo24Hour,
   timestampToDateString,
@@ -23,6 +25,7 @@ import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import DescriptionRichTextEditor from "../events/create/DescriptionRichTextEditor";
+import { updateEventByName } from "@/services/src/events/eventsService";
 
 interface EventDrilldownDetailsPageProps {
   loading: boolean;
@@ -209,9 +212,7 @@ const EventDrilldownDetailsPage = ({
                     value={newEditTitle}
                     style={{
                       fontSize: "1.5rem",
-                      // color: "#333",
                       width: "100%",
-                      height: "85%",
                     }}
                     onChange={(e) => {
                       setNewEditTitle(e.target.value);
@@ -263,12 +264,12 @@ const EventDrilldownDetailsPage = ({
                     <div className="flex my-1">
                       <Input
                         type="date"
-                        value={newEditDate}
+                        value={formatStringToDate(newEditDate)}
                         style={{
                           width: "100%",
                         }}
                         onChange={(e) => {
-                          setNewEditDate(e.target.value);
+                          setNewEditDate(formatDateToString(e.target.value));
                         }}
                         crossOrigin={false}
                       />
