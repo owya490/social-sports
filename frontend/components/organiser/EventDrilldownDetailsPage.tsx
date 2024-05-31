@@ -15,6 +15,7 @@ import { Input } from "@material-tailwind/react";
 
 import OrganiserEventDescription from "@/components/events/OrganiserEventDescription";
 import {
+  calculateEndDate,
   formatDateToString,
   formatStringToDate,
   formatTimeTo12Hour,
@@ -33,7 +34,8 @@ import DescriptionRichTextEditor from "../events/create/DescriptionRichTextEdito
 interface EventDrilldownDetailsPageProps {
   loading: boolean;
   eventName: string;
-  eventStartdate: Timestamp;
+  eventStartDate: Timestamp;
+  eventEndDate: Timestamp;
   eventDescription: string;
   eventLocation: string;
   eventPrice: number;
@@ -45,7 +47,7 @@ interface EventDrilldownDetailsPageProps {
 const EventDrilldownDetailsPage = ({
   loading,
   eventName,
-  eventStartdate,
+  eventStartDate,
   eventDescription,
   eventLocation,
   eventPrice,
@@ -89,37 +91,15 @@ const EventDrilldownDetailsPage = ({
   const [time, setTime] = useState("");
 
   useEffect(() => {
-    if (eventStartdate) {
-      const dateString = timestampToDateString(eventStartdate);
-      const timeString = timestampToTimeOfDay(eventStartdate);
+    if (eventStartDate) {
+      const dateString = timestampToDateString(eventStartDate);
+      const timeString = timestampToTimeOfDay(eventStartDate);
       setDate(`${dateString}`);
       setNewEditDate(`${dateString}`);
       setTime(`${timeString}`);
       setNewEditTime(`${timeString}`);
     }
-  }, [eventStartdate]);
-
-  const handleDateTimeUpdate = async () => {
-    const dateTimeString = `${newEditDate} ${newEditTime}`;
-    const updatedTimestamp = parseDateTimeStringToTimestamp(dateTimeString);
-
-    try {
-      await updateEventById(eventId, { startDate: updatedTimestamp, registrationDeadline: updatedTimestamp });
-      setEditDate(false);
-      setEditTime(false);
-    } catch (error) {
-      console.error("Failed to update event date and time:", error);
-    }
-  };
-
-  const handleCancelDateTime = () => {
-    const dateString = timestampToDateString(eventStartdate);
-    const timeString = timestampToTimeOfDay(eventStartdate);
-    setNewEditDate(`${dateString}`);
-    setNewEditTime(`${timeString}`);
-    setEditDate(false);
-    setEditTime(false);
-  };
+  }, [eventStartDate]);
 
   const [editDurationHrs, setEditDurationHrs] = useState(false);
   const [newEditDurationHrs, setNewEditDurationHrs] = useState(0);
@@ -138,17 +118,33 @@ const EventDrilldownDetailsPage = ({
     }
   }, [eventDuration]);
 
-  const handleDurationUpdate = async () => {
+  const handleDateTimeUpdate = async () => {
     try {
-      await updateEventById(eventId, { duration: { hrs: newEditDurationHrs, mins: newEditDurationMins } });
+      const dateTimeString = `${newEditDate} ${newEditTime}`;
+      const updatedTimestamp = parseDateTimeStringToTimestamp(dateTimeString);
+      const endingDate = calculateEndDate(updatedTimestamp, newEditDurationHrs, newEditDurationMins);
+      await updateEventById(eventId, {
+        startDate: updatedTimestamp,
+        registrationDeadline: updatedTimestamp,
+        duration: { hrs: newEditDurationHrs, mins: newEditDurationMins },
+        endDate: endingDate,
+      });
+      setEditDate(false);
+      setEditTime(false);
       setEditDurationHrs(false);
       setEditDurationMins(false);
     } catch (error) {
-      console.error("Failed to update event duration:", error);
+      console.error("Failed to update event date and time:", error);
     }
   };
 
-  const handleCancelDuration = () => {
+  const handleCancelDateTime = () => {
+    const dateString = timestampToDateString(eventStartDate);
+    const timeString = timestampToTimeOfDay(eventStartDate);
+    setNewEditDate(`${dateString}`);
+    setNewEditTime(`${timeString}`);
+    setEditDate(false);
+    setEditTime(false);
     setNewEditDurationHrs(durationHrs);
     setNewEditDurationMins(durationMins);
     setEditDurationHrs(false);
@@ -408,8 +404,6 @@ const EventDrilldownDetailsPage = ({
                           const minutes = totalMinutes % 60;
                           setNewEditDurationHrs(hours);
                           setNewEditDurationMins(minutes);
-                          // setNewEditDurationHrs(newEditDurationHrs);
-                          // setNewEditDurationMins(newEditDurationMins);
                         }}
                         crossOrigin="false"
                       />
@@ -487,7 +481,6 @@ const EventDrilldownDetailsPage = ({
                           handleDateTimeUpdate();
                           handleLocationUpdate();
                           handlePriceUpdate();
-                          handleDurationUpdate();
                         }}
                       />
                       <XMarkIcon
@@ -496,7 +489,6 @@ const EventDrilldownDetailsPage = ({
                           handleCancelDateTime();
                           handleCancelLocation();
                           handleCancelPrice();
-                          handleCancelDuration();
                         }}
                       />
                     </div>

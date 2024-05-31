@@ -30,6 +30,7 @@ export default function EventPage({ params }: EventPageProps) {
 
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
+  const [eventEndDate, setEventEndDate] = useState<Timestamp>(Timestamp.now());
   const [eventDuration, setEventDuration] = useState<number[]>([]);
   let dummyUserData: UserData = {
     userId: "",
@@ -60,6 +61,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventData(event);
         setEventName(event.name);
         setEventStartDate(event.startDate);
+        setEventEndDate(event.endDate);
         const { hrs, mins } = event.duration;
         const durationArray: number[] = [hrs, mins];
         setEventDuration(durationArray);
@@ -135,7 +137,8 @@ export default function EventPage({ params }: EventPageProps) {
               <EventDrilldownDetailsPage
                 loading={loading}
                 eventName={eventName}
-                eventStartdate={eventStartDate}
+                eventStartDate={eventStartDate}
+                eventEndDate={eventEndDate}
                 eventDescription={eventDescription}
                 eventLocation={eventLocation}
                 eventPrice={eventPrice}
