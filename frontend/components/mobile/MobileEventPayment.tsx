@@ -1,14 +1,12 @@
 "use client";
 
-import {
-  timestampToDateString,
-  timestampToTimeOfDay,
-} from "@/services/src/datetimeUtils";
+import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   CalendarDaysIcon,
   ClockIcon,
   CurrencyDollarIcon,
   MapPinIcon,
+  PlayCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 
@@ -17,6 +15,10 @@ interface EventPaymentProps {
   location: string;
   price: number;
   vacancy: number;
+  duration: {
+    hrs: number,
+    mins: number,
+  };
 }
 
 export default function MobileEventPayment(props: EventPaymentProps) {
@@ -29,14 +31,16 @@ export default function MobileEventPayment(props: EventPaymentProps) {
             <h2 className="hidden sm:block font-semibold">Date and Time</h2>
             <div className="flex items-center mb-1 sm:mb-0">
               <CalendarDaysIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">
-                {timestampToDateString(props.date)}
-              </p>
+              <p className="text-md font-light mr-[5%]">{timestampToDateString(props.date)}</p>
             </div>
             <div className="flex items-center">
               <ClockIcon className="w-4 h-4 mr-2" />
+              <p className="text-md font-light mr-[5%]">{timestampToTimeOfDay(props.date)}</p>
+            </div>
+            <div className="flex items-center">
+              <PlayCircleIcon className="w-4 h-4 mr-2" />
               <p className="text-md font-light mr-[5%]">
-                {timestampToTimeOfDay(props.date)}
+                {props.duration.hrs} hrs {props.duration.mins} mins
               </p>
             </div>
           </div>
@@ -53,9 +57,7 @@ export default function MobileEventPayment(props: EventPaymentProps) {
             <h2 className="hidden sm:block font-semibold">Price</h2>
             <div className="flex items-center">
               <CurrencyDollarIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">
-                ${props.price} AUD per person
-              </p>
+              <p className="text-md font-light mr-[5%]">${props.price} AUD per person</p>
             </div>
           </div>
         </div>

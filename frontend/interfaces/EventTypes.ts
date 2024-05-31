@@ -33,6 +33,7 @@ interface AbstractEventData {
   name: string;
   description: string;
   nameTokens?: string[]; // Assuming "rich text field" is a string
+  locationTokens?: string[];
   image: string; // Assuming you store the image URL or path as a string
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
@@ -42,6 +43,10 @@ interface AbstractEventData {
   accessCount: number;
   sport: string;
   paymentsActive: boolean;
+  duration: {
+    hrs: number;
+    mins: number;
+  };
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -81,6 +86,10 @@ export const EmptyEventData: EventData = {
   sport: "",
   isPrivate: false,
   paymentsActive: false,
+  duration: {
+    hrs: 0,
+    mins: 0,
+  },
 };
 
 export interface EventMetadata {

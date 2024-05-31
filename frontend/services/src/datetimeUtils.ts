@@ -48,7 +48,6 @@ export function formatTimeTo24Hour(time: string) {
   }
   const formattedHours = hours < 10 ? `0${hours}` : hours;
   const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-  console.log(formattedMinutes);
   return `${formattedHours}:${formattedMinutes}`;
 }
 
@@ -111,3 +110,8 @@ export function formatDateToString(date: string): string {
 
   return formatToLongDate(date);
 }
+
+export const parseDateTimeStringToTimestamp = (dateTimeString: string): Timestamp => {
+  const parsedDate = new Date(dateTimeString);
+  return Timestamp.fromDate(parsedDate);
+};

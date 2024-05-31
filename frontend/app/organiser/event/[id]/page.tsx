@@ -30,6 +30,7 @@ export default function EventPage({ params }: EventPageProps) {
 
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
+  const [eventDuration, setEventDuration] = useState<number[]>([]);
   let dummyUserData: UserData = {
     userId: "",
     firstName: "",
@@ -59,6 +60,9 @@ export default function EventPage({ params }: EventPageProps) {
         setEventData(event);
         setEventName(event.name);
         setEventStartDate(event.startDate);
+        const { hrs, mins } = event.duration;
+        const durationArray: number[] = [hrs, mins];
+        setEventDuration(durationArray);
         setEventOrganiser(event.organiser);
         setEventVacancy(event.vacancy);
         setEventDescription(event.description);
@@ -136,6 +140,11 @@ export default function EventPage({ params }: EventPageProps) {
                 eventLocation={eventLocation}
                 eventPrice={eventPrice}
                 eventImage={eventImage}
+                eventId={eventId}
+                eventDuration={{
+                  hrs: eventDuration[0],
+                  mins: eventDuration[1],
+                }}
               />
             )}
             {currSidebarPage === "Manage Attendees" && (

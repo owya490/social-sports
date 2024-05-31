@@ -25,6 +25,7 @@ export function EventDetails(props: EventDetailsProps) {
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
+              duration={eventData.duration}
             />
           </div>
 
@@ -49,6 +50,7 @@ export function EventDetails(props: EventDetailsProps) {
               eventId={eventData.eventId}
               isPrivate={eventData.isPrivate}
               setLoading={setLoading}
+              duration={eventData.duration}
             />
           </div>
         </div>

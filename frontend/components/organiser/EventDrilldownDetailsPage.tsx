@@ -5,6 +5,7 @@ import {
   CurrencyDollarIcon,
   MapPinIcon,
   PencilSquareIcon,
+  PlayCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -18,14 +19,16 @@ import {
   formatStringToDate,
   formatTimeTo12Hour,
   formatTimeTo24Hour,
+  parseDateTimeStringToTimestamp,
   timestampToDateString,
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
+import { updateEventById } from "@/services/src/events/eventsService";
+import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import DescriptionRichTextEditor from "../events/create/DescriptionRichTextEditor";
-import { updateEventByName } from "@/services/src/events/eventsService";
 
 interface EventDrilldownDetailsPageProps {
   loading: boolean;
@@ -35,6 +38,8 @@ interface EventDrilldownDetailsPageProps {
   eventLocation: string;
   eventPrice: number;
   eventImage: string;
+  eventId: string;
+  eventDuration: { hrs: number; mins: number };
 }
 
 const EventDrilldownDetailsPage = ({
@@ -45,6 +50,8 @@ const EventDrilldownDetailsPage = ({
   eventLocation,
   eventPrice,
   eventImage,
+  eventId,
+  eventDuration,
 }: EventDrilldownDetailsPageProps) => {
   const [editTitle, setEditTitle] = useState(false);
   const [newEditTitle, setNewEditTitle] = useState("");
@@ -57,10 +64,15 @@ const EventDrilldownDetailsPage = ({
     }
   }, [eventName]);
 
-  const handleTitleUpdate = () => {
+  const handleTitleUpdate = async () => {
     setTitle(newEditTitle);
-    // Update to firestore
-    setEditTitle(false);
+    const nameTokens = newEditTitle.toLowerCase().split(" ");
+    try {
+      await updateEventById(eventId, { name: newEditTitle, nameTokens });
+      setEditTitle(false);
+    } catch (error) {
+      console.error("Failed to update event name:", error);
+    }
   };
 
   const handleCancelTitle = () => {
@@ -87,26 +99,60 @@ const EventDrilldownDetailsPage = ({
     }
   }, [eventStartdate]);
 
-  const handleDateUpdate = () => {
-    setDate(newEditDate);
-    // Update to firestore
-    setEditDate(false);
+  const handleDateTimeUpdate = async () => {
+    const dateTimeString = `${newEditDate} ${newEditTime}`;
+    const updatedTimestamp = parseDateTimeStringToTimestamp(dateTimeString);
+
+    try {
+      await updateEventById(eventId, { startDate: updatedTimestamp, registrationDeadline: updatedTimestamp });
+      setEditDate(false);
+      setEditTime(false);
+    } catch (error) {
+      console.error("Failed to update event date and time:", error);
+    }
   };
 
-  const handleCancelDate = () => {
-    setNewEditDate(date);
+  const handleCancelDateTime = () => {
+    const dateString = timestampToDateString(eventStartdate);
+    const timeString = timestampToTimeOfDay(eventStartdate);
+    setNewEditDate(`${dateString}`);
+    setNewEditTime(`${timeString}`);
     setEditDate(false);
-  };
-
-  const handleTimeUpdate = () => {
-    setTime(newEditTime);
-    // Update to firestore
     setEditTime(false);
   };
 
-  const handleCancelTime = () => {
-    setNewEditTime(time);
-    setEditTime(false);
+  const [editDurationHrs, setEditDurationHrs] = useState(false);
+  const [newEditDurationHrs, setNewEditDurationHrs] = useState(0);
+  const [durationHrs, setDurationHrs] = useState(0);
+
+  const [editDurationMins, setEditDurationMins] = useState(false);
+  const [newEditDurationMins, setNewEditDurationMins] = useState(0);
+  const [durationMins, setDurationMins] = useState(0);
+
+  useEffect(() => {
+    if (eventDuration) {
+      setDurationHrs(eventDuration.hrs);
+      setNewEditDurationHrs(eventDuration.hrs);
+      setDurationMins(eventDuration.mins);
+      setNewEditDurationMins(eventDuration.mins);
+    }
+  }, [eventDuration]);
+
+  const handleDurationUpdate = async () => {
+    try {
+      await updateEventById(eventId, { duration: { hrs: newEditDurationHrs, mins: newEditDurationMins } });
+      setEditDurationHrs(false);
+      setEditDurationMins(false);
+    } catch (error) {
+      console.error("Failed to update event duration:", error);
+    }
+  };
+
+  const handleCancelDuration = () => {
+    setNewEditDurationHrs(durationHrs);
+    setNewEditDurationMins(durationMins);
+    setEditDurationHrs(false);
+    setEditDurationMins(false);
   };
 
   const [editLocation, setEditLocation] = useState(false);
@@ -120,10 +166,23 @@ const EventDrilldownDetailsPage = ({
     }
   }, [eventLocation]);
 
-  const handleLocationUpdate = () => {
+  const handleLocationUpdate = async () => {
     setLocation(newEditLocation);
-    // Update to firestore
-    setEditLocation(false);
+    const locationTokens = newEditLocation.toLowerCase().split(" ");
+    const latLng = await getLocationCoordinates(newEditLocation);
+    try {
+      await updateEventById(eventId, {
+        location: newEditLocation,
+        locationTokens,
+        locationLatLng: {
+          lat: latLng.lat,
+          lng: latLng.lng,
+        },
+      });
+      setEditLocation(false);
+    } catch (error) {
+      console.error("Failed to update event location:", error);
+    }
   };
 
   const handleCancelLocation = () => {
@@ -142,10 +201,14 @@ const EventDrilldownDetailsPage = ({
     }
   }, [eventPrice]);
 
-  const handlePriceUpdate = () => {
+  const handlePriceUpdate = async () => {
     setPrice(newEditPrice);
-    // Update to firestore
-    setEditPrice(false);
+    try {
+      await updateEventById(eventId, { price: newEditPrice });
+      setEditPrice(false);
+    } catch (error) {
+      console.error("Failed to update event price:", error);
+    }
   };
 
   const handleCancelPrice = () => {
@@ -164,10 +227,14 @@ const EventDrilldownDetailsPage = ({
     }
   }, [eventDescription]);
 
-  const handleDescriptionUpdate = () => {
+  const handleDescriptionUpdate = async () => {
     setDescription(newEditDescription);
-    // Update to firestore
-    setEditDescription(false);
+    try {
+      await updateEventById(eventId, { description: newEditDescription });
+      setEditDescription(false);
+    } catch (error) {
+      console.error("Failed to update event description:", error);
+    }
   };
 
   const handleCancelDescription = () => {
@@ -217,7 +284,7 @@ const EventDrilldownDetailsPage = ({
                     onChange={(e) => {
                       setNewEditTitle(e.target.value);
                     }}
-                    crossOrigin={false}
+                    crossOrigin="false"
                   />
                   <CheckIcon
                     className="absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer"
@@ -271,7 +338,7 @@ const EventDrilldownDetailsPage = ({
                         onChange={(e) => {
                           setNewEditDate(formatDateToString(e.target.value));
                         }}
-                        crossOrigin={false}
+                        crossOrigin="false"
                       />
                     </div>
                   ) : (
@@ -293,7 +360,7 @@ const EventDrilldownDetailsPage = ({
                 />
               ) : (
                 <>
-                  {editDate ? (
+                  {editTime ? (
                     <div className="flex my-1">
                       <Input
                         type="time"
@@ -304,11 +371,53 @@ const EventDrilldownDetailsPage = ({
                         onChange={(e) => {
                           setNewEditTime(formatTimeTo12Hour(e.target.value));
                         }}
-                        crossOrigin={false}
+                        crossOrigin="false"
                       />
                     </div>
                   ) : (
                     <div>{newEditTime}</div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+          <div className="px-2 flex flex-row space-x-2">
+            <PlayCircleIcon className="w-4" />
+            <div>
+              {loading ? (
+                <Skeleton
+                  style={{
+                    height: 10,
+                    width: 100,
+                  }}
+                />
+              ) : (
+                <>
+                  {editDurationHrs || editDurationMins ? (
+                    <div className="flex my-1">
+                      <Input
+                        type="text"
+                        min="0"
+                        value={`${newEditDurationHrs * 60 + newEditDurationMins} mins`}
+                        style={{
+                          width: "100%",
+                        }}
+                        onChange={(e) => {
+                          const totalMinutes = parseInt(e.target.value);
+                          const hours = Math.floor(totalMinutes / 60);
+                          const minutes = totalMinutes % 60;
+                          setNewEditDurationHrs(hours);
+                          setNewEditDurationMins(minutes);
+                          // setNewEditDurationHrs(newEditDurationHrs);
+                          // setNewEditDurationMins(newEditDurationMins);
+                        }}
+                        crossOrigin="false"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      {newEditDurationHrs} hrs {newEditDurationMins} mins
+                    </div>
                   )}
                 </>
               )}
@@ -336,7 +445,7 @@ const EventDrilldownDetailsPage = ({
                         onChange={(e) => {
                           setNewEditLocation(e.target.value);
                         }}
-                        crossOrigin={false}
+                        crossOrigin="false"
                       />
                     </div>
                   ) : (
@@ -362,6 +471,7 @@ const EventDrilldownDetailsPage = ({
                     <div className="flex my-1">
                       <Input
                         type="number"
+                        min="0"
                         value={newEditPrice}
                         style={{
                           width: "100%",
@@ -369,24 +479,24 @@ const EventDrilldownDetailsPage = ({
                         onChange={(e) => {
                           setNewEditPrice(Number(e.target.value));
                         }}
-                        crossOrigin={false}
+                        crossOrigin="false"
                       />
                       <CheckIcon
                         className="absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer"
                         onClick={() => {
-                          handleDateUpdate();
-                          handleTimeUpdate();
+                          handleDateTimeUpdate();
                           handleLocationUpdate();
                           handlePriceUpdate();
+                          handleDurationUpdate();
                         }}
                       />
                       <XMarkIcon
                         className="absolute top-2 right-2 w-7 stroke-organiser-title-gray-text cursor-pointer"
                         onClick={() => {
-                          handleCancelDate();
-                          handleCancelTime();
+                          handleCancelDateTime();
                           handleCancelLocation();
                           handleCancelPrice();
+                          handleCancelDuration();
                         }}
                       />
                     </div>
@@ -400,6 +510,8 @@ const EventDrilldownDetailsPage = ({
                           setEditTime(true);
                           setEditLocation(true);
                           setEditPrice(true);
+                          setEditDurationHrs(true);
+                          setEditDurationMins(true);
                         }}
                       />
                     </div>

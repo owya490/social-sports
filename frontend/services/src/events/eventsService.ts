@@ -6,6 +6,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   increment,
   query,
@@ -156,31 +157,27 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   }
 }
 
-export async function updateEventByName(eventName: string, updatedData: Partial<EventData>) {
-  if (!rateLimitCreateAndUpdateEvents()) {
-    console.log("Rate Limited!!!");
-    throw "Rate Limited";
-  }
-  eventServiceLogger.info(`updateEventByName ${eventName}`);
+export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
+  // if (!rateLimitCreateAndUpdateEvents()) {
+  //   console.log("Rate Limited!!!");
+  //   throw "Rate Limited";
+  // }
+  eventServiceLogger.info(`updateEventById ${eventId}`);
   try {
-    const eventCollectionRef = collection(db, CollectionPaths.Events);
-    const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
+    const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
 
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.size === 0) {
-      throw new Error(`Event with name '${eventName}' not found.`);
+    // Check if document exists
+    const eventDocSnapshot = await getDoc(eventDocRef);
+    if (!eventDocSnapshot.exists()) {
+      throw new Error(`Event with id '${eventId}' not found.`);
     }
 
-    // Loop through each event with the same name and update them
-    querySnapshot.forEach(async (eventDoc) => {
-      await updateDoc(eventDoc.ref, updatedData);
-    });
+    await updateDoc(eventDocRef, updatedData);
 
-    console.log(`Events with name '${eventName}' updated successfully.`);
-    eventServiceLogger.info(`Events with name '${eventName}' updated successfully.`);
+    console.log(`Event with Id '${eventId}' updated successfully.`);
+    eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
-    eventServiceLogger.error(`updateEventByName ${error}`);
+    eventServiceLogger.error(`updateEventById ${error}`);
     console.error(error);
   }
 }

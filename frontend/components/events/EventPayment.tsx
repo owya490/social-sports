@@ -4,7 +4,13 @@ import { useState } from "react";
 import { EventId } from "@/interfaces/EventTypes";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
-import { CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import {
+  CalendarDaysIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  MapPinIcon,
+  PlayCircleIcon,
+} from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,6 +24,10 @@ interface EventPaymentProps {
   eventId: EventId;
   isPrivate: boolean;
   setLoading: (value: boolean) => void;
+  duration: {
+    hrs: number;
+    mins: number;
+  };
 }
 
 export default function EventPayment(props: EventPaymentProps) {
@@ -47,6 +57,12 @@ export default function EventPayment(props: EventPaymentProps) {
               <div className="flex items-center">
                 <ClockIcon className="w-5 mr-2" />
                 <p className="text-md mr-[5%]">{timestampToTimeOfDay(props.date)}</p>
+              </div>
+              <div className="flex items-center">
+                <PlayCircleIcon className="w-5 mr-2" />
+                <p className="text-md mr-[5%]">
+                  {props.duration.hrs} hrs {props.duration.mins} mins
+                </p>
               </div>
             </div>
 
