@@ -98,7 +98,11 @@ export default function EventPayment(props: EventPaymentProps) {
                       .fill(0)
                       .map((_, idx) => {
                         const count = idx + 1;
-                        return <Option value={`${count}`}>{count} Ticket</Option>;
+                        return (
+                          <Option key={`attendee-option-${count}`} value={`${count}`}>
+                            {count} Ticket
+                          </Option>
+                        );
                       })}
                   </Select>
                 </div>
