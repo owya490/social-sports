@@ -10,12 +10,14 @@ import { useRouter } from "next/navigation";
 
 type LoginUserContextType = {
   user: UserData;
+  setUser: (userData: UserData) => void;
   isLoggedIn: () => boolean;
   logUserOut: () => void;
 };
 
 export const LoginUserContext = createContext<LoginUserContextType>({
   user: EmptyUserData,
+  setUser: () => {},
   isLoggedIn: () => false,
   logUserOut: () => {},
 });
@@ -56,7 +58,9 @@ export default function UserContext({ children }: { children: any }) {
     }
   }
 
-  return <LoginUserContext.Provider value={{ user, isLoggedIn, logUserOut }}>{children}</LoginUserContext.Provider>;
+  return (
+    <LoginUserContext.Provider value={{ user, setUser, isLoggedIn, logUserOut }}>{children}</LoginUserContext.Provider>
+  );
 }
 
 export const useUser = () => useContext(LoginUserContext);
