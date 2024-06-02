@@ -51,6 +51,8 @@ export interface UserData extends AbstractUserData {
   userId: UserId;
 }
 
+export interface TempUserData extends AbstractUserData {}
+
 export const EmptyNewUserData: NewUserData = {
   firstName: "",
   contactInformation: {

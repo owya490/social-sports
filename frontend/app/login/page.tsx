@@ -19,8 +19,12 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      await handleEmailAndPasswordSignIn(userData.email, userData.password);
-      router.push("/dashboard?login=success");
+      const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
+      if (userCreated) {
+        router.push("/dashboard?login=success"); // Redirect only if user creation is successful
+      } else {
+        console.error("User creation failed.");
+      }
     } catch (error: unknown) {
       if (error instanceof Error) setErrorMessage(error.message);
       setAlertStatus(true);

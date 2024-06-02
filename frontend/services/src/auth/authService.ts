@@ -1,4 +1,4 @@
-import { EmptyUserData, NewUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyUserData, NewUserData, TempUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import {
   FacebookAuthProvider,
@@ -36,9 +36,9 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
     // Send email verification
     await sendEmailVerification(userCredential.user, actionCodeSettings);
     console.log("Email verification sent. Please verify your email before logging in.");
-
+    const { password, ...userDataWithoutPassword } = data;
     // Save user data temporarily in your database
-    await saveTempUserData(userCredential.user.uid, data);
+    await saveTempUserData(userCredential.user.uid, userDataWithoutPassword);
   } catch (error) {
     console.error("Error during sign-up:", error);
     throw error;
@@ -65,6 +65,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
 
       try {
         const userExist = await getPublicUserById(userCredential.user.uid);
+        return true;
       } catch (error: unknown) {
         // Retrieve the temporary user data
         if (error instanceof UserNotFoundError) {
@@ -73,6 +74,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
           if (userData) {
             await createUser(userData, userCredential.user.uid);
             deleteTempUserData(userCredential.user.uid);
+            return true;
           } else {
             console.error("User data not found after email verification.");
             throw new Error("User data not found.");
@@ -94,7 +96,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
   }
 }
 
-export async function saveTempUserData(userId: string, data: NewUserData) {
+export async function saveTempUserData(userId: string, data: TempUserData) {
   await setDoc(doc(db, "TempUsers", userId), data);
 }
 
