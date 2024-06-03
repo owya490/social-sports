@@ -15,7 +15,7 @@ interface EventPaymentProps {
   location: string;
   price: number;
   vacancy: number;
-  stripe: boolean;
+  isPaymentsActive: boolean;
   eventId: EventId;
   isPrivate: boolean;
   setLoading: (value: boolean) => void;
@@ -72,7 +72,7 @@ export default function EventPayment(props: EventPaymentProps) {
         </div>
         <hr className="px-2 h-0.5 mx-auto bg-gray-400 border-0 rounded dark:bg-gray-400 mb-6"></hr>
         <div className="relative flex justify-center mb-6 w-full">
-          {props.stripe ? (
+          {props.isPaymentsActive ? (
             <div className="w-full space-y-6">
               {props.vacancy === 0 ? (
                 <div>
