@@ -9,6 +9,9 @@ export const INVALID_LNG = -1;
 
 export type EventAttendees = { [emailHash: string]: number };
 
+/**
+ * @deprecated The type should not be used as it has been replaced by EventMetadata
+ */
 export type EventAttendeesMetadata = {
   [emailHash: string]: {
     email: string;
