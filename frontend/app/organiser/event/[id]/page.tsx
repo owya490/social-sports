@@ -8,9 +8,9 @@ import EventDrilldownSharePage from "@/components/organiser/EventDrilldownShareP
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
-import { EventAttendees, EventAttendeesMetadata, EventData, EventId } from "@/interfaces/EventTypes";
-import { UserData } from "@/interfaces/UserTypes";
-import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
+import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { eventServiceLogger, getEventById, getEventMetadataByEventId } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -27,19 +27,9 @@ export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [eventData, setEventData] = useState<EventData>();
   const [loading, setLoading] = useState<boolean>(true);
-
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
-  let dummyUserData: UserData = {
-    userId: "",
-    firstName: "",
-    surname: "",
-    profilePicture: "",
-    contactInformation: {
-      email: "dummy_email",
-    },
-  };
-  const [eventOrganiser, setEventOrganiser] = useState<UserData>(dummyUserData);
+  const [eventOrganiser, setEventOrganiser] = useState<UserData>(EmptyUserData);
   const [eventVacancy, setEventVacancy] = useState<number>(0);
   const [eventDescription, setEventDescription] = useState<string>("");
   const [eventLocation, setEventLocation] = useState<string>("");
@@ -47,8 +37,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventImage, setEventImage] = useState<string>("");
   const [eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
-  const [eventAttendeesNumTickets, setEventAttendeesNumTickets] = useState<EventAttendees>({});
-  const [eventAttendeesMetadata, setEventAttendeesMetadata] = useState<EventAttendeesMetadata>({});
+  const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
 
   const router = useRouter();
 
@@ -67,8 +56,6 @@ export default function EventPage({ params }: EventPageProps) {
         setEventImage(event.image);
         setEventAccessCount(event.accessCount);
         setEventCapacity(event.capacity);
-        setEventAttendeesNumTickets(event.attendees);
-        setEventAttendeesMetadata(event.attendeesMetadata);
       })
       .finally(async () => {
         await sleep(500);
@@ -78,6 +65,9 @@ export default function EventPage({ params }: EventPageProps) {
         eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
         router.push("/error");
       });
+    getEventMetadataByEventId(eventId).then((eventMetadata) => {
+      setEventMetadata(eventMetadata);
+    });
   }, []);
 
   useEffect(() => {
@@ -139,10 +129,7 @@ export default function EventPage({ params }: EventPageProps) {
               />
             )}
             {currSidebarPage === "Manage Attendees" && (
-              <EventDrilldownManageAttendeesPage
-                eventAttendeesNumTickets={eventAttendeesNumTickets}
-                eventAttendeesMetadata={eventAttendeesMetadata}
-              />
+              <EventDrilldownManageAttendeesPage eventMetadata={eventMetadata} />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
             {currSidebarPage === "Share" && <EventDrilldownSharePage />}

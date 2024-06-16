@@ -9,17 +9,6 @@ export const INVALID_LNG = -1;
 
 export type EventAttendees = { [emailHash: string]: number };
 
-/**
- * @deprecated The type should not be used as it has been replaced by EventMetadata
- */
-export type EventAttendeesMetadata = {
-  [emailHash: string]: {
-    email: string;
-    names: string[];
-    phones: string[];
-  };
-};
-
 interface AbstractEventData {
   startDate: Timestamp;
   endDate: Timestamp;
@@ -93,6 +82,14 @@ export interface EventMetadata {
   completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
   organiserId: UserId;
 }
+
+export const EmptyEventMetadata: EventMetadata = {
+  eventId: "",
+  purchaserMap: { "": { email: "", attendees: { "": { name: "", phone: "", ticketCount: 0 } }, totalTicketCount: 0 } },
+  completeTicketCount: 0,
+  completedStripeCheckoutSessionIds: [],
+  organiserId: "",
+};
 
 export interface Purchaser {
   email: string;

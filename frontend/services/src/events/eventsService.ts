@@ -1,4 +1,4 @@
-import { EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EventData, EventDataWithoutOrganiser, EventId, EventMetadata, NewEventData } from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
@@ -30,6 +30,7 @@ import {
 import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
 import {
   findEventDoc,
+  findEventMetadataDocByEventId,
   getAllEventsFromCollectionRef,
   tryGetAllActisvePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
@@ -75,6 +76,17 @@ export async function createEventMetadata(batch: WriteBatch, eventId: EventId, d
     eventServiceLogger.info(`createEventMetadata succedded for ${eventId}`);
   } catch (error) {
     eventServiceLogger.error(`An error occured in createEventMetadata for ${eventId} error=${error}`);
+    throw error;
+  }
+}
+
+export async function getEventMetadataByEventId(eventId: EventId): Promise<EventMetadata> {
+  eventServiceLogger.info(`getEventMetadataByEventId, ${eventId}`);
+  try {
+    const eventMetadataDoc = await findEventMetadataDocByEventId(eventId);
+    return eventMetadataDoc.data() as EventMetadata;
+  } catch (error) {
+    eventServiceLogger.error(`getEventMetadataByEventId ${error}`);
     throw error;
   }
 }
