@@ -1,9 +1,9 @@
 import { handleSignOut } from "@/services/src/auth/authService";
 import { auth, storage } from "@/services/src/firebase";
 import { sleep } from "@/utilities/sleepUtil";
-import { Menu, Transition } from "@headlessui/react";
+import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
-  ArrowLeftOnRectangleIcon,
+  ArrowLeftStartOnRectangleIcon,
   Cog8ToothIcon,
   LifebuoyIcon,
   LightBulbIcon,
@@ -112,7 +112,7 @@ export default function ProfilePic() {
         <div className="flex items-center">
           <Menu as="div" className="relative inline-block text-left">
             <div className="flex items-centers">
-              <Menu.Button className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
+              <MenuButton className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
                 <Image
                   priority
                   src={user?.profilePicture || profilePictureURL}
@@ -121,7 +121,7 @@ export default function ProfilePic() {
                   height={0}
                   className="object-cover h-10 w-10"
                 />
-              </Menu.Button>
+              </MenuButton>
             </div>
             <Transition
               as={Fragment}
@@ -132,83 +132,63 @@ export default function ProfilePic() {
               leaveFrom="transform opacity-100 scale-100"
               leaveTo="transform opacity-0 scale-95"
             >
-              <Menu.Items className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <MenuItems className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 {loggedIn && (
                   <div className="px-1 py-1">
-                    <Menu.Item>
-                      {({ active }) => (
-                        <Link
-                          href="/profile"
-                          className={`${
-                            active ? "text-white bg-black" : "text-black"
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                        >
-                          <UserCircleIcon className="h-5 mr-2" />
-                          Profile
-                        </Link>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <Link
-                          href="/settings"
-                          className={`${
-                            active ? "text-white bg-black" : "text-black"
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                        >
-                          <Cog8ToothIcon className="h-5 mr-2" />
-                          Settings
-                        </Link>
-                      )}
-                    </Menu.Item>
+                    <MenuItem>
+                      <Link
+                        href="/profile"
+                        className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:bg-black`}
+                      >
+                        <UserCircleIcon className="h-5 mr-2" />
+                        Profile
+                      </Link>
+                    </MenuItem>
+                    <MenuItem>
+                      <Link
+                        href="/settings"
+                        className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:bg-black`}
+                      >
+                        <Cog8ToothIcon className="h-5 mr-2" />
+                        Settings
+                      </Link>
+                    </MenuItem>
                   </div>
                 )}
                 <div className="px-1 py-1">
-                  <Menu.Item>
-                    {({ active }) => (
-                      <Link
-                        href="/help"
-                        className={`${
-                          active ? "text-white bg-black" : "text-black"
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <LifebuoyIcon className="h-5 mr-2" />
-                        Help Centre
-                      </Link>
-                    )}
-                  </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <Link
-                        href="/suggestions"
-                        className={`${
-                          active ? "text-white bg-black" : "text-black"
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        <LightBulbIcon className="h-5 mr-2" />
-                        Suggestions
-                      </Link>
-                    )}
-                  </Menu.Item>
+                  <MenuItem>
+                    <Link
+                      href="/help"
+                      className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:bg-black`}
+                    >
+                      <LifebuoyIcon className="h-5 mr-2" />
+                      Help Centre
+                    </Link>
+                  </MenuItem>
+                  <MenuItem>
+                    <Link
+                      href="/suggestions"
+                      className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:bg-black`}
+                    >
+                      <LightBulbIcon className="h-5 mr-2" />
+                      Suggestions
+                    </Link>
+                  </MenuItem>
                 </div>
                 {loggedIn && (
                   <div className="px-1 py-1">
-                    <Menu.Item>
-                      {({ active }) => (
-                        <div
-                          onClick={handleLogOut}
-                          className={`${
-                            active ? "text-white bg-black" : "text-black"
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer`}
-                        >
-                          <ArrowLeftOnRectangleIcon className="h-5 mr-2" />
-                          Log Out
-                        </div>
-                      )}
-                    </Menu.Item>
+                    <MenuItem>
+                      <div
+                        onClick={handleLogOut}
+                        className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer hover:text-white hover:bg-black`}
+                      >
+                        <ArrowLeftStartOnRectangleIcon className="h-5 mr-2" />
+                        Log Out
+                      </div>
+                    </MenuItem>
                   </div>
                 )}
-              </Menu.Items>
+              </MenuItems>
             </Transition>
           </Menu>
         </div>

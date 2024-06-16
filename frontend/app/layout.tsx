@@ -21,25 +21,22 @@ const roboto_condensed = Roboto_Condensed({
   variable: "--font-roboto-condensed",
 });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <GrafanaFaro>
         <UserContext>
           <body className={`${inter.className} ${roboto_condensed.variable}`}>
-              <div className="hidden md:block">
-                <Navbar />
-              </div>
-              <div className="md:hidden">
-                <MobileNavbar />
-              </div>
-              {children}
-              <Footer />
-            </body>
+            <div className="hidden md:block">
+              <Navbar />
+            </div>
+            <div className="md:hidden">
+              <MobileNavbar />
+            </div>
+            <div className="min-h-screen">{children}</div>{" "}
+            {/* min-h-screen for the purposes of ensuring the footer does not move up when position set to fixed in organiser main drill down. */}
+            <Footer />
+          </body>
         </UserContext>
       </GrafanaFaro>
     </html>
