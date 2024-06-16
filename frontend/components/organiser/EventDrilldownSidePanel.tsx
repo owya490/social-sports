@@ -1,16 +1,30 @@
+import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import { Timestamp } from "firebase/firestore";
 import React, { Dispatch, SetStateAction } from "react";
+import Skeleton from "react-loading-skeleton";
 
 interface EventDrilldownSidePanelProps {
+  loading: boolean;
   currSidebarPage: string;
   setCurrSidebarPage: Dispatch<SetStateAction<string>>;
+  eventName: string;
+  eventStartDate: Timestamp;
 }
 
-const EventDrilldownSidePanel = ({ currSidebarPage, setCurrSidebarPage }: EventDrilldownSidePanelProps) => {
+const EventDrilldownSidePanel = ({
+  loading,
+  currSidebarPage,
+  setCurrSidebarPage,
+  eventName,
+  eventStartDate,
+}: EventDrilldownSidePanelProps) => {
   return (
     <div className="bg-organiser-light-gray mr-10 w-64 rounded-3xl">
       <div className="p-8">
-        <div className="text-xl font-extrabold">Volleyball World Cup</div>
-        <div className="text-organiser-dark-gray-text text-sm font-bold">Sun, 17 March 2024, 10:00am</div>
+        <div className="text-xl font-extrabold">{loading ? <Skeleton style={{ height: 40 }} /> : eventName}</div>
+        <div className="text-organiser-dark-gray-text text-sm font-bold">
+          {loading ? <Skeleton style={{ height: 20 }} /> : timestampToEventCardDateString(eventStartDate)}
+        </div>
         <div className="h-20"></div>
       </div>
       <div className="flex flex-col hover:cursor-pointer">

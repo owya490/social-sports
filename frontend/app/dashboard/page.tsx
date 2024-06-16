@@ -78,6 +78,9 @@ export default function Dashboard() {
             .finally(async () => {
               await sleep(500);
               setLoading(false);
+            })
+            .catch(() => {
+              router.push("/error");
             });
         }
       }
