@@ -1,18 +1,14 @@
 import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/outline";
 import React, { useState } from "react";
 import EventDrilldownAttendeeCard from "./EventDrilldownAttendeeCard";
-import { EventAttendees, EventAttendeesMetadata } from "@/interfaces/EventTypes";
-import InviteAttendeeDialog from "./attendee/InviteAttendeeDialog";
+import { EventMetadata } from "@/interfaces/EventTypes";
+import InviteAttendeeDialog from "./attendee/AddAttendeeDialog";
 
 interface EventDrilldownManageAttendeesPageProps {
-  eventAttendeesNumTickets: EventAttendees;
-  eventAttendeesMetadata: EventAttendeesMetadata;
+  eventMetadata: EventMetadata;
 }
 
-const EventDrilldownManageAttendeesPage = ({
-  eventAttendeesNumTickets,
-  eventAttendeesMetadata,
-}: EventDrilldownManageAttendeesPageProps) => {
+const EventDrilldownManageAttendeesPage = ({ eventMetadata }: EventDrilldownManageAttendeesPageProps) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   function closeModal() {
     setIsFilterModalOpen(false);
@@ -27,7 +23,7 @@ const EventDrilldownManageAttendeesPage = ({
             onClick={() => setIsFilterModalOpen(true)}
           >
             <PlusIcon className="mr-2 h-5 w-5 text-violet-200 hover:text-violet-100" />
-            Invite
+            Add Attendee
           </div>
         </div>
       </div>
@@ -43,53 +39,23 @@ const EventDrilldownManageAttendeesPage = ({
         </div>
         <div className="inline-block w-full h-0.5 my-2 self-stretch bg-organiser-title-gray-text"></div>
         <div className="">
-          {eventAttendeesMetadata &&
-            Object.entries(eventAttendeesMetadata).map(([emailHash, value]) => {
-              return (
-                <EventDrilldownAttendeeCard
-                  name={value.names[0]}
-                  email={value.email}
-                  number={value.phones[0]}
-                  tickets={eventAttendeesNumTickets[emailHash]}
-                />
-              );
-            })}
-          {/* <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={2}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          />
-          <EventDrilldownAttendeeCard
-            name="Duriana Smith"
-            email="duriana.smith456@gmail.com"
-            number="0469368618"
-            tickets={1}
-          /> */}
+          {eventMetadata.purchaserMap &&
+            Object.values(eventMetadata.purchaserMap).map((purchaserObj) =>
+              Object.entries(purchaserObj.attendees).map(([purchaserName, attendeeDetailsObj]) => {
+                return (
+                  <EventDrilldownAttendeeCard
+                    name={attendeeDetailsObj.name ? attendeeDetailsObj.name : purchaserName}
+                    image={
+                      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c"
+                    }
+                    email={purchaserObj.email}
+                    number={attendeeDetailsObj.phone}
+                    tickets={attendeeDetailsObj.ticketCount}
+                    key={purchaserName}
+                  />
+                );
+              })
+            )}
         </div>
       </div>
       <div className="grow">

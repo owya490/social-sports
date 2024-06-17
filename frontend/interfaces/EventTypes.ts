@@ -9,14 +9,6 @@ export const INVALID_LNG = -1;
 
 export type EventAttendees = { [emailHash: string]: number };
 
-export type EventAttendeesMetadata = {
-  [emailHash: string]: {
-    email: string;
-    names: string[];
-    phones: string[];
-  };
-};
-
 interface AbstractEventData {
   startDate: Timestamp;
   endDate: Timestamp;
@@ -38,8 +30,13 @@ interface AbstractEventData {
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
   isPrivate: boolean;
+<<<<<<< HEAD
   attendees: EventAttendees;
   attendeesMetadata: EventAttendeesMetadata;
+=======
+  attendees: Record<string, number>; // Key is Email and Number is amount of tickets associated with the email
+  attendeesMetadata: Record<string, { names: string[]; phones: string[] }>; // keeping track of an array with names and phones provided
+>>>>>>> a8f07d9c9c98e17bc7c6bf568a59a59a698fa702
   accessCount: number;
   sport: string;
   paymentsActive: boolean;
@@ -99,6 +96,14 @@ export interface EventMetadata {
   completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
   organiserId: UserId;
 }
+
+export const EmptyEventMetadata: EventMetadata = {
+  eventId: "",
+  purchaserMap: { "": { email: "", attendees: { "": { name: "", phone: "", ticketCount: 0 } }, totalTicketCount: 0 } },
+  completeTicketCount: 0,
+  completedStripeCheckoutSessionIds: [],
+  organiserId: "",
+};
 
 export interface Purchaser {
   email: string;
