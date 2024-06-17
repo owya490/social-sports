@@ -1,5 +1,5 @@
 "use client";
-import OrganiserEventCard from "@/components/events/OrganiserEventCard";
+import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
 // import OrganiserFilterDialog, {
 //   DAY_END_TIME_STRING,
 //   DAY_START_TIME_STRING,
