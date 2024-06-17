@@ -5,7 +5,7 @@ import { Alert } from "@material-tailwind/react";
 import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
 import { useRouter, useSearchParams } from "next/navigation";
-import noSearchResultLineDrawing from "../../public/images/no-search-result-line-drawing.jpg";
+import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import Image from "next/image";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { sleep } from "@/utilities/sleepUtil";
@@ -78,6 +78,9 @@ export default function Dashboard() {
             .finally(async () => {
               await sleep(500);
               setLoading(false);
+            })
+            .catch(() => {
+              router.push("/error");
             });
         }
       }

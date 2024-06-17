@@ -7,6 +7,8 @@ export type StripeCheckoutSessionId = string;
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;
 
+export type EventAttendees = { [emailHash: string]: number };
+
 interface AbstractEventData {
   startDate: Timestamp;
   endDate: Timestamp;
@@ -80,6 +82,14 @@ export interface EventMetadata {
   completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
   organiserId: UserId;
 }
+
+export const EmptyEventMetadata: EventMetadata = {
+  eventId: "",
+  purchaserMap: { "": { email: "", attendees: { "": { name: "", phone: "", ticketCount: 0 } }, totalTicketCount: 0 } },
+  completeTicketCount: 0,
+  completedStripeCheckoutSessionIds: [],
+  organiserId: "",
+};
 
 export interface Purchaser {
   email: string;

@@ -1,4 +1,4 @@
-import { EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EventData, EventDataWithoutOrganiser, EventId, EventMetadata, NewEventData } from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
@@ -6,6 +6,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   increment,
   query,
@@ -18,7 +19,8 @@ import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "../firebase";
-import { getPublicUserById } from "../users/usersService";
+import { UserNotFoundError } from "../users/userErrors";
+import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -30,6 +32,7 @@ import {
 import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
 import {
   findEventDoc,
+  findEventMetadataDocByEventId,
   getAllEventsFromCollectionRef,
   tryGetAllActisvePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
@@ -58,6 +61,14 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     batch.set(docRef, eventDataWithTokens);
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
+    const user = await getPrivateUserById(data.organiserId);
+    if (user.organiserEvents == undefined) {
+      user.organiserEvents = [docRef.id];
+    } else {
+      user.organiserEvents.push(docRef.id);
+    }
+    console.log("create event user", user);
+    await updateUser(data.organiserId, user);
     eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
@@ -79,8 +90,19 @@ export async function createEventMetadata(batch: WriteBatch, eventId: EventId, d
   }
 }
 
+export async function getEventMetadataByEventId(eventId: EventId): Promise<EventMetadata> {
+  eventServiceLogger.info(`getEventMetadataByEventId, ${eventId}`);
+  try {
+    const eventMetadataDoc = await findEventMetadataDocByEventId(eventId);
+    return eventMetadataDoc.data() as EventMetadata;
+  } catch (error) {
+    eventServiceLogger.error(`getEventMetadataByEventId ${error}`);
+    throw error;
+  }
+}
+
 export async function getEventById(eventId: EventId): Promise<EventData> {
-  eventServiceLogger.info(`getEventById`);
+  eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
@@ -88,8 +110,9 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     var organiser: UserData = EmptyUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
-    } catch {
-      console.log("error finding user");
+    } catch (error) {
+      eventServiceLogger.error(`getEventById ${error}`);
+      throw error;
     }
     const event: EventData = {
       ...eventWithoutOrganiser,
@@ -151,6 +174,32 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   } catch (error) {
     console.error("Error getting all events:", error);
     eventServiceLogger.error(`Error getting all events ${error}`);
+    throw error;
+  }
+}
+
+export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
+  eventServiceLogger.info(`getOrganiserEvents`);
+  try {
+    const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
+
+    if (!privateDoc.exists()) {
+      throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
+    }
+    const privateData = privateDoc.data();
+    const organiserEvents = privateData?.organiserEvents || [];
+    const eventDataList: EventData[] = [];
+    for (let i = 0; i < organiserEvents.length; i++) {
+      const event = organiserEvents[i];
+      console.log(event); // Or perform any other operation with 'event'
+      const eventData: EventData = await getEventById(event);
+      eventData.eventId = event;
+      eventDataList.push(eventData);
+    }
+    // Return the organiserEvents array
+    console.log(eventDataList);
+    return eventDataList;
+  } catch (error) {
     throw error;
   }
 }
