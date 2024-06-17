@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="md:hidden">
               <MobileNavbar />
             </div>
-            {children}
+            <div className="min-h-screen">{children}</div>
           </body>
         </UserContext>
       </GrafanaFaro>

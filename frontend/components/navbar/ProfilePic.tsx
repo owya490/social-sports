@@ -1,9 +1,9 @@
 import { handleSignOut } from "@/services/src/auth/authService";
 import { auth, storage } from "@/services/src/firebase";
 import { sleep } from "@/utilities/sleepUtil";
-import { Menu, Transition } from "@headlessui/react";
+import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
-  ArrowLeftOnRectangleIcon,
+  ArrowLeftStartOnRectangleIcon,
   Cog8ToothIcon,
   LifebuoyIcon,
   LightBulbIcon,
@@ -112,7 +112,7 @@ export default function ProfilePic() {
         <div className="flex items-center">
           <Menu as="div" className="relative inline-block text-left">
             <div className="flex items-centers">
-              <Menu.Button className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
+              <MenuButton className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
                 <Image
                   priority
                   src={user?.profilePicture || profilePictureURL}
@@ -121,7 +121,7 @@ export default function ProfilePic() {
                   height={0}
                   className="object-cover h-10 w-10"
                 />
-              </Menu.Button>
+              </MenuButton>
             </div>
             <Transition
               as={Fragment}
@@ -132,7 +132,7 @@ export default function ProfilePic() {
               leaveFrom="transform opacity-100 scale-100"
               leaveTo="transform opacity-0 scale-95"
             >
-              <Menu.Items className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <MenuItems className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 {loggedIn && (
                   <div className="px-1 py-1">
                     <Menu.Item>
@@ -201,14 +201,14 @@ export default function ProfilePic() {
                             active ? "text-white bg-highlight-yellow" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer`}
                         >
-                          <ArrowLeftOnRectangleIcon className="h-5 mr-2" />
+                          <ArrowLeftStartOnRectangleIcon className="h-5 mr-2" />
                           Log Out
                         </div>
                       )}
                     </Menu.Item>
                   </div>
                 )}
-              </Menu.Items>
+              </MenuItems>
             </Transition>
           </Menu>
         </div>

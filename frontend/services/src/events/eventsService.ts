@@ -1,4 +1,4 @@
-import { EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EventData, EventDataWithoutOrganiser, EventId, EventMetadata, NewEventData } from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
@@ -32,6 +32,7 @@ import {
 import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
 import {
   findEventDoc,
+  findEventMetadataDocByEventId,
   getAllEventsFromCollectionRef,
   tryGetAllActisvePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
@@ -89,8 +90,19 @@ export async function createEventMetadata(batch: WriteBatch, eventId: EventId, d
   }
 }
 
+export async function getEventMetadataByEventId(eventId: EventId): Promise<EventMetadata> {
+  eventServiceLogger.info(`getEventMetadataByEventId, ${eventId}`);
+  try {
+    const eventMetadataDoc = await findEventMetadataDocByEventId(eventId);
+    return eventMetadataDoc.data() as EventMetadata;
+  } catch (error) {
+    eventServiceLogger.error(`getEventMetadataByEventId ${error}`);
+    throw error;
+  }
+}
+
 export async function getEventById(eventId: EventId): Promise<EventData> {
-  eventServiceLogger.info(`getEventById`);
+  eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
@@ -98,8 +110,9 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     var organiser: UserData = EmptyUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
-    } catch {
-      console.log("error finding user");
+    } catch (error) {
+      eventServiceLogger.error(`getEventById ${error}`);
+      throw error;
     }
     const event: EventData = {
       ...eventWithoutOrganiser,

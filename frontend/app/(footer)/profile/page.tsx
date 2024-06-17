@@ -253,7 +253,6 @@ const Profile = () => {
           value={editable ? (editedData[name] as string) : (initialProfileData[name] as string)}
           onChange={handleSelectChange}
           className="mt-1 p-2 border rounded-md w-full"
-          placeholder="Not Provided"
         >
           <option value="">Select</option>
           <option value="Male">Male</option>
