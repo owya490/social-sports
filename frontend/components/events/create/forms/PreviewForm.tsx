@@ -1,4 +1,4 @@
-import { FormData } from "@/app/event/create/page";
+import { FormData } from "@/app/(footer)/event/create/page";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { Timestamp } from "firebase/firestore";

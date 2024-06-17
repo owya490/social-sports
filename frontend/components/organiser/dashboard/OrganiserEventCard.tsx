@@ -5,9 +5,9 @@ import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
-import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
+import LoadingSkeletonOrganiserEventCard from "../../loading/LoadingSkeletonOrganiserEventCard";
 
-interface OrganiserEventCardProps {
+export interface OrganiserEventCardProps {
   eventId: EventId;
   image: string;
   name: string;
@@ -31,7 +31,7 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
       <div className="bg-white rounded-lg text-left border-gray-300 border w-full sm:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer">
         {props.loading ? (
           <div>
-            <LoadingSkeletonEventCard />
+            <LoadingSkeletonOrganiserEventCard />
           </div>
         ) : (
           <>
