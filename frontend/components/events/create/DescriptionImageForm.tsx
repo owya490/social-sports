@@ -22,12 +22,12 @@ export function DescriptionImageForm({
 }: DescriptionImageFormProps) {
   const [previousImages, setPreviousImages] = useState<string[]>([]);
 
-  useEffect(() => {
-    // Fetch previous images from Firebase and set them in state
-    fetchPreviousImagesFromFirebase().then((images) => {
-      setPreviousImages(images);
-    });
-  }, []);
+  // useEffect(() => {
+  //   // Fetch previous images from Firebase and set them in state
+  //   // fetchPreviousImagesFromFirebase().then((images) => {
+  //     setPreviousImages(images);
+  // //   });
+  // }, []);
 
   const updateDescription = (e: string) => {
     updateField({
@@ -35,22 +35,22 @@ export function DescriptionImageForm({
     });
   };
 
-  const fetchPreviousImagesFromFirebase = async () => {
-    // Fetch previous images from Firebase and return their URLs
-    // Example: You can use Firebase Firestore or Firebase Realtime Database to store image URLs
-    const images = await fetch('YOUR_FIREBASE_IMAGE_URLS_ENDPOINT');
-    const data = await images.json();
-    return data.urls;
-  };
+  // const fetchPreviousImagesFromFirebase = async () => {
+  //   // Fetch previous images from Firebase and return their URLs
+  //   // Example: You can use Firebase Firestore or Firebase Realtime Database to store image URLs
+  //   const images = await fetch('YOUR_FIREBASE_IMAGE_URLS_ENDPOINT');
+  //   const data = await images.json();
+  //   return data.urls;
+  // };
 
-  const handleImageSelection = (imageUrl: string) => {
-    // Set the selected image URL as the preview URL
-    setImagePreviewUrl(imageUrl);
-    // Optionally, you can set the image field in your form data
-    updateField({
-      image: undefined, // Clear the image field since the user selected a previous image
-    });
-  };
+  // const handleImageSelection = (imageUrl: string) => {
+  //   // Set the selected image URL as the preview URL
+  //   setImagePreviewUrl(imageUrl);
+  //   // Optionally, you can set the image field in your form data
+  //   updateField({
+  //     image: undefined, // Clear the image field since the user selected a previous image
+  //   });
+  // };
 
   return (
     <FormWrapper>
@@ -66,7 +66,7 @@ export function DescriptionImageForm({
             />
           </div>
         </div>
-        {/* <div>
+        <div>
           <label className="text-black text-lg font-semibold">
             Upload a photo as your event cover.
           </label>
@@ -84,7 +84,7 @@ export function DescriptionImageForm({
               />
             )}
             <div className="flex flex-wrap mt-4">
-              {previousImages.map((imageUrl, index) => (
+              {/* {previousImages.map((imageUrl, index) => (
                 <div
                   key={index}
                   className="cursor-pointer mr-4 mb-4"
@@ -98,7 +98,7 @@ export function DescriptionImageForm({
                     className="rounded-md"
                   />
                 </div>
-              ))}
+              ))} */}
             </div>
             <input
               className="rounded-md mt-4 ml-4"
@@ -114,7 +114,7 @@ export function DescriptionImageForm({
               }}
             />
           </div>
-        </div> */}
+        </div>
       </div>
     </FormWrapper>
   );

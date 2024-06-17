@@ -186,26 +186,6 @@ export function BasicInformation({
           </div>
         </div>
         <div>
-          <label className="text-black text-lg font-semibold">Is your event Private?</label>
-          <p className="text-sm mb-5 mt-2">
-            Private Events will not be shown on the public dashboard and will be invite only
-          </p>
-          <div className="mt-4 w-1/2">
-            <Select
-              size="md"
-              label="Select Visibility"
-              value={isPrivate ? "Private" : "Public"}
-              onChange={(e) => {
-                const privacyValue = e || "Public";
-                handlePrivacyChange(privacyValue);
-              }}
-            >
-              <Option value="Public">Public</Option>
-              <Option value="Private">Private</Option>
-            </Select>
-          </div>
-        </div>
-        <div>
           <label className="text-black text-lg font-semibold">What is the price of the event and max capacity?</label>
           <p className="text-sm mt-2 mb-5">
             Event price is the cost of each ticket. Event capacity is the total number of tickets you&apos;re willing to
