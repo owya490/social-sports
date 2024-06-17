@@ -41,10 +41,7 @@ function CreateEventCostSlider({
           trackClassName="rounded-none border border-gray-300"
         />
       </div>
-      <div
-        className="mt-2 text-black text-center w-full"
-        style={{ left: customAmountPosition }}
-      >
+      <div className="mt-2 text-black text-center w-full" style={{ left: customAmountPosition }}>
         ${eventCost}
       </div>
     </div>
