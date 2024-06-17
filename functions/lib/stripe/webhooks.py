@@ -66,7 +66,7 @@ def add_stripe_event_and_checkout_tags(logger: Logger, event: Event):
 
 
 @firestore.transactional
-def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer): # Typing of customer is customer details
+def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer, full_name: str, phone_number: str): # Typing of customer is customer details
   # Update the event to include the new attendees
   private_path = "Private" if is_private else "Public"
   event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
@@ -120,13 +120,13 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
   purchaser = event_metadata["purchaserMap"][email_hash]
   purchaser["email"] = customer.email
   purchaser["totalTicketCount"] += item.quantity
-  maybe_current_attendee = event_metadata["purchaserMap"][email_hash]["attendees"].get(customer.name)
+  maybe_current_attendee = event_metadata["purchaserMap"][email_hash]["attendees"].get(full_name)
   if maybe_current_attendee == None:
-    purchaser["attendees"][customer.name] = {"phone": customer.phone, "ticketCount": item.quantity}
+    purchaser["attendees"][full_name] = {"phone": phone_number, "ticketCount": item.quantity}
   else:
-    purchaser["attendees"][customer.name] = {
-      "phone": customer.phone,
-      "ticketCount": purchaser["attendees"][customer.name]["ticketCount"] + item.quantity
+    purchaser["attendees"][full_name] = {
+      "phone": phone_number,
+      "ticketCount": purchaser["attendees"][full_name]["ticketCount"] + item.quantity
     }
   
   body = {
@@ -139,7 +139,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
   else:
     transaction.set(event_metadata_ref, body)
 
-  logger.info(f"Updated attendee list to reflect newly purchased tickets. email={customer.email}, name={customer.name}")
+  logger.info(f"Updated attendee list to reflect newly purchased tickets. email={customer.email}, name={full_name}")
 
   # Lastly, we want to record the checkout session id of this webhook event, so we have an idempotency in our operations
   transaction.update(
@@ -182,13 +182,13 @@ def restock_tickets_after_expired_checkout(transaction: Transaction, checkout_se
 
 
 @firestore.transactional
-def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer_details, checkout_session):
+def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer_details, checkout_session, full_name: str, phone_number: str):
   # Check if this checkout_session_id has already been processed.
   if (check_if_session_has_been_processed_already(transaction, logger, checkout_session_id, event_id)):
     logger.info(f"Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}")
     return https_fn.Response(status=200)
   
-  success = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details)
+  success = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number)
   if not success:
     logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id.id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
     return https_fn.Response(status=500) 
@@ -276,6 +276,27 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
         logger.error(f"Session Metadata did not contain necessary fields of eventId or isPrivate. session.metadata={session.metadata} error={v}")
         return https_fn.Response(status=400)
       
+      if session.custom_fields is None:
+        logger.error(f"Unable to retrieve custom fields from session, returned none. session={session.id}")
+        return https_fn.Response(status=400)
+
+      full_name = None
+      phone_number = None
+
+      for field in session.custom_fields:
+        match (field.key):
+          case "attendeeFullName":
+            full_name = field.text
+          case "attendeePhone":
+            phone_number = field.numeric
+          case _:
+            logger.error(f"Encountered custom field that is not registered. custom_field={field}")
+            return https_fn.Response(status=400)
+
+      if (full_name is None or phone_number is None):
+        logger.error(f"Either name or phone number is not present. full_name={full_name} phone_number={phone_number}")
+        return https_fn.Response(status=400)
+
       line_items = session.line_items
       customer_details = session.customer_details
 
@@ -290,7 +311,7 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
       logger.info(f"Attempting to fulfill completed event ticket purchase. session={session.id}, eventId={session_metadata.eventId}, line_items={line_items}, customer={customer_details.email}")
       transaction = db.transaction()
       
-      return fulfilment_workflow_on_ticket_purchase(transaction, logger, checkout_session_id, session_metadata.eventId, session_metadata.isPrivate, line_items, customer_details, session)
+      return fulfilment_workflow_on_ticket_purchase(transaction, logger, checkout_session_id, session_metadata.eventId, session_metadata.isPrivate, line_items, customer_details, session, full_name, phone_number)
 
     # Handle the checkout.session.expired event
     case "checkout.session.expired":
