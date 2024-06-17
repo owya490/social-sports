@@ -30,20 +30,11 @@ interface AbstractEventData {
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
   isPrivate: boolean;
-<<<<<<< HEAD
-  attendees: EventAttendees;
-  attendeesMetadata: EventAttendeesMetadata;
-=======
   attendees: Record<string, number>; // Key is Email and Number is amount of tickets associated with the email
   attendeesMetadata: Record<string, { names: string[]; phones: string[] }>; // keeping track of an array with names and phones provided
->>>>>>> a8f07d9c9c98e17bc7c6bf568a59a59a698fa702
   accessCount: number;
   sport: string;
   paymentsActive: boolean;
-  duration: {
-    hrs: number;
-    mins: number;
-  };
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -83,10 +74,6 @@ export const EmptyEventData: EventData = {
   sport: "",
   isPrivate: false,
   paymentsActive: false,
-  duration: {
-    hrs: 0,
-    mins: 0,
-  },
 };
 
 export interface EventMetadata {

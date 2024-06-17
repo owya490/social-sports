@@ -5,7 +5,6 @@ import {
   CurrencyDollarIcon,
   MapPinIcon,
   PencilSquareIcon,
-  PlayCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -15,7 +14,6 @@ import { Input } from "@material-tailwind/react";
 
 import OrganiserEventDescription from "@/components/events/OrganiserEventDescription";
 import {
-  calculateEndDate,
   formatDateToString,
   formatStringToDate,
   formatTimeTo12Hour,
@@ -41,19 +39,18 @@ interface EventDrilldownDetailsPageProps {
   eventPrice: number;
   eventImage: string;
   eventId: string;
-  eventDuration: { hrs: number; mins: number };
 }
 
 const EventDrilldownDetailsPage = ({
   loading,
   eventName,
   eventStartDate,
+  eventEndDate,
   eventDescription,
   eventLocation,
   eventPrice,
   eventImage,
   eventId,
-  eventDuration,
 }: EventDrilldownDetailsPageProps) => {
   const [editTitle, setEditTitle] = useState(false);
   const [newEditTitle, setNewEditTitle] = useState("");
@@ -90,6 +87,14 @@ const EventDrilldownDetailsPage = ({
   const [newEditTime, setNewEditTime] = useState("");
   const [time, setTime] = useState("");
 
+  const [editEndDate, setEditEndDate] = useState(false);
+  const [newEditEndDate, setNewEditEndDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const [editEndTime, setEditEndTime] = useState(false);
+  const [newEditEndTime, setNewEditEndTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+
   useEffect(() => {
     if (eventStartDate) {
       const dateString = timestampToDateString(eventStartDate);
@@ -101,38 +106,31 @@ const EventDrilldownDetailsPage = ({
     }
   }, [eventStartDate]);
 
-  const [editDurationHrs, setEditDurationHrs] = useState(false);
-  const [newEditDurationHrs, setNewEditDurationHrs] = useState(0);
-  const [durationHrs, setDurationHrs] = useState(0);
-
-  const [editDurationMins, setEditDurationMins] = useState(false);
-  const [newEditDurationMins, setNewEditDurationMins] = useState(0);
-  const [durationMins, setDurationMins] = useState(0);
-
   useEffect(() => {
-    if (eventDuration) {
-      setDurationHrs(eventDuration.hrs);
-      setNewEditDurationHrs(eventDuration.hrs);
-      setDurationMins(eventDuration.mins);
-      setNewEditDurationMins(eventDuration.mins);
+    if (eventEndDate) {
+      const dateString = timestampToDateString(eventStartDate);
+      const timeString = timestampToTimeOfDay(eventEndDate);
+      setEndDate(`${dateString}`);
+      setNewEditEndDate(`${dateString}`);
+      setEndTime(`${timeString}`);
+      setNewEditEndTime(`${timeString}`);
     }
-  }, [eventDuration]);
+  }, [eventEndDate]);
 
   const handleDateTimeUpdate = async () => {
     try {
-      const dateTimeString = `${newEditDate} ${newEditTime}`;
-      const updatedTimestamp = parseDateTimeStringToTimestamp(dateTimeString);
-      const endingDate = calculateEndDate(updatedTimestamp, newEditDurationHrs, newEditDurationMins);
+      const dateStartTimeString = `${newEditDate} ${newEditTime}`;
+      const updatedStartTimestamp = parseDateTimeStringToTimestamp(dateStartTimeString);
+      const dateEndTimeString = `${newEditEndDate} ${newEditEndTime}`;
+      const updatedEndTimestamp = parseDateTimeStringToTimestamp(dateEndTimeString);
       await updateEventById(eventId, {
-        startDate: updatedTimestamp,
-        registrationDeadline: updatedTimestamp,
-        duration: { hrs: newEditDurationHrs, mins: newEditDurationMins },
-        endDate: endingDate,
+        startDate: updatedStartTimestamp,
+        registrationDeadline: updatedStartTimestamp,
+        endDate: updatedEndTimestamp,
       });
       setEditDate(false);
       setEditTime(false);
-      setEditDurationHrs(false);
-      setEditDurationMins(false);
+      setEditEndTime(false);
     } catch (error) {
       console.error("Failed to update event date and time:", error);
     }
@@ -141,14 +139,16 @@ const EventDrilldownDetailsPage = ({
   const handleCancelDateTime = () => {
     const dateString = timestampToDateString(eventStartDate);
     const timeString = timestampToTimeOfDay(eventStartDate);
+    const endDateString = timestampToDateString(eventEndDate);
+    const endTimeString = timestampToTimeOfDay(eventEndDate);
     setNewEditDate(`${dateString}`);
     setNewEditTime(`${timeString}`);
+    setNewEditEndDate(`${endDateString}`);
+    setNewEditEndTime(`${endTimeString}`);
     setEditDate(false);
     setEditTime(false);
-    setNewEditDurationHrs(durationHrs);
-    setNewEditDurationMins(durationMins);
-    setEditDurationHrs(false);
-    setEditDurationMins(false);
+    setEditEndTime(false);
+    setEditEndDate(false);
   };
 
   const [editLocation, setEditLocation] = useState(false);
@@ -324,7 +324,7 @@ const EventDrilldownDetailsPage = ({
               ) : (
                 <>
                   {editDate ? (
-                    <div className="flex my-1">
+                    <div className="flex">
                       <Input
                         type="date"
                         value={formatStringToDate(newEditDate)}
@@ -345,19 +345,14 @@ const EventDrilldownDetailsPage = ({
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            <ClockIcon className="w-4" />
+            {editEndTime && <ClockIcon className="w-4" />}
             <div>
               {loading ? (
-                <Skeleton
-                  style={{
-                    height: 10,
-                    width: 100,
-                  }}
-                />
+                <div></div>
               ) : (
                 <>
                   {editTime ? (
-                    <div className="flex my-1">
+                    <div className="flex">
                       <Input
                         type="time"
                         value={formatTimeTo24Hour(newEditTime)}
@@ -371,14 +366,14 @@ const EventDrilldownDetailsPage = ({
                       />
                     </div>
                   ) : (
-                    <div>{newEditTime}</div>
+                    <div></div>
                   )}
                 </>
               )}
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            <PlayCircleIcon className="w-4" />
+            <ClockIcon className="w-4" />
             <div>
               {loading ? (
                 <Skeleton
@@ -389,28 +384,23 @@ const EventDrilldownDetailsPage = ({
                 />
               ) : (
                 <>
-                  {editDurationHrs || editDurationMins ? (
-                    <div className="flex my-1">
+                  {editEndTime ? (
+                    <div className="flex">
                       <Input
-                        type="text"
-                        min="0"
-                        value={`${newEditDurationHrs * 60 + newEditDurationMins} mins`}
+                        type="time"
+                        value={formatTimeTo24Hour(newEditEndTime)}
                         style={{
                           width: "100%",
                         }}
                         onChange={(e) => {
-                          const totalMinutes = parseInt(e.target.value);
-                          const hours = Math.floor(totalMinutes / 60);
-                          const minutes = totalMinutes % 60;
-                          setNewEditDurationHrs(hours);
-                          setNewEditDurationMins(minutes);
+                          setNewEditEndTime(formatTimeTo12Hour(e.target.value));
                         }}
                         crossOrigin="false"
                       />
                     </div>
                   ) : (
                     <div>
-                      {newEditDurationHrs} hrs {newEditDurationMins} mins
+                      {newEditTime} - {newEditEndTime}
                     </div>
                   )}
                 </>
@@ -430,7 +420,7 @@ const EventDrilldownDetailsPage = ({
               ) : (
                 <>
                   {editLocation ? (
-                    <div className="flex my-1">
+                    <div className="flex">
                       <Input
                         value={newEditLocation}
                         style={{
@@ -462,7 +452,7 @@ const EventDrilldownDetailsPage = ({
               ) : (
                 <>
                   {editPrice ? (
-                    <div className="flex my-1">
+                    <div className="flex">
                       <Input
                         type="number"
                         min="0"
@@ -502,8 +492,7 @@ const EventDrilldownDetailsPage = ({
                           setEditTime(true);
                           setEditLocation(true);
                           setEditPrice(true);
-                          setEditDurationHrs(true);
-                          setEditDurationMins(true);
+                          setEditEndTime(true);
                         }}
                       />
                     </div>
