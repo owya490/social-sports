@@ -6,6 +6,7 @@ import GrafanaFaro from "@/observability/GrafanaFaro";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/auth/authContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,16 +22,13 @@ const roboto_condensed = Roboto_Condensed({
   variable: "--font-roboto-condensed",
 });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <GrafanaFaro>
-        <UserContext>
-          <body className={`${inter.className} ${roboto_condensed.variable}`}>
+      <AuthProvider>
+        <GrafanaFaro>
+          <UserContext>
+            <body className={`${inter.className} ${roboto_condensed.variable}`}>
               <div className="hidden md:block">
                 <Navbar />
               </div>
@@ -40,8 +38,9 @@ export default function RootLayout({
               {children}
               <Footer />
             </body>
-        </UserContext>
-      </GrafanaFaro>
+          </UserContext>
+        </GrafanaFaro>
+      </AuthProvider>
     </html>
   );
 }
