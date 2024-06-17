@@ -1,3 +1,4 @@
+import { EventMetadata, NewEventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { EVENTS_REFRESH_MILLIS, LocalStorageKeys } from "../eventsConstants";
 const rateLimitLogger = new Logger("RateLimitLogger");
@@ -30,4 +31,13 @@ export function rateLimitCreateAndUpdateEvents(): boolean {
   localStorage.setItem(LocalStorageKeys.OperationCount5Min, "0");
   localStorage.setItem(LocalStorageKeys.LastCreateUpdateOperationTimestamp, now.toUTCString());
   return true;
+}
+
+export function extractEventsMetadataFields(eventData: NewEventData): EventMetadata {
+  return {
+    purchaserMap: {},
+    completedStripeCheckoutSessionIds: [],
+    organiserId: eventData.organiserId,
+    completeTicketCount: 0,
+  };
 }

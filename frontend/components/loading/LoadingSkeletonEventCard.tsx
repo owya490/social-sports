@@ -6,9 +6,7 @@ export default function LoadingSkeletonEventCard() {
       <Skeleton
         height={150}
         wrapper={({ children }) => {
-          return (
-            <div className="h-44 flex items-center w-full">{children}</div>
-          );
+          return <div className="h-44 flex items-center w-full">{children}</div>;
         }}
       />
       <Skeleton
@@ -29,9 +27,7 @@ export default function LoadingSkeletonEventCard() {
         height={6}
         width={160}
         wrapper={({ children }) => {
-          return (
-            <div className="h-5 flex items-center ml-2 mt-5">{children}</div>
-          );
+          return <div className="h-5 flex items-center ml-2 mt-5">{children}</div>;
         }}
       />
       <Skeleton
@@ -53,9 +49,7 @@ export default function LoadingSkeletonEventCard() {
           height={6}
           width={100}
           wrapper={({ children }) => {
-            return (
-              <div className="h-3 flex items-center mt-10 mb-4">{children}</div>
-            );
+            return <div className="h-3 flex items-center mt-10 mb-4">{children}</div>;
           }}
         />
         <div className="ml-auto">
@@ -63,11 +57,7 @@ export default function LoadingSkeletonEventCard() {
             height={25}
             width={80}
             wrapper={({ children }) => {
-              return (
-                <div className="h-3 flex items-center mt-10 mb-4">
-                  {children}
-                </div>
-              );
+              return <div className="h-3 flex items-center mt-10 mb-4">{children}</div>;
             }}
           />
         </div>
