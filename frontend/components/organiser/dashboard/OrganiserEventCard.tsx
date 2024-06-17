@@ -5,7 +5,7 @@ import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
-import LoadingSkeletonOrganiserEventCard from "../loading/LoadingSkeletonOrganiserEventCard";
+import LoadingSkeletonOrganiserEventCard from "../../loading/LoadingSkeletonOrganiserEventCard";
 
 export interface OrganiserEventCardProps {
   eventId: EventId;
