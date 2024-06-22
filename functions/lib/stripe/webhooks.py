@@ -150,7 +150,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
     transaction.create(tickets_id_ref, {
       "eventId": event_id,
       "orderId": order_id_ref.id,
-      "price": item.price,
+      "price": item.price.unit_amount /100, # TODO change price from integer to cents SPORTSHUB-80
       "purchaseDate": purchase_time
     })
     ticket_list.append(tickets_id_ref.id)
@@ -159,6 +159,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
   transaction.set(order_id_ref, {
     "datePurchased": purchase_time,
     "email": customer.email,
+    "fullName": full_name,
     "phone": phone_number,
     "tickets": ticket_list,
   })
@@ -316,9 +317,9 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
       for field in session.custom_fields:
         match (field.key):
           case "attendeeFullName":
-            full_name = field.text
+            full_name = field.text.value
           case "attendeePhone":
-            phone_number = field.numeric
+            phone_number = field.text.value
           case _:
             logger.error(f"Encountered custom field that is not registered. custom_field={field}")
             return https_fn.Response(status=400)
