@@ -7,6 +7,7 @@ import json
 import sys
 import uuid
 from dataclasses import dataclass
+from datetime import datetime
 
 import stripe
 from firebase_admin import firestore
@@ -105,7 +106,6 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
   if event_metadata.get("purchaserMap") == None:
     event_metadata["purchaserMap"] = {}
 
-
   # If the purchaser doesn't exist, add base template so we don't null pointer
   if event_metadata["purchaserMap"].get(email_hash) == None:
     event_metadata["purchaserMap"][email_hash] = {
@@ -115,8 +115,6 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
     }
   
   # Get names and phones already added, if it doesn't exist, start new list
-  # current_attendee_names = [] if event_metadata["attendees"][email_hash].get("names") == None else event_metadata["attendees"][email_hash]["names"]
-  # current_attendee_phones = [] if event_metadata["attendees"][email_hash].get("phones") == None else event_metadata["attendees"][email_hash]["phones"]
   purchaser = event_metadata["purchaserMap"][email_hash]
   purchaser["email"] = customer.email
   purchaser["totalTicketCount"] += item.quantity
@@ -140,6 +138,38 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
     transaction.set(event_metadata_ref, body)
 
   logger.info(f"Updated attendee list to reflect newly purchased tickets. email={customer.email}, name={full_name}")
+
+  # We to update EventsMetadata with the unique order object containing ticket objects for this purchase
+  purchase_time = datetime.now()
+  order_id_ref = db.collection("Orders").document()
+
+  ticket_list = []
+  # Create Tickets for each individual ticket
+  for i in range(item.quantity):
+    tickets_id_ref = db.collection("Tickets").document()
+    transaction.create(tickets_id_ref, {
+      "eventId": event_id,
+      "orderId": order_id_ref.id,
+      "price": item.price,
+      "purchaseDate": purchase_time
+    })
+    ticket_list.append(tickets_id_ref.id)
+
+  # Create new unique order object for this order
+  transaction.set(order_id_ref, {
+    "datePurchased": purchase_time,
+    "email": customer.email,
+    "phone": phone_number,
+    "tickets": ticket_list,
+  })
+
+  # Update the array to contain a union of this order object and all previous ones
+  transaction.update(
+    event_metadata_ref,
+    {
+      "orderIds": firestore.ArrayUnion([order_id_ref.id])
+    }
+  )
 
   # Lastly, we want to record the checkout session id of this webhook event, so we have an idempotency in our operations
   transaction.update(
