@@ -27,7 +27,7 @@ function CreateEventCostSlider({
 
   return (
     <div className="flex flex-col items-center mt-10">
-      <div className="w-full">
+      <div className="w-full md:w-96"> {/* Adjusted width based on screen size */}
         <Slider
           size="sm"
           value={eventCost}
@@ -36,15 +36,12 @@ function CreateEventCostSlider({
           max={60}
           step={1}
           className="text-black relative z-10"
-          barClassName="rounded-none bg-gray-300" // Adjusted the bar background color
-          thumbClassName="rounded-full bg-white z-20" // Made the thumb fully visible
+          barClassName="rounded-none bg-gray-300"
+          thumbClassName="rounded-full bg-white z-20"
           trackClassName="rounded-none border border-gray-300"
         />
       </div>
-      <div
-        className="mt-2 text-black text-center w-full"
-        style={{ left: customAmountPosition }}
-      >
+      <div className="mt-2 text-black text-center w-full" style={{ left: customAmountPosition }}>
         ${eventCost}
       </div>
     </div>

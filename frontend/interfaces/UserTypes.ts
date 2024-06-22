@@ -1,5 +1,3 @@
-import { User } from "firebase/auth";
-
 export type UserId = string;
 
 interface AbstractUserData {
@@ -19,6 +17,9 @@ interface AbstractUserData {
     }
   ];
   profilePicture: string;
+  stripeAccount?: string;
+  stripeAccountActive?: boolean;
+  organiserEvents?: [string];
 }
 
 export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
@@ -41,6 +42,8 @@ export interface PrivateUserData extends AbstractUserData {
       eventId: string;
     }
   ];
+  stripeAccount?: string;
+  stripeAccountActive?: boolean;
 }
 
 export interface NewUserData extends AbstractUserData {
@@ -62,6 +65,7 @@ export const EmptyNewUserData: NewUserData = {
   surname: "",
   dob: "",
 };
+
 export const EmptyUserData: UserData = {
   userId: "",
   firstName: "",
