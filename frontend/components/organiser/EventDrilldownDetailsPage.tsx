@@ -115,7 +115,7 @@ const EventDrilldownDetailsPage = ({
       setEndTime(`${timeString}`);
       setNewEditEndTime(`${timeString}`);
     }
-  }, [eventEndDate]);
+  }, [eventEndDate, eventStartDate]);
 
   const handleDateTimeUpdate = async () => {
     try {
