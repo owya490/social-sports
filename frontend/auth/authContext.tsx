@@ -1,9 +1,10 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { auth, authUser } from "@/services/src/firebase";
+import { auth } from "@/services/src/firebase"; // Ensure this import is correct
 import { User } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
+import Loading from "@/components/loading/Loading";
 
 interface AuthContextProps {
   user: User | null;
@@ -21,20 +22,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const protectedRoutes = ["/organiser"]; // Add your protected routes here
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      setLoading(false);
-    });
+    console.log("Setting up auth state change listener");
+    const unsubscribe = auth.onAuthStateChanged(
+      (user) => {
+        console.log("Auth state changed, user:", user);
+        setUser(user);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error in auth state change:", error);
+        setLoading(false);
+      }
+    );
 
-    return unsubscribe;
+    return () => {
+      console.log("Cleaning up auth state change listener");
+      unsubscribe();
+    };
   }, []);
-
-  // useEffect(() => {
-  //   if (!loading && !user && pathname !== "/login") {
-  //     router.push("/login"); // Redirect to login if not authenticated and not on the login page
-  //   }
-  // }, [user, pathname, loading]);
+  useEffect(() => {
+    console.log("Checking authentication and protected routes");
+    console.log("Current user:", user);
+    console.log("Current pathname:", pathname);
+    console.log("Loading:", loading);
+    if (!loading && !user && protectedRoutes.some((prefix) => pathname.startsWith(prefix))) {
+      console.log("why is this being triggered", user);
+      router.push("/login");
+    }
+  }, [user, pathname, loading]);
 
   return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>;
 };
