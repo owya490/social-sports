@@ -9,17 +9,11 @@ import EventPayment from "./EventPayment";
 interface EventDetailsProps {
   eventData: EventData;
   eventTags: Tag[];
+  setLoading: (value: boolean) => void;
 }
 
 export function EventDetails(props: EventDetailsProps) {
-  // const title = "Sydney Thunder Volleyball Women's Training";
-  // const description = [
-  //     "Women’s sessions are for female players who are looking to increase their skill and will be focused solely on training and building game experience.",
-  //     "This training session is for women playing at an intermediate to advanced level and is really focused on perfecting your game! (If you can serve 70% in and receive to a setter with confidence this session is for you)!",
-  //     "These sessions are built to representative level volleyball. This session is focused for women in the Sydney Thunder Volleyball Women’s Representative Team however all women at an advanced level are welcome to join. This session will have STV’s Head Coach Lead the session and will be focused on improving skills as an individual and as a team.",
-  //     "Limited spots are available!",
-  // ];
-  const { eventData } = props;
+  const { eventData, eventTags, setLoading } = props;
   return (
     <div className="flex justify-center w-full">
       <div className="pb-10 screen-width-primary">
@@ -51,6 +45,10 @@ export function EventDetails(props: EventDetailsProps) {
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
+              isPaymentsActive={eventData.paymentsActive}
+              eventId={eventData.eventId}
+              isPrivate={eventData.isPrivate}
+              setLoading={setLoading}
             />
           </div>
         </div>

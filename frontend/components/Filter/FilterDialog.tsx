@@ -3,10 +3,7 @@
 import { EventData } from "@/interfaces/EventTypes";
 import { NO_SPORT_CHOSEN_STRING } from "@/services/src/filterService";
 import { Dialog, Transition } from "@headlessui/react";
-import {
-  AdjustmentsHorizontalIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
+import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Slider } from "@material-tailwind/react";
 import { Fragment } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
@@ -54,9 +51,7 @@ interface FilterDialogProps {
   sortByCategoryValue: SortByCategory;
   setSortByCategoryValue: React.Dispatch<React.SetStateAction<SortByCategory>>;
   appliedSortByCategoryValue: SortByCategory;
-  setAppliedSortByCategoryValue: React.Dispatch<
-    React.SetStateAction<SortByCategory>
-  >;
+  setAppliedSortByCategoryValue: React.Dispatch<React.SetStateAction<SortByCategory>>;
   maxPriceSliderValue: number;
   setMaxPriceSliderValue: React.Dispatch<React.SetStateAction<number>>;
   appliedMaxPriceSliderValue: number;
@@ -64,9 +59,7 @@ interface FilterDialogProps {
   maxProximitySliderValue: number;
   setMaxProximitySliderValue: React.Dispatch<React.SetStateAction<number>>;
   appliedMaxProximitySliderValue: number;
-  setAppliedMaxProximitySliderValue: React.Dispatch<
-    React.SetStateAction<number>
-  >;
+  setAppliedMaxProximitySliderValue: React.Dispatch<React.SetStateAction<number>>;
   dateRange: {
     startDate: string | null;
     endDate: string | null;
@@ -268,9 +261,7 @@ export default function FilterDialog({
                       </div>
                       <div className="w-full mt-3 flex items-center">
                         <p className={"mr-2"}>
-                          {maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE
-                            ? "$ANY"
-                            : "$" + maxPriceSliderValue}
+                          {maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE ? "$ANY" : "$" + maxPriceSliderValue}
                         </p>
 
                         <Slider
@@ -279,9 +270,7 @@ export default function FilterDialog({
                           step={1}
                           min={0}
                           max={PRICE_SLIDER_MAX_VALUE}
-                          defaultValue={
-                            maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue
-                          }
+                          defaultValue={maxPriceSliderValue === 0 ? 0 : maxPriceSliderValue}
                           onChange={(e) => {
                             setMaxPriceSliderValue(parseInt(e.target.value));
                           }}
@@ -308,8 +297,7 @@ export default function FilterDialog({
                       </div>
                       <div className="w-full mt-3 mb-5 flex items-center">
                         <p className="mr-2 whitespace-nowrap">
-                          {maxProximitySliderValue ===
-                          PROXIMITY_SLIDER_MAX_VALUE
+                          {maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE
                             ? "ANY km"
                             : maxProximitySliderValue + "km"}
                         </p>
@@ -319,15 +307,9 @@ export default function FilterDialog({
                           step={1}
                           min={0}
                           max={PROXIMITY_SLIDER_MAX_VALUE}
-                          defaultValue={
-                            maxProximitySliderValue === 0
-                              ? 0
-                              : maxProximitySliderValue
-                          }
+                          defaultValue={maxProximitySliderValue === 0 ? 0 : maxProximitySliderValue}
                           onChange={(e) => {
-                            setMaxProximitySliderValue(
-                              parseInt(e.target.value)
-                            );
+                            setMaxProximitySliderValue(parseInt(e.target.value));
                           }}
                         />
                       </div>
@@ -343,10 +325,7 @@ export default function FilterDialog({
                   </div>
 
                   <div className="mt-3 w-full flex items-center">
-                    <button
-                      className="hover:underline cursor-pointer"
-                      onClick={handleClearAll}
-                    >
+                    <button className="hover:underline cursor-pointer" onClick={handleClearAll}>
                       Clear all
                     </button>
                     <button

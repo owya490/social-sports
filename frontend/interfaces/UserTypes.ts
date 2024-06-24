@@ -17,6 +17,8 @@ interface AbstractUserData {
     }
   ];
   profilePicture: string;
+  stripeAccount?: string;
+  stripeAccountActive?: boolean;
   organiserEvents?: [string];
 }
 
@@ -40,6 +42,8 @@ export interface PrivateUserData extends AbstractUserData {
       eventId: string;
     }
   ];
+  stripeAccount?: string;
+  stripeAccountActive?: boolean;
 }
 
 export interface NewUserData extends AbstractUserData {
@@ -61,6 +65,7 @@ export const EmptyNewUserData: NewUserData = {
   surname: "",
   dob: "",
 };
+
 export const EmptyUserData: UserData = {
   userId: "",
   firstName: "",
