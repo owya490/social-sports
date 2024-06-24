@@ -7,7 +7,7 @@ import { TagForm } from "@/components/events/create/forms/TagForm";
 import { useMultistepForm } from "@/components/events/create/forms/useMultistepForm";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
-import { EventAttendees, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
 import { uploadUserImage } from "@/services/src/imageService";
@@ -146,10 +146,6 @@ export default function CreateEvent() {
     return {
       startDate: convertDateAndTimeStringToTimestamp(formData.date, formData.startTime),
       endDate: convertDateAndTimeStringToTimestamp(formData.date, formData.endTime),
-      duration: calculateDifference(
-        convertDateAndTimeStringToTimestamp(formData.date, formData.startTime),
-        convertDateAndTimeStringToTimestamp(formData.date, formData.endTime)
-      ),
       location: formData.location,
       capacity: formData.capacity,
       vacancy: formData.capacity,
