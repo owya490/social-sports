@@ -4,7 +4,7 @@ import { useState } from "react";
 import { EventId } from "@/interfaces/EventTypes";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
-import { CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, MapPinIcon, PlayCircleIcon } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
