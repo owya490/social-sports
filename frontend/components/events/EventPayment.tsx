@@ -2,16 +2,23 @@
 import { useState } from "react";
 
 import { EventId } from "@/interfaces/EventTypes";
-import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
-import { CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, MapPinIcon, PlayCircleIcon } from "@heroicons/react/24/outline";
+import {
+  CalendarDaysIcon,
+  ClockIcon,
+  CurrencyDollarIcon,
+  MapPinIcon,
+  PlayCircleIcon,
+} from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface EventPaymentProps {
-  date: Timestamp;
+  startDate: Timestamp;
+  endDate: Timestamp;
   location: string;
   price: number;
   vacancy: number;
@@ -19,10 +26,6 @@ interface EventPaymentProps {
   eventId: EventId;
   isPrivate: boolean;
   setLoading: (value: boolean) => void;
-  duration: {
-    hrs: number;
-    mins: number;
-  };
 }
 
 export default function EventPayment(props: EventPaymentProps) {
@@ -39,6 +42,9 @@ export default function EventPayment(props: EventPaymentProps) {
 
   // const guestCountValue = parseInt(guestCount.split(" ")[0]);
 
+  const { startDate, endDate } = props;
+  const { hours, minutes } = duration(startDate, endDate);
+
   return (
     <div className="md:border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
       <div className="mx-6">
@@ -49,16 +55,16 @@ export default function EventPayment(props: EventPaymentProps) {
               <h2 className=" font-semibold">Date and Time</h2>
               <div className="flex items-center">
                 <CalendarDaysIcon className="w-5 mr-2" />
-                <p className="text-md mr-[5%] font-light">{timestampToDateString(props.date)}</p>
+                <p className="text-md mr-[5%] font-light">{timestampToDateString(props.startDate)}</p>
               </div>
               <div className="flex items-center">
                 <ClockIcon className="w-5 mr-2" />
-                <p className="text-md mr-[5%] font-light">{timestampToTimeOfDay(props.date)}</p>
+                <p className="text-md mr-[5%] font-light">{timestampToTimeOfDay(props.startDate)}</p>
               </div>
               <div className="flex items-center">
                 <PlayCircleIcon className="w-5 mr-2" />
                 <p className="text-md mr-[5%]">
-                  {props.duration.hrs} hrs {props.duration.mins} mins
+                  {hours} hrs {minutes} mins
                 </p>
               </div>
             </div>

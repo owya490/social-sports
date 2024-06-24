@@ -1,6 +1,6 @@
 "use client";
 
-import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   CalendarDaysIcon,
   ClockIcon,
@@ -11,17 +11,17 @@ import {
 import { Timestamp } from "firebase/firestore";
 
 interface EventPaymentProps {
-  date: Timestamp;
   location: string;
   price: number;
   vacancy: number;
-  duration: {
-    hrs: number,
-    mins: number,
-  };
+  startDate: Timestamp;
+  endDate: Timestamp;
 }
 
 export default function MobileEventPayment(props: EventPaymentProps) {
+  const { startDate, endDate } = props;
+  const { hours, minutes } = duration(startDate, endDate);
+
   return (
     <div className="mx-2">
       <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl mb-5 mt-5 text-center"></p>
@@ -31,16 +31,16 @@ export default function MobileEventPayment(props: EventPaymentProps) {
             <h2 className="hidden sm:block font-semibold">Date and Time</h2>
             <div className="flex items-center mb-1 sm:mb-0">
               <CalendarDaysIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">{timestampToDateString(props.date)}</p>
+              <p className="text-md font-light mr-[5%]">{timestampToDateString(props.startDate)}</p>
             </div>
             <div className="flex items-center">
               <ClockIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">{timestampToTimeOfDay(props.date)}</p>
+              <p className="text-md font-light mr-[5%]">{timestampToTimeOfDay(props.startDate)}</p>
             </div>
             <div className="flex items-center">
               <PlayCircleIcon className="w-4 h-4 mr-2" />
               <p className="text-md font-light mr-[5%]">
-                {props.duration.hrs} hrs {props.duration.mins} mins
+                {hours} hrs {minutes} mins
               </p>
             </div>
           </div>

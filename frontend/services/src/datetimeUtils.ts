@@ -116,10 +116,13 @@ export const parseDateTimeStringToTimestamp = (dateTimeString: string): Timestam
   return Timestamp.fromDate(parsedDate);
 };
 
-export function calculateEndDate(startDate: Timestamp, hours: number, minutes: number): Timestamp {
+export function duration(startDate: Timestamp, endDate: Timestamp) {
   const startDateMillis = startDate.toMillis();
-  const durationInMillis = hours * 60 * 60 * 1000 + minutes * 60 * 1000;
-  const endDateMillis = startDateMillis + durationInMillis;
+  const endDateMillis = endDate.toMillis();
+  const durationInMillis = endDateMillis - startDateMillis;
 
-  return Timestamp.fromMillis(endDateMillis);
+  const hours = Math.floor(durationInMillis / (1000 * 60 * 60));
+  const minutes = Math.floor((durationInMillis % (1000 * 60 * 60)) / (1000 * 60));
+
+  return { hours, minutes };
 }
