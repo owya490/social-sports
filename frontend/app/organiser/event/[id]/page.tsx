@@ -16,6 +16,7 @@ import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import React from "react";
 
 interface EventPageProps {
   params: {
@@ -120,6 +121,7 @@ export default function EventPage({ params }: EventPageProps) {
                 eventLocation={eventLocation}
                 eventPrice={eventPrice}
                 eventImage={eventImage}
+                
               />
             )}
             {currSidebarPage === "Manage Attendees" && (
