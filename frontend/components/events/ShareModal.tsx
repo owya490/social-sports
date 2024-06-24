@@ -66,7 +66,7 @@ ${currentURL}`;
 
       <Transition appear show={modalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={toggleModal}>
-          <Transition.Child
+          <Transition
             as={Fragment}
             enter="ease-out duration-300"
             enterFrom="opacity-0"
@@ -76,11 +76,11 @@ ${currentURL}`;
             leaveTo="opacity-0"
           >
             <div className="fixed inset-0 bg-black bg-opacity-50" />
-          </Transition.Child>
+          </Transition>
 
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
-              <Transition.Child
+              <Transition
                 as={Fragment}
                 enter="ease-out duration-300"
                 enterFrom="opacity-0 scale-95"
@@ -89,10 +89,10 @@ ${currentURL}`;
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                <div className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <h3 className="text-lg font-medium leading-6 text-gray-900">
                     Share
-                  </Dialog.Title>
+                  </h3>
                   <div className="mt-2">
                     <ul className="flex list-none p-0 my-3 space-x-8">
                       <li className="cursor-pointer" onClick={handleFacebookShare} title="Share on Facebook">
@@ -128,8 +128,8 @@ ${currentURL}`;
                       Copy
                     </button>
                   </div>
-                </Dialog.Panel>
-              </Transition.Child>
+                </div>
+              </Transition>
             </div>
           </div>
         </Dialog>
