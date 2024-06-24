@@ -5,6 +5,7 @@ import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/crea
 import { Logger } from "@/observability/logger";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
 import { sleep } from "@/utilities/sleepUtil";
+import { USERS_REFRESH_MILLIS, UsersLocalStorageKeys } from "./usersConstants";
 
 const userServiceLogger = new Logger("userServiceLogger");
 
@@ -30,6 +31,24 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
   try {
     // try find in local storage
     // return immediately if we find it in local storage
+    const currentDateString = new Date().toUTCString();
+    const UsersDataJSONString = localStorage.getItem(UsersLocalStorageKeys.UsersData);
+
+    if (
+      localStorage.getItem(UsersLocalStorageKeys.UsersData) !== null &&
+      localStorage.getItem(UsersLocalStorageKeys.LastFetchedUserData) !== null
+    ) {
+      const lastFetchedDate = new Date(localStorage.getItem(UsersLocalStorageKeys.LastFetchedUserData)!);
+      if (new Date().valueOf() - lastFetchedDate.valueOf() < USERS_REFRESH_MILLIS) {
+        const UsersDataString = localStorage.getItem(UsersLocalStorageKeys.UsersData);
+        if (UsersDataString !== null) {
+          const UsersDataObject = JSON.parse(UsersDataString);
+          if (userId in UsersDataObject) {
+            return UsersDataObject[userId];
+          }
+        }
+      }
+    }
 
     const userDoc = await getDoc(doc(db, "Users", "Active", "Public", userId));
     if (!userDoc.exists()) {
@@ -40,6 +59,12 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
 
     // set local storage with data
     // then return the value in local storage
+    if (localStorage.getItem(UsersLocalStorageKeys.UsersData) === null) {
+      const UsersDataString = JSON.stringify({});
+      localStorage.setItem(UsersLocalStorageKeys.UsersData, UsersDataString);
+    }
+
+    const UsersDataString = localStorage.getItem(UsersLocalStorageKeys.UsersData);
 
     return userData;
   } catch (error) {
