@@ -8,7 +8,6 @@ import EventDrilldownSharePage from "@/components/organiser/EventDrilldownShareP
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
-import ShareFunction from "@/components/events/ShareModal";
 import { EventAttendees, EventAttendeesMetadata, EventData, EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
@@ -110,7 +109,6 @@ export default function EventPage({ params }: EventPageProps) {
             />
           </div>
           <div className="mx-auto w-full mx-20">
-            <ShareFunction/>
             {currSidebarPage === "Details" && (
               <EventDrilldownDetailsPage
                 loading={loading}
@@ -120,7 +118,6 @@ export default function EventPage({ params }: EventPageProps) {
                 eventLocation={eventLocation}
                 eventPrice={eventPrice}
                 eventImage={eventImage}
-                
               />
             )}
             {currSidebarPage === "Manage Attendees" && (

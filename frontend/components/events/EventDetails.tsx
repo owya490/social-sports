@@ -45,7 +45,7 @@ export function EventDetails(props: EventDetailsProps) {
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
-              stripe={true}
+              isPaymentsActive={eventData.paymentsActive}
               eventId={eventData.eventId}
               isPrivate={eventData.isPrivate}
               setLoading={setLoading}

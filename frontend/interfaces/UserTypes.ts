@@ -19,6 +19,7 @@ interface AbstractUserData {
   profilePicture: string;
   stripeAccount?: string;
   stripeAccountActive?: boolean;
+  organiserEvents?: [string];
 }
 
 export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {

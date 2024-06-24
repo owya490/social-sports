@@ -1,8 +1,6 @@
 import Image from "next/image";
 import React from "react";
 
-import BannerImage from "../../public/images/vball1.webp";
-import EditIcon from "../../public/images/edit-icon.svg";
 import {
   CalendarDaysIcon,
   ClockIcon,
@@ -13,7 +11,6 @@ import {
 import Skeleton from "react-loading-skeleton";
 import { Timestamp } from "firebase/firestore";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
-import EventDescription from "../events/EventDescription";
 import EventDrilldownDescription from "./EventDrilldownDescription";
 
 interface EventDrilldownDetailsPageProps {

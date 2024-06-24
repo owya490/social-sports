@@ -129,6 +129,18 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
       "eventId": event_id,
       "isPrivate": is_private
     },
+    custom_fields=[
+      {
+        "key": "attendeeFullName",
+        "label": {"type": "custom", "custom": "Full name for booking"},
+        "type": "text",
+      },
+      {
+        "key": "attendeePhone",
+        "label": {"type": "custom", "custom": "Phone number"},
+        "type": "text",
+      },
+    ],
     # payment_intent_data={"application_fee_amount": 123},
     success_url=success_url, # TODO need to update to a static success page
     cancel_url=cancel_url,

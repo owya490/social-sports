@@ -1,9 +1,17 @@
 import { EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { CollectionReference, DocumentData, Timestamp, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  CollectionReference,
+  DocumentData,
+  QueryDocumentSnapshot,
+  Timestamp,
+  doc,
+  getDoc,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
-import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
+import { CollectionPaths, EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 
 // const router = useRouter();
@@ -30,6 +38,26 @@ export async function findEventDoc(eventId: string): Promise<any> {
   } catch (error) {
     console.error(`Error finding event document for eventId: ${eventId}`, error);
     eventServiceLogger.error(`Error finding event document for eventId: ${eventId}, ${error}`);
+    throw error;
+  }
+}
+
+export async function findEventMetadataDocByEventId(
+  eventId: string
+): Promise<QueryDocumentSnapshot<DocumentData, DocumentData>> {
+  try {
+    const eventMetadataDocRef = doc(db, CollectionPaths.EventsMetadata, eventId);
+    const eventMetadataDoc = await getDoc(eventMetadataDocRef);
+
+    if (eventMetadataDoc.exists()) {
+      eventServiceLogger.info(`Found EventMetadata document reference for eventId: ${eventId}`);
+      return eventMetadataDoc;
+    }
+
+    eventServiceLogger.error(`EventMetadata document not found in any subcollection for eventId: ${eventId}`);
+    throw new Error("No EventMetadata found in EventMetadata collection");
+  } catch (error) {
+    eventServiceLogger.error(`Error finding EventMetadata document for eventId: ${eventId}, ${error}`);
     throw error;
   }
 }
