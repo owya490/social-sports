@@ -310,7 +310,7 @@ const EventDrilldownDetailsPage = ({
       </div>
       <div className="border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 p-2 pb-4 relative">
         <div className="text-organiser-title-gray-text font-bold">Event Details</div>
-        <div className="text-sm flex flex-col mt-4">
+        <div className={`text-sm flex flex-col mt-4 ${editDate ? "space-y-2" : ""}`}>
           <div className="px-2 flex flex-row space-x-2">
             <CalendarDaysIcon className="w-4" />
             <div>
@@ -345,7 +345,7 @@ const EventDrilldownDetailsPage = ({
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            {editEndTime && <ClockIcon className="w-4" />}
+            {editEndTime && <ClockIcon className="w-4 mt-2" />}
             <div>
               {loading ? (
                 <div></div>
@@ -373,7 +373,7 @@ const EventDrilldownDetailsPage = ({
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            <ClockIcon className="w-4" />
+            <ClockIcon className="w-4 mt-2" />
             <div>
               {loading ? (
                 <Skeleton
@@ -399,7 +399,7 @@ const EventDrilldownDetailsPage = ({
                       />
                     </div>
                   ) : (
-                    <div>
+                    <div className="mt-2">
                       {newEditTime} - {newEditEndTime}
                     </div>
                   )}
@@ -408,7 +408,7 @@ const EventDrilldownDetailsPage = ({
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            <MapPinIcon className="w-4" />
+            <MapPinIcon className="w-4 mt-2" />
             <div>
               {loading ? (
                 <Skeleton
@@ -433,14 +433,14 @@ const EventDrilldownDetailsPage = ({
                       />
                     </div>
                   ) : (
-                    <div>{newEditLocation}</div>
+                    <div className="mt-2">{newEditLocation}</div>
                   )}
                 </>
               )}
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            <CurrencyDollarIcon className="w-4" />
+            <CurrencyDollarIcon className="w-4 mt-2" />
             <div>
               {loading ? (
                 <Skeleton
@@ -483,7 +483,7 @@ const EventDrilldownDetailsPage = ({
                       />
                     </div>
                   ) : (
-                    <div>
+                    <div className="mt-2">
                       ${newEditPrice}
                       <PencilSquareIcon
                         className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
