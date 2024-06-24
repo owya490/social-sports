@@ -1,5 +1,6 @@
 "use client";
 
+import ShareFunction from "@/components/events/ShareModal";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
 import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
@@ -107,6 +108,7 @@ export default function EventPage({ params }: EventPageProps) {
           eventPrice={eventPrice}
         />
         <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
+          
           <div id="side-panel" className="z-20">
             <EventDrilldownSidePanel
               loading={loading}
@@ -117,6 +119,7 @@ export default function EventPage({ params }: EventPageProps) {
             />
           </div>
           <div id="event-drilldown-details-page" className="w-full">
+            <ShareFunction/>
             {currSidebarPage === "Details" && (
               <EventDrilldownDetailsPage
                 loading={loading}
