@@ -4,18 +4,8 @@ import { useState } from "react";
 import { EventId } from "@/interfaces/EventTypes";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
-<<<<<<< HEAD
-import {
-  CalendarDaysIcon,
-  ClockIcon,
-  CurrencyDollarIcon,
-  MapPinIcon,
-  PlayCircleIcon,
-} from "@heroicons/react/24/outline";
-=======
 import { CalendarDaysIcon, ClockIcon, CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
->>>>>>> 19ed041d258eff4d99363d1a16e47345caa57174
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
