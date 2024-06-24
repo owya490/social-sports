@@ -2,6 +2,10 @@
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import eye from "@/public/images/Eye.png";
+import location from "@/public/images/location.png";
+import Upload from "@/public/images/upload.png";
+import x from "@/public/images/x.png";
 import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
@@ -9,18 +13,6 @@ import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
-<<<<<<< HEAD:frontend/app/profile/page.tsx
-import eye from "./../../public/images/Eye.png";
-import location from "./../../public/images/location.png";
-import Upload from "./../../public/images/upload.png";
-import x from "./../../public/images/x.png";
-=======
-import eye from "@/public/images/Eye.png";
-import location from "@/public/images/location.png";
-import Upload from "@/public/images/upload.png";
-import x from "@/public/images/x.png";
-import { useRouter } from "next/navigation";
->>>>>>> 19ed041d258eff4d99363d1a16e47345caa57174:frontend/app/(footer)/profile/page.tsx
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");

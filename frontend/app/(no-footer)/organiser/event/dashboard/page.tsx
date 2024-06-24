@@ -1,6 +1,4 @@
 "use client";
-<<<<<<< HEAD:frontend/app/organiser/event/dashboard/page.tsx
-import OrganiserEventCard from "@/components/events/OrganiserEventCard";
 import OrganiserFilterDialog, {
   DAY_END_TIME_STRING,
   DAY_START_TIME_STRING,
@@ -14,22 +12,7 @@ import OrganiserFilterDialog, {
   DEFAULT_START_DATE,
   SortByCategory,
 } from "@/components/Filter/OrganiserFilterDialog";
-=======
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
-// import OrganiserFilterDialog, {
-//   DAY_END_TIME_STRING,
-//   DAY_START_TIME_STRING,
-//   DEFAULT_END_DATE,
-//   DEFAULT_EVENT_STATUS,
-//   DEFAULT_EVENT_TYPE,
-//   DEFAULT_MAX_PRICE,
-//   DEFAULT_MIN_PRICE,
-//   DEFAULT_SEARCH,
-//   DEFAULT_SORT_BY_CATEGORY,
-//   DEFAULT_START_DATE,
-//   SortByCategory,
-// } from "@/components/Filter/OrganiserFilterDialog";
->>>>>>> 19ed041d258eff4d99363d1a16e47345caa57174:frontend/app/(no-footer)/organiser/event/dashboard/page.tsx
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
