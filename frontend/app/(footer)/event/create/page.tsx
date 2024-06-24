@@ -87,8 +87,11 @@ export default function CreateEvent() {
 
     if (!isLastStep) {
       next();
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+
     try {
       createEventWorkflow(data, user).then((eventId) => {
         router.push(`/event/${eventId}`);
@@ -96,6 +99,7 @@ export default function CreateEvent() {
     } catch (e) {
       console.log(e);
     }
+    window.scrollTo({ top: 0, behavior: "smooth" }); // You can use 'auto' instead of 'smooth' for instant scrolling
   }
 
   async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
@@ -181,26 +185,26 @@ export default function CreateEvent() {
   return loading ? (
     <Loading />
   ) : (
-    <div className="w-screen flex justify-center">
+    <div className="flex justify-center">
       {!showForm ? (
         <div className="h-screen w-full flex justify-center items-center">Please Login/ Register to Access</div>
       ) : (
         <div className="screen-width-primary my-32">
           <form onSubmit={submit}>
-            <div className="px-12">
+            <div className="px-6 lg:px-12">
               <CreateEventStepper activeStep={currentStep} />
             </div>
             <div className="absolute top-2 right-2">{/* {currentStep + 1} / {steps.length} */}</div>
             {step}
 
-            <div className="flex mt-8">
+            <div className="flex mt-8 w-11/12 lg:w-2/3 xl:w-full m-auto">
               {!isFirstStep && (
                 <button type="button" className="border border-black py-1.5 px-7 rounded-lg mr-2" onClick={back}>
                   Back
                 </button>
               )}
               {!isLastStep && (
-                <button type="submit" className="border border-black py-1.5 px-7 rounded-lg ml-auto">
+                <button type="submit" className="border border-black py-1.5 px-7 rounded-lg ml-auto lg:mr-2">
                   Next
                 </button>
               )}

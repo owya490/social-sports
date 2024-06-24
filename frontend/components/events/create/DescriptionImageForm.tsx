@@ -1,6 +1,7 @@
-import Image from "next/image";
-import DescriptionRichTextEditor from "./DescriptionRichTextEditor";
-import { FormWrapper } from "./forms/FormWrapper";
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import DescriptionRichTextEditor from './DescriptionRichTextEditor';
+import { FormWrapper } from './forms/FormWrapper';
 
 type BasicData = {
   description: string;
@@ -19,11 +20,37 @@ export function DescriptionImageForm({
   setImagePreviewUrl,
   updateField,
 }: DescriptionImageFormProps) {
+  const [previousImages, setPreviousImages] = useState<string[]>([]);
+
+  // useEffect(() => {
+  //   // Fetch previous images from Firebase and set them in state
+  //   // fetchPreviousImagesFromFirebase().then((images) => {
+  //     setPreviousImages(images);
+  // //   });
+  // }, []);
+
   const updateDescription = (e: string) => {
     updateField({
       description: e,
     });
   };
+
+  // const fetchPreviousImagesFromFirebase = async () => {
+  //   // Fetch previous images from Firebase and return their URLs
+  //   // Example: You can use Firebase Firestore or Firebase Realtime Database to store image URLs
+  //   const images = await fetch('YOUR_FIREBASE_IMAGE_URLS_ENDPOINT');
+  //   const data = await images.json();
+  //   return data.urls;
+  // };
+
+  // const handleImageSelection = (imageUrl: string) => {
+  //   // Set the selected image URL as the preview URL
+  //   setImagePreviewUrl(imageUrl);
+  //   // Optionally, you can set the image field in your form data
+  //   updateField({
+  //     image: undefined, // Clear the image field since the user selected a previous image
+  //   });
+  // };
 
   return (
     <FormWrapper>
@@ -56,15 +83,32 @@ export function DescriptionImageForm({
                 className="h-72 w-fit p-4"
               />
             )}
+            <div className="flex flex-wrap mt-4">
+              {/* {previousImages.map((imageUrl, index) => (
+                <div
+                  key={index}
+                  className="cursor-pointer mr-4 mb-4"
+                  onClick={() => handleImageSelection(imageUrl)}
+                >
+                  <Image
+                    src={imageUrl}
+                    width={100}
+                    height={100}
+                    alt={`Previous Image ${index}`}
+                    className="rounded-md"
+                  />
+                </div>
+              ))} */}
+            </div>
             <input
-              className="rounded-md ml-4"
+              className="rounded-md mt-4 ml-4"
               accept="image/*"
               type="file"
               onChange={(e) => {
                 if (e.target.files !== null) {
-                  setImagePreviewUrl(URL.createObjectURL(e.target.files![0]));
+                  setImagePreviewUrl(URL.createObjectURL(e.target.files[0]));
                   updateField({
-                    image: e.target.files![0],
+                    image: e.target.files[0],
                   });
                 }
               }}

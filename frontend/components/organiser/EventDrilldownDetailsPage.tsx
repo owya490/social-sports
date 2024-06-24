@@ -67,8 +67,8 @@ const EventDrilldownDetailsPage = ({
     setTitle(newEditTitle);
     const nameTokens = newEditTitle.toLowerCase().split(" ");
     try {
-      await updateEventById(eventId, { name: newEditTitle, nameTokens });
       setEditTitle(false);
+      await updateEventById(eventId, { name: newEditTitle, nameTokens });
     } catch (error) {
       console.error("Failed to update event name:", error);
     }
@@ -123,14 +123,14 @@ const EventDrilldownDetailsPage = ({
       const updatedStartTimestamp = parseDateTimeStringToTimestamp(dateStartTimeString);
       const dateEndTimeString = `${newEditEndDate} ${newEditEndTime}`;
       const updatedEndTimestamp = parseDateTimeStringToTimestamp(dateEndTimeString);
+      setEditDate(false);
+      setEditTime(false);
+      setEditEndTime(false);
       await updateEventById(eventId, {
         startDate: updatedStartTimestamp,
         registrationDeadline: updatedStartTimestamp,
         endDate: updatedEndTimestamp,
       });
-      setEditDate(false);
-      setEditTime(false);
-      setEditEndTime(false);
     } catch (error) {
       console.error("Failed to update event date and time:", error);
     }
@@ -164,6 +164,7 @@ const EventDrilldownDetailsPage = ({
 
   const handleLocationUpdate = async () => {
     setLocation(newEditLocation);
+    setEditLocation(false);
     const locationTokens = newEditLocation.toLowerCase().split(" ");
     const latLng = await getLocationCoordinates(newEditLocation);
     try {
@@ -175,7 +176,6 @@ const EventDrilldownDetailsPage = ({
           lng: latLng.lng,
         },
       });
-      setEditLocation(false);
     } catch (error) {
       console.error("Failed to update event location:", error);
     }
@@ -199,9 +199,9 @@ const EventDrilldownDetailsPage = ({
 
   const handlePriceUpdate = async () => {
     setPrice(newEditPrice);
+    setEditPrice(false);
     try {
       await updateEventById(eventId, { price: newEditPrice });
-      setEditPrice(false);
     } catch (error) {
       console.error("Failed to update event price:", error);
     }
@@ -225,9 +225,9 @@ const EventDrilldownDetailsPage = ({
 
   const handleDescriptionUpdate = async () => {
     setDescription(newEditDescription);
+    setEditDescription(false);
     try {
       await updateEventById(eventId, { description: newEditDescription });
-      setEditDescription(false);
     } catch (error) {
       console.error("Failed to update event description:", error);
     }

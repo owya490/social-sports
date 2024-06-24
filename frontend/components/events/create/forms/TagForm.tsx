@@ -22,14 +22,12 @@ export function TagForm({}: TagFormProps) {
   return (
     <FormWrapper>
       <div className="my-24">
-        <label className="text-black text-lg font-semibold">
-          Search and select relevant tags?
-        </label>
-        <div className="relative flex w-full max-w-[32rem] my-8">
+        <label className="text-black text-lg font-semibold">Search and select relevant tags?</label>
+        <div className="relative flex w-full my-8">
           <Input
             label="Tag Search"
             value={""}
-            className="pr-20"
+            className="pr-20 focus:ring-0"
             containerProps={{
               className: "min-w-0",
             }}

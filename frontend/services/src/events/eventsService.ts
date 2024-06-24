@@ -19,7 +19,8 @@ import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "../firebase";
-import { getPublicUserById } from "../users/usersService";
+import { UserNotFoundError } from "../users/userErrors";
+import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -60,6 +61,14 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     batch.set(docRef, eventDataWithTokens);
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
+    const user = await getPrivateUserById(data.organiserId);
+    if (user.organiserEvents == undefined) {
+      user.organiserEvents = [docRef.id];
+    } else {
+      user.organiserEvents.push(docRef.id);
+    }
+    console.log("create event user", user);
+    await updateUser(data.organiserId, user);
     eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
@@ -169,12 +178,38 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   }
 }
 
+export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
+  eventServiceLogger.info(`getOrganiserEvents`);
+  try {
+    const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
+
+    if (!privateDoc.exists()) {
+      throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
+    }
+    const privateData = privateDoc.data();
+    const organiserEvents = privateData?.organiserEvents || [];
+    const eventDataList: EventData[] = [];
+    for (let i = 0; i < organiserEvents.length; i++) {
+      const event = organiserEvents[i];
+      console.log(event); // Or perform any other operation with 'event'
+      const eventData: EventData = await getEventById(event);
+      eventData.eventId = event;
+      eventDataList.push(eventData);
+    }
+    // Return the organiserEvents array
+    console.log(eventDataList);
+    return eventDataList;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
-  // if (!rateLimitCreateAndUpdateEvents()) {
-  //   console.log("Rate Limited!!!");
-  //   throw "Rate Limited";
-  // }
-  eventServiceLogger.info(`updateEventById ${eventId}`);
+  if (!rateLimitCreateAndUpdateEvents()) {
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
+  }
+  eventServiceLogger.info(`updateEventByName ${eventId}`);
   try {
     const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
 
