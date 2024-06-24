@@ -8,9 +8,10 @@ const page = () => {
     <div className="ml-14 mt-16">
       <div className="max-w-5xl lg:mx-auto">
         <OrganiserNavbar currPage="Settings" />
-        <div className="p-10 space-y-4">
+        <div className="p-12 space-y-8">
           <OrganiserSettingsStripeCard />
-          <OrganiserSettingsAboutCard />
+          {/* <OrganiserSettingsAboutCard /> */}
+          <h1 className="pt-20 text-3xl font-bold text-center">More features coming soon!</h1>
         </div>
       </div>
     </div>
