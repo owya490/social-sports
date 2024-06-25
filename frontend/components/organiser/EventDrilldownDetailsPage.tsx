@@ -68,7 +68,7 @@ const EventDrilldownDetailsPage = ({
     const nameTokens = newEditTitle.toLowerCase().split(" ");
     try {
       setEditTitle(false);
-      await updateEventById(eventId, { name: newEditTitle, nameTokens });
+      await updateEventById(eventId, { name: newEditTitle, nameTokens }, newEditTitle);
     } catch (error) {
       console.error("Failed to update event name:", error);
     }
@@ -130,7 +130,7 @@ const EventDrilldownDetailsPage = ({
         startDate: updatedStartTimestamp,
         registrationDeadline: updatedStartTimestamp,
         endDate: updatedEndTimestamp,
-      });
+      }, eventName );
     } catch (error) {
       console.error("Failed to update event date and time:", error);
     }
@@ -175,7 +175,7 @@ const EventDrilldownDetailsPage = ({
           lat: latLng.lat,
           lng: latLng.lng,
         },
-      });
+      }, eventName);
     } catch (error) {
       console.error("Failed to update event location:", error);
     }
@@ -201,7 +201,7 @@ const EventDrilldownDetailsPage = ({
     setPrice(newEditPrice);
     setEditPrice(false);
     try {
-      await updateEventById(eventId, { price: newEditPrice });
+      await updateEventById(eventId, { price: newEditPrice }, eventName);
     } catch (error) {
       console.error("Failed to update event price:", error);
     }
@@ -227,7 +227,7 @@ const EventDrilldownDetailsPage = ({
     setDescription(newEditDescription);
     setEditDescription(false);
     try {
-      await updateEventById(eventId, { description: newEditDescription });
+      await updateEventById(eventId, { description: newEditDescription }, eventName);
     } catch (error) {
       console.error("Failed to update event description:", error);
     }
