@@ -1,8 +1,8 @@
 import React, { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
-import { Dialog, Transition } from "@headlessui/react";
+import { Dialog, Transition, TransitionChild } from "@headlessui/react";
 import share_arrow from "../../public/images/share_arrow.png";
-import email_icon from "../..public/images/email_icon.png";
+import email_icons from "../../public/images/email_icons.png";
 
 const ShareFunction = () => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -65,8 +65,8 @@ ${currentURL}`;
       </div>
 
       <Transition appear show={modalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={toggleModal}>
-          <Transition
+        <Dialog as="div" className="relative z-50" onClose={toggleModal}>
+          <TransitionChild
             as={Fragment}
             enter="ease-out duration-300"
             enterFrom="opacity-0"
@@ -76,11 +76,11 @@ ${currentURL}`;
             leaveTo="opacity-0"
           >
             <div className="fixed inset-0 bg-black bg-opacity-50" />
-          </Transition>
+          </TransitionChild>
 
-          <div className="fixed inset-0 overflow-y-auto">
+          <div className="fixed inset-0 overflow-y-auto z-50">
             <div className="flex min-h-full items-center justify-center p-4">
-              <Transition
+              <TransitionChild
                 as={Fragment}
                 enter="ease-out duration-300"
                 enterFrom="opacity-0 scale-95"
@@ -89,10 +89,20 @@ ${currentURL}`;
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <div className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <h3 className="text-lg font-medium leading-6 text-gray-900">
-                    Share
-                  </h3>
+               <div className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all relative">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium leading-6 text-gray-900">
+                      Share
+                    </h3>
+                    <button
+                      className="text-gray-500 hover:text-gray-700"
+                      onClick={toggleModal}
+                    >
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                   <div className="mt-2">
                     <ul className="flex list-none p-0 my-3 space-x-8">
                       <li className="cursor-pointer" onClick={handleFacebookShare} title="Share on Facebook">
@@ -114,11 +124,7 @@ ${currentURL}`;
                         </svg>
                       </li>
                       <li className="cursor-pointer" onClick={handleEmailShare} title="Share via Email">
-                        <img
-                          src={`/images/email_icon.png`}
-                          alt="Share via Email"
-                          className="h-10 w-10"
-                        />
+                        <Image src={email_icons} alt="Share via Email" className="h-11 w-11" />
                       </li>
                     </ul>
                     <p id="url" onClick={highlightURL} className="mb-4 cursor-pointer">
@@ -129,7 +135,7 @@ ${currentURL}`;
                     </button>
                   </div>
                 </div>
-              </Transition>
+              </TransitionChild>
             </div>
           </div>
         </Dialog>
