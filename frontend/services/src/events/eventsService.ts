@@ -204,10 +204,10 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
 
 export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
   if (!rateLimitCreateAndUpdateEvents()) {
-    eventServiceLogger.info(`Rate Limited!, ${eventName}`);
+    eventServiceLogger.info(`Rate Limited!, ${eventId}`);
     throw "Rate Limited";
   }
-  eventServiceLogger.info(`updateEventByName ${eventId}`);
+  eventServiceLogger.info(`updateEventByName ${eventId}`); 
   try {
     const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
 
