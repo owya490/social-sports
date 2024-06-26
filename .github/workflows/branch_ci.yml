@@ -1,0 +1,32 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  set_dev_env_variables: |
+    cd frontend
+    touch .env
+    echo FIREBASE_DEV_API_KEY=${{ secrets.FIREBASE_DEV_API_KEY }} >> .env
+    echo FIREBASE_DEV_AUTH_DOMAIN=${{ secrets.FIREBASE_DEV_AUTH_DOMAIN }} >> .env
+    echo FIREBASE_DEV_DATABASE_URL=${{ secrets.FIREBASE_DEV_DATABASE_URL }} >> .env
+    echo FIREBASE_DEV_PROJECT_ID=${{ secrets.FIREBASE_DEV_PROJECT_ID }} >> .env
+    echo FIREBASE_DEV_STORAGE_BUCKET=${{ secrets.FIREBASE_DEV_STORAGE_BUCKET }} >> .env
+    echo FIREBASE_DEV_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_DEV_MESSAGING_SENDER_ID }} >> .env
+    echo FIREBASE_DEV_APP_ID=${{ secrets.FIREBASE_DEV_APP_ID }} >> .env
+    echo FIREBASE_DEV_MEASUREMENT_ID=${{ secrets.FIREBASE_DEV_MEASUREMENT_ID }} >> .env
+
+jobs:
+  frontend_testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: create env file
+        run: ${{ env.set_dev_env_variables }}
+      - name: type check
+        run: cd frontend && npm install
+      - name: linting
+        run: cd frontend && npm run lint
+      - name: test building
+        run: cd frontend && npm run build
+      - name: react tests
+        run: cd frontend && npm test
