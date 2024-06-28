@@ -5,7 +5,8 @@ import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/crea
 import { Logger } from "@/observability/logger";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
 import { sleep } from "@/utilities/sleepUtil";
-import { USERS_REFRESH_MILLIS, UsersLocalStorageKeys } from "./usersConstants";
+import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
+import { eventServiceLogger } from "../events/eventsService";
 
 const userServiceLogger = new Logger("userServiceLogger");
 
@@ -29,25 +30,11 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
   try {
-    // try find in local storage
-    // return immediately if we find it in local storage
-    const currentDateString = new Date().toUTCString();
-    const UsersDataJSONString = localStorage.getItem(UsersLocalStorageKeys.UsersData);
+    // try find in localstorage
+    const { success, userDataLocalStorage } = tryGetActivePublicUserDataFromLocalStorage(userId);
 
-    if (
-      localStorage.getItem(UsersLocalStorageKeys.UsersData) !== null &&
-      localStorage.getItem(UsersLocalStorageKeys.LastFetchedUserData) !== null
-    ) {
-      const lastFetchedDate = new Date(localStorage.getItem(UsersLocalStorageKeys.LastFetchedUserData)!);
-      if (new Date().valueOf() - lastFetchedDate.valueOf() < USERS_REFRESH_MILLIS) {
-        const UsersDataString = localStorage.getItem(UsersLocalStorageKeys.UsersData);
-        if (UsersDataString !== null) {
-          const UsersDataObject = JSON.parse(UsersDataString);
-          if (userId in UsersDataObject) {
-            return UsersDataObject[userId];
-          }
-        }
-      }
+    if (success) {
+      return userDataLocalStorage;
     }
 
     const userDoc = await getDoc(doc(db, "Users", "Active", "Public", userId));
@@ -58,13 +45,7 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
     userData.userId = userId;
 
     // set local storage with data
-    // then return the value in local storage
-    if (localStorage.getItem(UsersLocalStorageKeys.UsersData) === null) {
-      const UsersDataString = JSON.stringify({});
-      localStorage.setItem(UsersLocalStorageKeys.UsersData, UsersDataString);
-    }
-
-    const UsersDataString = localStorage.getItem(UsersLocalStorageKeys.UsersData);
+    setUsersDataIntoLocalStorage(userId, userData);
 
     return userData;
   } catch (error) {

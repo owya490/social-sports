@@ -76,3 +76,7 @@ export const EmptyUserData: UserData = {
   surname: "",
   dob: "",
 };
+
+export interface IUsersDataLocalStorage {
+  [key: string]: UserData;
+}
