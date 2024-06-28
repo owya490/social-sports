@@ -26,13 +26,17 @@ const nextConfig = {
   },
   // https://github.com/open-telemetry/opentelemetry-js/issues/4173#issuecomment-1822938936 to prevent console spamming for
   // Open Telemetry Critical Dependency: the request of a dependency is an expression.
-  webpack: (
-    config,
-    { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }
-  ) => {
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }) => {
     if (isServer) {
       config.ignoreWarnings = [{ module: /opentelemetry/ }];
     }
+
+    // Add SVG handling
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
+
     return config;
   },
   experimental: { missingSuspenseWithCSRBailout: false },

@@ -1,6 +1,6 @@
 "use client";
 
-import ShareFunction from "@/components/events/ShareModal";
+import ShareModal from "@/components/events/ShareModal";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
 import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
@@ -121,7 +121,7 @@ export default function EventPage({ params }: EventPageProps) {
             />
           </div>
           <div id="event-drilldown-details-page" className="w-full">
-            <ShareFunction/>
+            <ShareModal/>
             {currSidebarPage === "Details" && (
               <EventDrilldownDetailsPage
                 loading={loading}
