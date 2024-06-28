@@ -63,7 +63,7 @@ export default function EventPayment(props: EventPaymentProps) {
               </div>
               <div className="flex items-center">
                 <PlayCircleIcon className="w-5 mr-2" />
-                <p className="text-md mr-[5%]">
+                <p className="text-md mr-[5%] font-light">
                   {hours} hrs {minutes} mins
                 </p>
               </div>

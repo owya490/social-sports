@@ -115,7 +115,11 @@ export default function CreateEvent() {
     try {
       newEventId = await createEvent(newEventData);
     } catch (error) {
-      router.push("/error");
+      if (error === "Rate Limited") {
+        router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
+      } else {
+        router.push("/error");
+      }
     }
     return newEventId;
   }
