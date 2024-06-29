@@ -1,13 +1,12 @@
 import { PrivateUserData, PublicUserData, UserData } from "@/interfaces/UserTypes";
+import { DEFAULT_USER_PROFILE_PICTURE } from "../usersConstants";
 
 // Extracts Public user data
 export function extractPublicUserData(data: Partial<UserData>): Partial<PublicUserData> {
   const { firstName, surname, gender, dob, age, profilePicture } = data;
   const publicUserData: PublicUserData = {
     firstName: firstName ?? "",
-    profilePicture:
-      profilePicture ??
-      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+    profilePicture: profilePicture ?? DEFAULT_USER_PROFILE_PICTURE,
   };
 
   if (surname !== undefined && surname !== null) {

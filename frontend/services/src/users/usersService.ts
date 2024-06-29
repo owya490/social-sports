@@ -6,9 +6,9 @@ import { Logger } from "@/observability/logger";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
 import { sleep } from "@/utilities/sleepUtil";
 import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
-import { eventServiceLogger } from "../events/eventsService";
+import { DEFAULT_USER_PROFILE_PICTURE } from "./usersConstants";
 
-const userServiceLogger = new Logger("userServiceLogger");
+export const userServiceLogger = new Logger("userServiceLogger");
 
 export async function createUser(data: NewUserData, userId: string): Promise<void> {
   try {
@@ -32,7 +32,6 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
   try {
     // try find in localstorage
     const { success, userDataLocalStorage } = tryGetActivePublicUserDataFromLocalStorage(userId);
-
     if (success) {
       return userDataLocalStorage;
     }
@@ -43,6 +42,9 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
     }
     const userData = userDoc.data() as UserData;
     userData.userId = userId;
+    if (!userData.profilePicture) {
+      userData.profilePicture = DEFAULT_USER_PROFILE_PICTURE;
+    }
 
     // set local storage with data
     setUsersDataIntoLocalStorage(userId, userData);
