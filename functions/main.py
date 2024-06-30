@@ -1,6 +1,7 @@
 from lib.auth import *
 from lib.constants import *
 from lib.move_inactive_events import *
+<<<<<<< HEAD
 
 # Welcome to Cloud Functions for Firebase for Python!
 # To get started, simply uncomment the below code or create your own.
@@ -205,3 +206,12 @@ def send_email_verification(req: https_fn.Request) -> https_fn.Response:
     except Exception as e:
         print(f"Error sending verification email: {e}")
         return {"error": "Failed to send verification email."}, 500
+=======
+from lib.stripe import *
+from lib.stripe.checkout import *
+from lib.stripe.create_account import *
+from lib.stripe.webhooks import *
+
+# from lib.stripe.create_account import *
+# from lib.stripe.webhooks import *
+>>>>>>> cb9c93364756508bbdd3bce5b6c7f994a04fa90c

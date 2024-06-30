@@ -1,21 +1,26 @@
-import { EmptyEventData, EventData, EventDataWithoutOrganiser, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EventData, EventDataWithoutOrganiser, EventId, EventMetadata, NewEventData } from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
-  addDoc,
+  WriteBatch,
   collection,
   deleteDoc,
+  doc,
+  getDoc,
   getDocs,
   increment,
   query,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
 
+import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "../firebase";
-import { getPublicUserById } from "../users/usersService";
+import { UserNotFoundError } from "../users/userErrors";
+import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -24,13 +29,17 @@ import {
   processEventData,
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
-import { rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
+import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
 import {
   findEventDoc,
+  findEventMetadataDocByEventId,
   getAllEventsFromCollectionRef,
   tryGetAllActisvePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
+<<<<<<< HEAD
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+=======
+>>>>>>> cb9c93364756508bbdd3bce5b6c7f994a04fa90c
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -50,7 +59,20 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     };
     let isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
     let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
-    const docRef = await addDoc(collection(db, CollectionPaths.Events, isActive, isPrivate), eventDataWithTokens);
+
+    const batch = writeBatch(db);
+    const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate));
+    batch.set(docRef, eventDataWithTokens);
+    createEventMetadata(batch, docRef.id, data);
+    batch.commit();
+    const user = await getPrivateUserById(data.organiserId);
+    if (user.organiserEvents == undefined) {
+      user.organiserEvents = [docRef.id];
+    } else {
+      user.organiserEvents.push(docRef.id);
+    }
+    console.log("create event user", user);
+    await updateUser(data.organiserId, user);
     eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
@@ -60,8 +82,31 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
   }
 }
 
+export async function createEventMetadata(batch: WriteBatch, eventId: EventId, data: NewEventData) {
+  try {
+    const eventMetadata = extractEventsMetadataFields(data);
+    const docRef = doc(db, CollectionPaths.EventsMetadata, eventId);
+    batch.set(docRef, eventMetadata);
+    eventServiceLogger.info(`createEventMetadata succedded for ${eventId}`);
+  } catch (error) {
+    eventServiceLogger.error(`An error occured in createEventMetadata for ${eventId} error=${error}`);
+    throw error;
+  }
+}
+
+export async function getEventMetadataByEventId(eventId: EventId): Promise<EventMetadata> {
+  eventServiceLogger.info(`getEventMetadataByEventId, ${eventId}`);
+  try {
+    const eventMetadataDoc = await findEventMetadataDocByEventId(eventId);
+    return eventMetadataDoc.data() as EventMetadata;
+  } catch (error) {
+    eventServiceLogger.error(`getEventMetadataByEventId ${error}`);
+    throw error;
+  }
+}
+
 export async function getEventById(eventId: EventId): Promise<EventData> {
-  eventServiceLogger.info(`getEventById`);
+  eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
@@ -69,16 +114,22 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     var organiser: UserData = EmptyUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
+<<<<<<< HEAD
     } catch {
       console.log("error");
+=======
+    } catch (error) {
+      eventServiceLogger.error(`getEventById ${error}`);
+      throw error;
+>>>>>>> cb9c93364756508bbdd3bce5b6c7f994a04fa90c
     }
     const event: EventData = {
       ...eventWithoutOrganiser,
       organiser: organiser,
     };
+    event.eventId = eventId;
     return event;
   } catch (error) {
-    console.log(error);
     eventServiceLogger.error(`getEventById ${error}`);
     throw error;
   }
@@ -136,31 +187,51 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   }
 }
 
-export async function updateEventByName(eventName: string, updatedData: Partial<EventData>) {
+export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
+  eventServiceLogger.info(`getOrganiserEvents`);
+  try {
+    const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
+
+    if (!privateDoc.exists()) {
+      throw new UserNotFoundError(userId);
+    }
+    const privateData = privateDoc.data();
+    const organiserEvents = privateData?.organiserEvents || [];
+    const eventDataList: EventData[] = [];
+    for (const eventId of organiserEvents) {
+      const eventData: EventData = await getEventById(eventId);
+      eventData.eventId = eventId;
+      eventDataList.push(eventData);
+    }
+    // Return the organiserEvents array
+    eventServiceLogger.info(`Fetching private user by ID:, ${userId}, ${eventDataList}`);
+    return eventDataList;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
   if (!rateLimitCreateAndUpdateEvents()) {
-    console.log("Rate Limited!!!");
+    eventServiceLogger.info(`Rate Limited!, ${eventId}`);
     throw "Rate Limited";
   }
-  eventServiceLogger.info(`updateEventByName ${eventName}`);
+  eventServiceLogger.info(`updateEventByName ${eventId}`); 
   try {
-    const eventCollectionRef = collection(db, CollectionPaths.Events);
-    const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
+    const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
 
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.size === 0) {
-      throw new Error(`Event with name '${eventName}' not found.`);
+    // Check if document exists
+    const eventDocSnapshot = await getDoc(eventDocRef);
+    if (!eventDocSnapshot.exists()) {
+      throw new Error(`Event with id '${eventId}' not found.`);
     }
 
-    // Loop through each event with the same name and update them
-    querySnapshot.forEach(async (eventDoc) => {
-      await updateDoc(eventDoc.ref, updatedData);
-    });
+    await updateDoc(eventDocRef, updatedData);
 
-    console.log(`Events with name '${eventName}' updated successfully.`);
-    eventServiceLogger.info(`Events with name '${eventName}' updated successfully.`);
+    console.log(`Event with Id '${eventId}' updated successfully.`);
+    eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
-    eventServiceLogger.error(`updateEventByName ${error}`);
+    eventServiceLogger.error(`updateEventById ${error}`);
     console.error(error);
   }
 }

@@ -1,3 +1,9 @@
 firebase_functions~=0.1.0
 google-cloud-firestore==2.11.1
+<<<<<<< HEAD
 sendgrid==6.11.0 
+=======
+stripe>=5.0.0
+google-cloud-logging>=3.0.0
+posthog>=3.4.0
+>>>>>>> cb9c93364756508bbdd3bce5b6c7f994a04fa90c

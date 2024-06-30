@@ -1,7 +1,12 @@
 // BasicInformation.tsx
 
+import { UserData } from "@/interfaces/UserTypes";
+import { getStripeStandardAccounLink } from "@/services/src/stripe/stripeService";
+import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
@@ -18,10 +23,13 @@ type BasicData = {
   price: number;
   capacity: number;
   isPrivate: boolean;
+  paymentsActive: boolean;
 };
 
 type BasicInformationProps = BasicData & {
+  user: UserData;
   updateField: (fields: Partial<BasicData>) => void;
+  setLoading: (value: boolean) => void;
 };
 
 export function BasicInformation({
@@ -34,8 +42,12 @@ export function BasicInformation({
   price,
   capacity,
   isPrivate,
+  paymentsActive,
+  user,
   updateField,
+  setLoading,
 }: BasicInformationProps) {
+  const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [priceString, setPriceString] = useState("15");
@@ -98,6 +110,10 @@ export function BasicInformation({
     updateField({ price: amount }); // Update the cost field in the parent component
   };
 
+  const handlePaymentsActiveChange = (paymentsActive: string) => {
+    updateField({ paymentsActive: paymentsActive.toLowerCase() === "true" });
+  };
+
   return (
     <FormWrapper>
       <div className="space-y-12">
@@ -113,13 +129,13 @@ export function BasicInformation({
             required
             value={name}
             onChange={(e) => updateField({ name: e.target.value })}
-            className="rounded-md"
+            className="rounded-md focus:ring-0"
             size="lg"
           />
         </div>
         <div>
           <label className="text-black text-lg font-semibold">When does your event start and end?</label>
-          <div className="flex space-x-2 mt-4">
+          <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
             <div className="basis-1/2">
               <CustomDateInput date={date} placeholder="Date" handleChange={handleDateChange} />
             </div>
@@ -141,7 +157,7 @@ export function BasicInformation({
               required
               value={location}
               onChange={(e) => updateField({ location: e.target.value })}
-              className="rounded-md"
+              className="rounded-md focus:ring-0"
               size="lg"
               icon={<MapPinIcon />}
             />
@@ -202,8 +218,8 @@ export function BasicInformation({
               onCustomAmountChange={handleEventCostSliderChange}
             />
           </div>
-          <div className="w-full flex space-x-3">
-            <div className="mt-4 grow">
+          <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3 my-6">
+            <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
               <Input
                 label="Price"
                 crossOrigin={undefined}
@@ -211,15 +227,19 @@ export function BasicInformation({
                 value={priceString}
                 type="number"
                 onChange={(e) => {
-                  setPriceString(e.target.value);
-                  handleCustomAmountChange(parseInt(e.target.value));
+                  var value = parseInt(e.target.value);
+                  if (value < 1 && value !== 0) {
+                    value = 1;
+                  }
+                  setPriceString(`${value}`);
+                  handleCustomAmountChange(value);
                 }}
-                className="rounded-md"
+                className="rounded-md focus:ring-0"
                 size="lg"
                 icon={<CurrencyDollarIcon />}
               />
             </div>
-            <div className="mt-4 grow">
+            <div className="w-full md:w-1/2 mt-4 md:mt-0">
               <Input
                 label="Capacity"
                 crossOrigin={undefined}
@@ -230,12 +250,80 @@ export function BasicInformation({
                   setCapacityString(e.target.value);
                   updateField({ capacity: parseInt(e.target.value) });
                 }}
-                className="rounded-md"
+                className="rounded-md focus:ring-0"
                 size="lg"
               />
             </div>
-          </div>
+                </div>
+
+            <div>
+              <label className="text-black text-lg font-semibold">Is your event Private?</label>
+              <p className="text-sm mb-5 mt-2">
+                Private Events will not be shown on the public dashboard and will be invite only
+              </p>
+              <div className="mt-4">
+                <Select
+                  size="md"
+                  label="Select Visibility"
+                  value={isPrivate.toString()}
+                  onChange={(e) => {
+                    const privacyValue = e || "Public";
+                    handlePrivacyChange(privacyValue);
+                  }}
+                >
+                  <Option value="Public">Public</Option>
+                  <Option value="Private">Private</Option>
+                </Select>
+              </div>
+            </div>
         </div>
+        {user.stripeAccountActive ? (
+          <div>
+            <label className="text-black text-lg font-semibold">Is your event accepting payments?</label>
+            <p className="text-sm mb-5 mt-2">
+              If you are accepting payments, ensure your Stripe account is fully setup. Funds transfer will occur
+              through Stripe.
+            </p>
+            <div className="mt-4 w-1/2">
+              <Select
+                size="md"
+                label="Accepting Payments"
+                value={paymentsActive.toString()}
+                onChange={(e) => {
+                  const paymentsActive = e || "false";
+                  handlePaymentsActiveChange(paymentsActive);
+                }}
+              >
+                <Option value="false">False</Option>
+                <Option value="true">True</Option>
+              </Select>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 p-3 border border-1 border-blue-gray-200 rounded-lg flex-col flex">
+            <h2 className=" text-lg mb-2">Register for Organiser Hub!</h2>
+            <p className="font-light text-sm">Join hundreds of sport societies hosting their events on Sportshub.</p>
+            <p className="font-light text-sm">
+              Leverage the ability to take bookings and payments right through the platform.
+            </p>
+            <button
+              className="ml-auto bg-black px-3 py-1.5 text-white rounded-lg mt-2"
+              type="button"
+              onClick={async () => {
+                setLoading(true);
+                window.scrollTo(0, 0);
+                const link = await getStripeStandardAccounLink(
+                  user.userId,
+                  getUrlWithCurrentHostname("/organiser"),
+                  getRefreshAccountLinkUrl()
+                );
+                router.push(link);
+              }}
+            >
+              Register
+            </button>
+          </div>
+        )}
       </div>
     </FormWrapper>
   );

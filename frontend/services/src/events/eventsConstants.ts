@@ -12,6 +12,7 @@ export enum EventPrivacy {
 
 export enum CollectionPaths {
   Events = "Events",
+  EventsMetadata = "EventsMetadata",
 }
 
 export const EVENT_PATHS = [
