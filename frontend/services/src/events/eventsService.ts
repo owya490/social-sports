@@ -202,7 +202,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
   }
 }
 
-export async function updateEventById(eventId: string, updatedData: Partial<EventData>, eventName: string) {
+export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
   if (!rateLimitCreateAndUpdateEvents()) {
     eventServiceLogger.info(`Rate Limited!, ${eventId}`);
     throw "Rate Limited";
