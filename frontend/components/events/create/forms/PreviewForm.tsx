@@ -1,8 +1,12 @@
+<<<<<<< HEAD
+=======
 import { FormData } from "@/app/(footer)/event/create/page";
+>>>>>>> cb9c93364756508bbdd3bce5b6c7f994a04fa90c
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { Timestamp } from "firebase/firestore";
 import { FormWrapper } from "./FormWrapper";
+import { FormData } from "@/interfaces/FormTypes";
 
 type BasicData = {
   form: FormData;

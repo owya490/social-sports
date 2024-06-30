@@ -30,7 +30,7 @@ export default function ProfilePic() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
+      if (user && auth.currentUser?.emailVerified) {
         setLoggedIn(true);
       } else {
         setLoggedIn(false);

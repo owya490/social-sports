@@ -1,6 +1,8 @@
 /venv
 /__pycache__/
 functions_key.json
+.env
+sendgrid.env
 *.log
 /lib/__pycache__/
 *__pycache__*

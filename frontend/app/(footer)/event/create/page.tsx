@@ -15,6 +15,11 @@ import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+<<<<<<< HEAD:frontend/app/event/create/page.tsx
+import { CreateEventFormData } from "@/interfaces/FormTypes";
+import { CreateEmailNotification } from "@/services/src/emails/eventsEmail";
+import { EmptyCreateEventFormData } from "@/interfaces/FormTypes";
+=======
 
 export type FormData = {
   date: string;
@@ -47,6 +52,7 @@ const INITIAL_DATA: FormData = {
   endTime: "18:00",
   paymentsActive: false,
 };
+>>>>>>> cb9c93364756508bbdd3bce5b6c7f994a04fa90c:frontend/app/(footer)/event/create/page.tsx
 
 export default function CreateEvent() {
   const { user } = useUser();
@@ -55,7 +61,7 @@ export default function CreateEvent() {
 
   const [loading, setLoading] = useState(false);
 
-  const [data, setData] = useState(INITIAL_DATA);
+  const [data, setData] = useState(EmptyCreateEventFormData);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
     <BasicInformation key="basic-form" {...data} updateField={updateFields} user={user} setLoading={setLoading} />,
@@ -76,7 +82,7 @@ export default function CreateEvent() {
     />,
   ]);
 
-  function updateFields(fields: Partial<FormData>) {
+  function updateFields(fields: Partial<CreateEventFormData>) {
     setData((prev) => {
       return { ...prev, ...fields };
     });
@@ -84,6 +90,7 @@ export default function CreateEvent() {
 
   function submit(e: FormEvent) {
     e.preventDefault();
+    // const toEmail = e.toEmail
 
     if (!isLastStep) {
       next();
@@ -102,7 +109,7 @@ export default function CreateEvent() {
     window.scrollTo({ top: 0, behavior: "smooth" }); // You can use 'auto' instead of 'smooth' for instant scrolling
   }
 
-  async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
+  async function createEventWorkflow(formData: CreateEventFormData, user: UserData): Promise<EventId> {
     setLoading(true);
     var imageUrl =
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
@@ -111,17 +118,27 @@ export default function CreateEvent() {
       imageUrl = await uploadUserImage(user.userId, formData.image);
     }
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
+<<<<<<< HEAD:frontend/app/event/create/page.tsx
+    const newEventId = await createEvent(newEventData);
+    try {
+      CreateEmailNotification(formData, user);
+    } catch (error) {
+      console.log(error);
+    }
+
+=======
     let newEventId = "";
     try {
       newEventId = await createEvent(newEventData);
     } catch (error) {
       router.push("/error");
     }
+>>>>>>> cb9c93364756508bbdd3bce5b6c7f994a04fa90c:frontend/app/(footer)/event/create/page.tsx
     return newEventId;
   }
 
   async function convertFormDataToEventData(
-    formData: FormData,
+    formData: CreateEventFormData,
     user: UserData,
     imageUrl: string
   ): Promise<NewEventData> {
