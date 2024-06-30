@@ -15,8 +15,6 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
-
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
@@ -36,10 +34,7 @@ import {
   getAllEventsFromCollectionRef,
   tryGetAllActisvePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
-<<<<<<< HEAD
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
-=======
->>>>>>> cb9c93364756508bbdd3bce5b6c7f994a04fa90c
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -114,14 +109,9 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     var organiser: UserData = EmptyUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
-<<<<<<< HEAD
-    } catch {
-      console.log("error");
-=======
     } catch (error) {
       eventServiceLogger.error(`getEventById ${error}`);
       throw error;
->>>>>>> cb9c93364756508bbdd3bce5b6c7f994a04fa90c
     }
     const event: EventData = {
       ...eventWithoutOrganiser,
@@ -216,7 +206,7 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
     eventServiceLogger.info(`Rate Limited!, ${eventId}`);
     throw "Rate Limited";
   }
-  eventServiceLogger.info(`updateEventByName ${eventId}`); 
+  eventServiceLogger.info(`updateEventByName ${eventId}`);
   try {
     const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
 
