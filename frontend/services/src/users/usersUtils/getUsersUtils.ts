@@ -40,9 +40,7 @@ export function setUsersDataIntoLocalStorage(userId: UserId, userData: UserData)
     const usersDataString = JSON.stringify({});
     localStorage.setItem(UsersLocalStorageKeys.UsersData, usersDataString);
   }
-  userServiceLogger.info("HMMMMMMMM");
   let usersDataObject: IUsersDataLocalStorage = JSON.parse(localStorage.getItem(UsersLocalStorageKeys.UsersData)!);
-  userServiceLogger.info(`TTTTTT ${usersDataObject}`);
   usersDataObject[userId] = userData;
   localStorage.setItem(UsersLocalStorageKeys.UsersData, JSON.stringify(usersDataObject));
   localStorage.setItem(UsersLocalStorageKeys.LastFetchedUserData, new Date().valueOf().toString());
