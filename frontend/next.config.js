@@ -31,11 +31,7 @@ const nextConfig = {
       config.ignoreWarnings = [{ module: /opentelemetry/ }];
     }
 
-    // Add SVG handling
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ['@svgr/webpack'],
-    });
+    
 
     return config;
   },

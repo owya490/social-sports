@@ -4,8 +4,9 @@ import React, { useState, useEffect, Fragment } from "react";
 import Image from "next/image";
 import { Dialog, Transition, TransitionChild } from "@headlessui/react";
 import share_arrow from "../../public/images/share_arrow.png";
-import email_icons from "../../public/images/email_icons.png";
-
+import email_icons from "../../public/images/email.png";
+import fb_icons from "../../public/images/fbfb.jpeg";
+import insta_logo from "../../public/images/insta_logo.png";
 import FacebookIcon from "../../svgs/fb.svg";
 import InstagramIcon from "../../svgs/InstagramIcon.svg";
 
@@ -106,10 +107,10 @@ ${currentURL}`;
                   <div className="mt-2">
                     <ul className="flex list-none p-0 my-3 space-x-8">
                       <li className="cursor-pointer" onClick={handleFacebookShare} title="Share on Facebook">
-                        <FacebookIcon className="h-11 w-11" />
+                        <Image src={fb_icons} alt="Share via Facebook" className="h-11 w-11" />
                       </li>
                       <li className="cursor-pointer" onClick={handleInstagramShare} title="Share on Instagram">
-                        <InstagramIcon className="h-11 w-11" />
+                        <Image src={insta_logo} alt="Share via Instagram" className="h-11 w-11" />
                       </li>
                       <li className="cursor-pointer" onClick={handleEmailShare} title="Share via Email">
                         <Image src={email_icons} alt="Share via Email" className="h-11 w-11" />
