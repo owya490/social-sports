@@ -1,31 +1,9 @@
-"use client";
 import React, { useEffect, useState } from "react";
 import StripeLogo from "@/public/images/stripe-logo.svg";
 import Image from "next/image";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { useUser } from "@components/utility/UserContext";
-import { getStripeAccId } from "@/services/src/stripe/stripeService";
 
-const OrganiserSettingsStripeCard = () => {
-  const { user } = useUser();
-  const [stripeId, setStripeId] = useState<string>("");
-
-  useEffect(() => {
-    const fetchStripeId = async () => {
-      if (user.userId === "") {
-        console.error("User not found");
-        return;
-      }
-      try {
-        const response = await getStripeAccId(user.userId);
-        setStripeId(response);
-      } catch (error) {
-        console.error("fetchStripeId Error: ", error);
-      }
-    };
-    fetchStripeId();
-  }, [user]);
-
+const OrganiserSettingsStripeCard = (props: { stripeId: string }) => {
   return (
     <div>
       <div>
@@ -38,7 +16,7 @@ const OrganiserSettingsStripeCard = () => {
             </a>
             <h2 className="font-bold text-xl text-organiser-title-gray-text">Stripe Account ID</h2>
             <div className="border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 p-2 relative w-3/4">
-              {stripeId}
+              {props.stripeId}
             </div>
           </div>
         </div>

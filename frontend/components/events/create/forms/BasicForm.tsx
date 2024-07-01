@@ -1,7 +1,7 @@
 // BasicInformation.tsx
 
 import { UserData } from "@/interfaces/UserTypes";
-import { getStripeStandardAccounLink } from "@/services/src/stripe/stripeService";
+import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
@@ -254,28 +254,28 @@ export function BasicInformation({
                 size="lg"
               />
             </div>
-                </div>
+          </div>
 
-            <div>
-              <label className="text-black text-lg font-semibold">Is your event Private?</label>
-              <p className="text-sm mb-5 mt-2">
-                Private Events will not be shown on the public dashboard and will be invite only
-              </p>
-              <div className="mt-4">
-                <Select
-                  size="md"
-                  label="Select Visibility"
-                  value={isPrivate.toString()}
-                  onChange={(e) => {
-                    const privacyValue = e || "Public";
-                    handlePrivacyChange(privacyValue);
-                  }}
-                >
-                  <Option value="Public">Public</Option>
-                  <Option value="Private">Private</Option>
-                </Select>
-              </div>
+          <div>
+            <label className="text-black text-lg font-semibold">Is your event Private?</label>
+            <p className="text-sm mb-5 mt-2">
+              Private Events will not be shown on the public dashboard and will be invite only
+            </p>
+            <div className="mt-4">
+              <Select
+                size="md"
+                label="Select Visibility"
+                value={isPrivate.toString()}
+                onChange={(e) => {
+                  const privacyValue = e || "Public";
+                  handlePrivacyChange(privacyValue);
+                }}
+              >
+                <Option value="Public">Public</Option>
+                <Option value="Private">Private</Option>
+              </Select>
             </div>
+          </div>
         </div>
         {user.stripeAccountActive ? (
           <div>
@@ -312,7 +312,7 @@ export function BasicInformation({
               onClick={async () => {
                 setLoading(true);
                 window.scrollTo(0, 0);
-                const link = await getStripeStandardAccounLink(
+                const link = await getStripeStandardAccountLink(
                   user.userId,
                   getUrlWithCurrentHostname("/organiser"),
                   getRefreshAccountLinkUrl()

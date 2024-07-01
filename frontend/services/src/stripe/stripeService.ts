@@ -21,7 +21,7 @@ interface StripeGetCheckoutUrlResponse {
 
 const stripeServiceLogger = new Logger("stripeServiceLogger");
 
-export async function getStripeStandardAccounLink(organiserId: string, returnUrl: string, refreshUrl: string) {
+export async function getStripeStandardAccountLink(organiserId: string, returnUrl: string, refreshUrl: string) {
   const content = {
     organiser: organiserId,
     returnUrl: returnUrl,
@@ -65,15 +65,14 @@ export async function getStripeAccId(userId: UserId): Promise<string> {
     throw Error;
   }
   try {
-    console.log("fetching");
     const userDoc = await getDoc(doc(db, "Users/Active/Private", userId));
     if (!userDoc.exists()) {
-      console.error("Account missing!");
+      console.error("userDoc missing");
       return "";
     }
     const userData = userDoc.data() as PrivateUserData;
     if (!userData.stripeAccount) {
-      return "Account not setup yet";
+      return "";
     }
     return userData.stripeAccount;
   } catch (error) {
