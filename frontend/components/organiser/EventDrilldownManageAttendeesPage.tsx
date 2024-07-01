@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import EventDrilldownAttendeeCard from "./EventDrilldownAttendeeCard";
 import { EventMetadata } from "@/interfaces/EventTypes";
 import InviteAttendeeDialog from "./attendee/AddAttendeeDialog";
+import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 
 interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
@@ -45,9 +46,7 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata }: EventDrilldownMana
                 return (
                   <EventDrilldownAttendeeCard
                     name={attendeeDetailsObj.name ? attendeeDetailsObj.name : purchaserName}
-                    image={
-                      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c"
-                    }
+                    image={DEFAULT_USER_PROFILE_PICTURE}
                     email={purchaserObj.email}
                     number={attendeeDetailsObj.phone}
                     tickets={attendeeDetailsObj.ticketCount}
