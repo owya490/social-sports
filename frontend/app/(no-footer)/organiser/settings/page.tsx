@@ -8,7 +8,7 @@ import { useUser } from "@/components/utility/UserContext";
 import { getStripeAccId, getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import React, { useEffect, useState } from "react";
 
-const page = () => {
+const Settings = () => {
   const { user } = useUser();
   const [loading, setLoading] = useState<boolean>(false);
   const [stripeId, setStripeId] = useState<string>("");
@@ -50,4 +50,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Settings;
