@@ -1,5 +1,7 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
+import { addDoc, collection, doc, getDoc, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
+import { db } from "@/services/src/firebase";
 
 import {
   FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT,
@@ -7,6 +9,7 @@ import {
   getFirebaseFunctionByName,
 } from "../firebaseFunctionsService";
 import { getUrlWithCurrentHostname } from "../urlUtils";
+import { EmptyUserData, PrivateUserData, UserData, UserId } from "@/interfaces/UserTypes";
 
 interface StripeCreateStandardAccountResponse {
   url: string;
@@ -55,4 +58,26 @@ export async function getStripeCheckoutFromEventId(eventId: EventId, isPrivate: 
       stripeServiceLogger.warn(`Failed to return Stripe get checkout url link. error=${error}`);
       return "/error";
     });
+}
+
+export async function getStripeAccId(userId: UserId): Promise<string> {
+  if (userId === undefined) {
+    throw Error;
+  }
+  try {
+    console.log("fetching");
+    const userDoc = await getDoc(doc(db, "Users/Active/Private", userId));
+    if (!userDoc.exists()) {
+      console.error("Account missing!");
+      return "";
+    }
+    const userData = userDoc.data() as PrivateUserData;
+    if (!userData.stripeAccount) {
+      return "Account not setup yet";
+    }
+    return userData.stripeAccount;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
