@@ -9,13 +9,10 @@ export default function StripeSetup(props: { userId: string; setLoading: Dispatc
 
   return (
     <div className="p-8 border-2 border-organiser-darker-light-gray rounded-3xl flex-col flex">
-      <h2 className=" text-lg mb-2">Register for Organiser Hub!</h2>
-      <p className="font-light text-sm">Join hundreds of sport societies hosting their events on Sportshub.</p>
-      <p className="font-light text-sm">
-        Leverage the ability to take bookings and payments right through the platform.
-      </p>
+      <h2 className="font-bold text-xl mb-2">Connect your Stripe Account now!</h2>
+      <p className="">Leverage the ability to take bookings and payments right through the platform.</p>
       <button
-        className="ml-auto bg-black px-3 py-1.5 text-white rounded-lg mt-2"
+        className="ml-auto bg-highlight-yellow font-semibold text-lg px-6 py-2 text-white rounded-lg mt-2 hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
         type="button"
         onClick={async () => {
           props.setLoading(true);
