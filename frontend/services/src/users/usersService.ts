@@ -1,11 +1,11 @@
-import { NewUserData, UserData, UserId, PublicUserData, PrivateUserData, EmptyUserData } from "@/interfaces/UserTypes";
-import { addDoc, collection, doc, getDoc, getDocs, deleteDoc, updateDoc, setDoc } from "firebase/firestore";
-import { db } from "../firebase";
-import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
+import { NewUserData, PrivateUserData, PublicUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { UserNotFoundError, UsersServiceError } from "./userErrors";
 import { sleep } from "@/utilities/sleepUtil";
 import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
+import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { UserNotFoundError, UsersServiceError } from "./userErrors";
+import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
 import { DEFAULT_USER_PROFILE_PICTURE } from "./usersConstants";
 
 export const userServiceLogger = new Logger("userServiceLogger");
@@ -24,7 +24,6 @@ export async function createUser(data: NewUserData, userId: string): Promise<voi
 
 export async function getPublicUserById(userId: UserId): Promise<UserData> {
   userServiceLogger.info(`Fetching public user by ID:, ${userId}`);
-  console.log(userId);
   if (userId === undefined) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
     throw new UserNotFoundError(userId, "UserId is undefined");
@@ -57,6 +56,31 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
       throw new UserNotFoundError(userId);
     } else {
       userServiceLogger.error(`Error fetching public user by ID=${userId}: ${error}`);
+      throw new UsersServiceError(userId);
+    }
+  }
+}
+
+export async function getPrivateUserById(userId: UserId): Promise<UserData> {
+  userServiceLogger.info(`Fetching private user by ID:, ${userId}`);
+  if (userId === undefined || userId === null) {
+    userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
+    throw new UserNotFoundError(userId, "UserId is undefined");
+  }
+  try {
+    const userDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
+    if (!userDoc.exists()) {
+      throw new UserNotFoundError(userId);
+    }
+    const userData = userDoc.data() as UserData;
+    userData.userId = userId;
+    return userData;
+  } catch (error) {
+    if (error instanceof UserNotFoundError) {
+      userServiceLogger.error(`User ID=${userId} did not exist when expected by reference: ${error}`);
+      throw new UserNotFoundError(userId);
+    } else {
+      userServiceLogger.error(`Error fetching private user by ID=${userId}: ${error}`);
       throw new UsersServiceError(userId);
     }
   }
@@ -130,11 +154,15 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>): Pr
 
     // Update public user data
     const publicDataToUpdate = extractPublicUserData(newData);
+
     await updateDoc(publicUserDocRef, publicDataToUpdate);
 
     // Update private user data
     const privateDataToUpdate = extractPrivateUserData(newData);
+
     await updateDoc(privateUserDocRef, privateDataToUpdate);
+    console.log("update pub", publicDataToUpdate);
+    console.log("update pri", privateDataToUpdate);
     userServiceLogger.info(`User updated successfully:", ${userId}`);
   } catch (error) {
     userServiceLogger.error(`Error updating user with ID ${userId}:, ${error}`);

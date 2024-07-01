@@ -129,13 +129,13 @@ export function BasicInformation({
             required
             value={name}
             onChange={(e) => updateField({ name: e.target.value })}
-            className="rounded-md"
+            className="rounded-md focus:ring-0"
             size="lg"
           />
         </div>
         <div>
           <label className="text-black text-lg font-semibold">When does your event start and end?</label>
-          <div className="flex space-x-2 mt-4">
+          <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
             <div className="basis-1/2">
               <CustomDateInput date={date} placeholder="Date" handleChange={handleDateChange} />
             </div>
@@ -157,7 +157,7 @@ export function BasicInformation({
               required
               value={location}
               onChange={(e) => updateField({ location: e.target.value })}
-              className="rounded-md"
+              className="rounded-md focus:ring-0"
               size="lg"
               icon={<MapPinIcon />}
             />
@@ -194,7 +194,7 @@ export function BasicInformation({
             <Select
               size="md"
               label="Select Visibility"
-              value={isPrivate ? "Private" : "Public"}
+              value={isPrivate.toString()}
               onChange={(e) => {
                 const privacyValue = e || "Public";
                 handlePrivacyChange(privacyValue);
@@ -218,8 +218,8 @@ export function BasicInformation({
               onCustomAmountChange={handleEventCostSliderChange}
             />
           </div>
-          <div className="w-full flex space-x-3">
-            <div className="mt-4 grow">
+          <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3 my-6">
+            <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
               <Input
                 label="Price"
                 crossOrigin={undefined}
@@ -234,12 +234,12 @@ export function BasicInformation({
                   setPriceString(`${value}`);
                   handleCustomAmountChange(value);
                 }}
-                className="rounded-md"
+                className="rounded-md focus:ring-0"
                 size="lg"
                 icon={<CurrencyDollarIcon />}
               />
             </div>
-            <div className="mt-4 grow">
+            <div className="w-full md:w-1/2 mt-4 md:mt-0">
               <Input
                 label="Capacity"
                 crossOrigin={undefined}
@@ -250,11 +250,32 @@ export function BasicInformation({
                   setCapacityString(e.target.value);
                   updateField({ capacity: parseInt(e.target.value) });
                 }}
-                className="rounded-md"
+                className="rounded-md focus:ring-0"
                 size="lg"
               />
             </div>
-          </div>
+                </div>
+
+            <div>
+              <label className="text-black text-lg font-semibold">Is your event Private?</label>
+              <p className="text-sm mb-5 mt-2">
+                Private Events will not be shown on the public dashboard and will be invite only
+              </p>
+              <div className="mt-4">
+                <Select
+                  size="md"
+                  label="Select Visibility"
+                  value={isPrivate.toString()}
+                  onChange={(e) => {
+                    const privacyValue = e || "Public";
+                    handlePrivacyChange(privacyValue);
+                  }}
+                >
+                  <Option value="Public">Public</Option>
+                  <Option value="Private">Private</Option>
+                </Select>
+              </div>
+            </div>
         </div>
         {user.stripeAccountActive ? (
           <div>

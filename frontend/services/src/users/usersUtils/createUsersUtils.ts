@@ -1,13 +1,16 @@
 import { PrivateUserData, PublicUserData, UserData } from "@/interfaces/UserTypes";
-import { DEFAULT_USER_PROFILE_PICTURE } from "../usersConstants";
 
 // Extracts Public user data
 export function extractPublicUserData(data: Partial<UserData>): Partial<PublicUserData> {
   const { firstName, surname, gender, dob, age, profilePicture } = data;
-  const publicUserData: PublicUserData = {
-    firstName: firstName ?? "",
-    profilePicture: profilePicture ?? DEFAULT_USER_PROFILE_PICTURE,
-  };
+  const publicUserData: Partial<PublicUserData> = {};
+  if (firstName !== undefined && firstName !== null) {
+    publicUserData.firstName = firstName;
+  }
+
+  if (profilePicture !== undefined && profilePicture !== null) {
+    publicUserData.profilePicture = profilePicture;
+  }
 
   if (surname !== undefined && surname !== null) {
     publicUserData.surname = surname;
@@ -29,7 +32,7 @@ export function extractPublicUserData(data: Partial<UserData>): Partial<PublicUs
 }
 
 export function extractPrivateUserData(data: Partial<UserData>): Partial<PrivateUserData> {
-  const { location, contactInformation, activeBookings } = data;
+  const { location, contactInformation, activeBookings, organiserEvents } = data;
   const privateUserData: Partial<PrivateUserData> = { contactInformation: contactInformation };
 
   if (location !== undefined && location !== null) {
@@ -49,6 +52,9 @@ export function extractPrivateUserData(data: Partial<UserData>): Partial<Private
 
   if (activeBookings !== undefined && activeBookings !== null) {
     privateUserData.activeBookings = activeBookings;
+  }
+  if (organiserEvents !== undefined && organiserEvents !== null) {
+    privateUserData.organiserEvents = organiserEvents;
   }
 
   return privateUserData;

@@ -29,6 +29,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
+  const [eventEndDate, setEventEndDate] = useState<Timestamp>(Timestamp.now());
   const [eventOrganiser, setEventOrganiser] = useState<UserData>(EmptyUserData);
   const [eventVacancy, setEventVacancy] = useState<number>(0);
   const [eventDescription, setEventDescription] = useState<string>("");
@@ -48,6 +49,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventData(event);
         setEventName(event.name);
         setEventStartDate(event.startDate);
+        setEventEndDate(event.endDate);
         setEventOrganiser(event.organiser);
         setEventVacancy(event.vacancy);
         setEventDescription(event.description);
@@ -121,11 +123,13 @@ export default function EventPage({ params }: EventPageProps) {
               <EventDrilldownDetailsPage
                 loading={loading}
                 eventName={eventName}
-                eventStartdate={eventStartDate}
+                eventStartDate={eventStartDate}
+                eventEndDate={eventEndDate}
                 eventDescription={eventDescription}
                 eventLocation={eventLocation}
                 eventPrice={eventPrice}
                 eventImage={eventImage}
+                eventId={eventId}
               />
             )}
             {currSidebarPage === "Manage Attendees" && (

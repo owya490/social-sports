@@ -2,17 +2,17 @@
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import eye from "@/public/images/Eye.png";
+import location from "@/public/images/location.png";
+import Upload from "@/public/images/upload.png";
+import x from "@/public/images/x.png";
 import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
 import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
 import Image from "next/image";
-import { ChangeEvent, Fragment, useEffect, useState } from "react";
-import eye from "./../../public/images/Eye.png";
-import location from "./../../public/images/location.png";
-import Upload from "./../../public/images/upload.png";
-import x from "./../../public/images/x.png";
 import { useRouter } from "next/navigation";
+import { ChangeEvent, Fragment, useEffect, useState } from "react";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -221,6 +221,10 @@ const Profile = () => {
   };
 
   const handleSaveClick = () => {
+    if (editedData.firstName.trim() === "") {
+      return;
+    }
+
     console.log("Saving changes:", initialProfileData);
     setEditable(false);
     try {
@@ -233,7 +237,9 @@ const Profile = () => {
 
   const renderEditableField = (label: string, name: keyof UserData) => (
     <div key={name} className="mb-4">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label className="block text-sm font-medium text-gray-700">
+        {label} {label === "Given Name" && <span className="text-red-500">*</span>}
+      </label>
       {label === "Date of Birth" ? (
         <input
           type="date"

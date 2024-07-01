@@ -84,7 +84,7 @@ export default function ProfilePic() {
     <div className="ml-auto flex items-center">
       {loggedIn && (
         <button
-          className="border border-black px-4 py-2 rounded-lg mx-3 max-h-[40px] hidden lg:block whitespace-nowrap hover:bg-black hover:text-white"
+          className="px-4 py-2 rounded-lg mx-3 max-h-[40px] font-semibold hidden lg:block whitespace-nowrap  bg-highlight-yellow text-white hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
           onClick={() => {
             router.push("/event/create");
           }}
@@ -95,13 +95,13 @@ export default function ProfilePic() {
       {!loggedIn && (
         <div className="flex">
           <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block bg-black text-white whitespace-nowrap ml-4 hover:bg-white hover:text-black"
+            className=" px-6 py-2 rounded-lg max-h-[40px] font-semibold lg:block bg-highlight-yellow text-white whitespace-nowrap ml-4 hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
             onClick={() => router.push("/login")}
           >
             Login
           </button>
           <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block hover:bg-black hover:text-white"
+            className="border-2 text-highlight-yellow font-semibold border-highlight-yellow px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block hover:bg-highlight-yellow hover:text-white"
             onClick={() => router.push("/register")}
           >
             Register
@@ -135,57 +135,77 @@ export default function ProfilePic() {
               <MenuItems className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 {loggedIn && (
                   <div className="px-1 py-1">
-                    <MenuItem>
-                      <Link
-                        href="/profile"
-                        className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:bg-black`}
-                      >
-                        <UserCircleIcon className="h-5 mr-2" />
-                        Profile
-                      </Link>
-                    </MenuItem>
-                    <MenuItem>
-                      <Link
-                        href="/settings"
-                        className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:bg-black`}
-                      >
-                        <Cog8ToothIcon className="h-5 mr-2" />
-                        Settings
-                      </Link>
-                    </MenuItem>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <Link
+                          href="/profile"
+                          className={`${
+                            active ? "text-white bg-highlight-yellow" : "text-black"
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          <UserCircleIcon className="h-5 mr-2" />
+                          Profile
+                        </Link>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <Link
+                          href="/settings"
+                          className={`${
+                            active ? "text-white bg-highlight-yellow" : "text-black"
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          <Cog8ToothIcon className="h-5 mr-2" />
+                          Settings
+                        </Link>
+                      )}
+                    </Menu.Item>
                   </div>
                 )}
                 <div className="px-1 py-1">
-                  <MenuItem>
-                    <Link
-                      href="/help"
-                      className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:bg-black`}
-                    >
-                      <LifebuoyIcon className="h-5 mr-2" />
-                      Help Centre
-                    </Link>
-                  </MenuItem>
-                  <MenuItem>
-                    <Link
-                      href="/suggestions"
-                      className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:text-white hover:bg-black`}
-                    >
-                      <LightBulbIcon className="h-5 mr-2" />
-                      Suggestions
-                    </Link>
-                  </MenuItem>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <Link
+                        href="/help"
+                        className={`${
+                          active ? "text-white bg-highlight-yellow" : "text-black"
+                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                      >
+                        <LifebuoyIcon className="h-5 mr-2" />
+                        Help Centre
+                      </Link>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <Link
+                        href="/suggestions"
+                        className={`${
+                          active ? "text-white bg-highlight-yellow" : "text-black"
+                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                      >
+                        <LightBulbIcon className="h-5 mr-2" />
+                        Suggestions
+                      </Link>
+                    )}
+                  </Menu.Item>
                 </div>
                 {loggedIn && (
                   <div className="px-1 py-1">
-                    <MenuItem>
-                      <div
-                        onClick={handleLogOut}
-                        className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer hover:text-white hover:bg-black`}
-                      >
-                        <ArrowLeftStartOnRectangleIcon className="h-5 mr-2" />
-                        Log Out
-                      </div>
-                    </MenuItem>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <div
+                          onClick={handleLogOut}
+                          className={`${
+                            active ? "text-white bg-highlight-yellow" : "text-black"
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer`}
+                        >
+                          <ArrowLeftStartOnRectangleIcon className="h-5 mr-2" />
+                          Log Out
+                        </div>
+                      )}
+                    </Menu.Item>
                   </div>
                 )}
               </MenuItems>
