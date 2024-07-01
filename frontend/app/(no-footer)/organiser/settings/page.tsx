@@ -1,7 +1,6 @@
 "use client";
 import Loading from "@/components/loading/Loading";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
-import OrganiserSettingsAboutCard from "@/components/organiser/OrganiserSettingsAboutCard";
 import OrganiserSettingsStripeCard from "@/components/organiser/OrganiserSettingsStripeCard";
 import StripeSetup from "@/components/utility/StripeSetup";
 import { useUser } from "@/components/utility/UserContext";
@@ -15,19 +14,11 @@ const Settings = () => {
 
   useEffect(() => {
     const fetchStripeId = async () => {
-      if (user.userId === "") {
-        console.error("User not found");
-        return;
-      }
-      try {
-        const response = await getStripeAccId(user.userId);
-        if (!response) {
-          setStripeId("Account not set up yet");
-        } else {
-          setStripeId(response);
-        }
-      } catch (error) {
-        console.error("fetchStripeId Error: ", error);
+      const response = await getStripeAccId(user.userId);
+      if (!response) {
+        setStripeId("Account not set up yet");
+      } else {
+        setStripeId(response);
       }
     };
     fetchStripeId();
@@ -42,7 +33,6 @@ const Settings = () => {
         <div className="p-12 space-y-8">
           <OrganiserSettingsStripeCard stripeId={stripeId} />
           {!user.stripeAccountActive && <StripeSetup userId={user.userId} setLoading={setLoading} />}
-          {/* <OrganiserSettingsAboutCard /> */}
           <h1 className="pt-20 text-3xl font-bold text-center">More features coming soon!</h1>
         </div>
       </div>

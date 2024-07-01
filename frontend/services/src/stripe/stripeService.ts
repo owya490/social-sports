@@ -10,6 +10,7 @@ import {
 } from "../firebaseFunctionsService";
 import { getUrlWithCurrentHostname } from "../urlUtils";
 import { EmptyUserData, PrivateUserData, UserData, UserId } from "@/interfaces/UserTypes";
+import { getPrivateUserById } from "../users/usersService";
 
 interface StripeCreateStandardAccountResponse {
   url: string;
@@ -61,22 +62,20 @@ export async function getStripeCheckoutFromEventId(eventId: EventId, isPrivate: 
 }
 
 export async function getStripeAccId(userId: UserId): Promise<string> {
-  if (userId === undefined) {
-    throw Error;
-  }
   try {
-    const userDoc = await getDoc(doc(db, "Users/Active/Private", userId));
-    if (!userDoc.exists()) {
-      console.error("userDoc missing");
-      return "";
+    if (!userId) {
+      throw Error(`getStripeAccId(${userId}): userId not valid`);
     }
-    const userData = userDoc.data() as PrivateUserData;
+    const userData = await getPrivateUserById(userId);
+    if (!userData) {
+      throw Error(`getStripeAccId(${userId}): private user data missing on userId`);
+    }
     if (!userData.stripeAccount) {
       return "";
     }
     return userData.stripeAccount;
-  } catch (error) {
-    console.error(error);
-    throw error;
+  } catch (e) {
+    stripeServiceLogger.error(e as string);
+    return "";
   }
 }
