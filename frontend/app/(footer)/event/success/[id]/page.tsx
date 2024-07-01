@@ -15,7 +15,7 @@ export default function Success({ params }: any) {
       setEvent(event);
       setLoading(false);
     });
-  });
+  }, []);
   return loading ? (
     <Loading />
   ) : (

@@ -21,7 +21,8 @@ export function EventDetails(props: EventDetailsProps) {
         <div className="lg:flex w-full mt-5">
           <div className="lg:hidden">
             <MobileEventPayment
-              date={eventData.startDate}
+              startDate={eventData.startDate}
+              endDate={eventData.endDate}
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
@@ -41,7 +42,8 @@ export function EventDetails(props: EventDetailsProps) {
           </div>
           <div className="hidden lg:block lg:w-1/3 xl:w-1/4">
             <EventPayment
-              date={eventData.startDate}
+              startDate={eventData.startDate}
+              endDate={eventData.endDate}
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
