@@ -33,6 +33,7 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
     // try find in localstorage
     const { success, userDataLocalStorage } = tryGetActivePublicUserDataFromLocalStorage(userId);
     if (success) {
+      userServiceLogger.info(`Return user data from local storage, ${userId}`);
       return userDataLocalStorage;
     }
 
