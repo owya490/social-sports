@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react";
 import StripeLogo from "@/public/images/stripe-logo.svg";
 import Image from "next/image";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
