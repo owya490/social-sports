@@ -34,7 +34,7 @@ import {
   findEventDoc,
   findEventMetadataDocByEventId,
   getAllEventsFromCollectionRef,
-  tryGetAllActisvePublicEventsFromLocalStorage,
+  tryGetAllActivePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
@@ -157,7 +157,7 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
 
     if (isActive && !isPrivate) {
       const currentDate = new Date();
-      let { success, events } = tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
+      let { success, events } = tryGetAllActivePublicEventsFromLocalStorage(currentDate);
       if (success) {
         return events;
       }
