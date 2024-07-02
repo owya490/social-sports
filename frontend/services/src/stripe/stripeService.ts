@@ -1,15 +1,12 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
-import { addDoc, collection, doc, getDoc, getDocs, deleteDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/services/src/firebase";
-
 import {
   FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT,
   FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID,
   getFirebaseFunctionByName,
 } from "../firebaseFunctionsService";
 import { getUrlWithCurrentHostname } from "../urlUtils";
-import { EmptyUserData, PrivateUserData, UserData, UserId } from "@/interfaces/UserTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import { getPrivateUserById } from "../users/usersService";
 
 interface StripeCreateStandardAccountResponse {

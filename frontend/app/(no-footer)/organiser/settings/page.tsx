@@ -4,7 +4,7 @@ import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserSettingsStripeCard from "@/components/organiser/OrganiserSettingsStripeCard";
 import StripeSetup from "@/components/utility/StripeSetup";
 import { useUser } from "@/components/utility/UserContext";
-import { getStripeAccId, getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
+import { getStripeAccId } from "@/services/src/stripe/stripeService";
 import React, { useEffect, useState } from "react";
 
 const Settings = () => {
