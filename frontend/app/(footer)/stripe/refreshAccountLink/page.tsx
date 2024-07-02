@@ -3,7 +3,7 @@ import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData } from "@/interfaces/UserTypes";
 import { isLoggedIn } from "@/services/src/auth/authService";
-import { getStripeStandardAccounLink } from "@/services/src/stripe/stripeService";
+import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { useRouter } from "next/navigation";
@@ -19,7 +19,7 @@ export default function RefreshAccountLink() {
     }
     const returnUrl = getUrlWithCurrentHostname("/organiser");
     const refreshUrl = getRefreshAccountLinkUrl();
-    getStripeStandardAccounLink(user.userId, returnUrl, refreshUrl).then((link) => {
+    getStripeStandardAccountLink(user.userId, returnUrl, refreshUrl).then((link) => {
       router.push(link);
     });
   }, []);
