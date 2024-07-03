@@ -28,6 +28,7 @@ const nextConfig = {
     if (isServer) {
       config.ignoreWarnings = [{ module: /opentelemetry/ }];
     }
+
     return config;
   },
   experimental: { missingSuspenseWithCSRBailout: false },
