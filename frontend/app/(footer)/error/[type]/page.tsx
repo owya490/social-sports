@@ -7,7 +7,7 @@ export default function Error({ params }: any) {
       return (
         <div className="h-screen w-full flex justify-center items-center">
           <div className="text-center">
-            <h2 className="text-2xl">Oh no, you've been Rate Limited for Create/ Update Event!</h2>
+            <h2 className="text-2xl">Oh no, you&apos;ve been Rate Limited for Create/ Update Event!</h2>
             <p className="font-light">Please wait 15 minutes and try again! </p>
           </div>
         </div>
