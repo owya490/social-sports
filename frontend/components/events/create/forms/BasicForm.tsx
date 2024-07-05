@@ -1,7 +1,7 @@
 // BasicInformation.tsx
 
 import { UserData } from "@/interfaces/UserTypes";
-import { getStripeStandardAccounLink } from "@/services/src/stripe/stripeService";
+import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
@@ -290,7 +290,7 @@ export function BasicInformation({
               onClick={async () => {
                 setLoading(true);
                 window.scrollTo(0, 0);
-                const link = await getStripeStandardAccounLink(
+                const link = await getStripeStandardAccountLink(
                   user.userId,
                   getUrlWithCurrentHostname("/organiser"),
                   getRefreshAccountLinkUrl()
