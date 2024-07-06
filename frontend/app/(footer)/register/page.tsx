@@ -1,5 +1,6 @@
 "use client";
 import { EmptyNewUserData, NewUserData } from "@/interfaces/UserTypes";
+import { AuthServiceError } from "@/services/src/auth/authErrors";
 import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
@@ -46,6 +47,9 @@ export default function Register() {
           default:
             setError("An unexpected error occurred.");
         }
+      } else if (error instanceof AuthServiceError) {
+        setError(error.message);
+        router.push("/error");
       } else {
         setError("An unexpected error occurred"); // Fallback error message
       }
