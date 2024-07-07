@@ -152,7 +152,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   return json.dumps({"url": checkout.url})
 
 
-@https_fn.on_call(cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
+@https_fn.on_call(cors=options.CorsOptions(cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
 def get_stripe_checkout_url_by_event_id(req: https_fn.CallableRequest):
   uid = str(uuid.uuid4())
   logger = Logger(f"stripe_checkout_logger_{uid}")

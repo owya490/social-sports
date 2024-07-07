@@ -83,7 +83,7 @@ def check_and_update_organiser_stripe_account(transaction: Transaction, logger: 
       return json.dumps({"url": return_url})
 
 
-@https_fn.on_call(region="australia-southeast1")
+@https_fn.on_call(cors=options.CorsOptions(cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
 def create_stripe_standard_account(req: https_fn.CallableRequest):
   uid = str(uuid.uuid4())
   logger = Logger(f"stripe_create_account_logger_{uid}")
