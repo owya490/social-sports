@@ -5,7 +5,7 @@ node_modules
 */.DS_Store
 */.next/*
 *public/.DS_Store*
-.env
+.env*
 .next/
 .swc/
 .*.env
