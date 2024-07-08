@@ -76,7 +76,7 @@ export default function Register() {
         >
           {error}
         </Alert>
-        <h2 className="mt-[5vh] sm:mt-0 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 ">
+        <h2 className="mt-[5vh] sm:mt-0 text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 ">
           Register your account
         </h2>
       </div>
@@ -84,7 +84,7 @@ export default function Register() {
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
         <form className="space-y-6 group" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="first-name" className="block text-sm font-medium leading-6 text-gray-900">
+            <label htmlFor="first-name" className="block font-medium leading-6 text-gray-900">
               First Name
             </label>
             <div className="mt-2">
@@ -92,7 +92,7 @@ export default function Register() {
                 id="first-name"
                 name="first-name"
                 type="text"
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                className="block w-full rounded-md border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm sm:leading-6"
                 value={userData.firstName}
                 required
                 onChange={(e) =>
@@ -105,7 +105,7 @@ export default function Register() {
             </div>
           </div>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+            <label htmlFor="email" className="block font-medium leading-6 text-gray-900">
               Email address
             </label>
             <div className="mt-2">
@@ -115,7 +115,7 @@ export default function Register() {
                 type="email"
                 autoComplete="email"
                 required
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                className="block w-full rounded-md border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm sm:leading-6"
                 value={userData.contactInformation.email}
                 onChange={(e) =>
                   setUserData({
@@ -132,7 +132,7 @@ export default function Register() {
 
           <div>
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+              <label htmlFor="password" className="block font-medium leading-6 text-gray-900">
                 Password (min. 6 characters)
               </label>
             </div>
@@ -141,7 +141,7 @@ export default function Register() {
                 id="password"
                 name="password"
                 type="password"
-                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 ${
+                className={`block w-full rounded-md border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm sm:leading-6 ${
                   passwordMismatch ? "ring-red-400" : ""
                 }`}
                 required
@@ -159,7 +159,7 @@ export default function Register() {
 
           <div>
             <div className="flex items-center justify-between">
-              <label htmlFor="password-repeat" className="block text-sm font-medium leading-6 text-gray-900">
+              <label htmlFor="password-repeat" className="block font-medium leading-6 text-gray-900">
                 Repeat Password
               </label>
             </div>
@@ -168,7 +168,7 @@ export default function Register() {
                 id="password-repeat"
                 name="password"
                 type="password"
-                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 ${
+                className={`block w-full rounded-md border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm sm:leading-6 ${
                   passwordMismatch ? "ring-red-400" : ""
                 }`}
                 required
@@ -180,13 +180,13 @@ export default function Register() {
           <div>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-md bg-black px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-black border-2"
+              className="flex w-full justify-center rounded-md px-3 py-2 font-semibold leading-6 text-white shadow-sm hover:bg-white hover:text-highlight-yellow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-highlight-yellow bg-highlight-yellow border-2 transition-colors duration-300 transform"
             >
               Register
             </button>
           </div>
 
-          <p className="mt-10 text-center text-sm text-gray-500">
+          <p className="mt-10 text-center text-gray-500">
             Have an account?{" "}
             <Link href="/login" className="font-semibold leading-6 text-black hover:underline">
               Login here

@@ -36,7 +36,7 @@ export default function Login() {
         Wrong email or password!
       </Alert>
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h1 className="text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
+        <h1 className="text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
           Sign in to your account
         </h1>
       </div>
@@ -44,7 +44,7 @@ export default function Login() {
       <div className="mt-8 mx-auto w-full max-w-sm">
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
+            <label htmlFor="email" className="block font-medium leading-6 text-gray-900">
               Email address
             </label>
             <div className="mt-2">
@@ -55,7 +55,7 @@ export default function Login() {
                 autoComplete="email"
                 tabIndex={1}
                 required
-                className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                className="block w-full rounded-lg border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm: sm:leading-6"
                 value={userData.email}
                 onChange={(e) =>
                   setUserData({
@@ -69,11 +69,11 @@ export default function Login() {
 
           <div>
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+              <label htmlFor="password" className="block font-medium leading-6 text-gray-900">
                 Password
               </label>
-              <div className="text-sm">
-                <Link href="#" className="font-semibold text-gray-500 hover:underline">
+              <div>
+                <Link href="#" className="font-semibold text-sm text-gray-500 hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -86,7 +86,7 @@ export default function Login() {
                 autoComplete="current-password"
                 tabIndex={2}
                 required
-                className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                className="block w-full rounded-lg border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm: sm:leading-6"
                 value={userData.password}
                 onChange={(e) =>
                   setUserData({
@@ -101,7 +101,7 @@ export default function Login() {
           <div>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-lg bg-black px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-white hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-black border-2"
+              className="flex w-full justify-center rounded-lg bg-highlight-yellow px-3 py-2  font-semibold leading-6 text-white shadow-sm hover:bg-white hover:text-highlight-yellow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-highlight-yellow border-2 transition-colors duration-300 transform"
               tabIndex={3}
             >
               Sign in
@@ -109,7 +109,7 @@ export default function Login() {
           </div>
         </form>
 
-        <p className="mt-10 text-center text-sm text-gray-500">
+        <p className="mt-10 text-center text-gray-500">
           Not a member?{" "}
           <Link href="/register" className="font-semibold leading-6 text-black hover:underline">
             Register here

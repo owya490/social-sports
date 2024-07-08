@@ -35,17 +35,13 @@ export default function SearchBar() {
 
   const handleSearchClick = () => {
     console.log("search");
-    const searchUrl = `/dashboard?event=${encodeURIComponent(
-      event
-    )}&location=${encodeURIComponent(location)}`;
+    const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
     router.push(searchUrl);
   };
   const handleKeyPress = (e: { key: string }) => {
     if (e.key === "Enter") {
       console.log("search");
-      const searchUrl = `/dashboard?event=${encodeURIComponent(
-        event
-      )}&location=${encodeURIComponent(location)}`;
+      const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
       router.push(searchUrl);
     }
   };
@@ -68,10 +64,7 @@ export default function SearchBar() {
         onChange={(e) => setLocation(e.target.value)}
         onKeyDown={handleKeyPress}
       />
-      <button
-        onClick={handleSearchClick}
-        className="w-9 h-9 rounded-full border border-black bg-black"
-      >
+      <button onClick={handleSearchClick} className="w-9 h-9 rounded-full border border-black bg-black">
         <SearchIcon />
       </button>
     </div>
