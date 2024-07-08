@@ -7,7 +7,7 @@ import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
-import EventImage from "@/components/events/EventImage";
+import EventCardImage from "./EventCardImage";
 
 interface EventCardProps {
   eventId: EventId;
@@ -37,10 +37,8 @@ export default function EventCard(props: EventCardProps) {
           </div>
         ) : (
           <>
-            <div
-              className="h-36 w-full object-cover rounded-t-lg"
-            >
-              <EventImage imageSrc={props.image} />
+            <div className="h-36 w-full object-cover">
+              <EventCardImage imageSrc={props.image} />
             </div>
             <div className="p-4">
               <h4 className="font-bold text-gray-500 text-xs">{timestampToEventCardDateString(props.startTime)}</h4>

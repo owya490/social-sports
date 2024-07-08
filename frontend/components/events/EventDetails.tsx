@@ -16,7 +16,7 @@ export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
   return (
     <div className="flex justify-center w-full">
-      <div className="pb-10 screen-width-primary">
+      <div className="pb-10 screen-width-primary sm:rounded-3xl">
         <EventImage imageSrc={eventData.image} />
         <div className="lg:flex w-full mt-5">
           <div className="lg:hidden">
