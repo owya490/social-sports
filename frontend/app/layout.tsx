@@ -4,9 +4,35 @@ import UserContext from "@/components/utility/UserContext";
 import GrafanaFaro from "@/observability/GrafanaFaro";
 import type { Metadata } from "next";
 import { Inter, Roboto_Condensed } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const aileron = localFont({
+  src: [
+    {
+      path: "../public/fonts/Aileron-Regular.otf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Aileron-Italic.otf",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../public/fonts/Aileron-Bold.otf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Aileron-BoldItalic.otf",
+      weight: "700",
+      style: "italic",
+    },
+  ],
+});
+
+// const inter = Inter({ subsets: ["latin"] }); old font, just replace aileron with inter to swap back
 
 export const metadata: Metadata = {
   title: "SportsHub | Book your next social sports session",
@@ -38,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <GrafanaFaro>
         <UserContext>
-          <body className={`${inter.className} ${roboto_condensed.variable}`}>
+          <body className={`${aileron.className} ${roboto_condensed.variable}`}>
             <div className="hidden md:block">
               <Navbar />
             </div>
