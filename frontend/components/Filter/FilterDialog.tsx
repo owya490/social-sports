@@ -265,7 +265,7 @@ export default function FilterDialog({
                         </p>
 
                         <Slider
-                          color="blue"
+                          color="amber"
                           className="h-1 z-0"
                           step={1}
                           min={0}
@@ -302,7 +302,7 @@ export default function FilterDialog({
                             : maxProximitySliderValue + "km"}
                         </p>
                         <Slider
-                          color="blue"
+                          color="amber"
                           className="h-1 z-0"
                           step={1}
                           min={0}
