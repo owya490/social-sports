@@ -59,7 +59,7 @@ export default function EventPayment(props: EventPaymentProps) {
               </div>
               <div className="flex items-center">
                 <ClockIcon className="w-5 mr-2" />
-                <p className="text-md mr-[5%] font-light">{timestampToTimeOfDay(props.startDate)}</p>
+                <p className="text-md mr-[5%] font-light">{timestampToTimeOfDay(props.startDate)} - {timestampToTimeOfDay(props.endDate)}</p>
               </div>
               <div className="flex items-center">
                 <PlayCircleIcon className="w-5 mr-2" />
