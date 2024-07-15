@@ -14,7 +14,7 @@ from lib.logging import Logger
 from lib.stripe.commons import ERROR_URL
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from lib.sendgrid.commons import get_user_email
+from lib.sendgrid.commons import get_user_email, CREATE_EVENT_EMAIL_TEMPLATE_ID
 
 
 @dataclass
@@ -53,40 +53,46 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
   event_data = maybe_event_data.to_dict()
   organiser_id = event_data.get("organiserId")
 
-  try: 
-    email = get_user_email(organiser_id)
-  except Exception as e:
-    logger.error(f"Error occured in getting organiser email.", e)
-    return https_fn.Response(status=400)
-
   maybe_organiser_data = db.collection("Users/Active/Private").document(organiser_id).get()
   if (not maybe_organiser_data.exists):
-    logger.error(f"Unable to find organiser provided in datastore to send email. organiserId={organiser_id}")
+    raise Exception(f"Unable to find organiser provided in datastore to send email. organiserId={organiser_id}")
+
+  organiser_data = maybe_organiser_data.to_dict()
+
+  try: 
+    email = get_user_email(organiser_id, organiser_data)
+  except Exception as e:
+    logger.error(f"Error occured in getting organiser email.", e)
     return https_fn.Response(status=400)
   
   try:
     message = Mail(
-      from_email='team.sportshub@gmail.com',
+      from_email="team.sportshub@gmail.com",
       to_emails=email,
       subject=f"Thank you for creating {event_data.get("name")}",
     )
 
     message.dynamic_template_data = {
-      "name": event_data.get("name"),
-      "location": event_data.get("location"),
-      "sport": event_data.get("sport"),
-      "price": event_data.get("price"),
-      "startDate": event_data.get("startDate"),
-      "endDate": event_data.get("endDate")
+      "first_name": organiser_data.get("firstName"),
+      "event_name": event_data.get("name"),
+      "event_location": event_data.get("location"),
+      "event_startDate": event_data.get("startDate"),
+      "event_endDate": event_data.get("endDate"),
+      "event_sport": event_data.get("sport"),
+      "event_price": event_data.get("price"),
+      "event_capacity": event_data.get("capacity"),
+      "event_isPrivate": request_data.visibility
     }
 
+    message.template_id = CREATE_EVENT_EMAIL_TEMPLATE_ID
+
     # TODO possibly either move this to common or make sendgrid service/ client in python
-    sg = sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
     response = sg.send(message)
     if (not response.status_code == 200):
       raise Exception(f"Sendgrid failed to send message. e={response.body}")
-    
+
     return https_fn.Response(status=200)
   except Exception as e:
     logger.error(f"Error sending create event email. eventId={request_data.eventId} error={e}")
-
+    return https_fn.Response(status=500)
