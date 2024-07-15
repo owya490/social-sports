@@ -1,7 +1,7 @@
 import { EventData } from "@/interfaces/EventTypes";
 import { QueryFieldFilterConstraint, Timestamp, collection, getDocs, limit, query, where } from "firebase/firestore";
 import geofire from "geofire-common";
-import { SortByCategory } from "../../components/Filter/FilterDialog";
+import { SortByCategory } from "../../components/filter/FilterDialog";
 import { db } from "./firebase";
 import { getDistanceBetweenTwoCoords } from "./locationUtils";
 

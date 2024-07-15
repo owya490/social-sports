@@ -7,7 +7,7 @@ import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outlin
 import { Slider } from "@material-tailwind/react";
 import { Fragment } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
-import ListBox from "../../components/ListBox";
+import ListBox from "../ListBox";
 
 export enum SortByCategory {
   HOT,

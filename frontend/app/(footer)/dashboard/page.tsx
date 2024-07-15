@@ -1,6 +1,6 @@
 "use client";
-import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
+import FilterBanner from "@/components/filter/FilterBanner";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
