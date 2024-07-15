@@ -8,6 +8,8 @@ import ChevronLeftButton from "../utility/ChevronLeftButton";
 import ChevronRightButton from "../utility/ChevronRightButton";
 import EventCard from "./EventCard";
 
+const NO_RECOMMENDED_EVENTS = 6;
+
 interface RecommendedEventsProps {
   eventData?: EventData;
 }
@@ -26,7 +28,10 @@ const sortByProximityFromHere = (a: EventData, b: EventData, here: EventData | u
 
 const filterEventsBySport = (a: EventData, eventData: EventData | undefined) => {
   if (eventData === undefined) {
-    return a;
+    return true;
+  }
+  if (a.eventId === eventData.eventId) {
+    return false;
   }
   return a.sport == eventData.sport;
 };
@@ -36,14 +41,15 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
     const newRecommendedEvents: EventData[] = [];
-    getAllEvents(true).then((data) => {
-      data.filter((a) => {
-        return filterEventsBySport(a, eventData);
-      });
-      data.sort((a, b) => {
-        return sortByProximityFromHere(a, b, eventData);
-      });
-      for (let i = 0; i < 6; i++) {
+    getAllEvents().then((data) => {
+      data = data
+        .filter((a) => {
+          return filterEventsBySport(a, eventData);
+        })
+        .sort((a, b) => {
+          return sortByProximityFromHere(a, b, eventData);
+        });
+      for (let i = 0; i < NO_RECOMMENDED_EVENTS && i < data.length; i++) {
         newRecommendedEvents.push(data[i]);
       }
       setRecommendedEvents(newRecommendedEvents);
