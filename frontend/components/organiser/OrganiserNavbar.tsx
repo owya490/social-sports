@@ -41,7 +41,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
 
         setEventDataList(futureEvents);
         setClosestEvent(futureEvents.length > 0 ? futureEvents[0] : null);
-        setEventId(futureEvents.length > 0 ? futureEvents[0].eventId : "");
+        setEventId(futureEvents.length > 0 ? futureEvents[0].eventId : "event/create");
       } catch (error) {
         console.error("getOrganiserEvents() Error: " + error);
       }

@@ -1,7 +1,7 @@
 import { handleSignOut } from "@/services/src/auth/authService";
 import { auth, storage } from "@/services/src/firebase";
 import { sleep } from "@/utilities/sleepUtil";
-import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
+import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowLeftStartOnRectangleIcon,
   Cog8ToothIcon,
@@ -167,13 +167,13 @@ export default function ProfilePic() {
                   <Menu.Item>
                     {({ active }) => (
                       <Link
-                        href="/help"
+                        href="/organiser/dashboard"
                         className={`${
                           active ? "text-white bg-highlight-yellow" : "text-black"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LifebuoyIcon className="h-5 mr-2" />
-                        Help Centre
+                        Organiser Hub
                       </Link>
                     )}
                   </Menu.Item>
