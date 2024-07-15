@@ -9,6 +9,10 @@
   .screen-width-dashboard {
     @apply w-screen px-3 sm:mx-0 sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px] 2xl:w-[1400px];
   }
+  .custom-border {
+    border: 4px solid #333; 
+    border-radius: 8px; 
+  }
 }
 @layer base {
   .list-style-circle{
