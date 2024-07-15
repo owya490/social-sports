@@ -1,6 +1,5 @@
 "use client";
 import { EmptyNewUserData, NewUserData } from "@/interfaces/UserTypes";
-import { AuthServiceError } from "@/services/src/auth/authErrors";
 import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
@@ -15,6 +14,7 @@ export default function Register() {
   const [repeatPassword, setRepeatPassword] = useState("");
   const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [showRegisterFailure, setShowRegisterFailure] = useState(false);
+  const [showEmailSentAlert, setShowEmailSentAlert] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -28,7 +28,7 @@ export default function Register() {
 
     try {
       await handleEmailAndPasswordSignUp(userData);
-      router.push("/dashboard?login=success");
+      setShowEmailSentAlert(true);
     } catch (error) {
       setShowRegisterFailure(true);
       setPasswordMismatch(false);
@@ -47,13 +47,17 @@ export default function Register() {
           default:
             setError("An unexpected error occurred.");
         }
-      } else if (error instanceof AuthServiceError) {
-        setError(error.message);
-        router.push("/error");
       } else {
         setError("An unexpected error occurred"); // Fallback error message
       }
       console.error("Error:", error);
+    }
+  };
+
+  const handleAlertClose = () => {
+    setShowRegisterFailure(false);
+    if (error == "This email is already in use.") {
+      router.push("/login");
     }
   };
 
@@ -70,11 +74,19 @@ export default function Register() {
         </Alert>
         <Alert
           open={showRegisterFailure}
-          onClose={() => setShowRegisterFailure(false)}
+          onClose={() => handleAlertClose()}
           color="red"
           className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
         >
           {error}
+        </Alert>
+        <Alert
+          open={showEmailSentAlert}
+          onClose={() => setShowEmailSentAlert(false)}
+          color="green"
+          className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+        >
+          Email sent successfully. Please check your inbox.
         </Alert>
         <h2 className="mt-[5vh] sm:mt-0 text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 ">
           Register your account

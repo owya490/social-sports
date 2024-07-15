@@ -10,31 +10,42 @@ export default function Login() {
     email: "",
     password: "",
   });
-  const [showLoginFailure, setShowLoginFailure] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [AlertStatus, setAlertStatus] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      await handleEmailAndPasswordSignIn(userData.email, userData.password);
-      router.push("/dashboard?login=success");
-    } catch (error) {
-      setShowLoginFailure(true);
-      console.error("Error:", error);
+      const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
+      if (userCreated) {
+        router.push("/dashboard?login=success"); // Redirect only if user creation is successful
+      } else {
+        console.error("User creation failed.");
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) setErrorMessage(error.message);
+      setAlertStatus(true);
     }
+  };
+
+  const handleAlertClose = () => {
+    setAlertStatus(false);
+    setErrorMessage("");
   };
 
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
       <Alert
-        open={showLoginFailure}
-        onClose={() => setShowLoginFailure(false)}
+        open={AlertStatus}
+        onClose={handleAlertClose}
         color="red"
         className="absolute ml-auto mr-auto left-0 right-0 top-24 w-fit"
       >
-        Wrong email or password!
+        {errorMessage}
       </Alert>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <h1 className="text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
           Sign in to your account
@@ -73,7 +84,7 @@ export default function Login() {
                 Password
               </label>
               <div>
-                <Link href="#" className="font-semibold text-sm text-gray-500 hover:underline">
+                <Link href="resetPassword" className="font-semibold text-sm text-gray-500 hover:underline">
                   Forgot password?
                 </Link>
               </div>
