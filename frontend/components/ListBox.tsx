@@ -2,7 +2,7 @@
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { Fragment, useState } from "react";
-import { SortByCategory } from "./filter/FilterDialog";
+import { SortByCategory } from "./Filter/FilterDialog";
 
 interface ListBoxProps {
   onChangeHandler: (e: any) => void;

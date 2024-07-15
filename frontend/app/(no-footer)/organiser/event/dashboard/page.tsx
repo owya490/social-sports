@@ -11,7 +11,7 @@ import OrganiserFilterDialog, {
   DEFAULT_SORT_BY_CATEGORY,
   DEFAULT_START_DATE,
   SortByCategory,
-} from "@/components/filter/OrganiserFilterDialog";
+} from "@/components/Filter/OrganiserFilterDialog";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";

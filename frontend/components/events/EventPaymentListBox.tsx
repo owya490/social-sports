@@ -1,5 +1,5 @@
 "use client";
-import { SortByCategory } from "../filter/FilterDialog";
+import { SortByCategory } from "../Filter/FilterDialog";
 import ListBox from "../ListBox";
 
 interface EventPaymentListBoxProps {
