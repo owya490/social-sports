@@ -13,6 +13,7 @@ import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -158,8 +159,7 @@ const Profile = () => {
 
     if (files && files.length > 0) {
       const file = files[0];
-      const originalFileName = file.name;
-      const modifiedFileName = originalFileName.replace(/[(){}[\]]/g, "");
+      const modifiedFileName = uuidv4();
 
       try {
         const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${modifiedFileName}`);

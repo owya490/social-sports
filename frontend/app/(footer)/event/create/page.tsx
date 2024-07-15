@@ -15,6 +15,7 @@ import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 export type FormData = {
   date: string;
@@ -109,8 +110,7 @@ export default function CreateEvent() {
 
     if (formData.image !== undefined) {
       const originalFile = formData.image;
-      const originalFileName = originalFile.name;
-      const modifiedFileName = originalFileName.replace(/[(){}[\]]/g, "");
+      const modifiedFileName = uuidv4();
 
       const modifiedFile = new File([originalFile], modifiedFileName, {
         type: originalFile.type,
@@ -228,4 +228,7 @@ export default function CreateEvent() {
       )}
     </div>
   );
+}
+function uuid() {
+  throw new Error("Function not implemented.");
 }
