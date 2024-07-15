@@ -108,7 +108,16 @@ export default function CreateEvent() {
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
 
     if (formData.image !== undefined) {
-      imageUrl = await uploadUserImage(user.userId, formData.image);
+      const originalFile = formData.image;
+      const originalFileName = originalFile.name;
+      const modifiedFileName = originalFileName.replace(/[(){}[\]]/g, "");
+
+      const modifiedFile = new File([originalFile], modifiedFileName, {
+        type: originalFile.type,
+        lastModified: originalFile.lastModified,
+      });
+
+      imageUrl = await uploadUserImage(user.userId, modifiedFile);
     }
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
     let newEventId = "";

@@ -154,7 +154,6 @@ const Profile = () => {
   }, [isProfilePictureUpdated, editedData, initialProfileData]);
 
   const handleFileInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    console.log("ran");
     const files = event.target?.files;
 
     if (files && files.length > 0) {
