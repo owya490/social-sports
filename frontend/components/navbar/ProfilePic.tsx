@@ -6,6 +6,7 @@ import {
   ArrowLeftStartOnRectangleIcon,
   LifebuoyIcon,
   LightBulbIcon,
+  PencilSquareIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { onAuthStateChanged } from "firebase/auth";
@@ -163,6 +164,21 @@ export default function ProfilePic() {
                       </Menu.Item>
                     </div>
                   )}
+                </div>
+                <div className="px-1 py-1">
+                  <Menu.Item>
+                    {({ active }) => (
+                      <Link
+                        href="/event/create"
+                        className={`${
+                          active ? "text-white bg-highlight-yellow" : "text-black"
+                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                      >
+                        <PencilSquareIcon className="h-5 mr-2" />
+                        Create Event
+                      </Link>
+                    )}
+                  </Menu.Item>
                   <Menu.Item>
                     {({ active }) => (
                       <Link

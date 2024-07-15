@@ -30,6 +30,18 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
       if (user.userId === "") {
         return;
       }
+
+      if (
+        currPage === "EventDrilldown" &&
+        typeof window !== "undefined" &&
+        window.location.pathname.includes("/organiser/event/")
+      ) {
+        const pathParts = window.location.pathname.split("/");
+        const lastPart = pathParts[pathParts.length - 1];
+        setEventId(lastPart);
+        return;
+      }
+
       try {
         const events = await getOrganiserEvents(user.userId);
 
