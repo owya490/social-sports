@@ -12,16 +12,29 @@ interface RecommendedEventsProps {
   eventData?: EventData;
 }
 
+const sortByProximityFromHere = (a: EventData, b: EventData, here: EventData | undefined) => {
+  if (here === undefined) {
+    return b.accessCount - a.accessCount;
+  }
+  return (
+    Math.abs(a.locationLatLng.lat - here.locationLatLng.lat) +
+    Math.abs(a.locationLatLng.lng - here.locationLatLng.lng) -
+    (Math.abs(b.locationLatLng.lat - here.locationLatLng.lat) +
+      Math.abs(b.locationLatLng.lng - here.locationLatLng.lng))
+  );
+};
+
 export default function RecommendedEvents(props: RecommendedEventsProps) {
   const { eventData } = props;
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
     const newRecommendedEvents: EventData[] = [];
-    getAllEvents().then((data) => {
-      for (let i = 0; i < 5; i++) {
-        if (data[i] !== undefined) {
-          newRecommendedEvents.push(data[i]);
-        }
+    getAllEvents(true).then((data) => {
+      data.sort((a, b) => {
+        return sortByProximityFromHere(a, b, eventData);
+      });
+      for (let i = 0; i < 6; i++) {
+        newRecommendedEvents.push(data[i]);
       }
       setRecommendedEvents(newRecommendedEvents);
     });
