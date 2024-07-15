@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  BookmarkSquareIcon,
-  CalendarIcon,
-  CameraIcon,
-  ChartBarIcon,
-  HomeIcon,
-  UserIcon,
-} from "@heroicons/react/24/outline";
+import { BookmarkSquareIcon, ChartBarIcon, HomeIcon, UserIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 interface OrganiserNavbarProps {
@@ -27,7 +20,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
             <HomeIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
           </div>
         </Link>
-        <Link href="/organiser/event">
+        {/* <Link href="/organiser/event/dashboard">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
               currPage === "Event" && "bg-organiser-darker-light-gray"
@@ -35,8 +28,8 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
           >
             <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
           </div>
-        </Link>
-        <Link href="/organiser/event/asdf">
+        </Link> */}
+        <Link href="/organiser/event/dashboard">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
               currPage === "EventDrilldown" && "bg-organiser-darker-light-gray"
@@ -54,7 +47,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
             <ChartBarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
           </div>
         </Link>
-        <Link href="/organiser/gallery">
+        {/* <Link href="/organiser/gallery">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
               currPage === "Gallery" && "bg-organiser-darker-light-gray"
@@ -62,7 +55,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
           >
             <CameraIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
           </div>
-        </Link>
+        </Link> */}
         <Link href="/organiser/settings">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
