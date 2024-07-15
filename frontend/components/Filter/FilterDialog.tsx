@@ -8,6 +8,7 @@ import { Slider } from "@material-tailwind/react";
 import { Fragment } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../../components/ListBox";
+import { InvertedHighlightButton } from "../utility/HighlightButton";
 
 export enum SortByCategory {
   HOT,
@@ -172,14 +173,10 @@ export default function FilterDialog({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={openModal}
-        className="text-black flex items-center border border-black px-1 md:px-3 rounded-lg h-10 ml-auto"
-      >
+      <InvertedHighlightButton onClick={openModal} className="!flex !items-center px-1 !md:px-3 !h-10 !ml-auto">
         <p className="hidden md:block">Filters</p>
-        <AdjustmentsHorizontalIcon className="w-7 ml-1" />
-      </button>
+        <AdjustmentsHorizontalIcon className="w-7 md:ml-1" />
+      </InvertedHighlightButton>
 
       <Transition appear show={isFilterModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>

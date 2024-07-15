@@ -1,9 +1,10 @@
 import { MouseEventHandler } from "react";
 
 interface ButtonProps {
-  text: string;
+  text?: string;
   onClick: MouseEventHandler<HTMLButtonElement> | undefined;
   className?: string;
+  children?: React.ReactNode;
 }
 export const HighlightButton = (props: ButtonProps) => {
   return (
@@ -15,6 +16,7 @@ export const HighlightButton = (props: ButtonProps) => {
       onClick={props.onClick}
     >
       {props.text}
+      {props.children}
     </button>
   );
 };
@@ -29,6 +31,7 @@ export const InvertedHighlightButton = (props: ButtonProps) => {
       onClick={props.onClick}
     >
       {props.text}
+      {props.children}
     </button>
   );
 };
