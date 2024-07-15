@@ -31,9 +31,7 @@ export default function MobileNavbar() {
           <MobileSearchBar openSearchInput={handleSearchExpanded} />
           <MobileSearchInput searchExpanded={searchExpanded} setSearchExpanded={handleSearchExpanded} tags={tags} />
         </div>
-        <div className="flex ml-auto items-center">
-          <ProfilePic />
-        </div>
+        <ProfilePic />
       </div>
       <div className="h-[1px] bg-black"></div>
     </div>
