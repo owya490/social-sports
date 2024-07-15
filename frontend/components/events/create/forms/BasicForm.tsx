@@ -12,6 +12,8 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
+import { getLocationCoordinates } from "@/services/src/locationUtils";
+
 
 type BasicData = {
   name: string;
@@ -50,8 +52,10 @@ export function BasicInformation({
   const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null); // Initialize locationError state
   const [priceString, setPriceString] = useState("15");
   const [capacityString, setCapacityString] = useState("20");
+  
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -114,6 +118,31 @@ export function BasicInformation({
     updateField({ paymentsActive: paymentsActive.toLowerCase() === "true" });
   };
 
+  const validateLocation = async (location: string) => {
+    const result = await getLocationCoordinates(location);
+    if (result) {
+      setLocationError(null);
+    } else {
+      setLocationError("Location not found. Please enter a valid location.");
+    }
+  };
+
+  const handleLocationBlur = () => {
+    validateLocation(location);
+  };
+
+  const nextPage = async () => {
+    await validateLocation(location);
+    if (!locationError) {
+      // Proceed to the next page if there are no errors
+      router.push("/next-page-url"); // replace with your next page URL
+    } else {
+      // Scroll to the top of the form to display the error
+      window.scrollTo(0, 0);
+    }
+  };
+  
+
   return (
     <FormWrapper>
       <div className="space-y-12">
@@ -157,10 +186,12 @@ export function BasicInformation({
               required
               value={location}
               onChange={(e) => updateField({ location: e.target.value })}
+              onBlur={handleLocationBlur}
               className="rounded-md focus:ring-0"
               size="lg"
               icon={<MapPinIcon />}
             />
+            {locationError && <p className="text-red-500">{locationError}</p>}
           </div>
         </div>
         <div>
@@ -302,6 +333,15 @@ export function BasicInformation({
             </button>
           </div>
         )}
+        <div className="mt-8">
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-md"
+            type="button"
+            onClick={nextPage}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </FormWrapper>
   );
