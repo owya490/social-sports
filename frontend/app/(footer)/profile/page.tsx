@@ -154,13 +154,16 @@ const Profile = () => {
   }, [isProfilePictureUpdated, editedData, initialProfileData]);
 
   const handleFileInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    console.log("ran");
     const files = event.target?.files;
 
     if (files && files.length > 0) {
       const file = files[0];
+      const originalFileName = file.name;
+      const modifiedFileName = originalFileName.replace(/[(){}[\]]/g, "");
 
       try {
-        const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${file.name}`);
+        const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${modifiedFileName}`);
 
         const previousProfilePictureURL = initialProfileData.profilePicture;
 
