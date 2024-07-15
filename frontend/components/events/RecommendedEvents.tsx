@@ -24,12 +24,22 @@ const sortByProximityFromHere = (a: EventData, b: EventData, here: EventData | u
   );
 };
 
+const filterEventsBySport = (a: EventData, eventData: EventData | undefined) => {
+  if (eventData === undefined) {
+    return a;
+  }
+  return a.sport == eventData.sport;
+};
+
 export default function RecommendedEvents(props: RecommendedEventsProps) {
   const { eventData } = props;
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
     const newRecommendedEvents: EventData[] = [];
     getAllEvents(true).then((data) => {
+      data.filter((a) => {
+        return filterEventsBySport(a, eventData);
+      });
       data.sort((a, b) => {
         return sortByProximityFromHere(a, b, eventData);
       });
