@@ -11,7 +11,6 @@ from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import db
 from lib.logging import Logger
-from lib.stripe.commons import ERROR_URL
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from lib.sendgrid.commons import get_user_email, CREATE_EVENT_EMAIL_TEMPLATE_ID
@@ -96,3 +95,5 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
   except Exception as e:
     logger.error(f"Error sending create event email. eventId={request_data.eventId} error={e}")
     return https_fn.Response(status=500)
+  
+  return https_fn.Response(status=200)
