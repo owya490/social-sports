@@ -16,8 +16,8 @@ from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import db, posthog
 from lib.logging import Logger
-# from lib.sendgrid.purchase_event import (SendGridPurchaseEventRequest,
-#                                          send_email_on_purchase_event)
+from lib.sendgrid.purchase_event import (SendGridPurchaseEventRequest,
+                                         send_email_on_purchase_event)
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
 
@@ -183,10 +183,10 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
   )
 
   # Retry sending email 3 times, before exiting and completing order. If email breaks, its not the end of the world.
-  # for i in range(3):
-  #   success = send_email_on_purchase_event(SendGridPurchaseEventRequest(event_id, is_private, customer.email, full_name, order_id_ref.id))
-  #   if success:
-  #     break
+  for i in range(3):
+    success = send_email_on_purchase_event(SendGridPurchaseEventRequest(event_id, is_private, customer.email, full_name, order_id_ref.id))
+    if success:
+      break
 
   return True
 

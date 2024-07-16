@@ -12,6 +12,7 @@ import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
 import { uploadUserImage } from "@/services/src/imageService";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
+import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -114,6 +115,7 @@ export default function CreateEvent() {
     let newEventId = "";
     try {
       newEventId = await createEvent(newEventData);
+      await sendEmailOnCreateEvent(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");

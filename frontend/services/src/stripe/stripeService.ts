@@ -32,7 +32,6 @@ export async function getStripeStandardAccountLink(organiserId: string, returnUr
       return data.url;
     })
     .catch((error) => {
-      console.log(error);
       stripeServiceLogger.warn(`Failed to return Stripe create standard account link. error=${error}`);
       return "/error";
     });

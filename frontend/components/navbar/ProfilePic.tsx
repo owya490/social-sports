@@ -1,7 +1,8 @@
 import { handleSignOut } from "@/services/src/auth/authService";
 import { auth, storage } from "@/services/src/firebase";
+import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
 import { sleep } from "@/utilities/sleepUtil";
-import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
+import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowLeftStartOnRectangleIcon,
   Cog8ToothIcon,
@@ -86,7 +87,8 @@ export default function ProfilePic() {
         <button
           className="px-4 py-2 rounded-lg mx-3 max-h-[40px] font-semibold hidden lg:block whitespace-nowrap  bg-highlight-yellow text-white hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
           onClick={() => {
-            router.push("/event/create");
+            sendEmailOnCreateEvent("tHa1iwYdcNeB29RrBBhL", "Public");
+            // router.push("/event/create");
           }}
         >
           Create Event

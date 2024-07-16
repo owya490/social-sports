@@ -1,9 +1,9 @@
 import json
+import os
 import time
 import uuid
 from dataclasses import dataclass
 
-import os
 import stripe
 from firebase_admin import firestore
 from firebase_functions import https_fn, options
@@ -11,10 +11,10 @@ from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import db
 from lib.logging import Logger
+from lib.sendgrid.commons import PURCHASE_EVENT_EMAIL_TEMPLATE_ID
 from lib.stripe.commons import ERROR_URL
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from lib.sendgrid.commons import PURCHASE_EVENT_EMAIL_TEMPLATE_ID
 
 
 @dataclass
@@ -56,10 +56,11 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
   order_data = maybe_order_data.to_dict()
   
   try:
+    subject = "Thank you for purchasing " + event_data.get("name")
     message = Mail(
       from_email='team.sportshub@gmail.com',
       to_emails=request_data.email,
-      subject=f"Thank you for purchasing {event_data.get("name")}",
+      subject=subject
     )
 
     message.dynamic_template_data = {
