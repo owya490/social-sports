@@ -108,14 +108,14 @@ const EventDrilldownDetailsPage = ({
 
   useEffect(() => {
     if (eventEndDate) {
-      const dateString = timestampToDateString(eventStartDate);
+      const dateString = timestampToDateString(eventEndDate);
       const timeString = timestampToTimeOfDay(eventEndDate);
       setEndDate(`${dateString}`);
       setNewEditEndDate(`${dateString}`);
       setEndTime(`${timeString}`);
       setNewEditEndTime(`${timeString}`);
     }
-  }, [eventEndDate, eventStartDate]);
+  }, [eventEndDate]);
 
   const handleDateTimeUpdate = async () => {
     try {
@@ -335,38 +335,32 @@ const EventDrilldownDetailsPage = ({
                           setNewEditDate(formatDateToString(e.target.value));
                         }}
                         crossOrigin="false"
+                        label="Start Date"
                       />
-                    </div>
-                  ) : (
-                    <div>{newEditDate}</div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-          <div className="px-2 flex flex-row space-x-2">
-            {editEndTime && <ClockIcon className="w-4 mt-2" />}
-            <div>
-              {loading ? (
-                <div></div>
-              ) : (
-                <>
-                  {editTime ? (
-                    <div className="flex">
+
                       <Input
-                        type="time"
-                        value={formatTimeTo24Hour(newEditTime)}
+                        type="date"
+                        value={formatStringToDate(newEditEndDate)}
                         style={{
                           width: "100%",
                         }}
                         onChange={(e) => {
-                          setNewEditTime(formatTimeTo12Hour(e.target.value));
+                          setNewEditEndDate(formatDateToString(e.target.value));
                         }}
                         crossOrigin="false"
+                        label="End Date"
                       />
                     </div>
                   ) : (
-                    <div></div>
+                    <div>
+                      {newEditDate === newEditEndDate ? (
+                        <div>{newEditDate}</div>
+                      ) : (
+                        <div>
+                          {newEditDate} - {newEditEndDate}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </>
               )}
@@ -388,6 +382,18 @@ const EventDrilldownDetailsPage = ({
                     <div className="flex">
                       <Input
                         type="time"
+                        value={formatTimeTo24Hour(newEditTime)}
+                        style={{
+                          width: "100%",
+                        }}
+                        onChange={(e) => {
+                          setNewEditTime(formatTimeTo12Hour(e.target.value));
+                        }}
+                        crossOrigin="false"
+                        label="Start Time"
+                      />
+                      <Input
+                        type="time"
                         value={formatTimeTo24Hour(newEditEndTime)}
                         style={{
                           width: "100%",
@@ -396,6 +402,7 @@ const EventDrilldownDetailsPage = ({
                           setNewEditEndTime(formatTimeTo12Hour(e.target.value));
                         }}
                         crossOrigin="false"
+                        label="End Time"
                       />
                     </div>
                   ) : (
@@ -430,6 +437,7 @@ const EventDrilldownDetailsPage = ({
                           setNewEditLocation(e.target.value);
                         }}
                         crossOrigin="false"
+                        label="Location"
                       />
                     </div>
                   ) : (
@@ -464,6 +472,7 @@ const EventDrilldownDetailsPage = ({
                           setNewEditPrice(Number(e.target.value));
                         }}
                         crossOrigin="false"
+                        label="Price"
                       />
                       <CheckIcon
                         className="absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer"

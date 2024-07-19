@@ -17,7 +17,8 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 export type FormData = {
-  date: string;
+  startDate: string;
+  endDate: string;
   location: string;
   sport: string;
   price: number;
@@ -33,7 +34,8 @@ export type FormData = {
 };
 
 const INITIAL_DATA: FormData = {
-  date: new Date().toISOString().slice(0, 10),
+  startDate: new Date().toISOString().slice(0, 10),
+  endDate: new Date().toISOString().slice(0, 10),
   location: "",
   sport: "volleyball",
   price: 15,
@@ -130,13 +132,12 @@ export default function CreateEvent() {
     imageUrl: string
   ): Promise<NewEventData> {
     // TODO
-    // Fix end date
     // Consider a User's ability to select their event image from their uploaded images
     // Fix organiserId
     const lngLat = await getLocationCoordinates(formData.location);
-    const calculateDifference = (startDate: Timestamp, endDate: Timestamp): { hrs: number; mins: number } => {
-      const startMillis = startDate.toMillis();
-      const endMillis = endDate.toMillis();
+    const calculateDifference = (startTime: Timestamp, endTime: Timestamp): { hrs: number; mins: number } => {
+      const startMillis = startTime.toMillis();
+      const endMillis = endTime.toMillis();
 
       const differenceMillis = endMillis - startMillis;
 
@@ -148,8 +149,8 @@ export default function CreateEvent() {
     };
 
     return {
-      startDate: convertDateAndTimeStringToTimestamp(formData.date, formData.startTime),
-      endDate: convertDateAndTimeStringToTimestamp(formData.date, formData.endTime),
+      startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
+      endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
       location: formData.location,
       capacity: formData.capacity,
       vacancy: formData.capacity,
@@ -164,7 +165,7 @@ export default function CreateEvent() {
       attendeesMetadata: {},
       accessCount: 0,
       organiserId: user.userId,
-      registrationDeadline: convertDateAndTimeStringToTimestamp(formData.date, formData.startTime),
+      registrationDeadline: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       locationLatLng: {
         lat: lngLat.lat,
         lng: lngLat.lng,

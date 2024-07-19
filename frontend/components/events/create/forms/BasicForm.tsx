@@ -7,7 +7,7 @@ import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
@@ -16,7 +16,8 @@ import { FormWrapper } from "./FormWrapper";
 type BasicData = {
   name: string;
   location: string;
-  date: string;
+  startDate: string;
+  endDate: string;
   startTime: string;
   endTime: string;
   sport: string;
@@ -35,7 +36,8 @@ type BasicInformationProps = BasicData & {
 export function BasicInformation({
   name,
   location,
-  date,
+  startDate,
+  endDate,
   startTime,
   endTime,
   sport,
@@ -61,7 +63,7 @@ export function BasicInformation({
       updateField({ isPrivate: true });
     }
   };
-  const handleDateChange = (selectedDate: string) => {
+  const handleStartDateChange = (selectedDate: string) => {
     // Validate if the selected date is in the past
     const currentDate = new Date();
     const selectedDateObj = new Date(selectedDate);
@@ -72,8 +74,24 @@ export function BasicInformation({
       setDateWarning(null);
     }
 
-    updateField({ date: selectedDate });
+    updateField({ startDate: selectedDate });
   };
+
+  const handleEndDateChange = (selectedDate: string) => {
+    const selectedDateObj = new Date(selectedDate);
+    const startDateObj = new Date(startDate);
+    //Validate end date is after start date
+    if (selectedDateObj < startDateObj) {
+      setDateWarning("Selected date is after the starting date.");
+    } else {
+      setDateWarning(null);
+    }
+    updateField({ endDate: selectedDate });
+  };
+
+  useEffect(() => {
+    updateField({ endDate: startDate });
+  }, [startDate]);
 
   const handleStartTimeChange = (selectedTime: string) => {
     // Validate if end time is before start time
@@ -136,14 +154,17 @@ export function BasicInformation({
         <div>
           <label className="text-black text-lg font-semibold">When does your event start and end?</label>
           <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
-            <div className="basis-1/2">
-              <CustomDateInput date={date} placeholder="Date" handleChange={handleDateChange} />
+            <div className="basis-1/3">
+              <CustomDateInput date={startDate} placeholder="Start Date" handleChange={handleStartDateChange} />
             </div>
             <div className="basis-1/4">
-              <CustomTimeInput value={startTime} placeholder="Start time" handleChange={handleStartTimeChange} />
+              <CustomTimeInput value={startTime} placeholder="Start Time" handleChange={handleStartTimeChange} />
+            </div>
+            <div className="basis-1/3">
+              <CustomDateInput date={endDate} placeholder="End Date" handleChange={handleEndDateChange} />
             </div>
             <div className="basis-1/4">
-              <CustomTimeInput value={endTime} placeholder="End time" handleChange={handleEndTimeChange} />
+              <CustomTimeInput value={endTime} placeholder="End Time" handleChange={handleEndTimeChange} />
             </div>
           </div>
         </div>
