@@ -7,9 +7,10 @@ import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstant
 
 interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
+  eventId: string;
 }
 
-const EventDrilldownManageAttendeesPage = ({ eventMetadata }: EventDrilldownManageAttendeesPageProps) => {
+const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDrilldownManageAttendeesPageProps) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   function closeModal() {
     setIsFilterModalOpen(false);
@@ -45,7 +46,7 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata }: EventDrilldownMana
               Object.entries(purchaserObj.attendees).map(([purchaserName, attendeeDetailsObj]) => {
                 return (
                   <EventDrilldownAttendeeCard
-                    name={attendeeDetailsObj.name ? attendeeDetailsObj.name : purchaserName}
+                    name={purchaserName}
                     image={DEFAULT_USER_PROFILE_PICTURE}
                     email={purchaserObj.email}
                     number={attendeeDetailsObj.phone}
@@ -62,6 +63,7 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata }: EventDrilldownMana
           setIsFilterModalOpen={setIsFilterModalOpen}
           closeModal={closeModal}
           isFilterModalOpen={isFilterModalOpen}
+          eventId={eventId}
         />
       </div>
     </div>

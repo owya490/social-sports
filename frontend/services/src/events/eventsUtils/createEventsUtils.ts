@@ -39,5 +39,6 @@ export function extractEventsMetadataFields(eventData: NewEventData): EventMetad
     completedStripeCheckoutSessionIds: [],
     organiserId: eventData.organiserId,
     completeTicketCount: 0,
+    orderIds: [],
   };
 }

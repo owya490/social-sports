@@ -1,4 +1,13 @@
-import { EventData, EventDataWithoutOrganiser, EventId, EventMetadata, NewEventData } from "@/interfaces/EventTypes";
+import {
+  Attendee,
+  EmptyPurchaser,
+  EventData,
+  EventDataWithoutOrganiser,
+  EventId,
+  EventMetadata,
+  NewEventData,
+  Purchaser,
+} from "@/interfaces/EventTypes";
 import {
   DocumentData,
   DocumentReference,
@@ -36,6 +45,7 @@ import {
   getAllEventsFromCollectionRef,
   tryGetAllActivePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
+import * as crypto from "crypto";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -207,7 +217,7 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
     eventServiceLogger.info(`Rate Limited!, ${eventId}`);
     throw "Rate Limited";
   }
-  eventServiceLogger.info(`updateEventByName ${eventId}`); 
+  eventServiceLogger.info(`updateEventByName ${eventId}`);
   try {
     const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
 
@@ -294,8 +304,66 @@ export async function updateEventFromDocRef(
     await updateDoc(eventRef, updatedData);
     eventServiceLogger.info("Event updated successfully.");
   } catch (error) {
-    console.error(error);
     eventServiceLogger.error(`Error updating event from document reference: ${error}`);
     throw error;
   }
+}
+
+export async function updateEventMetadataFromEventId(eventId: string, updatedData: Partial<EventMetadata>) {
+  try {
+    const eventMetadataDocRef = doc(db, CollectionPaths.EventsMetadata, eventId); // Get document reference by ID
+
+    await updateDoc(eventMetadataDocRef, updatedData);
+
+    eventServiceLogger.info(`EventMetadata with eventId '${eventId}' updated successfully.`);
+  } catch (error) {
+    eventServiceLogger.error(`updateEventMetadataFromEventId ${error}`);
+  }
+}
+
+export async function addEventAttendee(attendee: Purchaser, eventId: string) {
+  const attendeeEmail = attendee.email;
+  const attendeeEmailHash = getPurchaserEmailHash(attendeeEmail);
+  // Get information of the one attendee
+  const attendeeName = Object.keys(attendee.attendees)[0];
+  const attendeeInfo = Object.values(attendee.attendees)[0];
+
+  // First check whether there is enough ticket allocation
+  const eventData = await getEventById(eventId);
+  if (eventData.vacancy < attendeeInfo.ticketCount) {
+    throw new Error("Not enough tickets!");
+  }
+
+  const docRef = doc(db, CollectionPaths.EventsMetadata, eventId);
+  const eventsMetadataDoc = await getDoc(docRef);
+  let eventMetadata = eventsMetadataDoc.data() as EventMetadata;
+
+  // Check if email has is already in the purchaserMap
+  if (!(attendeeEmailHash in eventMetadata.purchaserMap)) {
+    eventMetadata.purchaserMap[attendeeEmailHash] = EmptyPurchaser;
+    eventMetadata.purchaserMap[attendeeEmailHash].email = attendeeEmail;
+  }
+
+  // Check if specific attendee name is already under purchaser email
+  if (!(attendeeName in eventMetadata.purchaserMap[attendeeEmailHash].attendees)) {
+    eventMetadata.purchaserMap[attendeeEmailHash].attendees[attendeeName] = attendeeInfo;
+  } else {
+    eventMetadata.purchaserMap[attendeeEmailHash].attendees[attendeeName].ticketCount += attendeeInfo.ticketCount;
+  }
+
+  eventMetadata.purchaserMap[attendeeEmailHash].totalTicketCount += attendeeInfo.ticketCount;
+
+  updateEventMetadataFromEventId(eventId, eventMetadata);
+}
+
+/**
+ * Equivalent hashing function to the one located in webhooks.py
+ Used to give email hash of purchaser email.
+ */
+function getPurchaserEmailHash(email: string) {
+  const md5Hash = crypto.createHash("md5").update(email).digest("hex");
+
+  const hashInt = BigInt("0x" + md5Hash);
+
+  return hashInt.toString();
 }

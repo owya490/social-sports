@@ -1,4 +1,4 @@
-import { inviteAttendee, removeAttendee } from "@/services/src/organiser/organiserService";
+import { removeAttendee } from "@/services/src/organiser/organiserService";
 import { Dialog, Transition, Description, DialogTitle, TransitionChild, DialogPanel } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import React, { Fragment, useState } from "react";

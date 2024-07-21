@@ -3,6 +3,7 @@ import { EmptyUserData, UserData, UserId } from "./UserTypes";
 
 export type EventId = string;
 export type StripeCheckoutSessionId = string;
+export type OrderId = string;
 
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;
@@ -82,14 +83,16 @@ export interface EventMetadata {
   completeTicketCount: number;
   completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
   organiserId: UserId;
+  orderIds: OrderId[];
 }
 
 export const EmptyEventMetadata: EventMetadata = {
   eventId: "",
-  purchaserMap: { "": { email: "", attendees: { "": { name: "", phone: "", ticketCount: 0 } }, totalTicketCount: 0 } },
+  purchaserMap: { "": { email: "", attendees: { "": { phone: "", ticketCount: 0 } }, totalTicketCount: 0 } },
   completeTicketCount: 0,
   completedStripeCheckoutSessionIds: [],
   organiserId: "",
+  orderIds: [],
 };
 
 export interface Purchaser {
@@ -98,11 +101,21 @@ export interface Purchaser {
   totalTicketCount: number;
 }
 
+export const EmptyAttendee: Attendee = {
+  phone: "",
+  ticketCount: 0,
+};
+
+export const EmptyPurchaser: Purchaser = {
+  email: "",
+  attendees: {},
+  totalTicketCount: 0,
+};
+
 export interface Attendee {
-  name: Name;
   phone: string;
   ticketCount: number;
 }
 
-type Name = string;
+export type Name = string;
 type EmailHash = string;

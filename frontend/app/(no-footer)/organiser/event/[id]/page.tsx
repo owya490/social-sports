@@ -110,7 +110,6 @@ export default function EventPage({ params }: EventPageProps) {
           eventPrice={eventPrice}
         />
         <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
-          
           <div id="side-panel" className="z-20">
             <EventDrilldownSidePanel
               loading={loading}
@@ -121,7 +120,7 @@ export default function EventPage({ params }: EventPageProps) {
             />
           </div>
           <div id="event-drilldown-details-page" className="w-full">
-            <ShareModal/>
+            <ShareModal />
             {currSidebarPage === "Details" && (
               <EventDrilldownDetailsPage
                 loading={loading}
@@ -136,7 +135,7 @@ export default function EventPage({ params }: EventPageProps) {
               />
             )}
             {currSidebarPage === "Manage Attendees" && (
-              <EventDrilldownManageAttendeesPage eventMetadata={eventMetadata} />
+              <EventDrilldownManageAttendeesPage eventMetadata={eventMetadata} eventId={eventId} />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
             {currSidebarPage === "Share" && <EventDrilldownSharePage />}

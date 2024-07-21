@@ -1,4 +1,4 @@
-import { inviteAttendee } from "@/services/src/organiser/organiserService";
+import { addAttendee } from "@/services/src/organiser/organiserService";
 import { Dialog, Transition, Description, DialogTitle, TransitionChild, DialogPanel } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import React, { Fragment, useState } from "react";
@@ -7,10 +7,19 @@ interface InviteAttendeeDialogProps {
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
   isFilterModalOpen: boolean;
+  eventId: string;
 }
 
-const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalOpen }: InviteAttendeeDialogProps) => {
-  const [inviteEmail, setInviteEmail] = useState<string>("");
+const InviteAttendeeDialog = ({
+  setIsFilterModalOpen,
+  closeModal,
+  isFilterModalOpen,
+  eventId,
+}: InviteAttendeeDialogProps) => {
+  const [attendeeEmail, setAttendeeEmail] = useState<string>("");
+  const [attendeeName, setAttendeeName] = useState<string>("");
+  const [attendeePhoneNumber, setAttendeePhoneNumber] = useState<string>("");
+  const [numTickets, setNumTickets] = useState<number>(1);
   const [enabled, setEnabled] = useState(true);
   return (
     <div>
@@ -54,24 +63,66 @@ const InviteAttendeeDialog = ({ setIsFilterModalOpen, closeModal, isFilterModalO
                       </div>
                     </div>
                   </Description>
-
-                  <div className="">
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      tabIndex={1}
-                      required
-                      className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                      placeholder="Attendee email"
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                    />
+                  <div className="space-y-2">
+                    <div className="">
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        tabIndex={1}
+                        required
+                        className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                        placeholder="Attendee email"
+                        onChange={(e) => setAttendeeEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="">
+                      <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        tabIndex={1}
+                        required
+                        className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                        placeholder="Attendee name"
+                        onChange={(e) => setAttendeeName(e.target.value)}
+                      />
+                    </div>
+                    <div className="">
+                      <input
+                        id="mobilenumber"
+                        name="mobilenumber"
+                        type="tel"
+                        pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                        autoComplete="number"
+                        tabIndex={1}
+                        required
+                        className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                        placeholder="Mobile number"
+                        onChange={(e) => setAttendeePhoneNumber(e.target.value)}
+                      />
+                    </div>
+                    <div className="">
+                      <input
+                        id="mobilenumber"
+                        name="mobilenumber"
+                        type="number"
+                        pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                        autoComplete="number"
+                        tabIndex={1}
+                        required
+                        className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                        placeholder="Number of tickets"
+                        onChange={(e) => setNumTickets(parseInt(e.target.value))}
+                      />
+                    </div>
                   </div>
+
                   <div className="mt-2 float-right">
                     <div
                       className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
-                      onClick={() => inviteAttendee(inviteEmail)}
+                      onClick={() => addAttendee(attendeeEmail, attendeeName, attendeePhoneNumber, numTickets, eventId)}
                     >
                       Add Attendee
                     </div>
