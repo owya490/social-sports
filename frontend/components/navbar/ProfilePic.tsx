@@ -1,9 +1,9 @@
 import { handleSignOut } from "@/services/src/auth/authService";
 import { auth, storage } from "@/services/src/firebase";
 import { sleep } from "@/utilities/sleepUtil";
-import { Menu, Transition } from "@headlessui/react";
+import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
-  ArrowLeftOnRectangleIcon,
+  ArrowLeftStartOnRectangleIcon,
   Cog8ToothIcon,
   LifebuoyIcon,
   LightBulbIcon,
@@ -30,7 +30,7 @@ export default function ProfilePic() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
+      if (user && auth.currentUser?.emailVerified) {
         setLoggedIn(true);
       } else {
         setLoggedIn(false);
@@ -84,7 +84,7 @@ export default function ProfilePic() {
     <div className="ml-auto flex items-center">
       {loggedIn && (
         <button
-          className="border border-black px-4 py-2 rounded-lg mx-3 max-h-[40px] hidden lg:block whitespace-nowrap hover:bg-black hover:text-white"
+          className="px-4 py-2 rounded-lg mx-3 max-h-[40px] font-semibold hidden lg:block whitespace-nowrap  bg-highlight-yellow text-white hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
           onClick={() => {
             router.push("/event/create");
           }}
@@ -95,13 +95,13 @@ export default function ProfilePic() {
       {!loggedIn && (
         <div className="flex">
           <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block bg-black text-white whitespace-nowrap ml-4 hover:bg-white hover:text-black"
+            className=" px-6 py-2 rounded-lg max-h-[40px] font-semibold lg:block bg-highlight-yellow text-white whitespace-nowrap ml-4 hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
             onClick={() => router.push("/login")}
           >
             Login
           </button>
           <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block hover:bg-black hover:text-white"
+            className="border-2 text-highlight-yellow font-semibold border-highlight-yellow px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block hover:bg-highlight-yellow hover:text-white"
             onClick={() => router.push("/register")}
           >
             Register
@@ -112,7 +112,7 @@ export default function ProfilePic() {
         <div className="flex items-center">
           <Menu as="div" className="relative inline-block text-left">
             <div className="flex items-centers">
-              <Menu.Button className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
+              <MenuButton className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
                 <Image
                   priority
                   src={user?.profilePicture || profilePictureURL}
@@ -121,7 +121,7 @@ export default function ProfilePic() {
                   height={0}
                   className="object-cover h-10 w-10"
                 />
-              </Menu.Button>
+              </MenuButton>
             </div>
             <Transition
               as={Fragment}
@@ -132,7 +132,7 @@ export default function ProfilePic() {
               leaveFrom="transform opacity-100 scale-100"
               leaveTo="transform opacity-0 scale-95"
             >
-              <Menu.Items className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <MenuItems className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 {loggedIn && (
                   <div className="px-1 py-1">
                     <Menu.Item>
@@ -140,7 +140,7 @@ export default function ProfilePic() {
                         <Link
                           href="/profile"
                           className={`${
-                            active ? "text-white bg-black" : "text-black"
+                            active ? "text-white bg-highlight-yellow" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <UserCircleIcon className="h-5 mr-2" />
@@ -153,7 +153,7 @@ export default function ProfilePic() {
                         <Link
                           href="/settings"
                           className={`${
-                            active ? "text-white bg-black" : "text-black"
+                            active ? "text-white bg-highlight-yellow" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <Cog8ToothIcon className="h-5 mr-2" />
@@ -169,7 +169,7 @@ export default function ProfilePic() {
                       <Link
                         href="/help"
                         className={`${
-                          active ? "text-white bg-black" : "text-black"
+                          active ? "text-white bg-highlight-yellow" : "text-black"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LifebuoyIcon className="h-5 mr-2" />
@@ -182,7 +182,7 @@ export default function ProfilePic() {
                       <Link
                         href="/suggestions"
                         className={`${
-                          active ? "text-white bg-black" : "text-black"
+                          active ? "text-white bg-highlight-yellow" : "text-black"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LightBulbIcon className="h-5 mr-2" />
@@ -198,17 +198,17 @@ export default function ProfilePic() {
                         <div
                           onClick={handleLogOut}
                           className={`${
-                            active ? "text-white bg-black" : "text-black"
+                            active ? "text-white bg-highlight-yellow" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer`}
                         >
-                          <ArrowLeftOnRectangleIcon className="h-5 mr-2" />
+                          <ArrowLeftStartOnRectangleIcon className="h-5 mr-2" />
                           Log Out
                         </div>
                       )}
                     </Menu.Item>
                   </div>
                 )}
-              </Menu.Items>
+              </MenuItems>
             </Transition>
           </Menu>
         </div>

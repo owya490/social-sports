@@ -1,3 +1,5 @@
+import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
+
 export type UserId = string;
 
 interface AbstractUserData {
@@ -19,6 +21,7 @@ interface AbstractUserData {
   profilePicture: string;
   stripeAccount?: string;
   stripeAccountActive?: boolean;
+  organiserEvents?: [string];
 }
 
 export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
@@ -45,6 +48,8 @@ export interface PrivateUserData extends AbstractUserData {
   stripeAccountActive?: boolean;
 }
 
+export interface TempUserData extends AbstractUserData {}
+
 export interface NewUserData extends AbstractUserData {
   password: string;
 }
@@ -59,8 +64,7 @@ export const EmptyNewUserData: NewUserData = {
     email: "",
   },
   password: "",
-  profilePicture:
-    "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+  profilePicture: DEFAULT_USER_PROFILE_PICTURE,
   surname: "",
   dob: "",
 };
@@ -71,8 +75,11 @@ export const EmptyUserData: UserData = {
   contactInformation: {
     email: "",
   },
-  profilePicture:
-    "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-profile-photo.webp?alt=media&token=15ca6518-e159-4c46-8f68-c445df11888c",
+  profilePicture: DEFAULT_USER_PROFILE_PICTURE,
   surname: "",
   dob: "",
 };
+
+export interface IUsersDataLocalStorage {
+  [key: string]: UserData;
+}

@@ -51,10 +51,7 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
             <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
             <div className="flex my-5">
               <h5 className="font-bold text-lg">Similar events nearby</h5>
-              <Link
-                href="#"
-                className="text-sm font-light ml-auto cursor-pointer hover:underline"
-              >
+              <Link href="#" className="text-sm font-light ml-auto cursor-pointer hover:underline">
                 See all
               </Link>
             </div>
@@ -66,17 +63,11 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
             <ChevronLeftButton handleClick={scrollLeft} />
           </div>
           <div className="pb-10 screen-width-dashboard">
-            <div
-              id="recommended-event-overflow"
-              className="flex overflow-x-auto pb-4 snap-x snap-mandatory"
-            >
-              <div className="flex space-x-4">
+            <div id="recommended-event-overflow" className="flex overflow-x-auto pb-4 snap-x snap-mandatory">
+            <div className="flex space-x-2 xl:space-x-8">
                 {recommendedEvents.map((event, i) => {
                   return (
-                    <div
-                      key={`recommended-event-${i}`}
-                      className="snap-start max-w-[300px]"
-                    >
+                    <div key={`recommended-event-${i}`} className="snap-start w-[300px] min-h-[250px]">
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}

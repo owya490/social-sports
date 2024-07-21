@@ -10,7 +10,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./functions_key.json"
 
 app = initialize_app()
 
-db: google.cloud.firestore.Client = firestore.Client(project="socialsports-44162")
+db: google.cloud.firestore.Client = firestore.Client()
 
 client = google.cloud.logging.Client()
 client.setup_logging()

@@ -7,6 +7,7 @@ import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
+import EventImage from "@/components/events/EventImage";
 
 interface EventCardProps {
   eventId: EventId;
@@ -29,7 +30,7 @@ export default function EventCard(props: EventCardProps) {
   }
   return (
     <Link href={`/event/${props.eventId}`}>
-      <div className="bg-white rounded-lg text-left border-gray-300 border w-full sm:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer">
+      <div className="bg-white rounded-lg text-left border-gray-300 border w-full md:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer">
         {props.loading ? (
           <div>
             <LoadingSkeletonEventCard />
@@ -38,19 +39,12 @@ export default function EventCard(props: EventCardProps) {
           <>
             <div
               className="h-36 w-full object-cover rounded-t-lg"
-              style={{
-                backgroundImage: `url(${props.image})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center center",
-              }}
-            ></div>
+            >
+              <EventImage imageSrc={props.image} />
+            </div>
             <div className="p-4">
-              <h4 className="font-bold text-gray-500 text-xs">
-                {timestampToEventCardDateString(props.startTime)}
-              </h4>
-              <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">
-                {props.name}
-              </h2>
+              <h4 className="font-bold text-gray-500 text-xs">{timestampToEventCardDateString(props.startTime)}</h4>
+              <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">{props.name}</h2>
               <div className="flex ml-0.5 items-center">
                 <Image
                   src={props.organiser.profilePicture}
@@ -70,15 +64,11 @@ export default function EventCard(props: EventCardProps) {
                 </div>
                 <div className="flex items-center">
                   <CurrencyDollarIcon className="w-5" />
-                  <p className="ml-1 font-light text-sm">
-                    {`$${props.price} AUD per person`}
-                  </p>
+                  <p className="ml-1 font-light text-sm">{`$${props.price} AUD per person`}</p>
                 </div>
               </div>
               <div className="flex items-center">
-                <p className="text-sm font-light text-gray-500">
-                  {`${props.vacancy} spots left`}
-                </p>
+                <p className="text-sm font-light text-gray-500">{`${props.vacancy} spots left`}</p>
                 <button className="ml-auto rounded-lg border-black border py-1 px-2 text-blackm text-center">
                   <h2 className="text-sm">Book Now</h2>
                 </button>

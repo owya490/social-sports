@@ -7,6 +7,8 @@ export type StripeCheckoutSessionId = string;
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;
 
+export type EventAttendees = { [emailHash: string]: number };
+
 interface AbstractEventData {
   startDate: Timestamp;
   endDate: Timestamp;
@@ -23,6 +25,7 @@ interface AbstractEventData {
   name: string;
   description: string;
   nameTokens?: string[]; // Assuming "rich text field" is a string
+  locationTokens?: string[];
   image: string; // Assuming you store the image URL or path as a string
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
@@ -80,6 +83,14 @@ export interface EventMetadata {
   completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
   organiserId: UserId;
 }
+
+export const EmptyEventMetadata: EventMetadata = {
+  eventId: "",
+  purchaserMap: { "": { email: "", attendees: { "": { name: "", phone: "", ticketCount: 0 } }, totalTicketCount: 0 } },
+  completeTicketCount: 0,
+  completedStripeCheckoutSessionIds: [],
+  organiserId: "",
+};
 
 export interface Purchaser {
   email: string;
