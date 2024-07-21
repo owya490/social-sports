@@ -354,6 +354,8 @@ export async function addEventAttendee(attendee: Purchaser, eventId: string) {
   eventMetadata.purchaserMap[attendeeEmailHash].totalTicketCount += attendeeInfo.ticketCount;
   eventData.vacancy -= attendeeInfo.ticketCount;
 
+  // TODO: need to make both these operations guaranteed to be atomic and handle race condition for
+  // adding new tickets.
   updateEventById(eventId, eventData);
   updateEventMetadataFromEventId(eventId, eventMetadata);
 }
