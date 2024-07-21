@@ -352,7 +352,9 @@ export async function addEventAttendee(attendee: Purchaser, eventId: string) {
   }
 
   eventMetadata.purchaserMap[attendeeEmailHash].totalTicketCount += attendeeInfo.ticketCount;
+  eventData.vacancy -= attendeeInfo.ticketCount;
 
+  updateEventById(eventId, eventData);
   updateEventMetadataFromEventId(eventId, eventMetadata);
 }
 
