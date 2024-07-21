@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 export type FormData = {
+  end: string;
+  start: string;
   startDate: string;
   endDate: string;
   location: string;
@@ -48,6 +50,8 @@ const INITIAL_DATA: FormData = {
   startTime: "10:00",
   endTime: "18:00",
   paymentsActive: false,
+  end: "",
+  start: "",
 };
 
 export default function CreateEvent() {

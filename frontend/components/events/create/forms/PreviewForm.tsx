@@ -2,7 +2,6 @@ import { FormData } from "@/app/(footer)/event/create/page";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { Timestamp } from "firebase/firestore";
-import { FormWrapper } from "./FormWrapper";
 
 type BasicData = {
   form: FormData;
@@ -15,7 +14,7 @@ type PreviewFormProps = BasicData & {
 };
 
 export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: PreviewFormProps) => {
-  const dateString = form.date + " " + form.startTime;
+  const dateString = form.startDate + " " + form.startTime;
   var [datePart, timePart] = dateString.split(" ");
   var [year, month, day] = datePart.split("-");
   var [hours, minutes] = timePart.split(":");
@@ -25,17 +24,10 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
     <div className="lg:grid lg:grid-cols-3 mt-20 space-y-6">
       <div className="md:grid md:grid-cols-2 gap-6 mt-0 items-start mb-8 md:col-span-2 space-y-6">
         <div className="col-span-1 mt-6 mx-2 space-y-6">
-        <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">
-              Name and Date
-            </div>
+          <div>
+            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Name</div>
             <div className="flex justify-between">
-              <p className="text-m">Name: </p>
               <p className="text-m">{form.name}</p>
-            </div>
-            <div className="flex justify-between">
-              <p className="text-m">Date: </p>
-              <p className="text-m">{form.date} </p>
             </div>
           </div>
           <div>
@@ -43,16 +35,15 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
             <p className="text-m">{form.location}</p>
           </div>
           <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">
-              Details of Time
-            </div>
+            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Time</div>
             <div className="flex justify-between">
-              <p className="text-m">Time Start: </p>
-              <p className="text-m">{form.startTime}</p>
+              <p className="text-m">Start Time: </p>
+              <p className="text-m">{form.start}</p>
             </div>
+
             <div className="flex justify-between">
-              <p className="text-m">Time End: </p>
-              <p className="text-m">{form.endTime} </p>
+              <p className="text-m">End Time: </p>
+              <p className="text-m">{form.end}</p>
             </div>
           </div>
         </div>
@@ -65,12 +56,12 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
 
           <div>
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Price</div>
-            <p className="text-m">{form.price}</p>
+            <p className="text-m">${form.price}</p>
           </div>
 
           <div>
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Capacity</div>
-            <p className="text-m">{form.capacity}</p>
+            <p className="text-m">{form.capacity} people</p>
           </div>
         </div>
 

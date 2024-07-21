@@ -1,6 +1,7 @@
 // BasicInformation.tsx
 
 import { UserData } from "@/interfaces/UserTypes";
+import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
@@ -25,6 +26,8 @@ type BasicData = {
   capacity: number;
   isPrivate: boolean;
   paymentsActive: boolean;
+  start: string;
+  end: string;
 };
 
 type BasicInformationProps = BasicData & {
@@ -40,6 +43,8 @@ export function BasicInformation({
   endDate,
   startTime,
   endTime,
+  start,
+  end,
   sport,
   price,
   capacity,
@@ -64,28 +69,10 @@ export function BasicInformation({
     }
   };
   const handleStartDateChange = (selectedDate: string) => {
-    // Validate if the selected date is in the past
-    const currentDate = new Date();
-    const selectedDateObj = new Date(selectedDate);
-
-    if (selectedDateObj < currentDate) {
-      setDateWarning("Selected date is in the past.");
-    } else {
-      setDateWarning(null);
-    }
-
     updateField({ startDate: selectedDate });
   };
 
   const handleEndDateChange = (selectedDate: string) => {
-    const selectedDateObj = new Date(selectedDate);
-    const startDateObj = new Date(startDate);
-    //Validate end date is after start date
-    if (selectedDateObj < startDateObj) {
-      setDateWarning("Selected date is after the starting date.");
-    } else {
-      setDateWarning(null);
-    }
     updateField({ endDate: selectedDate });
   };
 
@@ -94,26 +81,42 @@ export function BasicInformation({
   }, [startDate]);
 
   const handleStartTimeChange = (selectedTime: string) => {
-    // Validate if end time is before start time
-    if (endTime && selectedTime >= endTime) {
-      setTimeWarning("End time must be after start time.");
-    } else {
-      setTimeWarning(null);
-    }
-
     updateField({ startTime: selectedTime });
   };
 
   const handleEndTimeChange = (selectedTime: string) => {
-    // Validate if end time is before start time
-    if (selectedTime <= startTime) {
-      setTimeWarning("End time must be after start time.");
+    updateField({ endTime: selectedTime });
+  };
+
+  useEffect(() => {
+    const currentDateTime = new Date();
+    const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
+    const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
+    console.log(startDate, startTime);
+
+    if (currentDateTime > selectedStartDateTime) {
+      setDateWarning("Event start date and time is in the past!");
+    } else {
+      setDateWarning(null);
+    }
+
+    if (selectedEndDateTime < selectedStartDateTime) {
+      setTimeWarning("Event must end after it starts!");
     } else {
       setTimeWarning(null);
     }
+  }, [startDate, startTime, endDate, endTime]);
 
-    updateField({ endTime: selectedTime });
-  };
+  useEffect(() => {
+    const startingDate = formatDateToString(startDate);
+    const startingTime = formatTimeTo12Hour(startTime);
+    const endingDate = formatDateToString(endDate);
+    const endingTime = formatTimeTo12Hour(endTime);
+    const start = startingTime + " " + startingDate;
+    const end = endingTime + " " + endingDate;
+    updateField({ end: end });
+    updateField({ start: start });
+  }, [startDate, startTime, endDate, endTime]);
 
   const [customAmount, setCustomAmount] = useState(price);
 
@@ -167,6 +170,8 @@ export function BasicInformation({
               <CustomTimeInput value={endTime} placeholder="End Time" handleChange={handleEndTimeChange} />
             </div>
           </div>
+          {dateWarning && <div className="text-red-600 text-sm mt-2">{dateWarning}</div>}
+          {timeWarning && <div className="text-red-600 text-sm mt-2">{timeWarning}</div>}
         </div>
 
         <div>
@@ -195,14 +200,14 @@ export function BasicInformation({
                 updateField({ sport: e });
               }}
             >
-              <Option value="volleyball">Volleyball</Option>
-              <Option value="badminton">Badminton</Option>
-              <Option value="basketball">Basketball</Option>
-              <Option value="soccer">Soccer</Option>
-              <Option value="tennis">Tennis</Option>
-              <Option value="table-tennis">Table Tennis</Option>
-              <Option value="oztag">Oztag</Option>
-              <Option value="baseball">Baseball</Option>
+              <Option value="Volleyball">Volleyball</Option>
+              <Option value="Badminton">Badminton</Option>
+              <Option value="Basketball">Basketball</Option>
+              <Option value="Soccer">Soccer</Option>
+              <Option value="Tennis">Tennis</Option>
+              <Option value="Table Tennis">Table Tennis</Option>
+              <Option value="Oztag">Oztag</Option>
+              <Option value="Baseball">Baseball</Option>
             </Select>
           </div>
         </div>
