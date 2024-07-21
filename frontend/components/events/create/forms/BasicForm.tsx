@@ -34,6 +34,7 @@ type BasicInformationProps = BasicData & {
   user: UserData;
   updateField: (fields: Partial<BasicData>) => void;
   setLoading: (value: boolean) => void;
+  setHasError: (value: boolean) => void;
 };
 
 export function BasicInformation({
@@ -53,6 +54,7 @@ export function BasicInformation({
   user,
   updateField,
   setLoading,
+  setHasError,
 }: BasicInformationProps) {
   const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
@@ -104,6 +106,10 @@ export function BasicInformation({
       setTimeWarning("Event must end after it starts!");
     } else {
       setTimeWarning(null);
+    }
+
+    if (dateWarning || timeWarning) {
+      setHasError(true);
     }
   }, [startDate, startTime, endDate, endTime]);
 

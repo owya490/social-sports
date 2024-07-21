@@ -60,11 +60,20 @@ export default function CreateEvent() {
   const showForm = user.userId !== "";
 
   const [loading, setLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+
   const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
-    <BasicInformation key="basic-form" {...data} updateField={updateFields} user={user} setLoading={setLoading} />,
+    <BasicInformation
+      key="basic-form"
+      {...data}
+      updateField={updateFields}
+      user={user}
+      setLoading={setLoading}
+      setHasError={setHasError}
+    />,
     <TagForm key="tag-form" {...data} updateField={updateFields} />,
     <DescriptionImageForm
       key="description-image-form"
@@ -209,7 +218,12 @@ export default function CreateEvent() {
                 </button>
               )}
               {!isLastStep && (
-                <button type="submit" className="border border-black py-1.5 px-7 rounded-lg ml-auto lg:mr-2">
+                <button
+                  type="submit"
+                  className={`border border-black py-1.5 px-7 rounded-lg ml-auto lg:mr-2 ${
+                    hasError ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                  }`}
+                >
                   Next
                 </button>
               )}

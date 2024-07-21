@@ -157,8 +157,6 @@ const EventDrilldownDetailsPage = ({
       setTimeWarning(null);
     }
 
-    console.log(selectedStartDateTime);
-    console.log(newEditStartDate, newEditStartTime);
   }, [newEditStartDate, newEditStartTime, newEditEndDate, newEditEndTime]);
 
   useEffect(() => {
