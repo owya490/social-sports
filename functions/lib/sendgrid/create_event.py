@@ -96,8 +96,11 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
     # TODO possibly either move this to common or make sendgrid service/ client in python
     sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
     response = sg.send(message)
-    if (not response.status_code == 200):
+    
+    # Normally sendgrid return 202, reqeust in progress, but any 2XX response is acceptable.
+    if (not (response.status_code >= 200 and response.status_code < 300)):
       raise Exception(f"Sendgrid failed to send message. e={response.body}")
+
 
     return https_fn.Response(status=200, headers={'Access-Control-Allow-Origin', '*'})
   except Exception as e:

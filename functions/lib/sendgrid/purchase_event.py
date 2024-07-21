@@ -9,6 +9,7 @@ from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
+from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
 from lib.sendgrid.commons import PURCHASE_EVENT_EMAIL_TEMPLATE_ID
@@ -63,6 +64,13 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       subject=subject
     )
 
+    start_date: Timestamp = event_data.get("startDate").timestamp_pb()
+    end_date: Timestamp = event_data.get("endDate").timestamp_pb()
+    start_date_string =  start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
+    end_date_string =  end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
+    logger.info(start_date_string)
+    logger.info(end_date_string)
+
     message.dynamic_template_data = {
       "first_name": request_data.first_name,
       "event_name": event_data.get("name"),
@@ -70,8 +78,8 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       "location": event_data.get("location"),
       "quantity_bought": len(order_data.get("tickets")),
       "price": event_data.get("price"),
-      "start_date": event_data.get("startDate"),
-      "end_date": event_data.get("endDate")
+      "start_date": start_date_string,
+      "end_date": end_date_string
     }
 
     message.template_id = PURCHASE_EVENT_EMAIL_TEMPLATE_ID
@@ -79,7 +87,10 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
     # TODO possibly either move this to common or make sendgrid service/ client in python
     sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
     response = sg.send(message)
-    if (not response.status_code == 200):
+    logger.info(response.status_code)
+
+    # Normally sendgrid return 202, reqeust in progress, but any 2XX response is acceptable.
+    if (not (response.status_code >= 200 and response.status_code < 300)):
       raise Exception(f"Sendgrid failed to send message. e={response.body}")
 
     return True
