@@ -94,7 +94,7 @@ export default function ProfilePic() {
       )}
       {!loggedIn && (
         <div className="flex">
-          <HighlightButton text="Login" onClick={() => router.push("/login")} className="px-6" />
+          <HighlightButton text="Login" onClick={() => router.push("/login")} className="px-6 ml-3" />
           <InvertedHighlightButton
             text="Register"
             onClick={() => router.push("/register")}

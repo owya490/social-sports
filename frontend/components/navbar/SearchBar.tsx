@@ -48,7 +48,7 @@ export default function SearchBar() {
   return (
     <div className="flex border border-1 border-black rounded-full h-10 pl-5 pr-0.5 w-fit items-center bg-white drop-shadow-md">
       <input
-        className="h-9 max-w-[160px] xl:max-w-[220px] border-0"
+        className="h-9 max-w-[160px] xl:max-w-[220px] border-0 focus:ring-0"
         type="text"
         placeholder="Search Event"
         value={event}
@@ -57,7 +57,7 @@ export default function SearchBar() {
       />
       <div className="h-full bg-black w-[1px] mx-2"></div>
       <input
-        className="h-9 max-w-[160px] xl:max-w-[220px] border-0"
+        className="h-9 max-w-[160px] xl:max-w-[220px] border-0 focus:ring-0"
         type="text"
         placeholder="Sydney, AU"
         value={location}

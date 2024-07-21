@@ -24,7 +24,7 @@ export default function MobileNavbar() {
     <div className="bg-white drop-shadow-lg fixed top-0 w-screen z-50">
       <div className="flex items-center py-2 px-4">
         <Link href="/dashboard">
-          <Image src={Logo} alt="Logo" width={50} height={50} className="w-12 mr-4" />
+          <Image src={Logo} alt="Logo" className="w-10 h-10 mr-4" />
         </Link>
 
         <div className="w-[50%]">
