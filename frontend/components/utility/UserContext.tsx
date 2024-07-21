@@ -42,12 +42,7 @@ export default function UserContext({ children }: { children: any }) {
   }, []);
 
   useEffect(() => {
-    console.log("Checking authentication and protected routes");
-    console.log("Current user:", user);
-    console.log("Current pathname:", pathname);
-
     if (user === EmptyUserData && protectedRoutes.some((prefix) => pathname.startsWith(prefix))) {
-      console.log("why is this being triggered", user);
       router.push("/login");
     }
   }, [user, pathname]);
