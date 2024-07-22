@@ -1,12 +1,12 @@
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import UnderConstruction from "@/components/UnderConstruction";
 
-const MetricsPage = () => {
+const GalleryPage = () => {
   return (
     <div>
       <div className="ml-14 mt-16">
         <div className="max-w-5xl lg:mx-auto">
-          <OrganiserNavbar currPage="Metrics" />
+          <OrganiserNavbar currPage="Gallery" />
           <UnderConstruction />
         </div>
       </div>
@@ -14,4 +14,4 @@ const MetricsPage = () => {
   );
 };
 
-export default MetricsPage;
+export default GalleryPage;
