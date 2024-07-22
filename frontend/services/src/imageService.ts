@@ -1,5 +1,6 @@
 import { getDownloadURL, listAll, ref, uploadBytes } from "firebase/storage";
 import { storage } from "./firebase";
+import { v4 as uuidv4 } from "uuid";
 
 export async function getUsersImageLocation(userID: string): Promise<string[]> {
   const userRef = ref(storage, "users/" + userID);
@@ -69,7 +70,8 @@ export async function getEventImageUrls(eventID: string): Promise<string[]> {
 
 export async function uploadUserImage(userID: string, file: File): Promise<string> {
   const timestamp = Date.now(); // To ensure unique filenames
-  const imagePath = `users/${userID}/${file.name}_${timestamp}`;
+  const uuid = uuidv4();
+  const imagePath = `users/${userID}/${uuid}_${timestamp}`;
   const imageRef = ref(storage, imagePath);
 
   try {

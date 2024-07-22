@@ -15,7 +15,6 @@ import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 export type FormData = {
   date: string;
@@ -109,15 +108,7 @@ export default function CreateEvent() {
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
 
     if (formData.image !== undefined) {
-      const originalFile = formData.image;
-      const modifiedFileName = uuidv4();
-
-      const modifiedFile = new File([originalFile], modifiedFileName, {
-        type: originalFile.type,
-        lastModified: originalFile.lastModified,
-      });
-
-      imageUrl = await uploadUserImage(user.userId, modifiedFile);
+      imageUrl = await uploadUserImage(user.userId, formData.image);
     }
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
     let newEventId = "";
@@ -228,7 +219,4 @@ export default function CreateEvent() {
       )}
     </div>
   );
-}
-function uuid() {
-  throw new Error("Function not implemented.");
 }

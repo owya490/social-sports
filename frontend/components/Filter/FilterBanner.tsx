@@ -207,10 +207,8 @@ export default function FilterBanner({
     closeModal();
   }
 
-  // Runs after first render
   useEffect(() => {
     if (triggerFilterApply !== undefined) {
-      console.log("applyFilters");
       applyFilters(selectedSport).finally(() => {
         if (endLoading === undefined) {
           setEndLoading(true);
