@@ -206,14 +206,14 @@ export function BasicInformation({
                 updateField({ sport: e });
               }}
             >
-              <Option value="Volleyball">Volleyball</Option>
-              <Option value="Badminton">Badminton</Option>
-              <Option value="Basketball">Basketball</Option>
-              <Option value="Soccer">Soccer</Option>
-              <Option value="Tennis">Tennis</Option>
-              <Option value="Table Tennis">Table Tennis</Option>
-              <Option value="Oztag">Oztag</Option>
-              <Option value="Baseball">Baseball</Option>
+              <Option value="volleyball">Volleyball</Option>
+              <Option value="badminton">Badminton</Option>
+              <Option value="basketball">Basketball</Option>
+              <Option value="Ssoccer">Soccer</Option>
+              <Option value="tennis">Tennis</Option>
+              <Option value="table-tennis">Table Tennis</Option>
+              <Option value="oztag">Oztag</Option>
+              <Option value="baseball">Baseball</Option>
             </Select>
           </div>
         </div>

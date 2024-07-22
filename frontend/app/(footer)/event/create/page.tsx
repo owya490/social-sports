@@ -148,18 +148,6 @@ export default function CreateEvent() {
     // Consider a User's ability to select their event image from their uploaded images
     // Fix organiserId
     const lngLat = await getLocationCoordinates(formData.location);
-    const calculateDifference = (startTime: Timestamp, endTime: Timestamp): { hrs: number; mins: number } => {
-      const startMillis = startTime.toMillis();
-      const endMillis = endTime.toMillis();
-
-      const differenceMillis = endMillis - startMillis;
-
-      // Convert milliseconds to hours and minutes
-      const differenceHours = Math.floor(differenceMillis / (1000 * 60 * 60));
-      const differenceMinutes = Math.floor((differenceMillis % (1000 * 60 * 60)) / (1000 * 60));
-
-      return { hrs: differenceHours, mins: differenceMinutes };
-    };
 
     return {
       startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
