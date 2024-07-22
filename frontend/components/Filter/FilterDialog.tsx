@@ -8,7 +8,7 @@ import { Slider } from "@material-tailwind/react";
 import { Fragment } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../../components/ListBox";
-import { InvertedHighlightButton } from "../utility/HighlightButton";
+import { InvertedHighlightButton } from "../elements/HighlightButton";
 
 export enum SortByCategory {
   HOT,

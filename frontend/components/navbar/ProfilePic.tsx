@@ -17,8 +17,8 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
-import { HighlightButton, InvertedHighlightButton } from "../utility/HighlightButton";
 import { useUser } from "../utility/UserContext";
 
 export default function ProfilePic() {

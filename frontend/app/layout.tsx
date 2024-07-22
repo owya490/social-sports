@@ -3,7 +3,6 @@ import Navbar from "@/components/navbar/Navbar";
 import UserContext from "@/components/utility/UserContext";
 import GrafanaFaro from "@/observability/GrafanaFaro";
 import type { Metadata } from "next";
-import { Inter, Roboto_Condensed } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -52,19 +51,12 @@ export const metadata: Metadata = {
   },
 };
 
-const roboto_condensed = Roboto_Condensed({
-  weight: "400",
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-roboto-condensed",
-});
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <GrafanaFaro>
         <UserContext>
-          <body className={`${aileron.className} ${roboto_condensed.variable}`}>
+          <body className={`${aileron.className}`}>
             <div className="hidden md:block">
               <Navbar />
             </div>
