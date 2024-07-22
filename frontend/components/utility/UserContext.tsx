@@ -1,11 +1,11 @@
 "use client";
 import { auth } from "@/services/src/firebase";
-import { onAuthStateChanged } from "firebase/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
-import { getFullUserByIdForUserContextWithRetries } from "../../services/src/users/usersService";
 
-import { redirect, usePathname, useRouter } from "next/navigation";
+import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
+import { onAuthStateChanged } from "firebase/auth";
+import { usePathname, useRouter } from "next/navigation";
 
 type LoginUserContextType = {
   user: UserData;
@@ -21,6 +21,7 @@ export default function UserContext({ children }: { children: any }) {
   const [user, setUser] = useState<UserData>(EmptyUserData);
   const router = useRouter();
   const pathname = usePathname();
+  const [loading, setLoading] = useState(true);
 
   const protectedRoutes = ["/organiser"];
   useEffect(() => {
@@ -30,22 +31,27 @@ export default function UserContext({ children }: { children: any }) {
         try {
           const userData = await getFullUserByIdForUserContextWithRetries(uid);
           setUser(userData);
+          
         } catch {
           router.push("/error");
         }
-      } else {
-        router.replace("/login");
-      }
+      } 
+      setLoading(false);
     });
 
     return () => unsubscriber();
   }, []);
-
   useEffect(() => {
-    if (user === EmptyUserData && protectedRoutes.some((prefix) => pathname.startsWith(prefix))) {
-      router.push("/login");
+    if (loading) return;
+    console.log("first User", auth.currentUser)
+    if (protectedRoutes.some((prefix) => pathname.startsWith(prefix))) {
+      if (!auth.currentUser || !auth.currentUser?.emailVerified) {
+
+        console.log("user", auth.currentUser);
+        router.push("/login");
+      }
     }
-  }, [user, pathname]);
+  }, [user, pathname, loading]);
 
   return <LoginUserContext.Provider value={{ user, setUser }}>{children}</LoginUserContext.Provider>;
 }

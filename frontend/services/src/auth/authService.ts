@@ -1,28 +1,22 @@
+import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, NewUserData, TempUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { FirebaseError } from "@firebase/util";
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
   UserCredential,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signOut,
-  getAuth,
-  sendPasswordResetEmail,
-  sendSignInLinkToEmail,
-  sendEmailVerification,
-  deleteUser,
+  signOut
 } from "firebase/auth";
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import { auth, authUser, db } from "../firebase";
-import { createUser, getPublicUserById } from "../users/usersService";
-import { verify } from "crypto";
-import { CodeBracketIcon } from "@heroicons/react/24/outline";
-import { FirebaseError } from "@firebase/util";
-import { isInstanceOf } from "@grafana/faro-web-sdk";
+import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
+import { createUser, getPublicUserById } from "../users/usersService";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
@@ -166,7 +160,8 @@ export async function handleFacebookSignIn() {
  * @returns boolean
  */
 export function isLoggedIn(): boolean {
-  return authUser !== null;
+  const user = useUser();
+  return useUser() !== null;
 }
 
 const actionCodeSettings = {

@@ -61,15 +61,15 @@ export const storage = getStorage(app);
 setPersistence(auth, browserLocalPersistence);
 
 // Handle changes in user logged in status
-let authUser: User | null = null;
-onAuthStateChanged(auth, (currUser) => {
-  if (auth.currentUser) {
-    if (auth.currentUser?.emailVerified) {
-      authUser = currUser;
-    } else {
-      signOut(auth);
-    }
-  }
-});
+// let authUser: User | null = null;
+// onAuthStateChanged(auth, (currUser) => {
+//   if (auth.currentUser) {
+//     if (auth.currentUser?.emailVerified) {
+//       authUser = currUser;
+//     } else {
+//       signOut(auth);
+//     }
+//   }
+// });
 
-export { authUser };
+// export { authUser };
