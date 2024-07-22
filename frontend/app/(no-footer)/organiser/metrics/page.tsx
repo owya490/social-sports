@@ -1,5 +1,4 @@
 //metrics
-"use client";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 
 export default function Metrics() {
