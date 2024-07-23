@@ -82,7 +82,7 @@ export async function uploadUserImage(userID: string, file: File): Promise<void>
   await uploadImage(imageRef, file);
 }
 
-async function uploadImage(imageRef: StorageReference, file: File) {
+async function uploadImage(imageRef: StorageReference, file: File): Promise<string> {
   try {
     // Upload the file to Firebase Storage
     await uploadBytes(imageRef, file);
