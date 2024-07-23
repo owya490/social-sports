@@ -1,7 +1,6 @@
 // BasicInformation.tsx
 
 import { UserData } from "@/interfaces/UserTypes";
-import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
@@ -104,8 +103,10 @@ export function BasicInformation({
       setTimeWarning(null);
     }
 
-    if (dateWarning || timeWarning) {
+    if (currentDateTime > selectedStartDateTime || selectedEndDateTime < selectedStartDateTime) {
       setHasError(true);
+    } else {
+      setHasError(false);
     }
   }, [startDate, startTime, endDate, endTime]);
 
