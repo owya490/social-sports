@@ -1,7 +1,6 @@
 // BasicInformation.tsx
 
 import { UserData } from "@/interfaces/UserTypes";
-import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
@@ -243,8 +242,14 @@ export function BasicInformation({
                 value={capacityString}
                 type="number"
                 onChange={(e) => {
-                  setCapacityString(e.target.value);
-                  updateField({ capacity: parseInt(e.target.value) });
+                  const value = parseInt(e.target.value);
+                  if (value >= 0) {
+                    setCapacityString(e.target.value);
+                    updateField({ capacity: value });
+                  } else {
+                    setCapacityString("0");
+                    updateField({ capacity: 0 });
+                  }
                 }}
                 className="rounded-md focus:ring-0"
                 size="lg"
