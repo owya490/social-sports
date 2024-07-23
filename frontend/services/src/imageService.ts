@@ -76,10 +76,12 @@ export async function uploadProfilePhoto(userID: string, file: File): Promise<st
   return url;
 }
 
-export async function uploadUserImage(userID: string, file: File): Promise<void> {
+export async function uploadUserImage(userID: string, file: File): Promise<string> {
   const imagePath = `users/${userID}/${generateImageId()}`;
   const imageRef = ref(storage, imagePath);
-  await uploadImage(imageRef, file);
+  const url = await uploadImage(imageRef, file);
+
+  return url;
 }
 
 async function uploadImage(imageRef: StorageReference, file: File): Promise<string> {
