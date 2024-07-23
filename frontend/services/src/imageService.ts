@@ -1,6 +1,6 @@
-import { getDownloadURL, listAll, ref, uploadBytes } from "firebase/storage";
-import { storage } from "./firebase";
+import { getDownloadURL, listAll, ref, StorageReference, uploadBytes } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
+import { storage } from "./firebase";
 
 export async function getUsersImageLocation(userID: string): Promise<string[]> {
   const userRef = ref(storage, "users/" + userID);
@@ -68,12 +68,21 @@ export async function getEventImageUrls(eventID: string): Promise<string[]> {
   }
 }
 
-export async function uploadUserImage(userID: string, file: File): Promise<string> {
-  const timestamp = Date.now(); // To ensure unique filenames
-  const uuid = uuidv4();
-  const imagePath = `users/${userID}/${uuid}_${timestamp}`;
+export async function uploadProfilePhoto(userID: string, file: File): Promise<string> {
+  const imagePath = `users/${userID}/profilepicture${generateImageId()}`;
   const imageRef = ref(storage, imagePath);
+  const url = await uploadImage(imageRef, file);
 
+  return url;
+}
+
+export async function uploadUserImage(userID: string, file: File): Promise<void> {
+  const imagePath = `users/${userID}/${generateImageId()}`;
+  const imageRef = ref(storage, imagePath);
+  await uploadImage(imageRef, file);
+}
+
+async function uploadImage(imageRef: StorageReference, file: File) {
   try {
     // Upload the file to Firebase Storage
     await uploadBytes(imageRef, file);
@@ -86,4 +95,11 @@ export async function uploadUserImage(userID: string, file: File): Promise<strin
     console.error("Error uploading image:", error);
     throw error; // Re-throw the error so the caller can handle it
   }
+}
+
+function generateImageId() {
+  const timestamp = Date.now(); // To ensure unique filenames
+  const uuid = uuidv4();
+
+  return `${uuid}_${timestamp}`;
 }
