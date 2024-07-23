@@ -1,6 +1,7 @@
 import { FormData } from "@/app/(footer)/event/create/page";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
+import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 
 type BasicData = {
@@ -38,12 +39,16 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Time</div>
             <div className="flex justify-between">
               <p className="text-m">Start Time: </p>
-              <p className="text-m">{form.start}</p>
+              <p className="text-m">
+                {formatDateToString(form.startDate)} {formatTimeTo12Hour(form.startTime)}
+              </p>
             </div>
 
             <div className="flex justify-between">
               <p className="text-m">End Time: </p>
-              <p className="text-m">{form.end}</p>
+              <p className="text-m">
+                {formatDateToString(form.endDate)} {formatTimeTo12Hour(form.endTime)}
+              </p>
             </div>
           </div>
         </div>

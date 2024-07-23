@@ -17,8 +17,6 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 export type FormData = {
-  end: string;
-  start: string;
   startDate: string;
   endDate: string;
   location: string;
@@ -50,8 +48,6 @@ const INITIAL_DATA: FormData = {
   startTime: "10:00",
   endTime: "18:00",
   paymentsActive: false,
-  end: "",
-  start: "",
 };
 
 export default function CreateEvent() {
@@ -150,8 +146,6 @@ export default function CreateEvent() {
     const lngLat = await getLocationCoordinates(formData.location);
 
     return {
-      startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
-      endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
       location: formData.location,
       capacity: formData.capacity,
       vacancy: formData.capacity,
@@ -173,6 +167,8 @@ export default function CreateEvent() {
       },
       sport: formData.sport,
       paymentsActive: formData.paymentsActive,
+      startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
+      endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
     };
   }
 

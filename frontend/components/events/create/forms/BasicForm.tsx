@@ -26,8 +26,6 @@ type BasicData = {
   capacity: number;
   isPrivate: boolean;
   paymentsActive: boolean;
-  start: string;
-  end: string;
 };
 
 type BasicInformationProps = BasicData & {
@@ -44,8 +42,6 @@ export function BasicInformation({
   endDate,
   startTime,
   endTime,
-  start,
-  end,
   sport,
   price,
   capacity,
@@ -111,17 +107,6 @@ export function BasicInformation({
     if (dateWarning || timeWarning) {
       setHasError(true);
     }
-  }, [startDate, startTime, endDate, endTime]);
-
-  useEffect(() => {
-    const startingDate = formatDateToString(startDate);
-    const startingTime = formatTimeTo12Hour(startTime);
-    const endingDate = formatDateToString(endDate);
-    const endingTime = formatTimeTo12Hour(endTime);
-    const start = startingTime + " " + startingDate;
-    const end = endingTime + " " + endingDate;
-    updateField({ end: end });
-    updateField({ start: start });
   }, [startDate, startTime, endDate, endTime]);
 
   const [customAmount, setCustomAmount] = useState(price);
