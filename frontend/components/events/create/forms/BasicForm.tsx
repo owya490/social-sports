@@ -222,11 +222,13 @@ export function BasicInformation({
                 value={priceString}
                 type="number"
                 onChange={(e) => {
-                  var value = parseInt(e.target.value);
-                  if (value < 1 && value !== 0) {
-                    value = 1;
+                  let value = parseInt(e.target.value);
+                  if (!isNaN(value)) {
+                    value = Math.max(value, 0);
+                  } else {
+                    value = 0;
                   }
-                  setPriceString(`${value}`);
+                  setPriceString(value.toString());
                   handleCustomAmountChange(value);
                 }}
                 className="rounded-md focus:ring-0"
@@ -243,9 +245,10 @@ export function BasicInformation({
                 type="number"
                 onChange={(e) => {
                   const value = parseInt(e.target.value);
-                  if (value >= 0) {
-                    setCapacityString(e.target.value);
-                    updateField({ capacity: value });
+                  if (!isNaN(value)) {
+                    const maxValue = Math.max(value, 0);
+                    setCapacityString(maxValue.toString());
+                    updateField({ capacity: maxValue });
                   } else {
                     setCapacityString("0");
                     updateField({ capacity: 0 });
