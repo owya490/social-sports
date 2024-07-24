@@ -363,6 +363,7 @@ export async function addEventAttendee(attendee: Purchaser, eventId: string) {
 /**
  * Equivalent hashing function to the one located in webhooks.py
  Used to give email hash of purchaser email.
+ DO NOT EDIT - MUST ALSO EDIT THE HASH IN webhooks.py
  */
 function getPurchaserEmailHash(email: string) {
   const md5Hash = crypto.createHash("md5").update(email).digest("hex");
