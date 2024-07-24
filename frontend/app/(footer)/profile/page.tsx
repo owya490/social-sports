@@ -154,18 +154,20 @@ const Profile = () => {
     }
   }, [isProfilePictureUpdated, editedData, initialProfileData]);
 
-  const handleFileInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = event.target?.files;
+  const ç = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+
+    console.log("ranthrough");
 
     if (files && files.length > 0) {
       const file = files[0];
 
-      // Check file type and size (example: max 5MB)
-      const validFileTypes = ["image/jpeg", "image/png", "image/jpg"];
+      // Check file type and size
+      const validFileTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
 
       if (!validFileTypes.includes(file.type)) {
-        console.error("Invalid file type. Only JPEG and PNG are allowed.");
+        console.error("Invalid file type.");
         return;
       }
 
@@ -208,7 +210,7 @@ const Profile = () => {
       }
     }
   };
-  
+
   const handleInputChangeMobile = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     setEditedData({
       ...editedData,
@@ -473,7 +475,7 @@ const Profile = () => {
                           id="Image_input"
                           className="hidden"
                           onChange={handleFileInputChange}
-                          accept=".jpg,.jpeg,.png"
+                          accept=".jpg,.jpeg,.png,.gif"
                         />
                         <Image
                           src={Upload}
