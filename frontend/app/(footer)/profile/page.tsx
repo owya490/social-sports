@@ -6,10 +6,11 @@ import eye from "@/public/images/Eye.png";
 import location from "@/public/images/location.png";
 import Upload from "@/public/images/upload.png";
 import x from "@/public/images/x.png";
+import { uploadUserImage } from "@/services/src/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
-import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, getMetadata, getStorage, ref } from "firebase/storage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
@@ -159,11 +160,23 @@ const Profile = () => {
     if (files && files.length > 0) {
       const file = files[0];
 
+      // Check file type and size (example: max 5MB)
+      const validFileTypes = ["image/jpeg", "image/png", "image/jpg"];
+      const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
+
+      if (!validFileTypes.includes(file.type)) {
+        console.error("Invalid file type. Only JPEG and PNG are allowed.");
+        return;
+      }
+
+      if (file.size > maxSizeInBytes) {
+        console.error("File size exceeds the maximum limit of 5MB.");
+        return;
+      }
+
       try {
-        const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${file.name}`);
-
+        // Delete the previous profile picture if it exists and is not a generic one
         const previousProfilePictureURL = initialProfileData.profilePicture;
-
         if (previousProfilePictureURL && !previousProfilePictureURL.includes("generic-profile-photo.webp")) {
           const previousProfilePictureRef = ref(storage, previousProfilePictureURL);
 
@@ -177,16 +190,19 @@ const Profile = () => {
           }
         }
 
-        await uploadBytes(storageRef, file);
+        // Upload the new file using the provided function
+        const downloadURL = await uploadUserImage(initialProfileData.userId, file);
 
-        const downloadURL = await getDownloadURL(storageRef);
-
+        // Update state with the new profile picture URL
         setEditedData((prevData) => ({
           ...prevData,
           profilePicture: downloadURL,
         }));
 
-        setUser({ ...user, profilePicture: downloadURL });
+        setUser((prevUser) => ({
+          ...prevUser,
+          profilePicture: downloadURL,
+        }));
 
         setIsProfilePictureUpdated(true);
       } catch (error) {
@@ -194,7 +210,7 @@ const Profile = () => {
       }
     }
   };
-
+  
   const handleInputChangeMobile = (changeEvent: ChangeEvent<HTMLInputElement>) => {
     setEditedData({
       ...editedData,
@@ -464,9 +480,9 @@ const Profile = () => {
                         <Image
                           src={Upload}
                           alt="Upload"
-                          width={0}
-                          height={0}
-                          className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64 opacity-60"
+                          width={208}
+                          height={208}
+                          className="rounded-full object-cover h-52 w-52 3xl:h-64 3xl:w-64 opacity-60 cursor-pointer"
                           onClick={() => {
                             document.getElementById("Image_input")!.click();
                           }}
