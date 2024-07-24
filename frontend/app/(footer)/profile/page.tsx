@@ -9,6 +9,7 @@ import x from "@/public/images/x.png";
 import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
+import Tick from "@svgs/Verified_tick.png";
 import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -417,10 +418,18 @@ const Profile = () => {
         <div className="relative mt-[92px] lg:mt-[120px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[4vw]">
           <div className="flex justify-center md:justify-start col-start-1 col-span-1 md:col-start-2 md:row-span-1 md:row-start-1">
             <div
-              className="flex justify-center mb-4 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl"
+              className="flex justify-center mb-4 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl relative group"
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}&apos;s Profile
+              {user.isVerifiedOrganiser && (
+                <div className="relative">
+                  <Image src={Tick} alt="Verified Organiser" className="h-10 w-10 ml-2" />
+                  <div className="absolute transform translate-x-12 -translate-y-8 ml-2 hidden group-hover:block bg-[#f2b705] text-black text-xs px-2 py-1 rounded whitespace-nowrap">
+                    Verified Organiser
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex flex-col">

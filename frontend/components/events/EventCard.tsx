@@ -1,13 +1,14 @@
 "use client";
+import EventImage from "@/components/events/EventImage";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import Tick from "@svgs/Verified_tick.png";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
-import EventImage from "@/components/events/EventImage";
 
 interface EventCardProps {
   eventId: EventId;
@@ -28,6 +29,7 @@ export default function EventCard(props: EventCardProps) {
       loading: false,
     };
   }
+
   return (
     <Link href={`/event/${props.eventId}`}>
       <div className="bg-white rounded-lg text-left border-gray-300 border w-full md:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer">
@@ -37,9 +39,7 @@ export default function EventCard(props: EventCardProps) {
           </div>
         ) : (
           <>
-            <div
-              className="h-36 w-full object-cover rounded-t-lg"
-            >
+            <div className="h-36 w-full object-cover rounded-t-lg">
               <EventImage imageSrc={props.image} />
             </div>
             <div className="p-4">
@@ -56,6 +56,9 @@ export default function EventCard(props: EventCardProps) {
                 <p className="text-xs font-light ml-1">
                   {`Hosted by ${props.organiser.firstName} ${props.organiser.surname}`}
                 </p>
+                {props.organiser.isVerifiedOrganiser && (
+                  <Image src={Tick} alt="Verified Organiser" className="h-4 w-4 ml-1" />
+                )}
               </div>
               <div className="mt-4 mb-7 space-y-3">
                 <div className="flex items-center">
