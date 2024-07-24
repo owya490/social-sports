@@ -34,8 +34,8 @@ export type FormData = {
 };
 
 const INITIAL_DATA: FormData = {
-  startDate: new Date().toISOString().slice(0, 10),
-  endDate: new Date().toISOString().slice(0, 10),
+  startDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
+  endDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   location: "",
   sport: "volleyball",
   price: 15,
@@ -202,11 +202,13 @@ export default function CreateEvent() {
                 </button>
               )}
               {!isLastStep && (
+                //TODO: Add service layer protection
                 <button
                   type="submit"
                   className={`border border-black py-1.5 px-7 rounded-lg ml-auto lg:mr-2 ${
                     hasError ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                   }`}
+                  disabled={hasError}
                 >
                   Next
                 </button>

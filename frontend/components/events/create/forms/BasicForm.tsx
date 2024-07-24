@@ -103,8 +103,10 @@ export function BasicInformation({
       setTimeWarning(null);
     }
 
-    if (dateWarning || timeWarning) {
+    if (currentDateTime > selectedStartDateTime || selectedEndDateTime < selectedStartDateTime) {
       setHasError(true);
+    } else {
+      setHasError(false);
     }
   }, [startDate, startTime, endDate, endTime]);
 
@@ -193,7 +195,7 @@ export function BasicInformation({
               <Option value="volleyball">Volleyball</Option>
               <Option value="badminton">Badminton</Option>
               <Option value="basketball">Basketball</Option>
-              <Option value="Ssoccer">Soccer</Option>
+              <Option value="soccer">Soccer</Option>
               <Option value="tennis">Tennis</Option>
               <Option value="table-tennis">Table Tennis</Option>
               <Option value="oztag">Oztag</Option>
