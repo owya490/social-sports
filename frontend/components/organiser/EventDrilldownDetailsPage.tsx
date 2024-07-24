@@ -81,6 +81,8 @@ const EventDrilldownDetailsPage = ({
     setEditTitle(false);
   };
 
+  //TODO: More elegant solution for usestates
+
   const [editStartDate, setEditStartDate] = useState(false);
   const [newEditStartDate, setNewEditStartDate] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -156,7 +158,6 @@ const EventDrilldownDetailsPage = ({
     } else {
       setTimeWarning(null);
     }
-
   }, [newEditStartDate, newEditStartTime, newEditEndDate, newEditEndTime]);
 
   useEffect(() => {
