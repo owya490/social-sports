@@ -132,7 +132,7 @@ export default function OrganiserDashboard() {
 
   return (
     <div className="w-screen mt-16 mb-10 ml-7 h-screen max-h-screen overflow-hidden">
-      <OrganiserNavbar currPage={""} />
+      <OrganiserNavbar currPage={"EventDashboard"} />
       <div className="flex justify-center">
         <div className="flex flex-col items-start">
           <div className="text-6xl my-6">Event Dashboard</div>
