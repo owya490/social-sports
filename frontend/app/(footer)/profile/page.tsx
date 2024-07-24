@@ -6,7 +6,7 @@ import eye from "@/public/images/Eye.png";
 import location from "@/public/images/location.png";
 import Upload from "@/public/images/upload.png";
 import x from "@/public/images/x.png";
-import { uploadUserImage } from "@/services/src/imageService";
+import { uploadProfilePhoto } from "@/services/src/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
@@ -190,10 +190,8 @@ const Profile = () => {
           }
         }
 
-        // Upload the new file using the provided function
-        const downloadURL = await uploadUserImage(initialProfileData.userId, file);
+        const downloadURL = await uploadProfilePhoto(initialProfileData.userId, files[0]);
 
-        // Update state with the new profile picture URL
         setEditedData((prevData) => ({
           ...prevData,
           profilePicture: downloadURL,

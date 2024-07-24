@@ -8,7 +8,10 @@ interface EventImageProps {
 export default function EventImage(props: EventImageProps) {
   return (
     <Image
-      priority={true}
+      priority
+      fetchPriority="high"
+      rel="preload"
+      loading="eager"
       src={props.imageSrc}
       alt="..."
       width={0}

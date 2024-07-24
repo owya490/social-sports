@@ -209,7 +209,6 @@ export default function FilterBanner({
 
   useEffect(() => {
     if (triggerFilterApply !== undefined) {
-      console.log("applyFilters");
       applyFilters(selectedSport).finally(() => {
         if (endLoading === undefined) {
           setEndLoading(true);
