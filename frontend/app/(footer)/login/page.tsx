@@ -20,7 +20,7 @@ export default async function Login() {
 
   useEffect(() => {
     if (user) {
-      router.push("/dashboard");
+      router.push("/dashboard"); 
     } else {
       setLoading(false);
     }
