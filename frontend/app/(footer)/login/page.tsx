@@ -1,12 +1,13 @@
 "use client";
+import Loading from "@/components/loading/Loading";
+import { useUser } from "@/components/utility/UserContext";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Auth } from "firebase/auth";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-export default function Login() {
+export default async function Login() {
   const [userData, setUserData] = useState({
     email: "",
     password: "",
@@ -14,6 +15,16 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [AlertStatus, setAlertStatus] = useState(false);
   const router = useRouter();
+  const user = useUser();
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
+    } else {
+      setLoading(false);
+    }
+  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,7 +47,9 @@ export default function Login() {
     setErrorMessage("");
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
       <Alert
         open={AlertStatus}

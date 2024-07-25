@@ -1,15 +1,27 @@
 "use client";
+import Loading from "@/components/loading/Loading";
+import { useUser } from "@/components/utility/UserContext";
 import { EmptyNewUserData, NewUserData } from "@/interfaces/UserTypes";
 import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function Register() {
   const [userData, setUserData] = useState<NewUserData>(EmptyNewUserData);
   const router = useRouter();
+  const user = useUser();
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
+    } else {
+      setLoading(false);
+    }
+  }, [user, router]);
 
   const [repeatPassword, setRepeatPassword] = useState("");
   const [passwordMismatch, setPasswordMismatch] = useState(false);
@@ -61,7 +73,9 @@ export default function Register() {
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <Alert

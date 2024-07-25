@@ -187,3 +187,4 @@ export async function resetUserPassword(email: string): Promise<void> {
     throw error; // Rethrow the error for the caller to handle if needed
   }
 }
+
