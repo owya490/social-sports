@@ -202,6 +202,7 @@ export default function CreateEvent() {
                 </button>
               )}
               {!isLastStep && (
+                //TODO: Add service layer protection
                 <button
                   type="submit"
                   className={`border border-black py-1.5 px-7 rounded-lg ml-auto lg:mr-2 ${

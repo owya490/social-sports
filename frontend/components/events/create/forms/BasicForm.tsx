@@ -195,7 +195,7 @@ export function BasicInformation({
               <Option value="volleyball">Volleyball</Option>
               <Option value="badminton">Badminton</Option>
               <Option value="basketball">Basketball</Option>
-              <Option value="Ssoccer">Soccer</Option>
+              <Option value="soccer">Soccer</Option>
               <Option value="tennis">Tennis</Option>
               <Option value="table-tennis">Table Tennis</Option>
               <Option value="oztag">Oztag</Option>
@@ -224,11 +224,13 @@ export function BasicInformation({
                 value={priceString}
                 type="number"
                 onChange={(e) => {
-                  var value = parseInt(e.target.value);
-                  if (value < 1 && value !== 0) {
-                    value = 1;
+                  let value = parseInt(e.target.value);
+                  if (!isNaN(value)) {
+                    value = Math.max(value, 0);
+                  } else {
+                    value = 0;
                   }
-                  setPriceString(`${value}`);
+                  setPriceString(value.toString());
                   handleCustomAmountChange(value);
                 }}
                 className="rounded-md focus:ring-0"
@@ -244,8 +246,15 @@ export function BasicInformation({
                 value={capacityString}
                 type="number"
                 onChange={(e) => {
-                  setCapacityString(e.target.value);
-                  updateField({ capacity: parseInt(e.target.value) });
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value)) {
+                    const maxValue = Math.max(value, 0);
+                    setCapacityString(maxValue.toString());
+                    updateField({ capacity: maxValue });
+                  } else {
+                    setCapacityString("0");
+                    updateField({ capacity: 0 });
+                  }
                 }}
                 className="rounded-md focus:ring-0"
                 size="lg"

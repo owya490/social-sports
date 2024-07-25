@@ -81,6 +81,8 @@ const EventDrilldownDetailsPage = ({
     setEditTitle(false);
   };
 
+  //TODO: More elegant solution for usestates
+
   const [editStartDate, setEditStartDate] = useState(false);
   const [newEditStartDate, setNewEditStartDate] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -156,7 +158,6 @@ const EventDrilldownDetailsPage = ({
     } else {
       setTimeWarning(null);
     }
-
   }, [newEditStartDate, newEditStartTime, newEditEndDate, newEditEndTime]);
 
   useEffect(() => {
@@ -442,8 +443,14 @@ const EventDrilldownDetailsPage = ({
               )}
             </div>
           </div>
-          {dateWarning && <div className="text-red-600 text-sm mt-2">{dateWarning}</div>}
-          {timeWarning && <div className="text-red-600 text-sm mt-2">{timeWarning}</div>}
+          {editStartDate ? (
+            <>
+              {dateWarning && <div className="text-red-600 text-sm mt-2">{dateWarning}</div>}
+              {timeWarning && <div className="text-red-600 text-sm mt-2">{timeWarning}</div>}
+            </>
+          ) : (
+            <div></div>
+          )}
           <div className="px-2 flex flex-row space-x-2">
             <MapPinIcon className="w-4 mt-2" />
             <div>
