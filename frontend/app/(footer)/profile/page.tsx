@@ -154,7 +154,7 @@ const Profile = () => {
     }
   }, [isProfilePictureUpdated, editedData, initialProfileData]);
 
-  const ç = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
 
     console.log("ranthrough");
