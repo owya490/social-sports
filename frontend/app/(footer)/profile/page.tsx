@@ -125,6 +125,7 @@ const Profile = () => {
   }, [defaultProfilePicturePath]);
 
   const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
+    console.log("working");
     const { name, value } = changeEvent.target;
     if (name === "dob") {
       setEditedData((prevData) => ({
@@ -325,12 +326,10 @@ const Profile = () => {
 
   const renderField = (label: string, name: string) => (
     <div key={label} className="mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between w-full">
-        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">{label}:</strong>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start w-full">
+        <span className="text-sm md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">{label}:</span>
         <span
-          className={`text-md md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
-            name === "email" ? "break-all" : ""
-          }`}
+          className={`text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${name === "email" ? "break-all" : ""}`}
         >
           {(initialProfileData[name as keyof UserData] as string) === ""
             ? "Not Provided"
@@ -342,12 +341,10 @@ const Profile = () => {
 
   const renderFieldContact = (label: string, name: "mobile" | "email") => (
     <div key={label} className="mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between w-full">
-        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">{label}:</strong>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start w-full">
+        <strong className="text-sm md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">{label}:</strong>
         <span
-          className={`text-md md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
-            name === "email" ? "break-all" : ""
-          }`}
+          className={`text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${name === "email" ? "break-all" : ""}`}
         >
           {(initialProfileData.contactInformation?.[name] as string) === ""
             ? "Not Provided"
