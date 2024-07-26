@@ -17,7 +17,8 @@ export default function Register() {
 
   useEffect(() => {
     if (user) {
-      router.push("/dashboard"); 
+      router.push("/dashboard");
+      console.log("alr loggedin");
     } else {
       setLoading(false);
     }
