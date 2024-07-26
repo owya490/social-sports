@@ -17,7 +17,8 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 export type FormData = {
-  date: string;
+  startDate: string;
+  endDate: string;
   location: string;
   sport: string;
   price: number;
@@ -33,7 +34,8 @@ export type FormData = {
 };
 
 const INITIAL_DATA: FormData = {
-  date: new Date().toISOString().slice(0, 10),
+  startDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
+  endDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   location: "",
   sport: "volleyball",
   price: 15,
@@ -54,11 +56,20 @@ export default function CreateEvent() {
   const showForm = user.userId !== "";
 
   const [loading, setLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+
   const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
-    <BasicInformation key="basic-form" {...data} updateField={updateFields} user={user} setLoading={setLoading} />,
+    <BasicInformation
+      key="basic-form"
+      {...data}
+      updateField={updateFields}
+      user={user}
+      setLoading={setLoading}
+      setHasError={setHasError}
+    />,
     <TagForm key="tag-form" {...data} updateField={updateFields} />,
     <DescriptionImageForm
       key="description-image-form"
@@ -130,26 +141,11 @@ export default function CreateEvent() {
     imageUrl: string
   ): Promise<NewEventData> {
     // TODO
-    // Fix end date
     // Consider a User's ability to select their event image from their uploaded images
     // Fix organiserId
     const lngLat = await getLocationCoordinates(formData.location);
-    const calculateDifference = (startDate: Timestamp, endDate: Timestamp): { hrs: number; mins: number } => {
-      const startMillis = startDate.toMillis();
-      const endMillis = endDate.toMillis();
-
-      const differenceMillis = endMillis - startMillis;
-
-      // Convert milliseconds to hours and minutes
-      const differenceHours = Math.floor(differenceMillis / (1000 * 60 * 60));
-      const differenceMinutes = Math.floor((differenceMillis % (1000 * 60 * 60)) / (1000 * 60));
-
-      return { hrs: differenceHours, mins: differenceMinutes };
-    };
 
     return {
-      startDate: convertDateAndTimeStringToTimestamp(formData.date, formData.startTime),
-      endDate: convertDateAndTimeStringToTimestamp(formData.date, formData.endTime),
       location: formData.location,
       capacity: formData.capacity,
       vacancy: formData.capacity,
@@ -164,13 +160,15 @@ export default function CreateEvent() {
       attendeesMetadata: {},
       accessCount: 0,
       organiserId: user.userId,
-      registrationDeadline: convertDateAndTimeStringToTimestamp(formData.date, formData.startTime),
+      registrationDeadline: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       locationLatLng: {
         lat: lngLat.lat,
         lng: lngLat.lng,
       },
       sport: formData.sport,
       paymentsActive: formData.paymentsActive,
+      startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
+      endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
     };
   }
 
@@ -204,7 +202,14 @@ export default function CreateEvent() {
                 </button>
               )}
               {!isLastStep && (
-                <button type="submit" className="border border-black py-1.5 px-7 rounded-lg ml-auto lg:mr-2">
+                //TODO: Add service layer protection
+                <button
+                  type="submit"
+                  className={`border border-black py-1.5 px-7 rounded-lg ml-auto lg:mr-2 ${
+                    hasError ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                  }`}
+                  disabled={hasError}
+                >
                   Next
                 </button>
               )}
