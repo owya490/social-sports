@@ -7,7 +7,7 @@ import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
@@ -18,7 +18,8 @@ import { getLocationCoordinates } from "@/services/src/locationUtils";
 type BasicData = {
   name: string;
   location: string;
-  date: string;
+  startDate: string;
+  endDate: string;
   startTime: string;
   endTime: string;
   sport: string;
@@ -32,12 +33,14 @@ type BasicInformationProps = BasicData & {
   user: UserData;
   updateField: (fields: Partial<BasicData>) => void;
   setLoading: (value: boolean) => void;
+  setHasError: (value: boolean) => void;
 };
 
 export function BasicInformation({
   name,
   location,
-  date,
+  startDate,
+  endDate,
   startTime,
   endTime,
   sport,
@@ -48,6 +51,7 @@ export function BasicInformation({
   user,
   updateField,
   setLoading,
+  setHasError,
 }: BasicInformationProps) {
   const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
@@ -65,41 +69,50 @@ export function BasicInformation({
       updateField({ isPrivate: true });
     }
   };
-  const handleDateChange = (selectedDate: string) => {
-    // Validate if the selected date is in the past
-    const currentDate = new Date();
-    const selectedDateObj = new Date(selectedDate);
-
-    if (selectedDateObj < currentDate) {
-      setDateWarning("Selected date is in the past.");
-    } else {
-      setDateWarning(null);
-    }
-
-    updateField({ date: selectedDate });
+  const handleStartDateChange = (selectedDate: string) => {
+    updateField({ startDate: selectedDate });
   };
 
-  const handleStartTimeChange = (selectedTime: string) => {
-    // Validate if end time is before start time
-    if (endTime && selectedTime >= endTime) {
-      setTimeWarning("End time must be after start time.");
-    } else {
-      setTimeWarning(null);
-    }
+  const handleEndDateChange = (selectedDate: string) => {
+    updateField({ endDate: selectedDate });
+  };
 
+  useEffect(() => {
+    updateField({ endDate: startDate });
+  }, [startDate]);
+
+  const handleStartTimeChange = (selectedTime: string) => {
     updateField({ startTime: selectedTime });
   };
 
   const handleEndTimeChange = (selectedTime: string) => {
-    // Validate if end time is before start time
-    if (selectedTime <= startTime) {
-      setTimeWarning("End time must be after start time.");
+    updateField({ endTime: selectedTime });
+  };
+
+  useEffect(() => {
+    const currentDateTime = new Date();
+    const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
+    const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
+    console.log(startDate, startTime);
+
+    if (currentDateTime > selectedStartDateTime) {
+      setDateWarning("Event start date and time is in the past!");
+    } else {
+      setDateWarning(null);
+    }
+
+    if (selectedEndDateTime < selectedStartDateTime) {
+      setTimeWarning("Event must end after it starts!");
     } else {
       setTimeWarning(null);
     }
 
-    updateField({ endTime: selectedTime });
-  };
+    if (currentDateTime > selectedStartDateTime || selectedEndDateTime < selectedStartDateTime) {
+      setHasError(true);
+    } else {
+      setHasError(false);
+    }
+  }, [startDate, startTime, endDate, endTime]);
 
   const [customAmount, setCustomAmount] = useState(price);
 
@@ -165,16 +178,21 @@ export function BasicInformation({
         <div>
           <label className="text-black text-lg font-semibold">When does your event start and end?</label>
           <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
-            <div className="basis-1/2">
-              <CustomDateInput date={date} placeholder="Date" handleChange={handleDateChange} />
+            <div className="basis-1/3">
+              <CustomDateInput date={startDate} placeholder="Start Date" handleChange={handleStartDateChange} />
             </div>
             <div className="basis-1/4">
-              <CustomTimeInput value={startTime} placeholder="Start time" handleChange={handleStartTimeChange} />
+              <CustomTimeInput value={startTime} placeholder="Start Time" handleChange={handleStartTimeChange} />
+            </div>
+            <div className="basis-1/3">
+              <CustomDateInput date={endDate} placeholder="End Date" handleChange={handleEndDateChange} />
             </div>
             <div className="basis-1/4">
-              <CustomTimeInput value={endTime} placeholder="End time" handleChange={handleEndTimeChange} />
+              <CustomTimeInput value={endTime} placeholder="End Time" handleChange={handleEndTimeChange} />
             </div>
           </div>
+          {dateWarning && <div className="text-red-600 text-sm mt-2">{dateWarning}</div>}
+          {timeWarning && <div className="text-red-600 text-sm mt-2">{timeWarning}</div>}
         </div>
 
         <div>
@@ -237,11 +255,13 @@ export function BasicInformation({
                 value={priceString}
                 type="number"
                 onChange={(e) => {
-                  var value = parseInt(e.target.value);
-                  if (value < 1 && value !== 0) {
-                    value = 1;
+                  let value = parseInt(e.target.value);
+                  if (!isNaN(value)) {
+                    value = Math.max(value, 0);
+                  } else {
+                    value = 0;
                   }
-                  setPriceString(`${value}`);
+                  setPriceString(value.toString());
                   handleCustomAmountChange(value);
                 }}
                 className="rounded-md focus:ring-0"
@@ -257,8 +277,15 @@ export function BasicInformation({
                 value={capacityString}
                 type="number"
                 onChange={(e) => {
-                  setCapacityString(e.target.value);
-                  updateField({ capacity: parseInt(e.target.value) });
+                  const value = parseInt(e.target.value);
+                  if (!isNaN(value)) {
+                    const maxValue = Math.max(value, 0);
+                    setCapacityString(maxValue.toString());
+                    updateField({ capacity: maxValue });
+                  } else {
+                    setCapacityString("0");
+                    updateField({ capacity: 0 });
+                  }
                 }}
                 className="rounded-md focus:ring-0"
                 size="lg"

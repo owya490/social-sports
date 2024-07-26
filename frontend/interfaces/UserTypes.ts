@@ -48,6 +48,8 @@ export interface PrivateUserData extends AbstractUserData {
   stripeAccountActive?: boolean;
 }
 
+export interface TempUserData extends AbstractUserData {}
+
 export interface NewUserData extends AbstractUserData {
   password: string;
 }
