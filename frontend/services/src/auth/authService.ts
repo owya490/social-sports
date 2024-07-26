@@ -11,7 +11,7 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signOut
+  signOut,
 } from "firebase/auth";
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
@@ -95,12 +95,18 @@ export async function saveTempUserData(userId: string, data: TempUserData) {
 }
 
 export async function getTempUserData(userId: string): Promise<NewUserData | null> {
-  const docRef = doc(db, "TempUsers", userId); // Get a reference to the document
-  const docSnap = await getDoc(docRef); // Retrieve the document snapshot
+  try {
+    const docRef = doc(db, "TempUsers", userId); // Get a reference to the document
+    const docSnap = await getDoc(docRef); // Retrieve the document snapshot
 
-  if (docSnap.exists()) {
-    return docSnap.data() as NewUserData;
-  } else {
+    if (docSnap.exists()) {
+      return docSnap.data() as NewUserData;
+    } else {
+      console.error(`User ID=${userId} did not exist when expected by reference.`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error fetching user data for ID=${userId}:`, error);
     return null;
   }
 }
