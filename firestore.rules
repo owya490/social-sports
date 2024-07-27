@@ -18,6 +18,8 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null 
       && request.auth.uid == get(/databases/$(database)/documents/Events/$(activeModifier)/$(accessModifier)/$(eventId)).data.organiserId;
+      allow write: if (request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['accessCount']));
     }
 
     // Only events organisers can read and write to their Events metadata fields
@@ -41,6 +43,11 @@ service cloud.firestore {
     match /Tickets/{ticketId} {
       allow read: if true;
       allow write: if get(/databases/$(database)/documents/Tickets/$(ticketId)).data == null;
+    }
+    
+    // Everyone can read and write to tags for now
+    match /EventTags/{eventTags} {
+    	allow read, write: if true;
     }
   }
 }
