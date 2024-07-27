@@ -1,5 +1,4 @@
 import {
-  Attendee,
   EmptyPurchaser,
   EventData,
   EventDataWithoutOrganiser,
@@ -19,6 +18,7 @@ import {
   getDocs,
   increment,
   query,
+  runTransaction,
   updateDoc,
   where,
   writeBatch,
@@ -41,11 +41,11 @@ import {
 import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
 import {
   findEventDoc,
-  findEventMetadataDocByEventId,
   getAllEventsFromCollectionRef,
   tryGetAllActivePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
 import * as crypto from "crypto";
+import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -100,18 +100,7 @@ export async function createEventMetadata(batch: WriteBatch, eventId: EventId, d
   }
 }
 
-export async function getEventMetadataByEventId(eventId: EventId): Promise<EventMetadata> {
-  eventServiceLogger.info(`getEventMetadataByEventId, ${eventId}`);
-  try {
-    const eventMetadataDoc = await findEventMetadataDocByEventId(eventId);
-    return eventMetadataDoc.data() as EventMetadata;
-  } catch (error) {
-    eventServiceLogger.error(`getEventMetadataByEventId ${error}`);
-    throw error;
-  }
-}
-
-export async function getEventById(eventId: EventId): Promise<EventData> {
+export async function getEventById(eventId: EventId, bypassCache: boolean = false): Promise<EventData> {
   eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
     const eventDoc = await findEventDoc(eventId);
@@ -119,7 +108,7 @@ export async function getEventById(eventId: EventId): Promise<EventData> {
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
     var organiser: UserData = EmptyUserData;
     try {
-      organiser = await getPublicUserById(eventWithoutOrganiser.organiserId);
+      organiser = await getPublicUserById(eventWithoutOrganiser.organiserId, bypassCache);
     } catch (error) {
       eventServiceLogger.error(`getEventById ${error}`);
       throw error;
@@ -233,7 +222,6 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
     eventServiceLogger.error(`updateEventById ${error}`);
-    console.error(error);
   }
 }
 
@@ -244,10 +232,8 @@ export async function deleteEvent(eventId: EventId): Promise<void> {
     const eventRef = await findEventDocRef(eventId);
     await deleteDoc(eventRef);
     eventServiceLogger.info(`deleteEvent Succesfull ${eventId}`);
-    console.log(deleteDoc);
   } catch (error) {
     eventServiceLogger.error(`deleteEvent ${error}`);
-    console.error(error);
   }
 }
 
@@ -265,11 +251,9 @@ export async function deleteEventByName(eventName: string): Promise<void> {
     querySnapshot.forEach(async (eventDoc) => {
       await deleteDoc(eventDoc.ref);
     });
-    eventServiceLogger.info(`Deleting Event by Name successfull ${eventName}`);
-    console.log(`Events with name '${eventName}' delete successfully.`);
+    eventServiceLogger.info(`Deleting Event by name successfully ${eventName}`);
   } catch (error) {
     eventServiceLogger.error(`deleteEventbyName ${error}`);
-    console.error(error);
   }
 }
 
@@ -321,43 +305,54 @@ export async function updateEventMetadataFromEventId(eventId: string, updatedDat
   }
 }
 
-export async function addEventAttendee(attendee: Purchaser, eventId: string) {
-  const attendeeEmail = attendee.email;
-  const attendeeEmailHash = getPurchaserEmailHash(attendeeEmail);
-  // Get information of the one attendee
-  const attendeeName = Object.keys(attendee.attendees)[0];
-  const attendeeInfo = Object.values(attendee.attendees)[0];
+export async function addEventAttendee(attendee: Purchaser, eventId: EventId) {
+  try {
+    const attendeeEmail = attendee.email;
+    const attendeeEmailHash = getPurchaserEmailHash(attendeeEmail);
+    // Get information of the one attendee
+    const attendeeName = Object.keys(attendee.attendees)[0];
+    const attendeeInfo = Object.values(attendee.attendees)[0];
 
-  // First check whether there is enough ticket allocation
-  const eventData = await getEventById(eventId);
-  if (eventData.vacancy < attendeeInfo.ticketCount) {
-    throw new Error("Not enough tickets!");
+    // Run transaction to ensure read and write are atomic
+    await runTransaction(db, async (transaction) => {
+      // GET OPERATION: First check whether there is enough ticket allocation
+      const eventDocRef = await findEventDocRef(eventId);
+      const eventDataWithoutOrganiser = (await transaction.get(eventDocRef)).data() as EventDataWithoutOrganiser;
+      if (eventDataWithoutOrganiser.vacancy < attendeeInfo.ticketCount) {
+        throw new Error("Not enough tickets!");
+      }
+
+      const eventMetadataDocRef = findEventMetadataDocRefByEventId(eventId);
+      let eventMetadata = (await transaction.get(eventMetadataDocRef)).data() as EventMetadata;
+
+      // Check if email has is already in the purchaserMap
+      if (!(attendeeEmailHash in eventMetadata.purchaserMap)) {
+        eventMetadata.purchaserMap[attendeeEmailHash] = EmptyPurchaser;
+        eventMetadata.purchaserMap[attendeeEmailHash].email = attendeeEmail;
+      }
+
+      // Check if specific attendee name is already under purchaser email
+      if (!(attendeeName in eventMetadata.purchaserMap[attendeeEmailHash].attendees)) {
+        eventMetadata.purchaserMap[attendeeEmailHash].attendees[attendeeName] = attendeeInfo;
+      } else {
+        eventMetadata.purchaserMap[attendeeEmailHash].attendees[attendeeName].ticketCount += attendeeInfo.ticketCount;
+      }
+
+      eventMetadata.purchaserMap[attendeeEmailHash].totalTicketCount += attendeeInfo.ticketCount;
+      eventDataWithoutOrganiser.vacancy -= attendeeInfo.ticketCount;
+
+      transaction.update(eventDocRef, eventDataWithoutOrganiser as Partial<EventData>);
+      transaction.update(eventMetadataDocRef, eventMetadata as Partial<EventMetadata>);
+    });
+  } catch (error) {
+    eventServiceLogger.error(
+      `Error adding event attendee in addEventAttendee() from eventId: ${eventId} and attendee: ${JSON.stringify(
+        attendee,
+        null,
+        2
+      )}`
+    );
   }
-
-  const docRef = doc(db, CollectionPaths.EventsMetadata, eventId);
-  const eventsMetadataDoc = await getDoc(docRef);
-  let eventMetadata = eventsMetadataDoc.data() as EventMetadata;
-
-  // Check if email has is already in the purchaserMap
-  if (!(attendeeEmailHash in eventMetadata.purchaserMap)) {
-    eventMetadata.purchaserMap[attendeeEmailHash] = EmptyPurchaser;
-    eventMetadata.purchaserMap[attendeeEmailHash].email = attendeeEmail;
-  }
-
-  // Check if specific attendee name is already under purchaser email
-  if (!(attendeeName in eventMetadata.purchaserMap[attendeeEmailHash].attendees)) {
-    eventMetadata.purchaserMap[attendeeEmailHash].attendees[attendeeName] = attendeeInfo;
-  } else {
-    eventMetadata.purchaserMap[attendeeEmailHash].attendees[attendeeName].ticketCount += attendeeInfo.ticketCount;
-  }
-
-  eventMetadata.purchaserMap[attendeeEmailHash].totalTicketCount += attendeeInfo.ticketCount;
-  eventData.vacancy -= attendeeInfo.ticketCount;
-
-  // TODO: need to make both these operations guaranteed to be atomic and handle race condition for
-  // adding new tickets.
-  updateEventById(eventId, eventData);
-  updateEventMetadataFromEventId(eventId, eventMetadata);
 }
 
 /**
