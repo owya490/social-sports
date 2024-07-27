@@ -66,7 +66,7 @@ export default function PopularEvents(props: PopularEventsProps) {
               <div className="flex space-x-2 xl:space-x-8">
                 {recommendedEvents.map((event, i) => {
                   return (
-                    <div key={`recommended-event-${i}`} className="snap-start w-[300px]">
+                    <div key={`recommended-event-${i}`} className="snap-start w-[300px] min-h-[250px]">
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}

@@ -52,6 +52,8 @@ const EventDrilldownDetailsPage = ({
   eventImage,
   eventId,
 }: EventDrilldownDetailsPageProps) => {
+  const [dateWarning, setDateWarning] = useState<string | null>(null);
+  const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState(false);
   const [newEditTitle, setNewEditTitle] = useState("");
   const [title, setTitle] = useState("");
@@ -79,13 +81,15 @@ const EventDrilldownDetailsPage = ({
     setEditTitle(false);
   };
 
-  const [editDate, setEditDate] = useState(false);
-  const [newEditDate, setNewEditDate] = useState("");
-  const [date, setDate] = useState("");
+  //TODO: More elegant solution for usestates
 
-  const [editTime, setEditTime] = useState(false);
-  const [newEditTime, setNewEditTime] = useState("");
-  const [time, setTime] = useState("");
+  const [editStartDate, setEditStartDate] = useState(false);
+  const [newEditStartDate, setNewEditStartDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+
+  const [editStartTime, setEditStartTime] = useState(false);
+  const [newEditStartTime, setNewEditStartTime] = useState("");
+  const [startTime, setStartTime] = useState("");
 
   const [editEndDate, setEditEndDate] = useState(false);
   const [newEditEndDate, setNewEditEndDate] = useState("");
@@ -99,32 +103,32 @@ const EventDrilldownDetailsPage = ({
     if (eventStartDate) {
       const dateString = timestampToDateString(eventStartDate);
       const timeString = timestampToTimeOfDay(eventStartDate);
-      setDate(`${dateString}`);
-      setNewEditDate(`${dateString}`);
-      setTime(`${timeString}`);
-      setNewEditTime(`${timeString}`);
+      setStartDate(`${dateString}`);
+      setNewEditStartDate(`${dateString}`);
+      setStartTime(`${timeString}`);
+      setNewEditStartTime(`${timeString}`);
     }
   }, [eventStartDate]);
 
   useEffect(() => {
     if (eventEndDate) {
-      const dateString = timestampToDateString(eventStartDate);
+      const dateString = timestampToDateString(eventEndDate);
       const timeString = timestampToTimeOfDay(eventEndDate);
       setEndDate(`${dateString}`);
       setNewEditEndDate(`${dateString}`);
       setEndTime(`${timeString}`);
       setNewEditEndTime(`${timeString}`);
     }
-  }, [eventEndDate, eventStartDate]);
+  }, [eventEndDate]);
 
   const handleDateTimeUpdate = async () => {
     try {
-      const dateStartTimeString = `${newEditDate} ${newEditTime}`;
+      const dateStartTimeString = `${newEditStartDate} ${newEditStartTime}`;
       const updatedStartTimestamp = parseDateTimeStringToTimestamp(dateStartTimeString);
       const dateEndTimeString = `${newEditEndDate} ${newEditEndTime}`;
       const updatedEndTimestamp = parseDateTimeStringToTimestamp(dateEndTimeString);
-      setEditDate(false);
-      setEditTime(false);
+      setEditStartDate(false);
+      setEditStartTime(false);
       setEditEndTime(false);
       await updateEventById(eventId, {
         startDate: updatedStartTimestamp,
@@ -136,17 +140,41 @@ const EventDrilldownDetailsPage = ({
     }
   };
 
+  useEffect(() => {
+    const currentDateTime = new Date();
+    const selectedStartDateTime = new Date(
+      `${formatStringToDate(newEditStartDate)}T${formatTimeTo24Hour(newEditStartTime)}`
+    );
+    const selectedEndDateTime = new Date(`${formatStringToDate(newEditEndDate)}T${formatTimeTo24Hour(newEditEndTime)}`);
+
+    if (currentDateTime > selectedStartDateTime) {
+      setDateWarning("Event start date and time is in the past!");
+    } else {
+      setDateWarning(null);
+    }
+
+    if (selectedEndDateTime < selectedStartDateTime) {
+      setTimeWarning("Event must end after it starts!");
+    } else {
+      setTimeWarning(null);
+    }
+  }, [newEditStartDate, newEditStartTime, newEditEndDate, newEditEndTime]);
+
+  useEffect(() => {
+    setNewEditEndDate(newEditStartDate);
+  }, [newEditStartDate]);
+
   const handleCancelDateTime = () => {
     const dateString = timestampToDateString(eventStartDate);
     const timeString = timestampToTimeOfDay(eventStartDate);
     const endDateString = timestampToDateString(eventEndDate);
     const endTimeString = timestampToTimeOfDay(eventEndDate);
-    setNewEditDate(`${dateString}`);
-    setNewEditTime(`${timeString}`);
+    setNewEditStartDate(`${dateString}`);
+    setNewEditStartTime(`${timeString}`);
     setNewEditEndDate(`${endDateString}`);
     setNewEditEndTime(`${endTimeString}`);
-    setEditDate(false);
-    setEditTime(false);
+    setEditStartDate(false);
+    setEditStartTime(false);
     setEditEndTime(false);
     setEditEndDate(false);
   };
@@ -310,7 +338,7 @@ const EventDrilldownDetailsPage = ({
       </div>
       <div className="border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 p-2 pb-4 relative">
         <div className="text-organiser-title-gray-text font-bold">Event Details</div>
-        <div className={`text-sm flex flex-col mt-4 ${editDate ? "space-y-2" : ""}`}>
+        <div className={`text-sm flex flex-col mt-4 ${editStartDate ? "space-y-2" : ""}`}>
           <div className="px-2 flex flex-row space-x-2">
             <CalendarDaysIcon className="w-4" />
             <div>
@@ -323,50 +351,44 @@ const EventDrilldownDetailsPage = ({
                 />
               ) : (
                 <>
-                  {editDate ? (
+                  {editStartDate ? (
                     <div className="flex">
                       <Input
                         type="date"
-                        value={formatStringToDate(newEditDate)}
+                        value={formatStringToDate(newEditStartDate)}
                         style={{
                           width: "100%",
                         }}
                         onChange={(e) => {
-                          setNewEditDate(formatDateToString(e.target.value));
+                          setNewEditStartDate(formatDateToString(e.target.value));
                         }}
                         crossOrigin="false"
+                        label="Start Date"
                       />
-                    </div>
-                  ) : (
-                    <div>{newEditDate}</div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-          <div className="px-2 flex flex-row space-x-2">
-            {editEndTime && <ClockIcon className="w-4 mt-2" />}
-            <div>
-              {loading ? (
-                <div></div>
-              ) : (
-                <>
-                  {editTime ? (
-                    <div className="flex">
+                      <div className="mr-2"></div>
                       <Input
-                        type="time"
-                        value={formatTimeTo24Hour(newEditTime)}
+                        type="date"
+                        value={formatStringToDate(newEditEndDate)}
                         style={{
                           width: "100%",
                         }}
                         onChange={(e) => {
-                          setNewEditTime(formatTimeTo12Hour(e.target.value));
+                          setNewEditEndDate(formatDateToString(e.target.value));
                         }}
                         crossOrigin="false"
+                        label="End Date"
                       />
                     </div>
                   ) : (
-                    <div></div>
+                    <div>
+                      {newEditStartDate === newEditEndDate ? (
+                        <div>{newEditStartDate}</div>
+                      ) : (
+                        <div>
+                          {newEditStartDate} - {newEditEndDate}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </>
               )}
@@ -388,6 +410,19 @@ const EventDrilldownDetailsPage = ({
                     <div className="flex">
                       <Input
                         type="time"
+                        value={formatTimeTo24Hour(newEditStartTime)}
+                        style={{
+                          width: "100%",
+                        }}
+                        onChange={(e) => {
+                          setNewEditStartTime(formatTimeTo12Hour(e.target.value));
+                        }}
+                        crossOrigin="false"
+                        label="Start Time"
+                      />
+                      <div className="mr-2"></div>
+                      <Input
+                        type="time"
                         value={formatTimeTo24Hour(newEditEndTime)}
                         style={{
                           width: "100%",
@@ -396,17 +431,26 @@ const EventDrilldownDetailsPage = ({
                           setNewEditEndTime(formatTimeTo12Hour(e.target.value));
                         }}
                         crossOrigin="false"
+                        label="End Time"
                       />
                     </div>
                   ) : (
                     <div className="mt-2">
-                      {newEditTime} - {newEditEndTime}
+                      {newEditStartTime} - {newEditEndTime}
                     </div>
                   )}
                 </>
               )}
             </div>
           </div>
+          {editStartDate ? (
+            <>
+              {dateWarning && <div className="text-red-600 text-sm mt-2">{dateWarning}</div>}
+              {timeWarning && <div className="text-red-600 text-sm mt-2">{timeWarning}</div>}
+            </>
+          ) : (
+            <div></div>
+          )}
           <div className="px-2 flex flex-row space-x-2">
             <MapPinIcon className="w-4 mt-2" />
             <div>
@@ -430,6 +474,7 @@ const EventDrilldownDetailsPage = ({
                           setNewEditLocation(e.target.value);
                         }}
                         crossOrigin="false"
+                        label="Location"
                       />
                     </div>
                   ) : (
@@ -464,13 +509,18 @@ const EventDrilldownDetailsPage = ({
                           setNewEditPrice(Number(e.target.value));
                         }}
                         crossOrigin="false"
+                        label="Price"
                       />
                       <CheckIcon
-                        className="absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer"
+                        className={`absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer ${
+                          dateWarning || timeWarning ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        }`}
                         onClick={() => {
-                          handleDateTimeUpdate();
-                          handleLocationUpdate();
-                          handlePriceUpdate();
+                          if (!dateWarning && !timeWarning) {
+                            handleDateTimeUpdate();
+                            handleLocationUpdate();
+                            handlePriceUpdate();
+                          }
                         }}
                       />
                       <XMarkIcon
@@ -488,8 +538,8 @@ const EventDrilldownDetailsPage = ({
                       <PencilSquareIcon
                         className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
                         onClick={() => {
-                          setEditDate(true);
-                          setEditTime(true);
+                          setEditStartDate(true);
+                          setEditStartTime(true);
                           setEditLocation(true);
                           setEditPrice(true);
                           setEditEndTime(true);

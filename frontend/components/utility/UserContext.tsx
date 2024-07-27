@@ -23,7 +23,7 @@ export default function UserContext({ children }: { children: any }) {
 
   useEffect(() => {
     const unsubscriber = onAuthStateChanged(auth, async (userAuth) => {
-      if (userAuth) {
+      if (userAuth && auth.currentUser?.emailVerified) {
         const { uid } = userAuth;
         try {
           const userData = await getFullUserByIdForUserContextWithRetries(uid);
