@@ -34,7 +34,7 @@ import {
   findEventDoc,
   findEventMetadataDocByEventId,
   getAllEventsFromCollectionRef,
-  tryGetAllActisvePublicEventsFromLocalStorage,
+  tryGetAllActivePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
@@ -157,7 +157,7 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
 
     if (isActive && !isPrivate) {
       const currentDate = new Date();
-      let { success, events } = tryGetAllActisvePublicEventsFromLocalStorage(currentDate);
+      let { success, events } = tryGetAllActivePublicEventsFromLocalStorage(currentDate);
       if (success) {
         return events;
       }
@@ -184,51 +184,45 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
     const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
 
     if (!privateDoc.exists()) {
-      throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
+      throw new UserNotFoundError(userId);
     }
     const privateData = privateDoc.data();
     const organiserEvents = privateData?.organiserEvents || [];
     const eventDataList: EventData[] = [];
-    for (let i = 0; i < organiserEvents.length; i++) {
-      const event = organiserEvents[i];
-      console.log(event); // Or perform any other operation with 'event'
-      const eventData: EventData = await getEventById(event);
-      eventData.eventId = event;
+    for (const eventId of organiserEvents) {
+      const eventData: EventData = await getEventById(eventId);
+      eventData.eventId = eventId;
       eventDataList.push(eventData);
     }
     // Return the organiserEvents array
-    console.log(eventDataList);
+    eventServiceLogger.info(`Fetching private user by ID:, ${userId}, ${eventDataList}`);
     return eventDataList;
   } catch (error) {
     throw error;
   }
 }
 
-export async function updateEventByName(eventName: string, updatedData: Partial<EventData>) {
+export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
   if (!rateLimitCreateAndUpdateEvents()) {
-    console.log("Rate Limited!!!");
+    eventServiceLogger.info(`Rate Limited!, ${eventId}`);
     throw "Rate Limited";
   }
-  eventServiceLogger.info(`updateEventByName ${eventName}`);
+  eventServiceLogger.info(`updateEventByName ${eventId}`); 
   try {
-    const eventCollectionRef = collection(db, CollectionPaths.Events);
-    const q = query(eventCollectionRef, where("name", "==", eventName)); // Query by event name
+    const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
 
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.size === 0) {
-      throw new Error(`Event with name '${eventName}' not found.`);
+    // Check if document exists
+    const eventDocSnapshot = await getDoc(eventDocRef);
+    if (!eventDocSnapshot.exists()) {
+      throw new Error(`Event with id '${eventId}' not found.`);
     }
 
-    // Loop through each event with the same name and update them
-    querySnapshot.forEach(async (eventDoc) => {
-      await updateDoc(eventDoc.ref, updatedData);
-    });
+    await updateDoc(eventDocRef, updatedData);
 
-    console.log(`Events with name '${eventName}' updated successfully.`);
-    eventServiceLogger.info(`Events with name '${eventName}' updated successfully.`);
+    console.log(`Event with Id '${eventId}' updated successfully.`);
+    eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
-    eventServiceLogger.error(`updateEventByName ${error}`);
+    eventServiceLogger.error(`updateEventById ${error}`);
     console.error(error);
   }
 }

@@ -15,6 +15,7 @@ from lib.constants import db
 from lib.logging import Logger
 from lib.stripe.commons import ERROR_URL
 
+
 @dataclass
 class CreateStandardStripeAccountRequest:
   refreshUrl: str
@@ -82,13 +83,17 @@ def check_and_update_organiser_stripe_account(transaction: Transaction, logger: 
       return json.dumps({"url": return_url})
 
 
-@https_fn.on_call(region="australia-southeast1")
+@https_fn.on_call(cors=options.CorsOptions(cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
 def create_stripe_standard_account(req: https_fn.CallableRequest):
   uid = str(uuid.uuid4())
   logger = Logger(f"stripe_create_account_logger_{uid}")
   logger.add_tag("uuid", uid)
 
   body_data = req.data
+
+  # Security Check to see if user is authenticated
+  if (req.auth.uid == None):
+    return https_fn.Response(status=401, body_data=json.dumps({"url": ERROR_URL}))
   
   # Validate the incoming request to contain the necessary fields
   try:
@@ -98,6 +103,11 @@ def create_stripe_standard_account(req: https_fn.CallableRequest):
     return json.dumps({"url": ERROR_URL})
 
   logger.add_tag("organiser", request_data.organiser)
+
+  # If the requester uid is not the organiser, return 401
+  if (not req.auth.uid == request_data.organiser):
+    logger.error(f"Authenticated uid does not match with organiser attached in request body. uid={req.auth.uid} organiser={request_data.organiser}")
+    return https_fn.Response(status=401, body_data=json.dumps({"url": ERROR_URL}))
   
   transaction = db.transaction()
   organiser_ref = db.collection("Users/Active/Private").document(request_data.organiser)

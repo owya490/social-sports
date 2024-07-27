@@ -8,11 +8,7 @@ import {
   filterEventsBySortBy,
   filterEventsBySport,
 } from "@/services/src/filterService";
-import {
-  SYDNEY_LAT,
-  SYDNEY_LNG,
-  getLocationCoordinates,
-} from "@/services/src/locationUtils";
+import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import ChevronRightButton from "../utility/ChevronRightButton";
@@ -52,7 +48,9 @@ interface FilterBannerProps {
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
   srcLocation: string;
   setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
-  triggerFilterApply: boolean;
+  triggerFilterApply: boolean | undefined;
+  endLoading: boolean | undefined;
+  setEndLoading: (state: boolean | undefined) => void;
 }
 
 export default function FilterBanner({
@@ -62,20 +60,17 @@ export default function FilterBanner({
   srcLocation,
   setSrcLocation,
   triggerFilterApply,
+  endLoading,
+  setEndLoading,
 }: FilterBannerProps) {
-  const [sortByCategoryValue, setSortByCategoryValue] =
-    useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
+  const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
     useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
-  const [maxPriceSliderValue, setMaxPriceSliderValue] =
-    useState<number>(DEFAULT_MAX_PRICE);
+  const [maxPriceSliderValue, setMaxPriceSliderValue] = useState<number>(DEFAULT_MAX_PRICE);
   /// Keeps track of what filter values were actually applied.
-  const [appliedMaxPriceSliderValue, setAppliedMaxPriceSliderValue] =
-    useState<number>(DEFAULT_MAX_PRICE);
-  const [maxProximitySliderValue, setMaxProximitySliderValue] =
-    useState<number>(DEFAULT_MAX_PROXIMITY); // max proximity in kms.
-  const [appliedMaxProximitySliderValue, setAppliedMaxProximitySliderValue] =
-    useState<number>(DEFAULT_MAX_PROXIMITY);
+  const [appliedMaxPriceSliderValue, setAppliedMaxPriceSliderValue] = useState<number>(DEFAULT_MAX_PRICE);
+  const [maxProximitySliderValue, setMaxProximitySliderValue] = useState<number>(DEFAULT_MAX_PROXIMITY); // max proximity in kms.
+  const [appliedMaxProximitySliderValue, setAppliedMaxProximitySliderValue] = useState<number>(DEFAULT_MAX_PROXIMITY);
   const [dateRange, setDateRange] = useState<{
     startDate: string | null;
     endDate: string | null;
@@ -152,19 +147,13 @@ export default function FilterBanner({
     console.log("FILTERING", srcLocation);
     const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
     // changed it so that instead of it running only if its not max, if locaiton is not ""
-    const isAnyProximityBool =
-      srcLocation === "" ||
-      maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
+    const isAnyProximityBool = srcLocation === "" || maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
 
     let filteredEventDataList = [...eventDataList];
     console.log(srcLocation);
     // Filter by MAX PRICE
     if (!isAnyPriceBool) {
-      let newEventDataList = filterEventsByPrice(
-        [...filteredEventDataList],
-        null,
-        maxPriceSliderValue
-      );
+      let newEventDataList = filterEventsByPrice([...filteredEventDataList], null, maxPriceSliderValue);
       filteredEventDataList = newEventDataList;
     }
     setAppliedMaxPriceSliderValue(maxPriceSliderValue);
@@ -173,9 +162,7 @@ export default function FilterBanner({
     if (dateRange.startDate && dateRange.endDate) {
       let newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
-        Timestamp.fromDate(
-          new Date(dateRange.startDate + DAY_START_TIME_STRING)
-        ), // TODO: needed to specify maximum time range on particular day.
+        Timestamp.fromDate(new Date(dateRange.startDate + DAY_START_TIME_STRING)), // TODO: needed to specify maximum time range on particular day.
         Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
       );
       filteredEventDataList = newEventDataList;
@@ -206,17 +193,11 @@ export default function FilterBanner({
     setAppliedMaxProximitySliderValue(maxProximitySliderValue);
 
     // Filter by SPORT
-    let newEventDataList = filterEventsBySport(
-      [...filteredEventDataList],
-      selectedSportProp
-    );
+    let newEventDataList = filterEventsBySport([...filteredEventDataList], selectedSportProp);
     filteredEventDataList = newEventDataList;
 
     // Filter by SORT BY
-    newEventDataList = filterEventsBySortBy(
-      [...filteredEventDataList],
-      sortByCategoryValue
-    );
+    newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
     filteredEventDataList = newEventDataList;
     setAppliedSortByCategoryValue(sortByCategoryValue);
 
@@ -225,16 +206,24 @@ export default function FilterBanner({
     setEventDataList([...filteredEventDataList]);
     closeModal();
   }
+
   useEffect(() => {
-    applyFilters(selectedSport);
+    if (triggerFilterApply !== undefined) {
+      console.log("applyFilters");
+      applyFilters(selectedSport).finally(() => {
+        if (endLoading === undefined) {
+          setEndLoading(true);
+        } else {
+          setEndLoading(!endLoading);
+        }
+      });
+    }
   }, [triggerFilterApply]);
+
   return (
     <div className="pt-16 bg-white px-4 sm:px-0 screen-width-dashboard">
       <div className="h-20 flex items-center mt-2">
-        <div
-          id="filter-overflow"
-          className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all"
-        >
+        <div id="filter-overflow" className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all">
           {Object.entries(icons).map((entry, idx) => {
             const sportIdentifierString = entry[0];
             const sportInfo = entry[1];
@@ -291,9 +280,7 @@ export default function FilterBanner({
             maxProximitySliderValue={maxProximitySliderValue}
             setMaxProximitySliderValue={setMaxProximitySliderValue}
             appliedMaxProximitySliderValue={appliedMaxProximitySliderValue}
-            setAppliedMaxProximitySliderValue={
-              setAppliedMaxProximitySliderValue
-            }
+            setAppliedMaxProximitySliderValue={setAppliedMaxProximitySliderValue}
             dateRange={dateRange}
             setDateRange={setDateRange}
             appliedDateRange={appliedDateRange}

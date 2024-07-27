@@ -14,6 +14,7 @@ export default function Register() {
   const [repeatPassword, setRepeatPassword] = useState("");
   const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [showRegisterFailure, setShowRegisterFailure] = useState(false);
+  const [showEmailSentAlert, setShowEmailSentAlert] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,7 +28,7 @@ export default function Register() {
 
     try {
       await handleEmailAndPasswordSignUp(userData);
-      router.push("/dashboard?login=success");
+      setShowEmailSentAlert(true);
     } catch (error) {
       setShowRegisterFailure(true);
       setPasswordMismatch(false);
@@ -53,6 +54,13 @@ export default function Register() {
     }
   };
 
+  const handleAlertClose = () => {
+    setShowRegisterFailure(false);
+    if (error == "This email is already in use.") {
+      router.push("/login");
+    }
+  };
+
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
@@ -66,11 +74,19 @@ export default function Register() {
         </Alert>
         <Alert
           open={showRegisterFailure}
-          onClose={() => setShowRegisterFailure(false)}
+          onClose={() => handleAlertClose()}
           color="red"
           className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
         >
           {error}
+        </Alert>
+        <Alert
+          open={showEmailSentAlert}
+          onClose={() => setShowEmailSentAlert(false)}
+          color="green"
+          className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+        >
+          Email sent successfully. Please check your inbox.
         </Alert>
         <h2 className="mt-[5vh] sm:mt-0 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 ">
           Register your account

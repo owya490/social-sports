@@ -1,18 +1,28 @@
 "use client";
-import { useEffect, useLayoutEffect, useState } from "react";
-import { searchEventsByKeyword, getAllEvents, getEventById } from "@/services/src/events/eventsService";
-import { Alert } from "@material-tailwind/react";
 import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
-import { useRouter, useSearchParams } from "next/navigation";
-import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
-import Image from "next/image";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
+import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
+import { Alert } from "@material-tailwind/react";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
+  const loadingEventDataList: EventData[] = [
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+  ];
   const [eventDataList, setEventDataList] = useState<EventData[]>([
     EmptyEventData,
     EmptyEventData,
@@ -28,9 +38,13 @@ export default function Dashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [srcLocation, setSrcLocation] = useState<string>("");
-  const [triggerFilterApply, setTriggerFilterApply] = useState(false);
+  const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
+  const [endLoading, setEndLoading] = useState<boolean | undefined>(false);
   const getQueryParams = () => {
-    if (typeof window === "undefined") {
+    // if (typeof window === "undefined") {
+    console.log(window);
+    if (window === undefined) {
+      console.log("aidan");
       // Return some default or empty values when not in a browser environment
       return { event: "", location: "" };
     }
@@ -47,19 +61,25 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchEvents = async () => {
+      await sleep(500);
       const { event, location } = getQueryParams();
-      setSrcLocation(location);
+      if (event === "UNDEFINED") {
+        console.log("owen");
+        return false;
+      }
+
       if (typeof event === "string" && typeof location === "string") {
         if (event.trim() === "") {
+          console.log("no event name");
           getAllEvents()
             .then((events) => {
+              console.log(events);
               setEventDataList(events);
               setSearchDataList(events);
               setAllEventsDataList(events);
             })
             .finally(async () => {
               await sleep(500);
-              setLoading(false);
             });
         } else {
           searchEventsByKeyword(event, location)
@@ -77,7 +97,6 @@ export default function Dashboard() {
             })
             .finally(async () => {
               await sleep(500);
-              setLoading(false);
             })
             .catch(() => {
               router.push("/error");
@@ -85,11 +104,28 @@ export default function Dashboard() {
         }
       }
       if (location.trim() !== "") {
-        setTriggerFilterApply(true);
+        setSrcLocation(location);
+        if (triggerFilterApply === undefined) {
+          setTriggerFilterApply(false);
+        } else {
+          setTriggerFilterApply(!triggerFilterApply);
+        }
+      } else {
+        setLoading(false);
       }
     };
+
+    // fetchEvents();
+    setLoading(true);
     fetchEvents();
   }, [searchParams]);
+
+  // useEffect listener for when filtering finishes
+  useEffect(() => {
+    if (endLoading !== undefined) {
+      setLoading(false);
+    }
+  }, [endLoading]);
 
   useEffect(() => {
     const login = searchParams?.get("login");
@@ -126,6 +162,8 @@ export default function Dashboard() {
           srcLocation={srcLocation}
           setSrcLocation={setSrcLocation}
           triggerFilterApply={triggerFilterApply}
+          endLoading={endLoading}
+          setEndLoading={setEndLoading}
         />
       </div>
       <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit">
@@ -135,8 +173,28 @@ export default function Dashboard() {
       </div>
       <div className="flex justify-center">
         <div className="pb-10 screen-width-dashboard">
-          {eventDataList.length === 0 ? (
-            <div className="flex justify-center">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-screen justify-items-center">
+              {loadingEventDataList.map((event, eventIdx) => {
+                return (
+                  <div className="my-4 w-full" key={eventIdx}>
+                    <EventCard
+                      eventId={event.eventId}
+                      image={event.image}
+                      name={event.name}
+                      organiser={event.organiser}
+                      startTime={event.startDate}
+                      location={event.location}
+                      price={event.price}
+                      vacancy={event.vacancy}
+                      loading={loading}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ) : eventDataList.length === 0 ? (
+            <div className="flex justify-center w-screen">
               <div>
                 <Image
                   src={noSearchResultLineDrawing}

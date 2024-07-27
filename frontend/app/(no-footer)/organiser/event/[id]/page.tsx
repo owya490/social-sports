@@ -1,5 +1,6 @@
 "use client";
 
+import ShareModal from "@/components/events/ShareModal";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
 import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
@@ -29,6 +30,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
+  const [eventEndDate, setEventEndDate] = useState<Timestamp>(Timestamp.now());
   const [eventOrganiser, setEventOrganiser] = useState<UserData>(EmptyUserData);
   const [eventVacancy, setEventVacancy] = useState<number>(0);
   const [eventDescription, setEventDescription] = useState<string>("");
@@ -48,6 +50,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventData(event);
         setEventName(event.name);
         setEventStartDate(event.startDate);
+        setEventEndDate(event.endDate);
         setEventOrganiser(event.organiser);
         setEventVacancy(event.vacancy);
         setEventDescription(event.description);
@@ -118,15 +121,20 @@ export default function EventPage({ params }: EventPageProps) {
           </div>
           <div id="event-drilldown-details-page" className="w-full">
             {currSidebarPage === "Details" && (
-              <EventDrilldownDetailsPage
-                loading={loading}
-                eventName={eventName}
-                eventStartdate={eventStartDate}
-                eventDescription={eventDescription}
-                eventLocation={eventLocation}
-                eventPrice={eventPrice}
-                eventImage={eventImage}
-              />
+              <>
+                <EventDrilldownDetailsPage
+                  loading={loading}
+                  eventName={eventName}
+                  eventStartDate={eventStartDate}
+                  eventEndDate={eventEndDate}
+                  eventDescription={eventDescription}
+                  eventLocation={eventLocation}
+                  eventPrice={eventPrice}
+                  eventImage={eventImage}
+                  eventId={eventId}
+                />
+                <ShareModal />
+              </>
             )}
             {currSidebarPage === "Manage Attendees" && (
               <EventDrilldownManageAttendeesPage eventMetadata={eventMetadata} />

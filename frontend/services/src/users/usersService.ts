@@ -1,12 +1,14 @@
 import { NewUserData, PrivateUserData, PublicUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
+import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
 import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
 import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
+import { DEFAULT_USER_PROFILE_PICTURE } from "./usersConstants";
 
-const userServiceLogger = new Logger("userServiceLogger");
+export const userServiceLogger = new Logger("userServiceLogger");
 
 export async function createUser(data: NewUserData, userId: string): Promise<void> {
   try {
@@ -22,18 +24,31 @@ export async function createUser(data: NewUserData, userId: string): Promise<voi
 
 export async function getPublicUserById(userId: UserId): Promise<UserData> {
   userServiceLogger.info(`Fetching public user by ID:, ${userId}`);
-  console.log(userId);
   if (userId === undefined) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
   try {
+    // try find in localstorage
+    const { success, userDataLocalStorage } = tryGetActivePublicUserDataFromLocalStorage(userId);
+    if (success) {
+      userServiceLogger.info(`Return user data from local storage, ${userId}`);
+      return userDataLocalStorage;
+    }
+
     const userDoc = await getDoc(doc(db, "Users", "Active", "Public", userId));
     if (!userDoc.exists()) {
       throw new UserNotFoundError(userId);
     }
     const userData = userDoc.data() as UserData;
     userData.userId = userId;
+    if (!userData.profilePicture) {
+      userData.profilePicture = DEFAULT_USER_PROFILE_PICTURE;
+    }
+
+    // set local storage with data
+    setUsersDataIntoLocalStorage(userId, userData);
+
     return userData;
   } catch (error) {
     if (error instanceof UserNotFoundError) {
@@ -48,8 +63,7 @@ export async function getPublicUserById(userId: UserId): Promise<UserData> {
 
 export async function getPrivateUserById(userId: UserId): Promise<UserData> {
   userServiceLogger.info(`Fetching private user by ID:, ${userId}`);
-  console.log(userId);
-  if (userId === undefined) {
+  if (userId === undefined || userId === null) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
