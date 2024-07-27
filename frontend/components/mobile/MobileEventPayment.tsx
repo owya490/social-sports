@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
 import {
   CalendarDaysIcon,
   ClockIcon,
@@ -11,9 +11,10 @@ import {
 } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
 
 interface MobileEventPaymentProps {
   location: string;
@@ -105,7 +106,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                       className: "text-black",
                     }}
                   >
-                    {Array(Math.min(props.vacancy, 7))
+                    {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
                       .fill(0)
                       .map((_, idx) => {
                         const count = idx + 1;

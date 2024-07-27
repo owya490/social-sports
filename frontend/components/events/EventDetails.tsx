@@ -12,6 +12,8 @@ interface EventDetailsProps {
   setLoading: (value: boolean) => void;
 }
 
+export const MAX_TICKETS_PER_ORDER = 7;
+
 export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
   return (

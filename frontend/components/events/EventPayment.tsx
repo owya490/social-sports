@@ -14,6 +14,7 @@ import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -108,7 +109,7 @@ export default function EventPayment(props: EventPaymentProps) {
                         className: "text-black",
                       }}
                     >
-                      {Array(Math.min(props.vacancy, 7))
+                      {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
                         .fill(0)
                         .map((_, idx) => {
                           const count = idx + 1;
