@@ -1,11 +1,15 @@
 rules_version = '2';
 
-// Firebase Storage will be free access as all images uploaded should be widely available to anyone with the URL.
+// Firebase Storage will be free read access as all images uploaded should be widely available to anyone with the URL.
 // This is as any event, whether Private or Public, will have it image accessed by anyone with the Event Link.
+// However, only users can perform write requests to their own bucket (create, update delete).
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      allow read, write: if true;
+      allow read: if true;
+    }
+    match /users/{userId} {
+      allow write: if userId == request.auth.uid;
     }
   }
 }
