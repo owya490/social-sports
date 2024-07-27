@@ -339,6 +339,15 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId) {
       }
 
       eventMetadata.purchaserMap[attendeeEmailHash].totalTicketCount += attendeeInfo.ticketCount;
+
+      // Absolutely update EventMetadata.completeTicketCount - it is ESSENTIAL this is completed in a
+      // runTransaction block to ensure atomicity in preserving consistency in the number of tickets.
+      let totalEventTickets = 0;
+      for (const purchaserInfo of Object.values(eventMetadata.purchaserMap)) {
+        totalEventTickets += purchaserInfo.totalTicketCount;
+      }
+      eventMetadata.completeTicketCount = totalEventTickets;
+
       eventDataWithoutOrganiser.vacancy -= attendeeInfo.ticketCount;
 
       transaction.update(eventDocRef, eventDataWithoutOrganiser as Partial<EventData>);
@@ -360,7 +369,7 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId) {
  Used to give email hash of purchaser email.
  DO NOT EDIT - MUST ALSO EDIT THE HASH IN webhooks.py
  */
-function getPurchaserEmailHash(email: string) {
+export function getPurchaserEmailHash(email: string) {
   const md5Hash = crypto.createHash("md5").update(email).digest("hex");
 
   const hashInt = BigInt("0x" + md5Hash);

@@ -1,26 +1,26 @@
-import { removeAttendee } from "@/services/src/organiser/organiserService";
-import { Dialog, Transition, Description, DialogTitle, TransitionChild, DialogPanel } from "@headlessui/react";
+import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import React, { Fragment, useState } from "react";
+import { Fragment, useState } from "react";
 
-interface RemoveAttendeeDialogProps {
-  setIsRemoveAttendeeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+interface EditAttendeeTicketsDialogProps {
+  setIsEditAttendeeTicketsDialogModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
-  isRemoveAttendeeModalOpen: boolean;
+  isEditAttendeeTicketsDialogModalOpen: boolean;
   email: string;
+  numTickets: number;
 }
 
-const RemoveAttendeeDialog = ({
-  setIsRemoveAttendeeModalOpen,
+export const EditAttendeeTicketsDialog = ({
+  setIsEditAttendeeTicketsDialogModalOpen,
   closeModal,
-  isRemoveAttendeeModalOpen,
+  isEditAttendeeTicketsDialogModalOpen,
   email,
-}: RemoveAttendeeDialogProps) => {
-  const [inviteEmail, setInviteEmail] = useState<string>("");
-  const [enabled, setEnabled] = useState(true);
+  numTickets,
+}: EditAttendeeTicketsDialogProps) => {
+  const [newNumTickets, setNewNumTickets] = useState<number>(0);
   return (
     <div>
-      <Transition appear show={isRemoveAttendeeModalOpen} as={Fragment}>
+      <Transition appear show={isEditAttendeeTicketsDialogModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-30" onClose={closeModal}>
           <TransitionChild
             as={Fragment}
@@ -50,27 +50,51 @@ const RemoveAttendeeDialog = ({
                     as="h3"
                     className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[0px] border-gray-500 w-full text-center flex justify-center items-center"
                   >
-                    Remove Attendee
+                    Edit Attendee Tickets
                   </DialogTitle>
                   <Description className="font-semibold text-organiser-title-gray-text p-4 rounded-lg bg-yellow-100 mb-2 text-sm">
                     <div className="flex flex-row">
-                      <div>IMPORTANT: The event organiser and attendee will need to organise their own payment.</div>
+                      <div>
+                        IMPORTANT: The event organiser and attendee will need to organise their own payment arrangement
+                        to account for this change.
+                      </div>
                       <div className="content-center ml-4">
                         <ExclamationCircleIcon className="h-8" />
                       </div>
                     </div>
                   </Description>
                   <Description className=" text-organiser-dark-gray-text p-2 mb-2 text-sm">
-                    You are about to remove
-                    <span className="font-semibold"> {email}</span>.
+                    <span className="font-semibold"> {email}</span> currently has{" "}
+                    <span className="font-semibold">{numTickets}</span> tickets.
+                    <br></br>
+                    Change this to:
                   </Description>
+                  <div className="">
+                    <input
+                      type="number"
+                      pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                      tabIndex={1}
+                      required
+                      className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                      placeholder="Number of tickets"
+                      value={newNumTickets}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (value >= 0) {
+                          setNewNumTickets(parseInt(e.target.value));
+                        }
+                      }}
+                    />
+                  </div>
 
                   <div className="mt-2 float-right">
                     <div
                       className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
-                      onClick={() => removeAttendee(email)}
+                      onClick={() => {
+                        // TODO: add the setAttendeeTickets function here
+                      }}
                     >
-                      Remove Attendee
+                      Submit
                     </div>
                   </div>
                 </DialogPanel>
@@ -82,5 +106,3 @@ const RemoveAttendeeDialog = ({
     </div>
   );
 };
-
-export default RemoveAttendeeDialog;
