@@ -120,7 +120,6 @@ export default function EventPage({ params }: EventPageProps) {
             />
           </div>
           <div id="event-drilldown-details-page" className="w-full">
-            <ShareModal/>
             {currSidebarPage === "Details" && (
               <>
                 <EventDrilldownDetailsPage
