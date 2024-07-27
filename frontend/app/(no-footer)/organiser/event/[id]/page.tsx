@@ -123,17 +123,20 @@ export default function EventPage({ params }: EventPageProps) {
           <div id="event-drilldown-details-page" className="w-full">
             <ShareModal />
             {currSidebarPage === "Details" && (
-              <EventDrilldownDetailsPage
-                loading={loading}
-                eventName={eventName}
-                eventStartDate={eventStartDate}
-                eventEndDate={eventEndDate}
-                eventDescription={eventDescription}
-                eventLocation={eventLocation}
-                eventPrice={eventPrice}
-                eventImage={eventImage}
-                eventId={eventId}
-              />
+              <>
+                <EventDrilldownDetailsPage
+                  loading={loading}
+                  eventName={eventName}
+                  eventStartDate={eventStartDate}
+                  eventEndDate={eventEndDate}
+                  eventDescription={eventDescription}
+                  eventLocation={eventLocation}
+                  eventPrice={eventPrice}
+                  eventImage={eventImage}
+                  eventId={eventId}
+                />
+                <ShareModal />
+              </>
             )}
             {currSidebarPage === "Manage Attendees" && (
               <EventDrilldownManageAttendeesPage eventMetadata={eventMetadata} eventId={eventId} />
