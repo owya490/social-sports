@@ -28,14 +28,22 @@ export async function addAttendee(email: string, name: Name, phoneNumber: string
   await addEventAttendee(purchaserInfo, eventId);
 }
 
-export async function removeAttendee(email: string) {
-  // this is a stub function
+/**
+ * Sets the specified attendee ticketCount to 0. Attendees with a ticket count of 0 are not shown in the organiser event drilldown.
+ */
+export async function removeAttendee(purchaser: Purchaser, attendeeName: Name, eventId: EventId) {
+  try {
+    await setAttendeeTickets(0, purchaser, attendeeName, eventId);
+  } catch (error) {
+    organiserServiceLogger.error(`removeAttendee error: ${error}`);
+    throw error;
+  }
 }
 
 export async function setAttendeeTickets(
   numTickets: number,
   purchaser: Purchaser,
-  attendeeName: string,
+  attendeeName: Name,
   eventId: EventId
 ) {
   const emailHash = getPurchaserEmailHash(purchaser.email);

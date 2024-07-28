@@ -44,14 +44,16 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDril
           {eventMetadata.purchaserMap &&
             Object.values(eventMetadata.purchaserMap).map((purchaserObj) =>
               Object.entries(purchaserObj.attendees).map(([attendeeName, attendeeDetailsObj]) => {
-                return (
-                  <EventDrilldownAttendeeCard
-                    attendeeName={attendeeName}
-                    image={DEFAULT_USER_PROFILE_PICTURE}
-                    purchaser={purchaserObj}
-                    key={attendeeName}
-                  />
-                );
+                if (attendeeDetailsObj.ticketCount > 0) {
+                  return (
+                    <EventDrilldownAttendeeCard
+                      attendeeName={attendeeName}
+                      image={DEFAULT_USER_PROFILE_PICTURE}
+                      purchaser={purchaserObj}
+                      key={attendeeName}
+                    />
+                  );
+                }
               })
             )}
         </div>
