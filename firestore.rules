@@ -2,30 +2,46 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Only allow users to write to their own Userdata fields. Anyone can read.
+    // Only allow users to write to their own Userdata fields. Anyone can read. Allow write if User Data does not exist.
     match /Users/{activeModifier}/Public/{userId} {
+    	// GET
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // UPDATE, DELETE
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
+      // CREATE
+      allow create: if request.auth != null;
     }
 
-    // Only allow users to read and write their own private Userdata fields.
+    // Only allow users to read and write their own private Userdata fields. Allow write if User Data does not exist.
     match /Users/{activeModifier}/Private/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    	// GET, UPDATE, DELETE
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      // CREATE
+      allow create: if request.auth != null;
+
     }
 
-    // Only organisers can write to their EventData fields. Everyone can read.
+    // Only organisers can write to their EventData fields. Everyone can read. Allow write if EventsData doesn't exist initially.
     match /Events/{activeModifier}/{accessModifier}/{eventId} {
+    	// GET
       allow read: if true;
-      allow write: if request.auth != null 
+      // UPDATE, DELETE
+      allow update, delete: if request.auth != null 
       && request.auth.uid == get(/databases/$(database)/documents/Events/$(activeModifier)/$(accessModifier)/$(eventId)).data.organiserId;
+      // UPDATE accessCount
       allow write: if (request.resource.data.diff(resource.data).affectedKeys()
         .hasOnly(['accessCount']));
+      // CREATE
+      allow create: if request.auth != null;
     }
 
-    // Only events organisers can read and write to their Events metadata fields
+    // Only events organisers can read and write to their Events metadata fields. Allow write if EventsMetadata doesn't exist initially.
     match /EventsMetadata/{eventId} {
-      allow read, write: if request.auth != null 
+    	// GET, UPDATE, DELETE
+      allow read, update, delete: if request.auth != null 
       && request.auth.uid == get(/databases/$(database)/documents/EventsMetadata/$(eventId)).data.organiserId;
+      // CREATE
+      allow create: if request.auth != null;
     }
 
     // No one can access the Attendees Table
@@ -35,14 +51,18 @@ service cloud.firestore {
 
     // Everyone can read Orders Table if they have the correct id. No one can overwrite and mutate exsiting data
     match /Orders/{orderId} {
+    	// GET
       allow read: if true;
-      allow write: if get(/databases/$(database)/documents/Orders/$(orderId)).data == null;
+      // CREATE
+      allow create: if true;
     }
 
     // Everyone can read Tickets Table if they have the correct id. No one can overwrite and mutate exsiting data
     match /Tickets/{ticketId} {
+      // GET
       allow read: if true;
-      allow write: if get(/databases/$(database)/documents/Tickets/$(ticketId)).data == null;
+      // CREATE
+      allow create: if true;
     }
     
     // Everyone can read and write to tags for now
