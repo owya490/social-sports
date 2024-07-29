@@ -1,6 +1,9 @@
+import { Logger } from "@/observability/logger";
 import { getDownloadURL, listAll, ref, StorageReference, uploadBytes } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
 import { storage } from "./firebase";
+
+export const imageServiceLogger = new Logger("imageServiceLogger");
 
 export async function getUsersImageLocation(userID: string): Promise<string[]> {
   const userRef = ref(storage, "users/" + userID);
@@ -13,7 +16,7 @@ export async function getUsersImageLocation(userID: string): Promise<string[]> {
     });
     return itemArray;
   } catch (error) {
-    console.error("Error fetching images:", error);
+    imageServiceLogger.error(`Error fetching images ${error}`);
     return [];
   }
 }
@@ -30,7 +33,7 @@ export async function getUsersImageUrls(userID: string): Promise<string[]> {
 
     return urls;
   } catch (error) {
-    console.error("Error fetching download URLs:", error);
+    imageServiceLogger.error(`Error fetching download URLs ${error}`);
     return [];
   }
 }
@@ -46,7 +49,7 @@ export async function getEventImageLocation(eventID: string): Promise<string[]> 
     });
     return itemArray;
   } catch (error) {
-    console.error("Error fetching images:", error);
+    imageServiceLogger.error(`Error fetching images ${error}`);
     return [];
   }
 }
@@ -63,7 +66,7 @@ export async function getEventImageUrls(eventID: string): Promise<string[]> {
 
     return urls;
   } catch (error) {
-    console.error("Error fetching download URLs:", error);
+    imageServiceLogger.error(`Error fetching download URLs ${error}`);
     return [];
   }
 }
@@ -94,12 +97,12 @@ async function uploadImage(imageRef: StorageReference, file: File): Promise<stri
 
     return url;
   } catch (error) {
-    console.error("Error uploading image:", error);
+    imageServiceLogger.error(`Error uploading image ${error}`);
     throw error; // Re-throw the error so the caller can handle it
   }
 }
 
-function generateImageId() {
+function generateImageId(): string {
   const timestamp = Date.now(); // To ensure unique filenames
   const uuid = uuidv4();
 
