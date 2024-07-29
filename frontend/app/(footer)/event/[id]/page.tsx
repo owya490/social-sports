@@ -4,7 +4,6 @@ import EventBanner from "@/components/events/EventBanner";
 import { EventDetails } from "@/components/events/EventDetails";
 import RecommendedEvents from "@/components/events/RecommendedEvents";
 import Loading from "@/components/loading/Loading";
-import MobileEventDetailFooter from "@/components/mobile/MobileEventDetailFooter";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
 import { getEventById, incrementEventAccessCountById } from "@/services/src/events/eventsService";
@@ -58,9 +57,10 @@ export default function EventPage({ params }: any) {
 
         <RecommendedEvents eventData={eventData} />
       </div>
+      {/* SPORTSHUB-194 Mobile Event footer will be re-enabled post MVP
       <div className="lg:hidden">
         <MobileEventDetailFooter date={eventData.startDate} />
-      </div>
+      </div> */}
     </div>
   );
 }
