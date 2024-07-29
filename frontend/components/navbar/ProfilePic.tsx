@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
 import { useUser } from "../utility/UserContext";
 
@@ -84,29 +85,22 @@ export default function ProfilePic() {
   ) : (
     <div className="ml-auto flex items-center">
       {loggedIn && (
-        <button
-          className="px-4 py-2 rounded-lg mx-3 max-h-[40px] font-semibold hidden lg:block whitespace-nowrap  bg-highlight-yellow text-white hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
+        <HighlightButton
+          text="Create Event"
           onClick={() => {
             router.push("/event/create");
           }}
-        >
-          Create Event
-        </button>
+          className="mx-3 hidden lg:block"
+        />
       )}
       {!loggedIn && (
         <div className="flex">
-          <button
-            className=" px-6 py-2 rounded-lg max-h-[40px] font-semibold lg:block bg-highlight-yellow text-white whitespace-nowrap ml-4 hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow"
-            onClick={() => router.push("/login")}
-          >
-            Login
-          </button>
-          <button
-            className="border-2 text-highlight-yellow font-semibold border-highlight-yellow px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block hover:bg-highlight-yellow hover:text-white"
+          <HighlightButton text="Login" onClick={() => router.push("/login")} className="px-6 ml-3" />
+          <InvertedHighlightButton
+            text="Register"
             onClick={() => router.push("/register")}
-          >
-            Register
-          </button>
+            className="hidden lg:block"
+          />
         </div>
       )}
       {loggedIn && (
