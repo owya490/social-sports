@@ -418,7 +418,7 @@ const Profile = () => {
         <div className="relative mt-[92px] lg:mt-[120px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[4vw]">
           <div className="flex justify-center md:justify-start col-start-1 col-span-1 md:col-start-2 md:row-span-1 md:row-start-1">
             <div
-              className="flex justify-center mb-4 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl relative group"
+              className="flex justify-center mb-4 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl relative"
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}&apos;s Profile
