@@ -12,6 +12,8 @@ interface EventDetailsProps {
   setLoading: (value: boolean) => void;
 }
 
+export const MAX_TICKETS_PER_ORDER = 7;
+
 export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
   return (
@@ -26,6 +28,10 @@ export function EventDetails(props: EventDetailsProps) {
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
+              isPaymentsActive={eventData.paymentsActive}
+              eventId={eventData.eventId}
+              isPrivate={eventData.isPrivate}
+              setLoading={setLoading}
             />
           </div>
 

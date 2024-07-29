@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ChevronRightButton from "../utility/ChevronRightButton";
+import ChevronRightButton from "../elements/ChevronRightButton";
 import BadmintonImage from "./../../public/images/badminton.png";
 import BaseballImage from "./../../public/images/baseball.png";
 import BasketballImage from "./../../public/images/basketball.png";
@@ -35,10 +35,7 @@ export default function SearchSport() {
       <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
       <div className="flex my-5">
         <h5 className="font-bold text-lg">Search by Sports</h5>
-        <Link
-          href="#"
-          className="text-sm font-light ml-auto cursor-pointer hover:underline"
-        >
+        <Link href="#" className="text-sm font-light ml-auto cursor-pointer hover:underline">
           See all
         </Link>
       </div>
@@ -49,23 +46,9 @@ export default function SearchSport() {
         >
           {Object.entries(icons).map((entry, idx) => {
             if (idx === 0) {
-              return (
-                <SportIcon
-                  key={idx}
-                  image={entry[1].image}
-                  name={entry[0]}
-                  isFirst={true}
-                />
-              );
+              return <SportIcon key={idx} image={entry[1].image} name={entry[0]} isFirst={true} />;
             }
-            return (
-              <SportIcon
-                key={idx}
-                image={entry[1].image}
-                name={entry[0]}
-                isFirst={false}
-              />
-            );
+            return <SportIcon key={idx} image={entry[1].image} name={entry[0]} isFirst={false} />;
           })}
         </div>
         <div className="ml-auto md:hidden">

@@ -1,28 +1,22 @@
+import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, NewUserData, TempUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { FirebaseError } from "@firebase/util";
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
   UserCredential,
   createUserWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  getAuth,
-  sendPasswordResetEmail,
-  sendSignInLinkToEmail,
-  sendEmailVerification,
-  deleteUser,
 } from "firebase/auth";
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import { auth, authUser, db } from "../firebase";
-import { createUser, getPublicUserById } from "../users/usersService";
-import { verify } from "crypto";
-import { CodeBracketIcon } from "@heroicons/react/24/outline";
-import { FirebaseError } from "@firebase/util";
-import { isInstanceOf } from "@grafana/faro-web-sdk";
+import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
+import { createUser, getPublicUserById } from "../users/usersService";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
@@ -101,12 +95,18 @@ export async function saveTempUserData(userId: string, data: TempUserData) {
 }
 
 export async function getTempUserData(userId: string): Promise<NewUserData | null> {
-  const docRef = doc(db, "TempUsers", userId); // Get a reference to the document
-  const docSnap = await getDoc(docRef); // Retrieve the document snapshot
+  try {
+    const docRef = doc(db, "TempUsers", userId); // Get a reference to the document
+    const docSnap = await getDoc(docRef); // Retrieve the document snapshot
 
-  if (docSnap.exists()) {
-    return docSnap.data() as NewUserData;
-  } else {
+    if (docSnap.exists()) {
+      return docSnap.data() as NewUserData;
+    } else {
+      console.error(`User ID=${userId} did not exist when expected by reference.`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error fetching user data for ID=${userId}:`, error);
     return null;
   }
 }
@@ -166,13 +166,14 @@ export async function handleFacebookSignIn() {
  * @returns boolean
  */
 export function isLoggedIn(): boolean {
-  return authUser !== null;
+  const user = useUser();
+  return useUser() !== null;
 }
 
 const actionCodeSettings = {
   // URL you want to redirect back to. The domain (www.example.com) for this
   // URL must be in the authorized domains list in the Firebase Console.
-  url: "http://localhost:3000/login",
+  url: "https://www.sportshub.net.au/login",
 };
 
 export async function resetUserPassword(email: string): Promise<void> {

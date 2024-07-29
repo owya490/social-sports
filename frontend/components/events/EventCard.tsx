@@ -1,4 +1,5 @@
 "use client";
+import EventImage from "@/components/events/EventImage";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
@@ -7,7 +8,6 @@ import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
-import EventImage from "@/components/events/EventImage";
 
 interface EventCardProps {
   eventId: EventId;
@@ -37,9 +37,7 @@ export default function EventCard(props: EventCardProps) {
           </div>
         ) : (
           <>
-            <div
-              className="h-36 w-full object-cover rounded-t-lg"
-            >
+            <div className="h-36 w-full object-cover rounded-t-lg">
               <EventImage imageSrc={props.image} />
             </div>
             <div className="p-4">
@@ -69,9 +67,9 @@ export default function EventCard(props: EventCardProps) {
               </div>
               <div className="flex items-center">
                 <p className="text-sm font-light text-gray-500">{`${props.vacancy} spots left`}</p>
-                <button className="ml-auto rounded-lg border-black border py-1 px-2 text-blackm text-center">
+                {/* <button className="ml-auto rounded-lg border-black border py-1 px-2 text-blackm text-center">
                   <h2 className="text-sm">Book Now</h2>
-                </button>
+                </button> */}
               </div>
             </div>
           </>
