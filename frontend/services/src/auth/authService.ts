@@ -173,7 +173,7 @@ export function isLoggedIn(): boolean {
 const actionCodeSettings = {
   // URL you want to redirect back to. The domain (www.example.com) for this
   // URL must be in the authorized domains list in the Firebase Console.
-  url: "http://localhost:3000/login",
+  url: "https://www.sportshub.net.au/login",
 };
 
 export async function resetUserPassword(email: string): Promise<void> {
