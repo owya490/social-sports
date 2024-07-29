@@ -13,7 +13,8 @@ import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
-
+import AutocompleteComponent from "@/components/utility/AutoComplete";
+import AutocompleteForm from "@/components/utility/AutoComplete";
 
 type BasicData = {
   name: string;
@@ -59,7 +60,6 @@ export function BasicInformation({
   const [locationError, setLocationError] = useState<string | null>(null); // Initialize locationError state
   const [priceString, setPriceString] = useState("15");
   const [capacityString, setCapacityString] = useState("20");
-  
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -154,7 +154,10 @@ export function BasicInformation({
       window.scrollTo(0, 0);
     }
   };
-  
+  const handlePlaceSelected = (lat: number, lng: number, address: string) => {
+    console.log(`Latitude: ${lat}, Longitude: ${lng}`);
+    console.log(`Address: ${address}`);
+  };
 
   return (
     <FormWrapper>
@@ -198,7 +201,7 @@ export function BasicInformation({
         <div>
           <label className="text-black text-lg font-semibold">Where is it located?</label>
           <div className="mt-4">
-            <Input
+            {/* <Input
               label="Location"
               crossOrigin={undefined}
               required
@@ -208,7 +211,8 @@ export function BasicInformation({
               className="rounded-md focus:ring-0"
               size="lg"
               icon={<MapPinIcon />}
-            />
+            /> */}
+            <AutocompleteForm />
             {locationError && <p className="text-red-500">{locationError}</p>}
           </div>
         </div>
@@ -361,11 +365,7 @@ export function BasicInformation({
           </div>
         )}
         <div className="mt-8">
-          <button
-            className="bg-blue-600 text-white px-4 py-2 rounded-md"
-            type="button"
-            onClick={nextPage}
-          >
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-md" type="button" onClick={nextPage}>
             Next
           </button>
         </div>
