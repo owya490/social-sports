@@ -1,11 +1,17 @@
-//gallery
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import UnderConstruction from "@/components/UnderConstruction";
 
-export default function Gallery() {
+const GalleryPage = () => {
   return (
-    <div className="pt-16 pl-14 max-h-screen">
-      <OrganiserNavbar currPage="Gallery" />
-      <div className="pt-16 pl-14">hello im coming soon</div>
+    <div>
+      <div className="ml-14 mt-16">
+        <div className="max-w-5xl lg:mx-auto">
+          <OrganiserNavbar currPage="Gallery" />
+          <UnderConstruction />
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default GalleryPage;
