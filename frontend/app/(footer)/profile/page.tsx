@@ -425,7 +425,7 @@ const Profile = () => {
               {user.isVerifiedOrganiser && (
                 <div className="relative">
                   <Image src={Tick} alt="Verified Organiser" className="h-10 w-10 ml-2" />
-                  <div className="absolute transform translate-x-12 -translate-y-8 ml-2 hidden group-hover:block bg-[#f2b705] text-black text-xs px-2 py-1 rounded whitespace-nowrap">
+                  <div className="absolute transform translate-x-12 -translate-y-8 ml-2 bg-[#f2b705] text-black text-xs px-2 py-1 rounded whitespace-nowrap">
                     Verified Organiser
                   </div>
                 </div>

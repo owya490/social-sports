@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import ProfilePic from "../navbar/ProfilePic";
-import Logo from "./../../public/images/SportsHubMobileLogo.png";
+import Logo from "./../../public/images/BlackLogo.svg";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileSearchInput from "./MobileSearchInput";
 
@@ -24,26 +24,14 @@ export default function MobileNavbar() {
     <div className="bg-white drop-shadow-lg fixed top-0 w-screen z-50">
       <div className="flex items-center py-2 px-4">
         <Link href="/dashboard">
-          <Image
-            src={Logo}
-            alt="Logo"
-            width={50}
-            height={50}
-            className="w-12 mr-4"
-          />
+          <Image src={Logo} alt="Logo" className="w-10 h-10 mr-4" />
         </Link>
 
         <div className="w-[50%]">
           <MobileSearchBar openSearchInput={handleSearchExpanded} />
-          <MobileSearchInput
-            searchExpanded={searchExpanded}
-            setSearchExpanded={handleSearchExpanded}
-            tags={tags}
-          />
+          <MobileSearchInput searchExpanded={searchExpanded} setSearchExpanded={handleSearchExpanded} tags={tags} />
         </div>
-        <div className="flex ml-auto items-center">
-          <ProfilePic />
-        </div>
+        <ProfilePic />
       </div>
       <div className="h-[1px] bg-black"></div>
     </div>
