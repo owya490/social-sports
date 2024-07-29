@@ -418,12 +418,12 @@ const Profile = () => {
         <div className="relative mt-[92px] lg:mt-[120px] mb-[5%] grid grid-cols-1 md:grid-cols-2 md:gap-x-[5vw] lg:gap-x-[4vw]">
           <div className="flex justify-center md:justify-start col-start-1 col-span-1 md:col-start-2 md:row-span-1 md:row-start-1">
             <div
-              className="flex justify-center mb-4 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl relative"
+              className="flex justify-center mb-4 text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl"
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}&apos;s Profile
               {user.isVerifiedOrganiser && (
-                <div className="relative">
+                <div>
                   <Image src={Tick} alt="Verified Organiser" className="h-10 w-10 ml-2" />
                   <div className="absolute transform translate-x-12 -translate-y-8 ml-2 bg-[#f2b705] text-black text-xs px-2 py-1 rounded whitespace-nowrap">
                     Verified Organiser
