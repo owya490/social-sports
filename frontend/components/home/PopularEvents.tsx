@@ -3,9 +3,9 @@ import { EventData } from "@/interfaces/EventTypes";
 import { getAllEvents } from "@/services/src/events/eventsService";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ChevronLeftButton from "../elements/ChevronLeftButton";
+import ChevronRightButton from "../elements/ChevronRightButton";
 import EventCard from "../events/EventCard";
-import ChevronLeftButton from "../utility/ChevronLeftButton";
-import ChevronRightButton from "../utility/ChevronRightButton";
 
 interface PopularEventsProps {
   eventData?: EventData;
@@ -66,7 +66,7 @@ export default function PopularEvents(props: PopularEventsProps) {
               <div className="flex space-x-2 xl:space-x-8">
                 {recommendedEvents.map((event, i) => {
                   return (
-                    <div key={`recommended-event-${i}`} className="snap-start w-[300px]">
+                    <div key={`recommended-event-${i}`} className="snap-start w-[300px] min-h-[250px]">
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}

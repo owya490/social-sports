@@ -1,6 +1,7 @@
 {
   "projects": {
     "dev": "socialsports-44162",
+    "prod": "socialsportsprod",
     "default": "socialsports-44162"
   },
   "targets": {},

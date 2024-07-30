@@ -4,26 +4,54 @@ import { getAllEvents } from "@/services/src/events/eventsService";
 import Link from "next/link";
 
 import { useEffect, useState } from "react";
-import ChevronLeftButton from "../utility/ChevronLeftButton";
-import ChevronRightButton from "../utility/ChevronRightButton";
+import ChevronLeftButton from "../elements/ChevronLeftButton";
+import ChevronRightButton from "../elements/ChevronRightButton";
 import EventCard from "./EventCard";
+
+const NUMBER_OF_RECOMMENDED_EVENTS = 6;
 
 interface RecommendedEventsProps {
   eventData?: EventData;
 }
 
+// A sort function by closest distance to a current location otherwise sorted by access count
+const sortByProximityFromHere = (a: EventData, b: EventData, here: EventData | undefined) => {
+  // In the case of the homepage there is no 'here' variable so sort by 'popularity'
+  if (here === undefined) {
+    return b.accessCount - a.accessCount;
+  }
+  return (
+    // Check whether a or b is closer to the current location (here)
+    Math.abs(a.locationLatLng.lat - here.locationLatLng.lat) +
+    Math.abs(a.locationLatLng.lng - here.locationLatLng.lng) -
+    (Math.abs(b.locationLatLng.lat - here.locationLatLng.lat) +
+      Math.abs(b.locationLatLng.lng - here.locationLatLng.lng))
+  );
+};
+
+const filterEventsBySport = (a: EventData, eventData: EventData | undefined) => {
+  if (eventData === undefined) {
+    return true;
+  }
+  if (a.eventId === eventData.eventId) {
+    return false;
+  }
+  return a.sport == eventData.sport;
+};
+
 export default function RecommendedEvents(props: RecommendedEventsProps) {
   const { eventData } = props;
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
-    const newRecommendedEvents: EventData[] = [];
     getAllEvents().then((data) => {
-      for (let i = 0; i < 5; i++) {
-        if (data[i] !== undefined) {
-          newRecommendedEvents.push(data[i]);
-        }
-      }
-      setRecommendedEvents(newRecommendedEvents);
+      data = data
+        .filter((a) => {
+          return filterEventsBySport(a, eventData);
+        })
+        .sort((a, b) => {
+          return sortByProximityFromHere(a, b, eventData);
+        });
+      setRecommendedEvents(data.slice(0, NUMBER_OF_RECOMMENDED_EVENTS));
     });
   }, []);
 
@@ -64,10 +92,10 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
           </div>
           <div className="pb-10 screen-width-dashboard">
             <div id="recommended-event-overflow" className="flex overflow-x-auto pb-4 snap-x snap-mandatory">
-              <div className="flex space-x-10">
+              <div className="flex space-x-2 xl:space-x-8">
                 {recommendedEvents.map((event, i) => {
                   return (
-                    <div key={`recommended-event-${i}`} className="snap-start max-w-[300px]">
+                    <div key={`recommended-event-${i}`} className="snap-start w-[300px] min-h-[250px]">
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}
