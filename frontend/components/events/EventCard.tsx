@@ -37,20 +37,9 @@ export default function EventCard(props: EventCardProps) {
           </div>
         ) : (
           <>
-<<<<<<< HEAD
-            <div
-              className="h-36 w-full object-cover rounded-t-lg"
-              style={{
-                backgroundImage: `url(${props.image})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center center",
-              }}
-            ></div>
-=======
             <div className="h-36 w-full object-cover rounded-t-lg">
               <EventImage imageSrc={props.image} />
             </div>
->>>>>>> 3cccd9849f72a6f0ddab0bbdc15c096c20e3e6a8
             <div className="p-4">
               <h4 className="font-bold text-gray-500 text-xs">{timestampToEventCardDateString(props.startTime)}</h4>
               <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">{props.name}</h2>
