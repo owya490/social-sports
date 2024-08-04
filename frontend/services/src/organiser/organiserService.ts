@@ -6,12 +6,9 @@ import { db } from "../firebase";
 import { findEventMetadataDocRefByEventId } from "../events/eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
 import { findEventDocRef } from "../events/eventsUtils/commonEventsUtils";
 import { Logger } from "@/observability/logger";
+import { recalculateEventsMetadataTotalTicketCounts } from "../events/eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
 
 export const organiserServiceLogger = new Logger("organiserServiceLogger");
-
-export async function getEventAttendees(eventId: string) {
-  const eventDoc = await findEventDoc(eventId);
-}
 
 export async function addAttendee(
   email: string,
@@ -62,7 +59,7 @@ export async function setAttendeeTickets(
 ) {
   const emailHash = getPurchaserEmailHash(purchaser.email);
   try {
-    runTransaction(db, async (transaction) => {
+    await runTransaction(db, async (transaction) => {
       // Check that the update to the attendee tickets is within capacity of the event.
       const eventMetadataDocRef = findEventMetadataDocRefByEventId(eventId);
       const eventDataWithoutOrganiserDocRef = await findEventDocRef(eventId);
@@ -72,10 +69,12 @@ export async function setAttendeeTickets(
       ).data() as EventDataWithoutOrganiser;
 
       const eventCapacity = eventDataWithoutOrganiser.capacity;
-      const prevEventTotalTicketCount = eventMetadata.completeTicketCount;
 
-      const prevAttendeeTicketCount = eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount;
-      const newEventTotalTicketCount = prevEventTotalTicketCount - prevAttendeeTicketCount + numTickets;
+      // Update attendee ticket count
+      eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount = numTickets;
+      eventMetadata = recalculateEventsMetadataTotalTicketCounts(eventMetadata);
+
+      const newEventTotalTicketCount = eventMetadata.completeTicketCount;
 
       if (newEventTotalTicketCount < 0 || newEventTotalTicketCount > eventCapacity) {
         organiserServiceLogger.error(
@@ -86,11 +85,8 @@ export async function setAttendeeTickets(
         );
       }
 
-      // Update the values in both eventData and eventMetadata.
-      eventMetadata.completeTicketCount = newEventTotalTicketCount;
-      eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount = numTickets;
+      // Update the vacancy in eventData
       eventDataWithoutOrganiser.vacancy = eventCapacity - newEventTotalTicketCount;
-
       transaction.update(eventMetadataDocRef, eventMetadata as Partial<EventMetadata>);
       transaction.update(
         eventDataWithoutOrganiserDocRef,

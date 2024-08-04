@@ -1,11 +1,12 @@
 import Loading from "@/components/loading/Loading";
 import { EventId, EventMetadata, Name, Purchaser } from "@/interfaces/EventTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import { getEventById } from "@/services/src/events/eventsService";
 import { removeAttendee } from "@/services/src/organiser/organiserService";
 import { Dialog, Transition, Description, DialogTitle, TransitionChild, DialogPanel } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
-import React, { Fragment, useState } from "react";
+import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
 
 interface RemoveAttendeeDialogProps {
   setIsRemoveAttendeeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,6 +17,7 @@ interface RemoveAttendeeDialogProps {
   attendeeName: Name;
   eventId: EventId;
   setEventMetadataState: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  setEventVacancy: Dispatch<SetStateAction<number>>;
 }
 
 const RemoveAttendeeDialog = ({
@@ -27,6 +29,7 @@ const RemoveAttendeeDialog = ({
   attendeeName,
   eventId,
   setEventMetadataState,
+  setEventVacancy,
 }: RemoveAttendeeDialogProps) => {
   const [enabled, setEnabled] = useState(true);
 
@@ -44,7 +47,9 @@ const RemoveAttendeeDialog = ({
       setLoading(true);
       await removeAttendee(purchaser, attendeeName, eventId);
       const updatedEventMetadata = await getEventsMetadataByEventId(eventId);
+      const updatedEventData = await getEventById(eventId);
       setEventMetadataState(updatedEventMetadata);
+      setEventVacancy(updatedEventData.vacancy);
       setShowSuccessAlert(true);
       setShowErrorMessage(false);
       closeModal();
@@ -143,7 +148,7 @@ const RemoveAttendeeDialog = ({
           color="green"
           className="z-40"
         >
-          Success adding new attendee!
+          Success removing attendee!
         </Alert>
       </div>
     </div>

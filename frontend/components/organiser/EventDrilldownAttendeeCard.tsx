@@ -1,7 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon, PencilSquareIcon, UserCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import React, { Fragment, useState } from "react";
+import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
 import RemoveAttendeeDialog from "./attendee/RemoveAttendeeDialog";
 import Image from "next/image";
 import { EditAttendeeTicketsDialog } from "./attendee/EditAttendeeTicketsDialog";
@@ -13,6 +13,7 @@ interface EventDrilldownAttendeeCardProps {
   purchaser: Purchaser;
   eventId: EventId;
   setEventMetadataState: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  setEventVacancy: Dispatch<SetStateAction<number>>;
 }
 
 const EventDrilldownAttendeeCard = ({
@@ -21,6 +22,7 @@ const EventDrilldownAttendeeCard = ({
   purchaser,
   eventId,
   setEventMetadataState,
+  setEventVacancy,
 }: EventDrilldownAttendeeCardProps) => {
   const [isRemoveAttendeeModalOpen, setIsRemoveAttendeeModalOpen] = useState<boolean>(false);
   const [isEditAttendeeTicketsDialogModalOpen, setIsEditAttendeeTicketsDialogModalOpen] = useState<boolean>(false);
@@ -118,6 +120,7 @@ const EventDrilldownAttendeeCard = ({
           attendeeName={attendeeName}
           eventId={eventId}
           setEventMetadataState={setEventMetadataState}
+          setEventVacancy={setEventVacancy}
         />
       </div>
     </div>

@@ -139,7 +139,11 @@ export default function EventPage({ params }: EventPageProps) {
               </>
             )}
             {currSidebarPage === "Manage Attendees" && (
-              <EventDrilldownManageAttendeesPage eventMetadata={eventMetadata} eventId={eventId} />
+              <EventDrilldownManageAttendeesPage
+                eventMetadata={eventMetadata}
+                eventId={eventId}
+                setEventVacancy={setEventVacancy}
+              />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
             {currSidebarPage === "Share" && <EventDrilldownSharePage />}

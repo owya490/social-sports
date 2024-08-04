@@ -1,5 +1,5 @@
 import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/outline";
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import EventDrilldownAttendeeCard from "./EventDrilldownAttendeeCard";
 import { EventMetadata } from "@/interfaces/EventTypes";
 import InviteAttendeeDialog from "./attendee/AddAttendeeDialog";
@@ -8,9 +8,14 @@ import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstant
 interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
   eventId: string;
+  setEventVacancy: Dispatch<SetStateAction<number>>;
 }
 
-const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDrilldownManageAttendeesPageProps) => {
+const EventDrilldownManageAttendeesPage = ({
+  eventMetadata,
+  eventId,
+  setEventVacancy,
+}: EventDrilldownManageAttendeesPageProps) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   const [eventMetadataState, setEventMetadataState] = useState<EventMetadata>(eventMetadata);
 
@@ -62,6 +67,7 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDril
                         key={attendeeName}
                         eventId={eventId}
                         setEventMetadataState={setEventMetadataState}
+                        setEventVacancy={setEventVacancy}
                       />
                     );
                   }
