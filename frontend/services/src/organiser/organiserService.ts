@@ -13,19 +13,33 @@ export async function getEventAttendees(eventId: string) {
   const eventDoc = await findEventDoc(eventId);
 }
 
-export async function addAttendee(email: string, name: Name, phoneNumber: string, numTickets: number, eventId: string) {
-  const attendeeInfo: Attendee = {
-    phone: phoneNumber,
-    ticketCount: numTickets,
-  };
-  const purchaserInfo: Purchaser = {
-    email: email,
-    attendees: {
-      [name]: attendeeInfo,
-    },
-    totalTicketCount: numTickets,
-  };
-  await addEventAttendee(purchaserInfo, eventId);
+export async function addAttendee(
+  email: string,
+  name: Name,
+  phoneNumber: string,
+  numTickets: number,
+  eventId: string
+): Promise<void> {
+  try {
+    const attendeeInfo: Attendee = {
+      phone: phoneNumber,
+      ticketCount: numTickets,
+    };
+    const purchaserInfo: Purchaser = {
+      email: email,
+      attendees: {
+        [name]: attendeeInfo,
+      },
+      totalTicketCount: numTickets,
+    };
+    await addEventAttendee(purchaserInfo, eventId);
+  } catch (error) {
+    organiserServiceLogger.error(
+      `Error adding new attendee in addAttendee() from eventId: ${eventId} and attendee: ${email}, ${name}, ${phoneNumber}, ${numTickets}, ${eventId}`
+    );
+    organiserServiceLogger.error(JSON.stringify(error, null, 2));
+    throw error;
+  }
 }
 
 /**

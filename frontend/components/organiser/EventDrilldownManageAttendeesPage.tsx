@@ -12,6 +12,7 @@ interface EventDrilldownManageAttendeesPageProps {
 
 const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDrilldownManageAttendeesPageProps) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
+  const [eventMetadataState, setEventMetadataState] = useState<EventMetadata>(eventMetadata);
   function closeModal() {
     setIsFilterModalOpen(false);
   }
@@ -41,21 +42,25 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDril
         </div>
         <div className="inline-block w-full h-0.5 my-2 self-stretch bg-organiser-title-gray-text"></div>
         <div className="">
-          {eventMetadata.purchaserMap &&
-            Object.values(eventMetadata.purchaserMap).map((purchaserObj) =>
-              Object.entries(purchaserObj.attendees).map(([attendeeName, attendeeDetailsObj]) => {
-                if (attendeeDetailsObj.ticketCount > 0) {
-                  return (
-                    <EventDrilldownAttendeeCard
-                      attendeeName={attendeeName}
-                      image={DEFAULT_USER_PROFILE_PICTURE}
-                      purchaser={purchaserObj}
-                      key={attendeeName}
-                    />
-                  );
-                }
+          {eventMetadataState.purchaserMap &&
+            Object.values(eventMetadataState.purchaserMap)
+              .sort((purchaser1, purchaser2) => {
+                return purchaser1.email.localeCompare(purchaser2.email);
               })
-            )}
+              .map((purchaserObj) =>
+                Object.entries(purchaserObj.attendees).map(([attendeeName, attendeeDetailsObj]) => {
+                  if (attendeeDetailsObj.ticketCount > 0) {
+                    return (
+                      <EventDrilldownAttendeeCard
+                        attendeeName={attendeeName}
+                        image={DEFAULT_USER_PROFILE_PICTURE}
+                        purchaser={purchaserObj}
+                        key={attendeeName}
+                      />
+                    );
+                  }
+                })
+              )}
         </div>
       </div>
       <div className="grow">
@@ -64,6 +69,7 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDril
           closeModal={closeModal}
           isFilterModalOpen={isFilterModalOpen}
           eventId={eventId}
+          setEventMetadataState={setEventMetadataState}
         />
       </div>
     </div>

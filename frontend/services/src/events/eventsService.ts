@@ -305,9 +305,12 @@ export async function updateEventMetadataFromEventId(eventId: string, updatedDat
   }
 }
 
-export async function addEventAttendee(attendee: Purchaser, eventId: EventId) {
+export async function addEventAttendee(attendee: Purchaser, eventId: EventId): Promise<void> {
   try {
-    const attendeeEmail = attendee.email;
+    // Service layer check whether attendee is able to be added to event metadata.
+    validatePurchaserDetails(attendee);
+
+    const attendeeEmail = attendee.email.toLowerCase();
     const attendeeEmailHash = getPurchaserEmailHash(attendeeEmail);
     // Get information of the one attendee
     const attendeeName = Object.keys(attendee.attendees)[0];
@@ -361,6 +364,8 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId) {
         2
       )}`
     );
+    eventServiceLogger.error(JSON.stringify(error, null, 2));
+    throw error;
   }
 }
 
@@ -375,4 +380,27 @@ export function getPurchaserEmailHash(email: string) {
   const hashInt = BigInt("0x" + md5Hash);
 
   return hashInt.toString();
+}
+
+function validatePurchaserDetails(purchaser: Purchaser): void {
+  const validateEmail = (email: string) => {
+    return String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+  };
+
+  if (purchaser.email === "" || !validateEmail(purchaser.email)) {
+    throw new Error("Invalid or empty email!");
+  }
+
+  for (const [name, attendeeObj] of Object.entries(purchaser.attendees)) {
+    if (name === "") {
+      throw new Error("Attendee name cannot be empty!");
+    }
+    if (attendeeObj.ticketCount < 0) {
+      throw new Error("Attendee ticket count cannot be negative!");
+    }
+  }
 }
