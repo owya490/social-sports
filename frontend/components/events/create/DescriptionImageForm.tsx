@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import DescriptionRichTextEditor from './DescriptionRichTextEditor';
-import { FormWrapper } from './forms/FormWrapper';
+import Image from "next/image";
+import { useState } from "react";
+import DescriptionRichTextEditor from "./DescriptionRichTextEditor";
+import { FormWrapper } from "./forms/FormWrapper";
 
 type BasicData = {
   description: string;
@@ -56,32 +56,20 @@ export function DescriptionImageForm({
     <FormWrapper>
       <div className="mb-32 space-y-12">
         <div>
-          <label className="text-black text-lg font-semibold">
-            Write a Description for your event!
-          </label>
+          <label className="text-black text-lg font-semibold">Write a Description for your event!</label>
           <div className="w-full mt-8">
-            <DescriptionRichTextEditor
-              description={description}
-              updateDescription={updateDescription}
-            />
+            <DescriptionRichTextEditor description={description} updateDescription={updateDescription} />
           </div>
         </div>
         <div>
-          <label className="text-black text-lg font-semibold">
-            Upload a photo as your event cover.
-          </label>
+          <label className="text-black text-lg font-semibold">Upload a photo as your event cover.</label>
+          <p className="text-xs font-light">
+            If your image upload button isn't working, try closing and reopening the browser.
+          </p>
           <div className="w-full mt-8 border border-black rounded-lg relative py-3">
-            <h4 className="absolute -top-3 left-3 text-sm px-1 bg-white">
-              Image
-            </h4>
+            <h4 className="absolute -top-3 left-3 text-sm px-1 bg-white">Image</h4>
             {imagePreviewUrl !== "" && (
-              <Image
-                src={imagePreviewUrl}
-                width={0}
-                height={0}
-                alt="imagePreview"
-                className="h-72 w-fit p-4"
-              />
+              <Image src={imagePreviewUrl} width={0} height={0} alt="imagePreview" className="h-72 w-fit p-4" />
             )}
             <div className="flex flex-wrap mt-4">
               {/* {previousImages.map((imageUrl, index) => (

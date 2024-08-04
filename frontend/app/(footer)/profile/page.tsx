@@ -524,6 +524,9 @@ const Profile = () => {
                   Sports Hub uses your location to better recommend you events that are close to you!
                 </div>
               </div>
+              <p className="text-xs font-light mt-2 ml-1">
+                (If your edit profile picture isn't working, try closing and reopening the browser.)
+              </p>
             </div>
           </div>
           <div className="col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
