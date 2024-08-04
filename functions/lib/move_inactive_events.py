@@ -1,10 +1,9 @@
 from datetime import date
 
 from firebase_admin import firestore
-from firebase_functions import https_fn, options
+from firebase_functions import https_fn, options, scheduler_fn
 from google.cloud import firestore
 from google.cloud.firestore import DocumentReference, Transaction
-from firebase_functions import scheduler_fn
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.auth import *
 from lib.constants import *
@@ -66,7 +65,7 @@ def get_and_move_private_inactive_events(today: date):
 
 
 
-@scheduler_fn.on_schedule(schedule="every day 00:00")
+@scheduler_fn.on_schedule(schedule="every day 00:00", region="australia-southeast1")
 def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   
   today = date.today()
