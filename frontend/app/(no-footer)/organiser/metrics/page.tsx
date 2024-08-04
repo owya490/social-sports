@@ -1,11 +1,17 @@
-//metrics
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import UnderConstruction from "@/components/UnderConstruction";
 
-export default function Metrics() {
+const MetricsPage = () => {
   return (
-    <div className="pt-16 pl-14 max-h-screen">
-      <OrganiserNavbar currPage="Metrics" />
-      <div className="pt-16 pl-14">hello im coming soon</div>
+    <div>
+      <div className="ml-14 mt-16">
+        <div className="max-w-5xl lg:mx-auto">
+          <OrganiserNavbar currPage="Metrics" />
+          <UnderConstruction />
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default MetricsPage;
