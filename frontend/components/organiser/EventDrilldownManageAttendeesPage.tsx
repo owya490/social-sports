@@ -13,6 +13,10 @@ interface EventDrilldownManageAttendeesPageProps {
 const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDrilldownManageAttendeesPageProps) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   const [eventMetadataState, setEventMetadataState] = useState<EventMetadata>(eventMetadata);
+
+  const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
+  const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
+
   function closeModal() {
     setIsFilterModalOpen(false);
   }
@@ -57,6 +61,7 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDril
                         purchaser={purchaserObj}
                         key={attendeeName}
                         eventId={eventId}
+                        setEventMetadataState={setEventMetadataState}
                       />
                     );
                   }

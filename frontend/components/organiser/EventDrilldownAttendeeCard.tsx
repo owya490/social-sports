@@ -5,18 +5,26 @@ import React, { Fragment, useState } from "react";
 import RemoveAttendeeDialog from "./attendee/RemoveAttendeeDialog";
 import Image from "next/image";
 import { EditAttendeeTicketsDialog } from "./attendee/EditAttendeeTicketsDialog";
-import { EventId, Purchaser } from "@/interfaces/EventTypes";
+import { EventId, EventMetadata, Purchaser } from "@/interfaces/EventTypes";
 
 interface EventDrilldownAttendeeCardProps {
   attendeeName: string;
   image: string;
   purchaser: Purchaser;
   eventId: EventId;
+  setEventMetadataState: React.Dispatch<React.SetStateAction<EventMetadata>>;
 }
 
-const EventDrilldownAttendeeCard = ({ attendeeName, image, purchaser, eventId }: EventDrilldownAttendeeCardProps) => {
+const EventDrilldownAttendeeCard = ({
+  attendeeName,
+  image,
+  purchaser,
+  eventId,
+  setEventMetadataState,
+}: EventDrilldownAttendeeCardProps) => {
   const [isRemoveAttendeeModalOpen, setIsRemoveAttendeeModalOpen] = useState<boolean>(false);
   const [isEditAttendeeTicketsDialogModalOpen, setIsEditAttendeeTicketsDialogModalOpen] = useState<boolean>(false);
+
   function closeRemoveAttendeeModal() {
     setIsRemoveAttendeeModalOpen(false);
   }
@@ -97,6 +105,7 @@ const EventDrilldownAttendeeCard = ({ attendeeName, image, purchaser, eventId }:
           purchaser={purchaser}
           attendeeName={attendeeName}
           eventId={eventId}
+          setEventMetadataState={setEventMetadataState}
         />
       </div>
       <div className="grow">
@@ -108,6 +117,7 @@ const EventDrilldownAttendeeCard = ({ attendeeName, image, purchaser, eventId }:
           purchaser={purchaser}
           attendeeName={attendeeName}
           eventId={eventId}
+          setEventMetadataState={setEventMetadataState}
         />
       </div>
     </div>

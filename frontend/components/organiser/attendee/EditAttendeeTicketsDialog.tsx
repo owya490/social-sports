@@ -1,4 +1,4 @@
-import { EventId, Name, Purchaser } from "@/interfaces/EventTypes";
+import { EventId, EventMetadata, Name, Purchaser } from "@/interfaces/EventTypes";
 import { setAttendeeTickets } from "@/services/src/organiser/organiserService";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
@@ -14,6 +14,7 @@ interface EditAttendeeTicketsDialogProps {
   purchaser: Purchaser;
   attendeeName: Name;
   eventId: EventId;
+  setEventMetadataState: React.Dispatch<React.SetStateAction<EventMetadata>>;
 }
 
 export const EditAttendeeTicketsDialog = ({
@@ -25,8 +26,13 @@ export const EditAttendeeTicketsDialog = ({
   purchaser,
   attendeeName,
   eventId,
+  setEventMetadataState,
 }: EditAttendeeTicketsDialogProps) => {
   const [newNumTickets, setNewNumTickets] = useState<string>(numTickets.toString());
+
+  const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
+  const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
+
   return (
     <div>
       <Transition appear show={isEditAttendeeTicketsDialogModalOpen} as={Fragment}>

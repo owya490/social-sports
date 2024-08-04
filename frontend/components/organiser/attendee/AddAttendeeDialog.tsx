@@ -47,6 +47,23 @@ const InviteAttendeeDialog = ({
     setNumTickets("0");
   };
 
+  const handleAddAttendee = async () => {
+    try {
+      setLoading(true);
+      await addAttendee(attendeeEmail, attendeeName, attendeePhoneNumber, parseInt(numTickets), eventId);
+      const updatedEventMetadata = await getEventsMetadataByEventId(eventId);
+      setEventMetadataState(updatedEventMetadata);
+      setShowSuccessAlert(true);
+      resetInputFields();
+      setShowErrorMessage(false);
+      closeModal();
+    } catch (error) {
+      handleErrorAddingAttendee();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <Transition appear show={isFilterModalOpen} as={Fragment}>
@@ -165,28 +182,7 @@ const InviteAttendeeDialog = ({
                       <div className="mt-2 float-right">
                         <div
                           className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
-                          onClick={async () => {
-                            try {
-                              setLoading(true);
-                              await addAttendee(
-                                attendeeEmail,
-                                attendeeName,
-                                attendeePhoneNumber,
-                                parseInt(numTickets),
-                                eventId
-                              );
-                              const updatedEventMetadata = await getEventsMetadataByEventId(eventId);
-                              setEventMetadataState(updatedEventMetadata);
-                              setShowSuccessAlert(true);
-                              resetInputFields();
-                              setShowErrorMessage(false);
-                              closeModal();
-                            } catch (error) {
-                              handleErrorAddingAttendee();
-                            } finally {
-                              setLoading(false);
-                            }
-                          }}
+                          onClick={handleAddAttendee}
                         >
                           Add Attendee
                         </div>
