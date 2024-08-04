@@ -100,7 +100,7 @@ export async function createEventMetadata(batch: WriteBatch, eventId: EventId, d
   }
 }
 
-export async function getEventById(eventId: EventId, bypassCache: boolean = false): Promise<EventData> {
+export async function getEventById(eventId: EventId, bypassCache: boolean = true): Promise<EventData> {
   eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
     const eventDoc = await findEventDoc(eventId);
