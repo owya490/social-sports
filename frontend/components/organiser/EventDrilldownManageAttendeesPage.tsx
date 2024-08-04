@@ -56,6 +56,7 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata, eventId }: EventDril
                         image={DEFAULT_USER_PROFILE_PICTURE}
                         purchaser={purchaserObj}
                         key={attendeeName}
+                        eventId={eventId}
                       />
                     );
                   }

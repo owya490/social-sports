@@ -1,5 +1,8 @@
+import { EventId, Name, Purchaser } from "@/interfaces/EventTypes";
+import { setAttendeeTickets } from "@/services/src/organiser/organiserService";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { Input } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
 
 interface EditAttendeeTicketsDialogProps {
@@ -8,6 +11,9 @@ interface EditAttendeeTicketsDialogProps {
   isEditAttendeeTicketsDialogModalOpen: boolean;
   email: string;
   numTickets: number;
+  purchaser: Purchaser;
+  attendeeName: Name;
+  eventId: EventId;
 }
 
 export const EditAttendeeTicketsDialog = ({
@@ -16,8 +22,11 @@ export const EditAttendeeTicketsDialog = ({
   isEditAttendeeTicketsDialogModalOpen,
   email,
   numTickets,
+  purchaser,
+  attendeeName,
+  eventId,
 }: EditAttendeeTicketsDialogProps) => {
-  const [newNumTickets, setNewNumTickets] = useState<number>(0);
+  const [newNumTickets, setNewNumTickets] = useState<string>(numTickets.toString());
   return (
     <div>
       <Transition appear show={isEditAttendeeTicketsDialogModalOpen} as={Fragment}>
@@ -70,20 +79,23 @@ export const EditAttendeeTicketsDialog = ({
                     Change this to:
                   </Description>
                   <div className="">
-                    <input
-                      type="number"
-                      pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
-                      tabIndex={1}
+                    <Input
+                      label="Number of tickets"
+                      crossOrigin={undefined}
                       required
-                      className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                      placeholder="Number of tickets"
                       value={newNumTickets}
+                      type="number"
                       onChange={(e) => {
                         const value = parseInt(e.target.value);
-                        if (value >= 0) {
-                          setNewNumTickets(parseInt(e.target.value));
+                        if (!isNaN(value)) {
+                          const maxValue = Math.max(value, 0);
+                          setNewNumTickets(maxValue.toString());
+                        } else {
+                          setNewNumTickets("0");
                         }
                       }}
+                      className="rounded-md focus:ring-0"
+                      size="lg"
                     />
                   </div>
 
@@ -91,7 +103,7 @@ export const EditAttendeeTicketsDialog = ({
                     <div
                       className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
                       onClick={() => {
-                        // TODO: add the setAttendeeTickets function here
+                        setAttendeeTickets(parseInt(newNumTickets), purchaser, attendeeName, eventId);
                       }}
                     >
                       Submit

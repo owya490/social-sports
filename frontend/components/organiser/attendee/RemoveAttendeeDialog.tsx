@@ -1,3 +1,4 @@
+import { EventId, Name, Purchaser } from "@/interfaces/EventTypes";
 import { removeAttendee } from "@/services/src/organiser/organiserService";
 import { Dialog, Transition, Description, DialogTitle, TransitionChild, DialogPanel } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
@@ -8,6 +9,9 @@ interface RemoveAttendeeDialogProps {
   closeModal: () => void;
   isRemoveAttendeeModalOpen: boolean;
   email: string;
+  purchaser: Purchaser;
+  attendeeName: Name;
+  eventId: EventId;
 }
 
 const RemoveAttendeeDialog = ({
@@ -15,6 +19,9 @@ const RemoveAttendeeDialog = ({
   closeModal,
   isRemoveAttendeeModalOpen,
   email,
+  purchaser,
+  attendeeName,
+  eventId,
 }: RemoveAttendeeDialogProps) => {
   const [inviteEmail, setInviteEmail] = useState<string>("");
   const [enabled, setEnabled] = useState(true);
@@ -69,7 +76,7 @@ const RemoveAttendeeDialog = ({
                     <div
                       className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
                       onClick={() => {
-                        // removeAttendee()
+                        removeAttendee(purchaser, attendeeName, eventId);
                       }}
                     >
                       Remove Attendee

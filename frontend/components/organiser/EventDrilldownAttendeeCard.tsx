@@ -5,15 +5,16 @@ import React, { Fragment, useState } from "react";
 import RemoveAttendeeDialog from "./attendee/RemoveAttendeeDialog";
 import Image from "next/image";
 import { EditAttendeeTicketsDialog } from "./attendee/EditAttendeeTicketsDialog";
-import { Purchaser } from "@/interfaces/EventTypes";
+import { EventId, Purchaser } from "@/interfaces/EventTypes";
 
 interface EventDrilldownAttendeeCardProps {
   attendeeName: string;
   image: string;
   purchaser: Purchaser;
+  eventId: EventId;
 }
 
-const EventDrilldownAttendeeCard = ({ attendeeName, image, purchaser }: EventDrilldownAttendeeCardProps) => {
+const EventDrilldownAttendeeCard = ({ attendeeName, image, purchaser, eventId }: EventDrilldownAttendeeCardProps) => {
   const [isRemoveAttendeeModalOpen, setIsRemoveAttendeeModalOpen] = useState<boolean>(false);
   const [isEditAttendeeTicketsDialogModalOpen, setIsEditAttendeeTicketsDialogModalOpen] = useState<boolean>(false);
   function closeRemoveAttendeeModal() {
@@ -93,6 +94,9 @@ const EventDrilldownAttendeeCard = ({ attendeeName, image, purchaser }: EventDri
           isEditAttendeeTicketsDialogModalOpen={isEditAttendeeTicketsDialogModalOpen}
           email={email}
           numTickets={tickets}
+          purchaser={purchaser}
+          attendeeName={attendeeName}
+          eventId={eventId}
         />
       </div>
       <div className="grow">
@@ -101,6 +105,9 @@ const EventDrilldownAttendeeCard = ({ attendeeName, image, purchaser }: EventDri
           closeModal={closeRemoveAttendeeModal}
           isRemoveAttendeeModalOpen={isRemoveAttendeeModalOpen}
           email={email}
+          purchaser={purchaser}
+          attendeeName={attendeeName}
+          eventId={eventId}
         />
       </div>
     </div>
