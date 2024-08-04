@@ -36,6 +36,7 @@ export default function EventBanner(props: EventBannerProps) {
               <p className="font-bold text-xs hidden md:block">{timestampToEventCardDateString(props.startDate)}</p>
             </div>
           </div>
+          <div className="ml-auto font-bold text-2xl">{`${props.vacancy} Tickets Left`}</div>
         </div>
       </div>
     </div>
