@@ -42,9 +42,7 @@ export default function Dashboard() {
   const [endLoading, setEndLoading] = useState<boolean | undefined>(false);
   const getQueryParams = () => {
     // if (typeof window === "undefined") {
-    console.log(window);
     if (window === undefined) {
-      console.log("aidan");
       // Return some default or empty values when not in a browser environment
       return { event: "", location: "" };
     }
@@ -114,8 +112,6 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-
-    // fetchEvents();
     setLoading(true);
     fetchEvents();
   }, [searchParams]);

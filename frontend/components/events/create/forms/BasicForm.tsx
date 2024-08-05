@@ -270,7 +270,7 @@ export function BasicInformation({
               <Select
                 size="md"
                 label="Select Visibility"
-                value={isPrivate.toString()}
+                value={isPrivate ? "Private" : "Public"}
                 onChange={(e) => {
                   const privacyValue = e || "Public";
                   handlePrivacyChange(privacyValue);
