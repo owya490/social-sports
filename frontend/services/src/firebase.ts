@@ -21,6 +21,7 @@ const firebaseConfigDev = {
   messagingSenderId: process.env.FIREBASE_DEV_MESSAGING_SENDER_ID,
   appId: process.env.FIREBASE_DEV_APP_ID,
   measurementId: process.env.FIREBASE_DEV_MEASUREMENT_ID,
+  MapsApi: process.env.GOOGLE_MAPS_API_KEY,
 };
 
 const firebaseConfigProd = {
@@ -32,6 +33,7 @@ const firebaseConfigProd = {
   messagingSenderId: process.env.FIREBASE_PROD_MESSAGING_SENDER_ID,
   appId: process.env.FIREBASE_PROD_APP_ID,
   measurementId: process.env.FIREBASE_PROD_MEASUREMENT_ID,
+  MapsApi: process.env.GOOGLE_MAPS_API_KEY,
 };
 
 // Obtain from .env file which environment we are currently in
@@ -59,5 +61,3 @@ export const storage = getStorage(app);
 // set persistence to a session - meaning if user closes the window, they will be logged out.
 // TODO: change back to browserLocalPersistence after we implement session infrastructure.
 setPersistence(auth, browserLocalPersistence);
-
-

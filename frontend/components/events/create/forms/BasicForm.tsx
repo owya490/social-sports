@@ -28,6 +28,8 @@ type BasicData = {
   capacity: number;
   isPrivate: boolean;
   paymentsActive: boolean;
+  lat: number;
+  long: number;
 };
 
 type BasicInformationProps = BasicData & {
@@ -212,7 +214,7 @@ export function BasicInformation({
               size="lg"
               icon={<MapPinIcon />}
             /> */}
-            <AutocompleteForm />
+            <AutocompleteForm location={location} updateField={updateField} />
             {locationError && <p className="text-red-500">{locationError}</p>}
           </div>
         </div>
@@ -365,9 +367,9 @@ export function BasicInformation({
           </div>
         )}
         <div className="mt-8">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-md" type="button" onClick={nextPage}>
+          {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-md" type="button" onClick={nextPage}>
             Next
-          </button>
+          </button> */}
         </div>
       </div>
     </FormWrapper>
