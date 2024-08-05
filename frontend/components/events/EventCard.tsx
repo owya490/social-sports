@@ -1,5 +1,4 @@
 "use client";
-import EventImage from "@/components/events/EventImage";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
@@ -32,16 +31,21 @@ export default function EventCard(props: EventCardProps) {
 
   return (
     <Link href={`/event/${props.eventId}`}>
-      <div className="bg-white rounded-lg text-left border-gray-300 border w-full md:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer">
+      <div className="bg-white rounded-lg text-left border-gray-300 border w-full md:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer overflow-hidden">
         {props.loading ? (
           <div>
             <LoadingSkeletonEventCard />
           </div>
         ) : (
           <>
-            <div className="h-36 w-full object-cover rounded-t-lg overflow-hidden">
-              <EventImage imageSrc={props.image} />
-            </div>
+            <div
+              className="h-36 w-full"
+              style={{
+                backgroundImage: `url(${props.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center center",
+              }}
+            ></div>
             <div className="p-4">
               <h4 className="font-bold text-gray-500 text-xs">{timestampToEventCardDateString(props.startTime)}</h4>
               <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">{props.name}</h2>
