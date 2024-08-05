@@ -377,8 +377,10 @@ export async function setAttendeeTickets(
   attendeeName: Name,
   eventId: EventId
 ) {
-  const emailHash = getPurchaserEmailHash(purchaser.email);
   try {
+    validatePurchaserDetails(purchaser);
+
+    const emailHash = getPurchaserEmailHash(purchaser.email);
     await runTransaction(db, async (transaction) => {
       // Check that the update to the attendee tickets is within capacity of the event.
       const eventMetadataDocRef = findEventMetadataDocRefByEventId(eventId);

@@ -162,7 +162,7 @@ export const EditAttendeeTicketsDialog = ({
           </div>
         </Dialog>
       </Transition>
-      <div className="sticky ml-auto mr-auto left-0 right-0 top-32 w-fit">
+      <div className="fixed ml-auto mr-auto left-4 bottom-4 w-fit z-40">
         <Alert
           open={showSuccessAlert}
           onClose={() => {
