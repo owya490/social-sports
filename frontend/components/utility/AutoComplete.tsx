@@ -73,7 +73,7 @@ const AutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateFie
         const longitude = latLng.lng();
         updateField({ lat: latitude, long: longitude });
       } else {
-        console.error("Geocode was not successful for the following reason: " + status);
+        throw new Error("Location not Found");
       }
     });
   };
@@ -86,14 +86,10 @@ const AutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateFie
       <input
         ref={inputRef}
         type="text"
-        // label="Enter a location"
         onChange={(e) => setAddress(e.target.value)}
         value={address}
         // Autocomplete doesn't work with tailwind for some reason
         style={{ width: "100%", padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
-        // className="rounded-md focus:ring-0"
-        // size="lg"
-        // crossOrigin={undefined}
         required
       />
     </div>

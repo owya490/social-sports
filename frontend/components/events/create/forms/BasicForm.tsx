@@ -12,8 +12,6 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
-import { getLocationCoordinates } from "@/services/src/locationUtils";
-import AutocompleteComponent from "@/components/utility/AutoComplete";
 import AutocompleteForm from "@/components/utility/AutoComplete";
 
 type BasicData = {
@@ -133,34 +131,6 @@ export function BasicInformation({
     updateField({ paymentsActive: paymentsActive.toLowerCase() === "true" });
   };
 
-  const validateLocation = async (location: string) => {
-    const result = await getLocationCoordinates(location);
-    if (result) {
-      setLocationError(null);
-    } else {
-      setLocationError("Location not found. Please enter a valid location.");
-    }
-  };
-
-  const handleLocationBlur = () => {
-    validateLocation(location);
-  };
-
-  const nextPage = async () => {
-    await validateLocation(location);
-    if (!locationError) {
-      // Proceed to the next page if there are no errors
-      router.push("/next-page-url"); // replace with your next page URL
-    } else {
-      // Scroll to the top of the form to display the error
-      window.scrollTo(0, 0);
-    }
-  };
-  const handlePlaceSelected = (lat: number, lng: number, address: string) => {
-    console.log(`Latitude: ${lat}, Longitude: ${lng}`);
-    console.log(`Address: ${address}`);
-  };
-
   return (
     <FormWrapper>
       <div className="space-y-12">
@@ -203,17 +173,6 @@ export function BasicInformation({
         <div>
           <label className="text-black text-lg font-semibold">Where is it located?</label>
           <div className="mt-4">
-            {/* <Input
-              label="Location"
-              crossOrigin={undefined}
-              required
-              value={location}
-              onChange={(e) => updateField({ location: e.target.value })}
-              onBlur={handleLocationBlur}
-              className="rounded-md focus:ring-0"
-              size="lg"
-              icon={<MapPinIcon />}
-            /> */}
             <AutocompleteForm location={location} updateField={updateField} />
             {locationError && <p className="text-red-500">{locationError}</p>}
           </div>
@@ -366,11 +325,7 @@ export function BasicInformation({
             </button>
           </div>
         )}
-        <div className="mt-8">
-          {/* <button className="bg-blue-600 text-white px-4 py-2 rounded-md" type="button" onClick={nextPage}>
-            Next
-          </button> */}
-        </div>
+        <div className="mt-8"></div>
       </div>
     </FormWrapper>
   );
