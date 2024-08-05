@@ -1,19 +1,24 @@
 "use client";
-import { useEffect, useState } from "react";
+import LoadingSkeletonOrganiserName from "@/components/loading/LoadingSkeletonOrganiserName";
+import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import OrganiserChecklist from "@/components/organiser/dashboard/OrganiserChecklist";
+import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
+import { useUser } from "@/components/utility/UserContext";
+import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { Logger } from "@/observability/logger";
+import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
-import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
-import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
-import { getOrganiserEvents } from "@/services/src/events/eventsService";
-import { useUser } from "@/components/utility/UserContext";
-import LoadingSkeletonOrganiserName from "@/components/loading/LoadingSkeletonOrganiserName";
-import OrganiserChecklist from "@/components/organiser/dashboard/OrganiserChecklist";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [eventDataList, setEventDataList] = useState<EventData[]>([EmptyEventData, EmptyEventData]);
+  const router = useRouter();
+
+  const organiserDashboardLogger = new Logger("organiserDashboardLogger");
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -28,7 +33,8 @@ export default function Dashboard() {
         setEventDataList(events);
         setLoading(false);
       } catch (error) {
-        console.error("getOrganiserEvents() Error: " + error);
+        organiserDashboardLogger.error("getOrganiserEvents() Error: " + error);
+        router.push("/error");
       }
     };
     fetchEvents();
