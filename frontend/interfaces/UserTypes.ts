@@ -22,6 +22,7 @@ interface AbstractUserData {
   stripeAccount?: string;
   stripeAccountActive?: boolean;
   organiserEvents?: [string];
+  isVerifiedOrganiser?: boolean;
 }
 
 export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
@@ -31,6 +32,7 @@ export interface PublicUserData extends Omit<AbstractUserData, "contactInformati
   dob?: string;
   age?: string;
   profilePicture: string;
+  isVerifiedOrganiser?: boolean;
 }
 
 export interface PrivateUserData extends AbstractUserData {
@@ -67,6 +69,7 @@ export const EmptyNewUserData: NewUserData = {
   profilePicture: DEFAULT_USER_PROFILE_PICTURE,
   surname: "",
   dob: "",
+  isVerifiedOrganiser: false,
 };
 
 export const EmptyUserData: UserData = {
@@ -78,6 +81,7 @@ export const EmptyUserData: UserData = {
   profilePicture: DEFAULT_USER_PROFILE_PICTURE,
   surname: "",
   dob: "",
+  isVerifiedOrganiser: false,
 };
 
 export interface IUsersDataLocalStorage {
