@@ -6,10 +6,11 @@ import eye from "@/public/images/Eye.png";
 import location from "@/public/images/location.png";
 import Upload from "@/public/images/upload.png";
 import x from "@/public/images/x.png";
+import { uploadProfilePhoto } from "@/services/src/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
-import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, getMetadata, getStorage, ref } from "firebase/storage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
@@ -157,11 +158,7 @@ const Profile = () => {
     const files = event.target?.files;
 
     if (files && files.length > 0) {
-      const file = files[0];
-
       try {
-        const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${file.name}`);
-
         const previousProfilePictureURL = initialProfileData.profilePicture;
 
         if (previousProfilePictureURL && !previousProfilePictureURL.includes("generic-profile-photo.webp")) {
@@ -177,9 +174,7 @@ const Profile = () => {
           }
         }
 
-        await uploadBytes(storageRef, file);
-
-        const downloadURL = await getDownloadURL(storageRef);
+        const downloadURL = await uploadProfilePhoto(initialProfileData.userId, files[0]);
 
         setEditedData((prevData) => ({
           ...prevData,
@@ -524,6 +519,9 @@ const Profile = () => {
                   Sports Hub uses your location to better recommend you events that are close to you!
                 </div>
               </div>
+              <p className="text-xs font-light mt-2 ml-1">
+                (If your edit profile picture isn&apos;t working, try closing and reopening the browser.)
+              </p>
             </div>
           </div>
           <div className="col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">

@@ -11,7 +11,7 @@ import {
 import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import ChevronRightButton from "../utility/ChevronRightButton";
+import ChevronRightButton from "../elements/ChevronRightButton";
 import BadmintonImage from "./../../public/images/badminton.png";
 import BaseballImage from "./../../public/images/baseball.png";
 import BasketballImage from "./../../public/images/basketball.png";
@@ -209,7 +209,6 @@ export default function FilterBanner({
 
   useEffect(() => {
     if (triggerFilterApply !== undefined) {
-      console.log("applyFilters");
       applyFilters(selectedSport).finally(() => {
         if (endLoading === undefined) {
           setEndLoading(true);
