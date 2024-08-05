@@ -143,6 +143,7 @@ export default function EventPage({ params }: EventPageProps) {
                 eventMetadata={eventMetadata}
                 eventId={eventId}
                 setEventVacancy={setEventVacancy}
+                setEventMetadata={setEventMetadata}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

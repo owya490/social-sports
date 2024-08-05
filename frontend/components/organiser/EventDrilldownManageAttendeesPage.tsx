@@ -9,15 +9,16 @@ interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
   eventId: string;
   setEventVacancy: Dispatch<SetStateAction<number>>;
+  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
 }
 
 const EventDrilldownManageAttendeesPage = ({
   eventMetadata,
   eventId,
   setEventVacancy,
+  setEventMetadata,
 }: EventDrilldownManageAttendeesPageProps) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
-  const [eventMetadataState, setEventMetadataState] = useState<EventMetadata>(eventMetadata);
 
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
   const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
@@ -51,8 +52,8 @@ const EventDrilldownManageAttendeesPage = ({
         </div>
         <div className="inline-block w-full h-0.5 my-2 self-stretch bg-organiser-title-gray-text"></div>
         <div className="">
-          {eventMetadataState.purchaserMap &&
-            Object.values(eventMetadataState.purchaserMap)
+          {eventMetadata.purchaserMap &&
+            Object.values(eventMetadata.purchaserMap)
               .sort((purchaser1, purchaser2) => {
                 return purchaser1.email.localeCompare(purchaser2.email);
               })
@@ -66,7 +67,7 @@ const EventDrilldownManageAttendeesPage = ({
                         purchaser={purchaserObj}
                         key={attendeeName}
                         eventId={eventId}
-                        setEventMetadataState={setEventMetadataState}
+                        setEventMetadata={setEventMetadata}
                         setEventVacancy={setEventVacancy}
                       />
                     );
@@ -81,7 +82,8 @@ const EventDrilldownManageAttendeesPage = ({
           closeModal={closeModal}
           isFilterModalOpen={isFilterModalOpen}
           eventId={eventId}
-          setEventMetadataState={setEventMetadataState}
+          setEventMetadata={setEventMetadata}
+          setEventVacancy={setEventVacancy}
         />
       </div>
     </div>

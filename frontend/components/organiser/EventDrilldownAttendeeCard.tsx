@@ -12,7 +12,7 @@ interface EventDrilldownAttendeeCardProps {
   image: string;
   purchaser: Purchaser;
   eventId: EventId;
-  setEventMetadataState: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
 }
 
@@ -21,7 +21,7 @@ const EventDrilldownAttendeeCard = ({
   image,
   purchaser,
   eventId,
-  setEventMetadataState,
+  setEventMetadata,
   setEventVacancy,
 }: EventDrilldownAttendeeCardProps) => {
   const [isRemoveAttendeeModalOpen, setIsRemoveAttendeeModalOpen] = useState<boolean>(false);
@@ -107,7 +107,8 @@ const EventDrilldownAttendeeCard = ({
           purchaser={purchaser}
           attendeeName={attendeeName}
           eventId={eventId}
-          setEventMetadataState={setEventMetadataState}
+          setEventMetadata={setEventMetadata}
+          setEventVacancy={setEventVacancy}
         />
       </div>
       <div className="grow">
@@ -119,7 +120,7 @@ const EventDrilldownAttendeeCard = ({
           purchaser={purchaser}
           attendeeName={attendeeName}
           eventId={eventId}
-          setEventMetadataState={setEventMetadataState}
+          setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
         />
       </div>

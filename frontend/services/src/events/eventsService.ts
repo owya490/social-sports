@@ -4,6 +4,7 @@ import {
   EventDataWithoutOrganiser,
   EventId,
   EventMetadata,
+  Name,
   NewEventData,
   Purchaser,
 } from "@/interfaces/EventTypes";
@@ -46,6 +47,7 @@ import {
 } from "./eventsUtils/getEventsUtils";
 import * as crypto from "crypto";
 import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
+import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -365,6 +367,54 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId): P
       )}`
     );
     eventServiceLogger.error(JSON.stringify(error, null, 2));
+    throw error;
+  }
+}
+
+export async function setAttendeeTickets(
+  numTickets: number,
+  purchaser: Purchaser,
+  attendeeName: Name,
+  eventId: EventId
+) {
+  const emailHash = getPurchaserEmailHash(purchaser.email);
+  try {
+    await runTransaction(db, async (transaction) => {
+      // Check that the update to the attendee tickets is within capacity of the event.
+      const eventMetadataDocRef = findEventMetadataDocRefByEventId(eventId);
+      const eventDataWithoutOrganiserDocRef = await findEventDocRef(eventId);
+      let eventMetadata = (await transaction.get(eventMetadataDocRef)).data() as EventMetadata;
+      let eventDataWithoutOrganiser = (
+        await transaction.get(eventDataWithoutOrganiserDocRef)
+      ).data() as EventDataWithoutOrganiser;
+
+      const eventCapacity = eventDataWithoutOrganiser.capacity;
+
+      // Update attendee ticket count
+      eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount = numTickets;
+      eventMetadata = recalculateEventsMetadataTotalTicketCounts(eventMetadata);
+
+      const newEventTotalTicketCount = eventMetadata.completeTicketCount;
+
+      if (newEventTotalTicketCount < 0 || newEventTotalTicketCount > eventCapacity) {
+        eventServiceLogger.error(
+          `Setting ${attendeeName}'s tickets to ${numTickets} in event: ${eventId} causes the total ticket count to be ${newEventTotalTicketCount}, which is out of range [0, ${eventCapacity}]`
+        );
+        throw Error(
+          `Setting ${attendeeName}'s tickets to ${numTickets} in event: ${eventId} causes the total ticket count to be ${newEventTotalTicketCount}, which is out of range [0, ${eventCapacity}]`
+        );
+      }
+
+      // Update the vacancy in eventData
+      eventDataWithoutOrganiser.vacancy = eventCapacity - newEventTotalTicketCount;
+      transaction.update(eventMetadataDocRef, eventMetadata as Partial<EventMetadata>);
+      transaction.update(
+        eventDataWithoutOrganiserDocRef,
+        eventDataWithoutOrganiser as Partial<EventDataWithoutOrganiser>
+      );
+    });
+  } catch (error) {
+    eventServiceLogger.error(`setAttendeeTickets error: ${error}`);
     throw error;
   }
 }

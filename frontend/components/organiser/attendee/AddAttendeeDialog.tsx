@@ -1,6 +1,7 @@
 import Loading from "@/components/loading/Loading";
 import { EventMetadata } from "@/interfaces/EventTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import { getEventById } from "@/services/src/events/eventsService";
 import { addAttendee } from "@/services/src/organiser/organiserService";
 import { Dialog, Transition, Description, DialogTitle, TransitionChild, DialogPanel } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
@@ -12,7 +13,8 @@ interface InviteAttendeeDialogProps {
   closeModal: () => void;
   isFilterModalOpen: boolean;
   eventId: string;
-  setEventMetadataState: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const InviteAttendeeDialog = ({
@@ -20,7 +22,8 @@ const InviteAttendeeDialog = ({
   closeModal,
   isFilterModalOpen,
   eventId,
-  setEventMetadataState,
+  setEventMetadata,
+  setEventVacancy,
 }: InviteAttendeeDialogProps) => {
   const [attendeeEmail, setAttendeeEmail] = useState<string>("");
   const [attendeeName, setAttendeeName] = useState<string>("");
@@ -52,7 +55,9 @@ const InviteAttendeeDialog = ({
       setLoading(true);
       await addAttendee(attendeeEmail, attendeeName, attendeePhoneNumber, parseInt(numTickets), eventId);
       const updatedEventMetadata = await getEventsMetadataByEventId(eventId);
-      setEventMetadataState(updatedEventMetadata);
+      setEventMetadata(updatedEventMetadata);
+      const updatedEventData = await getEventById(eventId);
+      setEventVacancy(updatedEventData.vacancy);
       setShowSuccessAlert(true);
       resetInputFields();
       setShowErrorMessage(false);

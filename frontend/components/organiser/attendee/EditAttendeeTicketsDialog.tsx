@@ -1,8 +1,10 @@
+import Loading from "@/components/loading/Loading";
 import { EventId, EventMetadata, Name, Purchaser } from "@/interfaces/EventTypes";
-import { setAttendeeTickets } from "@/services/src/organiser/organiserService";
+import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import { getEventById, setAttendeeTickets } from "@/services/src/events/eventsService";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import { Input } from "@material-tailwind/react";
+import { Alert, Input } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
 
 interface EditAttendeeTicketsDialogProps {
@@ -14,7 +16,8 @@ interface EditAttendeeTicketsDialogProps {
   purchaser: Purchaser;
   attendeeName: Name;
   eventId: EventId;
-  setEventMetadataState: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export const EditAttendeeTicketsDialog = ({
@@ -26,12 +29,41 @@ export const EditAttendeeTicketsDialog = ({
   purchaser,
   attendeeName,
   eventId,
-  setEventMetadataState,
+  setEventMetadata,
+  setEventVacancy,
 }: EditAttendeeTicketsDialogProps) => {
   const [newNumTickets, setNewNumTickets] = useState<string>(numTickets.toString());
 
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
   const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
+
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleErrorEditAttendeeTickets = () => {
+    setShowErrorMessage(true);
+  };
+
+  const handleEditAttendeeTickets = async () => {
+    try {
+      setLoading(true);
+      await setAttendeeTickets(parseInt(newNumTickets), purchaser, attendeeName, eventId);
+      const updatedEventMetadata = await getEventsMetadataByEventId(eventId);
+      const updatedEventData = await getEventById(eventId);
+      setEventMetadata(updatedEventMetadata);
+      setEventVacancy(updatedEventData.vacancy);
+      setShowSuccessAlert(true);
+      setShowErrorMessage(false);
+      closeModal();
+    } catch (error) {
+      handleErrorEditAttendeeTickets();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const ErrorMessage = () => {
+    return <div className="text-red-400 text-sm py-2">Error editing attendee tickets!</div>;
+  };
 
   return (
     <div>
@@ -61,66 +93,87 @@ export const EditAttendeeTicketsDialog = ({
                 leaveTo="opacity-0 scale-95"
               >
                 <DialogPanel className="w-full max-w-md transform rounded-2xl p-6 bg-white text-left align-middle shadow-xl transition-all">
-                  <DialogTitle
-                    as="h3"
-                    className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[0px] border-gray-500 w-full text-center flex justify-center items-center"
-                  >
-                    Edit Attendee Tickets
-                  </DialogTitle>
-                  <Description className="font-semibold text-organiser-title-gray-text p-4 rounded-lg bg-yellow-100 mb-2 text-sm">
-                    <div className="flex flex-row">
-                      <div>
-                        IMPORTANT: The event organiser and attendee will need to organise their own payment arrangement
-                        to account for this change.
-                      </div>
-                      <div className="content-center ml-4">
-                        <ExclamationCircleIcon className="h-8" />
-                      </div>
+                  {loading ? (
+                    <div className="flex justify-center items-center">
+                      <Loading inline={true} />
                     </div>
-                  </Description>
-                  <Description className=" text-organiser-dark-gray-text p-2 mb-2 text-sm">
-                    <span className="font-semibold"> {email}</span> currently has{" "}
-                    <span className="font-semibold">{numTickets}</span> tickets.
-                    <br></br>
-                    Change this to:
-                  </Description>
-                  <div className="">
-                    <Input
-                      label="Number of tickets"
-                      crossOrigin={undefined}
-                      required
-                      value={newNumTickets}
-                      type="number"
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value)) {
-                          const maxValue = Math.max(value, 0);
-                          setNewNumTickets(maxValue.toString());
-                        } else {
-                          setNewNumTickets("0");
-                        }
-                      }}
-                      className="rounded-md focus:ring-0"
-                      size="lg"
-                    />
-                  </div>
+                  ) : (
+                    <div>
+                      <DialogTitle
+                        as="h3"
+                        className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[0px] border-gray-500 w-full text-center flex justify-center items-center"
+                      >
+                        Edit Attendee Tickets
+                      </DialogTitle>
+                      <Description className="font-semibold text-organiser-title-gray-text p-4 rounded-lg bg-yellow-100 mb-2 text-sm">
+                        <div className="flex flex-row">
+                          <div>
+                            IMPORTANT: The event organiser and attendee will need to organise their own payment
+                            arrangement to account for this change.
+                          </div>
+                          <div className="content-center ml-4">
+                            <ExclamationCircleIcon className="h-8" />
+                          </div>
+                        </div>
+                      </Description>
+                      <Description className=" text-organiser-dark-gray-text p-2 mb-2 text-sm">
+                        <span className="font-semibold"> {email}</span> currently has{" "}
+                        <span className="font-semibold">{numTickets}</span> tickets.
+                        <br></br>
+                        Change this to:
+                      </Description>
+                      <div className="">
+                        <Input
+                          label="Number of tickets"
+                          crossOrigin={undefined}
+                          required
+                          value={newNumTickets}
+                          type="number"
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            if (!isNaN(value)) {
+                              const maxValue = Math.max(value, 0);
+                              setNewNumTickets(maxValue.toString());
+                            } else {
+                              setNewNumTickets("0");
+                            }
+                          }}
+                          className="rounded-md focus:ring-0"
+                          size="lg"
+                        />
+                      </div>
 
-                  <div className="mt-2 float-right">
-                    <div
-                      className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
-                      onClick={() => {
-                        setAttendeeTickets(parseInt(newNumTickets), purchaser, attendeeName, eventId);
-                      }}
-                    >
-                      Submit
+                      <div className="mt-2 float-right">
+                        <div
+                          className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
+                          onClick={() => {
+                            handleEditAttendeeTickets();
+                          }}
+                        >
+                          Submit
+                        </div>
+                      </div>
+                      <div className="mt-2 float-left">{showErrorMessage ? <ErrorMessage /> : <div></div>}</div>
                     </div>
-                  </div>
+                  )}
                 </DialogPanel>
               </TransitionChild>
             </div>
           </div>
         </Dialog>
       </Transition>
+      <div className="sticky ml-auto mr-auto left-0 right-0 top-32 w-fit">
+        <Alert
+          open={showSuccessAlert}
+          onClose={() => {
+            setShowSuccessAlert(false);
+          }}
+          color="green"
+          className="z-40"
+        >
+          Success editing attendee tickets!
+        </Alert>
+      </div>
     </div>
   );
 };

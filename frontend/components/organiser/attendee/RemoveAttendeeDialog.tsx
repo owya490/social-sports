@@ -16,7 +16,7 @@ interface RemoveAttendeeDialogProps {
   purchaser: Purchaser;
   attendeeName: Name;
   eventId: EventId;
-  setEventMetadataState: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
 }
 
@@ -28,7 +28,7 @@ const RemoveAttendeeDialog = ({
   purchaser,
   attendeeName,
   eventId,
-  setEventMetadataState,
+  setEventMetadata,
   setEventVacancy,
 }: RemoveAttendeeDialogProps) => {
   const [enabled, setEnabled] = useState(true);
@@ -48,7 +48,7 @@ const RemoveAttendeeDialog = ({
       await removeAttendee(purchaser, attendeeName, eventId);
       const updatedEventMetadata = await getEventsMetadataByEventId(eventId);
       const updatedEventData = await getEventById(eventId);
-      setEventMetadataState(updatedEventMetadata);
+      setEventMetadata(updatedEventMetadata);
       setEventVacancy(updatedEventData.vacancy);
       setShowSuccessAlert(true);
       setShowErrorMessage(false);

@@ -1,12 +1,6 @@
-import { Attendee, EventDataWithoutOrganiser, EventId, EventMetadata, Name, Purchaser } from "@/interfaces/EventTypes";
-import { addEventAttendee, getPurchaserEmailHash } from "../events/eventsService";
-import { findEventDoc } from "../events/eventsUtils/getEventsUtils";
-import { runTransaction } from "firebase/firestore";
-import { db } from "../firebase";
-import { findEventMetadataDocRefByEventId } from "../events/eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
-import { findEventDocRef } from "../events/eventsUtils/commonEventsUtils";
+import { Attendee, EventId, Name, Purchaser } from "@/interfaces/EventTypes";
+import { addEventAttendee, setAttendeeTickets } from "../events/eventsService";
 import { Logger } from "@/observability/logger";
-import { recalculateEventsMetadataTotalTicketCounts } from "../events/eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
 
 export const organiserServiceLogger = new Logger("organiserServiceLogger");
 
@@ -47,54 +41,6 @@ export async function removeAttendee(purchaser: Purchaser, attendeeName: Name, e
     await setAttendeeTickets(0, purchaser, attendeeName, eventId);
   } catch (error) {
     organiserServiceLogger.error(`removeAttendee error: ${error}`);
-    throw error;
-  }
-}
-
-export async function setAttendeeTickets(
-  numTickets: number,
-  purchaser: Purchaser,
-  attendeeName: Name,
-  eventId: EventId
-) {
-  const emailHash = getPurchaserEmailHash(purchaser.email);
-  try {
-    await runTransaction(db, async (transaction) => {
-      // Check that the update to the attendee tickets is within capacity of the event.
-      const eventMetadataDocRef = findEventMetadataDocRefByEventId(eventId);
-      const eventDataWithoutOrganiserDocRef = await findEventDocRef(eventId);
-      let eventMetadata = (await transaction.get(eventMetadataDocRef)).data() as EventMetadata;
-      let eventDataWithoutOrganiser = (
-        await transaction.get(eventDataWithoutOrganiserDocRef)
-      ).data() as EventDataWithoutOrganiser;
-
-      const eventCapacity = eventDataWithoutOrganiser.capacity;
-
-      // Update attendee ticket count
-      eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount = numTickets;
-      eventMetadata = recalculateEventsMetadataTotalTicketCounts(eventMetadata);
-
-      const newEventTotalTicketCount = eventMetadata.completeTicketCount;
-
-      if (newEventTotalTicketCount < 0 || newEventTotalTicketCount > eventCapacity) {
-        organiserServiceLogger.error(
-          `Setting ${attendeeName}'s tickets to ${numTickets} in event: ${eventId} causes the total ticket count to be ${newEventTotalTicketCount}, which is out of range [0, ${eventCapacity}]`
-        );
-        throw Error(
-          `Setting ${attendeeName}'s tickets to ${numTickets} in event: ${eventId} causes the total ticket count to be ${newEventTotalTicketCount}, which is out of range [0, ${eventCapacity}]`
-        );
-      }
-
-      // Update the vacancy in eventData
-      eventDataWithoutOrganiser.vacancy = eventCapacity - newEventTotalTicketCount;
-      transaction.update(eventMetadataDocRef, eventMetadata as Partial<EventMetadata>);
-      transaction.update(
-        eventDataWithoutOrganiserDocRef,
-        eventDataWithoutOrganiser as Partial<EventDataWithoutOrganiser>
-      );
-    });
-  } catch (error) {
-    organiserServiceLogger.error(`setAttendeeTickets error: ${error}`);
     throw error;
   }
 }
