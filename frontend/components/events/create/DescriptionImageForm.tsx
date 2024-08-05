@@ -64,7 +64,7 @@ export function DescriptionImageForm({
         <div>
           <label className="text-black text-lg font-semibold">Upload a photo as your event cover.</label>
           <p className="text-xs font-light">
-            If your image upload button isn't working, try closing and reopening the browser.
+            If your image upload button isn&apos;t working, try closing and reopening the browser.
           </p>
           <div className="w-full mt-8 border border-black rounded-lg relative py-3">
             <h4 className="absolute -top-3 left-3 text-sm px-1 bg-white">Image</h4>

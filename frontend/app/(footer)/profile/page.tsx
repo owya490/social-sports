@@ -525,7 +525,7 @@ const Profile = () => {
                 </div>
               </div>
               <p className="text-xs font-light mt-2 ml-1">
-                (If your edit profile picture isn't working, try closing and reopening the browser.)
+                (If your edit profile picture isn&apos;t working, try closing and reopening the browser.)
               </p>
             </div>
           </div>
