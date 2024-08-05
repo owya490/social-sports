@@ -212,7 +212,6 @@ def restock_tickets_after_expired_checkout(transaction: Transaction, checkout_se
   )
 
 
-@firestore.transactional
 def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer_details, checkout_session, full_name: str, phone_number: str):
   # Check if this checkout_session_id has already been processed.
   if (check_if_session_has_been_processed_already(transaction, logger, checkout_session_id, event_id)):
@@ -221,20 +220,19 @@ def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Log
   
   success = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number)
   if not success:
-    logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id.id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
-    return https_fn.Response(status=500) 
+    logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
+    return https_fn.Response(status=500)
       
   record_checkout_session_by_customer_email(transaction, event_id, checkout_session, customer_details)
   logger.info(f"Successfully handled checkout.session.completed webhook event. session={checkout_session_id}")
   return https_fn.Response(status=200)
   
 
-@firestore.transactional
 def fulfilment_workflow_on_expired_session(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items):
   # Check if this checkout_session_id has already been processed.
   if (check_if_session_has_been_processed_already(transaction, logger, checkout_session_id, event_id)):
     logger.info(f"Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}")
-    return https_fn.Response(status=200) 
+    return https_fn.Response(status=200)
 
   restock_tickets_after_expired_checkout(transaction, checkout_session_id, event_id, is_private, line_items)
       
