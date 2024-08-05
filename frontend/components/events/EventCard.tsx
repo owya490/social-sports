@@ -39,7 +39,7 @@ export default function EventCard(props: EventCardProps) {
           </div>
         ) : (
           <>
-            <div className="h-36 w-full object-cover rounded-t-lg">
+            <div className="h-36 w-full object-cover rounded-t-lg overflow-hidden">
               <EventImage imageSrc={props.image} />
             </div>
             <div className="p-4">

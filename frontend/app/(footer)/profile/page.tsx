@@ -6,6 +6,7 @@ import eye from "@/public/images/Eye.png";
 import location from "@/public/images/location.png";
 import Upload from "@/public/images/upload.png";
 import x from "@/public/images/x.png";
+import { uploadProfilePhoto } from "@/services/src/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
@@ -158,11 +159,7 @@ const Profile = () => {
     const files = event.target?.files;
 
     if (files && files.length > 0) {
-      const file = files[0];
-
       try {
-        const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${file.name}`);
-
         const previousProfilePictureURL = initialProfileData.profilePicture;
 
         if (previousProfilePictureURL && !previousProfilePictureURL.includes("generic-profile-photo.webp")) {
@@ -178,9 +175,7 @@ const Profile = () => {
           }
         }
 
-        await uploadBytes(storageRef, file);
-
-        const downloadURL = await getDownloadURL(storageRef);
+        const downloadURL = await uploadProfilePhoto(initialProfileData.userId, files[0]);
 
         setEditedData((prevData) => ({
           ...prevData,
