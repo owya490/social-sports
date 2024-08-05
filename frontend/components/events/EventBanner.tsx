@@ -40,6 +40,7 @@ export default function EventBanner(props: EventBannerProps) {
                     </div>
                   </div>
                 )}
+                <p className="font-bold text-xs ml-auto md:hidden">{`${props.vacancy} Tickets Left`}</p>
               </div>
 
               <p className="font-bold text-xs hidden md:block ml-4">
@@ -47,6 +48,7 @@ export default function EventBanner(props: EventBannerProps) {
               </p>
             </div>
           </div>
+          <div className="ml-auto font-bold text-2xl hidden md:block">{`${props.vacancy} Tickets Left`}</div>
         </div>
       </div>
     </div>
