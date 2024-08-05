@@ -3,7 +3,7 @@ import { EventMetadata } from "@/interfaces/EventTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { getEventById } from "@/services/src/events/eventsService";
 import { addAttendee } from "@/services/src/organiser/organiserService";
-import { Dialog, Transition, Description, DialogTitle, TransitionChild, DialogPanel } from "@headlessui/react";
+import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert, Input } from "@material-tailwind/react";
 import React, { Fragment, useState } from "react";
@@ -109,7 +109,7 @@ const InviteAttendeeDialog = ({
                       <Loading inline={true} />
                     </div>
                   ) : (
-                    <div>
+                    <form onSubmit={handleAddAttendee}>
                       <DialogTitle
                         as="h3"
                         className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[0px] border-gray-500 w-full text-center flex justify-center items-center"
@@ -185,16 +185,16 @@ const InviteAttendeeDialog = ({
                       </div>
 
                       <div className="mt-2 float-right">
-                        <div
+                        <button
                           className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
-                          onClick={handleAddAttendee}
+                          type="submit"
                         >
                           Add Attendee
-                        </div>
+                        </button>
                       </div>
 
                       <div className="mt-2 float-left">{showErrorMessage ? <ErrorMessage /> : <div></div>}</div>
-                    </div>
+                    </form>
                   )}
                 </DialogPanel>
               </TransitionChild>
