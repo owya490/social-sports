@@ -1,0 +1,52 @@
+/* Reset default margin and padding for all elements */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Styles for custom bullet list */
+.custom-bullet-list ul, 
+.custom-bullet-list ol {
+  list-style-position: outside; 
+  list-style-type: disc; 
+  padding-left: 20px; 
+}
+
+/* List item styling */
+.custom-bullet-list ul li, 
+.custom-bullet-list ol li {
+  display: list-item; 
+  margin-left: 0; 
+  padding-left: 0; 
+  line-height: 1.5; 
+}
+
+/* Styling for list markers */
+.custom-bullet-list ul > li::marker, 
+.custom-bullet-list ol > li::marker {
+  color: black; 
+  font-size: 16px; 
+}
+
+/* Custom styles for bullet points using flexbox, if needed */
+.custom-bullet-list .list-item {
+  display: flex; 
+  align-items: baseline; 
+}
+
+.custom-bullet-list .bullet {
+  margin-right: 10px; 
+  font-size: 16px; 
+  line-height: 1; 
+}
+
+.custom-bullet-list .text {
+  flex: 1; 
+}
+
+/* Ensure bullet visibility */
+.custom-bullet-list ul > li::marker, 
+.custom-bullet-list ol > li::marker {
+  opacity: 1; /* Ensure marker is visible */
+}
