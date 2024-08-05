@@ -134,7 +134,7 @@ const InviteAttendeeDialog = ({
                             tabIndex={1}
                             required
                             className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                            placeholder="Attendee email"
+                            placeholder="Attendee email *"
                             onChange={(e) => setAttendeeEmail(e.target.value)}
                           />
                         </div>
@@ -146,7 +146,7 @@ const InviteAttendeeDialog = ({
                             tabIndex={1}
                             required
                             className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                            placeholder="Attendee name"
+                            placeholder="Attendee name *"
                             onChange={(e) => setAttendeeName(e.target.value)}
                           />
                         </div>
@@ -155,12 +155,12 @@ const InviteAttendeeDialog = ({
                             id="mobilenumber"
                             name="mobilenumber"
                             type="tel"
-                            pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                            pattern="04[0-9]{8}"
                             autoComplete="number"
                             tabIndex={1}
                             required
                             className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                            placeholder="Mobile number"
+                            placeholder="Mobile number (04 XXXX XXXX) *"
                             onChange={(e) => setAttendeePhoneNumber(e.target.value)}
                           />
                         </div>
