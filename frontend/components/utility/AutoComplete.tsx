@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLoadScript } from "@react-google-maps/api";
 import { Input } from "@material-tailwind/react";
+import { Environment, getEnvironment } from "@/utilities/environment";
 
 const libraries: "places"[] = ["places"];
 
@@ -28,7 +29,14 @@ const AutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateFie
   const [address, setAddress] = useState<string>(location);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const env = getEnvironment();
+  let googleMapsApiKey = null;
+  if (env == Environment.DEVELOPMENT) {
+    googleMapsApiKey = process.env.GOOGLE_MAPS_DEV_API_KEY;
+  }
+  if (env == Environment.PRODUCTION) {
+    googleMapsApiKey = process.env.GOOGLE_MAPS_PROD_API_KEY;
+  }
 
   if (!googleMapsApiKey) {
     throw new Error("Google Maps API Key is not defined");
