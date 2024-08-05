@@ -10,7 +10,8 @@ import { uploadProfilePhoto } from "@/services/src/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
-import { deleteObject, getDownloadURL, getMetadata, getStorage, ref } from "firebase/storage";
+import Tick from "@svgs/Verified_tick.png";
+import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
@@ -416,6 +417,14 @@ const Profile = () => {
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}&apos;s Profile
+              {user.isVerifiedOrganiser && (
+                <div>
+                  <Image src={Tick} alt="Verified Organiser" className="h-10 w-10 ml-2" />
+                  <div className="absolute transform translate-x-12 -translate-y-8 ml-2 bg-[#f2b705] text-black text-xs px-2 py-1 rounded whitespace-nowrap">
+                    Verified Organiser
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex flex-col">
