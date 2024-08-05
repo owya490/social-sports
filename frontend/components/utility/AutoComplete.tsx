@@ -7,7 +7,7 @@ interface AutocompleteFormProps {
   updateField: (fields: Partial<BasicData>) => void;
 }
 
-const AutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateField }) => {
+const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateField }) => {
   const [address, setAddress] = useState<string>(location);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -22,13 +22,18 @@ const AutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateFie
     }
   }, [isLoaded]);
 
-  const handlePlaceSelect = () => {
+  const handlePlaceSelect = async () => {
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
       if (place.formatted_address) {
         setAddress(place.formatted_address);
         updateField({ location: place.formatted_address });
-        validateLocation(place.formatted_address, updateField);
+        try {
+          const { lat, long } = await validateLocation(place.formatted_address);
+          updateField({ lat, long });
+        } catch (error) {
+          console.error(error);
+        }
       }
     }
   };
@@ -50,4 +55,4 @@ const AutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateFie
   );
 };
 
-export default AutocompleteForm;
+export default LocationAutocompleteForm;

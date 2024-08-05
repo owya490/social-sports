@@ -1,4 +1,3 @@
-// src/services/googleMapsService.ts
 import { BasicData } from "@/components/events/create/forms/BasicForm";
 import { Environment, getEnvironment } from "@/utilities/environment";
 import { useLoadScript } from "@react-google-maps/api";
@@ -44,22 +43,25 @@ const initializeAutocomplete = (inputRef: React.RefObject<HTMLInputElement>, han
   return autocomplete;
 };
 
-const validateLocation = (location: string, updateField: (fields: Partial<BasicData>) => void) => {
-  if (!window.google || !window.google.maps) {
-    console.error("Google Maps JavaScript API is not loaded.");
-    return;
-  }
-
-  const geocoder = new window.google.maps.Geocoder();
-  geocoder.geocode({ address: location }, (results, status) => {
-    if (status === "OK" && results && results[0]) {
-      const latLng = results[0].geometry.location;
-      const latitude = latLng.lat();
-      const longitude = latLng.lng();
-      updateField({ lat: latitude, long: longitude });
-    } else {
-      throw new Error("Location not Found");
+const validateLocation = (location: string): Promise<{ lat: number; long: number }> => {
+  return new Promise((resolve, reject) => {
+    if (!window.google || !window.google.maps) {
+      console.error("Google Maps JavaScript API is not loaded.");
+      reject(new Error("Google Maps JavaScript API is not loaded."));
+      return;
     }
+
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address: location }, (results, status) => {
+      if (status === "OK" && results && results[0]) {
+        const latLng = results[0].geometry.location;
+        const latitude = latLng.lat();
+        const longitude = latLng.lng();
+        resolve({ lat: latitude, long: longitude });
+      } else {
+        reject(new Error("Location not Found"));
+      }
+    });
   });
 };
 
