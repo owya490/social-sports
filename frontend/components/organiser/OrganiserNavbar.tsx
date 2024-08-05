@@ -53,7 +53,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
 
         setEventDataList(futureEvents);
         setClosestEvent(futureEvents.length > 0 ? futureEvents[0] : null);
-        setEventId(futureEvents.length > 0 ? futureEvents[0].eventId : "event/create");
+        setEventId(futureEvents.length > 0 ? `organiser/event/${futureEvents[0].eventId}` : "event/create");
       } catch (error) {
         console.error("getOrganiserEvents() Error: " + error);
       }
@@ -83,7 +83,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
             <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
           </div>
         </Link>
-        <Link href={`/organiser/event/${eventId}`}>
+        <Link href={`/${eventId}`}>
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
               currPage === "EventDrilldown" && "bg-organiser-darker-light-gray"
