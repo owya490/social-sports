@@ -1,4 +1,3 @@
-// At the top of your file, before any other imports
 "use client";
 
 import { Logger } from "@/observability/logger";
