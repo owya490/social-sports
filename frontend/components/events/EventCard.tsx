@@ -1,5 +1,4 @@
 "use client";
-import EventImage from "@/components/events/EventImage";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
@@ -39,9 +38,14 @@ export default function EventCard(props: EventCardProps) {
           </div>
         ) : (
           <>
-            <div className="h-36 w-full object-cover rounded-t-lg overflow-hidden">
-              <EventImage imageSrc={props.image} />
-            </div>
+            <div
+              className="h-36 w-full rounded-t-lg overflow-hidden"
+              style={{
+                backgroundImage: `url(${props.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center center",
+              }}
+            ></div>
             <div className="p-4">
               <h4 className="font-bold text-gray-500 text-xs">{timestampToEventCardDateString(props.startTime)}</h4>
               <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">{props.name}</h2>
