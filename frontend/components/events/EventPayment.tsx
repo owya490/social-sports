@@ -144,7 +144,7 @@ export default function EventPayment(props: EventPaymentProps) {
   );
 }
 
-const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
+export const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
   const { hours, minutes } = duration(startDate, endDate);
   return (
     <>
@@ -169,22 +169,26 @@ const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; en
   );
 };
 
-const DifferentDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
+export const DifferentDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
   return (
     <>
       <h2 className=" font-semibold">Start Date</h2>
       <div className="flex items-center">
         <CalendarDaysIcon className="w-5 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(startDate)} - ${timestampToDateString(
-          startDate
-        )}`}</p>
+        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(startDate)}`}</p>
+      </div>
+      <div className="flex items-center">
+        <ClockIcon className="w-5 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(startDate)}`}</p>
       </div>
       <h2 className=" font-semibold">End Date</h2>
       <div className="flex items-center">
         <CalendarDaysIcon className="w-5 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(endDate)} - ${timestampToDateString(
-          endDate
-        )}`}</p>
+        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(endDate)}`}</p>
+      </div>
+      <div className="flex items-center">
+        <ClockIcon className="w-5 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(endDate)}`}</p>
       </div>
     </>
   );
