@@ -2,6 +2,10 @@ import { MantineProvider } from "@mantine/core";
 import { Link, RichTextEditor } from "@mantine/tiptap";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Highlight from "@tiptap/extension-highlight";
+import TextAlign from "@tiptap/extension-text-align";
+import "./custom-styles.css"; // Import custom styles
 
 export default function DescriptionRichTextEditor({
   description,
@@ -12,22 +16,18 @@ export default function DescriptionRichTextEditor({
 }) {
   const editor = useEditor({
     editable: true,
-    extensions: [StarterKit, Link],
+    extensions: [StarterKit, Link, Underline, Highlight, TextAlign.configure({ types: ["heading", "paragraph"] })],
     content: description,
     onUpdate: ({ editor }) => {
       updateDescription(editor.getHTML());
     },
   });
 
-  // Function to determine if the screen is small
   const isSmallScreen = () => window.innerWidth <= 768;
 
   return (
     <MantineProvider>
-      <RichTextEditor
-        editor={editor}
-        className="list-style-circle min-h-[24rem]"
-      >
+      <RichTextEditor editor={editor} className="list-style-circle min-h-[24rem]">
         <RichTextEditor.Toolbar sticky stickyOffset={60}>
           <RichTextEditor.ControlsGroup>
             <RichTextEditor.Bold />
@@ -47,23 +47,21 @@ export default function DescriptionRichTextEditor({
           </RichTextEditor.ControlsGroup>
 
           <RichTextEditor.ControlsGroup>
-          {isSmallScreen() ? null : (
+            {isSmallScreen() ? null : (
               <>
-            <RichTextEditor.Blockquote />
-            <RichTextEditor.Hr />
-            <RichTextEditor.BulletList />
-            <RichTextEditor.Subscript />
-            <RichTextEditor.Superscript />
-            </>
+                <RichTextEditor.Blockquote />
+                <RichTextEditor.Hr />
+                <RichTextEditor.BulletList />
+              </>
             )}
           </RichTextEditor.ControlsGroup>
 
           <RichTextEditor.ControlsGroup>
-          {isSmallScreen() ? null : (
+            {isSmallScreen() ? null : (
               <>
-            <RichTextEditor.Link />
-            <RichTextEditor.Unlink />
-            </>
+                <RichTextEditor.Link />
+                <RichTextEditor.Unlink />
+              </>
             )}
           </RichTextEditor.ControlsGroup>
 
@@ -78,7 +76,7 @@ export default function DescriptionRichTextEditor({
           </RichTextEditor.ControlsGroup>
         </RichTextEditor.Toolbar>
 
-        <RichTextEditor.Content />
+        <RichTextEditor.Content className="custom-bullet-list" />
       </RichTextEditor>
     </MantineProvider>
   );
