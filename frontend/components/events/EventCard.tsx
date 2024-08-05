@@ -39,7 +39,7 @@ export default function EventCard(props: EventCardProps) {
         ) : (
           <>
             <div
-              className="h-36 w-full rounded-t-lg overflow-hidden"
+              className="h-36 w-full rounded-t-lg"
               style={{
                 backgroundImage: `url(${props.image})`,
                 backgroundSize: "cover",
