@@ -30,14 +30,14 @@ export default function EventCard(props: EventCardProps) {
   }
   return (
     <Link href={`/event/${props.eventId}`}>
-      <div className="bg-white rounded-lg text-left border-gray-300 border w-full md:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer overflow-hidden">
+      <div className="bg-white rounded-lg text-left border-gray-300 border w-full md:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer">
         {props.loading ? (
           <div>
             <LoadingSkeletonEventCard />
           </div>
         ) : (
           <>
-            <div className="h-36 w-full object-cover">
+            <div className="h-36 w-full object-cover rounded-t-lg overflow-hidden">
               <EventImage imageSrc={props.image} />
             </div>
             <div className="p-4">
