@@ -1,58 +1,24 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useLoadScript } from "@react-google-maps/api";
-import { Input } from "@material-tailwind/react";
-import { Environment, getEnvironment } from "@/utilities/environment";
+import { loadGoogleMapsScript, initializeAutocomplete, validateLocation } from "@/services/src/maps/mapsService";
+import { BasicData } from "../events/create/forms/BasicForm";
 
-const libraries: "places"[] = ["places"];
-
-type BasicData = {
-  name: string;
-  location: string;
-  startDate: string;
-  endDate: string;
-  startTime: string;
-  endTime: string;
-  sport: string;
-  price: number;
-  capacity: number;
-  isPrivate: boolean;
-  paymentsActive: boolean;
-  lat: number;
-  long: number;
-};
 interface AutocompleteFormProps {
   location: string;
-  updateField: (fields: Partial<BasicData>) => void; // Ensure BasicData is imported or defined in this file
+  updateField: (fields: Partial<BasicData>) => void;
 }
 
 const AutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateField }) => {
   const [address, setAddress] = useState<string>(location);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const env = getEnvironment();
-  let googleMapsApiKey = null;
-  if (env == Environment.DEVELOPMENT) {
-    googleMapsApiKey = process.env.GOOGLE_MAPS_DEV_API_KEY;
-  }
-  if (env == Environment.PRODUCTION) {
-    googleMapsApiKey = process.env.GOOGLE_MAPS_PROD_API_KEY;
-  }
 
-  if (!googleMapsApiKey) {
-    throw new Error("Google Maps API Key is not defined");
-  }
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: googleMapsApiKey, // Replace with your API key
-    libraries,
-  });
+  const scriptLoadResult = loadGoogleMapsScript();
+  const isLoaded = scriptLoadResult ? scriptLoadResult.isLoaded : false;
+  const loadError = scriptLoadResult ? scriptLoadResult.loadError : undefined;
 
   useEffect(() => {
     if (isLoaded && inputRef.current) {
-      const options = {
-        types: ["address"],
-      };
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
-      autocompleteRef.current.addListener("place_changed", handlePlaceSelect);
+      autocompleteRef.current = initializeAutocomplete(inputRef, handlePlaceSelect);
     }
   }, [isLoaded]);
 
@@ -62,28 +28,9 @@ const AutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateFie
       if (place.formatted_address) {
         setAddress(place.formatted_address);
         updateField({ location: place.formatted_address });
-        validateLocation(place.formatted_address);
+        validateLocation(place.formatted_address, updateField);
       }
     }
-  };
-
-  const validateLocation = async (location: string) => {
-    if (!window.google || !window.google.maps) {
-      console.error("Google Maps JavaScript API is not loaded.");
-      return;
-    }
-
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ address: location }, (results, status) => {
-      if (status === "OK" && results && results[0]) {
-        const latLng = results[0].geometry.location;
-        const latitude = latLng.lat();
-        const longitude = latLng.lng();
-        updateField({ lat: latitude, long: longitude });
-      } else {
-        throw new Error("Location not Found");
-      }
-    });
   };
 
   if (!isLoaded) return <div>Loading...</div>;
@@ -96,7 +43,6 @@ const AutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateFie
         type="text"
         onChange={(e) => setAddress(e.target.value)}
         value={address}
-        // Autocomplete doesn't work with tailwind for some reason
         style={{ width: "100%", padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
         required
       />

@@ -14,7 +14,7 @@ import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
 import AutocompleteForm from "@/components/utility/AutoComplete";
 
-type BasicData = {
+export type BasicData = {
   name: string;
   location: string;
   startDate: string;
