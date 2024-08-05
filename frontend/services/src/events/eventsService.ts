@@ -29,7 +29,6 @@ import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "../firebase";
-import { UserNotFoundError } from "../users/userErrors";
 import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import {
   createEventCollectionRef,
@@ -182,18 +181,20 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
 export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
   eventServiceLogger.info(`getOrganiserEvents`);
   try {
-    const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
+    const privateDoc = await getPrivateUserById(userId);
 
-    if (!privateDoc.exists()) {
-      throw new UserNotFoundError(userId);
-    }
-    const privateData = privateDoc.data();
-    const organiserEvents = privateData?.organiserEvents || [];
+    const organiserEvents = privateDoc.organiserEvents || [];
     const eventDataList: EventData[] = [];
     for (const eventId of organiserEvents) {
-      const eventData: EventData = await getEventById(eventId);
-      eventData.eventId = eventId;
-      eventDataList.push(eventData);
+      try {
+        const eventData: EventData = await getEventById(eventId);
+        eventData.eventId = eventId;
+        eventDataList.push(eventData);
+      } catch {
+        eventServiceLogger.warn(
+          `Organiser cannot find an event which is present in their personal event list. organiser=${userId} eventId=${eventId}`
+        );
+      }
     }
     // Return the organiserEvents array
     eventServiceLogger.info(`Fetching private user by ID:, ${userId}, ${eventDataList}`);
