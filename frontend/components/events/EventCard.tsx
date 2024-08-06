@@ -67,7 +67,7 @@ export default function EventCard(props: EventCardProps) {
               <div className="mt-4 mb-7 space-y-3">
                 <div className="flex items-center">
                   <MapPinIcon className="w-5" />
-                  <p className="ml-1 font-light text-sm">{props.location}</p>
+                  <p className="ml-1 font-light text-sm whitespace-nowrap overflow-hidden">{props.location}</p>
                 </div>
                 <div className="flex items-center">
                   <CurrencyDollarIcon className="w-5" />
