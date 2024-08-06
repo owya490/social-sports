@@ -17,8 +17,6 @@ import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
-export const createEventLogger = new Logger("createEventLogger");
-
 export type FormData = {
   startDate: string;
   endDate: string;
@@ -54,6 +52,7 @@ const INITIAL_DATA: FormData = {
 };
 
 export default function CreateEvent() {
+  const createEventLogger = new Logger("createEventLogger");
   const { user } = useUser();
   const router = useRouter();
   const showForm = user.userId !== "";

@@ -1,3 +1,4 @@
+import { Logger } from "@/observability/logger";
 import axios from "axios";
 
 // For some reason, need to require geofire-common to use methods???
@@ -5,18 +6,15 @@ const geofire = require("geofire-common");
 
 export const SYDNEY_LAT = -33.8688;
 export const SYDNEY_LNG = 151.2093;
+export const locationUtilsLogger = new Logger("locationUtilsLogger");
 
-export async function getLocationCoordinates(
-  locationName: string
-): Promise<{ lat: number; lng: number }> {
+export async function getLocationCoordinates(locationName: string): Promise<{ lat: number; lng: number }> {
   try {
-    console.log("searching for location " + locationName)
+    locationUtilsLogger.error(`Searching for location ${locationName}`);
     const response = await axios.get(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        locationName
-      )}`
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}`
     );
-    console.log("finished searching for location " + locationName);
+    locationUtilsLogger.error(`Finished searching for location ${locationName}`);
 
     if (response.data.length > 0) {
       const { lat, lon } = response.data[0];
@@ -30,9 +28,6 @@ export async function getLocationCoordinates(
   }
 }
 
-export function getDistanceBetweenTwoCoords(
-  [lat1, lng1]: [number, number],
-  [lat2, lng2]: [number, number]
-): number {
+export function getDistanceBetweenTwoCoords([lat1, lng1]: [number, number], [lat2, lng2]: [number, number]): number {
   return geofire.distanceBetween([lat1, lng1], [lat2, lng2]);
 }

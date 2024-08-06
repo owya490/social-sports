@@ -89,7 +89,6 @@ export function BasicInformation({
     const currentDateTime = new Date();
     const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
     const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
-    console.log(startDate, startTime);
 
     if (currentDateTime > selectedStartDateTime) {
       setDateWarning("Event start date and time is in the past!");

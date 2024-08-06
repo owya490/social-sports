@@ -1,7 +1,7 @@
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, NewUserData, TempUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { FirebaseError } from "@firebase/util";
+import { FirebaseError } from "firebase/app";
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
@@ -29,10 +29,12 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
 
     // Send email verification
     await sendEmailVerification(userCredential.user, actionCodeSettings);
-    console.log("Email verification sent. Please verify your email before logging in.");
+    authServiceLogger.error(`Email sent ${userCredential.user}`);
+
     const { password, ...userDataWithoutPassword } = data;
     // Save user data temporarily in your database
     await saveTempUserData(userCredential.user.uid, userDataWithoutPassword);
+    authServiceLogger.error(`Temp User data ${userCredential.user.uid}:${userDataWithoutPassword}`);
   } catch (error) {
     console.error("Error during sign-up:", error);
     throw error;
@@ -43,7 +45,7 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
   try {
     await signOut(auth);
     setUser(EmptyUserData);
-    console.log("Signed out!");
+    authServiceLogger.error("Logged out");
   } catch (error) {
     throw error;
   }
@@ -52,7 +54,7 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
 export async function handleEmailAndPasswordSignIn(email: string, password: string) {
   try {
     const userCredential: UserCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("isverified", userCredential.user.emailVerified);
+    authServiceLogger.error(`Is verified ${userCredential.user.emailVerified}`);
     // Check if the user's email is verified
     if (userCredential.user.emailVerified) {
       console.log("Email is verified. Logging in...");

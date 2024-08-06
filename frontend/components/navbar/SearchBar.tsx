@@ -3,8 +3,10 @@
 import { SearchIcon } from "@/svgs/SearchIcon";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Logger } from "@/observability/logger";
 
 export default function SearchBar() {
+  const searchBarLogger = new Logger("searchBarLogger");
   const [event, setEvent] = useState("");
   const [location, setLocation] = useState("");
   const pathname = usePathname();
@@ -34,13 +36,13 @@ export default function SearchBar() {
   }, [pathname, searchParams]);
 
   const handleSearchClick = () => {
-    console.log("search");
+    searchBarLogger.error(`Event:${event}, Location:${location}`);
     const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
     router.push(searchUrl);
   };
   const handleKeyPress = (e: { key: string }) => {
     if (e.key === "Enter") {
-      console.log("search");
+      searchBarLogger.error(`Event:${event}, Location:${location}`);
       const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
       router.push(searchUrl);
     }
