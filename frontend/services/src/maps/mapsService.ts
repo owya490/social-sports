@@ -15,7 +15,7 @@ const getGoogleMapsApiKey = () => {
   throw new Error("Google Maps API Key is not defined");
 };
 
-const loadGoogleMapsScript = () => {
+export const loadGoogleMapsScript = () => {
   const googleMapsApiKey = getGoogleMapsApiKey();
   if (!googleMapsApiKey) {
     return null;
@@ -26,7 +26,7 @@ const loadGoogleMapsScript = () => {
   });
 };
 
-const initializeAutocomplete = (inputRef: React.RefObject<HTMLInputElement>, handlePlaceSelect: () => void) => {
+export const initializeAutocomplete = (inputRef: React.RefObject<HTMLInputElement>, handlePlaceSelect: () => void) => {
   if (!window.google || !window.google.maps) {
     console.error("Google Maps JavaScript API is not loaded.");
     return null;
@@ -43,7 +43,7 @@ const initializeAutocomplete = (inputRef: React.RefObject<HTMLInputElement>, han
   return autocomplete;
 };
 
-const validateLocation = (location: string): Promise<{ lat: number; long: number }> => {
+export const validateLocation = (location: string): Promise<{ lat: number; long: number }> => {
   return new Promise((resolve, reject) => {
     if (!window.google || !window.google.maps) {
       console.error("Google Maps JavaScript API is not loaded.");
@@ -64,5 +64,3 @@ const validateLocation = (location: string): Promise<{ lat: number; long: number
     });
   });
 };
-
-export { loadGoogleMapsScript, initializeAutocomplete, validateLocation };

@@ -144,11 +144,6 @@ export default function CreateEvent() {
     user: UserData,
     imageUrl: string
   ): Promise<NewEventData> {
-    // TODO
-    // Consider a User's ability to select their event image from their uploaded images
-    // Fix organiserId
-    // const lngLat = await getLocationCoordinates(formData.location);
-    // console.log("LOCATION", lngLat);
     return {
       location: formData.location,
       capacity: formData.capacity,
