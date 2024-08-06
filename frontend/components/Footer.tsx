@@ -1,4 +1,4 @@
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { LightBulbIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 export default function Footer() {
@@ -13,10 +13,13 @@ export default function Footer() {
           <Link href="/organiser/dashboard" className="mx-2">
             Organiser Hub
           </Link>
+          <Link href="/event/create" className="mx-2">
+            Create Event
+          </Link>
         </ol>
         <Link href="/event/create" className="ml-auto flex justify-center items-center">
-          <PencilSquareIcon className="h-4 mr-1" />
-          <p className="font-bold">Create Event</p>
+          <LightBulbIcon className="h-4 mr-1" />
+          <p className="font-bold">Suggestions</p>
         </Link>
       </div>
     </footer>
