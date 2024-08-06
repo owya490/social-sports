@@ -58,8 +58,8 @@ const InviteAttendeeDialog = ({
       setEventMetadata(updatedEventMetadata);
       const updatedEventData = await getEventById(eventId);
       setEventVacancy(updatedEventData.vacancy);
-      setShowSuccessAlert(true);
       resetInputFields();
+      setShowSuccessAlert(true);
       setShowErrorMessage(false);
       closeModal();
     } catch (error) {
@@ -158,9 +158,8 @@ const InviteAttendeeDialog = ({
                             pattern="04[0-9]{8}"
                             autoComplete="number"
                             tabIndex={1}
-                            required
                             className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                            placeholder="Mobile number (04 XXXX XXXX) *"
+                            placeholder="Mobile number (04 XXXX XXXX)"
                             onChange={(e) => setAttendeePhoneNumber(e.target.value)}
                           />
                         </div>

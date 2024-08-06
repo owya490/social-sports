@@ -444,6 +444,15 @@ function validatePurchaserDetails(purchaser: Purchaser): void {
       );
   };
 
+  // TODO: Currently, phone number is not compulsory. We may or may not make it compulsory in the future.
+  // const isValidAustralianMobileNumber = (phoneNumber: string): boolean => {
+  //   // Define the regular expression for an Australian mobile number
+  //   const australianMobileNumberRegex = /^04\d{8}$/;
+
+  //   // Test the phone number against the regex
+  //   return australianMobileNumberRegex.test(phoneNumber);
+  // };
+
   if (purchaser.email === "" || !validateEmail(purchaser.email)) {
     throw new Error("Invalid or empty email!");
   }
@@ -452,8 +461,13 @@ function validatePurchaserDetails(purchaser: Purchaser): void {
     if (name === "") {
       throw new Error("Attendee name cannot be empty!");
     }
-    if (attendeeObj.ticketCount < 0) {
-      throw new Error("Attendee ticket count cannot be negative!");
+    if (attendeeObj.ticketCount <= 0) {
+      throw new Error("Attendee ticket count must be greater than 0!");
     }
+
+    // TODO: Currently, phone number is not compulsory. We may or may not make it compulsory in the future.
+    // if (!isValidAustralianMobileNumber(attendeeObj.phone)) {
+    //   throw new Error(`Attendee phone number is invalid - ${attendeeObj.phone}`);
+    // }
   }
 }
