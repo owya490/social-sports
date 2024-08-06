@@ -1,60 +1,54 @@
 "use client";
 
-import { Logger } from "@/observability/logger";
 import Logo from "@/components/navbar/Logo";
+import { sendEmail } from "@/services/src/emailJS/emailJS";
 import LightBulbIcon from "@/svgs/LightBulbIcon";
-import emailjs from "emailjs-com";
-import React, { useState } from "react";
+import { useState } from "react";
 
-export const emailJSLogger = new Logger("emailJSLogger");
+// Define the type for template parameters
+type TemplateParams = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  message: string;
+};
 
 export default function Suggestions() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch environment variables and handle potential undefined values
-  const serviceId = process.env.REACT_APP_EMAILJS_SERVICE_ID;
-  const templateId = process.env.REACT_APP_EMAILJS_TEMPLATE_ID;
-  const userId = process.env.REACT_APP_EMAILJS_USER_ID;
-
-  emailJSLogger.info(`Service ID: ${serviceId}`);
-  emailJSLogger.info(`Template ID: ${templateId}`);
-  emailJSLogger.info(`User ID: ${userId}`);
-
-  /// Ensure the required environment variables are defined
-  if (!serviceId || !templateId || !userId) {
-    emailJSLogger.error("Missing necessary environment variables for EmailJS.");
-    throw new Error("Missing necessary environment variables for EmailJS.");
-  }
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    const templateParams = {
+    const templateParams: TemplateParams = {
       firstName,
       lastName,
       email,
       message,
     };
 
-    // Send email using EmailJS
-    emailjs
-      .send(serviceId, templateId, templateParams, userId)
-      .then((response) => {
-        emailJSLogger.info(`SUCCESS! Status: ${response.status}, Text: ${response.text}`);
-        alert("Thank you for your feedback!");
-        setFirstName("");
-        setLastName("");
-        setEmail("");
-        setMessage("");
-      })
-      .catch((err) => {
-        emailJSLogger.error(`Error: ${err}. Failed to send feedback. Please try again later.`);
-        alert("Failed to send feedback. Please try again later.");
-      });
+    try {
+      await sendEmail(templateParams);
+      alert("Thank you for your feedback!");
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setMessage("");
+    } catch (err) {
+      alert("Failed to send feedback. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // In the button element:
+  <button type="submit" className="w-full bg-[#30ADFF] py-2 text-white text-xl rounded-lg" disabled={isLoading}>
+    {isLoading ? "Sending..." : "Submit"}
+  </button>;
 
   return (
     <div className="w-screen flex justify-center">
