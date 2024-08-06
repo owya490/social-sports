@@ -12,9 +12,9 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
-import AutocompleteForm from "@/components/utility/AutoComplete";
+import LocationAutocompleteForm from "@/components/utility/AutoComplete";
 
-type BasicData = {
+export type BasicData = {
   name: string;
   location: string;
   startDate: string;
@@ -173,7 +173,7 @@ export function BasicInformation({
         <div>
           <label className="text-black text-lg font-semibold">Where is it located?</label>
           <div className="mt-4">
-            <AutocompleteForm location={location} updateField={updateField} />
+            <LocationAutocompleteForm location={location} updateField={updateField} />
             {locationError && <p className="text-red-500">{locationError}</p>}
           </div>
         </div>
