@@ -36,6 +36,7 @@ export const EditAttendeeTicketsDialog = ({
 
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
   const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -55,6 +56,7 @@ export const EditAttendeeTicketsDialog = ({
       setShowErrorMessage(false);
       closeModal();
     } catch (error) {
+      setErrorMessage((error as Error).message);
       handleErrorEditAttendeeTickets();
     } finally {
       setLoading(false);
@@ -62,7 +64,7 @@ export const EditAttendeeTicketsDialog = ({
   };
 
   const ErrorMessage = () => {
-    return <div className="text-red-400 text-sm py-2">Error editing attendee tickets!</div>;
+    return <div className="text-red-400 text-sm py-2">Error editing attendee tickets - {errorMessage}!</div>;
   };
 
   return (

@@ -37,6 +37,7 @@ const RemoveAttendeeDialog = ({
 
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
   const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const handleErrorRemovingAttendee = () => {
     setShowErrorMessage(true);
@@ -55,13 +56,14 @@ const RemoveAttendeeDialog = ({
       closeModal();
     } catch (error) {
       handleErrorRemovingAttendee();
+      setErrorMessage(JSON.stringify(error));
     } finally {
       setLoading(false);
     }
   };
 
   const ErrorMessage = () => {
-    return <div className="text-red-400 text-sm py-2">Error removing attendee!</div>;
+    return <div className="text-red-400 text-sm py-2">Error removing attendee - {errorMessage}!</div>;
   };
 
   return (

@@ -34,9 +34,10 @@ const InviteAttendeeDialog = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
   const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const ErrorMessage = () => {
-    return <div className="text-red-400 text-sm py-2">Error adding new attendee!</div>;
+    return <div className="text-red-400 text-sm py-2">Error adding new attendee - {errorMessage}!</div>;
   };
 
   const handleErrorAddingAttendee = () => {
@@ -63,6 +64,7 @@ const InviteAttendeeDialog = ({
       setShowErrorMessage(false);
       closeModal();
     } catch (error) {
+      setErrorMessage((error as Error).message);
       handleErrorAddingAttendee();
     } finally {
       setLoading(false);
