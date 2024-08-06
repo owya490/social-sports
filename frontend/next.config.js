@@ -17,6 +17,8 @@ const nextConfig = {
     FIREBASE_PROD_APP_ID: process.env.FIREBASE_PROD_APP_ID,
     FIREBASE_PROD_MEASUREMENT_ID: process.env.FIREBASE_PROD_MEASUREMENT_ID,
     ENVIRONMENT: process.env.ENVIRONMENT,
+    GOOGLE_MAPS_DEV_API_KEY: process.env.GOOGLE_MAPS_DEV_API_KEY,
+    GOOGLE_MAPS_PROD_API_KEY: process.env.GOOGLE_MAPS_PROD_API_KEY
   },
   images: {
     domains: ["firebasestorage.googleapis.com"],

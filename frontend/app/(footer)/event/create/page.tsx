@@ -31,6 +31,8 @@ export type FormData = {
   startTime: string;
   endTime: string;
   paymentsActive: boolean;
+  lat: number;
+  long: number;
 };
 
 const INITIAL_DATA: FormData = {
@@ -48,6 +50,8 @@ const INITIAL_DATA: FormData = {
   startTime: "10:00",
   endTime: "18:00",
   paymentsActive: false,
+  lat: 0,
+  long: 0,
 };
 
 export default function CreateEvent() {
@@ -140,11 +144,6 @@ export default function CreateEvent() {
     user: UserData,
     imageUrl: string
   ): Promise<NewEventData> {
-    // TODO
-    // Consider a User's ability to select their event image from their uploaded images
-    // Fix organiserId
-    const lngLat = await getLocationCoordinates(formData.location);
-
     return {
       location: formData.location,
       capacity: formData.capacity,
@@ -162,8 +161,8 @@ export default function CreateEvent() {
       organiserId: user.userId,
       registrationDeadline: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       locationLatLng: {
-        lat: lngLat.lat,
-        lng: lngLat.lng,
+        lat: formData.lat,
+        lng: formData.long,
       },
       sport: formData.sport,
       paymentsActive: formData.paymentsActive,
