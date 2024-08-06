@@ -70,7 +70,7 @@ service cloud.firestore {
     	allow read, write: if true;
     }
 
-    // Everyone can read, create and delete TempUser table. No one is allowed to update.
+    // Everyone can read, and write to TempUser table.
     match /TempUsers/{userId} {
       allow read, write: if true;
     }
