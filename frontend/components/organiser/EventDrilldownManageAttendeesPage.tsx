@@ -1,5 +1,5 @@
 import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/outline";
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import EventDrilldownAttendeeCard from "./EventDrilldownAttendeeCard";
 import { EventMetadata } from "@/interfaces/EventTypes";
 import InviteAttendeeDialog from "./attendee/AddAttendeeDialog";
@@ -7,10 +7,22 @@ import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstant
 
 interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
+  eventId: string;
+  setEventVacancy: Dispatch<SetStateAction<number>>;
+  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
 }
 
-const EventDrilldownManageAttendeesPage = ({ eventMetadata }: EventDrilldownManageAttendeesPageProps) => {
+const EventDrilldownManageAttendeesPage = ({
+  eventMetadata,
+  eventId,
+  setEventVacancy,
+  setEventMetadata,
+}: EventDrilldownManageAttendeesPageProps) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
+
+  const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
+  const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
+
   function closeModal() {
     setIsFilterModalOpen(false);
   }
@@ -41,20 +53,31 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata }: EventDrilldownMana
         <div className="inline-block w-full h-0.5 my-2 self-stretch bg-organiser-title-gray-text"></div>
         <div className="">
           {eventMetadata.purchaserMap &&
-            Object.values(eventMetadata.purchaserMap).map((purchaserObj) =>
-              Object.entries(purchaserObj.attendees).map(([purchaserName, attendeeDetailsObj]) => {
-                return (
-                  <EventDrilldownAttendeeCard
-                    name={attendeeDetailsObj.name ? attendeeDetailsObj.name : purchaserName}
-                    image={DEFAULT_USER_PROFILE_PICTURE}
-                    email={purchaserObj.email}
-                    number={attendeeDetailsObj.phone}
-                    tickets={attendeeDetailsObj.ticketCount}
-                    key={purchaserName}
-                  />
-                );
+            Object.values(eventMetadata.purchaserMap)
+              .sort((purchaser1, purchaser2) => {
+                return purchaser1.email.localeCompare(purchaser2.email);
               })
-            )}
+              .map((purchaserObj) =>
+                Object.entries(purchaserObj.attendees)
+                  .sort(([attendeeName1, _attendeeDetailsObj1], [attendeeName2, _attendeeDetailsObj2]) => {
+                    return attendeeName1.localeCompare(attendeeName2);
+                  })
+                  .map(([attendeeName, attendeeDetailsObj]) => {
+                    if (attendeeDetailsObj.ticketCount > 0) {
+                      return (
+                        <EventDrilldownAttendeeCard
+                          attendeeName={attendeeName}
+                          image={DEFAULT_USER_PROFILE_PICTURE}
+                          purchaser={purchaserObj}
+                          key={attendeeName}
+                          eventId={eventId}
+                          setEventMetadata={setEventMetadata}
+                          setEventVacancy={setEventVacancy}
+                        />
+                      );
+                    }
+                  })
+              )}
         </div>
       </div>
       <div className="grow">
@@ -62,6 +85,9 @@ const EventDrilldownManageAttendeesPage = ({ eventMetadata }: EventDrilldownMana
           setIsFilterModalOpen={setIsFilterModalOpen}
           closeModal={closeModal}
           isFilterModalOpen={isFilterModalOpen}
+          eventId={eventId}
+          setEventMetadata={setEventMetadata}
+          setEventVacancy={setEventVacancy}
         />
       </div>
     </div>
