@@ -325,7 +325,6 @@ export function BasicInformation({
             </button>
           </div>
         )}
-        <div className="mt-8"></div>
       </div>
     </FormWrapper>
   );
