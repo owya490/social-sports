@@ -1,6 +1,4 @@
 "use client";
-import { useState } from "react";
-
 import { EventId } from "@/interfaces/EventTypes";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
@@ -15,6 +13,8 @@ import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -30,8 +30,6 @@ interface EventPaymentProps {
 
 export default function EventPayment(props: EventPaymentProps) {
   const router = useRouter();
-
-  // Stub code for SPORTSHUB-77: feature for selecting amount of tickets sold per transaction, as currently defaults to 1.
   const [attendeeCount, setAttendeeCount] = useState(1);
 
   const handleAttendeeCount = (value?: string) => {
@@ -40,10 +38,7 @@ export default function EventPayment(props: EventPaymentProps) {
     }
   };
 
-  // const guestCountValue = parseInt(guestCount.split(" ")[0]);
-
   const { startDate, endDate } = props;
-  const { hours, minutes } = duration(startDate, endDate);
 
   return (
     <div className="md:border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
@@ -52,23 +47,12 @@ export default function EventPayment(props: EventPaymentProps) {
         <div className="flex justify-start">
           <div className="w-full">
             <div className="mb-6">
-              <h2 className=" font-semibold">Date and Time</h2>
-              <div className="flex items-center">
-                <CalendarDaysIcon className="w-5 mr-2" />
-                <p className="text-md mr-[5%] font-light">{timestampToDateString(props.startDate)}</p>
-              </div>
-              <div className="flex items-center">
-                <ClockIcon className="w-5 mr-2" />
-                <p className="text-md mr-[5%] font-light">{timestampToTimeOfDay(props.startDate)} - {timestampToTimeOfDay(props.endDate)}</p>
-              </div>
-              <div className="flex items-center">
-                <PlayCircleIcon className="w-5 mr-2" />
-                <p className="text-md mr-[5%] font-light">
-                  {hours} hrs {minutes} mins
-                </p>
-              </div>
+              {timestampToDateString(startDate) === timestampToDateString(endDate) ? (
+                <SameDayEventDateTime startDate={startDate} endDate={endDate} />
+              ) : (
+                <DifferentDayEventDateTime startDate={startDate} endDate={endDate} />
+              )}
             </div>
-
             <div className="mb-6">
               <h2 className=" font-semibold">Location</h2>
               <div className="flex">
@@ -96,48 +80,50 @@ export default function EventPayment(props: EventPaymentProps) {
                   <p>Please check back later.</p>
                 </div>
               ) : (
-                <div className="!text-black !border-black">
-                  <Select
-                    className="border-black border-t-transparent text-black"
-                    label="Select Ticket Amount"
-                    size="lg"
-                    value={`${attendeeCount}`}
-                    onChange={handleAttendeeCount}
-                    labelProps={{
-                      className: "text-black before:border-black after:border-black",
+                <>
+                  <div className="!text-black !border-black">
+                    <Select
+                      className="border-black border-t-transparent text-black"
+                      label="Select Ticket Amount"
+                      size="lg"
+                      value={`${attendeeCount}`}
+                      onChange={handleAttendeeCount}
+                      labelProps={{
+                        className: "text-black before:border-black after:border-black",
+                      }}
+                      menuProps={{
+                        className: "text-black",
+                      }}
+                    >
+                      {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
+                        .fill(0)
+                        .map((_, idx) => {
+                          const count = idx + 1;
+                          return (
+                            <Option key={`attendee-option-${count}`} value={`${count}`}>
+                              {count} Ticket{count > 1 ? "s" : ""}
+                            </Option>
+                          );
+                        })}
+                    </Select>
+                  </div>
+                  <button
+                    className="text-lg rounded-2xl border border-black w-full py-3"
+                    style={{
+                      textAlign: "center",
+                      position: "relative",
                     }}
-                    menuProps={{
-                      className: "text-black",
+                    onClick={async () => {
+                      props.setLoading(true);
+                      window.scrollTo(0, 0);
+                      const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
+                      router.push(link);
                     }}
                   >
-                    {Array(Math.min(props.vacancy, 7))
-                      .fill(0)
-                      .map((_, idx) => {
-                        const count = idx + 1;
-                        return (
-                          <Option key={`attendee-option-${count}`} value={`${count}`}>
-                            {count} Ticket
-                          </Option>
-                        );
-                      })}
-                  </Select>
-                </div>
+                    Book Now
+                  </button>
+                </>
               )}
-              <button
-                className="text-lg rounded-2xl border border-black w-full py-3"
-                style={{
-                  textAlign: "center",
-                  position: "relative",
-                }}
-                onClick={async () => {
-                  props.setLoading(true);
-                  window.scrollTo(0, 0);
-                  const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
-                  router.push(link);
-                }}
-              >
-                Book Now
-              </button>
             </div>
           ) : (
             <Link href="#" className="w-full">
@@ -157,3 +143,53 @@ export default function EventPayment(props: EventPaymentProps) {
     </div>
   );
 }
+
+export const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
+  const { hours, minutes } = duration(startDate, endDate);
+  return (
+    <>
+      <h2 className=" font-semibold">Date and Time</h2>
+      <div className="flex items-center">
+        <CalendarDaysIcon className="w-5 mr-2" />
+        <p className="text-md mr-[5%] font-light">{timestampToDateString(startDate)}</p>
+      </div>
+      <div className="flex items-center">
+        <ClockIcon className="w-5 mr-2" />
+        <p className="text-md mr-[5%] font-light">
+          {timestampToTimeOfDay(startDate)} - {timestampToTimeOfDay(endDate)}
+        </p>
+      </div>
+      <div className="flex items-center">
+        <PlayCircleIcon className="w-5 mr-2" />
+        <p className="text-md mr-[5%] font-light">
+          {hours} hrs {minutes} mins
+        </p>
+      </div>
+    </>
+  );
+};
+
+export const DifferentDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
+  return (
+    <>
+      <h2 className=" font-semibold">Start Date</h2>
+      <div className="flex items-center">
+        <CalendarDaysIcon className="w-5 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(startDate)}`}</p>
+      </div>
+      <div className="flex items-center">
+        <ClockIcon className="w-5 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(startDate)}`}</p>
+      </div>
+      <h2 className=" font-semibold">End Date</h2>
+      <div className="flex items-center">
+        <CalendarDaysIcon className="w-5 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(endDate)}`}</p>
+      </div>
+      <div className="flex items-center">
+        <ClockIcon className="w-5 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(endDate)}`}</p>
+      </div>
+    </>
+  );
+};

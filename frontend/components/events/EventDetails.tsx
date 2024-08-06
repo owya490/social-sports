@@ -12,12 +12,17 @@ interface EventDetailsProps {
   setLoading: (value: boolean) => void;
 }
 
+export const MAX_TICKETS_PER_ORDER = 7;
+
 export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
   return (
     <div className="flex justify-center w-full">
       <div className="pb-10 screen-width-primary">
-        <EventImage imageSrc={eventData.image} />
+        <div className="sm:rounded-xl overflow-hidden">
+          <EventImage imageSrc={eventData.image} />
+        </div>
+
         <div className="lg:flex w-full mt-5">
           <div className="lg:hidden">
             <MobileEventPayment
@@ -26,6 +31,10 @@ export function EventDetails(props: EventDetailsProps) {
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
+              isPaymentsActive={eventData.paymentsActive}
+              eventId={eventData.eventId}
+              isPrivate={eventData.isPrivate}
+              setLoading={setLoading}
             />
           </div>
 

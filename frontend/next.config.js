@@ -32,6 +32,20 @@ const nextConfig = {
     return config;
   },
   experimental: { missingSuspenseWithCSRBailout: false },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        destination: "/dashboard",
+        permanent: true,
+      },
+      {
+        source: "/organiser",
+        destination: "/organiser/dashboard",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

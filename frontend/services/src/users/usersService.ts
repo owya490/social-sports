@@ -22,18 +22,20 @@ export async function createUser(data: NewUserData, userId: string): Promise<voi
   }
 }
 
-export async function getPublicUserById(userId: UserId): Promise<UserData> {
+export async function getPublicUserById(userId: UserId, bypassCache: boolean = false): Promise<UserData> {
   userServiceLogger.info(`Fetching public user by ID:, ${userId}`);
   if (userId === undefined) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
   try {
-    // try find in localstorage
-    const { success, userDataLocalStorage } = tryGetActivePublicUserDataFromLocalStorage(userId);
-    if (success) {
-      userServiceLogger.info(`Return user data from local storage, ${userId}`);
-      return userDataLocalStorage;
+    if (!bypassCache) {
+      // try find in localstorage
+      const { success, userDataLocalStorage } = tryGetActivePublicUserDataFromLocalStorage(userId);
+      if (success) {
+        userServiceLogger.info(`Return user data from local storage, ${userId}`);
+        return userDataLocalStorage;
+      }
     }
 
     const userDoc = await getDoc(doc(db, "Users", "Active", "Public", userId));

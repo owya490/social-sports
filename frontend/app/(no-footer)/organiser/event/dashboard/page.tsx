@@ -131,12 +131,12 @@ export default function OrganiserDashboard() {
   }, [user]);
 
   return (
-    <div className="w-screen mt-16 mb-10 ml-7 h-screen max-h-screen overflow-hidden">
-      <OrganiserNavbar currPage={""} />
+    <div className="w-screen mt-16 mb-10 ml-7 h-screen max-h-screen">
+      <OrganiserNavbar currPage={"EventDashboard"} />
       <div className="flex justify-center">
         <div className="flex flex-col items-start">
           <div className="text-6xl my-6">Event Dashboard</div>
-          <div className="flex flex-row h-screen">
+          <div className="flex flex-row h-full w-full">
             <OrganiserFilterDialog
               eventDataList={eventDataList}
               allEventsDataList={allEventsDataList}
@@ -157,7 +157,7 @@ export default function OrganiserDashboard() {
               setDateRange={setDateRange}
               applyFilters={applyFilters}
             />
-            <div className="z-5 grid grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 gap-y-2 2xl:gap-y-5 justify-items-center max-h-screen overflow-y-auto px-4 min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-fit">
+            <div className="z-5 grid grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 gap-y-2 2xl:gap-y-5 justify-items-center max-h-screen overflow-y-auto px-4 min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[90vh]">
               {eventDataList
                 .sort((event1, event2) => {
                   if (event1.accessCount > event2.accessCount) {
