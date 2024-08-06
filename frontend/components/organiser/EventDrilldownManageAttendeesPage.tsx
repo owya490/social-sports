@@ -58,21 +58,25 @@ const EventDrilldownManageAttendeesPage = ({
                 return purchaser1.email.localeCompare(purchaser2.email);
               })
               .map((purchaserObj) =>
-                Object.entries(purchaserObj.attendees).map(([attendeeName, attendeeDetailsObj]) => {
-                  if (attendeeDetailsObj.ticketCount > 0) {
-                    return (
-                      <EventDrilldownAttendeeCard
-                        attendeeName={attendeeName}
-                        image={DEFAULT_USER_PROFILE_PICTURE}
-                        purchaser={purchaserObj}
-                        key={attendeeName}
-                        eventId={eventId}
-                        setEventMetadata={setEventMetadata}
-                        setEventVacancy={setEventVacancy}
-                      />
-                    );
-                  }
-                })
+                Object.entries(purchaserObj.attendees)
+                  .sort(([attendeeName1, _attendeeDetailsObj1], [attendeeName2, _attendeeDetailsObj2]) => {
+                    return attendeeName1.localeCompare(attendeeName2);
+                  })
+                  .map(([attendeeName, attendeeDetailsObj]) => {
+                    if (attendeeDetailsObj.ticketCount > 0) {
+                      return (
+                        <EventDrilldownAttendeeCard
+                          attendeeName={attendeeName}
+                          image={DEFAULT_USER_PROFILE_PICTURE}
+                          purchaser={purchaserObj}
+                          key={attendeeName}
+                          eventId={eventId}
+                          setEventMetadata={setEventMetadata}
+                          setEventVacancy={setEventVacancy}
+                        />
+                      );
+                    }
+                  })
               )}
         </div>
       </div>
