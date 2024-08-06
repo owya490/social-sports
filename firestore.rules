@@ -69,5 +69,10 @@ service cloud.firestore {
     match /EventTags/{eventTags} {
     	allow read, write: if true;
     }
+
+    // Everyone can read, create and delete TempUser table. No one is allowed to update.
+    match /TempUsers/{userId} {
+      allow read, write: if true;
+    }
   }
 }
