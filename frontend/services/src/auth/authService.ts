@@ -29,12 +29,12 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
 
     // Send email verification
     await sendEmailVerification(userCredential.user, actionCodeSettings);
-    authServiceLogger.error(`Email sent ${userCredential.user}`);
+    authServiceLogger.info(`Email sent ${userCredential.user}`);
 
     const { password, ...userDataWithoutPassword } = data;
     // Save user data temporarily in your database
     await saveTempUserData(userCredential.user.uid, userDataWithoutPassword);
-    authServiceLogger.error(`Temp User data ${userCredential.user.uid}:${userDataWithoutPassword}`);
+    authServiceLogger.info(`Temp User data ${userCredential.user.uid}:${userDataWithoutPassword}`);
   } catch (error) {
     console.error("Error during sign-up:", error);
     throw error;
@@ -45,7 +45,7 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
   try {
     await signOut(auth);
     setUser(EmptyUserData);
-    authServiceLogger.error("Logged out");
+    authServiceLogger.info("Logged out");
   } catch (error) {
     throw error;
   }
@@ -54,11 +54,9 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
 export async function handleEmailAndPasswordSignIn(email: string, password: string) {
   try {
     const userCredential: UserCredential = await signInWithEmailAndPassword(auth, email, password);
-    authServiceLogger.error(`Is verified ${userCredential.user.emailVerified}`);
     // Check if the user's email is verified
     if (userCredential.user.emailVerified) {
-      console.log("Email is verified. Logging in...");
-
+      authServiceLogger.info("User's email is verified");
       try {
         const userExist = await getPublicUserById(userCredential.user.uid);
         return true;
@@ -133,10 +131,9 @@ export async function handleGoogleSignIn() {
       };
       await setDoc(userDocRef, userDataToSet);
     }
-
-    console.log("Google signed in");
+    authServiceLogger.info("Google signed in");
   } catch (error) {
-    console.log(error);
+    console.error(`Error: ${error}`);
   }
 }
 
@@ -156,10 +153,9 @@ export async function handleFacebookSignIn() {
       };
       await setDoc(userDocRef, userDataToSet);
     }
-
-    console.log("Facebook signed in");
+    authServiceLogger.info("Facebook signed in");
   } catch (error) {
-    console.log(error);
+    console.error(`Error: ${error}`);
   }
 }
 
@@ -183,7 +179,7 @@ export async function resetUserPassword(email: string): Promise<void> {
     // Send password reset email
     sendPasswordResetEmail(auth, email);
     // Password reset email sent successfully
-    console.log(`Password reset email sent to ${email}`);
+    authServiceLogger.info(`Password reset email sent to ${email}`);
   } catch (error) {
     // Handle errors
     console.error("Error sending password reset email:", error);

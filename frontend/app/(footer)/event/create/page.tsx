@@ -110,7 +110,7 @@ export default function CreateEvent() {
         router.push(`/event/${eventId}`);
       });
     } catch (e) {
-      createEventLogger.error(`Create event ${e}`);
+      createEventLogger.info(`Create event ${e}`);
     }
     window.scrollTo({ top: 0, behavior: "smooth" }); // You can use 'auto' instead of 'smooth' for instant scrolling
   }

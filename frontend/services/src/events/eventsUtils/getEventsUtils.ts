@@ -33,7 +33,6 @@ export async function findEventDoc(eventId: string): Promise<any> {
 
     // If no document found, log and throw an error
     eventServiceLogger.debug(`Event document not found in any subcollection for eventId: ${eventId}`);
-    console.log("Event not found in any subcollection.");
     throw new Error("No event found in any subcollection");
   } catch (error) {
     console.error(`Error finding event document for eventId: ${eventId}`, error);
@@ -64,7 +63,7 @@ export async function findEventMetadataDocByEventId(
 
 export function tryGetAllActivePublicEventsFromLocalStorage(currentDate: Date) {
   try {
-    console.log("Trying to get Cached Active Public Events");
+    eventServiceLogger.info("Trying to get Cached Active Public Events");
 
     // If already cached, and within 5 minutes, return cached data, otherwise no-op
     if (
@@ -90,7 +89,7 @@ export async function getAllEventsFromCollectionRef(
   eventCollectionRef: CollectionReference<DocumentData, DocumentData>
 ): Promise<EventData[]> {
   try {
-    console.log("Getting events from DB");
+    eventServiceLogger.info("Getting events from DB");
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
     const eventsData: EventData[] = [];

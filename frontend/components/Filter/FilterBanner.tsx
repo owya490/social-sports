@@ -156,7 +156,6 @@ export default function FilterBanner({
       filteredEventDataList = newEventDataList;
     }
     setAppliedMaxPriceSliderValue(maxPriceSliderValue);
-    filterBannerLogger.error(`Max Price ${maxPriceSliderValue}`);
 
     // Filter by DATERANGE
     if (dateRange.startDate && dateRange.endDate) {
@@ -168,13 +167,12 @@ export default function FilterBanner({
       filteredEventDataList = newEventDataList;
     }
     setAppliedDateRange(dateRange);
-    filterBannerLogger.error(`Date Range ${dateRange}`);
 
     // Filter by MAX PROXIMITY
     if (!isAnyProximityBool) {
       let srcLat = SYDNEY_LAT;
       let srcLng = SYDNEY_LNG;
-      filterBannerLogger.error(`Location ${srcLocation}`);
+      filterBannerLogger.info(`Location ${srcLocation}`);
       try {
         const { lat, lng } = await getLocationCoordinates(srcLocation);
         srcLat = lat;
@@ -192,18 +190,15 @@ export default function FilterBanner({
       filteredEventDataList = newEventDataList;
     }
     setAppliedMaxProximitySliderValue(maxProximitySliderValue);
-    filterBannerLogger.error(`Max Proximity ${maxProximitySliderValue}`);
 
     // Filter by SPORT
     let newEventDataList = filterEventsBySport([...filteredEventDataList], selectedSportProp);
     filteredEventDataList = newEventDataList;
-    filterBannerLogger.error(`Filter by sport ${selectedSportProp}`);
 
     // Filter by SORT BY
     newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
     filteredEventDataList = newEventDataList;
     setAppliedSortByCategoryValue(sortByCategoryValue);
-    filterBannerLogger.error(`Sort by ${sortByCategoryValue}`);
 
     // TODO: add more filters
 

@@ -10,11 +10,11 @@ export const locationUtilsLogger = new Logger("locationUtilsLogger");
 
 export async function getLocationCoordinates(locationName: string): Promise<{ lat: number; lng: number }> {
   try {
-    locationUtilsLogger.error(`Searching for location ${locationName}`);
+    locationUtilsLogger.info(`Searching for location ${locationName}`);
     const response = await axios.get(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}`
     );
-    locationUtilsLogger.error(`Finished searching for location ${locationName}`);
+    locationUtilsLogger.info(`Finished searching for location ${locationName}`);
 
     if (response.data.length > 0) {
       const { lat, lon } = response.data[0];
