@@ -190,7 +190,7 @@ export default function Dashboard() {
               })}
             </div>
           ) : eventDataList.length === 0 ? (
-            <div className="flex justify-center w-screen">
+            <div className="flex justify-center">
               <div>
                 <Image
                   src={noSearchResultLineDrawing}
@@ -200,7 +200,7 @@ export default function Dashboard() {
                   className="opacity-60"
                 />
 
-                <div className="flex justify-center text-gray-600 font-medium text-lg sm:text-2xl text-center">
+                <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
                   Sorry, we couldn&apos;t find any results
                 </div>
               </div>
