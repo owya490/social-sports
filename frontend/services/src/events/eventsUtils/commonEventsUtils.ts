@@ -3,6 +3,7 @@ import { EventId } from "@/interfaces/EventTypes";
 import {
   CollectionReference,
   DocumentData,
+  DocumentReference,
   Firestore,
   Query,
   collection,
@@ -22,7 +23,7 @@ export function tokenizeText(text: string): string[] {
   return text.toLowerCase().split(/\s+/).filter(Boolean);
 }
 
-export async function findEventDocRef(eventId: string): Promise<any> {
+export async function findEventDocRef(eventId: EventId): Promise<DocumentReference<DocumentData, DocumentData>> {
   try {
     // Search through all the paths
     for (const path of EVENT_PATHS) {
@@ -46,6 +47,7 @@ export async function findEventDocRef(eventId: string): Promise<any> {
     throw error;
   }
 }
+
 export async function fetchEventTokenMatches(
   eventCollectionRef: Query<unknown, DocumentData>,
   searchKeywords: string[]

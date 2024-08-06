@@ -11,7 +11,8 @@ import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatB
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
-import { eventServiceLogger, getEventById, getEventMetadataByEventId } from "@/services/src/events/eventsService";
+import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -68,7 +69,7 @@ export default function EventPage({ params }: EventPageProps) {
         eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
         router.push("/error");
       });
-    getEventMetadataByEventId(eventId).then((eventMetadata) => {
+    getEventsMetadataByEventId(eventId).then((eventMetadata) => {
       setEventMetadata(eventMetadata);
     });
   }, []);
@@ -120,6 +121,7 @@ export default function EventPage({ params }: EventPageProps) {
             />
           </div>
           <div id="event-drilldown-details-page" className="w-full">
+            <ShareModal />
             {currSidebarPage === "Details" && (
               <>
                 <EventDrilldownDetailsPage
@@ -137,7 +139,12 @@ export default function EventPage({ params }: EventPageProps) {
               </>
             )}
             {currSidebarPage === "Manage Attendees" && (
-              <EventDrilldownManageAttendeesPage eventMetadata={eventMetadata} />
+              <EventDrilldownManageAttendeesPage
+                eventMetadata={eventMetadata}
+                eventId={eventId}
+                setEventVacancy={setEventVacancy}
+                setEventMetadata={setEventMetadata}
+              />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
             {currSidebarPage === "Share" && <EventDrilldownSharePage />}
