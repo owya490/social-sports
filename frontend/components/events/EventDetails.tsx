@@ -19,7 +19,10 @@ export function EventDetails(props: EventDetailsProps) {
   return (
     <div className="flex justify-center w-full">
       <div className="pb-10 screen-width-primary">
-        <EventImage imageSrc={eventData.image} />
+        <div className="sm:rounded-xl overflow-hidden">
+          <EventImage imageSrc={eventData.image} />
+        </div>
+
         <div className="lg:flex w-full mt-5">
           <div className="lg:hidden">
             <MobileEventPayment

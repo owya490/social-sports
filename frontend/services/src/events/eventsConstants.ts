@@ -18,8 +18,8 @@ export enum CollectionPaths {
 export const EVENT_PATHS = [
   "Events/Active/Public",
   "Events/Active/Private",
-  "Events/Inactive/Public",
-  "Events/Inactive/Private",
+  "Events/InActive/Public",
+  "Events/InActive/Private",
 ];
 
 export enum LocalStorageKeys {

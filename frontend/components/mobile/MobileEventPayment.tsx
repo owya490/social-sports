@@ -39,33 +39,20 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
   };
 
   const { startDate, endDate } = props;
-  const { hours, minutes } = duration(startDate, endDate);
 
   return (
     <div className="mx-2">
       <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl mb-5 mt-5 text-center"></p>
       <div className="flex justify-start">
         <div className="w-full text-sm">
-          <div className="mb-1 sm:mb-3">
-            <h2 className="hidden sm:block font-semibold">Date and Time</h2>
-            <div className="flex items-center mb-1 sm:mb-0">
-              <CalendarDaysIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">{timestampToDateString(props.startDate)}</p>
-            </div>
-            <div className="flex items-center">
-              <ClockIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">{timestampToTimeOfDay(props.startDate)}</p>
-            </div>
-            <div className="flex items-center">
-              <PlayCircleIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">
-                {hours} hrs {minutes} mins
-              </p>
-            </div>
-          </div>
+          {timestampToDateString(startDate) === timestampToDateString(endDate) ? (
+            <SameDayEventDateTime startDate={startDate} endDate={endDate} />
+          ) : (
+            <DifferentDayEventDateTime startDate={startDate} endDate={endDate} />
+          )}
 
-          <div className="mb-1 sm:mb-3">
-            <h2 className="hidden sm:block font-semibold text-sm">Location</h2>
+          <div className="mb-1 mt-2 sm:mb-3">
+            <h2 className="font-semibold text-sm">Location & Price</h2>
             <div className="flex items-center">
               <MapPinIcon className="w-4 h-4 mr-2" />
               <p className="text-sm font-light mr-[5%]">{props.location}</p>
@@ -153,3 +140,53 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
     </div>
   );
 }
+
+const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
+  const { hours, minutes } = duration(startDate, endDate);
+  return (
+    <>
+      <h2 className="font-semibold">Date and Time</h2>
+      <div className="flex items-center">
+        <CalendarDaysIcon className="w-4 mr-2" />
+        <p className="text-md mr-[5%] font-light">{timestampToDateString(startDate)}</p>
+      </div>
+      <div className="flex items-center">
+        <ClockIcon className="w-4 mr-2" />
+        <p className="text-md mr-[5%] font-light">
+          {timestampToTimeOfDay(startDate)} - {timestampToTimeOfDay(endDate)}
+        </p>
+      </div>
+      <div className="flex items-center">
+        <PlayCircleIcon className="w-4 mr-2" />
+        <p className="text-md mr-[5%] font-light">
+          {hours} hrs {minutes} mins
+        </p>
+      </div>
+    </>
+  );
+};
+
+const DifferentDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
+  return (
+    <>
+      <h2 className="font-semibold">Start Date</h2>
+      <div className="flex items-center">
+        <CalendarDaysIcon className="w-4 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(startDate)}`}</p>
+      </div>
+      <div className="flex items-center">
+        <ClockIcon className="w-4 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(startDate)}`}</p>
+      </div>
+      <h2 className=" font-semibold">End Date</h2>
+      <div className="flex items-center">
+        <CalendarDaysIcon className="w-4 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(endDate)}`}</p>
+      </div>
+      <div className="flex items-center">
+        <ClockIcon className="w-4 mr-2" />
+        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(endDate)}`}</p>
+      </div>
+    </>
+  );
+};

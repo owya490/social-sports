@@ -6,9 +6,11 @@ import eye from "@/public/images/Eye.png";
 import location from "@/public/images/location.png";
 import Upload from "@/public/images/upload.png";
 import x from "@/public/images/x.png";
+import { uploadProfilePhoto } from "@/services/src/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
+import Tick from "@svgs/Verified_tick.png";
 import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -157,11 +159,7 @@ const Profile = () => {
     const files = event.target?.files;
 
     if (files && files.length > 0) {
-      const file = files[0];
-
       try {
-        const storageRef = ref(storage, `users/${initialProfileData.userId}/profilepicture/${file.name}`);
-
         const previousProfilePictureURL = initialProfileData.profilePicture;
 
         if (previousProfilePictureURL && !previousProfilePictureURL.includes("generic-profile-photo.webp")) {
@@ -177,9 +175,7 @@ const Profile = () => {
           }
         }
 
-        await uploadBytes(storageRef, file);
-
-        const downloadURL = await getDownloadURL(storageRef);
+        const downloadURL = await uploadProfilePhoto(initialProfileData.userId, files[0]);
 
         setEditedData((prevData) => ({
           ...prevData,
@@ -421,6 +417,14 @@ const Profile = () => {
               style={{ fontWeight: 600 }}
             >
               {initialProfileData.firstName}&apos;s Profile
+              {user.isVerifiedOrganiser && (
+                <div>
+                  <Image src={Tick} alt="Verified Organiser" className="h-10 w-10 ml-2" />
+                  <div className="absolute transform translate-x-12 -translate-y-8 ml-2 bg-[#f2b705] text-black text-xs px-2 py-1 rounded whitespace-nowrap">
+                    Verified Organiser
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex flex-col">
@@ -524,6 +528,9 @@ const Profile = () => {
                   Sports Hub uses your location to better recommend you events that are close to you!
                 </div>
               </div>
+              <p className="text-xs font-light mt-2 ml-1">
+                (If your edit profile picture isn&apos;t working, try closing and reopening the browser.)
+              </p>
             </div>
           </div>
           <div className="col-start-1 col-span-1 md:col-start-2 md:row-start-1 md:row-span-4 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">

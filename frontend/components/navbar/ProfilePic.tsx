@@ -68,7 +68,7 @@ export default function ProfilePic() {
   //TODO: Refactor !loggedin as hard to read
   return loading ? (
     <div className="flex ml-auto">
-      <div className="mr-4">
+      <div className="mr-4 hidden md:block">
         <LoadingSkeletonSmall />
       </div>
       <div>
