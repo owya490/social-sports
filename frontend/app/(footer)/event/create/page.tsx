@@ -9,12 +9,15 @@ import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
 import { uploadUserImage } from "@/services/src/imageService";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+
+export const createEventLogger = new Logger("createEventLogger");
 
 export type FormData = {
   startDate: string;
@@ -108,7 +111,7 @@ export default function CreateEvent() {
         router.push(`/event/${eventId}`);
       });
     } catch (e) {
-      console.log(e);
+      createEventLogger.error(`Create event ${e}`);
     }
     window.scrollTo({ top: 0, behavior: "smooth" }); // You can use 'auto' instead of 'smooth' for instant scrolling
   }

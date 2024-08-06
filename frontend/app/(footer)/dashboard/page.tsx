@@ -62,16 +62,13 @@ export default function Dashboard() {
       await sleep(500);
       const { event, location } = getQueryParams();
       if (event === "UNDEFINED") {
-        console.log("owen");
         return false;
       }
 
       if (typeof event === "string" && typeof location === "string") {
         if (event.trim() === "") {
-          console.log("no event name");
           getAllEvents()
             .then((events) => {
-              console.log(events);
               setEventDataList(events);
               setSearchDataList(events);
               setAllEventsDataList(events);
