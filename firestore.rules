@@ -73,7 +73,7 @@ service cloud.firestore {
     // Everyone can read, and write to TempUser table.
     match /TempUsers/{userId} {
       //can read if same user
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
       //allow create
       allow create: if request.auth != null;
     }
