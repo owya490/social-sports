@@ -224,7 +224,7 @@ const Profile = () => {
     setEditable(false);
     try {
       updateUser(initialProfileData.userId, editedData);
-      profileLogger.info(`Edited profile ${editedData}`);
+      profileLogger.info(`Edited profile - uid:${initialProfileData.userId} data:${editedData}`);
     } catch {
       router.push("/error");
     }
