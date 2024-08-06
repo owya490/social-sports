@@ -6,13 +6,11 @@ const libraries: "places"[] = ["places"];
 
 const getGoogleMapsApiKey = () => {
   const env = getEnvironment();
-  if (env === Environment.DEVELOPMENT) {
-    return process.env.GOOGLE_MAPS_DEV_API_KEY;
-  }
   if (env === Environment.PRODUCTION) {
     return process.env.GOOGLE_MAPS_PROD_API_KEY;
+  } else {
+    return process.env.GOOGLE_MAPS_DEV_API_KEY;
   }
-  throw new Error("Google Maps API Key is not defined");
 };
 
 export const loadGoogleMapsScript = () => {
