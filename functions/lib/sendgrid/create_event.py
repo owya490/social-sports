@@ -1,18 +1,13 @@
-import json
 import os
-import time
 import uuid
 from dataclasses import dataclass
 
-import sendgrid.helpers.mail
-from firebase_admin import firestore
-from firebase_functions import https_fn, options
-from google.cloud import firestore
-from google.cloud.firestore import Transaction
+from firebase_functions import https_fn
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
-from lib.sendgrid.commons import CREATE_EVENT_EMAIL_TEMPLATE_ID, get_user_email
+from lib.sendgrid.commons import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
+                                  get_user_data, get_user_email)
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
@@ -28,7 +23,7 @@ class SendGridCreateEventRequest:
     if not isinstance(self.visibility, str):
       raise ValueError("Visibility must be provided as a string.")
 
-#cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"])
+
 @https_fn.on_call(region="australia-southeast1")
 def send_email_on_create_event(req: https_fn.CallableRequest):
   uid = str(uuid.uuid4())
@@ -53,11 +48,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
   event_data = maybe_event_data.to_dict()
   organiser_id = event_data.get("organiserId")
 
-  maybe_organiser_data = db.collection("Users/Active/Private").document(organiser_id).get()
-  if (not maybe_organiser_data.exists):
-    raise Exception(f"Unable to find organiser provided in datastore to send email. organiserId={organiser_id}")
-
-  organiser_data = maybe_organiser_data.to_dict()
+  organiser_data = get_user_data(organiser_id)
 
   try: 
     email = get_user_email(organiser_id, organiser_data)
@@ -76,8 +67,6 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
     end_date: Timestamp = event_data.get("endDate").timestamp_pb()
     start_date_string =  start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
     end_date_string =  end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
-    logger.info(start_date_string)
-    logger.info(end_date_string)
 
     message.dynamic_template_data = {
       "first_name": organiser_data.get("firstName"),

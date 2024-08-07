@@ -3,6 +3,7 @@ import os
 import time
 import uuid
 from dataclasses import dataclass
+from datetime import datetime
 
 import stripe
 from firebase_admin import firestore
@@ -33,14 +34,12 @@ class SendGridPurchaseEventRequest:
       raise ValueError("Visibility must be provided as a string.")
 
 
-# @https_fn.on_call(cors=options.CorsOptions(cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
 # Left as normal python function as only invoked from the Stripe webhook oncall function. Not exposed to outside world.
 def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
   uid = str(uuid.uuid4())
   logger = Logger(f"sendgrid_purchase_event_logger_{uid}")
   logger.add_tag("uuid", uid)
   
-
   # TODO add fields for public private + maybe add retries as maybe consistency issues due to firebase update, but email is send prior
   maybe_event_data = db.collection(f"Events/Active/{request_data.visibility}").document(request_data.eventId).get()
   if (not maybe_event_data.exists):
@@ -68,8 +67,8 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
     end_date: Timestamp = event_data.get("endDate").timestamp_pb()
     start_date_string =  start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
     end_date_string =  end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
-    logger.info(start_date_string)
-    logger.info(end_date_string)
+    date_purchased: Timestamp = order_data.get("datePurchased").timestamp_pb()
+    date_purchased_string = date_purchased.ToDatetime().strftime("%m/%d/%Y, %H:%M")
 
     message.dynamic_template_data = {
       "first_name": request_data.first_name,
@@ -79,7 +78,8 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       "quantity_bought": len(order_data.get("tickets")),
       "price": event_data.get("price"),
       "start_date": start_date_string,
-      "end_date": end_date_string
+      "end_date": end_date_string,
+      "date_purchased": date_purchased_string
     }
 
     message.template_id = PURCHASE_EVENT_EMAIL_TEMPLATE_ID

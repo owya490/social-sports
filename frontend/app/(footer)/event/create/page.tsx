@@ -130,6 +130,8 @@ export default function CreateEvent() {
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
+      } else if (error == "Sendgrid failed") {
+        return newEventId;
       } else {
         router.push("/error");
       }

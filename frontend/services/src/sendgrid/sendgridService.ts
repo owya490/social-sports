@@ -20,7 +20,7 @@ export async function sendEmailOnCreateEvent(eventId: string, visibility: string
       return data.status;
     })
     .catch((error) => {
-      sendgridServiceLogger.warn(`Failed to send email on event creation. error=${error}`);
-      return 500;
+      sendgridServiceLogger.warn(`Failed to send email on event creation. eventId=${eventId} error=${error}`);
+      throw Error("Sendgrid failed");
     });
 }
