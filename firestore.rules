@@ -69,5 +69,13 @@ service cloud.firestore {
     match /EventTags/{eventTags} {
     	allow read, write: if true;
     }
+
+    // Everyone can read, and write to TempUser table.
+    match /TempUsers/{userId} {
+      //can read if same user
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      //allow create
+      allow create: if request.auth != null;
+    }
   }
 }

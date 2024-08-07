@@ -12,8 +12,9 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
+import LocationAutocompleteForm from "@/components/utility/AutoComplete";
 
-type BasicData = {
+export type BasicData = {
   name: string;
   location: string;
   startDate: string;
@@ -25,6 +26,8 @@ type BasicData = {
   capacity: number;
   isPrivate: boolean;
   paymentsActive: boolean;
+  lat: number;
+  long: number;
 };
 
 type BasicInformationProps = BasicData & {
@@ -54,6 +57,7 @@ export function BasicInformation({
   const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null); // Initialize locationError state
   const [priceString, setPriceString] = useState("15");
   const [capacityString, setCapacityString] = useState("20");
 
@@ -169,16 +173,8 @@ export function BasicInformation({
         <div>
           <label className="text-black text-lg font-semibold">Where is it located?</label>
           <div className="mt-4">
-            <Input
-              label="Location"
-              crossOrigin={undefined}
-              required
-              value={location}
-              onChange={(e) => updateField({ location: e.target.value })}
-              className="rounded-md focus:ring-0"
-              size="lg"
-              icon={<MapPinIcon />}
-            />
+            <LocationAutocompleteForm location={location} updateField={updateField} />
+            {locationError && <p className="text-red-500">{locationError}</p>}
           </div>
         </div>
         <div>
