@@ -1,22 +1,16 @@
-import json
 import os
-import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
-import stripe
-from firebase_admin import firestore
-from firebase_functions import https_fn, options
-from google.cloud import firestore
-from google.cloud.firestore import Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
-from lib.sendgrid.commons import PURCHASE_EVENT_EMAIL_TEMPLATE_ID
-from lib.stripe.commons import ERROR_URL
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+
+from functions.lib.sendgrid.constants import (PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
+                                              SENDGRID_API_KEY)
 
 
 @dataclass
@@ -85,7 +79,7 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
     message.template_id = PURCHASE_EVENT_EMAIL_TEMPLATE_ID
 
     # TODO possibly either move this to common or make sendgrid service/ client in python
-    sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    sg = SendGridAPIClient(SENDGRID_API_KEY)
     response = sg.send(message)
     logger.info(response.status_code)
 

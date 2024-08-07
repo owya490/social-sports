@@ -6,10 +6,12 @@ from firebase_functions import https_fn
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
-from lib.sendgrid.commons import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
-                                  get_user_data, get_user_email)
+from lib.sendgrid.commons import get_user_data, get_user_email
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+
+from functions.lib.sendgrid.constants import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
+                                              SENDGRID_API_KEY)
 
 
 @dataclass
@@ -83,7 +85,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
     message.template_id = CREATE_EVENT_EMAIL_TEMPLATE_ID
 
     # TODO possibly either move this to common or make sendgrid service/ client in python
-    sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    sg = SendGridAPIClient(SENDGRID_API_KEY)
     response = sg.send(message)
     
     # Normally sendgrid return 202, reqeust in progress, but any 2XX response is acceptable.

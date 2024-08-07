@@ -1,8 +1,5 @@
 from lib.constants import db
 
-CREATE_EVENT_EMAIL_TEMPLATE_ID = "d-63eb299010344bcf951af2537c42a410"
-PURCHASE_EVENT_EMAIL_TEMPLATE_ID = "d-0c47c68389fe4149a9bf065e38f4a3e9"
-
 def get_user_email(user_id: str, user_data = None) -> str:
   if user_data == None:
     user_data = get_user_data(user_id)
