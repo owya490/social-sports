@@ -7,7 +7,7 @@ export async function getTagById(tagId: TagId): Promise<Tag> {
     const tagDoc = await getDoc(doc(db, "EventTags", tagId));
     return { ...(tagDoc.data() as Tag), id: tagDoc.id };
   } catch (error) {
-    console.log(error);
+    console.error("Error:", { error });
     throw error;
   }
 }

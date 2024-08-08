@@ -1,5 +1,4 @@
 "use client";
-
 import { EventData } from "@/interfaces/EventTypes";
 import {
   filterEventsByDate,
@@ -41,6 +40,7 @@ import FilterDialog, {
   VOLLEYBALL_SPORT_STRING,
 } from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
+import { Logger } from "@/observability/logger";
 
 interface FilterBannerProps {
   eventDataList: EventData[];
@@ -63,6 +63,7 @@ export default function FilterBanner({
   endLoading,
   setEndLoading,
 }: FilterBannerProps) {
+  const filterBannerLogger = new Logger("filterBannerLogger");
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
     useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
@@ -144,13 +145,11 @@ export default function FilterBanner({
   };
 
   async function applyFilters(selectedSportProp: string) {
-    console.log("FILTERING", srcLocation);
     const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
     // changed it so that instead of it running only if its not max, if locaiton is not ""
     const isAnyProximityBool = srcLocation === "" || maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
 
     let filteredEventDataList = [...eventDataList];
-    console.log(srcLocation);
     // Filter by MAX PRICE
     if (!isAnyPriceBool) {
       let newEventDataList = filterEventsByPrice([...filteredEventDataList], null, maxPriceSliderValue);
@@ -173,13 +172,13 @@ export default function FilterBanner({
     if (!isAnyProximityBool) {
       let srcLat = SYDNEY_LAT;
       let srcLng = SYDNEY_LNG;
-      console.log("LOCATION", srcLocation);
+      filterBannerLogger.info(`Location ${srcLocation}`);
       try {
         const { lat, lng } = await getLocationCoordinates(srcLocation);
         srcLat = lat;
         srcLng = lng;
       } catch (error) {
-        console.log(error);
+        console.error("Error:",error)
       }
 
       let newEventDataList = filterEventsByMaxProximity(

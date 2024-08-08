@@ -207,7 +207,7 @@ async function filterEventsByWhereClausesAndProximity(
 
     return filteredEventsData;
   } catch (error) {
-    console.log(error);
+    console.error("Error:", { error });
     throw error;
   }
 }

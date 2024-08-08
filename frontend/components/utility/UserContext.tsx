@@ -1,12 +1,12 @@
 "use client";
+import { Logger } from "@/observability/logger";
+import { getTempUserData } from "@/services/src/auth/authService";
 import { auth } from "@/services/src/firebase";
-import { createContext, useContext, useEffect, useState } from "react";
-import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
-
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
 import { onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
-import { getTempUserData } from "@/services/src/auth/authService";
+import { createContext, useContext, useEffect, useState } from "react";
+import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
 
 type LoginUserContextType = {
   user: UserData;
@@ -19,6 +19,7 @@ export const LoginUserContext = createContext<LoginUserContextType>({
 });
 
 export default function UserContext({ children }: { children: any }) {
+  const userContextLogger = new Logger("userContextLogger");
   const [user, setUser] = useState<UserData>(EmptyUserData);
   const router = useRouter();
   const pathname = usePathname();
@@ -67,7 +68,7 @@ export default function UserContext({ children }: { children: any }) {
           // redirecting to dashboard, hence we need to do another check to see if they are in the create
           // user workflow
           const userData = await getTempUserData(auth.currentUser.uid);
-          console.log("userData", userData);
+          userContextLogger.info(`User data: ${userData}`);
           if (!userData) {
             router.push("/dashboard");
           }

@@ -10,6 +10,7 @@ import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
 import { uploadUserImage } from "@/services/src/imageService";
 import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
@@ -56,6 +57,7 @@ const INITIAL_DATA: FormData = {
 };
 
 export default function CreateEvent() {
+  const createEventLogger = new Logger("createEventLogger");
   const { user } = useUser();
   const router = useRouter();
   const showForm = user.userId !== "";
@@ -113,7 +115,7 @@ export default function CreateEvent() {
         router.push(`/event/${eventId}`);
       });
     } catch (e) {
-      console.log(e);
+      createEventLogger.info(`Create event ${e}`);
     }
     window.scrollTo({ top: 0, behavior: "smooth" }); // You can use 'auto' instead of 'smooth' for instant scrolling
   }
