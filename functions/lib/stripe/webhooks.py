@@ -16,6 +16,8 @@ from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import db, posthog
 from lib.logging import Logger
+from lib.sendgrid.purchase_event import (SendGridPurchaseEventRequest,
+                                         send_email_on_purchase_event)
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
 
@@ -66,8 +68,9 @@ def add_stripe_event_and_checkout_tags(logger: Logger, event: Event):
   })
 
 
+# Will return orderId for email to pick up and read order information. If this function fails, either logic error or transactions fail, it will return None
 @firestore.transactional
-def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer, full_name: str, phone_number: str): # Typing of customer is customer details
+def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer, full_name: str, phone_number: str) -> str | None: # Typing of customer is customer details
   # Update the event to include the new attendees
   private_path = "Private" if is_private else "Public"
   event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
@@ -77,7 +80,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
 
   if (not maybe_event.exists):
     logger.error(f"Unable to find event provided in datastore to fulfill purchase. eventId={event_id}, isPrivate={is_private}")
-    return False
+    return None
   
   event = maybe_event.to_dict()
 
@@ -86,7 +89,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
     item = line_items.data[0] # we only offer one item type per checkout (can buy multiple quantities)
   except IndexError as e:
     logger.error(f"Unable to access the first index of the line_items raising error {e}. It is probably empty... line_items={line_items}")
-    return False
+    return None
   
   # We want to hash the email first as firestore doesn't like @ or . as characters in keys
   email_hash = str(int(hashlib.md5(str(customer.email).encode('utf-8')).hexdigest(), 16))
@@ -180,7 +183,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
     }
   )
 
-  return True
+  return order_id_ref.id
 
 
 @firestore.transactional
@@ -218,11 +221,20 @@ def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Log
     logger.info(f"Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}")
     return https_fn.Response(status=200)
   
-  success = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number)
+  orderId = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number)
+  if orderId == None:
+    logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id.id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
+    return https_fn.Response(status=500) 
+  
+  # Send email to purchasing consumer. Retry sending email 3 times, before exiting and completing order. If email breaks, its not the end of the world.
+  for i in range(3):
+    success = send_email_on_purchase_event(SendGridPurchaseEventRequest(event_id, "Private" if is_private else "Public", customer_details.email, full_name, orderId))
+    if success:
+      break
+  
   if not success:
-    logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
-    return https_fn.Response(status=500)
-      
+    logger.warning(f"Was unable to send email to {customer_details.email}. orderId={orderId}")
+
   record_checkout_session_by_customer_email(transaction, event_id, checkout_session, customer_details)
   logger.info(f"Successfully handled checkout.session.completed webhook event. session={checkout_session_id}")
   return https_fn.Response(status=200)
