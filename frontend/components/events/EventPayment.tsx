@@ -56,8 +56,15 @@ export default function EventPayment(props: EventPaymentProps) {
             <div className="mb-6">
               <h2 className=" font-semibold">Location</h2>
               <div className="flex">
-                <MapPinIcon className="w-5 h-5 mr-2 mt-0.5" />
-                <p className="text-md mr-[5%] font-light">{props.location}</p>
+                <MapPinIcon className="w-4 h-4 mr-2 lg:mt-1" />
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(props.location)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-md font-light mr-[5%]"
+                >
+                  {props.location}
+                </a>
               </div>
             </div>
 
