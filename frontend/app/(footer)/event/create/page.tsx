@@ -1,4 +1,5 @@
 "use client";
+import { HighlightButton, InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import CreateEventStepper from "@/components/events/create/CreateEventStepper";
 import { DescriptionImageForm } from "@/components/events/create/DescriptionImageForm";
 import { BasicInformation } from "@/components/events/create/forms/BasicForm";
@@ -195,26 +196,25 @@ export default function CreateEvent() {
 
             <div className="flex mt-8 w-11/12 lg:w-2/3 xl:w-full m-auto">
               {!isFirstStep && (
-                <button type="button" className="border border-black py-1.5 px-7 rounded-lg mr-2" onClick={back}>
+                <InvertedHighlightButton type="button" className="px-7" onClick={back}>
                   Back
-                </button>
+                </InvertedHighlightButton>
               )}
               {!isLastStep && (
                 //TODO: Add service layer protection
-                <button
+                <HighlightButton
                   type="submit"
-                  className={`border border-black py-1.5 px-7 rounded-lg ml-auto lg:mr-2 ${
-                    hasError ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                  }`}
+                  className={`px-7 ml-auto lg:mr-2 ${hasError ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   disabled={hasError}
+                  onClick={undefined}
                 >
                   Next
-                </button>
+                </HighlightButton>
               )}
               {isLastStep && (
-                <button type="submit" className="border border-black py-1.5 px-7 rounded-lg ml-auto">
+                <HighlightButton type="submit" className="px-7 ml-auto" onClick={undefined}>
                   Create Event
-                </button>
+                </HighlightButton>
               )}
             </div>
           </form>

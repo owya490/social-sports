@@ -5,7 +5,10 @@ interface ButtonProps {
   onClick: MouseEventHandler<HTMLButtonElement> | undefined;
   className?: string;
   children?: React.ReactNode;
+  type?: "submit" | "reset" | "button" | undefined;
+  disabled?: boolean;
 }
+
 export const HighlightButton = (props: ButtonProps) => {
   return (
     <button
@@ -14,6 +17,8 @@ export const HighlightButton = (props: ButtonProps) => {
         props.className
       }
       onClick={props.onClick}
+      type={props.type}
+      disabled={props.disabled}
     >
       {props.text}
       {props.children}
@@ -25,10 +30,12 @@ export const InvertedHighlightButton = (props: ButtonProps) => {
   return (
     <button
       className={
-        `border-2 text-highlight-yellow font-semibold border-highlight-yellow px-4 py-1.5 rounded-lg lg:block whitespace-nowrap ml-4 hover:bg-highlight-yellow hover:text-white transition-colors duration-300 transform ` +
+        `border-2 text-highlight-yellow font-semibold border-highlight-yellow px-4 py-1.5 rounded-lg lg:block whitespace-nowrap hover:bg-highlight-yellow hover:text-white transition-colors duration-300 transform ` +
         props.className
       }
       onClick={props.onClick}
+      type={props.type}
+      disabled={props.disabled}
     >
       {props.text}
       {props.children}

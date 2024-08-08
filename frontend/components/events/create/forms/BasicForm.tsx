@@ -1,10 +1,11 @@
 // BasicInformation.tsx
 
+import LocationAutocompleteForm from "@/components/utility/AutoComplete";
 import { UserData } from "@/interfaces/UserTypes";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
-import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -12,7 +13,6 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
-import LocationAutocompleteForm from "@/components/utility/AutoComplete";
 
 export type BasicData = {
   name: string;
@@ -58,8 +58,6 @@ export function BasicInformation({
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null); // Initialize locationError state
-  const [priceString, setPriceString] = useState("15");
-  const [capacityString, setCapacityString] = useState("20");
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -118,7 +116,7 @@ export function BasicInformation({
 
   const handleEventCostSliderChange = (amount: number) => {
     handleCustomAmountChange(amount);
-    setPriceString(amount + "");
+    updateField({ price: amount });
   };
 
   const handleCustomAmountChange = (amount: number) => {
@@ -217,7 +215,7 @@ export function BasicInformation({
                 label="Price"
                 crossOrigin={undefined}
                 required
-                value={priceString}
+                value={price}
                 type="number"
                 onChange={(e) => {
                   let value = parseInt(e.target.value);
@@ -226,7 +224,6 @@ export function BasicInformation({
                   } else {
                     value = 0;
                   }
-                  setPriceString(value.toString());
                   handleCustomAmountChange(value);
                 }}
                 className="rounded-md focus:ring-0"
@@ -239,16 +236,14 @@ export function BasicInformation({
                 label="Capacity"
                 crossOrigin={undefined}
                 required
-                value={capacityString}
+                value={capacity}
                 type="number"
                 onChange={(e) => {
                   const value = parseInt(e.target.value);
                   if (!isNaN(value)) {
                     const maxValue = Math.max(value, 0);
-                    setCapacityString(maxValue.toString());
                     updateField({ capacity: maxValue });
                   } else {
-                    setCapacityString("0");
                     updateField({ capacity: 0 });
                   }
                 }}
