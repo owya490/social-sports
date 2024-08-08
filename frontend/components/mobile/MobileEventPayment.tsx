@@ -55,7 +55,14 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
             <h2 className="font-semibold text-sm">Location & Price</h2>
             <div className="flex items-center">
               <MapPinIcon className="w-4 h-4 mr-2" />
-              <p className="text-sm font-light mr-[5%]">{props.location}</p>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(props.location)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-light mr-[5%]"
+              >
+                {props.location}
+              </a>
             </div>
           </div>
 
