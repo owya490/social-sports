@@ -206,13 +206,12 @@ export default function CreateEvent() {
                   type="submit"
                   className={`px-7 ml-auto lg:mr-2 ${hasError ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   disabled={hasError}
-                  onClick={undefined}
                 >
                   Next
                 </HighlightButton>
               )}
               {isLastStep && (
-                <HighlightButton type="submit" className="px-7 ml-auto" onClick={undefined}>
+                <HighlightButton type="submit" className="px-7 ml-auto">
                   Create Event
                 </HighlightButton>
               )}
