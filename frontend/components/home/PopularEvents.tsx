@@ -50,7 +50,7 @@ export default function PopularEvents(props: PopularEventsProps) {
             <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
             <div className="flex my-5">
               <h5 className="font-bold text-lg">Popular events nearby</h5>
-              <Link href="#" className="text-sm font-light ml-auto cursor-pointer hover:underline">
+              <Link href="/dashboard" className="text-sm font-light ml-auto cursor-pointer hover:underline">
                 See all
               </Link>
             </div>

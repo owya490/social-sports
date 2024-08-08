@@ -10,7 +10,7 @@ from lib.sendgrid.commons import get_user_data, get_user_email
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-from functions.lib.sendgrid.constants import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
+from lib.sendgrid.constants import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
                                               SENDGRID_API_KEY)
 
 

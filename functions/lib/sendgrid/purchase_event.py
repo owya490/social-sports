@@ -9,7 +9,7 @@ from lib.logging import Logger
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-from functions.lib.sendgrid.constants import (PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
+from lib.sendgrid.constants import (PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
                                               SENDGRID_API_KEY)
 
 
