@@ -99,7 +99,7 @@ export default function ProfilePic() {
           <InvertedHighlightButton
             text="Register"
             onClick={() => router.push("/register")}
-            className="hidden lg:block"
+            className="hidden lg:block ml-4"
           />
         </div>
       )}
