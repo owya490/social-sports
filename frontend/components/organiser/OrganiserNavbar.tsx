@@ -63,8 +63,8 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
   }, [user]);
 
   return (
-    <div className="bg-organiser-light-gray drop-shadow-lg fixed left-0 h-screen z-40">
-      <div className="w-14 flex flex-col mt-14 space-y-3">
+    <div className="bg-organiser-light-gray drop-shadow-lg fixed bottom-0 sm:left-0 sm:h-screen z-40">
+      <div className="sm:w-14 flex sm:flex-col sm:mt-14 sm:space-y-3">
         <Link href="/organiser/dashboard/">
           <div
             className={`flex justify-center h-10 w-10 m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
