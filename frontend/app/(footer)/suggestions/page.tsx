@@ -45,11 +45,6 @@ export default function Suggestions() {
     }
   };
 
-  // In the button element:
-  <button type="submit" className="w-full bg-[#30ADFF] py-2 text-white text-xl rounded-lg" disabled={isLoading}>
-    {isLoading ? "Sending..." : "Submit"}
-  </button>;
-
   return (
     <div className="w-screen flex justify-center">
       <div className="screen-width-primary mx-3 mb-32 mt-20 md:mt-32 md:max-w-lg space-y-5">
@@ -113,8 +108,8 @@ export default function Suggestions() {
               required
             />
           </div>
-          <button type="submit" className="w-full bg-[#30ADFF] py-2 text-white text-xl rounded-lg">
-            Submit
+          <button type="submit" className="w-full bg-[#30ADFF] py-2 text-white text-xl rounded-lg" disabled={isLoading}>
+            {isLoading ? "Sending..." : "Submit"}
           </button>
         </form>
       </div>

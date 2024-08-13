@@ -1,4 +1,3 @@
-// emailService.ts
 import emailjs from "emailjs-com";
 import { Logger } from "@/observability/logger";
 
@@ -8,17 +7,11 @@ export const emailJSLogger = new Logger("emailJSLogger");
 type TemplateParams = Record<string, string>;
 
 // Configuration for EmailJS
-const serviceId = process.env.REACT_APP_EMAILJS_PROD_SERVICE_ID;
-const templateId = process.env.REACT_APP_EMAILJS_PROD_TEMPLATE_ID;
-const userId = process.env.REACT_APP_EMAILJS_PROD_USER_ID;
-
+const serviceId = process.env.NEXT_PUBLIC_EMAILJS_PROD_SERVICE_ID;
+const templateId = process.env.NEXT_PUBLIC_EMAILJS_PROD_TEMPLATE_ID;
+const userId = process.env.NEXT_PUBLIC_EMAILJS_PROD_USER_ID;
 
 export const sendEmail = async (templateParams: TemplateParams) => {
-  // Log environment variables to verify their values
-  console.log('Service ID:', serviceId);
-  console.log('Template ID:', templateId);
-  console.log('User ID:', userId);
-
   if (!serviceId || !templateId || !userId) {
     emailJSLogger.error("Missing necessary environment variables for EmailJS.");
     throw new Error("Missing necessary environment variables for EmailJS.");
@@ -33,5 +26,3 @@ export const sendEmail = async (templateParams: TemplateParams) => {
     throw err;
   }
 };
-
-
