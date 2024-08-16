@@ -100,9 +100,16 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   organiser_stripe_account_id = organiser.get("stripeAccount")
 
   # 4a. check if the price exists for this event
-  if (price == None or not isinstance(price, int) or price < 1): # we don't want events to be less than stripe fees
+  # Example validation logic
+  if price is None or not isinstance(price, (int, float)) or price < 1:
+    logger.error(f"Retrieved price for event {event_ref.path}: {price} (type: {type(price)})")
     logger.error(f"Provided event {event_ref.path} does not have a valid price. Returning status=500")
     return json.dumps({"url": ERROR_URL})
+
+  
+ # price = round(float(price), 2)
+  #unit_amount=price * 100
+
 
   # 5. set the tickets as sold and reduce vacancy (prevent race condition/ over selling, we will release tickets back after cancelled sale)
   transaction.update(event_ref, {"vacancy": vacancy - quantity })
@@ -121,7 +128,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
             "isPrivate": is_private
           }
         },
-        "unit_amount": price * 100
+        "unit_amount": price
       },
       "quantity": quantity
     }],
