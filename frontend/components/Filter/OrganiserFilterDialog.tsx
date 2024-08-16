@@ -165,24 +165,18 @@ export default function OrganiserFilterDialog({
   );
 
   const toggleStatusCheckboxValue = (value: string) => {
-    if (eventStatusValue.includes(value)) {
-      setEventStatusValue(eventStatusValue.replace(value, ""));
+    if (eventStatusValue === value) {
+      setEventStatusValue(""); // Deselect if the same value is clicked
     } else {
-      setEventStatusValue(eventStatusValue + value);
-      if (eventStatusValue.includes("past") && eventStatusValue.includes("future")) {
-        setEventStatusValue("");
-      }
+      setEventStatusValue(value); // Set the selected value
     }
   };
 
   const toggleTypeCheckboxValue = (value: string) => {
-    if (eventTypeValue.includes(value)) {
-      setEventTypeValue(eventTypeValue.replace(value, ""));
+    if (eventTypeValue === value) {
+      setEventTypeValue("");
     } else {
-      setEventTypeValue(eventTypeValue + value);
-    }
-    if (eventTypeValue.includes("public") && eventTypeValue.includes("private")) {
-      setEventStatusValue("");
+      setEventTypeValue(value);
     }
   };
 
