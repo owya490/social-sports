@@ -37,6 +37,9 @@ type BasicInformationProps = BasicData & {
   setHasError: (value: boolean) => void;
 };
 
+const centsToDollars = (cents: number) => (cents / 100).toFixed(2);
+const dollarsToCents = (dollars: number) => Math.round(dollars * 100);
+
 export function BasicInformation({
   name,
   location,
@@ -113,7 +116,7 @@ export function BasicInformation({
   }, [startDate, startTime, endDate, endTime]);
 
   const [customAmount, setCustomAmount] = useState(price);
-
+  
   const handleEventCostSliderChange = (amount: number) => {
     handleCustomAmountChange(amount);
     updateField({ price: amount });
@@ -218,7 +221,7 @@ export function BasicInformation({
                 value={price}
                 type="number"
                 onChange={(e) => {
-                  let value = parseInt(e.target.value);
+                  let value = parseFloat(e.target.value);
                   if (!isNaN(value)) {
                     value = Math.max(value, 0);
                   } else {
