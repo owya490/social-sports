@@ -121,7 +121,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
             "isPrivate": is_private
           }
         },
-        "unit_amount": price * 100
+        "unit_amount": price
       },
       "quantity": quantity
     }],

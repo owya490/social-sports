@@ -8,6 +8,7 @@ import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
+import { displayPrice } from "@/utilities/priceUtils";
 
 interface EventCardProps {
   eventId: EventId;
@@ -71,7 +72,7 @@ export default function EventCard(props: EventCardProps) {
                 </div>
                 <div className="flex items-center">
                   <CurrencyDollarIcon className="w-5" />
-                  <p className="ml-1 font-light text-sm">{`$${props.price} AUD per person`}</p>
+                  <p className="ml-1 font-light text-sm">{`$${displayPrice(props.price)} AUD per person`}</p>
                 </div>
               </div>
               <div className="flex items-center">

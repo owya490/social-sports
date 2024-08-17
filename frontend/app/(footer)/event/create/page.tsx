@@ -41,7 +41,7 @@ const INITIAL_DATA: FormData = {
   endDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   location: "",
   sport: "volleyball",
-  price: 15,
+  price: 1500, // $15 default price, set to 1500 as it is in cents
   capacity: 20,
   name: "",
   description: "",
