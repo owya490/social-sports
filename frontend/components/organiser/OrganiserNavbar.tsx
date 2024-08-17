@@ -64,54 +64,54 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
 
   return (
     <div className="bg-organiser-light-gray drop-shadow-lg fixed bottom-0 sm:bottom-auto inset-x-0 sm:inset-x-auto sm:left-0 sm:h-screen z-40">
-      <div className="flex justify-center h-16 sm:h-auto sm:w-14 sm:flex-col sm:mt-14 sm:space-y-3 sm:space-x-0 space-x-3">
+      <div className="flex justify-center h-12 sm:h-auto sm:w-14 sm:flex-col sm:mt-14 sm:space-y-3 sm:space-x-0 space-x-3">
         <Link
           href="/organiser/dashboard/"
-          className={`flex justify-center self-center h-12 w-12 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "Dashboard" && "bg-organiser-darker-light-gray"
           }`}
         >
-          <HomeIcon className="w-10 sm:w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <HomeIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
         <Link
           href="/organiser/event/dashboard"
-          className={`flex justify-center self-center h-12 w-12 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "EventDashboard" && "bg-organiser-darker-light-gray"
           }`}
         >
-          <CalendarIcon className="w-10 sm:w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
         <Link
           href={`/${eventId}`}
-          className={`flex justify-center self-center h-12 w-12 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "EventDrilldown" && "bg-organiser-darker-light-gray"
           }`}
         >
-          <BookmarkSquareIcon className="w-10 sm:w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <BookmarkSquareIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
         <Link
           href="/organiser/metrics"
-          className={`flex justify-center self-center h-12 w-12 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "Metrics" && "bg-organiser-darker-light-gray"
           }`}
         >
-          <ChartBarIcon className="w-10 sm:w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <ChartBarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
         <Link
           href="/organiser/gallery"
-          className={`flex justify-center self-center h-12 w-12 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "Gallery" && "bg-organiser-darker-light-gray"
           }`}
         >
-          <CameraIcon className="w-10 sm:w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <CameraIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
         <Link
           href="/organiser/settings"
-          className={`flex justify-center self-center h-12 w-12 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "Settings" && "bg-organiser-darker-light-gray"
           }`}
         >
-          <UserIcon className="w-10 sm:w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <UserIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
       </div>
     </div>

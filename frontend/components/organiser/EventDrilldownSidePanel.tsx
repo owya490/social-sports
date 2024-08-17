@@ -1,6 +1,6 @@
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
-import React, { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction } from "react";
 import Skeleton from "react-loading-skeleton";
 
 interface EventDrilldownSidePanelProps {
@@ -19,7 +19,7 @@ const EventDrilldownSidePanel = ({
   eventStartDate,
 }: EventDrilldownSidePanelProps) => {
   return (
-    <div className="bg-organiser-light-gray mr-10 w-64 rounded-3xl">
+    <div className="bg-organiser-light-gray mr-10 w-48 md:w-64 rounded-3xl hidden sm:block">
       <div className="p-8">
         <div className="text-xl font-extrabold">{loading ? <Skeleton style={{ height: 40 }} /> : eventName}</div>
         <div className="text-organiser-dark-gray-text text-sm font-bold">
@@ -38,9 +38,9 @@ const EventDrilldownSidePanel = ({
         </div>
         <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
-            currSidebarPage === "Manage Attendees" ? "bg-white" : ""
+            currSidebarPage === "Attendees" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
-          onClick={() => setCurrSidebarPage("Manage Attendees")}
+          onClick={() => setCurrSidebarPage("Attendees")}
         >
           Manage Attendees
         </div>

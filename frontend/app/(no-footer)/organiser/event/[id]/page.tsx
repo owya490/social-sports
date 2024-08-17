@@ -76,14 +76,17 @@ export default function EventPage({ params }: EventPageProps) {
 
   useEffect(() => {
     window.onscroll = () => {
-      if (window.scrollY > 310) {
-        document.getElementById("side-panel")!.classList.add("fixed");
-        document.getElementById("side-panel")!.classList.add("top-[110px]");
-        document.getElementById("event-drilldown-details-page")!.classList.add("ml-[296px]");
-      } else if (window.scrollY <= 310) {
-        document.getElementById("side-panel")!.classList.remove("fixed");
-        document.getElementById("side-panel")!.classList.remove("top-[110px]");
-        document.getElementById("event-drilldown-details-page")!.classList.remove("ml-[296px]");
+      // Prevent side panel on small screen as its doesn't exist
+      if (window.innerWidth > 640) {
+        if (window.scrollY > 310) {
+          document.getElementById("side-panel")!.classList.add("fixed");
+          document.getElementById("side-panel")!.classList.add("top-[110px]");
+          document.getElementById("event-drilldown-details-page")!.classList.add("ml-[296px]");
+        } else if (window.scrollY <= 310) {
+          document.getElementById("side-panel")!.classList.remove("fixed");
+          document.getElementById("side-panel")!.classList.remove("top-[110px]");
+          document.getElementById("event-drilldown-details-page")!.classList.remove("ml-[296px]");
+        }
       }
     };
 
@@ -93,7 +96,7 @@ export default function EventPage({ params }: EventPageProps) {
   }, []);
 
   return (
-    <div className="ml-14 mt-16">
+    <div className="sm:ml-14 mt-16">
       <OrganiserNavbar currPage="EventDrilldown" />
       <EventDrilldownBanner
         name={eventName}
@@ -102,7 +105,7 @@ export default function EventPage({ params }: EventPageProps) {
         vacancy={eventVacancy}
         loading={loading}
       />
-      <div className="p-10">
+      <div className="sm:p-10">
         <EventDrilldownStatBanner
           loading={loading}
           eventAccessCount={eventAccessCount}
@@ -110,7 +113,22 @@ export default function EventPage({ params }: EventPageProps) {
           eventCapacity={eventCapacity}
           eventPrice={eventPrice}
         />
-        <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
+        <div className="flex sm:hidden">
+          {["Details", "Attendees", "Share"].map((tab) => {
+            return (
+              <button
+                className={`px-2 py-2 text-center overflow-hidden rounded-xl text-xs basis-1/3 ${
+                  currSidebarPage === tab ? "bg-gray-300" : ""
+                }`}
+                onClick={() => {setCurrSidebarPage(tab)}}
+              >
+                {tab}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
           <div id="side-panel" className="z-20">
             <EventDrilldownSidePanel
               loading={loading}
@@ -120,7 +138,7 @@ export default function EventPage({ params }: EventPageProps) {
               eventStartDate={eventStartDate}
             />
           </div>
-          <div id="event-drilldown-details-page" className="w-full">
+          <div id="event-drilldown-details-page" className="w-full mb-20 sm:mb-0">
             {currSidebarPage === "Details" && (
               <>
                 <EventDrilldownDetailsPage
@@ -137,7 +155,7 @@ export default function EventPage({ params }: EventPageProps) {
                 <ShareModal />
               </>
             )}
-            {currSidebarPage === "Manage Attendees" && (
+            {currSidebarPage === "Attendees" && (
               <EventDrilldownManageAttendeesPage
                 eventMetadata={eventMetadata}
                 eventId={eventId}
