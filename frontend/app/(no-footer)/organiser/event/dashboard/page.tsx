@@ -17,6 +17,7 @@ import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventC
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import {
   filterEventsByDate,
@@ -27,9 +28,8 @@ import {
   filterEventsByType,
 } from "@/services/src/filterService";
 import { Timestamp } from "firebase/firestore";
-import { SetStateAction, useEffect, useLayoutEffect, useState } from "react";
 import Image from "next/image";
-import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
+import { useEffect, useLayoutEffect, useState } from "react";
 
 export default function OrganiserDashboard() {
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
@@ -213,7 +213,7 @@ export default function OrganiserDashboard() {
               />
             </div>
             {loading ? (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 gap-y-2 2xl:gap-y-5 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
+              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-8 justify-items-center overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
                 {loadingEventDataList.map((event, eventIdx) => {
                   return (
                     <div className="w-full" key={eventIdx}>
@@ -248,7 +248,7 @@ export default function OrganiserDashboard() {
                 </div>
               </div>
             ) : (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-x-2 2xl:gap-x-5 gap-y-2 2xl:gap-y-5 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
+              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-6 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-auto">
                 {eventDataList
                   .sort((event1, event2) => {
                     if (event1.accessCount > event2.accessCount) {
