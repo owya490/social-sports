@@ -162,7 +162,7 @@ export default function Dashboard() {
           setEndLoading={setEndLoading}
         />
       </div>
-      <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit">
+      <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit z-50">
         <Alert open={showLoginSuccess} color="green">
           Successfully logged in!
         </Alert>
@@ -190,7 +190,7 @@ export default function Dashboard() {
               })}
             </div>
           ) : eventDataList.length === 0 ? (
-            <div className="flex justify-center">
+            <div className="flex justify-center z-10">
               <div>
                 <Image
                   src={noSearchResultLineDrawing}
