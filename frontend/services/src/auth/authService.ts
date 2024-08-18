@@ -26,13 +26,23 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
   try {
     // Create a new user with email and password
     userCredential = await createUserWithEmailAndPassword(auth, data.contactInformation.email, data.password);
-
+    authServiceLogger.info("Firebase Auth Object Created", {
+      email: data.contactInformation.email,
+      userId: userCredential.user.uid,
+    });
     const { password, ...userDataWithoutPassword } = data;
     // Save user data temporarily in your database
     await saveTempUserData(userCredential.user.uid, userDataWithoutPassword);
+    authServiceLogger.info("Temp User Data Created", {
+      email: data.contactInformation.email,
+      userId: userCredential.user.uid,
+    });
     // Send email verification
     await sendEmailVerification(userCredential.user, actionCodeSettings);
-    console.log("Email verification sent. Please verify your email before logging in.");
+    authServiceLogger.info("Email Verification sent", {
+      email: data.contactInformation.email,
+      userId: userCredential.user.uid,
+    });
   } catch (error) {
     console.error("Error during sign-up:", error);
     throw error;
@@ -59,7 +69,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
     authServiceLogger.info("User Object gotten in sign in workflow", { email, userId: userCredential.user.uid });
 
     if (!userCredential.user.emailVerified) {
-      authServiceLogger.warn("Email is not verified. Sending verification email.", { userId: userCredential.user.uid });
+      authServiceLogger.info("Email is not verified. Sending verification email.", { userId: userCredential.user.uid });
       await sendEmailVerification(userCredential.user, actionCodeSettings);
       throw new Error("Email is not verified. We have sent another Verification Email");
     } else {
@@ -70,7 +80,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
         return true; // User exists, sign-in successful
       } catch (error: unknown) {
         if (error instanceof UserNotFoundError) {
-          authServiceLogger.warn("User not found in public users. Attempting to retrieve temporary user data.", {
+          authServiceLogger.info("User not found in public users. Attempting to retrieve temporary user data.", {
             userId: userCredential.user.uid,
           });
 
