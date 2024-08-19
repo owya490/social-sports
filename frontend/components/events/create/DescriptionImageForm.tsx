@@ -20,14 +20,7 @@ export function DescriptionImageForm({
   setImagePreviewUrl,
   updateField,
 }: DescriptionImageFormProps) {
-  const [previousImages, setPreviousImages] = useState<string[]>([]);
-
-  // useEffect(() => {
-  //   // Fetch previous images from Firebase and set them in state
-  //   // fetchPreviousImagesFromFirebase().then((images) => {
-  //     setPreviousImages(images);
-  // //   });
-  // }, []);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const updateDescription = (e: string) => {
     updateField({
@@ -35,22 +28,40 @@ export function DescriptionImageForm({
     });
   };
 
-  // const fetchPreviousImagesFromFirebase = async () => {
-  //   // Fetch previous images from Firebase and return their URLs
-  //   // Example: You can use Firebase Firestore or Firebase Realtime Database to store image URLs
-  //   const images = await fetch('YOUR_FIREBASE_IMAGE_URLS_ENDPOINT');
-  //   const data = await images.json();
-  //   return data.urls;
-  // };
+  // Validate image type
+  const validateImage = (file: File) => {
+    const validTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (validTypes.includes(file.type)) {
+      return true;
+    } else {
+      setErrorMessage("Please upload a valid image file (jpg, png, gif).");
+      return false;
+    }
+  };
 
-  // const handleImageSelection = (imageUrl: string) => {
-  //   // Set the selected image URL as the preview URL
-  //   setImagePreviewUrl(imageUrl);
-  //   // Optionally, you can set the image field in your form data
-  //   updateField({
-  //     image: undefined, // Clear the image field since the user selected a previous image
-  //   });
-  // };
+  // Handle file input change
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      let validFile: File | undefined;
+      let fileList = Array.from(e.target.files);
+      
+      for (const file of fileList) {
+        if (validateImage(file)) {
+          // Set the first valid file and break
+          validFile = file;
+          break;
+        }
+      }
+
+      if (validFile) {
+        setErrorMessage(null);
+        setImagePreviewUrl(URL.createObjectURL(validFile));
+        updateField({
+          image: validFile,
+        });
+      }
+    }
+  };
 
   return (
     <FormWrapper>
@@ -71,37 +82,16 @@ export function DescriptionImageForm({
             {imagePreviewUrl !== "" && (
               <Image src={imagePreviewUrl} width={0} height={0} alt="imagePreview" className="h-72 w-fit p-4" />
             )}
-            <div className="flex flex-wrap mt-4">
-              {/* {previousImages.map((imageUrl, index) => (
-                <div
-                  key={index}
-                  className="cursor-pointer mr-4 mb-4"
-                  onClick={() => handleImageSelection(imageUrl)}
-                >
-                  <Image
-                    src={imageUrl}
-                    width={100}
-                    height={100}
-                    alt={`Previous Image ${index}`}
-                    className="rounded-md"
-                  />
-                </div>
-              ))} */}
-            </div>
+            <div className="flex flex-wrap mt-4"></div>
             <input
               className="rounded-md mt-4 ml-4"
               accept="image/*"
               type="file"
-              onChange={(e) => {
-                if (e.target.files !== null) {
-                  setImagePreviewUrl(URL.createObjectURL(e.target.files[0]));
-                  updateField({
-                    image: e.target.files[0],
-                  });
-                }
-              }}
+              multiple // Allow multiple files
+              onChange={handleFileChange}
             />
           </div>
+          {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
         </div>
       </div>
     </FormWrapper>

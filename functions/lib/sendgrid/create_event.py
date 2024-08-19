@@ -2,19 +2,19 @@ import os
 import uuid
 from dataclasses import dataclass
 
-from firebase_functions import https_fn
+from firebase_functions import https_fn, options
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
 from lib.sendgrid.commons import get_user_data, get_user_email
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, Asm
-
 from lib.sendgrid.constants import (
     CREATE_EVENT_EMAIL_TEMPLATE_ID,
     SENDGRID_API_KEY,
     SENDGRID_UNSUBSCRIBE_GROUP_ID,
 )
+from lib.utils.priceUtils import centsToDollars
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Asm
 
 
 @dataclass
@@ -29,7 +29,12 @@ class SendGridCreateEventRequest:
             raise ValueError("Visibility must be provided as a string.")
 
 
-@https_fn.on_call(region="australia-southeast1")
+@https_fn.on_call(
+    cors=options.CorsOptions(
+        cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["post"]
+    ),
+    region="australia-southeast1",
+)
 def send_email_on_create_event(req: https_fn.CallableRequest):
     uid = str(uuid.uuid4())
     logger = Logger(f"sendgrid_create_event_logger_{uid}")
@@ -45,7 +50,6 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
         )
         return https_fn.Response(status=400)
 
-    # TODO add fields for public private + maybe add retries as maybe consistency issues due to firebase update, but email is send prior
     maybe_event_data = (
         db.collection(f"Events/Active/{request_data.visibility}")
         .document(request_data.eventId)
@@ -60,12 +64,11 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
     event_data = maybe_event_data.to_dict()
     organiser_id = event_data.get("organiserId")
 
-    organiser_data = get_user_data(organiser_id)
-
     try:
+        organiser_data = get_user_data(organiser_id)
         email = get_user_email(organiser_id, organiser_data)
     except Exception as e:
-        logger.error(f"Error occured in getting organiser email.", e)
+        logger.error(f"Error occurred in getting organiser email.", e)
         return https_fn.Response(status=400)
 
     try:
@@ -75,10 +78,16 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
             to_emails=email,
             subject=subject,
         )
-        start_date: Timestamp = event_data.get("startDate").timestamp_pb()
-        end_date: Timestamp = event_data.get("endDate").timestamp_pb()
-        start_date_string = start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
-        end_date_string = end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
+
+        start_date: Timestamp = event_data.get("startDate", Timestamp()).timestamp_pb()
+        end_date: Timestamp = event_data.get("endDate", Timestamp()).timestamp_pb()
+
+        start_date_string = (
+            start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M") if start_date else "N/A"
+        )
+        end_date_string = (
+            end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M") if end_date else "N/A"
+        )
 
         message.dynamic_template_data = {
             "first_name": organiser_data.get("firstName"),
@@ -87,27 +96,22 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
             "event_startDate": start_date_string,
             "event_endDate": end_date_string,
             "event_sport": event_data.get("sport"),
-            "event_price": event_data.get("price"),
+            "event_price": centsToDollars(event_data.get("price")),
             "event_capacity": event_data.get("capacity"),
             "event_isPrivate": request_data.visibility,
         }
 
         message.template_id = CREATE_EVENT_EMAIL_TEMPLATE_ID
+        message.asm = Asm(group_id=SENDGRID_UNSUBSCRIBE_GROUP_ID)
 
-        message.asm = Asm(
-            group_id=SENDGRID_UNSUBSCRIBE_GROUP_ID 
-        )
-
-        # TODO possibly either move this to common or make sendgrid service/ client in python
         sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
 
-        # Normally sendgrid return 202, reqeust in progress, but any 2XX response is acceptable.
         if not (response.status_code >= 200 and response.status_code < 300):
-            raise Exception(f"Sendgrid failed to send message. e={response.body}")
+            raise Exception(f"SendGrid failed to send message. e={response.body}")
 
         return https_fn.Response(
-            status=200, headers={"Access-Control-Allow-Origin", "*"}
+            status=200, headers={"Access-Control-Allow-Origin": "*"}
         )
     except Exception as e:
         logger.error(
