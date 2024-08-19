@@ -10,8 +10,6 @@ export default function ResetPassword() {
   const [resetSuccess, setResetSuccess] = useState(false);
   const [resetFailed, setResetFailed] = useState(false);
 
-  const router = useRouter();
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 

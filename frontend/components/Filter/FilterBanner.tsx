@@ -50,12 +50,11 @@ interface FilterBannerProps {
   setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
   triggerFilterApply: boolean | undefined;
   endLoading: boolean | undefined;
-  setEndLoading: (state: boolean | undefined) => void;
+  setEndLoading: (_state: boolean | undefined) => void;
 }
 
 export default function FilterBanner({
   eventDataList,
-  allEventsDataList,
   setEventDataList,
   srcLocation,
   setSrcLocation,

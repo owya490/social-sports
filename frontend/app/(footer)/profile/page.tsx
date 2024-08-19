@@ -11,7 +11,7 @@ import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
 import Tick from "@svgs/Verified_tick.png";
-import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, getMetadata, getStorage, ref } from "firebase/storage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";

@@ -4,7 +4,9 @@ import { BasicData } from "../events/create/forms/BasicForm";
 
 interface AutocompleteFormProps {
   location: string;
+  /* eslint-disable no-unused-vars */
   updateField: (fields: Partial<BasicData>) => void;
+  /* eslint-disable no-unused-vars */
 }
 
 const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateField }) => {

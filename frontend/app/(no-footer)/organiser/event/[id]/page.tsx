@@ -27,7 +27,6 @@ interface EventPageProps {
 //brians
 export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
-  const [eventData, setEventData] = useState<EventData>();
   const [loading, setLoading] = useState<boolean>(true);
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());

@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
-import { CollectionPaths, EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
+import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 
 // const router = useRouter();
