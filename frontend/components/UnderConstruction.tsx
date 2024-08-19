@@ -1,10 +1,8 @@
 // components/UnderConstruction.tsx
 
-import React from "react";
-
 const UnderConstruction = () => {
   return (
-    <div className="text-center text-5xl font-semibold flex justify-center px-20 py-[30vh]">
+    <div className="text-center text-5xl font-semibold flex justify-center mx-auto py-[30vh]">
       🚧 This page is still under construction 🚧
     </div>
   );

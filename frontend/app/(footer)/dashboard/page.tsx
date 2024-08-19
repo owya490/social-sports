@@ -199,7 +199,6 @@ export default function Dashboard() {
                   height={300}
                   className="opacity-60"
                 />
-
                 <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
                   Sorry, we couldn&apos;t find any results
                 </div>

@@ -4,7 +4,7 @@ import UnderConstruction from "@/components/UnderConstruction";
 const GalleryPage = () => {
   return (
     <div>
-      <div className="ml-14 mt-16">
+      <div className="sm:ml-14 sm:mt-16">
         <div className="max-w-5xl lg:mx-auto">
           <OrganiserNavbar currPage="Gallery" />
           <UnderConstruction />
