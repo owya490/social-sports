@@ -96,6 +96,7 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
             location={form.location}
             price={form.price}
             vacancy={form.capacity}
+            isPreview={true} // Pass true to make it non-clickable
           />
         </div>
       </div>
