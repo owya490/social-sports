@@ -65,6 +65,10 @@ export function tryGetAllActivePublicEventsFromLocalStorage(currentDate: Date) {
   }
 }
 
+export function bustEventsLocalStorageCache() {
+  localStorage.removeItem(LocalStorageKeys.LastFetchedEventData)
+}
+
 // Function to retrieve all events
 export async function getAllEventsFromCollectionRef(
   eventCollectionRef: CollectionReference<DocumentData, DocumentData>

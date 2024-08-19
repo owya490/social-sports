@@ -24,11 +24,11 @@ import {
 } from "@/services/src/datetimeUtils";
 import { updateEventById } from "@/services/src/events/eventsService";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
+import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import DescriptionRichTextEditor from "../events/create/DescriptionRichTextEditor";
-import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 
 interface EventDrilldownDetailsPageProps {
   loading: boolean;
@@ -228,7 +228,7 @@ const EventDrilldownDetailsPage = ({
 
   const handleManualNewEditPriceUpdate = (price: number) => {
     setNewEditPrice(dollarsToCents(price));
-  }
+  };
 
   const handlePriceUpdate = async () => {
     setPrice(newEditPrice);
@@ -539,7 +539,7 @@ const EventDrilldownDetailsPage = ({
                     </div>
                   ) : (
                     <div className="mt-2">
-                      ${newEditPrice}
+                      ${displayPrice(newEditPrice)}
                       <PencilSquareIcon
                         className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
                         onClick={() => {
