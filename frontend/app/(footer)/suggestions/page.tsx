@@ -6,7 +6,7 @@ import LightBulbIcon from "@/svgs/LightBulbIcon";
 import { useState } from "react";
 
 // Define the type for template parameters
-type TemplateParams = {
+type SuggestionsTemplateParams = {
   firstName: string;
   lastName: string;
   email: string;
@@ -24,7 +24,7 @@ export default function Suggestions() {
     e.preventDefault();
     setIsLoading(true);
 
-    const templateParams: TemplateParams = {
+    const templateParams: SuggestionsTemplateParams = {
       firstName,
       lastName,
       email,

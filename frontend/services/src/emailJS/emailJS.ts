@@ -3,15 +3,14 @@ import { Logger } from "@/observability/logger";
 
 export const emailJSLogger = new Logger("emailJSLogger");
 
-// Define the type for TemplateParams using Record
-type TemplateParams = Record<string, string>;
+type SuggestionsTemplateParams = Record<string, string>;
 
 // Configuration for EmailJS
 const serviceId = process.env.NEXT_PUBLIC_EMAILJS_PROD_SERVICE_ID;
 const templateId = process.env.NEXT_PUBLIC_EMAILJS_PROD_TEMPLATE_ID;
 const userId = process.env.NEXT_PUBLIC_EMAILJS_PROD_USER_ID;
 
-export const sendEmail = async (templateParams: TemplateParams) => {
+export const sendEmail = async (templateParams: SuggestionsTemplateParams) => {
   if (!serviceId || !templateId || !userId) {
     emailJSLogger.error("Missing necessary environment variables for EmailJS.");
     throw new Error("Missing necessary environment variables for EmailJS.");
