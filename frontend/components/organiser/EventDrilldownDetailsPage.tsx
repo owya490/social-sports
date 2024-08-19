@@ -345,7 +345,7 @@ const EventDrilldownDetailsPage = ({
         <div className="text-organiser-title-gray-text font-bold">Event Details</div>
         <div className={`text-sm flex flex-col mt-4 ${editStartDate ? "space-y-2" : ""}`}>
           <div className="px-2 flex flex-row space-x-2">
-            <CalendarDaysIcon className="w-4" />
+            <CalendarDaysIcon className="w-4 shrink-0" />
             <div>
               {loading ? (
                 <Skeleton
@@ -400,7 +400,7 @@ const EventDrilldownDetailsPage = ({
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            <ClockIcon className="w-4 mt-2" />
+            <ClockIcon className="w-4 mt-2 shrink-0" />
             <div>
               {loading ? (
                 <Skeleton
@@ -457,7 +457,7 @@ const EventDrilldownDetailsPage = ({
             <div></div>
           )}
           <div className="px-2 flex flex-row space-x-2">
-            <MapPinIcon className="w-4 mt-2" />
+            <MapPinIcon className="w-4 mt-2 shrink-0" />
             <div>
               {loading ? (
                 <Skeleton
@@ -490,7 +490,7 @@ const EventDrilldownDetailsPage = ({
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            <CurrencyDollarIcon className="w-4 mt-2" />
+            <CurrencyDollarIcon className="w-4 mt-2 shrink-0" />
             <div>
               {loading ? (
                 <Skeleton
