@@ -8,6 +8,7 @@ import { Slider } from "@material-tailwind/react";
 import { Fragment } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../../components/ListBox";
+import { InvertedHighlightButton } from "../elements/HighlightButton";
 
 export enum SortByCategory {
   HOT, // eslint-disable-line
@@ -172,14 +173,10 @@ export default function FilterDialog({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={openModal}
-        className="text-black flex items-center border border-black px-1 md:px-3 rounded-lg h-10 ml-auto"
-      >
+      <InvertedHighlightButton onClick={openModal} className="!flex !items-center px-1 !md:px-3 !h-10 !ml-auto">
         <p className="hidden md:block">Filters</p>
-        <AdjustmentsHorizontalIcon className="w-7 ml-1" />
-      </button>
+        <AdjustmentsHorizontalIcon className="w-7 md:ml-1" />
+      </InvertedHighlightButton>
 
       <Transition appear show={isFilterModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -265,7 +262,7 @@ export default function FilterDialog({
                         </p>
 
                         <Slider
-                          color="blue"
+                          color="amber"
                           className="h-1 z-0"
                           step={1}
                           min={0}
@@ -302,7 +299,7 @@ export default function FilterDialog({
                             : maxProximitySliderValue + "km"}
                         </p>
                         <Slider
-                          color="blue"
+                          color="amber"
                           className="h-1 z-0"
                           step={1}
                           min={0}
@@ -330,7 +327,7 @@ export default function FilterDialog({
                     </button>
                     <button
                       type="button"
-                      className="ml-auto inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      className="ml-auto inline-flex justify-center rounded-md bg-highlight-yellow  px-4 py-2 font-semibold text-white border-2 border-highlight-yellow hover:bg-white hover:text-highlight-yellow focus-visible:ring-offset-2 transition-colors duration-300 transform"
                       onClick={applyFilters}
                     >
                       Apply Filters!

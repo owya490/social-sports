@@ -1,12 +1,12 @@
 import { handleSignOut } from "@/services/src/auth/authService";
 import { auth, storage } from "@/services/src/firebase";
 import { sleep } from "@/utilities/sleepUtil";
-import { Menu, Transition } from "@headlessui/react";
+import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
-  ArrowLeftOnRectangleIcon,
-  Cog8ToothIcon,
+  ArrowLeftStartOnRectangleIcon,
   LifebuoyIcon,
   LightBulbIcon,
+  PencilSquareIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { onAuthStateChanged } from "firebase/auth";
@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
 import { useUser } from "../utility/UserContext";
 
@@ -30,7 +31,7 @@ export default function ProfilePic() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
+      if (user && auth.currentUser?.emailVerified) {
         setLoggedIn(true);
       } else {
         setLoggedIn(false);
@@ -64,9 +65,10 @@ export default function ProfilePic() {
     router.push("/");
   };
 
+  //TODO: Refactor !loggedin as hard to read
   return loading ? (
     <div className="flex ml-auto">
-      <div className="mr-4">
+      <div className="mr-4 hidden md:block">
         <LoadingSkeletonSmall />
       </div>
       <div>
@@ -83,36 +85,29 @@ export default function ProfilePic() {
   ) : (
     <div className="ml-auto flex items-center">
       {loggedIn && (
-        <button
-          className="border border-black px-4 py-2 rounded-lg mx-3 max-h-[40px] hidden lg:block whitespace-nowrap hover:bg-black hover:text-white"
+        <HighlightButton
+          text="Create Event"
           onClick={() => {
             router.push("/event/create");
           }}
-        >
-          Create Event
-        </button>
+          className="mx-3 hidden lg:block"
+        />
       )}
       {!loggedIn && (
         <div className="flex">
-          <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block bg-black text-white whitespace-nowrap ml-4 hover:bg-white hover:text-black"
-            onClick={() => router.push("/login")}
-          >
-            Login
-          </button>
-          <button
-            className="border border-black px-4 py-2 rounded-lg max-h-[40px] lg:block whitespace-nowrap ml-4 hidden sm:block hover:bg-black hover:text-white"
+          <HighlightButton text="Login" onClick={() => router.push("/login")} className="px-6 ml-3" />
+          <InvertedHighlightButton
+            text="Register"
             onClick={() => router.push("/register")}
-          >
-            Register
-          </button>
+            className="hidden lg:block ml-4"
+          />
         </div>
       )}
       {loggedIn && (
         <div className="flex items-center">
           <Menu as="div" className="relative inline-block text-left">
             <div className="flex items-centers">
-              <Menu.Button className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
+              <MenuButton className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
                 <Image
                   priority
                   src={user?.profilePicture || profilePictureURL}
@@ -121,7 +116,7 @@ export default function ProfilePic() {
                   height={0}
                   className="object-cover h-10 w-10"
                 />
-              </Menu.Button>
+              </MenuButton>
             </div>
             <Transition
               as={Fragment}
@@ -132,48 +127,50 @@ export default function ProfilePic() {
               leaveFrom="transform opacity-100 scale-100"
               leaveTo="transform opacity-0 scale-95"
             >
-              <Menu.Items className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                {loggedIn && (
-                  <div className="px-1 py-1">
-                    <Menu.Item>
-                      {({ active }) => (
-                        <Link
-                          href="/profile"
-                          className={`${
-                            active ? "text-white bg-black" : "text-black"
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                        >
-                          <UserCircleIcon className="h-5 mr-2" />
-                          Profile
-                        </Link>
-                      )}
-                    </Menu.Item>
-                    <Menu.Item>
-                      {({ active }) => (
-                        <Link
-                          href="/settings"
-                          className={`${
-                            active ? "text-white bg-black" : "text-black"
-                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                        >
-                          <Cog8ToothIcon className="h-5 mr-2" />
-                          Settings
-                        </Link>
-                      )}
-                    </Menu.Item>
-                  </div>
-                )}
+              <MenuItems className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <div className="px-1 py-1">
+                  {loggedIn && (
+                    <div>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <Link
+                            href="/profile"
+                            className={`${
+                              active ? "text-white bg-highlight-yellow" : "text-black"
+                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          >
+                            <UserCircleIcon className="h-5 mr-2" />
+                            Profile
+                          </Link>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <Link
+                            href="/organiser/dashboard"
+                            className={`${
+                              active ? "text-white bg-highlight-yellow" : "text-black"
+                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          >
+                            <LifebuoyIcon className="h-5 mr-2" />
+                            Organiser Hub
+                          </Link>
+                        )}
+                      </Menu.Item>
+                    </div>
+                  )}
+                </div>
                 <div className="px-1 py-1">
                   <Menu.Item>
                     {({ active }) => (
                       <Link
-                        href="/help"
+                        href="/event/create"
                         className={`${
-                          active ? "text-white bg-black" : "text-black"
+                          active ? "text-white bg-highlight-yellow" : "text-black"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
-                        <LifebuoyIcon className="h-5 mr-2" />
-                        Help Centre
+                        <PencilSquareIcon className="h-5 mr-2" />
+                        Create Event
                       </Link>
                     )}
                   </Menu.Item>
@@ -182,7 +179,7 @@ export default function ProfilePic() {
                       <Link
                         href="/suggestions"
                         className={`${
-                          active ? "text-white bg-black" : "text-black"
+                          active ? "text-white bg-highlight-yellow" : "text-black"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LightBulbIcon className="h-5 mr-2" />
@@ -191,24 +188,24 @@ export default function ProfilePic() {
                     )}
                   </Menu.Item>
                 </div>
-                {loggedIn && (
-                  <div className="px-1 py-1">
+                <div className="px-1 py-1">
+                  {loggedIn && (
                     <Menu.Item>
                       {({ active }) => (
                         <div
                           onClick={handleLogOut}
                           className={`${
-                            active ? "text-white bg-black" : "text-black"
+                            active ? "text-white bg-highlight-yellow" : "text-black"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer`}
                         >
-                          <ArrowLeftOnRectangleIcon className="h-5 mr-2" />
+                          <ArrowLeftStartOnRectangleIcon className="h-5 mr-2" />
                           Log Out
                         </div>
                       )}
                     </Menu.Item>
-                  </div>
-                )}
-              </Menu.Items>
+                  )}
+                </div>
+              </MenuItems>
             </Transition>
           </Menu>
         </div>

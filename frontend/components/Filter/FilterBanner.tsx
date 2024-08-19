@@ -11,7 +11,7 @@ import {
 import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/locationUtils";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import ChevronRightButton from "../utility/ChevronRightButton";
+import ChevronRightButton from "../elements/ChevronRightButton";
 import BadmintonImage from "./../../public/images/badminton.png";
 import BaseballImage from "./../../public/images/baseball.png";
 import BasketballImage from "./../../public/images/basketball.png";
@@ -48,7 +48,9 @@ interface FilterBannerProps {
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
   srcLocation: string;
   setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
-  triggerFilterApply: boolean;
+  triggerFilterApply: boolean | undefined;
+  endLoading: boolean | undefined;
+  setEndLoading: (state: boolean | undefined) => void;
 }
 
 export default function FilterBanner({
@@ -58,6 +60,8 @@ export default function FilterBanner({
   srcLocation,
   setSrcLocation,
   triggerFilterApply,
+  endLoading,
+  setEndLoading,
 }: FilterBannerProps) {
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
@@ -202,9 +206,19 @@ export default function FilterBanner({
     setEventDataList([...filteredEventDataList]);
     closeModal();
   }
+
   useEffect(() => {
-    applyFilters(selectedSport);
+    if (triggerFilterApply !== undefined) {
+      applyFilters(selectedSport).finally(() => {
+        if (endLoading === undefined) {
+          setEndLoading(true);
+        } else {
+          setEndLoading(!endLoading);
+        }
+      });
+    }
   }, [triggerFilterApply]);
+
   return (
     <div className="pt-16 bg-white px-4 sm:px-0 screen-width-dashboard">
       <div className="h-20 flex items-center mt-2">

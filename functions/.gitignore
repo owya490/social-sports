@@ -1,5 +1,11 @@
-*/__pycache__/*
-venv/
-functions_key.json
+/venv
+/__pycache__/
+functions_key*
 *.log
+/lib/__pycache__/
 *__pycache__*
+__pycache__/
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class

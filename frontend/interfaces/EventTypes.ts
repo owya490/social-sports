@@ -1,10 +1,14 @@
 import { Timestamp } from "firebase/firestore";
-import { EmptyUserData, UserData } from "./UserTypes";
+import { EmptyUserData, UserData, UserId } from "./UserTypes";
 
 export type EventId = string;
+export type StripeCheckoutSessionId = string;
+export type OrderId = string;
 
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;
+
+export type EventAttendees = { [emailHash: string]: number };
 
 interface AbstractEventData {
   startDate: Timestamp;
@@ -22,13 +26,16 @@ interface AbstractEventData {
   name: string;
   description: string;
   nameTokens?: string[]; // Assuming "rich text field" is a string
+  locationTokens?: string[];
   image: string; // Assuming you store the image URL or path as a string
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
   isPrivate: boolean;
-  attendees: { email: string }[];
+  attendees: Record<string, number>; // Key is Email and Number is amount of tickets associated with the email
+  attendeesMetadata: Record<string, { names: string[]; phones: string[] }>; // keeping track of an array with names and phones provided
   accessCount: number;
   sport: string;
+  paymentsActive: boolean;
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -62,8 +69,53 @@ export const EmptyEventData: EventData = {
   image: "",
   eventTags: [],
   isActive: false,
-  attendees: [],
+  attendees: {},
+  attendeesMetadata: {},
   accessCount: 0,
   sport: "",
   isPrivate: false,
+  paymentsActive: false,
 };
+
+export interface EventMetadata {
+  eventId?: EventId;
+  purchaserMap: Record<EmailHash, Purchaser>;
+  completeTicketCount: number;
+  completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
+  organiserId: UserId;
+  orderIds: OrderId[];
+}
+
+export const EmptyEventMetadata: EventMetadata = {
+  eventId: "",
+  purchaserMap: { "": { email: "", attendees: { "": { phone: "", ticketCount: 0 } }, totalTicketCount: 0 } },
+  completeTicketCount: 0,
+  completedStripeCheckoutSessionIds: [],
+  organiserId: "",
+  orderIds: [],
+};
+
+export interface Purchaser {
+  email: string;
+  attendees: Record<Name, Attendee>;
+  totalTicketCount: number;
+}
+
+export const EmptyAttendee: Attendee = {
+  phone: "",
+  ticketCount: 0,
+};
+
+export const EmptyPurchaser: Purchaser = {
+  email: "",
+  attendees: {},
+  totalTicketCount: 0,
+};
+
+export interface Attendee {
+  phone: string;
+  ticketCount: number;
+}
+
+export type Name = string;
+type EmailHash = string;

@@ -1,7 +1,7 @@
 from datetime import date
 
 from firebase_admin import firestore
-from firebase_functions import https_fn, options
+from firebase_functions import https_fn, options, scheduler_fn
 from google.cloud import firestore
 from google.cloud.firestore import DocumentReference, Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -65,10 +65,8 @@ def get_and_move_private_inactive_events(today: date):
 
 
 
-@https_fn.on_request(cors=options.CorsOptions(cors_origins="*", cors_methods=["post"]))
-def move_inactive_events(req: https_fn.Request) -> https_fn.Response:
-  if (not verify_access_token_from_http_request(get_token_from_request_headers(req))):
-    return https_fn.Response(status=401)
+@scheduler_fn.on_schedule(schedule="every day 00:00", region="australia-southeast1")
+def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   
   today = date.today()
 

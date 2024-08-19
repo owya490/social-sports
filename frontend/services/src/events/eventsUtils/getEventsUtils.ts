@@ -1,15 +1,22 @@
 import { EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { CollectionReference, DocumentData, Timestamp, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  CollectionReference,
+  DocumentData,
+  QueryDocumentSnapshot,
+  Timestamp,
+  doc,
+  getDoc,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
-import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
+import { CollectionPaths, EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
-import { useRouter } from "next/navigation";
 
 // const router = useRouter();
 
-export async function findEventDoc(eventId: string): Promise<any> {
+export async function findEventDoc(eventId: string): Promise<QueryDocumentSnapshot<DocumentData, DocumentData>> {
   try {
     // Search through the paths
     for (const path of EVENT_PATHS) {
@@ -35,7 +42,7 @@ export async function findEventDoc(eventId: string): Promise<any> {
   }
 }
 
-export function tryGetAllActisvePublicEventsFromLocalStorage(currentDate: Date) {
+export function tryGetAllActivePublicEventsFromLocalStorage(currentDate: Date) {
   try {
     console.log("Trying to get Cached Active Public Events");
 
@@ -115,6 +122,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       eventTags: event.eventTags,
       isActive: event.isActive,
       attendees: event.attendees,
+      attendeesMetadata: event.attendeesMetadata,
       accessCount: event.accessCount,
       sport: event.sport,
       locationLatLng: {
@@ -122,6 +130,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
         lng: event.locationLatLng.lng,
       },
       isPrivate: event.isPrivate,
+      paymentsActive: event.paymentsActive,
     });
   });
   return eventsDataFinal;

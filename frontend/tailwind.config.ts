@@ -38,6 +38,9 @@ const config: Config = {
         "dark-gray-text": "#404040",
         "title-gray-text": "#969696",
       },
+      highlight: {
+        "yellow": "#F2B705",
+      }
     },
   },
   plugins: [require("@tailwindcss/forms")],
