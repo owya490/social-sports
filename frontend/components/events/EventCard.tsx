@@ -8,6 +8,7 @@ import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
+import { displayPrice } from "@/utilities/priceUtils";
 
 interface EventCardProps {
   eventId: EventId;

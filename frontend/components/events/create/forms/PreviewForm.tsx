@@ -2,6 +2,7 @@ import { FormData } from "@/app/(footer)/event/create/page";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
+import { displayPrice } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 
 type BasicData = {
@@ -61,7 +62,7 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
 
           <div>
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Price</div>
-            <p className="text-m">${form.price}</p>
+            <p className="text-m">${displayPrice(form.price)}</p>
           </div>
 
           <div>
