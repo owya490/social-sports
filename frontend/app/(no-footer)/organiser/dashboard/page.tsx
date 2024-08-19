@@ -41,7 +41,7 @@ export default function Dashboard() {
   }, [user]);
 
   return (
-    <div className="pt-16 pl-14 max-h-screen">
+    <div className="sm:pt-16 sm:pl-14 max-h-screen">
       <OrganiserNavbar currPage="Dashboard" />
       <div className="py-16 flex justify-center">
         <div>
