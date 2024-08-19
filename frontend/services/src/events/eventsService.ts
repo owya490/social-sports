@@ -89,7 +89,7 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
   }
 }
 
-export async function createEventMetadata(batch: WriteBatch, eventId: EventId, data: NewEventData) {
+export function createEventMetadata(batch: WriteBatch, eventId: EventId, data: NewEventData) {
   try {
     const eventMetadata = extractEventsMetadataFields(data);
     const docRef = doc(db, CollectionPaths.EventsMetadata, eventId);
