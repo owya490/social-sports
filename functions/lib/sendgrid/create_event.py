@@ -13,7 +13,7 @@ from sendgrid.helpers.mail import Mail, Asm
 from lib.sendgrid.constants import (
     CREATE_EVENT_EMAIL_TEMPLATE_ID,
     SENDGRID_API_KEY,
-    YOUR_UNSUBSCRIBE_GROUP_ID,
+    SENDGRID_UNSUBSCRIBE_GROUP_ID,
 )
 
 
@@ -95,7 +95,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
         message.template_id = CREATE_EVENT_EMAIL_TEMPLATE_ID
 
         message.asm = Asm(
-            group_id=SENDGRID_UNSUBSCRIBE_GROUP_ID  # Replace with the actual unsubscribe group ID
+            group_id=SENDGRID_UNSUBSCRIBE_GROUP_ID 
         )
 
         # TODO possibly either move this to common or make sendgrid service/ client in python
