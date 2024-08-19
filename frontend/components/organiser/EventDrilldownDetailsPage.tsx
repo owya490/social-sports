@@ -28,6 +28,7 @@ import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import DescriptionRichTextEditor from "../events/create/DescriptionRichTextEditor";
+import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 
 interface EventDrilldownDetailsPageProps {
   loading: boolean;
@@ -224,6 +225,10 @@ const EventDrilldownDetailsPage = ({
       setNewEditPrice(eventPrice);
     }
   }, [eventPrice]);
+
+  const handleManualNewEditPriceUpdate = (price: number) => {
+    setNewEditPrice(dollarsToCents(price));
+  }
 
   const handlePriceUpdate = async () => {
     setPrice(newEditPrice);
@@ -501,12 +506,12 @@ const EventDrilldownDetailsPage = ({
                       <Input
                         type="number"
                         min="0"
-                        value={newEditPrice}
+                        value={displayPrice(newEditPrice)}
                         style={{
                           width: "100%",
                         }}
                         onChange={(e) => {
-                          setNewEditPrice(Number(e.target.value));
+                          handleManualNewEditPriceUpdate(parseFloat(e.target.value));
                         }}
                         crossOrigin="false"
                         label="Price"

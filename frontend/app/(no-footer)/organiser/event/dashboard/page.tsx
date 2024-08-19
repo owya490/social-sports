@@ -81,7 +81,7 @@ export default function OrganiserDashboard() {
 
     // Filter by PRICE
     let minPrice = minPriceValue !== DEFAULT_MIN_PRICE ? minPriceValue : 0;
-    let maxPrice = maxPriceValue !== DEFAULT_MAX_PRICE ? maxPriceValue : 9999;
+    let maxPrice = maxPriceValue !== DEFAULT_MAX_PRICE ? maxPriceValue : 999999;
 
     if (minPriceValue !== DEFAULT_MIN_PRICE || maxPriceValue !== DEFAULT_MAX_PRICE) {
       let newEventDataList = filterEventsByPrice([...filteredEventDataList], minPrice, maxPrice);

@@ -1,3 +1,4 @@
+import { displayPrice } from "@/utilities/priceUtils";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
 
@@ -29,7 +30,7 @@ const EventDrilldownStatBanner = ({
                 }}
               />
             ) : (
-              `$A${((eventCapacity - eventVacancy) * eventPrice).toFixed(2)}`
+              `$A${((eventCapacity - eventVacancy) * displayPrice(eventPrice)).toFixed(2)}`
             )}
           </div>
         </div>

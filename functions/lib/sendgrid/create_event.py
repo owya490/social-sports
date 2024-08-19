@@ -2,16 +2,16 @@ import os
 import uuid
 from dataclasses import dataclass
 
-from firebase_functions import https_fn
+from firebase_functions import https_fn, options
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
 from lib.sendgrid.commons import get_user_data, get_user_email
+from lib.sendgrid.constants import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
+                                    SENDGRID_API_KEY)
+from lib.utils.priceUtils import centsToDollars
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-
-from lib.sendgrid.constants import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
-                                              SENDGRID_API_KEY)
 
 
 @dataclass
@@ -26,7 +26,7 @@ class SendGridCreateEventRequest:
       raise ValueError("Visibility must be provided as a string.")
 
 
-@https_fn.on_call(region="australia-southeast1")
+@https_fn.on_call(cors=options.CorsOptions(cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
 def send_email_on_create_event(req: https_fn.CallableRequest):
   uid = str(uuid.uuid4())
   logger = Logger(f"sendgrid_create_event_logger_{uid}")
@@ -77,7 +77,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
       "event_startDate": start_date_string,
       "event_endDate": end_date_string,
       "event_sport": event_data.get("sport"),
-      "event_price": event_data.get("price"),
+      "event_price": centsToDollars(event_data.get("price")),
       "event_capacity": event_data.get("capacity"),
       "event_isPrivate": request_data.visibility
     }

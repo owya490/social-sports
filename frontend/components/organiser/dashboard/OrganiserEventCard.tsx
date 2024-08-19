@@ -6,6 +6,7 @@ import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import LoadingSkeletonOrganiserEventCard from "../../loading/LoadingSkeletonOrganiserEventCard";
+import { displayPrice } from "@/utilities/priceUtils";
 
 export interface OrganiserEventCardProps {
   eventId: EventId;
@@ -53,7 +54,7 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
                 </div>
                 <div className="flex items-center">
                   <CurrencyDollarIcon className="w-5" />
-                  <p className="ml-1 font-light text-sm">{`$${props.price} AUD per person`}</p>
+                  <p className="ml-1 font-light text-sm">{`$${displayPrice(props.price)} AUD per person`}</p>
                 </div>
               </div>
               <div className="flex items-center">

@@ -153,7 +153,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
     transaction.create(tickets_id_ref, {
       "eventId": event_id,
       "orderId": order_id_ref.id,
-      "price": item.price.unit_amount /100, # TODO change price from integer to cents SPORTSHUB-80
+      "price": item.price.unit_amount,
       "purchaseDate": purchase_time
     })
     ticket_list.append(tickets_id_ref.id)
