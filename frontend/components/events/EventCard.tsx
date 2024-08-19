@@ -67,11 +67,11 @@ export default function EventCard(props: EventCardProps) {
               </div>
               <div className="mt-4 mb-7 space-y-3">
                 <div className="flex items-center">
-                  <MapPinIcon className="w-5" />
+                  <MapPinIcon className="w-5 flex-shrink-0" />
                   <p className="ml-1 font-light text-sm whitespace-nowrap overflow-hidden">{props.location}</p>
                 </div>
                 <div className="flex items-center">
-                  <CurrencyDollarIcon className="w-5" />
+                  <CurrencyDollarIcon className="w-5 flex-shrink-0" />
                   <p className="ml-1 font-light text-sm">{`$${displayPrice(props.price)} AUD per person`}</p>
                 </div>
               </div>
