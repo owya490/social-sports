@@ -17,7 +17,7 @@ export default function Footer() {
             Create Event
           </Link>
         </ol>
-        <Link href="/event/create" className="ml-auto flex justify-center items-center">
+        <Link href="/suggestions" className="ml-auto flex justify-center items-center">
           <LightBulbIcon className="h-4 mr-1" />
           <p className="font-bold">Suggestions</p>
         </Link>
