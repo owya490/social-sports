@@ -28,8 +28,7 @@ export function DescriptionImageForm({
     });
   };
 
-  //to add more validTypes "image/yourtype"
-  //also update the ErrorMessage 
+  // Validate image type
   const validateImage = (file: File) => {
     const validTypes = ["image/jpeg", "image/png", "image/gif"];
     if (validTypes.includes(file.type)) {
@@ -37,6 +36,30 @@ export function DescriptionImageForm({
     } else {
       setErrorMessage("Please upload a valid image file (jpg, png, gif).");
       return false;
+    }
+  };
+
+  // Handle file input change
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      let validFile: File | undefined;
+      let fileList = Array.from(e.target.files);
+      
+      for (const file of fileList) {
+        if (validateImage(file)) {
+          // Set the first valid file and break
+          validFile = file;
+          break;
+        }
+      }
+
+      if (validFile) {
+        setErrorMessage(null);
+        setImagePreviewUrl(URL.createObjectURL(validFile));
+        updateField({
+          image: validFile,
+        });
+      }
     }
   };
 
@@ -64,15 +87,8 @@ export function DescriptionImageForm({
               className="rounded-md mt-4 ml-4"
               accept="image/*"
               type="file"
-              onChange={(e) => {
-                if (e.target.files !== null && validateImage(e.target.files[0])) {
-                  setErrorMessage(null); // Clear any previous error messages
-                  setImagePreviewUrl(URL.createObjectURL(e.target.files[0]));
-                  updateField({
-                    image: e.target.files[0],
-                  });
-                }
-              }}
+              multiple // Allow multiple files
+              onChange={handleFileChange}
             />
           </div>
           {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
