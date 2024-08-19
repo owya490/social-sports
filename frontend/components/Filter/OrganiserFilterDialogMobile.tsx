@@ -1,15 +1,25 @@
 "use client";
 
 import { EventData } from "@/interfaces/EventTypes";
-import { AdjustmentsHorizontalIcon, ChevronDownIcon, ChevronUpIcon, XMarkIcon } from "@heroicons/react/24/outline";
-
+import { Dialog, Transition } from "@headlessui/react";
+import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Fragment, useMemo, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
-import ListBox from "../ListBox";
-import { Transition, Dialog } from "@headlessui/react";
-import { Slider } from "@material-tailwind/react";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
-import { PROXIMITY_SLIDER_MAX_VALUE } from "./FilterDialog";
+import ListBox from "../ListBox";
+import {
+  DATE_ASCENDING_SORTBY_STRING,
+  DATE_DESCENDING_SORTBY_STRING,
+  DEFAULT_END_DATE,
+  DEFAULT_EVENT_TYPE,
+  DEFAULT_SEARCH,
+  DEFAULT_SORT_BY_CATEGORY,
+  DEFAULT_START_DATE,
+  HOT_SORTBY_STRING,
+  PRICE_ASCENDING_SORTBY_STRING,
+  PRICE_DESCENDING_SORTBY_STRING,
+  TOP_RATED_SORTBY_STRING,
+} from "./OrganiserFilterDialog";
 
 export enum SortByCategory {
   HOT,
@@ -20,27 +30,7 @@ export enum SortByCategory {
   DATE_DESCENDING,
 }
 
-export const DEFAULT_SORT_BY_CATEGORY = SortByCategory.HOT;
-export const HOT_SORTBY_STRING = "Hot";
-export const TOP_RATED_SORTBY_STRING = "Top Rated";
-export const PRICE_ASCENDING_SORTBY_STRING = "Price Ascending";
-export const PRICE_DESCENDING_SORTBY_STRING = "Price Descending";
-export const DATE_ASCENDING_SORTBY_STRING = "Date Ascending";
-export const DATE_DESCENDING_SORTBY_STRING = "Date Descending";
-
-export const DEFAULT_SEARCH = "";
-export const DEFAULT_EVENT_TYPE = "";
-export const DEFAULT_START_DATE = "";
-export const DEFAULT_END_DATE = "";
-export const defaultDateRange = {
-  startDate: DEFAULT_START_DATE,
-  endDate: DEFAULT_END_DATE,
-};
-export const DAY_START_TIME_STRING = " 00:00:00";
-export const DAY_END_TIME_STRING = " 23:59:59";
-export const EMPTY_LOCATION_STRING = "";
-
-interface OrganiserFilterDialogProps {
+interface OrganiserFilterDialogMobileProps {
   eventDataList: EventData[];
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
@@ -87,7 +77,7 @@ interface OrganiserFilterDialogProps {
   closeModal: () => void;
 }
 
-export default function OrganiserFilterDialog({
+export default function OrganiserFilterDialogMobile({
   eventDataList,
   allEventsDataList,
   setEventDataList,
@@ -111,7 +101,7 @@ export default function OrganiserFilterDialog({
   isFilterModalOpen,
   setIsFilterModalOpen,
   closeModal,
-}: OrganiserFilterDialogProps) {
+}: OrganiserFilterDialogMobileProps) {
   const [sortByKey, setSortByKey] = useState(0);
 
   const updateSortByKey = () => {
@@ -174,10 +164,17 @@ export default function OrganiserFilterDialog({
 
   function handleClearAll() {
     setSortByCategoryValue(DEFAULT_SORT_BY_CATEGORY);
+    setAppliedSortByCategoryValue(DEFAULT_SORT_BY_CATEGORY);
     updateSortByKey();
     setSearchValue(DEFAULT_SEARCH);
+    setAppliedSearchValue(DEFAULT_SEARCH);
     setEventTypeValue(DEFAULT_EVENT_TYPE);
+    setAppliedEventTypeValue(DEFAULT_EVENT_TYPE);
     setDateRange({
+      startDate: DEFAULT_START_DATE,
+      endDate: DEFAULT_END_DATE,
+    });
+    setAppliedDateRange({
       startDate: DEFAULT_START_DATE,
       endDate: DEFAULT_END_DATE,
     });
@@ -232,6 +229,7 @@ export default function OrganiserFilterDialog({
                       <h4 className="text-lg font-bold">Sort By</h4>
                       <div className="mt-2">
                         <ListBox
+                          key={sortByKey}
                           onChangeHandler={function (e: any): void {
                             //   throw new Error("Function not implemented.");
                             setSortByCategoryValue(e);
