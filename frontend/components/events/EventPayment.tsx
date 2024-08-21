@@ -57,7 +57,7 @@ export default function EventPayment(props: EventPaymentProps) {
             <div className="mb-6">
               <h2 className=" font-semibold">Location</h2>
               <div className="flex">
-                <MapPinIcon className="w-4 h-4 mr-2 lg:mt-1" />
+                <MapPinIcon className="w-4 h-4 mr-2 lg:mt-1 shrink-0" />
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(props.location)}`}
                   target="_blank"
@@ -72,7 +72,7 @@ export default function EventPayment(props: EventPaymentProps) {
             <div className="mb-6">
               <h2 className=" font-semibold">Price</h2>
               <div className="flex items-center font-light">
-                <CurrencyDollarIcon className="w-5 h-5 mr-2" />
+                <CurrencyDollarIcon className="w-5 h-5 mr-2 shrink-0" />
                 <p className="text-md mr-[5%] font-light">${displayPrice(props.price)} AUD per person</p>
               </div>
             </div>
@@ -158,17 +158,17 @@ export const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timest
     <>
       <h2 className=" font-semibold">Date and Time</h2>
       <div className="flex items-center">
-        <CalendarDaysIcon className="w-5 mr-2" />
+        <CalendarDaysIcon className="w-5 mr-2 shrink-0" />
         <p className="text-md mr-[5%] font-light">{timestampToDateString(startDate)}</p>
       </div>
       <div className="flex items-center">
-        <ClockIcon className="w-5 mr-2" />
+        <ClockIcon className="w-5 mr-2 shrink-0" />
         <p className="text-md mr-[5%] font-light">
           {timestampToTimeOfDay(startDate)} - {timestampToTimeOfDay(endDate)}
         </p>
       </div>
       <div className="flex items-center">
-        <PlayCircleIcon className="w-5 mr-2" />
+        <PlayCircleIcon className="w-5 mr-2 shrink-0" />
         <p className="text-md mr-[5%] font-light">
           {hours} hrs {minutes} mins
         </p>
@@ -182,20 +182,20 @@ export const DifferentDayEventDateTime = ({ startDate, endDate }: { startDate: T
     <>
       <h2 className=" font-semibold">Start Date</h2>
       <div className="flex items-center">
-        <CalendarDaysIcon className="w-5 mr-2" />
+        <CalendarDaysIcon className="w-5 mr-2 shrink-0" />
         <p className="text-md mr-[5%] font-light">{`${timestampToDateString(startDate)}`}</p>
       </div>
       <div className="flex items-center">
-        <ClockIcon className="w-5 mr-2" />
+        <ClockIcon className="w-5 mr-2 shrink-0" />
         <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(startDate)}`}</p>
       </div>
       <h2 className=" font-semibold">End Date</h2>
       <div className="flex items-center">
-        <CalendarDaysIcon className="w-5 mr-2" />
+        <CalendarDaysIcon className="w-5 mr-2 shrink-0" />
         <p className="text-md mr-[5%] font-light">{`${timestampToDateString(endDate)}`}</p>
       </div>
       <div className="flex items-center">
-        <ClockIcon className="w-5 mr-2" />
+        <ClockIcon className="w-5 mr-2 shrink-0" />
         <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(endDate)}`}</p>
       </div>
     </>

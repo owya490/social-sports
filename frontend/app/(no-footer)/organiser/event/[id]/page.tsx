@@ -133,7 +133,7 @@ export default function EventPage({ params }: EventPageProps) {
                   eventImage={eventImage}
                   eventId={eventId}
                 />
-                <ShareModal />
+                <ShareModal eventId={eventId} />
               </>
             )}
             {currSidebarPage === "Manage Attendees" && (

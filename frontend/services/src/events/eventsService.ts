@@ -28,8 +28,12 @@ import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./
 
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import * as crypto from "crypto";
 import { db } from "../firebase";
 import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
+import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
+import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
+import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -40,13 +44,11 @@ import {
 } from "./eventsUtils/commonEventsUtils";
 import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
 import {
+  bustEventsLocalStorageCache,
   findEventDoc,
   getAllEventsFromCollectionRef,
   tryGetAllActivePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
-import * as crypto from "crypto";
-import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
-import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -80,6 +82,11 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     }
     console.log("create event user", user);
     await updateUser(data.organiserId, user);
+
+    // We want to bust all our caches when we create a new event.
+    bustEventsLocalStorageCache();
+    bustUserLocalStorageCache();
+
     eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {

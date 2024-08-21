@@ -24,6 +24,10 @@ export function tryGetActivePublicUserDataFromLocalStorage(userId: UserId) {
   }
 }
 
+export function bustUserLocalStorageCache() {
+  localStorage.removeItem(UsersLocalStorageKeys.LastFetchedUserData);
+}
+
 export function isUsersDataInLocalStorage(userId: UserId): boolean {
   const usersDataObject: IUsersDataLocalStorage = JSON.parse(localStorage.getItem(UsersLocalStorageKeys.UsersData)!);
   return userId in usersDataObject;
