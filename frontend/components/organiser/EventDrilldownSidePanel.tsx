@@ -44,22 +44,22 @@ const EventDrilldownSidePanel = ({
         >
           Manage Attendees
         </div>
-        <div
+        {/* <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
             currSidebarPage === "Communication" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
           onClick={() => setCurrSidebarPage("Communication")}
         >
           Communication
-        </div>
-        <div
+        </div> */}
+        {/* <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
             currSidebarPage === "Share" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
           onClick={() => setCurrSidebarPage("Share")}
         >
           Share
-        </div>
+        </div> */}
       </div>
       <div className="h-40"></div>
     </div>

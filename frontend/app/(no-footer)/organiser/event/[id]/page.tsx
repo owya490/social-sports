@@ -114,13 +114,15 @@ export default function EventPage({ params }: EventPageProps) {
           eventPrice={eventPrice}
         />
         <div className="flex sm:hidden">
-          {["Details", "Attendees", "Share"].map((tab) => {
+          {["Details", "Attendees"].map((tab) => {
             return (
               <button
-                className={`px-2 py-2 text-center overflow-hidden rounded-xl text-xs basis-1/3 ${
+                className={`px-2 py-2 text-center overflow-hidden rounded-xl text-xs basis-1/2 ${
                   currSidebarPage === tab ? "bg-gray-300" : ""
                 }`}
-                onClick={() => {setCurrSidebarPage(tab)}}
+                onClick={() => {
+                  setCurrSidebarPage(tab);
+                }}
               >
                 {tab}
               </button>
