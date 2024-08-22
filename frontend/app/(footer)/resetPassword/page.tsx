@@ -1,7 +1,6 @@
 "use client";
 
 import { resetUserPassword } from "@/services/src/auth/authService";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert } from "@material-tailwind/react";
 
