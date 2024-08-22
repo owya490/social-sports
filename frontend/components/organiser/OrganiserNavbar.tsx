@@ -23,7 +23,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
   const { user } = useUser();
   const [eventDataList, setEventDataList] = useState<EventData[]>([EmptyEventData, EmptyEventData]);
   const [closestEvent, setClosestEvent] = useState<EventData | null>(null);
-  const [eventId, setEventId] = useState<string>("");
+  const [eventId, setEventId] = useState<string>("dashboard");
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -53,7 +53,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
 
         setEventDataList(futureEvents);
         setClosestEvent(futureEvents.length > 0 ? futureEvents[0] : null);
-        setEventId(futureEvents.length > 0 ? `organiser/event/${futureEvents[0].eventId}` : "event/create");
+        setEventId(futureEvents.length > 0 ? `${futureEvents[0].eventId}` : "dashboard");
       } catch (error) {
         console.error("getOrganiserEvents() Error: " + error);
       }
@@ -82,7 +82,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
           <CalendarIcon className="w-10 sm:w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
         <Link
-          href={`/${eventId}`}
+          href={`/organiser/event/${eventId}`}
           className={`flex justify-center self-center h-12 w-12 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "EventDrilldown" && "bg-organiser-darker-light-gray"
           }`}

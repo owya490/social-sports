@@ -101,17 +101,6 @@ export interface Purchaser {
   totalTicketCount: number;
 }
 
-export const EmptyAttendee: Attendee = {
-  phone: "",
-  ticketCount: 0,
-};
-
-export const EmptyPurchaser: Purchaser = {
-  email: "",
-  attendees: {},
-  totalTicketCount: 0,
-};
-
 export interface Attendee {
   phone: string;
   ticketCount: number;
