@@ -340,7 +340,11 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId): P
 
       // Check if email has is already in the purchaserMap
       if (!(attendeeEmailHash in eventMetadata.purchaserMap)) {
-        eventMetadata.purchaserMap[attendeeEmailHash] = EmptyPurchaser;
+        eventMetadata.purchaserMap[attendeeEmailHash] = {
+          email: "",
+          attendees: {},
+          totalTicketCount: 0,
+        };
         eventMetadata.purchaserMap[attendeeEmailHash].email = attendeeEmail;
       }
 
