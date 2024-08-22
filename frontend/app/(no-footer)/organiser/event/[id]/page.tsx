@@ -9,7 +9,7 @@ import EventDrilldownSharePage from "@/components/organiser/EventDrilldownShareP
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
-import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EmptyEventMetadata, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
@@ -47,7 +47,6 @@ export default function EventPage({ params }: EventPageProps) {
   useEffect(() => {
     getEventById(eventId)
       .then((event) => {
-        setEventData(event);
         setEventName(event.name);
         setEventStartDate(event.startDate);
         setEventEndDate(event.endDate);

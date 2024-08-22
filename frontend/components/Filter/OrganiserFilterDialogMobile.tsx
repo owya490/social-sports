@@ -73,7 +73,7 @@ interface OrganiserFilterDialogMobileProps {
     }>
   >;
 
-  applyFilters: () => Promise<void>;
+  applyFilters: () => void;
   isFilterModalOpen: boolean;
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;

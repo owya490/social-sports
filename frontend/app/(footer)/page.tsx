@@ -29,7 +29,7 @@ export default function Home() {
 
   return (
     <div>
-      <LoadingOverlay shouldAnimate={shouldAnimate} />
+      <LoadingOverlay _shouldAnimate={shouldAnimate} />
       <div id="page" className="">
         <div className="mt-20 w-screen justify-center flex">
           <div className="screen-width-dashboard">

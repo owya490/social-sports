@@ -143,7 +143,7 @@ export default function CreateEvent() {
     return newEventId;
   }
 
-  function convertFormDataToEventData(formData: FormData, user: UserData, imageUrl: string): Promise<NewEventData> {
+  function convertFormDataToEventData(formData: FormData, user: UserData, imageUrl: string): NewEventData {
     return {
       location: formData.location,
       capacity: formData.capacity,
