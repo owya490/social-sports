@@ -18,7 +18,6 @@ interface InviteAttendeeDialogProps {
 }
 
 const InviteAttendeeDialog = ({
-  setIsFilterModalOpen,
   closeModal,
   isFilterModalOpen,
   eventId,
@@ -29,7 +28,6 @@ const InviteAttendeeDialog = ({
   const [attendeeName, setAttendeeName] = useState<string>("");
   const [attendeePhoneNumber, setAttendeePhoneNumber] = useState<string>("");
   const [numTickets, setNumTickets] = useState<string>("0");
-  const [enabled, setEnabled] = useState(true);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);

@@ -21,6 +21,7 @@ import {
   TOP_RATED_SORTBY_STRING,
 } from "./OrganiserFilterDialog";
 
+/* eslint-disable no-unused-vars */
 export enum SortByCategory {
   HOT,
   TOP_RATED,
@@ -29,6 +30,7 @@ export enum SortByCategory {
   DATE_ASCENDING,
   DATE_DESCENDING,
 }
+/* eslint-enable no-unused-vars */
 
 interface OrganiserFilterDialogMobileProps {
   eventDataList: EventData[];
@@ -78,7 +80,6 @@ interface OrganiserFilterDialogMobileProps {
 }
 
 export default function OrganiserFilterDialogMobile({
-  eventDataList,
   allEventsDataList,
   setEventDataList,
   sortByCategoryValue,

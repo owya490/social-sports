@@ -8,11 +8,11 @@ import ChevronRightButton from "../elements/ChevronRightButton";
 import EventCard from "../events/EventCard";
 
 interface PopularEventsProps {
-  eventData?: EventData;
+  _eventData?: EventData;
 }
 
 export default function PopularEvents(props: PopularEventsProps) {
-  const { eventData } = props;
+  const { _eventData } = props;
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
     const newRecommendedEvents: EventData[] = [];

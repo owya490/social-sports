@@ -7,11 +7,11 @@ type BasicData = {
   description: string;
   image: File | undefined;
   imagePreviewUrl: string;
-  setImagePreviewUrl: (v: string) => void;
+  setImagePreviewUrl: (_v: string) => void;
 };
 
 type DescriptionImageFormProps = BasicData & {
-  updateField: (fields: Partial<BasicData>) => void;
+  updateField: (_fields: Partial<BasicData>) => void;
 };
 
 export function DescriptionImageForm({
@@ -44,7 +44,7 @@ export function DescriptionImageForm({
     if (e.target.files) {
       let validFile: File | undefined;
       let fileList = Array.from(e.target.files);
-      
+
       for (const file of fileList) {
         if (validateImage(file)) {
           // Set the first valid file and break

@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../ListBox";
 
+/* eslint-disable no-unused-vars */
 export enum SortByCategory {
   HOT,
   TOP_RATED,
@@ -14,6 +15,7 @@ export enum SortByCategory {
   DATE_ASCENDING,
   DATE_DESCENDING,
 }
+/* eslint-enable no-unused-vars */
 
 export const DEFAULT_SORT_BY_CATEGORY = SortByCategory.HOT;
 export const HOT_SORTBY_STRING = "Hot";
@@ -75,7 +77,6 @@ interface OrganiserFilterDialogProps {
 }
 
 export default function OrganiserFilterDialog({
-  eventDataList,
   allEventsDataList,
   setEventDataList,
   sortByCategoryValue,

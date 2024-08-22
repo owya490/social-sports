@@ -12,10 +12,10 @@ type BasicData = {
 };
 
 type PreviewFormProps = BasicData & {
-  updateField: (fields: Partial<FormData>) => void;
+  updateField: (_fields: Partial<FormData>) => void;
 };
 
-export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: PreviewFormProps) => {
+export const PreviewForm = ({ form, user, imagePreviewUrl }: PreviewFormProps) => {
   const dateString = form.startDate + " " + form.startTime;
   var [datePart, timePart] = dateString.split(" ");
   var [year, month, day] = datePart.split("-");

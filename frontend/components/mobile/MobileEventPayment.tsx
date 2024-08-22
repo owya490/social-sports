@@ -26,7 +26,7 @@ interface MobileEventPaymentProps {
   eventId: string;
   isPaymentsActive: boolean;
   isPrivate: boolean;
-  setLoading: (value: boolean) => void;
+  setLoading: (_value: boolean) => void;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {

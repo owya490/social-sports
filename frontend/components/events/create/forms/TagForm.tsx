@@ -8,7 +8,7 @@ import { FormWrapper } from "./FormWrapper";
 type BasicData = {};
 
 type TagFormProps = BasicData & {
-  updateField: (fields: Partial<BasicData>) => void;
+  updateField: (_fields: Partial<BasicData>) => void;
 };
 
 export function TagForm({}: TagFormProps) {

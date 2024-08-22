@@ -3,7 +3,7 @@ import { SortByCategory } from "../Filter/FilterDialog";
 import ListBox from "../ListBox";
 
 interface EventPaymentListBoxProps {
-  onGuestCountChange: (count: number) => void;
+  onGuestCountChange: (_count: number) => void;
   vacancy: number;
 }
 

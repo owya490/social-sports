@@ -9,13 +9,13 @@ import EventPayment from "./EventPayment";
 interface EventDetailsProps {
   eventData: EventData;
   eventTags: Tag[];
-  setLoading: (value: boolean) => void;
+  setLoading: (_value: boolean) => void;
 }
 
 export const MAX_TICKETS_PER_ORDER = 7;
 
 export function EventDetails(props: EventDetailsProps) {
-  const { eventData, eventTags, setLoading } = props;
+  const { eventData, setLoading } = props;
   return (
     <div className="flex justify-center w-full">
       <div className="pb-10 screen-width-primary">

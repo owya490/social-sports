@@ -33,9 +33,9 @@ export type BasicData = {
 
 type BasicInformationProps = BasicData & {
   user: UserData;
-  updateField: (fields: Partial<BasicData>) => void;
-  setLoading: (value: boolean) => void;
-  setHasError: (value: boolean) => void;
+  updateField: (_fields: Partial<BasicData>) => void;
+  setLoading: (_value: boolean) => void;
+  setHasError: (_value: boolean) => void;
 };
 
 export function BasicInformation({
@@ -58,7 +58,7 @@ export function BasicInformation({
   const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null); // Initialize locationError state
+  const [locationError, _setLocationError] = useState<string | null>(null); // Initialize locationError state
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
