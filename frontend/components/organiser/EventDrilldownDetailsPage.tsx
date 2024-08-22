@@ -86,19 +86,19 @@ const EventDrilldownDetailsPage = ({
 
   const [editStartDate, setEditStartDate] = useState(false);
   const [newEditStartDate, setNewEditStartDate] = useState("");
-  const [startDate, setStartDate] = useState("");
+  const [_startDate, setStartDate] = useState("");
 
-  const [editStartTime, setEditStartTime] = useState(false);
+  const [_editStartTime, setEditStartTime] = useState(false);
   const [newEditStartTime, setNewEditStartTime] = useState("");
-  const [startTime, setStartTime] = useState("");
+  const [_startTime, setStartTime] = useState("");
 
-  const [editEndDate, setEditEndDate] = useState(false);
+  const [_editEndDate, setEditEndDate] = useState(false);
   const [newEditEndDate, setNewEditEndDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [_endDate, setEndDate] = useState("");
 
   const [editEndTime, setEditEndTime] = useState(false);
   const [newEditEndTime, setNewEditEndTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [_endTime, setEndTime] = useState("");
 
   useEffect(() => {
     if (eventStartDate) {

@@ -21,7 +21,6 @@ interface RemoveAttendeeDialogProps {
 }
 
 const RemoveAttendeeDialog = ({
-  setIsRemoveAttendeeModalOpen,
   closeModal,
   isRemoveAttendeeModalOpen,
   email,
@@ -31,8 +30,6 @@ const RemoveAttendeeDialog = ({
   setEventMetadata,
   setEventVacancy,
 }: RemoveAttendeeDialogProps) => {
-  const [enabled, setEnabled] = useState(true);
-
   const [loading, setLoading] = useState<boolean>(false);
 
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);

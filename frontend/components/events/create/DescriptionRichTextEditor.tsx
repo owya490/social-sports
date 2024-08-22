@@ -12,7 +12,7 @@ export default function DescriptionRichTextEditor({
   updateDescription,
 }: {
   description: string;
-  updateDescription: (e: string) => void;
+  updateDescription: (_e: string) => void;
 }) {
   const editor = useEditor({
     editable: true,

@@ -11,12 +11,12 @@ import ListBox from "../../components/ListBox";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 
 export enum SortByCategory {
-  HOT,
-  TOP_RATED,
-  PRICE_ASCENDING,
-  PRICE_DESCENDING,
-  DATE_ASCENDING,
-  DATE_DESCENDING,
+  HOT, // eslint-disable-line
+  TOP_RATED, // eslint-disable-line
+  PRICE_ASCENDING, // eslint-disable-line
+  PRICE_DESCENDING, // eslint-disable-line
+  DATE_ASCENDING, // eslint-disable-line
+  DATE_DESCENDING, // eslint-disable-line
 }
 export const DEFAULT_SORT_BY_CATEGORY = SortByCategory.HOT;
 export const HOT_SORTBY_STRING = "Hot";
@@ -110,9 +110,7 @@ export default function FilterDialog({
   setDateRange,
   appliedDateRange,
   setAppliedDateRange,
-  srcLocation,
   setSrcLocation,
-  selectedSport,
   setSelectedSport,
   applyFilters,
   isFilterModalOpen,

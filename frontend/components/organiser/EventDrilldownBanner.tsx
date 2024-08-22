@@ -12,7 +12,7 @@ interface EventBannerProps {
   loading: boolean;
 }
 
-const EventDrilldownBanner = ({ name, startDate, organiser, vacancy, loading }: EventBannerProps) => {
+const EventDrilldownBanner = ({ name, startDate, loading }: EventBannerProps) => {
   return (
     <div className="bg-organiser-light-gray border-b-black w-100% px-5 md:px-10 pt-2 shadow-lg flex justify-center">
       <div className="screen-width-primary">

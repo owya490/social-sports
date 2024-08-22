@@ -5,7 +5,7 @@ import { Fragment, useState } from "react";
 import { SortByCategory } from "./Filter/FilterDialog";
 
 interface ListBoxProps {
-  onChangeHandler: (e: any) => void;
+  onChangeHandler: (_e: any) => void;
   options: IOption[];
   sortByCategory: SortByCategory;
   textSize?: "xs" | "sm" | "md" | "lg" | "xl";

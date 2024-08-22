@@ -5,7 +5,7 @@ export default function CustomTimeInput({
 }: {
   placeholder: string;
   value: string;
-  handleChange: (value: any) => void;
+  handleChange: (_value: any) => void;
 }) {
   return (
     <div className="relative">
@@ -19,9 +19,7 @@ export default function CustomTimeInput({
           handleChange(e.target.value);
         }}
       ></input>
-      <label className="absolute -top-2 left-3 bg-white flex px-1 text-xs font-light">
-        {placeholder}
-      </label>
+      <label className="absolute -top-2 left-3 bg-white flex px-1 text-xs font-light">{placeholder}</label>
     </div>
   );
 }

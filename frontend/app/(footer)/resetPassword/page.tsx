@@ -1,7 +1,6 @@
 "use client";
 
 import { resetUserPassword } from "@/services/src/auth/authService";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert } from "@material-tailwind/react";
 
@@ -9,8 +8,6 @@ export default function ResetPassword() {
   const [email, setEmail] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
   const [resetFailed, setResetFailed] = useState(false);
-
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

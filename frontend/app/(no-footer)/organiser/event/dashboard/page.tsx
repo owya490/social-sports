@@ -57,7 +57,7 @@ export default function OrganiserDashboard() {
     endDate: DEFAULT_END_DATE,
   });
 
-  async function applyFilters() {
+  function applyFilters() {
     let filteredEventDataList = [...allEventsDataList];
 
     // Filter by SEARCH

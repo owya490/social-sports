@@ -21,8 +21,8 @@ interface OrganiserNavbarProps {
 
 export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
   const { user } = useUser();
-  const [eventDataList, setEventDataList] = useState<EventData[]>([EmptyEventData, EmptyEventData]);
-  const [closestEvent, setClosestEvent] = useState<EventData | null>(null);
+  const [_eventDataList, setEventDataList] = useState<EventData[]>([EmptyEventData, EmptyEventData]);
+  const [_closestEvent, setClosestEvent] = useState<EventData | null>(null);
   const [eventId, setEventId] = useState<string>("");
 
   useEffect(() => {

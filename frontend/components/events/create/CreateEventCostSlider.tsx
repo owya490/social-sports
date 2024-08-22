@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 
 interface CreateEventCostSliderProps {
   initialCustomAmount?: number;
-  onCustomAmountChange: (amount: number) => void;
+  onCustomAmountChange: (_amount: number) => void;
 }
 
 function CreateEventCostSlider({
@@ -27,7 +27,9 @@ function CreateEventCostSlider({
 
   return (
     <div className="flex flex-col items-center mt-10">
-      <div className="w-full md:w-96"> {/* Adjusted width based on screen size */}
+      <div className="w-full md:w-96">
+        {" "}
+        {/* Adjusted width based on screen size */}
         <Slider
           size="sm"
           value={eventCost}

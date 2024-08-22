@@ -9,18 +9,16 @@ interface FilterIconProps {
   style: string;
   isFirst: boolean;
   allEventsDataList: EventData[];
-  setEventDataList: (events: EventData[]) => void;
+  setEventDataList: (_events: EventData[]) => void;
   selectedSport: string;
-  setSelectedSport: (sport: string) => void;
-  applyFilters: (selectedSport: string) => Promise<void>;
+  setSelectedSport: (_sport: string) => void;
+  applyFilters: (_selectedSport: string) => Promise<void>;
 }
 
 export default function FilterIcon(props: FilterIconProps) {
   return (
     <button
-      className={`${
-        props.isFirst ? "mr-6 md:mr-8" : "min-w-[6rem] md:min-w-[8rem]"
-      } flex justify-center snap-start`}
+      className={`${props.isFirst ? "mr-6 md:mr-8" : "min-w-[6rem] md:min-w-[8rem]"} flex justify-center snap-start`}
       onClick={() => {
         if (props.selectedSport === props.sportIdentifierString) {
           props.setSelectedSport(NO_SPORT_CHOSEN_STRING);
