@@ -1,5 +1,4 @@
 import {
-  EmptyPurchaser,
   EventData,
   EventDataWithoutOrganiser,
   EventId,
