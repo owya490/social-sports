@@ -1,6 +1,6 @@
 import { Attendee, EventId, Name, Purchaser } from "@/interfaces/EventTypes";
-import { addEventAttendee, setAttendeeTickets } from "../events/eventsService";
 import { Logger } from "@/observability/logger";
+import { addEventAttendee, setAttendeeTickets } from "../events/eventsService";
 
 export const organiserServiceLogger = new Logger("organiserServiceLogger");
 

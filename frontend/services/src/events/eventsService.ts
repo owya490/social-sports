@@ -28,8 +28,11 @@ import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./
 
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import * as crypto from "crypto";
 import { db } from "../firebase";
 import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
+import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
+import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -44,9 +47,6 @@ import {
   getAllEventsFromCollectionRef,
   tryGetAllActivePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
-import * as crypto from "crypto";
-import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
-import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
