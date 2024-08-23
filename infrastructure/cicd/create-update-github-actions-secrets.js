@@ -73,6 +73,19 @@ for (const { secretName, secretValue } of envVariableListDev) {
   await createUpdateRepositorySecret(secretName, secretValue);
 }
 
+dotenv.config({ path: "../../functions/.env" });
+
+const functionsEnvVariableListDev = [
+  {
+    secretName: "FIREBASE_SERVICE_ACCOUNT",
+    secretValue: process.env.FIREBASE_SERVICE_ACCOUNT,
+  },
+];
+
+for (const { secretName, secretValue } of functionsEnvVariableListDev) {
+  await createUpdateRepositorySecret(secretName, secretValue);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS //
 ////////////////////////////////////////////////////////////////////////////////
@@ -86,14 +99,8 @@ for (const { secretName, secretValue } of envVariableListDev) {
  * @param {string} firebaseKeySecretName
  * @param {string} firebaseKeyEncryptedValue
  */
-async function createUpdateRepositorySecret(
-  firebaseKeySecretName,
-  firebaseKeyValue
-) {
-  const firebaseKeyEncryptedValue = await _encryptKeyLibSodium(
-    firebaseKeyValue,
-    encryptionKey
-  );
+async function createUpdateRepositorySecret(firebaseKeySecretName, firebaseKeyValue) {
+  const firebaseKeyEncryptedValue = await _encryptKeyLibSodium(firebaseKeyValue, encryptionKey);
   await octokit.request(
     `PUT /repos/${SOCIAL_SPORTS_REPO_OWNER}/${SOCIAL_SPORTS_REPO_NAME}/actions/secrets/${firebaseKeySecretName}`,
     {
