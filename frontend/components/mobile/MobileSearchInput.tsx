@@ -33,15 +33,15 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
     <div
       className={
         searchExpanded
-          ? `h-screen bg-white w-screen absolute top-[0px] left-0 z-50 transition-all duration-500`
-          : `h-screen bg-white w-screen absolute top-[2000px] left-0 z-50 transition-all duration-500`
+          ? `h-screen bg-white w-screen absolute top-[0px] left-0 z-50 transition-all duration-500 rounded-3xl`
+          : `h-screen bg-white w-screen absolute top-[2000px] left-0 z-50 transition-all duration-500 rounded-3xl`
       }
     >
       <div
         className={
           searchExpanded
-            ? `p-6 opacity-100 transition-all delay-500 duration-500`
-            : `p-6 opacity-0 transition-all`
+            ? `p-6 opacity-100 transition-all delay-500 duration-500 rounded-2xl`
+            : `p-6 opacity-0 transition-all rounded-2xl`
         }
       >
         <div className="w-full flex justify-center">
@@ -53,7 +53,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           <MagnifyingGlassIcon className="w-7 h-7 mr-2" />
           <input
             id="search_input"
-            className="w-56 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none"
+            className="w-56 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
             placeholder="Search Events"
             value={searchPhrase}
             onChange={(event) => {
@@ -62,23 +62,15 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           />
           <button
             onClick={() => {
-              const maybePrevSearches =
-                sessionStorage.getItem("recentSearches");
+              const maybePrevSearches = sessionStorage.getItem("recentSearches");
               const currentSearch = searchPhrase + ":" + searchLocation;
               if (maybePrevSearches) {
-                const prevSearches: string[] =
-                  deserialize_list(maybePrevSearches);
+                const prevSearches: string[] = deserialize_list(maybePrevSearches);
                 prevSearches.unshift(currentSearch);
-                sessionStorage.setItem(
-                  "recentSearches",
-                  serialize_list(prevSearches)
-                );
+                sessionStorage.setItem("recentSearches", serialize_list(prevSearches));
                 setRecentSearches(prevSearches);
               } else {
-                sessionStorage.setItem(
-                  "recentSearches",
-                  serialize_list([currentSearch])
-                );
+                sessionStorage.setItem("recentSearches", serialize_list([currentSearch]));
                 setRecentSearches([currentSearch]);
               }
               setSearchExpanded();
@@ -88,10 +80,10 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           </button>
         </div>
         <div className="w-full flex items-center mt-7">
-          <MapPinIcon className="w-7 h-7 mr-2" />
+          <MapPinIcon className="w-7 h-7 mr-2 " />
           <input
             id="location_input"
-            className="w-36 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none"
+            className="w-36 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
             placeholder="Location"
             value={searchLocation}
             onChange={(event) => {
@@ -101,7 +93,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
         </div>
         <div className="w-full mt-14 ml-1">
           <h3 className="font-semibold text-lg">Search by Tags</h3>
-          <div className="flex flex-wrap mt-1 max-h-36 overflow-y-scroll">
+          <div className="flex flex-wrap mt-1 max-h-36 overflow-y-scroll rounded-2xl">
             <TagGroup tags={tags} size="sm" />
           </div>
         </div>
@@ -109,14 +101,12 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           <h3 className="font-semibold text-lg">Recent Searches</h3>
           <div className="h-36 overflow-y-scroll">
             {recentSearches.length === 0 ? (
-              <p className="text-sm font-light">
-                No recent searches... go ahead ;)
-              </p>
+              <p className="text-sm font-light">No recent searches... go ahead ;)</p>
             ) : (
               recentSearches.map((search, i) => {
                 const splitSearch = search.split(":");
                 return (
-                  <span key={i} className="flex items-center my-1">
+                  <span key={i} className="flex items-center my-1 rounded-lg">
                     <ClockIcon className="w-4 h-4 mr-1" />
                     <Link
                       href="https://google.com"
