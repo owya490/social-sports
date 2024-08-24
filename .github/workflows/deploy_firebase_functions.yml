@@ -30,4 +30,5 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
+          firebase use --add socialsports-44162
           firebase deploy --only functions --token "$FIREBASE_TOKEN"
