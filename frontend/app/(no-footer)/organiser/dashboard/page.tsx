@@ -43,7 +43,7 @@ export default function Dashboard() {
   return (
     <div className="sm:pt-16 sm:pl-14 max-h-screen">
       <OrganiserNavbar currPage="Dashboard" />
-      <div className="py-16 flex justify-center">
+      <div className="py-16 flex justify-center px-4 md:px-0">
         <div>
           <h1 className="text-5xl font-bold">Organiser Dashboard</h1>
           {loading ? (
@@ -51,10 +51,10 @@ export default function Dashboard() {
           ) : (
             <h1 className="pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
           )}
-          <div className="flex w-full mt-8 max-h-[60vh]">
-            <div className="grow mr-8 flex flex-col w-[40rem]">
+          <div className="lg:flex w-full mt-8 lg:max-h-[60vh]">
+            <div className="grow lg:mr-8 md:flex flex-col md:w-[40rem]">
               <OrganiserChecklist />
-              <div className="flex mt-8 grow min-h-[10vh]">
+              <div className="hidden md:flex mt-8 grow min-h-[10vh] mb-10 md:mb-0">
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/event/create">
                     <div className="h-full flex justify-center items-center">
@@ -71,11 +71,9 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="overflow-auto">
-              <div className="bg-organiser-light-gray py-4 rounded-2xl">
-                <h1 className="text-2xl font-bold text-center w-full sm:w-[300px] xl:w-[290px] 2xl:w-[320px]">
-                  Upcoming Events
-                </h1>
+            <div className="md:overflow-auto">
+              <div className="bg-organiser-light-gray py-4 rounded-2xl mt-6 md:mt-0">
+                <h1 className="text-2xl font-bold text-center w-full">Upcoming Events</h1>
               </div>
               <div>
                 {eventDataList
@@ -91,7 +89,7 @@ export default function Dashboard() {
                   })
                   .map((event, eventIdx) => {
                     return (
-                      <div key={eventIdx} className="mt-8">
+                      <div key={eventIdx} className="mt-4 mb-8 md:mb-0 md:mt-8 ">
                         <OrganiserEventCard
                           eventId={event.eventId}
                           image={event.image}
@@ -115,7 +113,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div></div>
       </div>
     </div>
   );
