@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import OrganiserCheckbox from "@/components/organiser/dashboard/OrganiserCheckbox";
+import { useEffect, useState } from "react";
 
 interface ChecklistItem {
   id: number;
@@ -62,7 +62,7 @@ export default function OrganiserChecklist() {
   const allItemsChecked = checklist.every((item) => item.checked);
 
   return (
-    <div className="bg-organiser-light-gray p-8 rounded-2xl ">
+    <div className="bg-organiser-light-gray p-4 sm:p-8 rounded-2xl ">
       {!allItemsChecked && (
         <>
           <h1 className="text-2xl font-bold">Finish setting up</h1>
@@ -79,7 +79,7 @@ export default function OrganiserChecklist() {
       )}
       {allItemsChecked && (
         <>
-          <h1 className="text-center py-16 font-bold text-2xl">
+          <h1 className="text-center py-6 sm:py-16 font-bold text-xl sm:text-2xl">
             Good job you have finished setting up ✅ <br></br>
             Go out there and make more events
           </h1>
