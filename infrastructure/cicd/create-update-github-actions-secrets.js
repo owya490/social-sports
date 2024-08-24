@@ -77,8 +77,12 @@ for (const { secretName, secretValue } of envVariableListDev) {
 dotenv.config({ path: "../../functions/.env" });
 
 const functionsKeyDevPath = "../../functions/functions_key_dev.json";
-const fileContent = fs.readFileSync(functionsKeyDevPath);
-const functionsKeyDevBase64Encoded = Buffer.from(fileContent).toString("base64");
+const fileContentDev = fs.readFileSync(functionsKeyDevPath);
+const functionsKeyDevBase64Encoded = Buffer.from(fileContentDev).toString("base64");
+
+const functionsKeyProdPath = "../../functions/functions_key_prod.json";
+const fileContentProd = fs.readFileSync(functionsKeyProdPath);
+const functionsKeyProdBase64Encoded = Buffer.from(fileContentProd).toString("base64");
 
 const functionsEnvVariableListDev = [
   {
@@ -88,6 +92,10 @@ const functionsEnvVariableListDev = [
   {
     secretName: "FIREBASE_SERVICE_ACCOUNT_KEY_DEV",
     secretValue: functionsKeyDevBase64Encoded,
+  },
+  {
+    secretName: "FIREBASE_SERVICE_ACCOUNT_KEY_PROD",
+    secretValue: functionsKeyProdBase64Encoded,
   },
 ];
 

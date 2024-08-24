@@ -24,13 +24,13 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      # TODO: make it work for both environments
-      - name: Decode and save functions_key.json
+      # Deployments for DEV environment
+      - name: Decode and save functions_key.json for DEV
         working-directory: functions
         run: |
           echo ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_DEV }} | base64 -d > ./functions_key.json
 
-      - name: Deploy Cloud Functions
+      - name: Deploy Cloud Functions for DEV
         working-directory: functions
         run: |
           python3.12 -m venv venv
@@ -38,9 +38,16 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json
           firebase deploy --only functions --debug --project socialsports-44162
 
-      # - name: Deploy to Firebase
-      #   env:
-      #     FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      #   run: |
-      #     firebase use --add socialsports-44162
-      #     firebase deploy --only functions --token "$FIREBASE_TOKEN"
+      # Deployments for PROD environment
+      - name: Decode and save functions_key.json for PROD
+        working-directory: functions
+        run: |
+          echo ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY_PROD }} | base64 -d > ./functions_key.json
+
+      - name: Deploy Cloud Functions for PROD
+        working-directory: functions
+        run: |
+          python3.12 -m venv venv
+          . "$GITHUB_WORKSPACE/functions/venv/bin/activate" && python3.12 -m pip install -r requirements.txt
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json
+          firebase deploy --only functions --debug --project socialsportsprod
