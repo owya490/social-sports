@@ -28,7 +28,7 @@ jobs:
         working-directory: functions
         run: |
           python3.12 -m venv venv
-          "$GITHUB_WORKSPACE/functions/venv/bin/activate" && python3.12 -m pip install -r requirements.txt
+          . "$GITHUB_WORKSPACE/functions/venv/bin/activate" && python3.12 -m pip install -r requirements.txt
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json
           firebase deploy --only functions --debug --project socialsports-44162
 
