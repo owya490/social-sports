@@ -37,7 +37,6 @@ const EventDrilldownManageAttendeesPage = ({
           >
             <PlusIcon className="md:mr-2 h-5 w-5 text-violet-200 hover:text-violet-100" />
             <span className="hidden md:block">Add Attendee</span>
-            {/* <span className="md:hidddn">Add</span> */}
           </div>
         </div>
       </div>
