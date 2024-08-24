@@ -6,6 +6,7 @@
 import dotenv from "dotenv";
 import { Octokit } from "octokit";
 import _sodium from "libsodium-wrappers";
+import fs from "fs";
 
 dotenv.config({ path: "../../frontend/.env" });
 
@@ -75,10 +76,18 @@ for (const { secretName, secretValue } of envVariableListDev) {
 
 dotenv.config({ path: "../../functions/.env" });
 
+const functionsKeyDevPath = "../../functions/functions_key_dev.json";
+const fileContent = fs.readFileSync(functionsKeyDevPath);
+const functionsKeyDevBase64Encoded = Buffer.from(fileContent).toString("base64");
+
 const functionsEnvVariableListDev = [
   {
     secretName: "FIREBASE_SERVICE_ACCOUNT",
     secretValue: process.env.FIREBASE_SERVICE_ACCOUNT,
+  },
+  {
+    secretName: "FIREBASE_SERVICE_ACCOUNT_KEY_DEV",
+    secretValue: functionsKeyDevBase64Encoded,
   },
 ];
 
