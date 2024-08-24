@@ -9,6 +9,7 @@ import EventDrilldownSharePage from "@/components/organiser/EventDrilldownShareP
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import { EventDrilldownNavTabs } from "@/components/organiser/mobile/EventDrilldownNavTabs";
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
@@ -129,7 +130,7 @@ export default function EventPage({ params }: EventPageProps) {
             );
           })}
         </div>
-
+        <EventDrilldownNavTabs currSidebarPage={currSidebarPage} setCurrSidebarPage={setCurrSidebarPage} />
         <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
           <div id="side-panel" className="z-20">
             <EventDrilldownSidePanel
