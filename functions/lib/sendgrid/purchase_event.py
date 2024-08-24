@@ -6,11 +6,11 @@ from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
+from lib.sendgrid.constants import (PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
+                                    SENDGRID_API_KEY)
+from lib.utils.priceUtils import centsToDollars
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-
-from lib.sendgrid.constants import (PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
-                                              SENDGRID_API_KEY)
 
 
 @dataclass
@@ -70,7 +70,7 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       "order_id": request_data.orderId,
       "location": event_data.get("location"),
       "quantity_bought": len(order_data.get("tickets")),
-      "price": event_data.get("price"),
+      "price": centsToDollars(event_data.get("price")),
       "start_date": start_date_string,
       "end_date": end_date_string,
       "date_purchased": date_purchased_string

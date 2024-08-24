@@ -1,5 +1,4 @@
 import {
-  EmptyPurchaser,
   EventData,
   EventDataWithoutOrganiser,
   EventId,
@@ -31,6 +30,7 @@ import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
 import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
+import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
 import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
 import {
@@ -43,6 +43,7 @@ import {
 } from "./eventsUtils/commonEventsUtils";
 import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
 import {
+  bustEventsLocalStorageCache,
   findEventDoc,
   getAllEventsFromCollectionRef,
   tryGetAllActivePublicEventsFromLocalStorage,
@@ -80,6 +81,11 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     }
     console.log("create event user", user);
     await updateUser(data.organiserId, user);
+
+    // We want to bust all our caches when we create a new event.
+    bustEventsLocalStorageCache();
+    bustUserLocalStorageCache();
+
     eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
@@ -333,7 +339,11 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId): P
 
       // Check if email has is already in the purchaserMap
       if (!(attendeeEmailHash in eventMetadata.purchaserMap)) {
-        eventMetadata.purchaserMap[attendeeEmailHash] = EmptyPurchaser;
+        eventMetadata.purchaserMap[attendeeEmailHash] = {
+          email: "",
+          attendees: {},
+          totalTicketCount: 0,
+        };
         eventMetadata.purchaserMap[attendeeEmailHash].email = attendeeEmail;
       }
 

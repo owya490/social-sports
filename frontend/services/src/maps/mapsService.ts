@@ -1,4 +1,3 @@
-import { BasicData } from "@/components/events/create/forms/BasicForm";
 import { Environment, getEnvironment } from "@/utilities/environment";
 import { useLoadScript } from "@react-google-maps/api";
 

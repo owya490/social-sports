@@ -18,6 +18,9 @@ fi
 # Copy service account private key into the generic functions_key.json file
 cp "functions_key_$ENVIRONMENT.json" functions_key.json
 
+# Copy the environment specific keys into the generic .env file
+cp ".env.$ENVIRONMENT" .env
+
 # Select respective firebase project
 firebase use $ENVIRONMENT
 

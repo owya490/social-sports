@@ -162,7 +162,7 @@ export default function Dashboard() {
           setEndLoading={setEndLoading}
         />
       </div>
-      <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit">
+      <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit z-50">
         <Alert open={showLoginSuccess} color="green">
           Successfully logged in!
         </Alert>
@@ -190,7 +190,7 @@ export default function Dashboard() {
               })}
             </div>
           ) : eventDataList.length === 0 ? (
-            <div className="flex justify-center">
+            <div className="flex justify-center z-10">
               <div>
                 <Image
                   src={noSearchResultLineDrawing}
@@ -199,14 +199,13 @@ export default function Dashboard() {
                   height={300}
                   className="opacity-60"
                 />
-
                 <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
                   Sorry, we couldn&apos;t find any results
                 </div>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-screen justify-items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
               {eventDataList
                 .sort((event1, event2) => {
                   if (event1.accessCount > event2.accessCount) {

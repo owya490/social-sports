@@ -5,6 +5,7 @@ import { UserData } from "@/interfaces/UserTypes";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
+import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
@@ -22,7 +23,7 @@ export type BasicData = {
   startTime: string;
   endTime: string;
   sport: string;
-  price: number;
+  price: number; // Price is stored in cents, e.g. 1567 will be $15.67
   capacity: number;
   isPrivate: boolean;
   paymentsActive: boolean;
@@ -91,7 +92,6 @@ export function BasicInformation({
     const currentDateTime = new Date();
     const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
     const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
-    console.log(startDate, startTime);
 
     if (currentDateTime > selectedStartDateTime) {
       setDateWarning("Event start date and time is in the past!");
@@ -112,17 +112,17 @@ export function BasicInformation({
     }
   }, [startDate, startTime, endDate, endTime]);
 
-  const [customAmount, setCustomAmount] = useState(price);
+  const [customAmount, setCustomAmount] = useState(centsToDollars(price)); // customAmount is for frontend display and is stored in a int with decimal places. Price is stored in cents.
 
   const handleEventCostSliderChange = (amount: number) => {
     handleCustomAmountChange(amount);
-    updateField({ price: amount });
+    updateField({ price: dollarsToCents(amount) });
   };
 
   const handleCustomAmountChange = (amount: number) => {
     amount = Number.isNaN(amount) ? 0 : amount;
     setCustomAmount(amount);
-    updateField({ price: amount }); // Update the cost field in the parent component
+    updateField({ price: dollarsToCents(amount) }); // Update the cost field in the parent component
   };
 
   const handlePaymentsActiveChange = (paymentsActive: string) => {
@@ -215,10 +215,12 @@ export function BasicInformation({
                 label="Price"
                 crossOrigin={undefined}
                 required
-                value={price}
+                value={customAmount}
                 type="number"
+                step=".01"
                 onChange={(e) => {
-                  let value = parseInt(e.target.value);
+                  let value = parseFloat(parseFloat(e.target.value).toFixed(2));
+                  console.log(value);
                   if (!isNaN(value)) {
                     value = Math.max(value, 0);
                   } else {

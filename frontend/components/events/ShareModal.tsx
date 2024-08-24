@@ -1,5 +1,7 @@
 "use client";
 
+import { EventId } from "@/interfaces/EventTypes";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { Dialog, Transition, TransitionChild } from "@headlessui/react";
 import Image from "next/image";
 import { Fragment, useEffect, useState } from "react";
@@ -8,12 +10,16 @@ import fb_icons from "../../public/images/fbfb.jpeg";
 import insta_logo from "../../public/images/insta_logo.png";
 import share_arrow from "../../public/images/share_arrow.png";
 
-const ShareModal = () => {
+interface ShareModalProps {
+  eventId: EventId;
+}
+
+const ShareModal = ({ eventId }: ShareModalProps) => {
   const [modalOpen, setModalOpen] = useState(false);
-  const [currentURL, setCurrentURL] = useState("");
+  const [eventURL, setEventURL] = useState("");
 
   useEffect(() => {
-    setCurrentURL(window.location.href);
+    setEventURL(getUrlWithCurrentHostname(`/event/${eventId}`));
   }, []);
 
   const toggleModal = () => {
@@ -21,7 +27,7 @@ const ShareModal = () => {
   };
 
   const handleFacebookShare = () => {
-    const facebookShareURL = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentURL)}`;
+    const facebookShareURL = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(eventURL)}`;
     window.open(facebookShareURL, "_blank", "width=550,height=450");
     toggleModal();
   };
@@ -34,14 +40,14 @@ const ShareModal = () => {
   const handleEmailShare = () => {
     const subject = "Check out this event!";
     const body = `I found this interesting event here: 
-${currentURL}`;
+${eventURL}`;
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     toggleModal();
   };
 
   const copyURL = async () => {
     try {
-      await navigator.clipboard.writeText(currentURL);
+      await navigator.clipboard.writeText(eventURL);
       alert("URL copied to clipboard");
     } catch (err) {
       console.error("Failed to copy URL to clipboard:", err);
@@ -115,7 +121,7 @@ ${currentURL}`;
                       </li>
                     </ul>
                     <p id="url" onClick={highlightURL} className="mb-4 cursor-pointer">
-                      {currentURL}
+                      {eventURL}
                     </p>
                     <button className="bg-blue-200 px-2 py-1 rounded" onClick={copyURL}>
                       Copy

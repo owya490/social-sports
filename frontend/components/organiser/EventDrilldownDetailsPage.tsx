@@ -24,6 +24,7 @@ import {
 } from "@/services/src/datetimeUtils";
 import { updateEventById } from "@/services/src/events/eventsService";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
+import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -225,6 +226,10 @@ const EventDrilldownDetailsPage = ({
     }
   }, [eventPrice]);
 
+  const handleManualNewEditPriceUpdate = (price: number) => {
+    setNewEditPrice(dollarsToCents(price));
+  };
+
   const handlePriceUpdate = async () => {
     setPrice(newEditPrice);
     setEditPrice(false);
@@ -336,7 +341,7 @@ const EventDrilldownDetailsPage = ({
         <div className="text-organiser-title-gray-text font-bold">Event Details</div>
         <div className={`text-sm flex flex-col mt-4 w-full ${editStartDate ? "space-y-4" : ""}`}>
           <div className="px-2 flex space-x-2 grow w-full">
-            <CalendarDaysIcon className="w-4" />
+            <CalendarDaysIcon className="w-4 shrink-0" />
             <div>
               {loading ? (
                 <Skeleton
@@ -387,7 +392,7 @@ const EventDrilldownDetailsPage = ({
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            <ClockIcon className="w-4 mt-2" />
+            <ClockIcon className="w-4 mt-2 shrink-0" />
             <div>
               {loading ? (
                 <Skeleton
@@ -440,7 +445,7 @@ const EventDrilldownDetailsPage = ({
             <div></div>
           )}
           <div className="px-2 flex flex-row space-x-2">
-            <MapPinIcon className="w-4 mt-2" />
+            <MapPinIcon className="w-4 mt-2 shrink-0" />
             <div>
               {loading ? (
                 <Skeleton
@@ -471,7 +476,7 @@ const EventDrilldownDetailsPage = ({
             </div>
           </div>
           <div className="px-2 flex flex-row space-x-2">
-            <CurrencyDollarIcon className="w-4 mt-2" />
+            <CurrencyDollarIcon className="w-4 mt-2 shrink-0" />
             <div>
               {loading ? (
                 <Skeleton
@@ -488,9 +493,9 @@ const EventDrilldownDetailsPage = ({
                         className="w-80 sm:w-full"
                         type="number"
                         min="0"
-                        value={newEditPrice}
+                        value={displayPrice(newEditPrice)}
                         onChange={(e) => {
-                          setNewEditPrice(Number(e.target.value));
+                          handleManualNewEditPriceUpdate(parseFloat(e.target.value));
                         }}
                         crossOrigin="false"
                         label="Price"
@@ -518,7 +523,7 @@ const EventDrilldownDetailsPage = ({
                     </div>
                   ) : (
                     <div className="mt-2">
-                      ${newEditPrice}
+                      ${displayPrice(newEditPrice)}
                       <PencilSquareIcon
                         className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
                         onClick={() => {
