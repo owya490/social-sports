@@ -16,19 +16,25 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: 3.12
+
+      - name: Create SA key
+        run: echo '${{ secrets.GCP_SA_DEPLOY_KEY }}' > $HOME/gcloud.json
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
-      - name: Install dependencies
+      - name: Deploy Cloud Functions
+        working-directory: functions
         run: |
-          cd functions
-          pip install -r requirements.txt
+          python3.12 -m venv venv
+          "$GITHUB_WORKSPACE/functions/venv/bin/activate" && python3.12 -m pip install -r requirements.txt
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcloud.json
+          firebase deploy --only functions --debug --project socialsports-44162
 
-      - name: Deploy to Firebase
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          firebase use --add socialsports-44162
-          firebase deploy --only functions --token "$FIREBASE_TOKEN"
+      # - name: Deploy to Firebase
+      #   env:
+      #     FIREBASE_TOKEN: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      #   run: |
+      #     firebase use --add socialsports-44162
+      #     firebase deploy --only functions --token "$FIREBASE_TOKEN"
