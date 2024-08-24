@@ -33,7 +33,7 @@ jobs:
       - name: Deploy Cloud Functions
         working-directory: functions
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: "$HOME/gcloud.json"
+          GOOGLE_APPLICATION_CREDENTIALS: "/$HOME/gcloud.json"
         run: |
           python3.12 -m venv venv
           . "$GITHUB_WORKSPACE/functions/venv/bin/activate" && python3.12 -m pip install -r requirements.txt
