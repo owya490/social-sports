@@ -1,3 +1,3 @@
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+wexport default function RootLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
