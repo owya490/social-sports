@@ -1,3 +1,4 @@
+import { getCurrentTime } from "@/services/src/datetimeUtils";
 import { Environment, getEnvironment } from "@/utilities/environment";
 import { LogLevel, faro } from "@grafana/faro-web-sdk";
 
@@ -27,14 +28,14 @@ export class Logger {
 
   private log(log: string, loggingContext: { [key: string]: string }, logLevel: LogLevel) {
     if (getEnvironment() === Environment.DEVELOPMENT) {
-      this.logToConsole(log, loggingContext, logLevel);
+      this.logToConsole(`${getCurrentTime()} ${log}`, loggingContext, logLevel);
     } else {
       this.logToGrafanaFaro(log, loggingContext, logLevel);
     }
   }
 
   private logToGrafanaFaro(log: string, loggingContext: { [key: string]: string }, logLevel: LogLevel) {
-    if (faro && faro.api && typeof faro.api.pushLog === 'function') {
+    if (faro && faro.api && typeof faro.api.pushLog === "function") {
       const context = {
         level: logLevel,
         ...this.loggingContext,
@@ -43,10 +44,10 @@ export class Logger {
       try {
         faro.api.pushLog([log], { context });
       } catch (error) {
-        console.error('Failed to push log to Grafana Faro:', error);
+        console.error("Failed to push log to Grafana Faro:", error);
       }
     } else {
-      console.error('Grafana Faro not initialized or available.');
+      console.error("Grafana Faro not initialized or available.");
     }
   }
 

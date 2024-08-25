@@ -123,7 +123,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     props.setLoading(true);
                     window.scrollTo(0, 0);
                     const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
-                    router.push(link);
+                    // router.push(link);
                   }}
                 >
                   Book Now
