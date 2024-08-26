@@ -85,6 +85,7 @@ export default function Dashboard() {
             })
             .finally(async () => {
               await sleep(500);
+              setLoading(false);
             })
             .catch(() => {
               router.push("/error");
@@ -92,7 +93,6 @@ export default function Dashboard() {
         }
       }
       if (location.trim() !== "") {
-        setSrcLocation(location);
         if (triggerFilterApply === undefined) {
           setTriggerFilterApply(true);
         } else {

@@ -208,7 +208,6 @@ export default function FilterBanner({
   }
 
   useEffect(() => {
-    console.log("EDWIN", triggerFilterApply);
     if (triggerFilterApply !== undefined) {
       applyFilters(selectedSport).finally(() => {
         setLoading(false);
