@@ -29,6 +29,7 @@ export default function Dashboard() {
   const searchParams = useSearchParams();
   const [srcLocation, setSrcLocation] = useState<string>("");
   const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
+  const [endLoading, setEndLoading] = useState<boolean | undefined>(false);
   const getQueryParams = () => {
     // if (typeof window === "undefined") {
     if (window === undefined) {
@@ -104,6 +105,13 @@ export default function Dashboard() {
     fetchEvents();
   }, [searchParams]);
 
+  // useEffect listener for when filtering finishes
+  useEffect(() => {
+    if (endLoading !== undefined) {
+      setLoading(false);
+    }
+  }, [endLoading]);
+
   useEffect(() => {
     const login = searchParams?.get("login");
     if (login === "success") {
@@ -139,8 +147,8 @@ export default function Dashboard() {
           srcLocation={srcLocation}
           setSrcLocation={setSrcLocation}
           triggerFilterApply={triggerFilterApply}
-          loading={loading}
-          setLoading={setLoading}
+          endLoading={endLoading}
+          setEndLoading={setEndLoading}
         />
       </div>
       <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit z-50">
