@@ -11,18 +11,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 
 export default function Dashboard() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const loadingEventDataList: EventData[] = [
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ];
   const [eventDataList, setEventDataList] = useState<EventData[]>([
     EmptyEventData,
     EmptyEventData,
@@ -39,7 +29,6 @@ export default function Dashboard() {
   const searchParams = useSearchParams();
   const [srcLocation, setSrcLocation] = useState<string>("");
   const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
-  const [endLoading, setEndLoading] = useState<boolean | undefined>(false);
   const getQueryParams = () => {
     // if (typeof window === "undefined") {
     if (window === undefined) {
@@ -78,6 +67,7 @@ export default function Dashboard() {
             })
             .finally(async () => {
               await sleep(500);
+              setLoading(false);
             });
         } else {
           searchEventsByKeyword(event, location)
@@ -104,24 +94,15 @@ export default function Dashboard() {
       if (location.trim() !== "") {
         setSrcLocation(location);
         if (triggerFilterApply === undefined) {
-          setTriggerFilterApply(false);
+          setTriggerFilterApply(true);
         } else {
           setTriggerFilterApply(!triggerFilterApply);
         }
-      } else {
-        setLoading(false);
       }
     };
     setLoading(true);
     fetchEvents();
   }, [searchParams]);
-
-  // useEffect listener for when filtering finishes
-  useEffect(() => {
-    if (endLoading !== undefined) {
-      setLoading(false);
-    }
-  }, [endLoading]);
 
   useEffect(() => {
     const login = searchParams?.get("login");
@@ -158,8 +139,8 @@ export default function Dashboard() {
           srcLocation={srcLocation}
           setSrcLocation={setSrcLocation}
           triggerFilterApply={triggerFilterApply}
-          endLoading={endLoading}
-          setEndLoading={setEndLoading}
+          loading={loading}
+          setLoading={setLoading}
         />
       </div>
       <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit z-50">
@@ -169,9 +150,34 @@ export default function Dashboard() {
       </div>
       <div className="flex justify-center">
         <div className="pb-10 screen-width-dashboard">
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-screen justify-items-center">
-              {loadingEventDataList.map((event, eventIdx) => {
+          {eventDataList.length === 0 && (
+            <div className="flex justify-center z-10">
+              <div>
+                <Image
+                  src={noSearchResultLineDrawing}
+                  alt="noSearchResultLineDrawing"
+                  width={500}
+                  height={300}
+                  className="opacity-60"
+                />
+                <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
+                  Sorry, we couldn&apos;t find any results
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
+            {eventDataList
+              .sort((event1, event2) => {
+                if (event1.accessCount > event2.accessCount) {
+                  return 1;
+                }
+                if (event2.accessCount < event2.accessCount) {
+                  return -1;
+                }
+                return 0;
+              })
+              .map((event, eventIdx) => {
                 return (
                   <div className="my-4 w-full" key={eventIdx}>
                     <EventCard
@@ -188,53 +194,7 @@ export default function Dashboard() {
                   </div>
                 );
               })}
-            </div>
-          ) : eventDataList.length === 0 ? (
-            <div className="flex justify-center z-10">
-              <div>
-                <Image
-                  src={noSearchResultLineDrawing}
-                  alt="noSearchResultLineDrawing"
-                  width={500}
-                  height={300}
-                  className="opacity-60"
-                />
-                <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                  Sorry, we couldn&apos;t find any results
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
-              {eventDataList
-                .sort((event1, event2) => {
-                  if (event1.accessCount > event2.accessCount) {
-                    return 1;
-                  }
-                  if (event2.accessCount < event2.accessCount) {
-                    return -1;
-                  }
-                  return 0;
-                })
-                .map((event, eventIdx) => {
-                  return (
-                    <div className="my-4 w-full" key={eventIdx}>
-                      <EventCard
-                        eventId={event.eventId}
-                        image={event.image}
-                        name={event.name}
-                        organiser={event.organiser}
-                        startTime={event.startDate}
-                        location={event.location}
-                        price={event.price}
-                        vacancy={event.vacancy}
-                        loading={loading}
-                      />
-                    </div>
-                  );
-                })}
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

@@ -49,8 +49,8 @@ interface FilterBannerProps {
   srcLocation: string;
   setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
   triggerFilterApply: boolean | undefined;
-  endLoading: boolean | undefined;
-  setEndLoading: (state: boolean | undefined) => void;
+  loading: boolean;
+  setLoading: (state: boolean) => void;
 }
 
 export default function FilterBanner({
@@ -60,8 +60,8 @@ export default function FilterBanner({
   srcLocation,
   setSrcLocation,
   triggerFilterApply,
-  endLoading,
-  setEndLoading,
+  loading,
+  setLoading,
 }: FilterBannerProps) {
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
@@ -208,13 +208,10 @@ export default function FilterBanner({
   }
 
   useEffect(() => {
+    console.log("EDWIN", triggerFilterApply);
     if (triggerFilterApply !== undefined) {
       applyFilters(selectedSport).finally(() => {
-        if (endLoading === undefined) {
-          setEndLoading(true);
-        } else {
-          setEndLoading(!endLoading);
-        }
+        setLoading(false);
       });
     }
   }, [triggerFilterApply]);
