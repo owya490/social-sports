@@ -26,6 +26,7 @@ const EventDrilldownManageAttendeesPage = ({
   function closeModal() {
     setIsFilterModalOpen(false);
   }
+
   return (
     <div className="flex flex-col space-y-4 mb-6 w-full p-1 pt-3 md:p-0">
       <div className="flex justify-between">
