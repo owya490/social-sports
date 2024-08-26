@@ -95,7 +95,7 @@ export default function Dashboard() {
       }
       if (location.trim() !== "") {
         if (triggerFilterApply === undefined) {
-          setTriggerFilterApply(true);
+          setTriggerFilterApply(false);
         } else {
           setTriggerFilterApply(!triggerFilterApply);
         }
