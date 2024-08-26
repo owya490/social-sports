@@ -159,7 +159,7 @@ export default function Dashboard() {
       </div>
       <div className="flex justify-center">
         <div className="pb-10 screen-width-dashboard">
-          {eventDataList.length === 0 && (
+          {loading === false && eventDataList.length === 0 && (
             <div className="flex justify-center z-10">
               <div>
                 <Image

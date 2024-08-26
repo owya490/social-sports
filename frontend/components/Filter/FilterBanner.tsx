@@ -226,23 +226,6 @@ export default function FilterBanner({
           {Object.entries(icons).map((entry, idx) => {
             const sportIdentifierString = entry[0];
             const sportInfo = entry[1];
-            if (idx === 0) {
-              return (
-                <FilterIcon
-                  key={idx}
-                  sportIdentifierString={sportIdentifierString}
-                  image={sportInfo.image}
-                  style={sportInfo.style}
-                  name={sportInfo.sport_name}
-                  isFirst={true}
-                  setEventDataList={setEventDataList}
-                  allEventsDataList={eventDataList}
-                  selectedSport={selectedSport}
-                  setSelectedSport={setSelectedSport}
-                  applyFilters={applyFilters}
-                />
-              );
-            }
             return (
               <FilterIcon
                 key={idx}
@@ -250,7 +233,7 @@ export default function FilterBanner({
                 image={sportInfo.image}
                 style={sportInfo.style}
                 name={sportInfo.sport_name}
-                isFirst={false}
+                isFirst={idx === 0}
                 setEventDataList={setEventDataList}
                 allEventsDataList={eventDataList}
                 selectedSport={selectedSport}
