@@ -1,6 +1,5 @@
-import { getCurrentTime } from "@/services/src/datetimeUtils";
 import { Environment, getEnvironment } from "@/utilities/environment";
-import { LogLevel, faro } from "@grafana/faro-web-sdk";
+import { LogLevel, faro, getCurrentTimestamp } from "@grafana/faro-web-sdk";
 
 export class Logger {
   loggingContext: { [key: string]: string };
@@ -28,7 +27,7 @@ export class Logger {
 
   private log(log: string, loggingContext: { [key: string]: string }, logLevel: LogLevel) {
     if (getEnvironment() === Environment.DEVELOPMENT) {
-      this.logToConsole(`${getCurrentTime()} ${log}`, loggingContext, logLevel);
+      this.logToConsole(`${getCurrentTimestamp()} ${log}`, loggingContext, logLevel);
     } else {
       this.logToGrafanaFaro(log, loggingContext, logLevel);
     }

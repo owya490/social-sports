@@ -47,7 +47,6 @@ export async function getStripeCheckoutFromEventId(eventId: EventId, isPrivate: 
   };
   stripeServiceLogger.info(`Getting stripe checkout for ${eventId} for ${quantity} tickets.`);
   const getStripeCheckoutFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID);
-  stripeServiceLogger.info(`Got the firebase function Checkout.`);
   return getStripeCheckoutFunction(content)
     .then((result) => {
       const data = JSON.parse(result.data as string) as StripeGetCheckoutUrlResponse;

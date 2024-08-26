@@ -1,3 +1,4 @@
+import { getCurrentTimestamp } from "@grafana/faro-web-sdk";
 import { HttpsCallable, getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "./firebase";
 
@@ -10,5 +11,6 @@ export const FIREBASE_FUNCTIONS_SEND_EMAIL_ON_CREATE_EVENT = "send_email_on_crea
 
 export function getFirebaseFunctionByName(name: string): HttpsCallable {
   const functions = getFunctions(app, "australia-southeast1");
+  console.log(`${getCurrentTimestamp()} Got the firebase function Checkout.`);
   return httpsCallable(functions, name);
 }
