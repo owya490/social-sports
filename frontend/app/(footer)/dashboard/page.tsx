@@ -108,7 +108,8 @@ export default function Dashboard() {
   // useEffect listener for when filtering finishes
   useEffect(() => {
     if (endLoading !== undefined) {
-      setLoading(false);
+      // Something wrong with endLoading in the filter stuff
+      // setLoading(false);
     }
   }, [endLoading]);
 
