@@ -41,7 +41,7 @@ export default function Dashboard() {
   }, [user]);
 
   return (
-    <div className="pt-16 sm:pl-14 max-h-screen">
+    <div className="pt-16 pb-20 sm:pb-4 sm:pl-14 lg:max-h-screen">
       <OrganiserNavbar currPage="Dashboard" />
       <div className="pt-2 md:py-16 md:flex md:justify-center px-4 md:px-0">
         <div>
@@ -89,7 +89,7 @@ export default function Dashboard() {
                   })
                   .map((event, eventIdx) => {
                     return (
-                      <div key={eventIdx} className="mt-4 mb-8 md:mb-0 md:mt-8 ">
+                      <div key={eventIdx} className="mt-4 md:mt-8 ">
                         <OrganiserEventCard
                           eventId={event.eventId}
                           image={event.image}
