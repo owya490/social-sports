@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, Fragment } from "react";
-import Image from "next/image";
+import { EventId } from "@/interfaces/EventTypes";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { Dialog, Transition, TransitionChild } from "@headlessui/react";
-import share_arrow from "../../public/images/share_arrow.png";
+import Image from "next/image";
+import { Fragment, useEffect, useState } from "react";
 import email_icons from "../../public/images/email.png";
 import fb_icons from "../../public/images/fbfb.jpeg";
 import insta_logo from "../../public/images/insta_logo.png";
-import { EventId } from "@/interfaces/EventTypes";
-import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
+import share_arrow from "../../public/images/share_arrow.png";
 
 interface ShareModalProps {
   eventId: EventId;
@@ -68,9 +68,9 @@ ${eventURL}`;
   };
 
   return (
-    <div className="relative">
-      <div className="flex items-center bg-organiser-light-gray rounded-xl w-1/6 cursor-pointer" onClick={toggleModal}>
-        <div className="rounded-md text-lg px-4 py-2">Share</div>
+    <div className="relative px-4 sm:px-0">
+      <div className="flex items-center bg-organiser-light-gray rounded-xl w-fit cursor-pointer" onClick={toggleModal}>
+        <div className="rounded-md text-sm sm:text-lg px-4 py-2">Share</div>
         <Image src={share_arrow} alt="Share arrow" className="w-9 h-5 mx-2" />
       </div>
 
