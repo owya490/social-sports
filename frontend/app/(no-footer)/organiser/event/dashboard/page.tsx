@@ -156,7 +156,7 @@ export default function OrganiserDashboard() {
       <div className="flex justify-center">
         <div className="flex flex-col items-center md:items-start">
           <div className="flex flex-row items-center justify-center">
-            <div className="text-4xl md:text-5xl lg:text-6xl my-6 md:ml-4 lg:ml-0 font-semibold">Event Dashboard</div>
+            <div className="text-3xl md:text-4xl lg:text-5xl my-6 md:ml-4 lg:ml-0 font-semibold">Event Dashboard</div>
             <div className="lg:hidden ml-4">
               <OrganiserFilterDialogMobile
                 eventDataList={eventDataList}
