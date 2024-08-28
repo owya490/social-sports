@@ -45,11 +45,11 @@ export default function Dashboard() {
       <OrganiserNavbar currPage="Dashboard" />
       <div className="pt-2 md:py-16 md:flex md:justify-center px-4">
         <div className="w-full lg:w-auto">
-          <h1 className="text-5xl font-bold mt-2 sm:mt-0">Organiser Dashboard</h1>
+          <h1 className="text-4xl sm:text-5xl font-bold mt-2 sm:mt-0">Organiser Dashboard</h1>
           {loading ? (
             <LoadingSkeletonOrganiserName />
           ) : (
-            <h1 className="pt-2 sm:pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
+            <h1 className="pt-2 sm:pt-4 text-3xl sm:text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
           )}
           <div className="lg:flex w-full mt-8 lg:max-h-[60vh]">
             <div className="grow lg:mr-8 md:flex flex-col w-full">
