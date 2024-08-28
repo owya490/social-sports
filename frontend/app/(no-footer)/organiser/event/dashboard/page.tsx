@@ -110,16 +110,7 @@ export default function OrganiserDashboard() {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const loadingEventDataList: EventData[] = [
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ];
+
   const [eventDataList, setEventDataList] = useState<EventData[]>([
     EmptyEventData,
     EmptyEventData,
@@ -146,8 +137,13 @@ export default function OrganiserDashboard() {
       }
     };
     fetchData();
-    setLoading(false);
   }, [user]);
+
+  useEffect(() => {
+    if (allEventsDataList.length !== 0) {
+      setLoading(false);
+    }
+  }, [allEventsDataList]);
 
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   function closeModal() {
@@ -160,7 +156,7 @@ export default function OrganiserDashboard() {
       <div className="flex justify-center">
         <div className="flex flex-col items-center md:items-start">
           <div className="flex flex-row items-center justify-center">
-            <div className="text-4xl md:text-5xl lg:text-6xl my-6 md:ml-4 lg:ml-0">Event Dashboard</div>
+            <div className="text-4xl md:text-5xl lg:text-6xl my-6 md:ml-4 lg:ml-0 font-semibold">Event Dashboard</div>
             <div className="lg:hidden ml-4">
               <OrganiserFilterDialogMobile
                 eventDataList={eventDataList}
@@ -212,28 +208,9 @@ export default function OrganiserDashboard() {
                 applyFilters={applyFilters}
               />
             </div>
-            {loading ? (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-8 justify-items-center overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
-                {loadingEventDataList.map((event, eventIdx) => {
-                  return (
-                    <div className="w-full" key={eventIdx}>
-                      <OrganiserEventCard
-                        eventId={event.eventId}
-                        image={event.image}
-                        name={event.name}
-                        organiser={event.organiser}
-                        startTime={event.startDate}
-                        location={event.location}
-                        price={event.price}
-                        vacancy={event.vacancy}
-                        loading={loading}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            ) : eventDataList.length === 0 ? (
-              <div className="flex justify-center">
+
+            {loading === false && eventDataList.length === 0 && (
+              <div className="flex justify-center z-10">
                 <div>
                   <Image
                     src={noSearchResultLineDrawing}
@@ -247,7 +224,8 @@ export default function OrganiserDashboard() {
                   </div>
                 </div>
               </div>
-            ) : (
+            )}
+            {eventDataList.length !== 0 && (
               <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-6 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-auto">
                 {eventDataList
                   .sort((event1, event2) => {
