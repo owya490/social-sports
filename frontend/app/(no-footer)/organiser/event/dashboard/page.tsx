@@ -151,113 +151,109 @@ export default function OrganiserDashboard() {
   }
 
   return (
-    <div className="w-screen pt-14 lg:pt-16 lg:pb-10 md:pl-7 h-fit max-h-screen overflow-y-auto">
+    <div className="pt-14 pb-16 px-4 sm:pl-20 sm:pb-4 lg:pl-32 lg:pr-12">
       <OrganiserNavbar currPage={"EventDashboard"} />
-      <div className="flex justify-center">
-        <div className="flex flex-col items-center md:items-start">
-          <div className="flex flex-row items-center justify-center">
-            <div className="text-3xl md:text-4xl lg:text-5xl my-6 md:ml-4 lg:ml-0 font-semibold">Event Dashboard</div>
-            <div className="lg:hidden ml-4">
-              <OrganiserFilterDialogMobile
-                eventDataList={eventDataList}
-                allEventsDataList={allEventsDataList}
-                setEventDataList={setEventDataList}
-                sortByCategoryValue={sortByCategoryValue}
-                setSortByCategoryValue={setSortByCategoryValue}
-                appliedSortByCategoryValue={appliedSortByCategoryValue}
-                setAppliedSortByCategoryValue={setAppliedSortByCategoryValue}
-                searchValue={searchValue}
-                setSearchValue={setSearchValue}
-                appliedSearchValue={appliedSearchValue}
-                setAppliedSearchValue={setAppliedSearchValue}
-                eventTypeValue={eventTypeValue}
-                setEventTypeValue={setEventTypeValue}
-                appliedEventTypeValue={appliedEventTypeValue}
-                setAppliedEventTypeValue={setAppliedEventTypeValue}
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                appliedDateRange={appliedDateRange}
-                setAppliedDateRange={setAppliedDateRange}
-                applyFilters={applyFilters}
-                isFilterModalOpen={isFilterModalOpen}
-                setIsFilterModalOpen={setIsFilterModalOpen}
-                closeModal={closeModal}
-              />
-            </div>
-          </div>
-          <div className="flex flex-row h-full w-full">
-            <div className="hidden lg:block">
-              <OrganiserFilterDialog
-                eventDataList={eventDataList}
-                allEventsDataList={allEventsDataList}
-                setEventDataList={setEventDataList}
-                sortByCategoryValue={sortByCategoryValue}
-                setSortByCategoryValue={setSortByCategoryValue}
-                searchValue={searchValue}
-                setSearchValue={setSearchValue}
-                eventStatusValue={eventStatusValue}
-                setEventStatusValue={setEventStatusValue}
-                eventTypeValue={eventTypeValue}
-                setEventTypeValue={setEventTypeValue}
-                minPriceValue={minPriceValue}
-                setMinPriceValue={setMinPriceValue}
-                maxPriceValue={maxPriceValue}
-                setMaxPriceValue={setMaxPriceValue}
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                applyFilters={applyFilters}
-              />
-            </div>
-
-            {loading === false && eventDataList.length === 0 && (
-              <div className="flex justify-center z-10">
-                <div>
-                  <Image
-                    src={noSearchResultLineDrawing}
-                    alt="noSearchResultLineDrawing"
-                    width={500}
-                    height={300}
-                    className="opacity-60"
-                  />
-                  <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                    Sorry, we couldn&apos;t find any results
-                  </div>
-                </div>
-              </div>
-            )}
-            {eventDataList.length !== 0 && (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-6 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-auto">
-                {eventDataList
-                  .sort((event1, event2) => {
-                    if (event1.accessCount > event2.accessCount) {
-                      return 1;
-                    }
-                    if (event2.accessCount < event2.accessCount) {
-                      return -1;
-                    }
-                    return 0;
-                  })
-                  .map((event, eventIdx) => {
-                    return (
-                      <div className="w-full" key={eventIdx}>
-                        <OrganiserEventCard
-                          eventId={event.eventId}
-                          image={event.image}
-                          name={event.name}
-                          organiser={event.organiser}
-                          startTime={event.startDate}
-                          location={event.location}
-                          price={event.price}
-                          vacancy={event.vacancy}
-                          loading={loading}
-                        />
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
+      <div className="flex flex-row mt-6 justify-between">
+        <div className="text-3xl md:text-4xl lg:text-5xl font-semibold">Event Dashboard</div>
+        <div className="lg:hidden">
+          <OrganiserFilterDialogMobile
+            eventDataList={eventDataList}
+            allEventsDataList={allEventsDataList}
+            setEventDataList={setEventDataList}
+            sortByCategoryValue={sortByCategoryValue}
+            setSortByCategoryValue={setSortByCategoryValue}
+            appliedSortByCategoryValue={appliedSortByCategoryValue}
+            setAppliedSortByCategoryValue={setAppliedSortByCategoryValue}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+            appliedSearchValue={appliedSearchValue}
+            setAppliedSearchValue={setAppliedSearchValue}
+            eventTypeValue={eventTypeValue}
+            setEventTypeValue={setEventTypeValue}
+            appliedEventTypeValue={appliedEventTypeValue}
+            setAppliedEventTypeValue={setAppliedEventTypeValue}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            appliedDateRange={appliedDateRange}
+            setAppliedDateRange={setAppliedDateRange}
+            applyFilters={applyFilters}
+            isFilterModalOpen={isFilterModalOpen}
+            setIsFilterModalOpen={setIsFilterModalOpen}
+            closeModal={closeModal}
+          />
         </div>
+      </div>
+      <div className="flex flex-row w-full mt-4 md:h-[80vh]">
+        <div className="hidden lg:block mr-2">
+          <OrganiserFilterDialog
+            eventDataList={eventDataList}
+            allEventsDataList={allEventsDataList}
+            setEventDataList={setEventDataList}
+            sortByCategoryValue={sortByCategoryValue}
+            setSortByCategoryValue={setSortByCategoryValue}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+            eventStatusValue={eventStatusValue}
+            setEventStatusValue={setEventStatusValue}
+            eventTypeValue={eventTypeValue}
+            setEventTypeValue={setEventTypeValue}
+            minPriceValue={minPriceValue}
+            setMinPriceValue={setMinPriceValue}
+            maxPriceValue={maxPriceValue}
+            setMaxPriceValue={setMaxPriceValue}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            applyFilters={applyFilters}
+          />
+        </div>
+
+        {loading === false && eventDataList.length === 0 && (
+          <div className="flex justify-center z-10">
+            <div>
+              <Image
+                src={noSearchResultLineDrawing}
+                alt="noSearchResultLineDrawing"
+                width={500}
+                height={300}
+                className="opacity-60"
+              />
+              <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
+                Sorry, we couldn&apos;t find any results
+              </div>
+            </div>
+          </div>
+        )}
+        {eventDataList.length !== 0 && (
+          <div className="w-full z-5 grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-6 md:h-full md:overflow-y-auto">
+            {eventDataList
+              .sort((event1, event2) => {
+                if (event1.accessCount > event2.accessCount) {
+                  return 1;
+                }
+                if (event2.accessCount < event2.accessCount) {
+                  return -1;
+                }
+                return 0;
+              })
+              .map((event, eventIdx) => {
+                return (
+                  <div key={eventIdx}>
+                    <OrganiserEventCard
+                      eventId={event.eventId}
+                      image={event.image}
+                      name={event.name}
+                      organiser={event.organiser}
+                      startTime={event.startDate}
+                      location={event.location}
+                      price={event.price}
+                      vacancy={event.vacancy}
+                      loading={loading}
+                    />
+                  </div>
+                );
+              })}
+          </div>
+        )}
       </div>
     </div>
   );
