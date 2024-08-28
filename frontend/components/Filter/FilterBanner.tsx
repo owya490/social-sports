@@ -220,7 +220,7 @@ export default function FilterBanner({
   }, [triggerFilterApply]);
 
   return (
-    <div className="pt-16 bg-white px-4 sm:px-0 screen-width-dashboard">
+    <div className="pt-16 bg-white screen-width-dashboard">
       <div className="h-20 flex items-center mt-2">
         <div id="filter-overflow" className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all">
           {Object.entries(icons).map((entry, idx) => {

@@ -158,53 +158,50 @@ export default function Dashboard() {
           Successfully logged in!
         </Alert>
       </div>
-      <div className="flex justify-center mt-4">
-        <div className="pb-10 screen-width-dashboard">
-          {loading === false && eventDataList.length === 0 && (
-            <div className="flex justify-center z-10">
-              <div>
-                <Image
-                  src={noSearchResultLineDrawing}
-                  alt="noSearchResultLineDrawing"
-                  width={500}
-                  height={300}
-                  className="opacity-60"
-                />
-                <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                  Sorry, we couldn&apos;t find any results
-                </div>
+      <div className="flex justify-center w-full mt-4 px-3 sm:px-20 pb-10">
+        {loading === false && eventDataList.length === 0 && (
+          <div className="flex justify-center z-10">
+            <div>
+              <Image
+                src={noSearchResultLineDrawing}
+                alt="noSearchResultLineDrawing"
+                width={500}
+                height={300}
+                className="opacity-60"
+              />
+              <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
+                Sorry, we couldn&apos;t find any results
               </div>
             </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-8 justify-items-center">
-            {eventDataList
-              .sort((event1, event2) => {
-                if (event1.accessCount > event2.accessCount) {
-                  return 1;
-                }
-                if (event2.accessCount < event2.accessCount) {
-                  return -1;
-                }
-                return 0;
-              })
-              .map((event, eventIdx) => {
-                return (
-                  <div className="w-full" key={eventIdx}>
-                    <EventCard
-                      eventId={event.eventId}
-                      image={event.image}
-                      name={event.name}
-                      organiser={event.organiser}
-                      startTime={event.startDate}
-                      location={event.location}
-                      price={event.price}
-                      vacancy={event.vacancy}
-                      loading={loading}
-                    />
-                  </div>
-                );
-              })}
           </div>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-8 w-full md:w-auto">
+          {eventDataList
+            .sort((event1, event2) => {
+              if (event1.accessCount > event2.accessCount) {
+                return 1;
+              }
+              if (event2.accessCount < event2.accessCount) {
+                return -1;
+              }
+              return 0;
+            })
+            .map((event, eventIdx) => {
+              return (
+                <EventCard
+                  eventId={event.eventId}
+                  image={event.image}
+                  name={event.name}
+                  organiser={event.organiser}
+                  startTime={event.startDate}
+                  location={event.location}
+                  price={event.price}
+                  vacancy={event.vacancy}
+                  loading={loading}
+                  key={eventIdx}
+                />
+              );
+            })}
         </div>
       </div>
     </div>
