@@ -158,7 +158,7 @@ export default function Dashboard() {
           Successfully logged in!
         </Alert>
       </div>
-      <div className="flex justify-center w-full mt-4 px-3 sm:px-20 pb-10">
+      <div className="flex justify-center w-full mt-4 px-3 sm:px-20 lg:px-3 pb-10">
         {loading === false && eventDataList.length === 0 && (
           <div className="flex justify-center z-10">
             <div>
