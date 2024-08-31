@@ -87,56 +87,58 @@ export default function EventPayment(props: EventPaymentProps) {
               <h2 className="font-semibold">Event has already finished.</h2>
               <p className="text-xs font-light">Please check with the organiser for future events.</p>
             </div>
-          ) : props.vacancy === 0 ? (
-            <div>
-              <h2 className="font-semibold">Event currently sold out.</h2>
-              <p>Please check back later.</p>
-            </div>
           ) : props.isPaymentsActive ? (
             <div className="w-full space-y-6">
-              <>
-                <div className="!text-black !border-black">
-                  <Select
-                    className="border-black border-t-transparent text-black"
-                    label="Select Ticket Amount"
-                    size="lg"
-                    value={`${attendeeCount}`}
-                    onChange={handleAttendeeCount}
-                    labelProps={{
-                      className: "text-black before:border-black after:border-black",
+              {props.vacancy === 0 ? (
+                <div>
+                  <h2 className="font-semibold">Event currently sold out.</h2>
+                  <p>Please check back later.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="!text-black !border-black">
+                    <Select
+                      className="border-black border-t-transparent text-black"
+                      label="Select Ticket Amount"
+                      size="lg"
+                      value={`${attendeeCount}`}
+                      onChange={handleAttendeeCount}
+                      labelProps={{
+                        className: "text-black before:border-black after:border-black",
+                      }}
+                      menuProps={{
+                        className: "text-black",
+                      }}
+                    >
+                      {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
+                        .fill(0)
+                        .map((_, idx) => {
+                          const count = idx + 1;
+                          return (
+                            <Option key={`attendee-option-${count}`} value={`${count}`}>
+                              {count} Ticket{count > 1 ? "s" : ""}
+                            </Option>
+                          );
+                        })}
+                    </Select>
+                  </div>
+                  <button
+                    className="text-lg rounded-2xl border border-black w-full py-3"
+                    style={{
+                      textAlign: "center",
+                      position: "relative",
                     }}
-                    menuProps={{
-                      className: "text-black",
+                    onClick={async () => {
+                      props.setLoading(true);
+                      window.scrollTo(0, 0);
+                      const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
+                      router.push(link);
                     }}
                   >
-                    {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
-                      .fill(0)
-                      .map((_, idx) => {
-                        const count = idx + 1;
-                        return (
-                          <Option key={`attendee-option-${count}`} value={`${count}`}>
-                            {count} Ticket{count > 1 ? "s" : ""}
-                          </Option>
-                        );
-                      })}
-                  </Select>
-                </div>
-                <button
-                  className="text-lg rounded-2xl border border-black w-full py-3"
-                  style={{
-                    textAlign: "center",
-                    position: "relative",
-                  }}
-                  onClick={async () => {
-                    props.setLoading(true);
-                    window.scrollTo(0, 0);
-                    const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
-                    router.push(link);
-                  }}
-                >
-                  Book Now
-                </button>
-              </>
+                    Book Now
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <Link href="#" className="w-full">
