@@ -142,6 +142,16 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
       },
     ],
     # payment_intent_data={"application_fee_amount": 123},
+    shipping_options=[{
+      "shipping_rate_data": {
+        "display_name": "Stripe Fees",
+        "fixed_amount": {
+          "amount": 123,
+          "currency": "aud"
+        },
+        "type": "fixed_amount"
+      }
+    }],
     success_url=success_url, # TODO need to update to a static success page
     cancel_url=cancel_url,
     stripe_account= organiser_stripe_account_id,
