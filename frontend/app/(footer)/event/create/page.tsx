@@ -174,6 +174,7 @@ export default function CreateEvent() {
       paymentsActive: formData.paymentsActive,
       startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
+      stripeFeeToCustomer: formData.stripeFeeToCustomer,
     };
   }
 
