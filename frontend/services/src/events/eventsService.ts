@@ -54,10 +54,10 @@ export const eventServiceLogger = new Logger("eventServiceLogger");
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
   if (!rateLimitCreateAndUpdateEvents()) {
-    console.log("Rate Limited!!!");
+    eventServiceLogger.warn("Rate limited!");
     throw "Rate Limited";
   }
-  eventServiceLogger.info(`createEvent`);
+  eventServiceLogger.info("createEvent");
   try {
     // Simplified object spreading with tokenized values
     const eventDataWithTokens = {
@@ -79,7 +79,7 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     } else {
       user.organiserEvents.push(docRef.id);
     }
-    console.log("create event user", user);
+    eventServiceLogger.info(`create event user ${user}`);
     await updateUser(data.organiserId, user);
 
     // We want to bust all our caches when we create a new event.
@@ -203,7 +203,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
       }
     }
     // Return the organiserEvents array
-    eventServiceLogger.info(`Fetching private user by ID:, ${userId}, ${eventDataList}`);
+    eventServiceLogger.info(`Fetching private user by ID:, ${userId}`);
     return eventDataList;
   } catch (error) {
     throw error;
@@ -212,7 +212,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
 
 export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
   if (!rateLimitCreateAndUpdateEvents()) {
-    eventServiceLogger.info(`Rate Limited!, ${eventId}`);
+    eventServiceLogger.warn(`Rate Limited!, ${eventId}`);
     throw "Rate Limited";
   }
   eventServiceLogger.info(`updateEventByName ${eventId}`);
@@ -226,8 +226,6 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
     }
 
     await updateDoc(eventDocRef, updatedData);
-
-    console.log(`Event with Id '${eventId}' updated successfully.`);
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
     eventServiceLogger.error(`updateEventById ${error}`);
@@ -260,7 +258,7 @@ export async function deleteEventByName(eventName: string): Promise<void> {
     querySnapshot.forEach(async (eventDoc) => {
       await deleteDoc(eventDoc.ref);
     });
-    eventServiceLogger.info(`Deleting Event by name successfully ${eventName}`);
+    eventServiceLogger.info(`Deleting Event by Name successfull ${eventName}`);
   } catch (error) {
     eventServiceLogger.error(`deleteEventbyName ${error}`);
   }
@@ -274,7 +272,7 @@ export async function incrementEventAccessCountById(
 ) {
   try {
     eventServiceLogger.info(`Incrementing ${eventId} by ${count}`);
-    console.log(`${eventId}, ${isActive}, ${isPrivate}`);
+    eventServiceLogger.info(`EventID:${eventId}, IsActive:${isActive}, IsPrivate:${isPrivate}`);
     await updateDoc(createEventDocRef(eventId, isActive, isPrivate), {
       accessCount: increment(count),
     });

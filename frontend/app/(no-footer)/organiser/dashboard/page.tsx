@@ -33,7 +33,7 @@ export default function Dashboard() {
         setEventDataList(events);
         setLoading(false);
       } catch (error) {
-        organiserDashboardLogger.error("getOrganiserEvents() Error: " + error);
+        organiserDashboardLogger.error(`getOrganiserEvents() Error: ${error}`);
         router.push("/error");
       }
     };

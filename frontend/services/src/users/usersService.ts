@@ -1,12 +1,12 @@
 import { NewUserData, PrivateUserData, PublicUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
-import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
 import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
-import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
 import { DEFAULT_USER_PROFILE_PICTURE } from "./usersConstants";
+import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
+import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
 
 export const userServiceLogger = new Logger("userServiceLogger");
 
@@ -163,8 +163,6 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>): Pr
     const privateDataToUpdate = extractPrivateUserData(newData);
 
     await updateDoc(privateUserDocRef, privateDataToUpdate);
-    console.log("update pub", publicDataToUpdate);
-    console.log("update pri", privateDataToUpdate);
     userServiceLogger.info(`User updated successfully:", ${userId}`);
   } catch (error) {
     userServiceLogger.error(`Error updating user with ID ${userId}:, ${error}`);

@@ -2,6 +2,7 @@
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import eye from "@/public/images/Eye.png";
 import location from "@/public/images/location.png";
 import Upload from "@/public/images/upload.png";
@@ -11,7 +12,7 @@ import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
 import Tick from "@svgs/Verified_tick.png";
-import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, getMetadata, getStorage, ref } from "firebase/storage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
@@ -31,6 +32,7 @@ const calculateAge = (birthday: string) => {
 };
 
 const Profile = () => {
+  const profileLogger = new Logger("profileLogger");
   const router = useRouter();
   const storage = getStorage();
 
@@ -97,7 +99,6 @@ const Profile = () => {
     if (initialProfileData.firstName !== "") {
       sleep(1500).then(() => {
         setLoading(false);
-        console.log(initialProfileData.profilePicture);
       });
     }
   }, [initialProfileData]);
@@ -220,11 +221,10 @@ const Profile = () => {
     if (editedData.firstName.trim() === "") {
       return;
     }
-
-    console.log("Saving changes:", initialProfileData);
     setEditable(false);
     try {
       updateUser(initialProfileData.userId, editedData);
+      profileLogger.info(`Edited profile - uid:${initialProfileData.userId} data:${editedData}`);
     } catch {
       router.push("/error");
     }

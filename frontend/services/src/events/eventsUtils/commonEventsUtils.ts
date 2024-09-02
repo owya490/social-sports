@@ -39,7 +39,6 @@ export async function findEventDocRef(eventId: EventId): Promise<DocumentReferen
     }
 
     // If no document found, log and throw an error
-    console.log(`Event not found in any subcollection for eventId: ${eventId}`);
     eventServiceLogger.error(`No event found in any subcollection for eventId: ${eventId}`);
     throw new Error(`No event found in any subcollection for eventId: ${eventId}`);
   } catch (error) {
