@@ -36,7 +36,7 @@ interface AbstractEventData {
   accessCount: number;
   sport: string;
   paymentsActive: boolean;
-  stripeFeeToCustomer: boolean;
+  stripeFeeToCustomer?: boolean;
 }
 
 export interface NewEventData extends AbstractEventData {}
