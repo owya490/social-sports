@@ -348,29 +348,31 @@ export function BasicInformation({
         </div>
         {isAdditionalSettingsOpen && (
           <div>
-            <div>
-              <label className="text-black text-lg font-semibold">
-                Do you want to pass Application Fees onto the Customer?
-              </label>
-              <p className="text-sm mb-5 mt-2">
-                Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be charged
-                the fees ontop of the ticket price, shown as a Card Surcharge fee.
-              </p>
-              <div className="mt-4">
-                <Select
-                  size="md"
-                  label="Select Visibility"
-                  value={stripeFeeToCustomer ? "Yes" : "No"}
-                  onChange={(e) => {
-                    const value = e || "Yes";
-                    handleStripeFeesToCustomerChange(value);
-                  }}
-                >
-                  <Option value="Yes">Yes</Option>
-                  <Option value="No">No</Option>
-                </Select>
+            {user.stripeAccountActive && (
+              <div>
+                <label className="text-black text-lg font-semibold">
+                  Do you want to pass Application Fees onto the Customer?
+                </label>
+                <p className="text-sm mb-5 mt-2">
+                  Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
+                  charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
+                </p>
+                <div className="mt-4">
+                  <Select
+                    size="md"
+                    label="Select Stripe Fee to Customer"
+                    value={stripeFeeToCustomer ? "Yes" : "No"}
+                    onChange={(e) => {
+                      const value = e || "Yes";
+                      handleStripeFeesToCustomerChange(value);
+                    }}
+                  >
+                    <Option value="Yes">Yes</Option>
+                    <Option value="No">No</Option>
+                  </Select>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

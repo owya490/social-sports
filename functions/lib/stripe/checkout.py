@@ -6,12 +6,14 @@ import json
 import time
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 import stripe
 from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
+from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
 from lib.stripe.commons import ERROR_URL
@@ -59,11 +61,14 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   event = maybe_event.to_dict()
 
   # Check if event has not concluded, otherwise error out
-  # TODO
+  event_end_date: Timestamp = event.get("endDate").timestamp_pb()
+  event_end_date = event_end_date.ToDatetime(UTC)
+  if (datetime.now(UTC) > event_end_date):
+    logger.warning(f"Trying to get checkout url for event that has already concluded. eventId={event_id}.")
+    return json.dumps({"url": ERROR_URL})
   
   # 1. check for event is stripe enabled
   if (not event.get("paymentsActive")):
-    print("Payments not active")
     logger.error(f"Provided event {event_ref.path} does not have payments enabled. Returning status=500")
     return json.dumps({"url": cancel_url})
 
@@ -173,8 +178,6 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
     expires_at=int(time.time() + 1800) # Checkout session expires in 30 minutes (stripe minimum)
   )
   
-  
-
   logger.info(f"Creating checkout session {checkout.id} for event {event_ref.path}, linked to {organiser_ref.path} and their stripe account {organiser_stripe_account_id}. Secured {quantity} tickets at ${price}.")
   return json.dumps({"url": checkout.url})
 
