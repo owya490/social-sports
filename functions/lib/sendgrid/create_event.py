@@ -79,8 +79,11 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
       "event_sport": event_data.get("sport"),
       "event_price": centsToDollars(event_data.get("price")),
       "event_capacity": event_data.get("capacity"),
-      "event_isPrivate": request_data.visibility
+      "event_isPrivate": request_data.visibility,
+      "event_id": request_data.eventId 
+      
     }
+    
 
     message.template_id = CREATE_EVENT_EMAIL_TEMPLATE_ID
 
