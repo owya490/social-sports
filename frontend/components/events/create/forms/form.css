@@ -1,0 +1,10 @@
+.mantine-1ho0yb:checked {
+  background: black;
+  color: black;
+  border-color: black;
+}
+
+[type="checkbox"]:focus,
+[type="radio"]:focus {
+  --tw-ring-offset-shadow: none;
+}

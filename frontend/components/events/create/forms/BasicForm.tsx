@@ -8,6 +8,7 @@ import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
+import { Radio, Switch } from "@mantine/core";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,6 +16,7 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
+import "./form.css";
 
 export type BasicData = {
   name: string;
@@ -65,6 +67,10 @@ export function BasicInformation({
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null); // Initialize locationError state
   const [isAdditionalSettingsOpen, setIsAdditionalSettingsOpen] = useState(false);
+
+  // TODO remove and transfer into form state
+  const [enableRecurringEvents, setEnableRecurringEvents] = useState(false);
+  const [recurrenceInterval, setRecurrenceInterval] = useState("week");
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -341,74 +347,110 @@ export function BasicInformation({
             </button>
           </div>
         )}
-        <div
-          className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1"
-          onClick={() => {
-            setIsAdditionalSettingsOpen(!isAdditionalSettingsOpen);
-          }}
-        >
-          <h2>Additional Settings</h2>
-          {isAdditionalSettingsOpen ? (
-            <ChevronUpIcon className="w-7 h-7 ml-auto" />
-          ) : (
-            <ChevronDownIcon className="w-7 h-7 ml-auto" />
-          )}
-        </div>
-        {isAdditionalSettingsOpen && (
-          <div>
-            {user.stripeAccountActive && (
-              <>
-                <div className="mb-12">
-                  <label className="text-black text-lg font-semibold">
-                    Do you want to pass Application Fees onto the Customer?
-                  </label>
-                  <p className="text-sm mb-5 mt-2">
-                    Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
-                    charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
-                  </p>
-                  <div className="mt-4">
-                    <Select
-                      size="md"
-                      label="Stripe Fee to Customer"
-                      value={stripeFeeToCustomer ? "Yes" : "No"}
-                      onChange={(e) => {
-                        const value = e || "Yes";
-                        handleStripeFeesToCustomerChange(value);
-                      }}
-                    >
-                      <Option value="Yes">Yes</Option>
-                      <Option value="No">No</Option>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-black text-lg font-semibold">
-                    Do you want to allow Promotional Codes for this Event?
-                  </label>
-                  <p className="text-sm mb-5 mt-2">
-                    Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for discounts at the
-                    time of checkout. To create a promotional code for your account, please visit your stripe dashboard.
-                  </p>
-                  <div className="mt-4">
-                    <Select
-                      size="md"
-                      label="Promotional Codes Enabled"
-                      value={promotionalCodesEnabled ? "Yes" : "No"}
-                      onChange={(e) => {
-                        const value = e || "Yes";
-                        handlePromotionalCodesEnabledChange(value);
-                      }}
-                    >
-                      <Option value="Yes">Yes</Option>
-                      <Option value="No">No</Option>
-                    </Select>
-                  </div>
-                </div>
-              </>
+        <div>
+          <div
+            className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1 mb-4"
+            onClick={() => {
+              setIsAdditionalSettingsOpen(!isAdditionalSettingsOpen);
+            }}
+          >
+            <h2>Additional Settings</h2>
+            {isAdditionalSettingsOpen ? (
+              <ChevronUpIcon className="w-7 h-7 ml-auto" />
+            ) : (
+              <ChevronDownIcon className="w-7 h-7 ml-auto" />
             )}
           </div>
-        )}
+          {isAdditionalSettingsOpen && (
+            <div>
+              <div className="mb-12">
+                <label className="text-black text-lg font-semibold">Recurring Events</label>
+                {/* <p className="text-sm mb-5 mt-2">
+                    Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for discounts
+                    at the time of checkout. To create a promotional code for your account, please visit your stripe
+                    dashboard.
+                  </p> */}
+                <Switch
+                  color="teal"
+                  label="Enable Recurring Events"
+                  size="sm"
+                  className="mt-4"
+                  checked={enableRecurringEvents}
+                  onChange={(event) => {
+                    setEnableRecurringEvents(event.currentTarget.checked);
+                  }}
+                />
+                {/* Styled in ./form.css to make it black and no ring border on focus */}
+                <Radio.Group
+                  value={recurrenceInterval}
+                  onChange={setRecurrenceInterval}
+                  name="recurrenceInterval"
+                  label="Select your Recurrence Interval"
+                  description="This is how frequent your event will be re-created."
+                  withAsterisk
+                  className="mt-4 !text-black"
+                  color="dark"
+                >
+                  <Radio value="week" label="Weekly" defaultChecked color="dark" variant="outline" />
+                  <Radio value="fortnight" label="Fortnightly" color="dark" variant="outline" />
+                  <Radio value="month" label="Monthly" color="dark" variant="outline" />
+                </Radio.Group>
+              </div>
+              {user.stripeAccountActive && (
+                <>
+                  <div className="mb-12">
+                    <label className="text-black text-lg font-semibold">
+                      Do you want to pass Application Fees onto the Customer?
+                    </label>
+                    <p className="text-sm mb-5 mt-2">
+                      Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
+                      charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
+                    </p>
+                    <div className="mt-4">
+                      <Select
+                        size="md"
+                        label="Stripe Fee to Customer"
+                        value={stripeFeeToCustomer ? "Yes" : "No"}
+                        onChange={(e) => {
+                          const value = e || "Yes";
+                          handleStripeFeesToCustomerChange(value);
+                        }}
+                      >
+                        <Option value="Yes">Yes</Option>
+                        <Option value="No">No</Option>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="">
+                    <label className="text-black text-lg font-semibold">
+                      Do you want to allow Promotional Codes for this Event?
+                    </label>
+                    <p className="text-sm mb-5 mt-2">
+                      Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for
+                      discounts at the time of checkout. To create a promotional code for your account, please visit
+                      your stripe dashboard.
+                    </p>
+                    <div className="mt-4">
+                      <Select
+                        size="md"
+                        label="Promotional Codes Enabled"
+                        value={promotionalCodesEnabled ? "Yes" : "No"}
+                        onChange={(e) => {
+                          const value = e || "Yes";
+                          handlePromotionalCodesEnabledChange(value);
+                        }}
+                      >
+                        <Option value="Yes">Yes</Option>
+                        <Option value="No">No</Option>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </FormWrapper>
   );
