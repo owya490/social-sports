@@ -2,6 +2,7 @@
 
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import { displayPrice } from "@/utilities/priceUtils";
 import {
   CalendarDaysIcon,
   ClockIcon,
@@ -15,7 +16,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
-import { displayPrice } from "@/utilities/priceUtils";
 
 interface MobileEventPaymentProps {
   location: string;
@@ -40,6 +40,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
   };
 
   const { startDate, endDate } = props;
+  const eventInPast = Timestamp.now() > endDate;
 
   return (
     <div className="mx-2">
@@ -78,7 +79,12 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
       </div>
       <hr className="px-2 h-[1px] mx-auto bg-gray-300 border-0 rounded dark:bg-gray-400 mb-4"></hr>
       <div className="relative flex justify-center mb-6 w-full">
-        {props.isPaymentsActive ? (
+        {eventInPast ? (
+          <div>
+            <h2 className="font-semibold">Event has already finished.</h2>
+            <p className="text-xs font-light">Please check with the organiser for future events.</p>
+          </div>
+        ) : props.isPaymentsActive ? (
           <div className="w-full space-y-6">
             {props.vacancy === 0 ? (
               <div>
