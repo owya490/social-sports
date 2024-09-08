@@ -387,7 +387,7 @@ export function BasicInformation({
                     Do you want to allow Promotional Codes for this Event?
                   </label>
                   <p className="text-sm mb-5 mt-2">
-                    Selecting "Yes" will mean customers will be able to enter promotional codes for discounts at the
+                    Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for discounts at the
                     time of checkout. To create a promotional code for your account, please visit your stripe dashboard.
                   </p>
                   <div className="mt-4">
