@@ -229,9 +229,7 @@ def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Log
     logger.info(f"Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}")
     return https_fn.Response(status=200)
   
-  maybe_payment_details = stripe.checkout.Session.total_details
-  
-  orderId = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number, maybe_payment_details)
+  orderId = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number, checkout_session.total_details)
   if orderId == None:
     logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
     return https_fn.Response(status=500) 
