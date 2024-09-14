@@ -41,7 +41,7 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
     logger.info(event.id)
     event_id = event.id
     event_dict = event.to_dict()
-    event_end_date: Timestamp  = event_dict.get("endDate").timestamp_pb()
+    event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
     logger.info(event_end_date)
 
     if event_end_date.ToDatetime().date() < today:

@@ -74,7 +74,7 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
     const user = await getPrivateUserById(data.organiserId);
-    if (user.organiserEvents == undefined) {
+    if (user.organiserEvents === undefined) {
       user.organiserEvents = [docRef.id];
     } else {
       user.organiserEvents.push(docRef.id);

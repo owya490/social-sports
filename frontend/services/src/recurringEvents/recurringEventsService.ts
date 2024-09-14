@@ -15,23 +15,33 @@ export async function createRecurringEvents(
 ): Promise<RecurringEventsId> {
   recurringEventsServiceLogger.info("createRecurringEvents");
   const batch = writeBatch(db);
-  const isActive =
-    Timestamp.now().toMillis() < recurrenceData.recurrenceEndDate.toMillis()
-      ? recurringEventsStatus.Active
-      : recurringEventsStatus.Inactive;
-  const docRef = doc(collection(db, CollectionPaths.RecurringEvents, isActive));
+  // const isActive =
+  //   Timestamp.now().toMillis() < recurrenceData.recurrenceEndDate.toMillis()
+  //     ? recurringEventsStatus.Active
+  //     : recurringEventsStatus.Inactive;
+  const docRef = doc(
+    collection(
+      db,
+      CollectionPaths.RecurringEvents,
+      eventData.isActive ? recurringEventsStatus.Active : recurringEventsStatus.Inactive
+    )
+  );
+
   const recurringEventsData: RecurringEventsData = {
     eventDataTemplate: eventData,
     recurrenceData,
   };
   batch.set(docRef, recurringEventsData);
 
-  if (
-    isActive === recurringEventsStatus.Active &&
-    durationInDaysCeil(Timestamp.now(), recurrenceData.firstStartDate) <= recurrenceData.createDaysBefore
-  ) {
-    await createEvent(eventData, batch);
-  }
+  // We always create the first recurrence of the event.
+  createEvent(eventData, batch);
+
+  // if (
+  //   isActive === recurringEventsStatus.Active &&
+  //   durationInDaysCeil(Timestamp.now(), recurrenceData.firstStartDate) <= recurrenceData.createDaysBefore
+  // ) {
+  //   await createEvent(eventData, batch);
+  // }
 
   batch.commit();
 
