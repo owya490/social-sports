@@ -70,7 +70,7 @@ def add_stripe_event_and_checkout_tags(logger: Logger, event: Event):
 
 # Will return orderId for email to pick up and read order information. If this function fails, either logic error or transactions fail, it will return None
 @firestore.transactional
-def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer, full_name: str, phone_number: str, application_fees: int) -> str | None: # Typing of customer is customer details
+def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer, full_name: str, phone_number: str, payment_details: stripe.checkout.Session.TotalDetails) -> str | None: # Typing of customer is customer details
   # Update the event to include the new attendees
   private_path = "Private" if is_private else "Public"
   event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
@@ -146,6 +146,12 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
   purchase_time = datetime.now()
   order_id_ref = db.collection("Orders").document()
 
+  application_fees = 0
+  discounts = 0
+  if payment_details is not None:
+    application_fees = 0 if payment_details.amount_shipping is None else payment_details.amount_shipping 
+    discounts = payment_details.amount_discount
+
   ticket_list = []
   # Create Tickets for each individual ticket
   for i in range(item.quantity):
@@ -154,8 +160,6 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
       "eventId": event_id,
       "orderId": order_id_ref.id,
       "price": item.price.unit_amount,
-      "amountDiscount": item.amount_discount,
-      "amountTotal": item.amount_total,
       "purchaseDate": purchase_time
     })
     ticket_list.append(tickets_id_ref.id)
@@ -167,6 +171,7 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
     "fullName": full_name,
     "phone": phone_number,
     "applicationFees": application_fees,
+    "discounts": discounts,
     "tickets": ticket_list,
   })
 
@@ -224,12 +229,7 @@ def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Log
     logger.info(f"Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}")
     return https_fn.Response(status=200)
   
-  maybe_shipping_object: stripe.checkout.Session.ShippingCost = checkout_session.shipping_cost.get()
-  application_fees = 0
-  if maybe_shipping_object is not None:
-    application_fees = maybe_shipping_object.amount_total
-  
-  orderId = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number, application_fees)
+  orderId = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number, checkout_session.total_details)
   if orderId == None:
     logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
     return https_fn.Response(status=500) 
