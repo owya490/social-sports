@@ -68,7 +68,7 @@ export default function Dashboard() {
             })
             .finally(async () => {
               await sleep(500);
-              setLoading(false);
+              // setLoading(false);
             });
         } else {
           searchEventsByKeyword(event, location)
@@ -86,7 +86,7 @@ export default function Dashboard() {
             })
             .finally(async () => {
               await sleep(500);
-              setLoading(false);
+              // setLoading(false);
             })
             .catch(() => {
               router.push("/error");
@@ -100,6 +100,9 @@ export default function Dashboard() {
         } else {
           setTriggerFilterApply(!triggerFilterApply);
         }
+      } else {
+        await sleep(500);
+        setLoading(false);
       }
     };
     setLoading(true);
@@ -108,10 +111,14 @@ export default function Dashboard() {
 
   // useEffect listener for when filtering finishes
   useEffect(() => {
-    if (endLoading !== undefined) {
-      // Something wrong with endLoading in the filter stuff
-      // setLoading(false);
-    }
+    const temp = async () => {
+      if (endLoading !== undefined) {
+        // Something wrong with endLoading in the filter stuff
+        await sleep(500);
+        setLoading(false);
+      }
+    };
+    temp();
   }, [endLoading]);
 
   useEffect(() => {
