@@ -4,6 +4,8 @@ import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import UserContext, { useUser } from "@/components/utility/UserContext";
+import { getAuth } from "firebase/auth";
 
 export default function Login() {
   const [userData, setUserData] = useState({
@@ -13,6 +15,7 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [AlertStatus, setAlertStatus] = useState(false);
   const router = useRouter();
+  const user = useUser();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,9 +23,11 @@ export default function Login() {
     try {
       const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
       if (userCreated) {
-        router.push("/dashboard?login=success"); // Redirect only if user creation is successful
-      } else {
-        console.error("User creation failed.");
+        const auth = useUser();
+        const user = auth.user;
+        if (user.firstName != "") {
+          router.push("/dashboard?login=success"); // Redirect after successful login
+        }
       }
     } catch (error: unknown) {
       if (error instanceof Error) setErrorMessage(error.message);

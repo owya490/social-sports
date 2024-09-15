@@ -1,6 +1,7 @@
 "use client";
 
 import ShareModal from "@/components/events/ShareModal";
+import EventDrilldownSettingsPage from "@/components/organiser/EventDrillDownSettingsPage";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
 import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
@@ -148,6 +149,14 @@ export default function EventPage({ params }: EventPageProps) {
                 eventId={eventId}
                 setEventVacancy={setEventVacancy}
                 setEventMetadata={setEventMetadata}
+              />
+            )}
+            {currSidebarPage === "Settings" && (
+              <EventDrilldownSettingsPage
+                eventMetadata={eventMetadata}
+                eventId={eventId}
+                eventName={eventName}
+                eventStartDate={eventStartDate}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

@@ -234,6 +234,31 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
   }
 }
 
+export async function archiveAndDeleteEvent(eventId: EventId): Promise<void> {
+  eventServiceLogger.info(`Starting process to archive and delete event: ${eventId}`);
+
+  const batch: WriteBatch = writeBatch(db);
+
+  try {
+    const eventRef = await findEventDocRef(eventId);
+    const deletedEventRef = doc(collection(db, "DeletedEvents"));
+
+    batch.set(deletedEventRef, {
+      eventId,
+      deletedAt: new Date().toISOString(),
+    });
+
+    batch.delete(eventRef);
+
+    await batch.commit();
+
+    eventServiceLogger.info(`Successfully archived and deleted event: ${eventId}`);
+  } catch (error) {
+    eventServiceLogger.error(`Error archiving and deleting event ${eventId}: ${error}`);
+    throw error;
+  }
+}
+
 export async function deleteEvent(eventId: EventId): Promise<void> {
   eventServiceLogger.info(`deleteEvent ${eventId}`);
   try {

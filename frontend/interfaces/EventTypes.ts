@@ -49,6 +49,10 @@ export interface EventDataWithoutOrganiser extends AbstractEventData {
   eventId: EventId;
 }
 
+export interface DeletedEvent extends AbstractEventData {
+  deletedAt: Timestamp;
+}
+
 export const EmptyEventData: EventData = {
   eventId: "",
   organiser: EmptyUserData,

@@ -42,3 +42,37 @@ export const InvertedHighlightButton = (props: ButtonProps) => {
     </button>
   );
 };
+
+export const RedHighlightButton = (props: ButtonProps) => {
+  return (
+    <button
+      className={
+        `px-4 py-1.5 rounded-lg font-semibold whitespace-nowrap  bg-highlight-red text-white hover:bg-white hover:text-highlight-red border-2 border-highlight-red transition-colors duration-300 transform ` +
+        props.className
+      }
+      onClick={props.onClick}
+      type={props.type}
+      disabled={props.disabled}
+    >
+      {props.text}
+      {props.children}
+    </button>
+  );
+};
+
+export const BlackHighlightButton = (props: ButtonProps) => {
+  return (
+    <button
+      className={
+        `px-4 py-1.5 rounded-lg font-semibold whitespace-nowrap  bg-highlight-black text-white hover:bg-white hover:text-highlight-black border-2 border-highlight-black transition-colors duration-300 transform ` +
+        props.className
+      }
+      onClick={props.onClick}
+      type={props.type}
+      disabled={props.disabled}
+    >
+      {props.text}
+      {props.children}
+    </button>
+  );
+};
