@@ -3,10 +3,10 @@ import { NewEventData } from "./EventTypes";
 
 export type RecurringEventsId = string;
 
-enum Frequency {
-  WEEKLY = 0,
-  FORTNIGHTLY = 1,
-  MONTHLY = 2,
+export enum Frequency {
+  WEEKLY = "WEEKLY",
+  FORTNIGHTLY = "FORTNIGHTLY",
+  MONTHLY = "MONTHLY",
 }
 
 interface RecurrenceData {
