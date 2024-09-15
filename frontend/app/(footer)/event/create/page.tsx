@@ -9,6 +9,7 @@ import { useMultistepForm } from "@/components/events/create/forms/useMultistepF
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
 import { uploadUserImage } from "@/services/src/imageService";
@@ -36,6 +37,7 @@ export type FormData = {
   long: number;
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
+  newRecurrenceData: NewRecurrenceFormData;
 };
 
 const INITIAL_DATA: FormData = {
@@ -57,6 +59,7 @@ const INITIAL_DATA: FormData = {
   long: 0,
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
+  newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
 };
 
 export default function CreateEvent() {

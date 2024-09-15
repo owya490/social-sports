@@ -22,3 +22,15 @@
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
+
+#recurrenceSelectors .transition-all {
+  transition-property: none;
+}
+
+#recurrenceSelectors .before\:transition-all::before {
+  transition-property: none;
+}
+
+#recurrenceSelectors .after\:transition-all::after {
+  transition-property: none;
+}
