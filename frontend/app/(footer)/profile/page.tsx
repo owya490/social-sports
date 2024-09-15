@@ -168,8 +168,7 @@ const Profile = () => {
   // Compress image before upload
   const handleImageUpload = async (imageFile: File) => {
     const options = {
-      maxSizeMB: 3, // Maximum size of the image after compression
-      maxWidthOrHeight: 1920, // Max dimensions for width or height
+      maxSizeMB: 2, // Maximum size of the image after compression
       useWebWorker: true,
     };
 
