@@ -21,7 +21,13 @@ export function TagForm({}: TagFormProps) {
 
   return (
     <FormWrapper>
-      <div className="my-24">
+      <div className="my-12">
+        {/* Warning Message */}
+        <div className="bg-yellow-800 text-black p-4 mb-8 rounded border border-yellow-800">
+          <strong>⚠️ Warning:</strong> This feature is currently under construction.
+        </div>
+
+        {/* Form Elements */}
         <label className="text-black text-lg font-semibold">Search and select relevant tags?</label>
         <div className="relative flex w-full my-8">
           <Input
