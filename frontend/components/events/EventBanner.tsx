@@ -27,7 +27,7 @@ export default function EventBanner(props: EventBannerProps) {
                   alt="DP"
                   width={50}
                   height={50}
-                  className="rounded-full w-4 h-4"
+                  className="rounded-full w-4 h-4 shrink-0"
                 />
                 <p className="text-xs font-light ml-1 mr-1">
                   {`Hosted by ${props.organiser.firstName} ${props.organiser.surname}`}

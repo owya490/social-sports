@@ -53,7 +53,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           <MagnifyingGlassIcon className="w-7 h-7 mr-2" />
           <input
             id="search_input"
-            className="w-56 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none"
+            className="w-56 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
             placeholder="Search Events"
             value={searchPhrase}
             onChange={(event) => {
@@ -62,23 +62,15 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           />
           <button
             onClick={() => {
-              const maybePrevSearches =
-                sessionStorage.getItem("recentSearches");
+              const maybePrevSearches = sessionStorage.getItem("recentSearches");
               const currentSearch = searchPhrase + ":" + searchLocation;
               if (maybePrevSearches) {
-                const prevSearches: string[] =
-                  deserialize_list(maybePrevSearches);
+                const prevSearches: string[] = deserialize_list(maybePrevSearches);
                 prevSearches.unshift(currentSearch);
-                sessionStorage.setItem(
-                  "recentSearches",
-                  serialize_list(prevSearches)
-                );
+                sessionStorage.setItem("recentSearches", serialize_list(prevSearches));
                 setRecentSearches(prevSearches);
               } else {
-                sessionStorage.setItem(
-                  "recentSearches",
-                  serialize_list([currentSearch])
-                );
+                sessionStorage.setItem("recentSearches", serialize_list([currentSearch]));
                 setRecentSearches([currentSearch]);
               }
               setSearchExpanded();
@@ -91,7 +83,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           <MapPinIcon className="w-7 h-7 mr-2" />
           <input
             id="location_input"
-            className="w-36 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none"
+            className="w-36 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
             placeholder="Location"
             value={searchLocation}
             onChange={(event) => {
@@ -109,9 +101,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           <h3 className="font-semibold text-lg">Recent Searches</h3>
           <div className="h-36 overflow-y-scroll">
             {recentSearches.length === 0 ? (
-              <p className="text-sm font-light">
-                No recent searches... go ahead ;)
-              </p>
+              <p className="text-sm font-light">No recent searches... go ahead ;)</p>
             ) : (
               recentSearches.map((search, i) => {
                 const splitSearch = search.split(":");

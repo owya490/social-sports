@@ -287,19 +287,15 @@ const EventDrilldownDetailsPage = ({
             alt="BannerImage"
             width={0}
             height={0}
-            className="h-full w-full object-cover rounded-3xl"
+            className="h-full w-full object-cover sm:rounded-3xl"
           />
         )}
       </div>
-      <div className="h-fit border-organiser-darker-light-gray border-solid border-2 rounded-3xl px-4 pt-2 relative">
+      <div className="h-fit border-organiser-darker-light-gray border-solid sm:border-2 rounded-3xl px-4 pt-2 relative">
         <div className="text-organiser-title-gray-text font-bold">
           Event Name
           {loading ? (
-            <Skeleton
-              style={{
-                width: 400,
-              }}
-            />
+            <Skeleton className="w-80 sm:w-[400px]" />
           ) : (
             <>
               {editTitle ? (
@@ -341,10 +337,10 @@ const EventDrilldownDetailsPage = ({
           )}
         </div>
       </div>
-      <div className="border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 p-2 pb-4 relative">
+      <div className="border-organiser-darker-light-gray border-solid sm:border-2 rounded-3xl pl-4 p-2 pb-4 relative">
         <div className="text-organiser-title-gray-text font-bold">Event Details</div>
-        <div className={`text-sm flex flex-col mt-4 ${editStartDate ? "space-y-2" : ""}`}>
-          <div className="px-2 flex flex-row space-x-2">
+        <div className={`text-sm flex flex-col mt-4 w-full ${editStartDate ? "space-y-4" : ""}`}>
+          <div className="px-2 flex space-x-2 grow w-full">
             <CalendarDaysIcon className="w-4 shrink-0" />
             <div>
               {loading ? (
@@ -357,13 +353,11 @@ const EventDrilldownDetailsPage = ({
               ) : (
                 <>
                   {editStartDate ? (
-                    <div className="flex">
+                    <div className="sm:flex w-full space-y-4 sm:space-y-0">
                       <Input
+                        className="w-80 sm:w-full"
                         type="date"
                         value={formatStringToDate(newEditStartDate)}
-                        style={{
-                          width: "100%",
-                        }}
                         onChange={(e) => {
                           setNewEditStartDate(formatDateToString(e.target.value));
                         }}
@@ -372,11 +366,9 @@ const EventDrilldownDetailsPage = ({
                       />
                       <div className="mr-2"></div>
                       <Input
+                        className="w-80 sm:w-full"
                         type="date"
                         value={formatStringToDate(newEditEndDate)}
-                        style={{
-                          width: "100%",
-                        }}
                         onChange={(e) => {
                           setNewEditEndDate(formatDateToString(e.target.value));
                         }}
@@ -412,13 +404,11 @@ const EventDrilldownDetailsPage = ({
               ) : (
                 <>
                   {editEndTime ? (
-                    <div className="flex">
+                    <div className="sm:flex space-y-4 sm:space-y-0">
                       <Input
+                        className="w-80 sm:w-full"
                         type="time"
                         value={formatTimeTo24Hour(newEditStartTime)}
-                        style={{
-                          width: "100%",
-                        }}
                         onChange={(e) => {
                           setNewEditStartTime(formatTimeTo12Hour(e.target.value));
                         }}
@@ -427,11 +417,9 @@ const EventDrilldownDetailsPage = ({
                       />
                       <div className="mr-2"></div>
                       <Input
+                        className="w-80 sm:w-full"
                         type="time"
                         value={formatTimeTo24Hour(newEditEndTime)}
-                        style={{
-                          width: "100%",
-                        }}
                         onChange={(e) => {
                           setNewEditEndTime(formatTimeTo12Hour(e.target.value));
                         }}
@@ -471,10 +459,8 @@ const EventDrilldownDetailsPage = ({
                   {editLocation ? (
                     <div className="flex">
                       <Input
+                        className="w-80 sm:w-full"
                         value={newEditLocation}
-                        style={{
-                          width: "100%",
-                        }}
                         onChange={(e) => {
                           setNewEditLocation(e.target.value);
                         }}
@@ -504,12 +490,10 @@ const EventDrilldownDetailsPage = ({
                   {editPrice ? (
                     <div className="flex">
                       <Input
+                        className="w-80 sm:w-full"
                         type="number"
                         min="0"
                         value={displayPrice(newEditPrice)}
-                        style={{
-                          width: "100%",
-                        }}
                         onChange={(e) => {
                           handleManualNewEditPriceUpdate(parseFloat(e.target.value));
                         }}
@@ -558,19 +542,15 @@ const EventDrilldownDetailsPage = ({
           </div>
         </div>
       </div>
-      <div className="min-h-20 border-organiser-darker-light-gray border-solid border-2 rounded-3xl pl-4 pt-2 relative h-fit">
+      <div className="min-h-20 border-organiser-darker-light-gray border-solid sm:border-2 rounded-3xl px-4 pt-2 relative w-full sm:h-fit">
         <div className="text-organiser-title-gray-text font-bold">
           Event Description
           {loading ? (
-            <Skeleton
-              style={{
-                width: 400,
-              }}
-            />
+            <Skeleton className="w-80 sm:w-[400px]" />
           ) : (
             <>
               {editDescription ? (
-                <div className="flex my-2">
+                <div className="my-2 w-full">
                   <DescriptionRichTextEditor
                     description={newEditDescription}
                     updateDescription={setNewEditDescription}

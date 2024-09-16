@@ -35,6 +35,7 @@ export type FormData = {
   paymentsActive: boolean;
   lat: number;
   long: number;
+  stripeFeeToCustomer: boolean;
 };
 
 const INITIAL_DATA: FormData = {
@@ -54,6 +55,7 @@ const INITIAL_DATA: FormData = {
   paymentsActive: false,
   lat: 0,
   long: 0,
+  stripeFeeToCustomer: false,
 };
 
 export default function CreateEvent() {
@@ -201,6 +203,7 @@ export default function CreateEvent() {
       paymentsActive: formData.paymentsActive,
       startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
+      stripeFeeToCustomer: formData.stripeFeeToCustomer,
     };
   }
 

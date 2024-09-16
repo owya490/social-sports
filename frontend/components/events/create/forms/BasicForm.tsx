@@ -6,6 +6,7 @@ import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeServic
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
@@ -29,6 +30,7 @@ export type BasicData = {
   paymentsActive: boolean;
   lat: number;
   long: number;
+  stripeFeeToCustomer: boolean;
 };
 
 type BasicInformationProps = BasicData & {
@@ -54,6 +56,7 @@ export function BasicInformation({
   paymentsActive,
   user,
   locationError,
+  stripeFeeToCustomer,
   updateField,
   setLoading,
   setHasError,
@@ -62,6 +65,7 @@ export function BasicInformation({
   const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
+  const [isAdditionalSettingsOpen, setIsAdditionalSettingsOpen] = useState(false);
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -71,6 +75,7 @@ export function BasicInformation({
       updateField({ isPrivate: true });
     }
   };
+
   const handleStartDateChange = (selectedDate: string) => {
     updateField({ startDate: selectedDate });
   };
@@ -89,6 +94,12 @@ export function BasicInformation({
 
   const handleEndTimeChange = (selectedTime: string) => {
     updateField({ endTime: selectedTime });
+  };
+
+  const handleStripeFeesToCustomerChange = (value: string) => {
+    updateField({
+      stripeFeeToCustomer: value === "Yes",
+    });
   };
 
   useEffect(() => {
@@ -290,7 +301,7 @@ export function BasicInformation({
               If you are accepting payments, ensure your Stripe account is fully setup. Funds transfer will occur
               through Stripe.
             </p>
-            <div className="mt-4 w-1/2">
+            <div className="mt-4">
               <Select
                 size="md"
                 label="Accepting Payments"
@@ -328,6 +339,48 @@ export function BasicInformation({
             >
               Register
             </button>
+          </div>
+        )}
+        <div
+          className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1"
+          onClick={() => {
+            setIsAdditionalSettingsOpen(!isAdditionalSettingsOpen);
+          }}
+        >
+          <h2>Additional Settings</h2>
+          {isAdditionalSettingsOpen ? (
+            <ChevronUpIcon className="w-7 h-7 ml-auto" />
+          ) : (
+            <ChevronDownIcon className="w-7 h-7 ml-auto" />
+          )}
+        </div>
+        {isAdditionalSettingsOpen && (
+          <div>
+            {user.stripeAccountActive && (
+              <div>
+                <label className="text-black text-lg font-semibold">
+                  Do you want to pass Application Fees onto the Customer?
+                </label>
+                <p className="text-sm mb-5 mt-2">
+                  Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
+                  charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
+                </p>
+                <div className="mt-4">
+                  <Select
+                    size="md"
+                    label="Select Stripe Fee to Customer"
+                    value={stripeFeeToCustomer ? "Yes" : "No"}
+                    onChange={(e) => {
+                      const value = e || "Yes";
+                      handleStripeFeesToCustomerChange(value);
+                    }}
+                  >
+                    <Option value="Yes">Yes</Option>
+                    <Option value="No">No</Option>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

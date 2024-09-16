@@ -101,8 +101,8 @@ export default function Dashboard() {
             });
         }
       }
+      setSrcLocation(location);
       if (location.trim() !== "") {
-        setSrcLocation(location);
         if (triggerFilterApply === undefined) {
           setTriggerFilterApply(false);
         } else {

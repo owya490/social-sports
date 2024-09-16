@@ -6,7 +6,7 @@ import { addAttendee } from "@/services/src/organiser/organiserService";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert, Input } from "@material-tailwind/react";
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 
 interface InviteAttendeeDialogProps {
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -70,6 +70,22 @@ const InviteAttendeeDialog = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let timer: number | undefined;
+
+    if (showSuccessAlert) {
+      timer = window.setTimeout(() => {
+        setShowSuccessAlert(false);
+      }, 3000);
+    }
+
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [showSuccessAlert]);
 
   return (
     <div>
@@ -210,7 +226,7 @@ const InviteAttendeeDialog = ({
             setShowSuccessAlert(false);
           }}
           color="green"
-          className="z-40"
+          className="z-40 mb-16 md:mb-0"
         >
           Success adding new attendee!
         </Alert>
