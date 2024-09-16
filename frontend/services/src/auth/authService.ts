@@ -63,7 +63,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
   let userCredential: UserCredential | undefined = undefined;
 
   try {
-    // Sign in with email and passwor
+    // Sign in with email and password
 
     userCredential = await signInWithEmailAndPassword(auth, email, password);
     authServiceLogger.info("User Object gotten in sign in workflow", { email, userId: userCredential.user.uid });
