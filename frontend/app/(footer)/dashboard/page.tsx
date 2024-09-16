@@ -29,7 +29,7 @@ export default function Dashboard() {
   const searchParams = useSearchParams();
   const [srcLocation, setSrcLocation] = useState<string>("");
   const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
-  const [endLoading, setEndLoading] = useState<boolean | undefined>(false);
+  const [endLoading, setEndLoading] = useState<boolean | undefined>(undefined);
   const getQueryParams = () => {
     // if (typeof window === "undefined") {
     if (window === undefined) {
@@ -59,17 +59,12 @@ export default function Dashboard() {
       if (typeof event === "string" && typeof location === "string") {
         if (event.trim() === "") {
           console.log("no event name");
-          getAllEvents()
-            .then((events) => {
-              console.log(events);
-              setEventDataList(events);
-              setSearchDataList(events);
-              setAllEventsDataList(events);
-            })
-            .finally(async () => {
-              await sleep(500);
-              // setLoading(false);
-            });
+          getAllEvents().then((events) => {
+            console.log(events);
+            setEventDataList(events);
+            setSearchDataList(events);
+            setAllEventsDataList(events);
+          });
         } else {
           searchEventsByKeyword(event, location)
             .then(async (events) => {
@@ -84,10 +79,6 @@ export default function Dashboard() {
               setEventDataList(tempEventDataList);
               setSearchDataList(tempEventDataList);
             })
-            .finally(async () => {
-              await sleep(500);
-              // setLoading(false);
-            })
             .catch(() => {
               router.push("/error");
             });
@@ -101,7 +92,6 @@ export default function Dashboard() {
           setTriggerFilterApply(!triggerFilterApply);
         }
       } else {
-        await sleep(500);
         setLoading(false);
       }
     };
