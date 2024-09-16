@@ -48,7 +48,6 @@ export function DescriptionImageForm({
 
     try {
       const compressedFile = await imageCompression(imageFile, options);
-      console.log(`Compressed file size: ${compressedFile.size / 1024 / 1024} MB`);
 
       setImagePreviewUrl(URL.createObjectURL(compressedFile));
 
