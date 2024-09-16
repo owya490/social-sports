@@ -33,15 +33,15 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
     <div
       className={
         searchExpanded
-          ? `h-screen bg-white w-screen absolute top-[0px] left-0 z-50 transition-all duration-500 rounded-3xl`
-          : `h-screen bg-white w-screen absolute top-[2000px] left-0 z-50 transition-all duration-500 rounded-3xl`
+          ? `h-screen bg-white w-screen absolute top-[0px] left-0 z-50 transition-all duration-500`
+          : `h-screen bg-white w-screen absolute top-[2000px] left-0 z-50 transition-all duration-500`
       }
     >
       <div
         className={
           searchExpanded
-            ? `p-6 opacity-100 transition-all delay-500 duration-500 rounded-2xl`
-            : `p-6 opacity-0 transition-all rounded-2xl`
+            ? `p-6 opacity-100 transition-all delay-500 duration-500`
+            : `p-6 opacity-0 transition-all`
         }
       >
         <div className="w-full flex justify-center">
@@ -80,7 +80,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           </button>
         </div>
         <div className="w-full flex items-center mt-7">
-          <MapPinIcon className="w-7 h-7 mr-2 " />
+          <MapPinIcon className="w-7 h-7 mr-2" />
           <input
             id="location_input"
             className="w-36 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
@@ -93,7 +93,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
         </div>
         <div className="w-full mt-14 ml-1">
           <h3 className="font-semibold text-lg">Search by Tags</h3>
-          <div className="flex flex-wrap mt-1 max-h-36 overflow-y-scroll rounded-2xl">
+          <div className="flex flex-wrap mt-1 max-h-36 overflow-y-scroll">
             <TagGroup tags={tags} size="sm" />
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
               recentSearches.map((search, i) => {
                 const splitSearch = search.split(":");
                 return (
-                  <span key={i} className="flex items-center my-1 rounded-lg">
+                  <span key={i} className="flex items-center my-1">
                     <ClockIcon className="w-4 h-4 mr-1" />
                     <Link
                       href="https://google.com"
