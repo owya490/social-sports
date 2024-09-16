@@ -101,14 +101,14 @@ export default function Dashboard() {
 
   // useEffect listener for when filtering finishes
   useEffect(() => {
-    const temp = async () => {
+    const finishLoading = async () => {
       if (endLoading !== undefined) {
         // Something wrong with endLoading in the filter stuff
         await sleep(500);
         setLoading(false);
       }
     };
-    temp();
+    finishLoading();
   }, [endLoading]);
 
   useEffect(() => {
