@@ -21,9 +21,14 @@ export function TagForm({}: TagFormProps) {
 
   return (
     <FormWrapper>
-      <div className="my-24 mb-60 sm:mb-30">
+      <div className="my-12">
+        {/* Warning Message */}
+        <div className="bg-yellow-800 text-black p-4 mb-8 rounded border border-yellow-800">
+          <strong>⚠️ Warning:</strong> This feature is currently under construction.
+        </div>
+
         {/* Form Elements */}
-        {/* <label className="text-black text-lg font-semibold">Search and select relevant tags?</label>
+        <label className="text-black text-lg font-semibold">Search and select relevant tags?</label>
         <div className="relative flex w-full my-8">
           <Input
             label="Tag Search"
@@ -40,11 +45,6 @@ export function TagForm({}: TagFormProps) {
         </div>
         <div className="w-full flex flex-wrap">
           <TagGroup tags={tags} spacing={true} size="sm" />
-        </div> */}
-        
-        {/* Warning Message */}
-        <div className="bg-yellow-200 text-yellow-800 p-4 mt-60 sm:mt-30 rounded border border-yellow-400">
-          <strong>Warning:</strong> This feature is currently under construction.
         </div>
       </div>
     </FormWrapper>
