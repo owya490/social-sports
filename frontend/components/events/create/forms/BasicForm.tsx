@@ -35,9 +35,11 @@ export type BasicData = {
 
 type BasicInformationProps = BasicData & {
   user: UserData;
+  locationError: string;
   updateField: (fields: Partial<BasicData>) => void;
   setLoading: (value: boolean) => void;
   setHasError: (value: boolean) => void;
+  setLocationError: (value: string) => void;
 };
 
 export function BasicInformation({
@@ -53,15 +55,16 @@ export function BasicInformation({
   isPrivate,
   paymentsActive,
   user,
+  locationError,
   stripeFeeToCustomer,
   updateField,
   setLoading,
   setHasError,
+  setLocationError,
 }: BasicInformationProps) {
   const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null); // Initialize locationError state
   const [isAdditionalSettingsOpen, setIsAdditionalSettingsOpen] = useState(false);
 
   const handlePrivacyChange = (value: string) => {
@@ -182,8 +185,13 @@ export function BasicInformation({
         <div>
           <label className="text-black text-lg font-semibold">Where is it located?</label>
           <div className="mt-4">
-            <LocationAutocompleteForm location={location} updateField={updateField} />
-            {locationError && <p className="text-red-500">{locationError}</p>}
+            <LocationAutocompleteForm
+              setHasError={setHasError}
+              location={location}
+              updateField={updateField}
+              setLocationError={setLocationError}
+            />
+            {locationError !== "" && <div className="text-red-600 text-sm mt-2">{locationError}</div>}
           </div>
         </div>
         <div>
