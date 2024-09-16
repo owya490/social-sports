@@ -9,6 +9,7 @@ import EventDrilldownSharePage from "@/components/organiser/EventDrilldownShareP
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
@@ -76,14 +77,17 @@ export default function EventPage({ params }: EventPageProps) {
 
   useEffect(() => {
     window.onscroll = () => {
-      if (window.scrollY > 310) {
-        document.getElementById("side-panel")!.classList.add("fixed");
-        document.getElementById("side-panel")!.classList.add("top-[110px]");
-        document.getElementById("event-drilldown-details-page")!.classList.add("ml-[296px]");
-      } else if (window.scrollY <= 310) {
-        document.getElementById("side-panel")!.classList.remove("fixed");
-        document.getElementById("side-panel")!.classList.remove("top-[110px]");
-        document.getElementById("event-drilldown-details-page")!.classList.remove("ml-[296px]");
+      // Prevent side panel on small screen as its doesn't exist
+      if (window.innerWidth > 640) {
+        if (window.scrollY > 310) {
+          document.getElementById("side-panel")!.classList.add("fixed");
+          document.getElementById("side-panel")!.classList.add("top-[110px]");
+          document.getElementById("event-drilldown-details-page")!.classList.add("ml-[296px]");
+        } else if (window.scrollY <= 310) {
+          document.getElementById("side-panel")!.classList.remove("fixed");
+          document.getElementById("side-panel")!.classList.remove("top-[110px]");
+          document.getElementById("event-drilldown-details-page")!.classList.remove("ml-[296px]");
+        }
       }
     };
 
@@ -93,7 +97,7 @@ export default function EventPage({ params }: EventPageProps) {
   }, []);
 
   return (
-    <div className="ml-14 mt-16">
+    <div className="sm:ml-14 mt-16">
       <OrganiserNavbar currPage="EventDrilldown" />
       <EventDrilldownBanner
         name={eventName}
@@ -102,7 +106,7 @@ export default function EventPage({ params }: EventPageProps) {
         vacancy={eventVacancy}
         loading={loading}
       />
-      <div className="p-10">
+      <div className="sm:p-10">
         <EventDrilldownStatBanner
           loading={loading}
           eventAccessCount={eventAccessCount}
@@ -110,7 +114,8 @@ export default function EventPage({ params }: EventPageProps) {
           eventCapacity={eventCapacity}
           eventPrice={eventPrice}
         />
-        <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
+        <MobileEventDrilldownNavTabs currSidebarPage={currSidebarPage} setCurrSidebarPage={setCurrSidebarPage} />
+        <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
           <div id="side-panel" className="z-20">
             <EventDrilldownSidePanel
               loading={loading}
@@ -120,7 +125,7 @@ export default function EventPage({ params }: EventPageProps) {
               eventStartDate={eventStartDate}
             />
           </div>
-          <div id="event-drilldown-details-page" className="w-full">
+          <div id="event-drilldown-details-page" className="w-full mb-20 sm:mb-0">
             {currSidebarPage === "Details" && (
               <>
                 <EventDrilldownDetailsPage
@@ -137,7 +142,7 @@ export default function EventPage({ params }: EventPageProps) {
                 <ShareModal eventId={eventId} />
               </>
             )}
-            {currSidebarPage === "Manage Attendees" && (
+            {currSidebarPage === "Attendees" && (
               <EventDrilldownManageAttendeesPage
                 eventMetadata={eventMetadata}
                 eventId={eventId}

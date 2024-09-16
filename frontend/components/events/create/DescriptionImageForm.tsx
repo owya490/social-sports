@@ -1,3 +1,4 @@
+import imageCompression from "browser-image-compression";
 import Image from "next/image";
 import { useState } from "react";
 import DescriptionRichTextEditor from "./DescriptionRichTextEditor";
@@ -31,34 +32,46 @@ export function DescriptionImageForm({
   // Validate image type
   const validateImage = (file: File) => {
     const validTypes = ["image/jpeg", "image/png", "image/gif"];
-    if (validTypes.includes(file.type)) {
-      return true;
-    } else {
+    if (!validTypes.includes(file.type)) {
       setErrorMessage("Please upload a valid image file (jpg, png, gif).");
       return false;
+    }
+    return true;
+  };
+
+  // Compress image before upload
+  const handleImageUpload = async (imageFile: File) => {
+    const options = {
+      maxSizeMB: 2, // Maximum size of the image after compression
+      useWebWorker: true,
+    };
+
+    try {
+      const compressedFile = await imageCompression(imageFile, options);
+
+      setImagePreviewUrl(URL.createObjectURL(compressedFile));
+
+      updateField({
+        image: compressedFile,
+      });
+
+      setErrorMessage(null);
+    } catch (error) {
+      console.error("Error during image compression:", error);
+      setErrorMessage("Failed to compress the image. Please try again.");
     }
   };
 
   // Handle file input change
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      let validFile: File | undefined;
-      let fileList = Array.from(e.target.files);
-      
+      const fileList = Array.from(e.target.files);
+
       for (const file of fileList) {
         if (validateImage(file)) {
-          // Set the first valid file and break
-          validFile = file;
-          break;
+          await handleImageUpload(file); // Compress and handle image
+          break; // Process only the first valid image
         }
-      }
-
-      if (validFile) {
-        setErrorMessage(null);
-        setImagePreviewUrl(URL.createObjectURL(validFile));
-        updateField({
-          image: validFile,
-        });
       }
     }
   };
