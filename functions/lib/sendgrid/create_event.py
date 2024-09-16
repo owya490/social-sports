@@ -99,10 +99,8 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
             "event_price": centsToDollars(event_data.get("price")),
             "event_capacity": event_data.get("capacity"),
             "event_isPrivate": request_data.visibility,
-            "event_id": request_data.eventId 
-      ,
+            "event_id": request_data.eventId,
         }
-    
 
         message.template_id = CREATE_EVENT_EMAIL_TEMPLATE_ID
         message.asm = Asm(group_id=SENDGRID_UNSUBSCRIBE_GROUP_ID)
