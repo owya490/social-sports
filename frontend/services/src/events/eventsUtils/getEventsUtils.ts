@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
-import { CollectionPaths, EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
+import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 
 // const router = useRouter();
@@ -66,7 +66,7 @@ export function tryGetAllActivePublicEventsFromLocalStorage(currentDate: Date) {
 }
 
 export function bustEventsLocalStorageCache() {
-  localStorage.removeItem(LocalStorageKeys.LastFetchedEventData)
+  localStorage.removeItem(LocalStorageKeys.LastFetchedEventData);
 }
 
 // Function to retrieve all events
@@ -135,6 +135,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       },
       isPrivate: event.isPrivate,
       paymentsActive: event.paymentsActive,
+      stripeFeeToCustomer: event.stripeFeeToCustomer,
     });
   });
   return eventsDataFinal;
