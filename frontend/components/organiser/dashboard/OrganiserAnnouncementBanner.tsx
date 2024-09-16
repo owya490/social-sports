@@ -1,7 +1,10 @@
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export const OrganiserAnnouncementBanner = () => {
+  const router = useRouter();
+
   const [dismissed, setDismissed] = useState(false);
   return (
     !dismissed && (
@@ -14,12 +17,14 @@ export const OrganiserAnnouncementBanner = () => {
             </svg>
             Pass through Application Card Surcharges to customers.
           </p>
-          <a
-            href="/event/create"
+          <button
+            onClick={() => {
+              router.push("/event/create");
+            }}
             className="flex-none rounded-full bg-black px-3.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
           >
             Create Event <span aria-hidden="true">&rarr;</span>
-          </a>
+          </button>
         </div>
         <div className="flex flex-1 justify-end">
           <button
