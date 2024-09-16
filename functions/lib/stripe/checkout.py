@@ -3,6 +3,7 @@
 ###############################
 
 import json
+import math
 import time
 import uuid
 from dataclasses import dataclass
@@ -39,10 +40,10 @@ class StripeCheckoutRequest:
     if not isinstance(self.successUrl, str):
       raise ValueError("Success Url must be provided as a string.")
 
-def calculate_stripe_fee(price: float):
+def calculate_stripe_fee(price: float) -> int:
   # Stripe fee is 30c + 1.7% of total price as price passed in is in cents already
   # can just do the calculation and return a whole integer
-  return int(30 + (price * 0.017))
+  return int(math.ceil(30 + (price * 0.017)))
 
 
 @firestore.transactional
