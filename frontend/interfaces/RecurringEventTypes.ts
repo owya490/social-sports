@@ -3,10 +3,10 @@ import { NewEventData } from "./EventTypes";
 
 export type RecurringEventsId = string;
 
-enum Frequency {
-  WEEKLY = 0,
-  FORTNIGHTLY = 1,
-  MONTHLY = 2,
+export enum Frequency {
+  WEEKLY = "WEEKLY",
+  FORTNIGHTLY = "FORTNIGHTLY",
+  MONTHLY = "MONTHLY",
 }
 
 interface RecurrenceData {
@@ -14,6 +14,14 @@ interface RecurrenceData {
    * The frequency at which the event will recur.
    */
   frequency: Frequency;
+  /**
+   * The amount of times the recurrence should be performed. Should be upper-bounded by MAX_RECURRENCE_AMOUNT.
+   */
+  recurrenceAmount: number;
+  /**
+   * An array of recurrence dates for an event to be create.
+   */
+  recurrenceDates: Timestamp[];
   /**
    * The end date of this recurrence. After this date, the recurrence object will be automatically
    * moved to inactive state on the next run of the CRON job.
@@ -30,15 +38,15 @@ interface RecurrenceData {
   /**
    * The end date of the first event in the recurrence (this includes the event that is created immediately at event creation).
    */
-  firstEndDate: Timestamp;
+  firstEndDate?: Timestamp;
   /**
    * The start date of the next recurring event.
    */
-  nextStartDate: Timestamp;
+  nextStartDate?: Timestamp;
   /**
    * The end date of the next recurring event.
    */
-  nextEndDate: Timestamp;
+  nextEndDate?: Timestamp;
   /**
    * Specifies whether the recurrence is active.
    */
@@ -51,3 +59,29 @@ export interface RecurringEventsData {
   eventDataTemplate: NewEventData;
   recurrenceData: NewRecurrenceData;
 }
+
+export interface NewRecurrenceFormData {
+  /**
+   * The frequency at which the event will recur.
+   */
+  frequency: Frequency;
+  /**
+   * The amount of times the recurrence should be performed. Should be upper-bounded by MAX_RECURRENCE_AMOUNT.
+   */
+  recurrenceAmount: number;
+  /**
+   * The number of days the event should be created before scheduled recurrence date.
+   */
+  createDaysBefore: number;
+  /**
+   * If recurrence is enabled for this event.
+   */
+  recurrenceEnabled: boolean;
+}
+
+export const DEFAULT_RECURRENCE_FORM_DATA: NewRecurrenceFormData = {
+  frequency: Frequency.WEEKLY,
+  recurrenceAmount: 1,
+  createDaysBefore: 1,
+  recurrenceEnabled: false,
+};

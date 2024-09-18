@@ -1,11 +1,16 @@
 import { NewEventData } from "@/interfaces/EventTypes";
-import { NewRecurrenceData, RecurringEventsData, RecurringEventsId } from "@/interfaces/RecurringEventTypes";
+import {
+  Frequency,
+  NewRecurrenceData,
+  NewRecurrenceFormData,
+  RecurringEventsData,
+  RecurringEventsId,
+} from "@/interfaces/RecurringEventTypes";
 import { Logger } from "@/observability/logger";
-import { collection, doc, Timestamp, writeBatch } from "firebase/firestore";
+import { Timestamp, collection, doc, writeBatch } from "firebase/firestore";
+import { createEvent } from "../events/eventsService";
 import { db } from "../firebase";
 import { CollectionPaths, recurringEventsStatus } from "./recurringEventsConstants";
-import { createEvent } from "../events/eventsService";
-import { durationInDaysCeil } from "../datetimeUtils";
 
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
@@ -46,4 +51,30 @@ export async function createRecurringEvents(
   batch.commit();
 
   return docRef.id;
+}
+
+export function calculateRecurrenceDates(newRecurrenceFormData: NewRecurrenceFormData, startDate: Timestamp) {
+  switch (newRecurrenceFormData.frequency) {
+    case Frequency.WEEKLY:
+      return [...Array(newRecurrenceFormData.recurrenceAmount).keys()].map((recurrence) => {
+        recurrence += 1;
+        const recurrenceDate = startDate.toDate();
+        recurrenceDate.setDate(recurrenceDate.getDate() + 7 * recurrence);
+        return Timestamp.fromDate(recurrenceDate);
+      });
+    case Frequency.FORTNIGHTLY:
+      return [...Array(newRecurrenceFormData.recurrenceAmount).keys()].map((recurrence) => {
+        recurrence += 1;
+        const recurrenceDate = startDate.toDate();
+        recurrenceDate.setDate(recurrenceDate.getDate() + 14 * recurrence);
+        return Timestamp.fromDate(recurrenceDate);
+      });
+    case Frequency.MONTHLY:
+      return [...Array(newRecurrenceFormData.recurrenceAmount).keys()].map((recurrence) => {
+        recurrence += 1;
+        const recurrenceDate = startDate.toDate();
+        recurrenceDate.setMonth(recurrenceDate.getMonth() + 1 * recurrence);
+        return Timestamp.fromDate(recurrenceDate);
+      });
+  }
 }
