@@ -6,7 +6,6 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.logging.Logging;
@@ -46,7 +45,7 @@ public class FirebaseService {
         }
 
         FileInputStream serviceAccount = new FileInputStream(credentialsPath);
-        FirebaseOptions options = new FirebaseOptions.Builder()
+        FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .setProjectId(firebaseProject)
                 .build();
@@ -71,5 +70,9 @@ public class FirebaseService {
 
     public static String getFirebaseProject() {
         return firebaseProject;
+    }
+
+    public static PostHog getPosthog() {
+        return posthog;
     }
 }
