@@ -20,6 +20,7 @@ import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
 interface EventPaymentProps {
   startDate: Timestamp;
   endDate: Timestamp;
+  registrationEndDate: Timestamp;
   location: string;
   price: number;
   vacancy: number;
@@ -39,9 +40,10 @@ export default function EventPayment(props: EventPaymentProps) {
     }
   };
 
-  const { startDate, endDate } = props;
+  const { startDate, endDate, registrationEndDate } = props;
 
   const eventInPast = Timestamp.now() > endDate;
+  const eventRegistrationClosed = Timestamp.now() > registrationEndDate;
 
   return (
     <div className="md:border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
@@ -82,7 +84,12 @@ export default function EventPayment(props: EventPaymentProps) {
         </div>
         <hr className="px-2 h-0.5 mx-auto bg-gray-400 border-0 rounded dark:bg-gray-400 mb-6"></hr>
         <div className="relative flex justify-center mb-6 w-full">
-          {eventInPast ? (
+          {eventRegistrationClosed ? (
+            <div>
+              <h2 className="font-semibold">Event registration has closed.</h2>
+              <p className="text-xs font-light">Please check with the organiser for more details.</p>
+            </div>
+          ) : eventInPast ? (
             <div>
               <h2 className="font-semibold">Event has already finished.</h2>
               <p className="text-xs font-light">Please check with the organiser for future events.</p>

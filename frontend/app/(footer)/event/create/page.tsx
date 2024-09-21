@@ -54,7 +54,7 @@ const INITIAL_DATA: FormData = {
   tags: [],
   isPrivate: false,
   startTime: "10:00",
-  endTime: "18:00",
+  endTime: "10:00",
   registrationEndTime: "10:00",
   paymentsActive: false,
   lat: 0,
