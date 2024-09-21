@@ -21,8 +21,10 @@ export type BasicData = {
   location: string;
   startDate: string;
   endDate: string;
+  registrationEndDate: string;
   startTime: string;
   endTime: string;
+  registrationEndTime: string;
   sport: string;
   price: number; // Price is stored in cents, e.g. 1567 will be $15.67
   capacity: number;
@@ -47,8 +49,10 @@ export function BasicInformation({
   location,
   startDate,
   endDate,
+  registrationEndDate,
   startTime,
   endTime,
+  registrationEndTime,
   sport,
   price,
   capacity,
@@ -84,6 +88,10 @@ export function BasicInformation({
     updateField({ endDate: selectedDate });
   };
 
+  const handleRegistrationEndDateChange = (selectedDate: string) => {
+    updateField({ registrationEndDate: selectedDate });
+  };
+
   useEffect(() => {
     updateField({ endDate: startDate });
   }, [startDate]);
@@ -96,6 +104,10 @@ export function BasicInformation({
     updateField({ endTime: selectedTime });
   };
 
+  const handleRegistrationEndTimeChange = (selectedTime: string) => {
+    updateField({ registrationEndTime: selectedTime });
+  };
+
   const handleStripeFeesToCustomerChange = (value: string) => {
     updateField({
       stripeFeeToCustomer: value === "Yes",
@@ -106,6 +118,7 @@ export function BasicInformation({
     const currentDateTime = new Date();
     const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
     const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
+    const selectedRegistrationEndDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
 
     if (currentDateTime > selectedStartDateTime) {
       setDateWarning("Event start date and time is in the past!");
@@ -117,6 +130,18 @@ export function BasicInformation({
       setTimeWarning("Event must end after it starts!");
     } else {
       setTimeWarning(null);
+    }
+
+    if (currentDateTime > selectedRegistrationEndDateTime) {
+      setDateWarning("Event registration End date and time is in the past!");
+    } else {
+      setDateWarning(null);
+    }
+
+    if (selectedRegistrationEndDateTime > selectedEndDateTime) {
+      setDateWarning("Event registration End date and time is after the event!");
+    } else {
+      setDateWarning(null);
     }
 
     if (currentDateTime > selectedStartDateTime || selectedEndDateTime < selectedStartDateTime) {
@@ -180,6 +205,22 @@ export function BasicInformation({
           </div>
           {dateWarning && <div className="text-red-600 text-sm mt-2">{dateWarning}</div>}
           {timeWarning && <div className="text-red-600 text-sm mt-2">{timeWarning}</div>}
+          <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
+            <div className="basis-1/3">
+              <CustomDateInput
+                date={registrationEndDate}
+                placeholder="Registration End Date"
+                handleChange={handleRegistrationEndDateChange}
+              />
+            </div>
+            <div className="basis-1/4">
+              <CustomTimeInput
+                value={registrationEndTime}
+                placeholder="Registration End Time"
+                handleChange={handleRegistrationEndTimeChange}
+              />
+            </div>
+          </div>
         </div>
 
         <div>
