@@ -41,7 +41,7 @@ import {
   processEventData,
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
-import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
+import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
 import {
   bustEventsLocalStorageCache,
   findEventDoc,
@@ -52,8 +52,8 @@ import {
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
 //Function to create a Event
-export async function createEvent(data: NewEventData, externalBatch?: WriteBatch): Promise<EventId> {
-  if (!rateLimitCreateAndUpdateEvents()) {
+export async function createEvent(data: NewEventData): Promise<EventId> {
+  if (!rateLimitCreateEvents()) {
     console.log("Rate Limited!!!");
     throw "Rate Limited";
   }
@@ -213,10 +213,6 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
 }
 
 export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
-  if (!rateLimitCreateAndUpdateEvents()) {
-    eventServiceLogger.info(`Rate Limited!, ${eventId}`);
-    throw "Rate Limited";
-  }
   eventServiceLogger.info(`updateEventByName ${eventId}`);
   try {
     const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
@@ -293,9 +289,6 @@ export async function updateEventFromDocRef(
   updatedData: Partial<EventData>
 ): Promise<void> {
   try {
-    if (!rateLimitCreateAndUpdateEvents()) {
-      throw "Rate Limited";
-    }
     await updateDoc(eventRef, updatedData);
     eventServiceLogger.info("Event updated successfully.");
   } catch (error) {

@@ -97,10 +97,10 @@ export function filterEventsByPrice(
 ): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
   if (minPrice !== null) {
-    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price >= minPrice);
+    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price >= minPrice * 100);
   }
 
-  eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price <= maxPrice);
+  eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price <= maxPrice * 100);
   return eventDataListDeepClone;
 }
 
