@@ -11,7 +11,7 @@ import {
   DATE_ASCENDING_SORTBY_STRING,
   DATE_DESCENDING_SORTBY_STRING,
   DEFAULT_END_DATE,
-  DEFAULT_EVENT_TYPE,
+  DEFAULT_EVENT_STATUS,
   DEFAULT_SEARCH,
   DEFAULT_SORT_BY_CATEGORY,
   DEFAULT_START_DATE,
@@ -22,12 +22,12 @@ import {
 } from "./OrganiserFilterDialog";
 
 export enum SortByCategory {
+  DATE_DESCENDING,
   HOT,
   TOP_RATED,
   PRICE_ASCENDING,
   PRICE_DESCENDING,
   DATE_ASCENDING,
-  DATE_DESCENDING,
 }
 
 interface OrganiserFilterDialogMobileProps {
@@ -45,10 +45,10 @@ interface OrganiserFilterDialogMobileProps {
   appliedSearchValue: string;
   setAppliedSearchValue: React.Dispatch<React.SetStateAction<string>>;
 
-  eventTypeValue: string;
-  setEventTypeValue: React.Dispatch<React.SetStateAction<string>>;
-  appliedEventTypeValue: string;
-  setAppliedEventTypeValue: React.Dispatch<React.SetStateAction<string>>;
+  eventStatusValue: string;
+  setEventStatusValue: React.Dispatch<React.SetStateAction<string>>;
+  appliedEventStatusValue: string;
+  setAppliedEventStatusValue: React.Dispatch<React.SetStateAction<string>>;
 
   dateRange: {
     startDate: string;
@@ -89,10 +89,10 @@ export default function OrganiserFilterDialogMobile({
   setSearchValue,
   appliedSearchValue,
   setAppliedSearchValue,
-  eventTypeValue,
-  setEventTypeValue,
-  appliedEventTypeValue,
-  setAppliedEventTypeValue,
+  eventStatusValue,
+  setEventStatusValue,
+  appliedEventStatusValue,
+  setAppliedEventStatusValue,
   dateRange,
   setDateRange,
   appliedDateRange,
@@ -146,18 +146,18 @@ export default function OrganiserFilterDialogMobile({
     [datepickerKey, dateRange]
   );
 
-  const toggleTypeCheckboxValue = (value: string) => {
-    if (eventTypeValue === value) {
-      setEventTypeValue("");
+  const toggleStatusCheckboxValue = (value: string) => {
+    if (eventStatusValue === value) {
+      setEventStatusValue("");
     } else {
-      setEventTypeValue(value);
+      setEventStatusValue(value);
     }
   };
 
   function openModal() {
     setSortByCategoryValue(appliedSortByCategoryValue);
     setSearchValue(appliedSearchValue);
-    setEventTypeValue(appliedEventTypeValue);
+    setEventStatusValue(appliedEventStatusValue);
     setDateRange(appliedDateRange);
     setIsFilterModalOpen(true);
   }
@@ -168,8 +168,8 @@ export default function OrganiserFilterDialogMobile({
     updateSortByKey();
     setSearchValue(DEFAULT_SEARCH);
     setAppliedSearchValue(DEFAULT_SEARCH);
-    setEventTypeValue(DEFAULT_EVENT_TYPE);
-    setAppliedEventTypeValue(DEFAULT_EVENT_TYPE);
+    setEventStatusValue(DEFAULT_EVENT_STATUS);
+    setAppliedEventStatusValue(DEFAULT_EVENT_STATUS);
     setDateRange({
       startDate: DEFAULT_START_DATE,
       endDate: DEFAULT_END_DATE,
@@ -280,30 +280,30 @@ export default function OrganiserFilterDialogMobile({
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
-                        <p className="text-lg font-bold">Event Type</p>
+                        <p className="text-lg font-bold">Event Status</p>
                       </div>
                       <div className="flex mb-2 mt-1">
                         <label className="inline-flex items-center mr-auto">
                           <input
                             type="checkbox"
-                            name="Public"
-                            value="Public"
+                            name="Past"
+                            value="Past"
                             className="mr-2"
-                            checked={eventTypeValue.includes("public")}
-                            onChange={() => toggleTypeCheckboxValue("public")}
+                            checked={eventStatusValue.includes("past")}
+                            onChange={() => toggleStatusCheckboxValue("past")}
                           />
-                          Public
+                          Past
                         </label>
                         <label className="inline-flex items-center mx-auto">
                           <input
                             type="checkbox"
-                            name="Private"
-                            value="Private"
+                            name="Future"
+                            value="Future"
                             className="mr-2"
-                            checked={eventTypeValue.includes("private")}
-                            onChange={() => toggleTypeCheckboxValue("private")}
+                            checked={eventStatusValue.includes("future")}
+                            onChange={() => toggleStatusCheckboxValue("future")}
                           />
-                          Private
+                          Future
                         </label>
                       </div>
                     </div>

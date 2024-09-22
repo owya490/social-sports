@@ -15,7 +15,7 @@ export enum SortByCategory {
   DATE_DESCENDING,
 }
 
-export const DEFAULT_SORT_BY_CATEGORY = SortByCategory.HOT;
+export const DEFAULT_SORT_BY_CATEGORY = SortByCategory.DATE_DESCENDING;
 export const HOT_SORTBY_STRING = "Hot";
 export const TOP_RATED_SORTBY_STRING = "Top Rated";
 export const PRICE_ASCENDING_SORTBY_STRING = "Price Ascending";
@@ -165,6 +165,7 @@ export default function OrganiserFilterDialog({
   );
 
   const toggleStatusCheckboxValue = (value: string) => {
+    console.log(eventStatusValue);
     if (eventStatusValue === value) {
       setEventStatusValue(""); // Deselect if the same value is clicked
     } else {

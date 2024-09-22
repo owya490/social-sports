@@ -38,8 +38,8 @@ export default function OrganiserDashboard() {
   const [searchValue, setSearchValue] = useState<string>(DEFAULT_SEARCH);
   const [appliedSearchValue, setAppliedSearchValue] = useState<string>(DEFAULT_SEARCH);
   const [eventStatusValue, setEventStatusValue] = useState<string>(DEFAULT_EVENT_STATUS);
+  const [appliedEventStatusValue, setAppliedEventStatusValue] = useState<string>(DEFAULT_EVENT_STATUS);
   const [eventTypeValue, setEventTypeValue] = useState<string>(DEFAULT_EVENT_TYPE);
-  const [appliedEventTypeValue, setAppliedEventTypeValue] = useState<string>(DEFAULT_EVENT_TYPE);
   const [minPriceValue, setMinPriceValue] = useState<number | null>(DEFAULT_MIN_PRICE);
   const [maxPriceValue, setMaxPriceValue] = useState<number | null>(DEFAULT_MAX_PRICE);
   const [dateRange, setDateRange] = useState<{
@@ -69,13 +69,13 @@ export default function OrganiserDashboard() {
     // Filter by STATUS
     if (eventStatusValue !== DEFAULT_EVENT_STATUS) {
       let newEventDataList = filterEventsByStatus([...filteredEventDataList], eventStatusValue);
+      setAppliedEventStatusValue(eventStatusValue);
       filteredEventDataList = newEventDataList;
     }
 
     // Filter by TYPE
     if (eventTypeValue !== DEFAULT_EVENT_TYPE) {
       let newEventDataList = filterEventsByType([...filteredEventDataList], eventTypeValue);
-      setAppliedEventTypeValue(eventTypeValue);
       filteredEventDataList = newEventDataList;
     }
 
@@ -174,10 +174,10 @@ export default function OrganiserDashboard() {
                 setSearchValue={setSearchValue}
                 appliedSearchValue={appliedSearchValue}
                 setAppliedSearchValue={setAppliedSearchValue}
-                eventTypeValue={eventTypeValue}
-                setEventTypeValue={setEventTypeValue}
-                appliedEventTypeValue={appliedEventTypeValue}
-                setAppliedEventTypeValue={setAppliedEventTypeValue}
+                eventStatusValue={eventStatusValue}
+                setEventStatusValue={setEventStatusValue}
+                appliedEventStatusValue={appliedEventStatusValue}
+                setAppliedEventStatusValue={setAppliedEventStatusValue}
                 dateRange={dateRange}
                 setDateRange={setDateRange}
                 appliedDateRange={appliedDateRange}
