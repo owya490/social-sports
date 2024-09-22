@@ -165,7 +165,6 @@ export default function OrganiserFilterDialog({
   );
 
   const toggleStatusCheckboxValue = (value: string) => {
-    console.log(eventStatusValue);
     if (eventStatusValue === value) {
       setEventStatusValue(""); // Deselect if the same value is clicked
     } else {
@@ -211,7 +210,7 @@ export default function OrganiserFilterDialog({
           {showSortBy && (
             <ListBox
               key={sortByKey}
-              onChangeHandler={function (e: any): void {
+              onChangeHandler={(e) => {
                 setSortByCategoryValue(e);
               }}
               options={[

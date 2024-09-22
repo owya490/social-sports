@@ -22,12 +22,12 @@ import {
 } from "./OrganiserFilterDialog";
 
 export enum SortByCategory {
-  DATE_DESCENDING,
   HOT,
   TOP_RATED,
   PRICE_ASCENDING,
   PRICE_DESCENDING,
   DATE_ASCENDING,
+  DATE_DESCENDING,
 }
 
 interface OrganiserFilterDialogMobileProps {

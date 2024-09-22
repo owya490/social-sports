@@ -56,6 +56,7 @@ export default function OrganiserDashboard() {
     startDate: DEFAULT_START_DATE,
     endDate: DEFAULT_END_DATE,
   });
+  const [applyFiltersTrigger, setApplyFiltersTrigger] = useState<boolean>(true); // TODO: Brian Wang: Need to rework filter logic because this is tooo scuffed.
 
   async function applyFilters() {
     let filteredEventDataList = [...allEventsDataList];
@@ -66,6 +67,7 @@ export default function OrganiserDashboard() {
       setAppliedSearchValue(searchValue);
       filteredEventDataList = newEventDataList;
     }
+
     // Filter by STATUS
     if (eventStatusValue !== DEFAULT_EVENT_STATUS) {
       let newEventDataList = filterEventsByStatus([...filteredEventDataList], eventStatusValue);
@@ -141,13 +143,21 @@ export default function OrganiserDashboard() {
         const events = await getOrganiserEvents(user.userId);
         setEventDataList(events);
         setAllEventsDataList(events);
+        setApplyFiltersTrigger(!applyFiltersTrigger);
+        setLoading(false);
       } catch (error) {
         // Handle errors here
       }
     };
     fetchData();
-    setLoading(false);
   }, [user]);
+
+  // TODO: Brian Wang: this is currently a bandaid fix for making it so that applyFilters is triggered after events are retrieved from firebase. We will need to refactor this code for a far more elegant solution.
+  useEffect(() => {
+    if (eventDataList) {
+      applyFilters();
+    }
+  }, [applyFiltersTrigger]);
 
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   function closeModal() {
