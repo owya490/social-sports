@@ -73,6 +73,8 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     batch.set(docRef, eventDataWithTokens);
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
+
+    // TODO: Brian Wang: the block of code below should ideally be in its own event service function.
     const user = await getPrivateUserById(data.organiserId);
     if (user.organiserEvents === undefined) {
       user.organiserEvents = [docRef.id];

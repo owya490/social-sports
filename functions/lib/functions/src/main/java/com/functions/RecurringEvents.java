@@ -1,6 +1,8 @@
 package com.functions;
 
+import com.functions.Events.Events;
 import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QuerySnapshot;
@@ -18,6 +20,7 @@ import java.util.Map;
 
 public class RecurringEvents {
     private static final String RECURRING_ACTIVE = "RecurringEvents/Active";
+    private static final String RECURRING_INACTIVE = "RecurringEvents/InActive";
 
     public enum Frequency {
         WEEKLY(0),
@@ -44,6 +47,18 @@ public class RecurringEvents {
         }
     }
 
+    public static void moveRecurringEventToInactive(String recurrenceId, Transaction transaction) throws Exception {
+        Firestore db = FirebaseService.getFirestore();
+        final DocumentReference oldInactiveRecurringEventsRef = db.collection(RECURRING_ACTIVE).document(recurrenceId);
+        Map<String, Object> inactiveRecurringEventDict = transaction.get(oldInactiveRecurringEventsRef).get().getData();
+        if (inactiveRecurringEventDict == null) {
+            throw new Exception("Recurring event not found for ID: " + recurrenceId);
+        }
+        final DocumentReference newInactiveRecurringEventsRef = db.collection(RECURRING_INACTIVE)
+                .document(recurrenceId);
+        transaction.set(newInactiveRecurringEventsRef, inactiveRecurringEventDict);
+    }
+
     public static void createEventsFromRecurrenceTemplates(LocalDate today, Transaction transaction) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         final CollectionReference activeRecurringEventsRef = db.collection(RECURRING_ACTIVE);
@@ -58,8 +73,6 @@ public class RecurringEvents {
             Timestamp firstStartDate = (Timestamp) recurrenceData.get("firstStartDate");
             int recurrenceAmount = ((Integer) recurrenceData.get("recurrenceAmount")).intValue();
             int createDaysBefore = ((Integer) recurrenceData.get("createDaysBefore")).intValue();
-            // boolean recurrenceEnabled = (Boolean)
-            // recurrenceData.get("recurrenceEnabled");
             int currRecurrences = ((Integer) recurrenceData.get("currRecurrences")).intValue();
             LocalDate eventStartDate = TimeUtils
                     .convertTimestampToLocalDate((Timestamp) eventDataTemplate.get("startDate"));
@@ -67,23 +80,31 @@ public class RecurringEvents {
             // Check if cron job needs to create event on this run through
             LocalDate targetCreationDate = eventStartDate
                     .minusDays(createDaysBefore);
-            if (!today.isBefore(targetCreationDate)) {
-                CreateEvents.createEvent(); // TODO: finish off stub function
+            if (!today.isBefore(targetCreationDate) && currRecurrences < recurrenceAmount) {
+                // Events.createEvent(transaction); // TODO: finish off stub function
+                currRecurrences += 1;
 
                 // Update the date of the next event in the eventDataTemplate.
                 switch (frequency) {
                     case WEEKLY:
+                        eventDataTemplate.put("startDate",
+                                TimeUtils.convertLocalDateToTimestamp(eventStartDate.plusDays(7)));
                         break;
                     case FORTNIGHTLY:
+                        eventDataTemplate.put("startDate",
+                                TimeUtils.convertLocalDateToTimestamp(eventStartDate.plusDays(14)));
                         break;
                     case MONTHLY:
+                        eventDataTemplate.put("startDate",
+                                TimeUtils.convertLocalDateToTimestamp(eventStartDate.plusMonths(1)));
                         break;
                 }
             }
 
-            // Timestamp nextStartDate = (Timestamp) recurrenceData.get("nextStartDate");
-            // Timestamp nextEndDate = (Timestamp) recurrenceData.get("nextEndDate");
-
+            // Move recurring event to expired if it has reached target recurrence amount.
+            if (currRecurrences >= recurrenceAmount) {
+                RecurringEvents.moveRecurringEventToInactive(recurringEventId, transaction);
+            }
         }
     }
 

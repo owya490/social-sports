@@ -16,6 +16,16 @@ import com.google.firebase.cloud.FirestoreClient;
 import com.posthog.java.PostHog;
 
 public class FirebaseService {
+
+    public class CollectionPaths {
+        public static final String EVENTS = "Events";
+        public static final String ACTIVE = "Active";
+        public static final String INACTIVE = "InActive";
+        public static final String PRIVATE = "Private";
+        public static final String PUBLIC = "Public";
+        public static final String USERS = "Users";
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(FirebaseService.class);
 
     private static Firestore db;
