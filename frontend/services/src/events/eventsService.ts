@@ -52,7 +52,7 @@ import {
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
 //Function to create a Event
-export async function createEvent(data: NewEventData): Promise<EventId> {
+export async function createEvent(data: NewEventData, externalBatch?: WriteBatch): Promise<EventId> {
   if (!rateLimitCreateEvents()) {
     console.log("Rate Limited!!!");
     throw "Rate Limited";
