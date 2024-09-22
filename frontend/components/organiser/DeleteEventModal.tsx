@@ -9,7 +9,7 @@ import Image from "next/image";
 import { Fragment, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import DeleteEventAttendeeCard from "./DeleteEventAttendeeCard";
-import { BlackHighlightButton } from "../elements/HighlightButton";
+import { RedHighlightButton } from "../elements/HighlightButton";
 interface ShareModalProps {
   eventName: string;
   eventStartDate: Timestamp;
@@ -119,8 +119,8 @@ const DeleteEventModal = ({
                     )}
                   </div>
 
-                  <div className="mt-2 px-2">
-                    <BlackHighlightButton
+                  <div className="mt-2 px-2 flex justify-end">
+                    <RedHighlightButton
                       text="Delete Event"
                       onClick={() => {
                         onConfirm();

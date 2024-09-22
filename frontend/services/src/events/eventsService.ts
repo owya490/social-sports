@@ -11,6 +11,7 @@ import {
   DocumentData,
   DocumentReference,
   WriteBatch,
+  arrayRemove,
   collection,
   deleteDoc,
   doc,
@@ -234,14 +235,15 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
   }
 }
 
-export async function archiveAndDeleteEvent(eventId: EventId): Promise<void> {
+export async function archiveAndDeleteEvent(eventId: EventId, userId: String): Promise<void> {
   eventServiceLogger.info(`Starting process to archive and delete event: ${eventId}`);
 
   const batch: WriteBatch = writeBatch(db);
 
   try {
     const eventRef = await findEventDocRef(eventId);
-    const deletedEventRef = doc(collection(db, "DeletedEvents"));
+    const deletedEventRef = doc(db, "DeletedEvents", eventId);
+    const userEventsRef = doc(db, `Users/Active/Private/${userId}`);
 
     batch.set(deletedEventRef, {
       eventId,
@@ -249,6 +251,10 @@ export async function archiveAndDeleteEvent(eventId: EventId): Promise<void> {
     });
 
     batch.delete(eventRef);
+
+    batch.update(userEventsRef, {
+      organiserEvents: arrayRemove(eventId),
+    });
 
     await batch.commit();
 

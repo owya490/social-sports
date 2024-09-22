@@ -1,15 +1,18 @@
 import { EventMetadata } from "@/interfaces/EventTypes";
-import { BlackHighlightButton } from "../elements/HighlightButton";
+import { RedHighlightButton } from "../elements/HighlightButton";
 import { archiveAndDeleteEvent } from "@/services/src/events/eventsService";
 import DeleteEventModal from "./DeleteEventModal";
 import { useState } from "react";
 import { Timestamp } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+import { useUser } from "../utility/UserContext";
 
 interface EventDrilldownSettingsPageProps {
   eventMetadata: EventMetadata;
   eventId: string;
   eventName: string;
   eventStartDate: Timestamp;
+  router: ReturnType<typeof useRouter>;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -17,15 +20,18 @@ const EventDrilldownSettingsPage = ({
   eventId,
   eventName,
   eventStartDate,
+  router,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
+  const { user } = useUser();
 
   const onClose = () => {
     setModalOpen(false);
   };
 
-  const onConfirm = () => {
-    archiveAndDeleteEvent(eventId);
+  const onConfirm = async () => {
+    await archiveAndDeleteEvent(eventId, user.userId);
+    router.push("/organiser/event/dashboard");
   };
 
   const handleDeleteEvent = () => {
@@ -35,7 +41,7 @@ const EventDrilldownSettingsPage = ({
 
   return (
     <div className="flex flex-col space-y-4 mb-6">
-      <BlackHighlightButton
+      <RedHighlightButton
         text="Delete Event"
         onClick={() => {
           handleDeleteEvent();

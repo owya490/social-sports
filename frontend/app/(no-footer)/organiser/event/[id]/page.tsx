@@ -157,6 +157,7 @@ export default function EventPage({ params }: EventPageProps) {
                 eventId={eventId}
                 eventName={eventName}
                 eventStartDate={eventStartDate}
+                router={router}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
