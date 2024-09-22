@@ -52,7 +52,7 @@ import {
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
 //Function to create a Event
-export async function createEvent(data: NewEventData): Promise<EventId> {
+export async function createEvent(data: NewEventData, externalBatch?: WriteBatch): Promise<EventId> {
   if (!rateLimitCreateEvents()) {
     console.log("Rate Limited!!!");
     throw "Rate Limited";
@@ -68,25 +68,27 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     let isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
     let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
 
-    const batch = writeBatch(db);
+    const batch = externalBatch !== undefined ? externalBatch : writeBatch(db);
     const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate));
     batch.set(docRef, eventDataWithTokens);
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
+
+    // TODO: Brian Wang: the block of code below should ideally be in its own event service function.
     const user = await getPrivateUserById(data.organiserId);
-    if (user.organiserEvents == undefined) {
+    if (user.organiserEvents === undefined) {
       user.organiserEvents = [docRef.id];
     } else {
       user.organiserEvents.push(docRef.id);
     }
-    console.log("create event user", user);
+    eventServiceLogger.info(`create event user: ${JSON.stringify(user, null, 2)}`);
     await updateUser(data.organiserId, user);
 
     // We want to bust all our caches when we create a new event.
     bustEventsLocalStorageCache();
     bustUserLocalStorageCache();
 
-    eventServiceLogger.info(`createEvent succedded for ${docRef.id}`);
+    eventServiceLogger.info(`createEvent succeeded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
     console.error(error);

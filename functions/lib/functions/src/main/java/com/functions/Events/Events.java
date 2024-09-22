@@ -1,0 +1,38 @@
+package com.functions.Events;
+
+import com.functions.FirebaseService;
+import com.functions.JavaUtils;
+import com.functions.EventsMetadata.EventsMetadata;
+import com.functions.FirebaseService.CollectionPaths;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Transaction;
+
+import java.util.Map;
+import java.util.HashMap;
+
+public class Events {
+	/**
+	 * Create a new event in firebase.
+	 * 
+	 * @param data        data of the new event.
+	 * @param transaction
+	 */
+	public static void createEvent(NewEventData data, Transaction transaction) {
+		Firestore db = FirebaseService.getFirestore();
+		String isActive = data.isActive() ? CollectionPaths.ACTIVE : CollectionPaths.INACTIVE;
+		String isPrivate = data.isPrivate() ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
+		DocumentReference newEventDocRef = db.collection(CollectionPaths.EVENTS).document(isActive)
+				.collection(isPrivate)
+				.document();
+
+		Map<String, Object> eventDataWithTokens = JavaUtils.toMap(data);
+		eventDataWithTokens.put("nameTokens", EventsUtils.tokenizeText(data.getName()));
+		eventDataWithTokens.put("locationTokens", EventsUtils.tokenizeText(data.getLocation()));
+
+		transaction.set(newEventDocRef, eventDataWithTokens);
+		EventsMetadata.createEventMetadata(transaction);
+
+	}
+}

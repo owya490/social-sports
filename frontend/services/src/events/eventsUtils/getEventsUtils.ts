@@ -136,6 +136,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       isPrivate: event.isPrivate,
       paymentsActive: event.paymentsActive,
       stripeFeeToCustomer: event.stripeFeeToCustomer,
+      promotionalCodesEnabled: event.promotionalCodesEnabled,
     });
   });
   return eventsDataFinal;
