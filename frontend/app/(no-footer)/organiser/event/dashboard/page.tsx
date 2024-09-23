@@ -66,6 +66,8 @@ export default function OrganiserDashboard() {
       let newEventDataList = filterEventsBySearch([...filteredEventDataList], searchValue);
       setAppliedSearchValue(searchValue);
       filteredEventDataList = newEventDataList;
+    } else if (searchValue === DEFAULT_SEARCH) {
+      setAppliedSearchValue(DEFAULT_SEARCH);
     }
 
     // Filter by STATUS
