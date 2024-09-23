@@ -86,7 +86,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
 
           const userData = await getTempUserData(userCredential.user.uid);
 
-          if (userData) {
+          if (userData !== null) {
             try {
               await createUser(userData, userCredential.user.uid);
               authServiceLogger.info("Temporary user data found and user created successfully.", {
@@ -134,7 +134,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
     if (userCredential) {
       try {
         await signOut(auth);
-        authServiceLogger.info("User signed out due to an error.", { email });
+        authServiceLogger.info(`User signed out due to an error ${error}`, { email });
       } catch (signOutError) {
         authServiceLogger.error("Failed to sign out user during error handling.", {
           error: signOutError instanceof Error ? signOutError.message : "Unknown error",
@@ -228,15 +228,6 @@ export async function handleFacebookSignIn() {
   } catch (error) {
     console.log(error);
   }
-}
-
-/**
- * Utility function determining whether any user is logged in or not.
- * @returns boolean
- */
-export function isLoggedIn(): boolean {
-  const user = useUser();
-  return useUser() !== null;
 }
 
 const actionCodeSettings = {
