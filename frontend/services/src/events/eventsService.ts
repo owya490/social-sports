@@ -29,6 +29,7 @@ import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
+import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../firebaseFunctionsService";
 import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
@@ -50,6 +51,10 @@ import {
 } from "./eventsUtils/getEventsUtils";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
+
+interface CreateEventResponse {
+  eventId: string;
+}
 
 //Function to create a Event
 export async function createEvent(data: NewEventData, externalBatch?: WriteBatch): Promise<EventId> {
@@ -93,6 +98,22 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     eventServiceLogger.error(`createEvent ${error}`);
     throw error;
   }
+}
+
+export async function createEventV2(data: NewEventData) {
+  if (!rateLimitCreateAndUpdateEvents()) {
+    console.log("Rate Limited!!!");
+    throw "Rate Limited";
+  }
+  eventServiceLogger.info("createEventV2");
+  const content = {
+    eventData: data,
+  };
+  const createEventFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_EVENT);
+  return createEventFunction(content).then((result) => {
+    const data = JSON.parse(result.data as string) as CreateEventResponse;
+    return data.eventId;
+  });
 }
 
 export async function createEventMetadata(batch: WriteBatch, eventId: EventId, data: NewEventData) {

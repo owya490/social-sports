@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 import { NewEventData } from "./EventTypes";
 
-export type RecurringEventsId = string;
+export type RecurrenceTemplateId = string;
 
 export enum Frequency {
   WEEKLY = "WEEKLY",

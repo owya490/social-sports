@@ -1,7 +1,7 @@
 import { Frequency } from "@/interfaces/RecurringEventTypes";
 
 export enum CollectionPaths {
-  RecurringEvents = "RecurringEvents",
+  RecurrenceTemplates = "RecurrenceTemplates",
 }
 
 export enum recurringEventsStatus {
