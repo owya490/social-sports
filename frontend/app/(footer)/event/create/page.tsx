@@ -9,14 +9,15 @@ import { useMultistepForm } from "@/components/events/create/forms/useMultistepF
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { createEvent } from "@/services/src/events/eventsService";
+import { createEvent, createEventV2 } from "@/services/src/events/eventsService";
 import { uploadUserImage } from "@/services/src/imageService";
-import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
+import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
+import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { Alert } from "@material-tailwind/react";
 
 export type FormData = {
   startDate: string;
@@ -36,6 +37,7 @@ export type FormData = {
   lat: number;
   long: number;
   stripeFeeToCustomer: boolean;
+  newRecurrenceData: NewRecurrenceFormData;
 };
 
 const INITIAL_DATA: FormData = {
@@ -56,6 +58,7 @@ const INITIAL_DATA: FormData = {
   lat: 0,
   long: 0,
   stripeFeeToCustomer: false,
+  newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
 };
 
 export default function CreateEvent() {
@@ -158,10 +161,20 @@ export default function CreateEvent() {
       imageUrl = await uploadUserImage(user.userId, formData.image);
     }
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
+    const newRecurrenceData = formData.newRecurrenceData;
     let newEventId = "";
     try {
-      newEventId = await createEvent(newEventData);
-      await sendEmailOnCreateEvent(newEventId, newEventData.isPrivate ? "Private" : "Public");
+      if (newRecurrenceData.recurrenceEnabled) {
+        const [firstEventId, newRecurrenceTemplateId] = await createRecurrenceTemplate(newEventData, newRecurrenceData);
+        newEventId = firstEventId;
+      } else {
+        try {
+          newEventId = await createEventV2(newEventData);
+        } catch (error) {
+          newEventId = await createEvent(newEventData);
+        }
+      }
+      // await sendEmailOnCreateEvent(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
