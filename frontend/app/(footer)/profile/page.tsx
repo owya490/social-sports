@@ -11,7 +11,8 @@ import { updateUser } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Dialog, Transition } from "@headlessui/react";
 import Tick from "@svgs/Verified_tick.png";
-import { deleteObject, getDownloadURL, getMetadata, getStorage, ref, uploadBytes } from "firebase/storage";
+import imageCompression from "browser-image-compression";
+import { deleteObject, getDownloadURL, getMetadata, getStorage, ref } from "firebase/storage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
@@ -155,38 +156,74 @@ const Profile = () => {
     }
   }, [isProfilePictureUpdated, editedData, initialProfileData]);
 
+  // Validate image type
+  const validateImage = (file: File) => {
+    const validTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (!validTypes.includes(file.type)) {
+      return false;
+    }
+    return true;
+  };
+
+  // Compress image before upload
+  const handleImageUpload = async (imageFile: File) => {
+    const options = {
+      maxSizeMB: 2, // Maximum size of the image after compression
+      useWebWorker: true,
+    };
+
+    try {
+      const compressedFile = await imageCompression(imageFile, options);
+
+      return compressedFile;
+    } catch (error) {
+      console.error("Error during image compression:", error);
+      return null;
+    }
+  };
+
+  // Handle file input change
   const handleFileInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target?.files;
 
     if (files && files.length > 0) {
-      try {
-        const previousProfilePictureURL = initialProfileData.profilePicture;
+      const file = files[0];
 
-        if (previousProfilePictureURL && !previousProfilePictureURL.includes("generic-profile-photo.webp")) {
-          const previousProfilePictureRef = ref(storage, previousProfilePictureURL);
+      if (validateImage(file)) {
+        try {
+          const previousProfilePictureURL = initialProfileData.profilePicture;
 
-          try {
-            await getMetadata(previousProfilePictureRef);
-            await deleteObject(previousProfilePictureRef);
-          } catch (error) {
-            if ((error as any).code !== "storage/object-not-found") {
-              console.error("Error deleting previous profile picture:", error);
+          if (previousProfilePictureURL && !previousProfilePictureURL.includes("generic-profile-photo.webp")) {
+            const previousProfilePictureRef = ref(storage, previousProfilePictureURL);
+
+            try {
+              await getMetadata(previousProfilePictureRef);
+              await deleteObject(previousProfilePictureRef);
+            } catch (error) {
+              if ((error as any).code !== "storage/object-not-found") {
+                console.error("Error deleting previous profile picture:", error);
+              }
             }
           }
+
+          // Compress the image before upload
+          const compressedFile = await handleImageUpload(file);
+
+          if (compressedFile) {
+            const downloadURL = await uploadProfilePhoto(initialProfileData.userId, compressedFile);
+
+            setEditedData((prevData) => ({
+              ...prevData,
+              profilePicture: downloadURL,
+            }));
+
+            setUser({ ...user, profilePicture: downloadURL });
+
+            setIsProfilePictureUpdated(true);
+          }
+        } catch (error) {
+          console.error("Error uploading file:", error);
         }
-
-        const downloadURL = await uploadProfilePhoto(initialProfileData.userId, files[0]);
-
-        setEditedData((prevData) => ({
-          ...prevData,
-          profilePicture: downloadURL,
-        }));
-
-        setUser({ ...user, profilePicture: downloadURL });
-
-        setIsProfilePictureUpdated(true);
-      } catch (error) {
-        console.error("Error uploading file:", error);
       }
     }
   };
