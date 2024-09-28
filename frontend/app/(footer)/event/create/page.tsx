@@ -15,7 +15,8 @@ import { uploadUserImage } from "@/services/src/imageService";
 import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { Alert } from "@material-tailwind/react";
 
 export type FormData = {
   startDate: string;
@@ -66,6 +67,9 @@ export default function CreateEvent() {
 
   const [loading, setLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [hasAlert, setHasAlert] = useState(false);
+  const [AlertMessage, setAlertMessage] = useState("");
 
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
@@ -78,6 +82,8 @@ export default function CreateEvent() {
       user={user}
       setLoading={setLoading}
       setHasError={setHasError}
+      locationError={locationError}
+      setLocationError={setLocationError}
     />,
     <TagForm key="tag-form" {...data} updateField={updateFields} />,
     <DescriptionImageForm
@@ -105,9 +111,26 @@ export default function CreateEvent() {
   function submit(e: FormEvent) {
     e.preventDefault();
 
+    let formHasError = false;
+    let errorMessage = "";
+
+    if (isFirstStep) {
+      if (data.location === "") {
+        formHasError = true;
+        errorMessage = "Location is required.";
+      }
+    }
+
+    if (formHasError) {
+      setHasError(true);
+      setAlertMessage(errorMessage);
+      setHasAlert(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     if (!isLastStep) {
       next();
-
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -119,8 +142,14 @@ export default function CreateEvent() {
     } catch (e) {
       console.log(e);
     }
-    window.scrollTo({ top: 0, behavior: "smooth" }); // You can use 'auto' instead of 'smooth' for instant scrolling
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  useEffect(() => {
+    if (hasError) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [hasError]);
 
   async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
     setLoading(true);
@@ -188,7 +217,11 @@ export default function CreateEvent() {
     dateObject.setMinutes(parseInt(timeArr[1]));
     return Timestamp.fromDate(dateObject);
   }
-
+  const handleAlertClose = () => {
+    setHasError(false);
+    setHasAlert(false);
+    setAlertMessage("");
+  };
   return loading ? (
     <Loading />
   ) : (
@@ -203,7 +236,14 @@ export default function CreateEvent() {
             </div>
             <div className="absolute top-2 right-2">{/* {currentStep + 1} / {steps.length} */}</div>
             {step}
-
+            <Alert
+              open={hasAlert}
+              onClose={() => handleAlertClose()}
+              color="red"
+              className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+            >
+              {AlertMessage !== "" ? AlertMessage : "Error Submitting Form"}
+            </Alert>
             <div className="flex mt-8 w-11/12 lg:w-2/3 xl:w-full m-auto">
               {!isFirstStep && (
                 <InvertedHighlightButton type="button" className="px-7" onClick={back}>
