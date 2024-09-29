@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Before running this ensure that you are in venv and have run pip install requirements.txt
+
 # Check if correct number of arguments are provided
 if [ "$#" -ne 2 ]; then
   echo "Usage: $0 <environment> <function_name>"
@@ -27,4 +29,4 @@ firebase use $ENVIRONMENT
 echo "Deploying $FUNCTION_NAME to $ENVIRONMENT firebase"
 
 # Deploy the function using firebase CLI
-firebase deploy --only functions:$FUNCTION_NAME
+firebase deploy --only functions:$FUNCTION_NAME --debug
