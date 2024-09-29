@@ -45,18 +45,18 @@ export default function Dashboard() {
     <div className="pt-[3.5rem] pb-20 sm:pb-4 sm:pl-14 lg:max-h-screen">
       <OrganiserNavbar currPage="Dashboard" />
       <OrganiserAnnouncementBanner />
-      <div className="pt-2 md:py-16 md:flex md:justify-center px-4 md:px-0">
-        <div>
-          <h1 className="text-5xl font-bold mt-2 sm:mt-0">Organiser Dashboard</h1>
+      <div className="pt-2 md:py-16 md:flex md:justify-center px-4">
+        <div className="w-full lg:w-auto">
+          <h1 className="text-4xl sm:text-5xl font-bold mt-2 sm:mt-0">Organiser Dashboard</h1>
           {loading ? (
             <LoadingSkeletonOrganiserName />
           ) : (
-            <h1 className="pt-2 sm:pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
+            <h1 className="pt-2 sm:pt-4 text-3xl sm:text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
           )}
           <div className="lg:flex w-full mt-8 lg:max-h-[60vh]">
-            <div className="grow lg:mr-8 md:flex flex-col md:w-[40rem]">
+            <div className="grow lg:mr-8 md:flex flex-col w-full">
               <OrganiserChecklist />
-              <div className="hidden md:flex mt-8 grow min-h-[10vh] mb-10 md:mb-0">
+              <div className="hidden md:flex mt-8 grow min-h-[26vh] mb-10 md:mb-0">
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/event/create">
                     <div className="h-full flex justify-center items-center">
@@ -73,7 +73,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="md:overflow-auto mt-6 lg:mt-0">
+            <div className="md:overflow-auto mt-6 lg:mt-0 lg:min-w-96">
               <div className="bg-organiser-light-gray py-4 rounded-2xl lg:px-8">
                 <h1 className="text-2xl font-bold text-center w-full">Upcoming Events</h1>
               </div>
@@ -91,7 +91,7 @@ export default function Dashboard() {
                   })
                   .map((event, eventIdx) => {
                     return (
-                      <div key={eventIdx} className="mt-4 md:mt-8 ">
+                      <div key={eventIdx} className="mt-4">
                         <OrganiserEventCard
                           eventId={event.eventId}
                           image={event.image}

@@ -220,29 +220,12 @@ export default function FilterBanner({
   }, [triggerFilterApply]);
 
   return (
-    <div className="pt-16 bg-white px-4 sm:px-0 screen-width-dashboard">
+    <div className="pt-16 bg-white screen-width-dashboard">
       <div className="h-20 flex items-center mt-2">
         <div id="filter-overflow" className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all">
           {Object.entries(icons).map((entry, idx) => {
             const sportIdentifierString = entry[0];
             const sportInfo = entry[1];
-            if (idx === 0) {
-              return (
-                <FilterIcon
-                  key={idx}
-                  sportIdentifierString={sportIdentifierString}
-                  image={sportInfo.image}
-                  style={sportInfo.style}
-                  name={sportInfo.sport_name}
-                  isFirst={true}
-                  setEventDataList={setEventDataList}
-                  allEventsDataList={eventDataList}
-                  selectedSport={selectedSport}
-                  setSelectedSport={setSelectedSport}
-                  applyFilters={applyFilters}
-                />
-              );
-            }
             return (
               <FilterIcon
                 key={idx}
@@ -250,7 +233,7 @@ export default function FilterBanner({
                 image={sportInfo.image}
                 style={sportInfo.style}
                 name={sportInfo.sport_name}
-                isFirst={false}
+                isFirst={idx === 0}
                 setEventDataList={setEventDataList}
                 allEventsDataList={eventDataList}
                 selectedSport={selectedSport}
