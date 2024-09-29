@@ -213,7 +213,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
 export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
   eventServiceLogger.info(`updateEventByName ${eventId}`);
   try {
-    const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
+    const eventDocRef = await findEventDocRef(eventId); // Get document reference by ID
 
     // Check if document exists
     const eventDocSnapshot = await getDoc(eventDocRef);
