@@ -33,6 +33,11 @@ export default function OrganiserChecklist() {
     if (isMounted) {
       localStorage.setItem("checklist", JSON.stringify(checklist));
     }
+    checklist.forEach((item) => {
+      if (item.checked === false) {
+        return;
+      }
+    });
   }, [checklist, isMounted]);
 
   const handleCheck = (idx: number) => {
@@ -57,34 +62,32 @@ export default function OrganiserChecklist() {
   const allItemsChecked = checklist.every((item) => item.checked);
 
   return (
-    <div className="md:w-full lg:min-w-[600px]">
-      <div className="bg-organiser-light-gray p-4 sm:p-8 rounded-2xl">
-        {!allItemsChecked && (
-          <>
-            <h1 className="text-2xl font-bold">Finish setting up</h1>
-            {checklist.map((checkbox) => (
-              <OrganiserCheckbox
-                key={checkbox.id}
-                label={checkbox.label}
-                link={checkbox.link}
-                checked={checkbox.checked}
-                onChange={() => handleCheck(checkbox.id)}
-              />
-            ))}
-          </>
-        )}
-        {allItemsChecked && (
-          <>
-            <h1 className="text-center py-6 sm:py-16 font-bold text-xl sm:text-2xl">
-              Good job you have finished setting up ✅ <br></br>
-              Go out there and make more events
-            </h1>
-            <p className="text-[#BABABA] text-end hover:underline hover:cursor-pointer" onClick={resetChecklist}>
-              Reset
-            </p>
-          </>
-        )}
-      </div>
+    <div className="bg-organiser-light-gray p-4 sm:p-8 rounded-2xl ">
+      {!allItemsChecked && (
+        <>
+          <h1 className="text-2xl font-bold">Finish setting up</h1>
+          {checklist.map((checkbox) => (
+            <OrganiserCheckbox
+              key={checkbox.id}
+              label={checkbox.label}
+              link={checkbox.link}
+              checked={checkbox.checked}
+              onChange={() => handleCheck(checkbox.id)}
+            />
+          ))}
+        </>
+      )}
+      {allItemsChecked && (
+        <>
+          <h1 className="text-center py-6 sm:py-16 font-bold text-xl sm:text-2xl">
+            Good job you have finished setting up ✅ <br></br>
+            Go out there and make more events
+          </h1>
+          <p className="text-[#BABABA] text-end hover:underline hover:cursor-pointer" onClick={resetChecklist}>
+            Reset
+          </p>
+        </>
+      )}
     </div>
   );
 }

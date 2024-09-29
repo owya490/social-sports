@@ -40,7 +40,9 @@ export default function EventCard(props: EventCardProps) {
   const cardContent = (
     <div className="bg-white rounded-lg text-left border-gray-300 border w-full md:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer overflow-hidden">
       {loading ? (
-        <LoadingSkeletonEventCard />
+        <div>
+          <LoadingSkeletonEventCard />
+        </div>
       ) : (
         <>
           <div

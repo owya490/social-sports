@@ -45,7 +45,7 @@ export default function EventPage({ params }: any) {
   return loading ? (
     <Loading />
   ) : (
-    <div className="text-black mt-14">
+    <div className="text-black mt-16">
       <EventBanner
         name={eventData.name}
         startDate={eventData.startDate}

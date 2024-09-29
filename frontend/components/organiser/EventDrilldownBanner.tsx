@@ -20,9 +20,7 @@ const EventDrilldownBanner = ({ name, startDate, organiser, vacancy, loading }: 
             <p className="font-bold text-xs block md:hidden">
               {loading ? <Skeleton /> : timestampToEventCardDateString(startDate)}
             </p>
-            <h1 className="font-semibold text-3xl md:text-4xl">
-              {loading ? <Skeleton style={{ width: 300 }} /> : name}
-            </h1>
+            <h1 className="text-3xl md:text-4xl">{loading ? <Skeleton style={{ width: 300 }} /> : name}</h1>
 
             <div className="block md:flex items-center pt-2 pb-4 pl-1">
               <p className="font-bold text-xs hidden md:block">
