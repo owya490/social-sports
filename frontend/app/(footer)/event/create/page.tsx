@@ -36,6 +36,7 @@ export type FormData = {
   lat: number;
   long: number;
   stripeFeeToCustomer: boolean;
+  promotionalCodesEnabled: boolean;
 };
 
 const INITIAL_DATA: FormData = {
@@ -56,6 +57,7 @@ const INITIAL_DATA: FormData = {
   lat: 0,
   long: 0,
   stripeFeeToCustomer: false,
+  promotionalCodesEnabled: false,
 };
 
 export default function CreateEvent() {
@@ -204,6 +206,7 @@ export default function CreateEvent() {
       startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
       stripeFeeToCustomer: formData.stripeFeeToCustomer,
+      promotionalCodesEnabled: formData.promotionalCodesEnabled,
     };
   }
 
