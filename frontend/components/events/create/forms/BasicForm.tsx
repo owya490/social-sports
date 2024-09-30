@@ -1,6 +1,7 @@
 // BasicInformation.tsx
 
 import LocationAutocompleteForm from "@/components/utility/AutoComplete";
+import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
@@ -15,6 +16,8 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
+import { RecurringEventsForm } from "./RecurringEventsForm";
+import "./form.css";
 
 export type BasicData = {
   name: string;
@@ -31,6 +34,7 @@ export type BasicData = {
   lat: number;
   long: number;
   stripeFeeToCustomer: boolean;
+  newRecurrenceData: NewRecurrenceFormData;
 };
 
 type BasicInformationProps = BasicData & {
@@ -57,6 +61,7 @@ export function BasicInformation({
   user,
   locationError,
   stripeFeeToCustomer,
+  newRecurrenceData,
   updateField,
   setLoading,
   setHasError,
@@ -341,48 +346,61 @@ export function BasicInformation({
             </button>
           </div>
         )}
-        <div
-          className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1"
-          onClick={() => {
-            setIsAdditionalSettingsOpen(!isAdditionalSettingsOpen);
-          }}
-        >
-          <h2>Additional Settings</h2>
-          {isAdditionalSettingsOpen ? (
-            <ChevronUpIcon className="w-7 h-7 ml-auto" />
-          ) : (
-            <ChevronDownIcon className="w-7 h-7 ml-auto" />
-          )}
-        </div>
-        {isAdditionalSettingsOpen && (
-          <div>
-            {user.stripeAccountActive && (
-              <div>
-                <label className="text-black text-lg font-semibold">
-                  Do you want to pass Application Fees onto the Customer?
-                </label>
-                <p className="text-sm mb-5 mt-2">
-                  Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
-                  charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
-                </p>
-                <div className="mt-4">
-                  <Select
-                    size="md"
-                    label="Select Stripe Fee to Customer"
-                    value={stripeFeeToCustomer ? "Yes" : "No"}
-                    onChange={(e) => {
-                      const value = e || "Yes";
-                      handleStripeFeesToCustomerChange(value);
-                    }}
-                  >
-                    <Option value="Yes">Yes</Option>
-                    <Option value="No">No</Option>
-                  </Select>
-                </div>
-              </div>
+        <div>
+          <div
+            className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1 mb-4"
+            onClick={() => {
+              setIsAdditionalSettingsOpen(!isAdditionalSettingsOpen);
+            }}
+          >
+            <h2>Additional Settings</h2>
+            {isAdditionalSettingsOpen ? (
+              <ChevronUpIcon className="w-7 h-7 ml-auto" />
+            ) : (
+              <ChevronDownIcon className="w-7 h-7 ml-auto" />
             )}
           </div>
-        )}
+          {isAdditionalSettingsOpen && (
+            <div>
+              <div className="mb-12">
+                <RecurringEventsForm
+                  startDate={startDate}
+                  newRecurrenceData={newRecurrenceData}
+                  setRecurrenceData={(data: NewRecurrenceFormData) => {
+                    updateField({ newRecurrenceData: data });
+                  }}
+                />
+              </div>
+              {user.stripeAccountActive && (
+                <>
+                  <div className="mb-12">
+                    <label className="text-black text-lg font-semibold">
+                      Do you want to pass Application Fees onto the Customer?
+                    </label>
+                    <p className="text-sm mb-5 mt-2">
+                      Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
+                      charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
+                    </p>
+                    <div className="mt-4">
+                      <Select
+                        size="md"
+                        label="Stripe Fee to Customer"
+                        value={stripeFeeToCustomer ? "Yes" : "No"}
+                        onChange={(e) => {
+                          const value = e || "Yes";
+                          handleStripeFeesToCustomerChange(value);
+                        }}
+                      >
+                        <Option value="Yes">Yes</Option>
+                        <Option value="No">No</Option>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </FormWrapper>
   );

@@ -1,6 +1,10 @@
 import { HttpsCallable, getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "./firebase";
 
+// Create Event
+export const FIREBASE_FUNCTIONS_CREATE_EVENT = "create_event";
+export const FIREBASE_FUNCTIONS_CREATE_RECURRENCE_TEMPLATE = "create_recurrence_template";
+
 // Stripe
 export const FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT = "create_stripe_standard_account";
 export const FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID = "get_stripe_checkout_url_by_event_id";
