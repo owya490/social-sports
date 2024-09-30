@@ -3,17 +3,20 @@
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import { useUser } from "@components/utility/UserContext";
+import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
+  ArrowPathIcon,
   BookmarkSquareIcon,
   CalendarIcon,
   CameraIcon,
   ChartBarIcon,
   HomeIcon,
+  StarIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 interface OrganiserNavbarProps {
   currPage: string;
@@ -64,7 +67,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
 
   return (
     <div className="bg-organiser-light-gray drop-shadow-lg fixed bottom-0 sm:bottom-auto inset-x-0 sm:inset-x-auto sm:left-0 sm:h-screen z-40">
-      <div className="flex justify-center h-12 sm:h-auto sm:w-14 sm:flex-col sm:mt-14 sm:space-y-3 sm:space-x-0 space-x-3">
+      <div className="flex justify-center items-center h-12 sm:h-auto sm:w-14 sm:flex-col sm:mt-14 sm:space-y-3 sm:space-x-0 space-x-3">
         <Link
           href="/organiser/dashboard/"
           className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
@@ -73,14 +76,94 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         >
           <HomeIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
-        <Link
+        {/* <Link
           href="/organiser/event/dashboard"
           className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "EventDashboard" && "bg-organiser-darker-light-gray"
           }`}
         >
           <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
-        </Link>
+        </Link> */}
+        <Menu as="div" className="relative inline-block text-left">
+          <div className="flex items-centers">
+            <MenuButton
+              className={`flex justify-center items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+                currPage === "EventDashboard" && "bg-organiser-darker-light-gray"
+              }`}
+            >
+              <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+            </MenuButton>
+          </div>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <MenuItems className="absolute bottom-16 left-0 md:left-16 md:top-0 mt-1 w-52 h-fit origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <div className="px-1 py-1 ">
+                <Menu.Item>
+                  {({ active }) => (
+                    <Link
+                      href="/organiser/event/dashboard"
+                      className={`${
+                        active ? "text-white bg-highlight-yellow" : "text-black"
+                      } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                    >
+                      <StarIcon className="w-6 stroke-1 mr-2" />
+                      Event Dashboard
+                    </Link>
+                  )}
+                </Menu.Item>
+                <Menu.Item>
+                  {({ active }) => (
+                    <Link
+                      href="/organiser/event/recurring-events"
+                      className={`${
+                        active ? "text-white bg-highlight-yellow" : "text-black"
+                      } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                    >
+                      <ArrowPathIcon className="w-6 stroke-1 mr-2" />
+                      Recurring Events
+                    </Link>
+                  )}
+                </Menu.Item>
+              </div>
+            </MenuItems>
+          </Transition>
+        </Menu>
+        {/* <Popover placement="right" offset={10}>
+          <PopoverHandler>
+            <button
+              className={`flex justify-center items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+                currPage === "EventDashboard" && "bg-organiser-darker-light-gray"
+              }`}
+            >
+              <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+            </button>
+          </PopoverHandler>
+          <PopoverContent>
+            <div className="block">
+              <Link
+                href="/organiser/event/dashboard"
+                className="flex items-center p-1 pr-2 hover:bg-organiser-darker-light-gray transition ease-in-out rounded-md"
+              >
+                <StarIcon className="w-6 stroke-1 pr-1" />
+                Events Dashboard
+              </Link>
+              <Link
+                href="/organiser/event/dashboard"
+                className="flex items-center py-1 hover:bg-organiser-darker-light-gray transition ease-in-out"
+              >
+                <ArrowPathIcon className="w-6 stroke-1 pr-1" />
+                Recurring Events
+              </Link>
+            </div>
+          </PopoverContent>
+        </Popover> */}
         <Link
           href={`/organiser/event/${eventId}`}
           className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
