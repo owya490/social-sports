@@ -1,5 +1,6 @@
 package com.functions;
 
+import com.functions.Events.AbstractEventData;
 import com.functions.Events.Events;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
@@ -67,6 +68,19 @@ public class RecurringEvents {
             String recurringEventId = recurringEvent.getId();
             Map<String, Object> recurringEventDict = recurringEvent.getData();
             Map<String, Object> eventDataTemplate = (Map<String, Object>) recurringEventDict.get("eventDataTemplate");
+            // deserialize
+            // AbstractEventData eventData =
+            // recurringEvent.toObject(AbstractEventData.class); into
+            // a
+            // record
+
+            /**
+             * public record EventData(String eventId, Instant startDate);
+             * 
+             * ObjectMapper mapper = new ObjectMapper();
+             * mapper.readValue(jsonString)
+             * 
+             */
             Map<String, Object> recurrenceData = (Map<String, Object>) recurringEventDict.get("recurrenceData");
 
             Frequency frequency = Frequency.fromValue(((Integer) recurrenceData.get("frequency")).intValue());
