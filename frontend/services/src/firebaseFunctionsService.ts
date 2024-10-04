@@ -7,6 +7,7 @@ export const FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID = "get_strip
 
 // Sendgrid
 export const FIREBASE_FUNCTIONS_SEND_EMAIL_ON_CREATE_EVENT = "send_email_on_create_event";
+export const FIREBASE_FUNCTIONS_DELETE_EVENT_EMAIL_FOR_ORGANISER = "delete_event_email_for_organiser";
 
 export function getFirebaseFunctionByName(name: string): HttpsCallable {
   const functions = getFunctions(app, "australia-southeast1");
