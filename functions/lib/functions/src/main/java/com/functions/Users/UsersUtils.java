@@ -1,7 +1,5 @@
 package com.functions.Users;
 
-import com.functions.Users.AbstractUserData.ContactInformation;
-
 public class UsersUtils {
 	/**
 	 * CAUTION: This function performs a SHALLOW copy.

@@ -24,6 +24,8 @@ public class FirebaseService {
         public static final String PRIVATE = "Private";
         public static final String PUBLIC = "Public";
         public static final String USERS = "Users";
+
+        public static final String EVENTSMETADATA = "EventsMetadata";
     }
 
     private static final Logger logger = LoggerFactory.getLogger(FirebaseService.class);

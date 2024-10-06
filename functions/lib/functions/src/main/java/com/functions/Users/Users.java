@@ -2,7 +2,6 @@ package com.functions.Users;
 
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
-
 import com.functions.FirebaseService;
 import com.functions.JavaUtils;
 import com.functions.FirebaseService.CollectionPaths;
@@ -23,5 +22,11 @@ public class Users {
 		privateUserInfoDocRef.update(JavaUtils.toMap(privateUserData));
 	}
 
-	// public static void getPrivateUser
+	public static PrivateUserData getPrivateUserDataById(String userId) throws Exception {
+		Firestore db = FirebaseService.getFirestore();
+		DocumentReference docRef = db.collection(CollectionPaths.USERS).document(CollectionPaths.ACTIVE)
+				.collection(CollectionPaths.PRIVATE).document(userId);
+		PrivateUserData privateUserData = docRef.get().get().toObject(PrivateUserData.class);
+		return privateUserData;
+	}
 }
