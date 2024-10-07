@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useUser } from "../utility/UserContext";
+import { sendEmailonDeleteEvent } from "@/services/src/sendgrid/sendgridService";
+import { env } from "process";
 
 interface EventDrilldownSettingsPageProps {
   eventMetadata: EventMetadata;
@@ -30,8 +32,19 @@ const EventDrilldownSettingsPage = ({
   };
 
   const onConfirm = async () => {
-    await archiveAndDeleteEvent(eventId, user.userId);
-    router.push("/organiser/event/dashboard");
+    try {
+      await archiveAndDeleteEvent(eventId, user.userId);
+      await sendEmailonDeleteEvent(eventId);
+      router.push("/organiser/event/dashboard");
+    } catch (error) {
+      if (error === "Rate Limited") {
+        router.push("/error/Delete_UPDATE_EVENT_RATELIMITED");
+      } else if (error == "Sendgrid failed") {
+        console.log("sendgrid error", error);
+      } else {
+        router.push("/error");
+      }
+    }
   };
 
   const handleDeleteEvent = () => {
