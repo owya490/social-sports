@@ -8,6 +8,7 @@ import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
+import { Switch } from "@mantine/core";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -70,6 +71,7 @@ export function BasicInformation({
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [isAdditionalSettingsOpen, setIsAdditionalSettingsOpen] = useState(false);
+  const [customRegistrationDeadlineEnabled, setCustomRegistrationDeadlineEnabled] = useState(false);
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -104,6 +106,14 @@ export function BasicInformation({
     updateField({ endTime: selectedTime });
   };
 
+  const handleCustomRegistrationDeadlineEnabled = (enabled: boolean) => {
+    if (!enabled) {
+      handleRegistrationEndDateChange(startDate);
+      handleRegistrationEndTimeChange(startTime);
+    }
+    setCustomRegistrationDeadlineEnabled(enabled);
+  };
+
   const handleRegistrationEndTimeChange = (selectedTime: string) => {
     updateField({ registrationEndTime: selectedTime });
   };
@@ -115,41 +125,48 @@ export function BasicInformation({
   };
 
   useEffect(() => {
-    const currentDateTime = new Date();
-    const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
-    const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
-    const selectedRegistrationEndDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
+    const dateAdndTimeErrors = () => {
+      const currentDateTime = new Date();
+      const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
+      const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
+      const selectedRegistrationEndDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
 
-    if (currentDateTime > selectedStartDateTime) {
-      setDateWarning("Event start date and time is in the past!");
-    } else {
-      setDateWarning(null);
-    }
+      if (currentDateTime > selectedStartDateTime) {
+        setDateWarning("Event start date and time is in the past!");
+        return;
+      } else {
+        setDateWarning(null);
+      }
 
-    if (selectedEndDateTime < selectedStartDateTime) {
-      setTimeWarning("Event must end after it starts!");
-    } else {
-      setTimeWarning(null);
-    }
+      if (selectedEndDateTime < selectedStartDateTime) {
+        setTimeWarning("Event must end after it starts!");
+        return;
+      } else {
+        setTimeWarning(null);
+      }
 
-    if (currentDateTime > selectedRegistrationEndDateTime) {
-      setDateWarning("Event registration End date and time is in the past!");
-    } else {
-      setDateWarning(null);
-    }
+      if (currentDateTime > selectedRegistrationEndDateTime) {
+        setDateWarning("Event registration end date and time is in the past!");
+        return;
+      } else {
+        setDateWarning(null);
+      }
 
-    if (selectedRegistrationEndDateTime > selectedEndDateTime) {
-      setDateWarning("Event registration End date and time is after the event!");
-    } else {
-      setDateWarning(null);
-    }
+      if (selectedRegistrationEndDateTime > selectedEndDateTime) {
+        setDateWarning("Event registration end date and time is after the event!");
+        return;
+      } else {
+        setDateWarning(null);
+      }
 
-    if (currentDateTime > selectedStartDateTime || selectedEndDateTime < selectedStartDateTime) {
-      setHasError(true);
-    } else {
-      setHasError(false);
-    }
-  }, [startDate, startTime, endDate, endTime]);
+      if (currentDateTime > selectedStartDateTime || selectedEndDateTime < selectedStartDateTime) {
+        setHasError(true);
+      } else {
+        setHasError(false);
+      }
+    };
+    dateAdndTimeErrors();
+  }, [startDate, startTime, endDate, endTime, registrationEndDate, registrationEndTime]);
 
   const [customAmount, setCustomAmount] = useState(centsToDollars(price)); // customAmount is for frontend display and is stored in a int with decimal places. Price is stored in cents.
 
@@ -205,21 +222,37 @@ export function BasicInformation({
           </div>
           {dateWarning && <div className="text-red-600 text-sm mt-2">{dateWarning}</div>}
           {timeWarning && <div className="text-red-600 text-sm mt-2">{timeWarning}</div>}
-          <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
-            <div className="basis-1/3">
-              <CustomDateInput
-                date={registrationEndDate}
-                placeholder="Registration End Date"
-                handleChange={handleRegistrationEndDateChange}
+          <div className="flex items-center flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
+            <div>
+              <Switch
+                color="teal"
+                label="Enable Custom Registration Deadline"
+                size="sm"
+                className="my-2"
+                checked={customRegistrationDeadlineEnabled}
+                onChange={(event) => {
+                  handleCustomRegistrationDeadlineEnabled(event.currentTarget.checked);
+                }}
               />
             </div>
-            <div className="basis-1/4">
-              <CustomTimeInput
-                value={registrationEndTime}
-                placeholder="Registration End Time"
-                handleChange={handleRegistrationEndTimeChange}
-              />
-            </div>
+            {customRegistrationDeadlineEnabled && (
+              <>
+                <div className="basis-1/3">
+                  <CustomDateInput
+                    date={registrationEndDate}
+                    placeholder="Registration End Date"
+                    handleChange={handleRegistrationEndDateChange}
+                  />
+                </div>
+                <div className="basis-1/3">
+                  <CustomTimeInput
+                    value={registrationEndTime}
+                    placeholder="Registration End Time"
+                    handleChange={handleRegistrationEndTimeChange}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
 
