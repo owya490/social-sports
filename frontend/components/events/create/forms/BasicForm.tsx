@@ -84,6 +84,9 @@ export function BasicInformation({
 
   const handleStartDateChange = (selectedDate: string) => {
     updateField({ startDate: selectedDate });
+    if (!customRegistrationDeadlineEnabled) {
+      handleRegistrationEndDateChange(selectedDate);
+    }
   };
 
   const handleEndDateChange = (selectedDate: string) => {
@@ -100,6 +103,9 @@ export function BasicInformation({
 
   const handleStartTimeChange = (selectedTime: string) => {
     updateField({ startTime: selectedTime });
+    if (!customRegistrationDeadlineEnabled) {
+      handleRegistrationEndTimeChange(selectedTime);
+    }
   };
 
   const handleEndTimeChange = (selectedTime: string) => {
