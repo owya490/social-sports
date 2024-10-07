@@ -119,8 +119,8 @@ public class RecurringEvents implements HttpFunction {
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
-        response.appendHeader("Access-Control-Allow-Origin", "*"); // Allow all origins
-        response.appendHeader("Access-Control-Allow-Methods", "GET"); // Allow only POST
+        response.appendHeader("Access-Control-Allow-Origin", "*");
+        response.appendHeader("Access-Control-Allow-Methods", "GET");
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
 
         if (!"GET".equalsIgnoreCase(request.getMethod())) {
