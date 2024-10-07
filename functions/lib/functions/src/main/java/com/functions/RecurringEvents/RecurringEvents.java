@@ -11,6 +11,10 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
 
+import com.google.cloud.functions.HttpFunction;
+import com.google.cloud.functions.HttpRequest;
+import com.google.cloud.functions.HttpResponse;
+
 import com.google.protobuf.Timestamp;
 
 import java.time.LocalDate;
@@ -18,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class RecurringEvents {
+public class RecurringEvents implements HttpFunction {
     private static final String RECURRING_ACTIVE = "RecurringEvents/Active";
     private static final String RECURRING_INACTIVE = "RecurringEvents/InActive";
 
@@ -83,9 +87,24 @@ public class RecurringEvents {
         }
     }
 
-    public static void createRecurringEventsCron() throws Exception {
+    @Override
+    public void service(HttpRequest request, HttpResponse response) throws Exception {
+        response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
+        response.appendHeader("Access-Control-Allow-Origin", "*"); // Allow all origins
+        response.appendHeader("Access-Control-Allow-Methods", "GET"); // Allow only POST
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
+
+        if (!"GET".equalsIgnoreCase(request.getMethod())) {
+            response.setStatusCode(405); // Method Not Allowed
+            response.appendHeader("Allow", "GET"); // Inform client that only GET is allowed
+            response.getWriter().write("This function only supports GET requests.");
+            return;
+        }
+
         LocalDate today = LocalDate.now();
         // TODO: set up logging
         createEventsFromRecurrenceTemplates(today);
+
+        response.getWriter().write("Recurring events processed for: " + today);
     }
 }

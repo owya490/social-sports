@@ -39,7 +39,9 @@ public class FirebaseService {
 
     static {
         try {
-            initialize();
+            if (FirebaseApp.getApps().isEmpty()) {
+                initialize();
+            }
         } catch (IOException e) {
             logger.error("Error initializing FirebaseService: " + e.getMessage());
         }
