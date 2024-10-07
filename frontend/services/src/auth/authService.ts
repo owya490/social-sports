@@ -13,10 +13,10 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc, Transaction } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
-import { createUser, getPublicUserById } from "../users/usersService";
+import { createUser, deleteUser, getPublicUserById } from "../users/usersService";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
@@ -26,13 +26,23 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
   try {
     // Create a new user with email and password
     userCredential = await createUserWithEmailAndPassword(auth, data.contactInformation.email, data.password);
-
-    // Send email verification
-    await sendEmailVerification(userCredential.user, actionCodeSettings);
-    console.log("Email verification sent. Please verify your email before logging in.");
+    authServiceLogger.info("Firebase Auth Object Created", {
+      email: data.contactInformation.email,
+      userId: userCredential.user.uid,
+    });
     const { password, ...userDataWithoutPassword } = data;
     // Save user data temporarily in your database
     await saveTempUserData(userCredential.user.uid, userDataWithoutPassword);
+    authServiceLogger.info("Temp User Data Created", {
+      email: data.contactInformation.email,
+      userId: userCredential.user.uid,
+    });
+    // Send email verification
+    await sendEmailVerification(userCredential.user, actionCodeSettings);
+    authServiceLogger.info("Email Verification sent", {
+      email: data.contactInformation.email,
+      userId: userCredential.user.uid,
+    });
   } catch (error) {
     console.error("Error during sign-up:", error);
     throw error;
@@ -49,44 +59,103 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
   }
 }
 
-export async function handleEmailAndPasswordSignIn(email: string, password: string) {
-  try {
-    const userCredential: UserCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("isverified", userCredential.user.emailVerified);
-    // Check if the user's email is verified
-    if (userCredential.user.emailVerified) {
-      console.log("Email is verified. Logging in...");
+export async function handleEmailAndPasswordSignIn(email: string, password: string): Promise<boolean> {
+  let userCredential: UserCredential | undefined = undefined;
 
-      try {
-        const userExist = await getPublicUserById(userCredential.user.uid);
-        return true;
-      } catch (error: unknown) {
-        // Retrieve the temporary user data
-        if (error instanceof UserNotFoundError) {
-          const userData = await getTempUserData(userCredential.user.uid);
-          // Handle user creation if temporary user data exists
-          if (userData) {
-            await createUser(userData, userCredential.user.uid);
-            deleteTempUserData(userCredential.user.uid);
-            return true;
-          } else {
-            console.error("User data not found after email verification.");
-            throw new Error("User data not found.");
-          }
-        }
-      }
-    } else {
-      console.error("Email is not verified. Please verify your email before logging in.");
+  try {
+    // Sign in with email and password
+
+    userCredential = await signInWithEmailAndPassword(auth, email, password);
+    authServiceLogger.info("User Object gotten in sign in workflow", { email, userId: userCredential.user.uid });
+
+    if (!userCredential.user.emailVerified) {
+      authServiceLogger.info("Email is not verified. Sending verification email.", { userId: userCredential.user.uid });
       await sendEmailVerification(userCredential.user, actionCodeSettings);
       throw new Error("Email is not verified. We have sent another Verification Email");
+    } else {
+      authServiceLogger.info("Email is verified. Proceeding with login.", { userId: userCredential.user.uid });
+
+      try {
+        await getPublicUserById(userCredential.user.uid);
+        return true; // User exists, sign-in successful
+      } catch (error: unknown) {
+        if (error instanceof UserNotFoundError) {
+          authServiceLogger.info("User not found in public users. Attempting to retrieve temporary user data.", {
+            userId: userCredential.user.uid,
+          });
+
+          const userData = await getTempUserData(userCredential.user.uid);
+
+          if (userData !== null) {
+            try {
+              await createUser(userData, userCredential.user.uid);
+              authServiceLogger.info("Temporary user data found and user created successfully.", {
+                userId: userCredential.user.uid,
+              });
+
+              // Proceed with deletion of temporary user data
+              await deleteTempUserData(userCredential.user.uid);
+              authServiceLogger.info("Temporary user data deleted after successful creation.", {
+                userId: userCredential.user.uid,
+              });
+              return true; // User created and temporary data deleted successfully
+            } catch (creationError) {
+              authServiceLogger.error("Error during user creation. Attempting rollback.", {
+                userId: userCredential.user.uid,
+              });
+
+              // Rollback only if user creation succeeded and temporary data deletion failed
+              try {
+                await deleteUser(userCredential.user.uid);
+                authServiceLogger.error("User creation rolled back successfully.", { userId: userCredential.user.uid });
+              } catch (rollbackError) {
+                const rollbackErrorMessage =
+                  rollbackError instanceof Error ? rollbackError.message : "Unknown error during rollback";
+                authServiceLogger.error("Failed to roll back user creation:", {
+                  error: rollbackErrorMessage,
+                  userId: userCredential.user.uid,
+                });
+              }
+
+              throw new Error("User creation failed, rolled back the changes.");
+            }
+          } else {
+            authServiceLogger.error("Temporary user data not found after email verification.", {
+              userId: userCredential.user.uid,
+            });
+            throw new Error("User data not found.");
+          }
+        } else {
+          throw error; // Re-throw if it's not a UserNotFoundError
+        }
+      }
     }
   } catch (error: unknown) {
+    if (userCredential) {
+      try {
+        await signOut(auth);
+        authServiceLogger.info(`User signed out due to an error ${error}`, { email });
+      } catch (signOutError) {
+        authServiceLogger.error("Failed to sign out user during error handling.", {
+          error: signOutError instanceof Error ? signOutError.message : "Unknown error",
+          email,
+        });
+      }
+    }
+
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+
     if (error instanceof FirebaseError) {
-      throw new Error(error.code);
+      authServiceLogger.error("Firebase error occurred during sign-in process.", {
+        code: error.code,
+        message: error.message,
+        email,
+      });
+    } else {
+      authServiceLogger.error("An error occurred during sign-in process.", { message: errorMessage, email });
     }
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
+
+    throw new Error(errorMessage);
   }
 }
 
@@ -159,15 +228,6 @@ export async function handleFacebookSignIn() {
   } catch (error) {
     console.log(error);
   }
-}
-
-/**
- * Utility function determining whether any user is logged in or not.
- * @returns boolean
- */
-export function isLoggedIn(): boolean {
-  const user = useUser();
-  return useUser() !== null;
 }
 
 const actionCodeSettings = {
