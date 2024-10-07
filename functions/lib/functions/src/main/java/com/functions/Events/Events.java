@@ -33,8 +33,8 @@ public class Events {
 	 */
 	public static String createEventInternal(NewEventData data, Transaction transaction) throws Exception {
 		Firestore db = FirebaseService.getFirestore();
-		String isActive = data.isActive() ? CollectionPaths.ACTIVE : CollectionPaths.INACTIVE;
-		String isPrivate = data.isPrivate() ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
+		String isActive = data.getIsActive() ? CollectionPaths.ACTIVE : CollectionPaths.INACTIVE;
+		String isPrivate = data.getIsPrivate() ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
 		DocumentReference newEventDocRef = db.collection(CollectionPaths.EVENTS).document(isActive)
 				.collection(isPrivate)
 				.document();

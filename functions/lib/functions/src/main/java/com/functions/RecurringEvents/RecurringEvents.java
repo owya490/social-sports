@@ -65,8 +65,9 @@ public class RecurringEvents implements HttpFunction {
                 .document(CollectionPaths.ACTIVE).collection(CollectionPaths.PRIVATE);
         final CollectionReference activePublicRecurringEventsRef = db.collection(CollectionPaths.RECURRING_EVENTS)
                 .document(CollectionPaths.ACTIVE).collection(CollectionPaths.PUBLIC);
-        List<QueryDocumentSnapshot> recurringEventSnapshots = activePrivateRecurringEventsRef.get().get()
-                .getDocuments();
+        List<QueryDocumentSnapshot> recurringEventSnapshots = new ArrayList<QueryDocumentSnapshot>();
+        recurringEventSnapshots.addAll(activePrivateRecurringEventsRef.get().get()
+                .getDocuments());
         recurringEventSnapshots.addAll(activePublicRecurringEventsRef.get().get().getDocuments());
 
         List<String> moveToInactiveRecurringEvents = new ArrayList<String>();

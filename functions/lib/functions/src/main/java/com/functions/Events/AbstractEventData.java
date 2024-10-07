@@ -1,6 +1,7 @@
 package com.functions.Events;
 
 import lombok.Data;
+
 import com.google.cloud.Timestamp;
 import java.util.Map;
 import java.util.List;
@@ -12,9 +13,9 @@ public abstract class AbstractEventData {
 	private Timestamp endDate;
 	private String location;
 	private LocationLatLng locationLatLng;
-	private int capacity;
-	private int vacancy;
-	private double price;
+	private Integer capacity;
+	private Integer vacancy;
+	private Double price;
 	private String organiserId;
 	private Timestamp registrationDeadline;
 	private String name;
@@ -23,20 +24,20 @@ public abstract class AbstractEventData {
 	private List<String> locationTokens;
 	private String image;
 	private List<String> eventTags;
-	private boolean isActive;
-	private boolean isPrivate;
+	private Boolean isActive;
+	private Boolean isPrivate;
 	private Map<String, Integer> attendees; // Maps email to ticket count
 	private Map<String, AttendeesMetadata> attendeesMetadata; // Maps email to metadata
-	private int accessCount;
+	private Integer accessCount;
 	private String sport;
-	private boolean paymentsActive;
+	private Boolean paymentsActive;
 	private Optional<Boolean> stripeFeeToCustomer; // Optional field
 	private Optional<Boolean> promotionalCodesEnabled; // Optional field
 
 	@Data
 	public static class LocationLatLng {
-		private double lat;
-		private double lng;
+		private Integer lat;
+		private Integer lng;
 	}
 
 	@Data
