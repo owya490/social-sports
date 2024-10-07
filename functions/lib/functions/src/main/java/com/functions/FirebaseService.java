@@ -1,7 +1,8 @@
 package com.functions;
 
+import java.util.List;
+
 import java.io.FileInputStream;
-import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,20 +43,20 @@ public class FirebaseService {
             if (FirebaseApp.getApps().isEmpty()) {
                 initialize();
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Error initializing FirebaseService: " + e.getMessage());
         }
     }
 
-    private static void initialize() throws IOException {
-        String credentialsPath = "./functions_key.json";
+    private static void initialize() throws Exception {
+        String credentialsPath = "functions_key.json";
         posthogApiKey = System.getenv("POSTHOG_API_KEY");
         posthogHost = "https://app.posthog.com";
         firebaseProject = System.getenv("PROJECT_NAME");
 
         if (firebaseProject == null) {
             logger.error("Firebase project name is not set in the environment variables.");
-            return;
+            throw new Exception("Firebase project name is not set in the environment variables.");
         }
 
         FileInputStream serviceAccount = new FileInputStream(credentialsPath);
@@ -63,7 +64,23 @@ public class FirebaseService {
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .setProjectId(firebaseProject)
                 .build();
-        FirebaseApp.initializeApp(options);
+        boolean hasBeenInitialised = false;
+        List<FirebaseApp> firebaseApps = FirebaseApp.getApps();
+        for (FirebaseApp app : firebaseApps) {
+            if (app.getName().equals(FirebaseApp.DEFAULT_APP_NAME)) {
+                hasBeenInitialised = true;
+            }
+        }
+        if (!hasBeenInitialised) {
+            FirebaseApp.initializeApp(options);
+        }
+
+        for (FirebaseApp app : FirebaseApp.getApps()) {
+            logger.info("FIREBASE APP: " + app.getName());
+        }
+        if (FirebaseApp.getApps().isEmpty()) {
+            throw new Exception("Firebase not initialized");
+        }
         db = FirestoreClient.getFirestore();
         logging = LoggingOptions.getDefaultInstance().getService();
 
@@ -71,6 +88,7 @@ public class FirebaseService {
     }
 
     public static Firestore getFirestore() {
+        logger.info("TEST log");
         return db;
     }
 
