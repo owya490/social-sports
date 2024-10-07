@@ -242,11 +242,39 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: String): P
 
   try {
     const eventRef = await findEventDocRef(eventId);
+    const eventSnapshot = await getDoc(eventRef);
+
+    if (!eventSnapshot.exists()) {
+      throw new Error(`Event with ID ${eventId} not found.`);
+    }
+
+    const eventData = eventSnapshot.data();
+    const eventName = eventData.name;
+    const eventPrice = eventData.price;
+    const eventStatusAtDeletion = eventData.isActive;
+
     const deletedEventRef = doc(db, "DeletedEvents", eventId);
     const userEventsRef = doc(db, `Users/Active/Private/${userId}`);
 
+    const userEventsSnapshot = await getDoc(userEventsRef);
+    let userEmail = null;
+
+    if (userEventsSnapshot.exists()) {
+      const userData = userEventsSnapshot.data();
+      const contactInformation = userData.contactInformation;
+
+      // Check if the ContactInformation field exists and extract email
+      if (contactInformation && contactInformation.email) {
+        userEmail = contactInformation.email;
+      }
+    }
+
     batch.set(deletedEventRef, {
       eventId,
+      eventName,
+      eventPrice,
+      userEmail,
+      eventStatusAtDeletion,
       deletedAt: new Date().toISOString(),
     });
 

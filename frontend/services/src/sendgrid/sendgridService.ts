@@ -24,3 +24,5 @@ export async function sendEmailOnCreateEvent(eventId: string, visibility: string
       throw Error("Sendgrid failed");
     });
 }
+
+export async function sendEmailonDeleteEvent(eventId: string) {}
