@@ -26,7 +26,9 @@ public class FirebaseService {
         public static final String PUBLIC = "Public";
         public static final String USERS = "Users";
 
-        public static final String EVENTSMETADATA = "EventsMetadata";
+        public static final String EVENTS_METADATA = "EventsMetadata";
+
+        public static final String RECURRING_EVENTS = "RecurringEvents";
     }
 
     private static final Logger logger = LoggerFactory.getLogger(FirebaseService.class);

@@ -5,10 +5,12 @@ import com.functions.JavaUtils;
 import com.functions.TimeUtils;
 import com.functions.Events.Events;
 import com.functions.Events.NewEventData;
+import com.functions.FirebaseService.CollectionPaths;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.Transaction;
 
 import com.google.cloud.functions.HttpFunction;
@@ -23,32 +25,59 @@ import java.util.List;
 import java.util.Map;
 
 public class RecurringEvents implements HttpFunction {
-    private static final String RECURRING_ACTIVE = "RecurringEvents/Active";
-    private static final String RECURRING_INACTIVE = "RecurringEvents/InActive";
 
     public static void moveRecurringEventToInactive(String recurrenceId, Transaction transaction) throws Exception {
         Firestore db = FirebaseService.getFirestore();
-        final DocumentReference oldInactiveRecurringEventsRef = db.collection(RECURRING_ACTIVE).document(recurrenceId);
-        Map<String, Object> inactiveRecurringEventDict = transaction.get(oldInactiveRecurringEventsRef).get().getData();
-        if (inactiveRecurringEventDict == null) {
-            throw new Exception("Recurring event not found for ID: " + recurrenceId);
+        DocumentReference oldInactivePrivateRecurringEventsRef = db.collection(CollectionPaths.RECURRING_EVENTS)
+                .document(CollectionPaths.ACTIVE).collection(CollectionPaths.PRIVATE).document(recurrenceId);
+        DocumentReference oldInactivePublicRecurringEventsRef = db.collection(CollectionPaths.RECURRING_EVENTS)
+                .document(CollectionPaths.ACTIVE).collection(CollectionPaths.PUBLIC).document(recurrenceId);
+
+        if (oldInactivePrivateRecurringEventsRef.get().get().exists()) {
+            Map<String, Object> inactiveRecurringEventDict = transaction.get(oldInactivePrivateRecurringEventsRef).get()
+                    .getData();
+            if (inactiveRecurringEventDict == null) {
+                throw new Exception("Recurring event dictionary not able to be retrieved: " + recurrenceId);
+            }
+            DocumentReference newInactiveRecurringEventsRef = db.collection(CollectionPaths.RECURRING_EVENTS)
+                    .document(CollectionPaths.INACTIVE).collection(CollectionPaths.PRIVATE).document(recurrenceId);
+            transaction.delete(oldInactivePrivateRecurringEventsRef);
+            transaction.set(newInactiveRecurringEventsRef, inactiveRecurringEventDict);
+        } else if (oldInactivePublicRecurringEventsRef.get().get().exists()) {
+            Map<String, Object> inactiveRecurringEventDict = transaction.get(oldInactivePublicRecurringEventsRef).get()
+                    .getData();
+            if (inactiveRecurringEventDict == null) {
+                throw new Exception("Recurring event dictionary not able to be retrieved: " + recurrenceId);
+            }
+            DocumentReference newInactiveRecurringEventsRef = db.collection(CollectionPaths.RECURRING_EVENTS)
+                    .document(CollectionPaths.INACTIVE).collection(CollectionPaths.PUBLIC).document(recurrenceId);
+            transaction.delete(oldInactivePublicRecurringEventsRef);
+            transaction.set(newInactiveRecurringEventsRef, inactiveRecurringEventDict);
         }
-        final DocumentReference newInactiveRecurringEventsRef = db.collection(RECURRING_INACTIVE)
-                .document(recurrenceId);
-        transaction.set(newInactiveRecurringEventsRef, inactiveRecurringEventDict);
+
+        throw new Exception("Recurring event not found for ID: " + recurrenceId);
     }
 
     public static void createEventsFromRecurrenceTemplates(LocalDate today) throws Exception {
         Firestore db = FirebaseService.getFirestore();
 
-        final CollectionReference activeRecurringEventsRef = db.collection(RECURRING_ACTIVE);
+        final CollectionReference activePrivateRecurringEventsRef = db.collection(CollectionPaths.RECURRING_EVENTS)
+                .document(CollectionPaths.ACTIVE).collection(CollectionPaths.PRIVATE);
+        final CollectionReference activePublicRecurringEventsRef = db.collection(CollectionPaths.RECURRING_EVENTS)
+                .document(CollectionPaths.ACTIVE).collection(CollectionPaths.PUBLIC);
+        List<QueryDocumentSnapshot> recurringEventSnapshots = activePrivateRecurringEventsRef.get().get()
+                .getDocuments();
+        recurringEventSnapshots.addAll(activePublicRecurringEventsRef.get().get().getDocuments());
+
         List<String> moveToInactiveRecurringEvents = new ArrayList<String>();
-        for (DocumentSnapshot recurringEventSnapshot : activeRecurringEventsRef.get().get().getDocuments()) {
+
+        for (DocumentSnapshot recurringEventSnapshot : recurringEventSnapshots) {
             db.runTransaction((Transaction.Function<Void>) transaction -> {
                 RecurringEvent recurringEvent = recurringEventSnapshot.toObject(RecurringEvent.class);
                 if (recurringEvent == null) {
-                    // TODO: throw error
-                    return null;
+                    throw new Exception(
+                            "Could not turn recurringEventSnapshot object into RecurringEvent pojo using toObject: "
+                                    + recurringEventSnapshot.getId());
                 }
                 NewEventData newEventData = recurringEvent.getEventData();
                 RecurrenceData recurrenceData = recurringEvent.getRecurrenceData();
@@ -102,7 +131,7 @@ public class RecurringEvents implements HttpFunction {
         }
 
         LocalDate today = LocalDate.now();
-        // TODO: set up logging
+        // TODO: put in logging
         createEventsFromRecurrenceTemplates(today);
 
         response.getWriter().write("Recurring events processed for: " + today);

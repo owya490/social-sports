@@ -11,7 +11,7 @@ public class EventsMetadata {
 	public static void createEventMetadata(Transaction transaction, String eventId, NewEventData data) {
 		Firestore db = FirebaseService.getFirestore();
 		EventMetadata eventMetadata = EventsMetadataUtils.extractEventsMetadataFieldsForNewEvent(data);
-		DocumentReference eventMetadataDocRef = db.collection(CollectionPaths.EVENTSMETADATA).document(eventId);
+		DocumentReference eventMetadataDocRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
 
 		transaction.set(eventMetadataDocRef, eventMetadata);
 	}
