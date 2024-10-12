@@ -57,10 +57,17 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       subject=subject
     )
 
-    start_date: Timestamp = event_data.get("startDate").timestamp_pb()
-    end_date: Timestamp = event_data.get("endDate").timestamp_pb()
-    start_date_string =  start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
-    end_date_string =  end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
+
+    start_date: Timestamp = event_data.get("startDate", Timestamp()).timestamp_pb()
+    end_date: Timestamp = event_data.get("endDate", Timestamp()).timestamp_pb()
+
+    start_date_string = (
+            start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M") if start_date else "N/A"
+        )
+    end_date_string = (
+            end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M") if end_date else "N/A"
+        )
+
     date_purchased: Timestamp = order_data.get("datePurchased").timestamp_pb()
     date_purchased_string = date_purchased.ToDatetime().strftime("%m/%d/%Y, %H:%M")
 
