@@ -53,6 +53,7 @@ export function EventDetails(props: EventDetailsProps) {
             <EventPayment
               startDate={eventData.startDate}
               endDate={eventData.endDate}
+              registrationEndDate={eventData.registrationDeadline}
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
