@@ -38,10 +38,10 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
       const event = searchParams.get("event");
       const location = searchParams.get("location");
 
-      if (event) {
+      if (event != null) {
         setEvent(event);
       }
-      if (location) {
+      if (location != null) {
         setLocation(location);
       }
     };
@@ -51,7 +51,6 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
   const handleSearch = () => {
     const maybePrevSearches = sessionStorage.getItem("recentSearches");
     const currentSearch = event + ":" + location;
-    console.log("CURRENT" + currentSearch);
     if (maybePrevSearches) {
       const prevSearches: string[] = deserialize_list(maybePrevSearches);
       prevSearches.unshift(currentSearch);
@@ -61,7 +60,6 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
       sessionStorage.setItem("recentSearches", serialize_list([currentSearch]));
       setRecentSearches([currentSearch]);
     }
-    console.log("mobile search");
     const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
     router.push(searchUrl);
     setSearchExpanded();
@@ -79,10 +77,6 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
       setRecentSearches(deserialize_list(maybeRecentSearch));
     }
   }, []);
-
-  useEffect(() => {
-    console.log(recentSearches);
-  }, [recentSearches]);
 
   return (
     <div
@@ -107,7 +101,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           <input
             id="search_input"
             className="w-56 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
-            placeholder="Search Event"
+            placeholder="Search Events"
             value={event}
             onChange={(event) => {
               setEvent(event.target.value);
@@ -123,7 +117,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           <input
             id="location_input"
             className="w-36 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
-            placeholder="Location"
+            placeholder="Sydney"
             value={location}
             onChange={(event) => {
               setLocation(event.target.value);
@@ -141,7 +135,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
           <h3 className="font-semibold text-lg">Recent Searches</h3>
           <div className="h-44 overflow-y-scroll">
             {recentSearches.length === 0 ? (
-              <p className="text-sm font-light">No recent searches... go ahead ;)</p>
+              <p className="text-sm font-light">None</p>
             ) : (
               recentSearches.map((search, i) => {
                 const splitSearch = search.split(":");
