@@ -170,7 +170,7 @@ export default function Dashboard() {
       <div className="flex justify-center">
         <div className="pb-10 screen-width-dashboard">
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 w-full min-h-screen justify-items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-screen justify-items-center">
               {loadingEventDataList.map((event, eventIdx) => {
                 return (
                   <div className="my-4 w-full" key={eventIdx}>
@@ -205,7 +205,7 @@ export default function Dashboard() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
               {eventDataList
                 .sort((event1, event2) => {
                   if (event1.accessCount > event2.accessCount) {
@@ -218,7 +218,7 @@ export default function Dashboard() {
                 })
                 .map((event, eventIdx) => {
                   return (
-                    <div className="my-4 w-full" key={eventIdx}>
+                    <div className="w-full md:w-auto" key={eventIdx}>
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}
