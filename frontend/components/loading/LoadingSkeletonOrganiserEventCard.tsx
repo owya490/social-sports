@@ -1,6 +1,6 @@
 import Skeleton from "react-loading-skeleton";
 
-export default function LoadingSkeletonEventCard() {
+export default function LoadingSkeletonOrganiserEventCard() {
   return (
     <div className="w-full px-2">
       <Skeleton

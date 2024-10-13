@@ -29,7 +29,7 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
   }
   return (
     <Link href={`/organiser/event/${props.eventId}`}>
-      <div className="bg-white rounded-lg text-left border-gray-300 border w-full hover:cursor-pointer">
+      <div className="bg-white rounded-lg text-left border-gray-300 border w-full sm:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer">
         {props.loading ? (
           <div>
             <LoadingSkeletonOrganiserEventCard />
