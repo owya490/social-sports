@@ -57,7 +57,7 @@ export default function Dashboard() {
             <div className="lg:mr-8 md:flex flex-col">
               <OrganiserChecklist />
               <div className="hidden md:flex mt-8 mb-10 md:mb-0">
-                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                <div className="flex-1 min-h-full py-20 font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/event/create">
                     <div className="h-full flex justify-center items-center">
                       <p>Create an event</p>
@@ -77,7 +77,7 @@ export default function Dashboard() {
               <h1 className="bg-organiser-light-gray py-4 rounded-2xl text-2xl font-bold text-center">
                 Upcoming Events
               </h1>
-              <div className="sm:grid sm:grid-cols-2 sm:justify-items-center lg:block">
+              <div className="sm:grid sm:grid-cols-2 sm:justify-items-center lg:block sm:max-h-96">
                 {eventDataList
                   .sort((event1, event2) => {
                     const seconds = Timestamp.now().seconds;
