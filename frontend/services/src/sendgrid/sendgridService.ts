@@ -37,8 +37,8 @@ export async function sendEmailonDeleteEvent(eventId: string) {
   };
   return sendEmailFunction(content)
     .then((result) => {
-      const data = JSON.parse(result.data as string) as SendgridSendEmailOnCreateEvent;
-      return data.status;
+      console.log("this is the" ,result)
+      return result
     })
     .catch((error) => {
       sendgridServiceLogger.warn(`Failed to send email on event creation. eventId=${eventId} error=${error}`);
