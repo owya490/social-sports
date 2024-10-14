@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from firebase_functions import https_fn, options
 from google.protobuf.timestamp_pb2 import Timestamp
 from functions.lib.sendgrid.commons import cents_to_dollars
-from lib.constants import db  # Assumed to be defined elsewhere
-from lib.logging import Logger  # Assumed to be defined elsewhere
-from lib.sendgrid.constants import CREATE_EVENT_EMAIL_TEMPLATE_ID, DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID, SENDGRID_API_KEY
+from lib.constants import db  
+from lib.logging import Logger  
+from lib.sendgrid.constants import DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID, SENDGRID_API_KEY
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
@@ -25,7 +25,7 @@ class SendGridDeleteEventRequest:
     ),
     region="australia-southeast1"
 )
-def send_email_on_delete_event(req: https_fn.CallableRequest):
+def send_email_on_delete_event_for_organiser(req: https_fn.CallableRequest):
     uid = str(uuid.uuid4())
     logger = Logger(f"sendgrid_delete_event_logger_{uid}")
     logger.add_tag("uuid", uid)
@@ -111,11 +111,16 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
             # Log the response status
             if 200 <= response.status_code < 300:
                 logger.info(f"Email successfully sent to {purchaser_email} for event: {event_name}")
+                return https_fn.Response(status=200, headers={'Access-Control-Allow-Origin': '*'})
             else:
                 logger.error(f"Failed to send email to {purchaser_email}. Response: {response.body}")
+                # return https_fn.Response(status=500)
 
-          
-        return https_fn.Response(status=200, headers={'Access-Control-Allow-Origin': '*'})
+        
+        # return https_fn.Response(status=200, headers={'Access-Control-Allow-Origin': '*'})
     except Exception as e:
         logger.error(f"Error sending event deleted email. eventId={request_data.eventId}", e)
-        return https_fn.Response(status=500)
+        # return https_fn.Response(status=500)
+    
+
+    
