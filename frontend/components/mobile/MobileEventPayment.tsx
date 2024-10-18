@@ -23,6 +23,7 @@ interface MobileEventPaymentProps {
   vacancy: number;
   startDate: Timestamp;
   endDate: Timestamp;
+  registrationEndDate: Timestamp;
   eventId: string;
   isPaymentsActive: boolean;
   isPrivate: boolean;
@@ -39,7 +40,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
     }
   };
 
-  const { startDate, endDate } = props;
+  const { startDate, endDate, registrationEndDate } = props;
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate;
 
