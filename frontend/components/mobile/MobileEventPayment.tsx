@@ -41,6 +41,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
 
   const { startDate, endDate } = props;
   const eventInPast = Timestamp.now() > endDate;
+  const eventRegistrationClosed = Timestamp.now() > registrationEndDate;
 
   return (
     <div className="mx-2">
@@ -79,7 +80,12 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
       </div>
       <hr className="px-2 h-[1px] mx-auto bg-gray-300 border-0 rounded dark:bg-gray-400 mb-4"></hr>
       <div className="relative flex justify-center mb-6 w-full">
-        {eventInPast ? (
+        {eventRegistrationClosed ? (
+          <div>
+            <h2 className="font-semibold">Event registration has closed.</h2>
+            <p className="text-xs font-light">Please check with the organiser for more details.</p>
+          </div>
+        ) : eventInPast ? (
           <div>
             <h2 className="font-semibold">Event has already finished.</h2>
             <p className="text-xs font-light">Please check with the organiser for future events.</p>
