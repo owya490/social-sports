@@ -27,6 +27,7 @@ interface MobileEventPaymentProps {
   eventId: string;
   isPaymentsActive: boolean;
   isPrivate: boolean;
+  paused: boolean;
   setLoading: (value: boolean) => void;
 }
 
@@ -40,9 +41,9 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
     }
   };
 
-  const { startDate, endDate, registrationEndDate } = props;
+  const { startDate, endDate, registrationEndDate, paused } = props;
   const eventInPast = Timestamp.now() > endDate;
-  const eventRegistrationClosed = Timestamp.now() > registrationEndDate;
+  const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
 
   return (
     <div className="mx-2">
@@ -80,7 +81,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
         </div>
       </div>
       <hr className="px-2 h-[1px] mx-auto bg-gray-300 border-0 rounded dark:bg-gray-400 mb-4"></hr>
-      <div className="relative flex justify-center mb-6 w-full">
+      <div className="relative flex mb-6 w-full">
         {eventRegistrationClosed ? (
           <div>
             <h2 className="font-semibold">Event registration has closed.</h2>
@@ -92,7 +93,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
             <p className="text-xs font-light">Please check with the organiser for future events.</p>
           </div>
         ) : props.isPaymentsActive ? (
-          <div className="w-full space-y-6">
+          <div className="w-full">
             {props.vacancy === 0 ? (
               <div>
                 <h2 className="font-semibold">Event currently sold out.</h2>
@@ -100,7 +101,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
               </div>
             ) : (
               <>
-                <div className="!text-black !border-black">
+                <div className="!text-black !border-black mb-6">
                   <Select
                     className="border-black border-t-transparent text-black"
                     label="Select Ticket Amount"
@@ -126,8 +127,9 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                       })}
                   </Select>
                 </div>
+
                 <button
-                  className="text-lg rounded-2xl border border-black w-full py-3"
+                  className="text-lg rounded-2xl border border-black w-full py-3 mb-2"
                   style={{
                     textAlign: "center",
                     position: "relative",
@@ -141,6 +143,9 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                 >
                   Book Now
                 </button>
+                <p className=" font-light text-[0.75rem]">{`Registrations close: ${timestampToTimeOfDay(
+                  registrationEndDate
+                )} ${timestampToDateString(registrationEndDate)}`}</p>
               </>
             )}
           </div>

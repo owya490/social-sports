@@ -27,6 +27,7 @@ interface EventPaymentProps {
   isPaymentsActive: boolean;
   eventId: EventId;
   isPrivate: boolean;
+  paused: boolean;
   setLoading: (value: boolean) => void;
 }
 
@@ -40,10 +41,10 @@ export default function EventPayment(props: EventPaymentProps) {
     }
   };
 
-  const { startDate, endDate, registrationEndDate } = props;
+  const { startDate, endDate, registrationEndDate, paused } = props;
 
   const eventInPast = Timestamp.now() > endDate;
-  const eventRegistrationClosed = Timestamp.now() > registrationEndDate;
+  const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
 
   return (
     <div className="md:border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
@@ -95,7 +96,7 @@ export default function EventPayment(props: EventPaymentProps) {
               <p className="text-xs font-light">Please check with the organiser for future events.</p>
             </div>
           ) : props.isPaymentsActive ? (
-            <div className="w-full space-y-6">
+            <div className="w-full">
               {props.vacancy === 0 ? (
                 <div>
                   <h2 className="font-semibold">Event currently sold out.</h2>
@@ -103,7 +104,7 @@ export default function EventPayment(props: EventPaymentProps) {
                 </div>
               ) : (
                 <>
-                  <div className="!text-black !border-black">
+                  <div className="!text-black !border-black mb-6">
                     <Select
                       className="border-black border-t-transparent text-black"
                       label="Select Ticket Amount"
@@ -130,7 +131,7 @@ export default function EventPayment(props: EventPaymentProps) {
                     </Select>
                   </div>
                   <button
-                    className="text-lg rounded-2xl border border-black w-full py-3"
+                    className="text-lg rounded-2xl border border-black w-full py-3 mb-2"
                     style={{
                       textAlign: "center",
                       position: "relative",
@@ -144,6 +145,9 @@ export default function EventPayment(props: EventPaymentProps) {
                   >
                     Book Now
                   </button>
+                  <p className=" font-light text-[0.75rem]">{`Registrations close: ${timestampToTimeOfDay(
+                    registrationEndDate
+                  )} ${timestampToDateString(registrationEndDate)}`}</p>
                 </>
               )}
             </div>
