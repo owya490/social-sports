@@ -43,7 +43,6 @@ const EventDrilldownSettingsPage = ({
           className="my-4"
           checked={paused}
           onChange={(event) => {
-            console.log(event.currentTarget.checked);
             handlePausedChange(event.currentTarget.checked);
           }}
         />
