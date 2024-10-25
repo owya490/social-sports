@@ -27,6 +27,7 @@ interface EventPaymentProps {
   isPaymentsActive: boolean;
   eventId: EventId;
   isPrivate: boolean;
+  paused: boolean;
   setLoading: (value: boolean) => void;
 }
 
@@ -40,10 +41,10 @@ export default function EventPayment(props: EventPaymentProps) {
     }
   };
 
-  const { startDate, endDate, registrationEndDate } = props;
+  const { startDate, endDate, registrationEndDate, paused } = props;
 
   const eventInPast = Timestamp.now() > endDate;
-  const eventRegistrationClosed = Timestamp.now() > registrationEndDate;
+  const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
 
   return (
     <div className="md:border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">

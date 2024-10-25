@@ -35,6 +35,7 @@ export function EventDetails(props: EventDetailsProps) {
               isPaymentsActive={eventData.paymentsActive}
               eventId={eventData.eventId}
               isPrivate={eventData.isPrivate}
+              paused={eventData.paused}
               setLoading={setLoading}
             />
           </div>
@@ -61,6 +62,7 @@ export function EventDetails(props: EventDetailsProps) {
               isPaymentsActive={eventData.paymentsActive}
               eventId={eventData.eventId}
               isPrivate={eventData.isPrivate}
+              paused={eventData.paused}
               setLoading={setLoading}
             />
           </div>

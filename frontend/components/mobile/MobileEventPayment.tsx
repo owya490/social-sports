@@ -27,6 +27,7 @@ interface MobileEventPaymentProps {
   eventId: string;
   isPaymentsActive: boolean;
   isPrivate: boolean;
+  paused: boolean;
   setLoading: (value: boolean) => void;
 }
 
@@ -40,9 +41,9 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
     }
   };
 
-  const { startDate, endDate, registrationEndDate } = props;
+  const { startDate, endDate, registrationEndDate, paused } = props;
   const eventInPast = Timestamp.now() > endDate;
-  const eventRegistrationClosed = Timestamp.now() > registrationEndDate;
+  const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
 
   return (
     <div className="mx-2">
@@ -80,7 +81,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
         </div>
       </div>
       <hr className="px-2 h-[1px] mx-auto bg-gray-300 border-0 rounded dark:bg-gray-400 mb-4"></hr>
-      <div className="relative flex justify-center mb-6 w-full">
+      <div className="relative flex mb-6 w-full">
         {eventRegistrationClosed ? (
           <div>
             <h2 className="font-semibold">Event registration has closed.</h2>
