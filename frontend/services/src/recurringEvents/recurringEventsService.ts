@@ -43,7 +43,8 @@ export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<R
     const privateDoc = await getPrivateUserById(userId);
 
     // TODO add recurrence templates
-    const organiserEvents = privateDoc.organiserEvents || [];
+    // const organiserEvents = privateDoc.organiserEvents || [];
+    const organiserEvents = ["VKUNc06rWB7fQdn05jG1"];
     const recurrenceTemplateList: RecurrenceTemplate[] = [];
     for (const recurrenceTemplateId of organiserEvents) {
       try {
@@ -64,9 +65,17 @@ export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<R
 export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId): Promise<RecurrenceTemplate> {
   recurringEventsServiceLogger.info(`Getting Recurrence Template by Id, id=${recurrenceTemplateId}`);
   try {
-    const recurrenceTemplateDocRef = doc(db, CollectionPaths.RecurrenceTemplates, recurrenceTemplateId);
+    const recurrenceTemplateDocRef = doc(
+      db,
+      CollectionPaths.RecurrenceTemplates,
+      "Active",
+      "Private",
+      recurrenceTemplateId
+    );
     const recurrenceTemplateDoc = await getDoc(recurrenceTemplateDocRef);
-    const recurrenceTemplate = recurrenceTemplateDoc.data() as RecurrenceTemplate;
+    console.log(`data ${recurrenceTemplateDoc.data()}`);
+    const recurrenceTemplate = { ...recurrenceTemplateDoc.data(), recurrenceTemplateId } as RecurrenceTemplate;
+    console.log(recurrenceTemplate);
     return recurrenceTemplate;
   } catch (error) {
     recurringEventsServiceLogger.error(

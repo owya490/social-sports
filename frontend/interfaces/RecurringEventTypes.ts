@@ -1,5 +1,5 @@
 import { Timestamp } from "firebase/firestore";
-import { EventDataWithoutOrganiser, EventId, NewEventData } from "./EventTypes";
+import { EventId, NewEventData } from "./EventTypes";
 
 export type RecurrenceTemplateId = string;
 
@@ -19,6 +19,7 @@ export interface RecurrenceData {
 }
 
 export interface RecurrenceTemplate {
+  recurrenceTemplateId: RecurrenceTemplateId;
   eventData: NewEventData;
   recurrenceData: RecurrenceData;
 }
