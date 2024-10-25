@@ -32,7 +32,7 @@ export const initializeAutocomplete = (inputRef: React.RefObject<HTMLInputElemen
     return null;
   }
   const options = {
-    types: ["address"],
+    types: ["geocode", "establishment"],
     componentRestrictions: { country: "au" },
   };
   const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, options);
