@@ -7,9 +7,7 @@ export default function Hero() {
     <div className="grid grid-cols-1 md:grid-cols-2 mt-4 md:mt-8">
       <div className="w-full flex justify-center items-center">
         <div>
-          <h1 className="text-6xl font-extrabold">
-            Satisfy your Sports Cravings.
-          </h1>
+          <h1 className="text-6xl font-extrabold">Satisfy your Sports Cravings.</h1>
           <p className="font-light mt-4">
             Find your next Social Sports Session right here on{" "}
             <Link href="/dashboard" className="font-semibold hover:underline">
@@ -19,14 +17,7 @@ export default function Hero() {
         </div>
       </div>
       <div>
-        <Image
-          priority
-          src={HeroImage}
-          height={0}
-          width={0}
-          alt="..."
-          className="w-full object-cover"
-        />
+        <Image priority src={HeroImage} height={0} width={0} alt="..." className="w-full object-cover" />
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import com.functions.TimeUtils;
 import com.functions.Events.Events;
 import com.functions.Events.NewEventData;
 import com.functions.FirebaseService.CollectionPaths;
+import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -17,14 +18,20 @@ import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
-import com.google.protobuf.Timestamp;
+import com.google.cloud.Timestamp;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RecurringEvents implements HttpFunction {
+
+    private static final Logger logger = LoggerFactory.getLogger(RecurringEvents.class);
 
     public static void moveRecurringEventToInactive(String recurrenceId, Transaction transaction) throws Exception {
         Firestore db = FirebaseService.getFirestore();
@@ -73,8 +80,8 @@ public class RecurringEvents implements HttpFunction {
         List<String> moveToInactiveRecurringEvents = new ArrayList<String>();
 
         for (DocumentSnapshot recurringEventSnapshot : recurringEventSnapshots) {
-            db.runTransaction((Transaction.Function<Void>) transaction -> {
-                RecurringEvent recurringEvent = recurringEventSnapshot.toObject(RecurringEvent.class);
+            ApiFuture<String> futureTransaction = db.runTransaction(transaction -> {
+            RecurringEvent recurringEvent = recurringEventSnapshot.toObject(RecurringEvent.class);
                 if (recurringEvent == null) {
                     throw new Exception(
                             "Could not turn recurringEventSnapshot object into RecurringEvent pojo using toObject: "
@@ -82,17 +89,27 @@ public class RecurringEvents implements HttpFunction {
                 }
                 NewEventData newEventData = recurringEvent.getEventData();
                 RecurrenceData recurrenceData = recurringEvent.getRecurrenceData();
-                Map<Timestamp, String> pastRecurrences = recurrenceData.getPastRecurrences();
+                Map<String, String> pastRecurrences = recurrenceData.getPastRecurrences();
 
                 Boolean isStillActiveRecurrenceFlag = false;
                 for (Timestamp recurrenceTimestamp : recurrenceData.getAllRecurrences()) {
+                    // String recurrenceTimestampMillisString = Long.toString(recurrenceTimestamp.toSqlTimestamp().getTime());
+                    String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
                     LocalDate eventCreationDate = TimeUtils.convertTimestampToLocalDate(recurrenceTimestamp)
                             .minusDays(recurrenceData.getCreateDaysBefore());
-                    if (!pastRecurrences.containsKey(recurrenceTimestamp)
-                            && (today.isAfter(eventCreationDate) || today.equals(eventCreationDate))) {
+                    // TODO: need to figure out timezones
+                    if (!pastRecurrences.containsKey(recurrenceTimestampString)
+                            && (today.isAfter(eventCreationDate) || today.equals(eventCreationDate)) && (today.isBefore(TimeUtils.convertTimestampToLocalDate(recurrenceTimestamp)) || today.isEqual(TimeUtils.convertTimestampToLocalDate(recurrenceTimestamp)))) {
                         isStillActiveRecurrenceFlag = true;
-                        String newEventId = Events.createEventInternal(newEventData, transaction);
-                        pastRecurrences.put(recurrenceTimestamp, newEventId);
+                        NewEventData newEventDataDeepCopy = JavaUtils.deepCopy(newEventData, NewEventData.class);
+                        Long eventLengthMillis = newEventDataDeepCopy.getEndDate().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
+                        newEventDataDeepCopy.setStartDate(recurrenceTimestamp);
+                        Timestamp newEndDate = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventLengthMillis) * 1000);
+                        newEventDataDeepCopy.setEndDate(newEndDate);
+                        // Registration deadline is currently set to the newEndDate.
+                        newEventDataDeepCopy.setRegistrationDeadline(recurrenceTimestamp);
+                        String newEventId = Events.createEventInternal(newEventDataDeepCopy, transaction);
+                        pastRecurrences.put(recurrenceTimestampString, newEventId);
                     }
                 }
 

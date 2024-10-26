@@ -6,7 +6,7 @@ import java.lang.Boolean;
 import java.util.Map;
 import java.util.List;
 
-import com.google.protobuf.Timestamp;
+import com.google.cloud.Timestamp;
 
 @Data
 public class RecurrenceData {
@@ -17,9 +17,9 @@ public class RecurrenceData {
 	private List<Timestamp> allRecurrences;
 
 	/**
-	 * Map<Timestamp, EventId: String>
+	 * Map<Timestamp: String, EventId: String>
 	 */
-	private Map<Timestamp, String> pastRecurrences;
+	private Map<String, String> pastRecurrences;
 
 	public enum Frequency {
 		WEEKLY(0),

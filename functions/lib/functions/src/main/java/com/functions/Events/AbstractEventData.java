@@ -5,7 +5,6 @@ import lombok.Data;
 import com.google.cloud.Timestamp;
 import java.util.Map;
 import java.util.List;
-import java.util.Optional;
 
 @Data
 public abstract class AbstractEventData {
@@ -31,8 +30,8 @@ public abstract class AbstractEventData {
 	private Integer accessCount;
 	private String sport;
 	private Boolean paymentsActive;
-	private Optional<Boolean> stripeFeeToCustomer; // Optional field
-	private Optional<Boolean> promotionalCodesEnabled; // Optional field
+	private Boolean stripeFeeToCustomer; // Optional field
+	private Boolean promotionalCodesEnabled; // Optional field
 
 	@Data
 	public static class LocationLatLng {

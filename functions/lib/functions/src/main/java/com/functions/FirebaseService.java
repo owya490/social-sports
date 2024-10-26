@@ -76,10 +76,7 @@ public class FirebaseService {
         if (!hasBeenInitialised) {
             FirebaseApp.initializeApp(options);
         }
-
-        for (FirebaseApp app : FirebaseApp.getApps()) {
-            logger.info("FIREBASE APP: " + app.getName());
-        }
+        
         if (FirebaseApp.getApps().isEmpty()) {
             throw new Exception("Firebase not initialized");
         }
@@ -90,7 +87,6 @@ public class FirebaseService {
     }
 
     public static Firestore getFirestore() {
-        logger.info("TEST log");
         return db;
     }
 

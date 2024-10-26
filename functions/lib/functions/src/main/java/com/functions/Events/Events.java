@@ -10,7 +10,12 @@ import com.google.cloud.firestore.Transaction;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Events {
+	    private static final Logger logger = LoggerFactory.getLogger(Events.class);
+
 	/**
 	 * Will be callable from firebase functions.
 	 * 
@@ -40,6 +45,8 @@ public class Events {
 				.document();
 
 		Map<String, Object> eventDataWithTokens = JavaUtils.toMap(data);
+		logger.info("CREATEE1: " + data.getName());
+		logger.info("CREATEE2: " + eventDataWithTokens.toString());
 		eventDataWithTokens.put("nameTokens", EventsUtils.tokenizeText(data.getName()));
 		eventDataWithTokens.put("locationTokens", EventsUtils.tokenizeText(data.getLocation()));
 
