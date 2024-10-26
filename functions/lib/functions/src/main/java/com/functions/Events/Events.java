@@ -1,6 +1,5 @@
 package com.functions.Events;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.functions.FirebaseService;
 import com.functions.JavaUtils;
 import com.functions.EventsMetadata.EventsMetadata;
