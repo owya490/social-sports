@@ -25,6 +25,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,6 +124,14 @@ public class RecurringEvents implements HttpFunction {
                 }
                 return null;
             });
+            try {
+                // Wait for the transaction to complete
+                String result = futureTransaction.get();
+                logger.info("Transaction completed with result: " + result);
+            } catch (InterruptedException | ExecutionException e) {
+                logger.error("Transaction failed: " + e.getMessage());
+                e.printStackTrace();
+            }
         }
 
         for (String recurringEventId : moveToInactiveRecurringEvents) {

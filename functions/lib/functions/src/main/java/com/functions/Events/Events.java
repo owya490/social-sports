@@ -45,8 +45,6 @@ public class Events {
 				.document();
 
 		Map<String, Object> eventDataWithTokens = JavaUtils.toMap(data);
-		logger.info("CREATEE1: " + data.getName());
-		logger.info("CREATEE2: " + eventDataWithTokens.toString());
 		eventDataWithTokens.put("nameTokens", EventsUtils.tokenizeText(data.getName()));
 		eventDataWithTokens.put("locationTokens", EventsUtils.tokenizeText(data.getLocation()));
 
