@@ -61,11 +61,14 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   
   event = maybe_event.to_dict()
 
-  # Check if event has not concluded, otherwise error out
+  # Check if event has not concluded or paused, otherwise error out
+  paused: bool = event.get("paused")
   event_end_date: Timestamp = event.get("endDate").timestamp_pb()
+  event_registration_end_date: Timestamp = event.get("registrationDeadline").timestamp_pb()
   event_end_date = event_end_date.ToDatetime(UTC)
-  if (datetime.now(UTC) > event_end_date):
-    logger.warning(f"Trying to get checkout url for event that has already concluded. eventId={event_id}.")
+  event_registration_end_date = event_registration_end_date.ToDatetime(UTC)
+  if (datetime.now(UTC) > event_end_date or datetime.now(UTC) > event_registration_end_date or paused):
+    logger.warning(f"Trying to get checkout url for event that has already concluded, paused or is past its registration deadline. eventId={event_id} time={datetime.now(UTC)} registrationEndDate={event_registration_end_date} endDate={event_end_date} paused={paused}")
     return json.dumps({"url": ERROR_URL})
   
   # 1. check for event is stripe enabled

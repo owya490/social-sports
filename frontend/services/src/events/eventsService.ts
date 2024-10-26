@@ -1,4 +1,5 @@
 import {
+  EmptyEventData,
   EventData,
   EventDataWithoutOrganiser,
   EventId,
@@ -122,10 +123,13 @@ export async function getEventById(eventId: EventId, bypassCache: boolean = true
       eventServiceLogger.error(`getEventById ${error}`);
       throw error;
     }
+
     const event: EventData = {
+      ...EmptyEventData, // initiate default values
       ...eventWithoutOrganiser,
       organiser: organiser,
     };
+
     event.eventId = eventId;
     return event;
   } catch (error) {
@@ -215,7 +219,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
 export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
   eventServiceLogger.info(`updateEventByName ${eventId}`);
   try {
-    const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
+    const eventDocRef = await findEventDocRef(eventId); // Get document reference by ID
 
     // Check if document exists
     const eventDocSnapshot = await getDoc(eventDocRef);
