@@ -1,5 +1,6 @@
 package com.functions.Events;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.functions.FirebaseService;
 import com.functions.JavaUtils;
 import com.functions.EventsMetadata.EventsMetadata;
@@ -7,13 +8,16 @@ import com.functions.FirebaseService.CollectionPaths;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
+import com.google.cloud.functions.HttpFunction;
+import com.google.cloud.functions.HttpRequest;
+import com.google.cloud.functions.HttpResponse;
 
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Events {
+public class Events implements HttpFunction {
 	    private static final Logger logger = LoggerFactory.getLogger(Events.class);
 
 	/**
@@ -52,5 +56,50 @@ public class Events {
 		EventsMetadata.createEventMetadata(transaction, newEventDocRef.getId(), data);
 		EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), newEventDocRef.getId());
 		return newEventDocRef.getId();
+	}
+
+	@Override
+	public void service(HttpRequest request, HttpResponse response) throws Exception {
+		response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
+        response.appendHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+        response.appendHeader("Access-Control-Allow-Methods", "GET");
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
+
+		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+			response.setStatusCode(204); // No Content
+			return;
+		}
+
+		if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            response.setStatusCode(405); // Method Not Allowed
+            response.appendHeader("Allow", "POST");
+            response.getWriter().write("This function only supports POST requests.");
+            return;
+        }
+
+		NewEventData data;
+		try {
+			data = JavaUtils.objectMapper.readValue(request.getReader(), NewEventData.class);
+		} catch (Exception e) {
+			response.setStatusCode(400);
+			response.getWriter().write("Invalid request data: " + e);
+			return;
+		}
+
+		Firestore db = FirebaseService.getFirestore();
+	
+		try {
+			String eventId = db.runTransaction(transaction -> {
+				return createEventInternal(data, transaction);
+			}).get();
+	
+			response.setStatusCode(200);
+			response.getWriter().write("Event created successfully with ID: " + eventId);
+		} catch (Exception e) {
+			response.setStatusCode(500);
+			response.getWriter().write("Error creating event: " + e.getMessage());
+		}
+
+		response.getWriter().write("Create events processed for: ");
 	}
 }

@@ -98,7 +98,6 @@ public class RecurringEvents implements HttpFunction {
                     String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
                     LocalDate eventCreationDate = TimeUtils.convertTimestampToLocalDate(recurrenceTimestamp)
                             .minusDays(recurrenceData.getCreateDaysBefore());
-                    // TODO: need to figure out timezones
                     if (!pastRecurrences.containsKey(recurrenceTimestampString)
                             && (today.isAfter(eventCreationDate) || today.equals(eventCreationDate)) && (today.isBefore(TimeUtils.convertTimestampToLocalDate(recurrenceTimestamp)) || today.isEqual(TimeUtils.convertTimestampToLocalDate(recurrenceTimestamp)))) {
                         isStillActiveRecurrenceFlag = true;

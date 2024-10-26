@@ -57,7 +57,7 @@ public class JavaUtils {
 		}
 	}
 
-	private static final ObjectMapper objectMapper = new ObjectMapper();
+	public static final ObjectMapper objectMapper = new ObjectMapper();
 
     static {
         SimpleModule module = new SimpleModule();
