@@ -94,7 +94,7 @@ public class Events implements HttpFunction {
 			}).get();
 	
 			response.setStatusCode(200);
-			response.getWriter().write("Event created successfully with ID: " + eventId);
+			response.getWriter().write("Event created successfully with ID: " + eventId + "\n");
 		} catch (Exception e) {
 			response.setStatusCode(500);
 			response.getWriter().write("Error creating event: " + e.getMessage());
