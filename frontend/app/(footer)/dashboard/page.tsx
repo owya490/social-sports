@@ -218,7 +218,7 @@ export default function Dashboard() {
                 })
                 .map((event, eventIdx) => {
                   return (
-                    <div className="my-4 w-full" key={eventIdx}>
+                    <div className="w-full md:w-auto" key={eventIdx}>
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}
