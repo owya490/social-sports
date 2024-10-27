@@ -43,19 +43,21 @@ export default function EventCard(props: EventCardProps) {
         <LoadingSkeletonEventCard />
       ) : (
         <>
-          <div
-            className="h-36 w-full"
-            style={{
-              backgroundImage: `url(${image})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center center",
-            }}
-          ></div>
+          <div className="relative w-full aspect-[16/9]">
+            <Image src={image} alt={name} fill className="object-cover" priority={true} />
+          </div>
           <div className="p-4">
             <h4 className="font-bold text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>
             <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">{name}</h2>
             <div className="flex ml-0.5 items-center">
-              <Image src={organiser.profilePicture} alt="DP" width={50} height={50} className="rounded-full w-4 h-4" />
+              <Image
+                src={organiser.profilePicture}
+                quality={1}
+                alt="DP"
+                width={50}
+                height={50}
+                className="rounded-full w-4 h-4"
+              />
               <p className="text-xs font-light ml-1">{`Hosted by ${organiser.firstName} ${organiser.surname}`}</p>
               {organiser.isVerifiedOrganiser && <Image src={Tick} alt="Verified Organiser" className="h-4 w-4 ml-1" />}
             </div>
