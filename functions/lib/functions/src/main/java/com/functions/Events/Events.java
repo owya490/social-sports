@@ -19,19 +19,23 @@ import org.slf4j.LoggerFactory;
 public class Events implements HttpFunction {
 	    private static final Logger logger = LoggerFactory.getLogger(Events.class);
 
+		// TODO: need recurring template name
+		// TODO: need to have createEvent send email (call python function)
+
+		// TODO: remove this as it is unused.
 	/**
 	 * Will be callable from firebase functions.
 	 * 
 	 * @param data data of the new event.
 	 * @return
 	 */
-	public static String createEvent(NewEventData data) {
-		Firestore db = FirebaseService.getFirestore();
-		String newEventId = db.runTransaction(transaction -> {
-			return createEventInternal(data, transaction);
-		}).toString();
-		return newEventId;
-	}
+	// public static String createEvent(NewEventData data) {
+	// 	Firestore db = FirebaseService.getFirestore();
+	// 	String newEventId = db.runTransaction(transaction -> {
+	// 		return createEventInternal(data, transaction);
+	// 	}).toString();
+	// 	return newEventId;
+	// }
 
 	/**
 	 * Internal implementation to create a new event in firebase with a transaction.
@@ -39,7 +43,7 @@ public class Events implements HttpFunction {
 	 * @param data        data of the new event.
 	 * @param transaction
 	 */
-	public static String createEventInternal(NewEventData data, Transaction transaction) throws Exception {
+	public static String createEvent(NewEventData data, Transaction transaction) throws Exception {
 		Firestore db = FirebaseService.getFirestore();
 		String isActive = data.getIsActive() ? CollectionPaths.ACTIVE : CollectionPaths.INACTIVE;
 		String isPrivate = data.getIsPrivate() ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -89,7 +93,7 @@ public class Events implements HttpFunction {
 	
 		try {
 			String eventId = db.runTransaction(transaction -> {
-				return createEventInternal(data, transaction);
+				return createEvent(data, transaction);
 			}).get();
 	
 			response.setStatusCode(200);
@@ -98,7 +102,5 @@ public class Events implements HttpFunction {
 			response.setStatusCode(500);
 			response.getWriter().write("Error creating event: " + e.getMessage());
 		}
-
-		response.getWriter().write("Create events processed for: ");
 	}
 }

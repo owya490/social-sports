@@ -108,7 +108,7 @@ public class RecurringEvents implements HttpFunction {
                         newEventDataDeepCopy.setEndDate(newEndDate);
                         // Registration deadline is currently set to the newEndDate.
                         newEventDataDeepCopy.setRegistrationDeadline(recurrenceTimestamp);
-                        String newEventId = Events.createEventInternal(newEventDataDeepCopy, transaction);
+                        String newEventId = Events.createEvent(newEventDataDeepCopy, transaction);
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
                     }
                 }
