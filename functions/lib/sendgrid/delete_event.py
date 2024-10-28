@@ -25,7 +25,7 @@ class SendGridDeleteEventRequest:
     ),
     region="australia-southeast1"
 )
-def send_email_on_delete_event_for_organiser(req: https_fn.CallableRequest):
+def send_email_on_delete_event(req: https_fn.CallableRequest):
     uid = str(uuid.uuid4())
     logger = Logger(f"sendgrid_delete_event_logger_{uid}")
     logger.add_tag("uuid", uid)
@@ -61,68 +61,79 @@ def send_email_on_delete_event_for_organiser(req: https_fn.CallableRequest):
     event_price = event_delete_data.get("eventPrice")
     event_status = event_delete_data.get("eventStatusAtDeletion")
     organiser_email = event_delete_data.get("userEmail")
+    organiser_name = event_delete_data.get("userName")  
+    event_date = event_delete_data.get("eventDate") 
     purchaser_map = event_metadata_data.get("purchaserMap", {})
 
     if event_name is None or event_price is None or organiser_email is None or event_status is None:
-        logger.warning(f"Missing event details for eventId={request_data.eventId}. "
-                       f"event_name='{event_name}', event_price='{event_price}', "
-                       f"organiser_email='{organiser_email}', event_status='{event_status}'.")
+        logger.warning(f"Missing event details for eventId={request_data.eventId}.")
+        return https_fn.Response(status=400)
+
     if event_status == False:
         logger.info(f"Event {event_name} was already inactive at deletion. No email will be sent.")
         return https_fn.Response(status=200)
 
+    # Convert price to dollars
     event_price = cents_to_dollars(event_price)
     logger.info(f"Converted event price to dollars: {event_price}")
 
-    # If purchaserMap is empty, log and return
-    if not purchaser_map:
-        logger.warning(f"No purchasers found for event: {request_data.eventId}. Nothing to send.")
-        return https_fn.Response(status=200)
+    sg = SendGridAPIClient(SENDGRID_API_KEY)
 
-    # Send an email to each purchaser in the purchaserMap
+    # Prepare attendees list for the email template
+    attendees = [
+        {
+            "name": purchaser_info.get("name"),
+            "email": purchaser_info.get("email"),
+            "tickets": purchaser_info.get("totalTicketCount", 0)
+        }
+        for purchaser_info in purchaser_map.values() if purchaser_info.get("email")
+    ]
+
+    # Send organizer email
     try:
-        sg = SendGridAPIClient(SENDGRID_API_KEY)
-        for purchaser_id, purchaser_info in purchaser_map.items():
-            # Skip if email is missing
-            if not purchaser_info.get("email"):
-                logger.error(f"No email found for purchaser {purchaser_id}. Skipping.")
-                continue
+        organiser_message = Mail(
+            from_email="team.sportshub@gmail.com",
+            to_emails=organiser_email,
+            subject=f"Your event '{event_name}' has been deleted",
+            dynamic_template_data={
+                "organiser_name": organiser_name,
+                "event_name": event_name,
+                "event_date": event_date,
+                "attendees": attendees
+            },
+            template_id=DELETE_EVENT_ORGANISER_EMAIL_TEMPLATE_ID
+        )
+        sg.send(organiser_message)
+        logger.info(f"Organizer email sent to {organiser_email} for event: {event_name}")
+    except Exception as e:
+        logger.error(f"Failed to send email to organizer. Exception: {e}")
+        return https_fn.Response(status=500)
 
-            purchaser_email = purchaser_info.get("email")
-            
-            if not purchaser_info.get("totalTicketCount"):
-                logger.error(f"No tickets found for purchaser {purchaser_id}. Skipping.")
-                continue
+    # Send attendee emails
+    for purchaser_info in attendees:
+        purchaser_email = purchaser_info.get("email")
+        ticket_count = purchaser_info.get("tickets")
 
-            ticket_count = purchaser_info.get("totalTicketCount")
-
-            # Compose the email message for the purchaser
-            subject = f"Notification: {event_name} has been deleted"
-            message = Mail(
+        try:
+            attendee_message = Mail(
                 from_email="team.sportshub@gmail.com",
                 to_emails=purchaser_email,
-                subject=subject,
+                subject=f"Notification: {event_name} has been deleted",
+                dynamic_template_data={
+                    "event_name": event_name,
+                    "event_price": event_price,
+                    "ticket_count": ticket_count,
+                    "organiser_email": organiser_email,
+                },
+                template_id=DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID
             )
-            message.dynamic_template_data = {
-                "event_name": event_name,
-                "event_price": event_price,
-                "ticket_count": ticket_count,
-                "organiser_email": organiser_email,
-            }
-
-            message.template_id = DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID
-
-            # Send the email using SendGrid
-            response = sg.send(message)
-
-            # Log the response status
+            response = sg.send(attendee_message)
             if 200 <= response.status_code < 300:
-                logger.info(f"Email successfully sent to {purchaser_email} for event: {event_name}")
+                logger.info(f"Attendee email sent to {purchaser_email} for event: {event_name}")
             else:
                 logger.error(f"Failed to send email to {purchaser_email}. Response: {response.body}")
+        except Exception as e:
+            logger.error(f"Failed to send email to attendee. Exception: {e}")
 
-        logger.info(f"All emails sent for event: {event_name}, eventId={request_data.eventId}")
-        return https_fn.Response(status=200)
-    except Exception as e:
-        logger.error(f"Error sending event deleted email for eventId={request_data.eventId}. Exception: {e}")
-        return https_fn.Response(status=500)
+    logger.info(f"All emails sent for event: {event_name}, eventId={request_data.eventId}")
+    return https_fn.Response(status=200)
