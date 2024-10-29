@@ -76,14 +76,6 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         >
           <HomeIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
-        {/* <Link
-          href="/organiser/event/dashboard"
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-            currPage === "EventDashboard" && "bg-organiser-darker-light-gray"
-          }`}
-        >
-          <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
-        </Link> */}
         <Menu as="div" className="relative inline-block text-left">
           <div className="flex items-centers">
             <MenuButton
@@ -121,7 +113,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
                 <Menu.Item>
                   {({ active }) => (
                     <Link
-                      href="/organiser/event/recurring-events"
+                      href="/organiser/recurring-events"
                       className={`${
                         active ? "text-white bg-highlight-yellow" : "text-black"
                       } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
@@ -135,35 +127,6 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
             </MenuItems>
           </Transition>
         </Menu>
-        {/* <Popover placement="right" offset={10}>
-          <PopoverHandler>
-            <button
-              className={`flex justify-center items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-                currPage === "EventDashboard" && "bg-organiser-darker-light-gray"
-              }`}
-            >
-              <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
-            </button>
-          </PopoverHandler>
-          <PopoverContent>
-            <div className="block">
-              <Link
-                href="/organiser/event/dashboard"
-                className="flex items-center p-1 pr-2 hover:bg-organiser-darker-light-gray transition ease-in-out rounded-md"
-              >
-                <StarIcon className="w-6 stroke-1 pr-1" />
-                Events Dashboard
-              </Link>
-              <Link
-                href="/organiser/event/dashboard"
-                className="flex items-center py-1 hover:bg-organiser-darker-light-gray transition ease-in-out"
-              >
-                <ArrowPathIcon className="w-6 stroke-1 pr-1" />
-                Recurring Events
-              </Link>
-            </div>
-          </PopoverContent>
-        </Popover> */}
         <Link
           href={`/organiser/event/${eventId}`}
           className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${

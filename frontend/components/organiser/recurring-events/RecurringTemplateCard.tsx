@@ -29,8 +29,9 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
       loading: false,
     };
   }
+
   return (
-    <Link href={`/organiser/recurring-event/${props.recurrenceTemplateId}`}>
+    <Link href={`/organiser/recurring-events/${props.recurrenceTemplateId}`}>
       <div className="bg-white rounded-lg text-left border-gray-300 border w-full sm:w-[600px] xl:w-[580px] 2xl:w-[640px] hover:cursor-pointer">
         {props.loading ? (
           <div>
@@ -73,16 +74,12 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
                 </div>
                 <div>
                   <div className="flex items-center">
-                    {/* <p className="text-sm font-light text-gray-500">{`Recurrence Enabled`}</p> */}
                     <Switch
                       color="teal"
-                      label="Enable Recurrence for this Event"
+                      label={`Recurrence is ${props.recurrenceEnabled ? "" : "Not"} Enabled`}
                       size="sm"
                       className="my-4"
                       checked={props.recurrenceEnabled}
-                      onChange={(event) => {
-                        // handleRecurrenceEnabledChange(event.currentTarget.checked);
-                      }}
                     />
                   </div>
                 </div>
