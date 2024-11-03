@@ -2,12 +2,13 @@ import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import {
   Frequency,
   NewRecurrenceFormData,
+  RecurrenceData,
   RecurrenceTemplate,
   RecurrenceTemplateId,
 } from "@/interfaces/RecurringEventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { Timestamp, doc, getDoc } from "firebase/firestore";
+import { Timestamp, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { FIREBASE_FUNCTIONS_CREATE_RECURRENCE_TEMPLATE, getFirebaseFunctionByName } from "../firebaseFunctionsService";
 import { getPrivateUserById } from "../users/usersService";
@@ -83,6 +84,50 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
     );
     throw error;
   }
+}
+
+export async function updateRecurrenceTemplate(
+  recurrenceTemplateId: RecurrenceTemplateId,
+  updatedData:
+    | Partial<RecurrenceTemplate>
+    | { eventData: Partial<NewEventData> }
+    | { recurrenceData: Partial<RecurrenceData> }
+) {
+  recurringEventsServiceLogger.info(`Updating Recurrence Template ${recurrenceTemplateId}`);
+  try {
+    // Check if document exists
+    const recurrenceTemplateDocRef = doc(
+      db,
+      CollectionPaths.RecurrenceTemplates,
+      "Active",
+      "Private",
+      recurrenceTemplateId
+    );
+    const recurrenceTemplateDocSnapshot = await getDoc(recurrenceTemplateDocRef);
+    if (!recurrenceTemplateDocSnapshot.exists()) {
+      throw new Error(`Recurrence Template with id ${recurrenceTemplateId} not found.`);
+    }
+
+    // If exists, update the recurrence template
+    await updateDoc(recurrenceTemplateDocRef, updatedData);
+    recurringEventsServiceLogger.info(`Recurrence Template with id ${recurrenceTemplateId} updated successfully.`);
+  } catch (error) {
+    recurringEventsServiceLogger.error(`updateRecurrenceTemplate ${error}`);
+  }
+}
+
+export async function updateRecurrenceTemplateEventData(
+  recurrenceTemplateId: RecurrenceTemplateId,
+  updatedData: Partial<NewEventData>
+) {
+  recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} event data`);
+  const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+  await updateRecurrenceTemplate(recurrenceTemplateId, {
+    eventData: {
+      ...recurrenceTemplate.eventData,
+      ...updatedData,
+    },
+  });
 }
 
 export function calculateRecurrenceDates(newRecurrenceFormData: NewRecurrenceFormData, startDate: Timestamp) {

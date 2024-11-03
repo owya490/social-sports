@@ -15,7 +15,6 @@ import { createEvent, createEventV2 } from "@/services/src/events/eventsService"
 import { uploadUserImage } from "@/services/src/imageService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 import { Alert } from "@material-tailwind/react";
-import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
