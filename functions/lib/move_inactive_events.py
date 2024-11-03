@@ -78,7 +78,7 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   
   today = date.today()
 
-  logger.info("Moving inactive events for date " + today)
+  logger.info("Moving inactive events for date " + today.strftime("%d/%m/%Y, %H:%M:%S"))
 
   get_and_move_public_inactive_events(today, logger)
   get_and_move_private_inactive_events(today)

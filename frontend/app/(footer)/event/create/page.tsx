@@ -15,6 +15,7 @@ import { createEvent, createEventV2 } from "@/services/src/events/eventsService"
 import { uploadUserImage } from "@/services/src/imageService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 import { Alert } from "@material-tailwind/react";
+import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -22,6 +23,7 @@ import { FormEvent, useEffect, useState } from "react";
 export type FormData = {
   startDate: string;
   endDate: string;
+  registrationEndDate: string;
   location: string;
   sport: string;
   price: number;
@@ -33,16 +35,20 @@ export type FormData = {
   isPrivate: boolean;
   startTime: string;
   endTime: string;
+  registrationEndTime: string;
   paymentsActive: boolean;
   lat: number;
   long: number;
   stripeFeeToCustomer: boolean;
+  promotionalCodesEnabled: boolean;
+  paused: boolean;
   newRecurrenceData: NewRecurrenceFormData;
 };
 
 const INITIAL_DATA: FormData = {
   startDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   endDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
+  registrationEndDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   location: "",
   sport: "volleyball",
   price: 1500, // $15 default price, set to 1500 as it is in cents
@@ -53,11 +59,14 @@ const INITIAL_DATA: FormData = {
   tags: [],
   isPrivate: false,
   startTime: "10:00",
-  endTime: "18:00",
+  endTime: "10:00",
+  registrationEndTime: "10:00",
   paymentsActive: false,
   lat: 0,
   long: 0,
   stripeFeeToCustomer: false,
+  promotionalCodesEnabled: false,
+  paused: false,
   newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
 };
 
@@ -207,7 +216,10 @@ export default function CreateEvent() {
       attendeesMetadata: {},
       accessCount: 0,
       organiserId: user.userId,
-      registrationDeadline: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
+      registrationDeadline: convertDateAndTimeStringToTimestamp(
+        formData.registrationEndDate,
+        formData.registrationEndTime
+      ),
       locationLatLng: {
         lat: formData.lat,
         lng: formData.long,
@@ -217,6 +229,8 @@ export default function CreateEvent() {
       startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
       stripeFeeToCustomer: formData.stripeFeeToCustomer,
+      promotionalCodesEnabled: formData.promotionalCodesEnabled,
+      paused: formData.paused,
     };
   }
 

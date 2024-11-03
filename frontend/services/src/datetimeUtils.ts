@@ -20,7 +20,7 @@ export function timestampToTimeOfDay24Hour(timestamp: Timestamp) {
   return `${hours < 10 ? `0${hours}` : hours}:${minutes < 10 ? `0${minutes}` : minutes}`;
 }
 
-export function timestampToDateString(timestamp: Timestamp) {
+export function timestampToDateString(timestamp: Timestamp): string {
   let date = timestamp.toDate();
   //   let date = new Date(timestamp).toDateString();
   return date.toDateString();

@@ -1,4 +1,5 @@
 import {
+  EmptyEventData,
   EventData,
   EventDataWithoutOrganiser,
   EventId,
@@ -141,10 +142,13 @@ export async function getEventById(eventId: EventId, bypassCache: boolean = true
       eventServiceLogger.error(`getEventById ${error}`);
       throw error;
     }
+
     const event: EventData = {
+      ...EmptyEventData, // initiate default values
       ...eventWithoutOrganiser,
       organiser: organiser,
     };
+
     event.eventId = eventId;
     return event;
   } catch (error) {

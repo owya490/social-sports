@@ -36,7 +36,9 @@ interface AbstractEventData {
   accessCount: number;
   sport: string;
   paymentsActive: boolean;
-  stripeFeeToCustomer?: boolean;
+  stripeFeeToCustomer: boolean; // should default to false
+  promotionalCodesEnabled: boolean; // should default to false
+  paused: boolean; // should default to false
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -77,6 +79,8 @@ export const EmptyEventData: EventData = {
   isPrivate: false,
   paymentsActive: false,
   stripeFeeToCustomer: false,
+  promotionalCodesEnabled: false,
+  paused: false,
 };
 
 export interface EventMetadata {

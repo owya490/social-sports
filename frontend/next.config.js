@@ -40,11 +40,6 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/",
-        destination: "/dashboard",
-        permanent: true,
-      },
-      {
         source: "/event",
         destination: "/dashboard",
         permanent: true,

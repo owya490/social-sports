@@ -61,11 +61,14 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   
   event = maybe_event.to_dict()
 
-  # Check if event has not concluded, otherwise error out
+  # Check if event has not concluded or paused, otherwise error out
+  paused: bool = event.get("paused")
   event_end_date: Timestamp = event.get("endDate").timestamp_pb()
+  event_registration_end_date: Timestamp = event.get("registrationDeadline").timestamp_pb()
   event_end_date = event_end_date.ToDatetime(UTC)
-  if (datetime.now(UTC) > event_end_date):
-    logger.warning(f"Trying to get checkout url for event that has already concluded. eventId={event_id}.")
+  event_registration_end_date = event_registration_end_date.ToDatetime(UTC)
+  if (datetime.now(UTC) > event_end_date or datetime.now(UTC) > event_registration_end_date or paused):
+    logger.warning(f"Trying to get checkout url for event that has already concluded, paused or is past its registration deadline. eventId={event_id} time={datetime.now(UTC)} registrationEndDate={event_registration_end_date} endDate={event_end_date} paused={paused}")
     return json.dumps({"url": ERROR_URL})
   
   # 1. check for event is stripe enabled
@@ -122,7 +125,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   transaction.update(event_ref, {"vacancy": vacancy - quantity })
   logger.info(f"Securing {quantity} tickets for event {event_ref.path} at ${price}. There are now {vacancy - quantity} tickets left.")
 
-  # 7. check if stripe fee is passed to customer, if so, create shipping object with an additional respective fees
+  # 6. check if stripe fee is passed to customer, if so, create shipping object with an additional respective fees
   shipping_options = None
   if(event.get("stripeFeeToCustomer") is True):
     stripe_surcharge_fee = calculate_stripe_fee(price)
@@ -137,8 +140,13 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
           "type": "fixed_amount"
         }
       }]
+  
+  # 7. check if promotional codes is enabled for this event
+  promotional_codes_enabled = False
+  if (event.get("promotionalCodesEnabled") is True):
+    promotional_codes_enabled = True
 
-  # 6. create checkout session with connected account and return link
+  # 8. create checkout session with connected account and return link
   checkout = stripe.checkout.Session.create(
     mode="payment",
     line_items=[{
@@ -176,7 +184,8 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
     success_url=success_url, # TODO need to update to a static success page
     cancel_url=cancel_url,
     stripe_account= organiser_stripe_account_id,
-    expires_at=int(time.time() + 1800) # Checkout session expires in 30 minutes (stripe minimum)
+    expires_at=int(time.time() + 1800), # Checkout session expires in 30 minutes (stripe minimum)
+    allow_promotion_codes=promotional_codes_enabled
   )
   
   logger.info(f"Creating checkout session {checkout.id} for event {event_ref.path}, linked to {organiser_ref.path} and their stripe account {organiser_stripe_account_id}. Secured {quantity} tickets at ${price}.")
