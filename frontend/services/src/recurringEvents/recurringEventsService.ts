@@ -121,13 +121,18 @@ export async function updateRecurrenceTemplateEventData(
   updatedData: Partial<NewEventData>
 ) {
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} event data`);
-  const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
-  await updateRecurrenceTemplate(recurrenceTemplateId, {
-    eventData: {
-      ...recurrenceTemplate.eventData,
-      ...updatedData,
-    },
-  });
+  try {
+    const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+    await updateRecurrenceTemplate(recurrenceTemplateId, {
+      eventData: {
+        ...recurrenceTemplate.eventData,
+        ...updatedData,
+      },
+    });
+  } catch (error) {
+    // no op as we already logged error, we just need to catch it here as we do not want to continue to update template if 
+    // we did not find the existing data in the existing recurrence template
+  }
 }
 
 export function calculateRecurrenceDates(newRecurrenceFormData: NewRecurrenceFormData, startDate: Timestamp) {
