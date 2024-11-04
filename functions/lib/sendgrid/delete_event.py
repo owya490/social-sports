@@ -38,18 +38,18 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
         logger.info(f"Parsed request data: {request_data}.")
     except ValueError as v:
         logger.warning(f"Request body did not contain necessary fields. Error: {v}. Returned status=400")
-        return https_fn.Response(status=400)
+        return {"status": 400, "message": "Invalid request data"}
 
     # Get the deleted event data from the database
     maybe_event_metadata = db.collection("EventsMetadata").document(request_data.eventId).get()
     if not maybe_event_metadata.exists:
         logger.error(f"Unable to find deleted event in EventsMetadata. eventId={request_data.eventId}")
-        return https_fn.Response(status=400)
+        return {"status": 400, "message": "Event metadata not found"}
 
     maybe_delete_event_data = db.collection("DeletedEvents").document(request_data.eventId).get()
     if not maybe_delete_event_data.exists:
         logger.error(f"Unable to find deleted event in DeletedEvents. eventId={request_data.eventId}")
-        return https_fn.Response(status=400)
+        return {"status": 400, "message": "Deleted event data not found"}
 
     logger.info(f"Retrieved event data for eventId={request_data.eventId}")
 
@@ -67,11 +67,11 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
 
     if event_name is None or event_price is None or organiser_email is None or event_status is None:
         logger.warning(f"Missing event details for eventId={request_data.eventId}.")
-        return https_fn.Response(status=400)
+        return {"status": 400, "message": "Missing event details"}
 
     if event_status == False:
         logger.info(f"Event {event_name} was already inactive at deletion. No email will be sent.")
-        return https_fn.Response(status=200)
+        return {"status": 200, "message": "Event already inactive"}
 
     # Convert price to dollars
     event_price = cents_to_dollars(event_price)
@@ -108,7 +108,7 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
         logger.info(f"Organizer email sent to {organiser_email} for event: {event_name}")
     except Exception as e:
         logger.error(f"Failed to send email to organizer. Exception: {e}")
-        return https_fn.Response(status=500)
+        return {"status": 500, "message": "Failed to send organizer email"}
 
     # Send attendee emails
     for purchaser_info in attendees:
@@ -137,4 +137,4 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
             logger.error(f"Failed to send email to attendee. Exception: {e}")
 
     logger.info(f"All emails sent for event: {event_name}, eventId={request_data.eventId}")
-    return https_fn.Response(status=200)
+    return {"status": 200, "message": "Emails sent successfully"}
