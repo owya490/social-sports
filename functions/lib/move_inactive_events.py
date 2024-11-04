@@ -41,7 +41,7 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
     logger.info(event.id)
     event_id = event.id
     event_dict = event.to_dict()
-    event_end_date: Timestamp  = event_dict.get("endDate").timestamp_pb()
+    event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
     logger.info(event_end_date)
 
     if event_end_date.ToDatetime().date() < today:
@@ -70,7 +70,7 @@ def get_and_move_private_inactive_events(today: date):
 
 
 
-@scheduler_fn.on_schedule(schedule="every day 00:00", region="australia-southeast1")
+@scheduler_fn.on_schedule(schedule="every day 00:00", region="australia-southeast1", time_zone="Australia/Sydney")
 def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   uid = str(uuid.uuid4())
   logger = Logger(f"move_inactive_events_logger_{uid}")
