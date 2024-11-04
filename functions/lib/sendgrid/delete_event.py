@@ -82,11 +82,12 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
     # Prepare attendees list for the email template
     attendees = [
         {
-            "name": purchaser_info.get("name"),
+            "name": name,
             "email": purchaser_info.get("email"),
             "tickets": purchaser_info.get("totalTicketCount", 0)
         }
-        for purchaser_info in purchaser_map.values() if purchaser_info.get("email")
+        for purchaser_info in purchaser_map.values()
+        for name, attendee_info in purchaser_info.get("attendees", {}).items()
     ]
 
     # Send organizer email
@@ -95,14 +96,14 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
             from_email="team.sportshub@gmail.com",
             to_emails=organiser_email,
             subject=f"Your event '{event_name}' has been deleted",
-            dynamic_template_data={
-                "organiser_name": organiser_name,
-                "event_name": event_name,
-                "event_date": event_date,
-                "attendees": attendees
-            },
-            template_id=DELETE_EVENT_ORGANISER_EMAIL_TEMPLATE_ID
         )
+        organiser_message.template_id = DELETE_EVENT_ORGANISER_EMAIL_TEMPLATE_ID
+        organiser_message.dynamic_template_data={
+            "organiser_name": organiser_name,
+            "event_name": event_name,
+            "event_date": event_date,
+            "attendees": attendees
+        }
         sg.send(organiser_message)
         logger.info(f"Organizer email sent to {organiser_email} for event: {event_name}")
     except Exception as e:
@@ -119,14 +120,14 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
                 from_email="team.sportshub@gmail.com",
                 to_emails=purchaser_email,
                 subject=f"Notification: {event_name} has been deleted",
-                dynamic_template_data={
-                    "event_name": event_name,
-                    "event_price": event_price,
-                    "ticket_count": ticket_count,
-                    "organiser_email": organiser_email,
-                },
-                template_id=DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID
             )
+            attendee_message.dynamic_template_data={
+                "event_name": event_name,
+                "event_price": event_price,
+                "ticket_count": ticket_count,
+                "organiser_email": organiser_email,
+            }
+            attendee_message.template_id=DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID
             response = sg.send(attendee_message)
             if 200 <= response.status_code < 300:
                 logger.info(f"Attendee email sent to {purchaser_email} for event: {event_name}")
