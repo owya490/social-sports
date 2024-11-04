@@ -126,11 +126,3 @@ export function duration(startDate: Timestamp, endDate: Timestamp) {
 
   return { hours, minutes };
 }
-
-/**
- * Returns number of days between two firebase Timestamps - rounds up the difference.
- */
-export function durationInDaysCeil(startDate: Timestamp, endDate: Timestamp): number {
-  const { hours } = duration(startDate, endDate);
-  return Math.ceil(hours / 24);
-}
