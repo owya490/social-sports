@@ -11,34 +11,18 @@ import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Events implements HttpFunction {
 	    private static final Logger logger = LoggerFactory.getLogger(Events.class);
 
-		// TODO: need recurring template name
-		// TODO: need to have createEvent send email (call python function)
-
-		// TODO: remove this as it is unused.
-	/**
-	 * Will be callable from firebase functions.
-	 * 
-	 * @param data data of the new event.
-	 * @return
-	 */
-	// public static String createEvent(NewEventData data) {
-	// 	Firestore db = FirebaseService.getFirestore();
-	// 	String newEventId = db.runTransaction(transaction -> {
-	// 		return createEventInternal(data, transaction);
-	// 	}).toString();
-	// 	return newEventId;
-	// }
+		private static final String ACCESS_ALLOW_ORIGIN_HEADER = "Access-Control-Allow-Origin";
+		private static final String ACCESS_ALLOW_METHODS_HEADER = "Access-Control-Allow-Methods";
+		private static final String ACCESS_ALLOW_HEADERS_HEADER = "Access-Control-Allow-Headers";
 
 	/**
-	 * Internal implementation to create a new event in firebase with a transaction.
+	 * Create a new event in firebase with a transaction.
 	 * 
 	 * @param data        data of the new event.
 	 * @param transaction
@@ -50,12 +34,10 @@ public class Events implements HttpFunction {
 		DocumentReference newEventDocRef = db.collection(CollectionPaths.EVENTS).document(isActive)
 				.collection(isPrivate)
 				.document();
+		data.setNameTokens(EventsUtils.tokenizeText(data.getName()));
+		data.setLocationTokens(EventsUtils.tokenizeText(data.getLocation()));
 
-		Map<String, Object> eventDataWithTokens = JavaUtils.toMap(data);
-		eventDataWithTokens.put("nameTokens", EventsUtils.tokenizeText(data.getName()));
-		eventDataWithTokens.put("locationTokens", EventsUtils.tokenizeText(data.getLocation()));
-
-		transaction.set(newEventDocRef, eventDataWithTokens);
+		transaction.set(newEventDocRef, JavaUtils.toMap(data));
 		EventsMetadata.createEventMetadata(transaction, newEventDocRef.getId(), data);
 		EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), newEventDocRef.getId());
 		return newEventDocRef.getId();
@@ -63,15 +45,15 @@ public class Events implements HttpFunction {
 
 	@Override
 	public void service(HttpRequest request, HttpResponse response) throws Exception {
-		response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
-        response.appendHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-        response.appendHeader("Access-Control-Allow-Methods", "GET");
-        response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
+		// response.appendHeader(ACCESS_ALLOW_ORIGIN_HEADER, "https://www.sportshub.net.au");
+        // response.appendHeader(ACCESS_ALLOW_ORIGIN_HEADER, "http://localhost:3000");
+        // response.appendHeader(ACCESS_ALLOW_METHODS_HEADER, "GET");
+        // response.appendHeader(ACCESS_ALLOW_HEADERS_HEADER, "Content-Type");
 
-		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-			response.setStatusCode(204); // No Content
-			return;
-		}
+		// if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+		// 	response.setStatusCode(204); // No Content
+		// 	return;
+		// }
 
 		if (!"POST".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
