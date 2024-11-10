@@ -1,66 +1,38 @@
-"use client";
+import EventPage from "@/components/events/EventPage";
+import { EventId } from "@/interfaces/EventTypes";
+import { getEventById } from "@/services/src/events/eventsService";
+import { Metadata } from "next";
 
-import EventBanner from "@/components/events/EventBanner";
-import { EventDetails } from "@/components/events/EventDetails";
-import RecommendedEvents from "@/components/events/RecommendedEvents";
-import Loading from "@/components/loading/Loading";
-import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
-import { Tag } from "@/interfaces/TagTypes";
-import { getEventById, incrementEventAccessCountById } from "@/services/src/events/eventsService";
-import { getTagById } from "@/services/src/tagService";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
-export default function EventPage({ params }: any) {
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const eventId: EventId = params.id;
-  const [loading, setLoading] = useState(true);
-  const [eventData, setEventData] = useState<EventData>(EmptyEventData);
-  const [eventTags, setEventTags] = useState<Tag[]>([]);
 
-  const router = useRouter();
-  useEffect(() => {
-    getEventById(eventId)
-      .then((event) => {
-        setEventData(event);
-        if (event.eventTags && typeof event.eventTags === "object") {
-          event.eventTags.map((tagId) => {
-            getTagById(tagId).then((tag) => {
-              setEventTags([...eventTags, tag]);
-            });
-          });
-        }
+  const event = await getEventById(eventId, true, false);
+  const imageSrc = event?.image || "";
 
-        incrementEventAccessCountById(eventId, 1, event.isActive, event.isPrivate);
-      })
-      .finally(() => {
-        setLoading(false);
-      })
-      .catch(() => {
-        router.push("/error");
-      });
+  console.log("EDWIN", imageSrc);
 
-    //  eslint-disable-next-line
-  }, []);
+  return {
+    title: `SportsHub | Book your next sports session`,
+    description: `SportsHub is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!`,
+    openGraph: {
+      title: `${event.name}`,
+      description: `${event.description}`,
+      images: [
+        {
+          url: imageSrc ? `/api/og/?src=${encodeURIComponent(imageSrc)}` : `/api/og/`,
+          width: 1200,
+          height: 630,
+          alt: "Event Image",
+        },
+      ],
+    },
+  };
+}
 
-  return loading ? (
-    <Loading />
-  ) : (
-    <div className="text-black mt-16">
-      <EventBanner
-        name={eventData.name}
-        startDate={eventData.startDate}
-        organiser={eventData.organiser}
-        vacancy={eventData.vacancy}
-      />
-      <div className="mt-5 lg:mt-10 mb-10">
-        <EventDetails eventData={eventData} eventTags={eventTags} setLoading={setLoading} />
-
-        <RecommendedEvents eventData={eventData} />
-      </div>
-      {/* SPORTSHUB-194 Mobile Event footer will be re-enabled post MVP
-      <div className="lg:hidden">
-        <MobileEventDetailFooter date={eventData.startDate} />
-      </div> */}
+export default function Page({ params }: any) {
+  return (
+    <div>
+      <EventPage params={params} />
     </div>
   );
 }
