@@ -8,8 +8,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const event = await getEventById(eventId, true, false);
   const imageSrc = event?.image || "";
-
-  console.log("EDWIN", imageSrc);
+  const title = event?.name;
 
   return {
     title: `SportsHub | Book your next sports session`,
@@ -19,7 +18,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       description: `${event.description}`,
       images: [
         {
-          url: imageSrc ? `/api/og/?src=${encodeURIComponent(imageSrc)}` : `/api/og/`,
+          url: imageSrc
+            ? `/api/og/?src=${encodeURIComponent(imageSrc)}&title=${encodeURIComponent(title)}`
+            : `/api/og/`,
           width: 1200,
           height: 630,
           alt: "Event Image",
