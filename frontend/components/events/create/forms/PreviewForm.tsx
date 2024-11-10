@@ -23,83 +23,81 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
   var myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
 
   return (
-    <div className="lg:grid lg:grid-cols-3 mt-20 space-y-6">
-      <div className="md:grid md:grid-cols-2 gap-6 mt-0 items-start mb-8 md:col-span-2 space-y-6">
-        <div className="col-span-1 mt-6 mx-2 space-y-6">
+    <div className="md:flex md:justify-center mt-20">
+      <div className="md:flex-2 md:grid md:grid-cols-2 gap-6 mt-0 mb-8 md:col-span-2 space-y-6">
+        <div className="mt-6 mx-2 space-y-6">
           <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Name</div>
-            <div className="flex justify-between">
-              <p className="text-m">{form.name}</p>
+            <div className="text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Name</div>
+            <div>
+              <p>{form.name}</p>
             </div>
           </div>
           <div>
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Location</div>
-            <p className="text-m">{form.location}</p>
+            <p>{form.location}</p>
           </div>
           <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Time</div>
+            <div className="text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Time</div>
             <div className="flex justify-between">
-              <p className="text-m">Start Time: </p>
-              <p className="text-m">
+              <p>Start Time: </p>
+              <p>
                 {formatDateToString(form.startDate)} {formatTimeTo12Hour(form.startTime)}
               </p>
             </div>
 
             <div className="flex justify-between">
-              <p className="text-m">End Time: </p>
-              <p className="text-m">
+              <p>End Time: </p>
+              <p>
                 {formatDateToString(form.endDate)} {formatTimeTo12Hour(form.endTime)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="col-span-1 mt-6 mx-2 space-y-6">
+        <div className="mt-6 mx-2 space-y-6">
           <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Sport</div>
-            <p className="text-m">{form.sport}</p>
+            <div className="text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Sport</div>
+            <p>{form.sport}</p>
           </div>
 
           <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Price</div>
-            <p className="text-m">${displayPrice(form.price)}</p>
+            <div className="text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Price</div>
+            <p>${displayPrice(form.price)}</p>
           </div>
 
           <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Capacity</div>
-            <p className="text-m">{form.capacity} people</p>
+            <div className="text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Capacity</div>
+            <p>{form.capacity} people</p>
           </div>
 
           <div>
-            <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Publicity</div>
-            <p className="text-m">{form.isPrivate ? "Private" : "Public"}</p>
+            <div className="text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Publicity</div>
+            <p>{form.isPrivate ? "Private" : "Public"}</p>
           </div>
         </div>
 
         <div className="col-span-2 mx-2">
-          <div className="text-lg lg:text-lg font-bold border-b-2 border-gray-300 pb-1 text-gray-600">Description</div>
-          <div className="text-m" dangerouslySetInnerHTML={{ __html: form.description }}></div>
+          <div className="text-lg font-bold border-b-2 border-gray-300 pb-1 text-gray-600">Description</div>
+          <div dangerouslySetInnerHTML={{ __html: form.description }}></div>
         </div>
       </div>
-      <div className="mx-2 col-span-1 flex justify-center lg:justify-end xl:justify-center">
-        <div className="w-full md:w-fit">
-          <div className="text-lg lg:text-lg font-bold mb-2 text-gray-600 text-center">Your EventCard preview:</div>
-          <EventCard
-            eventId=""
-            image={
-              imagePreviewUrl === ""
-                ? "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5"
-                : imagePreviewUrl
-            }
-            name={form.name}
-            organiser={user}
-            startTime={Timestamp.fromDate(myDate)}
-            location={form.location}
-            price={form.price}
-            vacancy={form.capacity}
-            isClickable={true} // Pass true to make it non-clickable
-          />
-        </div>
+      <div className="w-full md:max-w-80 md:mx-6">
+        <div className="text-lg font-bold mb-2 text-gray-600 text-center">Your EventCard preview:</div>
+        <EventCard
+          eventId=""
+          image={
+            imagePreviewUrl === ""
+              ? "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5"
+              : imagePreviewUrl
+          }
+          name={form.name}
+          organiser={user}
+          startTime={Timestamp.fromDate(myDate)}
+          location={form.location}
+          price={form.price}
+          vacancy={form.capacity}
+          isClickable={true} // Pass true to make it non-clickable
+        />
       </div>
     </div>
   );
