@@ -31,9 +31,5 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default function Page({ params }: any) {
-  return (
-    <div>
-      <EventPage params={params} />
-    </div>
-  );
+  return <EventPage params={params} />;
 }
