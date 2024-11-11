@@ -12,6 +12,7 @@ import {
   DocumentReference,
   WriteBatch,
   arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -249,10 +250,6 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: String): P
     }
 
     const eventData = eventSnapshot.data();
-    const eventName = eventData.name;
-    const eventPrice = eventData.price;
-    const eventStatusAtDeletion = eventData.isActive;
-
     const deletedEventRef = doc(db, "DeletedEvents", eventId);
     const userEventsRef = doc(db, `Users/Active/Private/${userId}`);
 
@@ -263,25 +260,24 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: String): P
       const userData = userEventsSnapshot.data();
       const contactInformation = userData.contactInformation;
 
-      // Check if the ContactInformation field exists and extract email
+      // Check if the contactInformation field exists and extract email
       if (contactInformation && contactInformation.email) {
         userEmail = contactInformation.email;
       }
     }
 
+    // Add all event fields to the deleted document, with additional deletion metadata
     batch.set(deletedEventRef, {
-      eventId,
-      eventName,
-      eventPrice,
-      userEmail,
-      eventStatusAtDeletion,
-      deletedAt: new Date().toISOString(),
+      ...eventData, // Copy all fields from the original event
+      userEmail, // Add user email
+      deletedAt: new Date().toISOString(), // Record deletion time
     });
 
     batch.delete(eventRef);
 
     batch.update(userEventsRef, {
       organiserEvents: arrayRemove(eventId),
+      deletedEvents: arrayUnion(eventId),
     });
 
     await batch.commit();

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "../utility/UserContext";
 import { sendEmailonDeleteEvent } from "@/services/src/sendgrid/sendgridService";
 import { env } from "process";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 
 interface EventDrilldownSettingsPageProps {
   eventMetadata: EventMetadata;
@@ -35,6 +36,7 @@ const EventDrilldownSettingsPage = ({
     try {
       await archiveAndDeleteEvent(eventId, user.userId);
       await sendEmailonDeleteEvent(eventId);
+      bustEventsLocalStorageCache();
       router.push("/organiser/event/dashboard");
     } catch (error) {
       if (error === "Rate Limited") {
