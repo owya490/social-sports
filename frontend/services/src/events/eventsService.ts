@@ -108,7 +108,11 @@ export async function createEventMetadata(batch: WriteBatch, eventId: EventId, d
   }
 }
 
-export async function getEventById(eventId: EventId, bypassCache: boolean = true): Promise<EventData> {
+export async function getEventById(
+  eventId: EventId,
+  bypassCache: boolean = true,
+  client: boolean = true
+): Promise<EventData> {
   eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
     const eventDoc = await findEventDoc(eventId);
@@ -116,7 +120,7 @@ export async function getEventById(eventId: EventId, bypassCache: boolean = true
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
     var organiser: UserData = EmptyUserData;
     try {
-      organiser = await getPublicUserById(eventWithoutOrganiser.organiserId, bypassCache);
+      organiser = await getPublicUserById(eventWithoutOrganiser.organiserId, bypassCache, client);
     } catch (error) {
       eventServiceLogger.error(`getEventById ${error}`);
       throw error;
