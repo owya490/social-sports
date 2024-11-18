@@ -3,7 +3,7 @@ import { Logger } from "@/observability/logger";
 import { EVENTS_REFRESH_MILLIS, LocalStorageKeys } from "../eventsConstants";
 const rateLimitLogger = new Logger("RateLimitLogger");
 
-export function rateLimitCreateAndUpdateEvents(): boolean {
+export function rateLimitCreateEvents(): boolean {
   const now = new Date();
   const maybeOperationCount5minString = localStorage.getItem(LocalStorageKeys.OperationCount5Min);
   const maybeLastCreateUpdateOperationTimestampString = localStorage.getItem(
@@ -23,12 +23,12 @@ export function rateLimitCreateAndUpdateEvents(): boolean {
         return true;
       }
     }
-    localStorage.setItem(LocalStorageKeys.OperationCount5Min, "0");
+    localStorage.setItem(LocalStorageKeys.OperationCount5Min, "1");
     localStorage.setItem(LocalStorageKeys.LastCreateUpdateOperationTimestamp, now.toUTCString());
     return true;
   }
   // allow edit as one is null
-  localStorage.setItem(LocalStorageKeys.OperationCount5Min, "0");
+  localStorage.setItem(LocalStorageKeys.OperationCount5Min, "1");
   localStorage.setItem(LocalStorageKeys.LastCreateUpdateOperationTimestamp, now.toUTCString());
   return true;
 }

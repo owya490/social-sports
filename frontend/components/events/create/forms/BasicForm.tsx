@@ -6,7 +6,9 @@ import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeServic
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
+import { Switch } from "@mantine/core";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,8 +22,10 @@ export type BasicData = {
   location: string;
   startDate: string;
   endDate: string;
+  registrationEndDate: string;
   startTime: string;
   endTime: string;
+  registrationEndTime: string;
   sport: string;
   price: number; // Price is stored in cents, e.g. 1567 will be $15.67
   capacity: number;
@@ -29,13 +33,17 @@ export type BasicData = {
   paymentsActive: boolean;
   lat: number;
   long: number;
+  stripeFeeToCustomer: boolean;
+  promotionalCodesEnabled: boolean;
 };
 
 type BasicInformationProps = BasicData & {
   user: UserData;
+  locationError: string;
   updateField: (fields: Partial<BasicData>) => void;
   setLoading: (value: boolean) => void;
   setHasError: (value: boolean) => void;
+  setLocationError: (value: string) => void;
 };
 
 export function BasicInformation({
@@ -43,22 +51,29 @@ export function BasicInformation({
   location,
   startDate,
   endDate,
+  registrationEndDate,
   startTime,
   endTime,
+  registrationEndTime,
   sport,
   price,
   capacity,
   isPrivate,
   paymentsActive,
   user,
+  locationError,
+  stripeFeeToCustomer,
+  promotionalCodesEnabled,
   updateField,
   setLoading,
   setHasError,
+  setLocationError,
 }: BasicInformationProps) {
   const router = useRouter();
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null); // Initialize locationError state
+  const [isAdditionalSettingsOpen, setIsAdditionalSettingsOpen] = useState(false);
+  const [customRegistrationDeadlineEnabled, setCustomRegistrationDeadlineEnabled] = useState(false);
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -68,12 +83,20 @@ export function BasicInformation({
       updateField({ isPrivate: true });
     }
   };
+
   const handleStartDateChange = (selectedDate: string) => {
     updateField({ startDate: selectedDate });
+    if (!customRegistrationDeadlineEnabled) {
+      handleRegistrationEndDateChange(selectedDate);
+    }
   };
 
   const handleEndDateChange = (selectedDate: string) => {
     updateField({ endDate: selectedDate });
+  };
+
+  const handleRegistrationEndDateChange = (selectedDate: string) => {
+    updateField({ registrationEndDate: selectedDate });
   };
 
   useEffect(() => {
@@ -82,35 +105,82 @@ export function BasicInformation({
 
   const handleStartTimeChange = (selectedTime: string) => {
     updateField({ startTime: selectedTime });
+    if (!customRegistrationDeadlineEnabled) {
+      handleRegistrationEndTimeChange(selectedTime);
+    }
   };
 
   const handleEndTimeChange = (selectedTime: string) => {
     updateField({ endTime: selectedTime });
   };
 
+  const handleCustomRegistrationDeadlineEnabled = (enabled: boolean) => {
+    if (!enabled) {
+      handleRegistrationEndDateChange(startDate);
+      handleRegistrationEndTimeChange(startTime);
+    }
+    setCustomRegistrationDeadlineEnabled(enabled);
+  };
+
+  const handleRegistrationEndTimeChange = (selectedTime: string) => {
+    updateField({ registrationEndTime: selectedTime });
+  };
+
+  const handleStripeFeesToCustomerChange = (value: string) => {
+    updateField({
+      stripeFeeToCustomer: value === "Yes",
+    });
+  };
+
+  const handlePromotionalCodesEnabledChange = (value: string) => {
+    updateField({
+      promotionalCodesEnabled: value === "Yes",
+    });
+  };
+
   useEffect(() => {
-    const currentDateTime = new Date();
-    const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
-    const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
+    const dateAdndTimeErrors = () => {
+      const currentDateTime = new Date();
+      const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
+      const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
+      const selectedRegistrationEndDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
 
-    if (currentDateTime > selectedStartDateTime) {
-      setDateWarning("Event start date and time is in the past!");
-    } else {
-      setDateWarning(null);
-    }
+      if (currentDateTime > selectedStartDateTime) {
+        setDateWarning("Event start date and time is in the past!");
+        return;
+      } else {
+        setDateWarning(null);
+      }
 
-    if (selectedEndDateTime < selectedStartDateTime) {
-      setTimeWarning("Event must end after it starts!");
-    } else {
-      setTimeWarning(null);
-    }
+      if (selectedEndDateTime < selectedStartDateTime) {
+        setTimeWarning("Event must end after it starts!");
+        return;
+      } else {
+        setTimeWarning(null);
+      }
 
-    if (currentDateTime > selectedStartDateTime || selectedEndDateTime < selectedStartDateTime) {
-      setHasError(true);
-    } else {
-      setHasError(false);
-    }
-  }, [startDate, startTime, endDate, endTime]);
+      if (currentDateTime > selectedRegistrationEndDateTime) {
+        setDateWarning("Event registration end date and time is in the past!");
+        return;
+      } else {
+        setDateWarning(null);
+      }
+
+      if (selectedRegistrationEndDateTime > selectedEndDateTime) {
+        setDateWarning("Event registration end date and time is after the event!");
+        return;
+      } else {
+        setDateWarning(null);
+      }
+
+      if (currentDateTime > selectedStartDateTime || selectedEndDateTime < selectedStartDateTime) {
+        setHasError(true);
+      } else {
+        setHasError(false);
+      }
+    };
+    dateAdndTimeErrors();
+  }, [startDate, startTime, endDate, endTime, registrationEndDate, registrationEndTime]);
 
   const [customAmount, setCustomAmount] = useState(centsToDollars(price)); // customAmount is for frontend display and is stored in a int with decimal places. Price is stored in cents.
 
@@ -166,13 +236,50 @@ export function BasicInformation({
           </div>
           {dateWarning && <div className="text-red-600 text-sm mt-2">{dateWarning}</div>}
           {timeWarning && <div className="text-red-600 text-sm mt-2">{timeWarning}</div>}
+          <div className="flex items-center flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
+            <div>
+              <Switch
+                color="teal"
+                label="Enable Custom Registration Deadline"
+                size="sm"
+                className="my-2"
+                checked={customRegistrationDeadlineEnabled}
+                onChange={(event) => {
+                  handleCustomRegistrationDeadlineEnabled(event.currentTarget.checked);
+                }}
+              />
+            </div>
+            {customRegistrationDeadlineEnabled && (
+              <>
+                <div className="basis-1/3">
+                  <CustomDateInput
+                    date={registrationEndDate}
+                    placeholder="Registration End Date"
+                    handleChange={handleRegistrationEndDateChange}
+                  />
+                </div>
+                <div className="basis-1/3">
+                  <CustomTimeInput
+                    value={registrationEndTime}
+                    placeholder="Registration End Time"
+                    handleChange={handleRegistrationEndTimeChange}
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div>
           <label className="text-black text-lg font-semibold">Where is it located?</label>
           <div className="mt-4">
-            <LocationAutocompleteForm location={location} updateField={updateField} />
-            {locationError && <p className="text-red-500">{locationError}</p>}
+            <LocationAutocompleteForm
+              setHasError={setHasError}
+              location={location}
+              updateField={updateField}
+              setLocationError={setLocationError}
+            />
+            {locationError !== "" && <div className="text-red-600 text-sm mt-2">{locationError}</div>}
           </div>
         </div>
         <div>
@@ -282,7 +389,7 @@ export function BasicInformation({
               If you are accepting payments, ensure your Stripe account is fully setup. Funds transfer will occur
               through Stripe.
             </p>
-            <div className="mt-4 w-1/2">
+            <div className="mt-4">
               <Select
                 size="md"
                 label="Accepting Payments"
@@ -320,6 +427,74 @@ export function BasicInformation({
             >
               Register
             </button>
+          </div>
+        )}
+        <div
+          className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1"
+          onClick={() => {
+            setIsAdditionalSettingsOpen(!isAdditionalSettingsOpen);
+          }}
+        >
+          <h2>Additional Settings</h2>
+          {isAdditionalSettingsOpen ? (
+            <ChevronUpIcon className="w-7 h-7 ml-auto" />
+          ) : (
+            <ChevronDownIcon className="w-7 h-7 ml-auto" />
+          )}
+        </div>
+        {isAdditionalSettingsOpen && (
+          <div>
+            {user.stripeAccountActive && (
+              <>
+                <div className="mb-12">
+                  <label className="text-black text-lg font-semibold">
+                    Do you want to pass Application Fees onto the Customer?
+                  </label>
+                  <p className="text-sm mb-5 mt-2">
+                    Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
+                    charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
+                  </p>
+                  <div className="mt-4">
+                    <Select
+                      size="md"
+                      label="Stripe Fee to Customer"
+                      value={stripeFeeToCustomer ? "Yes" : "No"}
+                      onChange={(e) => {
+                        const value = e || "Yes";
+                        handleStripeFeesToCustomerChange(value);
+                      }}
+                    >
+                      <Option value="Yes">Yes</Option>
+                      <Option value="No">No</Option>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-black text-lg font-semibold">
+                    Do you want to allow Promotional Codes for this Event?
+                  </label>
+                  <p className="text-sm mb-5 mt-2">
+                    Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for discounts at the
+                    time of checkout. To create a promotional code for your account, please visit your stripe dashboard.
+                  </p>
+                  <div className="mt-4">
+                    <Select
+                      size="md"
+                      label="Promotional Codes Enabled"
+                      value={promotionalCodesEnabled ? "Yes" : "No"}
+                      onChange={(e) => {
+                        const value = e || "Yes";
+                        handlePromotionalCodesEnabledChange(value);
+                      }}
+                    >
+                      <Option value="Yes">Yes</Option>
+                      <Option value="No">No</Option>
+                    </Select>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

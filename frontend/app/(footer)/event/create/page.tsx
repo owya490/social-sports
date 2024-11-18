@@ -13,13 +13,15 @@ import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
 import { uploadUserImage } from "@/services/src/imageService";
 import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
+import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 export type FormData = {
   startDate: string;
   endDate: string;
+  registrationEndDate: string;
   location: string;
   sport: string;
   price: number;
@@ -31,14 +33,19 @@ export type FormData = {
   isPrivate: boolean;
   startTime: string;
   endTime: string;
+  registrationEndTime: string;
   paymentsActive: boolean;
   lat: number;
   long: number;
+  stripeFeeToCustomer: boolean;
+  promotionalCodesEnabled: boolean;
+  paused: boolean;
 };
 
 const INITIAL_DATA: FormData = {
   startDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   endDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
+  registrationEndDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   location: "",
   sport: "volleyball",
   price: 1500, // $15 default price, set to 1500 as it is in cents
@@ -49,10 +56,14 @@ const INITIAL_DATA: FormData = {
   tags: [],
   isPrivate: false,
   startTime: "10:00",
-  endTime: "18:00",
+  endTime: "10:00",
+  registrationEndTime: "10:00",
   paymentsActive: false,
   lat: 0,
   long: 0,
+  stripeFeeToCustomer: false,
+  promotionalCodesEnabled: false,
+  paused: false,
 };
 
 export default function CreateEvent() {
@@ -62,6 +73,9 @@ export default function CreateEvent() {
 
   const [loading, setLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [hasAlert, setHasAlert] = useState(false);
+  const [AlertMessage, setAlertMessage] = useState("");
 
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
@@ -74,6 +88,8 @@ export default function CreateEvent() {
       user={user}
       setLoading={setLoading}
       setHasError={setHasError}
+      locationError={locationError}
+      setLocationError={setLocationError}
     />,
     <TagForm key="tag-form" {...data} updateField={updateFields} />,
     <DescriptionImageForm
@@ -101,9 +117,26 @@ export default function CreateEvent() {
   function submit(e: FormEvent) {
     e.preventDefault();
 
+    let formHasError = false;
+    let errorMessage = "";
+
+    if (isFirstStep) {
+      if (data.location === "") {
+        formHasError = true;
+        errorMessage = "Location is required.";
+      }
+    }
+
+    if (formHasError) {
+      setHasError(true);
+      setAlertMessage(errorMessage);
+      setHasAlert(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     if (!isLastStep) {
       next();
-
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -115,8 +148,14 @@ export default function CreateEvent() {
     } catch (e) {
       console.log(e);
     }
-    window.scrollTo({ top: 0, behavior: "smooth" }); // You can use 'auto' instead of 'smooth' for instant scrolling
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  useEffect(() => {
+    if (hasError) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [hasError]);
 
   async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
     setLoading(true);
@@ -163,7 +202,10 @@ export default function CreateEvent() {
       attendeesMetadata: {},
       accessCount: 0,
       organiserId: user.userId,
-      registrationDeadline: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
+      registrationDeadline: convertDateAndTimeStringToTimestamp(
+        formData.registrationEndDate,
+        formData.registrationEndTime
+      ),
       locationLatLng: {
         lat: formData.lat,
         lng: formData.long,
@@ -172,6 +214,9 @@ export default function CreateEvent() {
       paymentsActive: formData.paymentsActive,
       startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
+      stripeFeeToCustomer: formData.stripeFeeToCustomer,
+      promotionalCodesEnabled: formData.promotionalCodesEnabled,
+      paused: formData.paused,
     };
   }
 
@@ -182,7 +227,11 @@ export default function CreateEvent() {
     dateObject.setMinutes(parseInt(timeArr[1]));
     return Timestamp.fromDate(dateObject);
   }
-
+  const handleAlertClose = () => {
+    setHasError(false);
+    setHasAlert(false);
+    setAlertMessage("");
+  };
   return loading ? (
     <Loading />
   ) : (
@@ -197,7 +246,14 @@ export default function CreateEvent() {
             </div>
             <div className="absolute top-2 right-2">{/* {currentStep + 1} / {steps.length} */}</div>
             {step}
-
+            <Alert
+              open={hasAlert}
+              onClose={() => handleAlertClose()}
+              color="red"
+              className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+            >
+              {AlertMessage !== "" ? AlertMessage : "Error Submitting Form"}
+            </Alert>
             <div className="flex mt-8 w-11/12 lg:w-2/3 xl:w-full m-auto">
               {!isFirstStep && (
                 <InvertedHighlightButton type="button" className="px-7" onClick={back}>

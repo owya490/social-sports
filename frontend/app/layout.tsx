@@ -34,7 +34,7 @@ const aileron = localFont({
 // const inter = Inter({ subsets: ["latin"] }); old font, just replace aileron with inter to swap back
 
 export const metadata: Metadata = {
-  title: "SportsHub | Book your next social sports session",
+  title: "SportsHub | Book your next sports session",
   description:
     "SportsHub is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!",
   icons: {

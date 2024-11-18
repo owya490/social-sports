@@ -1,4 +1,5 @@
 import {
+  EmptyEventData,
   EventData,
   EventDataWithoutOrganiser,
   EventId,
@@ -43,7 +44,7 @@ import {
   processEventData,
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
-import { extractEventsMetadataFields, rateLimitCreateAndUpdateEvents } from "./eventsUtils/createEventsUtils";
+import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
 import {
   bustEventsLocalStorageCache,
   findEventDoc,
@@ -55,7 +56,7 @@ export const eventServiceLogger = new Logger("eventServiceLogger");
 
 //Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
-  if (!rateLimitCreateAndUpdateEvents()) {
+  if (!rateLimitCreateEvents()) {
     console.log("Rate Limited!!!");
     throw "Rate Limited";
   }
@@ -109,7 +110,11 @@ export async function createEventMetadata(batch: WriteBatch, eventId: EventId, d
   }
 }
 
-export async function getEventById(eventId: EventId, bypassCache: boolean = true): Promise<EventData> {
+export async function getEventById(
+  eventId: EventId,
+  bypassCache: boolean = true,
+  client: boolean = true
+): Promise<EventData> {
   eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
     const eventDoc = await findEventDoc(eventId);
@@ -117,15 +122,18 @@ export async function getEventById(eventId: EventId, bypassCache: boolean = true
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
     var organiser: UserData = EmptyUserData;
     try {
-      organiser = await getPublicUserById(eventWithoutOrganiser.organiserId, bypassCache);
+      organiser = await getPublicUserById(eventWithoutOrganiser.organiserId, bypassCache, client);
     } catch (error) {
       eventServiceLogger.error(`getEventById ${error}`);
       throw error;
     }
+
     const event: EventData = {
+      ...EmptyEventData, // initiate default values
       ...eventWithoutOrganiser,
       organiser: organiser,
     };
+
     event.eventId = eventId;
     return event;
   } catch (error) {
@@ -213,13 +221,9 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
 }
 
 export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
-  if (!rateLimitCreateAndUpdateEvents()) {
-    eventServiceLogger.info(`Rate Limited!, ${eventId}`);
-    throw "Rate Limited";
-  }
   eventServiceLogger.info(`updateEventByName ${eventId}`);
   try {
-    const eventDocRef = doc(db, "Events/Active/Public", eventId); // Get document reference by ID
+    const eventDocRef = await findEventDocRef(eventId); // Get document reference by ID
 
     // Check if document exists
     const eventDocSnapshot = await getDoc(eventDocRef);
@@ -346,9 +350,6 @@ export async function updateEventFromDocRef(
   updatedData: Partial<EventData>
 ): Promise<void> {
   try {
-    if (!rateLimitCreateAndUpdateEvents()) {
-      throw "Rate Limited";
-    }
     await updateDoc(eventRef, updatedData);
     eventServiceLogger.info("Event updated successfully.");
   } catch (error) {

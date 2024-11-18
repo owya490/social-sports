@@ -3,15 +3,18 @@
 ###############################
 
 import json
+import math
 import time
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 import stripe
 from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
+from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
 from lib.stripe.commons import ERROR_URL
@@ -37,6 +40,11 @@ class StripeCheckoutRequest:
     if not isinstance(self.successUrl, str):
       raise ValueError("Success Url must be provided as a string.")
 
+def calculate_stripe_fee(price: float) -> int:
+  # Stripe fee is 30c + 1.7% of total price as price passed in is in cents already
+  # can just do the calculation and return a whole integer
+  return int(math.ceil(30 + (price * 0.017)))
+
 
 @firestore.transactional
 def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger: Logger, event_id: str, quantity: int, is_private: bool, cancel_url: str, success_url: str):
@@ -52,10 +60,19 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
     return json.dumps({"url": ERROR_URL})
   
   event = maybe_event.to_dict()
+
+  # Check if event has not concluded or paused, otherwise error out
+  paused: bool = event.get("paused")
+  event_end_date: Timestamp = event.get("endDate").timestamp_pb()
+  event_registration_end_date: Timestamp = event.get("registrationDeadline").timestamp_pb()
+  event_end_date = event_end_date.ToDatetime(UTC)
+  event_registration_end_date = event_registration_end_date.ToDatetime(UTC)
+  if (datetime.now(UTC) > event_end_date or datetime.now(UTC) > event_registration_end_date or paused):
+    logger.warning(f"Trying to get checkout url for event that has already concluded, paused or is past its registration deadline. eventId={event_id} time={datetime.now(UTC)} registrationEndDate={event_registration_end_date} endDate={event_end_date} paused={paused}")
+    return json.dumps({"url": ERROR_URL})
   
   # 1. check for event is stripe enabled
   if (not event.get("paymentsActive")):
-    print("Payments not active")
     logger.error(f"Provided event {event_ref.path} does not have payments enabled. Returning status=500")
     return json.dumps({"url": cancel_url})
 
@@ -108,7 +125,28 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   transaction.update(event_ref, {"vacancy": vacancy - quantity })
   logger.info(f"Securing {quantity} tickets for event {event_ref.path} at ${price}. There are now {vacancy - quantity} tickets left.")
 
-  # 6. create checkout session with connected account and return link
+  # 6. check if stripe fee is passed to customer, if so, create shipping object with an additional respective fees
+  shipping_options = None
+  if(event.get("stripeFeeToCustomer") is True):
+    stripe_surcharge_fee = calculate_stripe_fee(price)
+    logger.info(f"Application fee calculated to be {stripe_surcharge_fee} for event {event_id} with price {price} with quantity {quantity}.")
+    shipping_options = [{
+        "shipping_rate_data": {
+          "display_name": "Stripe Card Surcharge Fees",
+          "fixed_amount": {
+            "amount": stripe_surcharge_fee,
+            "currency": "aud"
+          },
+          "type": "fixed_amount"
+        }
+      }]
+  
+  # 7. check if promotional codes is enabled for this event
+  promotional_codes_enabled = False
+  if (event.get("promotionalCodesEnabled") is True):
+    promotional_codes_enabled = True
+
+  # 8. create checkout session with connected account and return link
   checkout = stripe.checkout.Session.create(
     mode="payment",
     line_items=[{
@@ -142,12 +180,14 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
       },
     ],
     # payment_intent_data={"application_fee_amount": 123},
+    shipping_options=shipping_options,
     success_url=success_url, # TODO need to update to a static success page
     cancel_url=cancel_url,
     stripe_account= organiser_stripe_account_id,
-    expires_at=int(time.time() + 1800) # Checkout session expires in 30 minutes (stripe minimum)
+    expires_at=int(time.time() + 1800), # Checkout session expires in 30 minutes (stripe minimum)
+    allow_promotion_codes=promotional_codes_enabled
   )
-
+  
   logger.info(f"Creating checkout session {checkout.id} for event {event_ref.path}, linked to {organiser_ref.path} and their stripe account {organiser_stripe_account_id}. Secured {quantity} tickets at ${price}.")
   return json.dumps({"url": checkout.url})
 

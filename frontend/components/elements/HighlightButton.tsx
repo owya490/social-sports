@@ -64,7 +64,11 @@ export const BlackHighlightButton = (props: ButtonProps) => {
   return (
     <button
       className={
+<<<<<<< HEAD
         `px-4 py-1.5 rounded-lg font-semibold whitespace-nowrap  bg-highlight-black text-white hover:bg-white hover:text-highlight-black border-2 border-highlight-black transition-colors duration-300 transform ` +
+=======
+        `px-4 py-1.5 rounded-lg font-semibold whitespace-nowrap bg-white text-black hover:bg-black hover:text-white border-2 border-black transition-colors duration-300 transform ` +
+>>>>>>> 3b3633ed163a2b7b1d3ca7754876766479271f0f
         props.className
       }
       onClick={props.onClick}

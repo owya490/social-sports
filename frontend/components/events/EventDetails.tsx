@@ -28,12 +28,14 @@ export function EventDetails(props: EventDetailsProps) {
             <MobileEventPayment
               startDate={eventData.startDate}
               endDate={eventData.endDate}
+              registrationEndDate={eventData.registrationDeadline}
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
               isPaymentsActive={eventData.paymentsActive}
               eventId={eventData.eventId}
               isPrivate={eventData.isPrivate}
+              paused={eventData.paused}
               setLoading={setLoading}
             />
           </div>
@@ -53,12 +55,14 @@ export function EventDetails(props: EventDetailsProps) {
             <EventPayment
               startDate={eventData.startDate}
               endDate={eventData.endDate}
+              registrationEndDate={eventData.registrationDeadline}
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
               isPaymentsActive={eventData.paymentsActive}
               eventId={eventData.eventId}
               isPrivate={eventData.isPrivate}
+              paused={eventData.paused}
               setLoading={setLoading}
             />
           </div>

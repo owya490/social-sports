@@ -6,6 +6,7 @@ import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
 import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
 import EventDrilldownManageAttendeesPage from "@/components/organiser/EventDrilldownManageAttendeesPage";
+import EventDrilldownSettingsPage from "@/components/organiser/EventDrilldownSettingsPage";
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
@@ -43,6 +44,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
   const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
+  const [eventPaused, setEventPaused] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -62,6 +64,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventImage(event.image);
         setEventAccessCount(event.accessCount);
         setEventCapacity(event.capacity);
+        setEventPaused(event.paused);
       })
       .finally(async () => {
         await sleep(500);
@@ -158,6 +161,11 @@ export default function EventPage({ params }: EventPageProps) {
                 eventName={eventName}
                 eventStartDate={eventStartDate}
                 router={router}
+<<<<<<< HEAD
+=======
+                paused={eventPaused}
+                setPaused={setEventPaused}
+>>>>>>> 3b3633ed163a2b7b1d3ca7754876766479271f0f
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

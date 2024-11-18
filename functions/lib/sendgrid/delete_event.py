@@ -57,12 +57,13 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
     event_metadata_data = maybe_event_metadata.to_dict()
     event_delete_data = maybe_delete_event_data.to_dict()
 
-    event_name = event_delete_data.get("eventName")
-    event_price = event_delete_data.get("eventPrice")
-    event_status = event_delete_data.get("eventStatusAtDeletion")
+    event_name = event_delete_data.get("name")
+    event_price = event_delete_data.get("price")
+    event_status = event_delete_data.get("isActive")
     organiser_email = event_delete_data.get("userEmail")
     organiser_name = event_delete_data.get("userName")  
-    event_date = event_delete_data.get("eventDate") 
+    event_date = event_delete_data.get("startDate") 
+    date_string = event_date.strftime("%Y-%m-%d %H")
     purchaser_map = event_metadata_data.get("purchaserMap", {})
 
     if event_name is None or event_price is None or organiser_email is None or event_status is None:
@@ -101,7 +102,7 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
         organiser_message.dynamic_template_data={
             "organiser_name": organiser_name,
             "event_name": event_name,
-            "event_date": event_date,
+            "event_date": date_string,
             "attendees": attendees
         }
         sg.send(organiser_message)
