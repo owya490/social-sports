@@ -1,12 +1,11 @@
 "use client";
 
 import ShareModal from "@/components/events/ShareModal";
-import EventDrilldownSettingsPage from "@/components/organiser/EventDrillDownSettingsPage";
+import EventDrilldownSettingsPage from "@/components/organiser/EventDrilldownSettingsPage";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
 import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
 import EventDrilldownManageAttendeesPage from "@/components/organiser/EventDrilldownManageAttendeesPage";
-import EventDrilldownSettingsPage from "@/components/organiser/EventDrilldownSettingsPage";
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
@@ -161,11 +160,8 @@ export default function EventPage({ params }: EventPageProps) {
                 eventName={eventName}
                 eventStartDate={eventStartDate}
                 router={router}
-<<<<<<< HEAD
-=======
                 paused={eventPaused}
                 setPaused={setEventPaused}
->>>>>>> 3b3633ed163a2b7b1d3ca7754876766479271f0f
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
