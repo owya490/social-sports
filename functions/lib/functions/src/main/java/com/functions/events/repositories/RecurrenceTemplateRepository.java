@@ -140,7 +140,6 @@ public class RecurrenceTemplateRepository {
                             Map.Entry::getKey,
                             Map.Entry::getValue
                     ));
-
         } catch (InterruptedException | ExecutionException e) {
             //Noop
             logger.error("Unable to get all active recurrence templates", e);

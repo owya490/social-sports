@@ -1,15 +1,15 @@
 package com.functions.events.models;
 
 import com.google.cloud.Timestamp;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Value;
+import lombok.*;
 
 import java.util.List;
 import java.util.Map;
 
 @Value
 @Builder(toBuilder=true)
+@NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class RecurrenceData {
 	RecurrenceData.Frequency frequency;
 	Integer recurrenceAmount;
@@ -28,6 +28,15 @@ public class RecurrenceData {
 				.recurrenceAmount(newRecurrenceData.getRecurrenceAmount())
 				.createDaysBefore(newRecurrenceData.getCreateDaysBefore())
 				.recurrenceEnabled(newRecurrenceData.getRecurrenceEnabled());
+	}
+
+	public NewRecurrenceData extractNewRecurrenceData() {
+		return NewRecurrenceData.builder()
+				.frequency(this.frequency)
+				.recurrenceAmount(this.recurrenceAmount)
+				.createDaysBefore(this.createDaysBefore)
+				.recurrenceEnabled(this.recurrenceEnabled)
+				.build();
 	}
 
 	@Getter

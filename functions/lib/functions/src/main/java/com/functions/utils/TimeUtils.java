@@ -9,12 +9,12 @@ import java.time.format.DateTimeFormatter;
 public class TimeUtils {
 	public static LocalDateTime convertTimestampToLocalDateTime(Timestamp timestamp) {
 		Instant instant = Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos());
-		return instant.atZone(ZoneId.of("Australia/Sydney")).toLocalDateTime();
+		return instant.atZone(ZoneOffset.UTC).toLocalDateTime();
 	}
 
 	public static Timestamp convertLocalDateTimeToTimestamp(LocalDateTime localDateTime) {
-        // Convert LocalDateTime to Instant (UTC timezone)
-        Instant instant = localDateTime.toInstant(ZoneOffset.of("Australia/Sydney"));
+		ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneOffset.UTC);
+		Instant instant = zonedDateTime.toInstant();
         
         // Convert Instant to com.google.cloud.Timestamp
 		return Timestamp.ofTimeSecondsAndNanos(instant.getEpochSecond(), instant.getNano());

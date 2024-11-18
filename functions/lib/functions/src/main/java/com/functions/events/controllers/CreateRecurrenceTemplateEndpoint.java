@@ -19,13 +19,13 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
         response.appendHeader("Access-Control-Allow-Origin", "*");
-        response.appendHeader("Access-Control-Allow-Methods", "GET");
+        response.appendHeader("Access-Control-Allow-Methods", "POST");
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
 
-        if (!"GET".equalsIgnoreCase(request.getMethod())) {
+        if (!"POST".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
-            response.appendHeader("Allow", "GET"); // Inform client that only GET is allowed
-            response.getWriter().write("This function only supports GET requests.");
+            response.appendHeader("Allow", "POST"); // Inform client that only GET is allowed
+            response.getWriter().write("This function only supports POST requests.");
             return;
         }
 
@@ -38,7 +38,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
             return;
         }
 
-        Optional<String> maybeRecurrenceTemplateId = RecurringEventsService.createRecurrenceTemplate(data.getEventData(), data.getRecurrenceData());
+        Optional<String> maybeRecurrenceTemplateId = RecurringEventsService.createRecurrenceTemplate(data.eventData(), data.recurrenceData());
 
 
         if (maybeRecurrenceTemplateId.isPresent()) {

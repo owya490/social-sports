@@ -1,14 +1,21 @@
 package com.functions.events.models;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.functions.utils.JavaUtils;
+import com.google.cloud.Timestamp;
 import lombok.Data;
 
-import com.google.cloud.Timestamp;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public abstract class AbstractEventData {
+	@JsonSerialize(using = JavaUtils.TimestampSerializer.class)
+	@JsonDeserialize(using = JavaUtils.TimestampDeserializer.class)
 	private Timestamp startDate;
+	@JsonSerialize(using = JavaUtils.TimestampSerializer.class)
+	@JsonDeserialize(using = JavaUtils.TimestampDeserializer.class)
 	private Timestamp endDate;
 	private String location;
 	private LocationLatLng locationLatLng;
@@ -16,6 +23,8 @@ public abstract class AbstractEventData {
 	private Integer vacancy;
 	private Double price;
 	private String organiserId;
+	@JsonSerialize(using = JavaUtils.TimestampSerializer.class)
+	@JsonDeserialize(using = JavaUtils.TimestampDeserializer.class)
 	private Timestamp registrationDeadline;
 	private String name;
 	private String description;

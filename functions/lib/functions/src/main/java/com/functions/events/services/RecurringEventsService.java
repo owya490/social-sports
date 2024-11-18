@@ -7,6 +7,7 @@ import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,7 @@ public class RecurringEventsService {
         // Place content in the firestore database
         try {
             String recurrenceTemplateId = RecurrenceTemplateRepository.createRecurrenceTemplate(newEventData.getIsActive(), newEventData.getIsPrivate(), recurrenceTemplate);
+            // TODO update users recurrence template list
             logger.info("Successfully created new Recurrence Template {}", recurrenceTemplateId);
             return Optional.of(recurrenceTemplateId);
         } catch (ExecutionException | InterruptedException e) {
@@ -43,9 +45,21 @@ public class RecurringEventsService {
     public static Optional<String> updateRecurrenceTemplate(String recurrenceTemplateId, NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
         // Get the current Recurrence Template
         Optional<RecurrenceTemplate> maybeCurrentRecurrenceTemplate = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId);
-        Map<String, String> pastRecurrences = maybeCurrentRecurrenceTemplate.map(
-                recurrenceTemplate -> recurrenceTemplate.getRecurrenceData().getPastRecurrences())
-                .orElse(Map.of());
+
+        if (maybeCurrentRecurrenceTemplate.isEmpty()) {
+            logger.warn("Updating recurrence template that does not exist {}", recurrenceTemplateId);
+            return Optional.empty();
+        }
+        RecurrenceTemplate currentRecurrenceTemplate = maybeCurrentRecurrenceTemplate.get();
+        logger.info("Recurrence template found {} {}", recurrenceTemplateId, currentRecurrenceTemplate);
+        Map<String, String> pastRecurrences = currentRecurrenceTemplate.getRecurrenceData().getPastRecurrences();
+
+        if (newEventData == null) {
+            newEventData = currentRecurrenceTemplate.getEventData();
+        }
+        if (newRecurrenceData == null) {
+            newRecurrenceData = currentRecurrenceTemplate.getRecurrenceData().extractNewRecurrenceData();
+        }
 
         // Calculate all future recurrence Dates
         RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate(), pastRecurrences);
@@ -77,7 +91,9 @@ public class RecurringEventsService {
                 .build();
     }
 
-    private static List<Timestamp> calculateAllRecurrenceDates(Timestamp startDate, RecurrenceData.Frequency frequency, Integer recurrenceAmount) {
+    @VisibleForTesting
+    public static List<Timestamp> calculateAllRecurrenceDates(Timestamp startDate, RecurrenceData.Frequency frequency, Integer recurrenceAmount) {
+        logger.info("Calculating all recurrence dates from {} with a frequency of {} for {} times", startDate, frequency, recurrenceAmount);
         switch (frequency) {
             case WEEKLY:
             case FORTNIGHTLY:

@@ -25,6 +25,7 @@ public class RecurringEventsCronService {
 
     public static void createEventsFromRecurrenceTemplates(LocalDate today) throws Exception {
         Map<String, RecurrenceTemplate> activeRecurrenceTemplates = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplates();
+        logger.info("All Active Recurrence Templates {}", activeRecurrenceTemplates);
         List<String> moveToInactiveRecurringEvents = new ArrayList<String>();
 
         for (Map.Entry<String, RecurrenceTemplate> recurrenceTemplateAndId : activeRecurrenceTemplates.entrySet()) {
@@ -65,6 +66,7 @@ public class RecurringEventsCronService {
                     }
                 }
                 RecurrenceData newRecurrenceData = recurrenceData.toBuilder().pastRecurrences(pastRecurrences).build();
+                logger.info("New Recurrence Data {}", newRecurrenceData.getPastRecurrences());
                 RecurrenceTemplate newRecurrenceTemplate = recurrenceTemplate.toBuilder().recurrenceData(newRecurrenceData).build();
 
                 RecurrenceTemplateRepository.updateRecurrenceTemplate(recurrenceTemplateId, newRecurrenceTemplate, transaction);
