@@ -1,6 +1,5 @@
 package com.functions.users.models;
 
-import com.functions.users.models.AbstractUserData;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

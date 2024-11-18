@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,12 +49,7 @@ public class RecurringEventsCronService {
                     String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
                     LocalDate eventCreationDate = TimeUtils.convertTimestampToLocalDateTime(recurrenceTimestamp).toLocalDate()
                             .minusDays(recurrenceData.getCreateDaysBefore());
-                    if (!pastRecurrences.containsKey(recurrenceTimestampString)
-                            && (today.isAfter(eventCreationDate)
-                            || today.equals(eventCreationDate))
-                            && (today.isBefore(TimeUtils.convertTimestampToLocalDateTime(recurrenceTimestamp).toLocalDate())
-                            || today.isEqual(TimeUtils.convertTimestampToLocalDateTime(recurrenceTimestamp).toLocalDate()))) {
-                        isStillActiveRecurrenceFlag = true;
+                    if (!pastRecurrences.containsKey(recurrenceTimestampString) && today.equals(eventCreationDate)) {
                         NewEventData newEventDataDeepCopy = JavaUtils.deepCopy(newEventData, NewEventData.class);
                         long eventLengthMillis = newEventDataDeepCopy.getEndDate().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
                         newEventDataDeepCopy.setStartDate(recurrenceTimestamp);
@@ -63,6 +59,14 @@ public class RecurringEventsCronService {
                         newEventDataDeepCopy.setRegistrationDeadline(recurrenceTimestamp);
                         String newEventId = createEvent(newEventDataDeepCopy, transaction);
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
+                    }
+
+                    if (recurrenceData.getAllRecurrences().size() > 0) {
+                        Timestamp latestTimestamp = Collections.max(recurrenceData.getAllRecurrences(), Timestamp::compareTo);
+                        LocalDate finalEventCreationDate = TimeUtils.convertTimestampToLocalDateTime(latestTimestamp).toLocalDate().minusDays(recurrenceData.getCreateDaysBefore());
+                        if (today.isBefore(finalEventCreationDate)) {
+                            isStillActiveRecurrenceFlag = true;
+                        }
                     }
                 }
                 RecurrenceData newRecurrenceData = recurrenceData.toBuilder().pastRecurrences(pastRecurrences).build();

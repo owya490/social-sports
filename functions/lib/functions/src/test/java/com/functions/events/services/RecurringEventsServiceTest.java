@@ -24,7 +24,6 @@ public class RecurringEventsServiceTest {
     public void testDeepCopy() {
         NewEventData eventData = new NewEventData();
         eventData.setLocation("owen");
-        eventData.setOwen("yes");
         eventData.setStartDate(Timestamp.of(Date.from(Instant.now())));
 
         System.out.println(eventData);
