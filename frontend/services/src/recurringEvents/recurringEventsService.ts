@@ -108,6 +108,7 @@ export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceT
   }
   const recurrenceData = updatedData.recurrenceData || null;
   const content = {
+    recurrenceTemplateId: recurrenceTemplateId,
     eventData: eventData,
     recurrenceData: recurrenceData,
   };

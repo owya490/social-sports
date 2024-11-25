@@ -32,6 +32,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [eventData, setEventData] = useState<NewEventData>();
   const [loading, setLoading] = useState<boolean>(true);
+  const [updatingRecurrenceData, setUpdatingRecurrenceData] = useState<boolean>(false);
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
   const [eventEndDate, setEventEndDate] = useState<Timestamp>(Timestamp.now());
@@ -92,7 +93,9 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   };
 
   const submitNewRecurrenceData = async () => {
+    setUpdatingRecurrenceData(true);
     await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
+    setUpdatingRecurrenceData(false);
   };
 
   return (
@@ -108,7 +111,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
       <div className="sm:p-10">
         <RecurringTemplateDrilldownSettings
           loading={loading}
-          recurrenceTemplateId={recurrenceTemplateId}
+          updating={updatingRecurrenceData}
           newRecurrenceData={newRecurrenceData}
           setNewRecurrenceData={setNewRecurrenceData}
           startDate={eventStartDate}

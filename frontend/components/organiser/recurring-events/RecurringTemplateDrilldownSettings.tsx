@@ -1,16 +1,16 @@
 import { MAX_RECURRENCE_AMOUNT } from "@/components/events/create/forms/RecurringEventsForm";
 import LoadingSkeletonBig from "@/components/loading/LoadingSkeletonBig";
-import { Frequency, NewRecurrenceFormData, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
+import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
 import { Button, Radio, Switch } from "@mantine/core";
-import { Option, Select } from "@material-tailwind/react";
+import { Option, Select, Spinner } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { RecurringEventsPreviewTable } from "../../events/create/forms/RecurringEventsPreviewTable";
 interface RecurringTemplateDrilldownSettingsProps {
   loading: boolean;
-  recurrenceTemplateId: RecurrenceTemplateId;
+  updating: boolean;
   startDate: Timestamp;
   newRecurrenceData: NewRecurrenceFormData;
   setNewRecurrenceData: (data: NewRecurrenceFormData) => void;
@@ -19,7 +19,7 @@ interface RecurringTemplateDrilldownSettingsProps {
 
 const RecurringTemplateDrilldownSettings = ({
   loading,
-  recurrenceTemplateId,
+  updating,
   startDate,
   newRecurrenceData,
   setNewRecurrenceData,
@@ -162,7 +162,7 @@ const RecurringTemplateDrilldownSettings = ({
                   <RecurringEventsPreviewTable recurrenceDates={recurrenceDates} />
                   <div className="flex w-full mt-6">
                     <Button variant="light" color="dark" className="ml-auto" onClick={submitNewRecurrenceData}>
-                      Save
+                      {updating ? <Spinner /> : <>Save</>}
                     </Button>
                   </div>
                 </div>
