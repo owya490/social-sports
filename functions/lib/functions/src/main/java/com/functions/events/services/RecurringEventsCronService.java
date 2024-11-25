@@ -61,7 +61,7 @@ public class RecurringEventsCronService {
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
                     }
 
-                    if (recurrenceData.getAllRecurrences().size() > 0) {
+                    if (!recurrenceData.getAllRecurrences().isEmpty()) {
                         Timestamp latestTimestamp = Collections.max(recurrenceData.getAllRecurrences(), Timestamp::compareTo);
                         LocalDate finalEventCreationDate = TimeUtils.convertTimestampToLocalDateTime(latestTimestamp).toLocalDate().minusDays(recurrenceData.getCreateDaysBefore());
                         if (today.isBefore(finalEventCreationDate)) {
