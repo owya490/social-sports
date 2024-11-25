@@ -5,6 +5,8 @@ import com.functions.events.models.NewRecurrenceData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.users.models.PrivateUserData;
+import com.functions.users.services.Users;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import com.google.common.annotations.VisibleForTesting;
@@ -35,8 +37,14 @@ public class RecurringEventsService {
         // Place content in the firestore database
         try {
             String recurrenceTemplateId = RecurrenceTemplateRepository.createRecurrenceTemplate(newEventData.getIsActive(), newEventData.getIsPrivate(), recurrenceTemplate);
+            // Update User Data to add recurrence Template
+            PrivateUserData privateUserData = Users.getPrivateUserDataById(newEventData.getOrganiserId());
+            List<String> recurrenceTemplates = privateUserData.getRecurrenceTemplates();
+            recurrenceTemplates.add(recurrenceTemplateId);
+            privateUserData.setRecurrenceTemplates(recurrenceTemplates);
+            Users.updatePrivateUserData(newEventData.getOrganiserId(), privateUserData);
+            // Create the first event iteration
             String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId).stream().findFirst().orElseThrow(() -> new Exception(""));
-            // TODO update users recurrence template list
             logger.info("Successfully created new Recurrence Template {}", recurrenceTemplateId);
             return Optional.of(Map.entry(recurrenceTemplateId, eventId));
         } catch (Exception e) {

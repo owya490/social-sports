@@ -19,6 +19,7 @@ public abstract class AbstractUserData {
 	private String stripeAccount;
 	private Boolean stripeAccountActive;
 	private List<String> organiserEvents;
+	private List<String> recurrenceTemplates;
 	private Boolean isVerifiedOrganiser;
 
 	@Data

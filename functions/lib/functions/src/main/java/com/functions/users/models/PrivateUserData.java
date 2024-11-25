@@ -1,11 +1,10 @@
 package com.functions.users.models;
 
-import java.util.List;
-
 import com.functions.users.models.AbstractUserData.ActiveBooking;
 import com.functions.users.models.AbstractUserData.ContactInformation;
-
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class PrivateUserData {
@@ -15,4 +14,5 @@ public class PrivateUserData {
 	private String stripeAccount;
 	private Boolean stripeAccountActive;
 	private List<String> organiserEvents;
+	private List<String> recurrenceTemplates;
 }
