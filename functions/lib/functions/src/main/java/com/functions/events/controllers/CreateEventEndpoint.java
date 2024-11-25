@@ -44,6 +44,7 @@ public class CreateEventEndpoint implements HttpFunction {
             data = JavaUtils.objectMapper.readValue(request.getReader(), NewEventData.class);
         } catch (Exception e) {
             response.setStatusCode(400);
+            logger.error("Could not parse input", e);
             response.getWriter().write("Invalid request data: " + e);
             return;
         }

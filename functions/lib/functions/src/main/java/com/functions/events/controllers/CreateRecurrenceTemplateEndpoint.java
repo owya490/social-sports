@@ -40,6 +40,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
             data = JavaUtils.objectMapper.readValue(request.getReader(), CreateRecurrenceTemplateRequest.class);
         } catch (Exception e) {
             response.setStatusCode(400);
+            logger.error("Could not parse input", e);
             response.getWriter().write("Invalid request data: " + e);
             return;
         }

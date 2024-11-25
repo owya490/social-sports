@@ -41,6 +41,7 @@ public abstract class AbstractEventData {
 	private Boolean paymentsActive;
 	private Boolean stripeFeeToCustomer; // Optional field
 	private Boolean promotionalCodesEnabled; // Optional field
+	private Boolean paused;
 
 	@Data
 	public static class LocationLatLng {
