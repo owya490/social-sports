@@ -11,6 +11,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.stream.IntStream;
 public class RecurringEventsService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsService.class);
 
+    // Returns Map.Entry<RecurrenceTemplateId, EventId>
     public static Optional<Map.Entry<String, String>> createRecurrenceTemplate(NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
         // Calculate all future recurrence Dates
         RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate());
@@ -33,11 +35,11 @@ public class RecurringEventsService {
         // Place content in the firestore database
         try {
             String recurrenceTemplateId = RecurrenceTemplateRepository.createRecurrenceTemplate(newEventData.getIsActive(), newEventData.getIsPrivate(), recurrenceTemplate);
-
+            String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId).stream().findFirst().orElseThrow(() -> new Exception(""));
             // TODO update users recurrence template list
             logger.info("Successfully created new Recurrence Template {}", recurrenceTemplateId);
-            return Optional.of(recurrenceTemplateId);
-        } catch (ExecutionException | InterruptedException e) {
+            return Optional.of(Map.entry(recurrenceTemplateId, eventId));
+        } catch (Exception e) {
             logger.error("Error when creating new Recurrence Template", e);
             return Optional.empty();
         }

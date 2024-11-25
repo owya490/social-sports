@@ -33,7 +33,7 @@ public class RecurringEventsCronService {
         if (targetRecurrenceTemplateId == null) {
             activeRecurrenceTemplates = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplates();
         } else {
-            activeRecurrenceTemplates = Map.of(targetRecurrenceTemplateId, RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId).orElseThrow(() -> new Exception("")));
+            activeRecurrenceTemplates = Map.of(targetRecurrenceTemplateId, RecurrenceTemplateRepository.getRecurrenceTemplate(targetRecurrenceTemplateId).orElseThrow(() -> new Exception("")));
         }
 
         logger.info("All Active Recurrence Templates {}", activeRecurrenceTemplates);

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static com.functions.events.services.RecurringEventsCronService.createEventsFromRecurrenceTemplates;
 
@@ -15,7 +16,7 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
-        response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
+//        response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
         response.appendHeader("Access-Control-Allow-Origin", "*");
         response.appendHeader("Access-Control-Allow-Methods", "GET");
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -28,8 +29,8 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
         }
 
         LocalDate today = LocalDate.now();
-        createEventsFromRecurrenceTemplates(today);
+        List<String> createdEvents = createEventsFromRecurrenceTemplates(today);
 
-        response.getWriter().write("Recurring events processed for: " + today);
+        response.getWriter().write("Recurring events processed for: " + today + "Created events: " + createdEvents);
     }
 }
