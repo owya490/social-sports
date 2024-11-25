@@ -27,6 +27,11 @@ public class CreateEventEndpoint implements HttpFunction {
         // 	return;
         // }
 
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatusCode(204); // No Content
+            return;
+        }
+
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");

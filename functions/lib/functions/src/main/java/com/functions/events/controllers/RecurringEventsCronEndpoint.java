@@ -18,8 +18,13 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
     public void service(HttpRequest request, HttpResponse response) throws Exception {
 //        response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
         response.appendHeader("Access-Control-Allow-Origin", "*");
-        response.appendHeader("Access-Control-Allow-Methods", "GET");
+        response.appendHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatusCode(204); // No Content
+            return;
+        }
 
         if (!"GET".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
