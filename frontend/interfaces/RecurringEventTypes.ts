@@ -1,5 +1,5 @@
 import { Timestamp } from "firebase/firestore";
-import { EventId, NewEventData } from "./EventTypes";
+import { EmptyEventData, EventId, NewEventData } from "./EventTypes";
 
 export type RecurrenceTemplateId = string;
 
@@ -55,4 +55,14 @@ export const DEFAULT_RECURRENCE_FORM_DATA: NewRecurrenceFormData = {
   recurrenceAmount: 1,
   createDaysBefore: 1,
   recurrenceEnabled: false,
+};
+
+export const EMPTY_RECURRENCE_TEMPLATE: RecurrenceTemplate = {
+  recurrenceTemplateId: "",
+  eventData: EmptyEventData,
+  recurrenceData: {
+    ...DEFAULT_RECURRENCE_FORM_DATA,
+    allRecurrences: [],
+    pastRecurrences: {},
+  },
 };

@@ -22,6 +22,7 @@ interface AbstractUserData {
   stripeAccount?: string;
   stripeAccountActive?: boolean;
   organiserEvents?: [string];
+  recurringTemplates?: [string];
   isVerifiedOrganiser?: boolean;
 }
 

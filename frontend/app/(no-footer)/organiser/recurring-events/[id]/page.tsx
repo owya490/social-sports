@@ -14,7 +14,9 @@ import { EmptyUserData } from "@/interfaces/UserTypes";
 import {
   getRecurrenceTemplate,
   updateRecurrenceTemplateEventData,
+  updateRecurrenceTemplateRecurrenceData,
 } from "@/services/src/recurringEvents/recurringEventsService";
+import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -61,7 +63,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventImage(recurrenceTemplate.eventData.image);
         setEventAccessCount(recurrenceTemplate.eventData.accessCount);
         setEventCapacity(recurrenceTemplate.eventData.capacity);
-        setNewRecurrenceData(recurrenceTemplate.recurrenceData);
+        setNewRecurrenceData(extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData));
       })
       .finally(async () => {
         await sleep(500);
@@ -89,8 +91,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
     await updateRecurrenceTemplateEventData(recurrenceTemplateId, newEventData);
   };
 
-  const submitNewRecurrenceData = () => {
-    // TODO need to create java function to update recurrence settings and calculate future recurrences
+  const submitNewRecurrenceData = async () => {
+    await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
   };
 
   return (
@@ -106,6 +108,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
       <div className="sm:p-10">
         <RecurringTemplateDrilldownSettings
           loading={loading}
+          recurrenceTemplateId={recurrenceTemplateId}
           newRecurrenceData={newRecurrenceData}
           setNewRecurrenceData={setNewRecurrenceData}
           startDate={eventStartDate}

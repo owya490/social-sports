@@ -2,22 +2,23 @@ import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import {
   Frequency,
   NewRecurrenceFormData,
-  RecurrenceData,
   RecurrenceTemplate,
   RecurrenceTemplateId,
 } from "@/interfaces/RecurringEventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { Timestamp, doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
-import { FIREBASE_FUNCTIONS_CREATE_RECURRENCE_TEMPLATE, getFirebaseFunctionByName } from "../firebaseFunctionsService";
+import { Timestamp } from "firebase/firestore";
 import { getPrivateUserById } from "../users/usersService";
-import { CollectionPaths } from "./recurringEventsConstants";
+import { findRecurrenceTemplateDoc } from "./recurringEventsUtils";
 
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
 interface CreateRecurrenceTemplateResponse {
   eventId: string;
+  recurrenceTemplateId: string;
+}
+
+interface UpdateRecurrenceTemplateResponse {
   recurrenceTemplateId: string;
 }
 
@@ -27,15 +28,30 @@ export async function createRecurrenceTemplate(
 ): Promise<[EventId, RecurrenceTemplateId]> {
   recurringEventsServiceLogger.info("createRecurrenceTemplate");
   const content = {
-    eventData: eventData,
+    eventData: {
+      ...eventData,
+      startDate: eventData.startDate.toDate(),
+      endDate: eventData.endDate.toDate(),
+      registrationDeadline: eventData.registrationDeadline.toDate(),
+    },
     recurrenceData: recurrenceData,
   };
-  // TODO: call createRecurrenceTemplateAPI
-  const createRecurrenceTemplateFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_RECURRENCE_TEMPLATE);
-  return createRecurrenceTemplateFunction(content).then((result) => {
-    const data = JSON.parse(result.data as string) as CreateRecurrenceTemplateResponse;
-    return [data.eventId, data.recurrenceTemplateId];
-  });
+
+  console.log(JSON.stringify(content));
+
+  const rawResponse = await fetch(
+    "https://australia-southeast1-socialsports-44162.cloudfunctions.net/createRecurrenceTemplate",
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(content),
+    }
+  );
+  const response = (await rawResponse.json()) as CreateRecurrenceTemplateResponse;
+  return [response.eventId, response.recurrenceTemplateId];
 }
 
 export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<RecurrenceTemplate[]> {
@@ -45,7 +61,8 @@ export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<R
 
     // TODO add recurrence templates
     // const organiserEvents = privateDoc.organiserEvents || [];
-    const organiserEvents = ["VKUNc06rWB7fQdn05jG1"];
+    console.log(privateDoc);
+    const organiserEvents = privateDoc.recurringTemplates || [];
     const recurrenceTemplateList: RecurrenceTemplate[] = [];
     for (const recurrenceTemplateId of organiserEvents) {
       try {
@@ -66,17 +83,8 @@ export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<R
 export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId): Promise<RecurrenceTemplate> {
   recurringEventsServiceLogger.info(`Getting Recurrence Template by Id, id=${recurrenceTemplateId}`);
   try {
-    const recurrenceTemplateDocRef = doc(
-      db,
-      CollectionPaths.RecurrenceTemplates,
-      "Active",
-      "Private",
-      recurrenceTemplateId
-    );
-    const recurrenceTemplateDoc = await getDoc(recurrenceTemplateDocRef);
-    console.log(`data ${recurrenceTemplateDoc.data()}`);
+    const recurrenceTemplateDoc = await findRecurrenceTemplateDoc(recurrenceTemplateId);
     const recurrenceTemplate = { ...recurrenceTemplateDoc.data(), recurrenceTemplateId } as RecurrenceTemplate;
-    console.log(recurrenceTemplate);
     return recurrenceTemplate;
   } catch (error) {
     recurringEventsServiceLogger.error(
@@ -86,34 +94,39 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
   }
 }
 
-export async function updateRecurrenceTemplate(
-  recurrenceTemplateId: RecurrenceTemplateId,
-  updatedData:
-    | Partial<RecurrenceTemplate>
-    | { eventData: Partial<NewEventData> }
-    | { recurrenceData: Partial<RecurrenceData> }
-) {
+// Should be a partial of eventData or NewRecurrenceFormData
+export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId, updatedData: any) {
   recurringEventsServiceLogger.info(`Updating Recurrence Template ${recurrenceTemplateId}`);
-  try {
-    // Check if document exists
-    const recurrenceTemplateDocRef = doc(
-      db,
-      CollectionPaths.RecurrenceTemplates,
-      "Active",
-      "Private",
-      recurrenceTemplateId
-    );
-    const recurrenceTemplateDocSnapshot = await getDoc(recurrenceTemplateDocRef);
-    if (!recurrenceTemplateDocSnapshot.exists()) {
-      throw new Error(`Recurrence Template with id ${recurrenceTemplateId} not found.`);
-    }
-
-    // If exists, update the recurrence template
-    await updateDoc(recurrenceTemplateDocRef, updatedData);
-    recurringEventsServiceLogger.info(`Recurrence Template with id ${recurrenceTemplateId} updated successfully.`);
-  } catch (error) {
-    recurringEventsServiceLogger.error(`updateRecurrenceTemplate ${error}`);
+  var eventData = null;
+  if (updatedData.eventData) {
+    eventData = {
+      ...updatedData.eventData,
+      startDate: updatedData.eventData.startDate.toDate(),
+      endDate: updatedData.eventData.endDate.toDate(),
+      registrationDeadline: updatedData.eventData.registrationDeadline.toDate(),
+    };
   }
+  const recurrenceData = updatedData.recurrenceData || null;
+  const content = {
+    eventData: eventData,
+    recurrenceData: recurrenceData,
+  };
+  console.log("Owen here");
+  console.log(JSON.stringify(content));
+
+  const rawResponse = await fetch(
+    "https://australia-southeast1-socialsports-44162.cloudfunctions.net/updateRecurrenceTemplate",
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(content),
+    }
+  );
+  const response = (await rawResponse.json()) as UpdateRecurrenceTemplateResponse;
+  return response.recurrenceTemplateId;
 }
 
 export async function updateRecurrenceTemplateEventData(
@@ -130,7 +143,30 @@ export async function updateRecurrenceTemplateEventData(
       },
     });
   } catch (error) {
-    // no op as we already logged error, we just need to catch it here as we do not want to continue to update template if 
+    // no op as we already logged error, we just need to catch it here as we do not want to continue to update template if
+    // we did not find the existing data in the existing recurrence template
+  }
+}
+
+export async function updateRecurrenceTemplateRecurrenceData(
+  recurrenceTemplateId: RecurrenceTemplateId,
+  updatedData: Partial<NewRecurrenceFormData>
+) {
+  console.log(updatedData);
+  recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} recurrence data`);
+  try {
+    const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+    await updateRecurrenceTemplate(recurrenceTemplateId, {
+      recurrenceData: {
+        frequency: recurrenceTemplate.recurrenceData.frequency,
+        recurrenceAmount: recurrenceTemplate.recurrenceData.recurrenceAmount,
+        createDaysBefore: recurrenceTemplate.recurrenceData.createDaysBefore,
+        recurrenceEnabled: recurrenceTemplate.recurrenceData.recurrenceEnabled,
+        ...updatedData,
+      },
+    });
+  } catch (error) {
+    // no op as we already logged error, we just need to catch it here as we do not want to continue to update template if
     // we did not find the existing data in the existing recurrence template
   }
 }

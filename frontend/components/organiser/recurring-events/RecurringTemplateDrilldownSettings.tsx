@@ -1,6 +1,6 @@
 import { MAX_RECURRENCE_AMOUNT } from "@/components/events/create/forms/RecurringEventsForm";
 import LoadingSkeletonBig from "@/components/loading/LoadingSkeletonBig";
-import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
+import { Frequency, NewRecurrenceFormData, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
 import { Button, Radio, Switch } from "@mantine/core";
@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { RecurringEventsPreviewTable } from "../../events/create/forms/RecurringEventsPreviewTable";
 interface RecurringTemplateDrilldownSettingsProps {
   loading: boolean;
+  recurrenceTemplateId: RecurrenceTemplateId;
   startDate: Timestamp;
   newRecurrenceData: NewRecurrenceFormData;
   setNewRecurrenceData: (data: NewRecurrenceFormData) => void;
@@ -18,6 +19,7 @@ interface RecurringTemplateDrilldownSettingsProps {
 
 const RecurringTemplateDrilldownSettings = ({
   loading,
+  recurrenceTemplateId,
   startDate,
   newRecurrenceData,
   setNewRecurrenceData,

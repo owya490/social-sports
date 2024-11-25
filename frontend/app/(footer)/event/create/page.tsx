@@ -11,9 +11,10 @@ import { useUser } from "@/components/utility/UserContext";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { createEvent, createEventV2 } from "@/services/src/events/eventsService";
+import { createEvent } from "@/services/src/events/eventsService";
 import { uploadUserImage } from "@/services/src/imageService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
+import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
 import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -176,13 +177,9 @@ export default function CreateEvent() {
         const [firstEventId, newRecurrenceTemplateId] = await createRecurrenceTemplate(newEventData, newRecurrenceData);
         newEventId = firstEventId;
       } else {
-        try {
-          newEventId = await createEventV2(newEventData);
-        } catch (error) {
-          newEventId = await createEvent(newEventData);
-        }
+        newEventId = await createEvent(newEventData);
       }
-      // await sendEmailOnCreateEvent(newEventId, newEventData.isPrivate ? "Private" : "Public");
+      await sendEmailOnCreateEvent(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");

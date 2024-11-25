@@ -4,6 +4,13 @@ export enum CollectionPaths {
   RecurrenceTemplates = "RecurringEvents",
 }
 
+export const RECURRING_EVENT_PATHS = [
+  "RecurringEvents/Active/Public",
+  "RecurringEvents/Active/Private",
+  "RecurringEvents/InActive/Public",
+  "RecurringEvents/InActive/Private",
+];
+
 export enum recurringEventsStatus {
   Active = "Active",
   Inactive = "InActive",

@@ -2,9 +2,10 @@
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import RecurringTemplateCard from "@/components/organiser/recurring-events/RecurringTemplateCard";
 import { useUser } from "@/components/utility/UserContext";
-import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
+import { EMPTY_RECURRENCE_TEMPLATE, Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getOrganiserRecurrenceTemplates } from "@/services/src/recurringEvents/recurringEventsService";
+import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,7 +14,12 @@ export default function RecurringEventDashboard() {
   const { user } = useUser();
   const router = useRouter();
 
-  const [loadingRecurrenceTemplateList, setLoadingRecurrenceTemplateList] = useState<RecurrenceTemplate[]>([]);
+  const [loadingRecurrenceTemplateList, setLoadingRecurrenceTemplateList] = useState<RecurrenceTemplate[]>([
+    EMPTY_RECURRENCE_TEMPLATE,
+    EMPTY_RECURRENCE_TEMPLATE,
+    EMPTY_RECURRENCE_TEMPLATE,
+    EMPTY_RECURRENCE_TEMPLATE,
+  ]);
 
   const [recurrenceTemplateList, setRecurrenceTemplateList] = useState<RecurrenceTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +53,23 @@ export default function RecurringEventDashboard() {
             {loading ? (
               <div className="z-5 grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
                 {loadingRecurrenceTemplateList.map((template, templateIdx) => {
-                  return <div className="w-full" key={templateIdx}></div>;
+                  return (
+                    <div className="w-full" key={templateIdx}>
+                      <RecurringTemplateCard
+                        recurrenceTemplateId={""}
+                        image={""}
+                        name={""}
+                        startTime={Timestamp.now()}
+                        location={""}
+                        price={0}
+                        frequency={Frequency.WEEKLY}
+                        recurrenceAmount={0}
+                        createDaysBefore={0}
+                        recurrenceEnabled={false}
+                        loading={true}
+                      />
+                    </div>
+                  );
                 })}
               </div>
             ) : recurrenceTemplateList.length === 0 ? (
