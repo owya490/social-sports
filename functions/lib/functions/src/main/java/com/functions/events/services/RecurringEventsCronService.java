@@ -24,12 +24,25 @@ import static com.functions.events.services.EventsService.createEvent;
 public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
 
-    public static void createEventsFromRecurrenceTemplates(LocalDate today) throws Exception {
-        Map<String, RecurrenceTemplate> activeRecurrenceTemplates = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplates();
+    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today) throws Exception {
+        return createEventsFromRecurrenceTemplates(today, null);
+    }
+
+    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId) throws Exception {
+        Map<String, RecurrenceTemplate> activeRecurrenceTemplates;
+        if (targetRecurrenceTemplateId == null) {
+            activeRecurrenceTemplates = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplates();
+        } else {
+            activeRecurrenceTemplates = Map.of(targetRecurrenceTemplateId, RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId).orElseThrow(() -> new Exception("")));
+        }
+
         logger.info("All Active Recurrence Templates {}", activeRecurrenceTemplates);
         List<String> moveToInactiveRecurringEvents = new ArrayList<String>();
 
-        for (Map.Entry<String, RecurrenceTemplate> recurrenceTemplateAndId : activeRecurrenceTemplates.entrySet()) {
+        List<String> createdEventIds = new ArrayList<String>();
+
+        for (
+                Map.Entry<String, RecurrenceTemplate> recurrenceTemplateAndId : activeRecurrenceTemplates.entrySet()) {
             String recurrenceTemplateId = recurrenceTemplateAndId.getKey();
             RecurrenceTemplate recurrenceTemplate = recurrenceTemplateAndId.getValue();
 
@@ -58,6 +71,7 @@ public class RecurringEventsCronService {
                         // Registration deadline is currently set to the newEndDate.
                         newEventDataDeepCopy.setRegistrationDeadline(recurrenceTimestamp);
                         String newEventId = createEvent(newEventDataDeepCopy, transaction);
+                        createdEventIds.add(newEventId);
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
                     }
 
@@ -82,12 +96,15 @@ public class RecurringEventsCronService {
             });
         }
 
-        for (String recurringEventId : moveToInactiveRecurringEvents) {
+        for (
+                String recurringEventId : moveToInactiveRecurringEvents) {
             RecurrenceTemplateRepository.createFirestoreTransaction(transaction -> {
                 moveRecurringEventToInactive(recurringEventId, transaction);
                 return null;
             });
         }
+
+        return createdEventIds;
     }
 
     private static void moveRecurringEventToInactive(String recurrenceId, Transaction transaction) throws Exception {

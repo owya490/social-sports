@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 public class RecurringEventsService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsService.class);
 
-    public static Optional<String> createRecurrenceTemplate(NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
+    public static Optional<Map.Entry<String, String>> createRecurrenceTemplate(NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
         // Calculate all future recurrence Dates
         RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate());
         RecurrenceTemplate recurrenceTemplate = RecurrenceTemplate.builder()
@@ -33,6 +33,7 @@ public class RecurringEventsService {
         // Place content in the firestore database
         try {
             String recurrenceTemplateId = RecurrenceTemplateRepository.createRecurrenceTemplate(newEventData.getIsActive(), newEventData.getIsPrivate(), recurrenceTemplate);
+
             // TODO update users recurrence template list
             logger.info("Successfully created new Recurrence Template {}", recurrenceTemplateId);
             return Optional.of(recurrenceTemplateId);

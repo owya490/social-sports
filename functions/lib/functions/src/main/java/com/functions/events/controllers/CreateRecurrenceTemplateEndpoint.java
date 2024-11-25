@@ -10,6 +10,7 @@ import com.google.cloud.functions.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.Optional;
 
 public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
@@ -38,21 +39,21 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
             return;
         }
 
-        Optional<String> maybeRecurrenceTemplateId = RecurringEventsService.createRecurrenceTemplate(data.eventData(), data.recurrenceData());
+        Optional<Map.Entry<String, String>> maybeRecurrenceTemplateId = RecurringEventsService.createRecurrenceTemplate(data.eventData(), data.recurrenceData());
 
 
         if (maybeRecurrenceTemplateId.isPresent()) {
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
-                            new CreateRecurrenceTemplateResponse(maybeRecurrenceTemplateId.get())
+                            new CreateRecurrenceTemplateResponse(maybeRecurrenceTemplateId.get().getKey(), maybeRecurrenceTemplateId.get().getValue())
                     )
             );
         } else {
             response.setStatusCode(500);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
-                            new CreateRecurrenceTemplateResponse("")
+                            new CreateRecurrenceTemplateResponse("", "")
                     )
             );
         }

@@ -17,7 +17,7 @@ public class UpdateRecurrenceTemplateEndpoint implements HttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
-        response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
+//        response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
         response.appendHeader("Access-Control-Allow-Origin", "*");
         response.appendHeader("Access-Control-Allow-Methods", "POST");
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
