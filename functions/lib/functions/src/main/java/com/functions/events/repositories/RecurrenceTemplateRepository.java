@@ -44,10 +44,7 @@ public class RecurrenceTemplateRepository {
         }
         // 4. Try InActive Public Recurrence Templates
         maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, false, transaction);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
-        }
-        return Optional.empty();
+        return maybeRecurrenceTemplate;
     }
 
     public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, boolean isActive, boolean isPrivate) {

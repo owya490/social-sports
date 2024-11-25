@@ -46,9 +46,9 @@ public class CreateEventEndpoint implements HttpFunction {
         Firestore db = FirebaseService.getFirestore();
 
         try {
-            String eventId = db.runTransaction(transaction -> {
-                return createEvent(data, transaction);
-            }).get();
+            String eventId = db.runTransaction(transaction ->
+                    createEvent(data, transaction)
+            ).get();
 
             response.setStatusCode(200);
             response.getWriter().write("Event created successfully with ID: " + eventId + "\n");
