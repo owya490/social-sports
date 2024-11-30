@@ -2,6 +2,7 @@ package com.functions.events.repositories;
 
 import com.functions.FirebaseService;
 import com.functions.events.models.RecurrenceTemplate;
+import com.functions.utils.JavaUtils;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
@@ -87,7 +88,7 @@ public class RecurrenceTemplateRepository {
         if (transaction == null) {
             recurrenceTemplateDocRef.set(recurrenceTemplate, SetOptions.merge()).get();
         } else {
-            transaction.set(recurrenceTemplateDocRef, recurrenceTemplate, SetOptions.merge());
+            transaction.set(recurrenceTemplateDocRef, JavaUtils.toMap(recurrenceTemplate), SetOptions.merge());
         }
         return recurrenceTemplateDocRef.getId();
     }

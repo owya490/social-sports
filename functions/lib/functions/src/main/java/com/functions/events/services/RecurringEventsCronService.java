@@ -13,11 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static com.functions.events.services.EventsService.createEvent;
 
@@ -25,15 +21,15 @@ public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
 
     public static List<String> createEventsFromRecurrenceTemplates(LocalDate today) throws Exception {
-        return createEventsFromRecurrenceTemplates(today, null);
+        return createEventsFromRecurrenceTemplates(today, null, null, false);
     }
 
-    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId) throws Exception {
+    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, RecurrenceTemplate targetRecurrenceTemplate, boolean noCreateBeforeDays) throws Exception {
         Map<String, RecurrenceTemplate> activeRecurrenceTemplates;
         if (targetRecurrenceTemplateId == null) {
             activeRecurrenceTemplates = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplates();
         } else {
-            activeRecurrenceTemplates = Map.of(targetRecurrenceTemplateId, RecurrenceTemplateRepository.getRecurrenceTemplate(targetRecurrenceTemplateId).orElseThrow(() -> new Exception("")));
+            activeRecurrenceTemplates = Map.of(targetRecurrenceTemplateId, targetRecurrenceTemplate);
         }
 
         logger.info("All Active Recurrence Templates {}", activeRecurrenceTemplates);
@@ -41,8 +37,7 @@ public class RecurringEventsCronService {
 
         List<String> createdEventIds = new ArrayList<String>();
 
-        for (
-                Map.Entry<String, RecurrenceTemplate> recurrenceTemplateAndId : activeRecurrenceTemplates.entrySet()) {
+        for (Map.Entry<String, RecurrenceTemplate> recurrenceTemplateAndId : activeRecurrenceTemplates.entrySet()) {
             String recurrenceTemplateId = recurrenceTemplateAndId.getKey();
             RecurrenceTemplate recurrenceTemplate = recurrenceTemplateAndId.getValue();
 
@@ -55,22 +50,25 @@ public class RecurringEventsCronService {
                 }
                 NewEventData newEventData = recurrenceTemplate.getEventData();
                 RecurrenceData recurrenceData = recurrenceTemplate.getRecurrenceData();
-                Map<String, String> pastRecurrences = recurrenceData.getPastRecurrences();
+                Map<String, String> pastRecurrences = new HashMap<>(recurrenceData.getPastRecurrences());
 
                 boolean isStillActiveRecurrenceFlag = false;
                 for (Timestamp recurrenceTimestamp : recurrenceData.getAllRecurrences()) {
+                    logger.info("Recurrence Timestamp: {}", recurrenceTimestamp);
                     String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
                     LocalDate eventCreationDate = TimeUtils.convertTimestampToLocalDateTime(recurrenceTimestamp).toLocalDate()
-                            .minusDays(recurrenceData.getCreateDaysBefore());
+                            .minusDays(noCreateBeforeDays ? 0 :recurrenceData.getCreateDaysBefore());
                     if (!pastRecurrences.containsKey(recurrenceTimestampString) && today.equals(eventCreationDate)) {
                         NewEventData newEventDataDeepCopy = JavaUtils.deepCopy(newEventData, NewEventData.class);
                         long eventLengthMillis = newEventDataDeepCopy.getEndDate().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
+                        long eventDeadlineDeltaMillis = newEventDataDeepCopy.getRegistrationDeadline().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
                         newEventDataDeepCopy.setStartDate(recurrenceTimestamp);
                         Timestamp newEndDate = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventLengthMillis) * 1000);
+                        Timestamp newRegistrationDeadline = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventDeadlineDeltaMillis) * 1000);
                         newEventDataDeepCopy.setEndDate(newEndDate);
-                        // Registration deadline is currently set to the newEndDate.
-                        newEventDataDeepCopy.setRegistrationDeadline(recurrenceTimestamp);
+                        newEventDataDeepCopy.setRegistrationDeadline(newRegistrationDeadline);
                         String newEventId = createEvent(newEventDataDeepCopy, transaction);
+                        logger.info("New event id: {}", newEventId);
                         createdEventIds.add(newEventId);
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
                     }
@@ -92,7 +90,7 @@ public class RecurringEventsCronService {
                 if (!isStillActiveRecurrenceFlag) {
                     moveToInactiveRecurringEvents.add(recurrenceTemplateId);
                 }
-                return null;
+                return true;
             });
         }
 

@@ -29,6 +29,7 @@ public class EventsService {
      * @param transaction the firestore transaction object
      */
     public static String createEvent(NewEventData data, Transaction transaction) throws Exception {
+        logger.info("Creating event: {}", data.getName());
         Firestore db = FirebaseService.getFirestore();
         String isActive = data.getIsActive() ? ACTIVE : INACTIVE;
         String isPrivate = data.getIsPrivate() ? PRIVATE : PUBLIC;
@@ -37,7 +38,6 @@ public class EventsService {
                 .document();
         data.setNameTokens(EventsUtils.tokenizeText(data.getName()));
         data.setLocationTokens(EventsUtils.tokenizeText(data.getLocation()));
-
         transaction.set(newEventDocRef, JavaUtils.toMap(data));
         createEventMetadata(transaction, newEventDocRef.getId(), data);
         EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), newEventDocRef.getId());
@@ -45,6 +45,7 @@ public class EventsService {
     }
 
     private static void createEventMetadata(Transaction transaction, String eventId, NewEventData data) {
+        logger.info("Creating Event Metadata: {}", eventId);
         Firestore db = FirebaseService.getFirestore();
         EventMetadata eventMetadata = EventsMetadataUtils.extractEventsMetadataFieldsForNewEvent(data);
         DocumentReference eventMetadataDocRef = db.collection(EVENTS_METADATA).document(eventId);

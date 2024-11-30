@@ -28,7 +28,7 @@ public class RecurringEventsService {
     // Returns Map.Entry<RecurrenceTemplateId, EventId>
     public static Optional<Map.Entry<String, String>> createRecurrenceTemplate(NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
         // Calculate all future recurrence Dates
-        RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate());
+        RecurrenceData recurrenceData = calculateRecurrenceDataForCreate(newRecurrenceData, newEventData.getStartDate());
         RecurrenceTemplate recurrenceTemplate = RecurrenceTemplate.builder()
                 .eventData(newEventData)
                 .recurrenceData(recurrenceData)
@@ -44,7 +44,7 @@ public class RecurringEventsService {
             privateUserData.setRecurrenceTemplates(recurrenceTemplates);
             Users.updatePrivateUserData(newEventData.getOrganiserId(), privateUserData);
             // Create the first event iteration
-            String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId).stream().findFirst().orElseThrow(() -> new Exception(""));
+            String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId, recurrenceTemplate, true).stream().findFirst().orElseThrow(() -> new Exception(""));
             logger.info("Successfully created new Recurrence Template {}", recurrenceTemplateId);
             return Optional.of(Map.entry(recurrenceTemplateId, eventId));
         } catch (Exception e) {
@@ -73,7 +73,7 @@ public class RecurringEventsService {
         }
 
         // Calculate all future recurrence Dates
-        RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate(), pastRecurrences);
+        RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate(), pastRecurrences, false);
         RecurrenceTemplate recurrenceTemplate = RecurrenceTemplate.builder()
                 .eventData(newEventData)
                 .recurrenceData(recurrenceData)
@@ -90,12 +90,12 @@ public class RecurringEventsService {
         }
     }
 
-    private static RecurrenceData calculateRecurrenceData(NewRecurrenceData newRecurrenceData, Timestamp startDate) {
-        return calculateRecurrenceData(newRecurrenceData, startDate, Map.of());
+    private static RecurrenceData calculateRecurrenceDataForCreate(NewRecurrenceData newRecurrenceData, Timestamp startDate) {
+        return calculateRecurrenceData(newRecurrenceData, startDate, Map.of(), true);
     }
 
-    private static RecurrenceData calculateRecurrenceData(NewRecurrenceData newRecurrenceData, Timestamp startDate, Map<String, String> pastRecurrences) {
-        List<Timestamp> allRecurrences = calculateAllRecurrenceDates(startDate, newRecurrenceData.getFrequency(), newRecurrenceData.getRecurrenceAmount());
+    private static RecurrenceData calculateRecurrenceData(NewRecurrenceData newRecurrenceData, Timestamp startDate, Map<String, String> pastRecurrences, boolean isCreate) {
+        List<Timestamp> allRecurrences = calculateAllRecurrenceDates(startDate, newRecurrenceData.getFrequency(), newRecurrenceData.getRecurrenceAmount(), isCreate);
         return RecurrenceData.builderFromNewRecurrenceData(newRecurrenceData)
                 .allRecurrences(allRecurrences)
                 .pastRecurrences(pastRecurrences)
@@ -103,18 +103,21 @@ public class RecurringEventsService {
     }
 
     @VisibleForTesting
-    public static List<Timestamp> calculateAllRecurrenceDates(Timestamp startDate, RecurrenceData.Frequency frequency, Integer recurrenceAmount) {
+    public static List<Timestamp> calculateAllRecurrenceDates(Timestamp startDate, RecurrenceData.Frequency frequency, Integer recurrenceAmount, boolean isCreate) {
         logger.info("Calculating all recurrence dates from {} with a frequency of {} for {} times", startDate, frequency, recurrenceAmount);
+        int starting = isCreate ? 0 : 1;
         switch (frequency) {
             case WEEKLY:
             case FORTNIGHTLY:
-                return IntStream.range(0, recurrenceAmount).mapToObj(recurrenceNumber -> {
+                // We want to do recurrenceAmount + 1 as we count the initial date as a recurrence, but not in the UI
+                return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber -> {
                     LocalDateTime recurrenceDateTime = TimeUtils.convertTimestampToLocalDateTime(startDate)
                             .plusDays((long) recurrenceNumber * frequency.getValue());
                     return TimeUtils.convertLocalDateTimeToTimestamp(recurrenceDateTime);
                 }).collect(Collectors.toList());
             case MONTHLY:
-                return IntStream.range(0, recurrenceAmount).mapToObj(recurrenceNumber -> {
+                // We want to do recurrenceAmount + 1 as we count the initial date as a recurrence, but not in the UI
+                return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber -> {
                     LocalDateTime recurrenceDateTime = TimeUtils.convertTimestampToLocalDateTime(startDate)
                             .plusMonths(recurrenceNumber);
                     return TimeUtils.convertLocalDateTimeToTimestamp(recurrenceDateTime);
