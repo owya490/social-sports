@@ -15,7 +15,7 @@ export interface RecurrenceData {
   createDaysBefore: number;
   recurrenceEnabled: boolean;
   allRecurrences: Timestamp[];
-  pastRecurrences: Record<number, EventId>;
+  pastRecurrences: Record<string, EventId>;
 }
 
 export interface RecurrenceTemplate {

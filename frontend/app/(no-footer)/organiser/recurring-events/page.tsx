@@ -28,8 +28,6 @@ export default function RecurringEventDashboard() {
     const fetchData = async () => {
       try {
         const organiserRecurrenceTemplatesList = await getOrganiserRecurrenceTemplates(user.userId);
-        console.log(`owen ${organiserRecurrenceTemplatesList}`);
-        console.log(organiserRecurrenceTemplatesList);
         setRecurrenceTemplateList(organiserRecurrenceTemplatesList);
         setLoading(false);
       } catch (error) {
@@ -51,7 +49,7 @@ export default function RecurringEventDashboard() {
           <div className="flex flex-row h-full w-full">
             <div className="hidden lg:block"></div>
             {loading ? (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
+              <div className="z-5 grid grid-cols-1 xl:grid-cols-2 gap-8 justify-items-center overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
                 {loadingRecurrenceTemplateList.map((template, templateIdx) => {
                   return (
                     <div className="w-full" key={templateIdx}>
@@ -88,9 +86,8 @@ export default function RecurringEventDashboard() {
                 </div>
               </div>
             ) : (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 gap-6 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-auto">
+              <div className="z-5 grid grid-cols-1 xl:grid-cols-2 gap-6 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-auto">
                 {recurrenceTemplateList.map((template, templateIdx) => {
-                  console.log(template);
                   return (
                     <div className="w-full" key={templateIdx}>
                       <RecurringTemplateCard

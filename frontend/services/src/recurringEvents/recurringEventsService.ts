@@ -37,8 +37,6 @@ export async function createRecurrenceTemplate(
     recurrenceData: recurrenceData,
   };
 
-  console.log(JSON.stringify(content));
-
   const rawResponse = await fetch(
     "https://australia-southeast1-socialsports-44162.cloudfunctions.net/createRecurrenceTemplate",
     {
@@ -60,9 +58,7 @@ export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<R
     const privateDoc = await getPrivateUserById(userId);
 
     // TODO add recurrence templates
-    // const organiserEvents = privateDoc.organiserEvents || [];
-    console.log(privateDoc);
-    const organiserEvents = privateDoc.recurringTemplates || [];
+    const organiserEvents = privateDoc.recurrenceTemplates || [];
     const recurrenceTemplateList: RecurrenceTemplate[] = [];
     for (const recurrenceTemplateId of organiserEvents) {
       try {
@@ -112,8 +108,6 @@ export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceT
     eventData: eventData,
     recurrenceData: recurrenceData,
   };
-  console.log("Owen here");
-  console.log(JSON.stringify(content));
 
   const rawResponse = await fetch(
     "https://australia-southeast1-socialsports-44162.cloudfunctions.net/updateRecurrenceTemplate",
@@ -153,7 +147,6 @@ export async function updateRecurrenceTemplateRecurrenceData(
   recurrenceTemplateId: RecurrenceTemplateId,
   updatedData: Partial<NewRecurrenceFormData>
 ) {
-  console.log(updatedData);
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} recurrence data`);
   try {
     const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);

@@ -4,7 +4,9 @@ import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSettings";
-import { EmptyEventMetadata, EventMetadata, NewEventData } from "@/interfaces/EventTypes";
+import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
+import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
+import { EmptyEventMetadata, EventId, EventMetadata, NewEventData } from "@/interfaces/EventTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
   NewRecurrenceFormData,
@@ -44,6 +46,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
   const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
+  const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
 
   const router = useRouter();
 
@@ -65,6 +68,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventAccessCount(recurrenceTemplate.eventData.accessCount);
         setEventCapacity(recurrenceTemplate.eventData.capacity);
         setNewRecurrenceData(extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData));
+        setPastEvents(recurrenceTemplate.recurrenceData.pastRecurrences);
       })
       .finally(async () => {
         await sleep(500);
@@ -118,6 +122,15 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
           submitNewRecurrenceData={submitNewRecurrenceData}
         />
         <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
+          <div id="side-panel" className="z-20">
+            <RecurringTemplateDrilldownSidePanel
+              loading={false}
+              currSidebarPage={currSidebarPage}
+              setCurrSidebarPage={setCurrSidebarPage}
+              eventName={eventName}
+              recurrenceTemplateId={recurrenceTemplateId}
+            />
+          </div>
           <div id="event-drilldown-details-page" className="w-full mb-20 sm:mb-0">
             {currSidebarPage === "Details" && (
               <>
@@ -133,6 +146,11 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   eventId={recurrenceTemplateId}
                   updateData={handleRecurrenceTemplateEventUpdate}
                 />
+              </>
+            )}
+            {currSidebarPage === "PastEvents" && (
+              <>
+                <RecurringTemplatePastEvents pastEvents={pastEvents} />
               </>
             )}
           </div>

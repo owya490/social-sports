@@ -1,5 +1,3 @@
-import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { Timestamp } from "firebase/firestore";
 import { Dispatch, SetStateAction } from "react";
 import Skeleton from "react-loading-skeleton";
 
@@ -8,7 +6,7 @@ interface RecurringTemplateDrilldownSidePanelProps {
   currSidebarPage: string;
   setCurrSidebarPage: Dispatch<SetStateAction<string>>;
   eventName: string;
-  eventStartDate: Timestamp;
+  recurrenceTemplateId: string;
 }
 
 const RecurringTemplateDrilldownSidePanel = ({
@@ -16,14 +14,14 @@ const RecurringTemplateDrilldownSidePanel = ({
   currSidebarPage,
   setCurrSidebarPage,
   eventName,
-  eventStartDate,
+  recurrenceTemplateId,
 }: RecurringTemplateDrilldownSidePanelProps) => {
   return (
     <div className="bg-organiser-light-gray mr-10 w-48 md:w-64 rounded-3xl hidden sm:block">
       <div className="p-8">
         <div className="text-xl font-extrabold">{loading ? <Skeleton style={{ height: 40 }} /> : eventName}</div>
-        <div className="text-organiser-dark-gray-text text-sm font-bold">
-          {loading ? <Skeleton style={{ height: 20 }} /> : timestampToEventCardDateString(eventStartDate)}
+        <div className="text-organiser-dark-gray-text text-sm font-thin">
+          {loading ? <Skeleton style={{ height: 20 }} /> : `Recurrence Template Id: ${recurrenceTemplateId}`}
         </div>
         <div className="h-20"></div>
       </div>
@@ -35,6 +33,14 @@ const RecurringTemplateDrilldownSidePanel = ({
           onClick={() => setCurrSidebarPage("Details")}
         >
           Details
+        </div>
+        <div
+          className={`text-organiser-dark-gray-text font-bold text-md ${
+            currSidebarPage === "PastEvents" ? "bg-white" : ""
+          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          onClick={() => setCurrSidebarPage("PastEvents")}
+        >
+          Past Events
         </div>
       </div>
       <div className="h-40"></div>
