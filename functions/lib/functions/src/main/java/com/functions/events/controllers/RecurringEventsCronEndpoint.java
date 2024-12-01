@@ -13,19 +13,10 @@ import static com.functions.events.services.RecurringEventsCronService.createEve
 
 public class RecurringEventsCronEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronEndpoint.class);
+    private static final String CLOUD_RUN_URL = "https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron";
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
-//        response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
-        response.appendHeader("Access-Control-Allow-Origin", "*");
-        response.appendHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
-        response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
-
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatusCode(204); // No Content
-            return;
-        }
-
         if (!"GET".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "GET"); // Inform client that only GET is allowed
@@ -33,9 +24,19 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
             return;
         }
 
+        // Protect endpoint
+        try {
+            AuthUtils.authenticateOIDCToken(request, response, logger, CLOUD_RUN_URL);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return;
+        }
+
+        // Process recurring events
         LocalDate today = LocalDate.now();
         List<String> createdEvents = createEventsFromRecurrenceTemplates(today);
 
+        response.setStatusCode(200);
         response.getWriter().write("Recurring events processed for: " + today + "Created events: " + createdEvents);
     }
 }

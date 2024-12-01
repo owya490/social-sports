@@ -35,6 +35,7 @@ export default function UserContext({ children }: { children: any }) {
       // user workflow
       if (userAuth && auth.currentUser?.emailVerified) {
         const { uid } = userAuth;
+        console.log("TOKENNN", await userAuth.getIdToken());
         try {
           const userData = await getFullUserByIdForUserContextWithRetries(uid);
           setUser(userData);
