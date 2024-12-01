@@ -17,25 +17,18 @@ public class CreateEventEndpoint implements HttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
-        // response.appendHeader(ACCESS_ALLOW_ORIGIN_HEADER, "https://www.sportshub.net.au");
-        // response.appendHeader(ACCESS_ALLOW_ORIGIN_HEADER, "http://localhost:3000");
-        // response.appendHeader(ACCESS_ALLOW_METHODS_HEADER, "GET");
-        // response.appendHeader(ACCESS_ALLOW_HEADERS_HEADER, "Content-Type");
-
-        // if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-        // 	response.setStatusCode(204); // No Content
-        // 	return;
-        // }
-
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatusCode(204); // No Content
-            return;
-        }
-
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
             response.getWriter().write("This function only supports POST requests.");
+            return;
+        }
+
+        // Protect endpoint
+        try {
+            AuthUtils.authenticateUserToken(request, response, logger);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
             return;
         }
 

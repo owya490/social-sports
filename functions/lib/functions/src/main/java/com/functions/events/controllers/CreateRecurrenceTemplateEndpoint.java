@@ -18,20 +18,18 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
-//        response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
-        response.appendHeader("Access-Control-Allow-Origin", "*");
-        response.appendHeader("Access-Control-Allow-Methods", "POST, HEAD, OPTIONS");
-        response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
-
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatusCode(204); // No Content
-            return;
-        }
-
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST"); // Inform client that only GET is allowed
             response.getWriter().write("This function only supports POST requests.");
+            return;
+        }
+
+        // Protect endpoint
+        try {
+            AuthUtils.authenticateUserToken(request, response, logger);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
             return;
         }
 
