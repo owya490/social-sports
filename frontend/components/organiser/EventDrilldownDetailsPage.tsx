@@ -72,6 +72,7 @@ const EventDrilldownDetailsPage = ({
     try {
       setEditTitle(false);
       await updateEventById(eventId, { name: newEditTitle, nameTokens });
+      window.location.reload();
     } catch (error) {
       console.error("Failed to update event name:", error);
     }
@@ -136,6 +137,7 @@ const EventDrilldownDetailsPage = ({
         registrationDeadline: updatedStartTimestamp,
         endDate: updatedEndTimestamp,
       });
+      window.location.reload();
     } catch (error) {
       console.error("Failed to update event date and time:", error);
     }
@@ -205,6 +207,7 @@ const EventDrilldownDetailsPage = ({
           lng: latLng.lng,
         },
       });
+      window.location.reload();
     } catch (error) {
       console.error("Failed to update event location:", error);
     }
@@ -235,6 +238,7 @@ const EventDrilldownDetailsPage = ({
     setEditPrice(false);
     try {
       await updateEventById(eventId, { price: newEditPrice });
+      window.location.reload();
     } catch (error) {
       console.error("Failed to update event price:", error);
     }
@@ -261,6 +265,7 @@ const EventDrilldownDetailsPage = ({
     setEditDescription(false);
     try {
       await updateEventById(eventId, { description: newEditDescription });
+      window.location.reload();
     } catch (error) {
       console.error("Failed to update event description:", error);
     }
