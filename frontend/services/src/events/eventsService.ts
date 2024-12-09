@@ -12,6 +12,8 @@ import {
   DocumentData,
   DocumentReference,
   WriteBatch,
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -235,6 +237,59 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
     eventServiceLogger.error(`updateEventById ${error}`);
+  }
+}
+
+export async function archiveAndDeleteEvent(eventId: EventId, userId: String): Promise<void> {
+  eventServiceLogger.info(`Starting process to archive and delete event: ${eventId}`);
+
+  const batch: WriteBatch = writeBatch(db);
+
+  try {
+    const eventRef = await findEventDocRef(eventId);
+    const eventSnapshot = await getDoc(eventRef);
+
+    if (!eventSnapshot.exists()) {
+      throw new Error(`Event with ID ${eventId} not found.`);
+    }
+
+    const eventData = eventSnapshot.data();
+    const deletedEventRef = doc(db, "DeletedEvents", eventId);
+    const userEventsRef = doc(db, `Users/Active/Private/${userId}`);
+
+    const userEventsSnapshot = await getDoc(userEventsRef);
+    let userEmail = null;
+
+    if (userEventsSnapshot.exists()) {
+      const userData = userEventsSnapshot.data();
+      const contactInformation = userData.contactInformation;
+
+      // Check if the contactInformation field exists and extract email
+      if (contactInformation && contactInformation.email) {
+        userEmail = contactInformation.email;
+      }
+    }
+
+    // Add all event fields to the deleted document, with additional deletion metadata
+    batch.set(deletedEventRef, {
+      ...eventData, // Copy all fields from the original event
+      userEmail, // Add user email
+      deletedAt: new Date().toISOString(), // Record deletion time
+    });
+
+    batch.delete(eventRef);
+
+    batch.update(userEventsRef, {
+      organiserEvents: arrayRemove(eventId),
+      deletedEvents: arrayUnion(eventId),
+    });
+
+    await batch.commit();
+
+    eventServiceLogger.info(`Successfully archived and deleted event: ${eventId}`);
+  } catch (error) {
+    eventServiceLogger.error(`Error archiving and deleting event ${eventId}: ${error}`);
+    throw error;
   }
 }
 
