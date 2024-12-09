@@ -2,6 +2,7 @@ package com.functions.events.controllers;
 
 import com.functions.FirebaseService;
 import com.functions.events.models.NewEventData;
+import com.functions.utils.AuthUtils;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.functions.HttpFunction;

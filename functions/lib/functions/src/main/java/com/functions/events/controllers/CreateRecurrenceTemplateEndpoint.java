@@ -3,6 +3,7 @@ package com.functions.events.controllers;
 import com.functions.events.models.requests.CreateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.CreateRecurrenceTemplateResponse;
 import com.functions.events.services.RecurringEventsService;
+import com.functions.utils.AuthUtils;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;

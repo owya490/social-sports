@@ -1,4 +1,4 @@
-package com.functions.events.controllers;
+package com.functions.utils;
 
 import com.functions.FirebaseService;
 import com.google.auth.oauth2.TokenVerifier;
