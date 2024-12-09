@@ -1,7 +1,12 @@
 import { NewRecurrenceFormData, RecurrenceData, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
+import { Environment, getEnvironment } from "@/utilities/environment";
 import { DocumentData, QueryDocumentSnapshot, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { RECURRING_EVENT_PATHS } from "./recurringEventsConstants";
+import {
+  CREATE_RECURRING_TEMPLATE_URL,
+  RECURRING_EVENT_PATHS,
+  UPDATE_RECURRING_TEMPLATE_URL,
+} from "./recurringEventsConstants";
 import { recurringEventsServiceLogger } from "./recurringEventsService";
 
 export async function findRecurrenceTemplateDoc(
@@ -39,4 +44,14 @@ export function extractNewRecurrenceFormDataFromRecurrenceData(recurrenceData: R
     recurrenceAmount: recurrenceData.recurrenceAmount,
     recurrenceEnabled: recurrenceData.recurrenceEnabled,
   };
+}
+
+export function getCreateRecurringTemplateUrl(): string {
+  const env = getEnvironment();
+  return CREATE_RECURRING_TEMPLATE_URL[`${env || Environment.DEVELOPMENT}`];
+}
+
+export function getUpdateRecurringTemplateUrl(): string {
+  const env = getEnvironment();
+  return UPDATE_RECURRING_TEMPLATE_URL[`${env || Environment.DEVELOPMENT}`];
 }

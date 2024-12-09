@@ -31,3 +31,15 @@ export const RecurringEventsFrequencyMetadata: Record<Frequency, FrequencyMetada
     maxPriorDaysForEventCreation: 21,
   },
 };
+
+export const CREATE_RECURRING_TEMPLATE_URL = {
+  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/createRecurrenceTemplate",
+  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/createRecurrenceTemplate",
+  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/createRecurrenceTemplate",
+};
+
+export const UPDATE_RECURRING_TEMPLATE_URL = {
+  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/updateRecurrenceTemplate",
+  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/updateRecurrenceTemplate",
+  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/updateRecurrenceTemplate",
+};

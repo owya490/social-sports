@@ -9,7 +9,7 @@ import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { Timestamp } from "firebase/firestore";
 import { getPrivateUserById } from "../users/usersService";
-import { findRecurrenceTemplateDoc } from "./recurringEventsUtils";
+import { findRecurrenceTemplateDoc, getCreateRecurringTemplateUrl, getUpdateRecurringTemplateUrl } from "./recurringEventsUtils";
 
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
@@ -38,7 +38,7 @@ export async function createRecurrenceTemplate(
   };
 
   const rawResponse = await fetch(
-    "https://australia-southeast1-socialsports-44162.cloudfunctions.net/createRecurrenceTemplate",
+    getCreateRecurringTemplateUrl(),
     {
       method: "POST",
       headers: {
@@ -109,17 +109,14 @@ export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceT
     recurrenceData: recurrenceData,
   };
 
-  const rawResponse = await fetch(
-    "https://australia-southeast1-socialsports-44162.cloudfunctions.net/updateRecurrenceTemplate",
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(content),
-    }
-  );
+  const rawResponse = await fetch(getUpdateRecurringTemplateUrl(), {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(content),
+  });
   const response = (await rawResponse.json()) as UpdateRecurrenceTemplateResponse;
   return response.recurrenceTemplateId;
 }
@@ -131,6 +128,10 @@ export async function updateRecurrenceTemplateEventData(
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} event data`);
   try {
     const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+    console.log({
+      ...recurrenceTemplate.eventData,
+      ...updatedData,
+    });
     await updateRecurrenceTemplate(recurrenceTemplateId, {
       eventData: {
         ...recurrenceTemplate.eventData,
