@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cp ../../functions_key_dev.json functions_key.json
+cp ../../functions_key_prod.json functions_key.json
 
-cp ../../.env.dev .env
+cp ../../.env.prod .env
 
 gcloud functions deploy updateRecurrenceTemplate \
     --entry-point com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint \
@@ -10,7 +10,8 @@ gcloud functions deploy updateRecurrenceTemplate \
     --trigger-http \
     --allow-unauthenticated \
     --region australia-southeast1 \
-    --set-env-vars PROJECT_NAME=socialsports-44162 \
+    --project socialsportsprod \
+    --set-env-vars PROJECT_NAME=socialsportsprod \
 #
 gcloud functions deploy createRecurrenceTemplate \
     --entry-point com.functions.events.controllers.CreateRecurrenceTemplateEndpoint \
@@ -18,7 +19,8 @@ gcloud functions deploy createRecurrenceTemplate \
     --trigger-http \
     --allow-unauthenticated \
     --region australia-southeast1 \
-    --set-env-vars PROJECT_NAME=socialsports-44162 \
+    --project socialsportsprod \
+    --set-env-vars PROJECT_NAME=socialsportsprod \
 
 # Deploy recurringEventsCron to DEV
 gcloud functions deploy recurringEventsCron \
@@ -27,7 +29,8 @@ gcloud functions deploy recurringEventsCron \
     --trigger-http \
     --allow-unauthenticated \
     --region australia-southeast1 \
-    --set-env-vars PROJECT_NAME=socialsports-44162 \
+    --project socialsportsprod \
+    --set-env-vars PROJECT_NAME=socialsportsprod \
     --memory 512 # uses 266 MiB of memory, which is greater than the
 #                  the lower tier of 256
 ##
