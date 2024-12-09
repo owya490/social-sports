@@ -1,4 +1,5 @@
 "use client";
+import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
@@ -14,6 +15,7 @@ export default function Login() {
   const [alertStatus, setAlertStatus] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const logger = new Logger("loginLogger");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,7 +29,8 @@ export default function Login() {
         } else {
           console.error("User creation failed.");
         }
-      } catch (error: unknown) {
+      } catch (error: any) {
+        logger.error("Error: ", error?.message || error);
         if (error instanceof Error) setErrorMessage(error.message);
         setAlertStatus(true);
       }
