@@ -6,22 +6,13 @@ from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
+from lib.sendgrid.commons import get_sender_email
 from lib.sendgrid.constants import (PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
                                     SENDGRID_API_KEY)
 from lib.utils.priceUtils import centsToDollars
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-MICROSOFT_EMAIL_LIST = [
-  "@live.com",
-  "@live.com.au",
-  "@outlook.com", 
-  "@hotmail.com", 
-  "@outlook.com.au"
-]
-
-SPORTSHUB_GMAIL_EMAIL = "team.sportshub@gmail.com"
-SPORTSHUB_OUTLOOK_EMAIL = "team.sportshub@outlook.com"
 
 @dataclass
 class SendGridPurchaseEventRequest:
@@ -62,11 +53,8 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
   try:
     subject = "Thank you for purchasing " + event_data.get("name")
 
-    # If 
-    is_email_microsoft = True if True in [email in request_data.email for email in MICROSOFT_EMAIL_LIST] else False
-
     message = Mail(
-      from_email=MICROSOFT_EMAIL_LIST if is_email_microsoft else SPORTSHUB_GMAIL_EMAIL,
+      from_email=get_sender_email(request_data.email),
       to_emails=request_data.email,
       subject=subject
     )

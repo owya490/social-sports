@@ -6,7 +6,7 @@ from firebase_functions import https_fn, options
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
-from lib.sendgrid.commons import get_user_data, get_user_email
+from lib.sendgrid.commons import get_user_data, get_user_email, get_sender_email
 from lib.sendgrid.constants import (
     CREATE_EVENT_EMAIL_TEMPLATE_ID,
     SENDGRID_API_KEY,
@@ -74,7 +74,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
     try:
         subject = "Thank you for creating " + event_data["name"]
         message = Mail(
-            from_email="team.sportshub@gmail.com",
+            from_email=get_sender_email(email),
             to_emails=email,
             subject=subject,
         )
