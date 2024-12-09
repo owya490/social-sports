@@ -22,7 +22,6 @@ import {
   timestampToDateString,
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
-import { updateEventById } from "@/services/src/events/eventsService";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
@@ -40,6 +39,7 @@ interface EventDrilldownDetailsPageProps {
   eventPrice: number;
   eventImage: string;
   eventId: string;
+  updateData: (id: string, data: any) => Promise<any>;
 }
 
 const EventDrilldownDetailsPage = ({
@@ -52,6 +52,7 @@ const EventDrilldownDetailsPage = ({
   eventPrice,
   eventImage,
   eventId,
+  updateData,
 }: EventDrilldownDetailsPageProps) => {
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
@@ -71,7 +72,7 @@ const EventDrilldownDetailsPage = ({
     const nameTokens = newEditTitle.toLowerCase().split(" ");
     try {
       setEditTitle(false);
-      await updateEventById(eventId, { name: newEditTitle, nameTokens });
+      await updateData(eventId, { name: newEditTitle, nameTokens });
       window.location.reload();
     } catch (error) {
       console.error("Failed to update event name:", error);
@@ -132,7 +133,7 @@ const EventDrilldownDetailsPage = ({
       setEditStartDate(false);
       setEditStartTime(false);
       setEditEndTime(false);
-      await updateEventById(eventId, {
+      await updateData(eventId, {
         startDate: updatedStartTimestamp,
         registrationDeadline: updatedStartTimestamp,
         endDate: updatedEndTimestamp,
@@ -199,7 +200,7 @@ const EventDrilldownDetailsPage = ({
     const locationTokens = newEditLocation.toLowerCase().split(" ");
     const latLng = await getLocationCoordinates(newEditLocation);
     try {
-      await updateEventById(eventId, {
+      await updateData(eventId, {
         location: newEditLocation,
         locationTokens,
         locationLatLng: {
@@ -237,7 +238,7 @@ const EventDrilldownDetailsPage = ({
     setPrice(newEditPrice);
     setEditPrice(false);
     try {
-      await updateEventById(eventId, { price: newEditPrice });
+      await updateData(eventId, { price: newEditPrice });
       window.location.reload();
     } catch (error) {
       console.error("Failed to update event price:", error);
@@ -264,7 +265,7 @@ const EventDrilldownDetailsPage = ({
     setDescription(newEditDescription);
     setEditDescription(false);
     try {
-      await updateEventById(eventId, { description: newEditDescription });
+      await updateData(eventId, { description: newEditDescription });
       window.location.reload();
     } catch (error) {
       console.error("Failed to update event description:", error);
@@ -292,7 +293,7 @@ const EventDrilldownDetailsPage = ({
             alt="BannerImage"
             width={0}
             height={0}
-            className="h-full w-full object-cover sm:rounded-3xl"
+            className="h-full w-full aspect-[16/9] object-cover sm:rounded-3xl"
           />
         )}
       </div>
