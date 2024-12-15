@@ -27,7 +27,7 @@ export default function Login() {
         if (userCreated) {
           router.push("/dashboard?login=success"); // Redirect only if user creation is successful
         } else {
-          console.error("User creation failed.");
+          throw new Error("Could not find user");
         }
       } catch (error: any) {
         logger.error("Error: ", error?.message || error);
