@@ -1,7 +1,6 @@
 import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
-import React from "react";
 import Skeleton from "react-loading-skeleton";
 
 interface EventBannerProps {
