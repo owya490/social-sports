@@ -1,0 +1,36 @@
+.mantine-1ho0yb:checked {
+  background: black;
+  color: black;
+  border-color: black;
+}
+
+[type="checkbox"]:focus,
+[type="radio"]:focus {
+  --tw-ring-offset-shadow: none;
+}
+
+.mantine-16uitr9 {
+  display: flex;
+  align-self: center;
+}
+
+.mantine-1x9kvcf {
+  margin-bottom: 0.5rem;
+}
+
+.mantine-hqx0d1 {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+#recurrenceSelectors .transition-all {
+  transition-property: none;
+}
+
+#recurrenceSelectors .before\:transition-all::before {
+  transition-property: none;
+}
+
+#recurrenceSelectors .after\:transition-all::after {
+  transition-property: none;
+}

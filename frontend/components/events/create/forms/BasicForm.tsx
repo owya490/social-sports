@@ -1,6 +1,7 @@
 // BasicInformation.tsx
 
 import LocationAutocompleteForm from "@/components/utility/AutoComplete";
+import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
@@ -16,6 +17,8 @@ import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
+import { RecurringEventsForm } from "./RecurringEventsForm";
+import "./form.css";
 
 export type BasicData = {
   name: string;
@@ -35,6 +38,7 @@ export type BasicData = {
   long: number;
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
+  newRecurrenceData: NewRecurrenceFormData;
 };
 
 type BasicInformationProps = BasicData & {
@@ -64,6 +68,7 @@ export function BasicInformation({
   locationError,
   stripeFeeToCustomer,
   promotionalCodesEnabled,
+  newRecurrenceData,
   updateField,
   setLoading,
   setHasError,
@@ -444,6 +449,15 @@ export function BasicInformation({
         </div>
         {isAdditionalSettingsOpen && (
           <div>
+             <div className="mb-12">
+                <RecurringEventsForm
+                  startDate={startDate}
+                  newRecurrenceData={newRecurrenceData}
+                  setRecurrenceData={(data: NewRecurrenceFormData) => {
+                    updateField({ newRecurrenceData: data });
+                  }}
+                />
+              </div>
             {user.stripeAccountActive && (
               <>
                 <div className="mb-12">
