@@ -1,12 +1,12 @@
 import { NewUserData, PrivateUserData, PublicUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
-import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
 import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
-import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
 import { DEFAULT_USER_PROFILE_PICTURE } from "./usersConstants";
+import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
+import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
 
 export const userServiceLogger = new Logger("userServiceLogger");
 
@@ -22,7 +22,11 @@ export async function createUser(data: NewUserData, userId: string): Promise<voi
   }
 }
 
-export async function getPublicUserById(userId: UserId, bypassCache: boolean = false): Promise<UserData> {
+export async function getPublicUserById(
+  userId: UserId,
+  bypassCache: boolean = false,
+  client: boolean = true
+): Promise<UserData> {
   userServiceLogger.info(`Fetching public user by ID:, ${userId}`);
   if (userId === undefined) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
@@ -49,7 +53,7 @@ export async function getPublicUserById(userId: UserId, bypassCache: boolean = f
     }
 
     // set local storage with data
-    setUsersDataIntoLocalStorage(userId, userData);
+    if (client) setUsersDataIntoLocalStorage(userId, userData);
 
     return userData;
   } catch (error) {

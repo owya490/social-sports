@@ -111,6 +111,7 @@ public class RecurringEventsService {
             case FORTNIGHTLY:
                 // We want to do recurrenceAmount + 1 as we count the initial date as a recurrence, but not in the UI
                 return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber -> {
+                    logger.info("recurrenceNumber {}", recurrenceNumber);
                     LocalDateTime recurrenceDateTime = TimeUtils.convertTimestampToLocalDateTime(startDate)
                             .plusDays((long) recurrenceNumber * frequency.getValue());
                     return TimeUtils.convertLocalDateTimeToTimestamp(recurrenceDateTime);
