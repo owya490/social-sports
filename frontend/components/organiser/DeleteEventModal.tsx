@@ -98,15 +98,17 @@ const DeleteEventModal = ({
                                         return attendeeName1.localeCompare(attendeeName2);
                                       }
                                     )
-                                    .map(([attendeeName, attendeeDetailsObj]) => {
+                                    .map(([attendeeName, attendeeDetailsObj], index) => {
                                       if (attendeeDetailsObj.ticketCount > 0) {
                                         return (
                                           <DeleteEventAttendeeCard
+                                            key={`${purchaserObj.email}-${attendeeName}-${index}`}
                                             attendeeName={attendeeName}
                                             purchaser={purchaserObj}
                                           />
                                         );
                                       }
+                                      return null;
                                     })
                                 )}
                           </div>
