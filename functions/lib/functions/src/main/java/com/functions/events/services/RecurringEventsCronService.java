@@ -24,7 +24,7 @@ public class RecurringEventsCronService {
         return createEventsFromRecurrenceTemplates(today, null, null, false);
     }
 
-    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, RecurrenceTemplate targetRecurrenceTemplate, boolean noCreateBeforeDays) throws Exception {
+    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, RecurrenceTemplate targetRecurrenceTemplate, boolean createEventWorkflow) throws Exception {
         Map<String, RecurrenceTemplate> activeRecurrenceTemplates;
         if (targetRecurrenceTemplateId == null) {
             activeRecurrenceTemplates = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplates();
@@ -53,12 +53,18 @@ public class RecurringEventsCronService {
                 Map<String, String> pastRecurrences = new HashMap<>(recurrenceData.getPastRecurrences());
 
                 boolean isStillActiveRecurrenceFlag = false;
-                for (Timestamp recurrenceTimestamp : recurrenceData.getAllRecurrences()) {
+                List<Timestamp> allRecurrences = recurrenceData.getAllRecurrences();
+
+                if (createEventWorkflow) {
+                    allRecurrences = List.of(allRecurrences.get(0));
+                }
+
+                for (Timestamp recurrenceTimestamp : allRecurrences) {
                     logger.info("Recurrence Timestamp: {}", recurrenceTimestamp);
                     String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
                     LocalDate eventCreationDate = TimeUtils.convertTimestampToLocalDateTime(recurrenceTimestamp).toLocalDate()
-                            .minusDays(noCreateBeforeDays ? 0 :recurrenceData.getCreateDaysBefore());
-                    if (!pastRecurrences.containsKey(recurrenceTimestampString) && today.equals(eventCreationDate)) {
+                            .minusDays(recurrenceData.getCreateDaysBefore());
+                    if (!pastRecurrences.containsKey(recurrenceTimestampString) && (today.equals(eventCreationDate) || createEventWorkflow)) {
                         NewEventData newEventDataDeepCopy = JavaUtils.deepCopy(newEventData, NewEventData.class);
                         long eventLengthMillis = newEventDataDeepCopy.getEndDate().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
                         long eventDeadlineDeltaMillis = newEventDataDeepCopy.getRegistrationDeadline().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
