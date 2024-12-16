@@ -1,12 +1,15 @@
+import json
 import os
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
+import requests
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
-from lib.sendgrid.constants import (PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
+from lib.sendgrid.constants import (LOOP_API_KEY,
+                                    PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
                                     SENDGRID_API_KEY)
 from lib.utils.priceUtils import centsToDollars
 from sendgrid import SendGridAPIClient
@@ -26,6 +29,32 @@ class SendGridPurchaseEventRequest:
       raise ValueError("Event Id must be provided as a string.")
     if not isinstance(self.visibility, str):
       raise ValueError("Visibility must be provided as a string.")
+
+
+def send_email_with_loop(logger, email, name, event_name, order_id, date_purchased, quantity, price, start_date, end_date, location):
+  headers = {"Authorization": "Bearer " + LOOP_API_KEY}
+  body = {
+    "transactionalId": "cm4r78nk301ehx79nrrxaijgl",
+    "email": email,
+    "dataVariables": {
+        "name": name,
+        "eventName": event_name,
+        "orderId": order_id, 
+        "datePurchased": date_purchased,
+        "quantity": quantity,
+        "price": price,
+        "startDate" : start_date,
+        "endDate": end_date,
+        "location": location
+    }
+  }
+
+  response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
+  print(response.json())
+  print(response.status_code)
+  if (response.status_code != 200):
+    logger.error(f"Failed to send payment confirmation for orderId={order_id}")
+
 
 
 # Left as normal python function as only invoked from the Stripe webhook oncall function. Not exposed to outside world.
@@ -76,16 +105,18 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       "date_purchased": date_purchased_string
     }
 
+    send_email_with_loop(logger, request_data.email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"))
+
     message.template_id = PURCHASE_EVENT_EMAIL_TEMPLATE_ID
 
     # TODO possibly either move this to common or make sendgrid service/ client in python
-    sg = SendGridAPIClient(SENDGRID_API_KEY)
-    response = sg.send(message)
-    logger.info(response.status_code)
+    # sg = SendGridAPIClient(SENDGRID_API_KEY)
+    # response = sg.send(message)
+    # logger.info(response.status_code)
 
     # Normally sendgrid return 202, reqeust in progress, but any 2XX response is acceptable.
-    if (not (response.status_code >= 200 and response.status_code < 300)):
-      raise Exception(f"Sendgrid failed to send message. e={response.body}")
+    # if (not (response.status_code >= 200 and response.status_code < 300)):
+    #   raise Exception(f"Sendgrid failed to send message. e={response.body}")
 
     return True
   except Exception as e:
