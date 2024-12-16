@@ -6,6 +6,7 @@ from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
+from lib.sendgrid.commons import get_sender_email
 from lib.sendgrid.constants import (PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
                                     SENDGRID_API_KEY)
 from lib.utils.priceUtils import centsToDollars
@@ -51,8 +52,9 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
   
   try:
     subject = "Thank you for purchasing " + event_data.get("name")
+
     message = Mail(
-      from_email='team.sportshub@gmail.com',
+      from_email=get_sender_email(request_data.email),
       to_emails=request_data.email,
       subject=subject
     )
