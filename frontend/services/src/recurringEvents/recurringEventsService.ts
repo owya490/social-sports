@@ -128,10 +128,6 @@ export async function updateRecurrenceTemplateEventData(
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} event data`);
   try {
     const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
-    console.log({
-      ...recurrenceTemplate.eventData,
-      ...updatedData,
-    });
     await updateRecurrenceTemplate(recurrenceTemplateId, {
       eventData: {
         ...recurrenceTemplate.eventData,

@@ -80,15 +80,6 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
       });
   }, []);
 
-  // useEffect(() => {
-  //   const tmp = async () => {
-  //     const event = await getEventById("8z4VmrOcOaElmkVKESeR");
-
-  //     handleRecurrenceTemplateEventUpdate("VKUNc06rWB7fQdn05jG1", event);
-  //   };
-  //   tmp();
-  // }, []);
-
   const handleRecurrenceTemplateEventUpdate = async (
     recurrenceTemplateId: RecurrenceTemplateId,
     newEventData: Partial<NewEventData>
