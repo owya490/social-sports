@@ -1,11 +1,10 @@
 "use client";
+import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
-import UserContext, { useUser } from "@/components/utility/UserContext";
-import { getAuth } from "firebase/auth";
+import React, { useState, useTransition } from "react";
 
 export default function Login() {
   const [userData, setUserData] = useState({
@@ -13,26 +12,29 @@ export default function Login() {
     password: "",
   });
   const [errorMessage, setErrorMessage] = useState("");
-  const [AlertStatus, setAlertStatus] = useState(false);
+  const [alertStatus, setAlertStatus] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const user = useUser();
+  const logger = new Logger("loginLogger");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    handleAlertClose();
 
-    try {
-      const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
-      if (userCreated) {
-        const auth = useUser();
-        const user = auth.user;
-        if (user.firstName != "") {
-          router.push("/dashboard?login=success"); // Redirect after successful login
+    startTransition(async () => {
+      try {
+        const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
+        if (userCreated) {
+          router.push("/dashboard?login=success"); // Redirect only if user creation is successful
+        } else {
+          throw new Error("Could not find user");
         }
+      } catch (error: any) {
+        logger.error("Error: ", error?.message || error);
+        if (error instanceof Error) setErrorMessage(error.message);
+        setAlertStatus(true);
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) setErrorMessage(error.message);
-      setAlertStatus(true);
-    }
+    });
   };
 
   const handleAlertClose = () => {
@@ -43,7 +45,7 @@ export default function Login() {
   return (
     <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
       <Alert
-        open={AlertStatus}
+        open={alertStatus}
         onClose={handleAlertClose}
         color="red"
         className="absolute ml-auto mr-auto left-0 right-0 top-24 w-fit"
@@ -117,10 +119,11 @@ export default function Login() {
           <div>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-lg bg-highlight-yellow px-3 py-2  font-semibold leading-6 text-white shadow-sm hover:bg-white hover:text-highlight-yellow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-highlight-yellow border-2 transition-colors duration-300 transform"
+              className="flex w-full justify-center rounded-lg bg-highlight-yellow text-white px-3 py-2 font-semibold leading-6 shadow-sm hover:bg-white hover:text-highlight-yellow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-highlight-yellow border-2 transition-colors duration-300 transform"
               tabIndex={3}
+              disabled={isPending}
             >
-              Sign in
+              {isPending ? <>Loading...</> : <>Sign in</>}
             </button>
           </div>
         </form>
