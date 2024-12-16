@@ -18,3 +18,6 @@ def get_user_data(user_id: str):
     raise Exception(f"Unable to find user provided in datastore to send email. userId={user_id}")
 
   return maybe_user_data.to_dict()
+
+def cents_to_dollars(price_in_cents):
+    return f"${price_in_cents / 100:.2f}"
