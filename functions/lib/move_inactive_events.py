@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 
 from firebase_admin import firestore
-from firebase_functions import https_fn, options, scheduler_fn
+from firebase_functions import https_fn, scheduler_fn
 from google.cloud import firestore
 from google.cloud.firestore import DocumentReference, Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -70,7 +70,7 @@ def get_and_move_private_inactive_events(today: date):
 
 
 
-@scheduler_fn.on_schedule(schedule="every day 00:00", region="australia-southeast1", time_zone="Australia/Sydney")
+@scheduler_fn.on_schedule(schedule="every day 00:00", region="australia-southeast1", timezone=scheduler_fn.Timezone("Australia/Sydney"))
 def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   uid = str(uuid.uuid4())
   logger = Logger(f"move_inactive_events_logger_{uid}")
@@ -83,5 +83,5 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   get_and_move_public_inactive_events(today, logger)
   get_and_move_private_inactive_events(today)
 
-  return https_fn.Response(f"Moved all Public and Private Active Events which are past their end date to Inactive.")
+  return https_fn.Response(f"Moved all Public and Private Active Events which are past their end date to Inactive.", status=200)
  

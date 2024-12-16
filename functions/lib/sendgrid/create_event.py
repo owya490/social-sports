@@ -6,15 +6,14 @@ from firebase_functions import https_fn, options
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
-from lib.sendgrid.commons import get_user_data, get_user_email, get_sender_email
-from lib.sendgrid.constants import (
-    CREATE_EVENT_EMAIL_TEMPLATE_ID,
-    SENDGRID_API_KEY,
-    SENDGRID_UNSUBSCRIBE_GROUP_ID,
-)
+from lib.sendgrid.commons import (get_sender_email, get_user_data,
+                                  get_user_email)
+from lib.sendgrid.constants import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
+                                    SENDGRID_API_KEY,
+                                    SENDGRID_UNSUBSCRIBE_GROUP_ID)
 from lib.utils.priceUtils import centsToDollars
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, Asm
+from sendgrid.helpers.mail import Asm, Mail
 
 
 @dataclass
@@ -111,9 +110,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
         if not (response.status_code >= 200 and response.status_code < 300):
             raise Exception(f"SendGrid failed to send message. e={response.body}")
 
-        return https_fn.Response(
-            status=200, headers={"Access-Control-Allow-Origin": "*"}
-        )
+        return https_fn.Response(status=200)
     except Exception as e:
         logger.error(
             f"Error sending create event email. eventId={request_data.eventId}", e

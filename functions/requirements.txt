@@ -1,4 +1,4 @@
-firebase_functions~=0.1.0
+firebase_functions~=0.4.2
 google-cloud-firestore==2.11.1
 stripe>=5.0.0
 google-cloud-logging>=3.0.0

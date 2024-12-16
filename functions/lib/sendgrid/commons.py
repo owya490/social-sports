@@ -1,6 +1,5 @@
 from lib.constants import db
 
-
 MICROSOFT_EMAIL_LIST = [
   "@live.com",
   "@live.com.au",
@@ -34,4 +33,4 @@ def get_user_data(user_id: str):
 
 def get_sender_email(to_email_address: str) -> str:
   is_email_microsoft = True if True in [email in to_email_address for email in MICROSOFT_EMAIL_LIST] else False
-  return MICROSOFT_EMAIL_LIST if is_email_microsoft else SPORTSHUB_GMAIL_EMAIL
+  return SPORTSHUB_OUTLOOK_EMAIL if is_email_microsoft else SPORTSHUB_GMAIL_EMAIL
