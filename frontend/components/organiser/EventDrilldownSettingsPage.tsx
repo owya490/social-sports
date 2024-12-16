@@ -10,6 +10,7 @@ import { sendEmailonDeleteEvent } from "@/services/src/sendgrid/sendgridService"
 import { env } from "process";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { Switch } from "@mantine/core";
+import { Logger } from "@/observability/logger";
 
 interface EventDrilldownSettingsPageProps {
   eventMetadata: EventMetadata;
@@ -32,7 +33,7 @@ const EventDrilldownSettingsPage = ({
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user } = useUser();
-
+  const logger = new Logger("DeleteLogger");
   const onClose = () => {
     setModalOpen(false);
   };
@@ -47,7 +48,7 @@ const EventDrilldownSettingsPage = ({
       if (error === "Rate Limited") {
         router.push("/error/Delete_UPDATE_EVENT_RATELIMITED");
       } else if (error == "Sendgrid failed") {
-        console.log("sendgrid error", error);
+        logger.error("Error, sendgrid failed to send delete event");
       } else {
         router.push("/error");
       }
