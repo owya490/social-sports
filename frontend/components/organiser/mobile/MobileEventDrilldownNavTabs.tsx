@@ -4,7 +4,7 @@ interface EventDrilldownNavTabsProps {
 }
 
 export const MobileEventDrilldownNavTabs = ({ currSidebarPage, setCurrSidebarPage }: EventDrilldownNavTabsProps) => {
-  const navigationTabs = ["Details", "Attendees"];
+  const navigationTabs = ["Details", "Attendees", "Settings"];
 
   return (
     <div className="flex sm:hidden">

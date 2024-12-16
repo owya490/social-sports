@@ -37,13 +37,13 @@ export default function Home() {
             <SearchSport />
           </div>
         </div>
-        <RecommendedEvents />
+        {/* <RecommendedEvents />
         <div className="my-16 md:my-36 w-screen flex justify-center">
           <div className="screen-width-dashboard">
             <NewsletterSignup />
           </div>
         </div>
-        <PopularLocations />
+        <PopularLocations /> */}
         <PopularEvents />
         <CreateEventBanner />
       </div>
