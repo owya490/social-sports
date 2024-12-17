@@ -15,6 +15,7 @@ from lib.sendgrid.constants import (
 from lib.utils.priceUtils import centsToDollars
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Asm
+import pytz
 
 
 @dataclass
@@ -81,12 +82,12 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
 
         start_date: Timestamp = event_data.get("startDate", Timestamp()).timestamp_pb()
         end_date: Timestamp = event_data.get("endDate", Timestamp()).timestamp_pb()
-
+        aest = pytz.timezone('Australia/Sydney')
         start_date_string = (
-            start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M") if start_date else "N/A"
+            start_date.ToDatetime().astimezone(aest).strftime("%m/%d/%Y, %H:%M") if start_date else "N/A"
         )
         end_date_string = (
-            end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M") if end_date else "N/A"
+            end_date.ToDatetime().astimezone(aest).strftime("%m/%d/%Y, %H:%M") if end_date else "N/A"
         )
 
         message.dynamic_template_data = {
