@@ -4,6 +4,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
+import pytz
 import requests
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
@@ -86,10 +87,11 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
 
     start_date: Timestamp = event_data.get("startDate").timestamp_pb()
     end_date: Timestamp = event_data.get("endDate").timestamp_pb()
-    start_date_string =  start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
-    end_date_string =  end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
+    aest = pytz.timezone('Australia/Sydney')
+    start_date_string =  start_date.ToDatetime().astimezone(aest).strftime("%m/%d/%Y, %H:%M")
+    end_date_string =  end_date.ToDatetime().astimezone(aest).strftime("%m/%d/%Y, %H:%M")
     date_purchased: Timestamp = order_data.get("datePurchased").timestamp_pb()
-    date_purchased_string = date_purchased.ToDatetime().strftime("%m/%d/%Y, %H:%M")
+    date_purchased_string = date_purchased.ToDatetime().astimezone(aest).strftime("%m/%d/%Y, %H:%M")
 
     message.dynamic_template_data = {
       "first_name": request_data.first_name,
