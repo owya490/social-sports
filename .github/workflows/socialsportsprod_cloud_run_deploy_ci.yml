@@ -5,6 +5,7 @@ on:
     branches:
       - master
   workflow_dispatch: # TODO: REMOVE THIS AS THIS IS FOR MANUAL TESTING PURPOSES ONLY
+  pull_request:
 
 jobs:
   deploy:
