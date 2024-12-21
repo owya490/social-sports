@@ -1,4 +1,4 @@
-name: Deploy cloud functions to Cloud Run for socialsportsprod
+name: deploy-cloud-functions-to-cloud-run-for-socialsportsprod
 
 on:
   push:
