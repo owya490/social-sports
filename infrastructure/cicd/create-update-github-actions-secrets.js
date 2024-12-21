@@ -66,6 +66,10 @@ const envVariableListDev = [
     secretName: "FIREBASE_DEV_MEASUREMENT_ID",
     secretValue: process.env.FIREBASE_DEV_MEASUREMENT_ID,
   },
+  {
+    secretName: "SOCIALSPORTSPROD_GCLOUD_CREDENTIALS",
+    secretValue: process.env.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS,
+  },
   // TODO: add more secrets you want to push to github secrets here.
 ];
 
@@ -86,14 +90,8 @@ for (const { secretName, secretValue } of envVariableListDev) {
  * @param {string} firebaseKeySecretName
  * @param {string} firebaseKeyEncryptedValue
  */
-async function createUpdateRepositorySecret(
-  firebaseKeySecretName,
-  firebaseKeyValue
-) {
-  const firebaseKeyEncryptedValue = await _encryptKeyLibSodium(
-    firebaseKeyValue,
-    encryptionKey
-  );
+async function createUpdateRepositorySecret(firebaseKeySecretName, firebaseKeyValue) {
+  const firebaseKeyEncryptedValue = await _encryptKeyLibSodium(firebaseKeyValue, encryptionKey);
   await octokit.request(
     `PUT /repos/${SOCIAL_SPORTS_REPO_OWNER}/${SOCIAL_SPORTS_REPO_NAME}/actions/secrets/${firebaseKeySecretName}`,
     {

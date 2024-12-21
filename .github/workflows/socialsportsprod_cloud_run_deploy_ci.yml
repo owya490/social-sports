@@ -1,0 +1,75 @@
+name: Deploy cloud functions to Cloud Run for socialsportsprod
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch: # TODO: REMOVE THIS AS THIS IS FOR MANUAL TESTING PURPOSES ONLY
+
+jobs:
+  deploy:
+    name: Deploy to Google Cloud Run
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Set up Google Cloud SDK
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: socialsportsprod
+          service_account_key: ${{ secrets.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS }}
+
+      # Authenticate Docker with Google Container Registry
+      - name: Authenticate Docker
+        run: |
+          gcloud auth configure-docker
+
+      # Deploy java cloud run functions
+      - name: Deploy updateRecurrenceTemplate
+        run: |
+          gcloud functions deploy updateRecurrenceTemplate \
+            --entry-point com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project socialsportsprod \
+            --set-env-vars PROJECT_NAME=socialsportsprod
+
+      - name: Deploy createRecurrenceTemplate
+        run: |
+          gcloud functions deploy createRecurrenceTemplate \
+            --entry-point com.functions.events.controllers.CreateRecurrenceTemplateEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project socialsportsprod \
+            --set-env-vars PROJECT_NAME=socialsportsprod
+
+      - name: Deploy recurringEventsCron
+        run: |
+          gcloud functions deploy recurringEventsCron \
+            --entry-point com.functions.events.controllers.RecurringEventsCronEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project socialsportsprod \
+            --set-env-vars PROJECT_NAME=socialsportsprod \
+            --memory 512
+
+      - name: Deploy createEvent
+        run: |
+          gcloud functions deploy createEvent \
+            --entry-point com.functions.Events.Events \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project socialsportsprod \
+            --set-env-vars PROJECT_NAME=socialsportsprod
