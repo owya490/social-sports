@@ -111,6 +111,12 @@ jobs:
         run: |
           npm install -g firebase-tools
 
+      # Install Python 3.12
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
       # Set up Python environment and install dependencies
       - name: Set up Python environment
         working-directory: functions
