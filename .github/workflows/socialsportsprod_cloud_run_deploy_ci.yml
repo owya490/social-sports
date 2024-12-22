@@ -44,6 +44,7 @@ jobs:
             --region australia-southeast1 \
             --project socialsportsprod \
             --set-env-vars PROJECT_NAME=socialsportsprod
+        working-directory: functions/lib/functions
 
       - name: Deploy createRecurrenceTemplate
         run: |
@@ -55,6 +56,7 @@ jobs:
             --region australia-southeast1 \
             --project socialsportsprod \
             --set-env-vars PROJECT_NAME=socialsportsprod
+        working-directory: functions/lib/functions
 
       - name: Deploy recurringEventsCron
         run: |
@@ -67,6 +69,7 @@ jobs:
             --project socialsportsprod \
             --set-env-vars PROJECT_NAME=socialsportsprod \
             --memory 512
+        working-directory: functions/lib/functions
 
       - name: Deploy createEvent
         run: |
@@ -78,3 +81,4 @@ jobs:
             --region australia-southeast1 \
             --project socialsportsprod \
             --set-env-vars PROJECT_NAME=socialsportsprod
+        working-directory: functions/lib/functions
