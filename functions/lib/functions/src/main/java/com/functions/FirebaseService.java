@@ -41,7 +41,7 @@ public class FirebaseService {
     static {
         try {
             if (FirebaseApp.getApps().isEmpty()) {
-                initialize();
+                invokeInitialize();
             }
         } catch (Exception e) {
             logger.error("Error initializing FirebaseService: " + e.getMessage());
@@ -82,6 +82,16 @@ public class FirebaseService {
         logging = LoggingOptions.getDefaultInstance().getService();
 
         posthog = new PostHog.Builder(posthogApiKey).host(posthogHost).build();
+    }
+
+    public static void invokeInitialize() throws Exception {
+        try {
+            if (FirebaseApp.getApps().isEmpty()) {
+                initialize();
+            }
+        } catch (Exception e) {
+            logger.error("Error initializing FirebaseService: " + e.getMessage());
+        }
     }
 
     public static Firestore getFirestore() {
