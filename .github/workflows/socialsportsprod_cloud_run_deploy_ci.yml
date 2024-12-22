@@ -107,6 +107,8 @@ jobs:
           credentials_json: ${{ secrets.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS }}
 
       - name: Set up Firebase CLI
+        env:
+          GCP_SA_KEY: ${{ secrets.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS }}
         uses: w9jds/firebase-action@v2.2.2
         with:
           args: projects:list
