@@ -36,7 +36,8 @@ jobs:
       - name: Set functions_key.json and .env
         working-directory: functions/lib/functions
         run: |
-          printf "%s" "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" > functions_key.json
+          sudo apt-get install -y jq
+          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" | jq '.' > functions_key.json
           echo "STRIPE_API_KEY=${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}" >> .env
           echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}" >> .env
           echo "POSTHOG_API_KEY=${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}" >> .env
@@ -136,7 +137,8 @@ jobs:
       - name: Set functions_key.json and .env
         working-directory: functions
         run: |
-          printf "%s" "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" > functions_key.json
+          sudo apt-get install -y jq
+          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" | jq '.' > functions_key.json
           echo "STRIPE_API_KEY=${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}" >> .env
           echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}" >> .env
           echo "POSTHOG_API_KEY=${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}" >> .env
@@ -151,4 +153,4 @@ jobs:
       - name: Deploy all python functions
         working-directory: functions
         run: |
-          firebase deploy --only functions
+          firebase deploy --only functions:move_inactive_events
