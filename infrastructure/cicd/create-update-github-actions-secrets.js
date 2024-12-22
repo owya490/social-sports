@@ -70,14 +70,36 @@ const envVariableListDev = [
     secretName: "SOCIALSPORTSPROD_GCLOUD_CREDENTIALS",
     secretValue: process.env.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS,
   },
+  {
+    secretName: "SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON",
+    secretValue: process.env.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_STRIPE_API_KEY",
+    secretValue: process.env.SOCIALSPORTSPROD_STRIPE_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET",
+    secretValue: process.env.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_POSTHOG_API_KEY",
+    secretValue: process.env.SOCIALSPORTSPROD_POSTHOG_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_BEARER_TOKEN",
+    secretValue: process.env.SOCIALSPORTSPROD_BEARER_TOKEN,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_SENDGRID_API_KEY",
+    secretValue: process.env.SOCIALSPORTSPROD_SENDGRID_API_KEY,
+  },
   // TODO: add more secrets you want to push to github secrets here.
 ];
 
 for (const { secretName, secretValue } of envVariableListDev) {
   await createUpdateRepositorySecret(secretName, secretValue);
 }
-
-console.log(await doesSecretExist("SOCIALSPORTSPROD_GCLOUD_CREDENTIALS"));
 
 ////////////////////////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS //

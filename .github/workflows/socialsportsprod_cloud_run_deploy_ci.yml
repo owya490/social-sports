@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  deploy:
+  deploy-java-cloud-run-functions:
     name: Deploy to Google Cloud Run
     runs-on: ubuntu-latest
 
@@ -32,8 +32,20 @@ jobs:
         run: |
           gcloud auth configure-docker
 
+      # The following functions_key.json and .env variables are required for our java cloud run functions
+      - name: Set functions_key.json and .env
+        working-directory: functions/lib/functions
+        run: |
+          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" > functions_key.json
+          echo "STRIPE_API_KEY=${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}" >> .env
+          echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}" >> .env
+          echo "POSTHOG_API_KEY=${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}" >> .env
+          echo "BEARER_TOKEN=${{ secrets.SOCIALSPORTSPROD_BEARER_TOKEN }}" >> .env
+          echo "SENDGRID_API_KEY=${{ secrets.SOCIALSPORTSPROD_SENDGRID_API_KEY }}" >> .env
+
       # Deploy java cloud run functions
       - name: Deploy updateRecurrenceTemplate
+        working-directory: functions/lib/functions
         run: |
           gcloud functions deploy updateRecurrenceTemplate \
             --entry-point com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint \
@@ -43,9 +55,9 @@ jobs:
             --region australia-southeast1 \
             --project socialsportsprod \
             --set-env-vars PROJECT_NAME=socialsportsprod
-        working-directory: functions/lib/functions
 
       - name: Deploy createRecurrenceTemplate
+        working-directory: functions/lib/functions
         run: |
           gcloud functions deploy createRecurrenceTemplate \
             --entry-point com.functions.events.controllers.CreateRecurrenceTemplateEndpoint \
@@ -55,9 +67,9 @@ jobs:
             --region australia-southeast1 \
             --project socialsportsprod \
             --set-env-vars PROJECT_NAME=socialsportsprod
-        working-directory: functions/lib/functions
 
       - name: Deploy recurringEventsCron
+        working-directory: functions/lib/functions
         run: |
           gcloud functions deploy recurringEventsCron \
             --entry-point com.functions.events.controllers.RecurringEventsCronEndpoint \
@@ -68,9 +80,9 @@ jobs:
             --project socialsportsprod \
             --set-env-vars PROJECT_NAME=socialsportsprod \
             --memory 512
-        working-directory: functions/lib/functions
 
       - name: Deploy createEvent
+        working-directory: functions/lib/functions
         run: |
           gcloud functions deploy createEvent \
             --entry-point com.functions.events.controllers.CreateEventEndpoint \
@@ -80,4 +92,42 @@ jobs:
             --region australia-southeast1 \
             --project socialsportsprod \
             --set-env-vars PROJECT_NAME=socialsportsprod
-        working-directory: functions/lib/functions
+
+  deploy-python-firebase-functions:
+    name: Deploy Python Firebase Functions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Authenticate Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS }}
+
+      - name: Set up Firebase CLI
+        uses: w9jds/firebase-action@v2.2.2
+        with:
+          args: projects:list
+
+      # The following functions_key.json and .env variables are required for our python firebase functions
+      - name: Set functions_key.json and .env
+        working-directory: functions
+        run: |
+          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" > functions_key.json
+          echo "STRIPE_API_KEY=${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}" >> .env
+          echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}" >> .env
+          echo "POSTHOG_API_KEY=${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}" >> .env
+          echo "BEARER_TOKEN=${{ secrets.SOCIALSPORTSPROD_BEARER_TOKEN }}" >> .env
+          echo "SENDGRID_API_KEY=${{ secrets.SOCIALSPORTSPROD_SENDGRID_API_KEY }}" >> .env
+
+      - name: Set firebase project
+        working-directory: functions
+        run: |
+          firebase use --add socialsportsprod
+
+      - name: Deploy all python functions
+        working-directory: functions
+        run: |
+          firebase deploy --only functions
