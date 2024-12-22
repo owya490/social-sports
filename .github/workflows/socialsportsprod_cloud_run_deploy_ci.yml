@@ -1,10 +1,9 @@
-name: deploy-cloud-functions-to-cloud-run-for-socialsportsprod
+name: Deploy cloud functions to Cloud Run for socialsportsprod
 
 on:
   push:
     branches:
       - master
-  workflow_dispatch: # TODO: REMOVE THIS AS THIS IS FOR MANUAL TESTING PURPOSES ONLY
   pull_request:
 
 jobs:
@@ -74,7 +73,7 @@ jobs:
       - name: Deploy createEvent
         run: |
           gcloud functions deploy createEvent \
-            --entry-point com.functions.Events.Events \
+            --entry-point com.functions.events.controllers.CreateEventEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \

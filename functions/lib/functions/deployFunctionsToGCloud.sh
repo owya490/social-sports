@@ -36,7 +36,7 @@ gcloud functions deploy recurringEventsCron \
 
 # Deploy createEvent to DEV
 gcloud functions deploy createEvent \
-   --entry-point com.functions.Events.Events \
+   --entry-point com.functions.events.controllers.CreateEventEndpoint \
    --runtime java17 \
    --trigger-http \
    --allow-unauthenticated \
