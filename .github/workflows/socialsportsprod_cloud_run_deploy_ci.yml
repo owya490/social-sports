@@ -36,7 +36,7 @@ jobs:
       - name: Set functions_key.json and .env
         working-directory: functions/lib/functions
         run: |
-          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" > functions_key.json
+          printf "%s" "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" > functions_key.json
           echo "STRIPE_API_KEY=${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}" >> .env
           echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}" >> .env
           echo "POSTHOG_API_KEY=${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}" >> .env
@@ -111,6 +111,14 @@ jobs:
         run: |
           npm install -g firebase-tools
 
+      # Set up Python environment and install dependencies
+      - name: Set up Python environment
+        working-directory: functions
+        run: |
+          python3.12 -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
       - name: Set up Firebase CLI
         env:
           GCP_SA_KEY: ${{ secrets.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS }}
@@ -122,7 +130,7 @@ jobs:
       - name: Set functions_key.json and .env
         working-directory: functions
         run: |
-          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" > functions_key.json
+          printf "%s" "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" > functions_key.json
           echo "STRIPE_API_KEY=${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}" >> .env
           echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}" >> .env
           echo "POSTHOG_API_KEY=${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}" >> .env
