@@ -77,6 +77,8 @@ for (const { secretName, secretValue } of envVariableListDev) {
   await createUpdateRepositorySecret(secretName, secretValue);
 }
 
+console.log(await doesSecretExist("SOCIALSPORTSPROD_GCLOUD_CREDENTIALS"));
+
 ////////////////////////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS //
 ////////////////////////////////////////////////////////////////////////////////
@@ -133,4 +135,31 @@ async function _encryptKeyLibSodium(secret, key) {
   });
 
   return output;
+}
+
+/**
+ * For sanity checking if a GitHub secret exists for the repository.
+ *
+ * @param {string} secretName - The name of the secret to check.
+ * @returns {boolean} - True if the secret exists, false otherwise.
+ */
+async function doesSecretExist(secretName) {
+  try {
+    const response = await octokit.request(
+      `GET /repos/${SOCIAL_SPORTS_REPO_OWNER}/${SOCIAL_SPORTS_REPO_NAME}/actions/secrets`,
+      {
+        owner: SOCIAL_SPORTS_REPO_OWNER,
+        repo: SOCIAL_SPORTS_REPO_NAME,
+        headers: {
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      }
+    );
+
+    const secrets = response.data.secrets || [];
+    return secrets.some((secret) => secret.name === secretName);
+  } catch (error) {
+    console.error(`Error checking secret existence: ${error.message}`);
+    return false;
+  }
 }
