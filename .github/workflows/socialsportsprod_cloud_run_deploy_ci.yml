@@ -37,6 +37,7 @@ jobs:
         working-directory: functions/lib/functions
         run: |
           sudo apt-get install -y jq
+          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}"
           echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" | jq '.' > functions_key.json
           echo "STRIPE_API_KEY=${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}" >> .env
           echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}" >> .env
