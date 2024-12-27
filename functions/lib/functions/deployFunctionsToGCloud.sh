@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# cp ../../functions_key_dev.json functions_key.json
+
+# cp ../../.env.dev .env
+
+
 cp ../../functions_key_prod.json functions_key.json
 
 cp ../../.env.prod .env
@@ -41,4 +46,7 @@ gcloud functions deploy createEvent \
    --trigger-http \
    --allow-unauthenticated \
    --region australia-southeast1 \
-   --set-env-vars PROJECT_NAME=socialsports-44162
+   --project socialsportsprod \
+   --set-env-vars PROJECT_NAME=socialsportsprod
+
+# socialsportsprod
