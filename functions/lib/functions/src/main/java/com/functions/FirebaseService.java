@@ -18,16 +18,14 @@ import com.posthog.java.PostHog;
 
 public class FirebaseService {
 
-    public class CollectionPaths {
+    public static class CollectionPaths {
         public static final String EVENTS = "Events";
         public static final String ACTIVE = "Active";
         public static final String INACTIVE = "InActive";
         public static final String PRIVATE = "Private";
         public static final String PUBLIC = "Public";
         public static final String USERS = "Users";
-
         public static final String EVENTS_METADATA = "EventsMetadata";
-
         public static final String RECURRING_EVENTS = "RecurringEvents";
     }
 
