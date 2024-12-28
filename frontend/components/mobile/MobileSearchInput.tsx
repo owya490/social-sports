@@ -33,33 +33,29 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
         // Return some default or empty values when not in a browser environment
         setEvent("");
         setLocation("");
+        return;
       }
       const searchParams = new URLSearchParams(window.location.search);
-      const event = searchParams.get("event");
-      const location = searchParams.get("location");
 
-      if (event != null) {
-        setEvent(event);
-      }
-      if (location != null) {
-        setLocation(location);
-      }
+      const eventParam = searchParams.get("event");
+      const locationParam = searchParams.get("location");
+
+      setEvent(eventParam || "");
+      setLocation(locationParam || "");
     };
     updateStateFromQuery();
   }, [pathname, searchParams]);
 
   const handleSearch = () => {
     const maybePrevSearches = sessionStorage.getItem("recentSearches");
+    let prevSearches = maybePrevSearches ? deserialize_list(maybePrevSearches) : [];
+
     const currentSearch = event + ":" + location;
-    if (maybePrevSearches) {
-      const prevSearches: string[] = deserialize_list(maybePrevSearches);
-      prevSearches.unshift(currentSearch);
-      sessionStorage.setItem("recentSearches", serialize_list(prevSearches));
-      setRecentSearches(prevSearches);
-    } else {
-      sessionStorage.setItem("recentSearches", serialize_list([currentSearch]));
-      setRecentSearches([currentSearch]);
-    }
+
+    prevSearches = [currentSearch, ...prevSearches.slice(0, 4)];
+    sessionStorage.setItem("recentSearches", serialize_list(prevSearches));
+    setRecentSearches(prevSearches);
+
     const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
     router.push(searchUrl);
     setSearchExpanded();
