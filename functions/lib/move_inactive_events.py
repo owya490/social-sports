@@ -36,7 +36,7 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
   public_events_ref = db.collection(ACTIVE_PUBLIC)
   public_events = public_events_ref.stream()
 
-  # Scan through and if the endDate is past todays date then move it to Events/Inactive/Public
+  # Scan through and if the endDate is past today's date then move it to Events/Inactive/Public
   for event in public_events:
     logger.info(event.id)
     event_id = event.id
