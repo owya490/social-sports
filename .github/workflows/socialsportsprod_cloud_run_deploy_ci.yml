@@ -42,10 +42,10 @@ jobs:
         working-directory: functions/lib/functions
         run: |
           echo "STRIPE_API_KEY=\"${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}\"" >> .env
-          echo 'STRIPE_WEBHOOK_ENDPOINT_SECRET="${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}"' >> .env
-          echo 'POSTHOG_API_KEY="${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}"' >> .env
-          echo 'BEARER_TOKEN="${{ secrets.SOCIALSPORTSPROD_BEARER_TOKEN }}'" >> .env
-          echo 'SENDGRID_API_KEY="${{ secrets.SOCIALSPORTSPROD_SENDGRID_API_KEY }}"' >> .env
+          echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=\"${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}\"" >> .env
+          echo "POSTHOG_API_KEY=\"${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}\"" >> .env
+          echo "BEARER_TOKEN=\"${{ secrets.SOCIALSPORTSPROD_BEARER_TOKEN }}\"" >> .env
+          echo "SENDGRID_API_KEY=\"${{ secrets.SOCIALSPORTSPROD_SENDGRID_API_KEY }}\"" >> .env
 
       # Deploy java cloud run functions
       - name: Deploy updateRecurrenceTemplate
@@ -145,11 +145,11 @@ jobs:
       - name: Set .env variables
         working-directory: functions
         run: |
-          echo 'STRIPE_API_KEY="${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}"' >> .env
-          echo 'STRIPE_WEBHOOK_ENDPOINT_SECRET="${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}"' >> .env
-          echo 'POSTHOG_API_KEY="${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}"' >> .env
-          echo 'BEARER_TOKEN="${{ secrets.SOCIALSPORTSPROD_BEARER_TOKEN }}'" >> .env
-          echo 'SENDGRID_API_KEY="${{ secrets.SOCIALSPORTSPROD_SENDGRID_API_KEY }}"' >> .env
+          echo "STRIPE_API_KEY=\"${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}\"" >> .env
+          echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=\"${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}\"" >> .env
+          echo "POSTHOG_API_KEY=\"${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}\"" >> .env
+          echo "BEARER_TOKEN=\"${{ secrets.SOCIALSPORTSPROD_BEARER_TOKEN }}\"" >> .env
+          echo "SENDGRID_API_KEY=\"${{ secrets.SOCIALSPORTSPROD_SENDGRID_API_KEY }}\"" >> .env
 
       - name: Set firebase project
         working-directory: functions
