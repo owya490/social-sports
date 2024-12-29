@@ -41,7 +41,6 @@ jobs:
       - name: Set .env variables
         working-directory: functions/lib/functions
         run: |
-          cat functions_key.json
           echo 'STRIPE_API_KEY="${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}"' >> .env
           echo 'STRIPE_WEBHOOK_ENDPOINT_SECRET="${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}"' >> .env
           echo 'POSTHOG_API_KEY="${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}"' >> .env
@@ -146,7 +145,6 @@ jobs:
       - name: Set .env variables
         working-directory: functions
         run: |
-          cat functions_key.json
           echo 'STRIPE_API_KEY="${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}"' >> .env
           echo 'STRIPE_WEBHOOK_ENDPOINT_SECRET="${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}"' >> .env
           echo 'POSTHOG_API_KEY="${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}"' >> .env
