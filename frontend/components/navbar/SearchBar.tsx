@@ -48,22 +48,23 @@ export default function SearchBar() {
   return (
     <div className="flex border border-1 border-black rounded-full h-10 pl-5 pr-0.5 w-fit items-center bg-white drop-shadow-md">
       <input
-        className="h-9 max-w-[160px] xl:max-w-[220px] border-0 focus:ring-0"
+        // className="h-9 max-w-[160px] xl:max-w-[220px] border-0 focus:ring-0"
+        className="h-9 w-64 border-0 focus:ring-0"
         type="text"
-        placeholder="Search Event"
+        placeholder="Search for events in Sydney, AU"
         value={event}
         onChange={(e) => setEvent(e.target.value)}
         onKeyDown={handleKeyPress}
       />
-      <div className="h-full bg-black w-[1px] mx-2"></div>
-      <input
+      {/* <div className="h-full bg-black w-[1px] mx-2"></div> */}
+      {/* <input
         className="h-9 max-w-[160px] xl:max-w-[220px] border-0 focus:ring-0"
         type="text"
         placeholder="Sydney, AU"
         value={location}
         onChange={(e) => setLocation(e.target.value)}
         onKeyDown={handleKeyPress}
-      />
+      /> */}
       <button onClick={handleSearchClick} className="w-9 h-9 rounded-full border border-black bg-black">
         <SearchIcon />
       </button>
