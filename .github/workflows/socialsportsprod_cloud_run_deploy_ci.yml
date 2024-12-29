@@ -62,6 +62,43 @@ jobs:
             --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
 
+      - name: Deploy createRecurrenceTemplate
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy createRecurrenceTemplate \
+            --entry-point com.functions.events.controllers.CreateRecurrenceTemplateEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+
+      - name: Deploy recurringEventsCron
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy recurringEventsCron \
+            --entry-point com.functions.events.controllers.RecurringEventsCronEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy createEvent
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy createEvent \
+            --entry-point com.functions.events.controllers.CreateEventEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}
     runs-on: ubuntu-latest

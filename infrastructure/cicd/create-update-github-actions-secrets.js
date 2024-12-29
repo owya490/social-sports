@@ -71,8 +71,8 @@ const envVariableListDev = [
     secretValue: process.env.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS,
   },
   {
-    secretName: "SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON",
-    secretValue: process.env.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON,
+    secretName: "SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED",
+    secretValue: process.env.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED,
   },
   {
     secretName: "SOCIALSPORTSPROD_STRIPE_API_KEY",
@@ -95,8 +95,32 @@ const envVariableListDev = [
     secretValue: process.env.SOCIALSPORTSPROD_SENDGRID_API_KEY,
   },
   {
-    secretName: "SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED",
-    secretValue: process.env.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED,
+    secretName: "SOCIALSPORTSDEV_GCLOUD_CREDENTIALS",
+    secretValue: process.env.SOCIALSPORTSDEV_GCLOUD_CREDENTIALS,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_FUNCTIONS_KEY_JSON_BASE64_ENCODED",
+    secretValue: process.env.SOCIALSPORTSDEV_FUNCTIONS_KEY_JSON_BASE64_ENCODED,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_STRIPE_API_KEY",
+    secretValue: process.env.SOCIALSPORTSDEV_STRIPE_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_STRIPE_WEBHOOK_ENDPOINT_SECRET",
+    secretValue: process.env.SOCIALSPORTSDEV_STRIPE_WEBHOOK_ENDPOINT_SECRET,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_POSTHOG_API_KEY",
+    secretValue: process.env.SOCIALSPORTSDEV_POSTHOG_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_BEARER_TOKEN",
+    secretValue: process.env.SOCIALSPORTSDEV_BEARER_TOKEN,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_SENDGRID_API_KEY",
+    secretValue: process.env.SOCIALSPORTSDEV_SENDGRID_API_KEY,
   },
   // TODO: add more secrets you want to push to github secrets here.
 ];
