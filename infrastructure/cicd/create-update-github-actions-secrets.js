@@ -94,6 +94,10 @@ const envVariableListDev = [
     secretName: "SOCIALSPORTSPROD_SENDGRID_API_KEY",
     secretValue: process.env.SOCIALSPORTSPROD_SENDGRID_API_KEY,
   },
+  {
+    secretName: "SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED",
+    secretValue: process.env.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED,
+  },
   // TODO: add more secrets you want to push to github secrets here.
 ];
 

@@ -32,16 +32,13 @@ jobs:
         run: |
           gcloud auth configure-docker
 
-      - name: create-json
-        id: create-json
-        uses: jsdaniell/create-json@1.1.2
-        with:
-          name: functions_key.json
-          json: ${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}
-          dir: "functions/lib/functions/"
+      - name: Create functions_key.json from base64-encoded secret
+        working-directory: functions/lib/functions
+        run: |
+          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED }}" | base64 -d > functions_key.json
 
       # The following functions_key.json and .env variables are required for our java cloud run functions
-      - name: Set functions_key.json and .env
+      - name: Set .env variables
         working-directory: functions/lib/functions
         run: |
           cat functions_key.json
@@ -141,11 +138,15 @@ jobs:
           args: projects:list
 
       # The following functions_key.json and .env variables are required for our python firebase functions
-      - name: Set functions_key.json and .env
+      - name: Create functions_key.json from base64-encoded secret
         working-directory: functions
         run: |
-          sudo apt-get install -y jq
-          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON }}" | jq '.' > functions_key.json
+          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED }}" | base64 -d > functions_key.json
+
+      - name: Set .env variables
+        working-directory: functions
+        run: |
+          cat functions_key.json
           echo 'STRIPE_API_KEY="${{ secrets.SOCIALSPORTSPROD_STRIPE_API_KEY }}"' >> .env
           echo 'STRIPE_WEBHOOK_ENDPOINT_SECRET="${{ secrets.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET }}"' >> .env
           echo 'POSTHOG_API_KEY="${{ secrets.SOCIALSPORTSPROD_POSTHOG_API_KEY }}"' >> .env
