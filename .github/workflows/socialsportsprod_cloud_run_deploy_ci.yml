@@ -35,7 +35,7 @@ jobs:
       - name: Create functions_key.json from base64-encoded secret
         working-directory: functions/lib/functions
         run: |
-          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED }}" | base64 -d > functions_key.json
+          echo '${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED }}' | base64 -d > functions_key.json
 
       # The following functions_key.json and .env variables are required for our java cloud run functions
       - name: Set .env variables
@@ -141,7 +141,7 @@ jobs:
       - name: Create functions_key.json from base64-encoded secret
         working-directory: functions
         run: |
-          echo "${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED }}" | base64 -d > functions_key.json
+          echo '${{ secrets.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED }}' | base64 -d > functions_key.json
 
       - name: Set .env variables
         working-directory: functions
