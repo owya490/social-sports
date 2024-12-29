@@ -18,9 +18,10 @@ interface MobileSearchInputProps {
 }
 
 export default function MobileSearchInput(props: MobileSearchInputProps) {
+  // Commented out the location param and related as search by location is broken, ask Edwin to fix later, just delete duplicate code underneath commments
   const { searchExpanded, setSearchExpanded, tags } = props;
   const [event, setEvent] = useState("");
-  const [location, setLocation] = useState("Sydney");
+  // const [location, setLocation] = useState("Sydney");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -32,16 +33,16 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
       if (typeof window === "undefined") {
         // Return some default or empty values when not in a browser environment
         setEvent("");
-        setLocation("");
+        // setLocation("");
         return;
       }
       const searchParams = new URLSearchParams(window.location.search);
 
       const eventParam = searchParams.get("event");
-      const locationParam = searchParams.get("location");
+      // const locationParam = searchParams.get("location");
 
       setEvent(eventParam || "");
-      setLocation(locationParam || "");
+      // setLocation(locationParam || "");
     };
     updateStateFromQuery();
   }, [pathname, searchParams]);
@@ -50,13 +51,15 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
     const maybePrevSearches = sessionStorage.getItem("recentSearches");
     let prevSearches = maybePrevSearches ? deserialize_list(maybePrevSearches) : [];
 
-    const currentSearch = event + ":" + location;
+    // const currentSearch = event + ":" + location;
+    const currentSearch = event;
 
     prevSearches = [currentSearch, ...prevSearches.slice(0, 4)];
     sessionStorage.setItem("recentSearches", serialize_list(prevSearches));
     setRecentSearches(prevSearches);
 
-    const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
+    // const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
+    const searchUrl = `/dashboard?event=${encodeURIComponent(event)}`;
     router.push(searchUrl);
     setSearchExpanded();
   };
@@ -110,7 +113,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
         </div>
         <div className="w-full flex items-center mt-7">
           <MapPinIcon className="w-7 h-7 mr-2" />
-          <input
+          {/* <input
             id="location_input"
             className="w-36 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
             placeholder="Sydney"
@@ -119,7 +122,8 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
               setLocation(event.target.value);
             }}
             onKeyDown={handleKeyPress}
-          />
+          /> */}
+          <h1 className="text-2xl font-light">Sydney</h1>
         </div>
         {/* <div className="w-full mt-14 ml-1">
           <h3 className="font-semibold text-lg">Search by Tags</h3>
@@ -133,18 +137,30 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
             {recentSearches.length === 0 ? (
               <p className="text-sm font-light">None</p>
             ) : (
+              // recentSearches.map((search, i) => {
+              //   const splitSearch = search.split(":");
+              //   const recentEvent = splitSearch[0];
+              //   const recentLocation = splitSearch[1];
+              //   return (
+              //     <span key={i} className="flex items-center my-1">
+              //       <ClockIcon className="w-4 h-4 mr-1" />
+              //       <Link
+              //         href={`/dashboard?event=${recentEvent}&location=${recentLocation}`}
+              //         className="font-light text-base"
+              //         onClick={setSearchExpanded}
+              //       >{`${recentEvent} - ${recentLocation}`}</Link>
+              //     </span>
+              //   );
+              // })
               recentSearches.map((search, i) => {
-                const splitSearch = search.split(":");
-                const recentEvent = splitSearch[0];
-                const recentSearch = splitSearch[1];
                 return (
                   <span key={i} className="flex items-center my-1">
                     <ClockIcon className="w-4 h-4 mr-1" />
                     <Link
-                      href={`/dashboard?event=${recentEvent}&location=${recentSearch}`}
+                      href={`/dashboard?event=${search}`}
                       className="font-light text-base"
                       onClick={setSearchExpanded}
-                    >{`${recentEvent} - ${recentSearch}`}</Link>
+                    >{`${search} - Sydney`}</Link>
                   </span>
                 );
               })
