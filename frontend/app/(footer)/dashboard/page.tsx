@@ -155,7 +155,8 @@ export default function Dashboard() {
           eventDataList={searchDataList}
           allEventsDataList={allEventsDataList}
           setEventDataList={setEventDataList}
-          srcLocation={srcLocation}
+          // srcLocation={srcLocation} // DISABLED LOCATION SEARCH FOR NOW
+          srcLocation={""}
           setSrcLocation={setSrcLocation}
           triggerFilterApply={triggerFilterApply}
           endLoading={endLoading}
