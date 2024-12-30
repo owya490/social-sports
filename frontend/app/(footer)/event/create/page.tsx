@@ -40,6 +40,7 @@ export type FormData = {
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
   paused: boolean;
+  eventLink: string;
 };
 
 const INITIAL_DATA: FormData = {
@@ -64,6 +65,7 @@ const INITIAL_DATA: FormData = {
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
   paused: false,
+  eventLink: "",
 };
 
 export default function CreateEvent() {

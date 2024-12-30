@@ -35,6 +35,7 @@ export type BasicData = {
   long: number;
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
+  eventLink: string;
 };
 
 type BasicInformationProps = BasicData & {
@@ -64,6 +65,7 @@ export function BasicInformation({
   locationError,
   stripeFeeToCustomer,
   promotionalCodesEnabled,
+  eventLink,
   updateField,
   setLoading,
   setHasError,
@@ -74,6 +76,28 @@ export function BasicInformation({
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [isAdditionalSettingsOpen, setIsAdditionalSettingsOpen] = useState(false);
   const [customRegistrationDeadlineEnabled, setCustomRegistrationDeadlineEnabled] = useState(false);
+  const [error, setError] = useState("");
+
+  const validateURL = (url: string | URL) => {
+    try {
+      new URL(url); // Checks if the string is a valid URL
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleChange = (e: { target: { value: any; }; }) => {
+    const value = e.target.value;
+    updateField({ eventLink: value });
+
+    if (!validateURL(value)) {
+      setError("Please enter a valid URL.");
+    } else {
+      setError("");
+    }
+  };
+
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -429,6 +453,21 @@ export function BasicInformation({
             </button>
           </div>
         )}
+        <div>
+          <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
+          <p className="text-sm mb-5 mt-2">
+            Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
+          </p>
+          <Input
+            label="Event Link"
+            crossOrigin={undefined}
+            required
+            value={eventLink}
+            onChange={handleChange}
+            className={`rounded-md focus:ring-0 ${error ? 'border-red-500' : ''}`}
+            size="lg"
+          />
+        </div>
         <div
           className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1"
           onClick={() => {
@@ -475,8 +514,9 @@ export function BasicInformation({
                     Do you want to allow Promotional Codes for this Event?
                   </label>
                   <p className="text-sm mb-5 mt-2">
-                    Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for discounts at the
-                    time of checkout. To create a promotional code for your account, please visit your stripe dashboard.
+                    Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for discounts
+                    at the time of checkout. To create a promotional code for your account, please visit your stripe
+                    dashboard.
                   </p>
                   <div className="mt-4">
                     <Select
