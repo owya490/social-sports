@@ -51,7 +51,7 @@ export default function SearchBar() {
         // className="h-9 max-w-[160px] xl:max-w-[220px] border-0 focus:ring-0"
         className="h-9 w-64 border-0 focus:ring-0"
         type="text"
-        placeholder="Search for events in Sydney, AU"
+        placeholder="Search for events"
         value={event}
         onChange={(e) => setEvent(e.target.value)}
         onKeyDown={handleKeyPress}
