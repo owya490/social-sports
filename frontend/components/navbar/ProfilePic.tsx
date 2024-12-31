@@ -107,7 +107,7 @@ export default function ProfilePic() {
         <div className="flex items-center">
           <Menu as="div" className="relative inline-block text-left">
             <div className="flex items-centers">
-              <MenuButton className="inline-flex justify-center rounded-full overflow-hidden  border border-black">
+              <MenuButton className="inline-flex justify-center rounded-full overflow-hidden  border border-core-outline">
                 <Image
                   priority
                   src={user?.profilePicture || profilePictureURL}

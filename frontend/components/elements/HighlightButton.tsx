@@ -13,7 +13,7 @@ export const HighlightButton = (props: ButtonProps) => {
   return (
     <button
       className={
-        `px-4 py-1.5 rounded-lg font-semibold whitespace-nowrap  bg-highlight-yellow text-white hover:bg-white hover:text-highlight-yellow border-2 border-highlight-yellow transition-colors duration-300 transform ` +
+        `px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap text-core-text hover:bg-core-hover transition-colors duration-300 transform ` +
         props.className
       }
       onClick={props.onClick}
