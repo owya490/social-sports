@@ -57,10 +57,10 @@ def get_active_events_starting_tomorrow(logger: Logger, tomorrow: date, collecti
   all_events_starting_tomorrow: list[EventReminderVariables] = []
 
   # Get all Active Events in Public
-  public_events_ref = db.collection(collection)
-  public_events = public_events_ref.stream()
+  events_ref = db.collection(collection)
+  events = events_ref.stream()
 
-  for event in public_events:
+  for event in events:
     event_id = event.id
     event_dict = event.to_dict()
     event_start_date: Timestamp = event_dict.get("startDate").timestamp_pb()
