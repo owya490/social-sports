@@ -21,10 +21,10 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
         response.appendHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
 
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatusCode(204); // No Content
-            return;
-        }
+        // if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+        //     response.setStatusCode(204); // No Content
+        //     return;
+        // }
 
         if (!"GET".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
