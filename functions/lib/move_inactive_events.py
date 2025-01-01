@@ -1,6 +1,7 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 
+import pytz
 from firebase_admin import firestore
 from firebase_functions import https_fn, options, scheduler_fn
 from google.cloud import firestore
@@ -43,8 +44,8 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
     event_dict = event.to_dict()
     event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
     logger.info(event_end_date)
-
-    if event_end_date.ToDatetime().date() < today:
+    aest = pytz.timezone('Australia/Sydney')
+    if event_end_date.ToDatetime().astimezone(aest).date() < today:
       logger.info(f"today is after end date for ${event.id}")
       transaction = db.transaction()
       # The events datetime is earlier so it has already passed, hence we should move it
@@ -62,12 +63,11 @@ def get_and_move_private_inactive_events(today: date):
     event_id = event.id
     event_dict = event.to_dict()
     event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
-
-    if event_end_date.ToDatetime().date() < today:
+    aest = pytz.timezone('Australia/Sydney')
+    if event_end_date.ToDatetime().astimezone(aest).date() < today:
       transaction = db.transaction()
       # The events datetime is earlier so it has already passed, hence we should move it
       move_event_to_inactive(transaction=transaction, old_event_ref=db.collection(ACTIVE_PRIVATE).document(event_id), new_event_ref=db.collection(INACTIVE_PRIVATE).document(event_id))
-
 
 
 @scheduler_fn.on_schedule(schedule="every day 00:00", region="australia-southeast1", timezone=scheduler_fn.Timezone("Australia/Sydney"))
@@ -76,7 +76,8 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   logger = Logger(f"move_inactive_events_logger_{uid}")
   logger.add_tag("uuid", uid)
   
-  today = date.today()
+  aest = pytz.timezone('Australia/Sydney')
+  today = datetime.now(aest).date()
 
   logger.info("Moving inactive events for date " + today.strftime("%d/%m/%Y, %H:%M:%S"))
 
