@@ -13,9 +13,8 @@ from google.cloud.firestore import DocumentReference, Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.auth import *
 from lib.constants import *
+from lib.emails.constants import LOOPS_API_KEY
 from lib.logging import Logger
-
-from functions.lib.emails.constants import LOOPS_API_KEY
 
 ACTIVE_PUBLIC = "Events/Active/Public"
 ACTIVE_PRIVATE = "Events/Active/Private"
@@ -42,8 +41,8 @@ def get_purchasers(logger: Logger, event_id: str) -> list[Purchaser]:
     event_metadata = db.collection(EVENT_METADATA).document(event_id).get()
     event_metadata_dict = event_metadata.to_dict()
     purchasers: list[Purchaser] = []
-
-    for purchaser in event_metadata_dict.get("purchaserMap", {}):
+    
+    for purchaser in dict(event_metadata_dict.get("purchaserMap", {})).values():
       names = list(dict(purchaser.get("attendees", {})).keys())
       purchasers.append(Purchaser(names=names, email=purchaser.get("email")))
 
@@ -54,6 +53,7 @@ def get_purchasers(logger: Logger, event_id: str) -> list[Purchaser]:
 
 
 def get_active_events_starting_tomorrow(logger: Logger, tomorrow: date, collection: str) -> list[EventReminderVariables]:
+
   all_events_starting_tomorrow: list[EventReminderVariables] = []
 
   # Get all Active Events in Public
@@ -75,7 +75,7 @@ def get_active_events_starting_tomorrow(logger: Logger, tomorrow: date, collecti
 
       logger.info(f"{event_id} is starting tomorrow")
       all_events_starting_tomorrow.append(EventReminderVariables(
-        eventid=event_id, 
+        eventId=event_id, 
         eventName=event_dict.get("name", ""),
         startDate=start_date_string,
         endDate=end_date_string,
@@ -116,7 +116,7 @@ def send_email_with_loop(logger: Logger, email, name, event_name, event_id, star
   time.sleep(0.3)
 
 @scheduler_fn.on_schedule(schedule="every day 12:00", region="australia-southeast1", timezone=scheduler_fn.Timezone("Australia/Sydney"), timeout_sec=540)
-def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
+def email_reminder(event: scheduler_fn.ScheduledEvent) -> None:
   uid = str(uuid.uuid4())
   logger = Logger(f"email_reminder_logger_{uid}")
   logger.add_tag("uuid", uid)
@@ -125,16 +125,15 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   tomorrow = (datetime.now(aest) + timedelta(days=1)).date()
 
   logger.info("Sending reminder emails for events for date " + tomorrow.strftime("%d/%m/%Y, %H:%M:%S"))
-  all_events_starting_tomorrow = get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PUBLIC) + get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PRIVATE)
+  all_events_starting_tomorrow = get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PUBLIC) #+ get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PRIVATE)
 
   for event in all_events_starting_tomorrow:
     event: EventReminderVariables = event
     for purchaser in event.purchasers:
       combined_name = ""
       for name in purchaser.names:
-        combined_name += f"and {name}"
-      combined_name.removeprefix("and ")
-
-      send_email_with_loop(logger, purchaser.email, combined_name, event.eventName, event.eventId, event.startDate, event.endDate, event.location)
+        combined_name += f" and {name}"
+      
+      send_email_with_loop(logger, purchaser.email, combined_name.removeprefix(" and "), event.eventName, event.eventId, event.startDate, event.endDate, event.location)
 
   return https_fn.Response(f"Sent all reminders for upcoming events.")
