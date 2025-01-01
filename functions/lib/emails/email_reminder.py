@@ -1,6 +1,7 @@
+import json
 import uuid
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pytz
 import requests
@@ -13,6 +14,8 @@ from lib.auth import *
 from lib.constants import *
 from lib.logging import Logger
 
+from functions.lib.emails.constants import LOOPS_API_KEY
+
 ACTIVE_PUBLIC = "Events/Active/Public"
 ACTIVE_PRIVATE = "Events/Active/Private"
 EVENT_METADATA = "EventsMetadata"
@@ -22,6 +25,7 @@ class Purchaser:
   names: list[str]
   email: str
 
+
 @dataclass
 class EventReminderVariables:
   eventId: str
@@ -30,6 +34,7 @@ class EventReminderVariables:
   endDate: str
   location: str
   purchasers: list[Purchaser]
+
 
 def get_purchasers(logger: Logger, event_id: str) -> list[Purchaser]:
   try: 
@@ -46,7 +51,8 @@ def get_purchasers(logger: Logger, event_id: str) -> list[Purchaser]:
   except Exception as e:
     logger.error(f"Error getting event details. eventId={event_id} error={e}")
 
-def get_active_events_starting_tomorrow(logger: Logger, tomorrow: date, collection: str):
+
+def get_active_events_starting_tomorrow(logger: Logger, tomorrow: date, collection: str) -> list[EventReminderVariables]:
   all_events_starting_tomorrow: list[EventReminderVariables] = []
 
   # Get all Active Events in Public
@@ -57,8 +63,9 @@ def get_active_events_starting_tomorrow(logger: Logger, tomorrow: date, collecti
     event_id = event.id
     event_dict = event.to_dict()
     event_start_date: Timestamp = event_dict.get("startDate").timestamp_pb()
+    aest = pytz.timezone('Australia/Sydney')
 
-    if (event_start_date.ToDatetime().date() == tomorrow):
+    if (event_start_date.ToDatetime().astimezone(aest).date() == tomorrow):
       start_date: Timestamp = event_dict.get("startDate").timestamp_pb()
       end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
       aest = pytz.timezone('Australia/Sydney')
@@ -78,6 +85,25 @@ def get_active_events_starting_tomorrow(logger: Logger, tomorrow: date, collecti
   return all_events_starting_tomorrow
 
 
+def send_email_with_loop(logger: Logger, email, name, event_name, event_id, start_date, end_date, location):
+  headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
+  body = {
+    "transactionalId": "cm5dwlbsj034sasyzg1w6sg39",
+    "email": email,
+    "dataVariables": {
+        "name": name,
+        "eventName": event_name,
+        "eventId": event_id, 
+        "startDate" : start_date,
+        "endDate": end_date,
+        "location": location
+    }
+  }
+
+  response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
+  if (response.status_code != 200):
+    logger.error(f"Failed to send event reminder for eventId={event_id}, body={response.json()}")
+
 
 @scheduler_fn.on_schedule(schedule="every day 12:00", region="australia-southeast1", timezone=scheduler_fn.Timezone("Australia/Sydney"))
 def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
@@ -85,9 +111,20 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   logger = Logger(f"move_inactive_events_logger_{uid}")
   logger.add_tag("uuid", uid)
   
-  tomorrow = date.today() + timedelta(days=1)
+  aest = pytz.timezone('Australia/Sydney')
+  tomorrow = (datetime.now(aest) + timedelta(days=1)).date()
 
   logger.info("Sending reminder emails for events for date " + tomorrow.strftime("%d/%m/%Y, %H:%M:%S"))
   all_events_starting_tomorrow = get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PUBLIC) + get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PRIVATE)
+
+  for event in all_events_starting_tomorrow:
+    event:EventReminderVariables = event
+    for purchaser in event.purchasers:
+      combined_name = ""
+      for name in purchaser.names:
+        combined_name += f"and {name}"
+      combined_name.removeprefix("and ")
+
+      send_email_with_loop(logger, purchaser.email, combined_name, event.eventName, event.eventId, event.startDate, event.endDate, event.location)
 
   return https_fn.Response(f"Sent all reminders for upcoming events.")

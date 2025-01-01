@@ -9,7 +9,7 @@ import requests
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import db
 from lib.logging import Logger
-from lib.sendgrid.constants import (LOOP_API_KEY,
+from lib.sendgrid.constants import (LOOPS_API_KEY,
                                     PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
                                     SENDGRID_API_KEY)
 from lib.utils.priceUtils import centsToDollars
@@ -33,7 +33,7 @@ class SendGridPurchaseEventRequest:
 
 
 def send_email_with_loop(logger, email, name, event_name, order_id, date_purchased, quantity, price, start_date, end_date, location):
-  headers = {"Authorization": "Bearer " + LOOP_API_KEY}
+  headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
   body = {
     "transactionalId": "cm4r78nk301ehx79nrrxaijgl",
     "email": email,
