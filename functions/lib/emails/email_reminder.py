@@ -115,7 +115,7 @@ def send_email_with_loop(logger: Logger, email, name, event_name, event_id, star
   # Sleep for 300ms to avoid getting rate limited. Loops offer 10 emails a second: https://loops.so/docs/api-reference/intro#rate-limiting
   time.sleep(0.3)
 
-@scheduler_fn.on_schedule(schedule="every day 12:00", region="australia-southeast1", timezone=scheduler_fn.Timezone("Australia/Sydney"))
+@scheduler_fn.on_schedule(schedule="every day 12:00", region="australia-southeast1", timezone=scheduler_fn.Timezone("Australia/Sydney"), timeout_sec=540)
 def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   uid = str(uuid.uuid4())
   logger = Logger(f"email_reminder_logger_{uid}")
