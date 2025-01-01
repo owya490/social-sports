@@ -1,4 +1,5 @@
 import json
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -101,14 +102,23 @@ def send_email_with_loop(logger: Logger, email, name, event_name, event_id, star
   }
 
   response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
+
+  # Retry once more on rate limit after waiting 1 second
+  if (response.status_code == 429):
+    logger.info(f"We got rate limited, retrying after 1 second. eventId={event_id}, body={response.json()}")
+    time.sleep(1)
+    response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
+
   if (response.status_code != 200):
     logger.error(f"Failed to send event reminder for eventId={event_id}, body={response.json()}")
 
+  # Sleep for 300ms to avoid getting rate limited. Loops offer 10 emails a second: https://loops.so/docs/api-reference/intro#rate-limiting
+  time.sleep(0.3)
 
 @scheduler_fn.on_schedule(schedule="every day 12:00", region="australia-southeast1", timezone=scheduler_fn.Timezone("Australia/Sydney"))
 def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   uid = str(uuid.uuid4())
-  logger = Logger(f"move_inactive_events_logger_{uid}")
+  logger = Logger(f"email_reminder_logger_{uid}")
   logger.add_tag("uuid", uid)
   
   aest = pytz.timezone('Australia/Sydney')
@@ -118,7 +128,7 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   all_events_starting_tomorrow = get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PUBLIC) + get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PRIVATE)
 
   for event in all_events_starting_tomorrow:
-    event:EventReminderVariables = event
+    event: EventReminderVariables = event
     for purchaser in event.purchasers:
       combined_name = ""
       for name in purchaser.names:

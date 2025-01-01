@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
@@ -51,6 +52,12 @@ def send_email_with_loop(logger, email, name, event_name, order_id, date_purchas
   }
 
   response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
+  
+  # Retry once more on rate limit after waiting 1 second
+  if (response.status_code == 429):
+    time.sleep(1)
+    response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
+
   if (response.status_code != 200):
     logger.error(f"Failed to send payment confirmation for orderId={order_id}, body={response.json()}")
 
