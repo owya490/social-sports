@@ -11,6 +11,7 @@ import {
   CameraIcon,
   ChartBarIcon,
   HomeIcon,
+  PencilSquareIcon,
   StarIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
@@ -150,6 +151,14 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
           }`}
         >
           <CameraIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+        </Link>
+        <Link
+          href="/organiser/forms"
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+            currPage === "Forms" && "bg-organiser-darker-light-gray"
+          }`}
+        >
+          <PencilSquareIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
         </Link>
         <Link
           href="/organiser/settings"
