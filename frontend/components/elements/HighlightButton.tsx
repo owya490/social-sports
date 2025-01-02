@@ -30,7 +30,7 @@ export const InvertedHighlightButton = (props: ButtonProps) => {
   return (
     <button
       className={
-        `border-2 text-highlight-yellow font-semibold border-highlight-yellow px-4 py-1.5 rounded-lg lg:block whitespace-nowrap hover:bg-highlight-yellow hover:text-white transition-colors duration-300 transform ` +
+        `border border-core-outline hover:border-core-text font-semibold text-sm px-4 py-1.5 text-core-text rounded-lg lg:block whitespace-nowrap hover:bg-core-hover transition-colors duration-300 transform ` +
         props.className
       }
       onClick={props.onClick}

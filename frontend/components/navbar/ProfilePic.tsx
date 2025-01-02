@@ -86,7 +86,7 @@ export default function ProfilePic() {
     <div className="ml-auto flex items-center">
       {loggedIn && (
         <HighlightButton
-          text="Create Event"
+          text="Create event"
           onClick={() => {
             router.push("/event/create");
           }}
@@ -128,7 +128,7 @@ export default function ProfilePic() {
               leaveTo="transform opacity-0 scale-95"
             >
               <MenuItems className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <div className="px-1 py-1">
+                <div className="py-1">
                   {loggedIn && (
                     <div>
                       <Menu.Item>
@@ -136,7 +136,7 @@ export default function ProfilePic() {
                           <Link
                             href="/profile"
                             className={`${
-                              active ? "text-white bg-highlight-yellow" : "text-black"
+                              active ? "text-core-text bg-core-hover" : "text-core-text"
                             } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                           >
                             <UserCircleIcon className="h-5 mr-2" />
@@ -149,7 +149,7 @@ export default function ProfilePic() {
                           <Link
                             href="/organiser/dashboard"
                             className={`${
-                              active ? "text-white bg-highlight-yellow" : "text-black"
+                              active ? "text-core-text bg-core-hover" : "text-core-text"
                             } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                           >
                             <LifebuoyIcon className="h-5 mr-2" />
@@ -160,17 +160,17 @@ export default function ProfilePic() {
                     </div>
                   )}
                 </div>
-                <div className="px-1 py-1">
+                <div className="py-1">
                   <Menu.Item>
                     {({ active }) => (
                       <Link
                         href="/event/create"
                         className={`${
-                          active ? "text-white bg-highlight-yellow" : "text-black"
+                          active ? "text-core-text bg-core-hover" : "text-core-text"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <PencilSquareIcon className="h-5 mr-2" />
-                        Create Event
+                        Create event
                       </Link>
                     )}
                   </Menu.Item>
@@ -179,7 +179,7 @@ export default function ProfilePic() {
                       <Link
                         href="/suggestions"
                         className={`${
-                          active ? "text-white bg-highlight-yellow" : "text-black"
+                          active ? "text-core-text bg-core-hover" : "text-core-text"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LightBulbIcon className="h-5 mr-2" />
@@ -188,14 +188,14 @@ export default function ProfilePic() {
                     )}
                   </Menu.Item>
                 </div>
-                <div className="px-1 py-1">
+                <div className=" py-1">
                   {loggedIn && (
                     <Menu.Item>
                       {({ active }) => (
                         <div
                           onClick={handleLogOut}
                           className={`${
-                            active ? "text-white bg-highlight-yellow" : "text-black"
+                            active ? "text-core-text bg-core-hover" : "text-core-text"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm cursor-pointer`}
                         >
                           <ArrowLeftStartOnRectangleIcon className="h-5 mr-2" />

@@ -32,8 +32,8 @@ const aileron = localFont({
   ],
 });
 
-const inter = Inter({ subsets: ['latin'] })
-const montserrat = Montserrat({ subsets: ['latin'] })
+export const inter = Inter({ subsets: ["latin"] });
+const montserrat = Montserrat({ subsets: ["latin"] });
 
 // const montserrat = localFont({
 //   src: [
