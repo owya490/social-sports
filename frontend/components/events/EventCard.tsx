@@ -55,17 +55,19 @@ export default function EventCard(props: EventCardProps) {
             }}
           ></div>
           <div className="p-4">
-            <h4 className="font-bold text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>
-            <h2 className="text-xl font-semibold mb-1 mt-1 whitespace-nowrap overflow-hidden">{name}</h2>
+            <h4 className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>
+            <h2 className="text-lg font-semibold mb-0.5 mt-0.5 whitespace-nowrap overflow-hidden text-core-text">
+              {name}
+            </h2>
             <div className="flex ml-0.5 items-center">
               <Image src={organiser.profilePicture} alt="DP" width={50} height={50} className="rounded-full w-4 h-4" />
               <p className="text-xs font-light ml-1">{`Hosted by ${organiser.firstName} ${organiser.surname}`}</p>
               {organiser.isVerifiedOrganiser && <Image src={Tick} alt="Verified Organiser" className="h-4 w-4 ml-1" />}
             </div>
             <div className="mt-2 space-y-3">
-              <div className="flex items-center">
-                <MapPinIcon className="w-5 shrink-0" />
-                <p className="ml-1 font-light text-sm whitespace-nowrap overflow-hidden">{location}</p>
+              <div className="flex items-center ml-0.5">
+                <MapPinIcon className="w-4 shrink-0" />
+                <p className="ml-1 font-light text-core-text text-xs whitespace-nowrap overflow-hidden">{location}</p>
               </div>
               {/* <div className="flex items-center">
                 <CurrencyDollarIcon className="w-5 shrink-0" />
