@@ -12,6 +12,7 @@ export default function Navbar() {
         <SearchBar />
         <ProfilePic />
       </div>
+
       <div className="h-[1px] bg-core-outline"></div>
     </div>
   );
