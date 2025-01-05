@@ -1,10 +1,10 @@
 "use client";
-import { HighlightButton, InvertedHighlightButton } from "@/components/elements/HighlightButton";
+import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import CreateEventStepper from "@/components/events/create/CreateEventStepper";
-import { DescriptionImageForm } from "@/components/events/create/DescriptionImageForm";
 import { BasicInformation } from "@/components/events/create/forms/BasicForm";
+import { DescriptionForm } from "@/components/events/create/forms/DescriptionForm";
+import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { PreviewForm } from "@/components/events/create/forms/PreviewForm";
-import { TagForm } from "@/components/events/create/forms/TagForm";
 import { useMultistepForm } from "@/components/events/create/forms/useMultistepForm";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
@@ -12,7 +12,12 @@ import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
-import { uploadUserImage } from "@/services/src/imageService";
+import {
+  getThumbnailUrlsBySport,
+  getUsersEventImagesUrls,
+  getUsersEventThumbnailsUrls,
+  uploadUserImage,
+} from "@/services/src/imageService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
 import { Alert } from "@material-tailwind/react";
@@ -30,7 +35,8 @@ export type FormData = {
   capacity: number;
   name: string;
   description: string;
-  image: File | undefined;
+  image: File | string | undefined;
+  thumbnail: File | string | undefined;
   tags: string[];
   isPrivate: boolean;
   startTime: string;
@@ -56,6 +62,7 @@ const INITIAL_DATA: FormData = {
   name: "",
   description: "",
   image: undefined,
+  thumbnail: undefined,
   tags: [],
   isPrivate: false,
   startTime: "10:00",
@@ -83,6 +90,18 @@ export default function CreateEvent() {
 
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState("");
+
+  const [eventThumbnailsUrls, setEventThumbnailUrls] = useState<string[]>([]);
+  const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchUserImages = async () => {
+      setEventThumbnailUrls(await getUsersEventThumbnailsUrls(user.userId));
+      setEventImageUrls(await getUsersEventImagesUrls(user.userId));
+    };
+    fetchUserImages();
+  }, [user]);
 
   const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
     <BasicInformation
@@ -95,19 +114,24 @@ export default function CreateEvent() {
       locationError={locationError}
       setLocationError={setLocationError}
     />,
-    <TagForm key="tag-form" {...data} updateField={updateFields} />,
-    <DescriptionImageForm
-      key="description-image-form"
+    <ImageForm
+      key="image-form"
       {...data}
       imagePreviewUrl={imagePreviewUrl}
       setImagePreviewUrl={setImagePreviewUrl}
       updateField={updateFields}
+      eventThumbnailsUrls={eventThumbnailsUrls}
+      eventImageUrls={eventImageUrls}
+      thumbnailPreviewUrl={thumbnailPreviewUrl}
+      setThumbnailPreviewUrl={setThumbnailPreviewUrl}
     />,
+    <DescriptionForm key="description-image-form" {...data} updateField={updateFields} />,
     <PreviewForm
       key="preview-form"
       form={data}
       user={user}
       imagePreviewUrl={imagePreviewUrl}
+      thumbnailPreviewUrl={thumbnailPreviewUrl}
       updateField={updateFields}
     />,
   ]);
@@ -163,13 +187,28 @@ export default function CreateEvent() {
 
   async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
     setLoading(true);
+    // If the image field is undefined, it will stay as this default image.
     var imageUrl =
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
-
-    if (formData.image !== undefined) {
-      imageUrl = await uploadUserImage(user.userId, formData.image);
+    // Otherwise if its a string, which means it is already uploaded, reuse the same imageUrl
+    if (formData.image !== undefined && typeof formData.image === "string") {
+      imageUrl = formData.image;
+      // If the image field is a File, upload it
+    } else if (formData.image !== undefined) {
+      imageUrl = await uploadUserImage(user.userId, "/eventImages", formData.image);
     }
-    const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
+
+    var thumbnailUrl = getThumbnailUrlsBySport(formData.sport);
+
+    // Otherwise if its a string, which means it is already uploaded, reuse the same imageUrl
+    if (formData.thumbnail !== undefined && typeof formData.thumbnail === "string") {
+      thumbnailUrl = formData.thumbnail;
+      // If the image field is a File, upload it
+    } else if (formData.thumbnail !== undefined) {
+      thumbnailUrl = await uploadUserImage(user.userId, "/eventThumbnails", formData.thumbnail);
+    }
+
+    const newEventData = await convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
     const newRecurrenceData = formData.newRecurrenceData;
     let newEventId = "";
     try {
@@ -195,7 +234,8 @@ export default function CreateEvent() {
   async function convertFormDataToEventData(
     formData: FormData,
     user: UserData,
-    imageUrl: string
+    imageUrl: string,
+    thumbnailUrl: string
   ): Promise<NewEventData> {
     return {
       location: formData.location,
@@ -205,6 +245,7 @@ export default function CreateEvent() {
       name: formData.name,
       description: formData.description,
       image: imageUrl,
+      thumbnail: thumbnailUrl,
       eventTags: formData.tags,
       isActive: true,
       isPrivate: formData.isPrivate,
@@ -272,18 +313,18 @@ export default function CreateEvent() {
               )}
               {!isLastStep && (
                 //TODO: Add service layer protection
-                <HighlightButton
+                <InvertedHighlightButton
                   type="submit"
                   className={`px-7 ml-auto lg:mr-2 ${hasError ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   disabled={hasError}
                 >
                   Next
-                </HighlightButton>
+                </InvertedHighlightButton>
               )}
               {isLastStep && (
-                <HighlightButton type="submit" className="px-7 ml-auto">
+                <InvertedHighlightButton type="submit" className="px-7 ml-auto">
                   Create Event
-                </HighlightButton>
+                </InvertedHighlightButton>
               )}
             </div>
           </form>

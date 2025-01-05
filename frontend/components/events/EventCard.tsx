@@ -12,6 +12,7 @@ import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
 interface EventCardProps {
   eventId: EventId;
   image: string;
+  thumbnail: string;
   name: string;
   organiser: UserData;
   startTime: Timestamp;
@@ -26,6 +27,7 @@ export default function EventCard(props: EventCardProps) {
   const {
     eventId,
     image,
+    thumbnail,
     name,
     organiser,
     startTime,
@@ -37,7 +39,7 @@ export default function EventCard(props: EventCardProps) {
   } = props;
 
   const cardContent = (
-    <div className="bg-white text-left w-full hover:cursor-pointer">
+    <div className="bg-white text-left w-full hover:cursor-pointer hover:scale-[1.02] transition-all duration-300 md:min-w-72">
       {loading ? (
         <div>
           <LoadingSkeletonEventCard />
@@ -47,7 +49,7 @@ export default function EventCard(props: EventCardProps) {
           <div
             className="w-full"
             style={{
-              backgroundImage: `url(${image})`,
+              backgroundImage: `url(${thumbnail ? thumbnail : image})`,
               backgroundSize: "cover",
               backgroundPosition: "center center",
               aspectRatio: "1/1",

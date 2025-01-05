@@ -16,7 +16,7 @@ export default function EventImage(props: EventImageProps) {
       alt="..."
       width={0}
       height={0}
-      className="object-cover w-full aspect-video"
+      className="object-cover h-auto w-full aspect-video"
     />
   );
 }
