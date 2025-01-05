@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# cp ../../functions_key_dev.json functions_key.json
+
+# cp ../../.env.dev .env
+
+
 cp ../../functions_key_prod.json functions_key.json
 
 cp ../../.env.prod .env
@@ -33,12 +38,15 @@ gcloud functions deploy recurringEventsCron \
     --set-env-vars PROJECT_NAME=socialsportsprod \
     --memory 512 # uses 266 MiB of memory, which is greater than the
 #                  the lower tier of 256
-#
+
 # Deploy createEvent to DEV
-#gcloud functions deploy createEvent \
-#    --entry-point com.functions.Events.Events \
-#    --runtime java17 \
-#    --trigger-http \
-#    --allow-unauthenticated \
-#    --region australia-southeast1 \
-#    --set-env-vars PROJECT_NAME=socialsports-44162
+gcloud functions deploy createEvent \
+   --entry-point com.functions.events.controllers.CreateEventEndpoint \
+   --runtime java17 \
+   --trigger-http \
+   --allow-unauthenticated \
+   --region australia-southeast1 \
+   --project socialsportsprod \
+   --set-env-vars PROJECT_NAME=socialsportsprod
+
+# socialsportsprod
