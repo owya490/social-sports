@@ -133,12 +133,11 @@ export function ImageForm({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {eventThumbnailsUrls.slice(0, 6).map((url, idx) => {
                 return (
-                  <div>
+                  <div key={idx}>
                     <img
                       onClick={() => {
                         handleThumbnailSelect(url);
                       }}
-                      key={idx}
                       className={`hover:cursor-pointer h-auto max-w-full rounded-lg object-cover aspect-square ${
                         typeof thumbnail === "string" && thumbnail === url ? "border-4 border-light-blue-400" : ""
                       }`}
@@ -174,12 +173,11 @@ export function ImageForm({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {eventImageUrls.slice(0, 6).map((url, idx) => {
                 return (
-                  <div>
+                  <div key={idx}>
                     <img
                       onClick={() => {
                         handleImageSelect(url);
                       }}
-                      key={idx}
                       className={`hover:cursor-pointer h-auto max-w-full rounded-lg object-cover aspect-video ${
                         typeof image === "string" && image === url ? "border-4 border-light-blue-400" : ""
                       }`}
