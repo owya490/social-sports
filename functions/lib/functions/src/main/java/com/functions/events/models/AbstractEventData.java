@@ -31,6 +31,7 @@ public abstract class AbstractEventData {
 	private List<String> nameTokens;
 	private List<String> locationTokens;
 	private String image;
+	private String thumbnail;
 	private List<String> eventTags;
 	private Boolean isActive;
 	private Boolean isPrivate;
