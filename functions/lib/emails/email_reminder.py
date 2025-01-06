@@ -101,6 +101,8 @@ def send_email_with_loop(logger: Logger, email, name, event_name, event_id, star
     }
   }
 
+  logger.info(f"Sending Loops transactional email with id cm5dwlbsj034sasyzg1w6sg39 to {email} for eventId {event_id}")
+
   response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
 
   # Retry once more on rate limit after waiting 1 second
@@ -125,7 +127,9 @@ def email_reminder(event: scheduler_fn.ScheduledEvent) -> None:
   tomorrow = (datetime.now(aest) + timedelta(days=1)).date()
 
   logger.info("Sending reminder emails for events for date " + tomorrow.strftime("%d/%m/%Y, %H:%M:%S"))
-  all_events_starting_tomorrow = get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PUBLIC) #+ get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PRIVATE)
+  all_events_starting_tomorrow = get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PUBLIC) + get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PRIVATE)
+
+  logger.info(f"Events starting tomorrow: {[event.eventId for event in all_events_starting_tomorrow]}")
 
   for event in all_events_starting_tomorrow:
     event: EventReminderVariables = event
