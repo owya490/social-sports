@@ -9,9 +9,11 @@ import { useMultistepForm } from "@/components/events/create/forms/useMultistepF
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
 import { uploadUserImage } from "@/services/src/imageService";
+import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
 import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
@@ -40,6 +42,7 @@ export type FormData = {
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
   paused: boolean;
+  newRecurrenceData: NewRecurrenceFormData;
 };
 
 const INITIAL_DATA: FormData = {
@@ -64,6 +67,7 @@ const INITIAL_DATA: FormData = {
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
   paused: false,
+  newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
 };
 
 export default function CreateEvent() {
@@ -166,9 +170,15 @@ export default function CreateEvent() {
       imageUrl = await uploadUserImage(user.userId, formData.image);
     }
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
+    const newRecurrenceData = formData.newRecurrenceData;
     let newEventId = "";
     try {
-      newEventId = await createEvent(newEventData);
+      if (newRecurrenceData.recurrenceEnabled) {
+        const [firstEventId, newRecurrenceTemplateId] = await createRecurrenceTemplate(newEventData, newRecurrenceData);
+        newEventId = firstEventId;
+      } else {
+        newEventId = await createEvent(newEventData);
+      }
       await sendEmailOnCreateEvent(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
