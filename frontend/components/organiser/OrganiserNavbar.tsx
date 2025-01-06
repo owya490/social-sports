@@ -66,24 +66,26 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
   }, [user]);
 
   return (
-    <div className="bg-organiser-light-gray drop-shadow-lg fixed bottom-0 sm:bottom-auto inset-x-0 sm:inset-x-auto sm:left-0 sm:h-screen z-40">
+    <div className="bg-organiser-light-gray drop-shadow-lg fixed bottom-0 sm:bottom-auto inset-x-0 sm:inset-x-auto sm:left-0 sm:h-screen z-40 sm:w-14 group hover:sm:w-56 transition-all duration-300 ease-in-out">
       <div className="flex justify-center items-center h-12 sm:h-auto sm:w-14 sm:flex-col sm:mt-14 sm:space-y-3 sm:space-x-0 space-x-3">
         <Link
           href="/organiser/dashboard/"
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-start items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "Dashboard" && "bg-organiser-darker-light-gray"
-          }`}
+          } group-hover:w-52`}
         >
           <HomeIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <span className="ml-3 text-sm text-black hidden group-hover:inline">Dashboard</span>
         </Link>
-        <Menu as="div" className="relative inline-block text-left">
-          <div className="flex items-centers">
+        <Menu as="div" className="relative inline-block text-left group">
+          <div className="flex items-center">
             <MenuButton
-              className={`flex justify-center items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+              className={`flex justify-start items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
                 currPage === "EventDashboard" && "bg-organiser-darker-light-gray"
-              }`}
+              } group-hover:w-52`}
             >
               <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+              <span className="ml-3 text-sm text-black hidden group-hover:inline">Events</span>
             </MenuButton>
           </div>
           <Transition
@@ -106,7 +108,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
                       } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                     >
                       <StarIcon className="w-6 stroke-1 mr-2" />
-                      Event Dashboard
+                      <span className="ml-3 text-sm text-black hidden group-hover:inline">Event Dashboard</span>
                     </Link>
                   )}
                 </Menu.Item>
@@ -119,7 +121,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
                       } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                     >
                       <ArrowPathIcon className="w-6 stroke-1 mr-2" />
-                      Recurring Events
+                      <span className="ml-3 text-sm text-black hidden group-hover:inline">Recurring Events</span>
                     </Link>
                   )}
                 </Menu.Item>
@@ -129,35 +131,39 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         </Menu>
         <Link
           href={`/organiser/event/${eventId}`}
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-start items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "EventDrilldown" && "bg-organiser-darker-light-gray"
-          }`}
+          } group-hover:w-52`}
         >
           <BookmarkSquareIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <span className="ml-3 text-sm text-black hidden group-hover:inline">Event Details</span>
         </Link>
         <Link
           href="/organiser/metrics"
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-start items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "Metrics" && "bg-organiser-darker-light-gray"
-          }`}
+          } group-hover:w-52`}
         >
           <ChartBarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <span className="ml-3 text-sm text-black hidden group-hover:inline">Metrics</span>
         </Link>
         <Link
           href="/organiser/gallery"
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-start items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "Gallery" && "bg-organiser-darker-light-gray"
-          }`}
+          } group-hover:w-52`}
         >
           <CameraIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <span className="ml-3 text-sm text-black hidden group-hover:inline">Gallery</span>
         </Link>
         <Link
           href="/organiser/settings"
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
+          className={`flex justify-start items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
             currPage === "Settings" && "bg-organiser-darker-light-gray"
-          }`}
+          } group-hover:w-52`}
         >
           <UserIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <span className="ml-3 text-sm text-black hidden group-hover:inline">Settings</span>
         </Link>
       </div>
     </div>
