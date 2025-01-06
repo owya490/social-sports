@@ -30,9 +30,6 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Name</div>
             <div className="flex justify-between">
               <p className="text-m">{form.name}</p>
-              <p className="text-m">{form.eventLink}</p>
-
-
             </div>
           </div>
           <div>

@@ -87,7 +87,9 @@ export function BasicInformation({
     }
   };
 
-  const handleChange = (e: { target: { value: any; }; }) => {
+  // get response for the url
+
+  const handleChange = (e: { target: { value: any } }) => {
     const value = e.target.value;
     updateField({ eventLink: value });
 
@@ -97,7 +99,6 @@ export function BasicInformation({
       setError("");
     }
   };
-
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -429,45 +430,47 @@ export function BasicInformation({
             </div>
           </div>
         ) : (
-          <div className="mt-5 p-3 border border-1 border-blue-gray-200 rounded-lg flex-col flex">
-            <h2 className=" text-lg mb-2">Register for Organiser Hub!</h2>
-            <p className="font-light text-sm">Join hundreds of sport societies hosting their events on Sportshub.</p>
-            <p className="font-light text-sm">
-              Leverage the ability to take bookings and payments right through the platform.
-            </p>
-            <button
-              className="ml-auto bg-black px-3 py-1.5 text-white rounded-lg mt-2"
-              type="button"
-              onClick={async () => {
-                setLoading(true);
-                window.scrollTo(0, 0);
-                const link = await getStripeStandardAccountLink(
-                  user.userId,
-                  getUrlWithCurrentHostname("/organiser"),
-                  getRefreshAccountLinkUrl()
-                );
-                router.push(link);
-              }}
-            >
-              Register
-            </button>
-          </div>
+          <>
+            <div className="mt-5 p-3 border border-1 border-blue-gray-200 rounded-lg flex-col flex">
+              <h2 className="text-lg mb-2">Register for Organiser Hub!</h2>
+              <p className="font-light text-sm">Join hundreds of sport societies hosting their events on Sportshub.</p>
+              <p className="font-light text-sm">
+                Leverage the ability to take bookings and payments right through the platform.
+              </p>
+              <button
+                className="ml-auto bg-black px-3 py-1.5 text-white rounded-lg mt-2"
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  window.scrollTo(0, 0);
+                  const link = await getStripeStandardAccountLink(
+                    user.userId,
+                    getUrlWithCurrentHostname("/organiser"),
+                    getRefreshAccountLinkUrl()
+                  );
+                  router.push(link);
+                }}
+              >
+                Register
+              </button>
+            </div>
+            <div className="mt-5">
+              <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
+              <p className="text-sm mb-5 mt-2">
+                Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
+              </p>
+              <Input
+                label="Event Link"
+                crossOrigin={undefined}
+                required
+                value={eventLink}
+                onChange={handleChange}
+                className={`rounded-md focus:ring-0 ${error ? "border-red-500" : ""}`}
+                size="lg"
+              />
+            </div>
+          </>
         )}
-        <div>
-          <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
-          <p className="text-sm mb-5 mt-2">
-            Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
-          </p>
-          <Input
-            label="Event Link"
-            crossOrigin={undefined}
-            required
-            value={eventLink}
-            onChange={handleChange}
-            className={`rounded-md focus:ring-0 ${error ? 'border-red-500' : ''}`}
-            size="lg"
-          />
-        </div>
         <div
           className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1"
           onClick={() => {

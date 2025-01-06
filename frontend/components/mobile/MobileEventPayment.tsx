@@ -12,7 +12,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
@@ -29,6 +28,7 @@ interface MobileEventPaymentProps {
   isPrivate: boolean;
   paused: boolean;
   setLoading: (value: boolean) => void;
+  eventLink: string;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
@@ -153,17 +153,28 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
             )}
           </div>
         ) : (
-          <Link href="#" className="w-full">
-            <div
-              className="text-lg rounded-2xl border border-black w-full py-3"
-              style={{
-                textAlign: "center",
-                position: "relative",
-              }}
-            >
-              Contact Now
-            </div>
-          </Link>
+          <button
+            onClick={() => {
+              console.log("Event Link:", props.eventLink);
+              if (props.eventLink) {
+                const proceed = window.confirm(
+                  `You are going to be redirected to the event link: ${props.eventLink}. Are you sure you want to proceed?`
+                );
+                if (proceed) {
+                  window.location.href = props.eventLink;
+                }
+              } else {
+                console.warn("No event link provided!");
+              }
+            }}
+            className="text-lg rounded-2xl border border-black w-full py-3"
+            style={{
+              textAlign: "center",
+              position: "relative",
+            }}
+          >
+            Contact Now
+          </button>
         )}
       </div>
     </div>

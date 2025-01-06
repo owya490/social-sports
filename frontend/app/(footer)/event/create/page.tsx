@@ -219,6 +219,7 @@ export default function CreateEvent() {
       stripeFeeToCustomer: formData.stripeFeeToCustomer,
       promotionalCodesEnabled: formData.promotionalCodesEnabled,
       paused: formData.paused,
+      eventLink: formData.eventLink,
     };
   }
 
