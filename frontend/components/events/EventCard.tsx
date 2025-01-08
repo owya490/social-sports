@@ -8,6 +8,7 @@ import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
+import { displayPrice } from "@/utilities/priceUtils";
 
 interface EventCardProps {
   eventId: EventId;
@@ -57,7 +58,10 @@ export default function EventCard(props: EventCardProps) {
             }}
           ></div>
           <div className="p-4">
-            <h4 className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>
+            <div className="flex">
+              <h4 className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>
+              <h4 className="font-light text-gray-500 text-xs ml-auto">{`$${displayPrice(price)}`}</h4>
+            </div>
             <h2 className="text-lg font-semibold mb-0.5 mt-0.5 whitespace-nowrap overflow-hidden text-core-text">
               {name}
             </h2>
