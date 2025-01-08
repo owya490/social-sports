@@ -54,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 
 export const metadata: Metadata = {
-  title: "Sports Hub",
+  title: "SPORTSHUB",
   icons: {
     icon: [
       {
