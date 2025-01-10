@@ -29,7 +29,7 @@ export default function FilterIcon(props: FilterIconProps) {
         }
       }}
     >
-      <div>
+      <div className="group">
         <div className="flex justify-center">
           <Image
             src={props.image}
@@ -46,7 +46,11 @@ export default function FilterIcon(props: FilterIconProps) {
           />
         </div>
         <p className="text-xs font-light grow text-center mb-1.5">{props.name}</p>
-        {props.selectedSport === props.sportIdentifierString && <div className="bg-black h-[2px]"></div>}
+        {props.selectedSport === props.sportIdentifierString ? (
+          <div className="bg-black h-[2px]"></div>
+        ) : (
+          <div className="group-hover:bg-black group-hover:h-[2px]"></div>
+        )}
       </div>
     </button>
   );

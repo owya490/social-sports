@@ -2,13 +2,13 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import { displayPrice } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import Tick from "@svgs/Verified_tick.png";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
-import { displayPrice } from "@/utilities/priceUtils";
 
 interface EventCardProps {
   eventId: EventId;
@@ -42,7 +42,7 @@ export default function EventCard(props: EventCardProps) {
   const cardContent = (
     <div className="bg-white text-left w-full hover:cursor-pointer hover:scale-[1.02] transition-all duration-300 md:min-w-72">
       {loading ? (
-        <div>
+        <div className="w-full">
           <LoadingSkeletonEventCard />
         </div>
       ) : (

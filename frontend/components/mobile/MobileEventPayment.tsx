@@ -75,7 +75,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
             <h2 className="hidden sm:block font-semibold">Price</h2>
             <div className="flex items-center">
               <CurrencyDollarIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">${displayPrice(props.price)} AUD per person</p>
+              <p className="text-md font-light mr-[5%]">${displayPrice(props.price)} AUD</p>
             </div>
           </div>
         </div>

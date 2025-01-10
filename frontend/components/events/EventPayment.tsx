@@ -78,7 +78,7 @@ export default function EventPayment(props: EventPaymentProps) {
               <h2 className=" font-semibold">Price</h2>
               <div className="flex items-center font-light">
                 <CurrencyDollarIcon className="w-5 h-5 mr-2 shrink-0" />
-                <p className="text-md mr-[5%] font-light">${displayPrice(props.price)} AUD per person</p>
+                <p className="text-md mr-[5%] font-light">${displayPrice(props.price)} AUD</p>
               </div>
             </div>
           </div>

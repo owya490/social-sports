@@ -25,7 +25,7 @@ const config: Config = {
       screens: {
         xs: "100px",
         ...defaultTheme.screens,
-        "3xl": "2600px",
+        "3xl": "2200px",
       },
       animation: {
         "spin-slow": "spin 2s linear infinite",
