@@ -158,7 +158,13 @@ export function ImageForm({
               onChange={handleThumbnailFileChange}
             />
             {thumbnailPreviewUrl !== "" && (
-              <Image src={thumbnailPreviewUrl} width={0} height={0} alt="imagePreview" className="h-72 w-fit p-4" />
+              <Image
+                src={thumbnailPreviewUrl}
+                width={0}
+                height={0}
+                alt="imagePreview"
+                className="h-72 w-fit p-4 aspect-square object-cover"
+              />
             )}
           </div>
           {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
@@ -198,7 +204,13 @@ export function ImageForm({
               onChange={handleImageFileChange}
             />
             {imagePreviewUrl !== "" && (
-              <Image src={imagePreviewUrl} width={0} height={0} alt="imagePreview" className="h-72 w-fit p-4" />
+              <Image
+                src={imagePreviewUrl}
+                width={0}
+                height={0}
+                alt="imagePreview"
+                className="h-72 w-auto p-4 aspect-video object-cover"
+              />
             )}
           </div>
           {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
