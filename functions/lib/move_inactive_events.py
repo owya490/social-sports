@@ -9,12 +9,9 @@ from google.cloud.firestore import DocumentReference, Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.auth import *
 from lib.constants import *
+from lib.constants import (ACTIVE_PRIVATE, ACTIVE_PUBLIC, INACTIVE_PRIVATE,
+                           INACTIVE_PUBLIC, SYDNEY_TIMEZONE)
 from lib.logging import Logger
-
-ACTIVE_PUBLIC = "Events/Active/Public"
-ACTIVE_PRIVATE = "Events/Active/Private"
-INACTIVE_PUBLIC = "Events/InActive/Public"
-INACTIVE_PRIVATE = "Events/InActive/Private"
 
 
 @firestore.transactional
@@ -44,8 +41,7 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
     event_dict = event.to_dict()
     event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
     logger.info(event_end_date)
-    aest = pytz.timezone('Australia/Sydney')
-    if event_end_date.ToDatetime().astimezone(aest).date() < today:
+    if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
       logger.info(f"today is after end date for ${event.id}")
       transaction = db.transaction()
       # The events datetime is earlier so it has already passed, hence we should move it
@@ -63,8 +59,7 @@ def get_and_move_private_inactive_events(today: date):
     event_id = event.id
     event_dict = event.to_dict()
     event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
-    aest = pytz.timezone('Australia/Sydney')
-    if event_end_date.ToDatetime().astimezone(aest).date() < today:
+    if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
       transaction = db.transaction()
       # The events datetime is earlier so it has already passed, hence we should move it
       move_event_to_inactive(transaction=transaction, old_event_ref=db.collection(ACTIVE_PRIVATE).document(event_id), new_event_ref=db.collection(INACTIVE_PRIVATE).document(event_id))
@@ -76,8 +71,7 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   logger = Logger(f"move_inactive_events_logger_{uid}")
   logger.add_tag("uuid", uid)
   
-  aest = pytz.timezone('Australia/Sydney')
-  today = datetime.now(aest).date()
+  today = datetime.now(SYDNEY_TIMEZONE).date()
 
   logger.info("Moving inactive events for date " + today.strftime("%d/%m/%Y, %H:%M:%S"))
 

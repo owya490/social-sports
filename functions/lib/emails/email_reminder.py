@@ -13,12 +13,11 @@ from google.cloud.firestore import DocumentReference, Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.auth import *
 from lib.constants import *
+from lib.constants import (ACTIVE_PRIVATE, ACTIVE_PUBLIC, EVENT_METADATA,
+                           SYDNEY_TIMEZONE)
 from lib.emails.constants import LOOPS_API_KEY
 from lib.logging import Logger
 
-ACTIVE_PUBLIC = "Events/Active/Public"
-ACTIVE_PRIVATE = "Events/Active/Private"
-EVENT_METADATA = "EventsMetadata"
 
 @dataclass 
 class Purchaser:
@@ -64,14 +63,12 @@ def get_active_events_starting_tomorrow(logger: Logger, tomorrow: date, collecti
     event_id = event.id
     event_dict = event.to_dict()
     event_start_date: Timestamp = event_dict.get("startDate").timestamp_pb()
-    aest = pytz.timezone('Australia/Sydney')
 
-    if (event_start_date.ToDatetime().astimezone(aest).date() == tomorrow):
+    if (event_start_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() == tomorrow):
       start_date: Timestamp = event_dict.get("startDate").timestamp_pb()
       end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
-      aest = pytz.timezone('Australia/Sydney')
-      start_date_string =  start_date.ToDatetime().astimezone(aest).strftime("%m/%d/%Y, %H:%M")
-      end_date_string =  end_date.ToDatetime().astimezone(aest).strftime("%m/%d/%Y, %H:%M")
+      start_date_string =  start_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
+      end_date_string =  end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
 
       logger.info(f"{event_id} is starting tomorrow")
       all_events_starting_tomorrow.append(EventReminderVariables(
@@ -123,8 +120,7 @@ def email_reminder(event: scheduler_fn.ScheduledEvent) -> None:
   logger = Logger(f"email_reminder_logger_{uid}")
   logger.add_tag("uuid", uid)
   
-  aest = pytz.timezone('Australia/Sydney')
-  tomorrow = (datetime.now(aest) + timedelta(days=1)).date()
+  tomorrow = (datetime.now(SYDNEY_TIMEZONE) + timedelta(days=1)).date()
 
   logger.info("Sending reminder emails for events for date " + tomorrow.strftime("%d/%m/%Y, %H:%M:%S"))
   all_events_starting_tomorrow = get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PUBLIC) + get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PRIVATE)
