@@ -2,7 +2,8 @@ import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
 import UserContext from "@/components/utility/UserContext";
 import GrafanaFaro from "@/observability/GrafanaFaro";
-import { Metadata } from "next";
+import type { Metadata } from "next";
+import { Inter, Montserrat } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -31,6 +32,17 @@ const aileron = localFont({
   ],
 });
 
+export const inter = Inter({ subsets: ["latin"] });
+const montserrat = Montserrat({ subsets: ["latin"] });
+
+// const montserrat = localFont({
+//   src: [
+//     {
+//       path:""
+//     }
+//   ]
+// })
+
 // const inter = Inter({ subsets: ["latin"] }); old font, just replace aileron with inter to swap back
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -38,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <GrafanaFaro>
         <UserContext>
-          <body className={`${aileron.className}`}>
+          <body className={`${inter.className}`}>
             <div className="hidden md:block">
               <Navbar />
             </div>
