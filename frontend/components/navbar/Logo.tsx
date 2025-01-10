@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-// import LogoImage from "./../../public/images/SportsHubBlackLogo.svg";
 import LogoImage from "./../../public/icons/Icon_black_square.png";
 
 export default function Logo() {

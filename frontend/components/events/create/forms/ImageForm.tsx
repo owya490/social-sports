@@ -4,7 +4,6 @@ import { useState } from "react";
 import { FormWrapper } from "./FormWrapper";
 
 type BasicData = {
-  description: string;
   image: File | string | undefined;
   thumbnail: File | string | undefined;
   imagePreviewUrl: string;

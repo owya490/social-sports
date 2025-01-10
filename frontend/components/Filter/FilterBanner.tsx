@@ -12,14 +12,6 @@ import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/l
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import ChevronRightButton from "../elements/ChevronRightButton";
-// import BadmintonImage from "./../../public/images/badminton.png";
-// import BaseballImage from "./../../public/images/baseball.png";
-// import BasketballImage from "./../../public/images/basketball.png";
-// import PingPongImage from "./../../public/images/ping-pong.png";
-// import RugbyImage from "./../../public/images/rugby-ball.png";
-// import SoccerImage from "./../../public/images/soccer-ball.png";
-// import TennisImage from "./../../public/images/tennis-balls.png";
-// import VolleyballImage from "./../../public/images/volleyball.png";
 import BadmintonImage from "./../../public/images/sport-icons/reshot-icon-badminton-L2HG8MEXV6.svg";
 import BaseballImage from "./../../public/images/sport-icons/reshot-icon-baseball-bat-4VRP9QE3SA.svg";
 import BasketballImage from "./../../public/images/sport-icons/reshot-icon-basketball-YHLJCPQSNE.svg";

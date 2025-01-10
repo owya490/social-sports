@@ -75,14 +75,7 @@ export default function EventCard(props: EventCardProps) {
                 <MapPinIcon className="w-4 shrink-0" />
                 <p className="ml-1 font-light text-core-text text-xs whitespace-nowrap overflow-hidden">{location}</p>
               </div>
-              {/* <div className="flex items-center">
-                <CurrencyDollarIcon className="w-5 shrink-0" />
-                <p className="ml-1 font-light text-sm">{`$${displayPrice(price)} AUD per person`}</p>
-              </div> */}
             </div>
-            {/* <div className="flex items-center">
-              <p className="text-sm font-light text-gray-500">{`${vacancy} spots left`}</p>
-            </div> */}
           </div>
         </>
       )}

@@ -54,7 +54,6 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({
 
   const handleInputBlur = () => {
     if (!selectionMade) {
-      console.log("owen");
       setAddress("");
       updateField({ location: "" });
       setHasError(true);
