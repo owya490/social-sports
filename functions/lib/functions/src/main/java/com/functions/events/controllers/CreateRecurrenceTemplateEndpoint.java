@@ -18,6 +18,10 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
+        response.appendHeader("Access-Control-Allow-Origin", "*");
+        response.appendHeader("Access-Control-Allow-Methods", "POST, HEAD, OPTIONS");
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
+
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST"); // Inform client that only GET is allowed

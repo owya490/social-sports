@@ -16,6 +16,10 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
+        response.appendHeader("Access-Control-Allow-Origin", "*");
+        response.appendHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
+
         if (!"GET".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "GET"); // Inform client that only GET is allowed
