@@ -46,7 +46,7 @@ export default function SearchBar() {
     }
   };
   return (
-    <div className="flex border border-1 border-black rounded-full h-10 pl-5 pr-0.5 w-fit items-center bg-white drop-shadow-md">
+    <div className="flex border border-1 border-core-outline rounded-full h-10 pl-5 pr-1 w-fit items-center bg-white shadow-sm">
       <input
         // className="h-9 max-w-[160px] xl:max-w-[220px] border-0 focus:ring-0"
         className="h-9 w-64 border-0 focus:ring-0"
@@ -65,7 +65,7 @@ export default function SearchBar() {
         onChange={(e) => setLocation(e.target.value)}
         onKeyDown={handleKeyPress}
       /> */}
-      <button onClick={handleSearchClick} className="w-9 h-9 rounded-full border border-black bg-black">
+      <button onClick={handleSearchClick} className="w-7 h-7 rounded-full border border-black bg-black">
         <SearchIcon />
       </button>
     </div>

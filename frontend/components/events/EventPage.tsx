@@ -45,14 +45,14 @@ export default function EventPage({ params }: any) {
   return loading ? (
     <Loading />
   ) : (
-    <div className="text-black mt-16">
+    <div className="text-black mt-12">
       <EventBanner
         name={eventData.name}
         startDate={eventData.startDate}
         organiser={eventData.organiser}
         vacancy={eventData.vacancy}
       />
-      <div className="mt-5 lg:mt-10 mb-10">
+      <div className="mt-1 mb-10">
         <EventDetails eventData={eventData} eventTags={eventTags} setLoading={setLoading} />
 
         <RecommendedEvents eventData={eventData} />

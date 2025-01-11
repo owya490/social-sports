@@ -27,7 +27,10 @@ export function timestampToDateString(timestamp: Timestamp): string {
 }
 
 export function timestampToEventCardDateString(timestamp: Timestamp) {
-  return `${timestampToDateString(timestamp).toUpperCase()} · ${timestampToTimeOfDay24Hour(timestamp)} AEST`;
+  // return `${timestampToDateString(timestamp).toUpperCase()} · ${timestampToTimeOfDay24Hour(timestamp)} AEST`;
+  return `${timestampToDateString(timestamp).toUpperCase().replace("2025", "")} · ${timestampToTimeOfDay24Hour(
+    timestamp
+  )} AEST`;
 }
 
 export function formatTimeTo12Hour(time: string) {

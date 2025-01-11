@@ -66,24 +66,24 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
   }, [user]);
 
   return (
-    <div className="bg-organiser-light-gray drop-shadow-lg fixed bottom-0 sm:bottom-auto inset-x-0 sm:inset-x-auto sm:left-0 sm:h-screen z-40">
+    <div className="bg-white border-r-[1px] border-core-outline fixed bottom-0 sm:bottom-auto inset-x-0 sm:inset-x-auto sm:left-0 sm:h-screen z-40">
       <div className="flex justify-center items-center h-12 sm:h-auto sm:w-14 sm:flex-col sm:mt-14 sm:space-y-3 sm:space-x-0 space-x-3">
         <Link
           href="/organiser/dashboard/"
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-            currPage === "Dashboard" && "bg-organiser-darker-light-gray"
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-core-hover transition ease-in-out ${
+            currPage === "Dashboard" && "bg-core-hover"
           }`}
         >
-          <HomeIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <HomeIcon className="w-6 stroke-1 stroke-core-text" />
         </Link>
         <Menu as="div" className="relative inline-block text-left">
           <div className="flex items-centers">
             <MenuButton
-              className={`flex justify-center items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-                currPage === "EventDashboard" && "bg-organiser-darker-light-gray"
+              className={`flex justify-center items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-core-hover transition ease-in-out ${
+                currPage === "EventDashboard" && "bg-core-hover"
               }`}
             >
-              <CalendarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+              <CalendarIcon className="w-6 stroke-1 stroke-core-text" />
             </MenuButton>
           </div>
           <Transition
@@ -102,7 +102,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
                     <Link
                       href="/organiser/event/dashboard"
                       className={`${
-                        active ? "text-white bg-highlight-yellow" : "text-black"
+                        active ? "text-core-text bg-core-hover" : "text-core-text"
                       } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                     >
                       <StarIcon className="w-6 stroke-1 mr-2" />
@@ -115,7 +115,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
                     <Link
                       href="/organiser/recurring-events"
                       className={`${
-                        active ? "text-white bg-highlight-yellow" : "text-black"
+                        active ? "text-core-text bg-core-hover" : "text-core-text"
                       } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                     >
                       <ArrowPathIcon className="w-6 stroke-1 mr-2" />
@@ -129,35 +129,35 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         </Menu>
         <Link
           href={`/organiser/event/${eventId}`}
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-            currPage === "EventDrilldown" && "bg-organiser-darker-light-gray"
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-core-hover transition ease-in-out ${
+            currPage === "EventDrilldown" && "bg-core-hover"
           }`}
         >
-          <BookmarkSquareIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <BookmarkSquareIcon className="w-6 stroke-1 stroke-core-text" />
         </Link>
         <Link
           href="/organiser/metrics"
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-            currPage === "Metrics" && "bg-organiser-darker-light-gray"
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-core-hover transition ease-in-out ${
+            currPage === "Metrics" && "bg-core-hover"
           }`}
         >
-          <ChartBarIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <ChartBarIcon className="w-6 stroke-1 stroke-core-text" />
         </Link>
         <Link
           href="/organiser/gallery"
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-            currPage === "Gallery" && "bg-organiser-darker-light-gray"
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-core-hover transition ease-in-out ${
+            currPage === "Gallery" && "bg-core-hover"
           }`}
         >
-          <CameraIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <CameraIcon className="w-6 stroke-1 stroke-core-text" />
         </Link>
         <Link
           href="/organiser/settings"
-          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-organiser-darker-light-gray transition ease-in-out ${
-            currPage === "Settings" && "bg-organiser-darker-light-gray"
+          className={`flex justify-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-core-hover transition ease-in-out ${
+            currPage === "Settings" && "bg-core-hover"
           }`}
         >
-          <UserIcon className="w-6 stroke-1 stroke-organiser-dark-gray-text" />
+          <UserIcon className="w-6 stroke-1 stroke-core-text" />
         </Link>
       </div>
     </div>

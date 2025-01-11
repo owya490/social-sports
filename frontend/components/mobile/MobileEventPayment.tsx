@@ -75,12 +75,12 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
             <h2 className="hidden sm:block font-semibold">Price</h2>
             <div className="flex items-center">
               <CurrencyDollarIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">${displayPrice(props.price)} AUD per person</p>
+              <p className="text-md font-light mr-[5%]">${displayPrice(props.price)} AUD</p>
             </div>
           </div>
         </div>
       </div>
-      <hr className="px-2 h-[1px] mx-auto bg-gray-300 border-0 rounded dark:bg-gray-400 mb-4"></hr>
+      <hr className="px-2 h-[1px] mx-auto bg-core-outline border-0 rounded dark:bg-gray-400 mb-4"></hr>
       <div className="relative flex mb-6 w-full">
         {eventRegistrationClosed ? (
           <div>
@@ -132,7 +132,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                 </div>
 
                 <button
-                  className="text-lg rounded-2xl border border-black w-full py-3 mb-2"
+                  className="font-semibold rounded-2xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline w-full py-3 transition-all duration-300 mb-2"
                   style={{
                     textAlign: "center",
                     position: "relative",
@@ -155,7 +155,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
         ) : (
           <Link href="#" className="w-full">
             <div
-              className="text-lg rounded-2xl border border-black w-full py-3"
+              className="font-semibold rounded-2xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline w-full py-3 transition-all duration-300"
               style={{
                 textAlign: "center",
                 position: "relative",
