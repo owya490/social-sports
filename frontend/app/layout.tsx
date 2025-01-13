@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import ReactQueryProvider from "@/utilities/ReactQueryProvider";
 
 const aileron = localFont({
   src: [
@@ -45,21 +46,29 @@ const montserrat = Montserrat({ subsets: ["latin"] });
 
 // const inter = Inter({ subsets: ["latin"] }); old font, just replace aileron with inter to swap back
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+  pageProps, // pageProps should contain dehydrated state for hydration
+}: {
+  children: React.ReactNode;
+  pageProps: any; // Define the type according to your actual data
+}) {
   return (
     <html lang="en">
       <GrafanaFaro>
-        <UserContext>
-          <body className={`${inter.className}`}>
-            <div className="hidden md:block">
-              <Navbar />
-            </div>
-            <div className="md:hidden">
-              <MobileNavbar />
-            </div>
-            <div className="min-h-screen">{children}</div>
-          </body>
-        </UserContext>
+        <ReactQueryProvider>
+          <UserContext>
+            <body className={`${inter.className}`}>
+              <div className="hidden md:block">
+                <Navbar />
+              </div>
+              <div className="md:hidden">
+                <MobileNavbar />
+              </div>
+              <div className="min-h-screen">{children}</div>
+            </body>
+          </UserContext>
+        </ReactQueryProvider>
       </GrafanaFaro>
     </html>
   );

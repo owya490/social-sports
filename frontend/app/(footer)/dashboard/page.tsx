@@ -48,55 +48,54 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      await sleep(500);
-      const { event, location } = getQueryParams();
-      if (event === "UNDEFINED") {
-        console.log("owen");
-        return false;
-      }
-
-      if (typeof event === "string" && typeof location === "string") {
-        if (event.trim() === "") {
-          console.log("no event name");
-          getAllEvents().then((events) => {
-            console.log(events);
-            setEventDataList(events);
-            setSearchDataList(events);
-            setAllEventsDataList(events);
-          });
-        } else {
-          searchEventsByKeyword(event, location)
-            .then(async (events) => {
-              let tempEventDataList: EventData[] = [];
-              for (const singleEvent of events) {
-                const eventData = await getEventById(singleEvent.eventId);
-                tempEventDataList.push(eventData);
-              }
-              return tempEventDataList;
-            })
-            .then((tempEventDataList: EventData[]) => {
-              setEventDataList(tempEventDataList);
-              setSearchDataList(tempEventDataList);
-            })
-            .catch(() => {
-              router.push("/error");
-            });
-        }
-      }
-      setSrcLocation(location);
-      if (location.trim() !== "") {
-        if (triggerFilterApply === undefined) {
-          setTriggerFilterApply(false);
-        } else {
-          setTriggerFilterApply(!triggerFilterApply);
-        }
-      } else {
-        setLoading(false);
-      }
-    };
-    setLoading(true);
-    fetchEvents();
+    // const fetchEvents = async () => {
+    //   await sleep(500);
+    //   const { event, location } = getQueryParams();
+    //   if (event === "UNDEFINED") {
+    //     console.log("owen");
+    //     return false;
+    //   }
+    //   if (typeof event === "string" && typeof location === "string") {
+    //     if (event.trim() === "") {
+    //       console.log("no event name");
+    //       getAllEvents().then((events) => {
+    //         console.log(events);
+    //         setEventDataList(events);
+    //         setSearchDataList(events);
+    //         setAllEventsDataList(events);
+    //       });
+    //     } else {
+    //       searchEventsByKeyword(event, location)
+    //         .then(async (events) => {
+    //           let tempEventDataList: EventData[] = [];
+    //           for (const singleEvent of events) {
+    //             const eventData = await getEventById(singleEvent.eventId);
+    //             tempEventDataList.push(eventData);
+    //           }
+    //           return tempEventDataList;
+    //         })
+    //         .then((tempEventDataList: EventData[]) => {
+    //           setEventDataList(tempEventDataList);
+    //           setSearchDataList(tempEventDataList);
+    //         })
+    //         .catch(() => {
+    //           router.push("/error");
+    //         });
+    //     }
+    //   }
+    //   setSrcLocation(location);
+    //   if (location.trim() !== "") {
+    //     if (triggerFilterApply === undefined) {
+    //       setTriggerFilterApply(false);
+    //     } else {
+    //       setTriggerFilterApply(!triggerFilterApply);
+    //     }
+    //   } else {
+    //     setLoading(false);
+    //   }
+    // };
+    // setLoading(true);
+    // fetchEvents();
   }, [searchParams]);
 
   // useEffect listener for when filtering finishes
