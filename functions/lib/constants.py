@@ -2,6 +2,7 @@ import os
 
 import google.cloud.firestore
 import google.cloud.logging
+import pytz
 from firebase_admin import firestore, initialize_app
 from google.cloud import firestore
 from posthog import Posthog
@@ -21,4 +22,10 @@ posthog = Posthog(project_api_key=str(POSTHOG_API_KEY), host='https://app.postho
 # posthog = Posthog(project_api_key="", host='https://app.posthog.com')
 
 
+ACTIVE_PUBLIC = "Events/Active/Public"
+ACTIVE_PRIVATE = "Events/Active/Private"
+INACTIVE_PUBLIC = "Events/InActive/Public"
+INACTIVE_PRIVATE = "Events/InActive/Private"
+EVENT_METADATA = "EventsMetadata"
 
+SYDNEY_TIMEZONE = pytz.timezone("Australia/Sydney")
