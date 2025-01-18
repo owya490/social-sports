@@ -1,7 +1,7 @@
 "use client";
 
+import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
-import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSettings";
 import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
@@ -40,12 +40,15 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventEndDate, setEventEndDate] = useState<Timestamp>(Timestamp.now());
   const [eventVacancy, setEventVacancy] = useState<number>(0);
   const [eventDescription, setEventDescription] = useState<string>("");
+  const [eventSport, setEventSport] = useState<string>("");
   const [eventLocation, setEventLocation] = useState<string>("");
   const [eventPrice, setEventPrice] = useState<number>(0);
   const [eventImage, setEventImage] = useState<string>("");
   const [eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
   const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
+  const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
+  const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
 
   const router = useRouter();
@@ -63,10 +66,13 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventVacancy(recurrenceTemplate.eventData.vacancy);
         setEventDescription(recurrenceTemplate.eventData.description);
         setEventLocation(recurrenceTemplate.eventData.location);
+        setEventSport(recurrenceTemplate.eventData.sport);
         setEventPrice(recurrenceTemplate.eventData.price);
         setEventImage(recurrenceTemplate.eventData.image);
         setEventAccessCount(recurrenceTemplate.eventData.accessCount);
         setEventCapacity(recurrenceTemplate.eventData.capacity);
+        setEventIsActive(recurrenceTemplate.eventData.isActive);
+        setEventRegistrationDeadline(recurrenceTemplate.eventData.registrationDeadline);
         setNewRecurrenceData(extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData));
         setPastEvents(recurrenceTemplate.recurrenceData.pastRecurrences);
       })
@@ -132,9 +138,13 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   eventEndDate={eventEndDate}
                   eventDescription={eventDescription}
                   eventLocation={eventLocation}
+                  eventSport={eventSport}
+                  eventCapacity={eventCapacity}
                   eventPrice={eventPrice}
                   eventImage={eventImage}
                   eventId={recurrenceTemplateId}
+                  isActive={eventIsActive}
+                  eventRegistrationDeadline={eventRegistrationDeadline}
                   updateData={handleRecurrenceTemplateEventUpdate}
                 />
               </>

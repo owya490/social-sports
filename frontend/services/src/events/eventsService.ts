@@ -219,18 +219,25 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
     const privateDoc = await getPrivateUserById(userId);
 
     const organiserEvents = privateDoc.organiserEvents || [];
+    const promisesList: Promise<EventData | null>[] = [];
     const eventDataList: EventData[] = [];
+
     for (const eventId of organiserEvents) {
-      try {
-        const eventData: EventData = await getEventById(eventId);
-        eventData.eventId = eventId;
-        eventDataList.push(eventData);
-      } catch {
-        eventServiceLogger.warn(
-          `Organiser cannot find an event which is present in their personal event list. organiser=${userId} eventId=${eventId}`
-        );
-      }
+      promisesList.push(
+        getEventById(eventId).catch((error) => {
+          eventServiceLogger.warn(
+            `Organiser cannot find an event which is present in their personal event list. organiser=${userId} eventId=${eventId}`
+          );
+          return null;
+        })
+      );
     }
+    await Promise.all(promisesList).then((results: (EventData | null)[]) => {
+      for (const event of results.filter((result) => result != null)) {
+        eventDataList.push(event);
+      }
+    });
+
     // Return the organiserEvents array
     eventServiceLogger.info(`Fetching private user by ID:, ${userId}, ${eventDataList}`);
     return eventDataList;
@@ -503,4 +510,27 @@ function validatePurchaserDetails(purchaser: Purchaser): void {
     //   throw new Error(`Attendee phone number is invalid - ${attendeeObj.phone}`);
     // }
   }
+}
+
+export async function updateEventCapacityById(eventId: EventId, capacity: number): Promise<boolean> {
+  eventServiceLogger.info(`Updating event capacity for ${eventId} to ${capacity}`);
+  var valid = false;
+  try {
+    await runTransaction(db, async (transaction) => {
+      const eventDocRef = await findEventDocRef(eventId);
+      const eventDoc: EventDataWithoutOrganiser = (
+        await transaction.get(eventDocRef)
+      ).data() as EventDataWithoutOrganiser;
+      eventDoc.vacancy;
+
+      if (capacity >= eventDoc.capacity - eventDoc.vacancy) {
+        const changeAmount = eventDoc.capacity - capacity;
+        transaction.update(eventDocRef, { capacity: capacity, vacancy: eventDoc.vacancy - changeAmount });
+        valid = true;
+      }
+    });
+  } catch (error) {
+    eventServiceLogger.error(`Error updating event capacity for ${eventId} ${error}`);
+  }
+  return valid;
 }

@@ -117,7 +117,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   >
                     {Array(
                       // TODO remove the hardcoded event as that was 1 off for gg eoy social
-                      Math.min(props.vacancy, props.eventId === "frpwA2xECrPsxQhtxdfj" ? 1 : MAX_TICKETS_PER_ORDER)
+                      Math.min(props.vacancy, MAX_TICKETS_PER_ORDER)
                     )
                       .fill(0)
                       .map((_, idx) => {
