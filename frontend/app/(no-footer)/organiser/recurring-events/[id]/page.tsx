@@ -140,12 +140,12 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   eventLocation={eventLocation}
                   eventSport={eventSport}
                   eventCapacity={eventCapacity}
+                  eventVacancy={eventVacancy}
                   eventPrice={eventPrice}
                   eventImage={eventImage}
                   eventId={recurrenceTemplateId}
                   isActive={eventIsActive}
                   eventRegistrationDeadline={eventRegistrationDeadline}
-                  updateData={handleRecurrenceTemplateEventUpdate}
                 />
               </>
             )}

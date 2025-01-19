@@ -38,6 +38,7 @@ export const EventDetailsEdit = ({
   eventLocation,
   eventSport,
   eventCapacity,
+  eventVacancy,
   eventPrice,
   eventRegistrationDeadline,
   loading,
@@ -49,6 +50,7 @@ export const EventDetailsEdit = ({
   eventLocation: string;
   eventSport: string;
   eventCapacity: number;
+  eventVacancy: number;
   eventPrice: number;
   eventRegistrationDeadline: Timestamp;
   loading: boolean;
@@ -57,6 +59,7 @@ export const EventDetailsEdit = ({
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [registrationDeadlineWarning, setRegistrationDeadlineWarning] = useState<string | null>(null);
+  const [capacityWarning, setCapacityWarning] = useState<string | null>(null);
 
   // Date and Time
   const [isEdit, setIsEdit] = useState(false);
@@ -116,41 +119,6 @@ export const EventDetailsEdit = ({
       },
     };
   };
-
-  useEffect(() => {
-    const currentDateTime = new Date();
-    const selectedStartDateTime = new Date(
-      `${formatStringToDate(newEditStartDate)}T${formatTimeTo24Hour(newEditStartTime)}`
-    );
-    const selectedEndDateTime = new Date(`${formatStringToDate(newEditEndDate)}T${formatTimeTo24Hour(newEditEndTime)}`);
-    const selectedRegistrationDeadline = new Date(
-      `${formatStringToDate(newEditRegistrationDeadlineDate)}T${formatTimeTo24Hour(newEditRegistrationDeadlineTime)}`
-    );
-
-    if (currentDateTime > selectedStartDateTime) {
-      setDateWarning("Event start date and time is in the past!");
-    } else {
-      setDateWarning(null);
-    }
-
-    if (selectedEndDateTime < selectedStartDateTime) {
-      setTimeWarning("Event must end after it starts!");
-    } else {
-      setTimeWarning(null);
-    }
-    if (selectedRegistrationDeadline > selectedEndDateTime) {
-      setRegistrationDeadlineWarning("Registration Deadline is after event end!");
-    } else {
-      setRegistrationDeadlineWarning(null);
-    }
-  }, [
-    newEditStartDate,
-    newEditStartTime,
-    newEditEndDate,
-    newEditEndTime,
-    newEditRegistrationDeadlineDate,
-    newEditRegistrationDeadlineTime,
-  ]);
 
   // Keep end datetime and registration deadline in sync with start date.
   useEffect(() => {
@@ -222,6 +190,48 @@ export const EventDetailsEdit = ({
     setNewEditPrice(eventPrice);
     setPrice(eventPrice);
   }, [loading]);
+
+  // UseEffect triggered on certain field mutations to ensure entry is valid
+  useEffect(() => {
+    const currentDateTime = new Date();
+    const selectedStartDateTime = new Date(
+      `${formatStringToDate(newEditStartDate)}T${formatTimeTo24Hour(newEditStartTime)}`
+    );
+    const selectedEndDateTime = new Date(`${formatStringToDate(newEditEndDate)}T${formatTimeTo24Hour(newEditEndTime)}`);
+    const selectedRegistrationDeadline = new Date(
+      `${formatStringToDate(newEditRegistrationDeadlineDate)}T${formatTimeTo24Hour(newEditRegistrationDeadlineTime)}`
+    );
+
+    if (currentDateTime > selectedStartDateTime) {
+      setDateWarning("Event start date and time is in the past!");
+    } else {
+      setDateWarning(null);
+    }
+
+    if (selectedEndDateTime < selectedStartDateTime) {
+      setTimeWarning("Event must end after it starts!");
+    } else {
+      setTimeWarning(null);
+    }
+    if (selectedRegistrationDeadline > selectedEndDateTime) {
+      setRegistrationDeadlineWarning("Registration Deadline is after event end!");
+    } else {
+      setRegistrationDeadlineWarning(null);
+    }
+    if (newEditCapacity < eventCapacity - eventVacancy) {
+      setCapacityWarning("New Capacity cannot be lower than current attendees count.");
+    } else {
+      setCapacityWarning(null);
+    }
+  }, [
+    newEditStartDate,
+    newEditStartTime,
+    newEditEndDate,
+    newEditEndTime,
+    newEditRegistrationDeadlineDate,
+    newEditRegistrationDeadlineTime,
+    newEditCapacity,
+  ]);
 
   const handleUpdate = async () => {
     await handleCapacityUpdate();
@@ -515,6 +525,7 @@ export const EventDetailsEdit = ({
             )}
           </div>
         </div>
+        {isEdit && <>{capacityWarning && <div className="text-red-600 text-sm mt-2">{capacityWarning}</div>}</>}
         <div className="px-2 flex flex-row space-x-2">
           <CurrencyDollarIcon className="w-4 mt-2 shrink-0" />
           <div>
@@ -542,7 +553,9 @@ export const EventDetailsEdit = ({
                     />
                     <CheckIcon
                       className={`absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer ${
-                        dateWarning || timeWarning ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        dateWarning || timeWarning || registrationDeadlineWarning
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
                       }`}
                       onClick={() => {
                         if (!dateWarning && !timeWarning && !registrationDeadlineWarning) {
