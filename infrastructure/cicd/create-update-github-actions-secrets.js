@@ -66,6 +66,7 @@ const envVariableListDev = [
     secretName: "FIREBASE_DEV_MEASUREMENT_ID",
     secretValue: process.env.FIREBASE_DEV_MEASUREMENT_ID,
   },
+  // SOCIALSPORTSPROD Github secrets env variables
   {
     secretName: "SOCIALSPORTSPROD_GCLOUD_CREDENTIALS",
     secretValue: process.env.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS,
@@ -95,6 +96,11 @@ const envVariableListDev = [
     secretValue: process.env.SOCIALSPORTSPROD_SENDGRID_API_KEY,
   },
   {
+    secretName: "SOCIALSPORTSPROD_LOOPS_API_KEY",
+    secretValue: process.env.SOCIALSPORTSPROD_LOOPS_API_KEY,
+  },
+  // SOCIALSPORTSDEV Github secrets env variables
+  {
     secretName: "SOCIALSPORTSDEV_GCLOUD_CREDENTIALS",
     secretValue: process.env.SOCIALSPORTSDEV_GCLOUD_CREDENTIALS,
   },
@@ -121,6 +127,10 @@ const envVariableListDev = [
   {
     secretName: "SOCIALSPORTSDEV_SENDGRID_API_KEY",
     secretValue: process.env.SOCIALSPORTSDEV_SENDGRID_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_LOOPS_API_KEY",
+    secretValue: process.env.SOCIALSPORTSDEV_LOOPS_API_KEY,
   },
   // TODO: add more secrets you want to push to github secrets here.
 ];
