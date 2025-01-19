@@ -21,6 +21,8 @@ interface EventDrilldownDetailsPageProps {
   eventId: string;
   eventRegistrationDeadline: Timestamp;
   isActive: boolean;
+  updateData: (id: string, data: any) => any;
+  isRecurrenceTemplate: boolean;
 }
 
 const EventDrilldownDetailsPage = ({
@@ -38,6 +40,8 @@ const EventDrilldownDetailsPage = ({
   eventId,
   eventRegistrationDeadline,
   isActive,
+  updateData,
+  isRecurrenceTemplate,
 }: EventDrilldownDetailsPageProps) => {
   return (
     <div className="flex flex-col space-y-4 mb-6">
@@ -73,6 +77,8 @@ const EventDrilldownDetailsPage = ({
         eventRegistrationDeadline={eventRegistrationDeadline}
         loading={loading}
         isActive={isActive}
+        updateData={updateData}
+        isRecurrenceTemplate={isRecurrenceTemplate}
       />
       <div className="h-[1px] bg-core-outline w-full"></div>
       <EventDescriptionEdit eventId={eventId} eventDescription={eventDescription} loading={loading} />

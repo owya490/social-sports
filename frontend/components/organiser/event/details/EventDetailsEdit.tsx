@@ -12,7 +12,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useEffect } from "react";
 
-import { Input, Option, Select } from "@material-tailwind/react";
+import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 
 import { EventData } from "@/interfaces/EventTypes";
 import {
@@ -24,7 +24,7 @@ import {
   timestampToDateString,
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
-import { updateEventById, updateEventCapacityById } from "@/services/src/events/eventsService";
+import { updateEventCapacityById } from "@/services/src/events/eventsService";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
@@ -43,6 +43,8 @@ export const EventDetailsEdit = ({
   eventRegistrationDeadline,
   loading,
   isActive,
+  updateData,
+  isRecurrenceTemplate,
 }: {
   eventId: string;
   eventStartDate: Timestamp;
@@ -55,7 +57,10 @@ export const EventDetailsEdit = ({
   eventRegistrationDeadline: Timestamp;
   loading: boolean;
   isActive: boolean;
+  updateData: (id: string, data: any) => any;
+  isRecurrenceTemplate: boolean;
 }) => {
+  const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [registrationDeadlineWarning, setRegistrationDeadlineWarning] = useState<string | null>(null);
@@ -233,15 +238,28 @@ export const EventDetailsEdit = ({
     newEditCapacity,
   ]);
 
+  // need to recurring and event snowflake divergence - capacity can be updated freely in recurrence templates
   const handleUpdate = async () => {
-    await handleCapacityUpdate();
-    updateEventById(eventId, {
+    setUpdateLoading(true);
+    var data = {
       ...handleDateTimeUpdate(),
       ...handleRegistrationDeadlineUpdate(),
       ...(await handleLocationUpdate()),
       ...handleSportUpdate(),
       ...handlePriceUpdate(),
-    });
+    };
+    if (!isRecurrenceTemplate) {
+      await handleCapacityUpdate();
+    } else {
+      data = {
+        ...data,
+        capacity: newEditCapacity,
+        vacancy: newEditCapacity,
+      };
+    }
+
+    await updateData(eventId, data);
+    setUpdateLoading(false);
   };
 
   const handleCancel = () => {
@@ -553,12 +571,12 @@ export const EventDetailsEdit = ({
                     />
                     <CheckIcon
                       className={`absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer ${
-                        dateWarning || timeWarning || registrationDeadlineWarning || capacityWarning
+                        (dateWarning || timeWarning || registrationDeadlineWarning || capacityWarning) && !isRecurrenceTemplate
                           ? "opacity-50 cursor-not-allowed"
                           : "cursor-pointer"
                       }`}
                       onClick={() => {
-                        if (!dateWarning && !timeWarning && !registrationDeadlineWarning && !capacityWarning) {
+                        if (!dateWarning && !timeWarning && !registrationDeadlineWarning && !capacityWarning || isRecurrenceTemplate) {
                           handleUpdate();
                           setIsEdit(false);
                         }
@@ -575,14 +593,17 @@ export const EventDetailsEdit = ({
                 ) : (
                   <div className="mt-2">
                     ${displayPrice(newEditPrice)}
-                    {!isActive && (
-                      <PencilSquareIcon
-                        className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
-                        onClick={() => {
-                          setIsEdit(true);
-                        }}
-                      />
-                    )}
+                    {isActive &&
+                      (updateLoading ? (
+                        <Spinner className="absolute top-2 right-2 w-5" />
+                      ) : (
+                        <PencilSquareIcon
+                          className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
+                          onClick={() => {
+                            setIsEdit(true);
+                          }}
+                        />
+                      ))}
                   </div>
                 )}
               </>

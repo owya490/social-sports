@@ -14,7 +14,7 @@ import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/Mobil
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
+import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -45,8 +45,8 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventCapacity, setEventCapacity] = useState<number>(0);
   const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
   const [eventPaused, setEventPaused] = useState<boolean>(false);
-  const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
   const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
+  const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
@@ -158,6 +158,8 @@ export default function EventPage({ params }: EventPageProps) {
                   eventId={eventId}
                   eventRegistrationDeadline={eventRegistrationDeadline}
                   isActive={eventIsActive}
+                  updateData={updateEventById}
+                  isRecurrenceTemplate={false}
                 />
                 <ShareModal eventId={eventId} />
               </>

@@ -2,14 +2,14 @@
 
 import { Switch } from "@mantine/core";
 
-interface SettingsSwitchProps {
+interface LabelledSwitchProps {
   title: string;
   description: string;
   state: boolean;
   setState: (event: boolean) => void;
   updateData: (event: boolean) => void;
 }
-export const SettingsSwitch = ({ title, description, state, setState, updateData }: SettingsSwitchProps) => {
+export const LabelledSwitch = ({ title, description, state, setState, updateData }: LabelledSwitchProps) => {
   return (
     <div className="lg:flex w-full items-center">
       <div>

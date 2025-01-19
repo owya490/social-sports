@@ -1,5 +1,5 @@
 import { updateEventById } from "@/services/src/events/eventsService";
-import { SettingsSwitch } from "./SettingsSwitch";
+import { LabelledSwitch } from "../../../elements/LabelledSwitch";
 
 interface EventDrilldownSettingsPageProps {
   eventId: string;
@@ -26,7 +26,7 @@ const EventDrilldownSettingsPage = ({
 }: EventDrilldownSettingsPageProps) => {
   return (
     <div className="flex flex-col space-y-4 mb-6 px-4 md:px-0">
-      <SettingsSwitch
+      <LabelledSwitch
         title={"Pause Event Registration"}
         description={"If enabled, event registration will be closed."}
         state={paused}
@@ -37,7 +37,7 @@ const EventDrilldownSettingsPage = ({
           });
         }}
       />
-      <SettingsSwitch
+      <LabelledSwitch
         title={"Enable Event Payments"}
         description={"Enable for customers to purchase paid tickets for this event."}
         state={paymentsActive}
@@ -48,7 +48,7 @@ const EventDrilldownSettingsPage = ({
           });
         }}
       />
-      <SettingsSwitch
+      <LabelledSwitch
         title={"Pass Stripe Fee to Customer"}
         description={
           "Once enabled, card surcharges and Stripe fees will be added at checkout and paid by the customer."
@@ -61,7 +61,7 @@ const EventDrilldownSettingsPage = ({
           });
         }}
       />
-      <SettingsSwitch
+      <LabelledSwitch
         title={"Enable Promotional Codes"}
         description={"Enable to allow customers to apply promotional codes at checkout."}
         state={promotionalCodesEnabled}
