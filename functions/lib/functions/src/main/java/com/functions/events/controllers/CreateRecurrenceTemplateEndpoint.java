@@ -23,6 +23,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
 
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            logger.error("Invalid request type made to CreateRecurrenceTemplateEndpoint: {}", request.getMethod());
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST"); // Inform client that only GET is allowed
             response.getWriter().write("This function only supports POST requests.");
@@ -43,6 +44,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
 
 
         if (maybeRecurrenceTemplateId.isPresent()) {
+            logger.info("Recurrence template successfully created: {}", JavaUtils.objectMapper.writeValueAsString(maybeRecurrenceTemplateId));
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
@@ -50,6 +52,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
                     )
             );
         } else {
+            logger.error("Recurrence template failed to be created");
             response.setStatusCode(500);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
