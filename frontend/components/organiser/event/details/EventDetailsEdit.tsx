@@ -553,12 +553,12 @@ export const EventDetailsEdit = ({
                     />
                     <CheckIcon
                       className={`absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer ${
-                        dateWarning || timeWarning || registrationDeadlineWarning
+                        dateWarning || timeWarning || registrationDeadlineWarning || capacityWarning
                           ? "opacity-50 cursor-not-allowed"
                           : "cursor-pointer"
                       }`}
                       onClick={() => {
-                        if (!dateWarning && !timeWarning && !registrationDeadlineWarning) {
+                        if (!dateWarning && !timeWarning && !registrationDeadlineWarning && !capacityWarning) {
                           handleUpdate();
                           setIsEdit(false);
                         }
