@@ -31,32 +31,32 @@ jobs:
         run: cd frontend && npm run build
       - name: react tests
         run: cd frontend && npm test
-  configure_firebase:
-    runs-on: "ubuntu-latest"
-    permissions:
-      contents: "read"
-      id-token: "write"
+  # configure_firebase:
+  #   runs-on: "ubuntu-latest"
+  #   permissions:
+  #     contents: "read"
+  #     id-token: "write"
 
-    steps:
-      - uses: "actions/checkout@v4"
+  #   steps:
+  #     - uses: "actions/checkout@v4"
 
-      - id: "auth"
-        uses: "google-github-actions/auth@v2"
-        with:
-          credentials_json: "${{ env.FIREBASE_SERIVCE_ACCOUNT_JSON }}"
+  #     - id: "auth"
+  #       uses: "google-github-actions/auth@v2"
+  #       with:
+  #         credentials_json: "${{ env.FIREBASE_SERIVCE_ACCOUNT_JSON }}"
 
-      - id: "deploy"
-        uses: "google-github-actions/deploy-cloud-functions@v2"
-        with:
-          name: "get_stripe_checkout_url_by_event_id"
-          runtime: "python310"
-      - id: "deploy"
-        uses: "google-github-actions/deploy-cloud-functions@v2"
-        with:
-          name: "stripe_webhook_checkout_fulfilment"
-          runtime: "python310"
-      - id: "deploy"
-        uses: "google-github-actions/deploy-cloud-functions@v2"
-        with:
-          name: "create_stripe_standard_account"
-          runtime: "python310"
+  #     - id: "deploy"
+  #       uses: "google-github-actions/deploy-cloud-functions@v2"
+  #       with:
+  #         name: "get_stripe_checkout_url_by_event_id"
+  #         runtime: "python310"
+  #     - id: "deploy"
+  #       uses: "google-github-actions/deploy-cloud-functions@v2"
+  #       with:
+  #         name: "stripe_webhook_checkout_fulfilment"
+  #         runtime: "python310"
+  #     - id: "deploy"
+  #       uses: "google-github-actions/deploy-cloud-functions@v2"
+  #       with:
+  #         name: "create_stripe_standard_account"
+  #         runtime: "python310"

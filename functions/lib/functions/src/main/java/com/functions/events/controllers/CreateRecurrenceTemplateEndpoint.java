@@ -18,20 +18,25 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
-//        response.appendHeader("Access-Control-Allow-Origin", "https://www.sportshub.net.au");
+        // Set CORS headers for all responses
         response.appendHeader("Access-Control-Allow-Origin", "*");
-        response.appendHeader("Access-Control-Allow-Methods", "POST, HEAD, OPTIONS");
-        response.appendHeader("Access-Control-Allow-Headers", "Content-Type");
+        response.appendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        response.appendHeader("Access-Control-Max-Age", "3600"); // Cache preflight for 1 hour
 
+        // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            logger.info("Handling OPTIONS request: {}", request);
             response.setStatusCode(204); // No Content
             return;
         }
 
+        // Handle actual (POST) request
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            logger.error("Invalid request type made to CreateRecurrenceTemplateEndpoint: {}", request.getMethod());
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST"); // Inform client that only GET is allowed
-            response.getWriter().write("This function only supports POST requests.");
+            response.getWriter().write("The CreateRecurrenceTemplateEndpoint only supports POST requests.");
             return;
         }
 
@@ -49,6 +54,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
 
 
         if (maybeRecurrenceTemplateId.isPresent()) {
+            logger.info("Recurrence template successfully created: {}", maybeRecurrenceTemplateId);
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
@@ -56,6 +62,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
                     )
             );
         } else {
+            logger.error("Recurrence template failed to be created");
             response.setStatusCode(500);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(

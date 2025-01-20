@@ -17,25 +17,24 @@ public class CreateEventEndpoint implements HttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
-        // response.appendHeader(ACCESS_ALLOW_ORIGIN_HEADER, "https://www.sportshub.net.au");
-        // response.appendHeader(ACCESS_ALLOW_ORIGIN_HEADER, "http://localhost:3000");
-        // response.appendHeader(ACCESS_ALLOW_METHODS_HEADER, "GET");
-        // response.appendHeader(ACCESS_ALLOW_HEADERS_HEADER, "Content-Type");
+        // Set CORS headers for all responses
+        response.appendHeader("Access-Control-Allow-Origin", "*");
+        response.appendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        response.appendHeader("Access-Control-Max-Age", "3600"); // Cache preflight for 1 hour
 
-        // if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-        // 	response.setStatusCode(204); // No Content
-        // 	return;
-        // }
-
+        // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            logger.info("Handling OPTIONS request: {}", request);
             response.setStatusCode(204); // No Content
             return;
         }
 
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            logger.error("Invalid request type made to CreateEventEndpoint: {}", request.getMethod());
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
-            response.getWriter().write("This function only supports POST requests.");
+            response.getWriter().write("The CreateEventEndpoint only supports POST requests.");
             return;
         }
 
