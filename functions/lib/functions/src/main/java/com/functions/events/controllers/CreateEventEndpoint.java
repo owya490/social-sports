@@ -25,11 +25,13 @@ public class CreateEventEndpoint implements HttpFunction {
 
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            logger.info("Handling OPTIONS request: {}", request);
             response.setStatusCode(204); // No Content
             return;
         }
 
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            logger.error("Invalid request type made to CreateEventEndpoint: {}", request.getMethod());
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
             response.getWriter().write("The CreateEventEndpoint only supports POST requests.");

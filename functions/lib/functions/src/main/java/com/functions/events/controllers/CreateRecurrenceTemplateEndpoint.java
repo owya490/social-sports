@@ -26,6 +26,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
 
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            logger.info("Handling OPTIONS request: {}", request);
             response.setStatusCode(204); // No Content
             return;
         }
@@ -53,7 +54,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
 
 
         if (maybeRecurrenceTemplateId.isPresent()) {
-            logger.info("Recurrence template successfully created: {}", JavaUtils.objectMapper.writeValueAsString(maybeRecurrenceTemplateId));
+            logger.info("Recurrence template successfully created: {}", maybeRecurrenceTemplateId);
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(

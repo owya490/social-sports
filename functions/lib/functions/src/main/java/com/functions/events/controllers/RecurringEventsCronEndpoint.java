@@ -24,6 +24,7 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
 
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            logger.info("Handling OPTIONS request: {}", request);
             response.setStatusCode(204); // No Content
             return;
         }
