@@ -76,7 +76,7 @@ const INITIAL_DATA: FormData = {
   promotionalCodesEnabled: false,
   paused: false,
   eventLink: "",
-  newRecurrenceData: undefined
+  newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
 };
 
 export default function CreateEvent() {
