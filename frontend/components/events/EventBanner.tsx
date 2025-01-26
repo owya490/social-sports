@@ -13,12 +13,12 @@ interface EventBannerProps {
 
 export default function EventBanner(props: EventBannerProps) {
   return (
-    <div className="bg-white border-b-black border-1 border w-100% px-5 md:px-10 pt-0 shadow-lg flex justify-center">
+    <div className="bg-white w-100% px-5 md:px-10 pt-0 flex justify-center">
       <div className="screen-width-primary">
         <div className="flex items-center">
-          <div className="mt-3">
+          <div className="mt-8">
             <p className="font-bold text-xs block md:hidden">{timestampToEventCardDateString(props.startDate)}</p>
-            <h1 className="text-3xl md:text-4xl">{props.name}</h1>
+            <h1 className="text-3xl md:text-4xl text-core-text">{props.name}</h1>
 
             <div className="block md:flex items-center pt-2 pb-4 pl-1">
               <div className="relative flex items-center group">
@@ -43,12 +43,12 @@ export default function EventBanner(props: EventBannerProps) {
                 <p className="font-bold text-xs ml-auto md:hidden">{`${props.vacancy} Tickets Left`}</p>
               </div>
 
-              <p className="font-bold text-xs hidden md:block ml-4">
+              <p className="text-xs hidden md:block ml-4 font-light">
                 {timestampToEventCardDateString(props.startDate)}
               </p>
             </div>
           </div>
-          <div className="ml-auto font-bold text-2xl hidden md:block">{`${props.vacancy} Tickets Left`}</div>
+          <div className="ml-auto text-2xl hidden md:block text-core-text font-light">{`${props.vacancy} Tickets Left`}</div>
         </div>
       </div>
     </div>

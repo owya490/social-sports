@@ -123,6 +123,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       name: event.name,
       description: event.description,
       image: event.image,
+      thumbnail: event.thumbnail,
       eventTags: event.eventTags,
       isActive: event.isActive,
       attendees: event.attendees,

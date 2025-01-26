@@ -1,57 +1,66 @@
 "use client";
 import { EmptyNewUserData, NewUserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 
 export default function Register() {
   const [userData, setUserData] = useState<NewUserData>(EmptyNewUserData);
   const router = useRouter();
+  const logger = new Logger("registerLogger");
 
   const [repeatPassword, setRepeatPassword] = useState("");
   const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [showRegisterFailure, setShowRegisterFailure] = useState(false);
   const [showEmailSentAlert, setShowEmailSentAlert] = useState(false);
   const [error, setError] = useState("");
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setPasswordMismatch(false);
+    setShowRegisterFailure(false);
+    setShowEmailSentAlert(false);
 
-    if (userData.password !== repeatPassword) {
-      setPasswordMismatch(true);
-      setShowRegisterFailure(false);
-      return;
-    }
-
-    try {
-      await handleEmailAndPasswordSignUp(userData);
-      setShowEmailSentAlert(true);
-    } catch (error) {
-      setShowRegisterFailure(true);
-      setPasswordMismatch(false);
-
-      if (error instanceof FirebaseError) {
-        switch (error.code) {
-          case "auth/email-already-in-use":
-            setError("This email is already in use.");
-            break;
-          case "auth/invalid-email":
-            setError("Invalid email address.");
-            break;
-          case "auth/weak-password":
-            setError("Password is too weak.");
-            break;
-          default:
-            setError("An unexpected error occurred.");
-        }
-      } else {
-        setError("An unexpected error occurred"); // Fallback error message
+    startTransition(async () => {
+      if (userData.password !== repeatPassword) {
+        setPasswordMismatch(true);
+        setShowRegisterFailure(false);
+        return;
       }
-      console.error("Error:", error);
-    }
+
+      try {
+        await handleEmailAndPasswordSignUp(userData);
+        setShowEmailSentAlert(true);
+      } catch (error: any) {
+        setShowRegisterFailure(true);
+        setPasswordMismatch(false);
+
+        if (error instanceof FirebaseError) {
+          switch (error.code) {
+            case "auth/email-already-in-use":
+              setError("This email is already in use.");
+              break;
+            case "auth/invalid-email":
+              setError("Invalid email address.");
+              break;
+            case "auth/weak-password":
+              setError("Password is too weak.");
+              break;
+            default:
+              setError("An unexpected error occurred.");
+          }
+        } else {
+          setError("An unexpected error occurred"); // Fallback error message
+          logger.error(error?.message || error);
+        }
+        console.error("Error:", error);
+      }
+    });
   };
 
   const handleAlertClose = () => {
@@ -86,7 +95,7 @@ export default function Register() {
           color="green"
           className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
         >
-          Email sent successfully. Please check your inbox.
+          Email sent. Please check your inbox.
         </Alert>
         <h2 className="mt-[5vh] sm:mt-0 text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 ">
           Register your account
@@ -193,8 +202,9 @@ export default function Register() {
             <button
               type="submit"
               className="flex w-full justify-center rounded-md px-3 py-2 font-semibold leading-6 text-white shadow-sm hover:bg-white hover:text-highlight-yellow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-highlight-yellow bg-highlight-yellow border-2 transition-colors duration-300 transform"
+              disabled={isPending}
             >
-              Register
+              {isPending ? <>Loading...</> : <>Register</>}
             </button>
           </div>
 

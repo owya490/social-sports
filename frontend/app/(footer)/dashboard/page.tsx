@@ -11,18 +11,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 
 export default function Dashboard() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const loadingEventDataList: EventData[] = [
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ];
   const [eventDataList, setEventDataList] = useState<EventData[]>([
     EmptyEventData,
     EmptyEventData,
@@ -39,7 +29,7 @@ export default function Dashboard() {
   const searchParams = useSearchParams();
   const [srcLocation, setSrcLocation] = useState<string>("");
   const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
-  const [endLoading, setEndLoading] = useState<boolean | undefined>(false);
+  const [endLoading, setEndLoading] = useState<boolean | undefined>(undefined);
   const getQueryParams = () => {
     // if (typeof window === "undefined") {
     if (window === undefined) {
@@ -69,16 +59,12 @@ export default function Dashboard() {
       if (typeof event === "string" && typeof location === "string") {
         if (event.trim() === "") {
           console.log("no event name");
-          getAllEvents()
-            .then((events) => {
-              console.log(events);
-              setEventDataList(events);
-              setSearchDataList(events);
-              setAllEventsDataList(events);
-            })
-            .finally(async () => {
-              await sleep(500);
-            });
+          getAllEvents().then((events) => {
+            console.log(events);
+            setEventDataList(events);
+            setSearchDataList(events);
+            setAllEventsDataList(events);
+          });
         } else {
           searchEventsByKeyword(event, location)
             .then(async (events) => {
@@ -92,9 +78,6 @@ export default function Dashboard() {
             .then((tempEventDataList: EventData[]) => {
               setEventDataList(tempEventDataList);
               setSearchDataList(tempEventDataList);
-            })
-            .finally(async () => {
-              await sleep(500);
             })
             .catch(() => {
               router.push("/error");
@@ -118,9 +101,14 @@ export default function Dashboard() {
 
   // useEffect listener for when filtering finishes
   useEffect(() => {
-    if (endLoading !== undefined) {
-      setLoading(false);
-    }
+    const finishLoading = async () => {
+      if (endLoading !== undefined) {
+        // Something wrong with endLoading in the filter stuff
+        await sleep(500);
+        setLoading(false);
+      }
+    };
+    finishLoading();
   }, [endLoading]);
 
   useEffect(() => {
@@ -155,7 +143,8 @@ export default function Dashboard() {
           eventDataList={searchDataList}
           allEventsDataList={allEventsDataList}
           setEventDataList={setEventDataList}
-          srcLocation={srcLocation}
+          // srcLocation={srcLocation} // DISABLED LOCATION SEARCH FOR NOW
+          srcLocation={""}
           setSrcLocation={setSrcLocation}
           triggerFilterApply={triggerFilterApply}
           endLoading={endLoading}
@@ -167,74 +156,51 @@ export default function Dashboard() {
           Successfully logged in!
         </Alert>
       </div>
-      <div className="flex justify-center">
-        <div className="pb-10 screen-width-dashboard">
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 min-h-screen justify-items-center">
-              {loadingEventDataList.map((event, eventIdx) => {
-                return (
-                  <div className="my-4 w-full" key={eventIdx}>
-                    <EventCard
-                      eventId={event.eventId}
-                      image={event.image}
-                      name={event.name}
-                      organiser={event.organiser}
-                      startTime={event.startDate}
-                      location={event.location}
-                      price={event.price}
-                      vacancy={event.vacancy}
-                      loading={loading}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          ) : eventDataList.length === 0 ? (
-            <div className="flex justify-center z-10">
-              <div>
-                <Image
-                  src={noSearchResultLineDrawing}
-                  alt="noSearchResultLineDrawing"
-                  width={500}
-                  height={300}
-                  className="opacity-60"
-                />
-                <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                  Sorry, we couldn&apos;t find any results
-                </div>
+      <div className="md:flex justify-center w-full mt-4 px-3 sm:px-20 lg:px-3 pb-10">
+        {loading === false && eventDataList.length === 0 && (
+          <div className="flex justify-center z-10">
+            <div>
+              <Image
+                src={noSearchResultLineDrawing}
+                alt="noSearchResultLineDrawing"
+                width={500}
+                height={300}
+                className="opacity-60"
+              />
+              <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
+                Sorry, we couldn&apos;t find any results
               </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
-              {eventDataList
-                .sort((event1, event2) => {
-                  if (event1.accessCount > event2.accessCount) {
-                    return 1;
-                  }
-                  if (event2.accessCount < event2.accessCount) {
-                    return -1;
-                  }
-                  return 0;
-                })
-                .map((event, eventIdx) => {
-                  return (
-                    <div className="my-4 w-full" key={eventIdx}>
-                      <EventCard
-                        eventId={event.eventId}
-                        image={event.image}
-                        name={event.name}
-                        organiser={event.organiser}
-                        startTime={event.startDate}
-                        location={event.location}
-                        price={event.price}
-                        vacancy={event.vacancy}
-                        loading={loading}
-                      />
-                    </div>
-                  );
-                })}
-            </div>
-          )}
+          </div>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-6 gap-4 lg:gap-8 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
+          {eventDataList
+            .sort((event1, event2) => {
+              if (event1.accessCount > event2.accessCount) {
+                return 1;
+              }
+              if (event2.accessCount < event2.accessCount) {
+                return -1;
+              }
+              return 0;
+            })
+            .map((event, eventIdx) => {
+              return (
+                <EventCard
+                  eventId={event.eventId}
+                  image={event.image}
+                  thumbnail={event.thumbnail}
+                  name={event.name}
+                  organiser={event.organiser}
+                  startTime={event.startDate}
+                  location={event.location}
+                  price={event.price}
+                  vacancy={event.vacancy}
+                  loading={loading}
+                  key={eventIdx}
+                />
+              );
+            })}
         </div>
       </div>
     </div>

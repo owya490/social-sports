@@ -14,7 +14,7 @@ import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/Mobil
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
+import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -100,7 +100,7 @@ export default function EventPage({ params }: EventPageProps) {
   }, []);
 
   return (
-    <div className="sm:ml-14 mt-16">
+    <div className="sm:ml-14 mt-14">
       <OrganiserNavbar currPage="EventDrilldown" />
       <EventDrilldownBanner
         name={eventName}
@@ -109,7 +109,7 @@ export default function EventPage({ params }: EventPageProps) {
         vacancy={eventVacancy}
         loading={loading}
       />
-      <div className="sm:p-10">
+      <div className="sm:px-10 sm:pb-10">
         <EventDrilldownStatBanner
           loading={loading}
           eventAccessCount={eventAccessCount}
@@ -141,6 +141,7 @@ export default function EventPage({ params }: EventPageProps) {
                   eventPrice={eventPrice}
                   eventImage={eventImage}
                   eventId={eventId}
+                  updateData={updateEventById}
                 />
                 <ShareModal eventId={eventId} />
               </>

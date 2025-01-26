@@ -87,12 +87,12 @@ export default function EventPayment(props: EventPaymentProps) {
               <h2 className=" font-semibold">Price</h2>
               <div className="flex items-center font-light">
                 <CurrencyDollarIcon className="w-5 h-5 mr-2 shrink-0" />
-                <p className="text-md mr-[5%] font-light">${displayPrice(props.price)} AUD per person</p>
+                <p className="text-md mr-[5%] font-light">${displayPrice(props.price)} AUD</p>
               </div>
             </div>
           </div>
         </div>
-        <hr className="px-2 h-0.5 mx-auto bg-gray-400 border-0 rounded dark:bg-gray-400 mb-6"></hr>
+        <hr className="px-2 h-0.5 mx-auto bg-core-outline border-0 rounded dark:bg-gray-400 mb-6"></hr>
         <div className="relative flex justify-center mb-6 w-full">
           {eventRegistrationClosed ? (
             <div>
@@ -143,7 +143,7 @@ export default function EventPayment(props: EventPaymentProps) {
                     </Select>
                   </div>
                   <button
-                    className="text-lg rounded-2xl border border-black w-full py-3 mb-2"
+                    className="font-semibold rounded-2xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline w-full py-3 transition-all duration-300 mb-2"
                     style={{
                       textAlign: "center",
                       position: "relative",
