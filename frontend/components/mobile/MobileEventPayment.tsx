@@ -1,20 +1,18 @@
 "use client";
 
-import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { timestampToDateString } from "@/services/src/datetimeUtils";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import {
-  CalendarDaysIcon,
-  ClockIcon,
   CurrencyDollarIcon,
   MapPinIcon,
-  PlayCircleIcon,
 } from "@heroicons/react/24/outline";
-import { Option, Select } from "@material-tailwind/react";
+import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
+import { SameDayEventDateTime, DifferentDayEventDateTime } from "../events/EventPayment";
 
 interface MobileEventPaymentProps {
   location: string;
@@ -34,10 +32,19 @@ interface MobileEventPaymentProps {
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const router = useRouter();
   const [attendeeCount, setAttendeeCount] = useState(1);
+  const [openModal, setOpenModal] = useState(false);
 
   const handleAttendeeCount = (value?: string) => {
     if (value) {
       setAttendeeCount(parseInt(value));
+    }
+  };
+
+  const handleContactClick = () => {
+    if (props.eventLink) {
+      setOpenModal(true);
+    } else {
+      console.warn("No event link provided!");
     }
   };
 
@@ -55,7 +62,6 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
           ) : (
             <DifferentDayEventDateTime startDate={startDate} endDate={endDate} />
           )}
-
           <div className="mb-1 mt-2 sm:mb-3">
             <h2 className="font-semibold text-sm">Location & Price</h2>
             <div className="flex items-center">
@@ -70,7 +76,6 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
               </a>
             </div>
           </div>
-
           <div className="mb-4">
             <h2 className="hidden sm:block font-semibold">Price</h2>
             <div className="flex items-center">
@@ -80,7 +85,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
           </div>
         </div>
       </div>
-      <hr className="px-2 h-[1px] mx-auto bg-gray-300 border-0 rounded dark:bg-gray-400 mb-4"></hr>
+      <hr className="px-2 h-[1px] mx-auto bg-gray-300 border-0 rounded dark:bg-gray-400 mb-4" />
       <div className="relative flex mb-6 w-full">
         {eventRegistrationClosed ? (
           <div>
@@ -101,42 +106,25 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
               </div>
             ) : (
               <>
-                <div className="!text-black !border-black mb-6">
-                  <Select
-                    className="border-black border-t-transparent text-black"
-                    label="Select Ticket Amount"
-                    size="lg"
-                    value={`${attendeeCount}`}
-                    onChange={handleAttendeeCount}
-                    labelProps={{
-                      className: "text-black before:border-black after:border-black",
-                    }}
-                    menuProps={{
-                      className: "text-black",
-                    }}
-                  >
-                    {Array(
-                      // TODO remove the hardcoded event as that was 1 off for gg eoy social
-                      Math.min(props.vacancy, props.eventId === "frpwA2xECrPsxQhtxdfj" ? 1 : MAX_TICKETS_PER_ORDER)
-                    )
-                      .fill(0)
-                      .map((_, idx) => {
-                        const count = idx + 1;
-                        return (
-                          <Option key={`attendee-option-${count}`} value={`${count}`}>
-                            {count} Ticket{count > 1 ? "s" : ""}
-                          </Option>
-                        );
-                      })}
-                  </Select>
-                </div>
-
+                <Select
+                  label="Select Ticket Amount"
+                  size="lg"
+                  value={`${attendeeCount}`}
+                  onChange={handleAttendeeCount}
+                >
+                  {Array(Math.min(props.vacancy, props.eventId === "frpwA2xECrPsxQhtxdfj" ? 1 : MAX_TICKETS_PER_ORDER))
+                    .fill(0)
+                    .map((_, idx) => {
+                      const count = idx + 1;
+                      return (
+                        <Option key={`attendee-option-${count}`} value={`${count}`}>
+                          {count} Ticket{count > 1 ? "s" : ""}
+                        </Option>
+                      );
+                    })}
+                </Select>
                 <button
                   className="text-lg rounded-2xl border border-black w-full py-3 mb-2"
-                  style={{
-                    textAlign: "center",
-                    position: "relative",
-                  }}
                   onClick={async () => {
                     props.setLoading(true);
                     window.scrollTo(0, 0);
@@ -146,87 +134,39 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                 >
                   Book Now
                 </button>
-                <p className=" font-light text-[0.75rem]">{`Registrations close: ${timestampToTimeOfDay(
-                  registrationEndDate
-                )} ${timestampToDateString(registrationEndDate)}`}</p>
               </>
             )}
           </div>
         ) : (
-          <button
-            onClick={() => {
-              console.log("Event Link:", props.eventLink);
-              if (props.eventLink) {
-                const proceed = window.confirm(
-                  `You are going to be redirected to the event link: ${props.eventLink}. Are you sure you want to proceed?`
-                );
-                if (proceed) {
-                  window.location.href = props.eventLink;
-                }
-              } else {
-                console.warn("No event link provided!");
-              }
-            }}
-            className="text-lg rounded-2xl border border-black w-full py-3"
-            style={{
-              textAlign: "center",
-              position: "relative",
-            }}
-          >
-            Contact Now
-          </button>
+          <>
+            <button onClick={handleContactClick} className="text-lg rounded-2xl border border-black w-full py-3">
+              Contact Now
+            </button>
+            <Dialog open={openModal} handler={setOpenModal}>
+              <DialogHeader className="mx-2 text-lg font-medium leading-6">Contact Event Organizer</DialogHeader>
+              <DialogBody>
+                <p className="mx-2 text-base font-medium text-black">You are going to be redirected to:</p>
+                <p className="mx-2 text-base font-medium text-blue-900">{props.eventLink}</p>
+              </DialogBody>
+              <DialogFooter className="flex justify-between">
+                <Button className="mx-2 bg-gray-200" variant="text" color="black" onClick={() => setOpenModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="ml-2"
+                  variant="filled"
+                  color="blue"
+                  onClick={() => {
+                    window.location.href = props.eventLink;
+                  }}
+                >
+                  Proceed
+                </Button>
+              </DialogFooter>
+            </Dialog>
+          </>
         )}
       </div>
     </div>
   );
 }
-
-const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
-  const { hours, minutes } = duration(startDate, endDate);
-  return (
-    <>
-      <h2 className="font-semibold">Date and Time</h2>
-      <div className="flex items-center">
-        <CalendarDaysIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{timestampToDateString(startDate)}</p>
-      </div>
-      <div className="flex items-center">
-        <ClockIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">
-          {timestampToTimeOfDay(startDate)} - {timestampToTimeOfDay(endDate)}
-        </p>
-      </div>
-      <div className="flex items-center">
-        <PlayCircleIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">
-          {hours} hrs {minutes} mins
-        </p>
-      </div>
-    </>
-  );
-};
-
-const DifferentDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
-  return (
-    <>
-      <h2 className="font-semibold">Start Date</h2>
-      <div className="flex items-center">
-        <CalendarDaysIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(startDate)}`}</p>
-      </div>
-      <div className="flex items-center">
-        <ClockIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(startDate)}`}</p>
-      </div>
-      <h2 className=" font-semibold">End Date</h2>
-      <div className="flex items-center">
-        <CalendarDaysIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(endDate)}`}</p>
-      </div>
-      <div className="flex items-center">
-        <ClockIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(endDate)}`}</p>
-      </div>
-    </>
-  );
-};

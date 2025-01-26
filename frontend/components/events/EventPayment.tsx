@@ -10,7 +10,7 @@ import {
   MapPinIcon,
   PlayCircleIcon,
 } from "@heroicons/react/24/outline";
-import { Option, Select } from "@material-tailwind/react";
+import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -34,10 +34,19 @@ interface EventPaymentProps {
 export default function EventPayment(props: EventPaymentProps) {
   const router = useRouter();
   const [attendeeCount, setAttendeeCount] = useState(1);
+  const [openModal, setOpenModal] = useState(false);
 
   const handleAttendeeCount = (value?: string) => {
     if (value) {
       setAttendeeCount(parseInt(value));
+    }
+  };
+
+  const handleContactClick = () => {
+    if (props.eventLink) {
+      setOpenModal(true);
+    } else {
+      console.warn("No event link provided!");
     }
   };
 
@@ -155,28 +164,33 @@ export default function EventPayment(props: EventPaymentProps) {
               )}
             </div>
           ) : (
-            <button
-              onClick={() => {
-                console.log("Event Link:", props.eventLink);
-                if (props.eventLink) {
-                  const proceed = window.confirm(
-                    `You are going to be redirected to the event link: ${props.eventLink}. Are you sure you want to proceed?`
-                  );
-                  if (proceed) {
-                    window.location.href = props.eventLink;
-                  } 
-                } else {
-                  console.warn("No event link provided!");
-                }
-              }}
-              className="text-lg rounded-2xl border border-black w-full py-3"
-              style={{
-                textAlign: "center",
-                position: "relative",
-              }}
-            >
-              Contact Now
-            </button>
+            <>
+              <button onClick={handleContactClick} className="text-lg rounded-2xl border border-black w-full py-3">
+                Contact Now
+              </button>
+              <Dialog open={openModal} handler={setOpenModal}>
+                <DialogHeader className="mx-2 text-lg font-medium leading-6">Contact Event Organizer</DialogHeader>
+                <DialogBody>
+                  <p className="mx-2 text-base font-medium text-black">You are going to be redirected to:</p>
+                  <p className="mx-2 text-base font-medium text-blue-900">{props.eventLink}</p>
+                </DialogBody>
+                <DialogFooter className="flex justify-between">
+                  <Button className="mx-2 bg-gray-200" variant="text" color="black" onClick={() => setOpenModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="ml-2"
+                    variant="filled"
+                    color="blue"
+                    onClick={() => {
+                      window.location.href = props.eventLink;
+                    }}
+                  >
+                    Proceed
+                  </Button>
+                </DialogFooter>
+              </Dialog>
+            </>
           )}
         </div>
       </div>

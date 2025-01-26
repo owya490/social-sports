@@ -346,7 +346,6 @@ export function BasicInformation({
               <Input
                 label="Price"
                 crossOrigin={undefined}
-                required
                 value={customAmount}
                 type="number"
                 step=".01"
@@ -411,7 +410,7 @@ export function BasicInformation({
           <div>
             <label className="text-black text-lg font-semibold">Is your event accepting payments?</label>
             <p className="text-sm mb-5 mt-2">
-              If you are accepting payments, ensure your Stripe account is fully setup. Funds transfer will occur
+              If you are accepting payments, ensure your Stripe account is fully set up. Funds transfer will occur
               through Stripe.
             </p>
             <div className="mt-4">
@@ -420,14 +419,31 @@ export function BasicInformation({
                 label="Accepting Payments"
                 value={paymentsActive.toString()}
                 onChange={(e) => {
-                  const paymentsActive = e || "false";
-                  handlePaymentsActiveChange(paymentsActive);
+                  const isActive = e || "false";
+                  handlePaymentsActiveChange(isActive);
                 }}
               >
-                <Option value="false">False</Option>
-                <Option value="true">True</Option>
+                <Option value="false">No</Option>
+                <Option value="true">Yes</Option>
               </Select>
             </div>
+
+            {!paymentsActive && (
+              <div className="mt-5">
+                <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
+                <p className="text-sm mb-5 mt-2">
+                  Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
+                </p>
+                <Input
+                  label="Event Link"
+                  crossOrigin={undefined}
+                  value={eventLink}
+                  onChange={handleChange}
+                  className={`rounded-md focus:ring-0 ${error ? "border-red-500" : ""}`}
+                  size="lg"
+                />
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -462,7 +478,6 @@ export function BasicInformation({
               <Input
                 label="Event Link"
                 crossOrigin={undefined}
-                required
                 value={eventLink}
                 onChange={handleChange}
                 className={`rounded-md focus:ring-0 ${error ? "border-red-500" : ""}`}
