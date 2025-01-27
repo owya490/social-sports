@@ -2,7 +2,6 @@ import { EventMetadata } from "@/interfaces/EventTypes";
 import { Switch } from "@mantine/core";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { useUser } from "../utility/UserContext";
 import { updateEventById } from "@/services/src/events/eventsService";
 
 interface EventDrilldownSettingsPageProps {
@@ -15,17 +14,7 @@ interface EventDrilldownSettingsPageProps {
   setPaused: (event: boolean) => void;
 }
 
-const EventDrilldownSettingsPage = ({
-  eventMetadata,
-  eventId,
-  eventName,
-  eventStartDate,
-  router,
-  paused,
-  setPaused,
-}: EventDrilldownSettingsPageProps) => {
-  const { user } = useUser();
-
+const EventDrilldownSettingsPage = ({ eventId, paused, setPaused }: EventDrilldownSettingsPageProps) => {
   const handlePausedChange = (event: boolean) => {
     updateEventById(eventId, {
       paused: event,

@@ -3,6 +3,7 @@ import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import RecurringTemplateCard from "@/components/organiser/recurring-events/RecurringTemplateCard";
 import { useUser } from "@/components/utility/UserContext";
 import { EMPTY_RECURRENCE_TEMPLATE, Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
+import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getOrganiserRecurrenceTemplates } from "@/services/src/recurringEvents/recurringEventsService";
 import { Timestamp } from "firebase/firestore";
@@ -11,10 +12,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function RecurringEventDashboard() {
+  const logger = new Logger("RecurringEventDashboard");
   const { user } = useUser();
   const router = useRouter();
 
-  const [loadingRecurrenceTemplateList, setLoadingRecurrenceTemplateList] = useState<RecurrenceTemplate[]>([
+  const [loadingRecurrenceTemplateList, _setLoadingRecurrenceTemplateList] = useState<RecurrenceTemplate[]>([
     EMPTY_RECURRENCE_TEMPLATE,
     EMPTY_RECURRENCE_TEMPLATE,
     EMPTY_RECURRENCE_TEMPLATE,
@@ -31,6 +33,7 @@ export default function RecurringEventDashboard() {
         setRecurrenceTemplateList(organiserRecurrenceTemplatesList);
         setLoading(false);
       } catch (error) {
+        logger.error(`Failed to get organiser recurrence templates: ${error}`);
         router.push("/error");
       }
     };
@@ -50,7 +53,7 @@ export default function RecurringEventDashboard() {
             <div className="hidden lg:block"></div>
             {loading ? (
               <div className="z-5 grid grid-cols-1 xl:grid-cols-2 gap-8 justify-items-center px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
-                {loadingRecurrenceTemplateList.map((template, templateIdx) => {
+                {loadingRecurrenceTemplateList.map((_template, templateIdx) => {
                   return (
                     <div className="w-full" key={templateIdx}>
                       <RecurringTemplateCard

@@ -17,6 +17,7 @@ import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventC
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import {
@@ -57,7 +58,9 @@ export default function OrganiserDashboard() {
     endDate: DEFAULT_END_DATE,
   });
 
-  async function applyFilters() {
+  const logger = new Logger("OrganiserDashboard");
+
+  function applyFilters() {
     let filteredEventDataList = [...allEventsDataList];
 
     // Filter by SEARCH
@@ -143,6 +146,7 @@ export default function OrganiserDashboard() {
         setAllEventsDataList(events);
       } catch (error) {
         // Handle errors here
+        logger.error(`Failed to get organiser events: ${error}`);
       }
     };
     fetchData();

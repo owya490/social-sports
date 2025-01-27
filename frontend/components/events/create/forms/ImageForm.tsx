@@ -99,7 +99,7 @@ export function ImageForm({
     }
   };
 
-  const handleThumbnailSelect = async (url: string) => {
+  const handleThumbnailSelect = (url: string) => {
     setThumbnailPreviewUrl("");
     (document.getElementById("thumbnail-input") as HTMLInputElement).value = "";
     updateField({
@@ -107,7 +107,7 @@ export function ImageForm({
     });
   };
 
-  const handleImageSelect = async (url: string) => {
+  const handleImageSelect = (url: string) => {
     setImagePreviewUrl("");
     (document.getElementById("image-input") as HTMLInputElement).value = "";
     updateField({

@@ -15,7 +15,7 @@ interface EventDetailsProps {
 export const MAX_TICKETS_PER_ORDER = 7;
 
 export function EventDetails(props: EventDetailsProps) {
-  const { eventData, eventTags, setLoading } = props;
+  const { eventData, setLoading } = props;
   return (
     <div className="flex justify-center w-full">
       <div className="pb-10 w-full md:screen-width-primary">

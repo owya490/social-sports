@@ -21,7 +21,6 @@ interface EditAttendeeTicketsDialogProps {
 }
 
 export const EditAttendeeTicketsDialog = ({
-  setIsEditAttendeeTicketsDialogModalOpen,
   closeModal,
   isEditAttendeeTicketsDialogModalOpen,
   email,
