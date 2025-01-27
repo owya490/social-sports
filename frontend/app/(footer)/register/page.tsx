@@ -20,7 +20,7 @@ export default function Register() {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPasswordMismatch(false);
     setShowRegisterFailure(false);
