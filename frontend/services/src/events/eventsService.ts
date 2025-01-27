@@ -26,7 +26,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
+import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
@@ -271,12 +271,13 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: String): P
     const eventSnapshot = await getDoc(eventRef);
 
     if (!eventSnapshot.exists()) {
+      eventServiceLogger.error(`archiveAndDeleteEvent ${eventId} not found`);
       throw new Error(`Event with ID ${eventId} not found.`);
     }
 
     const eventData = eventSnapshot.data();
-    const deletedEventRef = doc(db, "DeletedEvents", eventId);
-    const userEventsRef = doc(db, `Users/Active/Private/${userId}`);
+    const deletedEventRef = doc(db, CollectionPaths.DeletedEvents, eventId);
+    const userEventsRef = doc(db, `${USER_EVENT_PATH}/${userId}`);
 
     const userEventsSnapshot = await getDoc(userEventsRef);
     let userEmail = null;

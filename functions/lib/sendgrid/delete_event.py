@@ -1,4 +1,5 @@
 import os
+from time import sleep
 import uuid
 from dataclasses import dataclass
 from firebase_functions import https_fn, options
@@ -61,14 +62,27 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
     event_price = event_delete_data.get("price")
     event_status = event_delete_data.get("isActive")
     organiser_email = event_delete_data.get("userEmail")
-    organiser_name = event_delete_data.get("userName")  
     event_date = event_delete_data.get("startDate") 
     date_string = event_date.strftime("%Y-%m-%d %H")
     purchaser_map = event_metadata_data.get("purchaserMap", {})
 
-    if event_name is None or event_price is None or organiser_email is None or event_status is None:
-        logger.warning(f"Missing event details for eventId={request_data.eventId}.")
-        return {"status": 400, "message": "Missing event details"}
+    missing_fields = [
+        field_name
+        for field_name, value in {
+            "event_name": event_name,
+            "event_price": event_price,
+            "event_status": event_status,
+            "organiser_email": organiser_email,
+            "event_date": event_date,
+        }.items()
+        if value is None
+    ]
+
+    if missing_fields:
+        logger.warning(
+            f"Missing event details for eventId={request_data.eventId}. Missing fields: {', '.join(missing_fields)}."
+        )
+        return {"status": 400, "message": f"Missing event details: {', '.join(missing_fields)}"}
 
     if event_status == False:
         logger.info(f"Event {event_name} was already inactive at deletion. No email will be sent.")
@@ -100,7 +114,7 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
         )
         organiser_message.template_id = DELETE_EVENT_ORGANISER_EMAIL_TEMPLATE_ID
         organiser_message.dynamic_template_data={
-            "organiser_name": organiser_name,
+            "organiser_name":"",
             "event_name": event_name,
             "event_date": date_string,
             "attendees": attendees
@@ -110,32 +124,44 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
     except Exception as e:
         logger.error(f"Failed to send email to organizer. Exception: {e}")
         return {"status": 500, "message": "Failed to send organizer email"}
-
-    # Send attendee emails
+    MAX_RETRIES = 3  
+    RETRY_DELAY_SECONDS = 5 
     for purchaser_info in attendees:
         purchaser_email = purchaser_info.get("email")
         ticket_count = purchaser_info.get("tickets")
 
-        try:
-            attendee_message = Mail(
-                from_email="team.sportshub@gmail.com",
-                to_emails=purchaser_email,
-                subject=f"Notification: {event_name} has been deleted",
-            )
-            attendee_message.dynamic_template_data={
-                "event_name": event_name,
-                "event_price": event_price,
-                "ticket_count": ticket_count,
-                "organiser_email": organiser_email,
-            }
-            attendee_message.template_id=DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID
-            response = sg.send(attendee_message)
-            if 200 <= response.status_code < 300:
-                logger.info(f"Attendee email sent to {purchaser_email} for event: {event_name}")
+    
+
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                attendee_message = Mail(
+                    from_email="team.sportshub@gmail.com",
+                    to_emails=purchaser_email,
+                    subject=f"Notification: {event_name} has been deleted",
+                )
+                attendee_message.dynamic_template_data = {
+                    "event_name": event_name,
+                    "event_price": event_price,
+                    "ticket_count": ticket_count,
+                    "organiser_email": organiser_email,
+                }
+                attendee_message.template_id = DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID
+
+                response = sg.send(attendee_message)
+                if 200 <= response.status_code < 300:
+                    logger.info(f"Attendee email sent to {purchaser_email} for event: {event_name}")
+                    break  # Exit the retry loop on success
+                else:
+                    logger.error(f"Attempt {attempt}: Failed to send email to {purchaser_email}. Response: {response.body}")
+
+            except Exception as e:
+                logger.error(f"Attempt {attempt}: Failed to send email to {purchaser_email}. Exception: {e}")
+
+            if attempt < MAX_RETRIES:
+                logger.info(f"Retrying email to {purchaser_email} in {RETRY_DELAY_SECONDS} seconds...")
+                sleep(RETRY_DELAY_SECONDS)
             else:
-                logger.error(f"Failed to send email to {purchaser_email}. Response: {response.body}")
-        except Exception as e:
-            logger.error(f"Failed to send email to attendee. Exception: {e}")
+                logger.error(f"Failed to send email to {purchaser_email} after {MAX_RETRIES} attempts.")
 
     logger.info(f"All emails sent for event: {event_name}, eventId={request_data.eventId}")
     return {"status": 200, "message": "Emails sent successfully"}

@@ -80,9 +80,9 @@ service cloud.firestore {
 
     match /DeletedEvents/{eventId} {
       // GET
-      allow read: if request.auth != null; 
+      allow read: if request.auth != null && resource.data.organiserId == request.auth.uid;
       // CREATE
       allow create: if request.auth != null;
-}
+    }
   }
 }
