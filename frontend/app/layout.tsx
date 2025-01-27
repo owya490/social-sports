@@ -7,6 +7,8 @@ import { Inter, Montserrat } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import ReactQueryProvider from "@/utilities/ReactQueryProvider";
+import { Provider } from "react-redux";
+import { store } from "@/services/redux/store";
 
 const aileron = localFont({
   src: [
@@ -56,19 +58,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <GrafanaFaro>
-        <ReactQueryProvider>
-          <UserContext>
-            <body className={`${inter.className}`}>
-              <div className="hidden md:block">
-                <Navbar />
-              </div>
-              <div className="md:hidden">
-                <MobileNavbar />
-              </div>
-              <div className="min-h-screen">{children}</div>
-            </body>
-          </UserContext>
-        </ReactQueryProvider>
+        <Provider store={store}>
+          <ReactQueryProvider>
+            <UserContext>
+              <body className={`${inter.className}`}>
+                <div className="hidden md:block">
+                  <Navbar />
+                </div>
+                <div className="md:hidden">
+                  <MobileNavbar />
+                </div>
+                <div className="min-h-screen">{children}</div>
+              </body>
+            </UserContext>
+          </ReactQueryProvider>
+        </Provider>
       </GrafanaFaro>
     </html>
   );

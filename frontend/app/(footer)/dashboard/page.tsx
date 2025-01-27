@@ -8,32 +8,38 @@ import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/services/redux/store";
+import {
+  setAllEventsDataList,
+  setEndLoading,
+  setEventDataList,
+  setLoading,
+  setSearchDataList,
+  setShowLoginSuccess,
+  setSrcLocation,
+  setTriggerFilterApply,
+} from "@/services/redux/slices/dashboardSlice";
 
 export default function Dashboard() {
-  const [loading, setLoading] = useState<boolean>(true);
-  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const [eventDataList, setEventDataList] = useState<EventData[]>([
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ]);
-  const [searchDataList, setSearchDataList] = useState<EventData[]>([]);
-  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
+  const dispatch = useDispatch();
+  const {
+    loading,
+    eventDataList,
+    searchDataList,
+    allEventsDataList,
+    showLoginSuccess,
+    srcLocation,
+    triggerFilterApply,
+    endLoading,
+  } = useSelector((state: RootState) => state.dashboard);
+
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [srcLocation, setSrcLocation] = useState<string>("");
-  const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
-  const [endLoading, setEndLoading] = useState<boolean | undefined>(undefined);
+
   const getQueryParams = () => {
-    // if (typeof window === "undefined") {
     if (window === undefined) {
-      // Return some default or empty values when not in a browser environment
       return { event: "", location: "" };
     }
     const searchParams = new URLSearchParams(window.location.search);
@@ -48,83 +54,80 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    // const fetchEvents = async () => {
-    //   await sleep(500);
-    //   const { event, location } = getQueryParams();
-    //   if (event === "UNDEFINED") {
-    //     console.log("owen");
-    //     return false;
-    //   }
-    //   if (typeof event === "string" && typeof location === "string") {
-    //     if (event.trim() === "") {
-    //       console.log("no event name");
-    //       getAllEvents().then((events) => {
-    //         console.log(events);
-    //         setEventDataList(events);
-    //         setSearchDataList(events);
-    //         setAllEventsDataList(events);
-    //       });
-    //     } else {
-    //       searchEventsByKeyword(event, location)
-    //         .then(async (events) => {
-    //           let tempEventDataList: EventData[] = [];
-    //           for (const singleEvent of events) {
-    //             const eventData = await getEventById(singleEvent.eventId);
-    //             tempEventDataList.push(eventData);
-    //           }
-    //           return tempEventDataList;
-    //         })
-    //         .then((tempEventDataList: EventData[]) => {
-    //           setEventDataList(tempEventDataList);
-    //           setSearchDataList(tempEventDataList);
-    //         })
-    //         .catch(() => {
-    //           router.push("/error");
-    //         });
-    //     }
-    //   }
-    //   setSrcLocation(location);
-    //   if (location.trim() !== "") {
-    //     if (triggerFilterApply === undefined) {
-    //       setTriggerFilterApply(false);
-    //     } else {
-    //       setTriggerFilterApply(!triggerFilterApply);
-    //     }
-    //   } else {
-    //     setLoading(false);
-    //   }
-    // };
-    // setLoading(true);
-    // fetchEvents();
-  }, [searchParams]);
+    const fetchEvents = async () => {
+      await sleep(500);
+      const { event, location } = getQueryParams();
+      if (event === "UNDEFINED") {
+        console.log("owen");
+        return false;
+      }
+      if (typeof event === "string" && typeof location === "string") {
+        if (event.trim() === "") {
+          console.log("no event name");
+          getAllEvents().then((events) => {
+            dispatch(setEventDataList(events));
+            dispatch(setSearchDataList(events));
+            dispatch(setAllEventsDataList(events));
+          });
+        } else {
+          searchEventsByKeyword(event, location)
+            .then(async (events) => {
+              let tempEventDataList: EventData[] = [];
+              for (const singleEvent of events) {
+                const eventData = await getEventById(singleEvent.eventId);
+                tempEventDataList.push(eventData);
+              }
+              return tempEventDataList;
+            })
+            .then((tempEventDataList: EventData[]) => {
+              dispatch(setEventDataList(tempEventDataList));
+              dispatch(setSearchDataList(tempEventDataList));
+            })
+            .catch(() => {
+              router.push("/error");
+            });
+        }
+      }
+      dispatch(setSrcLocation(location));
+      if (location.trim() !== "") {
+        if (triggerFilterApply === undefined) {
+          dispatch(setTriggerFilterApply(false));
+        } else {
+          dispatch(setTriggerFilterApply(!triggerFilterApply));
+        }
+      } else {
+        dispatch(setLoading(false));
+      }
+    };
+    dispatch(setLoading(true));
+    fetchEvents();
+  }, [searchParams, dispatch, triggerFilterApply]);
 
   // useEffect listener for when filtering finishes
   useEffect(() => {
     const finishLoading = async () => {
       if (endLoading !== undefined) {
-        // Something wrong with endLoading in the filter stuff
         await sleep(500);
-        setLoading(false);
+        dispatch(setLoading(false));
       }
     };
     finishLoading();
-  }, [endLoading]);
+  }, [endLoading, dispatch]);
 
   useEffect(() => {
     const login = searchParams?.get("login");
     if (login === "success") {
-      setShowLoginSuccess(true);
-
+      dispatch(setShowLoginSuccess(true));
       router.replace("/dashboard");
     }
-  }, [router]);
+  }, [router, searchParams, dispatch]);
 
   useEffect(() => {
     let timer: number | undefined;
 
     if (showLoginSuccess) {
       timer = window.setTimeout(() => {
-        setShowLoginSuccess(false);
+        dispatch(setShowLoginSuccess(false));
       }, 3000);
     }
 
@@ -133,7 +136,7 @@ export default function Dashboard() {
         clearTimeout(timer);
       }
     };
-  }, [showLoginSuccess]);
+  }, [showLoginSuccess, dispatch]);
 
   return (
     <div>
@@ -141,13 +144,11 @@ export default function Dashboard() {
         <FilterBanner
           eventDataList={searchDataList}
           allEventsDataList={allEventsDataList}
-          setEventDataList={setEventDataList}
-          // srcLocation={srcLocation} // DISABLED LOCATION SEARCH FOR NOW
+          setEventDataList={(data: EventData[]) => dispatch(setEventDataList(data))}
           srcLocation={""}
-          setSrcLocation={setSrcLocation}
           triggerFilterApply={triggerFilterApply}
           endLoading={endLoading}
-          setEndLoading={setEndLoading}
+          setEndLoading={(loadingState: boolean | undefined) => dispatch(setEndLoading(loadingState))}
         />
       </div>
       <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit z-50">
@@ -178,7 +179,7 @@ export default function Dashboard() {
               if (event1.accessCount > event2.accessCount) {
                 return 1;
               }
-              if (event2.accessCount < event2.accessCount) {
+              if (event2.accessCount < event1.accessCount) {
                 return -1;
               }
               return 0;

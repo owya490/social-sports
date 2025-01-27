@@ -47,7 +47,7 @@ interface FilterBannerProps {
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
   srcLocation: string;
-  setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
+  // setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
   triggerFilterApply: boolean | undefined;
   endLoading: boolean | undefined;
   setEndLoading: (state: boolean | undefined) => void;
@@ -58,7 +58,7 @@ export default function FilterBanner({
   allEventsDataList,
   setEventDataList,
   srcLocation,
-  setSrcLocation,
+  // setSrcLocation,
   triggerFilterApply,
   endLoading,
   setEndLoading,
@@ -288,7 +288,7 @@ export default function FilterBanner({
             appliedDateRange={appliedDateRange}
             setAppliedDateRange={setAppliedDateRange}
             srcLocation={srcLocation}
-            setSrcLocation={setSrcLocation}
+            // setSrcLocation={setSrcLocation}
             selectedSport={selectedSport}
             setSelectedSport={setSelectedSport}
             applyFilters={() => applyFilters(selectedSport)}

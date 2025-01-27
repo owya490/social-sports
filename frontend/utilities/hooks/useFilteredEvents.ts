@@ -27,7 +27,6 @@ interface UseFilteredEventsProps {
 
 export const useFilteredEvents = ({
   srcLocation,
-  triggerFilterApply,
   dateRange,
   maxPriceSliderValue,
   maxProximitySliderValue,
@@ -49,7 +48,6 @@ export const useFilteredEvents = ({
   } = useQuery<EventData[]>(
     [
       srcLocation,
-      triggerFilterApply,
       dateRange,
       maxPriceSliderValue,
       maxProximitySliderValue,

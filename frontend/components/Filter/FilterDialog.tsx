@@ -82,7 +82,7 @@ interface FilterDialogProps {
     }>
   >;
   srcLocation: string;
-  setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
+  // setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
   selectedSport: string;
   setSelectedSport: React.Dispatch<React.SetStateAction<string>>;
   applyFilters: () => Promise<void>;
@@ -111,7 +111,7 @@ export default function FilterDialog({
   appliedDateRange,
   setAppliedDateRange,
   srcLocation,
-  setSrcLocation,
+  // setSrcLocation,
   selectedSport,
   setSelectedSport,
   applyFilters,
@@ -167,7 +167,7 @@ export default function FilterDialog({
     setSelectedSport(NO_SPORT_CHOSEN_STRING);
 
     setEventDataList([...eventDataList]);
-    setSrcLocation(EMPTY_LOCATION_STRING);
+    // setSrcLocation(EMPTY_LOCATION_STRING);
     closeModal();
   }
 
