@@ -45,6 +45,8 @@ const config: Config = {
       },
       highlight: {
         yellow: "#F2B705",
+        red: "#FF0000",
+        black: "#000000",
       },
     },
     boxShadow: {
