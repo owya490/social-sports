@@ -25,13 +25,18 @@ const config: Config = {
       screens: {
         xs: "100px",
         ...defaultTheme.screens,
-        "3xl": "2600px",
+        "3xl": "2200px",
       },
       animation: {
         "spin-slow": "spin 2s linear infinite",
       },
     },
     colors: {
+      core: {
+        outline: "#DDDDDD",
+        text: "#222222",
+        hover: "#F7F7F7",
+      },
       organiser: {
         "light-gray": "#F8F8F8",
         "darker-light-gray": "#E8E8E8",
@@ -43,6 +48,9 @@ const config: Config = {
         red: "#FF0000",
         black: "#000000",
       },
+    },
+    boxShadow: {
+      searchbar: "0 1px 2px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.05)",
     },
   },
   plugins: [require("@tailwindcss/forms")],

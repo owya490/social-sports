@@ -94,7 +94,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   };
 
   return (
-    <div className="sm:ml-14 mt-16">
+    <div className="sm:ml-14 mt-14">
       <OrganiserNavbar currPage="EventDrilldown" />
       <EventDrilldownBanner
         name={eventName}
@@ -103,7 +103,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         vacancy={eventVacancy}
         loading={loading}
       />
-      <div className="sm:p-10">
+      <div className="sm:px-10 sm:pb-10">
         <RecurringTemplateDrilldownSettings
           loading={loading}
           updating={updatingRecurrenceData}

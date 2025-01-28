@@ -18,7 +18,7 @@ export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
   return (
     <div className="flex justify-center w-full">
-      <div className="pb-10 screen-width-primary">
+      <div className="pb-10 w-full md:screen-width-primary">
         <div className="sm:rounded-xl overflow-hidden">
           <EventImage imageSrc={eventData.image} />
         </div>
