@@ -15,6 +15,7 @@ import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
+import { HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -165,9 +166,9 @@ export default function EventPayment(props: EventPaymentProps) {
             </div>
           ) : (
             <>
-              <button onClick={handleContactClick} className="text-lg rounded-2xl border border-black w-full py-3">
+              <InvertedHighlightButton onClick={handleContactClick} className="text-lg rounded-2xl border border-black w-full py-3">
                 Contact Now
-              </button>
+              </InvertedHighlightButton>
               <Dialog open={openModal} handler={setOpenModal}>
                 <DialogHeader className="mx-2 text-lg font-medium leading-6">Contact Event Organizer</DialogHeader>
                 <DialogBody>
@@ -181,7 +182,7 @@ export default function EventPayment(props: EventPaymentProps) {
                   <Button
                     className="ml-2"
                     variant="filled"
-                    color="blue"
+                    color="black"
                     onClick={() => {
                       window.location.href = props.eventLink;
                     }}
