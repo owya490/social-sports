@@ -7,6 +7,7 @@ import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
 
 interface EventDetailsProps {
+  
   eventData: EventData;
   eventTags: Tag[];
   setLoading: (value: boolean) => void;
@@ -16,6 +17,7 @@ export const MAX_TICKETS_PER_ORDER = 7;
 
 export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
+
   return (
     <div className="flex justify-center w-full">
       <div className="pb-10 w-full md:screen-width-primary">
@@ -37,6 +39,7 @@ export function EventDetails(props: EventDetailsProps) {
               isPrivate={eventData.isPrivate}
               paused={eventData.paused}
               setLoading={setLoading}
+              eventLink={eventData.eventLink}
             />
           </div>
 
@@ -47,7 +50,7 @@ export function EventDetails(props: EventDetailsProps) {
             />
             <div className="flex">
               <div className="hidden lg:block">
-                <TagGroup tags={props.eventTags} />
+                <TagGroup tags={eventTags} />
               </div>
             </div>
           </div>
@@ -64,6 +67,7 @@ export function EventDetails(props: EventDetailsProps) {
               isPrivate={eventData.isPrivate}
               paused={eventData.paused}
               setLoading={setLoading}
+              eventLink={eventData.eventLink}
             />
           </div>
         </div>
@@ -71,3 +75,4 @@ export function EventDetails(props: EventDetailsProps) {
     </div>
   );
 }
+

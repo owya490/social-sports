@@ -40,6 +40,7 @@ interface AbstractEventData {
   stripeFeeToCustomer: boolean; // should default to false
   promotionalCodesEnabled: boolean; // should default to false
   paused: boolean; // should default to false
+  eventLink: string;
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -83,6 +84,7 @@ export const EmptyEventData: EventData = {
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
   paused: false,
+  eventLink: "",
 };
 
 export interface EventMetadata {
