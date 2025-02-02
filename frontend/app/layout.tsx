@@ -8,7 +8,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import ReactQueryProvider from "@/utilities/ReactQueryProvider";
 import { Provider } from "react-redux";
-import { store } from "@/services/redux/store";
+import StoreProvider from "./storeProvider";
+// import { store } from "@/services/redux/store";
 
 const aileron = localFont({
   src: [
@@ -58,7 +59,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <GrafanaFaro>
-        <Provider store={store}>
+        <StoreProvider>
           <ReactQueryProvider>
             <UserContext>
               <body className={`${inter.className}`}>
@@ -72,7 +73,7 @@ export default function RootLayout({
               </body>
             </UserContext>
           </ReactQueryProvider>
-        </Provider>
+        </StoreProvider>
       </GrafanaFaro>
     </html>
   );

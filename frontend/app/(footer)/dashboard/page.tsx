@@ -30,10 +30,9 @@ export default function Dashboard() {
     searchDataList,
     allEventsDataList,
     showLoginSuccess,
-    srcLocation,
     triggerFilterApply,
     endLoading,
-  } = useSelector((state: RootState) => state.dashboard);
+  } = useSelector((state: RootState) => state.dashboardReducer);
 
   const router = useRouter();
   const searchParams = useSearchParams();

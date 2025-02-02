@@ -1,23 +1,22 @@
-// store/dashboardSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { EventData } from "@/interfaces/EventTypes";
 
 interface DashboardState {
   loading: boolean;
-  allEventsDataList: EventData[];
   eventDataList: EventData[];
   searchDataList: EventData[];
+  allEventsDataList: EventData[];
   showLoginSuccess: boolean;
   srcLocation: string;
-  triggerFilterApply?: boolean;
-  endLoading?: boolean;
+  triggerFilterApply: boolean | undefined;
+  endLoading: boolean | undefined;
 }
 
 const initialState: DashboardState = {
-  loading: true,
-  allEventsDataList: [],
+  loading: false,
   eventDataList: [],
   searchDataList: [],
+  allEventsDataList: [],
   showLoginSuccess: false,
   srcLocation: "",
   triggerFilterApply: undefined,
@@ -28,28 +27,28 @@ const dashboardSlice = createSlice({
   name: "dashboard",
   initialState,
   reducers: {
-    setLoading(state, action: PayloadAction<boolean>) {
+    setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    setAllEventsDataList(state, action: PayloadAction<EventData[]>) {
-      state.allEventsDataList = action.payload;
-    },
-    setEventDataList(state, action: PayloadAction<EventData[]>) {
+    setEventDataList: (state, action: PayloadAction<EventData[]>) => {
       state.eventDataList = action.payload;
     },
-    setSearchDataList(state, action: PayloadAction<EventData[]>) {
+    setSearchDataList: (state, action: PayloadAction<EventData[]>) => {
       state.searchDataList = action.payload;
     },
-    setShowLoginSuccess(state, action: PayloadAction<boolean>) {
+    setAllEventsDataList: (state, action: PayloadAction<EventData[]>) => {
+      state.allEventsDataList = action.payload;
+    },
+    setShowLoginSuccess: (state, action: PayloadAction<boolean>) => {
       state.showLoginSuccess = action.payload;
     },
-    setSrcLocation(state, action: PayloadAction<string>) {
+    setSrcLocation: (state, action: PayloadAction<string>) => {
       state.srcLocation = action.payload;
     },
-    setTriggerFilterApply(state, action: PayloadAction<boolean | undefined>) {
+    setTriggerFilterApply: (state, action: PayloadAction<boolean | undefined>) => {
       state.triggerFilterApply = action.payload;
     },
-    setEndLoading(state, action: PayloadAction<boolean | undefined>) {
+    setEndLoading: (state, action: PayloadAction<boolean | undefined>) => {
       state.endLoading = action.payload;
     },
   },
@@ -57,14 +56,13 @@ const dashboardSlice = createSlice({
 
 export const {
   setLoading,
-  setAllEventsDataList,
   setEventDataList,
   setSearchDataList,
+  setAllEventsDataList,
   setShowLoginSuccess,
   setSrcLocation,
   setTriggerFilterApply,
   setEndLoading,
 } = dashboardSlice.actions;
 
-const dashboardReducer = dashboardSlice.reducer;
-export default dashboardReducer;
+export default dashboardSlice.reducer;
