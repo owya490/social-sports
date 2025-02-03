@@ -16,7 +16,7 @@ import {
   setEndLoading,
   setEventDataList,
   setLoading,
-  setSearchDataList,
+  setFilteredDataList,
   setShowLoginSuccess,
   setSrcLocation,
   setTriggerFilterApply,
@@ -27,9 +27,10 @@ export default function Dashboard() {
   const {
     loading,
     eventDataList,
-    searchDataList,
+    filteredDataList,
     allEventsDataList,
     showLoginSuccess,
+    srcLocation,
     triggerFilterApply,
     endLoading,
   } = useSelector((state: RootState) => state.dashboardReducer);
@@ -53,52 +54,27 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
+    console.log("triggered");
     const fetchEvents = async () => {
-      await sleep(500);
-      const { event, location } = getQueryParams();
-      if (event === "UNDEFINED") {
-        console.log("owen");
-        return false;
-      }
-      if (typeof event === "string" && typeof location === "string") {
-        if (event.trim() === "") {
-          console.log("no event name");
-          getAllEvents().then((events) => {
-            dispatch(setEventDataList(events));
-            dispatch(setSearchDataList(events));
-            dispatch(setAllEventsDataList(events));
-          });
-        } else {
-          searchEventsByKeyword(event, location)
-            .then(async (events) => {
-              let tempEventDataList: EventData[] = [];
-              for (const singleEvent of events) {
-                const eventData = await getEventById(singleEvent.eventId);
-                tempEventDataList.push(eventData);
-              }
-              return tempEventDataList;
-            })
-            .then((tempEventDataList: EventData[]) => {
-              dispatch(setEventDataList(tempEventDataList));
-              dispatch(setSearchDataList(tempEventDataList));
-            })
-            .catch(() => {
-              router.push("/error");
-            });
-        }
-      }
-      dispatch(setSrcLocation(location));
-      if (location.trim() !== "") {
-        if (triggerFilterApply === undefined) {
-          dispatch(setTriggerFilterApply(false));
-        } else {
-          dispatch(setTriggerFilterApply(!triggerFilterApply));
-        }
-      } else {
-        dispatch(setLoading(false));
-      }
+      // const { event } = getQueryParams();
+      // if (event === "UNDEFINED") {
+      //   console.log("owen");
+      //   return false;
+      // }
+      const events = await getAllEvents();
+      const serializedEvents = events.map((event) => ({
+        ...event,
+        registrationDeadline: event.registrationDeadline?.toDate().toISOString(), // Convert timestamp
+        startDate: event.startDate?.toDate().toISOString(),
+        endDate: event.endDate?.toDate().toISOString(),
+      }));
+      console.log(events, "wewewew");
+      dispatch(setEventDataList(serializedEvents));
+      // getAllEvents().then((events) => {
+      //   dispatch(setEventDataList(events));
+      // });
+      // console.log(eventDataList, "reeeee");
     };
-    dispatch(setLoading(true));
     fetchEvents();
   }, [searchParams, dispatch, triggerFilterApply]);
 
@@ -140,7 +116,7 @@ export default function Dashboard() {
   return (
     <div>
       <div className="flex justify-center">
-        <FilterBanner
+        {/* <FilterBanner
           eventDataList={searchDataList}
           allEventsDataList={allEventsDataList}
           setEventDataList={(data: EventData[]) => dispatch(setEventDataList(data))}
@@ -148,7 +124,7 @@ export default function Dashboard() {
           triggerFilterApply={triggerFilterApply}
           endLoading={endLoading}
           setEndLoading={(loadingState: boolean | undefined) => dispatch(setEndLoading(loadingState))}
-        />
+        /> */}
       </div>
       <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit z-50">
         <Alert open={showLoginSuccess} color="green">

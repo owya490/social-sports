@@ -116,3 +116,51 @@ export interface Attendee {
 
 export type Name = string;
 type EmailHash = string;
+
+export class SerializedEventData implements AbstractEventData {
+  eventId: string;
+  organiserId: string;
+  startDate: string;
+  endDate: string;
+  registrationDeadline: string;
+  name: string;
+  description: string;
+  location: string;
+  image: string;
+  thumbnail: string;
+  eventTags: string[];
+  isActive: boolean;
+  isPrivate: boolean;
+  attendees: Record<string, number>;
+  attendeesMetadata: Record<string, { names: string[]; phones: string[] }>;
+  accessCount: number;
+  sport: string;
+  paymentsActive: boolean;
+  stripeFeeToCustomer: boolean;
+  promotionalCodesEnabled: boolean;
+  paused: boolean;
+
+  constructor(eventData: AbstractEventData, eventId: string) {
+    this.eventId = eventId;
+    this.organiserId = eventData.organiserId;
+    this.startDate = eventData.startDate.toDate().toISOString(); // Convert Timestamp to ISO string
+    this.endDate = eventData.endDate.toDate().toISOString(); // Convert Timestamp to ISO string
+    this.registrationDeadline = eventData.registrationDeadline.toDate().toISOString(); // Convert Timestamp to ISO string
+    this.name = eventData.name;
+    this.description = eventData.description;
+    this.location = eventData.location;
+    this.image = eventData.image;
+    this.thumbnail = eventData.thumbnail;
+    this.eventTags = eventData.eventTags;
+    this.isActive = eventData.isActive;
+    this.isPrivate = eventData.isPrivate;
+    this.attendees = eventData.attendees;
+    this.attendeesMetadata = eventData.attendeesMetadata;
+    this.accessCount = eventData.accessCount;
+    this.sport = eventData.sport;
+    this.paymentsActive = eventData.paymentsActive;
+    this.stripeFeeToCustomer = eventData.stripeFeeToCustomer;
+    this.promotionalCodesEnabled = eventData.promotionalCodesEnabled;
+    this.paused = eventData.paused;
+  }
+}

@@ -4,7 +4,7 @@ import { EventData } from "@/interfaces/EventTypes";
 interface DashboardState {
   loading: boolean;
   eventDataList: EventData[];
-  searchDataList: EventData[];
+  filteredDataList: EventData[];
   allEventsDataList: EventData[];
   showLoginSuccess: boolean;
   srcLocation: string;
@@ -15,7 +15,7 @@ interface DashboardState {
 const initialState: DashboardState = {
   loading: false,
   eventDataList: [],
-  searchDataList: [],
+  filteredDataList: [],
   allEventsDataList: [],
   showLoginSuccess: false,
   srcLocation: "",
@@ -30,11 +30,11 @@ const dashboardSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    setEventDataList: (state, action: PayloadAction<EventData[]>) => {
+    setEventDataList: (state, action: PayloadAction<serializedEventData[]>) => {
       state.eventDataList = action.payload;
     },
-    setSearchDataList: (state, action: PayloadAction<EventData[]>) => {
-      state.searchDataList = action.payload;
+    setFilteredDataList: (state, action: PayloadAction<EventData[]>) => {
+      state.filteredDataList = action.payload;
     },
     setAllEventsDataList: (state, action: PayloadAction<EventData[]>) => {
       state.allEventsDataList = action.payload;
@@ -57,7 +57,7 @@ const dashboardSlice = createSlice({
 export const {
   setLoading,
   setEventDataList,
-  setSearchDataList,
+  setFilteredDataList,
   setAllEventsDataList,
   setShowLoginSuccess,
   setSrcLocation,
