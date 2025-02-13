@@ -15,7 +15,7 @@ import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
-import { HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
+import { InvertedHighlightButton } from "../elements/HighlightButton";
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -48,6 +48,7 @@ export default function EventPayment(props: EventPaymentProps) {
       setOpenModal(true);
     } else {
       console.warn("No event link provided!");
+      // TODO: Redirect user to the organiser's profile page instead of just logging a warning
     }
   };
 
@@ -166,7 +167,10 @@ export default function EventPayment(props: EventPaymentProps) {
             </div>
           ) : (
             <>
-              <InvertedHighlightButton onClick={handleContactClick} className="text-lg rounded-2xl border border-black w-full py-3">
+              <InvertedHighlightButton
+                onClick={handleContactClick}
+                className="text-lg rounded-2xl border border-black w-full py-3"
+              >
                 Contact Now
               </InvertedHighlightButton>
               <Dialog open={openModal} handler={setOpenModal}>

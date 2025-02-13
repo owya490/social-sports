@@ -424,30 +424,36 @@ export function BasicInformation({
                 label="Accepting Payments"
                 value={paymentsActive.toString()}
                 onChange={(e) => {
-                  const isActive = e || "false";
-                  handlePaymentsActiveChange(isActive);
+                  const paymentsActive = e || "false";
+                  handlePaymentsActiveChange(paymentsActive);
                 }}
               >
-                <Option value="false">No</Option>
-                <Option value="true">Yes</Option>
+                <Option value="false">Flase</Option>
+                <Option value="true">True</Option>
               </Select>
             </div>
 
             {!paymentsActive && (
               <div className="mt-5">
-                <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
-                <p className="text-sm mb-5 mt-2">
-                  Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
-                </p>
-                <Input
-                  label="Event Link"
-                  crossOrigin={undefined}
-                  value={eventLink}
-                  onChange={handleChange}
-                  className={`rounded-md focus:ring-0 ${error ? "border-red-500" : ""}`}
-                  size="lg"
-                />
-              </div>
+              <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
+              <p className="text-sm mb-5 mt-2">
+                Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
+              </p>
+            
+              <Input
+                label="Event Link"
+                crossOrigin={undefined}
+                value={eventLink}
+                onChange={handleChange}
+                className={`rounded-md focus:ring-0 ${error ? "border-red-500" : ""}`}
+                size="lg"
+              />
+            
+              {"jhello"}
+            
+              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+              
+            </div>
             )}
           </div>
         ) : (
