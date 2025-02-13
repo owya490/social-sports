@@ -1,6 +1,13 @@
 /**
+ * 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+ * IMPORTANT - PLEASE READ DOCUMENTATION AT THE TOP OF .github/workflows/sportshub_cloud_functions_deploy_ci.yml
+ * BEFORE ADDING, DELETING OR MODIFYING ENV VARIABLES!
+ *
  * RUN THIS FILE EVERYTIME YOU WANT TO UPDATE GITHUB SECRETS AFTER CHANGING
  * ENVIRONMENT VARARIABLE FILE.
+ *
+ * NOT FOLLOWING THOSE STEPS MAY RESULT IN BROKEN DEPLOYMENTS!
+ * 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
  */
 
 import dotenv from "dotenv";
