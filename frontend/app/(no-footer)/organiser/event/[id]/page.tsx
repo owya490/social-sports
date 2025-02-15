@@ -9,8 +9,10 @@ import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatB
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
+import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
+import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
@@ -41,6 +43,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventSport, setEventSport] = useState<string>("");
   const [eventPrice, setEventPrice] = useState<number>(0);
   const [eventImage, setEventImage] = useState<string>("");
+  const [eventThumbnail, setEventThumbnail] = useState<string>("");
   const [eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
   const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
@@ -52,6 +55,8 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
 
   const router = useRouter();
+
+  const { user } = useUser();
 
   const eventId: EventId = params.id;
   useEffect(() => {
@@ -68,6 +73,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventSport(event.sport);
         setEventPrice(event.price);
         setEventImage(event.image);
+        setEventThumbnail(event.thumbnail);
         setEventAccessCount(event.accessCount);
         setEventCapacity(event.capacity);
         setEventPaused(event.paused);
@@ -170,6 +176,15 @@ export default function EventPage({ params }: EventPageProps) {
                 eventId={eventId}
                 setEventVacancy={setEventVacancy}
                 setEventMetadata={setEventMetadata}
+              />
+            )}
+            {currSidebarPage === "Images" && (
+              <EventDrilldownImagesPage
+                user={user}
+                eventId={eventId}
+                sport={eventSport}
+                eventImagePreviewUrl={eventImage}
+                eventThumbnailPreviewUrl={eventThumbnail}
               />
             )}
             {currSidebarPage === "Settings" && (
