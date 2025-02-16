@@ -1,4 +1,12 @@
-import { Form, FormId, FormResponse, FormSection, FormResponseId, SectionId } from "@/interfaces/FormTypes";
+import {
+  Form,
+  FormId,
+  FormResponse,
+  FormSection,
+  FormResponseId,
+  SectionId,
+  FormSectionType,
+} from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
 
 export async function createForm(form: Form): Promise<void> {
@@ -40,7 +48,7 @@ export async function getFormResponse(
   return {
     formId: "",
     userId: "",
-    responseMap: new Map<SectionId, FormSection>(),
+    responseMap: new Map<SectionId, Map<FormSectionType, FormSection>>(),
     submissionTime: Date.now(),
   };
 }
