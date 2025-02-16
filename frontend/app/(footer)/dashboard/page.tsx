@@ -1,7 +1,7 @@
 "use client";
 import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
-import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData, SerializedEventData } from "@/interfaces/EventTypes";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
@@ -21,6 +21,7 @@ import {
   setSrcLocation,
   setTriggerFilterApply,
 } from "@/services/redux/slices/dashboardSlice";
+import { Timestamp } from "firebase/firestore";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -56,38 +57,31 @@ export default function Dashboard() {
   useEffect(() => {
     console.log("triggered");
     const fetchEvents = async () => {
-      // const { event } = getQueryParams();
-      // if (event === "UNDEFINED") {
-      //   console.log("owen");
-      //   return false;
-      // }
+      const { event } = getQueryParams();
       const events = await getAllEvents();
-      const serializedEvents = events.map((event) => ({
-        ...event,
-        registrationDeadline: event.registrationDeadline?.toDate().toISOString(), // Convert timestamp
-        startDate: event.startDate?.toDate().toISOString(),
-        endDate: event.endDate?.toDate().toISOString(),
-      }));
-      console.log(events, "wewewew");
+      let filteredEvents = events;
+
+      // If the event query param is present, filter the events by name
+      if (event && event.trim() !== "") {
+        filteredEvents = events.filter((eventItem) => eventItem.name.toLowerCase().includes(event.toLowerCase()));
+      }
+
+      const serializedEvents = filteredEvents.map((event) => new SerializedEventData(event, event.eventId));
       dispatch(setEventDataList(serializedEvents));
-      // getAllEvents().then((events) => {
-      //   dispatch(setEventDataList(events));
-      // });
-      // console.log(eventDataList, "reeeee");
     };
     fetchEvents();
   }, [searchParams, dispatch, triggerFilterApply]);
 
   // useEffect listener for when filtering finishes
-  useEffect(() => {
-    const finishLoading = async () => {
-      if (endLoading !== undefined) {
-        await sleep(500);
-        dispatch(setLoading(false));
-      }
-    };
-    finishLoading();
-  }, [endLoading, dispatch]);
+  // useEffect(() => {
+  //   const finishLoading = async () => {
+  //     if (endLoading !== undefined) {
+  //       await sleep(500);
+  //       dispatch(setLoading(false));
+  //     }
+  //   };
+  //   finishLoading();
+  // }, [endLoading, dispatch]);
 
   useEffect(() => {
     const login = searchParams?.get("login");
@@ -97,34 +91,26 @@ export default function Dashboard() {
     }
   }, [router, searchParams, dispatch]);
 
-  useEffect(() => {
-    let timer: number | undefined;
+  // useEffect(() => {
+  //   let timer: number | undefined;
 
-    if (showLoginSuccess) {
-      timer = window.setTimeout(() => {
-        dispatch(setShowLoginSuccess(false));
-      }, 3000);
-    }
+  //   if (showLoginSuccess) {
+  //     timer = window.setTimeout(() => {
+  //       dispatch(setShowLoginSuccess(false));
+  //     }, 3000);
+  //   }
 
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
-  }, [showLoginSuccess, dispatch]);
+  //   return () => {
+  //     if (timer) {
+  //       clearTimeout(timer);
+  //     }
+  //   };
+  // }, [showLoginSuccess, dispatch]);
 
   return (
     <div>
       <div className="flex justify-center">
-        {/* <FilterBanner
-          eventDataList={searchDataList}
-          allEventsDataList={allEventsDataList}
-          setEventDataList={(data: EventData[]) => dispatch(setEventDataList(data))}
-          srcLocation={""}
-          triggerFilterApply={triggerFilterApply}
-          endLoading={endLoading}
-          setEndLoading={(loadingState: boolean | undefined) => dispatch(setEndLoading(loadingState))}
-        /> */}
+        <FilterBanner />
       </div>
       <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit z-50">
         <Alert open={showLoginSuccess} color="green">
@@ -150,7 +136,7 @@ export default function Dashboard() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-6 gap-4 lg:gap-8 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
           {eventDataList
-            .sort((event1, event2) => {
+            .toSorted((event1, event2) => {
               if (event1.accessCount > event2.accessCount) {
                 return 1;
               }
@@ -167,7 +153,7 @@ export default function Dashboard() {
                   thumbnail={event.thumbnail}
                   name={event.name}
                   organiser={event.organiser}
-                  startTime={event.startDate}
+                  startTime={Timestamp.fromDate(new Date(event.startDate))}
                   location={event.location}
                   price={event.price}
                   vacancy={event.vacancy}

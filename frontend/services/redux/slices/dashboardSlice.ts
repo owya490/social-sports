@@ -1,9 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, SerializedEventData } from "@/interfaces/EventTypes";
 
 interface DashboardState {
   loading: boolean;
-  eventDataList: EventData[];
+  eventDataList: SerializedEventData[];
   filteredDataList: EventData[];
   allEventsDataList: EventData[];
   showLoginSuccess: boolean;
@@ -30,7 +30,7 @@ const dashboardSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    setEventDataList: (state, action: PayloadAction<serializedEventData[]>) => {
+    setEventDataList: (state, action: PayloadAction<SerializedEventData[]>) => {
       state.eventDataList = action.payload;
     },
     setFilteredDataList: (state, action: PayloadAction<EventData[]>) => {

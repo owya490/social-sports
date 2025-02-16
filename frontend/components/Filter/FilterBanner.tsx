@@ -1,6 +1,6 @@
 "use client";
 
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, SerializedEventData } from "@/interfaces/EventTypes";
 import {
   filterEventsByDate,
   filterEventsByMaxProximity,
@@ -41,28 +41,24 @@ import FilterDialog, {
   VOLLEYBALL_SPORT_STRING,
 } from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/services/redux/store";
 
-interface FilterBannerProps {
-  eventDataList: EventData[];
-  allEventsDataList: EventData[];
-  setEventDataList: React.Dispatch<React.SetStateAction<any>>;
-  srcLocation: string;
-  // setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
-  triggerFilterApply: boolean | undefined;
-  endLoading: boolean | undefined;
-  setEndLoading: (state: boolean | undefined) => void;
-}
+// interface FilterBannerProps {
+//   eventDataList: SerializedEventData[];
+//   allEventsDataList: EventData[];
+//   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
+//   srcLocation: string;
+//   // setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
+//   triggerFilterApply: boolean | undefined;
+//   endLoading: boolean | undefined;
+//   setEndLoading: (state: boolean | undefined) => void;
+// }
 
-export default function FilterBanner({
-  eventDataList,
-  allEventsDataList,
-  setEventDataList,
-  srcLocation,
-  // setSrcLocation,
-  triggerFilterApply,
-  endLoading,
-  setEndLoading,
-}: FilterBannerProps) {
+export default function FilterBanner() {
+  const dispatch = useDispatch();
+  const { eventDataList } = useSelector((state: RootState) => state.dashboardReducer);
+
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
   const [appliedSortByCategoryValue, setAppliedSortByCategoryValue] =
     useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
@@ -144,12 +140,12 @@ export default function FilterBanner({
   };
 
   async function applyFilters(selectedSportProp: string) {
-    console.log("FILTERING", srcLocation);
+    // console.log("FILTERING", srcLocation);
     const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
     // changed it so that instead of it running only if its not max, if locaiton is not ""
-    const isAnyProximityBool = srcLocation === "" || maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
+    // const isAnyProximityBool = srcLocation === "" || maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
 
-    let filteredEventDataList = [...eventDataList];
+    let filteredEventDataList = [eventDataList.unserialize()];
     console.log(srcLocation);
     // Filter by MAX PRICE
     if (!isAnyPriceBool) {
@@ -170,27 +166,27 @@ export default function FilterBanner({
     setAppliedDateRange(dateRange);
 
     // Filter by MAX PROXIMITY
-    if (!isAnyProximityBool) {
-      let srcLat = SYDNEY_LAT;
-      let srcLng = SYDNEY_LNG;
-      console.log("LOCATION", srcLocation);
-      try {
-        const { lat, lng } = await getLocationCoordinates(srcLocation);
-        srcLat = lat;
-        srcLng = lng;
-      } catch (error) {
-        console.log(error);
-      }
+    // if (!isAnyProximityBool) {
+    //   let srcLat = SYDNEY_LAT;
+    //   let srcLng = SYDNEY_LNG;
+    //   console.log("LOCATION", srcLocation);
+    //   try {
+    //     const { lat, lng } = await getLocationCoordinates(srcLocation);
+    //     srcLat = lat;
+    //     srcLng = lng;
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
 
-      let newEventDataList = filterEventsByMaxProximity(
-        [...filteredEventDataList],
-        maxProximitySliderValue,
-        srcLat,
-        srcLng
-      );
-      filteredEventDataList = newEventDataList;
-    }
-    setAppliedMaxProximitySliderValue(maxProximitySliderValue);
+    //   let newEventDataList = filterEventsByMaxProximity(
+    //     [...filteredEventDataList],
+    //     maxProximitySliderValue,
+    //     srcLat,
+    //     srcLng
+    //   );
+    //   filteredEventDataList = newEventDataList;
+    // }
+    // setAppliedMaxProximitySliderValue(maxProximitySliderValue);
 
     // Filter by SPORT
     let newEventDataList = filterEventsBySport([...filteredEventDataList], selectedSportProp);

@@ -117,8 +117,9 @@ export interface Attendee {
 export type Name = string;
 type EmailHash = string;
 
-export class SerializedEventData implements AbstractEventData {
+export class SerializedEventData implements Omit<EventData, "startDate" | "endDate" | "registrationDeadline"> {
   eventId: string;
+  organiser: UserData;
   organiserId: string;
   startDate: string;
   endDate: string;
@@ -139,12 +140,19 @@ export class SerializedEventData implements AbstractEventData {
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
   paused: boolean;
+  locationLatLng: { lat: number; lng: number };
+  capacity: number;
+  vacancy: number;
+  price: number;
+  nameTokens?: string[] | undefined;
+  locationTokens?: string[] | undefined;
 
-  constructor(eventData: AbstractEventData, eventId: string) {
+  constructor(eventData: EventData, eventId: string) {
     this.eventId = eventId;
     this.organiserId = eventData.organiserId;
+    this.organiser = eventData.organiser;
     this.startDate = eventData.startDate.toDate().toISOString(); // Convert Timestamp to ISO string
-    this.endDate = eventData.endDate.toDate().toISOString(); // Convert Timestamp to ISO string
+    this.endDate = eventData.endDate.toDate().toISOString(); // Convert Timestaamp to ISO string
     this.registrationDeadline = eventData.registrationDeadline.toDate().toISOString(); // Convert Timestamp to ISO string
     this.name = eventData.name;
     this.description = eventData.description;
@@ -162,5 +170,42 @@ export class SerializedEventData implements AbstractEventData {
     this.stripeFeeToCustomer = eventData.stripeFeeToCustomer;
     this.promotionalCodesEnabled = eventData.promotionalCodesEnabled;
     this.paused = eventData.paused;
+    this.locationLatLng = eventData.locationLatLng;
+    this.capacity = eventData.capacity;
+    this.vacancy = eventData.vacancy;
+    this.price = eventData.price;
+  }
+
+  unserialize(): EventData {
+    return {
+      eventId: this.eventId,
+      organiserId: this.organiserId,
+      organiser: this.organiser,
+      startDate: Timestamp.fromDate(new Date(this.startDate)),
+      endDate: Timestamp.fromDate(new Date(this.endDate)),
+      registrationDeadline: Timestamp.fromDate(new Date(this.registrationDeadline)),
+      name: this.name,
+      description: this.description,
+      location: this.location,
+      image: this.image,
+      thumbnail: this.thumbnail,
+      eventTags: this.eventTags,
+      isActive: this.isActive,
+      isPrivate: this.isPrivate,
+      attendees: this.attendees,
+      attendeesMetadata: this.attendeesMetadata,
+      accessCount: this.accessCount,
+      sport: this.sport,
+      paymentsActive: this.paymentsActive,
+      stripeFeeToCustomer: this.stripeFeeToCustomer,
+      promotionalCodesEnabled: this.promotionalCodesEnabled,
+      paused: this.paused,
+      locationLatLng: this.locationLatLng,
+      capacity: this.capacity,
+      vacancy: this.vacancy,
+      price: this.price,
+      nameTokens: this.nameTokens,
+      locationTokens: this.locationTokens,
+    };
   }
 }

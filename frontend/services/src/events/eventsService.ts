@@ -182,6 +182,7 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
     throw error;
   }
 }
+
 export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   eventServiceLogger.info(`getAllEvents`);
   try {
