@@ -145,8 +145,8 @@ export default function FilterBanner() {
     // changed it so that instead of it running only if its not max, if locaiton is not ""
     // const isAnyProximityBool = srcLocation === "" || maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
 
-    let filteredEventDataList = [eventDataList.unserialize()];
-    console.log(srcLocation);
+    let filteredEventDataList = eventDataList.map((serializedEvent) => serializedEvent.unserialize());
+    // console.log(srcLocation);
     // Filter by MAX PRICE
     if (!isAnyPriceBool) {
       let newEventDataList = filterEventsByPrice([...filteredEventDataList], null, maxPriceSliderValue);
@@ -199,21 +199,9 @@ export default function FilterBanner() {
 
     // TODO: add more filters
 
-    setEventDataList([...filteredEventDataList]);
-    closeModal();
+    // setEventDataList([...filteredEventDataList]);
+    // closeModal();
   }
-
-  useEffect(() => {
-    if (triggerFilterApply !== undefined) {
-      applyFilters(selectedSport).finally(() => {
-        if (endLoading === undefined) {
-          setEndLoading(true);
-        } else {
-          setEndLoading(!endLoading);
-        }
-      });
-    }
-  }, [triggerFilterApply]);
 
   return (
     <div className="pt-16 bg-white w-full px-3">
@@ -222,49 +210,49 @@ export default function FilterBanner() {
           id="filter-overflow"
           className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all no-scrollbar"
         >
-          {Object.entries(icons).map((entry, idx) => {
+          {/* {Object.entries(icons).map((entry, idx) => {
             const sportIdentifierString = entry[0];
             const sportInfo = entry[1];
-            if (idx === 0) {
-              return (
-                <FilterIcon
-                  key={idx}
-                  sportIdentifierString={sportIdentifierString}
-                  image={sportInfo.image}
-                  style={sportInfo.style}
-                  name={sportInfo.sport_name}
-                  isFirst={true}
-                  setEventDataList={setEventDataList}
-                  allEventsDataList={eventDataList}
-                  selectedSport={selectedSport}
-                  setSelectedSport={setSelectedSport}
-                  applyFilters={applyFilters}
-                />
-              );
-            }
-            return (
-              <FilterIcon
-                key={idx}
-                sportIdentifierString={sportIdentifierString}
-                image={sportInfo.image}
-                style={sportInfo.style}
-                name={sportInfo.sport_name}
-                isFirst={false}
-                setEventDataList={setEventDataList}
-                allEventsDataList={eventDataList}
-                selectedSport={selectedSport}
-                setSelectedSport={setSelectedSport}
-                applyFilters={applyFilters}
-              />
-            );
-          })}
+            // if (idx === 0) {
+            //   return (
+            //     // <FilterIcon
+            //     //   key={idx}
+            //     //   sportIdentifierString={sportIdentifierString}
+            //     //   image={sportInfo.image}
+            //     //   style={sportInfo.style}
+            //     //   name={sportInfo.sport_name}
+            //     //   isFirst={true}
+            //     //   setEventDataList={setEventDataList}
+            //     //   allEventsDataList={eventDataList}
+            //     //   selectedSport={selectedSport}
+            //     //   setSelectedSport={setSelectedSport}
+            //     //   applyFilters={applyFilters}
+            //     // />
+            //   );
+            // }
+            // return (
+            //   // <FilterIcon
+            //   //   key={idx}
+            //   //   sportIdentifierString={sportIdentifierString}
+            //   //   image={sportInfo.image}
+            //   //   style={sportInfo.style}
+            //   //   name={sportInfo.sport_name}
+            //   //   isFirst={false}
+            //   //   setEventDataList={setEventDataList}
+            //   //   allEventsDataList={eventDataList}
+            //   //   selectedSport={selectedSport}
+            //   //   setSelectedSport={setSelectedSport}
+            //   //   applyFilters={applyFilters}
+            //   // />
+            // );
+          })} */}
         </div>
         <div className="-left-5 ml-2 mr-8 xl:hidden">
           <ChevronRightButton handleClick={scroll} />
         </div>
-
-        <div className="grow">
-          <FilterDialog
+        {/* 
+        <div className="grow"> */}
+        {/* <FilterDialog
             eventDataList={eventDataList}
             setEventDataList={setEventDataList}
             sortByCategoryValue={sortByCategoryValue}
@@ -292,7 +280,7 @@ export default function FilterBanner() {
             setIsFilterModalOpen={setIsFilterModalOpen}
             closeModal={closeModal}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );

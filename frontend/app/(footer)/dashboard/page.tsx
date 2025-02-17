@@ -109,9 +109,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="flex justify-center">
-        <FilterBanner />
-      </div>
+      <div className="flex justify-center">{/* <FilterBanner /> */}</div>
       <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit z-50">
         <Alert open={showLoginSuccess} color="green">
           Successfully logged in!
