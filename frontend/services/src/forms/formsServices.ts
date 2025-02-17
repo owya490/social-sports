@@ -8,9 +8,13 @@ import {
   FormSectionType,
 } from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
+
+export const formsServiceLogger = new Logger("formsServiceLogger");
 
 export async function createForm(form: Form): Promise<void> {
-  // TODO:
+  // TODO: implement rate limiting
+  formsServiceLogger.info(`createForm: ${form}`);
 }
 
 export async function getForm(formId: FormId): Promise<Form> {
