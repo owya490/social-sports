@@ -59,11 +59,8 @@ def update_private_documents():
 
 
         # Get the document data
-        doc_data = doc.to_dict()
-        organiser_events = doc_data.get('organiserEvents', [])
         private_ref.document(doc.id).update({
             'publicOrganiserEvents': [],
-            "organiserEvents": organiser_events
         })
         print(f"Updated private document: {doc.id}")
 
