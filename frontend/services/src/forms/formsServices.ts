@@ -9,12 +9,21 @@ import {
 } from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { doc } from "firebase/firestore";
+import { db } from "../firebase";
+import { CollectionPaths, FormStatus } from "./formsConstants";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
 export async function createForm(form: Form): Promise<void> {
   // TODO: implement rate limiting
   formsServiceLogger.info(`createForm: ${form}`);
+
+  try {
+    const docRef = doc(db, CollectionPaths.Forms, FormStatus.Active);
+  } catch (error) {
+    formsServiceLogger.error(`createForm: ${error}`);
+  }
 }
 
 export async function getForm(formId: FormId): Promise<Form> {
