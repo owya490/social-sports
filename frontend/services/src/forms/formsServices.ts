@@ -39,29 +39,23 @@ export async function createFormResponse(formResponse: FormResponse): Promise<Fo
   return "";
 }
 
-export async function getFormResponse(
-  formId: FormId,
-  userId: UserId,
-  responseId: FormResponseId
-): Promise<FormResponse> {
+export async function getFormResponse(formId: FormId, responseId: FormResponseId): Promise<FormResponse> {
   // TODO:
   return {
     formId: "",
-    userId: "",
-    responseMap: new Map<SectionId, Map<FormSectionType, FormSection>>(),
+    responseMap: new Map<SectionId, FormSection>(),
     submissionTime: Date.now(),
   };
 }
 
 export async function editFormResponse(
   formId: FormId,
-  userId: UserId,
   responseId: FormResponseId,
   formResponse: FormResponse
 ): Promise<void> {
   // TODO:
 }
 
-export async function deleteFormResponse(formId: FormId, userId: UserId, responseId: FormResponseId): Promise<void> {
+export async function deleteFormResponse(formId: FormId, responseId: FormResponseId): Promise<void> {
   // TODO:
 }

@@ -1,5 +1,3 @@
-import { UserId } from "./UserTypes";
-
 export interface Form {
   title: FormTitle;
   sectionsOrder: SectionId[]; // keeps track of ordering for editing forms
@@ -49,7 +47,7 @@ export interface MultipleChoiceSection extends AbstractSection {
 export interface DropdownSelectSection extends AbstractSection {
   type: FormSectionType.DROPDOWN_SELECT;
   options: string[];
-  answer: number; // index of chosen option
+  answer: string; // value of chosen option
 }
 
 export interface BinaryChoiceSection extends AbstractSection {
@@ -72,10 +70,9 @@ export interface DateTimeSection extends AbstractSection {
 /** Contains the answers of the form from the responder */
 export interface FormResponse {
   formId: FormId;
-  userId: UserId;
   /** Extra layer of indirection to allow organisers to edit type of
    * form section and store responses for that section type */
-  responseMap: Map<SectionId, Map<FormSectionType, FormSection>>;
+  responseMap: Map<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
   submissionTime: number | null;
 }
