@@ -15,7 +15,7 @@ export async function createUser(data: NewUserData, userId: string): Promise<voi
     userServiceLogger.info(`Creating new user:", ${data}, ${userId}`);
     await setDoc(doc(db, "Users", "Active", "Public", userId), extractPublicUserData(data));
     await setDoc(doc(db, "Users", "Active", "Private", userId), extractPrivateUserData(data));
-    userServiceLogger.info(`User created successfully:", ${userId}`);
+    userServiceLogger.info(`User created successfully: ${userId}`);
   } catch (error) {
     userServiceLogger.error(`Error creating new user:, ${error}`);
     throw new UsersServiceError(userId);

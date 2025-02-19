@@ -9,7 +9,7 @@ import {
 } from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { doc } from "firebase/firestore";
+import { doc, setDoc, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 import { CollectionPaths, FormStatus } from "./formsConstants";
 
@@ -20,7 +20,11 @@ export async function createForm(form: Form): Promise<void> {
   formsServiceLogger.info(`createForm: ${form}`);
 
   try {
+    const batch = writeBatch(db);
     const docRef = doc(db, CollectionPaths.Forms, FormStatus.Active);
+    batch.set(docRef, form);
+    batch.commit();
+    formsServiceLogger.info(`Form created successfully: ${form}`);
   } catch (error) {
     formsServiceLogger.error(`createForm: ${error}`);
   }
