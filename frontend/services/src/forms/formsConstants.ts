@@ -16,6 +16,10 @@ export enum FormPaths {
   FormsDeleted = "Forms/Deleted",
 }
 
+export enum FormResponsePaths {
+  Submitted = "FormResponses/Submitted",
+  Temp = "FormResponses/Temp",
+}
 export enum LocalStorageKeys {
   FormsOperationCount5Min = "formsOperationCount5Min",
   FormsLastCreateUpdateOperationTimestamp = "formsLastCreateUpdateOperationTimestamp",
