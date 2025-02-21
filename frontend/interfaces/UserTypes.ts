@@ -1,4 +1,5 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
+import { EventId } from "./EventTypes";
 
 export type UserId = string;
 
@@ -34,6 +35,14 @@ export interface PublicUserData extends Omit<AbstractUserData, "contactInformati
   age?: string;
   profilePicture: string;
   isVerifiedOrganiser?: boolean;
+  isSearchable?: boolean;
+  nameTokens?: string[];
+  publicContactInformation?: {
+    mobile?: string;
+    email?: string;
+  };
+  publicUpcomingOrgnaiserEvents?: EventId[];
+  username?: string;
 }
 
 export interface PrivateUserData extends AbstractUserData {
