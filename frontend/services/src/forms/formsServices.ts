@@ -1,20 +1,12 @@
-import {
-  Form,
-  FormId,
-  FormResponse,
-  FormSection,
-  FormResponseId,
-  SectionId,
-  FormSectionType,
-} from "@/interfaces/FormTypes";
-import { UserId } from "@/interfaces/UserTypes";
+import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 import { CollectionPaths, FormPaths, FormResponsePaths, FormStatus } from "./formsConstants";
 import { rateLimitCreateForm } from "./formsUtils/createFormUtils";
-import { findEventDoc } from "../events/eventsUtils/getEventsUtils";
 import { EventId } from "@/interfaces/EventTypes";
+import { findFormDoc } from "./formsUtils/formsUtils";
+import { rateLimiteCreateFormResponse } from "./formsUtils/createFormResponseUtils";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
@@ -27,7 +19,7 @@ export async function createForm(form: Form): Promise<FormId> {
     const batch = writeBatch(db);
     const docRef = doc(db, CollectionPaths.Forms, FormStatus.Active);
     batch.set(docRef, form);
-    batch.commit();
+    await batch.commit();
     formsServiceLogger.info(`Form created successfully with formId: ${docRef.id}, form: ${form}`);
 
     return docRef.id;
@@ -40,7 +32,7 @@ export async function createForm(form: Form): Promise<FormId> {
 /** Searches through all collections for form with formId */
 export async function getForm(formId: FormId): Promise<Form> {
   try {
-    const formDocRef = await findEventDoc(formId);
+    const formDocRef = await findFormDoc(formId);
     const formDoc = formDocRef.data() as Form;
 
     return formDoc;
@@ -108,19 +100,48 @@ export async function updateActiveForm(formData: Partial<Form>, formId: FormId):
   }
 }
 
+/** Move form from active to deleted */
 export async function deleteForm(formId: FormId): Promise<void> {
-  // TODO:
+  formsServiceLogger.info(`deleteForm with formId: ${formId}`);
+  const batch: WriteBatch = writeBatch(db);
+  try {
+    const docRef = doc(db, FormPaths.FormsActive, formId);
+    const formSnapshot = await getDoc(docRef);
+
+    if (!formSnapshot.exists()) {
+      formsServiceLogger.error(`deleteForm error: formId ${formId} not found`);
+      throw new Error(`Form with ID ${formId} not found`);
+    }
+
+    const formData = formSnapshot.data() as Form;
+    const deletedFormRef = doc(db, FormPaths.FormsDeleted, formId);
+
+    batch.set(deletedFormRef, {
+      ...formData,
+      formActive: false,
+      deletedAt: Date.now(),
+    });
+
+    batch.delete(docRef);
+
+    await batch.commit();
+  } catch (error) {
+    formsServiceLogger.error(`deleteForm Error: Failed to delete form with formId: ${formId}`);
+    throw error;
+  }
 }
 
 export async function createFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
-  // TODO: implement rate limiting
+  if (!rateLimiteCreateFormResponse()) {
+    formsServiceLogger.warn("Rate Limited!!!");
+  }
 
   formsServiceLogger.info(`createFormResponse: ${formResponse}`);
   try {
     const batch = writeBatch(db);
     const docRef = doc(db, FormResponsePaths.Submitted);
     batch.set(docRef, formResponse);
-    batch.commit();
+    await batch.commit();
     formsServiceLogger.info(
       `createFormResponse: Form response submitted with formResponseId: ${docRef.id}, formResponse: ${formResponse}`
     );

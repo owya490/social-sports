@@ -1,5 +1,9 @@
+import { UserId } from "./UserTypes";
+
 export interface Form {
   title: FormTitle;
+  userId: UserId;
+  formActive: boolean;
   sectionsOrder: SectionId[]; // keeps track of ordering for editing forms
   sectionsMap: Map<SectionId, FormSection>;
 }
