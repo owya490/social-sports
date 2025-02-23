@@ -1,4 +1,5 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
+import { FormId } from "./FormTypes";
 
 export type UserId = string;
 
@@ -24,6 +25,7 @@ interface AbstractUserData {
   organiserEvents?: [string];
   recurrenceTemplates?: [string];
   isVerifiedOrganiser?: boolean;
+  forms?: [FormId];
 }
 
 export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
