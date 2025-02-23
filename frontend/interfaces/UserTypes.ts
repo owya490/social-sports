@@ -41,8 +41,9 @@ export interface PublicUserData extends Omit<AbstractUserData, "contactInformati
     mobile?: string;
     email?: string;
   };
-  publicUpcomingOrgnaiserEvents?: EventId[];
+  publicUpcomingOrganiserEvents?: EventId[];
   username?: string;
+  bio?: string;
 }
 
 export interface PrivateUserData extends AbstractUserData {

@@ -26,7 +26,7 @@ export async function getPublicUserById(
   userId: UserId,
   bypassCache: boolean = false,
   client: boolean = true
-): Promise<UserData> {
+): Promise<PublicUserData> {
   userServiceLogger.info(`Fetching public user by ID:, ${userId}`);
   if (userId === undefined) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);

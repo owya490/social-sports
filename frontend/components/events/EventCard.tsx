@@ -67,7 +67,10 @@ export default function EventCard(props: EventCardProps) {
             </h2>
             <div className="flex ml-0.5 items-center">
               <Image src={organiser.profilePicture} alt="DP" width={50} height={50} className="rounded-full w-4 h-4" />
-              <p className="text-xs font-light ml-1">{`Hosted by ${organiser.firstName} ${organiser.surname}`}</p>
+              <Link
+                href={`/user/${organiser.userId}`}
+                className="text-xs font-light ml-1 hover:underline"
+              >{`Hosted by ${organiser.firstName} ${organiser.surname}`}</Link>
               {organiser.isVerifiedOrganiser && <Image src={Tick} alt="Verified Organiser" className="h-4 w-4 ml-1" />}
             </div>
             <div className="mt-2 space-y-3">

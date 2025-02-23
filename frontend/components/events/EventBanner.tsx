@@ -3,6 +3,7 @@ import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import Tick from "@svgs/Verified_tick.png";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
+import Link from "next/link";
 
 interface EventBannerProps {
   name: string;
@@ -29,9 +30,9 @@ export default function EventBanner(props: EventBannerProps) {
                   height={50}
                   className="rounded-full w-4 h-4 shrink-0"
                 />
-                <p className="text-xs font-light ml-1 mr-1">
+                <Link href={`/user/${props.organiser.userId}`} className="text-xs font-light ml-1 mr-1 hover:underline">
                   {`Hosted by ${props.organiser.firstName} ${props.organiser.surname}`}
-                </p>
+                </Link>
                 {props.organiser.isVerifiedOrganiser && (
                   <div className="relative">
                     <Image src={Tick} alt="Verified Organiser" className="h-4 w-4" />
