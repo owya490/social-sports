@@ -14,6 +14,7 @@ import Tick from "@svgs/Verified_tick.png";
 import imageCompression from "browser-image-compression";
 import { deleteObject, getDownloadURL, getMetadata, getStorage, ref } from "firebase/storage";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, Fragment, useEffect, useState } from "react";
 
@@ -528,9 +529,14 @@ const Profile = () => {
                         `, ${initialProfileData.age}`}
                     </span>
                   </div>
-                  <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-lg 3xl:text-xl">
-                    {initialProfileData.location === "Not Provided" ? "" : initialProfileData.location}
-                  </div>
+                  {initialProfileData.location !== "Not Provided" || (
+                    <div className="flex justify-center mt-3 3xl:mt-5 mb-5 text-lg 3xl:text-xl">
+                      {initialProfileData.location === "Not Provided" ? "" : initialProfileData.location}
+                    </div>
+                  )}
+                  <Link href={`/user/${user.userId}`} className="font-thin hover:underline text-xs">
+                    Go to public profile page.
+                  </Link>
                 </div>
               </div>
             </div>
