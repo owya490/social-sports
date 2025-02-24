@@ -15,3 +15,5 @@ Yes, you can update your email in your account settings.
 ## How do I Enable Stripe
 
 Have a look [here](/how-to-set-up-stripe)
+
+# test-title
