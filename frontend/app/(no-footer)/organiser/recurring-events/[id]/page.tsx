@@ -6,7 +6,7 @@ import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSettings";
 import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
 import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
-import { EmptyEventMetadata, EventId, EventMetadata, NewEventData } from "@/interfaces/EventTypes";
+import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
   NewRecurrenceFormData,
@@ -32,7 +32,7 @@ interface RecurrenceTemplatePageProps {
 
 export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
-  const [eventData, setEventData] = useState<NewEventData>();
+  const [_eventData, setEventData] = useState<NewEventData>();
   const [loading, setLoading] = useState<boolean>(true);
   const [updatingRecurrenceData, setUpdatingRecurrenceData] = useState<boolean>(false);
   const [eventName, setEventName] = useState<string>("");
@@ -43,9 +43,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventLocation, setEventLocation] = useState<string>("");
   const [eventPrice, setEventPrice] = useState<number>(0);
   const [eventImage, setEventImage] = useState<string>("");
-  const [eventAccessCount, setEventAccessCount] = useState<number>(0);
-  const [eventCapacity, setEventCapacity] = useState<number>(0);
-  const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
+  const [_eventAccessCount, setEventAccessCount] = useState<number>(0);
+  const [_eventCapacity, setEventCapacity] = useState<number>(0);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
 
   const router = useRouter();
@@ -74,7 +73,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         await sleep(500);
         setLoading(false);
       })
-      .catch((error) => {
+      .catch((_error) => {
         // dont need to log here as we should have caught all the necessary logs in the service layer
         router.push("/error");
       });

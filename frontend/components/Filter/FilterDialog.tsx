@@ -112,7 +112,6 @@ export default function FilterDialog({
   setAppliedDateRange,
   srcLocation,
   setSrcLocation,
-  selectedSport,
   setSelectedSport,
   applyFilters,
   isFilterModalOpen,
@@ -280,7 +279,10 @@ export default function FilterDialog({
                       </div>
 
                       <Datepicker
-                        value={dateRange}
+                        value={{
+                          startDate: dateRange && dateRange.startDate ? new Date(dateRange.startDate) : new Date(),
+                          endDate: dateRange && dateRange.endDate ? new Date(dateRange.endDate) : new Date(),
+                        }}
                         minDate={new Date()}
                         separator="to"
                         displayFormat={"DD/MM/YYYY"}
