@@ -1,6 +1,13 @@
 /**
+ * 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+ * IMPORTANT - PLEASE READ DOCUMENTATION AT THE TOP OF .github/workflows/sportshub_cloud_functions_deploy_ci.yml
+ * BEFORE ADDING, DELETING OR MODIFYING ENV VARIABLES!
+ *
  * RUN THIS FILE EVERYTIME YOU WANT TO UPDATE GITHUB SECRETS AFTER CHANGING
  * ENVIRONMENT VARARIABLE FILE.
+ *
+ * NOT FOLLOWING THOSE STEPS MAY RESULT IN BROKEN DEPLOYMENTS!
+ * 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
  */
 
 import dotenv from "dotenv";
@@ -66,6 +73,72 @@ const envVariableListDev = [
     secretName: "FIREBASE_DEV_MEASUREMENT_ID",
     secretValue: process.env.FIREBASE_DEV_MEASUREMENT_ID,
   },
+  // SOCIALSPORTSPROD Github secrets env variables
+  {
+    secretName: "SOCIALSPORTSPROD_GCLOUD_CREDENTIALS",
+    secretValue: process.env.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED",
+    secretValue: process.env.SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_STRIPE_API_KEY",
+    secretValue: process.env.SOCIALSPORTSPROD_STRIPE_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET",
+    secretValue: process.env.SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_POSTHOG_API_KEY",
+    secretValue: process.env.SOCIALSPORTSPROD_POSTHOG_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_BEARER_TOKEN",
+    secretValue: process.env.SOCIALSPORTSPROD_BEARER_TOKEN,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_SENDGRID_API_KEY",
+    secretValue: process.env.SOCIALSPORTSPROD_SENDGRID_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSPROD_LOOPS_API_KEY",
+    secretValue: process.env.SOCIALSPORTSPROD_LOOPS_API_KEY,
+  },
+  // SOCIALSPORTSDEV Github secrets env variables
+  {
+    secretName: "SOCIALSPORTSDEV_GCLOUD_CREDENTIALS",
+    secretValue: process.env.SOCIALSPORTSDEV_GCLOUD_CREDENTIALS,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_FUNCTIONS_KEY_JSON_BASE64_ENCODED",
+    secretValue: process.env.SOCIALSPORTSDEV_FUNCTIONS_KEY_JSON_BASE64_ENCODED,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_STRIPE_API_KEY",
+    secretValue: process.env.SOCIALSPORTSDEV_STRIPE_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_STRIPE_WEBHOOK_ENDPOINT_SECRET",
+    secretValue: process.env.SOCIALSPORTSDEV_STRIPE_WEBHOOK_ENDPOINT_SECRET,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_POSTHOG_API_KEY",
+    secretValue: process.env.SOCIALSPORTSDEV_POSTHOG_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_BEARER_TOKEN",
+    secretValue: process.env.SOCIALSPORTSDEV_BEARER_TOKEN,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_SENDGRID_API_KEY",
+    secretValue: process.env.SOCIALSPORTSDEV_SENDGRID_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_LOOPS_API_KEY",
+    secretValue: process.env.SOCIALSPORTSDEV_LOOPS_API_KEY,
+  },
   // TODO: add more secrets you want to push to github secrets here.
 ];
 
@@ -86,14 +159,8 @@ for (const { secretName, secretValue } of envVariableListDev) {
  * @param {string} firebaseKeySecretName
  * @param {string} firebaseKeyEncryptedValue
  */
-async function createUpdateRepositorySecret(
-  firebaseKeySecretName,
-  firebaseKeyValue
-) {
-  const firebaseKeyEncryptedValue = await _encryptKeyLibSodium(
-    firebaseKeyValue,
-    encryptionKey
-  );
+async function createUpdateRepositorySecret(firebaseKeySecretName, firebaseKeyValue) {
+  const firebaseKeyEncryptedValue = await _encryptKeyLibSodium(firebaseKeyValue, encryptionKey);
   await octokit.request(
     `PUT /repos/${SOCIAL_SPORTS_REPO_OWNER}/${SOCIAL_SPORTS_REPO_NAME}/actions/secrets/${firebaseKeySecretName}`,
     {
@@ -135,4 +202,31 @@ async function _encryptKeyLibSodium(secret, key) {
   });
 
   return output;
+}
+
+/**
+ * For sanity checking if a GitHub secret exists for the repository.
+ *
+ * @param {string} secretName - The name of the secret to check.
+ * @returns {boolean} - True if the secret exists, false otherwise.
+ */
+async function doesSecretExist(secretName) {
+  try {
+    const response = await octokit.request(
+      `GET /repos/${SOCIAL_SPORTS_REPO_OWNER}/${SOCIAL_SPORTS_REPO_NAME}/actions/secrets`,
+      {
+        owner: SOCIAL_SPORTS_REPO_OWNER,
+        repo: SOCIAL_SPORTS_REPO_NAME,
+        headers: {
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      }
+    );
+
+    const secrets = response.data.secrets || [];
+    return secrets.some((secret) => secret.name === secretName);
+  } catch (error) {
+    console.error(`Error checking secret existence: ${error.message}`);
+    return false;
+  }
 }
