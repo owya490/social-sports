@@ -428,7 +428,7 @@ export function BasicInformation({
                   handlePaymentsActiveChange(paymentsActive);
                 }}
               >
-                <Option value="false">Flase</Option>
+                <Option value="false">False</Option>
                 <Option value="true">True</Option>
               </Select>
             </div>
