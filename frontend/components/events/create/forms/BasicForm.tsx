@@ -432,29 +432,6 @@ export function BasicInformation({
                 <Option value="true">True</Option>
               </Select>
             </div>
-
-            {!paymentsActive && (
-              <div className="mt-5">
-              <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
-              <p className="text-sm mb-5 mt-2">
-                Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
-              </p>
-            
-              <Input
-                label="Event Link"
-                crossOrigin={undefined}
-                value={eventLink}
-                onChange={handleChange}
-                className={`rounded-md focus:ring-0 ${error ? "border-red-500" : ""}`}
-                size="lg"
-              />
-            
-              {"jhello"}
-            
-              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-              
-            </div>
-            )}
           </div>
         ) : (
           <>
@@ -481,21 +458,25 @@ export function BasicInformation({
                 Register
               </button>
             </div>
-            <div className="mt-5">
-              <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
-              <p className="text-sm mb-5 mt-2">
-                Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
-              </p>
-              <Input
-                label="Event Link"
-                crossOrigin={undefined}
-                value={eventLink}
-                onChange={handleChange}
-                className={`rounded-md focus:ring-0 ${error ? "border-red-500" : ""}`}
-                size="lg"
-              />
-            </div>
           </>
+        )}
+        {!paymentsActive && (
+          <div className="mt-5">
+            <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
+            <p className="text-sm mb-5 mt-2">
+              Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
+            </p>
+            <Input
+              label="Event Link"
+              crossOrigin={undefined}
+              value={eventLink}
+              onChange={handleChange}
+              className={`rounded-md focus:ring-0 ${error ? "border-red-500" : ""}`}
+              size="lg"
+            />
+
+            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          </div>
         )}
         <div
           className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1"
@@ -512,15 +493,15 @@ export function BasicInformation({
         </div>
         {isAdditionalSettingsOpen && (
           <div>
-             <div className="mb-12">
-                <RecurringEventsForm
-                  startDate={startDate}
-                  newRecurrenceData={newRecurrenceData}
-                  setRecurrenceData={(data: NewRecurrenceFormData) => {
-                    updateField({ newRecurrenceData: data });
-                  }}
-                />
-              </div>
+            <div className="mb-12">
+              <RecurringEventsForm
+                startDate={startDate}
+                newRecurrenceData={newRecurrenceData}
+                setRecurrenceData={(data: NewRecurrenceFormData) => {
+                  updateField({ newRecurrenceData: data });
+                }}
+              />
+            </div>
             {user.stripeAccountActive && (
               <>
                 <div className="mb-12">
