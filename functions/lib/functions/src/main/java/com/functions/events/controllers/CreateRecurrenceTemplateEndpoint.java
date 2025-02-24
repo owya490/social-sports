@@ -32,7 +32,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
         }
 
         // Handle actual (POST) request
-        if (!"POST".equalsIgnoreCase(request.getMethod())) {
+        if (!request.getMethod().equalsIgnoreCase("POST")) {
             logger.error("Invalid request type made to CreateRecurrenceTemplateEndpoint: {}", request.getMethod());
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST"); // Inform client that only GET is allowed

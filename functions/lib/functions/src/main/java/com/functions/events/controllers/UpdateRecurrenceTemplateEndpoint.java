@@ -30,7 +30,7 @@ public class UpdateRecurrenceTemplateEndpoint implements HttpFunction {
             return;
         }
 
-        if (!"POST".equalsIgnoreCase(request.getMethod())) {
+        if (!request.getMethod().equalsIgnoreCase("POST")) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST"); // Inform client that only GET is allowed
             response.getWriter().write("The UpdateRecurrenceTemplateEndpoint only supports POST requests.");
