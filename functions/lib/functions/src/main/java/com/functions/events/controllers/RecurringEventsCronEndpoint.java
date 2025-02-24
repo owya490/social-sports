@@ -29,7 +29,7 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
             return;
         }
 
-        if (!"GET".equalsIgnoreCase(request.getMethod())) {
+        if (!(request.getMethod().equalsIgnoreCase("GET"))) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "GET"); // Inform client that only GET is allowed
             response.getWriter().write("The RecurringEventsConEndpoint only supports GET requests.");

@@ -5,9 +5,9 @@
 # cp ../../.env.dev .env
 
 
-cp ../../functions_key_prod.json functions_key.json
-
-cp ../../.env.prod .env
+# cp ../../functions_key_prod.json functions_key.json
+# 
+# cp ../../.env.prod .env
 
 gcloud functions deploy updateRecurrenceTemplate \
     --entry-point com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint \
@@ -46,7 +46,7 @@ gcloud functions deploy createEvent \
    --trigger-http \
    --allow-unauthenticated \
    --region australia-southeast1 \
-   --project socialsportsprod \
-   --set-env-vars PROJECT_NAME=socialsportsprod
+   --project socialsports-44162 \
+   --set-env-vars PROJECT_NAME=socialsports-44162
 
 # socialsportsprod
