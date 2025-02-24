@@ -50,6 +50,7 @@ public abstract class AbstractEventData {
 	@Nullable
 	private Boolean promotionalCodesEnabled; // Optional field
 	private Boolean paused;
+	private String eventLink;
 
 	@Data
 	public static class LocationLatLng {
