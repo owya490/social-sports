@@ -48,6 +48,7 @@ export type FormData = {
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
   paused: boolean;
+  eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
 };
 
@@ -74,6 +75,7 @@ const INITIAL_DATA: FormData = {
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
   paused: false,
+  eventLink: "",
   newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
 };
 
@@ -271,6 +273,7 @@ export default function CreateEvent() {
       stripeFeeToCustomer: formData.stripeFeeToCustomer,
       promotionalCodesEnabled: formData.promotionalCodesEnabled,
       paused: formData.paused,
+      eventLink: formData.eventLink,
     };
   }
 
