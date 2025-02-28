@@ -88,27 +88,22 @@ const EventDrilldownDetailsPage = ({
 
   const [editStartDate, setEditStartDate] = useState(false);
   const [newEditStartDate, setNewEditStartDate] = useState("");
-  const [startDate, setStartDate] = useState("");
 
-  const [editStartTime, setEditStartTime] = useState(false);
   const [newEditStartTime, setNewEditStartTime] = useState("");
-  const [startTime, setStartTime] = useState("");
 
-  const [editEndDate, setEditEndDate] = useState(false);
+  const [_editEndDate, setEditEndDate] = useState(false);
   const [newEditEndDate, setNewEditEndDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [_endDate, setEndDate] = useState("");
 
   const [editEndTime, setEditEndTime] = useState(false);
   const [newEditEndTime, setNewEditEndTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [_endTime, setEndTime] = useState("");
 
   useEffect(() => {
     if (eventStartDate) {
       const dateString = timestampToDateString(eventStartDate);
       const timeString = timestampToTimeOfDay(eventStartDate);
-      setStartDate(`${dateString}`);
       setNewEditStartDate(`${dateString}`);
-      setStartTime(`${timeString}`);
       setNewEditStartTime(`${timeString}`);
     }
   }, [eventStartDate]);
@@ -131,7 +126,6 @@ const EventDrilldownDetailsPage = ({
       const dateEndTimeString = `${newEditEndDate} ${newEditEndTime}`;
       const updatedEndTimestamp = parseDateTimeStringToTimestamp(dateEndTimeString);
       setEditStartDate(false);
-      setEditStartTime(false);
       setEditEndTime(false);
       await updateData(eventId, {
         startDate: updatedStartTimestamp,
@@ -178,7 +172,6 @@ const EventDrilldownDetailsPage = ({
     setNewEditEndDate(`${endDateString}`);
     setNewEditEndTime(`${endTimeString}`);
     setEditStartDate(false);
-    setEditStartTime(false);
     setEditEndTime(false);
     setEditEndDate(false);
   };
@@ -534,7 +527,6 @@ const EventDrilldownDetailsPage = ({
                         className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
                         onClick={() => {
                           setEditStartDate(true);
-                          setEditStartTime(true);
                           setEditLocation(true);
                           setEditPrice(true);
                           setEditEndTime(true);
