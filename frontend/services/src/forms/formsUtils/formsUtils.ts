@@ -1,11 +1,12 @@
 // TODO: functions to abstract away editing forms
 
-import { FormId, FormSection, SectionId } from "@/interfaces/FormTypes";
+import { FormId, SectionId } from "@/interfaces/FormTypes";
 import { FormPaths } from "../formsConstants";
 import { db } from "../../firebase";
 import { doc, DocumentData, getDoc, QueryDocumentSnapshot } from "firebase/firestore";
 import { formsServiceLogger } from "../formsServices";
 
+/** Find form doc from within the sub collections in the Forms table */
 export async function findFormDoc(formId: FormId): Promise<QueryDocumentSnapshot<DocumentData, DocumentData>> {
   try {
     // Search through paths
@@ -29,4 +30,6 @@ export async function findFormDoc(formId: FormId): Promise<QueryDocumentSnapshot
   }
 }
 
-export function archiveSection(sectionId: SectionId): void {}
+export function archiveSection(sectionId: SectionId): void {
+  // TODO
+}

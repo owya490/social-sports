@@ -6,13 +6,13 @@ const createFormUtilsLogger = new Logger("createFormUtilsLogger");
 export function rateLimitCreateForm(): boolean {
   const now = new Date();
   const maybeFormsOperationCount5Min = localStorage.getItem(LocalStorageKeys.FormsOperationCount5Min);
-  const maybeFormsLastCreatedUpdateOperationTimestamp = localStorage.getItem(
+  const maybeFormsLastCreateUpdateOperationTimestamp = localStorage.getItem(
     LocalStorageKeys.FormsLastCreateUpdateOperationTimestamp
   );
 
-  if (maybeFormsOperationCount5Min !== null && maybeFormsLastCreatedUpdateOperationTimestamp !== null) {
+  if (maybeFormsOperationCount5Min !== null && maybeFormsLastCreateUpdateOperationTimestamp !== null) {
     const formsOperationCount5Min = parseInt(maybeFormsOperationCount5Min);
-    const formsLastCreateUpdateOperationTimestamp = new Date(maybeFormsLastCreatedUpdateOperationTimestamp);
+    const formsLastCreateUpdateOperationTimestamp = new Date(maybeFormsLastCreateUpdateOperationTimestamp);
 
     if (now.valueOf() - formsLastCreateUpdateOperationTimestamp.valueOf() < FORMS_REFRESH_MILLIS) {
       if (formsOperationCount5Min >= FORMS_MAX_EVENTS) {

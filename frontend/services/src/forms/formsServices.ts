@@ -13,6 +13,7 @@ export const formsServiceLogger = new Logger("formsServiceLogger");
 export async function createForm(form: Form): Promise<FormId> {
   if (!rateLimitCreateForm()) {
     formsServiceLogger.warn("Rate Limited!!!");
+    throw "createForm: Rate Limited";
   }
   formsServiceLogger.info(`createForm: ${form}`);
   try {
@@ -32,8 +33,8 @@ export async function createForm(form: Form): Promise<FormId> {
 /** Searches through all collections for form with formId */
 export async function getForm(formId: FormId): Promise<Form> {
   try {
-    const formDocRef = await findFormDoc(formId);
-    const formDoc = formDocRef.data() as Form;
+    const formDocSnapshot = await findFormDoc(formId);
+    const formDoc = formDocSnapshot.data() as Form;
 
     return formDoc;
   } catch (error) {
@@ -49,8 +50,8 @@ export async function getActiveForms(): Promise<Form[]> {
     const activeFormsSnapshot = await getDocs(activeFormsCollectionRef);
     const activeForms: Form[] = [];
 
-    activeFormsSnapshot.forEach((doc) => {
-      const formData = doc.data() as Form;
+    activeFormsSnapshot.forEach((docSnapshot) => {
+      const formData = docSnapshot.data() as Form;
       activeForms.push(formData);
     });
 
@@ -68,8 +69,8 @@ export async function getDeletedForms(): Promise<Form[]> {
     const deletedFormsSnapshot = await getDocs(deletedFormsCollectionRef);
     const deletedForms: Form[] = [];
 
-    deletedFormsSnapshot.forEach((doc) => {
-      const formData = doc.data() as Form;
+    deletedFormsSnapshot.forEach((docSnapshot) => {
+      const formData = docSnapshot.data() as Form;
       deletedForms.push(formData);
     });
 
@@ -93,7 +94,7 @@ export async function updateActiveForm(formData: Partial<Form>, formId: FormId):
 
     await updateDoc(formDocRef, formData);
 
-    formsServiceLogger.info(`Form with id: '${formId}' not updated successfully`);
+    formsServiceLogger.info(`Form with id: '${formId}' and contents: ${formData} updated successfully`);
   } catch (error) {
     formsServiceLogger.error(`updateActiveForm Error: failed to update form with formId: ${formId}, form: ${formData}`);
     throw error;
@@ -134,6 +135,7 @@ export async function deleteForm(formId: FormId): Promise<void> {
 export async function createFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
   if (!rateLimiteCreateFormResponse()) {
     formsServiceLogger.warn("Rate Limited!!!");
+    throw "createFormResponse: Rate Limited";
   }
 
   formsServiceLogger.info(`createFormResponse: ${formResponse}`);
