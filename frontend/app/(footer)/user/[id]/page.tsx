@@ -4,7 +4,7 @@ import ChevronRightButton from "@/components/elements/ChevronRightButton";
 import EventCard from "@/components/events/EventCard";
 import Loading from "@/components/loading/Loading";
 import { EventData } from "@/interfaces/EventTypes";
-import { EmptyUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getPublicUserById } from "@/services/src/users/usersService";
 import { EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 export default function UserProfilePage({ params }: any) {
   const userId: UserId = params.id;
   const [loading, setLoading] = useState(true);
-  const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyUserData);
+  const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyPublicUserData);
   const [upcomingOrganiserEvents, setUpcomingOrganiserEvents] = useState<EventData[]>([]);
   useEffect(() => {
     getPublicUserById(userId).then((user) => {

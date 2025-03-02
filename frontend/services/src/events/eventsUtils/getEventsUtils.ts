@@ -1,5 +1,5 @@
 import { EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
-import { UserData } from "@/interfaces/UserTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import {
   CollectionReference,
   DocumentData,
@@ -111,7 +111,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
   eventsData.map((event) => {
     eventsDataFinal.push({
       eventId: event.eventId,
-      organiser: event.organiser as UserData,
+      organiser: event.organiser as PublicUserData,
       startDate: new Timestamp(event.startDate.seconds, event.startDate.nanoseconds),
       endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
       location: event.location,

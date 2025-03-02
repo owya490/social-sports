@@ -26,7 +26,7 @@ import {
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
 
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
@@ -139,7 +139,7 @@ export async function getEventById(
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
-    var organiser: UserData = EmptyUserData;
+    var organiser: PublicUserData = EmptyPublicUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId, bypassCache, client);
     } catch (error) {
