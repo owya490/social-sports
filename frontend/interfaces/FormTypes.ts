@@ -70,8 +70,6 @@ export interface DateTimeSection extends AbstractSection {
 /** Contains the answers of the form from the responder */
 export interface FormResponse {
   formId: FormId;
-  /** Extra layer of indirection to allow organisers to edit type of
-   * form section and store responses for that section type */
   responseMap: Map<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
   submissionTime: number | null;
