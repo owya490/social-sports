@@ -4,9 +4,9 @@ export default function LoadingSkeletonEventCard() {
   return (
     <div className="w-full px-2">
       <Skeleton
-        height={150}
+        height={320}
         wrapper={({ children }) => {
-          return <div className="h-44 flex items-center w-full">{children}</div>;
+          return <div className="h-[22rem] flex items-center w-full">{children}</div>;
         }}
       />
       <Skeleton
@@ -27,7 +27,7 @@ export default function LoadingSkeletonEventCard() {
         height={6}
         width={160}
         wrapper={({ children }) => {
-          return <div className="h-5 flex items-center ml-2 mt-5">{children}</div>;
+          return <div className="h-5 flex items-center ml-2 mt-3">{children}</div>;
         }}
       />
       <Skeleton
@@ -37,7 +37,7 @@ export default function LoadingSkeletonEventCard() {
           return <div className="h-5 flex items-center ml-2">{children}</div>;
         }}
       />
-      <Skeleton
+      {/* <Skeleton
         height={6}
         width={160}
         wrapper={({ children }) => {
@@ -61,7 +61,7 @@ export default function LoadingSkeletonEventCard() {
             }}
           />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

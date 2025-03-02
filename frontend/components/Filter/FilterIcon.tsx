@@ -18,9 +18,7 @@ interface FilterIconProps {
 export default function FilterIcon(props: FilterIconProps) {
   return (
     <button
-      className={`${
-        props.isFirst ? "mr-6 md:mr-8" : "min-w-[6rem] md:min-w-[8rem]"
-      } flex justify-center snap-start`}
+      className={`${props.isFirst ? "mr-6 md:mr-8" : "min-w-[6rem] md:min-w-[8rem]"} flex justify-center snap-start`}
       onClick={() => {
         if (props.selectedSport === props.sportIdentifierString) {
           props.setSelectedSport(NO_SPORT_CHOSEN_STRING);
@@ -31,7 +29,7 @@ export default function FilterIcon(props: FilterIconProps) {
         }
       }}
     >
-      <div>
+      <div className="group">
         <div className="flex justify-center">
           <Image
             src={props.image}
@@ -40,14 +38,19 @@ export default function FilterIcon(props: FilterIconProps) {
             alt="volleyballImage"
             className={`${props.style} ${
               props.selectedSport === ""
-                ? "grayscale-0"
+                ? "opacity-100"
                 : props.selectedSport === props.sportIdentifierString
-                ? "grayscale-0"
-                : "grayscale"
+                ? "opacity-100"
+                : "opacity-50"
             } flex justify-center`}
           />
         </div>
-        <p className="text-sm font-light grow text-center">{props.name}</p>
+        <p className="text-xs font-light grow text-center mb-1.5">{props.name}</p>
+        {props.selectedSport === props.sportIdentifierString ? (
+          <div className="bg-black h-[2px]"></div>
+        ) : (
+          <div className="group-hover:bg-black group-hover:h-[2px]"></div>
+        )}
       </div>
     </button>
   );

@@ -28,6 +28,7 @@ interface AbstractEventData {
   nameTokens?: string[]; // Assuming "rich text field" is a string
   locationTokens?: string[];
   image: string; // Assuming you store the image URL or path as a string
+  thumbnail: string;
   eventTags: string[]; // Assuming "list of tags" is an array of strings
   isActive: boolean;
   isPrivate: boolean;
@@ -39,6 +40,7 @@ interface AbstractEventData {
   stripeFeeToCustomer: boolean; // should default to false
   promotionalCodesEnabled: boolean; // should default to false
   paused: boolean; // should default to false
+  eventLink: string;
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -70,6 +72,7 @@ export const EmptyEventData: EventData = {
   name: "",
   description: "",
   image: "",
+  thumbnail: "",
   eventTags: [],
   isActive: false,
   attendees: {},
@@ -81,6 +84,7 @@ export const EmptyEventData: EventData = {
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
   paused: false,
+  eventLink: "",
 };
 
 export interface EventMetadata {

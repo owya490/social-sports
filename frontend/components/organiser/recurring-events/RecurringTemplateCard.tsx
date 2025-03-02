@@ -57,7 +57,7 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
                 </div>
                 <div className="flex items-center">
                   <CurrencyDollarIcon className="w-5 shrink-0" />
-                  <p className="ml-1 font-light text-sm">{`$${displayPrice(props.price)} AUD per person`}</p>
+                  <p className="ml-1 font-light text-sm">{`$${displayPrice(props.price)} AUD`}</p>
                 </div>
               </div>
               <div className="grid md:grid-cols-2">

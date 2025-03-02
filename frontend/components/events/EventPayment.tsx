@@ -10,12 +10,12 @@ import {
   MapPinIcon,
   PlayCircleIcon,
 } from "@heroicons/react/24/outline";
-import { Option, Select } from "@material-tailwind/react";
+import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
+import { InvertedHighlightButton } from "../elements/HighlightButton";
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -29,15 +29,26 @@ interface EventPaymentProps {
   isPrivate: boolean;
   paused: boolean;
   setLoading: (value: boolean) => void;
+  eventLink: string;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
   const router = useRouter();
   const [attendeeCount, setAttendeeCount] = useState(1);
+  const [openModal, setOpenModal] = useState(false);
 
   const handleAttendeeCount = (value?: string) => {
     if (value) {
       setAttendeeCount(parseInt(value));
+    }
+  };
+
+  const handleContactClick = () => {
+    if (props.eventLink) {
+      setOpenModal(true);
+    } else {
+      console.warn("No event link provided!");
+      // TODO: Redirect user to the organiser's profile page instead of just logging a warning
     }
   };
 
@@ -78,12 +89,12 @@ export default function EventPayment(props: EventPaymentProps) {
               <h2 className=" font-semibold">Price</h2>
               <div className="flex items-center font-light">
                 <CurrencyDollarIcon className="w-5 h-5 mr-2 shrink-0" />
-                <p className="text-md mr-[5%] font-light">${displayPrice(props.price)} AUD per person</p>
+                <p className="text-md mr-[5%] font-light">${displayPrice(props.price)} AUD</p>
               </div>
             </div>
           </div>
         </div>
-        <hr className="px-2 h-0.5 mx-auto bg-gray-400 border-0 rounded dark:bg-gray-400 mb-6"></hr>
+        <hr className="px-2 h-0.5 mx-auto bg-core-outline border-0 rounded dark:bg-gray-400 mb-6"></hr>
         <div className="relative flex justify-center mb-6 w-full">
           {eventRegistrationClosed ? (
             <div>
@@ -134,7 +145,7 @@ export default function EventPayment(props: EventPaymentProps) {
                     </Select>
                   </div>
                   <button
-                    className="text-lg rounded-2xl border border-black w-full py-3 mb-2"
+                    className="font-semibold rounded-2xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline w-full py-3 transition-all duration-300 mb-2"
                     style={{
                       textAlign: "center",
                       position: "relative",
@@ -155,17 +166,36 @@ export default function EventPayment(props: EventPaymentProps) {
               )}
             </div>
           ) : (
-            <Link href="#" className="w-full">
-              <div
+            <>
+              <InvertedHighlightButton
+                onClick={handleContactClick}
                 className="text-lg rounded-2xl border border-black w-full py-3"
-                style={{
-                  textAlign: "center",
-                  position: "relative",
-                }}
               >
                 Contact Now
-              </div>
-            </Link>
+              </InvertedHighlightButton>
+              <Dialog open={openModal} handler={setOpenModal}>
+                <DialogHeader className="mx-2 text-lg font-medium leading-6">Contact Event Organizer</DialogHeader>
+                <DialogBody>
+                  <p className="mx-2 text-base font-medium text-black">You are going to be redirected to:</p>
+                  <p className="mx-2 text-base font-medium text-blue-900">{props.eventLink}</p>
+                </DialogBody>
+                <DialogFooter className="flex justify-between">
+                  <Button className="mx-2 bg-gray-200" variant="text" color="black" onClick={() => setOpenModal(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="ml-2"
+                    variant="filled"
+                    color="black"
+                    onClick={() => {
+                      window.location.href = props.eventLink;
+                    }}
+                  >
+                    Proceed
+                  </Button>
+                </DialogFooter>
+              </Dialog>
+            </>
           )}
         </div>
       </div>
