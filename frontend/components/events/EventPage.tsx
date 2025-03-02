@@ -54,7 +54,10 @@ export default function EventPage({ params }: any) {
       />
       <div className="mt-1 mb-10">
         <EventDetails eventData={eventData} eventTags={eventTags} setLoading={setLoading} />
-
+        {/* Stub for Orgnaiser on Event Page
+        <div className="w-full flex justify-center">
+          <div className="md:screen-width-primary">Owen</div>
+        </div> */}
         <RecommendedEvents eventData={eventData} />
       </div>
       {/* SPORTSHUB-194 Mobile Event footer will be re-enabled post MVP

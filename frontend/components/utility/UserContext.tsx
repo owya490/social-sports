@@ -3,17 +3,19 @@ import { auth } from "@/services/src/firebase";
 import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
 
+import { getTempUserData } from "@/services/src/auth/authService";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
 import { onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
-import { getTempUserData } from "@/services/src/auth/authService";
 
 type LoginUserContextType = {
+  userLoading: boolean;
   user: UserData;
   setUser: React.Dispatch<React.SetStateAction<UserData>>;
 };
 
 export const LoginUserContext = createContext<LoginUserContextType>({
+  userLoading: true,
   user: EmptyUserData,
   setUser: () => {},
 });
@@ -22,7 +24,7 @@ export default function UserContext({ children }: { children: any }) {
   const [user, setUser] = useState<UserData>(EmptyUserData);
   const router = useRouter();
   const pathname = usePathname();
-  const [loading, setLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(true);
 
   const protectedRoutes = ["/organiser", "/profile"];
   const LoginRegisterRoutes = ["/register", "/login"];
@@ -33,6 +35,7 @@ export default function UserContext({ children }: { children: any }) {
       // will satify both the above conditions and then skip the create user workflow due to this
       // redirecting to dashboard, hence we need to do another check to see if they are in the create
       // user workflow
+      setUserLoading(true);
       if (userAuth && auth.currentUser?.emailVerified) {
         const { uid } = userAuth;
         try {
@@ -45,13 +48,13 @@ export default function UserContext({ children }: { children: any }) {
           }
         }
       }
-      setLoading(false);
+      setUserLoading(false);
     });
     return () => unsubscriber();
   }, []);
   useEffect(() => {
     const checkAuthStatus = async () => {
-      if (loading) return;
+      if (userLoading) return;
 
       if (protectedRoutes.some((prefix) => pathname.startsWith(prefix))) {
         if (!auth.currentUser || !auth.currentUser.emailVerified) {
@@ -76,9 +79,9 @@ export default function UserContext({ children }: { children: any }) {
     };
 
     checkAuthStatus();
-  }, [user, pathname, loading]);
+  }, [user, pathname, userLoading]);
 
-  return <LoginUserContext.Provider value={{ user, setUser }}>{children}</LoginUserContext.Provider>;
+  return <LoginUserContext.Provider value={{ userLoading, user, setUser }}>{children}</LoginUserContext.Provider>;
 }
 
 export const useUser = () => useContext(LoginUserContext);

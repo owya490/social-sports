@@ -12,7 +12,7 @@ import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatB
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
@@ -34,7 +34,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
   const [eventEndDate, setEventEndDate] = useState<Timestamp>(Timestamp.now());
-  const [eventOrganiser, setEventOrganiser] = useState<UserData>(EmptyUserData);
+  const [eventOrganiser, setEventOrganiser] = useState<PublicUserData>(EmptyPublicUserData);
   const [eventVacancy, setEventVacancy] = useState<number>(0);
   const [eventDescription, setEventDescription] = useState<string>("");
   const [eventLocation, setEventLocation] = useState<string>("");
