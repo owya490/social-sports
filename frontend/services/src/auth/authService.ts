@@ -17,6 +17,7 @@ import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtil
 import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
 import { createUser, deleteUser, getPublicUserById } from "../users/usersService";
+import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
@@ -54,7 +55,7 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
   try {
     await signOut(auth);
     bustEventsLocalStorageCache();
-    bustEventsLocalStorageCache();
+    bustUserLocalStorageCache();
     setUser(EmptyUserData);
     console.log("Signed out!");
   } catch (error) {
