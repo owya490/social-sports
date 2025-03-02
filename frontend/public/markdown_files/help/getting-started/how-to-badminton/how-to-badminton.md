@@ -17,3 +17,5 @@ Yes, you can update your email in your account settings.
 Have a look [here](/how-to-set-up-stripe)
 
 # test-title
+
+![please work](/images/home_hero.jpg)

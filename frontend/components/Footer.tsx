@@ -16,8 +16,8 @@ export default function Footer() {
           <Link href="/event/create" className="mx-2">
             Create Event
           </Link>
-          <Link href="/faq" className="mx-2">
-            FAQ
+          <Link href="/help" className="mx-2">
+            Help
           </Link>
         </ol>
         <Link href="/suggestions" className="ml-auto flex justify-center items-center">
