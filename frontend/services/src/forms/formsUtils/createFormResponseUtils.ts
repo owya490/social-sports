@@ -3,7 +3,7 @@ import { FORM_RESPONSE_MAX_EVENTS, FORM_RESPONSE_REFRESH_MILLIS, LocalStorageKey
 
 const createFormResponseLogger = new Logger("createFormResponseLogger");
 
-export function rateLimiteCreateFormResponse(): boolean {
+export function rateLimitCreateFormResponse(): boolean {
   const now = new Date();
   const maybeFormResponseOperationCount5Min = localStorage.getItem(LocalStorageKeys.FormResponseOperationCount5Min);
   const maybeFormResponseLastCreatedUpdateOperationTimestamp = localStorage.getItem(

@@ -5,8 +5,8 @@ import { db } from "../firebase";
 import { CollectionPaths, FormPaths, FormResponsePaths, FormStatus } from "./formsConstants";
 import { rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { EventId } from "@/interfaces/EventTypes";
-import { findFormDoc } from "./formsUtils/formsUtils";
-import { rateLimiteCreateFormResponse } from "./formsUtils/createFormResponseUtils";
+import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
+import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
@@ -38,7 +38,7 @@ export async function getForm(formId: FormId): Promise<Form> {
 
     return formDoc;
   } catch (error) {
-    formsServiceLogger.error(`Error getting form for formId: ${formId}, error: ${error}`);
+    formsServiceLogger.error(`getForm: Error getting form for formId: ${formId}, error: ${error}`);
     throw error;
   }
 }
@@ -81,10 +81,10 @@ export async function getDeletedForms(): Promise<Form[]> {
   }
 }
 
-/** Updates are only allowed on active forms and not on deleted forms */
 export async function updateActiveForm(formData: Partial<Form>, formId: FormId): Promise<void> {
   formsServiceLogger.info(`updateActiveForm: ${formId}`);
   try {
+    // Updates are only allowed on active forms and not on deleted forms
     const formDocRef = doc(db, FormPaths.FormsActive, formId);
 
     const formDocSnapshot = await getDoc(formDocRef);
@@ -94,9 +94,9 @@ export async function updateActiveForm(formData: Partial<Form>, formId: FormId):
 
     await updateDoc(formDocRef, formData);
 
-    formsServiceLogger.info(`Form with id: '${formId}' and contents: ${formData} updated successfully`);
+    formsServiceLogger.info(`Successfully updated form with id: '${formId}' and contents: ${formData}`);
   } catch (error) {
-    formsServiceLogger.error(`updateActiveForm Error: failed to update form with formId: ${formId}, form: ${formData}`);
+    formsServiceLogger.error(`updateActiveForm: Failed to update form with formId: ${formId}, form: ${formData}`);
     throw error;
   }
 }
@@ -110,7 +110,7 @@ export async function deleteForm(formId: FormId): Promise<void> {
     const formSnapshot = await getDoc(docRef);
 
     if (!formSnapshot.exists()) {
-      formsServiceLogger.error(`deleteForm error: formId ${formId} not found`);
+      formsServiceLogger.error(`deleteForm: formId ${formId} not found`);
       throw new Error(`Form with ID ${formId} not found`);
     }
 
@@ -127,13 +127,13 @@ export async function deleteForm(formId: FormId): Promise<void> {
 
     await batch.commit();
   } catch (error) {
-    formsServiceLogger.error(`deleteForm Error: Failed to delete form with formId: ${formId}`);
+    formsServiceLogger.error(`deleteForm: Error Failed to delete form with formId: ${formId}`);
     throw error;
   }
 }
 
 export async function createFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
-  if (!rateLimiteCreateFormResponse()) {
+  if (!rateLimitCreateFormResponse()) {
     formsServiceLogger.warn("Rate Limited!!!");
     throw "createFormResponse: Rate Limited";
   }
@@ -145,7 +145,7 @@ export async function createFormResponse(formResponse: FormResponse): Promise<Fo
     batch.set(docRef, formResponse);
     await batch.commit();
     formsServiceLogger.info(
-      `createFormResponse: Form response submitted with formResponseId: ${docRef.id}, formResponse: ${formResponse}`
+      `createFormResponse: Form response created with formResponseId: ${docRef.id}, formResponse: ${formResponse}`
     );
     return docRef.id;
   } catch (error) {
@@ -162,12 +162,12 @@ export async function getFormResponse(
   responseId: FormResponseId
 ): Promise<FormResponse> {
   try {
-    const docRef = doc(db, FormResponsePaths.Submitted, formId, eventId, responseId);
-    const responseSnapshot = await getDoc(docRef);
+    const responseSnapshot = await findFormResponseDoc(formId, eventId, responseId);
 
     if (!responseSnapshot.exists()) {
+      formsServiceLogger.error(`getFormResponse: formResponseId ${formId} not found`);
       throw new Error(
-        `getFormResponse Error: Could not find form response with formId: ${formId}, eventId: ${eventId} and responseId: ${responseId}`
+        `getFormResponse: Could not find form response with formId: ${formId}, eventId: ${eventId} and responseId: ${responseId}`
       );
     }
 
@@ -175,7 +175,7 @@ export async function getFormResponse(
     return responseDoc;
   } catch (error) {
     formsServiceLogger.error(
-      `getFormResponse Error: Error getting form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}`
+      `getFormResponse: Error getting form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}`
     );
     throw error;
   }
@@ -188,19 +188,20 @@ export async function updateFormResponse(
   formResponse: Partial<FormResponse>
 ): Promise<void> {
   try {
-    const docRef = doc(db, FormResponsePaths.Submitted, formId, eventId, responseId);
+    const docRef = await findFormResponseDocRef(formId, eventId, responseId);
 
     const responseDocSnapshot = await getDoc(docRef);
     if (!responseDocSnapshot.exists()) {
+      formsServiceLogger.error(`updateFormResponse: formResponseId ${formId} not found`);
       throw new Error(
-        `Error updating form response because docRef does not exist, formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}`
+        `updateFormResponse: Error updating form response because docRef does not exist, formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}`
       );
     }
 
     await updateDoc(docRef, formResponse);
   } catch (error) {
     formsServiceLogger.error(
-      `updateFormResponse Error: Error editing form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}, updated form response: ${formResponse}, error: ${error}`
+      `updateFormResponse: Error editing form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}, updated form response: ${formResponse}, error: ${error}`
     );
     throw error;
   }

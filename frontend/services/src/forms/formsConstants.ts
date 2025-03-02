@@ -6,6 +6,7 @@ export const FORM_RESPONSE_MAX_EVENTS = 5;
 
 export enum CollectionPaths {
   Forms = "Forms",
+  FormResponses = "FormResponses",
 }
 
 export enum FormStatus {
@@ -13,14 +14,19 @@ export enum FormStatus {
   Deleted = "Deleted",
 }
 
+export enum FormResponseStatus {
+  Submitted = "Submitted",
+  Temp = "Temp",
+}
+
 export enum FormPaths {
-  FormsActive = "Forms/Active",
-  FormsDeleted = "Forms/Deleted",
+  FormsActive = `${CollectionPaths.Forms}/${FormStatus.Active}`,
+  FormsDeleted = `${CollectionPaths.Forms}/${FormStatus.Deleted}`,
 }
 
 export enum FormResponsePaths {
-  Submitted = "FormResponses/Submitted",
-  Temp = "FormResponses/Temp",
+  Submitted = `${CollectionPaths.FormResponses}/${FormResponseStatus.Submitted}`,
+  Temp = `${CollectionPaths.FormResponses}/${FormResponseStatus.Temp}`,
 }
 export enum LocalStorageKeys {
   FormsOperationCount5Min = "formsOperationCount5Min",
