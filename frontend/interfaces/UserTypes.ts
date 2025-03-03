@@ -79,6 +79,8 @@ export const EmptyPrivateUserData: PrivateUserData = {
   organiserEvents: [],
   publicOrganiserEvents: [],
   recurrenceTemplate: [],
+  stripeAccount: undefined,
+  stripeAccountActive: undefined,
 };
 
 export const EmptyUserData: UserData = {

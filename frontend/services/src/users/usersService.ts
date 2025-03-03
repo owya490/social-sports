@@ -1,4 +1,4 @@
-import { NewUserData, PrivateUserData, PublicUserData, UserData, UserId, UsernameMap } from "@/interfaces/UserTypes";
+import { PrivateUserData, PublicUserData, UserData, UserId, UsernameMap } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
 import { deleteDoc, doc, getDoc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
@@ -22,7 +22,7 @@ export async function createUser(data: UserData, userId: string): Promise<void> 
       ...extractPublicUserData(data),
       // cheekily inject the generated username and name tokens here.
       username: uniqueUsername,
-      nameTokens: data.firstName.split(" ").concat(data.surname?.split(" ")),
+      nameTokens: data.firstName.split(" "),
     } as PublicUserData);
     await setDoc(doc(db, "Users", "Active", "Private", userId), extractPrivateUserData(data));
     userServiceLogger.info(`User created successfully:", ${userId}`);
