@@ -33,49 +33,47 @@ export enum FormSectionType {
 interface AbstractSection {
   type: FormSectionType;
   question: string;
-  imageUrl: string; // image attached to question
+  imageUrl: string | null; // image attached to question
   required: boolean;
 }
 
 export interface TextSection extends AbstractSection {
   type: FormSectionType.TEXT;
-  answer: string;
+  answer: string | null;
 }
 
 export interface MultipleChoiceSection extends AbstractSection {
   type: FormSectionType.MULTIPLE_CHOICE;
   options: string[];
-  answer: number; // index of chosen option
+  answer: number | null; // index of chosen option
 }
 
 export interface DropdownSelectSection extends AbstractSection {
   type: FormSectionType.DROPDOWN_SELECT;
   options: string[];
-  answer: string; // value of chosen option
+  answer: string | null; // value of chosen option
 }
 
 export interface BinaryChoiceSection extends AbstractSection {
   type: FormSectionType.BINARY_CHOICE;
   choice1: string;
   choice2: string;
-  answer: 0 | 1; // 0 -> choice1, 1 -> choice2
+  answer: 0 | 1 | null; // 0 -> choice1, 1 -> choice2
 }
 
 export interface FileUploadSection extends AbstractSection {
   type: FormSectionType.FILE_UPLOAD;
-  fileUrl: string;
+  fileUrl: string | null;
 }
 
 export interface DateTimeSection extends AbstractSection {
   type: FormSectionType.DATE_TIME;
-  timestamp: string; // uct time
+  timestamp: string | null; // uct time
 }
 
 /** Contains the answers of the form from the responder */
 export interface FormResponse {
   formId: FormId;
-  /** Extra layer of indirection to allow organisers to edit type of
-   * form section and store responses for that section type */
   responseMap: Map<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
   submissionTime: number | null;
