@@ -96,9 +96,7 @@ export async function findFormResponseDoc(
     formsServiceLogger.error(
       `findFormResponseDoc: Form response document not found in any subcollection for formResponseId: ${formResponseId}, formId: ${formId}, eventId: ${eventId}`
     );
-    throw new Error(
-      `findFormResponseDoc: Form response document not found in any subcollection for formResponseId: ${formResponseId}, formId: ${formId}, eventId: ${eventId}`
-    );
+    throw new Error("findFormResponseDoc: Form response not found.");
   } catch (error) {
     formsServiceLogger.error(`findFormResponseDoc: Failed to find form response doc: ${error}`);
     throw error;
