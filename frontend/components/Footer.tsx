@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="w-full bg-white border-t-[1px] border-gray-400 bottom-0 h-8 flex justify-center items-center fixed">
       <div className="screen-width-dashboard text-xs flex">
-        <p className="mr-2">© 2024 SPORTSHUB</p>
+        <p className="mr-2">© 2025 SPORTSHUB</p>
         <ol className="hidden sm:block">
           <Link href="/dashboard" className="mx-2">
             Dashboard

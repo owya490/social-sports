@@ -5,6 +5,17 @@ export function getUrlWithCurrentHostname(path: string) {
   return `${protocol}://${hostname}${port}${path}`;
 }
 
+export function validateURL(url: string | URL): boolean {
+  try {
+    new URL(url); // Checks if the string is a valid URL
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function isLocalHost(hostname: string) {
   return hostname.includes("localhost");
 }
+
+
