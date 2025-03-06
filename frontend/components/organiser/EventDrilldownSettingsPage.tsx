@@ -59,7 +59,6 @@ const EventDrilldownSettingsPage = ({
   };
 
   const handleDeleteEvent = () => {
-    console.log(eventMetadata);
     setModalOpen(true);
   };
 
