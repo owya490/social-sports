@@ -1,11 +1,11 @@
 "use client";
 
 import ShareModal from "@/components/events/ShareModal";
+import EventDrilldownSettingsPage from "@/components/organiser/EventDrilldownSettingsPage";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
 import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
 import EventDrilldownManageAttendeesPage from "@/components/organiser/EventDrilldownManageAttendeesPage";
-import EventDrilldownSettingsPage from "@/components/organiser/EventDrilldownSettingsPage";
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
