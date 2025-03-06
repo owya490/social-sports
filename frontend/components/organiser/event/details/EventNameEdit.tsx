@@ -2,7 +2,7 @@
 import { CheckIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 
-import { Input } from "@material-tailwind/react";
+import { Input, Spinner } from "@material-tailwind/react";
 
 import Skeleton from "react-loading-skeleton";
 
@@ -19,6 +19,7 @@ export const EventNameEdit = ({
   isActive: boolean;
   updateData: (id: string, data: any) => any;
 }) => {
+  const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const [editTitle, setEditTitle] = useState(false);
   const [newEditTitle, setNewEditTitle] = useState("");
   const [title, setTitle] = useState("");
@@ -31,6 +32,7 @@ export const EventNameEdit = ({
   }, [eventName]);
 
   const handleTitleUpdate = async () => {
+    setUpdateLoading(true);
     setTitle(newEditTitle);
     const nameTokens = newEditTitle.toLowerCase().split(" ");
     try {
@@ -39,6 +41,7 @@ export const EventNameEdit = ({
     } catch (error) {
       console.error("Failed to update event name:", error);
     }
+    setUpdateLoading(false);
   };
 
   const handleTitleCancel = () => {
@@ -48,7 +51,7 @@ export const EventNameEdit = ({
 
   return (
     <div className="h-fit border-organiser-darker-light-gray px-4 pt-2 relative">
-      <div className="text-organiser-title-gray-text font-bold">
+      <div className="text-black font-bold">
         Event Name
         {loading ? (
           <Skeleton className="w-80 sm:w-[400px]" />
@@ -81,14 +84,19 @@ export const EventNameEdit = ({
                 />
               </div>
             ) : (
-              <div className="font-bold text-2xl my-1">
+              <div className="font-bold text-2xl my-1 text-organiser-title-gray-text">
                 {newEditTitle}
-                {isActive && (
-                  <PencilSquareIcon
-                    className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
-                    onClick={() => setEditTitle(true)}
-                  />
-                )}
+                {isActive &&
+                  (updateLoading ? (
+                    <Spinner className="absolute top-2 right-2 w-5" />
+                  ) : (
+                    <PencilSquareIcon
+                      className="absolute top-2 right-2 w-5 stroke-organiser-title-gray-text cursor-pointer"
+                      onClick={() => {
+                        setEditTitle(true);
+                      }}
+                    />
+                  ))}
               </div>
             )}
           </>

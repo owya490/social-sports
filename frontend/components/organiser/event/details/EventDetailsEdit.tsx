@@ -207,8 +207,8 @@ export const EventDetailsEdit = ({
     setNewEditPrice(eventPrice);
     setPrice(eventPrice);
 
-    setNewEditEventLink(eventEventLink)
-    setEventLink(eventEventLink)
+    setNewEditEventLink(eventEventLink);
+    setEventLink(eventEventLink);
   }, [loading]);
 
   // UseEffect triggered on certain field mutations to ensure entry is valid
@@ -294,7 +294,7 @@ export const EventDetailsEdit = ({
 
   return (
     <div className="border-organiser-darker-light-gray pl-4 p-2 pb-4 relative">
-      <div className="text-organiser-title-gray-text font-bold">Event Details</div>
+      <div className="text-black font-bold">Event Details</div>
       <div className={`text-sm flex flex-col mt-4 w-full ${isEdit ? "space-y-4" : ""}`}>
         <div className="px-2 flex space-x-2 grow w-full">
           <CalendarDaysIcon className="w-4 shrink-0" />
@@ -305,7 +305,6 @@ export const EventDetailsEdit = ({
                   height: 12,
                   width: 100,
                 }}
-
               />
             ) : (
               <>
@@ -357,7 +356,6 @@ export const EventDetailsEdit = ({
                   height: 12,
                   width: 100,
                 }}
-
               />
             ) : (
               <>
@@ -411,7 +409,6 @@ export const EventDetailsEdit = ({
                   height: 12,
                   width: 100,
                 }}
-
               />
             ) : (
               <>
@@ -464,7 +461,6 @@ export const EventDetailsEdit = ({
                   height: 12,
                   width: 100,
                 }}
-
               />
             ) : (
               <>
@@ -496,7 +492,6 @@ export const EventDetailsEdit = ({
                   height: 12,
                   width: 100,
                 }}
-
               />
             ) : (
               <>
@@ -536,7 +531,6 @@ export const EventDetailsEdit = ({
                   height: 12,
                   width: 100,
                 }}
-
               />
             ) : (
               <>
@@ -576,7 +570,6 @@ export const EventDetailsEdit = ({
                   height: 12,
                   width: 100,
                 }}
-
               />
             ) : (
               <>
@@ -595,12 +588,16 @@ export const EventDetailsEdit = ({
                     />
                     <CheckIcon
                       className={`absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer ${
-                        (dateWarning || timeWarning || registrationDeadlineWarning || capacityWarning) && !isRecurrenceTemplate
+                        (dateWarning || timeWarning || registrationDeadlineWarning || capacityWarning) &&
+                        !isRecurrenceTemplate
                           ? "opacity-50 cursor-not-allowed"
                           : "cursor-pointer"
                       }`}
                       onClick={() => {
-                        if (!dateWarning && !timeWarning && !registrationDeadlineWarning && !capacityWarning || isRecurrenceTemplate) {
+                        if (
+                          (!dateWarning && !timeWarning && !registrationDeadlineWarning && !capacityWarning) ||
+                          isRecurrenceTemplate
+                        ) {
                           handleUpdate();
                           setIsEdit(false);
                         }
@@ -659,7 +656,7 @@ export const EventDetailsEdit = ({
                     />
                   </div>
                 ) : (
-                  <div className="mt-2">{newEditLocation}</div>
+                  <div className="mt-2">{newEditEventLink}</div>
                 )}
               </>
             )}

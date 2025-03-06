@@ -65,7 +65,13 @@ const EventDrilldownDetailsPage = ({
           />
         )}
       </div>
-      <EventNameEdit eventId={eventId} eventName={eventName} loading={loading} isActive={isActive} updateData={updateData}/>
+      <EventNameEdit
+        eventId={eventId}
+        eventName={eventName}
+        loading={loading}
+        isActive={isActive}
+        updateData={updateData}
+      />
       <div className="h-[1px] bg-core-outline w-full"></div>
       <EventDetailsEdit
         eventId={eventId}
@@ -84,7 +90,13 @@ const EventDrilldownDetailsPage = ({
         isRecurrenceTemplate={isRecurrenceTemplate}
       />
       <div className="h-[1px] bg-core-outline w-full"></div>
-      <EventDescriptionEdit eventId={eventId} eventDescription={eventDescription} loading={loading} updateData={updateData}/>
+      <EventDescriptionEdit
+        eventId={eventId}
+        eventDescription={eventDescription}
+        isActive={isActive}
+        loading={loading}
+        updateData={updateData}
+      />
     </div>
   );
 };
