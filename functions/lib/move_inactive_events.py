@@ -1,6 +1,7 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 
+import pytz
 from firebase_admin import firestore
 from firebase_functions import https_fn, options, scheduler_fn
 from google.cloud import firestore
@@ -8,12 +9,9 @@ from google.cloud.firestore import DocumentReference, Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.auth import *
 from lib.constants import *
+from lib.constants import (ACTIVE_PRIVATE, ACTIVE_PUBLIC, INACTIVE_PRIVATE,
+                           INACTIVE_PUBLIC, SYDNEY_TIMEZONE)
 from lib.logging import Logger
-
-ACTIVE_PUBLIC = "Events/Active/Public"
-ACTIVE_PRIVATE = "Events/Active/Private"
-INACTIVE_PUBLIC = "Events/InActive/Public"
-INACTIVE_PRIVATE = "Events/InActive/Private"
 
 
 @firestore.transactional
@@ -36,15 +34,14 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
   public_events_ref = db.collection(ACTIVE_PUBLIC)
   public_events = public_events_ref.stream()
 
-  # Scan through and if the endDate is past todays date then move it to Events/Inactive/Public
+  # Scan through and if the endDate is past today's date then move it to Events/Inactive/Public
   for event in public_events:
     logger.info(event.id)
     event_id = event.id
     event_dict = event.to_dict()
     event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
     logger.info(event_end_date)
-
-    if event_end_date.ToDatetime().date() < today:
+    if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
       logger.info(f"today is after end date for ${event.id}")
       transaction = db.transaction()
       # The events datetime is earlier so it has already passed, hence we should move it
@@ -62,12 +59,10 @@ def get_and_move_private_inactive_events(today: date):
     event_id = event.id
     event_dict = event.to_dict()
     event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
-
-    if event_end_date.ToDatetime().date() < today:
+    if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
       transaction = db.transaction()
       # The events datetime is earlier so it has already passed, hence we should move it
       move_event_to_inactive(transaction=transaction, old_event_ref=db.collection(ACTIVE_PRIVATE).document(event_id), new_event_ref=db.collection(INACTIVE_PRIVATE).document(event_id))
-
 
 
 @scheduler_fn.on_schedule(schedule="every day 00:00", region="australia-southeast1", timezone=scheduler_fn.Timezone("Australia/Sydney"))
@@ -76,7 +71,7 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
   logger = Logger(f"move_inactive_events_logger_{uid}")
   logger.add_tag("uuid", uid)
   
-  today = date.today()
+  today = datetime.now(SYDNEY_TIMEZONE).date()
 
   logger.info("Moving inactive events for date " + today.strftime("%d/%m/%Y, %H:%M:%S"))
 

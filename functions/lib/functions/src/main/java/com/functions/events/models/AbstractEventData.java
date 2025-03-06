@@ -25,7 +25,7 @@ public abstract class AbstractEventData {
 	private LocationLatLng locationLatLng;
 	private Integer capacity;
 	private Integer vacancy;
-	private Double price;
+	private Integer price;
 	private String organiserId;
 	@JsonSerialize(using = JavaUtils.TimestampSerializer.class)
 	@JsonDeserialize(using = JavaUtils.TimestampDeserializer.class)
@@ -50,6 +50,8 @@ public abstract class AbstractEventData {
 	@Nullable
 	private Boolean promotionalCodesEnabled; // Optional field
 	private Boolean paused;
+	@Nullable
+	private String eventLink;
 
 	@Data
 	public static class LocationLatLng {

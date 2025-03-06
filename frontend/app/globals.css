@@ -30,3 +30,11 @@
     }
   }
 }
+
+:root {
+  --navbar-height: 65px;
+}
+
+html {
+  scroll-padding-top: var(--navbar-height);
+}
