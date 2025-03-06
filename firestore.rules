@@ -79,8 +79,8 @@ service cloud.firestore {
     }
 
     match /DeletedEvents/{eventId} {
-      // GET
-      allow read: if request.auth != null && resource.data.organiserId == request.auth.uid;
+      // GET, UPDATE
+      allow read, update: if request.auth != null && resource.data.organiserId == request.auth.uid;
       // CREATE
       allow create: if request.auth != null;
     }

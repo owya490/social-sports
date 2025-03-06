@@ -37,7 +37,6 @@ export async function sendEmailOnDeleteEvent(eventId: string) {
   };
   return sendEmailFunction(content)
     .then((result) => {
-      console.log("this is the", result);
       return result;
     })
     .catch((error) => {
