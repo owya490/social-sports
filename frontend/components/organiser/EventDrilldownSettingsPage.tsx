@@ -10,6 +10,7 @@ import { sendEmailOnDeleteEvent } from "@/services/src/sendgrid/sendgridService"
 import { env } from "process";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { Switch } from "@mantine/core";
+import { Logger } from "@/observability/logger";
 
 interface EventDrilldownSettingsPageProps {
   eventMetadata: EventMetadata;
@@ -31,15 +32,18 @@ const EventDrilldownSettingsPage = ({
   setPaused,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
-  const { user } = useUser();
-
+  const { user, auth } = useUser();
+  const logger = new Logger("EventDrilldownLogger");
   const onClose = () => {
     setModalOpen(false);
   };
 
   const onConfirm = async () => {
     try {
-      await archiveAndDeleteEvent(eventId, user.userId, user.contactInformation.email);
+      if (!auth.currentUser?.email) {
+        throw new Error("User email is missing, cannot proceed with event deletion.");
+      }
+      await archiveAndDeleteEvent(eventId, user.userId, auth.currentUser?.email);
       await sendEmailOnDeleteEvent(eventId);
       bustEventsLocalStorageCache();
       router.push("/organiser/event/dashboard");
@@ -47,7 +51,7 @@ const EventDrilldownSettingsPage = ({
       if (error === "Rate Limited") {
         router.push("/error/Delete_UPDATE_EVENT_RATELIMITED");
       } else if (error == "Sendgrid failed") {
-        console.log("sendgrid error", error);
+        logger.error("Sendgrid failed");
       } else {
         router.push("/error");
       }

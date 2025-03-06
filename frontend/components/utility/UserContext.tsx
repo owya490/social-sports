@@ -11,11 +11,13 @@ import { getTempUserData } from "@/services/src/auth/authService";
 type LoginUserContextType = {
   user: UserData;
   setUser: React.Dispatch<React.SetStateAction<UserData>>;
+  auth: typeof auth;
 };
 
 export const LoginUserContext = createContext<LoginUserContextType>({
   user: EmptyUserData,
   setUser: () => {},
+  auth,
 });
 
 export default function UserContext({ children }: { children: any }) {
@@ -78,7 +80,7 @@ export default function UserContext({ children }: { children: any }) {
     checkAuthStatus();
   }, [user, pathname, loading]);
 
-  return <LoginUserContext.Provider value={{ user, setUser }}>{children}</LoginUserContext.Provider>;
+  return <LoginUserContext.Provider value={{ user, setUser, auth }}>{children}</LoginUserContext.Provider>;
 }
 
 export const useUser = () => useContext(LoginUserContext);
