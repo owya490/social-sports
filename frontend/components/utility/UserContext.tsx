@@ -4,14 +4,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
 
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
-import { onAuthStateChanged } from "firebase/auth";
+import { Auth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
 import { getTempUserData } from "@/services/src/auth/authService";
 
 type LoginUserContextType = {
   user: UserData;
   setUser: React.Dispatch<React.SetStateAction<UserData>>;
-  auth: typeof auth;
+  auth: Auth;
 };
 
 export const LoginUserContext = createContext<LoginUserContextType>({

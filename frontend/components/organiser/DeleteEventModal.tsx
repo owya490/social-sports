@@ -10,12 +10,14 @@ import { Fragment, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import DeleteEventAttendeeCard from "./DeleteEventAttendeeCard";
 import { RedHighlightButton } from "../elements/HighlightButton";
+import LoadingSpinner from "../elements/LoadingSpinner";
 interface ShareModalProps {
   eventName: string;
   eventStartDate: Timestamp;
   eventMetadata: EventMetadata;
   eventId: string;
   modalOpen: boolean;
+  loading: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -26,6 +28,7 @@ const DeleteEventModal = ({
   eventMetadata,
   eventId,
   modalOpen,
+  loading,
   onClose,
   onConfirm,
 }: ShareModalProps) => {
@@ -120,7 +123,7 @@ const DeleteEventModal = ({
                     )}
                   </div>
 
-                  <div className="mt-2 px-2 flex justify-end">
+                  <div className="mt-2 px-2 flex justify-between">
                     <RedHighlightButton
                       text="Delete Event"
                       onClick={() => {
@@ -128,6 +131,7 @@ const DeleteEventModal = ({
                       }}
                       className="mx-3 w-32 mt-3"
                     />
+                    <div className="mt-4">{loading && <LoadingSpinner />}</div>
                   </div>
                 </div>
               </TransitionChild>

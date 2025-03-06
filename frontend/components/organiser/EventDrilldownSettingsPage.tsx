@@ -34,18 +34,18 @@ const EventDrilldownSettingsPage = ({
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
   const logger = new Logger("EventDrilldownLogger");
+  const [loading, setLoading] = useState(false);
   const onClose = () => {
     setModalOpen(false);
   };
 
   const onConfirm = async () => {
     try {
-      if (!auth.currentUser?.email) {
-        throw new Error("User email is missing, cannot proceed with event deletion.");
-      }
-      await archiveAndDeleteEvent(eventId, user.userId, auth.currentUser?.email);
+      setLoading(true);
+      await archiveAndDeleteEvent(eventId, user.userId, auth.currentUser?.email || "");
       await sendEmailOnDeleteEvent(eventId);
       bustEventsLocalStorageCache();
+      setLoading(false);
       router.push("/organiser/event/dashboard");
     } catch (error) {
       if (error === "Rate Limited") {
@@ -100,6 +100,7 @@ const EventDrilldownSettingsPage = ({
         modalOpen={modalOpen}
         onClose={onClose}
         onConfirm={onConfirm}
+        loading={loading}
       />
     </div>
   );
