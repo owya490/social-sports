@@ -1,16 +1,13 @@
 "use client";
 
-import { EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EventMetadata } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { Dialog, Transition, TransitionChild } from "@headlessui/react";
 import { Timestamp } from "firebase/firestore";
-import Image from "next/image";
-import { Fragment, useEffect, useState } from "react";
-import Skeleton from "react-loading-skeleton";
-import DeleteEventAttendeeCard from "./DeleteEventAttendeeCard";
+import { Fragment } from "react";
 import { RedHighlightButton } from "../elements/HighlightButton";
-import LoadingSpinner from "../elements/LoadingSpinner";
+import DeleteEventAttendeeCard from "./DeleteEventAttendeeCard";
+import { Spinner } from "@material-tailwind/react";
 interface ShareModalProps {
   eventName: string;
   eventStartDate: Timestamp;
@@ -116,7 +113,7 @@ const DeleteEventModal = ({
                                 )}
                           </div>
                           <div className="mt-4">
-                            An email will be sent to each attendee notifying them. Please handle refunds immediately
+                            An email will be sent to each attendee notifying them. Please handle refunds immediately.
                           </div>
                         </div>
                       </div>
@@ -131,7 +128,7 @@ const DeleteEventModal = ({
                       }}
                       className="mx-3 w-32 mt-3"
                     />
-                    <div className="mt-4">{loading && <LoadingSpinner />}</div>
+                    <div className="mt-4">{loading && <Spinner className="w-5" />}</div>
                   </div>
                 </div>
               </TransitionChild>

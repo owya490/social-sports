@@ -24,7 +24,8 @@ class SendGridDeleteEventRequest:
         cors_origins=["https://www.sportshub.net.au", "*"],
         cors_methods=["post"]
     ),
-    region="australia-southeast1"
+    region="australia-southeast1",
+    timeout_sec=540
 )
 def send_email_on_delete_event(req: https_fn.CallableRequest):
     uid = str(uuid.uuid4())
