@@ -29,7 +29,7 @@ export async function sendEmailOnCreateEvent(eventId: string, visibility: string
     });
 }
 
-export async function sendEmailonDeleteEvent(eventId: string) {
+export async function sendEmailOnDeleteEvent(eventId: string) {
   const sendEmailFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_SEND_EMAIL_ON_DELETE_EVENT);
 
   const content = {
@@ -37,8 +37,8 @@ export async function sendEmailonDeleteEvent(eventId: string) {
   };
   return sendEmailFunction(content)
     .then((result) => {
-      console.log("this is the" ,result)
-      return result
+      console.log("this is the", result);
+      return result;
     })
     .catch((error) => {
       sendgridServiceLogger.warn(`Failed to send email on event creation. eventId=${eventId} error=${error}`);

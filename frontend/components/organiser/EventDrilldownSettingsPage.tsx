@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useUser } from "../utility/UserContext";
-import { sendEmailonDeleteEvent } from "@/services/src/sendgrid/sendgridService";
+import { sendEmailOnDeleteEvent } from "@/services/src/sendgrid/sendgridService";
 import { env } from "process";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { Switch } from "@mantine/core";
@@ -39,8 +39,8 @@ const EventDrilldownSettingsPage = ({
 
   const onConfirm = async () => {
     try {
-      await archiveAndDeleteEvent(eventId, user.userId);
-      await sendEmailonDeleteEvent(eventId);
+      await archiveAndDeleteEvent(eventId, user.userId, user.contactInformation.email);
+      await sendEmailOnDeleteEvent(eventId);
       bustEventsLocalStorageCache();
       router.push("/organiser/event/dashboard");
     } catch (error) {

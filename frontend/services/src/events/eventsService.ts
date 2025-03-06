@@ -261,7 +261,7 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
   }
 }
 
-export async function archiveAndDeleteEvent(eventId: EventId, userId: String): Promise<void> {
+export async function archiveAndDeleteEvent(eventId: EventId, userId: String, email: String): Promise<void> {
   eventServiceLogger.info(`Starting process to archive and delete event: ${eventId}`);
 
   const batch: WriteBatch = writeBatch(db);
@@ -280,7 +280,7 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: String): P
     const userEventsRef = doc(db, `${USER_EVENT_PATH}/${userId}`);
 
     const userEventsSnapshot = await getDoc(userEventsRef);
-    let userEmail = null;
+    let userEmail = email;
 
     if (userEventsSnapshot.exists()) {
       const userData = userEventsSnapshot.data();

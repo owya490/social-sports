@@ -113,8 +113,7 @@ const DeleteEventModal = ({
                                 )}
                           </div>
                           <div className="mt-4">
-                            An Email will be sent to each attendee notifying them. Please handle refunds within business
-                            days
+                            An email will be sent to each attendee notifying them. Please handle refunds immediately
                           </div>
                         </div>
                       </div>

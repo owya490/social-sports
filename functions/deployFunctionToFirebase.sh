@@ -29,4 +29,4 @@ firebase use $ENVIRONMENT
 echo "Deploying $FUNCTION_NAME to $ENVIRONMENT firebase"
 
 # Deploy the function using firebase CLI
-firebase deploy --only functions:$FUNCTION_NAME --debug
+firebase deploy --only functions:$FUNCTION_NAME

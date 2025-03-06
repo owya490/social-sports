@@ -33,9 +33,9 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
 
     body_data = req.data
     logger.info("Received delete event request.")
-
     try:
         request_data = SendGridDeleteEventRequest(**body_data)
+        logger.info(f"Parsing delete event request. eventId={request_data.eventId}")
         logger.info(f"Parsed request data: {request_data}.")
     except ValueError as v:
         logger.warning(f"Request body did not contain necessary fields. Error: {v}. Returned status=400")
@@ -123,15 +123,13 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
         logger.info(f"Organizer email sent to {organiser_email} for event: {event_name}")
     except Exception as e:
         logger.error(f"Failed to send email to organizer. Exception: {e}")
-        return {"status": 500, "message": "Failed to send organizer email"}
+    
     MAX_RETRIES = 3  
-    RETRY_DELAY_SECONDS = 5 
+    RETRY_DELAY_SECONDS = 1
     for purchaser_info in attendees:
         purchaser_email = purchaser_info.get("email")
         ticket_count = purchaser_info.get("tickets")
-
-    
-
+        sleep(0.5) # 0.5 sec jitter
         for attempt in range(1, MAX_RETRIES + 1):
             try:
                 attendee_message = Mail(
