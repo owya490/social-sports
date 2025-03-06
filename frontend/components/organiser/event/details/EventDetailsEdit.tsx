@@ -4,6 +4,7 @@ import {
   ClockIcon,
   CurrencyDollarIcon,
   ExclamationTriangleIcon,
+  LinkIcon,
   MapPinIcon,
   PencilSquareIcon,
   StarIcon,
@@ -41,6 +42,7 @@ export const EventDetailsEdit = ({
   eventVacancy,
   eventPrice,
   eventRegistrationDeadline,
+  eventEventLink,
   loading,
   isActive,
   updateData,
@@ -55,6 +57,7 @@ export const EventDetailsEdit = ({
   eventVacancy: number;
   eventPrice: number;
   eventRegistrationDeadline: Timestamp;
+  eventEventLink: string;
   loading: boolean;
   isActive: boolean;
   updateData: (id: string, data: any) => any;
@@ -167,6 +170,15 @@ export const EventDetailsEdit = ({
     return { price: newEditPrice };
   };
 
+  // Event Link
+  const [newEditEventLink, setNewEditEventLink] = useState("");
+  const [eventLink, setEventLink] = useState("");
+
+  const handleEventLinkUpdate = (): Partial<EventData> => {
+    setEventLink(newEditEventLink);
+    return { eventLink: newEditEventLink };
+  };
+
   // loading useEffect to populate states
   useEffect(() => {
     setNewEditStartDate(timestampToDateString(eventStartDate));
@@ -194,6 +206,9 @@ export const EventDetailsEdit = ({
 
     setNewEditPrice(eventPrice);
     setPrice(eventPrice);
+
+    setNewEditEventLink(eventEventLink)
+    setEventLink(eventEventLink)
   }, [loading]);
 
   // UseEffect triggered on certain field mutations to ensure entry is valid
@@ -247,6 +262,7 @@ export const EventDetailsEdit = ({
       ...(await handleLocationUpdate()),
       ...handleSportUpdate(),
       ...handlePriceUpdate(),
+      ...handleEventLinkUpdate(),
     };
     if (!isRecurrenceTemplate) {
       await handleCapacityUpdate();
@@ -273,6 +289,7 @@ export const EventDetailsEdit = ({
     setNewEditSport(sport);
     setNewEditCapacity(capacity);
     setNewEditPrice(price);
+    setNewEditEventLink(eventLink);
   };
 
   return (
@@ -285,9 +302,10 @@ export const EventDetailsEdit = ({
             {loading ? (
               <Skeleton
                 style={{
-                  height: 10,
+                  height: 12,
                   width: 100,
                 }}
+
               />
             ) : (
               <>
@@ -336,9 +354,10 @@ export const EventDetailsEdit = ({
             {loading ? (
               <Skeleton
                 style={{
-                  height: 10,
+                  height: 12,
                   width: 100,
                 }}
+
               />
             ) : (
               <>
@@ -389,9 +408,10 @@ export const EventDetailsEdit = ({
             {loading ? (
               <Skeleton
                 style={{
-                  height: 10,
+                  height: 12,
                   width: 100,
                 }}
+
               />
             ) : (
               <>
@@ -441,9 +461,10 @@ export const EventDetailsEdit = ({
             {loading ? (
               <Skeleton
                 style={{
-                  height: 10,
+                  height: 12,
                   width: 100,
                 }}
+
               />
             ) : (
               <>
@@ -472,9 +493,10 @@ export const EventDetailsEdit = ({
             {loading ? (
               <Skeleton
                 style={{
-                  height: 10,
+                  height: 12,
                   width: 100,
                 }}
+
               />
             ) : (
               <>
@@ -511,9 +533,10 @@ export const EventDetailsEdit = ({
             {loading ? (
               <Skeleton
                 style={{
-                  height: 10,
+                  height: 12,
                   width: 100,
                 }}
+
               />
             ) : (
               <>
@@ -550,9 +573,10 @@ export const EventDetailsEdit = ({
             {loading ? (
               <Skeleton
                 style={{
-                  height: 10,
+                  height: 12,
                   width: 100,
                 }}
+
               />
             ) : (
               <>
@@ -605,6 +629,37 @@ export const EventDetailsEdit = ({
                         />
                       ))}
                   </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+        <div className="px-2 flex flex-row space-x-2">
+          <LinkIcon className="w-4 mt-2 shrink-0" />
+          <div>
+            {loading ? (
+              <Skeleton
+                style={{
+                  height: 12,
+                  width: 100,
+                }}
+              />
+            ) : (
+              <>
+                {isEdit ? (
+                  <div className="flex">
+                    <Input
+                      className="w-80 sm:w-full"
+                      value={newEditEventLink}
+                      onChange={(e) => {
+                        setNewEditEventLink(e.target.value);
+                      }}
+                      crossOrigin="false"
+                      label="EventLink"
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-2">{newEditLocation}</div>
                 )}
               </>
             )}

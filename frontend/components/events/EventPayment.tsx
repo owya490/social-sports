@@ -14,8 +14,8 @@ import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select 
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
+import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -130,9 +130,7 @@ export default function EventPayment(props: EventPaymentProps) {
                       }}
                     >
                       {/* TODO remove the hardcoded event as that was 1 off for gg eoy social */}
-                      {Array(
-                        Math.min(props.vacancy, MAX_TICKETS_PER_ORDER)
-                      )
+                      {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
                         .fill(0)
                         .map((_, idx) => {
                           const count = idx + 1;
@@ -188,7 +186,8 @@ export default function EventPayment(props: EventPaymentProps) {
                     variant="filled"
                     color="black"
                     onClick={() => {
-                      window.location.href = props.eventLink;
+                      window.open(props.eventLink, "_blank", "noopener,noreferrer");
+                      setOpenModal(false);
                     }}
                   >
                     Proceed

@@ -20,6 +20,7 @@ interface EventDrilldownDetailsPageProps {
   eventImage: string;
   eventId: string;
   eventRegistrationDeadline: Timestamp;
+  eventEventLink: string;
   isActive: boolean;
   updateData: (id: string, data: any) => any;
   isRecurrenceTemplate: boolean;
@@ -39,6 +40,7 @@ const EventDrilldownDetailsPage = ({
   eventImage,
   eventId,
   eventRegistrationDeadline,
+  eventEventLink,
   isActive,
   updateData,
   isRecurrenceTemplate,
@@ -63,7 +65,7 @@ const EventDrilldownDetailsPage = ({
           />
         )}
       </div>
-      <EventNameEdit eventId={eventId} eventName={eventName} loading={loading} isActive={isActive} />
+      <EventNameEdit eventId={eventId} eventName={eventName} loading={loading} isActive={isActive} updateData={updateData}/>
       <div className="h-[1px] bg-core-outline w-full"></div>
       <EventDetailsEdit
         eventId={eventId}
@@ -75,13 +77,14 @@ const EventDrilldownDetailsPage = ({
         eventVacancy={eventVacancy}
         eventPrice={eventPrice}
         eventRegistrationDeadline={eventRegistrationDeadline}
+        eventEventLink={eventEventLink}
         loading={loading}
         isActive={isActive}
         updateData={updateData}
         isRecurrenceTemplate={isRecurrenceTemplate}
       />
       <div className="h-[1px] bg-core-outline w-full"></div>
-      <EventDescriptionEdit eventId={eventId} eventDescription={eventDescription} loading={loading} />
+      <EventDescriptionEdit eventId={eventId} eventDescription={eventDescription} loading={loading} updateData={updateData}/>
     </div>
   );
 };

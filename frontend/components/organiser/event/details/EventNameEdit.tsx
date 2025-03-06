@@ -1,5 +1,4 @@
 "use client";
-import { updateEventById } from "@/services/src/events/eventsService";
 import { CheckIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 
@@ -12,11 +11,13 @@ export const EventNameEdit = ({
   eventName,
   loading,
   isActive,
+  updateData,
 }: {
   eventId: string;
   eventName: string;
   loading: boolean;
   isActive: boolean;
+  updateData: (id: string, data: any) => any;
 }) => {
   const [editTitle, setEditTitle] = useState(false);
   const [newEditTitle, setNewEditTitle] = useState("");
@@ -34,8 +35,7 @@ export const EventNameEdit = ({
     const nameTokens = newEditTitle.toLowerCase().split(" ");
     try {
       setEditTitle(false);
-      await updateEventById(eventId, { name: newEditTitle, nameTokens });
-      window.location.reload();
+      await updateData(eventId, { name: newEditTitle, nameTokens });
     } catch (error) {
       console.error("Failed to update event name:", error);
     }

@@ -2,7 +2,6 @@
 import DescriptionRichTextEditor from "@/components/events/create/DescriptionRichTextEditor";
 import OrganiserEventDescription from "@/components/events/OrganiserEventDescription";
 import { EventId } from "@/interfaces/EventTypes";
-import { updateEventById } from "@/services/src/events/eventsService";
 import { CheckIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -11,10 +10,12 @@ export const EventDescriptionEdit = ({
   eventId,
   eventDescription,
   loading,
+  updateData,
 }: {
   eventId: EventId;
   eventDescription: string;
   loading: boolean;
+  updateData: (id: string, data: any) => any;
 }) => {
   const [editDescription, setEditDescription] = useState(false);
   const [newEditDescription, setNewEditDescription] = useState(eventDescription);
@@ -31,8 +32,7 @@ export const EventDescriptionEdit = ({
     setDescription(newEditDescription);
     setEditDescription(false);
     try {
-      await updateEventById(eventId, { description: newEditDescription });
-      window.location.reload();
+      await updateData(eventId, { description: newEditDescription });
     } catch (error) {
       console.error("Failed to update event description:", error);
     }

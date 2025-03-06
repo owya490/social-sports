@@ -1,4 +1,4 @@
-import { EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import {
   CollectionReference,
@@ -89,6 +89,7 @@ export async function getAllEventsFromCollectionRef(
       try {
         const organiser = await getPublicUserById(event.organiserId);
         eventsData.push({
+          ...EmptyEventData, // initiate default values
           ...event,
           organiser: organiser,
         });

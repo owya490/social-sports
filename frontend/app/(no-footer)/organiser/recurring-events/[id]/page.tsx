@@ -49,6 +49,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventCapacity, setEventCapacity] = useState<number>(0);
   const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
   const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
+  const [eventEventLink, setEventEventLink] = useState<string>("");
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventPaused, seteventPaused] = useState<boolean>(false);
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
@@ -78,6 +79,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventCapacity(recurrenceTemplate.eventData.capacity);
         setEventIsActive(recurrenceTemplate.eventData.isActive);
         setEventRegistrationDeadline(recurrenceTemplate.eventData.registrationDeadline);
+        setEventEventLink(recurrenceTemplate.eventData.eventLink);
         setNewRecurrenceData(extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData));
         setPastEvents(recurrenceTemplate.recurrenceData.pastRecurrences);
         seteventPaused(recurrenceTemplate.eventData.paused);
@@ -155,6 +157,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   eventId={recurrenceTemplateId}
                   isActive={eventIsActive}
                   eventRegistrationDeadline={eventRegistrationDeadline}
+                  eventEventLink={eventEventLink}
                   updateData={updateRecurrenceTemplateEventData}
                   isRecurrenceTemplate={true}
                 />

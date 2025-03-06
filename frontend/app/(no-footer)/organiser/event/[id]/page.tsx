@@ -49,6 +49,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
   const [eventPaused, setEventPaused] = useState<boolean>(false);
   const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
+  const [eventEventLink, setEventEventLink] = useState<string>("");
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
@@ -79,6 +80,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventPaused(event.paused);
         setEventPaymentsActive(event.paymentsActive);
         setEventRegistrationDeadline(event.registrationDeadline);
+        setEventEventLink(event.eventLink);
         setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
         setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
         setEventIsActive(event.isActive);
@@ -163,6 +165,7 @@ export default function EventPage({ params }: EventPageProps) {
                   eventImage={eventImage}
                   eventId={eventId}
                   eventRegistrationDeadline={eventRegistrationDeadline}
+                  eventEventLink={eventEventLink}
                   isActive={eventIsActive}
                   updateData={updateEventById}
                   isRecurrenceTemplate={false}
