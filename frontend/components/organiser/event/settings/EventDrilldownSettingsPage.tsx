@@ -1,8 +1,22 @@
-import { updateEventById } from "@/services/src/events/eventsService";
+import { BlackHighlightButton } from "@/components/elements/HighlightButton";
+import { useUser } from "@/components/utility/UserContext";
+import { EventMetadata } from "@/interfaces/EventTypes";
+import { Logger } from "@/observability/logger";
+import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { sendEmailOnDeleteEvent } from "@/services/src/sendgrid/sendgridService";
+import { Timestamp } from "firebase/firestore";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { LabelledSwitch } from "../../../elements/LabelledSwitch";
+import DeleteEventModal from "./DeleteEventModal";
 
 interface EventDrilldownSettingsPageProps {
   eventId: string;
+  eventMetadata: EventMetadata;
+  eventName: string;
+  eventStartDate: Timestamp;
+  router: ReturnType<typeof useRouter>;
   paused: boolean;
   setPaused: (event: boolean) => void;
   paymentsActive: boolean;
@@ -15,6 +29,10 @@ interface EventDrilldownSettingsPageProps {
 
 const EventDrilldownSettingsPage = ({
   eventId,
+  eventMetadata,
+  eventName,
+  eventStartDate,
+  router,
   paused,
   setPaused,
   paymentsActive,
@@ -24,6 +42,44 @@ const EventDrilldownSettingsPage = ({
   promotionalCodesEnabled,
   setPromotionalCodesEnabled,
 }: EventDrilldownSettingsPageProps) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const { user, auth } = useUser();
+  const logger = new Logger("EventDrilldownSettingsLogger");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const onClose = () => {
+    setModalOpen(false);
+  };
+
+  const onConfirm = async () => {
+    try {
+      setDeleteLoading(true);
+      await archiveAndDeleteEvent(eventId, user.userId, auth.currentUser?.email || "");
+      await sendEmailOnDeleteEvent(eventId);
+      bustEventsLocalStorageCache();
+      setDeleteLoading(false);
+      router.push("/organiser/event/dashboard");
+    } catch (error) {
+      if (error === "Rate Limited") {
+        router.push("/error/Delete_UPDATE_EVENT_RATELIMITED");
+      } else if (error == "Sendgrid failed") {
+        logger.error("Sendgrid failed");
+      } else {
+        router.push("/error");
+      }
+    }
+  };
+
+  const handleDeleteEvent = () => {
+    setModalOpen(true);
+  };
+
+  const handlePausedChange = (event: boolean) => {
+    updateEventById(eventId, {
+      paused: event,
+    });
+    setPaused(event);
+  };
+
   return (
     <div className="flex flex-col space-y-4 mb-6 px-4 md:px-0">
       <LabelledSwitch
@@ -71,6 +127,23 @@ const EventDrilldownSettingsPage = ({
             promotionalCodesEnabled: event,
           });
         }}
+      />
+      <BlackHighlightButton
+        text="Delete Event"
+        onClick={() => {
+          handleDeleteEvent();
+        }}
+        className="w-32 mt-5"
+      />
+      <DeleteEventModal
+        eventName={eventName}
+        eventStartDate={eventStartDate}
+        eventMetadata={eventMetadata}
+        eventId={eventId}
+        modalOpen={modalOpen}
+        onClose={onClose}
+        onConfirm={onConfirm}
+        loading={deleteLoading}
       />
     </div>
   );

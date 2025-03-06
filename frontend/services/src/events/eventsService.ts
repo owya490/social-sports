@@ -12,6 +12,8 @@ import {
   DocumentData,
   DocumentReference,
   WriteBatch,
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -24,7 +26,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
+import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
@@ -263,6 +265,60 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
     eventServiceLogger.error(`updateEventById ${error}`);
+  }
+}
+
+export async function archiveAndDeleteEvent(eventId: EventId, userId: String, email: String): Promise<void> {
+  eventServiceLogger.info(`Starting process to archive and delete event: ${eventId}`);
+
+  const batch: WriteBatch = writeBatch(db);
+
+  try {
+    const eventRef = await findEventDocRef(eventId);
+    const eventSnapshot = await getDoc(eventRef);
+
+    if (!eventSnapshot.exists()) {
+      eventServiceLogger.error(`archiveAndDeleteEvent ${eventId} not found`);
+      throw new Error(`Event with ID ${eventId} not found.`);
+    }
+
+    const eventData = eventSnapshot.data();
+    const deletedEventRef = doc(db, CollectionPaths.DeletedEvents, eventId);
+    const userEventsRef = doc(db, `${USER_EVENT_PATH}/${userId}`);
+
+    const userEventsSnapshot = await getDoc(userEventsRef);
+    let userEmail = email;
+
+    if (userEventsSnapshot.exists()) {
+      const userData = userEventsSnapshot.data();
+      const contactInformation = userData.contactInformation;
+
+      // Check if the contactInformation field exists and extract email
+      if (contactInformation && contactInformation.email) {
+        userEmail = contactInformation.email;
+      }
+    }
+
+    // Add all event fields to the deleted document, with additional deletion metadata
+    batch.set(deletedEventRef, {
+      ...eventData, // Copy all fields from the original event
+      userEmail, // Add user email
+      deletedAt: new Date().toISOString(), // Record deletion time
+    });
+
+    batch.delete(eventRef);
+
+    batch.update(userEventsRef, {
+      organiserEvents: arrayRemove(eventId),
+      deletedEvents: arrayUnion(eventId),
+    });
+
+    await batch.commit();
+
+    eventServiceLogger.info(`Successfully archived and deleted event: ${eventId}`);
+  } catch (error) {
+    eventServiceLogger.error(`Error archiving and deleting event ${eventId}: ${error}`);
+    throw error;
   }
 }
 

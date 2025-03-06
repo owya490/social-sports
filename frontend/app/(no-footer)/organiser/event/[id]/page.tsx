@@ -192,6 +192,10 @@ export default function EventPage({ params }: EventPageProps) {
             )}
             {currSidebarPage === "Settings" && (
               <EventDrilldownSettingsPage
+                eventMetadata={eventMetadata}
+                eventName={eventName}
+                eventStartDate={eventStartDate}
+                router={router}
                 eventId={eventId}
                 paused={eventPaused}
                 setPaused={setEventPaused}
