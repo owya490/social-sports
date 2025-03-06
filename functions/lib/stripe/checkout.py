@@ -60,6 +60,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
     return json.dumps({"url": ERROR_URL})
   
   event = maybe_event.to_dict()
+  logger.info(f"Event info of event {event_ref.path} retrieved: {event}")
 
   # Check if event has not concluded or paused, otherwise error out
   paused: bool = event.get("paused")
@@ -118,7 +119,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
 
   # 4a. check if the price exists for this event
   if (price == None or not isinstance(price, int) or price < 1): # we don't want events to be less than stripe fees
-    logger.error(f"Provided event {event_ref.path} does not have a valid price. Returning status=500")
+    logger.error(f"Provided event {event_ref.path} does not have a valid price: {price}. Returning status=500")
     return json.dumps({"url": ERROR_URL})
 
   # 5. set the tickets as sold and reduce vacancy (prevent race condition/ over selling, we will release tickets back after cancelled sale)

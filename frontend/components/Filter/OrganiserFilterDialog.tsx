@@ -154,7 +154,10 @@ export default function OrganiserFilterDialog({
     () => (
       <Datepicker
         key={datepickerKey}
-        value={dateRange}
+        value={{
+          startDate: dateRange && dateRange.startDate ? new Date(dateRange.startDate) : new Date(),
+          endDate: dateRange && dateRange.endDate ? new Date(dateRange.endDate) : new Date(),
+        }}
         separator="to"
         displayFormat={"DD/MM/YYYY"}
         onChange={handleDateRangeChange}

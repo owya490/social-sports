@@ -62,7 +62,7 @@ interface CreateEventResponse {
 //Function to create a Event
 export async function createEvent(data: NewEventData, externalBatch?: WriteBatch): Promise<EventId> {
   if (!rateLimitCreateEvents()) {
-    console.log("Rate Limited!!!");
+    eventServiceLogger.warn("Rate Limited!!!");
     throw "Rate Limited";
   }
   eventServiceLogger.info(`createEvent`);
