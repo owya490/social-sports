@@ -129,8 +129,8 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
     for purchaser_info in attendees:
         purchaser_email = purchaser_info.get("email")
         ticket_count = purchaser_info.get("tickets")
-        sleep(0.5) # 0.5 sec jitter
         for attempt in range(1, MAX_RETRIES + 1):
+            sleep(0.5) # 0.5 sec jitter
             try:
                 attendee_message = Mail(
                     from_email="team.sportshub@gmail.com",
