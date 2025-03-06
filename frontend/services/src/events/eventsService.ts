@@ -235,8 +235,9 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
       );
     }
     await Promise.all(promisesList).then((results: (EventData | null)[]) => {
-      for (const event of results.filter((result) => result != null)) {
-        eventDataList.push(event);
+      const filteredResults = results.filter((result) => result != null)
+      for (const event of results) {
+        eventDataList.push(event!);
       }
     });
 

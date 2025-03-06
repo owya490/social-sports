@@ -116,7 +116,7 @@ export default function CreateEvent() {
       locationError={locationError}
       setLocationError={setLocationError}
     />,
-    <FormWrapper>
+    <FormWrapper key="image-form-wrapper">
       <ImageForm
         key="image-form"
         {...data}
