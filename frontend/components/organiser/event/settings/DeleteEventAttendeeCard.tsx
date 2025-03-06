@@ -1,10 +1,4 @@
-import { EventId, EventMetadata, Purchaser } from "@/interfaces/EventTypes";
-import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
-import { EllipsisVerticalIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
-import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
-import { EditAttendeeTicketsDialog } from "./attendee/EditAttendeeTicketsDialog";
-import RemoveAttendeeDialog from "./attendee/RemoveAttendeeDialog";
+import { Purchaser } from "@/interfaces/EventTypes";
 
 interface DeleteEventAttendeeCardProps {
   attendeeName: string;

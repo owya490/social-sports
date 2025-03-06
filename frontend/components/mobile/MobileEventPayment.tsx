@@ -113,7 +113,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   value={`${attendeeCount}`}
                   onChange={handleAttendeeCount}
                 >
-                  {Array(Math.min(props.vacancy, props.eventId === "frpwA2xECrPsxQhtxdfj" ? 1 : MAX_TICKETS_PER_ORDER))
+                  {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
                     .fill(0)
                     .map((_, idx) => {
                       const count = idx + 1;

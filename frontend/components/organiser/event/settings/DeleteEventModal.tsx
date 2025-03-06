@@ -3,11 +3,11 @@
 import { EventMetadata } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { Dialog, Transition, TransitionChild } from "@headlessui/react";
+import { Spinner } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { Fragment } from "react";
-import { RedHighlightButton } from "../elements/HighlightButton";
+import { RedHighlightButton } from "../../../elements/HighlightButton";
 import DeleteEventAttendeeCard from "./DeleteEventAttendeeCard";
-import { Spinner } from "@material-tailwind/react";
 interface ShareModalProps {
   eventName: string;
   eventStartDate: Timestamp;

@@ -3,8 +3,8 @@ import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/r
 import { EllipsisVerticalIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
-import { EditAttendeeTicketsDialog } from "./attendee/EditAttendeeTicketsDialog";
-import RemoveAttendeeDialog from "./attendee/RemoveAttendeeDialog";
+import { EditAttendeeTicketsDialog } from "./EditAttendeeTicketsDialog";
+import RemoveAttendeeDialog from "./RemoveAttendeeDialog";
 
 interface EventDrilldownAttendeeCardProps {
   attendeeName: string;

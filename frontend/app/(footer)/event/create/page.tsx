@@ -3,6 +3,7 @@ import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import CreateEventStepper from "@/components/events/create/CreateEventStepper";
 import { BasicInformation } from "@/components/events/create/forms/BasicForm";
 import { DescriptionForm } from "@/components/events/create/forms/DescriptionForm";
+import { FormWrapper } from "@/components/events/create/forms/FormWrapper";
 import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { PreviewForm } from "@/components/events/create/forms/PreviewForm";
 import { useMultistepForm } from "@/components/events/create/forms/useMultistepForm";
@@ -13,10 +14,9 @@ import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interface
 import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
 import {
-  getThumbnailUrlsBySport,
   getUsersEventImagesUrls,
   getUsersEventThumbnailsUrls,
-  uploadUserImage,
+  uploadAndGetImageAndThumbnailUrls,
 } from "@/services/src/imageService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
@@ -116,17 +116,19 @@ export default function CreateEvent() {
       locationError={locationError}
       setLocationError={setLocationError}
     />,
-    <ImageForm
-      key="image-form"
-      {...data}
-      imagePreviewUrl={imagePreviewUrl}
-      setImagePreviewUrl={setImagePreviewUrl}
-      updateField={updateFields}
-      eventThumbnailsUrls={eventThumbnailsUrls}
-      eventImageUrls={eventImageUrls}
-      thumbnailPreviewUrl={thumbnailPreviewUrl}
-      setThumbnailPreviewUrl={setThumbnailPreviewUrl}
-    />,
+    <FormWrapper key="image-form-wrapper">
+      <ImageForm
+        key="image-form"
+        {...data}
+        imagePreviewUrl={imagePreviewUrl}
+        setImagePreviewUrl={setImagePreviewUrl}
+        updateField={updateFields}
+        eventThumbnailsUrls={eventThumbnailsUrls}
+        eventImageUrls={eventImageUrls}
+        thumbnailPreviewUrl={thumbnailPreviewUrl}
+        setThumbnailPreviewUrl={setThumbnailPreviewUrl}
+      />
+    </FormWrapper>,
     <DescriptionForm key="description-image-form" {...data} updateField={updateFields} />,
     <PreviewForm
       key="preview-form"
@@ -189,26 +191,7 @@ export default function CreateEvent() {
 
   async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
     setLoading(true);
-    // If the image field is undefined, it will stay as this default image.
-    var imageUrl =
-      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
-    // Otherwise if its a string, which means it is already uploaded, reuse the same imageUrl
-    if (formData.image !== undefined && typeof formData.image === "string") {
-      imageUrl = formData.image;
-      // If the image field is a File, upload it
-    } else if (formData.image !== undefined) {
-      imageUrl = await uploadUserImage(user.userId, "/eventImages", formData.image);
-    }
-
-    var thumbnailUrl = getThumbnailUrlsBySport(formData.sport);
-
-    // Otherwise if its a string, which means it is already uploaded, reuse the same imageUrl
-    if (formData.thumbnail !== undefined && typeof formData.thumbnail === "string") {
-      thumbnailUrl = formData.thumbnail;
-      // If the image field is a File, upload it
-    } else if (formData.thumbnail !== undefined) {
-      thumbnailUrl = await uploadUserImage(user.userId, "/eventThumbnails", formData.thumbnail);
-    }
+    const [imageUrl, thumbnailUrl] = await uploadAndGetImageAndThumbnailUrls(user.userId, { ...formData });
 
     const newEventData = await convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
     const newRecurrenceData = formData.newRecurrenceData;
