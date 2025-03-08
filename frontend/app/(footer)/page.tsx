@@ -1,11 +1,8 @@
 "use client";
-import RecommendedEvents from "@/components/events/RecommendedEvents";
 import CreateEventBanner from "@/components/home/CreateEventBanner";
 import Hero from "@/components/home/Hero";
 import LoadingOverlay from "@/components/home/LoadingOverlay";
-import NewsletterSignup from "@/components/home/NewsletterSignup";
 import PopularEvents from "@/components/home/PopularEvents";
-import PopularLocations from "@/components/home/PopularLocations";
 import SearchSport from "@/components/home/SearchSport";
 import { sleep } from "@/utilities/sleepUtil";
 import { useEffect, useState } from "react";
