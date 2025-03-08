@@ -21,6 +21,7 @@ public abstract class AbstractUserData {
 	private List<String> organiserEvents;
 	private List<String> recurrenceTemplates;
 	private Boolean isVerifiedOrganiser;
+	private List<String> forms;
 
 	@Data
 	public static class ContactInformation {

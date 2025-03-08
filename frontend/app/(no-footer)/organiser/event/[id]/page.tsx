@@ -3,14 +3,16 @@
 import ShareModal from "@/components/events/ShareModal";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
-import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
-import EventDrilldownManageAttendeesPage from "@/components/organiser/EventDrilldownManageAttendeesPage";
-import EventDrilldownSettingsPage from "@/components/organiser/EventDrilldownSettingsPage";
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
+import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
+import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
+import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
+import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
@@ -38,14 +40,24 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventVacancy, setEventVacancy] = useState<number>(0);
   const [eventDescription, setEventDescription] = useState<string>("");
   const [eventLocation, setEventLocation] = useState<string>("");
+  const [eventSport, setEventSport] = useState<string>("");
   const [eventPrice, setEventPrice] = useState<number>(0);
   const [eventImage, setEventImage] = useState<string>("");
+  const [eventThumbnail, setEventThumbnail] = useState<string>("");
   const [eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
   const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
   const [eventPaused, setEventPaused] = useState<boolean>(false);
+  const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
+  const [eventEventLink, setEventEventLink] = useState<string>("");
+  const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
+  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
+  const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
+  const [eventIsActive, setEventIsActive] = useState<boolean>(false);
 
   const router = useRouter();
+
+  const { user } = useUser();
 
   const eventId: EventId = params.id;
   useEffect(() => {
@@ -59,11 +71,19 @@ export default function EventPage({ params }: EventPageProps) {
         setEventVacancy(event.vacancy);
         setEventDescription(event.description);
         setEventLocation(event.location);
+        setEventSport(event.sport);
         setEventPrice(event.price);
         setEventImage(event.image);
+        setEventThumbnail(event.thumbnail);
         setEventAccessCount(event.accessCount);
         setEventCapacity(event.capacity);
         setEventPaused(event.paused);
+        setEventPaymentsActive(event.paymentsActive);
+        setEventRegistrationDeadline(event.registrationDeadline);
+        setEventEventLink(event.eventLink);
+        setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
+        setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
+        setEventIsActive(event.isActive);
       })
       .finally(async () => {
         await sleep(500);
@@ -138,10 +158,17 @@ export default function EventPage({ params }: EventPageProps) {
                   eventEndDate={eventEndDate}
                   eventDescription={eventDescription}
                   eventLocation={eventLocation}
+                  eventSport={eventSport}
+                  eventCapacity={eventCapacity}
+                  eventVacancy={eventVacancy}
                   eventPrice={eventPrice}
                   eventImage={eventImage}
                   eventId={eventId}
+                  eventRegistrationDeadline={eventRegistrationDeadline}
+                  eventEventLink={eventEventLink}
+                  isActive={eventIsActive}
                   updateData={updateEventById}
+                  isRecurrenceTemplate={false}
                 />
                 <ShareModal eventId={eventId} />
               </>
@@ -154,15 +181,30 @@ export default function EventPage({ params }: EventPageProps) {
                 setEventMetadata={setEventMetadata}
               />
             )}
+            {currSidebarPage === "Images" && (
+              <EventDrilldownImagesPage
+                user={user}
+                eventId={eventId}
+                sport={eventSport}
+                eventImagePreviewUrl={eventImage}
+                eventThumbnailPreviewUrl={eventThumbnail}
+              />
+            )}
             {currSidebarPage === "Settings" && (
               <EventDrilldownSettingsPage
                 eventMetadata={eventMetadata}
-                eventId={eventId}
                 eventName={eventName}
                 eventStartDate={eventStartDate}
                 router={router}
+                eventId={eventId}
                 paused={eventPaused}
                 setPaused={setEventPaused}
+                paymentsActive={eventPaymentsActive}
+                setPaymentsActive={setEventPaymentsActive}
+                stripeFeeToCustomer={eventStripeFeeToCustomer}
+                setStripeFeeToCustomer={setEventStripeFeeToCustomer}
+                promotionalCodesEnabled={eventPromotionalCodesEnabled}
+                setPromotionalCodesEnabled={setEventPromotionalCodesEnabled}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}
