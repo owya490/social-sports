@@ -7,6 +7,7 @@ import { rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { EventId } from "@/interfaces/EventTypes";
 import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
 import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
+import { UserId } from "@/interfaces/UserTypes";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
@@ -203,6 +204,85 @@ export async function updateFormResponse(
     formsServiceLogger.error(
       `updateFormResponse: Error editing form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}, updated form response: ${formResponse}, error: ${error}`
     );
+    throw error;
+  }
+}
+
+// Function to get all forms for a specific user
+export async function getFormsForUser(userId: UserId): Promise<Form[]> {
+  formsServiceLogger.info(`getFormsForUser: ${userId}`);
+  try {
+    const activeFormsCollectionRef = collection(db, FormPaths.FormsActive);
+    const deletedFormsCollectionRef = collection(db, FormPaths.FormsDeleted);
+
+    const [activeFormsSnapshot, deletedFormsSnapshot] = await Promise.all([
+      getDocs(activeFormsCollectionRef),
+      getDocs(deletedFormsCollectionRef),
+    ]);
+
+    const allForms: Form[] = [];
+
+    activeFormsSnapshot.forEach((docSnapshot) => {
+      const formData = docSnapshot.data() as Form;
+      if (formData.userId === userId) {
+        allForms.push(formData);
+      }
+    });
+
+    deletedFormsSnapshot.forEach((docSnapshot) => {
+      const formData = docSnapshot.data() as Form;
+      if (formData.userId === userId) {
+        allForms.push(formData);
+      }
+    });
+
+    return allForms;
+  } catch (error) {
+    formsServiceLogger.error(`getFormsForUser: Error getting forms for userId: ${userId}, error: ${error}`);
+    throw error;
+  }
+}
+
+// Function to get active forms for a specific user
+export async function getActiveFormsForUser(userId: UserId): Promise<Form[]> {
+  formsServiceLogger.info(`getActiveFormsForUser: ${userId}`);
+  try {
+    const activeFormsCollectionRef = collection(db, FormPaths.FormsActive);
+    const activeFormsSnapshot = await getDocs(activeFormsCollectionRef);
+
+    const activeForms: Form[] = [];
+    activeFormsSnapshot.forEach((docSnapshot) => {
+      const formData = docSnapshot.data() as Form;
+      if (formData.userId === userId) {
+        activeForms.push(formData);
+      }
+    });
+
+    return activeForms;
+  } catch (error) {
+    formsServiceLogger.error(`getActiveFormsForUser: Error getting active forms for userId: ${userId}, error: ${error}`);
+    throw error;
+  }
+}
+
+// Function to get inactive (deleted) forms for a specific user
+export async function getInactiveFormsForUser(userId: UserId): Promise<Form[]> {
+  formsServiceLogger.info(`getInactiveFormsForUser: ${userId}`);
+  try {
+    const deletedFormsCollectionRef = collection(db, FormPaths.FormsDeleted);
+    const deletedFormsSnapshot = await getDocs(deletedFormsCollectionRef);
+
+    const inactiveForms: Form[] = [];
+    deletedFormsSnapshot.forEach((docSnapshot) => {
+      const formData = docSnapshot.data() as Form;
+      if (formData.userId === userId) {
+        inactiveForms.push(formData);
+      }
+    });
+
+    return inactiveForms;
+  } catch (error) {
+    formsServiceLogger.error(`getInactiveFormsForUser: Error getting inactive forms for userId: ${userId}, error: ${error}`);
     throw error;
   }
 }
