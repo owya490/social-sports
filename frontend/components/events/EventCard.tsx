@@ -42,7 +42,7 @@ export default function EventCard(props: EventCardProps) {
   const cardContent = (
     <div className="bg-white text-left w-full hover:cursor-pointer hover:scale-[1.02] transition-all duration-300 md:min-w-72">
       {loading ? (
-        <div className="w-full aspect-w-1 aspect-h-1">
+        <div className="w-full">
           <LoadingSkeletonEventCard />
         </div>
       ) : (
