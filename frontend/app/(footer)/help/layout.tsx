@@ -11,7 +11,7 @@ export default function HelpLayout({ children }: HelpLayoutProps) {
   return (
     <div className="relative min-h-screen ">
       <Link href="/help">
-        <div className="flex mt-20 ml-12 space-x-2">
+        <div className="mt-20 ml-12 space-x-2 hidden sm:flex">
           <TfiHelpAlt size={28} />
           <span className="font-bold text-xl">Help Center</span>
         </div>

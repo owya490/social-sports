@@ -10,7 +10,6 @@ const MarkdownPage = () => {
   const { category, slug } = params;
 
   const [content, setContent] = useState<string>("");
-  console.log("caere", category, slug);
   useEffect(() => {
     if (!slug) return;
 

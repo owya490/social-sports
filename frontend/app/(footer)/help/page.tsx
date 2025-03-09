@@ -6,13 +6,18 @@ import { toTitleCase } from "@/utilities/kebabToNormalCase";
 import { FaArrowRightLong } from "react-icons/fa6";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import HelpCard from "@/components/help/HelpCard";
+import { sleep } from "@/utilities/sleepUtil";
+import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
+import { Spinner } from "@material-tailwind/react";
 
 export default function HelpPage() {
   const [folders, setFolders] = useState<string[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [subFolders, setSubFolders] = useState<string[]>([]);
-  const [isMobile, setIsMobile] = useState(false);
   const [markdownContent, setMarkdownContent] = useState<string | null>(null);
+  const [subFolderloading, setSubFolderLoading] = useState(false);
+  const [folderLoading, setfolderLoading] = useState(false);
 
   useEffect(() => {
     const fetchFolders = async () => {
@@ -30,28 +35,20 @@ export default function HelpPage() {
     };
 
     fetchFolders();
-
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-
-    return () => {
-      window.removeEventListener("resize", checkMobile);
-    };
   }, [selectedFolder]);
 
   useEffect(() => {
     if (selectedFolder) {
       const fetchFolderData = async () => {
         try {
+          setSubFolderLoading(true);
           const res = await fetch(`/api/help/${selectedFolder}`);
           const data = await res.json();
-
-          setSubFolders(data.files); // Set subfolders (files in the folder)
-          setMarkdownContent(data.markdownContent); // Set markdown content for the folder
+          console.log(data);
+          setSubFolders(data.files);
+          setMarkdownContent(data.markdownContent);
+          await sleep(5000);
+          setSubFolderLoading(false);
         } catch (error) {
           console.error("Error fetching folder data:", error);
         }
@@ -61,63 +58,73 @@ export default function HelpPage() {
     }
   }, [selectedFolder]);
 
+  const getThumbnailPath = (subFolder: string) => {
+    return `/markdown_files/help/${selectedFolder}/${subFolder}/thumbnail.jpg`; // Adjust the file name if needed
+  };
+
   return (
     <div className="mx-auto p-4 mt-12 max-w-4xl">
-      <h1 className="text-center text-5xl font-bold mb-6 mt-12">Hi, how can we help?</h1>
+      <h1 className="text-center text-5xl font-bold mb-6 sm:mt-12">Hi, how can we help?</h1>
 
-      {isMobile ? (
-        <div className="mb-4">
-          <select
-            onChange={(e) => setSelectedFolder(e.target.value)}
-            className="p-3 border rounded-lg w-full text-gray-800"
-            value={selectedFolder || ""}
-          >
-            {folders.map((folder) => (
-              <option key={folder} value={folder}>
-                {toTitleCase(folder)}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <ul className="flex space-x-4 text-sm font-medium text-center text-gray-500 border-b border-gray-200 mt-6">
-            {folders.map((folder) => (
-              <li key={folder}>
+      <div className="mb-4 sm:hidden">
+        <select
+          onChange={(e) => setSelectedFolder(e.target.value)}
+          className="p-3 border rounded-lg w-full text-gray-800"
+          value={selectedFolder || ""}
+        >
+          {folders.map((folder) => (
+            <option key={folder} value={folder}>
+              {toTitleCase(folder)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="hidden sm:block overflow-x-auto text-sm font-medium text-center text-gray-500 border-b border-gray-200">
+        <ul className="flex space-x-4 text-sm font-medium text-center border-b border-gray-200 mt-6">
+          {folders.map((folder) => (
+            <li key={folder}>
+              <div
+                className={`border-b-2 ${
+                  selectedFolder === folder
+                    ? "border-gray-900 rounded-t-lg text-gray-900 "
+                    : "border-transparent text-gray-500 "
+                }`}
+              >
                 <div
+                  className="inline-block px-4 py-2 rounded my-1 cursor-pointer hover:text-gray-600 hover:bg-gray-200 w-full transition-colors"
                   onClick={() => setSelectedFolder(folder)}
-                  className={`inline-block px-6 py-4 rounded-t-lg cursor-pointer hover:bg-gray-100 ${
-                    selectedFolder === folder ? "bg-gray-200 text-gray-800" : "text-gray-800"
-                  }`}
                 >
                   {toTitleCase(folder)}
                 </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {selectedFolder && markdownContent && (
-        <div className="prose mt-6 pb-2 border-b border-gray-200">
+        <div className="prose mt-6 pb-2">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdownContent}</ReactMarkdown>
         </div>
       )}
 
       {selectedFolder && (
         <div className="mt-6">
-          <div className=" mt-4">
-            {subFolders.length > 0 ? (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 w-full gap-x-4 gap-y-10">
+            {subFolderloading ? (
+              <div className="absolute left-1/2 transform -translate-x-1/2 mt-10">
+                <LoadingSpinner />
+              </div>
+            ) : subFolders.length > 0 ? (
               subFolders.map((subFolder) => (
                 <div key={subFolder}>
-                  <Link
-                    href={`/help/${selectedFolder}/${subFolder}`}
-                    className="flex items-center justify-between p-2 hover:bg-gray-100 rounded-lg"
-                  >
-                    <span>{toTitleCase(subFolder)}</span>
-                    {/* Right arrow icon */}
-                    <FaArrowRightLong />
-                  </Link>
+                  <HelpCard
+                    title={toTitleCase(subFolder)}
+                    selectedFolder={selectedFolder}
+                    subFolder={subFolder}
+                    thumbnail={getThumbnailPath(subFolder)}
+                  />
                 </div>
               ))
             ) : (
