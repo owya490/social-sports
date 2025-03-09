@@ -141,12 +141,12 @@ export default function OrganiserDashboard() {
         const events = await getOrganiserEvents(user.userId);
         setEventDataList(events);
         setAllEventsDataList(events);
+        setLoading(false);
       } catch (error) {
         // Handle errors here
       }
     };
     fetchData();
-    setLoading(false);
   }, [user]);
 
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
@@ -226,7 +226,7 @@ export default function OrganiserDashboard() {
                         location={event.location}
                         price={event.price}
                         vacancy={event.vacancy}
-                        loading={loading}
+                        loading={true}
                       />
                     </div>
                   );

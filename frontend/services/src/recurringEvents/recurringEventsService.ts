@@ -9,7 +9,11 @@ import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { Timestamp } from "firebase/firestore";
 import { getPrivateUserById } from "../users/usersService";
-import { findRecurrenceTemplateDoc, getCreateRecurringTemplateUrl, getUpdateRecurringTemplateUrl } from "./recurringEventsUtils";
+import {
+  findRecurrenceTemplateDoc,
+  getCreateRecurringTemplateUrl,
+  getUpdateRecurringTemplateUrl,
+} from "./recurringEventsUtils";
 
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
@@ -37,17 +41,14 @@ export async function createRecurrenceTemplate(
     recurrenceData: recurrenceData,
   };
 
-  const rawResponse = await fetch(
-    getCreateRecurringTemplateUrl(),
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(content),
-    }
-  );
+  const rawResponse = await fetch(getCreateRecurringTemplateUrl(), {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(content),
+  });
   const response = (await rawResponse.json()) as CreateRecurrenceTemplateResponse;
   return [response.eventId, response.recurrenceTemplateId];
 }
@@ -128,12 +129,13 @@ export async function updateRecurrenceTemplateEventData(
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} event data`);
   try {
     const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
-    await updateRecurrenceTemplate(recurrenceTemplateId, {
+    const response = await updateRecurrenceTemplate(recurrenceTemplateId, {
       eventData: {
         ...recurrenceTemplate.eventData,
         ...updatedData,
       },
     });
+    return response ? true : false;
   } catch (error) {
     // no op as we already logged error, we just need to catch it here as we do not want to continue to update template if
     // we did not find the existing data in the existing recurrence template
