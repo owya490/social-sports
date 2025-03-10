@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import Image from "next/image";
 
 const MarkdownPage = () => {
   const params = useParams();
@@ -20,7 +20,7 @@ const MarkdownPage = () => {
   }, [slug]);
 
   return (
-    <div className="prose mx-auto p-4 mt-12 max-w-4xl">
+    <div className="prose mx-auto p-4 my-12 max-w-4xl">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import HelpCard from "@/components/help/HelpCard";
+import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { toTitleCase } from "@/utilities/kebabToNormalCase";
-import { FaArrowRightLong } from "react-icons/fa6";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import HelpCard from "@/components/help/HelpCard";
-import { sleep } from "@/utilities/sleepUtil";
-import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
-import { Spinner } from "@material-tailwind/react";
 
 export default function HelpPage() {
   const [folders, setFolders] = useState<string[]>([]);

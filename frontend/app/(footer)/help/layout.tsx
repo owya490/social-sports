@@ -1,5 +1,3 @@
-import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { TfiHelpAlt } from "react-icons/tfi";
@@ -16,7 +14,7 @@ export default function HelpLayout({ children }: HelpLayoutProps) {
           <span className="font-bold text-xl">Help Center</span>
         </div>
       </Link>
-      <div className="pt-20 px-4">{children}</div>
+      <div className="py-20 px-4">{children}</div>
     </div>
   );
 }
