@@ -47,7 +47,6 @@ export default function HelpPage() {
           console.log(data);
           setSubFolders(data.files);
           setMarkdownContent(data.markdownContent);
-          await sleep(5000);
           setSubFolderLoading(false);
         } catch (error) {
           console.error("Error fetching folder data:", error);
