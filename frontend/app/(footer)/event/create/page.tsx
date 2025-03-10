@@ -193,12 +193,15 @@ export default function CreateEvent() {
     setLoading(true);
     const [imageUrl, thumbnailUrl] = await uploadAndGetImageAndThumbnailUrls(user.userId, { ...formData });
 
-    const newEventData = await convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
+    const newEventData = convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
     const newRecurrenceData = formData.newRecurrenceData;
     let newEventId = "";
     try {
       if (newRecurrenceData.recurrenceEnabled) {
-        const [firstEventId, newRecurrenceTemplateId] = await createRecurrenceTemplate(newEventData, newRecurrenceData);
+        const [firstEventId, _newRecurrenceTemplateId] = await createRecurrenceTemplate(
+          newEventData,
+          newRecurrenceData
+        );
         newEventId = firstEventId;
       } else {
         newEventId = await createEvent(newEventData);
@@ -216,12 +219,12 @@ export default function CreateEvent() {
     return newEventId;
   }
 
-  async function convertFormDataToEventData(
+  function convertFormDataToEventData(
     formData: FormData,
     user: UserData,
     imageUrl: string,
     thumbnailUrl: string
-  ): Promise<NewEventData> {
+  ): NewEventData {
     return {
       location: formData.location,
       capacity: formData.capacity,

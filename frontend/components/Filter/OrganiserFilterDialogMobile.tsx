@@ -71,14 +71,13 @@ interface OrganiserFilterDialogMobileProps {
     }>
   >;
 
-  applyFilters: () => Promise<void>;
+  applyFilters: () => void;
   isFilterModalOpen: boolean;
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
 }
 
 export default function OrganiserFilterDialogMobile({
-  eventDataList,
   allEventsDataList,
   setEventDataList,
   sortByCategoryValue,

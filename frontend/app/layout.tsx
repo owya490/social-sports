@@ -7,6 +7,7 @@ import { Inter, Montserrat } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
+/* eslint-disable */
 const aileron = localFont({
   src: [
     {
@@ -31,8 +32,11 @@ const aileron = localFont({
     },
   ],
 });
+/* eslint-enable */
 
 export const inter = Inter({ subsets: ["latin"] });
+
+// eslint-disable-next-line
 const montserrat = Montserrat({ subsets: ["latin"] });
 
 // const montserrat = localFont({

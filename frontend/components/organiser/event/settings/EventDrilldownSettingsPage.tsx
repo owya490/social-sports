@@ -73,13 +73,6 @@ const EventDrilldownSettingsPage = ({
     setModalOpen(true);
   };
 
-  const handlePausedChange = (event: boolean) => {
-    updateEventById(eventId, {
-      paused: event,
-    });
-    setPaused(event);
-  };
-
   return (
     <div className="flex flex-col space-y-4 mb-6 px-4 md:px-0">
       <LabelledSwitch
