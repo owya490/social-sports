@@ -19,7 +19,7 @@ import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 
 interface OrganiserNavbarProps {
-  currPage: string;
+  currPage: "EventDrilldown" | "Dashboard" | "EventDashboard" | "Metrics" | "Gallery" | "Settings" | "FormsDashboard";
 }
 
 export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
