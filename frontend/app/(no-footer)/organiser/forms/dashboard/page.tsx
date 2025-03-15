@@ -16,7 +16,11 @@ const FormsDashboard = () => {
 
               <div className="z-5 grid grid-cols-1 xl:grid-cols-2 gap-8 justify-items-center px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
                 <div className="w-full">
-                  <FormsCard formId="test" name="Form 1"></FormsCard>
+                  <FormsCard
+                    formId="test"
+                    image="https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2FbJ2L4Pt9B1gfjHaoCVD9nj1cjFG3%2F1721045243251_Screenshot%202024-07-08%20at%201.49.56%E2%80%AFPM.png?alt=media&token=7920e1ba-5cd8-461d-8d51-9a43b80543a7"
+                    name="Form 1"
+                  ></FormsCard>
                 </div>
               </div>
             </div>
