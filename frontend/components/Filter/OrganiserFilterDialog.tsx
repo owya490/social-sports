@@ -71,11 +71,10 @@ interface OrganiserFilterDialogProps {
       endDate: string;
     }>
   >;
-  applyFilters: () => Promise<void>;
+  applyFilters: () => void;
 }
 
 export default function OrganiserFilterDialog({
-  eventDataList,
   allEventsDataList,
   setEventDataList,
   sortByCategoryValue,
