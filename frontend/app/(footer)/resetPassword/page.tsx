@@ -14,7 +14,7 @@ export default function ResetPassword() {
   const [isPending, startTransition] = useTransition();
   const logger = new Logger("resetPasswordLogger");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setResetSuccess(false);
     setResetFailed(false);

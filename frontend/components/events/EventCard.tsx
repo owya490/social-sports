@@ -34,7 +34,6 @@ export default function EventCard(props: EventCardProps) {
     startTime,
     location,
     price,
-    vacancy,
     loading = false,
     isClickable = false,
   } = props;
