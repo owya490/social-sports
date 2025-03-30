@@ -20,9 +20,6 @@ const EventDrilldownManageAttendeesPage = ({
 }: EventDrilldownManageAttendeesPageProps) => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
 
-  const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
-  const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
-
   function closeModal() {
     setIsFilterModalOpen(false);
   }

@@ -7,7 +7,6 @@ import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
 
 interface EventDetailsProps {
-  
   eventData: EventData;
   eventTags: Tag[];
   setLoading: (value: boolean) => void;
@@ -75,4 +74,3 @@ export function EventDetails(props: EventDetailsProps) {
     </div>
   );
 }
-

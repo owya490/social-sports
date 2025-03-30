@@ -27,7 +27,7 @@ export default function Dashboard() {
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [srcLocation, setSrcLocation] = useState<string>("");
+  const [_srcLocation, setSrcLocation] = useState<string>("");
   const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
   const [endLoading, setEndLoading] = useState<boolean | undefined>(undefined);
   const getQueryParams = () => {

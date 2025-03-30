@@ -112,7 +112,6 @@ export default function FilterDialog({
   setAppliedDateRange,
   srcLocation,
   setSrcLocation,
-  selectedSport,
   setSelectedSport,
   applyFilters,
   isFilterModalOpen,

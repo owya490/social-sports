@@ -17,7 +17,7 @@ export default function Login() {
   const router = useRouter();
   const logger = new Logger("loginLogger");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     handleAlertClose();
 
