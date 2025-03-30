@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Before running this ensure that you are in venv and have run pip install requirements.txt
+
 # Check if correct number of arguments are provided
 if [ "$#" -ne 2 ]; then
   echo "Usage: $0 <environment> <function_name>"

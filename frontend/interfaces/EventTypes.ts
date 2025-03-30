@@ -40,6 +40,7 @@ interface AbstractEventData {
   stripeFeeToCustomer: boolean; // should default to false
   promotionalCodesEnabled: boolean; // should default to false
   paused: boolean; // should default to false
+  eventLink: string;
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -51,6 +52,11 @@ export interface EventData extends AbstractEventData {
 
 export interface EventDataWithoutOrganiser extends AbstractEventData {
   eventId: EventId;
+}
+
+export interface DeletedEvent extends AbstractEventData {
+  deletedAt: Timestamp;
+  organiserEmail: string;
 }
 
 export const EmptyEventData: EventData = {
@@ -83,6 +89,7 @@ export const EmptyEventData: EventData = {
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
   paused: false,
+  eventLink: "",
 };
 
 export interface EventMetadata {

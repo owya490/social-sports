@@ -1,4 +1,5 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
+import { FormId } from "./FormTypes";
 import { EventId } from "./EventTypes";
 
 export type UserId = string;
@@ -18,6 +19,7 @@ export interface PublicUserData {
   };
   publicUpcomingOrganiserEvents: EventId[];
   bio: string;
+  forms?: [FormId];
 }
 
 export interface PrivateUserData {

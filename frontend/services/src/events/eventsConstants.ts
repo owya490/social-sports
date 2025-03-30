@@ -13,6 +13,7 @@ export enum EventPrivacy {
 export enum CollectionPaths {
   Events = "Events",
   EventsMetadata = "EventsMetadata",
+  DeletedEvents = "DeletedEvents",
 }
 
 export const EVENT_PATHS = [
@@ -21,6 +22,8 @@ export const EVENT_PATHS = [
   "Events/InActive/Public",
   "Events/InActive/Private",
 ];
+
+export const USER_EVENT_PATH = `Users/Active/Private`;
 
 export enum LocalStorageKeys {
   EventsData = "eventsData",

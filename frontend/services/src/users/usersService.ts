@@ -25,7 +25,7 @@ export async function createUser(data: UserData, userId: string): Promise<void> 
       nameTokens: data.firstName.split(" "),
     } as PublicUserData);
     await setDoc(doc(db, "Users", "Active", "Private", userId), extractPrivateUserData(data));
-    userServiceLogger.info(`User created successfully:", ${userId}`);
+    userServiceLogger.info(`User created successfully: ${userId}`);
   } catch (error) {
     userServiceLogger.error(`Error creating new user:, ${error}`);
     throw new UsersServiceError(userId);

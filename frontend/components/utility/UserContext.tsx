@@ -5,19 +5,21 @@ import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
 
 import { getTempUserData } from "@/services/src/auth/authService";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
-import { onAuthStateChanged } from "firebase/auth";
+import { Auth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
 
 type LoginUserContextType = {
   userLoading: boolean;
   user: UserData;
   setUser: React.Dispatch<React.SetStateAction<UserData>>;
+  auth: Auth;
 };
 
 export const LoginUserContext = createContext<LoginUserContextType>({
   userLoading: true,
   user: EmptyUserData,
   setUser: () => {},
+  auth,
 });
 
 export default function UserContext({ children }: { children: any }) {
@@ -81,7 +83,7 @@ export default function UserContext({ children }: { children: any }) {
     checkAuthStatus();
   }, [user, pathname, userLoading]);
 
-  return <LoginUserContext.Provider value={{ userLoading, user, setUser }}>{children}</LoginUserContext.Provider>;
+  return <LoginUserContext.Provider value={{ userLoading, user, setUser, auth }}>{children}</LoginUserContext.Provider>;
 }
 
 export const useUser = () => useContext(LoginUserContext);

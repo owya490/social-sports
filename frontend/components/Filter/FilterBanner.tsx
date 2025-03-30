@@ -55,7 +55,6 @@ interface FilterBannerProps {
 
 export default function FilterBanner({
   eventDataList,
-  allEventsDataList,
   setEventDataList,
   srcLocation,
   setSrcLocation,

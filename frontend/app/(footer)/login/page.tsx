@@ -20,7 +20,7 @@ export default function Login() {
   const { setUser } = useUser();
   const logger = new Logger("loginLogger");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     handleAlertClose();
 

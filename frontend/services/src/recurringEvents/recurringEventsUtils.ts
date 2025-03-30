@@ -21,18 +21,18 @@ export async function findRecurrenceTemplateDoc(
 
       // Check if the document exists in the current subcollection
       if (recurrenceTemplateDoc.exists()) {
-        recurringEventsServiceLogger.debug(`Found event document reference for eventId: ${recurrenceTemplateId}`);
+        recurringEventsServiceLogger.debug(`Found event document reference for recurrenceTemplateId: ${recurrenceTemplateId}`);
         return recurrenceTemplateDoc;
       }
     }
 
     // If no document found, log and throw an error
     recurringEventsServiceLogger.debug(
-      `Event document not found in any subcollection for eventId: ${recurrenceTemplateId}`
+      `Recurrence Template document not found in any subcollection for recurrenceTemplateId: ${recurrenceTemplateId}`
     );
-    throw new Error("No event found in any subcollection");
+    throw new Error("No Recurrence Template found in any subcollection");
   } catch (error) {
-    recurringEventsServiceLogger.error(`Error finding event document for eventId: ${recurrenceTemplateId}, ${error}`);
+    recurringEventsServiceLogger.error(`Error finding Recurrence Template document for recurrenceTemplateId: ${recurrenceTemplateId}, ${error}`);
     throw error;
   }
 }
