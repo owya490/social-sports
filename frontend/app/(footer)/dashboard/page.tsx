@@ -27,7 +27,7 @@ export default function Dashboard() {
   const [showLoginSuccess, setShowLoginSuccess] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [srcLocation, setSrcLocation] = useState<string>("");
+  const [_srcLocation, setSrcLocation] = useState<string>("");
   const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
   const [endLoading, setEndLoading] = useState<boolean | undefined>(undefined);
   const getQueryParams = () => {
@@ -173,7 +173,7 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-8 w-full md:w-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-6 gap-4 lg:gap-8 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
           {eventDataList
             .sort((event1, event2) => {
               if (event1.accessCount > event2.accessCount) {
@@ -189,6 +189,7 @@ export default function Dashboard() {
                 <EventCard
                   eventId={event.eventId}
                   image={event.image}
+                  thumbnail={event.thumbnail}
                   name={event.name}
                   organiser={event.organiser}
                   startTime={event.startDate}

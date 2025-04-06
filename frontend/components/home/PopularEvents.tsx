@@ -11,8 +11,7 @@ interface PopularEventsProps {
   eventData?: EventData;
 }
 
-export default function PopularEvents(props: PopularEventsProps) {
-  const { eventData } = props;
+export default function PopularEvents(_props: PopularEventsProps) {
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
     const newRecommendedEvents: EventData[] = [];
@@ -70,6 +69,7 @@ export default function PopularEvents(props: PopularEventsProps) {
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}
+                        thumbnail={event.thumbnail}
                         name={event.name}
                         organiser={event.organiser}
                         startTime={event.startDate}

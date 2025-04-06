@@ -12,14 +12,14 @@ import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/l
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import ChevronRightButton from "../elements/ChevronRightButton";
-import BadmintonImage from "./../../public/images/badminton.png";
-import BaseballImage from "./../../public/images/baseball.png";
-import BasketballImage from "./../../public/images/basketball.png";
-import PingPongImage from "./../../public/images/ping-pong.png";
-import RugbyImage from "./../../public/images/rugby-ball.png";
-import SoccerImage from "./../../public/images/soccer-ball.png";
-import TennisImage from "./../../public/images/tennis-balls.png";
-import VolleyballImage from "./../../public/images/volleyball.png";
+import BadmintonImage from "./../../public/images/sport-icons/reshot-icon-badminton-L2HG8MEXV6.svg";
+import BaseballImage from "./../../public/images/sport-icons/reshot-icon-baseball-bat-4VRP9QE3SA.svg";
+import BasketballImage from "./../../public/images/sport-icons/reshot-icon-basketball-YHLJCPQSNE.svg";
+import SoccerImage from "./../../public/images/sport-icons/reshot-icon-football-9BL6YR7JAD.svg";
+import RugbyImage from "./../../public/images/sport-icons/reshot-icon-football-ii-YZ9N4X356K.svg";
+import TennisImage from "./../../public/images/sport-icons/reshot-icon-softball-LMUT5BZ9GJ.svg";
+import PingPongImage from "./../../public/images/sport-icons/reshot-icon-table-tennis-HFEQCNR95U.svg";
+import VolleyballImage from "./../../public/images/sport-icons/reshot-icon-volley-ball-NHZFG6TPSC.svg";
 import FilterDialog, {
   BADMINTON_SPORT_STRING,
   BASEBALL_SPORT_STRING,
@@ -55,7 +55,6 @@ interface FilterBannerProps {
 
 export default function FilterBanner({
   eventDataList,
-  allEventsDataList,
   setEventDataList,
   srcLocation,
   setSrcLocation,
@@ -220,9 +219,12 @@ export default function FilterBanner({
   }, [triggerFilterApply]);
 
   return (
-    <div className="pt-16 bg-white px-4 sm:px-0 screen-width-dashboard">
-      <div className="h-20 flex items-center mt-2">
-        <div id="filter-overflow" className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all">
+    <div className="pt-16 bg-white w-full px-3">
+      <div className="h-20 flex items-center mt-2 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
+        <div
+          id="filter-overflow"
+          className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all no-scrollbar"
+        >
           {Object.entries(icons).map((entry, idx) => {
             const sportIdentifierString = entry[0];
             const sportInfo = entry[1];

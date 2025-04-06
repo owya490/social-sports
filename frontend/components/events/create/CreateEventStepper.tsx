@@ -1,4 +1,4 @@
-import { CalendarIcon, PhotoIcon, TagIcon, UserIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, PencilSquareIcon, PhotoIcon, UserIcon } from "@heroicons/react/24/outline";
 import { Step, Stepper, Typography } from "@material-tailwind/react";
 
 interface CreateEventStepperProps {
@@ -6,7 +6,7 @@ interface CreateEventStepperProps {
 }
 
 export default function CreateEventStepper({ activeStep }: CreateEventStepperProps) {
-  const stepLabels = ["Basic Information", "Relevant Tags", "Description and Image", "Preview and Create"];
+  const stepLabels = ["Basic Information", "Images", "Description", "Preview and Create"];
 
   return (
     <Stepper activeStep={activeStep}>
@@ -33,7 +33,7 @@ export default function CreateEventStepper({ activeStep }: CreateEventStepperPro
         </div>
       </Step>
       <Step onClick={() => {}}>
-        <TagIcon className="h-5 w-5" />
+        <PhotoIcon className="h-5 w-5" />
         <div
           className={`absolute -bottom-[4.5rem] w-max text-center ${
             activeStep === 1 ? "" : "hidden sm:flex sm:flex-col items-center"
@@ -55,7 +55,7 @@ export default function CreateEventStepper({ activeStep }: CreateEventStepperPro
         </div>
       </Step>
       <Step onClick={() => {}}>
-        <PhotoIcon className="h-5 w-5" />
+        <PencilSquareIcon className="h-5 w-5" />
         <div
           className={`absolute -bottom-[4.5rem] w-max text-center ${
             activeStep === 2 ? "" : "hidden sm:flex sm:flex-col items-center"

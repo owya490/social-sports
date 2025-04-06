@@ -38,6 +38,7 @@ export type BasicData = {
   long: number;
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
+  eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
 };
 
@@ -68,6 +69,7 @@ export function BasicInformation({
   locationError,
   stripeFeeToCustomer,
   promotionalCodesEnabled,
+  eventLink,
   newRecurrenceData,
   updateField,
   setLoading,
@@ -79,6 +81,29 @@ export function BasicInformation({
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [isAdditionalSettingsOpen, setIsAdditionalSettingsOpen] = useState(false);
   const [customRegistrationDeadlineEnabled, setCustomRegistrationDeadlineEnabled] = useState(false);
+  const [error, setError] = useState("");
+
+  const validateURL = (url: string | URL) => {
+    try {
+      new URL(url); // Checks if the string is a valid URL
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // get response for the url
+
+  const handleChange = (e: { target: { value: any } }) => {
+    const value = e.target.value;
+    updateField({ eventLink: value });
+
+    if (!validateURL(value)) {
+      setError("Please enter a valid URL.");
+    } else {
+      setError("");
+    }
+  };
 
   const handlePrivacyChange = (value: string) => {
     if (value === "Public") {
@@ -326,7 +351,6 @@ export function BasicInformation({
               <Input
                 label="Price"
                 crossOrigin={undefined}
-                required
                 value={customAmount}
                 type="number"
                 step=".01"
@@ -391,7 +415,7 @@ export function BasicInformation({
           <div>
             <label className="text-black text-lg font-semibold">Is your event accepting payments?</label>
             <p className="text-sm mb-5 mt-2">
-              If you are accepting payments, ensure your Stripe account is fully setup. Funds transfer will occur
+              If you are accepting payments, ensure your Stripe account is fully set up. Funds transfer will occur
               through Stripe.
             </p>
             <div className="mt-4">
@@ -410,28 +434,48 @@ export function BasicInformation({
             </div>
           </div>
         ) : (
-          <div className="mt-5 p-3 border border-1 border-blue-gray-200 rounded-lg flex-col flex">
-            <h2 className=" text-lg mb-2">Register for Organiser Hub!</h2>
-            <p className="font-light text-sm">Join hundreds of sport societies hosting their events on Sportshub.</p>
-            <p className="font-light text-sm">
-              Leverage the ability to take bookings and payments right through the platform.
+          <>
+            <div className="mt-5 p-3 border border-1 border-blue-gray-200 rounded-lg flex-col flex">
+              <h2 className="text-lg mb-2">Register for Organiser Hub!</h2>
+              <p className="font-light text-sm">Join hundreds of sport societies hosting their events on Sportshub.</p>
+              <p className="font-light text-sm">
+                Leverage the ability to take bookings and payments right through the platform.
+              </p>
+              <button
+                className="ml-auto bg-black px-3 py-1.5 text-white rounded-lg mt-2"
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  window.scrollTo(0, 0);
+                  const link = await getStripeStandardAccountLink(
+                    user.userId,
+                    getUrlWithCurrentHostname("/organiser"),
+                    getRefreshAccountLinkUrl()
+                  );
+                  router.push(link);
+                }}
+              >
+                Register
+              </button>
+            </div>
+          </>
+        )}
+        {!paymentsActive && (
+          <div className="mt-5">
+            <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
+            <p className="text-sm mb-5 mt-2">
+              Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
             </p>
-            <button
-              className="ml-auto bg-black px-3 py-1.5 text-white rounded-lg mt-2"
-              type="button"
-              onClick={async () => {
-                setLoading(true);
-                window.scrollTo(0, 0);
-                const link = await getStripeStandardAccountLink(
-                  user.userId,
-                  getUrlWithCurrentHostname("/organiser"),
-                  getRefreshAccountLinkUrl()
-                );
-                router.push(link);
-              }}
-            >
-              Register
-            </button>
+            <Input
+              label="Event Link"
+              crossOrigin={undefined}
+              value={eventLink}
+              onChange={handleChange}
+              className={`rounded-md focus:ring-0 ${error ? "border-red-500" : ""}`}
+              size="lg"
+            />
+
+            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           </div>
         )}
         <div
@@ -449,15 +493,15 @@ export function BasicInformation({
         </div>
         {isAdditionalSettingsOpen && (
           <div>
-             <div className="mb-12">
-                <RecurringEventsForm
-                  startDate={startDate}
-                  newRecurrenceData={newRecurrenceData}
-                  setRecurrenceData={(data: NewRecurrenceFormData) => {
-                    updateField({ newRecurrenceData: data });
-                  }}
-                />
-              </div>
+            <div className="mb-12">
+              <RecurringEventsForm
+                startDate={startDate}
+                newRecurrenceData={newRecurrenceData}
+                setRecurrenceData={(data: NewRecurrenceFormData) => {
+                  updateField({ newRecurrenceData: data });
+                }}
+              />
+            </div>
             {user.stripeAccountActive && (
               <>
                 <div className="mb-12">
@@ -489,8 +533,9 @@ export function BasicInformation({
                     Do you want to allow Promotional Codes for this Event?
                   </label>
                   <p className="text-sm mb-5 mt-2">
-                    Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for discounts at the
-                    time of checkout. To create a promotional code for your account, please visit your stripe dashboard.
+                    Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for discounts
+                    at the time of checkout. To create a promotional code for your account, please visit your stripe
+                    dashboard.
                   </p>
                   <div className="mt-4">
                     <Select

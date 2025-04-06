@@ -2,6 +2,7 @@ import { FormData } from "@/app/(footer)/event/create/page";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
+import { getThumbnailUrlsBySport } from "@/services/src/imageService";
 import { displayPrice } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 
@@ -9,13 +10,14 @@ type BasicData = {
   form: FormData;
   user: UserData;
   imagePreviewUrl: string;
+  thumbnailPreviewUrl: string;
 };
 
 type PreviewFormProps = BasicData & {
   updateField: (fields: Partial<FormData>) => void;
 };
 
-export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: PreviewFormProps) => {
+export const PreviewForm = ({ form, user, imagePreviewUrl, thumbnailPreviewUrl }: PreviewFormProps) => {
   const dateString = form.startDate + " " + form.startTime;
   var [datePart, timePart] = dateString.split(" ");
   var [year, month, day] = datePart.split("-");
@@ -82,7 +84,7 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
         </div>
       </div>
       <div className="mx-2 col-span-1 flex justify-center lg:justify-end xl:justify-center">
-        <div className="w-full md:w-fit">
+        <div className="w-full">
           <div className="text-lg lg:text-lg font-bold mb-2 text-gray-600 text-center">Your EventCard preview:</div>
           <EventCard
             eventId=""
@@ -90,6 +92,13 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, updateField }: Previe
               imagePreviewUrl === ""
                 ? "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5"
                 : imagePreviewUrl
+            }
+            thumbnail={
+              typeof form.thumbnail === "string"
+                ? form.thumbnail
+                : form.thumbnail === undefined
+                ? getThumbnailUrlsBySport(form.sport)
+                : thumbnailPreviewUrl
             }
             name={form.name}
             organiser={user}

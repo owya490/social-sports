@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { loadGoogleMapsScript, initializeAutocomplete, validateLocation } from "@/services/src/maps/mapsService";
+import { initializeAutocomplete, loadGoogleMapsScript, validateLocation } from "@/services/src/maps/mapsService";
+import React, { useEffect, useRef, useState } from "react";
 import { BasicData } from "../events/create/forms/BasicForm";
 
 interface AutocompleteFormProps {
@@ -33,13 +33,14 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({
   const handlePlaceSelect = async () => {
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
-      if (place.formatted_address) {
-        setAddress(place.formatted_address);
+      if (place.name && place.formatted_address) {
         setSelectionMade(true);
-        updateField({ location: place.formatted_address });
+        const full_address = `${place.name}, ${place.formatted_address}`;
+        setAddress(full_address);
+        updateField({ location: full_address });
 
         try {
-          const { lat, long } = await validateLocation(place.formatted_address);
+          const { lat, long } = await validateLocation(full_address);
           updateField({ lat, long });
           setHasError(false);
           setLocationError("");

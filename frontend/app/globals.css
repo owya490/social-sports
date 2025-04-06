@@ -4,14 +4,37 @@
 
 @layer components {
   .screen-width-primary {
-    @apply w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1400px];
+    @apply w-[400px] sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1200px];
   }
   .screen-width-dashboard {
-    @apply w-screen px-3 sm:mx-0 sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1200px] 2xl:w-[1400px];
+    @apply w-screen px-3 sm:mx-0 sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1200px];
   }
 }
 @layer base {
-  .list-style-circle{
+  .list-style-circle {
     list-style: circle;
   }
+}
+
+@layer utilities {
+  @variants responsive {
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+    }
+  }
+}
+
+:root {
+  --navbar-height: 65px;
+}
+
+html {
+  scroll-padding-top: var(--navbar-height);
 }

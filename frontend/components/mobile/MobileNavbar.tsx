@@ -21,7 +21,7 @@ export default function MobileNavbar() {
     setSearchExpanded(!searchExpanded);
   };
   return (
-    <div className="bg-white drop-shadow-lg fixed top-0 w-screen z-50">
+    <div className="bg-white fixed top-0 w-screen z-50">
       <div className="flex items-center py-2 px-4">
         <Link href="/dashboard">
           <Image src={Logo} alt="Logo" className="w-10 h-10 mr-4" />
@@ -33,7 +33,7 @@ export default function MobileNavbar() {
         </div>
         <ProfilePic />
       </div>
-      <div className="h-[1px] bg-black"></div>
+      <div className="h-[1px] bg-core-outline"></div>
     </div>
   );
 }
