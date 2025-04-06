@@ -91,7 +91,7 @@ jobs:
             --allow-unauthenticated \
             --region australia-southeast1 \
             --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }},RECURRING_EVENTS_OIDC_AUTH_AUDIENCE=${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_RECURRING_EVENTS_CRON_TRIGGER_URL' || 'SOCIALSPORTSDEV_RECURRING_EVENTS_CRON_TRIGGER_URL'] }} \
             --memory 512
 
       - name: Deploy createEvent
