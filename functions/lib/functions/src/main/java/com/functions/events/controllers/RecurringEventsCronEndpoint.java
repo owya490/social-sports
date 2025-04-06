@@ -14,7 +14,7 @@ import static com.functions.events.services.RecurringEventsCronService.createEve
 
 public class RecurringEventsCronEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronEndpoint.class);
-    private static final String CLOUD_RUN_URL = "https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron";
+    private static final String CLOUD_RUN_URL = System.getenv("RECURRING_EVENTS_OIDC_AUTH_AUDIENCE");
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
@@ -42,7 +42,7 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
         try {
             AuthUtils.authenticateOIDCToken(request, response, logger, CLOUD_RUN_URL);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("RecurringEventsCronEndpoint authentication error: {}", e.getMessage());
             return;
         }
 
