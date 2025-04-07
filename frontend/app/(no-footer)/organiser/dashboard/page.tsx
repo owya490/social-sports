@@ -41,6 +41,11 @@ export default function Dashboard() {
     fetchEvents();
   }, [user]);
 
+  const generateRandomFormId = () => {
+    // Generate a consistent form ID for testing
+    return "nll678ueu";
+  };
+
   return (
     <div className="pt-[3.5rem] pb-20 sm:pb-4 sm:pl-14 lg:max-h-screen">
       <OrganiserNavbar currPage="Dashboard" />
@@ -61,6 +66,14 @@ export default function Dashboard() {
                   <Link href="/event/create">
                     <div className="h-full flex justify-center items-center">
                       <p>Create an event</p>
+                    </div>
+                  </Link>
+                </div>
+
+                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                  <Link href={`/organiser/forms/${generateRandomFormId()}/form-editor`}>
+                    <div className="h-full flex justify-center items-center">
+                      <p>Create a form</p>
                     </div>
                   </Link>
                 </div>
