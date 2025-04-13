@@ -26,7 +26,6 @@ public class AuthUtils {
         try {
             // Verify the token using Firebase Admin SDK
             FirebaseService.invokeInitialize();
-            logger.info("TOKENN {}", idToken);
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
 
             String uid = decodedToken.getUid();

@@ -59,6 +59,13 @@ jobs:
           echo "SENDGRID_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_SENDGRID_API_KEY' || 'SOCIALSPORTSDEV_SENDGRID_API_KEY'] }}\"" >> .env
           echo "LOOPS_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_LOOPS_API_KEY' || 'SOCIALSPORTSDEV_LOOPS_API_KEY'] }}\"" >> .env
 
+      - name: Set cleanup policy for Cloud Functions artifacts to keep the 2 latest versions
+        run: |
+          gcloud artifacts repositories update cloud-functions \
+            --location=australia-southeast1 \
+            --cleanup-policy=active \
+            --max-versions=2
+
       # Deploy Java Cloud Run functions
       - name: Deploy updateRecurrenceTemplate
         working-directory: functions/lib/functions
@@ -159,6 +166,11 @@ jobs:
         working-directory: functions
         run: |
           firebase use --add ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+
+      - name: Set artifact cleanup policy to keep the latest 2 old versions
+        working-directory: functions
+        run: |
+          firebase functions:artifacts:setpolicy --location australia-southeast1 --max-old-versions 2
 
       - name: Deploy all python functions
         working-directory: functions
