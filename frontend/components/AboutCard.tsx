@@ -4,9 +4,13 @@ export const AboutCard = () => {
       <div className="px-5">
         <h2 className="text-3xl font-bold tracking-tight text-left sm:text-5xl dark:text-gray-50">Hey there!</h2>
         <p className="my-4 text-xl text-left dark:text-gray-400">
-          At SPORTSHUB, we are proud to have a diverse team of passionate individuals who are dedicated to helping
-          businesses succeed online. Our co-founders bring together a wealth of expertise and a shared vision for
-          empowering entrepreneurs with professional and impactful websites.
+          At SPORTSHUB, we’re not just building a platform — we’re building something we genuinely believe in. As
+          co-founders who actively play and love sports, we've experienced firsthand the challenges that come with
+          finding and booking events. From limited options to clunky systems, we knew there had to be a better way.
+          That’s when the idea for SPORTSHUB was born. With diverse backgrounds in tech, business, and community
+          building, we came together with a shared vision: to simplify and improve the way people connect with sports
+          events. Our mission is to create a seamless, user-friendly experience that helps individuals and communities
+          get active and stay engaged.
         </p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-1 md:gap-0 m-0 max-w-sm md:w-full md:max-w-full mx-auto">

@@ -1,6 +1,3 @@
-import { AboutCard } from "@/components/AboutCard";
-import AboutHero from "@/components/AboutHero";
-
 const ContactPage = () => {
   return (
     <div className="w-screen flex justify-center">
