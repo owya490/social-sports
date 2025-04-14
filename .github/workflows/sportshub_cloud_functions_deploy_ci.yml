@@ -11,9 +11,6 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
 
 jobs:
   deploy-java-cloud-run-functions:
@@ -21,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev]
+        env: [prod, dev]
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -123,7 +120,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev]
+        env: [prod, dev]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
