@@ -17,7 +17,6 @@ export type FormSection =
   | TextSection
   | MultipleChoiceSection
   | DropdownSelectSection
-  | BinaryChoiceSection
   | FileUploadSection
   | DateTimeSection;
 
@@ -39,36 +38,29 @@ interface AbstractSection {
 
 export interface TextSection extends AbstractSection {
   type: FormSectionType.TEXT;
-  answer: string | null;
+  answer?: string;
 }
 
 export interface MultipleChoiceSection extends AbstractSection {
   type: FormSectionType.MULTIPLE_CHOICE;
   options: string[];
-  answer: number | null; // index of chosen option
+  answer?: string; // value of chosen option
 }
 
 export interface DropdownSelectSection extends AbstractSection {
   type: FormSectionType.DROPDOWN_SELECT;
   options: string[];
-  answer: string | null; // value of chosen option
-}
-
-export interface BinaryChoiceSection extends AbstractSection {
-  type: FormSectionType.BINARY_CHOICE;
-  choice1: string;
-  choice2: string;
-  answer: 0 | 1 | null; // 0 -> choice1, 1 -> choice2
+  answer?: string; // value of chosen option
 }
 
 export interface FileUploadSection extends AbstractSection {
   type: FormSectionType.FILE_UPLOAD;
-  fileUrl: string | null;
+  fileUrl?: string;
 }
 
 export interface DateTimeSection extends AbstractSection {
   type: FormSectionType.DATE_TIME;
-  timestamp: string | null; // uct time
+  timestamp?: string; // uct time
 }
 
 /** Contains the answers of the form from the responder */
@@ -76,5 +68,5 @@ export interface FormResponse {
   formId: FormId;
   responseMap: Map<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
-  submissionTime: number | null;
+  submissionTime?: number;
 }
