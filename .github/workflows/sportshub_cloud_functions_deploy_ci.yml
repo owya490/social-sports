@@ -169,16 +169,7 @@ jobs:
         run: |
           firebase use --add ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
 
-      - name: Set cleanup policy for Artifact Registry
-        run: |
-          gcloud artifacts cleanup-policies create keep-last-2 \
-            --repository=cloud-functions \
-            --location=australia-southeast1 \
-            --package='*' \
-            --keep-last-versions=2 \
-            --policy-dry-run=false || echo "Policy may already exist"
-
       - name: Deploy all python functions
         working-directory: functions
         run: |
-          firebase deploy --only functions:move_inactive_events
+          firebase deploy --only functions:move_inactive_events --force
