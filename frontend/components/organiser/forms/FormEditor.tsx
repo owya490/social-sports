@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Form, FormSection, FormSectionType } from "@/interfaces/FormTypes";
-import { SectionId } from "@/interfaces/FormTypes";
+import { Form, FormId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { useState } from "react";
+
 
 const initialForm: Form = {
   title: "Sample Form",
@@ -10,7 +10,11 @@ const initialForm: Form = {
   sectionsMap: new Map<SectionId, FormSection>(),
 };
 
-const FormEditor = () => {
+export interface FormEditorParams {
+  formId: FormId
+}
+
+const FormEditor = ({formId}: FormEditorParams) => {
   const [form, setForm] = useState<Form>(initialForm);
 
   const addSection = (section: FormSection) => {
@@ -42,6 +46,7 @@ const FormEditor = () => {
       return prevForm;
     });
   };
+
   const renderSection = (section: FormSection, sectionId: SectionId) => {
     const updateDropdownOptions = (newOptions: string[]) => {
       setForm((prevForm) => {
@@ -120,19 +125,19 @@ const FormEditor = () => {
             </div>
           </div>
         );
-      case FormSectionType.BINARY_CHOICE:
-        return (
-          <div>
-            <label>
-              <input type="radio" name={section.question} value={section.choice1} />
-              {section.choice1}
-            </label>
-            <label>
-              <input type="radio" name={section.question} value={section.choice2} />
-              {section.choice2}
-            </label>
-          </div>
-        );
+      // case FormSectionType.BINARY_CHOICE:
+      //   return (
+      //     <div>
+      //       <label>
+      //         <input type="radio" name={section.question} value={section.choice1} />
+      //         {section.choice1}
+      //       </label>
+      //       <label>
+      //         <input type="radio" name={section.question} value={section.choice2} />
+      //         {section.choice2}
+      //       </label>
+      //     </div>
+      //   );
       case FormSectionType.FILE_UPLOAD:
         return <input type="file" />;
       case FormSectionType.DATE_TIME:
@@ -161,7 +166,6 @@ const FormEditor = () => {
             question: "New Question",
             imageUrl: null,
             required: true,
-            answer: null,
           })
         }
       >
@@ -176,7 +180,6 @@ const FormEditor = () => {
             question: "New Question",
             imageUrl: null,
             required: true,
-            answer: null,
             options: [], // Add an empty array of options
           })
         }
@@ -188,13 +191,12 @@ const FormEditor = () => {
         className="mx-4"
         onClick={() =>
           addSection({
-            type: FormSectionType.BINARY_CHOICE,
+            type: FormSectionType.MULTIPLE_CHOICE,
             question: "New Question",
             imageUrl: null,
             required: true,
-            answer: null, // Set to null initially (or 0/1 if needed)
-            choice1: "Option 1",
-            choice2: "Option 2",
+            options: [], // Add an empty array of options
+      
           })
         }
       >
@@ -209,7 +211,6 @@ const FormEditor = () => {
             question: "New Question",
             imageUrl: null,
             required: true,
-            answer: null,
             options: [], // Add an empty array of options
           })
         }
