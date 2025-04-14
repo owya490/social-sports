@@ -4,10 +4,10 @@ export const AboutCard = () => {
       <div className="px-5">
         <h2 className="text-3xl font-bold tracking-tight text-left sm:text-5xl dark:text-gray-50">Hey there!</h2>
         <p className="my-4 text-xl text-left dark:text-gray-400">
-          At SPORTSHUB, we’re not just building a platform — we’re building something we genuinely believe in. As
-          co-founders who actively play and love sports, we've experienced firsthand the challenges that come with
-          finding and booking events. From limited options to clunky systems, we knew there had to be a better way.
-          That’s when the idea for SPORTSHUB was born. With diverse backgrounds in tech, business, and community
+          At SPORTSHUB, we&apos;re not just building a platform — we&apos;re building something we genuinely believe in.
+          As co-founders who actively play and love sports, we&apos;ve experienced firsthand the challenges that come
+          with finding and booking events. From limited options to clunky systems, we knew there had to be a better way.
+          That&apos;s when the idea for SPORTSHUB was born. With diverse backgrounds in tech, business, and community
           building, we came together with a shared vision: to simplify and improve the way people connect with sports
           events. Our mission is to create a seamless, user-friendly experience that helps individuals and communities
           get active and stay engaged.
@@ -67,7 +67,7 @@ export const AboutCard = () => {
                 Edwin Ni
               </h5>
             </a>
-            <p className="font-normal text-gray-700 dark:text-gray-400">Head of Design/Frontend Engineer</p>
+            <p className="font-normal text-gray-700 dark:text-gray-400">Fullstack Engineer</p>
           </div>
         </div>
         <div className="max-w-full bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 m-2 md:m-5">
@@ -86,7 +86,7 @@ export const AboutCard = () => {
                 Owen Yang
               </h5>
             </a>
-            <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">Product Manager/Principal Engineer</p>
+            <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">Principal Engineer</p>
           </div>
         </div>
       </div>
@@ -107,7 +107,7 @@ export const AboutCard = () => {
                 Aidan Chee
               </h5>
             </a>
-            <p className="font-normal text-gray-700 dark:text-gray-400">Product Manager</p>
+            <p className="font-normal text-gray-700 dark:text-gray-400">Fullstack Engineer</p>
           </div>
         </div>
         <div className="max-w-full bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 m-2 md:m-5">

@@ -1,6 +1,6 @@
 const AboutHero = () => {
   return (
-    <div className="bg-gray-300">
+    <div className="bg-gray-200">
       <div className="container flex items-center flex-col justify-center p-6 mx-auto sm:py-12 lg:py-24 lg:flex-row lg:justify-between">
         <div className="flex items-center justify-center w-full lg:w-1/2 h-72 sm:h-80 lg:h-96 xl:h-112 2xl:h-128 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl shadow-xl hidden lg:flex">
           <img src="images/volleyball-art.png" alt="volleyball" className="object-cover w-full h-full rounded-xl" />
