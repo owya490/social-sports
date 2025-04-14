@@ -7,7 +7,7 @@ import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring
 import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
 import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
 import { RecurringTemplateSettings } from "@/components/organiser/recurring-events/RecurringTemplateSettings";
-import { EmptyEventMetadata, EventId, EventMetadata, NewEventData } from "@/interfaces/EventTypes";
+import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
   NewRecurrenceFormData,
@@ -33,7 +33,7 @@ interface RecurrenceTemplatePageProps {
 
 export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
-  const [eventData, setEventData] = useState<NewEventData>();
+  const [_eventData, setEventData] = useState<NewEventData>();
   const [loading, setLoading] = useState<boolean>(true);
   const [updatingRecurrenceData, setUpdatingRecurrenceData] = useState<boolean>(false);
   const [eventName, setEventName] = useState<string>("");
@@ -45,13 +45,12 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventLocation, setEventLocation] = useState<string>("");
   const [eventPrice, setEventPrice] = useState<number>(0);
   const [eventImage, setEventImage] = useState<string>("");
-  const [eventAccessCount, setEventAccessCount] = useState<number>(0);
+  const [_eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
-  const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
   const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
   const [eventEventLink, setEventEventLink] = useState<string>("");
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
-  const [eventPaused, seteventPaused] = useState<boolean>(false);
+  const [_eventPaused, seteventPaused] = useState<boolean>(false);
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
@@ -91,18 +90,11 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         await sleep(500);
         setLoading(false);
       })
-      .catch((error) => {
+      .catch((_error) => {
         // dont need to log here as we should have caught all the necessary logs in the service layer
         router.push("/error");
       });
   }, []);
-
-  const handleRecurrenceTemplateEventUpdate = async (
-    recurrenceTemplateId: RecurrenceTemplateId,
-    newEventData: Partial<NewEventData>
-  ) => {
-    await updateRecurrenceTemplateEventData(recurrenceTemplateId, newEventData);
-  };
 
   const submitNewRecurrenceData = async () => {
     setUpdatingRecurrenceData(true);

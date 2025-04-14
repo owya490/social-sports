@@ -23,7 +23,6 @@ const DeleteEventModal = ({
   eventName,
   eventStartDate,
   eventMetadata,
-  eventId,
   modalOpen,
   loading,
   onClose,

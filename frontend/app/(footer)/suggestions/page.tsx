@@ -39,7 +39,7 @@ export default function Suggestions() {
       setEmail("");
       setMessage("");
     } catch (err) {
-      alert("Failed to send feedback. Please try again later.");
+      alert(`Failed to send feedback. Please try again later: ${err}`);
     } finally {
       setIsLoading(false);
     }

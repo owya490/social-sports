@@ -19,7 +19,7 @@ interface MobileSearchInputProps {
 
 export default function MobileSearchInput(props: MobileSearchInputProps) {
   // Commented out the location param and related as search by location is broken, ask Edwin to fix later, just delete duplicate code underneath commments
-  const { searchExpanded, setSearchExpanded, tags } = props;
+  const { searchExpanded, setSearchExpanded } = props;
   const [event, setEvent] = useState("");
   // const [location, setLocation] = useState("Sydney");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
