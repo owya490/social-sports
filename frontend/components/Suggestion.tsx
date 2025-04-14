@@ -1,7 +1,6 @@
 import { sendEmail } from "@/services/src/emailJS/emailJS";
-import LightBulbIcon from "@/svgs/LightBulbIcon";
+
 import { useState } from "react";
-import Logo from "./navbar/Logo";
 
 type SuggestionsTemplateParams = {
   firstName: string;
