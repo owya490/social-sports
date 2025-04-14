@@ -1,5 +1,6 @@
 package com.functions.events.controllers;
 
+import com.functions.utils.AuthUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
@@ -13,6 +14,7 @@ import static com.functions.events.services.RecurringEventsCronService.createEve
 
 public class RecurringEventsCronEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronEndpoint.class);
+    private static final String CLOUD_RUN_URL = System.getenv("RECURRING_EVENTS_OIDC_AUTH_AUDIENCE");
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
@@ -36,9 +38,19 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
             return;
         }
 
+        // Protect endpoint
+        try {
+            AuthUtils.authenticateOIDCToken(request, response, logger, CLOUD_RUN_URL);
+        } catch (Exception e) {
+            logger.error("RecurringEventsCronEndpoint authentication error: {}", e.getMessage());
+            return;
+        }
+
+        // Process recurring events
         LocalDate today = LocalDate.now();
         List<String> createdEvents = createEventsFromRecurrenceTemplates(today);
 
+        response.setStatusCode(200);
         response.getWriter().write("Recurring events processed for: " + today + "Created events: " + createdEvents);
     }
 }

@@ -106,6 +106,10 @@ const envVariableListDev = [
     secretName: "SOCIALSPORTSPROD_LOOPS_API_KEY",
     secretValue: process.env.SOCIALSPORTSPROD_LOOPS_API_KEY,
   },
+  {
+    secretName: "SOCIALSPORTSPROD_RECURRING_EVENTS_CRON_TRIGGER_URL",
+    secretValue: process.env.SOCIALSPORTSPROD_RECURRING_EVENTS_CRON_TRIGGER_URL,
+  },
   // SOCIALSPORTSDEV Github secrets env variables
   {
     secretName: "SOCIALSPORTSDEV_GCLOUD_CREDENTIALS",
@@ -138,6 +142,10 @@ const envVariableListDev = [
   {
     secretName: "SOCIALSPORTSDEV_LOOPS_API_KEY",
     secretValue: process.env.SOCIALSPORTSDEV_LOOPS_API_KEY,
+  },
+  {
+    secretName: "SOCIALSPORTSDEV_RECURRING_EVENTS_CRON_TRIGGER_URL",
+    secretValue: process.env.SOCIALSPORTSDEV_RECURRING_EVENTS_CRON_TRIGGER_URL,
   },
   // TODO: add more secrets you want to push to github secrets here.
 ];
