@@ -172,4 +172,4 @@ jobs:
       - name: Deploy all python functions
         working-directory: functions
         run: |
-          firebase deploy --only functions:move_inactive_events --force
+          firebase deploy --force --only functions:move_inactive_events
