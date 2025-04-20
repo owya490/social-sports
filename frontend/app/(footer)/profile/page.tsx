@@ -1,17 +1,14 @@
 "use client";
 import Loading from "@/components/loading/Loading";
-import { InfoSharedPanel } from "@/components/users/profile/InfoSharedPanel";
-import { LocationPanel } from "@/components/users/profile/LocationPanel";
+import { FieldTypes, RenderEditableField } from "@/components/users/profile/ProfileFields";
 import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
-import x from "@/public/images/x.png";
 import { updateUser } from "@/services/src/users/usersService";
-import { Dialog, Transition } from "@headlessui/react";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ChangeEvent, Fragment, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -117,180 +114,6 @@ const Profile = () => {
     }
   };
 
-  const renderEditableField = (label: string, name: keyof UserData) => (
-    <div key={name} className="mb-4">
-      <label className="block text-sm font-medium text-gray-700">
-        {label} {label === "Given Name" && <span className="text-red-500">*</span>}
-      </label>
-      {label === "Date of Birth" ? (
-        <input
-          type="date"
-          name={name as string}
-          value={
-            editable
-              ? formatDateForInput(editedData[name] as string)
-              : formatDateForInput(editedData[name] as string)
-          }
-          onChange={handleInputChange}
-          max={today.toISOString().split("T")[0]}
-          className="mt-1 p-2 border rounded-md w-full"
-        />
-      ) : label === "Gender" ? (
-        <select
-          name={name as string}
-          value={editable ? (editedData[name] as string) : (editedData[name] as string)}
-          onChange={handleSelectChange}
-          className="mt-1 p-2 border rounded-md w-full"
-        >
-          <option value="">Select</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-      ) : (
-        <input
-          type="text"
-          name={name as string}
-          value={editable ? (editedData[name] as string) : (editedData[name] as string)}
-          onChange={handleInputChange}
-          className="mt-1 p-2 border rounded-md w-full"
-          placeholder="Not Provided"
-        />
-      )}
-    </div>
-  );
-
-  const renderEditableFieldMobile = (label: string, name: "mobile") => (
-    <div key={name} className="mb-4">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      <input
-        type="text"
-        pattern="[0-9]*"
-        name={`contactInformation.${name}`}
-        value={
-          editable
-            ? (editedData.contactInformation?.[name] as string)
-            : (editedData.contactInformation?.[name] as string)
-        }
-        onChange={handleInputChangeMobile}
-        onKeyDown={(e) => {
-          const key = e.key;
-          if (key === "Backspace" || key === "Delete") {
-            return;
-          }
-          if (!/[0-9]/.test(key)) {
-            e.preventDefault();
-          }
-        }}
-        inputMode="tel"
-        className="mt-1 p-2 border rounded-md w-full"
-        placeholder="Not Provided"
-      />
-    </div>
-  );
-
-  const renderField = (label: string, name: string) => (
-    <div key={label} className="mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between w-full">
-        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">{label}:</strong>
-        <span
-          className={`text-md md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
-            name === "email" ? "break-all" : ""
-          }`}
-        >
-          {(editedData[name as keyof UserData] as string) === ""
-            ? "Not Provided"
-            : (editedData[name as keyof UserData] as string)}
-        </span>
-      </div>
-    </div>
-  );
-
-  const renderFieldContact = (label: string, name: "mobile" | "email") => (
-    <div key={label} className="mb-4">
-      <div className="flex flex-col md:flex-row md:justify-between w-full">
-        <strong className="text-xs md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700">{label}:</strong>
-        <span
-          className={`text-md md:text-md lg:text-lg 3xl:text-xl font-medium text-gray-700 ${
-            name === "email" ? "break-all" : ""
-          }`}
-        >
-          {(editedData.contactInformation?.[name] as string) === ""
-            ? "Not Provided"
-            : (editedData.contactInformation?.[name] as string)}
-        </span>
-      </div>
-    </div>
-  );
-
-  // const renderModalContent = () => (
-  //   <Transition appear show={editable} as={Fragment}>
-  //     <Dialog as="div" className="relative z-10" onClose={handleEditClick}>
-  //       <Transition.Child
-  //         as={Fragment}
-  //         enter="ease-out duration-300"
-  //         enterFrom="opacity-0"
-  //         enterTo="opacity-100"
-  //         leave="ease-in duration-200"
-  //         leaveFrom="opacity-100"
-  //         leaveTo="opacity-0"
-  //       >
-  //         <div className="fixed inset-0 bg-black/25" />
-  //       </Transition.Child>
-  //       <div className="fixed inset-0 overflow-y-auto">
-  //         <div className="flex min-h-full items-center justify-center p-4 text-center">
-  //           <Transition.Child
-  //             as={Fragment}
-  //             enter="ease-out duration-300"
-  //             enterFrom="opacity-0 scale-95"
-  //             enterTo="opacity-100 scale-100"
-  //             leave="ease-in duration-200"
-  //             leaveFrom="opacity-100 scale-100"
-  //             leaveTo="opacity-0 scale-95"
-  //           >
-  //             <Dialog.Panel className="w-[90%] top-[6rem] absolute max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all z-50">
-  //               <div className="flex justify-between mb-3">
-  //                 <Dialog.Title
-  //                   as="h3"
-  //                   className="text-xl lg:text-2xl 3xl:text-2xl font-medium leading-6 text-gray-900 mb-3"
-  //                 >
-  //                   Edit Profile
-  //                 </Dialog.Title>
-  //                 <div className="flex justify-end ">
-  //                   <button
-  //                     type="button"
-  //                     onClick={handleEditClick}
-  //                     className="text-gray-500 hover:text-gray-700 focus:outline-none"
-  //                   >
-  //                     <Image src={x} alt="x" width={0} height={0} className="w-5 h-5 -mt-6" />
-  //                   </button>
-  //                 </div>
-  //               </div>
-  //               <div className="space-y-4 text-md lg:text-lg 3xl:text-xl -mt-1">
-  //                 {renderEditableField("Given Name", "firstName")}
-  //                 {renderEditableField("Surname", "surname")}
-  //                 {renderEditableFieldMobile("Phone Number", "mobile")}
-  //                 {renderEditableField("Gender", "gender")}
-  //                 {renderEditableField("Date of Birth", "dob")}
-  //                 {renderEditableField("Location", "location")}
-  //               </div>
-  //               <div className="flex justify-end mt-4">
-  //                 <button
-  //                   type="button"
-  //                   onClick={handleSaveClick}
-  //                   className="text-white bg-black font-medium rounded-full text-med px-6 py-2 z-50"
-  //                 >
-  //                   Save
-  //                 </button>
-  //               </div>
-  //             </Dialog.Panel>
-  //           </Transition.Child>
-  //         </div>
-  //       </div>
-  //     </Dialog>
-  //   </Transition>
-  // );
-
   return loading ? (
     <Loading />
   ) : (
@@ -298,7 +121,7 @@ const Profile = () => {
       <div className="screen-width-primary">
         <div className="mt-16 block lg:flex lg:space-x-10">
           <div className="basis-2/5 space-y-6">
-            <div className="flex mt-8 mb-4 font-bold text-2xl md:text-3xl lg:text-4xl 3xl:text-5xl">
+            <div className="flex mt-8 mb-4 font-bold text-2xl">
               {user.firstName}&apos;s Profile
               {user.isVerifiedOrganiser && (
                 <div>
@@ -311,8 +134,8 @@ const Profile = () => {
             </div>
 
             <ProfilePhotoPanel user={user} setUser={setUser} setEditedData={setEditedData} />
-            <InfoSharedPanel />
-            <LocationPanel />
+            {/* <InfoSharedPanel /> */}
+            {/* <LocationPanel /> */}
             <p className="text-xs font-light mt-2 ml-1">
               (If your edit profile picture isn&apos;t working, try closing and reopening or changing the browser.)
             </p>
@@ -320,60 +143,75 @@ const Profile = () => {
 
           <div className="basis-3/5 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
             <div
-              className="mb-2 text-xl lg:text-2xl flex justify-between items-center"
+              className="mb-2 text-xl flex justify-between items-center"
               style={{
                 fontWeight: 400,
-                borderBottom: "2px solid #ccc",
+                borderBottom: "1px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Name</div>
+              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Personal Details</div>
             </div>
             <ul className="w-full">
-              {renderField("Given Name", "firstName")}
-              {renderField("Surname", "surname")}
+              <RenderEditableField
+                label="First Name"
+                value={user.firstName}
+                type={FieldTypes.SHORT_TEXT}
+                onSubmit={(value) => {
+                  // Need to update local user data
+                  setUser({
+                    ...user,
+                    firstName: value,
+                  });
+                  // Need to update remote data respective to public/ private
+                  updateUser(user.userId, { firstName: value });
+                }}
+              />
+              <RenderEditableField label="Last Name" value={user.surname} type={FieldTypes.SHORT_TEXT} />
+              <RenderEditableField label="Location" value={user.location} type={FieldTypes.SHORT_TEXT} />
+              <RenderEditableField label="Date of Birth" value={user.dob} type={FieldTypes.SHORT_TEXT} />
+              <RenderEditableField label="Gender" value={user.gender} type={FieldTypes.SHORT_TEXT} />
             </ul>
 
             <div
-              className="mb-2 text-xl lg:text-2xl flex justify-between items-center"
+              className="mt-4 mb-2 text-xl flex justify-between items-center"
               style={{
                 fontWeight: 400,
-                borderBottom: "2px solid #ccc",
+                borderBottom: "1px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Contact Info</div>
+              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Public Info</div>
             </div>
             <ul className="w-full">
-              {renderFieldContact("Email", "email")}
-              {renderFieldContact("Phone Number", "mobile")}
+              <RenderEditableField
+                label="Contact Email"
+                value={user.publicContactInformation.email}
+                type={FieldTypes.SHORT_TEXT}
+              />
+              <RenderEditableField
+                label="Phone Number"
+                value={user.publicContactInformation.mobile}
+                type={FieldTypes.SHORT_TEXT}
+              />
+              <RenderEditableField label="Bio" value={user.bio} type={FieldTypes.SHORT_TEXT} />
             </ul>
 
             <div
-              className="mb-2 text-xl lg:text-2xl flex justify-between items-center"
+              className="mt-4 mb-2 text-xl flex justify-between items-center"
               style={{
                 fontWeight: 400,
-                borderBottom: "2px solid #ccc",
+                borderBottom: "1px solid #ccc",
                 width: "100%",
               }}
             >
-              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">About Me</div>
+              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Private Info</div>
             </div>
             <ul className="w-full">
-              {renderField("Gender", "gender")}
-              {renderField("Date of Birth", "dob")}
-              {renderField("Location", "location")}
+              <RenderEditableField label="User ID" value={user.userId} type={FieldTypes.SHORT_TEXT} />
+              <RenderEditableField label="Private Email" value={user.dob} type={FieldTypes.SHORT_TEXT} />
+              <RenderEditableField label="Private Phone Number" value={user.dob} type={FieldTypes.SHORT_TEXT} />
             </ul>
-            <div className="flex justify-start my-6 3xl:my-8">
-              {/* {renderModalContent()} */}
-              <button
-                type="button"
-                onClick={handleEditClick}
-                className="text-white bg-black font-medium rounded-full text-med px-6 py-2"
-              >
-                Edit
-              </button>
-            </div>
           </div>
         </div>
       </div>

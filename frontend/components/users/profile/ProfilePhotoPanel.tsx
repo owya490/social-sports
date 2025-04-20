@@ -119,7 +119,7 @@ export const ProfilePhotoPanel = ({ user, setUser, setEditedData }: ProfilePhoto
   return (
     <div className="flex border border-core-outline p-6 items-center justify-center rounded-lg space-x-3">
       <div
-        className="relative transition duration-500 h-32 w-32 lg:h-52 lg:w-52 rounded-full overflow-hidden "
+        className="relative transition duration-500 h-32 w-32 lg:h-44 lg:w-44 rounded-full overflow-hidden "
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
