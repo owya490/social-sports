@@ -129,7 +129,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   # 6. check if stripe fee is passed to customer, if so, create shipping object with an additional respective fees
   shipping_options = None
   if(event.get("stripeFeeToCustomer") is True):
-    stripe_surcharge_fee = calculate_stripe_fee(price)
+    stripe_surcharge_fee = calculate_stripe_fee(price * quantity) # We need to overall order price for surcharge. not just singular ticket price
     logger.info(f"Application fee calculated to be {stripe_surcharge_fee} for event {event_id} with price {price} with quantity {quantity}.")
     shipping_options = [{
         "shipping_rate_data": {
