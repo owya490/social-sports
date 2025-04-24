@@ -14,7 +14,7 @@ from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
-from lib.constants import db, posthog
+from lib.constants import db
 from lib.logging import Logger
 from lib.sendgrid.purchase_event import (SendGridPurchaseEventRequest,
                                          send_email_on_purchase_event)
@@ -288,14 +288,6 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
     # Invalid signature
     logger.error(f"Invalid Signature provided error={e}. payload={payload} signature={sig_header}, returned 400.")
     return https_fn.Response(status=400)
-  
-  # Get stripe test events enabled feature flag from posthog
-  stripe_webhook_test_events_enabled = posthog.feature_enabled("stripe_webhook_test_events", "")
-
-  # If its not enabled and the event is a test event, return early
-  if not stripe_webhook_test_events_enabled and not event["livemode"]:
-    logger.info("Test events are not permitted, returning 200 early.")
-    return https_fn.Response(status=200)
 
   match event["type"]:
     # Handle the checkout.session.completed event
