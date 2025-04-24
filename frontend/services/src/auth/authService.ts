@@ -248,3 +248,19 @@ export async function resetUserPassword(email: string): Promise<void> {
     throw error; // Rethrow the error for the caller to handle if needed
   }
 }
+
+/**
+ * Returns the firebase auth id token for the current logged in user.
+ */
+export async function getUserIdToken(): Promise<string> {
+  try {
+    const maybeIdToken = await auth.currentUser?.getIdToken();
+    if (maybeIdToken === undefined) {
+      throw new Error("Retrieved idToken is undefined");
+    }
+    return maybeIdToken;
+  } catch (error) {
+    authServiceLogger.error(`Unable to retrieve idToken from current user: ${error}`);
+    return "";
+  }
+}

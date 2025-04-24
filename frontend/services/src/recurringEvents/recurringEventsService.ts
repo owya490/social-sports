@@ -14,6 +14,7 @@ import {
   getCreateRecurringTemplateUrl,
   getUpdateRecurringTemplateUrl,
 } from "./recurringEventsUtils";
+import { getUserIdToken } from "../auth/authService";
 
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
@@ -46,6 +47,7 @@ export async function createRecurrenceTemplate(
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+      Authorization: `Bearer ${await getUserIdToken()}`,
     },
     body: JSON.stringify(content),
   });
@@ -115,6 +117,7 @@ export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceT
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
+      Authorization: `Bearer ${await getUserIdToken()}`,
     },
     body: JSON.stringify(content),
   });

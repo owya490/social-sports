@@ -3,6 +3,7 @@ package com.functions.events.controllers;
 import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.UpdateRecurrenceTemplateResponse;
 import com.functions.events.services.RecurringEventsService;
+import com.functions.utils.AuthUtils;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
@@ -34,6 +35,14 @@ public class UpdateRecurrenceTemplateEndpoint implements HttpFunction {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST"); // Inform client that only GET is allowed
             response.getWriter().write("The UpdateRecurrenceTemplateEndpoint only supports POST requests.");
+            return;
+        }
+
+        // Protect endpoint
+        try {
+            AuthUtils.authenticateUserToken(request, response, logger);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
             return;
         }
 

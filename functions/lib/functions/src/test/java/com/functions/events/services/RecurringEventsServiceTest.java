@@ -15,7 +15,7 @@ public class RecurringEventsServiceTest {
     public void testCalculateAllRecurrenceDates() {
         Timestamp startTime = Timestamp.of(Date.from(Instant.now()));
         RecurrenceData.Frequency frequency = RecurrenceData.Frequency.WEEKLY;
-        int recurrenceAmount = 3;
+        Integer recurrenceAmount = 3;
 
 //        System.out.println(RecurringEventsService.calculateAllRecurrenceDates(startTime, frequency, recurrenceAmount));
     }

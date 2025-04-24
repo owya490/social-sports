@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: [prod, dev]
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -56,6 +56,15 @@ jobs:
           echo "SENDGRID_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_SENDGRID_API_KEY' || 'SOCIALSPORTSDEV_SENDGRID_API_KEY'] }}\"" >> .env
           echo "LOOPS_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_LOOPS_API_KEY' || 'SOCIALSPORTSDEV_LOOPS_API_KEY'] }}\"" >> .env
 
+      - name: Set Artifact Registry cleanup policy
+        run: |
+          gcloud artifacts cleanup-policies create keep-last-2 \
+            --repository=cloud-functions \
+            --location=australia-southeast1 \
+            --package='*' \
+            --keep-last-versions=2 \
+            --policy-dry-run=false || echo "Policy may already exist. Skipping."
+
       # Deploy Java Cloud Run functions
       - name: Deploy updateRecurrenceTemplate
         working-directory: functions/lib/functions
@@ -91,7 +100,7 @@ jobs:
             --allow-unauthenticated \
             --region australia-southeast1 \
             --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }},RECURRING_EVENTS_OIDC_AUTH_AUDIENCE=${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_RECURRING_EVENTS_CRON_TRIGGER_URL' || 'SOCIALSPORTSDEV_RECURRING_EVENTS_CRON_TRIGGER_URL'] }} \
             --memory 512
 
       - name: Deploy createEvent
@@ -111,7 +120,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: [prod, dev]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -160,4 +169,4 @@ jobs:
       - name: Deploy all python functions
         working-directory: functions
         run: |
-          firebase deploy --only functions:move_inactive_events
+          firebase deploy --force --only functions:move_inactive_events
