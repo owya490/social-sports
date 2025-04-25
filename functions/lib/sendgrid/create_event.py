@@ -8,11 +8,9 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import SYDNEY_TIMEZONE, db
 from lib.logging import Logger
 from lib.sendgrid.commons import get_user_data, get_user_email
-from lib.sendgrid.constants import (
-    CREATE_EVENT_EMAIL_TEMPLATE_ID,
-    SENDGRID_API_KEY,
-    SENDGRID_UNSUBSCRIBE_GROUP_ID,
-)
+from lib.sendgrid.constants import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
+                                    SENDGRID_API_KEY,
+                                    SENDGRID_UNSUBSCRIBE_GROUP_ID)
 from lib.utils.priceUtils import centsToDollars
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Asm, Mail
@@ -29,6 +27,8 @@ class SendGridCreateEventRequest:
         if not isinstance(self.visibility, str):
             raise ValueError("Visibility must be provided as a string.")
 
+
+# ... [imports remain unchanged]
 
 @https_fn.on_call(
     cors=options.CorsOptions(
