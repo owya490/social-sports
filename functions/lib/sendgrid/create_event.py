@@ -61,7 +61,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
 
     if not maybe_event_data.exists:
         logger.error(
-             f"Unable to find event provided in datastore to send email. eventId={request_data.eventId}"
+            f"Unable to find event provided in datastore to send email. eventId={request_data.eventId}"
         )
         return {
             "success": False,
