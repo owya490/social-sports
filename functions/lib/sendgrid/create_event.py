@@ -28,8 +28,6 @@ class SendGridCreateEventRequest:
             raise ValueError("Visibility must be provided as a string.")
 
 
-# ... [imports remain unchanged]
-
 @https_fn.on_call(
     cors=options.CorsOptions(
         cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["post"]
@@ -47,7 +45,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
         request_data = SendGridCreateEventRequest(**body_data)
     except ValueError as v:
         logger.warning(
-            f"Request body did not contain necessary fields. Error: {v}"
+            f"Request body did not contain necessary fields. Error was thrown: {v}. Returned status=400"
         )
         return {
             "success": False,
@@ -63,7 +61,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
 
     if not maybe_event_data.exists:
         logger.error(
-            f"Unable to find event in datastore. eventId={request_data.eventId}"
+             f"Unable to find event provided in datastore to send email. eventId={request_data.eventId}"
         )
         return {
             "success": False,
@@ -93,8 +91,8 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
             subject=subject,
         )
 
-        start_date = event_data.get("startDate")
-        end_date = event_data.get("endDate")
+        start_date: Timestamp = event_data.get("startDate", Timestamp()).timestamp_pb()
+        end_date: Timestamp = event_data.get("endDate", Timestamp()).timestamp_pb()
 
         start_date_string = (
             start_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
@@ -124,7 +122,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
         sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
 
-        if not (200 <= response.status_code < 300):
+        if not (response.status_code >= 200 and response.status_code < 300):
             raise Exception(f"SendGrid failed to send message. e={response.body}")
 
         return {
