@@ -1,10 +1,11 @@
 "use client";
 import Loading from "@/components/loading/Loading";
-import { FieldTypes, RenderEditableField } from "@/components/users/profile/ProfileFields";
+import { FieldTypes, RenderEditableField, RenderNonEditableField } from "@/components/users/profile/ProfileFields";
 import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { updateUser } from "@/services/src/users/usersService";
+import { Switch } from "@mantine/core";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -117,7 +118,7 @@ const Profile = () => {
   return loading ? (
     <Loading />
   ) : (
-    <div className="w-screen flex justify-center">
+    <div className="w-screen flex justify-center mb-10 px-1">
       <div className="screen-width-primary">
         <div className="mt-16 block lg:flex lg:space-x-10">
           <div className="basis-2/5 space-y-6">
@@ -139,6 +140,39 @@ const Profile = () => {
             <p className="text-xs font-light mt-2 ml-1">
               (If your edit profile picture isn&apos;t working, try closing and reopening or changing the browser.)
             </p>
+            <div>
+              <div
+                className="mb-2 text-xl flex justify-between items-center"
+                style={{
+                  fontWeight: 400,
+                  borderBottom: "1px solid #ccc",
+                  width: "100%",
+                }}
+              >
+                <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Profile Settings</div>
+              </div>
+
+              <div className="flex justify-between w-full mb-2">
+                <strong className="text-xs md:text-md font-medium text-gray-700">
+                  Allow profile to be publically searchable?:
+                </strong>
+                <Switch
+                  color="teal"
+                  size="sm"
+                  className="ml-auto"
+                  checked={user.isSearchable}
+                  onChange={(event) => {
+                    setUser({
+                      ...user,
+                      isSearchable: event.currentTarget.checked,
+                    });
+                    updateUser(user.userId, {
+                      isSearchable: event.currentTarget.checked,
+                    });
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="basis-3/5 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
@@ -169,8 +203,13 @@ const Profile = () => {
               />
               <RenderEditableField label="Last Name" value={user.surname} type={FieldTypes.SHORT_TEXT} />
               <RenderEditableField label="Location" value={user.location} type={FieldTypes.SHORT_TEXT} />
-              <RenderEditableField label="Date of Birth" value={user.dob} type={FieldTypes.SHORT_TEXT} />
-              <RenderEditableField label="Gender" value={user.gender} type={FieldTypes.SHORT_TEXT} />
+              <RenderEditableField label="Date of Birth" value={user.dob} type={FieldTypes.DATE} />
+              <RenderEditableField
+                label="Gender"
+                value={user.gender}
+                type={FieldTypes.SELECT}
+                options={["Male", "Female"]}
+              />
             </ul>
 
             <div
@@ -193,8 +232,9 @@ const Profile = () => {
                 label="Phone Number"
                 value={user.publicContactInformation.mobile}
                 type={FieldTypes.SHORT_TEXT}
+                customValidation={(input) => /^\d*$/.test(input)} // Only allow numbers and empty string, no decimal or commas
               />
-              <RenderEditableField label="Bio" value={user.bio} type={FieldTypes.SHORT_TEXT} />
+              <RenderEditableField label="Bio" value={user.bio} type={FieldTypes.LONG_TEXT} />
             </ul>
 
             <div
@@ -208,9 +248,19 @@ const Profile = () => {
               <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Private Info</div>
             </div>
             <ul className="w-full">
-              <RenderEditableField label="User ID" value={user.userId} type={FieldTypes.SHORT_TEXT} />
-              <RenderEditableField label="Private Email" value={user.dob} type={FieldTypes.SHORT_TEXT} />
-              <RenderEditableField label="Private Phone Number" value={user.dob} type={FieldTypes.SHORT_TEXT} />
+              <RenderNonEditableField label="User ID" value={user.userId} />
+              <RenderEditableField label="Username" value={user.username} type={FieldTypes.SHORT_TEXT} />
+              <RenderEditableField
+                label="Private Email"
+                value={user.contactInformation.email}
+                type={FieldTypes.SHORT_TEXT}
+              />
+              <RenderEditableField
+                label="Private Phone Number"
+                value={user.contactInformation.mobile}
+                type={FieldTypes.SHORT_TEXT}
+                customValidation={(input) => /^\d*$/.test(input)} // Only allow numbers and empty string, no decimal or commas
+              />
             </ul>
           </div>
         </div>
