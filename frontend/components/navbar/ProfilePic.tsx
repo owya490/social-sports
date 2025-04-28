@@ -177,13 +177,13 @@ export default function ProfilePic() {
                   <Menu.Item>
                     {({ active }) => (
                       <Link
-                        href="/suggestions"
+                        href="/contact"
                         className={`${
                           active ? "text-core-text bg-core-hover" : "text-core-text"
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <LightBulbIcon className="h-5 mr-2" />
-                        Suggestions
+                        Contact Us
                       </Link>
                     )}
                   </Menu.Item>
