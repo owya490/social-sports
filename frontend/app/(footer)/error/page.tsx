@@ -6,7 +6,7 @@ export default function Error() {
       <div className="text-center">
         <h2 className="text-2xl">Oh no, something went wrong! Please navigate back to try again.</h2>
         <p className="font-light">
-          If the error continues to persist, please use the suggestions page to contact us directly.{" "}
+          If the error continues to persist, please use the contact us page to contact us directly.{" "}
         </p>
       </div>
     </div>
