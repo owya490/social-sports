@@ -32,7 +32,7 @@ export function extractPublicUserData(data: Partial<UserData>): Partial<PublicUs
 }
 
 export function extractPrivateUserData(data: Partial<UserData>): Partial<PrivateUserData> {
-  const { location, contactInformation, activeBookings, organiserEvents } = data;
+  const { location, contactInformation, activeBookings, organiserEvents, forms } = data;
   const privateUserData: Partial<PrivateUserData> = { contactInformation: contactInformation };
 
   if (location !== undefined && location !== null) {
@@ -55,6 +55,10 @@ export function extractPrivateUserData(data: Partial<UserData>): Partial<Private
   }
   if (organiserEvents !== undefined && organiserEvents !== null) {
     privateUserData.organiserEvents = organiserEvents;
+  }
+
+  if (forms !== undefined && forms !== null) {
+    privateUserData.forms = forms;
   }
 
   return privateUserData;

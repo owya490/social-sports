@@ -1,1 +1,3 @@
-export type URL = string;
+import { Branded } from ".";
+
+export type URL = Branded<string, "URL">;
