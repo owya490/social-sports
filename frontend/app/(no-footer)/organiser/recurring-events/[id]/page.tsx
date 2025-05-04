@@ -13,7 +13,7 @@ import {
   NewRecurrenceFormData,
   RecurrenceTemplateId,
 } from "@/interfaces/RecurringEventTypes";
-import { EmptyUserData } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData } from "@/interfaces/UserTypes";
 import {
   getRecurrenceTemplate,
   updateRecurrenceTemplateEventData,
@@ -108,7 +108,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
       <EventDrilldownBanner
         name={eventName}
         startDate={eventStartDate}
-        organiser={EmptyUserData}
+        organiser={EmptyPublicUserData}
         vacancy={eventVacancy}
         loading={loading}
       />

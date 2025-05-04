@@ -1,8 +1,11 @@
-import { IUsersDataLocalStorage, UserData, UserId } from "@/interfaces/UserTypes";
+import { IUsersDataLocalStorage, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { USERS_REFRESH_MILLIS, UsersLocalStorageKeys } from "../usersConstants";
 import { userServiceLogger } from "../usersService";
 
-export function tryGetActivePublicUserDataFromLocalStorage(userId: UserId) {
+export function tryGetActivePublicUserDataFromLocalStorage(userId: UserId): {
+  success: boolean;
+  userDataLocalStorage: PublicUserData;
+} {
   try {
     userServiceLogger.info("Trying to get cached Active Public users");
 
@@ -17,7 +20,7 @@ export function tryGetActivePublicUserDataFromLocalStorage(userId: UserId) {
         return { success: isUsersDataInLocalStorage(userId), userDataLocalStorage: userDataLocalStorage };
       }
     }
-    return { success: false, userDataLocalStorage: {} as UserData };
+    return { success: false, userDataLocalStorage: {} as PublicUserData };
   } catch (error) {
     userServiceLogger.error(`Error while trying to get cached Active Public users: ${error}`);
     throw error;
@@ -33,12 +36,12 @@ export function isUsersDataInLocalStorage(userId: UserId): boolean {
   return userId in usersDataObject;
 }
 
-export function getUsersDataFromLocalStorage(userId: UserId): UserData {
+export function getUsersDataFromLocalStorage(userId: UserId): PublicUserData {
   const usersDataObject: IUsersDataLocalStorage = JSON.parse(localStorage.getItem(UsersLocalStorageKeys.UsersData)!);
   return usersDataObject[userId];
 }
 
-export function setUsersDataIntoLocalStorage(userId: UserId, userData: UserData) {
+export function setUsersDataIntoLocalStorage(userId: UserId, userData: PublicUserData) {
   // first check if key-value pair exists in local storage
   if (localStorage.getItem(UsersLocalStorageKeys.UsersData) === null) {
     const usersDataString = JSON.stringify({});

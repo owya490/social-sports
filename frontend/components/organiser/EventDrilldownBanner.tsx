@@ -1,4 +1,4 @@
-import { UserData } from "@/interfaces/UserTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 import Skeleton from "react-loading-skeleton";
@@ -6,7 +6,7 @@ import Skeleton from "react-loading-skeleton";
 interface EventBannerProps {
   name: string;
   startDate: Timestamp;
-  organiser: UserData;
+  organiser: PublicUserData;
   vacancy: number;
   loading: boolean;
 }
