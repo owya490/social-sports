@@ -95,18 +95,6 @@ const RecurringTemplateDrilldownSettings = ({
             {newRecurrenceData.recurrenceEnabled && (
               <>
                 {/* Styled in ./form.css to make it black and no ring border on focus */}
-                {/* {isRecurrenceEnded && (
-                  <Input
-                    className="w-80 sm:w-full"
-                    type="date"
-                    // value={formatStringToDate(newEditRegistrationDeadlineDate)}
-                    // onChange={(e) => {
-                    //   setNewEditRegistrationDeadlineDate(formatDateToString(e.target.value));
-                    // }}
-                    crossOrigin="false"
-                    label="Recurrence Start Date"
-                  ></Input>
-                )} */}
                 <Radio.Group
                   value={newRecurrenceData.frequency}
                   onChange={handleRecurrenceFrequencyChange}

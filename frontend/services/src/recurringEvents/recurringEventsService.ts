@@ -201,5 +201,5 @@ export function calculateRecurrenceEnded(recurrenceTemplate: RecurrenceTemplate)
   const todaysDate = Date.now();
   const pastLastRecurrence = todaysDate > lastRecurrence.toMillis();
 
-  return lastPastRecurrenceCreated || pastLastRecurrence;
+  return lastPastRecurrenceCreated || pastLastRecurrence || !recurrenceTemplate.eventData.isActive;
 }
