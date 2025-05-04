@@ -1,19 +1,18 @@
-import { useUser } from "@/components/utility/UserContext";
 import { EmptyUserData, NewUserData, TempUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { FirebaseError } from "@firebase/util";
 import {
+  createUserWithEmailAndPassword,
   FacebookAuthProvider,
   GoogleAuthProvider,
-  UserCredential,
-  createUserWithEmailAndPassword,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  UserCredential,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc, Transaction } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
 import { createUser, deleteUser, getPublicUserById } from "../users/usersService";
@@ -51,6 +50,7 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
 
 export async function handleSignOut(setUser: (user: UserData) => void) {
   try {
+    console.log("Signing out...");
     await signOut(auth);
     setUser(EmptyUserData);
     console.log("Signed out!");

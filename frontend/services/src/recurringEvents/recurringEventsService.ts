@@ -191,3 +191,15 @@ export function calculateRecurrenceDates(newRecurrenceFormData: NewRecurrenceFor
       return [];
   }
 }
+
+export function calculateRecurrenceEnded(recurrenceTemplate: RecurrenceTemplate) {
+  const lastRecurrence =
+    recurrenceTemplate.recurrenceData.allRecurrences[recurrenceTemplate.recurrenceData.allRecurrences.length - 1];
+  const lastRecurrenceKey = lastRecurrence.toString();
+  const lastPastRecurrenceCreated = recurrenceTemplate.recurrenceData.pastRecurrences[lastRecurrenceKey] !== undefined;
+
+  const todaysDate = Date.now();
+  const pastLastRecurrence = todaysDate > lastRecurrence.toMillis();
+
+  return lastPastRecurrenceCreated || pastLastRecurrence;
+}

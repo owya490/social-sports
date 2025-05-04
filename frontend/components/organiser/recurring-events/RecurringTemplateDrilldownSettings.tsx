@@ -4,7 +4,7 @@ import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTyp
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
 import { Button, Radio, Switch } from "@mantine/core";
-import { Option, Select, Spinner } from "@material-tailwind/react";
+import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { RecurringEventsPreviewTable } from "../../events/create/forms/RecurringEventsPreviewTable";
@@ -15,6 +15,7 @@ interface RecurringTemplateDrilldownSettingsProps {
   newRecurrenceData: NewRecurrenceFormData;
   setNewRecurrenceData: (data: NewRecurrenceFormData) => void;
   submitNewRecurrenceData: () => void;
+  isRecurrenceEnded: boolean;
 }
 
 const RecurringTemplateDrilldownSettings = ({
@@ -24,6 +25,7 @@ const RecurringTemplateDrilldownSettings = ({
   newRecurrenceData,
   setNewRecurrenceData,
   submitNewRecurrenceData,
+  isRecurrenceEnded,
 }: RecurringTemplateDrilldownSettingsProps) => {
   const [recurrenceDates, setRecurrenceDates] = useState<Timestamp[]>([]);
 
@@ -82,7 +84,7 @@ const RecurringTemplateDrilldownSettings = ({
             <label className="text-black text-lg font-semibold">Recurrence Settings</label>
             <Switch
               color="teal"
-              label="Enable Recurrence for this Event"
+              label={`${isRecurrenceEnded ? "Re-enable" : "Enable"} Recurrence for this Event`}
               size="sm"
               className="my-4"
               checked={newRecurrenceData.recurrenceEnabled}
@@ -93,6 +95,18 @@ const RecurringTemplateDrilldownSettings = ({
             {newRecurrenceData.recurrenceEnabled && (
               <>
                 {/* Styled in ./form.css to make it black and no ring border on focus */}
+                {/* {isRecurrenceEnded && (
+                  <Input
+                    className="w-80 sm:w-full"
+                    type="date"
+                    // value={formatStringToDate(newEditRegistrationDeadlineDate)}
+                    // onChange={(e) => {
+                    //   setNewEditRegistrationDeadlineDate(formatDateToString(e.target.value));
+                    // }}
+                    crossOrigin="false"
+                    label="Recurrence Start Date"
+                  ></Input>
+                )} */}
                 <Radio.Group
                   value={newRecurrenceData.frequency}
                   onChange={handleRecurrenceFrequencyChange}

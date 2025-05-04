@@ -5,7 +5,10 @@ import { useUser } from "@/components/utility/UserContext";
 import { EMPTY_RECURRENCE_TEMPLATE, Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
-import { getOrganiserRecurrenceTemplates } from "@/services/src/recurringEvents/recurringEventsService";
+import {
+  calculateRecurrenceEnded,
+  getOrganiserRecurrenceTemplates,
+} from "@/services/src/recurringEvents/recurringEventsService";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -68,6 +71,7 @@ export default function RecurringEventDashboard() {
                         createDaysBefore={0}
                         recurrenceEnabled={false}
                         loading={true}
+                        disabled={true}
                       />
                     </div>
                   );
@@ -104,6 +108,7 @@ export default function RecurringEventDashboard() {
                         recurrenceAmount={template.recurrenceData.recurrenceAmount}
                         createDaysBefore={template.recurrenceData.createDaysBefore}
                         recurrenceEnabled={template.recurrenceData.recurrenceEnabled}
+                        disabled={calculateRecurrenceEnded(template)}
                       />
                     </div>
                   );
