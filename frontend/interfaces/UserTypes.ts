@@ -3,13 +3,18 @@ import { FormId } from "./FormTypes";
 
 export type UserId = string;
 
-interface AbstractUserData {
+export type PublicUserData = {
   firstName: string;
   surname?: string;
-  location?: string;
   gender?: "Male" | "Female" | "Other" | "";
   dob?: string;
   age?: string;
+  profilePicture: string;
+  isVerifiedOrganiser?: boolean;
+};
+
+export type PrivateUserData = {
+  location?: string;
   contactInformation: {
     mobile?: string;
     email: string;
@@ -19,50 +24,24 @@ interface AbstractUserData {
       eventId: string;
     }
   ];
-  profilePicture: string;
   stripeAccount?: string;
   stripeAccountActive?: boolean;
   organiserEvents?: [string];
   recurrenceTemplates?: [string];
-  isVerifiedOrganiser?: boolean;
   forms?: FormId[];
-}
+};
 
-export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
-  firstName: string;
-  surname?: string;
-  gender?: "Male" | "Female" | "Other" | "";
-  dob?: string;
-  age?: string;
-  profilePicture: string;
-  isVerifiedOrganiser?: boolean;
-}
+type AbstractUserData = PublicUserData & PrivateUserData;
 
-export interface PrivateUserData extends AbstractUserData {
-  location?: string;
-  contactInformation: {
-    mobile?: string;
-    email: string;
-  };
-  activeBookings?: [
-    {
-      eventId: string;
-    }
-  ];
-  stripeAccount?: string;
-  stripeAccountActive?: boolean;
-  forms?: FormId[];
-}
+export type TempUserData = AbstractUserData;
 
-export interface TempUserData extends AbstractUserData {}
-
-export interface NewUserData extends AbstractUserData {
+export type NewUserData = AbstractUserData & {
   password: string;
-}
+};
 
-export interface UserData extends AbstractUserData {
+export type UserData = AbstractUserData & {
   userId: UserId;
-}
+};
 
 export const EmptyNewUserData: NewUserData = {
   firstName: "",
