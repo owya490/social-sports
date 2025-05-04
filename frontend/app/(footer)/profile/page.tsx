@@ -3,13 +3,13 @@ import Loading from "@/components/loading/Loading";
 import { FieldTypes, RenderEditableField, RenderNonEditableField } from "@/components/users/profile/ProfileFields";
 import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
 import { updateUser } from "@/services/src/users/usersService";
+import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
+import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
 import { Switch } from "@mantine/core";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const calculateAge = (birthday: string) => {
   const [day, month, year] = birthday.split("-");
@@ -26,93 +26,24 @@ const calculateAge = (birthday: string) => {
 };
 
 const Profile = () => {
-  const router = useRouter();
-
   const { user, setUser } = useUser();
-
-  const [editable, setEditable] = useState(false);
-
-  const today = new Date();
-
-  const formatDateForInput = (dateString: string) => {
-    const [dd, mm, yyyy] = dateString.split("-");
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const formatDateForProfile = (dateString: string) => {
-    const [yyyy, mm, dd] = dateString.split("-");
-    return `${dd}-${mm}-${yyyy}`;
-  };
-
-  const [editedData, setEditedData] = useState<UserData>(EmptyUserData);
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user.userId !== "") {
       window.scrollTo(0, 0);
-      setEditedData(user);
       setLoading(false);
     }
   }, [user]);
 
-  const handleInputChange = (changeEvent: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = changeEvent.target;
-    if (name === "dob") {
-      setEditedData((prevData) => ({
-        ...prevData,
-        dob: value == "" ? "Not Provided" : formatDateForProfile(value),
-        age: value == "" ? "" : calculateAge(formatDateForProfile(value)),
-      }));
-    } else {
-      setEditedData((prevData) => ({ ...prevData, [name]: value }));
-    }
-  };
-
-  const handleSelectChange = (changeEvent: ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = changeEvent.target;
-    setEditedData((prevData) => ({ ...prevData, [name]: value }));
-  };
-
-  // useEffect(() => {
-  //   if (isProfilePictureUpdated) {
-  //     try {
-  //       updateUser(initialProfileData.userId, editedData);
-  //     } catch {
-  //       router.push("/error");
-  //     }
-  //     setInitialProfileData({ ...editedData });
-  //     setIsProfilePictureUpdated(false);
-  //   }
-  // }, [isProfilePictureUpdated, editedData, initialProfileData]);
-
-  const handleInputChangeMobile = (changeEvent: ChangeEvent<HTMLInputElement>) => {
-    setEditedData({
-      ...editedData,
-      contactInformation: {
-        email: editedData.contactInformation!.email,
-        mobile: changeEvent.target.value,
-      },
+  const handleUserProfileUpdate = (field: string, value: any) => {
+    // Need to update remote data respective to public/ private
+    updateUser(user.userId, { [field]: value });
+    // Need to update local user data
+    setUser({
+      ...user,
+      [field]: value,
     });
-  };
-
-  const handleEditClick = () => {
-    setEditable(!editable);
-    setEditedData({ ...user });
-  };
-
-  const handleSaveClick = () => {
-    if (editedData.firstName.trim() === "") {
-      return;
-    }
-
-    console.log("Saving changes:", editedData);
-    setEditable(false);
-    try {
-      updateUser(editedData.userId, editedData);
-    } catch {
-      router.push("/error");
-    }
   };
 
   return loading ? (
@@ -134,24 +65,15 @@ const Profile = () => {
               )}
             </div>
 
-            <ProfilePhotoPanel user={user} setUser={setUser} setEditedData={setEditedData} />
+            <ProfilePhotoPanel user={user} setUser={setUser} />
             {/* <InfoSharedPanel /> */}
             {/* <LocationPanel /> */}
             <p className="text-xs font-light mt-2 ml-1">
               (If your edit profile picture isn&apos;t working, try closing and reopening or changing the browser.)
             </p>
             <div>
-              <div
-                className="mb-2 text-xl flex justify-between items-center"
-                style={{
-                  fontWeight: 400,
-                  borderBottom: "1px solid #ccc",
-                  width: "100%",
-                }}
-              >
-                <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Profile Settings</div>
-              </div>
-
+              <h2 className="mb-1 md:mb-2 lg:mt-1 text-xl">Profile Settings</h2>
+              <div className="h-[1px] bg-[#ccc] mb-2"></div>
               <div className="flex justify-between w-full mb-2">
                 <strong className="text-xs md:text-md font-medium text-gray-700">
                   Allow profile to be publically searchable?:
@@ -162,13 +84,7 @@ const Profile = () => {
                   className="ml-auto"
                   checked={user.isSearchable}
                   onChange={(event) => {
-                    setUser({
-                      ...user,
-                      isSearchable: event.currentTarget.checked,
-                    });
-                    updateUser(user.userId, {
-                      isSearchable: event.currentTarget.checked,
-                    });
+                    handleUserProfileUpdate("isSearchable", event.currentTarget.checked);
                   }}
                 />
               </div>
@@ -176,90 +92,100 @@ const Profile = () => {
           </div>
 
           <div className="basis-3/5 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
-            <div
-              className="mb-2 text-xl flex justify-between items-center"
-              style={{
-                fontWeight: 400,
-                borderBottom: "1px solid #ccc",
-                width: "100%",
-              }}
-            >
-              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Personal Details</div>
-            </div>
+            <h2 className="mb-1 md:mb-2 lg:mt-1 text-xl">Personal Details</h2>
+            <div className="h-[1px] bg-[#ccc] mb-2"></div>
             <ul className="w-full">
               <RenderEditableField
                 label="First Name"
                 value={user.firstName}
                 type={FieldTypes.SHORT_TEXT}
-                onSubmit={(value) => {
-                  // Need to update local user data
-                  setUser({
-                    ...user,
-                    firstName: value,
-                  });
-                  // Need to update remote data respective to public/ private
-                  updateUser(user.userId, { firstName: value });
-                }}
+                onSubmit={(value) => handleUserProfileUpdate("firstName", value)}
               />
-              <RenderEditableField label="Last Name" value={user.surname} type={FieldTypes.SHORT_TEXT} />
-              <RenderEditableField label="Location" value={user.location} type={FieldTypes.SHORT_TEXT} />
-              <RenderEditableField label="Date of Birth" value={user.dob} type={FieldTypes.DATE} />
+              <RenderEditableField
+                label="Last Name"
+                value={user.surname}
+                type={FieldTypes.SHORT_TEXT}
+                onSubmit={(value) => handleUserProfileUpdate("surname", value)}
+              />
+              <RenderEditableField
+                label="Location"
+                value={user.location}
+                type={FieldTypes.SHORT_TEXT}
+                onSubmit={(value) => handleUserProfileUpdate("location", value)}
+              />
+              <RenderEditableField
+                label="Date of Birth"
+                value={user.dob}
+                type={FieldTypes.DATE}
+                onSubmit={(value) => handleUserProfileUpdate("dob", value)}
+              />
               <RenderEditableField
                 label="Gender"
                 value={user.gender}
                 type={FieldTypes.SELECT}
                 options={["Male", "Female"]}
+                onSubmit={(value) => handleUserProfileUpdate("gender", value)}
               />
             </ul>
-
-            <div
-              className="mt-4 mb-2 text-xl flex justify-between items-center"
-              style={{
-                fontWeight: 400,
-                borderBottom: "1px solid #ccc",
-                width: "100%",
-              }}
-            >
-              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Public Info</div>
-            </div>
+            <h2 className="mb-1 md:mb-2 lg:mt-1 text-xl">Public Info</h2>
+            <div className="h-[1px] bg-[#ccc] mb-2"></div>
             <ul className="w-full">
               <RenderEditableField
                 label="Contact Email"
                 value={user.publicContactInformation.email}
                 type={FieldTypes.SHORT_TEXT}
+                onSubmit={(value) =>
+                  handleUserProfileUpdate("publicContactInformation", {
+                    ...user.publicContactInformation,
+                    email: value,
+                  })
+                }
               />
               <RenderEditableField
                 label="Phone Number"
                 value={user.publicContactInformation.mobile}
                 type={FieldTypes.SHORT_TEXT}
                 customValidation={(input) => /^\d*$/.test(input)} // Only allow numbers and empty string, no decimal or commas
+                onSubmit={(value) =>
+                  handleUserProfileUpdate("publicContactInformation", {
+                    ...user.publicContactInformation,
+                    mobile: value,
+                  })
+                }
               />
-              <RenderEditableField label="Bio" value={user.bio} type={FieldTypes.LONG_TEXT} />
+              <RenderEditableField
+                label="Bio"
+                value={user.bio}
+                type={FieldTypes.LONG_TEXT}
+                onSubmit={(value) => handleUserProfileUpdate("bio", value)}
+              />
             </ul>
-
-            <div
-              className="mt-4 mb-2 text-xl flex justify-between items-center"
-              style={{
-                fontWeight: 400,
-                borderBottom: "1px solid #ccc",
-                width: "100%",
-              }}
-            >
-              <div className="mb-1 md:mb-2 lg:mt-1 justify-start">Private Info</div>
-            </div>
+            <h2 className="mb-1 md:mb-2 lg:mt-1 text-xl">Private Info</h2>
+            <div className="h-[1px] bg-[#ccc] mb-2"></div>
             <ul className="w-full">
               <RenderNonEditableField label="User ID" value={user.userId} />
-              <RenderEditableField label="Username" value={user.username} type={FieldTypes.SHORT_TEXT} />
               <RenderEditableField
-                label="Private Email"
-                value={user.contactInformation.email}
+                label="Username"
+                value={user.username}
                 type={FieldTypes.SHORT_TEXT}
+                onSubmit={(value) => {
+                  updateUsername(user.userId, value);
+                  bustUserLocalStorageCache();
+                  setUser({
+                    ...user,
+                    username: value,
+                  });
+                }}
               />
+              <RenderNonEditableField label="Private Email" value={user.contactInformation.email} />
               <RenderEditableField
                 label="Private Phone Number"
                 value={user.contactInformation.mobile}
                 type={FieldTypes.SHORT_TEXT}
                 customValidation={(input) => /^\d*$/.test(input)} // Only allow numbers and empty string, no decimal or commas
+                onSubmit={(value) =>
+                  handleUserProfileUpdate("contactInformation", { ...user.contactInformation, mobile: value })
+                }
               />
             </ul>
           </div>

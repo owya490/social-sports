@@ -1,7 +1,7 @@
 import { PrivateUserData, PublicUserData, UserData, UserId, UsernameMap } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
-import { deleteDoc, doc, getDoc, runTransaction, setDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, runTransaction, setDoc, Transaction, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
 import { DEFAULT_USER_PROFILE_PICTURE } from "./usersConstants";
@@ -35,7 +35,8 @@ export async function createUser(data: UserData, userId: string): Promise<void> 
 export async function getPublicUserById(
   userId: UserId,
   bypassCache: boolean = false,
-  client: boolean = true
+  client: boolean = true,
+  transaction?: Transaction
 ): Promise<PublicUserData> {
   userServiceLogger.info(`Fetching public user by ID:, ${userId}`);
   if (userId === undefined) {
@@ -51,9 +52,14 @@ export async function getPublicUserById(
         return userDataLocalStorage;
       }
     }
-
-    const userDoc = await getDoc(doc(db, "Users", "Active", "Public", userId));
-    if (!userDoc.exists()) {
+    const userDocRef = doc(db, "Users", "Active", "Public", userId);
+    var userDoc;
+    if (transaction) {
+      userDoc = await transaction.get(userDocRef);
+    } else {
+      userDoc = await getDoc(userDocRef);
+    }
+    if (!userDoc.exists() || userDoc === undefined) {
       throw new UserNotFoundError(userId);
     }
     const userData = userDoc.data() as PublicUserData;
@@ -155,7 +161,7 @@ export async function deleteUser(userId: UserId): Promise<void> {
   }
 }
 
-export async function updateUser(userId: UserId, newData: Partial<UserData>): Promise<void> {
+export async function updateUser(userId: UserId, newData: Partial<UserData>, transaction?: Transaction): Promise<void> {
   userServiceLogger.info(`Update user by ID:, ${userId}`);
 
   if (userId === undefined) {
@@ -168,15 +174,19 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>): Pr
     const publicUserDocRef = doc(db, "Users", "Active", "Public", userId);
     const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
 
-    // Update public user data
+    // Extract public & private user data
     const publicDataToUpdate = extractPublicUserData(newData);
-
-    await updateDoc(publicUserDocRef, publicDataToUpdate);
-
-    // Update private user data
     const privateDataToUpdate = extractPrivateUserData(newData);
 
-    await updateDoc(privateUserDocRef, privateDataToUpdate);
+    // Update public & private user data
+    if (transaction) {
+      transaction.update(publicUserDocRef, publicDataToUpdate);
+      transaction.update(privateUserDocRef, privateDataToUpdate);
+    } else {
+      await updateDoc(publicUserDocRef, publicDataToUpdate);
+      await updateDoc(privateUserDocRef, privateDataToUpdate);
+    }
+
     userServiceLogger.info(`User updated successfully:", ${userId}`);
   } catch (error) {
     userServiceLogger.error(`Error updating user with ID ${userId}:, ${error}`);
@@ -210,16 +220,26 @@ export async function getFullUserByIdForUserContextWithRetries(userId: string): 
   throw new UsersServiceError(userId, "Reached maximum retries, throwing error gracefully");
 }
 
-export async function getUsernameMapping(username: string, bypassErrorLogging = false): Promise<UsernameMap> {
+export async function getUsernameMapping(
+  username: string,
+  bypassErrorLogging = false,
+  transaction?: Transaction
+): Promise<UsernameMap> {
   userServiceLogger.info(`Fetching username: ${username}`);
   if (username === undefined) {
     userServiceLogger.warn(`Provided username is undefined: ${username}`);
     throw new UserNotFoundError(username, "UserId is undefined");
   }
   try {
-    const usernameDoc = await getDoc(doc(db, "Usernames", username));
+    const usernameDocRef = doc(db, "Usernames", username);
+    var usernameDoc;
+    if (transaction) {
+      usernameDoc = await transaction.get(usernameDocRef);
+    } else {
+      usernameDoc = await getDoc(usernameDocRef);
+    }
 
-    if (!usernameDoc.exists()) {
+    if (!usernameDoc.exists() || username === undefined) {
       throw new UserNotFoundError(username); // Or handle accordingly if you need to differentiate between empty and non-existent data
     }
 

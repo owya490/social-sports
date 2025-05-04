@@ -1,4 +1,5 @@
 "use client";
+import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
 import ChevronLeftButton from "@/components/elements/ChevronLeftButton";
 import ChevronRightButton from "@/components/elements/ChevronRightButton";
 import EventCard from "@/components/events/EventCard";
@@ -103,7 +104,9 @@ export default function UserProfilePage({ params }: any) {
           </div>
           <div id="col-2" className="pt-8">
             <h1 className="hidden md:block text-3xl font-bold">{`About ${publicUserProfile.firstName} ${publicUserProfile.surname}`}</h1>
-            <p className="md:pt-8 pb-6 font-light">{publicUserProfile.bio || "No bio provided."}</p>
+            <p className="md:pt-8 pb-6 font-light">
+              <RichTextEditorContent description={publicUserProfile.bio || "No bio provided."}/>
+            </p>
             <div className="h-[1px] bg-core-outline my-4"></div>
           </div>
         </div>

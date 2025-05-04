@@ -4,20 +4,18 @@ import Upload from "@/public/images/upload.png";
 import { uploadProfilePhoto } from "@/services/src/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import imageCompression from "browser-image-compression";
-import { deleteObject, getDownloadURL, getMetadata, getStorage, ref } from "firebase/storage";
+import { deleteObject, getMetadata, getStorage, ref } from "firebase/storage";
 import Image from "next/image";
 import Link from "next/link";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useState } from "react";
 
 interface ProfilePhotoPanelProps {
   user: UserData;
   setUser: (user: UserData) => void;
-  setEditedData: (user: any) => void;
 }
 
-export const ProfilePhotoPanel = ({ user, setUser, setEditedData }: ProfilePhotoPanelProps) => {
+export const ProfilePhotoPanel = ({ user, setUser }: ProfilePhotoPanelProps) => {
   const storage = getStorage();
-  const defaultProfilePicturePath = "users/generic/generic-profile-photo.webp";
 
   const [isHovered, setIsHovered] = useState(false);
 
@@ -37,23 +35,6 @@ export const ProfilePhotoPanel = ({ user, setUser, setEditedData }: ProfilePhoto
     }
     return true;
   };
-
-  useEffect(() => {
-    const fetchDefaultProfilePictureURL = async () => {
-      try {
-        const storageRef = ref(storage, defaultProfilePicturePath);
-        const downloadURL = await getDownloadURL(storageRef);
-        setEditedData((prevData: UserData) => ({
-          ...prevData,
-          profilePicture: prevData.profilePicture || downloadURL,
-        }));
-      } catch (error) {
-        console.error("Error fetching default profile picture:", error);
-      }
-    };
-
-    fetchDefaultProfilePictureURL();
-  }, [defaultProfilePicturePath]);
 
   // Compress image before upload
   const handleImageUpload = async (imageFile: File) => {
@@ -132,6 +113,7 @@ export const ProfilePhotoPanel = ({ user, setUser, setEditedData }: ProfilePhoto
           onClick={() => {
             document.getElementById("Image_input")!.click();
           }}
+          priority
         />
         <div className="absolute bottom-0 inset-x-0">
           <div className="flex items-center justify-center bg-black bg-opacity-50 text-white text-lg font-semibold py-2">
@@ -144,7 +126,10 @@ export const ProfilePhotoPanel = ({ user, setUser, setEditedData }: ProfilePhoto
             <input
               type="file"
               id="Image_input"
-              onChange={handleFileInputChange}
+              onChange={(e) => {
+                console.log("Owen");
+                handleFileInputChange(e);
+              }}
               className="hidden"
               accept=".jpg,.jpeg,.png"
             />
@@ -155,6 +140,7 @@ export const ProfilePhotoPanel = ({ user, setUser, setEditedData }: ProfilePhoto
               height={0}
               className="rounded-full object-cover h-30 w-30 opacity-60"
               onClick={() => {
+                document.getElementById("Image_input")!.nodeValue = null;
                 document.getElementById("Image_input")!.click();
               }}
             />
