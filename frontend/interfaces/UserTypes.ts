@@ -1,7 +1,8 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { FormId } from "./FormTypes";
+import { Branded } from ".";
 
-export type UserId = string;
+export type UserId = Branded<string, "UserId">;
 
 export type PublicUserData = {
   firstName: string;
@@ -56,7 +57,7 @@ export const EmptyNewUserData: NewUserData = {
 };
 
 export const EmptyUserData: UserData = {
-  userId: "",
+  userId: "" as UserId,
   firstName: "",
   contactInformation: {
     email: "",

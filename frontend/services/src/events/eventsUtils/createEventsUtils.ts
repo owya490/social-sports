@@ -1,6 +1,7 @@
 import { EventMetadata, NewEventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { EVENTS_REFRESH_MILLIS, LocalStorageKeys } from "../eventsConstants";
+import { UserId } from "@/interfaces/UserTypes";
 const rateLimitLogger = new Logger("RateLimitLogger");
 
 export function rateLimitCreateEvents(): boolean {

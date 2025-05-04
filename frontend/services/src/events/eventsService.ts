@@ -28,7 +28,7 @@ import {
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
@@ -218,7 +218,7 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
 export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
   eventServiceLogger.info(`getOrganiserEvents`);
   try {
-    const privateDoc = await getPrivateUserById(userId);
+    const privateDoc = await getPrivateUserById(userId as UserId);
 
     const organiserEvents = privateDoc.organiserEvents || [];
     const promisesList: Promise<EventData | null>[] = [];
@@ -235,7 +235,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
       );
     }
     await Promise.all(promisesList).then((results: (EventData | null)[]) => {
-      const filteredResults = results.filter((result) => result != null)
+      const filteredResults = results.filter((result) => result != null);
       for (const event of results) {
         eventDataList.push(event!);
       }

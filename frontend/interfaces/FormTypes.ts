@@ -30,44 +30,44 @@ export enum FormSectionType {
   DATE_TIME = "DATE_TIME",
 }
 
-interface AbstractSection {
+type AbstractSection = {
   type: FormSectionType;
   question: string;
   imageUrl: string | null; // image attached to question
   required: boolean;
-}
+};
 
-export interface TextSection extends AbstractSection {
+export type TextSection = AbstractSection & {
   type: FormSectionType.TEXT;
   answer?: string;
-}
+};
 
-export interface MultipleChoiceSection extends AbstractSection {
+export type MultipleChoiceSection = AbstractSection & {
   type: FormSectionType.MULTIPLE_CHOICE;
   options: string[];
   answer?: string; // value of chosen option
-}
+};
 
-export interface DropdownSelectSection extends AbstractSection {
+export type DropdownSelectSection = AbstractSection & {
   type: FormSectionType.DROPDOWN_SELECT;
   options: string[];
   answer?: string; // value of chosen option
-}
+};
 
-export interface FileUploadSection extends AbstractSection {
+export type FileUploadSection = AbstractSection & {
   type: FormSectionType.FILE_UPLOAD;
   fileUrl?: string;
-}
+};
 
-export interface DateTimeSection extends AbstractSection {
+export type DateTimeSection = AbstractSection & {
   type: FormSectionType.DATE_TIME;
   timestamp?: string; // uct time
-}
+};
 
 /** Contains the answers of the form from the responder */
-export interface FormResponse {
+export type FormResponse = {
   formId: FormId;
   responseMap: Record<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
   submissionTime?: number;
-}
+};
