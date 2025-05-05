@@ -2,15 +2,15 @@ import { EmptyUserData, NewUserData, TempUserData, UserData, UserId } from "@/in
 import { Logger } from "@/observability/logger";
 import { FirebaseError } from "@firebase/util";
 import {
+  createUserWithEmailAndPassword,
   FacebookAuthProvider,
   GoogleAuthProvider,
-  UserCredential,
-  createUserWithEmailAndPassword,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  UserCredential,
 } from "firebase/auth";
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
@@ -50,6 +50,7 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
 
 export async function handleSignOut(setUser: (user: UserData) => void) {
   try {
+    console.log("Signing out...");
     await signOut(auth);
     setUser(EmptyUserData);
     console.log("Signed out!");

@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { RecurringEventsPreviewTable } from "./RecurringEventsPreviewTable";
 import "./form.css";
 
-export const MAX_RECURRENCE_AMOUNT = 6;
+export const MAX_RECURRENCE_AMOUNT = 99;
 
 interface RecurringEventsFormProps {
   startDate: string;
