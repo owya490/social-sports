@@ -20,6 +20,8 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
 import { useUser } from "../utility/UserContext";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 
 export default function ProfilePic() {
   const [loading, setLoading] = useState(true);
@@ -62,6 +64,10 @@ export default function ProfilePic() {
 
   const handleLogOut = () => {
     handleSignOut(setUser);
+    // clearing all caches and relaoding page as we have magical bug where users are re-signed in...
+    bustEventsLocalStorageCache()
+    bustUserLocalStorageCache()
+    location.reload();
     router.push("/");
   };
 

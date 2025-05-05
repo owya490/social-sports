@@ -77,6 +77,12 @@ public class RecurrenceTemplateRepository {
         return recurrenceTemplateDocRef.getId();
     }
 
+    public static String createRecurrenceTemplate(String recurrenceTemplateId, boolean isActive, boolean isPrivate, RecurrenceTemplate recurrenceTemplate) throws ExecutionException, InterruptedException {
+        DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(recurrenceTemplateId, isActive, isPrivate);
+        recurrenceTemplateDocRef.create(recurrenceTemplate).get();
+        return recurrenceTemplateDocRef.getId();
+    }
+
     public static String updateRecurrenceTemplate(String recurrenceTemplateId, RecurrenceTemplate recurrenceTemplate) throws ExecutionException, InterruptedException {
         return updateRecurrenceTemplate(recurrenceTemplateId, recurrenceTemplate, null);
     }
@@ -105,6 +111,19 @@ public class RecurrenceTemplateRepository {
             transaction.delete(recurrenceTemplateDocRef);
         }
         return recurrenceTemplateDocRef.getId();
+    }
+
+    public static String moveRecurrenceTemplateToActive(String recurrenceTemplateId, RecurrenceTemplate recurrenceTemplate) throws ExecutionException, InterruptedException {
+        boolean isRecurrencePrivate = recurrenceTemplate.getEventData().getIsPrivate();
+        
+        // 1. Update the recurrence template back to active
+        recurrenceTemplate.getEventData().setIsActive(true);
+        // 2. Recreate the recurrence template in the active folder with the same ID
+        createRecurrenceTemplate(recurrenceTemplateId, true, isRecurrencePrivate, recurrenceTemplate);
+        // 3. Delete the old recurrence template in the inactive folder with the same ID
+        deleteRecurrenceTemplate(recurrenceTemplateId, false, isRecurrencePrivate);
+
+        return recurrenceTemplateId;
     }
 
     public static <T> T createFirestoreTransaction(Transaction.Function<T> consumer) {
