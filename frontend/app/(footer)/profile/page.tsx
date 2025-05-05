@@ -1,7 +1,7 @@
 "use client";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import eye from "@/public/images/Eye.png";
 import location from "@/public/images/location.png";
 import Upload from "@/public/images/upload.png";
@@ -74,7 +74,7 @@ const Profile = () => {
         dob: user?.dob || "", // DD-MM-YYYY format
         age: calculateAge(user?.dob || "") || "", // Calculate initial age
         gender: user?.gender || "",
-        userId: user?.userId || "",
+        userId: user?.userId || ("" as UserId),
       });
       setEditedData({
         firstName: user?.firstName || "",
@@ -88,7 +88,7 @@ const Profile = () => {
         dob: user?.dob || "", // DD-MM-YYYY format
         age: calculateAge(user?.dob || ""), // Calculate initial age
         gender: user?.gender || "",
-        userId: user?.userId || "",
+        userId: user?.userId || ("" as UserId),
       });
     }
     setInitialState();

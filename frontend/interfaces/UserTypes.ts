@@ -1,15 +1,21 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { FormId } from "./FormTypes";
+import { Branded } from ".";
 
-export type UserId = string;
+export type UserId = Branded<string, "UserId">;
 
-interface AbstractUserData {
+export type PublicUserData = {
   firstName: string;
   surname?: string;
-  location?: string;
   gender?: "Male" | "Female" | "Other" | "";
   dob?: string;
   age?: string;
+  profilePicture: string;
+  isVerifiedOrganiser?: boolean;
+};
+
+export type PrivateUserData = {
+  location?: string;
   contactInformation: {
     mobile?: string;
     email: string;
@@ -19,50 +25,24 @@ interface AbstractUserData {
       eventId: string;
     }
   ];
-  profilePicture: string;
   stripeAccount?: string;
   stripeAccountActive?: boolean;
   organiserEvents?: [string];
   recurrenceTemplates?: [string];
-  isVerifiedOrganiser?: boolean;
   forms?: FormId[];
-}
+};
 
-export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
-  firstName: string;
-  surname?: string;
-  gender?: "Male" | "Female" | "Other" | "";
-  dob?: string;
-  age?: string;
-  profilePicture: string;
-  isVerifiedOrganiser?: boolean;
-}
+type AbstractUserData = PublicUserData & PrivateUserData;
 
-export interface PrivateUserData extends AbstractUserData {
-  location?: string;
-  contactInformation: {
-    mobile?: string;
-    email: string;
-  };
-  activeBookings?: [
-    {
-      eventId: string;
-    }
-  ];
-  stripeAccount?: string;
-  stripeAccountActive?: boolean;
-  forms?: FormId[];
-}
+export type TempUserData = AbstractUserData;
 
-export interface TempUserData extends AbstractUserData {}
-
-export interface NewUserData extends AbstractUserData {
+export type NewUserData = AbstractUserData & {
   password: string;
-}
+};
 
-export interface UserData extends AbstractUserData {
+export type UserData = AbstractUserData & {
   userId: UserId;
-}
+};
 
 export const EmptyNewUserData: NewUserData = {
   firstName: "",
@@ -77,7 +57,7 @@ export const EmptyNewUserData: NewUserData = {
 };
 
 export const EmptyUserData: UserData = {
-  userId: "",
+  userId: "" as UserId,
   firstName: "",
   contactInformation: {
     email: "",

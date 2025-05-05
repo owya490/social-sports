@@ -10,7 +10,7 @@ export const INVALID_LNG = -1;
 
 export type EventAttendees = { [emailHash: string]: number };
 
-interface AbstractEventData {
+type AbstractEventData = {
   startDate: Timestamp;
   endDate: Timestamp;
   location: string; // Assuming "address" is a string
@@ -21,7 +21,7 @@ interface AbstractEventData {
   capacity: number;
   vacancy: number;
   price: number;
-  organiserId: string;
+  organiserId: UserId;
   registrationDeadline: Timestamp;
   name: string;
   description: string;
@@ -41,23 +41,23 @@ interface AbstractEventData {
   promotionalCodesEnabled: boolean; // should default to false
   paused: boolean; // should default to false
   eventLink: string;
-}
+};
 
-export interface NewEventData extends AbstractEventData {}
+export type NewEventData = AbstractEventData;
 
-export interface EventData extends AbstractEventData {
+export type EventData = AbstractEventData & {
   eventId: EventId;
   organiser: UserData;
-}
+};
 
-export interface EventDataWithoutOrganiser extends AbstractEventData {
+export type EventDataWithoutOrganiser = AbstractEventData & {
   eventId: EventId;
-}
+};
 
-export interface DeletedEvent extends AbstractEventData {
+export type DeletedEvent = AbstractEventData & {
   deletedAt: Timestamp;
   organiserEmail: string;
-}
+};
 
 export const EmptyEventData: EventData = {
   eventId: "",
@@ -72,7 +72,7 @@ export const EmptyEventData: EventData = {
   capacity: 0,
   vacancy: 0,
   price: 0,
-  organiserId: "",
+  organiserId: "" as UserId,
   registrationDeadline: new Timestamp(0, 0),
   name: "",
   description: "",
@@ -92,34 +92,34 @@ export const EmptyEventData: EventData = {
   eventLink: "",
 };
 
-export interface EventMetadata {
+export type EventMetadata = {
   eventId?: EventId;
   purchaserMap: Record<EmailHash, Purchaser>;
   completeTicketCount: number;
   completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
   organiserId: UserId;
   orderIds: OrderId[];
-}
+};
 
 export const EmptyEventMetadata: EventMetadata = {
   eventId: "",
   purchaserMap: { "": { email: "", attendees: { "": { phone: "", ticketCount: 0 } }, totalTicketCount: 0 } },
   completeTicketCount: 0,
   completedStripeCheckoutSessionIds: [],
-  organiserId: "",
+  organiserId: "" as UserId,
   orderIds: [],
 };
 
-export interface Purchaser {
+export type Purchaser = {
   email: string;
   attendees: Record<Name, Attendee>;
   totalTicketCount: number;
-}
+};
 
-export interface Attendee {
+export type Attendee = {
   phone: string;
   ticketCount: number;
-}
+};
 
 export type Name = string;
 type EmailHash = string;

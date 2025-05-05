@@ -1,5 +1,5 @@
 import { EmptyEventData, EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
-import { UserData } from "@/interfaces/UserTypes";
+import { UserData, UserId } from "@/interfaces/UserTypes";
 import {
   CollectionReference,
   DocumentData,

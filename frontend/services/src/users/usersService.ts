@@ -184,7 +184,7 @@ export async function getFullUserByIdForUserContextWithRetries(userId: string): 
     count += 1;
     try {
       // If we successfully get user, we want to exit retry loop
-      return await getFullUserById(userId);
+      return await getFullUserById(userId as UserId);
     } catch (error) {
       if (error instanceof UserNotFoundError) {
         // We got a unexist user thats logged in? PANIC THIS IS BAD AND UNEXPECTED just rethrow..

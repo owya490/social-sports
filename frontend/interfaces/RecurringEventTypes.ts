@@ -9,29 +9,29 @@ export enum Frequency {
   MONTHLY = "MONTHLY",
 }
 
-export interface RecurrenceData {
+export type RecurrenceData = {
   frequency: Frequency;
   recurrenceAmount: number;
   createDaysBefore: number;
   recurrenceEnabled: boolean;
   allRecurrences: Timestamp[];
   pastRecurrences: Record<string, EventId>;
-}
+};
 
-export interface RecurrenceTemplate {
+export type RecurrenceTemplate = {
   recurrenceTemplateId: RecurrenceTemplateId;
   eventData: NewEventData;
   recurrenceData: RecurrenceData;
-}
+};
 
-export interface NewRecurrenceData extends RecurrenceData {}
+export type NewRecurrenceData = RecurrenceData;
 
-export interface RecurringEventsData {
+export type RecurringEventsData = {
   eventDataTemplate: NewEventData;
   recurrenceData: NewRecurrenceData;
-}
+};
 
-export interface NewRecurrenceFormData {
+export type NewRecurrenceFormData = {
   /**
    * The frequency at which the event will recur.
    */
@@ -48,7 +48,7 @@ export interface NewRecurrenceFormData {
    * If recurrence is enabled for this event.
    */
   recurrenceEnabled: boolean;
-}
+};
 
 export const DEFAULT_RECURRENCE_FORM_DATA: NewRecurrenceFormData = {
   frequency: Frequency.WEEKLY,
