@@ -4,7 +4,7 @@ import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTyp
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
 import { Button, Radio, Switch } from "@mantine/core";
-import { Input, Option, Select, Spinner } from "@material-tailwind/react";
+import { Option, Select, Spinner } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { RecurringEventsPreviewTable } from "../../events/create/forms/RecurringEventsPreviewTable";
@@ -158,18 +158,18 @@ const RecurringTemplateDrilldownSettings = ({
             )}
           </div>
           <div>
-            {newRecurrenceData.recurrenceEnabled && (
-              <div className="h-full flex items-center">
-                <div className="w-full">
+            <div className="h-full flex items-center">
+              <div className="w-full">
+                {newRecurrenceData.recurrenceEnabled && (
                   <RecurringEventsPreviewTable recurrenceDates={recurrenceDates} />
-                  <div className="flex w-full mt-6">
-                    <Button variant="light" color="dark" className="ml-auto" onClick={submitNewRecurrenceData}>
-                      {updating ? <Spinner /> : <>Save</>}
-                    </Button>
-                  </div>
+                )}
+                <div className="flex w-full mt-6">
+                  <Button variant="light" color="dark" className="ml-auto" onClick={submitNewRecurrenceData}>
+                    {updating ? <Spinner /> : <>Save</>}
+                  </Button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}
