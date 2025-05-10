@@ -25,7 +25,7 @@ interface AbstractUserData {
   organiserEvents?: [string];
   recurrenceTemplates?: [string];
   isVerifiedOrganiser?: boolean;
-  forms?: [FormId];
+  forms?: FormId[];
 }
 
 export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
@@ -51,6 +51,7 @@ export interface PrivateUserData extends AbstractUserData {
   ];
   stripeAccount?: string;
   stripeAccountActive?: boolean;
+  forms?: FormId[];
 }
 
 export interface TempUserData extends AbstractUserData {}
