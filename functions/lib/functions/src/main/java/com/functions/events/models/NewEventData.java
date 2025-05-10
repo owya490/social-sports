@@ -1,5 +1,6 @@
 package com.functions.events.models;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

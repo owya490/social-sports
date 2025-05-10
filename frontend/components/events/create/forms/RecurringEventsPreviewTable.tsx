@@ -9,7 +9,7 @@ interface RecurringEventsPreviewTableProps {
 
 export const RecurringEventsPreviewTable = ({ recurrenceDates }: RecurringEventsPreviewTableProps) => {
   return (
-    <Card className="w-full overflow-hidden overflow-y-auto">
+    <Card className="w-full overflow-hidden overflow-y-auto h-96">
       <table className="w-full min-w-max table-auto text-left">
         <thead>
           <tr>
@@ -22,7 +22,7 @@ export const RecurringEventsPreviewTable = ({ recurrenceDates }: RecurringEvents
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="">
           {recurrenceDates.map((date, index) => {
             const isLast = index === recurrenceDates.length - 1;
             const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
