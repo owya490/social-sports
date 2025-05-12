@@ -60,7 +60,7 @@ const EventDrilldownManageAttendeesPage = ({
             className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-2 md:px-4 py-1.5 md:py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
             onClick={() => setIsFilterModalOpen(true)}
           >
-            <PlusIcon className="md:mr-2 h-5 w-5 text-violet-200 hover:text-violet-100" />
+            <PlusIcon className="md:mr-2 h-5 w-5" />
             <span className="hidden md:block">Add Attendee</span>
           </div>
         </div>
