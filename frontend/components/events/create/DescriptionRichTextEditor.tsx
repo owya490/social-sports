@@ -1,10 +1,10 @@
 import { MantineProvider } from "@mantine/core";
 import { Link, RichTextEditor } from "@mantine/tiptap";
-import { useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
+import Underline from "@tiptap/extension-underline";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import "./custom-styles.css"; // Import custom styles
 
 export default function DescriptionRichTextEditor({
@@ -27,7 +27,7 @@ export default function DescriptionRichTextEditor({
 
   return (
     <MantineProvider>
-      <RichTextEditor editor={editor} className="list-style-circle min-h-[24rem]">
+      <RichTextEditor editor={editor} className="">
         <RichTextEditor.Toolbar sticky stickyOffset={60}>
           <RichTextEditor.ControlsGroup>
             <RichTextEditor.Bold />
