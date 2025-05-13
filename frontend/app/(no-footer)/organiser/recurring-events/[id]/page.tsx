@@ -15,6 +15,7 @@ import {
 } from "@/interfaces/RecurringEventTypes";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
 import {
+  calculateRecurrenceEnded,
   getRecurrenceTemplate,
   updateRecurrenceTemplateEventData,
   updateRecurrenceTemplateRecurrenceData,
@@ -55,6 +56,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
+  const [recurrenceEnded, setRecurrenceEnded] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -79,12 +81,22 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventIsActive(recurrenceTemplate.eventData.isActive);
         setEventRegistrationDeadline(recurrenceTemplate.eventData.registrationDeadline);
         setEventEventLink(recurrenceTemplate.eventData.eventLink);
-        setNewRecurrenceData(extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData));
+        const newRecurrenceData = extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData);
+        setNewRecurrenceData(newRecurrenceData);
         setPastEvents(recurrenceTemplate.recurrenceData.pastRecurrences);
         seteventPaused(recurrenceTemplate.eventData.paused);
         setEventPaymentsActive(recurrenceTemplate.eventData.paymentsActive);
         setEventStripeFeeToCustomer(recurrenceTemplate.eventData.stripeFeeToCustomer);
         setEventPromotionalCodesEnabled(recurrenceTemplate.eventData.promotionalCodesEnabled);
+        const isRecurrenceEnded = calculateRecurrenceEnded(recurrenceTemplate);
+        setRecurrenceEnded(isRecurrenceEnded);
+        // Edge case, if the recurrence is ended, it should not be enabled
+        if (isRecurrenceEnded) {
+          setNewRecurrenceData({
+            ...newRecurrenceData,
+            recurrenceEnabled: false,
+          });
+        }
       })
       .finally(async () => {
         await sleep(500);
@@ -120,6 +132,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
           setNewRecurrenceData={setNewRecurrenceData}
           startDate={eventStartDate}
           submitNewRecurrenceData={submitNewRecurrenceData}
+          isRecurrenceEnded={recurrenceEnded}
         />
         <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
           <div id="side-panel" className="z-20">

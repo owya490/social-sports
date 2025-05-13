@@ -53,6 +53,7 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
 
 export async function handleSignOut(setUser: (user: UserData) => void) {
   try {
+    console.log("Signing out...");
     await signOut(auth);
     bustEventsLocalStorageCache();
     bustUserLocalStorageCache();

@@ -20,6 +20,7 @@ export interface RecurringTemplateCardProps {
   recurrenceAmount: number;
   createDaysBefore: number;
   recurrenceEnabled: boolean;
+  disabled: boolean;
 }
 
 export default function RecurringTemplateCard(props: RecurringTemplateCardProps) {
@@ -79,6 +80,7 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
                       label={`Recurrence is ${props.recurrenceEnabled ? "" : "Not"} Enabled`}
                       size="sm"
                       className="my-4"
+                      disabled={props.disabled}
                       checked={props.recurrenceEnabled}
                     />
                   </div>
