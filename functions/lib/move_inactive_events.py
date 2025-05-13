@@ -33,7 +33,7 @@ def move_event_to_inactive(transaction: Transaction, old_event_ref: DocumentRefe
 
 @firestore.transactional
 # Function to move an event from the upcoming organiser events to past
-def move_event_from_upcoming_organiser_events_to_past(transaction: Transaction, event_id: str, organiser_id: str):
+def move_event_from_upcoming_organiser_events_to_past(transaction: Transaction, event_id: str, organiser_id: str, is_private: bool):
     if organiser_id == "":
        ValueError(f"invalid organiserId for eventId {event_id}")
 
@@ -64,15 +64,20 @@ def move_event_from_upcoming_organiser_events_to_past(transaction: Transaction, 
         raise ValueError(f"Private organiser data not found for organiserId: {organiser_id}")
 
     private_data = private_doc.to_dict()
-    private_events = private_data.get('publicOrganiserEvents', [])
+    if (is_private):
+      event_list_key = "organiserEvents"
+    else:
+       event_list_key = "publicOrganiserEvents"
+
+    organiser_events = private_data.get(event_list_key, [])
 
     # Add the eventId to the private organiser events list
-    if event_id not in private_events:
-        private_events.append(event_id)
-        transaction.update(private_ref, {'publicOrganiserEvents': private_events})
-        print(f"Added eventId {event_id} to publicOrganiserEvents of {organiser_id}")
+    if event_id not in organiser_events:
+        organiser_events.append(event_id)
+        transaction.update(private_ref, {event_list_key: organiser_events})
+        print(f"Added eventId {event_id} to {event_list_key} of {organiser_id}")
     else:
-        print(f"eventId {event_id} already exists in private organiser events for organiserId: {organiser_id}")
+        print(f"eventId {event_id} already exists in {event_list_key} for organiserId: {organiser_id}")
 
 
 def get_and_move_public_inactive_events(today: date, logger: Logger):
@@ -95,7 +100,7 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
       # The events datetime is earlier so it has already passed, hence we should move it
       move_event_to_inactive(transaction=transaction, old_event_ref=db.collection(ACTIVE_PUBLIC).document(event_id), new_event_ref=db.collection(INACTIVE_PUBLIC).document(event_id))
       try: 
-        move_event_from_upcoming_organiser_events_to_past(transaction=transaction, event_id=event_id, organiser_id=organiser_id)
+        move_event_from_upcoming_organiser_events_to_past(transaction=transaction, event_id=event_id, organiser_id=organiser_id, is_private=event_dict.get("isPrivate"))
       except ValueError as e:
          print(f"An error has occured: {e}")
 
