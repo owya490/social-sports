@@ -33,14 +33,12 @@ def move_event_to_inactive(transaction: Transaction, old_event_ref: DocumentRefe
 
 @firestore.transactional
 # Function to move an event from the upcoming organiser events to past
-def move_event_from_upcoming_organiser_events_to_past(transaction: Transaction, event_id: str, organiser_id: str, is_private: bool):
+def remove_event_from_upcoming_organiser_events(logger: Logger, transaction: Transaction, event_id: str, organiser_id: str):
     if organiser_id == "":
        ValueError(f"invalid organiserId for eventId {event_id}")
 
     # Reference to the Public organiser data
     public_ref = db.collection('Users').document('Active').collection('Public').document(organiser_id)
-    # Reference to the Private organiser data
-    private_ref = db.collection('Users').document('Active').collection('Private').document(organiser_id)
 
     # Read the public organiser document data
     public_doc = public_ref.get(transaction=transaction)
@@ -48,36 +46,15 @@ def move_event_from_upcoming_organiser_events_to_past(transaction: Transaction, 
         raise ValueError(f"Public organiser data not found for organiserId: {organiser_id}")
     
     public_data = public_doc.to_dict()
-    upcoming_events = public_data.get('publicUpcomingOrganiserEvents', [])
+    upcoming_events: list = public_data.get('publicUpcomingOrganiserEvents', [])
 
     # Check if the eventId exists in the upcoming events list and remove it
     if event_id in upcoming_events:
         upcoming_events.remove(event_id)
         transaction.update(public_ref, {'publicUpcomingOrganiserEvents': upcoming_events})
-        print(f"Removed eventId {event_id} from publicUpcomingOrganiserEvents of {organiser_id}")
+        logger.info(f"Removed eventId {event_id} from publicUpcomingOrganiserEvents of {organiser_id}")
     else:
         raise ValueError(f"eventId {event_id} not found in publicUpcomingOrganiserEvents for organiserId: {organiser_id}")
-
-    # Read the private organiser document data
-    private_doc = private_ref.get(transaction=transaction)
-    if not private_doc.exists:
-        raise ValueError(f"Private organiser data not found for organiserId: {organiser_id}")
-
-    private_data = private_doc.to_dict()
-    if (is_private):
-      event_list_key = "organiserEvents"
-    else:
-       event_list_key = "publicOrganiserEvents"
-
-    organiser_events = private_data.get(event_list_key, [])
-
-    # Add the eventId to the private organiser events list
-    if event_id not in organiser_events:
-        organiser_events.append(event_id)
-        transaction.update(private_ref, {event_list_key: organiser_events})
-        print(f"Added eventId {event_id} to {event_list_key} of {organiser_id}")
-    else:
-        print(f"eventId {event_id} already exists in {event_list_key} for organiserId: {organiser_id}")
 
 
 def get_and_move_public_inactive_events(today: date, logger: Logger):
@@ -100,9 +77,9 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
       # The events datetime is earlier so it has already passed, hence we should move it
       move_event_to_inactive(transaction=transaction, old_event_ref=db.collection(ACTIVE_PUBLIC).document(event_id), new_event_ref=db.collection(INACTIVE_PUBLIC).document(event_id))
       try: 
-        move_event_from_upcoming_organiser_events_to_past(transaction=transaction, event_id=event_id, organiser_id=organiser_id, is_private=event_dict.get("isPrivate"))
+        remove_event_from_upcoming_organiser_events(logger, transaction=transaction, event_id=event_id, organiser_id=organiser_id)
       except ValueError as e:
-         print(f"An error has occured: {e}")
+         logger.error(f"An error has occured: {e}")
 
 
 def get_and_move_private_inactive_events(today: date):
