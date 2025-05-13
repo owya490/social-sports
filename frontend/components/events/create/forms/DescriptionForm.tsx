@@ -1,4 +1,4 @@
-import DescriptionRichTextEditor from "../DescriptionRichTextEditor";
+import DescriptionRichTextEditor from "../../../editor/DescriptionRichTextEditor";
 import { FormWrapper } from "./FormWrapper";
 
 type BasicData = {
