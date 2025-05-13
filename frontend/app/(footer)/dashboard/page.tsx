@@ -43,11 +43,6 @@ export default function Dashboard() {
     };
   };
 
-  // function sortAndSetEventDataList(events: EventData[]) {
-  //   events = events.sort((a, b) => b.accessCount - a.accessCount);
-  //   setEventDataList(events);
-  // }
-
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   });
