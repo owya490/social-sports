@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Navigate to the frontend directory
+cd frontend || exit 1
+
+# Run npm lint and capture the output
+echo "Running lint checks..."
+LINT_OUTPUT=$(npm run lint 2>&1)
+LINT_EXIT_CODE=$?
+
+# Check the exit code of the lint command
+if [ $LINT_EXIT_CODE -ne 0 ]; then
+  echo "❌ Linting errors detected. Commit aborted."
+  echo "--------------------------------------------"
+  echo "$LINT_OUTPUT"
+  echo "--------------------------------------------"
+  echo "Please fix the linting issues and try again."
+  exit 1
+fi
+
+echo "✅ Linting passed."
+
+# Run npm build and capture the output
+echo "Running build..."
+BUILD_OUTPUT=$(npm run build 2>&1)
+BUILD_EXIT_CODE=$?
+
+# Check the exit code of the build command
+if [ $BUILD_EXIT_CODE -ne 0 ]; then
+  echo "❌ Build failed. Commit aborted."
+  echo "--------------------------------------------"
+  echo "$BUILD_OUTPUT"
+  echo "--------------------------------------------"
+  echo "Please fix the build errors and try again."
+  exit 1
+fi
+
+echo "✅ Build successful."
+
+echo "🚀 Proceeding with commit!"
+
+exit 0

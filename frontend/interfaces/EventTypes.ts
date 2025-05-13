@@ -1,5 +1,5 @@
 import { Timestamp } from "firebase/firestore";
-import { EmptyUserData, UserData, UserId } from "./UserTypes";
+import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
 
 export type EventId = string;
 export type StripeCheckoutSessionId = string;
@@ -40,22 +40,28 @@ interface AbstractEventData {
   stripeFeeToCustomer: boolean; // should default to false
   promotionalCodesEnabled: boolean; // should default to false
   paused: boolean; // should default to false
+  eventLink: string;
 }
 
 export interface NewEventData extends AbstractEventData {}
 
 export interface EventData extends AbstractEventData {
   eventId: EventId;
-  organiser: UserData;
+  organiser: PublicUserData;
 }
 
 export interface EventDataWithoutOrganiser extends AbstractEventData {
   eventId: EventId;
 }
 
+export interface DeletedEvent extends AbstractEventData {
+  deletedAt: Timestamp;
+  organiserEmail: string;
+}
+
 export const EmptyEventData: EventData = {
   eventId: "",
-  organiser: EmptyUserData,
+  organiser: EmptyPublicUserData,
   startDate: new Timestamp(0, 0),
   endDate: new Timestamp(0, 0),
   location: "",
@@ -83,6 +89,7 @@ export const EmptyEventData: EventData = {
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
   paused: false,
+  eventLink: "",
 };
 
 export interface EventMetadata {

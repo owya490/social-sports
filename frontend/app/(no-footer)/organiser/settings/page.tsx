@@ -2,7 +2,7 @@
 import StripeSetup from "@/components/elements/StripeSetup";
 import Loading from "@/components/loading/Loading";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
-import OrganiserSettingsStripeCard from "@/components/organiser/OrganiserSettingsStripeCard";
+import OrganiserSettingsStripeCard from "@/components/organiser/settings/OrganiserSettingsStripeCard";
 import { useUser } from "@/components/utility/UserContext";
 import { getStripeAccId } from "@/services/src/stripe/stripeService";
 import { useEffect, useState } from "react";

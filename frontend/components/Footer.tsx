@@ -5,7 +5,9 @@ export default function Footer() {
   return (
     <footer className="w-full bg-white border-t-[1px] border-gray-400 bottom-0 h-8 flex justify-center items-center fixed">
       <div className="screen-width-dashboard text-xs flex">
-        <p className="mr-2">© 2024 SPORTSHUB</p>
+        <Link href="/aboutUs" className="mr-2">
+          © 2025 SPORTSHUB
+        </Link>
         <ol className="hidden sm:block">
           <Link href="/dashboard" className="mx-2">
             Dashboard
@@ -17,10 +19,13 @@ export default function Footer() {
             Create Event
           </Link>
         </ol>
-        <Link href="/suggestions" className="ml-auto flex justify-center items-center">
+        <Link href="/contact" className="ml-auto flex justify-center items-center mr-4">
           <LightBulbIcon className="h-4 mr-1" />
-          <p className="font-bold">Suggestions</p>
+          <p className="font-bold">Contact Us</p>
         </Link>
+        {/* <Link href="/contact" className="">
+          <p className="font-bold">Contact Us</p>
+        </Link> */}
       </div>
     </footer>
   );

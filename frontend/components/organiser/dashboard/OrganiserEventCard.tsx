@@ -1,6 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
-import { UserData } from "@/interfaces/UserTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { displayPrice } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
@@ -12,7 +12,7 @@ export interface OrganiserEventCardProps {
   eventId: EventId;
   image: string;
   name: string;
-  organiser: UserData;
+  organiser: PublicUserData;
   startTime: Timestamp;
   location: string;
   price: number;

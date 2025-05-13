@@ -1,5 +1,5 @@
-import { EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
-import { UserData } from "@/interfaces/UserTypes";
+import { EmptyEventData, EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import {
   CollectionReference,
   DocumentData,
@@ -89,6 +89,7 @@ export async function getAllEventsFromCollectionRef(
       try {
         const organiser = await getPublicUserById(event.organiserId);
         eventsData.push({
+          ...EmptyEventData, // initiate default values
           ...event,
           organiser: organiser,
         });
@@ -111,7 +112,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
   eventsData.map((event) => {
     eventsDataFinal.push({
       eventId: event.eventId,
-      organiser: event.organiser as UserData,
+      organiser: event.organiser as PublicUserData,
       startDate: new Timestamp(event.startDate.seconds, event.startDate.nanoseconds),
       endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
       location: event.location,
@@ -139,6 +140,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       stripeFeeToCustomer: event.stripeFeeToCustomer,
       promotionalCodesEnabled: event.promotionalCodesEnabled,
       paused: event.paused,
+      eventLink: event.eventLink,
     });
   });
   return eventsDataFinal;

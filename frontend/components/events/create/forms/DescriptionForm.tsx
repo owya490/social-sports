@@ -1,5 +1,4 @@
-import { useState } from "react";
-import DescriptionRichTextEditor from "../DescriptionRichTextEditor";
+import DescriptionRichTextEditor from "../../../editor/DescriptionRichTextEditor";
 import { FormWrapper } from "./FormWrapper";
 
 type BasicData = {
@@ -11,8 +10,6 @@ type DescriptionFormProps = BasicData & {
 };
 
 export function DescriptionForm({ description, updateField }: DescriptionFormProps) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const updateDescription = (e: string) => {
     updateField({
       description: e,

@@ -12,6 +12,8 @@ import {
   DocumentData,
   DocumentReference,
   WriteBatch,
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -24,14 +26,14 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys } from "./eventsConstants";
+import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
 import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../firebaseFunctionsService";
-import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
+import { getFullUserById, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
 import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
@@ -60,7 +62,7 @@ interface CreateEventResponse {
 //Function to create a Event
 export async function createEvent(data: NewEventData, externalBatch?: WriteBatch): Promise<EventId> {
   if (!rateLimitCreateEvents()) {
-    console.log("Rate Limited!!!");
+    eventServiceLogger.warn("Rate Limited!!!");
     throw "Rate Limited";
   }
   eventServiceLogger.info(`createEvent`);
@@ -79,11 +81,19 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     batch.set(docRef, eventDataWithTokens);
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
-    const user = await getPrivateUserById(data.organiserId);
+    const user = await getFullUserById(data.organiserId);
     if (user.organiserEvents === undefined) {
       user.organiserEvents = [docRef.id];
     } else {
       user.organiserEvents.push(docRef.id);
+    }
+    // If event is public, add it to the upcoming events
+    if (!eventDataWithTokens.isPrivate) {
+      if (user.publicUpcomingOrganiserEvents === undefined) {
+        user.publicUpcomingOrganiserEvents = [docRef.id];
+      } else {
+        user.publicUpcomingOrganiserEvents.push(docRef.id);
+      }
     }
     eventServiceLogger.info(`create event user: ${JSON.stringify(user, null, 2)}`);
     await updateUser(data.organiserId, user);
@@ -139,7 +149,7 @@ export async function getEventById(
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
-    var organiser: UserData = EmptyUserData;
+    var organiser: PublicUserData = EmptyPublicUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId, bypassCache, client);
     } catch (error) {
@@ -219,18 +229,26 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
     const privateDoc = await getPrivateUserById(userId);
 
     const organiserEvents = privateDoc.organiserEvents || [];
+    const promisesList: Promise<EventData | null>[] = [];
     const eventDataList: EventData[] = [];
+
     for (const eventId of organiserEvents) {
-      try {
-        const eventData: EventData = await getEventById(eventId);
-        eventData.eventId = eventId;
-        eventDataList.push(eventData);
-      } catch {
-        eventServiceLogger.warn(
-          `Organiser cannot find an event which is present in their personal event list. organiser=${userId} eventId=${eventId}`
-        );
-      }
+      promisesList.push(
+        getEventById(eventId).catch((error) => {
+          eventServiceLogger.warn(
+            `Organiser cannot find an event which is present in their personal event list. organiser=${userId} eventId=${eventId}`
+          );
+          return null;
+        })
+      );
     }
+    await Promise.all(promisesList).then((results: (EventData | null)[]) => {
+      const filteredResults = results.filter((result) => result != null);
+      for (const event of results) {
+        eventDataList.push(event!);
+      }
+    });
+
     // Return the organiserEvents array
     eventServiceLogger.info(`Fetching private user by ID:, ${userId}, ${eventDataList}`);
     return eventDataList;
@@ -256,6 +274,60 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
     eventServiceLogger.error(`updateEventById ${error}`);
+  }
+}
+
+export async function archiveAndDeleteEvent(eventId: EventId, userId: String, email: String): Promise<void> {
+  eventServiceLogger.info(`Starting process to archive and delete event: ${eventId}`);
+
+  const batch: WriteBatch = writeBatch(db);
+
+  try {
+    const eventRef = await findEventDocRef(eventId);
+    const eventSnapshot = await getDoc(eventRef);
+
+    if (!eventSnapshot.exists()) {
+      eventServiceLogger.error(`archiveAndDeleteEvent ${eventId} not found`);
+      throw new Error(`Event with ID ${eventId} not found.`);
+    }
+
+    const eventData = eventSnapshot.data();
+    const deletedEventRef = doc(db, CollectionPaths.DeletedEvents, eventId);
+    const userEventsRef = doc(db, `${USER_EVENT_PATH}/${userId}`);
+
+    const userEventsSnapshot = await getDoc(userEventsRef);
+    let userEmail = email;
+
+    if (userEventsSnapshot.exists()) {
+      const userData = userEventsSnapshot.data();
+      const contactInformation = userData.contactInformation;
+
+      // Check if the contactInformation field exists and extract email
+      if (contactInformation && contactInformation.email) {
+        userEmail = contactInformation.email;
+      }
+    }
+
+    // Add all event fields to the deleted document, with additional deletion metadata
+    batch.set(deletedEventRef, {
+      ...eventData, // Copy all fields from the original event
+      userEmail, // Add user email
+      deletedAt: new Date().toISOString(), // Record deletion time
+    });
+
+    batch.delete(eventRef);
+
+    batch.update(userEventsRef, {
+      organiserEvents: arrayRemove(eventId),
+      deletedEvents: arrayUnion(eventId),
+    });
+
+    await batch.commit();
+
+    eventServiceLogger.info(`Successfully archived and deleted event: ${eventId}`);
+  } catch (error) {
+    eventServiceLogger.error(`Error archiving and deleting event ${eventId}: ${error}`);
+    throw error;
   }
 }
 
@@ -503,4 +575,27 @@ function validatePurchaserDetails(purchaser: Purchaser): void {
     //   throw new Error(`Attendee phone number is invalid - ${attendeeObj.phone}`);
     // }
   }
+}
+
+export async function updateEventCapacityById(eventId: EventId, capacity: number): Promise<boolean> {
+  eventServiceLogger.info(`Updating event capacity for ${eventId} to ${capacity}`);
+  var valid = false;
+  try {
+    await runTransaction(db, async (transaction) => {
+      const eventDocRef = await findEventDocRef(eventId);
+      const eventDoc: EventDataWithoutOrganiser = (
+        await transaction.get(eventDocRef)
+      ).data() as EventDataWithoutOrganiser;
+      eventDoc.vacancy;
+
+      if (capacity >= eventDoc.capacity - eventDoc.vacancy) {
+        const changeAmount = eventDoc.capacity - capacity;
+        transaction.update(eventDocRef, { capacity: capacity, vacancy: eventDoc.vacancy - changeAmount });
+        valid = true;
+      }
+    });
+  } catch (error) {
+    eventServiceLogger.error(`Error updating event capacity for ${eventId} ${error}`);
+  }
+  return valid;
 }

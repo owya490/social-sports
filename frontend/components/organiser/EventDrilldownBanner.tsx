@@ -1,4 +1,4 @@
-import { UserData } from "@/interfaces/UserTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 import Skeleton from "react-loading-skeleton";
@@ -6,12 +6,12 @@ import Skeleton from "react-loading-skeleton";
 interface EventBannerProps {
   name: string;
   startDate: Timestamp;
-  organiser: UserData;
+  organiser: PublicUserData;
   vacancy: number;
   loading: boolean;
 }
 
-const EventDrilldownBanner = ({ name, startDate, organiser, vacancy, loading }: EventBannerProps) => {
+const EventDrilldownBanner = ({ name, startDate, loading }: EventBannerProps) => {
   return (
     <div className="bg-white w-100% px-5 md:px-10 pt-2 flex justify-center">
       <div className="max-w-6xl w-full">

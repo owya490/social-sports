@@ -1,0 +1,163 @@
+# 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+# IMPORTANT - PLEASE READ BEFORE MODIFYING, ADDING OR DELETING ENV VARIABLES!
+# https://owenyang.atlassian.net/wiki/spaces/SD/pages/225148936/IMPORTANT+Env+variables+in+cloud+function+deployments
+#
+# NOT FOLLOWING THE ABOVE STEPS MAY RESULT IN BROKEN DEPLOYMENTS!
+# 🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+
+name: Deploy cloud functions to Cloud Run and Firebase
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy-java-cloud-run-functions:
+    name: Deploy Cloud Functions to ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [dev, prod]
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Authenticate Google Cloud
+      - name: Authenticate Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_GCLOUD_CREDENTIALS' || 'SOCIALSPORTSDEV_GCLOUD_CREDENTIALS'] }}
+
+      # Set up Google Cloud SDK
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+
+      # Authenticate Docker with Google Container Registry
+      - name: Authenticate Docker
+        run: |
+          gcloud auth configure-docker
+
+      - name: Create functions_key.json from base64-encoded secret
+        working-directory: functions/lib/functions
+        run: |
+          echo '${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED' || 'SOCIALSPORTSDEV_FUNCTIONS_KEY_JSON_BASE64_ENCODED'] }}' | base64 -d > functions_key.json
+
+      - name: Set .env variables
+        working-directory: functions/lib/functions
+        run: |
+          echo "STRIPE_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_STRIPE_API_KEY' || 'SOCIALSPORTSDEV_STRIPE_API_KEY'] }}\"" >> .env
+          echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET' || 'SOCIALSPORTSDEV_STRIPE_WEBHOOK_ENDPOINT_SECRET'] }}\"" >> .env
+          echo "POSTHOG_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_POSTHOG_API_KEY' || 'SOCIALSPORTSDEV_POSTHOG_API_KEY'] }}\"" >> .env
+          echo "BEARER_TOKEN=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_BEARER_TOKEN' || 'SOCIALSPORTSDEV_BEARER_TOKEN'] }}\"" >> .env
+          echo "SENDGRID_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_SENDGRID_API_KEY' || 'SOCIALSPORTSDEV_SENDGRID_API_KEY'] }}\"" >> .env
+          echo "LOOPS_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_LOOPS_API_KEY' || 'SOCIALSPORTSDEV_LOOPS_API_KEY'] }}\"" >> .env
+
+      # Deploy Java Cloud Run functions
+      - name: Deploy updateRecurrenceTemplate
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy updateRecurrenceTemplate \
+            --entry-point com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+
+      - name: Deploy createRecurrenceTemplate
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy createRecurrenceTemplate \
+            --entry-point com.functions.events.controllers.CreateRecurrenceTemplateEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+
+      - name: Deploy recurringEventsCron
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy recurringEventsCron \
+            --entry-point com.functions.events.controllers.RecurringEventsCronEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy createEvent
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy createEvent \
+            --entry-point com.functions.events.controllers.CreateEventEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+
+  deploy-python-firebase-functions:
+    name: Deploy Python Firebase Functions to ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [dev, prod]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Authenticate Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_GCLOUD_CREDENTIALS' || 'SOCIALSPORTSDEV_GCLOUD_CREDENTIALS'] }}
+
+      - name: Install Firebase CLI
+        run: |
+          npm install -g firebase-tools
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Set up Python environment
+        working-directory: functions
+        run: |
+          python3.12 -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Create functions_key.json from base64-encoded secret
+        working-directory: functions
+        run: |
+          echo '${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_FUNCTIONS_KEY_JSON_BASE64_ENCODED' || 'SOCIALSPORTSDEV_FUNCTIONS_KEY_JSON_BASE64_ENCODED'] }}' | base64 -d > functions_key.json
+
+      - name: Set .env variables
+        working-directory: functions
+        run: |
+          echo "STRIPE_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_STRIPE_API_KEY' || 'SOCIALSPORTSDEV_STRIPE_API_KEY'] }}\"" >> .env
+          echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_STRIPE_WEBHOOK_ENDPOINT_SECRET' || 'SOCIALSPORTSDEV_STRIPE_WEBHOOK_ENDPOINT_SECRET'] }}\"" >> .env
+          echo "POSTHOG_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_POSTHOG_API_KEY' || 'SOCIALSPORTSDEV_POSTHOG_API_KEY'] }}\"" >> .env
+          echo "BEARER_TOKEN=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_BEARER_TOKEN' || 'SOCIALSPORTSDEV_BEARER_TOKEN'] }}\"" >> .env
+          echo "SENDGRID_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_SENDGRID_API_KEY' || 'SOCIALSPORTSDEV_SENDGRID_API_KEY'] }}\"" >> .env
+          echo "LOOPS_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_LOOPS_API_KEY' || 'SOCIALSPORTSDEV_LOOPS_API_KEY'] }}\"" >> .env
+
+      - name: Set firebase project
+        working-directory: functions
+        run: |
+          firebase use --add ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+
+      - name: Deploy all python functions
+        working-directory: functions
+        run: |
+          firebase deploy --only functions:move_inactive_events,functions:stripe_webhook_checkout_fulfilment,functions:create_stripe_standard_account,functions:get_stripe_checkout_url_by_event_id,functions:send_email_on_delete_event,functions:send_email_on_create_event,functions:email_reminder

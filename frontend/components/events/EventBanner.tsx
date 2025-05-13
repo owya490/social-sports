@@ -1,13 +1,14 @@
-import { UserData } from "@/interfaces/UserTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import Tick from "@svgs/Verified_tick.png";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
+import Link from "next/link";
 
 interface EventBannerProps {
   name: string;
   startDate: Timestamp;
-  organiser: UserData;
+  organiser: PublicUserData;
   vacancy: number;
 }
 
@@ -20,7 +21,7 @@ export default function EventBanner(props: EventBannerProps) {
             <p className="font-bold text-xs block md:hidden">{timestampToEventCardDateString(props.startDate)}</p>
             <h1 className="text-3xl md:text-4xl text-core-text">{props.name}</h1>
 
-            <div className="block md:flex items-center pt-2 pb-4 pl-1">
+            <div className="block md:flex items-center pt-1 pb-2 pl-1">
               <div className="relative flex items-center group">
                 <Image
                   src={props.organiser.profilePicture}
@@ -29,9 +30,12 @@ export default function EventBanner(props: EventBannerProps) {
                   height={50}
                   className="rounded-full w-4 h-4 shrink-0"
                 />
-                <p className="text-xs font-light ml-1 mr-1">
-                  {`Hosted by ${props.organiser.firstName} ${props.organiser.surname}`}
-                </p>
+                <Link
+                  href={`/user/${props.organiser.userId}`}
+                  className="text-xs font-light mr-1 px-1.5 py-1 hover:rounded-full hover:bg-core-hover"
+                >
+                  Hosted by {`${props.organiser.firstName} ${props.organiser.surname}`}
+                </Link>
                 {props.organiser.isVerifiedOrganiser && (
                   <div className="relative">
                     <Image src={Tick} alt="Verified Organiser" className="h-4 w-4" />

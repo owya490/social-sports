@@ -1,6 +1,8 @@
 "use client";
+import { useUser } from "@/components/utility/UserContext";
 import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
+import { getFullUserById } from "@/services/src/users/usersService";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,16 +17,18 @@ export default function Login() {
   const [alertStatus, setAlertStatus] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const { setUser } = useUser();
   const logger = new Logger("loginLogger");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     handleAlertClose();
 
     startTransition(async () => {
       try {
         const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
-        if (userCreated) {
+        if (userCreated !== null) {
+          setUser(await getFullUserById(userCreated));
           router.push("/dashboard?login=success"); // Redirect only if user creation is successful
         } else {
           throw new Error("Could not find user");

@@ -1,6 +1,7 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 
+import pytz
 from firebase_admin import firestore
 from firebase_functions import https_fn, options, scheduler_fn
 from google.cloud import firestore
@@ -8,12 +9,14 @@ from google.cloud.firestore import DocumentReference, Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.auth import *
 from lib.constants import *
+from lib.constants import (
+    ACTIVE_PRIVATE,
+    ACTIVE_PUBLIC,
+    INACTIVE_PRIVATE,
+    INACTIVE_PUBLIC,
+    SYDNEY_TIMEZONE,
+)
 from lib.logging import Logger
-
-ACTIVE_PUBLIC = "Events/Active/Public"
-ACTIVE_PRIVATE = "Events/Active/Private"
-INACTIVE_PUBLIC = "Events/InActive/Public"
-INACTIVE_PRIVATE = "Events/InActive/Private"
 
 
 @firestore.transactional
@@ -75,7 +78,7 @@ def remove_event_from_upcoming_organiser_events(
         event_dict = upcoming_event.to_dict()
         event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
 
-        if event_end_date.ToDatetime().date() < today:
+        if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
             logger.info(
                 f"today is after end date for ${upcoming_event_id} and is in upcoming events so removing"
             )
@@ -98,7 +101,7 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
         organiser_id = event_dict.get("organiserId", "")
         logger.info(event_end_date)
 
-        if event_end_date.ToDatetime().date() < today:
+        if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
             logger.info(f"today is after end date for ${event.id}")
             transaction = db.transaction()
             # The events datetime is earlier so it has already passed, hence we should move it
@@ -116,6 +119,7 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
 
 
 def get_and_move_private_inactive_events(today: date):
+
     # Get all Active Private Events
     private_events_ref = db.collection(ACTIVE_PRIVATE)
     private_events = private_events_ref.stream()
@@ -126,7 +130,7 @@ def get_and_move_private_inactive_events(today: date):
         event_dict = event.to_dict()
         event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
 
-        if event_end_date.ToDatetime().date() < today:
+        if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
             transaction = db.transaction()
             # The events datetime is earlier so it has already passed, hence we should move it
             move_event_to_inactive(
@@ -146,7 +150,7 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
     logger = Logger(f"move_inactive_events_logger_{uid}")
     logger.add_tag("uuid", uid)
 
-    today = date.today()
+    today = datetime.now(SYDNEY_TIMEZONE).date()
 
     logger.info(
         "Moving inactive events for date " + today.strftime("%d/%m/%Y, %H:%M:%S")

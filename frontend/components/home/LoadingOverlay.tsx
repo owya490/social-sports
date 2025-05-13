@@ -5,11 +5,7 @@ import { useEffect } from "react";
 import Logo from "../../public/images/black-logo.png";
 import { sleep } from "../../utilities/sleepUtil";
 
-export default function LoadingOverlay({
-  shouldAnimate,
-}: {
-  shouldAnimate: boolean;
-}) {
+export default function LoadingOverlay({}: { shouldAnimate: boolean }) {
   useEffect(() => {
     // Tuned very intricately, please consult Owen before making changes :D
     async function animateLogo() {
@@ -45,10 +41,7 @@ export default function LoadingOverlay({
   }, []);
 
   return (
-    <div
-      id="overlay"
-      className="absolute top-0 w-screen h-screen z-50 transition-all duration-1000"
-    >
+    <div id="overlay" className="absolute top-0 w-screen h-screen z-50 transition-all duration-1000">
       <div
         id="background"
         className="w-full object-cover h-screen relative bg-black transition-all duration-1000"
