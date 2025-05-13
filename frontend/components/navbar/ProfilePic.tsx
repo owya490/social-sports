@@ -22,7 +22,7 @@ export default function ProfilePic() {
   const [loggedIn, setLoggedIn] = useState(false);
   const router = useRouter();
   const { userLoading, user, setUser } = useUser();
-  const defaultProfilePicturePath = "users/generic/generic-profile-photo.webp";
+  // const defaultProfilePicturePath = "users/generic/generic-profile-photo.webp";
 
   useEffect(() => {
     if (!userLoading) {

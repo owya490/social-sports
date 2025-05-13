@@ -9,8 +9,10 @@ export async function isUsernameExists(username: string, transaction?: Transacti
     // This function will throw UserNotFoundError if the username does not exist
     await getUsernameMapping(username.toLowerCase(), false, transaction);
   } catch (error) {
+    console.log("Username does not exists!");
     return false;
   }
+  console.log("Username exists!");
   return true;
 }
 
@@ -34,7 +36,9 @@ export async function generateUsername(firstName: string): Promise<string> {
 
 export async function updateUsername(userId: UserId, username: string) {
   // run in a transaction
-  await runTransaction(db, async (transaction) => {
+  return await runTransaction(db, async (transaction) => {
+    // all username is in lowercase
+    username = username.toLowerCase();
     // check if username already exists
     if (await isUsernameExists(username, transaction)) {
       return false;
@@ -50,7 +54,6 @@ export async function updateUsername(userId: UserId, username: string) {
     // 4. remove the old username reference link in the usernames routing table
     const oldUsernameDocRef = doc(db, "Usernames", oldUsername);
     transaction.delete(oldUsernameDocRef);
-
     return true;
   });
 }

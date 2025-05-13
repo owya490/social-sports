@@ -4,7 +4,7 @@ import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import CheckIcon from "@heroicons/react/24/outline/CheckIcon";
 import { Input, Option, Select } from "@material-tailwind/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const RenderField = ({
   label,
@@ -66,23 +66,31 @@ export const RenderEditableField = ({
   label: string;
   value: any;
   type: FieldTypes;
-  onSubmit: (value: any) => void;
+  onSubmit: (value: any) => Promise<boolean>;
   customValidation?: (value: any) => boolean;
   options?: string[];
 }) => {
   const [editing, setEditing] = useState<boolean>(false);
   const [editableValue, setEditabledValue] = useState(value);
   const [prevValue, setPrevValue] = useState(value);
+
+  useEffect(() => {
+    setEditabledValue(value);
+    setPrevValue(value);
+  }, [value]);
+
   return editing ? (
     <>
       {determineEditableFieldJsx(
         type,
         label,
         editableValue,
-        () => {
-          setEditing(false);
-          setPrevValue(editableValue);
-          onSubmit(editableValue);
+        async () => {
+          const result = await onSubmit(editableValue);
+          if (result) {
+            setEditing(false);
+            setPrevValue(editableValue);
+          }
         },
         () => {
           setEditing(false);

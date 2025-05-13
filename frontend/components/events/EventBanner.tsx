@@ -1,4 +1,4 @@
-import { PublicUserData, UserData } from "@/interfaces/UserTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import Tick from "@svgs/Verified_tick.png";
 import { Timestamp } from "firebase/firestore";

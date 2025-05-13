@@ -11,23 +11,24 @@ import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-const calculateAge = (birthday: string) => {
-  const [day, month, year] = birthday.split("-");
-  const birthDate = new Date(`${year}-${month}-${day}`);
-  const currentDate = new Date();
-  let age = currentDate.getFullYear() - birthDate.getFullYear();
-  if (
-    currentDate.getMonth() < birthDate.getMonth() ||
-    (currentDate.getMonth() === birthDate.getMonth() && currentDate.getDate() < birthDate.getDate())
-  ) {
-    age--;
-  }
-  return age.toString();
-};
+// const calculateAge = (birthday: string) => {
+//   const [day, month, year] = birthday.split("-");
+//   const birthDate = new Date(`${year}-${month}-${day}`);
+//   const currentDate = new Date();
+//   let age = currentDate.getFullYear() - birthDate.getFullYear();
+//   if (
+//     currentDate.getMonth() < birthDate.getMonth() ||
+//     (currentDate.getMonth() === birthDate.getMonth() && currentDate.getDate() < birthDate.getDate())
+//   ) {
+//     age--;
+//   }
+//   return age.toString();
+// };
 
 const Profile = () => {
   const { user, setUser } = useUser();
   const [loading, setLoading] = useState(true);
+  const [usernameWarning, setUsernameWarning] = useState(false);
 
   useEffect(() => {
     if (user.userId !== "") {
@@ -36,7 +37,7 @@ const Profile = () => {
     }
   }, [user]);
 
-  const handleUserProfileUpdate = (field: string, value: any) => {
+  const handleUserProfileUpdate = async (field: string, value: any): Promise<boolean> => {
     // Need to update remote data respective to public/ private
     updateUser(user.userId, { [field]: value });
     // Need to update local user data
@@ -44,6 +45,7 @@ const Profile = () => {
       ...user,
       [field]: value,
     });
+    return true;
   };
 
   return loading ? (
@@ -99,7 +101,11 @@ const Profile = () => {
                 label="First Name"
                 value={user.firstName}
                 type={FieldTypes.SHORT_TEXT}
-                onSubmit={(value) => handleUserProfileUpdate("firstName", value)}
+                onSubmit={async (value) => {
+                  handleUserProfileUpdate("firstName", value);
+                  handleUserProfileUpdate("nameTokens", value.toLowerCase().split(" "));
+                  return true;
+                }}
               />
               <RenderEditableField
                 label="Last Name"
@@ -164,17 +170,27 @@ const Profile = () => {
             <div className="h-[1px] bg-[#ccc] mb-2"></div>
             <ul className="w-full">
               <RenderNonEditableField label="User ID" value={user.userId} />
+              {usernameWarning && (
+                <div className="text-red-900 text-xs font-light">Username update failed, try another username.</div>
+              )}
               <RenderEditableField
                 label="Username"
                 value={user.username}
                 type={FieldTypes.SHORT_TEXT}
-                onSubmit={(value) => {
-                  updateUsername(user.userId, value);
+                onSubmit={async (value) => {
+                  // if update username fails, we want to display warning
+                  const isUsernameExist = await updateUsername(user.userId, value);
+                  if (!isUsernameExist) {
+                    setUsernameWarning(true);
+                    return false;
+                  }
+                  setUsernameWarning(false);
                   bustUserLocalStorageCache();
                   setUser({
                     ...user,
                     username: value,
                   });
+                  return true;
                 }}
               />
               <RenderNonEditableField label="Private Email" value={user.contactInformation.email} />

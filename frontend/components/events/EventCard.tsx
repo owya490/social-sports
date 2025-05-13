@@ -1,6 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
-import { PublicUserData, UserData } from "@/interfaces/UserTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { displayPrice } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";

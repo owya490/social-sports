@@ -37,7 +37,7 @@ export interface PrivateUserData {
   stripeAccountActive?: boolean;
   organiserEvents: string[];
   publicOrganiserEvents: string[];
-  recurrenceTemplate: string[];
+  recurrenceTemplates: string[];
 }
 
 export interface NewUserData extends PublicUserData, PrivateUserData {
@@ -80,7 +80,7 @@ export const EmptyPrivateUserData: PrivateUserData = {
   activeBookings: [],
   organiserEvents: [],
   publicOrganiserEvents: [],
-  recurrenceTemplate: [],
+  recurrenceTemplates: [],
   stripeAccount: undefined,
   stripeAccountActive: undefined,
 };

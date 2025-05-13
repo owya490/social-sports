@@ -22,7 +22,7 @@ export async function createUser(data: UserData, userId: string): Promise<void> 
       ...extractPublicUserData(data),
       // cheekily inject the generated username and name tokens here.
       username: uniqueUsername,
-      nameTokens: data.firstName.split(" "),
+      nameTokens: data.firstName.toLowerCase().split(" "),
     } as PublicUserData);
     await setDoc(doc(db, "Users", "Active", "Private", userId), extractPrivateUserData(data));
     userServiceLogger.info(`User created successfully: ${userId}`);
