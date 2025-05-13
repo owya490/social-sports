@@ -45,6 +45,8 @@ const Profile = () => {
       ...user,
       [field]: value,
     });
+    // Bust the cache to ensure the updated data is fetched next time
+    bustUserLocalStorageCache();
     return true;
   };
 
