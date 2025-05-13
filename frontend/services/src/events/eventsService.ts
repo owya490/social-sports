@@ -33,7 +33,7 @@ import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
 import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../firebaseFunctionsService";
-import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
+import { getFullUserById, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
 import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
@@ -81,11 +81,19 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     batch.set(docRef, eventDataWithTokens);
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
-    const user = await getPrivateUserById(data.organiserId);
-    if (user.organiserEvents === undefined) {
-      user.organiserEvents = [docRef.id];
+    const user = await getFullUserById(data.organiserId);
+    if (eventDataWithTokens.isPrivate) {
+      if (user.organiserEvents === undefined) {
+        user.organiserEvents = [docRef.id];
+      } else {
+        user.organiserEvents.push(docRef.id);
+      }
     } else {
-      user.organiserEvents.push(docRef.id);
+      if (user.publicUpcomingOrganiserEvents === undefined) {
+        user.publicUpcomingOrganiserEvents = [docRef.id];
+      } else {
+        user.publicUpcomingOrganiserEvents.push(docRef.id);
+      }
     }
     eventServiceLogger.info(`create event user: ${JSON.stringify(user, null, 2)}`);
     await updateUser(data.organiserId, user);
@@ -235,7 +243,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
       );
     }
     await Promise.all(promisesList).then((results: (EventData | null)[]) => {
-      const filteredResults = results.filter((result) => result != null)
+      const filteredResults = results.filter((result) => result != null);
       for (const event of results) {
         eventDataList.push(event!);
       }
