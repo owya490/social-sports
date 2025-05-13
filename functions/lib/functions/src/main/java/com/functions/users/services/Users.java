@@ -26,10 +26,23 @@ public class Users {
 		privateUserInfoDocRef.update(JavaUtils.toMap(privateUserData));
 	}
 
+	public static void updatePublicUserData(String userId, PublicUserData newData) {
+		Firestore db = FirebaseService.getFirestore();
+		db.collection(CollectionPaths.USERS).document(CollectionPaths.ACTIVE).collection(CollectionPaths.PUBLIC)
+				.document(userId).update(JavaUtils.toMap(newData));
+	}
+
 	public static void updatePrivateUserData(String userId, PrivateUserData newData) {
 		Firestore db = FirebaseService.getFirestore();
 		db.collection(CollectionPaths.USERS).document(CollectionPaths.ACTIVE).collection(CollectionPaths.PRIVATE)
 				.document(userId).update(JavaUtils.toMap(newData));
+	}
+	
+	public static PublicUserData getPublicUserDataById(String userId) throws Exception {
+		Firestore db = FirebaseService.getFirestore();
+		DocumentReference docRef = db.collection(CollectionPaths.USERS).document(CollectionPaths.ACTIVE)
+				.collection(CollectionPaths.PUBLIC).document(userId);
+        return docRef.get().get().toObject(PublicUserData.class);
 	}
 
 	public static PrivateUserData getPrivateUserDataById(String userId) throws Exception {

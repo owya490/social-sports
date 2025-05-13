@@ -82,13 +82,13 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
     const user = await getFullUserById(data.organiserId);
-    if (eventDataWithTokens.isPrivate) {
-      if (user.organiserEvents === undefined) {
-        user.organiserEvents = [docRef.id];
-      } else {
-        user.organiserEvents.push(docRef.id);
-      }
+    if (user.organiserEvents === undefined) {
+      user.organiserEvents = [docRef.id];
     } else {
+      user.organiserEvents.push(docRef.id);
+    }
+    // If event is public, add it to the upcoming events
+    if (!eventDataWithTokens.isPrivate) {
       if (user.publicUpcomingOrganiserEvents === undefined) {
         user.publicUpcomingOrganiserEvents = [docRef.id];
       } else {
