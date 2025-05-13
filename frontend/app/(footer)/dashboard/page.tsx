@@ -43,6 +43,11 @@ export default function Dashboard() {
     };
   };
 
+  function sortAndSetEventDataList(events: EventData[]) {
+    events = events.sort((a, b) => b.accessCount - a.accessCount);
+    setEventDataList(events);
+  }
+
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   });
@@ -61,7 +66,7 @@ export default function Dashboard() {
           console.log("no event name");
           getAllEvents().then((events) => {
             console.log(events);
-            setEventDataList(events);
+            sortAndSetEventDataList(events);
             setSearchDataList(events);
             setAllEventsDataList(events);
           });
@@ -76,7 +81,7 @@ export default function Dashboard() {
               return tempEventDataList;
             })
             .then((tempEventDataList: EventData[]) => {
-              setEventDataList(tempEventDataList);
+              sortAndSetEventDataList(tempEventDataList);
               setSearchDataList(tempEventDataList);
             })
             .catch(() => {
@@ -142,7 +147,7 @@ export default function Dashboard() {
         <FilterBanner
           eventDataList={searchDataList}
           allEventsDataList={allEventsDataList}
-          setEventDataList={setEventDataList}
+          setEventDataList={sortAndSetEventDataList}
           // srcLocation={srcLocation} // DISABLED LOCATION SEARCH FOR NOW
           srcLocation={""}
           setSrcLocation={setSrcLocation}
