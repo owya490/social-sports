@@ -39,7 +39,7 @@ const Profile = () => {
 
   const handleUserProfileUpdate = async (field: string, value: any): Promise<boolean> => {
     // Need to update remote data respective to public/ private
-    updateUser(user.userId, { [field]: value });
+    await updateUser(user.userId, { [field]: value });
     // Need to update local user data
     setUser({
       ...user,
@@ -102,8 +102,8 @@ const Profile = () => {
                 value={user.firstName}
                 type={FieldTypes.SHORT_TEXT}
                 onSubmit={async (value) => {
-                  handleUserProfileUpdate("firstName", value);
-                  handleUserProfileUpdate("nameTokens", value.toLowerCase().split(" "));
+                  await handleUserProfileUpdate("firstName", value);
+                  await handleUserProfileUpdate("nameTokens", value.toLowerCase().split(" "));
                   return true;
                 }}
               />
