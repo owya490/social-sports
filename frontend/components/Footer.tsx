@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t-[1px] border-gray-400 bottom-0 h-8 flex justify-center items-center fixed">
+    <footer className="w-full bg-white border-t-[1px] border-gray-400 bottom-0 h-8 flex justify-center items-center fixed">
       <div className="screen-width-dashboard text-xs flex">
         <Link href="/aboutUs" className="mr-2">
           © 2025 SPORTSHUB

@@ -62,7 +62,7 @@ export default function UserProfilePage({ params }: any) {
       <div className="screen-width-primary">
         <div className="md:flex gap-16">
           <div id="col-1" className="pt-8 min-w-80">
-            <div className="px-8 py-12 border rounded-xl">
+            <div className="px-8 py-6 border rounded-xl">
               <div className="flex items-center gap-4">
                 <Image
                   priority
@@ -70,7 +70,7 @@ export default function UserProfilePage({ params }: any) {
                   alt="DP"
                   width={0}
                   height={0}
-                  className="object-cover h-24 w-24 rounded-full overflow-hidden border-black border"
+                  className="object-cover h-20 w-20 rounded-full overflow-hidden border-black border"
                 />
                 <div>
                   <h2 className="text-2xl font-bold flex items-center">
