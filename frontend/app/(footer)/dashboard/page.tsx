@@ -138,7 +138,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="flex justify-center">
+      <div className="flex justify-center pt-2">
         <FilterBanner
           eventDataList={searchDataList}
           allEventsDataList={allEventsDataList}
