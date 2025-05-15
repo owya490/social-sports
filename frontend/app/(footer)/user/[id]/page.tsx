@@ -19,7 +19,7 @@ export default function UserProfilePage({ params }: any) {
   const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyPublicUserData);
   const [upcomingOrganiserEvents, setUpcomingOrganiserEvents] = useState<EventData[]>([]);
   useEffect(() => {
-    getPublicUserById(userId).then((user) => {
+    getPublicUserById(userId, true).then((user) => {
       setPublicUserProfile(user);
 
       const fetchEvents = async () => {
