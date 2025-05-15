@@ -2,7 +2,6 @@
 
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSettings";
 import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
 import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
@@ -116,7 +115,6 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
 
   return (
     <div className="sm:ml-14 mt-14">
-      <OrganiserNavbar currPage="EventDrilldown" />
       <EventDrilldownBanner
         name={eventName}
         startDate={eventStartDate}

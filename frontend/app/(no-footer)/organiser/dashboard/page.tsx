@@ -1,6 +1,5 @@
 "use client";
 import LoadingSkeletonOrganiserName from "@/components/loading/LoadingSkeletonOrganiserName";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { OrganiserAnnouncementBanner } from "@/components/organiser/dashboard/OrganiserAnnouncementBanner";
 import OrganiserChecklist from "@/components/organiser/dashboard/OrganiserChecklist";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
@@ -43,7 +42,6 @@ export default function Dashboard() {
 
   return (
     <div className="pt-[3.5rem] pb-20 sm:pb-4 sm:pl-14 lg:max-h-screen">
-      <OrganiserNavbar currPage="Dashboard" />
       <OrganiserAnnouncementBanner />
       <div className="pt-2 md:py-16 md:flex md:justify-center px-4 md:px-0">
         <div>

@@ -14,7 +14,6 @@ import OrganiserFilterDialog, {
 } from "@/components/Filter/OrganiserFilterDialog";
 import OrganiserFilterDialogMobile from "@/components/Filter/OrganiserFilterDialogMobile";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
@@ -160,7 +159,6 @@ export default function OrganiserDashboard() {
 
   return (
     <div className="w-screen pt-14 lg:pt-16 lg:pb-10 md:pl-7 h-fit max-h-screen overflow-y-auto">
-      <OrganiserNavbar currPage={"EventDashboard"} />
       <div className="flex justify-center">
         <div className="flex flex-col items-center md:items-start">
           <div className="flex flex-row items-center justify-center">
