@@ -1,6 +1,5 @@
 "use client";
 import LoadingSkeletonOrganiserName from "@/components/loading/LoadingSkeletonOrganiserName";
-import { OrganiserAnnouncementBanner } from "@/components/organiser/dashboard/OrganiserAnnouncementBanner";
 import OrganiserChecklist from "@/components/organiser/dashboard/OrganiserChecklist";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
 import { useUser } from "@/components/utility/UserContext";
@@ -41,8 +40,8 @@ export default function Dashboard() {
   }, [user]);
 
   return (
-    <div className="pt-[3.5rem] pb-20 sm:pb-4 sm:pl-14 lg:max-h-screen">
-      <OrganiserAnnouncementBanner />
+    <>
+      {/* <OrganiserAnnouncementBanner /> */}
       <div className="pt-2 md:py-16 md:flex md:justify-center px-4 md:px-0">
         <div>
           <h1 className="text-5xl font-bold mt-2 sm:mt-0">Organiser Dashboard</h1>
@@ -114,6 +113,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -33,14 +33,12 @@ export default function ResetPassword() {
     });
   };
   return (
-    <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+    <div className="flex p-4 sm:min-h-[80vh] justify-center items-center">
+      <div className="mx-auto w-full max-w-sm">
         <h1 className="text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
           Reset your password
         </h1>
-      </div>
-      <div className="mt-8 mx-auto w-full max-w-sm">
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-4 mt-8" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="font-medium leading-6 text-gray-900">
               Please enter your email, make sure you check your junk and spam folders
@@ -49,15 +47,15 @@ export default function ResetPassword() {
               open={resetSuccess}
               onClose={() => setResetSuccess(false)}
               color="green"
-              className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+              className="absolute ml-auto mr-auto top-16 md:top-24 w-fit"
             >
               Request sent, please check your email
             </Alert>
             <Alert
               open={resetFailed}
               onClose={() => setResetFailed(false)}
-              color="green"
-              className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+              color="red"
+              className="absolute ml-auto mr-auto top-16 md:top-24 w-fit"
             >
               Failed to send email
             </Alert>

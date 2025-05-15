@@ -119,7 +119,7 @@ export default function EventPage({ params }: EventPageProps) {
   }, []);
 
   return (
-    <div className="sm:ml-14 mt-14">
+    <div className="sm:ml-14">
       <EventDrilldownBanner
         name={eventName}
         startDate={eventStartDate}
