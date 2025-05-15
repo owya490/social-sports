@@ -38,7 +38,6 @@ def move_event_to_inactive(
     transaction.delete(old_event_ref)
 
 
-@firestore.transactional
 # Function to move an event from the upcoming organiser events to past
 def remove_event_from_upcoming_organiser_events(
     logger: Logger, today: date, event_id: str, organiser_id: str
@@ -73,7 +72,7 @@ def remove_event_from_upcoming_organiser_events(
     # might as well scan upcoming events to see if we missed any
     for upcoming_event_id in upcoming_events:
         upcoming_event = db.collection(ACTIVE_PUBLIC).document(upcoming_event_id).get()
-        if not upcoming_event.exists():
+        if not upcoming_event.exists:
             raise ValueError(f"eventId {event_id} not found in public active events")
         event_dict = upcoming_event.to_dict()
         event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
