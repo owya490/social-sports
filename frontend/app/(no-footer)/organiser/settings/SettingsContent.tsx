@@ -8,8 +8,7 @@ import { useEffect, useState } from "react";
 
 export default function SettingsContent() {
   const { user } = useUser();
-  const [_loading, setLoading] = useState<boolean>(false);
-  const [stripeId, setStripeId] = useState<string>("");
+  const [stripeId, setStripeId] = useState<string>("Loading...");
 
   useEffect(() => {
     const fetchStripeId = async () => {
@@ -32,7 +31,7 @@ export default function SettingsContent() {
   return (
     <div className="py-10 px-2 sm:p-20 space-y-6">
       <OrganiserSettingsStripeCard stripeId={stripeId} />
-      {!user.stripeAccountActive && <StripeSetup userId={user.userId} setLoading={setLoading} />}
+      {!user.stripeAccountActive && <StripeSetup userId={user.userId} />}
     </div>
   );
 }

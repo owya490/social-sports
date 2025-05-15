@@ -34,7 +34,7 @@ const aileron = localFont({
 });
 /* eslint-enable */
 
-export const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
 // eslint-disable-next-line
 const montserrat = Montserrat({ subsets: ["latin"] });
