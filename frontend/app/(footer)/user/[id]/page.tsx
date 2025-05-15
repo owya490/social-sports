@@ -61,7 +61,7 @@ export default function UserProfilePage({ params }: any) {
     <div className="mt-16 w-full flex justify-center mb-8">
       <div className="screen-width-primary">
         <div className="md:flex gap-16">
-          <div id="col-1" className="pt-8 min-w-96">
+          <div id="col-1" className="pt-8 min-w-80">
             <div className="px-8 py-12 border rounded-xl">
               <div className="flex items-center gap-4">
                 <Image
@@ -105,7 +105,7 @@ export default function UserProfilePage({ params }: any) {
           <div id="col-2" className="pt-8">
             <h1 className="hidden md:block text-3xl font-bold">{`About ${publicUserProfile.firstName} ${publicUserProfile.surname}`}</h1>
             <p className="md:pt-8 pb-6 font-light">
-              <RichTextEditorContent description={publicUserProfile.bio || "No bio provided."}/>
+              <RichTextEditorContent description={publicUserProfile.bio || "No bio provided."} />
             </p>
             <div className="h-[1px] bg-core-outline my-4"></div>
           </div>
