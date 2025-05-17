@@ -119,7 +119,7 @@ export default function EventPage({ params }: EventPageProps) {
   }, []);
 
   return (
-    <div className="sm:ml-14">
+    <>
       <EventDrilldownBanner
         name={eventName}
         startDate={eventStartDate}
@@ -127,7 +127,7 @@ export default function EventPage({ params }: EventPageProps) {
         vacancy={eventVacancy}
         loading={loading}
       />
-      <div className="sm:px-10 sm:pb-10">
+      <div className=" sm:pb-10">
         <EventDrilldownStatBanner
           loading={loading}
           eventAccessCount={eventAccessCount}
@@ -210,6 +210,6 @@ export default function EventPage({ params }: EventPageProps) {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

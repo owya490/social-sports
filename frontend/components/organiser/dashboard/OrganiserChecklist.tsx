@@ -65,7 +65,7 @@ export default function OrganiserChecklist() {
     <div className="bg-organiser-light-gray p-4 sm:p-8 rounded-2xl ">
       {!allItemsChecked && (
         <>
-          <h1 className="text-2xl font-bold">Finish setting up</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Finish setting up</h1>
           {checklist.map((checkbox) => (
             <OrganiserCheckbox
               key={checkbox.id}

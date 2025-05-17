@@ -44,24 +44,24 @@ export default function Dashboard() {
       {/* <OrganiserAnnouncementBanner /> */}
       <div className="pt-2 md:py-16 md:flex md:justify-center px-4 md:px-0">
         <div>
-          <h1 className="text-5xl font-bold mt-2 sm:mt-0">Organiser Dashboard</h1>
+          <h1 className="text-3xl md:text-5xl font-bold mt-2 sm:mt-0">Organiser Dashboard</h1>
           {loading ? (
             <LoadingSkeletonOrganiserName />
           ) : (
-            <h1 className="pt-2 sm:pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
+            <h1 className="pt-2 sm:pt-4 text-2xl md:text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
           )}
           <div className="lg:flex w-full mt-8 lg:max-h-[60vh]">
             <div className="grow lg:mr-8 md:flex flex-col md:w-[40rem]">
               <OrganiserChecklist />
               <div className="hidden md:flex mt-8 grow min-h-[10vh] mb-10 md:mb-0">
-                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                <div className="flex-1 min-h-full font-semibold text-xl sm:text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/event/create">
                     <div className="h-full flex justify-center items-center">
                       <p>Create an event</p>
                     </div>
                   </Link>
                 </div>
-                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                <div className="flex-1 min-h-full font-semibold text-xl sm:text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/profile">
                     <div className="h-full flex justify-center items-center">
                       <p>Edit your profile</p>
@@ -72,7 +72,7 @@ export default function Dashboard() {
             </div>
             <div className="md:overflow-auto mt-6 lg:mt-0">
               <div className="bg-organiser-light-gray py-4 rounded-2xl lg:px-8">
-                <h1 className="text-2xl font-bold text-center w-full">Upcoming Events</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-center w-full">Upcoming Events</h1>
               </div>
               <div className="sm:grid sm:grid-cols-2 sm:gap-2 lg:block">
                 {eventDataList
