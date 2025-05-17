@@ -219,8 +219,8 @@ export default function FilterBanner({
   }, [triggerFilterApply]);
 
   return (
-    <div className="pt-16 bg-white w-full px-3">
-      <div className="h-20 flex items-center mt-2 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
+    <div className="bg-white w-full px-3">
+      <div className="h-20 flex items-center w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
         <div
           id="filter-overflow"
           className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all no-scrollbar"
