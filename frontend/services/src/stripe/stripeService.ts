@@ -1,4 +1,5 @@
 import { EventId } from "@/interfaces/EventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import {
   FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT,
@@ -6,7 +7,6 @@ import {
   getFirebaseFunctionByName,
 } from "../firebaseFunctionsService";
 import { getUrlWithCurrentHostname } from "../urlUtils";
-import { UserId } from "@/interfaces/UserTypes";
 import { getPrivateUserById } from "../users/usersService";
 
 interface StripeCreateStandardAccountResponse {
@@ -16,6 +16,11 @@ interface StripeCreateStandardAccountResponse {
 interface StripeGetCheckoutUrlResponse {
   url: string;
 }
+
+/**
+ * See https://docs.stripe.com/api/metadata for more information on metadata in Stripe.
+ */
+export type StripeMetadata = { [key: string]: string };
 
 const stripeServiceLogger = new Logger("stripeServiceLogger");
 
@@ -37,7 +42,13 @@ export async function getStripeStandardAccountLink(organiserId: string, returnUr
     });
 }
 
-export async function getStripeCheckoutFromEventId(eventId: EventId, isPrivate: boolean, quantity: number) {
+export async function getStripeCheckoutFromEventId(
+  eventId: EventId,
+  isPrivate: boolean,
+  quantity: number,
+  metadata: StripeMetadata
+) {
+  // TODO: propagate metadata to stripe checkout session
   const content = {
     eventId: eventId,
     isPrivate: isPrivate,

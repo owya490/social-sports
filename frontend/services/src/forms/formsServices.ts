@@ -1,14 +1,14 @@
-import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
-import { Logger } from "@/observability/logger";
-import { collection, deleteDoc, doc, getDoc, getDocs, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
-import { auth, db } from "../firebase";
-import { FormPaths, FormResponseStatus, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
-import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { EventId } from "@/interfaces/EventTypes";
-import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
-import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
+import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
+import { collection, doc, getDoc, getDocs, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
+import { db } from "../firebase";
 import { getPrivateUserById } from "../users/usersService";
+import { FormPaths, FormResponseStatus, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
+import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
+import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
+import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 

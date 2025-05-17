@@ -235,7 +235,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
       );
     }
     await Promise.all(promisesList).then((results: (EventData | null)[]) => {
-      const filteredResults = results.filter((result) => result != null)
+      const filteredResults = results.filter((result) => result != null);
       for (const event of results) {
         eventDataList.push(event!);
       }
@@ -591,3 +591,13 @@ export async function updateEventCapacityById(eventId: EventId, capacity: number
   }
   return valid;
 }
+
+/**
+ * Retrieves form associated with EventId. Each event can currently have a maximum of 1 form associated with it
+ * so the maximum number of forms this function can retrieve is 1.
+ *
+ * Returns null (absense of a value) if there is no form associated with the event.
+ */
+// export async function getFormAssociatedWithEvent(eventId: EventId): Promise<FormId | null> {
+//   // TODO: log an error if there is failure.
+// }

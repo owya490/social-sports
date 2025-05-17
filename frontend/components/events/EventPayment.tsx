@@ -1,7 +1,9 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
-import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+// import { getFormAssociatedWithEvent } from "@/services/src/events/eventsService";
+// import { createNewPaymentSession } from "@/services/src/payments/paymentsServices";
+import { getStripeCheckoutFromEventId, StripeMetadata } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import {
   CalendarDaysIcon,
@@ -151,8 +153,48 @@ export default function EventPayment(props: EventPaymentProps) {
                     onClick={async () => {
                       props.setLoading(true);
                       window.scrollTo(0, 0);
-                      const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
-                      router.push(link);
+
+                      // NOTE: all these operations should exceed one after the other.
+
+                      // const paymentSessionId = await createNewPaymentSession();
+
+                      // TODO: check whether there is a form associated or not
+                      // TODO: we'll create a payment session for every single payment that goes through.
+
+                      // TODO: we'll also need to consider how we can reset the number of tickets if the flow of payments
+                      // does not go through.
+
+                      // const metadata: StripeMetadata = {
+                      //   paymentSessionId: paymentSessionId,
+                      // };
+                      const metadata: StripeMetadata = {};
+                      const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                        props.eventId,
+                        props.isPrivate,
+                        attendeeCount,
+                        metadata
+                      );
+
+                      // If there is an error when retrieving the form, we'll continue on with the payment workflow regardless.
+                      // The organiser will see there is no form associated with that attendee after and then be able to
+                      // contact the attendee as appropriate to gain the required information.
+                      // const maybeFormId = getFormAssociatedWithEvent(props.eventId);
+                      // If there is no form associated with the event.
+                      // if (maybeFormId === null) {
+                      //   router.push(stripeCheckoutLink);
+                      //   return;
+                      // }
+
+                      // TODO: generate a new entry in the PaymentSessions table: store temp_form_id and stripe checkout session id
+                      // so that they do not keep generating new stripe checkout sessions and deplete tickets
+                      // On page refresh, they will retrieve the information from the PaymentSessions table.
+
+                      // TODO: check whether there exists form associated with this event
+                      // if there is not, we'll follow through with the regular workflow
+                      router.push(stripeCheckoutLink);
+                      // if there is, we'll redirect the user to the form
+                      // TODO: enter instance of forms associated with sessionId
+                      // TODO: when the user clicks on 'complete form', we'll push the user to the generated stripe checkout link
                     }}
                   >
                     Book Now
