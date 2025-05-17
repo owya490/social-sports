@@ -6,8 +6,9 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth, db } from "@/services/src/firebase";
+import { db } from "@/services/src/firebase";
+import { useUser } from "../utility/UserContext";
+import { createUserComment } from "@/services/src/comments/commentsService";
 
 interface Comment {
   id?: string;
@@ -19,15 +20,7 @@ interface Comment {
 export default function CommentsSection({ userId }: { userId: string }) {
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const currentUser = useUser();
 
   useEffect(() => {
     const commentsRef = collection(db, "Comments", userId, "comments");
@@ -43,10 +36,17 @@ export default function CommentsSection({ userId }: { userId: string }) {
     return () => unsub();
   }, [userId]);
 
-  const handleSubmit = () => {
-    if (!comment.trim() || !currentUser) return;
+const handleSubmit = async () => {
+  if (!comment.trim() || !currentUser) return;
 
-  };
+  try {
+    await createUserComment(userId, comment, currentUser.user.userId);
+    setComment("");
+  } catch (error) {
+    alert((error as Error).message);
+  }
+};
+
 
   return (
     <div className="mt-12 border-t pt-6">
