@@ -5,7 +5,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Fragment, useMemo, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
-import { InvertedHighlightButton } from "../elements/HighlightButton";
+import { HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 import ListBox from "../ListBox";
 import {
   DATE_ASCENDING_SORTBY_STRING,
@@ -142,7 +142,7 @@ export default function OrganiserFilterDialogMobile({
         separator="to"
         displayFormat={"DD/MM/YYYY"}
         onChange={handleDateRangeChange}
-        inputClassName="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+        inputClassName="w-full p-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
       />
     ),
     [datepickerKey, dateRange]
@@ -274,7 +274,7 @@ export default function OrganiserFilterDialogMobile({
                         type="text"
                         id="search"
                         name="search"
-                        className="w-full p-2 border-1 border border-black rounded-lg "
+                        className="w-full p-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
                         placeholder="Search for anything"
                         value={searchValue}
                         onChange={(e) => setSearchValue(e.target.value)}
@@ -290,7 +290,7 @@ export default function OrganiserFilterDialogMobile({
                             type="checkbox"
                             name="Public"
                             value="Public"
-                            className="mr-2"
+                            className="mr-2 h-4 w-4 rounded border-gray-300 text-black focus:ring-1 focus:ring-black"
                             checked={eventTypeValue.includes("public")}
                             onChange={() => toggleTypeCheckboxValue("public")}
                           />
@@ -301,7 +301,7 @@ export default function OrganiserFilterDialogMobile({
                             type="checkbox"
                             name="Private"
                             value="Private"
-                            className="mr-2"
+                            className="mr-2 h-4 w-4 rounded border-gray-300 text-black focus:ring-1 focus:ring-black"
                             checked={eventTypeValue.includes("private")}
                             onChange={() => toggleTypeCheckboxValue("private")}
                           />
@@ -317,16 +317,12 @@ export default function OrganiserFilterDialogMobile({
                     </div>
                   </div>
                   <div className="mt-3 w-full flex items-center">
-                    <button className="hover:underline cursor-pointer" onClick={handleClearAll}>
+                    <HighlightButton className="" onClick={handleClearAll}>
                       Clear all
-                    </button>
-                    <button
-                      type="button"
-                      className="ml-auto inline-flex justify-center rounded-md bg-highlight-yellow  px-4 py-2 font-semibold text-white border-2 border-highlight-yellow hover:bg-white hover:text-highlight-yellow focus-visible:ring-offset-2 transition-colors duration-300 transform"
-                      onClick={applyFilters}
-                    >
+                    </HighlightButton>
+                    <HighlightButton className="ml-auto" onClick={applyFilters}>
                       Apply Filters!
-                    </button>
+                    </HighlightButton>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
