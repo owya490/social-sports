@@ -111,7 +111,7 @@ jobs:
         working-directory: functions/lib/functions
         run: |
           gcloud functions deploy createUserComment \
-            --entry-point com.functions.events.controllers.CreateUserCommentEndpoint \
+            --entry-point com.functions.comments.controllers.CreateUserCommentEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
