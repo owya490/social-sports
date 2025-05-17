@@ -1,4 +1,5 @@
 "use client";
+import CommentsSection from "@/components/comments/CommentsSection";
 import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
 import ChevronLeftButton from "@/components/elements/ChevronLeftButton";
 import ChevronRightButton from "@/components/elements/ChevronRightButton";
@@ -152,6 +153,7 @@ export default function UserProfilePage({ params }: any) {
         ) : (
           <p className="font-thin">No upcoming events by this organiser.</p>
         )}
+        <CommentsSection userId={userId} />
       </div>
     </div>
   );
