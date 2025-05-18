@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Sportshub Analytics",
+  "description": "Displays net sales, tickets purchased, and page visits for events.",
+  "version": "1.0",
+  "author": "B2W + 41DAN",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon-light.png",
+      "48": "icon-light.png",
+      "128": "icon-light.png"
+    }
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["https://*.firebaseio.com/", "https://*.firebaseapp.com/", "https://*.googleapis.com/"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  }
+}
