@@ -73,11 +73,10 @@ export default function CommentsSection({ userId }: { userId: string }) {
           <button
             onClick={handleSubmit}
             disabled={loading || !comment.trim()}
-            className={`mt-2 px-4 py-2 rounded text-white ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            } flex items-center justify-center`}
+            className={`mt-2 px-4 py-2 rounded text-white ${loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+              } flex items-center justify-center`}
           >
             {loading ? (
               <svg
@@ -112,17 +111,50 @@ export default function CommentsSection({ userId }: { userId: string }) {
 
       {comments.length === 0 && <p className="text-gray-500">No comments yet.</p>}
 
-      {comments.map((c) => (
-        <div key={c.id} className="mb-6 p-4 border rounded-md shadow-sm bg-white">
-          <p className="text-xs text-gray-500 mb-1">
-            <span className="font-semibold">User:</span> {c.authorId || "Anonymous"}
-          </p>
-          <p className="text-gray-800 text-base mb-2 whitespace-pre-wrap">{c.text}</p>
-          <p className="text-xs text-gray-400">
-            {new Date(c.timestamp).toLocaleString()}
-          </p>
-        </div>
-      ))}
+      {comments.map((c) => {
+        const upvotes = Math.floor(Math.random() * 10);
+        const downvotes = Math.floor(Math.random() * 2);
+        return (
+          <div key={c.id} className="mb-6 p-4 border rounded-md shadow-sm bg-white flex justify-between items-center">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">
+                <span className="font-semibold">User:</span> {c.authorId || "Anonymous"}
+              </p>
+              <p className="text-gray-800 text-base mb-2 whitespace-pre-wrap">{c.text}</p>
+              <p className="text-xs text-gray-400">{new Date(c.timestamp).toLocaleString()}</p>
+            </div>
+            <div className="flex flex-col items-center space-y-2 ml-4">
+              <div className="flex items-center space-x-1 text-black">
+                <span className="">{upvotes}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+              </div>
+              <div className="flex items-center space-x-1 text-black">
+                <span className="">{downvotes}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
     </div>
   );
 }
