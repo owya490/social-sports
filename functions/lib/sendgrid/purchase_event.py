@@ -4,6 +4,9 @@ import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
+import qrcode
+import base64
+from io import BytesIO
 
 import requests
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -83,6 +86,17 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
     return False
   
   order_data = maybe_order_data.to_dict()
+
+  tickets = order_data.get("tickets")
+
+  if not tickets or len(tickets) == 0:
+    logger.error(f"Unable to find tickets in orderId provided in datastore to send email. orderId={request_data.orderId}")
+    return False
+
+  qr_codes = []
+    for ticket_id in tickets:
+      qr_code = generate_qr_code(ticket_id)
+      qr_codes.append({"ticket_id": ticket_id, "qr_code": qr_code})
   
   try:
     subject = "Thank you for purchasing " + event_data.get("name")
@@ -109,9 +123,10 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       "start_date": start_date_string,
       "end_date": end_date_string,
       "date_purchased": date_purchased_string
+      "tickets": qr_codes
     }
 
-    send_email_with_loop(logger, request_data.email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"))
+    send_email_with_loop(logger, request_data.email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"),qr_codes)
 
     message.template_id = PURCHASE_EVENT_EMAIL_TEMPLATE_ID
 
