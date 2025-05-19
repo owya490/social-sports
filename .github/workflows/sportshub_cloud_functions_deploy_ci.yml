@@ -130,7 +130,7 @@ jobs:
       - name: Setup latest Python
         uses: actions/setup-python@v4
         with:
-          python-version: "latest"
+          python-version: "3.x"
 
       - name: Set up Python environment
         working-directory: functions
