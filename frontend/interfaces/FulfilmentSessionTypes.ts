@@ -1,9 +1,9 @@
 import { FormId } from "./FormTypes";
 import { Branded } from "./index";
 
-export type PaymentSessionId = Branded<string, "PaymentSessionId">;
+export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
-export type PaymentSession = {
+export type FulfilmentSession = {
   /**
    * List of non-committed form submissions
    */
