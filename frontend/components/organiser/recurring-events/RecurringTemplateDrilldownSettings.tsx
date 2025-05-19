@@ -15,6 +15,7 @@ interface RecurringTemplateDrilldownSettingsProps {
   newRecurrenceData: NewRecurrenceFormData;
   setNewRecurrenceData: (data: NewRecurrenceFormData) => void;
   submitNewRecurrenceData: () => void;
+  isRecurrenceEnded: boolean;
 }
 
 const RecurringTemplateDrilldownSettings = ({
@@ -24,6 +25,7 @@ const RecurringTemplateDrilldownSettings = ({
   newRecurrenceData,
   setNewRecurrenceData,
   submitNewRecurrenceData,
+  isRecurrenceEnded,
 }: RecurringTemplateDrilldownSettingsProps) => {
   const [recurrenceDates, setRecurrenceDates] = useState<Timestamp[]>([]);
 
@@ -82,7 +84,7 @@ const RecurringTemplateDrilldownSettings = ({
             <label className="text-black text-lg font-semibold">Recurrence Settings</label>
             <Switch
               color="teal"
-              label="Enable Recurrence for this Event"
+              label={`${isRecurrenceEnded ? "Re-enable" : "Enable"} Recurrence for this Event`}
               size="sm"
               className="my-4"
               checked={newRecurrenceData.recurrenceEnabled}
@@ -156,18 +158,18 @@ const RecurringTemplateDrilldownSettings = ({
             )}
           </div>
           <div>
-            {newRecurrenceData.recurrenceEnabled && (
-              <div className="h-full flex items-center">
-                <div className="w-full">
+            <div className="h-full flex items-center">
+              <div className="w-full">
+                {newRecurrenceData.recurrenceEnabled && (
                   <RecurringEventsPreviewTable recurrenceDates={recurrenceDates} />
-                  <div className="flex w-full mt-6">
-                    <Button variant="light" color="dark" className="ml-auto" onClick={submitNewRecurrenceData}>
-                      {updating ? <Spinner /> : <>Save</>}
-                    </Button>
-                  </div>
+                )}
+                <div className="flex w-full mt-6">
+                  <Button variant="light" color="dark" className="ml-auto" onClick={submitNewRecurrenceData}>
+                    {updating ? <Spinner /> : <>Save</>}
+                  </Button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

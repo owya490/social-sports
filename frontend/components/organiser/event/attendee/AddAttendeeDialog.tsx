@@ -132,53 +132,46 @@ const InviteAttendeeDialog = ({
                       >
                         Add Attendee
                       </DialogTitle>
-                      <Description className="font-semibold text-organiser-title-gray-text p-4 rounded-lg border-0 bg-yellow-100 mb-2 text-sm">
-                        <div className="flex flex-row">
-                          <div>NOTE: The event organiser and attendee will need to organise their own payment.</div>
-                          <div className="content-center ml-4">
-                            <ExclamationCircleIcon className="h-8" />
-                          </div>
-                        </div>
+                      <Description className="font-semibold text-organiser-title-gray-text p-4 rounded-lg border-0 bg-yellow-100 mb-2 text-sm flex justify-between items-center gap-x-2">
+                        NOTE: The event organiser and attendee will need to organise their own payment.
+                        <ExclamationCircleIcon className="h-8 w-8 flex-shrink-0" />
                       </Description>
                       <div className="space-y-2">
-                        <div className="">
-                          <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            autoComplete="email"
-                            tabIndex={1}
-                            required
-                            className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                            placeholder="Attendee email *"
-                            onChange={(e) => setAttendeeEmail(e.target.value)}
-                          />
-                        </div>
-                        <div className="">
-                          <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            tabIndex={1}
-                            required
-                            className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                            placeholder="Attendee name *"
-                            onChange={(e) => setAttendeeName(e.target.value)}
-                          />
-                        </div>
-                        <div className="">
-                          <input
-                            id="mobilenumber"
-                            name="mobilenumber"
-                            type="tel"
-                            pattern="04[0-9]{8}"
-                            autoComplete="number"
-                            tabIndex={1}
-                            className="block w-full rounded-lg border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-                            placeholder="Mobile number (04 XXXX XXXX)"
-                            onChange={(e) => setAttendeePhoneNumber(e.target.value)}
-                          />
-                        </div>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          autoComplete="email"
+                          tabIndex={1}
+                          required
+                          className="focus:ring-0"
+                          label="Attendee email"
+                          onChange={(e) => setAttendeeEmail(e.target.value)}
+                          crossOrigin={undefined}
+                        />
+                        <Input
+                          id="name"
+                          name="name"
+                          type="text"
+                          tabIndex={1}
+                          required
+                          className="focus:ring-0"
+                          label="Attendee name"
+                          onChange={(e) => setAttendeeName(e.target.value)}
+                          crossOrigin={undefined}
+                        />
+                        <Input
+                          id="mobilenumber"
+                          name="mobilenumber"
+                          type="tel"
+                          pattern="04[0-9]{8}"
+                          autoComplete="number"
+                          tabIndex={1}
+                          className="focus:ring-0"
+                          label="Mobile number (04 XXXX XXXX)"
+                          onChange={(e) => setAttendeePhoneNumber(e.target.value)}
+                          crossOrigin={undefined}
+                        />
                         <Input
                           label="Number of tickets"
                           crossOrigin={undefined}
@@ -194,8 +187,7 @@ const InviteAttendeeDialog = ({
                               setNumTickets("0");
                             }
                           }}
-                          className="rounded-md focus:ring-0"
-                          size="lg"
+                          className="focus:ring-0"
                         />
                       </div>
 

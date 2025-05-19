@@ -11,11 +11,16 @@ public class UsersUtils {
 	public static PublicUserData extractPublicUserData(UserData data) {
 		PublicUserData publicUserData = new PublicUserData();
 		publicUserData.setFirstName(data.getFirstName());
-		publicUserData.setProfilePicture(data.getProfilePicture());
 		publicUserData.setSurname(data.getSurname());
-		publicUserData.setGender(data.getGender());
-		publicUserData.setDob(data.getDob());
-		publicUserData.setAge(data.getAge());
+		publicUserData.setProfilePicture(data.getProfilePicture());
+		publicUserData.setIsVerifiedOrganiser(data.getIsVerifiedOrganiser());
+		publicUserData.setBio(data.getBio());
+		publicUserData.setIsSearchable(data.getIsSearchable());
+		publicUserData.setNameTokens(data.getNameTokens());
+		publicUserData.setPublicContactInformation(data.getPublicContactInformation());
+		publicUserData.setPublicUpcomingOrganiserEvents(data.getPublicUpcomingOrganiserEvents());
+		publicUserData.setUsername(data.getUsername());
+		publicUserData.setForms(data.getForms());
 
 		return publicUserData;
 	}
@@ -25,10 +30,17 @@ public class UsersUtils {
 	 */
 	public static PrivateUserData extracPrivateUserData(UserData data) {
 		PrivateUserData privateUserData = new PrivateUserData();
+		privateUserData.setGender(privateUserData.getGender());
+		privateUserData.setDob(privateUserData.getDob());
+		privateUserData.setAge(privateUserData.getAge());
 		privateUserData.setLocation(privateUserData.getLocation());
 		privateUserData.setContactInformation(data.getContactInformation());
 		privateUserData.setActiveBookings(data.getActiveBookings());
-		privateUserData.setOrganiserEvents(data.getOrganiserEvents());
+		privateUserData.setStripeAccount(privateUserData.getStripeAccount());
+		privateUserData.setStripeAccountActive(privateUserData.getStripeAccountActive());
+		privateUserData.setOrganiserEvents(privateUserData.getOrganiserEvents());
+		privateUserData.setRecurrenceTemplates(data.getRecurrenceTemplates());
+		privateUserData.setPublicOrganiserEvents(data.getPublicOrganiserEvents());
 
 		return privateUserData;
 	}

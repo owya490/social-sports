@@ -41,6 +41,7 @@ public class EventsService {
         transaction.set(newEventDocRef, JavaUtils.toMap(data));
         createEventMetadata(transaction, newEventDocRef.getId(), data);
         EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), newEventDocRef.getId());
+        EventsUtils.addEventIdToUserOrganiserPublicUpcomingEvents(data.getOrganiserId(), newEventDocRef.getId());
         return newEventDocRef.getId();
     }
 
