@@ -3,6 +3,7 @@ import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTyp
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { collection, doc, getDoc, getDocs, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
+import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
 import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormResponseStatus, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
@@ -43,6 +44,39 @@ export async function getForm(formId: FormId): Promise<Form> {
     return formDoc;
   } catch (error) {
     formsServiceLogger.error(`getForm: Error getting form for formId: ${formId}, error: ${error}`);
+    throw error;
+  }
+}
+
+export async function getFormIdByEventId(eventId: EventId, bypassCache: boolean = false): Promise<FormId | undefined> {
+  formsServiceLogger.info(`getFormIdByEventId: ${eventId}`);
+  try {
+    const event = await getEventById(eventId, bypassCache);
+    if (event.formId === undefined) {
+      formsServiceLogger.info(`getFormIdByEventId: No form associated with eventId: ${eventId}`);
+      return undefined; // No form associated with this event
+    }
+    formsServiceLogger.info(
+      `getFormIdByEventId: Successfully retrieved formId: ${event.formId} for eventId: ${eventId}`
+    );
+    return event.formId as FormId;
+  } catch (error) {
+    formsServiceLogger.error(`getFormIdByEventId: Error getting formId for eventId: ${eventId}, error: ${error}`);
+    throw error;
+  }
+}
+
+export async function getFormByEventId(eventId: EventId, bypassCache: boolean = false): Promise<Form | undefined> {
+  formsServiceLogger.info(`getFormByEventId: ${eventId}`);
+  try {
+    const formId = await getFormIdByEventId(eventId, bypassCache);
+    if (formId === undefined) {
+      formsServiceLogger.info(`getFormByEventId: No form associated with eventId: ${eventId}`);
+      return undefined; // No form associated with this event
+    }
+    return await getForm(formId);
+  } catch (error) {
+    formsServiceLogger.error(`getFormByEventId: Error getting form for eventId: ${eventId}, error: ${error}`);
     throw error;
   }
 }

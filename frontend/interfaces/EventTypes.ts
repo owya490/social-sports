@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { FormId } from "./FormTypes";
 import { EmptyUserData, UserData, UserId } from "./UserTypes";
 
 export type EventId = string;
@@ -41,6 +42,7 @@ interface AbstractEventData {
   promotionalCodesEnabled: boolean; // should default to false
   paused: boolean; // should default to false
   eventLink: string;
+  formId?: FormId;
 }
 
 export interface NewEventData extends AbstractEventData {}
