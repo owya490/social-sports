@@ -5,7 +5,7 @@ import { Logger } from "@/observability/logger";
 import { collection, doc, getDoc, getDocs, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
-import { getPrivateUserById } from "../users/usersService";
+import { getPublicUserById } from "../users/usersService";
 import { FormPaths, FormResponseStatus, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
@@ -288,8 +288,8 @@ export async function getActiveFormsForUser(userId: UserId): Promise<Form[]> {
   formsServiceLogger.info(`getActiveFormsForUser: ${userId}`);
   try {
     const activeForms: Form[] = [];
-    const privateUserData = await getPrivateUserById(userId);
-    for (const formId of privateUserData.forms ?? []) {
+    const publicUserData = await getPublicUserById(userId);
+    for (const formId of publicUserData.forms ?? []) {
       const form = await getForm(formId);
       if (form.formActive) {
         activeForms.push(form);
@@ -311,8 +311,8 @@ export async function getDeletedFormsForUser(userId: UserId): Promise<Form[]> {
   formsServiceLogger.info(`getInactiveFormsForUser: ${userId}`);
   try {
     const deletedForms: Form[] = [];
-    const privateUserData = await getPrivateUserById(userId);
-    for (const formId of privateUserData.forms ?? []) {
+    const publicUserData = await getPublicUserById(userId);
+    for (const formId of publicUserData.forms ?? []) {
       const form = await getForm(formId);
       if (!form.formActive) {
         deletedForms.push(form);

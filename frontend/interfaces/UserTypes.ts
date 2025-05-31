@@ -1,93 +1,105 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
+import { EventId } from "./EventTypes";
 import { FormId } from "./FormTypes";
 
 export type UserId = string;
 
-interface AbstractUserData {
+export interface PublicUserData {
+  userId: string;
+  username: string;
   firstName: string;
-  surname?: string;
-  location?: string;
-  gender?: "Male" | "Female" | "Other" | "";
-  dob?: string;
-  age?: string;
-  contactInformation: {
-    mobile?: string;
-    email: string;
-  };
-  activeBookings?: [
-    {
-      eventId: string;
-    }
-  ];
-  profilePicture: string;
-  stripeAccount?: string;
-  stripeAccountActive?: boolean;
-  organiserEvents?: [string];
-  recurrenceTemplates?: [string];
-  isVerifiedOrganiser?: boolean;
-  forms?: FormId[];
-}
-
-export interface PublicUserData extends Omit<AbstractUserData, "contactInformation"> {
-  firstName: string;
-  surname?: string;
-  gender?: "Male" | "Female" | "Other" | "";
-  dob?: string;
-  age?: string;
+  surname: string;
   profilePicture: string;
   isVerifiedOrganiser?: boolean;
-}
-
-export interface PrivateUserData extends AbstractUserData {
-  location?: string;
-  contactInformation: {
-    mobile?: string;
+  isSearchable: boolean;
+  nameTokens: string[];
+  publicContactInformation: {
+    mobile: string;
     email: string;
   };
-  activeBookings?: [
-    {
-      eventId: string;
-    }
-  ];
-  stripeAccount?: string;
-  stripeAccountActive?: boolean;
-  forms?: FormId[];
+  publicUpcomingOrganiserEvents: EventId[];
+  bio: string;
+  forms?: [FormId];
 }
 
-export interface TempUserData extends AbstractUserData {}
+export interface PrivateUserData {
+  userId: string;
+  age: string;
+  dob: string;
+  gender: "Male" | "Female" | "Other" | "";
+  location: string;
+  contactInformation: {
+    mobile: string;
+    email: string;
+  };
+  activeBookings: string[];
+  stripeAccount?: string;
+  stripeAccountActive?: boolean;
+  organiserEvents: string[];
+  publicOrganiserEvents: string[];
+  recurrenceTemplates: string[];
+}
 
-export interface NewUserData extends AbstractUserData {
+export interface NewUserData extends PublicUserData, PrivateUserData {
   password: string;
 }
 
-export interface UserData extends AbstractUserData {
+export interface UserData extends PublicUserData, PrivateUserData {
   userId: UserId;
 }
 
-export const EmptyNewUserData: NewUserData = {
+// BEWARE - PLEASE TAKE CARE WHEN EDITING THESE AS THEY WILL AFFECT DESERIALISATION AND DEFAULT USER CREATION
+export const EmptyPublicUserData: PublicUserData = {
+  userId: "",
+  username: "",
   firstName: "",
-  contactInformation: {
+  surname: "",
+  publicContactInformation: {
+    mobile: "",
     email: "",
   },
-  password: "",
   profilePicture: DEFAULT_USER_PROFILE_PICTURE,
-  surname: "",
-  dob: "",
   isVerifiedOrganiser: false,
+  isSearchable: false,
+  nameTokens: [],
+  publicUpcomingOrganiserEvents: [],
+  bio: "",
+};
+
+// BEWARE - PLEASE TAKE CARE WHEN EDITING THESE AS THEY WILL AFFECT DESERIALISATION AND DEFAULT USER CREATION
+export const EmptyPrivateUserData: PrivateUserData = {
+  userId: "",
+  contactInformation: {
+    email: "",
+    mobile: "",
+  },
+  dob: "",
+  age: "",
+  gender: "",
+  location: "",
+  activeBookings: [],
+  organiserEvents: [],
+  publicOrganiserEvents: [],
+  recurrenceTemplates: [],
+  stripeAccount: undefined,
+  stripeAccountActive: undefined,
 };
 
 export const EmptyUserData: UserData = {
+  ...EmptyPublicUserData,
+  ...EmptyPrivateUserData,
   userId: "",
-  firstName: "",
-  contactInformation: {
-    email: "",
-  },
-  profilePicture: DEFAULT_USER_PROFILE_PICTURE,
-  surname: "",
-  dob: "",
-  isVerifiedOrganiser: false,
+};
+
+export const EmptyNewUserData: NewUserData = {
+  ...EmptyUserData,
+  password: "",
 };
 
 export interface IUsersDataLocalStorage {
-  [key: string]: UserData;
+  [key: string]: PublicUserData;
+}
+
+export interface UsernameMap {
+  userId: UserId;
 }

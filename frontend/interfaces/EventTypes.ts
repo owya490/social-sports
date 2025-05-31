@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 import { FormId } from "./FormTypes";
-import { EmptyUserData, UserData, UserId } from "./UserTypes";
+import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
 
 export type EventId = string;
 export type StripeCheckoutSessionId = string;
@@ -49,7 +49,7 @@ export interface NewEventData extends AbstractEventData {}
 
 export interface EventData extends AbstractEventData {
   eventId: EventId;
-  organiser: UserData;
+  organiser: PublicUserData;
 }
 
 export interface EventDataWithoutOrganiser extends AbstractEventData {
@@ -63,7 +63,7 @@ export interface DeletedEvent extends AbstractEventData {
 
 export const EmptyEventData: EventData = {
   eventId: "",
-  organiser: EmptyUserData,
+  organiser: EmptyPublicUserData,
   startDate: new Timestamp(0, 0),
   endDate: new Timestamp(0, 0),
   location: "",

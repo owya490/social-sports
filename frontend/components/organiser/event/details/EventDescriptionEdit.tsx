@@ -1,5 +1,5 @@
 "use client";
-import DescriptionRichTextEditor from "@/components/events/create/DescriptionRichTextEditor";
+import DescriptionRichTextEditor from "@/components/editor/DescriptionRichTextEditor";
 import OrganiserEventDescription from "@/components/events/OrganiserEventDescription";
 import { EventId } from "@/interfaces/EventTypes";
 import { CheckIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
