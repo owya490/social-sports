@@ -52,6 +52,9 @@ const montserrat = Montserrat({ subsets: ["latin"] });
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+      </head>
       <GrafanaFaro>
         <UserContext>
           <body className={`${inter.className}`}>

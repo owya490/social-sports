@@ -1,0 +1,16 @@
+export const Breadcrumbs = ({ texts, links }: { texts: string[]; links: string[] }) => {
+  return (
+    <nav aria-label="breadcrumb" className="w-max">
+      <ol className="flex w-full flex-wrap items-center rounded-md bg-slate-50 px-4 py-2">
+        {texts.map((text, idx) => {
+          return (
+            <li className="flex cursor-pointer items-center text-sm text-slate-500 transition-colors duration-300 hover:text-slate-800">
+              <a href={links[idx]}>{text}</a>
+              <span className="pointer-events-none mx-2 text-slate-800">/</span>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+};
