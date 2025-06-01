@@ -18,11 +18,6 @@ interface StripeGetCheckoutUrlResponse {
   url: string;
 }
 
-/**
- * See https://docs.stripe.com/api/metadata for more information on metadata in Stripe.
- */
-export type StripeMetadata = { [key: string]: string };
-
 const stripeServiceLogger = new Logger("stripeServiceLogger");
 
 export async function getStripeStandardAccountLink(organiserId: string, returnUrl: string, refreshUrl: string) {
@@ -49,7 +44,6 @@ export async function getStripeCheckoutFromEventId(
   quantity: number,
   successUrl?: URL
 ) {
-  // TODO: propagate metadata to stripe checkout session
   const content = {
     eventId: eventId,
     isPrivate: isPrivate,

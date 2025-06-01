@@ -27,7 +27,6 @@ class StripeCheckoutRequest:
   quantity: int
   cancelUrl: str
   successUrl: str
-  metadata: dict[str, str]
 
   def __post_init__(self):
     if not isinstance(self.eventId, str):
