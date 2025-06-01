@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 export default function SearchBar() {
-  const [event, setEvent] = useState("");
+  const [searchParameter, setSearchParameter] = useState("");
   const [location, setLocation] = useState("");
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -17,15 +17,19 @@ export default function SearchBar() {
     const updateStateFromQuery = () => {
       if (typeof window === "undefined") {
         // Return some default or empty values when not in a browser environment
-        setEvent("");
+        setSearchParameter("");
         setLocation("");
       }
       const searchParams = new URLSearchParams(window.location.search);
+      const user = searchParams.get("user");
       const event = searchParams.get("event");
       const location = searchParams.get("location");
-
+      if (user) {
+        setSearchParameter(user);
+        setSearchTypeSelected("users");
+      }
       if (event) {
-        setEvent(event);
+        setSearchParameter(event);
       }
       if (location) {
         setLocation(location);
@@ -35,14 +39,21 @@ export default function SearchBar() {
   }, [pathname, searchParams]);
 
   const handleSearchClick = () => {
-    console.log("search");
-    const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
+    // Default to events
+    var searchUrl = `/dashboard?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(location)}`;
+    if (searchTypeSelected == "users") {
+      searchUrl = `/dashboard?user=${encodeURIComponent(searchParameter)}`;
+    }
     router.push(searchUrl);
   };
   const handleKeyPress = (e: { key: string }) => {
     if (e.key === "Enter") {
-      console.log("search");
-      const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
+      var searchUrl = `/dashboard?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(
+        location
+      )}`;
+      if (searchTypeSelected == "users") {
+        searchUrl = `/dashboard?user=${encodeURIComponent(searchParameter)}`;
+      }
       router.push(searchUrl);
     }
   };
@@ -97,9 +108,9 @@ export default function SearchBar() {
       <input
         className={`h-9 w-64 border-0 focus:ring-0 font-thin ${isFocused ? "" : `${isHovered ? "bg-core-hover" : ""}`}`}
         type="text"
-        placeholder="Search for events"
-        value={event}
-        onChange={(e) => setEvent(e.target.value)}
+        placeholder={`Search for ${searchTypeSelected.charAt(0).toUpperCase() + searchTypeSelected.slice(1)}`}
+        value={searchParameter}
+        onChange={(e) => setSearchParameter(e.target.value)}
         onKeyDown={handleKeyPress}
         onMouseEnter={() => setIsHovered(true)}
       />
@@ -112,7 +123,6 @@ export default function SearchBar() {
         onChange={(e) => setLocation(e.target.value)}
         onKeyDown={handleKeyPress}
       /> */}
-      {/* {isFocused && ( */}
       <div
         className={`overflow-hidden transition-all duration-[400ms] mr-1 `}
         style={{ width: `${selectTargetWidth}px` }}
@@ -129,7 +139,6 @@ export default function SearchBar() {
           <option value="users">Users</option>
         </Select>
       </div>
-      {/* // )} */}
       <button
         onClick={handleSearchClick}
         className={`w-fit rounded-full border border-black bg-black transition-all duration-[400ms] text-white flex ${

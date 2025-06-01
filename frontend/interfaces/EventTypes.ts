@@ -123,3 +123,8 @@ export interface Attendee {
 
 export type Name = string;
 type EmailHash = string;
+
+export enum SearchType {
+  EVENT,
+  USER,
+}

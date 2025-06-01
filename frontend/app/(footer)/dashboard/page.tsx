@@ -1,9 +1,17 @@
 "use client";
 import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
-import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { UserCard } from "@/components/users/UserCard";
+import { EmptyEventData, EventData, SearchType } from "@/interfaces/EventTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
+import {
+  getAllPublicUsers,
+  getPublicUserById,
+  getUsernameMapping,
+  searchUserByKeyword,
+} from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import Image from "next/image";
@@ -30,16 +38,24 @@ export default function Dashboard() {
   const [_srcLocation, setSrcLocation] = useState<string>("");
   const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
   const [endLoading, setEndLoading] = useState<boolean | undefined>(undefined);
+  const [publicUserDataList, setPublicUserDataList] = useState<PublicUserData[]>([]);
+  const [searchType, setSearchType] = useState<SearchType>(SearchType.EVENT);
+
   const getQueryParams = () => {
     // if (typeof window === "undefined") {
     if (window === undefined) {
       // Return some default or empty values when not in a browser environment
-      return { event: "", location: "" };
+      return { event: null, location: null, user: null };
     }
     const searchParams = new URLSearchParams(window.location.search);
+    console.log(searchParams);
+    console.log(searchParams.get("event"));
+    console.log(searchParams.get("location"));
+    console.log(searchParams.get("user"));
     return {
-      event: searchParams.get("event") || "",
-      location: searchParams.get("location") || "",
+      event: searchParams.get("event"),
+      location: searchParams.get("location"),
+      user: searchParams.get("user"),
     };
   };
 
@@ -47,10 +63,47 @@ export default function Dashboard() {
     window.scrollTo(0, 0);
   });
 
+  function determineSearchType(
+    eventParameter: string | null,
+    locationParameter: string | null,
+    userParameter: string | null
+  ): SearchType {
+    var type = SearchType.EVENT;
+    if (eventParameter !== null) {
+      type = SearchType.EVENT;
+    } else if (userParameter !== null) {
+      type = SearchType.USER;
+    } else {
+      type = SearchType.EVENT;
+    }
+    setSearchType(type);
+    return type;
+  }
+
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchSearch = async () => {
+      setLoading(true);
+      const { event, location, user } = getQueryParams();
+      const type = determineSearchType(event, location, user);
+      console.log("type: " + type.toString());
+      switch (type) {
+        case SearchType.EVENT:
+          console.log("search type is event");
+          await fetchEvents(event || "", location || "");
+          return;
+        case SearchType.USER:
+          console.log("search type is user");
+          await fetchUsers(user || "");
+          return;
+        default:
+          console.log("search type is default");
+          await fetchEvents(event || "", location || "");
+          return;
+      }
+    };
+
+    const fetchEvents = async (event: string, location: string) => {
       await sleep(500);
-      const { event, location } = getQueryParams();
       if (event === "UNDEFINED") {
         console.log("owen");
         return false;
@@ -95,8 +148,39 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
+
+    const fetchUsers = async (user: string) => {
+      try {
+        if (typeof user === "string") {
+          // if the search is empty, get everyone and display
+          if (user.trim() === "") {
+            getAllPublicUsers().then((users) => {
+              setPublicUserDataList(users);
+            });
+          } else {
+            // the search is not empty
+            // 1. try search the user up by username and if so add it to the first element of the list
+            var users: PublicUserData[] = [];
+            try {
+              const { userId } = await getUsernameMapping(user);
+              users.push(await getPublicUserById(userId));
+            } catch (error) {
+              // no-op - this is fine, just search normally
+            }
+            // 2. if it doesn't exist, try do token search
+            users = [...users, ...(await searchUserByKeyword(user))];
+            setPublicUserDataList(users);
+          }
+        }
+      } catch (error) {
+        router.push("/error");
+      }
+      setEventDataList([]);
+      setLoading(false);
+    };
+
     setLoading(true);
-    fetchEvents();
+    fetchSearch();
   }, [searchParams]);
 
   // useEffect listener for when filtering finishes
@@ -157,7 +241,7 @@ export default function Dashboard() {
         </Alert>
       </div>
       <div className="md:flex justify-center w-full mt-4 px-3 sm:px-20 lg:px-3 pb-10">
-        {loading === false && eventDataList.length === 0 && (
+        {loading === false && eventDataList.length === 0 && publicUserDataList.length === 0 && (
           <div className="flex justify-center z-10">
             <div>
               <Image
@@ -174,25 +258,42 @@ export default function Dashboard() {
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-6 gap-4 lg:gap-8 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
-          {eventDataList
-            .sort((a, b) => b.accessCount - a.accessCount)
-            .map((event, eventIdx) => {
-              return (
-                <EventCard
-                  eventId={event.eventId}
-                  image={event.image}
-                  thumbnail={event.thumbnail}
-                  name={event.name}
-                  organiser={event.organiser}
-                  startTime={event.startDate}
-                  location={event.location}
-                  price={event.price}
-                  vacancy={event.vacancy}
-                  loading={loading}
-                  key={eventIdx}
-                />
-              );
-            })}
+          {searchType === SearchType.USER
+            ? publicUserDataList
+                .filter((user) => user.isSearchable)
+                .map((user, userIdx) => {
+                  return (
+                    <UserCard
+                      key={userIdx}
+                      userId={user.userId}
+                      firstName={user.firstName}
+                      surname={user.surname}
+                      username={user.username}
+                      email={user.publicContactInformation.email}
+                      image={user.profilePicture}
+                      loading={loading}
+                    />
+                  );
+                })
+            : eventDataList
+                .sort((a, b) => b.accessCount - a.accessCount)
+                .map((event, eventIdx) => {
+                  return (
+                    <EventCard
+                      eventId={event.eventId}
+                      image={event.image}
+                      thumbnail={event.thumbnail}
+                      name={event.name}
+                      organiser={event.organiser}
+                      startTime={event.startDate}
+                      location={event.location}
+                      price={event.price}
+                      vacancy={event.vacancy}
+                      loading={loading}
+                      key={eventIdx}
+                    />
+                  );
+                })}
         </div>
       </div>
     </div>
