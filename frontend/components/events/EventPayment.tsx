@@ -159,6 +159,7 @@ export default function EventPayment(props: EventPaymentProps) {
                       props.setLoading(true);
                       window.scrollTo(0, 0);
 
+                      // We'll put this behind a flag for now just in case we need to quickly disable this.
                       if (FULFILMENT_SESSION_ENABLED) {
                         try {
                           const fulfilmentSessionId = await initFulfilmentSession({
@@ -170,6 +171,9 @@ export default function EventPayment(props: EventPaymentProps) {
                           });
 
                           await execNextFulfilmentEntity(fulfilmentSessionId, router);
+
+                          // TODO: implement proper way of deleting fulfilment sessions. We'll manually delete them
+                          // for now to stop the db from filling up: https://owenyang.atlassian.net/browse/SPORTSHUB-365
                         } catch {
                           router.push("/error");
                         }
