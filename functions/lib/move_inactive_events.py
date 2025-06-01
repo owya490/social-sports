@@ -141,7 +141,7 @@ def get_and_move_private_inactive_events(today: date):
 
 
 @scheduler_fn.on_schedule(
-    schedule="every day 00:05",
+    schedule="every day 00:05", # Ensure we don't run into concurrency issues with recurrent events cron.
     region="australia-southeast1",
     timezone=scheduler_fn.Timezone("Australia/Sydney"),
 )
