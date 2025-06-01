@@ -1,7 +1,14 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { URL } from "@/interfaces/Types";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
-import { execNextFulfilmentEntity, initFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
+import {
+  execNextFulfilmentEntity,
+  FULFILMENT_SESSION_ENABLED,
+  initFulfilmentSession,
+} from "@/services/src/fulfilment/fulfilmentServices";
+import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { displayPrice } from "@/utilities/priceUtils";
 import {
   CalendarDaysIcon,
@@ -152,23 +159,29 @@ export default function EventPayment(props: EventPaymentProps) {
                       props.setLoading(true);
                       window.scrollTo(0, 0);
 
-                      const fulfilmentSessionId = await initFulfilmentSession({
-                        type: "checkout",
-                        fulfilmentEntityTypes: ["stripe"],
-                        eventId: props.eventId,
-                        numTickets: attendeeCount,
-                      });
+                      if (FULFILMENT_SESSION_ENABLED) {
+                        try {
+                          const fulfilmentSessionId = await initFulfilmentSession({
+                            type: "checkout",
+                            fulfilmentEntityTypes: ["stripe"],
+                            endUrl: getUrlWithCurrentHostname(`/event/success/${props.eventId}`) as URL,
+                            eventId: props.eventId,
+                            numTickets: attendeeCount,
+                          });
 
-                      await execNextFulfilmentEntity(fulfilmentSessionId, router);
+                          await execNextFulfilmentEntity(fulfilmentSessionId, router);
+                        } catch {
+                          router.push("/error");
+                        }
+                      } else {
+                        const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                          props.eventId,
+                          props.isPrivate,
+                          attendeeCount
+                        );
 
-                      // const stripeCheckoutLink = await getStripeCheckoutFromEventId(
-                      //   props.eventId,
-                      //   props.isPrivate,
-                      //   attendeeCount,
-                      //   {}
-                      // );
-
-                      // router.push(stripeCheckoutLink);
+                        router.push(stripeCheckoutLink);
+                      }
                     }}
                   >
                     Book Now

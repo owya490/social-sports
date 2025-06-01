@@ -14,7 +14,7 @@ export type FulfilmentSession = {
   currentFulfilmentEntityIndex: number;
 };
 
-export type FulfilmentSessionType = { fulfilmentEntityTypes: FulfilmentEntity["type"][] } & ({
+export type FulfilmentSessionType = { fulfilmentEntityTypes: FulfilmentEntity["type"][]; endUrl: URL } & ({
   type: "checkout";
 } & CheckoutFulfilmentSessionType);
 
@@ -24,9 +24,10 @@ export type CheckoutFulfilmentSessionType = {
 };
 
 /// FulfilmentEntity Types
-export type FulfilmentEntity =
+export type FulfilmentEntity = { nextUrl: URL } & (
   | ({ type: "stripe" } & StripeFulfilmentEntity)
-  | ({ type: "forms" } & FormsFulfilmentEntity);
+  | ({ type: "forms" } & FormsFulfilmentEntity)
+);
 
 export type StripeFulfilmentEntity = {
   stripeCheckoutLink: URL;

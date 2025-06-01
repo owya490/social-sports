@@ -105,7 +105,6 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     eventServiceLogger.info(`createEvent succeeded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
-    console.error(error);
     eventServiceLogger.error(`createEvent ${error}`);
     throw error;
   }
@@ -599,13 +598,3 @@ export async function updateEventCapacityById(eventId: EventId, capacity: number
   }
   return valid;
 }
-
-/**
- * Retrieves form associated with EventId. Each event can currently have a maximum of 1 form associated with it
- * so the maximum number of forms this function can retrieve is 1.
- *
- * Returns null (absense of a value) if there is no form associated with the event.
- */
-// export async function getFormAssociatedWithEvent(eventId: EventId): Promise<FormId | null> {
-//   // TODO: log an error if there is failure.
-// }

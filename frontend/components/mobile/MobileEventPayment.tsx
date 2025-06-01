@@ -1,7 +1,14 @@
 "use client";
 
+import { URL } from "@/interfaces/Types";
 import { timestampToDateString } from "@/services/src/datetimeUtils";
+import {
+  execNextFulfilmentEntity,
+  FULFILMENT_SESSION_ENABLED,
+  initFulfilmentSession,
+} from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { displayPrice } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
@@ -130,8 +137,29 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   onClick={async () => {
                     props.setLoading(true);
                     window.scrollTo(0, 0);
-                    const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount, {});
-                    router.push(link);
+                    if (FULFILMENT_SESSION_ENABLED) {
+                      try {
+                        const fulfilmentSessionId = await initFulfilmentSession({
+                          type: "checkout",
+                          fulfilmentEntityTypes: ["stripe"],
+                          endUrl: getUrlWithCurrentHostname(`/event/success/${props.eventId}`) as URL,
+                          eventId: props.eventId,
+                          numTickets: attendeeCount,
+                        });
+
+                        await execNextFulfilmentEntity(fulfilmentSessionId, router);
+                      } catch {
+                        router.push("/error");
+                      }
+                    } else {
+                      const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                        props.eventId,
+                        props.isPrivate,
+                        attendeeCount
+                      );
+
+                      router.push(stripeCheckoutLink);
+                    }
                   }}
                 >
                   Book Now

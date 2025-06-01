@@ -12,61 +12,80 @@ import {
   updateFulfilmentSession,
 } from "./fulfilmentUtils/fulfilmentUtils";
 
+// Flag for development purposes to enable or disable fulfilment session functionality.
+export const FULFILMENT_SESSION_ENABLED = true;
+
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 
 /**
  * Main entry point for creating fulfilment sessions.
  * Initializes a fulfilment session based on the provided fulfilment session type.
+ *
+ * NOTE: Fulfilment entities are initialized in the order they are provided in
+ * `fulfilmentSessionType.fulfilmentEntityTypes`.
  */
 export async function initFulfilmentSession(
   fulfilmentSessionType: FulfilmentSessionType
 ): Promise<FulfilmentSessionId> {
-  switch (fulfilmentSessionType.type) {
-    case "checkout": {
-      return initCheckoutFulfilmentSession(
-        fulfilmentSessionType.eventId,
-        fulfilmentSessionType.numTickets,
-        fulfilmentSessionType.fulfilmentEntityTypes
-      );
+  try {
+    switch (fulfilmentSessionType.type) {
+      case "checkout": {
+        return await initCheckoutFulfilmentSession(
+          fulfilmentSessionType.eventId,
+          fulfilmentSessionType.numTickets,
+          fulfilmentSessionType.fulfilmentEntityTypes,
+          fulfilmentSessionType.endUrl
+        );
+      }
     }
+  } catch (error) {
+    fulfilmentServiceLogger.error(`initFulfilmentSession: ${error}`);
+    throw error;
   }
 }
 
 /**
  * Initializes a checkout fulfilment session for the given event ID with specified fulfilment entity types.
- *
- * NOTE: Fulfilment entities are initialized in the order they are provided in `fulfilmentEntityTypes`.
  */
 async function initCheckoutFulfilmentSession(
   eventId: EventId,
   numTickets: number,
-  fulfilmentEntityTypes: FulfilmentEntity["type"][]
+  fulfilmentEntityTypes: FulfilmentEntity["type"][],
+  endUrl: URL
 ): Promise<FulfilmentSessionId> {
   fulfilmentServiceLogger.info(`initFulfilmentSession: Initializing fulfilment session for event ID: ${eventId}`);
   // TODO: look into holding tickets here separate from the stripe checkout session (to be able to have free events)
+  // https://owenyang.atlassian.net/browse/SPORTSHUB-362
 
   try {
     const eventData = await getEventById(eventId);
 
     const fulfilmentEntities: FulfilmentEntity[] = [];
-    for (const type of fulfilmentEntityTypes) {
+
+    // We iterate through the fulfilment entity types in reverse order to get the next URL for each fulfilment entity.
+    let currNextUrl = endUrl;
+    for (const type of fulfilmentEntityTypes.reverse()) {
       switch (type) {
         case "stripe": {
+          const stripeCheckoutLink = (await getStripeCheckoutFromEventId(
+            eventId,
+            eventData.isPrivate,
+            numTickets,
+            currNextUrl
+          )) as URL;
+
           fulfilmentEntities.push({
             type: "stripe",
-            stripeCheckoutLink: (await getStripeCheckoutFromEventId(
-              eventId,
-              eventData.isPrivate,
-              numTickets,
-              {}
-            )) as URL,
+            stripeCheckoutLink,
+            nextUrl: currNextUrl,
           });
+
+          currNextUrl = stripeCheckoutLink;
           break;
         }
 
         case "forms": {
           const formId = await getFormIdByEventId(eventId);
-          // TODO: need to handle this more gracefully, e.g. potentially do retries?
           if (!formId) {
             fulfilmentServiceLogger.warn(`initFulfilmentSession: No form found for event ID: ${eventId}`);
             continue; // Skip if no form is associated with the event
@@ -77,6 +96,7 @@ async function initCheckoutFulfilmentSession(
             formId,
             tempFormResponseIds: [],
             submittedFormResponseIds: [],
+            nextUrl: currNextUrl,
           });
           break;
         }
@@ -147,6 +167,7 @@ export async function execNextFulfilmentEntity(
     }
 
     case "forms": {
+      // TODO: implement form fulfilment entity execution: https://owenyang.atlassian.net/browse/SPORTSHUB-363
       fulfilmentServiceLogger.info(
         `execNextFulfilmentEntity: Executing Forms fulfilment entity for session ID: ${fulfilmentSessionId}, entity: ${JSON.stringify(
           currentFulfilmentEntity
