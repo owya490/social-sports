@@ -1,6 +1,6 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
-import { FormId } from "./FormTypes";
 import { EventId } from "./EventTypes";
+import { FormId } from "./FormTypes";
 
 export type UserId = string;
 

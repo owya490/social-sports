@@ -105,7 +105,6 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     eventServiceLogger.info(`createEvent succeeded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
-    console.error(error);
     eventServiceLogger.error(`createEvent ${error}`);
     throw error;
   }
