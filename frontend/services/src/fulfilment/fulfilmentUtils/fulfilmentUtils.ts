@@ -1,7 +1,7 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { FulfilmentEntity, FulfilmentSession, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
 import { UTCTime } from "@/interfaces/Types";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 import { db } from "../../firebase";
 import { fulfilmentSessionsRootPath } from "../fulfilmentConstants";
@@ -96,5 +96,25 @@ export async function updateFulfilmentSession(
   } catch (error) {
     fulfilmentServiceLogger.error(`updateFulfilmentSession: Failed to update fulfilment session: ${error}`);
     throw new Error(`updateFulfilmentSession: Failed to update fulfilment session: ${error}`);
+  }
+}
+
+/**
+ * NOTE: Do NOT use this function directly. Fulfilment sessions should be managed through `fulfilmentService.ts`.
+ *
+ * Deletes a fulfilment session by its ID.
+ */
+export async function deleteFulfilmentSession(fulfilmentSessionId: FulfilmentSessionId): Promise<void> {
+  fulfilmentServiceLogger.info(`deleteFulfilmentSession: Deleting fulfilment session with ID: ${fulfilmentSessionId}`);
+
+  try {
+    const docRef = doc(db, fulfilmentSessionsRootPath, fulfilmentSessionId);
+    await deleteDoc(docRef);
+    fulfilmentServiceLogger.info(
+      `deleteFulfilmentSession: Fulfilment session deleted successfully for ID: ${fulfilmentSessionId}`
+    );
+  } catch (error) {
+    fulfilmentServiceLogger.error(`deleteFulfilmentSession: Failed to delete fulfilment session: ${error}`);
+    throw new Error(`deleteFulfilmentSession: Failed to delete fulfilment session: ${error}`);
   }
 }

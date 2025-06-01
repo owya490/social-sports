@@ -137,6 +137,8 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   onClick={async () => {
                     props.setLoading(true);
                     window.scrollTo(0, 0);
+
+                    // We'll put this behind a flag for now just in case we need to quickly disable this.
                     if (FULFILMENT_SESSION_ENABLED) {
                       try {
                         const fulfilmentSessionId = await initFulfilmentSession({
@@ -148,6 +150,8 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                         });
 
                         await execNextFulfilmentEntity(fulfilmentSessionId, router);
+
+                        // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
                       } catch {
                         router.push("/error");
                       }

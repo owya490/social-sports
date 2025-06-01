@@ -172,8 +172,7 @@ export default function EventPayment(props: EventPaymentProps) {
 
                           await execNextFulfilmentEntity(fulfilmentSessionId, router);
 
-                          // TODO: implement proper way of deleting fulfilment sessions. We'll manually delete them
-                          // for now to stop the db from filling up: https://owenyang.atlassian.net/browse/SPORTSHUB-365
+                          // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
                         } catch {
                           router.push("/error");
                         }
