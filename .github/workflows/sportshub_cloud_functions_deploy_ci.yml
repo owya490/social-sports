@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - master
+      - QR_code_backend
 
 jobs:
   deploy-java-cloud-run-functions:
@@ -111,7 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: [dev]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
