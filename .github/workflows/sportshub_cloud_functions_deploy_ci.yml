@@ -126,7 +126,7 @@ jobs:
 
       - name: Install Firebase CLI
         run: |
-          npm install -g firebase-tools@13.2.1
+          npm install -g firebase-tools@14.5.1
 
       - name: Setup Python 3.11
         uses: actions/setup-python@v4
