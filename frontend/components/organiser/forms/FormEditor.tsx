@@ -13,8 +13,43 @@ export interface FormEditorParams {
   formId: FormId;
 }
 
-const FormEditor = ({ formId }: FormEditorParams) => {
+const FormEditor = ({}: FormEditorParams) => {
   const [form, setForm] = useState<Form>(initialForm);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      title: e.target.value,
+    }));
+  };
+
+  const duplicateSection = (section: FormSection, sectionId: SectionId) => {
+    const newSectionId: SectionId = `section-${form.sectionsOrder.length + 1}`;
+    setForm((prevForm) => ({
+      ...prevForm,
+      sectionsOrder: [...prevForm.sectionsOrder, newSectionId],
+      sectionsMap: new Map(prevForm.sectionsMap).set(newSectionId, {
+        ...section,
+        // Deep copy the options array if it exists
+        ...(section.type === FormSectionType.DROPDOWN_SELECT && {
+          options: [...section.options],
+        }),
+      }),
+    }));
+  };
+
+  const deleteSection = (sectionId: SectionId) => {
+    setForm((prevForm) => {
+      const newMap = new Map(prevForm.sectionsMap);
+      newMap.delete(sectionId);
+      return {
+        ...prevForm,
+        sectionsOrder: prevForm.sectionsOrder.filter((id) => id !== sectionId),
+        sectionsMap: newMap,
+      };
+    });
+  };
 
   const addSection = (section: FormSection) => {
     const newSectionId: SectionId = `section-${form.sectionsOrder.length + 1}`;
@@ -25,80 +60,127 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     }));
   };
 
-  const updateDropdownOptions = (sectionId: SectionId, newOptions: string[]) => {
-    setForm((prevForm) => {
-      const section = prevForm.sectionsMap.get(sectionId);
-      if (section && section.type === FormSectionType.DROPDOWN_SELECT) {
-        const updatedSection = { ...section, options: newOptions };
-        return {
-          ...prevForm,
-          sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-        };
-      }
-      return prevForm;
-    });
-  };
-
   const renderSection = (section: FormSection, sectionId: SectionId) => {
-    const updateDropdownOptions = (newOptions: string[]) => {
-      setForm((prevForm) => {
-        const updatedSection = { ...section, options: newOptions };
-        return {
-          ...prevForm,
-          sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-        };
-      });
-    };
-
     switch (section.type) {
       case FormSectionType.TEXT:
         return (
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
-          <input
-            type="text"
-            value={section.question}
-            placeholder="Enter your question here?"
-            onChange={(e) => {
-              setForm((prevForm) => {
-                const updatedSection = { ...section, question: e.target.value };
-                return {
-                  ...prevForm,
-                  sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-                };
-              });
-            }}
-            style={{
-              flex: 1,
-              padding: '10px',
-              width: '100%',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-            }}
-          />
-        </div>
-        
+          <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+            <input
+              type="text"
+              value={section.question}
+              placeholder="Enter your question here?"
+              onChange={(e) => {
+                setForm((prevForm) => {
+                  const updatedSection = { ...section, question: e.target.value };
+                  return {
+                    ...prevForm,
+                    sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
+                  };
+                });
+              }}
+              style={{
+                flex: 1,
+                padding: "10px",
+                width: "100%",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <button
+                onClick={() => deleteSection(sectionId)}
+                style={{
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  padding: "8px",
+                  color: "#666",
+                  fontSize: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <span>🗑️</span>
+                <span>Delete</span>
+              </button>
+              <button
+                onClick={() => duplicateSection(section, sectionId)}
+                style={{
+                  border: "none",
+                  background: "none",
+                  cursor: "pointer",
+                  padding: "8px",
+                  color: "#666",
+                  fontSize: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                <span>📋</span>
+                <span>Duplicate</span>
+              </button>
+              <span
+                style={{
+                  fontSize: "14px",
+                  color: "#666",
+                }}
+              >
+                Required
+              </span>
+              <button
+                onClick={() => {
+                  setForm((prevForm) => {
+                    const updatedSection = {
+                      ...section,
+                      required: !section.required,
+                    };
+                    return {
+                      ...prevForm,
+                      sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
+                    };
+                  });
+                }}
+                style={{
+                  width: "36px",
+                  height: "20px",
+                  backgroundColor: section.required ? "#4CAF50" : "#ccc",
+                  border: "none",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  position: "relative",
+                  transition: "background-color 0.3s",
+                }}
+              >
+                <div
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    backgroundColor: "white",
+                    borderRadius: "50%",
+                    position: "absolute",
+                    top: "2px",
+                    left: section.required ? "18px" : "2px",
+                    transition: "left 0.3s",
+                  }}
+                />
+              </button>
+            </div>
+          </div>
         );
-      // case FormSectionType.MULTIPLE_CHOICE:
-      //   return (
-      //     <div>
-      //       {section.options.map((option, index) => (
-      //         <label key={index}>
-      //           <input type="radio" name={section.question} value={String(option)} />
-      //           {option}
-      //         </label>
-      //       ))}
-      //     </div>
-      //   );
+
       case FormSectionType.DROPDOWN_SELECT:
         return (
-          <div
-            style={{
-              marginTop: '0', // Pushes the structure to the top of the page
-              padding: '10px',
-            }}
-          >
-            {/* Editable Question Field */}
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
+          <div style={{ marginTop: "0", padding: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
               <input
                 type="text"
                 value={section.question}
@@ -114,41 +196,112 @@ const FormEditor = ({ formId }: FormEditorParams) => {
                 }}
                 style={{
                   flex: 1,
-                  padding: '10px',
-                  width: '100%',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
+                  padding: "10px",
+                  width: "100%",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
                 }}
               />
-            </div>
 
-            {/* Dynamic Option Fields */}
-            {section.options.map((option, index) => (
+              {section.options.map((option, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <span style={{ marginRight: "10px", width: "20px", textAlign: "right" }}>{index + 1}.</span>
+                  <input
+                    type="text"
+                    value={option}
+                    placeholder={`Option ${index + 1}`}
+                    onChange={(e) => {
+                      setForm((prevForm) => {
+                        const updatedSection = { ...section };
+                        updatedSection.options[index] = e.target.value;
+
+                        if (index === updatedSection.options.length - 1 && e.target.value.trim() !== "") {
+                          updatedSection.options.push("");
+                        }
+
+                        return {
+                          ...prevForm,
+                          sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
+                        };
+                      });
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "10px",
+                      width: "100%",
+                      border: "1px solid #ccc",
+                      borderRadius: "4px",
+                    }}
+                  />
+                </div>
+              ))}
+
+              {/* Required Toggle */}
               <div
-                key={index}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  marginBottom: '10px',
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginTop: "10px",
                 }}
               >
-                <span style={{ marginRight: '10px', width: '20px', textAlign: 'right' }}>
-                  {index + 1}.
+                <button
+                  onClick={() => deleteSection(sectionId)}
+                  style={{
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    padding: "8px",
+                    color: "#666",
+                    fontSize: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <span>🗑️</span>
+                  <span>Delete</span>
+                </button>
+                <button
+                  onClick={() => duplicateSection(section, sectionId)}
+                  style={{
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    padding: "8px",
+                    color: "#666",
+                    fontSize: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <span>📋</span>
+                  <span>Duplicate</span>
+                </button>
+                <span
+                  style={{
+                    fontSize: "14px",
+                    color: "#666",
+                  }}
+                >
+                  Required
                 </span>
-                <input
-                  type="text"
-                  value={option}
-                  placeholder={`Option ${index + 1}`}
-                  onChange={(e) => {
+                <button
+                  onClick={() => {
                     setForm((prevForm) => {
-                      const updatedSection = { ...section };
-                      updatedSection.options[index] = e.target.value;
-
-                      // Add a new empty option if editing the last option
-                      if (index === updatedSection.options.length - 1 && e.target.value.trim() !== '') {
-                        updatedSection.options.push('');
-                      }
-
+                      const updatedSection = {
+                        ...section,
+                        required: !section.required,
+                      };
                       return {
                         ...prevForm,
                         sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
@@ -156,84 +309,58 @@ const FormEditor = ({ formId }: FormEditorParams) => {
                     });
                   }}
                   style={{
-                    flex: 1,
-                    padding: '10px',
-                    width: '100%',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
+                    width: "36px",
+                    height: "20px",
+                    backgroundColor: section.required ? "#4CAF50" : "#ccc",
+                    border: "none",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "background-color 0.3s",
                   }}
-                />
+                >
+                  <div
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      backgroundColor: "white",
+                      borderRadius: "50%",
+                      position: "absolute",
+                      top: "2px",
+                      left: section.required ? "18px" : "2px",
+                      transition: "left 0.3s",
+                    }}
+                  />
+                </button>
               </div>
-            ))}
+            </div>
           </div>
         );
-
-      // case FormSectionType.FILE_UPLOAD:
-      //   return <input type="file" />;
-      // case FormSectionType.DATE_TIME:
-      //   return <input type="datetime-local" />;
-      // default:
-      //   return null;
     }
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
-      {/* Centered Form */}
+    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f0f0f0", padding: "20px" }}>
+      {/* Left Toolbar */}
       <div
         style={{
-          flex: 1,
+          width: "60px",
+          backgroundColor: "white",
+          borderRadius: "8px",
+          padding: "16px",
+          marginRight: "20px",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
           display: "flex",
           flexDirection: "column",
+          gap: "16px",
           alignItems: "center",
-          justifyContent: "center",
-          padding: "10px",
+          position: "sticky",
+          top: "20px",
+          alignSelf: "flex-start",
+          height: "fit-content",
         }}
       >
-        <h1 className="my-10">{form.title}</h1>
-        {form.sectionsOrder.map((sectionId) => {
-          const section = form.sectionsMap.get(sectionId);
-          return section ? (
-            <div
-              key={sectionId}
-              style={{
-                marginBottom: "20px",
-                padding: "20px",
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                width: "100%",
-                maxWidth: "600px",
-                backgroundColor: "#f9f9f9",
-              }}
-            >
-              {renderSection(section, sectionId)}
-            </div>
-          ) : null;
-        })}
-      </div>
-
-      {/* Right Navbar */}
-      <div
-        style={{
-          width: "250px",
-          backgroundColor: "#f4f4f4",
-          padding: "20px",
-          boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <h3>Actions</h3>
         <button
-          style={{
-            display: "block",
-            width: "100%",
-            marginBottom: "10px",
-            padding: "10px",
-            backgroundColor: "#007bff",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
           onClick={() =>
             addSection({
               type: FormSectionType.TEXT,
@@ -242,32 +369,122 @@ const FormEditor = ({ formId }: FormEditorParams) => {
               required: true,
             })
           }
+          style={{
+            border: "none",
+            background: "none",
+            cursor: "pointer",
+            padding: "8px",
+          }}
         >
-          Add Text Section
+          <span style={{ fontSize: "24px" }}>+</span>
         </button>
         <button
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "10px",
-            backgroundColor: "#28a745",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
           onClick={() =>
             addSection({
               type: FormSectionType.DROPDOWN_SELECT,
               question: "",
-              required: true,
               options: [""],
               imageUrl: null,
+              required: true,
             })
           }
+          style={{ border: "none", background: "none", cursor: "pointer", padding: "8px" }}
         >
-          Add Dropdown Section
+          <span style={{ fontSize: "20px" }}>⌄</span>
         </button>
+        <button style={{ border: "none", background: "none", cursor: "pointer", padding: "8px" }}>
+          <span style={{ fontSize: "20px" }}>📄</span>
+        </button>
+      </div>
+
+      {/* Main Form Area */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+          maxWidth: "800px",
+          margin: "0 auto",
+        }}
+      >
+        {/* Form Title Card */}
+        <div
+          style={{
+            backgroundColor: "white",
+            borderRadius: "8px",
+            padding: "24px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          }}
+        >
+          {isEditingTitle ? (
+            <input
+              type="text"
+              value={form.title}
+              onChange={handleTitleChange}
+              onBlur={() => setIsEditingTitle(false)}
+              onKeyDown={(e) => e.key === "Enter" && setIsEditingTitle(false)}
+              style={{
+                fontSize: "32px",
+                fontWeight: "bold",
+                width: "100%",
+                border: "none",
+                outline: "none",
+                marginBottom: "16px",
+              }}
+              autoFocus
+            />
+          ) : (
+            <h1
+              onClick={() => setIsEditingTitle(true)}
+              style={{
+                fontSize: "32px",
+                fontWeight: "bold",
+                marginBottom: "16px",
+                cursor: "pointer",
+              }}
+            >
+              {form.title}
+            </h1>
+          )}
+          <input
+            type="text"
+            placeholder="Form description"
+            style={{
+              width: "100%",
+              border: "none",
+              outline: "none",
+              color: "#666",
+              fontSize: "16px",
+            }}
+          />
+        </div>
+
+        {/* Questions Container */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+          }}
+        >
+          {form.sectionsOrder.map((sectionId) => {
+            const section = form.sectionsMap.get(sectionId);
+            return section ? (
+              <div
+                key={sectionId}
+                style={{
+                  backgroundColor: "white",
+                  borderRadius: "8px",
+                  padding: "24px",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                }}
+              >
+                {renderSection(section, sectionId)}
+              </div>
+            ) : null;
+          })}
+        </div>
       </div>
     </div>
   );
