@@ -34,7 +34,7 @@ class SendGridPurchaseEventRequest:
     if not isinstance(self.visibility, str):
       raise ValueError("Visibility must be provided as a string.")
 
-
+# This function sends an email using the Loops API.
 def send_email_with_loop(logger, email, name, event_name, order_id, date_purchased, quantity, price, start_date, end_date, location, attachments):
   headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
   body = {
