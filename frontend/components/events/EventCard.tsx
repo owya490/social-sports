@@ -20,7 +20,7 @@ interface EventCardProps {
   location: string;
   price: number;
   vacancy: number;
-  loading?: boolean;
+  loading: boolean;
   isClickable?: boolean;
 }
 
@@ -34,8 +34,8 @@ export default function EventCard(props: EventCardProps) {
     startTime,
     location,
     price,
-    loading = false,
-    isClickable = false,
+    loading,
+    isClickable = true,
   } = props;
 
   const cardContent = (
@@ -82,5 +82,5 @@ export default function EventCard(props: EventCardProps) {
     </div>
   );
 
-  return isClickable ? cardContent : <Link href={`/event/${eventId}`}>{cardContent}</Link>;
+  return isClickable ? <Link href={`/event/${eventId}`}>{cardContent}</Link> : cardContent;
 }

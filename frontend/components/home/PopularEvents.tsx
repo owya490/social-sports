@@ -12,17 +12,23 @@ interface PopularEventsProps {
 }
 
 export default function PopularEvents(_props: PopularEventsProps) {
+  const [loading, setLoading] = useState(true);
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
-    const newRecommendedEvents: EventData[] = [];
-    getAllEvents().then((data) => {
-      for (let i = 0; i < 5; i++) {
-        if (data[i] !== undefined) {
-          newRecommendedEvents.push(data[i]);
+    const getRecommendedEvents = async () => {
+      const newRecommendedEvents: EventData[] = [];
+      await getAllEvents().then((data) => {
+        for (let i = 0; i < 5; i++) {
+          if (data[i] !== undefined) {
+            newRecommendedEvents.push(data[i]);
+          }
         }
-      }
-      setRecommendedEvents(newRecommendedEvents);
-    });
+        setRecommendedEvents(newRecommendedEvents);
+      });
+    };
+    getRecommendedEvents().then(() => {
+      setLoading(false);
+    })
   }, []);
 
   const scrollLeft = () => {
@@ -76,6 +82,7 @@ export default function PopularEvents(_props: PopularEventsProps) {
                         location={event.location}
                         price={event.price}
                         vacancy={event.vacancy}
+                        loading={loading}
                       />
                     </div>
                   );
