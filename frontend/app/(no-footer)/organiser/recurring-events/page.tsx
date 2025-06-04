@@ -1,5 +1,4 @@
 "use client";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import RecurringTemplateCard from "@/components/organiser/recurring-events/RecurringTemplateCard";
 import { useUser } from "@/components/utility/UserContext";
 import { EMPTY_RECURRENCE_TEMPLATE, Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
@@ -45,8 +44,7 @@ export default function RecurringEventDashboard() {
     }
   }, [user]);
   return (
-    <div className="w-screen pt-14 lg:pt-16 lg:pb-10 md:pl-7 h-fit max-h-screen overflow-y-auto">
-      <OrganiserNavbar currPage={"EventDashboard"} />
+    <div className="w-full sm:pt-14 lg:pt-16 lg:pb-10 h-fit max-h-screen overflow-y-auto">
       <div className="flex justify-center">
         <div className="flex flex-col items-center md:items-start">
           <div className="flex flex-row items-center justify-center">
@@ -78,18 +76,16 @@ export default function RecurringEventDashboard() {
                 })}
               </div>
             ) : recurrenceTemplateList.length === 0 ? (
-              <div className="flex justify-center">
-                <div>
-                  <Image
-                    src={noSearchResultLineDrawing}
-                    alt="noSearchResultLineDrawing"
-                    width={500}
-                    height={300}
-                    className="opacity-60"
-                  />
-                  <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                    Sorry, we couldn&apos;t find any results
-                  </div>
+              <div className="flex flex-col justify-center items-center w-full">
+                <Image
+                  src={noSearchResultLineDrawing}
+                  alt="noSearchResultLineDrawing"
+                  width={500}
+                  height={300}
+                  className="opacity-60"
+                />
+                <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
+                  Sorry, we couldn&apos;t find any results
                 </div>
               </div>
             ) : (
