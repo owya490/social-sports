@@ -139,7 +139,7 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       "end_date": end_date_string,
       "date_purchased": date_purchased_string
     }
-
+    # loop
     send_email_with_loop(logger, request_data.email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"), attachments)
 
     message.template_id = PURCHASE_EVENT_EMAIL_TEMPLATE_ID
