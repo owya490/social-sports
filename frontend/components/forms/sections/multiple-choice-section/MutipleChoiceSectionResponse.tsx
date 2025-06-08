@@ -1,7 +1,6 @@
 import { MultipleChoiceSection, TextSection } from "@/interfaces/FormTypes";
 
-// TODO: form text section implementation here
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const MutipleChoiceSectionResponse = ({ multipleChoiceSection }: { multipleChoiceSection: MultipleChoiceSection }) => {
   return;
 };
