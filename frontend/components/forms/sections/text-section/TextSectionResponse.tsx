@@ -1,6 +1,7 @@
 import { TextSection } from "@/interfaces/FormTypes";
 
 // TODO: form text section implementation here
+// @ts-ignore
 export const TextSectionResponse = ({ textSection }: { textSection: TextSection }) => {
   // return (
   //   // <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
