@@ -31,6 +31,13 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
             return;
         }
 
+        // GCP apparently sends health checks with the path being the root path "/"
+        if (request.getMethod().equalsIgnoreCase("GET") && request.getPath().equals("/")) {
+            logger.info("Processed health check from GCP. Returning function with request: {}.", request);
+            response.setStatusCode(204); // No Content
+            return;
+        }
+
         // Handle actual (POST) request
         if (!request.getMethod().equalsIgnoreCase("POST")) {
             logger.error("Invalid request type made to CreateRecurrenceTemplateEndpoint: {}", request.getMethod());
