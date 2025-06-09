@@ -14,7 +14,7 @@ const ViewForm = () => {
     title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
     userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
     formActive: true,
-    sectionsOrder: ["S123", "S456", "S789", "ABC"], // keeps track of ordering for editing forms
+    sectionsOrder: ["brian", "S123", "S456", "S789", "ABC"], // keeps track of ordering for editing forms
     sectionsMap: new Map<SectionId, FormSection>([
       [
         "S123",
@@ -54,6 +54,17 @@ const ViewForm = () => {
           options: ["Option 1", "Option 2", "Option 3", "Option 4"],
           answer: undefined,
           question: "Select a drop down option please?",
+          imageUrl: null, // image attached to question
+          required: true,
+        },
+      ],
+      [
+        "brian",
+        {
+          type: FormSectionType.DROPDOWN_SELECT,
+          options: ["Option 1", "Option 2", "Option 3", "Option 4"],
+          answer: undefined,
+          question: "Brian want?",
           imageUrl: null, // image attached to question
           required: true,
         },
