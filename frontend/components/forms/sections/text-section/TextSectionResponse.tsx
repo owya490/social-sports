@@ -1,118 +1,31 @@
+"use client";
 import { TextSection } from "@/interfaces/FormTypes";
+import { Textarea } from "@material-tailwind/react";
+import Image from "next/image";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const TextSectionResponse = ({ textSection }: { textSection: TextSection }) => {
-  // return (
-  //   <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-  //     <input
-  //       type="text"
-  //       value={section.question}
-  //       placeholder="Enter your question here?"
-  //       onChange={(e) => {
-  //         setForm((prevForm) => {
-  //           const updatedSection = { ...section, question: e.target.value };
-  //           return {
-  //             ...prevForm,
-  //             sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-  //           };
-  //         });
-  //       }}
-  //       style={{
-  //         flex: 1,
-  //         padding: "10px",
-  //         width: "100%",
-  //         border: "1px solid #ccc",
-  //         borderRadius: "4px",
-  //       }}
-  //     />
-  //     <div
-  //       style={{
-  //         display: "flex",
-  //         justifyContent: "flex-end",
-  //         alignItems: "center",
-  //         gap: "8px",
-  //       }}
-  //     >
-  //       <button
-  //         onClick={() => deleteSection(sectionId)}
-  //         style={{
-  //           border: "none",
-  //           background: "none",
-  //           cursor: "pointer",
-  //           padding: "8px",
-  //           color: "#666",
-  //           fontSize: "14px",
-  //           display: "flex",
-  //           alignItems: "center",
-  //           gap: "4px",
-  //         }}
-  //       >
-  //         <span>🗑️</span>
-  //         <span>Delete</span>
-  //       </button>
-  //       <button
-  //         onClick={() => duplicateSection(section, sectionId)}
-  //         style={{
-  //           border: "none",
-  //           background: "none",
-  //           cursor: "pointer",
-  //           padding: "8px",
-  //           color: "#666",
-  //           fontSize: "14px",
-  //           display: "flex",
-  //           alignItems: "center",
-  //           gap: "4px",
-  //         }}
-  //       >
-  //         <span>📋</span>
-  //         <span>Duplicate</span>
-  //       </button>
-  //       <span
-  //         style={{
-  //           fontSize: "14px",
-  //           color: "#666",
-  //         }}
-  //       >
-  //         Required
-  //       </span>
-  //       <button
-  //         onClick={() => {
-  //           setForm((prevForm) => {
-  //             const updatedSection = {
-  //               ...section,
-  //               required: !section.required,
-  //             };
-  //             return {
-  //               ...prevForm,
-  //               sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-  //             };
-  //           });
-  //         }}
-  //         style={{
-  //           width: "36px",
-  //           height: "20px",
-  //           backgroundColor: section.required ? "#4CAF50" : "#ccc",
-  //           border: "none",
-  //           borderRadius: "10px",
-  //           cursor: "pointer",
-  //           position: "relative",
-  //           transition: "background-color 0.3s",
-  //         }}
-  //       >
-  //         <div
-  //           style={{
-  //             width: "16px",
-  //             height: "16px",
-  //             backgroundColor: "white",
-  //             borderRadius: "50%",
-  //             position: "absolute",
-  //             top: "2px",
-  //             left: section.required ? "18px" : "2px",
-  //             transition: "left 0.3s",
-  //           }}
-  //         />
-  //       </button>
-  //     </div>
-  //   </div>
-  // );
+export const TextSectionResponse = ({
+  textSection,
+  answerOnChange,
+}: {
+  textSection: TextSection;
+  answerOnChange: (answer: string) => void;
+}) => {
+  return (
+    <div className="flex bg-white p-8 rounded-xl flex-col gap-4">
+      <h1 className="font-bold text-xl">{textSection.question}</h1>
+      {textSection.imageUrl && (
+        <Image src={textSection.imageUrl} alt={""} width={0} height={0} className="h-40 aspect-video" />
+      )}
+      <Textarea
+        label="Please answer here"
+        className="focus:ring-0"
+        value={textSection.answer}
+        onChange={(e) => {
+          answerOnChange(e.target.value);
+        }}
+      />
+      {textSection.required && <span className="text-red-700 ml-auto">* Required</span>}
+    </div>
+  );
 };
