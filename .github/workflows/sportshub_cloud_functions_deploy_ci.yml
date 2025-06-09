@@ -162,5 +162,9 @@ jobs:
       - name: Deploy all python functions
         working-directory: functions
         run: |
+<<<<<<< HEAD
           source venv/bin/activate
           firebase deploy --only functions:move_inactive_events,functions:stripe_webhook_checkout_fulfilment,functions:create_stripe_standard_account,functions:get_stripe_checkout_url_by_event_id,functions:send_email_on_delete_event,functions:send_email_on_create_event,functions:email_reminder --force
+=======
+          firebase deploy --only functions:move_inactive_events,functions:stripe_webhook_checkout_fulfilment,functions:create_stripe_standard_account,functions:get_stripe_checkout_url_by_event_id,functions:send_email_on_delete_event,functions:send_email_on_create_event,functions:email_reminder
+>>>>>>> ecd5291f (removed non entry python function)
