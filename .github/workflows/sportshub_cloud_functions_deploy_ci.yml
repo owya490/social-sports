@@ -11,9 +11,7 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
+      - brianw2/fix-deployment-get-error
 
 jobs:
   deploy-java-cloud-run-functions:
