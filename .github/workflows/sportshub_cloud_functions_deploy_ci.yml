@@ -13,6 +13,9 @@ on:
       - master
       - QR_code_backend
       - brianw2/fix-python-deploy
+  pull_request:
+    branches:
+      - master
 
 jobs:
   deploy-java-cloud-run-functions:
