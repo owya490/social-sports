@@ -17,7 +17,7 @@ export async function isUsernameExists(username: string, transaction?: Transacti
 }
 
 export async function generateUsername(firstName: string): Promise<string> {
-  var username = firstName.toLowerCase();
+  var username = firstName.toLowerCase().replaceAll(" ", "");
   for (let i = 0; i < 100; i++) {
     if (await isUsernameExists(username)) {
       // username exists, append a random number
