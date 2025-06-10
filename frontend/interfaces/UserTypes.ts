@@ -34,7 +34,7 @@ export interface PrivateUserData {
   };
   activeBookings: string[];
   stripeAccount: string | null;
-  stripeAccountActive: string | null;
+  stripeAccountActive: boolean | null;
   organiserEvents: string[];
   publicOrganiserEvents: string[];
   recurrenceTemplates: string[];
