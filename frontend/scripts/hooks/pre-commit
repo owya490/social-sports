@@ -14,7 +14,7 @@ if [ $LINT_EXIT_CODE -ne 0 ]; then
   echo "--------------------------------------------"
   echo "$LINT_OUTPUT"
   echo "--------------------------------------------"
-  echo "Please fix the linting issues and try again."
+  echo "Please fix the linting issues with `Error` messages and try again."
   exit 1
 fi
 
