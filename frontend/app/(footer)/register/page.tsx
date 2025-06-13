@@ -71,39 +71,37 @@ export default function Register() {
   };
 
   return (
-    <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <Alert
-          open={passwordMismatch}
-          onClose={() => setPasswordMismatch(false)}
-          color="red"
-          className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
-        >
-          Passwords do not match.
-        </Alert>
-        <Alert
-          open={showRegisterFailure}
-          onClose={() => handleAlertClose()}
-          color="red"
-          className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
-        >
-          {error}
-        </Alert>
-        <Alert
-          open={showEmailSentAlert}
-          onClose={() => setShowEmailSentAlert(false)}
-          color="green"
-          className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
-        >
-          Email sent. Please check your inbox.
-        </Alert>
+    <div className="flex p-4 sm:min-h-[80vh] justify-center items-center">
+      <Alert
+        open={passwordMismatch}
+        onClose={() => setPasswordMismatch(false)}
+        color="red"
+        className="absolute ml-auto mr-auto top-16 md:top-20 w-fit"
+      >
+        Passwords do not match.
+      </Alert>
+      <Alert
+        open={showRegisterFailure}
+        onClose={() => handleAlertClose()}
+        color="red"
+        className="absolute ml-auto mr-auto top-16 md:top-20 w-fit"
+      >
+        {error}
+      </Alert>
+      <Alert
+        open={showEmailSentAlert}
+        onClose={() => setShowEmailSentAlert(false)}
+        color="green"
+        className="absolute ml-auto mr-auto top-16 md:top-20 w-fit"
+      >
+        Email sent. Please check your inbox.
+      </Alert>
+
+      <div className="max-w-sm md:min-w-96">
         <h2 className="mt-[5vh] sm:mt-0 text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 ">
           Register your account
         </h2>
-      </div>
-
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form className="space-y-6 group" onSubmit={handleSubmit}>
+        <form className="space-y-4 mt-8" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="first-name" className="block font-medium leading-6 text-gray-900">
               First Name
