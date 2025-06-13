@@ -84,6 +84,7 @@ const FormEditor = ({}: FormEditorParams) => {
     }));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const duplicateSection = (section: FormSection, sectionId: SectionId) => {
     const newSectionId: SectionId = `section-${form.sectionsOrder.length + 1}`;
     setForm((prevForm) => ({
