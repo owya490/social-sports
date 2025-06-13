@@ -14,7 +14,7 @@ const FormEditorPage = () => {
 
   return (
     <div>
-      <h1 className='my-10'>Form Editor Page</h1>
+      <h1 className='my-10'></h1>
       <FormEditor formId={formId} />
     </div>
   );
