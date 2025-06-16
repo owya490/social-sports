@@ -160,7 +160,8 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
       "eventId": event_id,
       "orderId": order_id_ref.id,
       "price": item.price.unit_amount,
-      "purchaseDate": purchase_time
+      "purchaseDate": purchase_time,
+      "ticketStatus": "purchased",
     })
     ticket_list.append(tickets_id_ref.id)
 
