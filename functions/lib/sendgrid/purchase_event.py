@@ -4,6 +4,9 @@ import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
+import qrcode
+import base64
+from io import BytesIO
 
 import requests
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -31,8 +34,8 @@ class SendGridPurchaseEventRequest:
     if not isinstance(self.visibility, str):
       raise ValueError("Visibility must be provided as a string.")
 
-
-def send_email_with_loop(logger, email, name, event_name, order_id, date_purchased, quantity, price, start_date, end_date, location):
+# This function sends an email using the Loops API.
+def send_email_with_loop(logger, email, name, event_name, order_id, date_purchased, quantity, price, start_date, end_date, location, attachments):
   headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
   body = {
     "transactionalId": "cm4r78nk301ehx79nrrxaijgl",
@@ -47,7 +50,8 @@ def send_email_with_loop(logger, email, name, event_name, order_id, date_purchas
         "startDate" : start_date,
         "endDate": end_date,
         "location": location
-    }
+    },
+    "attachments": attachments
   }
 
   response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
@@ -61,7 +65,15 @@ def send_email_with_loop(logger, email, name, event_name, order_id, date_purchas
     logger.error(f"Failed to send payment confirmation for orderId={order_id}, body={response.json()}")
     raise Exception("Failed to send payment confirmation.")
 
-
+def generate_qr_code(ticket_id: str) -> str:
+    """Generate a QR code for the given ticket ID and return it as a base64 string."""
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+    qr.add_data(f"https://sportshub/events/checking/{ticket_id}")
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
 # Left as normal python function as only invoked from the Stripe webhook oncall function. Not exposed to outside world.
 def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
@@ -83,6 +95,23 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
     return False
   
   order_data = maybe_order_data.to_dict()
+
+  tickets = order_data.get("tickets")
+
+  if not tickets or len(tickets) == 0:
+    logger.error(f"Unable to find tickets in orderId provided in datastore to send email. orderId={request_data.orderId}")
+    return False
+
+  
+  attachments = []
+  for ticket_id in tickets:
+      qr_base64 = generate_qr_code(ticket_id)
+      attachments.append({
+          "filename": f"{event_data.get("name")}_{ticket_id}.png",
+          "contentType": "image/png",
+          "data": qr_base64
+      })
+
   
   try:
     subject = "Thank you for purchasing " + event_data.get("name")
@@ -111,7 +140,7 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       "date_purchased": date_purchased_string
     }
 
-    send_email_with_loop(logger, request_data.email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"))
+    send_email_with_loop(logger, request_data.email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"), attachments)
 
     message.template_id = PURCHASE_EVENT_EMAIL_TEMPLATE_ID
 
@@ -128,4 +157,3 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
   except Exception as e:
     logger.error(f"Error sending create event email. eventId={request_data.eventId} error={e}")
     return False
-
