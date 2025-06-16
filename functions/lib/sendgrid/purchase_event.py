@@ -107,7 +107,7 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
   for ticket_id in tickets:
       qr_base64 = generate_qr_code(ticket_id)
       attachments.append({
-          "filename": f"ticket_{ticket_id}.png",
+          "filename": f"{event_data.get("name")}_{ticket_id}.png",
           "contentType": "image/png",
           "data": qr_base64
       })
