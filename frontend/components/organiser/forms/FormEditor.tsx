@@ -2,6 +2,8 @@ import { Form, FormId, FormSection, FormSectionType, SectionId } from "@/interfa
 import { useState, ReactNode } from "react";
 import { Tooltip } from "@material-tailwind/react";
 import { DocumentTextIcon, ListBulletIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import { TextSectionBuilder } from "@/components/forms/sections/text-section/TextSectionBuilder";
+import { DropdownSelectSectionBuilder } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionBuilder";
 
 const initialForm: Form = {
   title: "Sample Form",
@@ -123,277 +125,37 @@ const FormEditor = ({}: FormEditorParams) => {
 
   const renderSection = (section: FormSection, sectionId: SectionId) => {
     switch (section.type) {
+      
       case FormSectionType.TEXT:
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-            <input
-              type="text"
-              value={section.question}
-              placeholder="Enter your question here?"
-              onChange={(e) => {
-                setForm((prevForm) => {
-                  const updatedSection = { ...section, question: e.target.value };
-                  return {
-                    ...prevForm,
-                    sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-                  };
-                });
-              }}
-              style={{
-                flex: 1,
-                padding: "10px",
-                width: "100%",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
-            />
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              <button
-                onClick={() => deleteSection(sectionId)}
-                style={{
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                  padding: "8px",
-                  color: "#666",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <span>🗑️</span>
-                <span>Delete</span>
-              </button>
-              <button
-                onClick={() => duplicateSection(section, sectionId)}
-                style={{
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                  padding: "8px",
-                  color: "#666",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <span>📋</span>
-                <span>Duplicate</span>
-              </button>
-              <span
-                style={{
-                  fontSize: "14px",
-                  color: "#666",
-                }}
-              >
-                Required
-              </span>
-              <button
-                onClick={() => {
-                  setForm((prevForm) => {
-                    const updatedSection = {
-                      ...section,
-                      required: !section.required,
-                    };
-                    return {
-                      ...prevForm,
-                      sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-                    };
-                  });
-                }}
-                style={{
-                  width: "36px",
-                  height: "20px",
-                  backgroundColor: section.required ? "#4CAF50" : "#ccc",
-                  border: "none",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  position: "relative",
-                  transition: "background-color 0.3s",
-                }}
-              >
-                <div
-                  style={{
-                    width: "16px",
-                    height: "16px",
-                    backgroundColor: "white",
-                    borderRadius: "50%",
-                    position: "absolute",
-                    top: "2px",
-                    left: section.required ? "18px" : "2px",
-                    transition: "left 0.3s",
-                  }}
-                />
-              </button>
-            </div>
-          </div>
+          <TextSectionBuilder
+            section={section}
+            sectionId={sectionId}
+            onUpdate={(updatedSection) => {
+              setForm((prevForm) => ({
+                ...prevForm,
+                sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
+              }));
+            }}
+            onDelete={deleteSection}
+            onDuplicate={duplicateSection}
+          />
         );
 
       case FormSectionType.DROPDOWN_SELECT:
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-            <input
-              type="text"
-              value={section.question}
-              placeholder="Enter your question here?"
-              onChange={(e) => {
-                setForm((prevForm) => {
-                  const updatedSection = { ...section, question: e.target.value };
-                  return {
-                    ...prevForm,
-                    sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-                  };
-                });
-              }}
-              style={{
-                flex: 1,
-                padding: "10px",
-                width: "100%",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
-            />
-
-            {section.options.map((option, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  marginBottom: "10px",
-                }}
-              >
-                <span style={{ marginRight: "10px", width: "20px", textAlign: "right" }}>{index + 1}.</span>
-                <input
-                  type="text"
-                  value={option}
-                  placeholder={`Option ${index + 1}`}
-                  onChange={(e) => {
-                    setForm((prevForm) => {
-                      const updatedSection = { ...section };
-                      updatedSection.options[index] = e.target.value;
-
-                      if (index === updatedSection.options.length - 1 && e.target.value.trim() !== "") {
-                        updatedSection.options.push("");
-                      }
-
-                      return {
-                        ...prevForm,
-                        sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-                      };
-                    });
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: "10px",
-                    width: "100%",
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                  }}
-                />
-              </div>
-            ))}
-
-            {/* Required Toggle */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                alignItems: "center",
-                gap: "8px",
-                marginTop: "10px",
-              }}
-            >
-              <button
-                onClick={() => deleteSection(sectionId)}
-                style={{
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                  padding: "8px",
-                  color: "#666",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <span>🗑️</span>
-                <span>Delete</span>
-              </button>
-              <button
-                onClick={() => duplicateSection(section, sectionId)}
-                style={{
-                  border: "none",
-                  background: "none",
-                  cursor: "pointer",
-                  padding: "8px",
-                  color: "#666",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <span>📋</span>
-                <span>Duplicate</span>
-              </button>
-              <span
-                style={{
-                  fontSize: "14px",
-                  color: "#666",
-                }}
-              >
-                Required
-              </span>
-              <button
-                onClick={() => {
-                  setForm((prevForm) => {
-                    const updatedSection = {
-                      ...section,
-                      required: !section.required,
-                    };
-                    return {
-                      ...prevForm,
-                      sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
-                    };
-                  });
-                }}
-                style={{
-                  width: "36px",
-                  height: "20px",
-                  backgroundColor: section.required ? "#4CAF50" : "#ccc",
-                  border: "none",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  position: "relative",
-                  transition: "background-color 0.3s",
-                }}
-              >
-                <div
-                  style={{
-                    width: "16px",
-                    height: "16px",
-                    backgroundColor: "white",
-                    borderRadius: "50%",
-                    position: "absolute",
-                    top: "2px",
-                    left: section.required ? "18px" : "2px",
-                    transition: "left 0.3s",
-                  }}
-                />
-              </button>
-            </div>
-          </div>
+          <DropdownSelectSectionBuilder
+            section={section}
+            sectionId={sectionId}
+            onUpdate={(updatedSection) => {
+              setForm((prevForm) => ({
+                ...prevForm,
+                sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
+              }));
+            }}
+            onDelete={deleteSection}
+            onDuplicate={duplicateSection}
+          />
         );
     }
   };
