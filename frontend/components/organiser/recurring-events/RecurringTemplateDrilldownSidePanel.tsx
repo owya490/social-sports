@@ -36,9 +36,9 @@ const RecurringTemplateDrilldownSidePanel = ({
         </div>
         <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
-            currSidebarPage === "PastEvents" ? "bg-white" : ""
+            currSidebarPage === "Past Events" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
-          onClick={() => setCurrSidebarPage("PastEvents")}
+          onClick={() => setCurrSidebarPage("Past Events")}
         >
           Past Events
         </div>
