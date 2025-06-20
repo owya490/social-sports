@@ -62,6 +62,21 @@ def send_email_with_loop(logger, email, name, event_name, order_id, date_purchas
     raise Exception("Failed to send payment confirmation.")
 
 
+def get_organiser_email_for_ticket_email(logger: Logger, organiser_id: str) -> str:
+  maybe_organiser_data = db.collection("Users/Active/Private").document(organiser_id).get()
+  if (not maybe_organiser_data.exists):
+    logger.error(f"Organiser does not exist: organiserId={organiser_id}")
+    return None
+  organiser_data = maybe_organiser_data.to_dict()
+  if (organiser_data.get("sendOrganiserTicketEmails", False)):
+    try:
+      return organiser_data.get("contactInformation").get("email")
+    except:
+      logger.error(f"Failed to find organiser email for sendOrganiserTicketEmail. organiserId={organiser_id}")
+      return None
+  
+  return None
+
 
 # Left as normal python function as only invoked from the Stripe webhook oncall function. Not exposed to outside world.
 def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
@@ -111,7 +126,13 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       "date_purchased": date_purchased_string
     }
 
+    # send this attendee first
     send_email_with_loop(logger, request_data.email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"))
+
+    # also check if we need to send this to organiser
+    organiser_email = get_organiser_email_for_ticket_email(logger, event_data.get("organiserId"))
+    if (not organiser_email == None):
+      send_email_with_loop(logger, organiser_email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"))
 
     message.template_id = PURCHASE_EVENT_EMAIL_TEMPLATE_ID
 
