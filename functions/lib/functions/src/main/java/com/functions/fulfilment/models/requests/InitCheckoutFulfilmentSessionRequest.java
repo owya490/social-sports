@@ -1,4 +1,4 @@
-package com.functions.fullfilment.models.requests;
+package com.functions.fulfilment.models.requests;
 
 import java.util.List;
 

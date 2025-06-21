@@ -1,8 +1,6 @@
-package com.functions.fullfilment.models;
+package com.functions.fulfilment.models;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
 
 @Data

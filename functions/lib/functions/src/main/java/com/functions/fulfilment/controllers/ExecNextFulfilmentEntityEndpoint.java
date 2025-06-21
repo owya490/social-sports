@@ -1,8 +1,8 @@
-package com.functions.fullfilment.controllers;
+package com.functions.fulfilment.controllers;
 
 import com.google.cloud.functions.HttpFunction;
 
-public class ExecNextFulfilmentEntity implements HttpFunction {
+public class ExecNextFulfilmentEntityEndpoint implements HttpFunction {
 
     @Override
     public void service(com.google.cloud.functions.HttpRequest request, com.google.cloud.functions.HttpResponse response) {

@@ -1,9 +1,9 @@
-package com.functions.fullfilment.controllers;
+package com.functions.fulfilment.controllers;
 
-import com.functions.fullfilment.models.FulfilmentEntityType;
-import com.functions.fullfilment.models.requests.InitCheckoutFulfilmentSessionRequest;
-import com.functions.fullfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
-import com.functions.fullfilment.services.FulfilmentService;
+import com.functions.fulfilment.models.FulfilmentEntityType;
+import com.functions.fulfilment.models.requests.InitCheckoutFulfilmentSessionRequest;
+import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
+import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;

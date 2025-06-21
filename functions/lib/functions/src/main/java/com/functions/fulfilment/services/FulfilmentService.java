@@ -1,10 +1,10 @@
-package com.functions.fullfilment.services;
+package com.functions.fulfilment.services;
 
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.forms.services.FormsService;
-import com.functions.fullfilment.models.*;
-import com.functions.fullfilment.repositories.FulfilmentSessionRepository;
+import com.functions.fulfilment.models.*;
+import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.services.StripeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
