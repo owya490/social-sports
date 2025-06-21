@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - master
+      - Project_reviews 
 
 jobs:
   deploy-java-cloud-run-functions:
@@ -18,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: [dev]
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -99,6 +100,18 @@ jobs:
         run: |
           gcloud functions deploy createEvent \
             --entry-point com.functions.events.controllers.CreateEventEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+      
+      - name: Deploy createUserComment
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy createUserComment \
+            --entry-point com.functions.comments.controllers.CreateUserCommentEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
