@@ -23,7 +23,7 @@ public class StripeService {
                             "eventId", eventId,
                             "isPrivate", isPrivate,
                             "quantity", numTickets,
-                            "cancelUrl", UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/%s", eventId)),
+                            "cancelUrl", UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/%s", eventId)).orElse("https://sportshub.net.au/dashboard"),
                             "successUrl", successUrl.orElse(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId)).orElse("https://sportshub.net.au/dashboard"))
                     ));
         } catch (Exception e) {

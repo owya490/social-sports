@@ -95,7 +95,7 @@ public class FulfilmentService {
                     .fulfilmentSessionStartTime(com.google.cloud.Timestamp.now())
                     .eventId(eventId)
                     .fulfilmentEntities(fulfilmentEntities)
-                    .currentFulfilmentEntity(fulfilmentEntities.get(0)) // Start with the first entity
+                    .currentFulfilmentIndex(0) // Start with the first entity // TODO: need to review whether this is actually the best way
                     .build());
 
             logger.info("Fulfilment session created with ID: {} for event ID: {}", fulfilmentSessionId, eventId);

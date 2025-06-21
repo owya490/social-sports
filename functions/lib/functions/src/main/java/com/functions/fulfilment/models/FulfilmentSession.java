@@ -16,5 +16,5 @@ public class FulfilmentSession {
     Timestamp fulfilmentSessionStartTime;
     String eventId;
     List<FulfilmentEntity> fulfilmentEntities;
-    FulfilmentEntity currentFulfilmentEntity;
+    Integer currentFulfilmentIndex;
 }

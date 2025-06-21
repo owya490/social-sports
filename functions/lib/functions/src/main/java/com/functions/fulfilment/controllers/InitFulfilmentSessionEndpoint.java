@@ -43,7 +43,7 @@ public class InitFulfilmentSessionEndpoint implements HttpFunction {
             data = com.functions.utils.JavaUtils.objectMapper.readValue(request.getReader(), InitCheckoutFulfilmentSessionRequest.class);
         } catch (Exception e) {
             response.setStatusCode(400);
-            logger.error("Could not parse input", e);
+            logger.error("Could not parse input:", e);
             response.getWriter().write("Invalid request data: " + e);
             return;
         }

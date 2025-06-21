@@ -1,5 +1,6 @@
 package com.functions.utils;
 
+import com.functions.Global;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +11,12 @@ public class UrlUtils {
 
     public static Optional<String> getUrlWithCurrentEnvironment(String url) {
         try {
-            String environment = System.getenv("DEPLOYMENT_ENV");
+            String environment = Global.getEnv("DEPLOYMENT_ENV");
+
+            if (environment == null || environment.isEmpty()) {
+                logger.warn("Environment variable 'DEPLOYMENT_ENV' is not set or empty. Defaulting to 'dev'.");
+                environment = "prod"; // Default to prod if not set
+            }
 
             if (environment.equals("dev")) {
                 return Optional.of(String.format("http://localhost:3000%s", url));

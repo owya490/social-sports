@@ -63,9 +63,9 @@ public class FirebaseService {
 
     private static void initialize() throws Exception {
         String credentialsPath = "functions_key.json";
-        posthogApiKey = System.getenv("POSTHOG_API_KEY");
+        posthogApiKey = Global.getEnv("POSTHOG_API_KEY");
         posthogHost = "https://app.posthog.com";
-        firebaseProject = System.getenv("PROJECT_NAME");
+        firebaseProject = Global.getEnv("PROJECT_NAME");
 
         if (firebaseProject == null) {
             logger.error("Firebase project name is not set in the environment variables.");
