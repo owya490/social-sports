@@ -33,8 +33,8 @@ export interface PrivateUserData {
     email: string;
   };
   activeBookings: string[];
-  stripeAccount?: string;
-  stripeAccountActive?: boolean;
+  stripeAccount: string | null;
+  stripeAccountActive: boolean | null;
   organiserEvents: string[];
   publicOrganiserEvents: string[];
   recurrenceTemplates: string[];
@@ -81,8 +81,8 @@ export const EmptyPrivateUserData: PrivateUserData = {
   organiserEvents: [],
   publicOrganiserEvents: [],
   recurrenceTemplates: [],
-  stripeAccount: undefined,
-  stripeAccountActive: undefined,
+  stripeAccount: null,
+  stripeAccountActive: null,
 };
 
 export const EmptyUserData: UserData = {
