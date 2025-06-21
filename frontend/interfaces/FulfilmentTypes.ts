@@ -41,3 +41,20 @@ export type FormsFulfilmentEntity = {
   tempFormResponseIds: FormResponseId[];
   submittedFormResponseIds: FormResponseId[];
 };
+
+/**
+ * Payload we send to java initFulfilmentSessionRequest function
+ */
+export type InitCheckoutFulfilmentSessionRequest = {
+  eventId: EventId;
+  numTickets: number;
+  fulfilmentEntityTypes: FulfilmentEntity["type"][];
+  endUrl: URL;
+};
+
+/**
+ * Payload we receive from java initFulfilmentSessionRequest function
+ */
+export type InitCheckoutFulfilmentSessionResponse = {
+  fulfilmentSessionId: FulfilmentSessionId;
+};

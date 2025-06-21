@@ -55,6 +55,8 @@ jobs:
           echo "BEARER_TOKEN=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_BEARER_TOKEN' || 'SOCIALSPORTSDEV_BEARER_TOKEN'] }}\"" >> .env
           echo "SENDGRID_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_SENDGRID_API_KEY' || 'SOCIALSPORTSDEV_SENDGRID_API_KEY'] }}\"" >> .env
           echo "LOOPS_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_LOOPS_API_KEY' || 'SOCIALSPORTSDEV_LOOPS_API_KEY'] }}\"" >> .env
+          echo "DEPLOYMENT_ENV=\"${{ matrix.env == 'prod' && 'prod' || 'dev' }}\"" >> .env
+          echo "PROJECT_NAME=\"${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}\"" >> .env
 
       # Deploy Java Cloud Run functions
       - name: Deploy updateRecurrenceTemplate

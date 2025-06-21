@@ -1,0 +1,29 @@
+package com.functions.forms.services;
+
+import com.functions.events.repositories.EventsRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
+
+public class FormsService {
+    private static final Logger logger = LoggerFactory.getLogger(FormsService.class);
+
+    public static Optional<String> getFormIdByEventId(String eventId) {
+        try {
+            EventsRepository.getEventById(eventId).flatMap(maybeEventData -> {
+                String maybeFormId = maybeEventData.getFormId();
+                if (maybeFormId != null) {
+                    logger.info("Found form ID {} for event ID {}", maybeFormId, eventId);
+                    return Optional.of(maybeFormId);
+                } else {
+                    logger.warn("No form ID found for event ID {}", eventId);
+                    return Optional.empty();
+                }
+            });
+        } catch (Exception e) {
+            logger.error("Error trying to get form ID for event ID {}: {}", eventId, e.getMessage());
+        }
+        return Optional.empty();
+    }
+}

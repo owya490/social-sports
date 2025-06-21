@@ -53,5 +53,6 @@ public class EventsService {
 
         transaction.set(eventMetadataDocRef, eventMetadata);
     }
+
 }
 
