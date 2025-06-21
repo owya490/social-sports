@@ -8,20 +8,12 @@ import org.slf4j.LoggerFactory;
  * Exposes global statics and other useful global utilities.
  */
 public class Global {
-    private static Logger logger = LoggerFactory.getLogger(Global.class);
+    private static final Logger logger = LoggerFactory.getLogger(Global.class);
 
-    private static Dotenv dotenv;
-
-    static {
-        try {
-            dotenv = Dotenv.configure()
-                    .ignoreIfMalformed()
-                    .ignoreIfMissing()
-                    .load();
-        } catch (Exception e) {
-            logger.error("Failed initializing Global class: " + e.getMessage());
-        }
-    }
+    private static final Dotenv dotenv = Dotenv.configure()
+            .ignoreIfMalformed()
+            .ignoreIfMissing()
+            .load();
 
     public static String getEnv(String key) {
         if (dotenv == null) {

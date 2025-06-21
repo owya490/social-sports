@@ -1,6 +1,6 @@
 package com.functions.fulfilment.repositories;
 
-import com.functions.FirebaseService;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.FulfilmentSession;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;

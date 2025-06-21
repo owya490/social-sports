@@ -1,6 +1,8 @@
 package com.functions.stripe.services;
 
-import com.functions.FirebaseService;
+import com.functions.firebase.services.FirebaseService;
+import com.functions.stripe.models.responses.GetStripeCheckoutUrlByEventIdResponse;
+import com.functions.utils.JavaUtils;
 import com.functions.utils.UrlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +27,16 @@ public class StripeService {
                             "quantity", numTickets,
                             "cancelUrl", UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/%s", eventId)).orElse("https://sportshub.net.au/dashboard"),
                             "successUrl", successUrl.orElse(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId)).orElse("https://sportshub.net.au/dashboard"))
-                    ));
+                    )).flatMap(response -> {
+                GetStripeCheckoutUrlByEventIdResponse stripeResponse;
+                try {
+                    stripeResponse = JavaUtils.objectMapper.convertValue(response.result(), GetStripeCheckoutUrlByEventIdResponse.class);
+                } catch (Exception e) {
+                    logger.error("Failed to parse Stripe checkout response for event ID {}: {}", eventId, e.getMessage());
+                    return Optional.empty();
+                }
+                return Optional.of(stripeResponse.url());
+            });
         } catch (Exception e) {
             logger.error("Error getting Stripe checkout URL for event ID {}: {}", eventId, e.getMessage());
             return Optional.empty();

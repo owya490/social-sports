@@ -1,5 +1,8 @@
-package com.functions;
+package com.functions.firebase.services;
 
+import com.functions.Global;
+import com.functions.firebase.models.requests.CallFirebaseFunctionRequest;
+import com.functions.firebase.models.responses.CallFirebaseFunctionResponse;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.logging.Logging;
@@ -8,10 +11,13 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
 import com.posthog.java.PostHog;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -45,10 +51,14 @@ public class FirebaseService {
     private static final Logger logger = LoggerFactory.getLogger(FirebaseService.class);
 
     private static Firestore db;
+    @Getter
     private static Logging logging;
+    @Getter
     private static String posthogApiKey;
     private static String posthogHost;
+    @Getter
     private static String firebaseProject;
+    @Getter
     private static PostHog posthog;
 
     static {
@@ -101,24 +111,7 @@ public class FirebaseService {
         return db;
     }
 
-    public static Logging getLogging() {
-        return logging;
-    }
-
-    public static String getPosthogApiKey() {
-        return posthogApiKey;
-    }
-
-    public static String getFirebaseProject() {
-        return firebaseProject;
-    }
-
-    public static PostHog getPosthog() {
-        return posthog;
-    }
-
-
-    public static Optional<String> callFirebaseFunction(String functionName, Object requestData) {
+    public static Optional<CallFirebaseFunctionResponse> callFirebaseFunction(String functionName, Object requestData) {
         try {
             String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION, System.getenv("PROJECT_NAME"), functionName);
             URL url = new URL(functionUrl);
@@ -129,11 +122,8 @@ public class FirebaseService {
             connection.setDoOutput(true);
             connection.setRequestProperty("Content-Type", "application/json");
 
-            // Prepare JSON body: wrap in { "data": ... } as Firebase callable functions expect
             String jsonData = objectMapper.writeValueAsString(
-                    new Object() {
-                        public final Object data = requestData;
-                    }
+                    new CallFirebaseFunctionRequest(requestData)
             );
 
             // Send request body
@@ -145,15 +135,24 @@ public class FirebaseService {
             // Read response
             int status = connection.getResponseCode();
             InputStream responseStream = (status < 400) ? connection.getInputStream() : connection.getErrorStream();
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream))) {
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-                return Optional.of(response.toString());
+            CallFirebaseFunctionResponse response;
+            try {
+                response = objectMapper.readValue(responseStream, CallFirebaseFunctionResponse.class);
+            } catch (Exception e) {
+                logger.error("Could not parse input", e);
+                return Optional.empty();
             }
+
+            return Optional.of(response);
+
+//            try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream))) {
+//                StringBuilder response = new StringBuilder();
+//                String line;
+//                while ((line = reader.readLine()) != null) {
+//                    response.append(line);
+//                }
+//                return Optional.of(response.toString());
+//            }
         } catch (Exception e) {
             logger.error("Error calling Firebase function {}: {}", functionName, e.getMessage(), e);
             return Optional.empty();

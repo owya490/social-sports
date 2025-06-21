@@ -77,7 +77,7 @@ public class FulfilmentService {
                 }
             }
 
-            FulfilmentService.createFulfilmentSession(eventId, fulfilmentEntities).flatMap( fulfilmentSessionId -> {
+            return FulfilmentService.createFulfilmentSession(eventId, fulfilmentEntities).flatMap( fulfilmentSessionId -> {
                 if (fulfilmentSessionId.isEmpty()) {
                     throw new RuntimeException("Failed to create fulfilment session for event ID: " + eventId);
                 }
