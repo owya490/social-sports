@@ -175,15 +175,7 @@ export default function Dashboard() {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-6 gap-4 lg:gap-8 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
           {eventDataList
-            .sort((event1, event2) => {
-              if (event1.accessCount > event2.accessCount) {
-                return 1;
-              }
-              if (event2.accessCount < event2.accessCount) {
-                return -1;
-              }
-              return 0;
-            })
+            .sort((a, b) => b.accessCount - a.accessCount)
             .map((event, eventIdx) => {
               return (
                 <EventCard

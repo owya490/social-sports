@@ -15,8 +15,7 @@ import EventDrilldownSettingsPage from "@/components/organiser/event/settings/Ev
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
-import { Form, FormResponse, FormSection, SectionId } from "@/interfaces/FormTypes";
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
@@ -38,7 +37,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
   const [eventEndDate, setEventEndDate] = useState<Timestamp>(Timestamp.now());
-  const [eventOrganiser, setEventOrganiser] = useState<UserData>(EmptyUserData);
+  const [eventOrganiser, setEventOrganiser] = useState<PublicUserData>(EmptyPublicUserData);
   const [eventVacancy, setEventVacancy] = useState<number>(0);
   const [eventDescription, setEventDescription] = useState<string>("");
   const [eventLocation, setEventLocation] = useState<string>("");
@@ -56,18 +55,6 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
-  const [form, setForm] = useState<Form>({
-    title: "my_title",
-    userId: "userId",
-    formActive: true,
-    sectionsOrder: [],
-    sectionsMap: new Map<SectionId, FormSection>(),
-  });
-  const [formResponse, setFormResponse] = useState<FormResponse>({
-    formId: "formId",
-    responseMap: new Map<SectionId, FormSection>(),
-    submissionTime: 0,     
-  });
 
   const router = useRouter();
 
@@ -195,10 +182,7 @@ export default function EventPage({ params }: EventPageProps) {
                 setEventMetadata={setEventMetadata}
               />
             )}
-            {currSidebarPage === "Forms" && (
-            <EventDrilldownFormsPage 
-              form={form} 
-              formResponse={formResponse} />)}
+            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventMetadata={eventMetadata} eventId={eventId} />}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}

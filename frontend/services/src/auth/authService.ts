@@ -1,22 +1,23 @@
-import { useUser } from "@/components/utility/UserContext";
-import { EmptyUserData, NewUserData, TempUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyUserData, NewUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { FirebaseError } from "@firebase/util";
 import {
+  createUserWithEmailAndPassword,
   FacebookAuthProvider,
   GoogleAuthProvider,
-  UserCredential,
-  createUserWithEmailAndPassword,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  UserCredential,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc, Transaction } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
 import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
 import { createUser, deleteUser, getPublicUserById } from "../users/usersService";
+import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
@@ -32,7 +33,8 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
     });
     const { password, ...userDataWithoutPassword } = data;
     // Save user data temporarily in your database
-    await saveTempUserData(userCredential.user.uid, userDataWithoutPassword);
+    const userId = userCredential.user.uid;
+    await saveTempUserData(userId, { ...userDataWithoutPassword, userId: userId });
     authServiceLogger.info("Temp User Data Created", {
       email: data.contactInformation.email,
       userId: userCredential.user.uid,
@@ -51,7 +53,10 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
 
 export async function handleSignOut(setUser: (user: UserData) => void) {
   try {
+    console.log("Signing out...");
     await signOut(auth);
+    bustEventsLocalStorageCache();
+    bustUserLocalStorageCache();
     setUser(EmptyUserData);
     console.log("Signed out!");
   } catch (error) {
@@ -59,7 +64,7 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
   }
 }
 
-export async function handleEmailAndPasswordSignIn(email: string, password: string): Promise<boolean> {
+export async function handleEmailAndPasswordSignIn(email: string, password: string): Promise<UserId | null> {
   let userCredential: UserCredential | undefined = undefined;
 
   try {
@@ -77,7 +82,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
 
       try {
         await getPublicUserById(userCredential.user.uid);
-        return true; // User exists, sign-in successful
+        return userCredential.user.uid; // User exists, sign-in successful
       } catch (error: unknown) {
         if (error instanceof UserNotFoundError) {
           authServiceLogger.info("User not found in public users. Attempting to retrieve temporary user data.", {
@@ -98,7 +103,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
               authServiceLogger.info("Temporary user data deleted after successful creation.", {
                 userId: userCredential.user.uid,
               });
-              return true; // User created and temporary data deleted successfully
+              return userCredential.user.uid; // User created and temporary data deleted successfully
             } catch (creationError) {
               authServiceLogger.error("Error during user creation. Attempting rollback.", {
                 userId: userCredential.user.uid,
@@ -159,23 +164,23 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
   }
 }
 
-export async function saveTempUserData(userId: string, data: TempUserData) {
+export async function saveTempUserData(userId: string, data: UserData) {
   await setDoc(doc(db, "TempUsers", userId), data);
 }
 
-export async function getTempUserData(userId: string): Promise<NewUserData | null> {
+export async function getTempUserData(userId: string): Promise<UserData | null> {
   try {
     const docRef = doc(db, "TempUsers", userId); // Get a reference to the document
     const docSnap = await getDoc(docRef); // Retrieve the document snapshot
 
     if (docSnap.exists()) {
-      return docSnap.data() as NewUserData;
+      return docSnap.data() as UserData;
     } else {
-      console.error(`User ID=${userId} did not exist when expected by reference.`);
+      authServiceLogger.error(`User ID=${userId} did not exist when expected by reference.`);
       return null;
     }
   } catch (error) {
-    console.error(`Error fetching user data for ID=${userId}:`, error);
+    authServiceLogger.error(`Error fetching user data for ID=${userId}: ${error}`);
     return null;
   }
 }
@@ -201,9 +206,9 @@ export async function handleGoogleSignIn() {
       await setDoc(userDocRef, userDataToSet);
     }
 
-    console.log("Google signed in");
+    authServiceLogger.info("Google signed in");
   } catch (error) {
-    console.log(error);
+    authServiceLogger.info(`${error}`);
   }
 }
 
@@ -224,9 +229,9 @@ export async function handleFacebookSignIn() {
       await setDoc(userDocRef, userDataToSet);
     }
 
-    console.log("Facebook signed in");
+    authServiceLogger.info("Facebook signed in");
   } catch (error) {
-    console.log(error);
+    authServiceLogger.info(`${error}`);
   }
 }
 
@@ -241,10 +246,13 @@ export async function resetUserPassword(email: string): Promise<void> {
     // Send password reset email
     sendPasswordResetEmail(auth, email);
     // Password reset email sent successfully
-    console.log(`Password reset email sent to ${email}`);
+    authServiceLogger.info(`Password reset email sent to ${email}`);
   } catch (error) {
     // Handle errors
-    console.error("Error sending password reset email:", error);
+    authServiceLogger.error(`Error sending password reset email: ${error}`);
     throw error; // Rethrow the error for the caller to handle if needed
   }
 }
+
+// can write to any empty username
+// can write to a username which has your userid

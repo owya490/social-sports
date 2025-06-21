@@ -1,5 +1,4 @@
 import Image from "next/image";
-
 import { Timestamp } from "firebase/firestore";
 import Skeleton from "react-loading-skeleton";
 import { EventDescriptionEdit } from "./EventDescriptionEdit";
