@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - master
+      - brianw2/payment-session
 
 jobs:
   deploy-java-cloud-run-functions:
@@ -18,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: [dev]
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -108,12 +109,24 @@ jobs:
             --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
 
+      - name: Deploy initFulfilmentSession
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy initFulfilmentSession \
+            --entry-point com.functions.fulfilment.controllers.InitFulfilmentSessionEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: [dev]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
