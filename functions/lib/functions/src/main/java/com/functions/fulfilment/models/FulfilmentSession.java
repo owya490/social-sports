@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 @Builder(toBuilder = true)
-@NoArgsConstructor(force = true, access = lombok.AccessLevel.PRIVATE)
+@NoArgsConstructor
 @AllArgsConstructor
 public class FulfilmentSession {
     Timestamp fulfilmentSessionStartTime;

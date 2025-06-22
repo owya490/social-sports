@@ -33,7 +33,7 @@ public class FulfilmentSessionRepository {
     public static FulfilmentSession getFulfilmentSession(String sessionId) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
-            return sessionDocRef.get().get().toObject(FulfilmentSession.class);
+            return sessionDocRef.get().get().toObject(FulfilmentSession.class); // TODO: this is the problem line
         } catch (Exception e) {
             logger.error("Failed to retrieve fulfilment session for sessionId: {}", sessionId, e);
             throw new Exception("Failed to retrieve fulfilment session for sessionId: " + sessionId, e);
