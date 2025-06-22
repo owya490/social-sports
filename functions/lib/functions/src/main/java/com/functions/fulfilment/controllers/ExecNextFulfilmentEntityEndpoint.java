@@ -1,10 +1,20 @@
 package com.functions.fulfilment.controllers;
 
+import com.functions.fulfilment.models.requests.ExecNextFulfilmentEntityRequest;
+import com.functions.fulfilment.models.responses.ExecNextFulfilmentEntityResponse;
+import com.functions.fulfilment.services.FulfilmentService;
+import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 public class ExecNextFulfilmentEntityEndpoint implements HttpFunction {
+    private static final Logger logger = LoggerFactory.getLogger(ExecNextFulfilmentEntityEndpoint.class);
+
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         // Set CORS headers for all responses
@@ -26,6 +36,28 @@ public class ExecNextFulfilmentEntityEndpoint implements HttpFunction {
             return;
         }
 
+        ExecNextFulfilmentEntityRequest data;
+        try {
+            data = JavaUtils.objectMapper.readValue(request.getReader(), ExecNextFulfilmentEntityRequest.class);
+        } catch (Exception e) {
+            response.setStatusCode(400);
+            logger.error("Could not parse input:", e);
+            response.getWriter().write("Invalid request data: " + e.getMessage());
+            return;
+        }
 
+        Optional<ExecNextFulfilmentEntityResponse> maybeResponse = FulfilmentService.execNextFulfilmentEntity(data.fulfilmentSessionId());
+
+        if (maybeResponse.isPresent()) {
+            logger.info("Next fulfilment entity executed successfully for session: {}", data.fulfilmentSessionId());
+            response.setStatusCode(200);
+            response.getWriter().write(
+                    JavaUtils.objectMapper.writeValueAsString(maybeResponse.get())
+            );
+        } else {
+            logger.error("No next fulfilment entity found for session: {}", data.fulfilmentSessionId());
+            response.setStatusCode(404);
+            response.getWriter().write("No next fulfilment entity found for session: " + data.fulfilmentSessionId());
+        }
     }
 }

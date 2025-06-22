@@ -1,14 +1,11 @@
 package com.functions.fulfilment.models;
 
 import com.google.cloud.Timestamp;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.Value;
+import lombok.*;
 
 import java.util.List;
 
-@Value
+@Data
 @Builder(toBuilder = true)
 @NoArgsConstructor(force = true, access = lombok.AccessLevel.PRIVATE)
 @AllArgsConstructor

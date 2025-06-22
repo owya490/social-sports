@@ -43,7 +43,7 @@ export type FormsFulfilmentEntity = {
 };
 
 /**
- * Payload we send to java initFulfilmentSessionRequest function
+ * Payload we send to java initFulfilmentSession function
  */
 export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
@@ -53,8 +53,30 @@ export type InitCheckoutFulfilmentSessionRequest = {
 };
 
 /**
- * Payload we receive from java initFulfilmentSessionRequest function
+ * Payload we receive from java initFulfilmentSession function
  */
 export type InitCheckoutFulfilmentSessionResponse = {
   fulfilmentSessionId: FulfilmentSessionId;
+};
+
+/**
+ * Payload we send to java execNextFulfilmentEntity function
+ */
+export type ExecNextFulfilmentEntityRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+};
+
+/**
+ * Payload we receive from java execNextFulfilmentEntity
+ */
+export type ExecNextFulfilmentEntityResponse = {
+  /**
+   * Empty if there are no more fulfilment entities to process
+   */
+  nextUrl?: URL;
+  /**
+   * NOTE: 0 based index of the current fulfilment entity
+   */
+  currentFulfilmentEntityIndex: number;
+  numFulfilmentEntities: number;
 };
