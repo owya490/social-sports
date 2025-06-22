@@ -4,15 +4,6 @@ import { URL } from "./Types";
 
 export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
-// /// FulfilmentSession Types
-// export type FulfilmentSession = {
-//   type: FulfilmentSessionType["type"];
-//   fulfilmentSessionStartTime: UTCTime;
-//   eventId: EventId;
-//   fulfilmentEntities: FulfilmentEntity[];
-//   currentFulfilmentEntityIndex: number;
-// };
-
 export type FulfilmentSessionType = { fulfilmentEntityTypes: FulfilmentEntityType[]; endUrl: URL } & ({
   type: "checkout";
 } & CheckoutFulfilmentSessionType);
@@ -32,24 +23,6 @@ export enum FulfilmentEntityType {
   STRIPE = "StripeFulfilmentEntity",
   FORMS = "FormsFulfilmentEntity",
 }
-
-// export type FulfilmentEntity = { nextUrl: URL } & (
-//   | ({ type: "stripe" } & StripeFulfilmentEntity)
-//   | ({ type: "forms" } & FormsFulfilmentEntity)
-// );
-
-// export type StripeFulfilmentEntity = {
-//   stripeCheckoutLink: URL;
-// };
-
-// export type FormsFulfilmentEntity = {
-//   formId: FormId;
-//   /**
-//    * List of non-committed form responses
-//    */
-//   tempFormResponseIds: FormResponseId[];
-//   submittedFormResponseIds: FormResponseId[];
-// };
 
 /**
  * Payload we send to java initFulfilmentSession function
