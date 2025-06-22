@@ -140,7 +140,9 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     window.scrollTo(0, 0);
 
                     // We'll put this behind a flag for now just in case we need to quickly disable this.
+                    console.log("FULFILMENT_SESSION_ENABLED:", FULFILMENT_SESSION_ENABLED);
                     if (FULFILMENT_SESSION_ENABLED) {
+                      console.log("FULFILMENT_ON");
                       try {
                         const fulfilmentSessionId = await initFulfilmentSession({
                           type: "checkout",
@@ -157,6 +159,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                         router.push("/error");
                       }
                     } else {
+                      console.log("FULFILMENT_OFF");
                       const stripeCheckoutLink = await getStripeCheckoutFromEventId(
                         props.eventId,
                         props.isPrivate,

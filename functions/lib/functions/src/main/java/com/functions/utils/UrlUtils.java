@@ -1,6 +1,6 @@
 package com.functions.utils;
 
-import com.functions.Global;
+import com.functions.global.services.Global;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

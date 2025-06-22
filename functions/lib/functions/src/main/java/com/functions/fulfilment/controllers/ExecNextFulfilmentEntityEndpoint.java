@@ -3,6 +3,7 @@ package com.functions.fulfilment.controllers;
 import com.functions.fulfilment.models.requests.ExecNextFulfilmentEntityRequest;
 import com.functions.fulfilment.models.responses.ExecNextFulfilmentEntityResponse;
 import com.functions.fulfilment.services.FulfilmentService;
+import com.functions.global.models.responses.ErrorResponse;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
@@ -32,7 +33,7 @@ public class ExecNextFulfilmentEntityEndpoint implements HttpFunction {
         if (!(request.getMethod().equalsIgnoreCase("POST"))) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
-            response.getWriter().write("The ExecNextFulfilmentEntityEndpoing only supports POST requests.");
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("The ExecNextFulfilmentEntityEndpoing only supports POST requests.")));
             return;
         }
 
@@ -42,7 +43,7 @@ public class ExecNextFulfilmentEntityEndpoint implements HttpFunction {
         } catch (Exception e) {
             response.setStatusCode(400);
             logger.error("Could not parse input:", e);
-            response.getWriter().write("Invalid request data: " + e.getMessage());
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("Invalid request data: " + e.getMessage())));
             return;
         }
 
@@ -57,7 +58,9 @@ public class ExecNextFulfilmentEntityEndpoint implements HttpFunction {
         } else {
             logger.error("No next fulfilment entity found for session: {}", data.fulfilmentSessionId());
             response.setStatusCode(404);
-            response.getWriter().write("No next fulfilment entity found for session: " + data.fulfilmentSessionId());
+            response.getWriter().write(
+                    JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("No next fulfilment entity found for session: " + data.fulfilmentSessionId()))
+            );
         }
     }
 }

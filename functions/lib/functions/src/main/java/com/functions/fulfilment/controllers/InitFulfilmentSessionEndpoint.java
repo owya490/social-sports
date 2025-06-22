@@ -4,6 +4,7 @@ import com.functions.fulfilment.models.FulfilmentEntityType;
 import com.functions.fulfilment.models.requests.InitCheckoutFulfilmentSessionRequest;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
 import com.functions.fulfilment.services.FulfilmentService;
+import com.functions.global.models.responses.ErrorResponse;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
@@ -34,7 +35,7 @@ public class InitFulfilmentSessionEndpoint implements HttpFunction {
         if (!(request.getMethod().equalsIgnoreCase("POST"))) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
-            response.getWriter().write("The InitFulfilmentSessionEndpoint only supports POST requests.");
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("The InitFulfilmentSessionEndpoint only supports POST requests.")));
             return;
         }
 
@@ -44,7 +45,7 @@ public class InitFulfilmentSessionEndpoint implements HttpFunction {
         } catch (Exception e) {
             response.setStatusCode(400);
             logger.error("Could not parse input:", e);
-            response.getWriter().write("Invalid request data: " + e);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("Invalid request data: " + e.getMessage())));
             return;
         }
 
@@ -61,7 +62,7 @@ public class InitFulfilmentSessionEndpoint implements HttpFunction {
         } else {
             logger.error("Failed to create fulfilment session for event ID: {}", data.eventId());
             response.setStatusCode(500);
-            response.getWriter().write("Failed to create fulfilment session.");
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("Failed to create fulfilment session for event ID: " + data.eventId())));
         }
     }
 

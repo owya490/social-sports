@@ -1,6 +1,6 @@
 package com.functions.firebase.services;
 
-import com.functions.Global;
+import com.functions.global.services.Global;
 import com.functions.firebase.models.requests.CallFirebaseFunctionRequest;
 import com.functions.firebase.models.responses.CallFirebaseFunctionResponse;
 import com.google.auth.oauth2.GoogleCredentials;

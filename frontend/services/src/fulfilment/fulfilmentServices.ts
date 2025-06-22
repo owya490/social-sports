@@ -1,3 +1,4 @@
+import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
 import {
   ExecNextFulfilmentEntityRequest,
@@ -75,6 +76,14 @@ async function initCheckoutFulfilmentSession(
       body: JSON.stringify(request),
     });
 
+    if (!rawResponse.ok) {
+      const errorResponse = (await rawResponse.json()) as ErrorResponse;
+      fulfilmentServiceLogger.error(
+        `initCheckoutFulfilmentSessionNew: Cloud function error: Failed to initialize fulfilment session: ${errorResponse.errorMessage}`
+      );
+      throw new Error(`initCheckoutFulfilmentSessionNew: ${errorResponse.errorMessage}`);
+    }
+
     const response = (await rawResponse.json()) as InitCheckoutFulfilmentSessionResponse;
     return response.fulfilmentSessionId;
   } catch (error) {
@@ -110,6 +119,14 @@ export async function execNextFulfilmentEntity(
       },
       body: JSON.stringify(request),
     });
+
+    if (!rawResponse.ok) {
+      const errorResponse = (await rawResponse.json()) as ErrorResponse;
+      fulfilmentServiceLogger.error(
+        `execNextFulfilmentEntityNew: Cloud function error: Failed to execute next fulfilment entity: ${errorResponse.errorMessage}`
+      );
+      throw new Error(`execNextFulfilmentEntityNew: ${errorResponse.errorMessage}`);
+    }
 
     const response = (await rawResponse.json()) as ExecNextFulfilmentEntityResponse;
 
