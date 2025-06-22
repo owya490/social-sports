@@ -122,6 +122,19 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
+      - name: Deploy execNextFulfilmentEntity
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy execNextFulfilmentEntity \
+            --entry-point com.functions.fulfilment.controllers.ExecNextFulfilmentEntityEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}
     runs-on: ubuntu-latest

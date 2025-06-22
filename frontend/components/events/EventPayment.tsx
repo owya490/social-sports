@@ -1,5 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { FulfilmentEntityType } from "@/interfaces/FulfilmentTypes";
 import { URL } from "@/interfaces/Types";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
@@ -164,7 +165,7 @@ export default function EventPayment(props: EventPaymentProps) {
                         try {
                           const fulfilmentSessionId = await initFulfilmentSession({
                             type: "checkout",
-                            fulfilmentEntityTypes: ["stripe"],
+                            fulfilmentEntityTypes: [FulfilmentEntityType.STRIPE],
                             endUrl: getUrlWithCurrentHostname(`/event/success/${props.eventId}`) as URL,
                             eventId: props.eventId,
                             numTickets: attendeeCount,

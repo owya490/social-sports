@@ -1,20 +1,19 @@
 import { EventId } from "./EventTypes";
-import { FormId, FormResponseId } from "./FormTypes";
 import { Branded } from "./index";
-import { URL, UTCTime } from "./Types";
+import { URL } from "./Types";
 
 export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
-/// FulfilmentSession Types
-export type FulfilmentSession = {
-  type: FulfilmentSessionType["type"];
-  fulfilmentSessionStartTime: UTCTime;
-  eventId: EventId;
-  fulfilmentEntities: FulfilmentEntity[];
-  currentFulfilmentEntityIndex: number;
-};
+// /// FulfilmentSession Types
+// export type FulfilmentSession = {
+//   type: FulfilmentSessionType["type"];
+//   fulfilmentSessionStartTime: UTCTime;
+//   eventId: EventId;
+//   fulfilmentEntities: FulfilmentEntity[];
+//   currentFulfilmentEntityIndex: number;
+// };
 
-export type FulfilmentSessionType = { fulfilmentEntityTypes: FulfilmentEntity["type"][]; endUrl: URL } & ({
+export type FulfilmentSessionType = { fulfilmentEntityTypes: FulfilmentEntityType[]; endUrl: URL } & ({
   type: "checkout";
 } & CheckoutFulfilmentSessionType);
 
@@ -23,24 +22,34 @@ export type CheckoutFulfilmentSessionType = {
   numTickets: number;
 };
 
-/// FulfilmentEntity Types
-export type FulfilmentEntity = { nextUrl: URL } & (
-  | ({ type: "stripe" } & StripeFulfilmentEntity)
-  | ({ type: "forms" } & FormsFulfilmentEntity)
-);
+/**
+ * Types of fulfilment entities that can be processed in a fulfilment session.
+ *
+ * NOTE: The string values here should match the name of the Java classes representing each type of
+ * fulfilment entity in `functions/fulfilment/models`.
+ */
+export enum FulfilmentEntityType {
+  STRIPE = "StripeFulfilmentEntity",
+  FORMS = "FormsFulfilmentEntity",
+}
 
-export type StripeFulfilmentEntity = {
-  stripeCheckoutLink: URL;
-};
+// export type FulfilmentEntity = { nextUrl: URL } & (
+//   | ({ type: "stripe" } & StripeFulfilmentEntity)
+//   | ({ type: "forms" } & FormsFulfilmentEntity)
+// );
 
-export type FormsFulfilmentEntity = {
-  formId: FormId;
-  /**
-   * List of non-committed form responses
-   */
-  tempFormResponseIds: FormResponseId[];
-  submittedFormResponseIds: FormResponseId[];
-};
+// export type StripeFulfilmentEntity = {
+//   stripeCheckoutLink: URL;
+// };
+
+// export type FormsFulfilmentEntity = {
+//   formId: FormId;
+//   /**
+//    * List of non-committed form responses
+//    */
+//   tempFormResponseIds: FormResponseId[];
+//   submittedFormResponseIds: FormResponseId[];
+// };
 
 /**
  * Payload we send to java initFulfilmentSession function
@@ -48,7 +57,7 @@ export type FormsFulfilmentEntity = {
 export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
   numTickets: number;
-  fulfilmentEntityTypes: FulfilmentEntity["type"][];
+  fulfilmentEntityTypes: FulfilmentEntityType[];
   endUrl: URL;
 };
 
