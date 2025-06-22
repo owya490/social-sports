@@ -5,9 +5,11 @@ import Image from "next/image";
 export const DropdownSelectSectionResponse = ({
   dropdownSelectSection,
   answerOnChange,
+  canEdit,
 }: {
   dropdownSelectSection: DropdownSelectSection;
   answerOnChange: (answer: string) => void;
+  canEdit: boolean;
 }) => {
   return (
     <div className="flex bg-white p-8 rounded-xl flex-col gap-4">
@@ -20,21 +22,14 @@ export const DropdownSelectSectionResponse = ({
         onChange={(e) => {
           answerOnChange(e!);
         }}
+        value={dropdownSelectSection.answer}
+        disabled={!canEdit}
       >
         {dropdownSelectSection.options.map((option, idx) => {
           return (
-            <Option value={option}>{option}</Option>
-            // <Radio
-            //   className="focus:ring-0"
-            //   name={option}
-            //   value={option}
-            //   label={option}
-            //   crossOrigin={undefined}
-            //   checked={dropdownSelectSection.answer === option ? true : false}
-            //   onChange={(e) => {
-            //     answerOnChange(e.target.value);
-            //   }}
-            // />
+            <Option key={idx} value={option}>
+              {option}
+            </Option>
           );
         })}
       </Select>

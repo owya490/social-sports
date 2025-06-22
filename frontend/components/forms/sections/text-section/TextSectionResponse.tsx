@@ -7,9 +7,11 @@ import Image from "next/image";
 export const TextSectionResponse = ({
   textSection,
   answerOnChange,
+  canEdit,
 }: {
   textSection: TextSection;
   answerOnChange: (answer: string) => void;
+  canEdit: boolean;
 }) => {
   return (
     <div className="flex bg-white p-8 rounded-xl flex-col gap-4">
@@ -21,6 +23,7 @@ export const TextSectionResponse = ({
         label="Please answer here"
         className="focus:ring-0"
         value={textSection.answer}
+        disabled={!canEdit}
         onChange={(e) => {
           answerOnChange(e.target.value);
         }}

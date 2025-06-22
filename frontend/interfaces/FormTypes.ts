@@ -1,3 +1,4 @@
+import { EventId } from "./EventTypes";
 import { UserId } from "./UserTypes";
 
 export interface Form {
@@ -66,6 +67,7 @@ export interface DateTimeSection extends AbstractSection {
 /** Contains the answers of the form from the responder */
 export interface FormResponse {
   formId: FormId;
+  eventId: EventId;
   responseMap: Map<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
   submissionTime?: number;
