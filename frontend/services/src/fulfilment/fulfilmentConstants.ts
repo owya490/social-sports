@@ -7,7 +7,7 @@ export const INIT_FULFILMENT_SESSION_URL = {
 };
 
 export const EXEC_NEXT_FULFILMENT_ENTITY_URL = {
-  DEVELOPMENT: "",
-  PREVIEW: "",
-  PRODUCTION: "",
+  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/execNextFulfilmentEntity",
+  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/execNextFulfilmentEntity",
+  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/execNextFulfilmentEntity",
 };
