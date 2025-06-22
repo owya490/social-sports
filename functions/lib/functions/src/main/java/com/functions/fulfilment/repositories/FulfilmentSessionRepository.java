@@ -4,10 +4,12 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.FulfilmentSession;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class FulfilmentSessionRepository {
@@ -30,10 +32,14 @@ public class FulfilmentSessionRepository {
         return db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH).document(sessionId);
     }
 
-    public static FulfilmentSession getFulfilmentSession(String sessionId) throws Exception {
+    public static Optional<FulfilmentSession> getFulfilmentSession(String sessionId) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
-            return sessionDocRef.get().get().toObject(FulfilmentSession.class); // TODO: this is the problem line
+            DocumentSnapshot maybeSnapshot = sessionDocRef.get().get();
+            if (maybeSnapshot.exists()) {
+                return Optional.ofNullable(maybeSnapshot.toObject(FulfilmentSession.class)); // TODO: this is the potential problem line
+            }
+            return Optional.empty();
         } catch (Exception e) {
             logger.error("Failed to retrieve fulfilment session for sessionId: {}", sessionId, e);
             throw new Exception("Failed to retrieve fulfilment session for sessionId: " + sessionId, e);
@@ -47,6 +53,16 @@ public class FulfilmentSessionRepository {
         } catch (Exception e) {
             logger.error("Failed to update fulfilment session for sessionId: {}, fulfilmentSession: {}", JavaUtils.objectMapper.writeValueAsString(updatedSession), updatedSession, e);
             throw new Exception("Failed to update fulfilment session for sessionId: " + sessionId, e);
+        }
+    }
+
+    public static void deleteFulfilmentSession(String sessionId) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            sessionDocRef.delete().get();
+        } catch (Exception e) {
+            logger.error("Failed to delete fulfilment session for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to delete fulfilment session for sessionId: " + sessionId, e);
         }
     }
 }

@@ -1,6 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
-import { FulfilmentEntityType } from "@/interfaces/FulfilmentTypes";
+import { FulfilmentEntityType, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
 import { URL } from "@/interfaces/Types";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
@@ -161,11 +161,10 @@ export default function EventPayment(props: EventPaymentProps) {
                       window.scrollTo(0, 0);
 
                       // We'll put this behind a flag for now just in case we need to quickly disable this.
-                      console.log("FULFILMENT_SESSION_ENABLED", FULFILMENT_SESSION_ENABLED);
                       if (FULFILMENT_SESSION_ENABLED) {
-                        console.log("FULFILMENT_ON");
+                        let fulfilmentSessionId: FulfilmentSessionId | undefined = undefined;
                         try {
-                          const fulfilmentSessionId = await initFulfilmentSession({
+                          fulfilmentSessionId = await initFulfilmentSession({
                             type: "checkout",
                             fulfilmentEntityTypes: [FulfilmentEntityType.STRIPE],
                             endUrl: getUrlWithCurrentHostname(`/event/success/${props.eventId}`) as URL,
@@ -176,11 +175,13 @@ export default function EventPayment(props: EventPaymentProps) {
                           await execNextFulfilmentEntity(fulfilmentSessionId, router);
 
                           // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
+                          // For now, we'll just manually delete the session after processing.
                         } catch {
+                          // Clean up fulfilment session if it fails
+
                           router.push("/error");
                         }
                       } else {
-                        console.log("FULFILMENT_OFF");
                         const stripeCheckoutLink = await getStripeCheckoutFromEventId(
                           props.eventId,
                           props.isPrivate,

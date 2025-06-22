@@ -9,7 +9,6 @@ import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.services.StripeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -112,8 +111,13 @@ public class FulfilmentService {
 
     public static Optional<ExecNextFulfilmentEntityResponse> execNextFulfilmentEntity(String fulfilmentSessionId) {
         try {
-            FulfilmentSession fulfilmentSession = FulfilmentSessionRepository.getFulfilmentSession(fulfilmentSessionId);
+            Optional<FulfilmentSession> maybeFulfilmentSession = FulfilmentSessionRepository.getFulfilmentSession(fulfilmentSessionId);
+            if (maybeFulfilmentSession.isEmpty()) {
+                logger.error("Fulfilment session not found for ID: {}", fulfilmentSessionId);
+                return Optional.empty();
+            }
 
+            FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
             int currentIndex = fulfilmentSession.getCurrentFulfilmentIndex();
             List<FulfilmentEntity> fulfilmentEntities = fulfilmentSession.getFulfilmentEntities();
 
@@ -143,6 +147,15 @@ public class FulfilmentService {
         } catch (Exception e) {
             logger.error("Failed to execute next fulfilment entity for session ID: {}", fulfilmentSessionId, e);
             return Optional.empty();
+        }
+    }
+
+    public static void deleteFulfilmentSession(String fulfilmentSessionId) {
+        try {
+            FulfilmentSessionRepository.deleteFulfilmentSession(fulfilmentSessionId);
+            logger.info("Fulfilment session deleted successfully for ID: {}", fulfilmentSessionId);
+        } catch (Exception e) {
+            logger.error("Failed to delete fulfilment session for ID: {}", fulfilmentSessionId, e);
         }
     }
 }
