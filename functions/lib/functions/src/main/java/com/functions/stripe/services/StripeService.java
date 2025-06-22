@@ -30,7 +30,7 @@ public class StripeService {
                     )).flatMap(response -> {
                 GetStripeCheckoutUrlByEventIdResponse stripeResponse;
                 try {
-                    stripeResponse = JavaUtils.objectMapper.convertValue(response.result(), GetStripeCheckoutUrlByEventIdResponse.class);
+                    stripeResponse = JavaUtils.objectMapper.readValue(response.result(), GetStripeCheckoutUrlByEventIdResponse.class);
                 } catch (Exception e) {
                     logger.error("Failed to parse Stripe checkout response for event ID {}: {}", eventId, e.getMessage());
                     return Optional.empty();
