@@ -183,83 +183,45 @@ const FormEditor = ({}: FormEditorParams) => {
 
   return (
     <StrictMode>
-      <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#f0f0f0", padding: "20px" }}>
-        <div
-          style={{
-            width: "60px",
-            backgroundColor: "white",
-            borderRadius: "8px",
-            padding: "16px",
-            marginRight: "20px",
-            marginTop: "80px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-            alignItems: "center",
-            position: "sticky",
-            top: "80px",
-            alignSelf: "flex-start",
-            height: "fit-content",
-          }}
-          className="bg-white border-r-[1px] fixed bottom-0 sm:bottom-auto inset-x-0 sm:inset-x-auto sm:left-0 sm:h-screen z-40"
-        >
-          <div className="flex flex-col space-y-3 sticky">
+      <div className="flex min-h-screen bg-gray-100 p-5">
+        {/* Left Toolbar */}
+        <div className="sticky top-20 w-14 bg-white rounded-lg p-4 mr-5 flex flex-col gap-4 items-center h-fit shadow-sm border border-gray-200 z-40">
+          <div className="flex flex-col space-y-3">
             <FormNavButton
-              onClick={() =>
-                addSection({
-                  type: FormSectionType.TEXT,
-                  question: "",
-                  imageUrl: null,
-                  required: true,
-                })
-              }
+              onClick={() => addSection({
+                type: FormSectionType.TEXT,
+                question: "",
+                imageUrl: null,
+                required: true,
+              })}
               tooltipContent="Add Text Question"
             >
-              <DocumentTextIcon className="w-6 h-6 stroke-1 stroke-core-text" />
+              <DocumentTextIcon className="w-5 h-5 stroke-1 text-gray-600" />
             </FormNavButton>
-
+  
             <FormNavButton
-              onClick={() =>
-                addSection({
-                  type: FormSectionType.DROPDOWN_SELECT,
-                  question: "",
-                  options: [""],
-                  imageUrl: null,
-                  required: true,
-                })
-              }
+              onClick={() => addSection({
+                type: FormSectionType.DROPDOWN_SELECT,
+                question: "",
+                options: [""],
+                imageUrl: null,
+                required: true,
+              })}
               tooltipContent="Add Dropdown Question"
             >
-              <ListBulletIcon className="w-6 h-6 stroke-1 stroke-core-text" />
+              <ListBulletIcon className="w-5 h-5 stroke-1 text-gray-600" />
             </FormNavButton>
-
-            <FormNavButton onClick={handleSubmitClick} tooltipContent="Save Form">
-              <PaperAirplaneIcon className="w-6 stroke-1 stroke-core-text" />
+  
+            <FormNavButton onClick={handleSubmitClick} tooltipContent="Submit Form">
+              <PaperAirplaneIcon className="w-5 h-5 stroke-1 text-gray-600" />
             </FormNavButton>
           </div>
         </div>
-
+  
         {/* Main Form Area */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            gap: "20px",
-            maxWidth: "800px",
-            margin: "0 auto",
-            position: "relative",
-            paddingBottom: "80px",
-          }}
-        >
+        <div className="flex-1 flex flex-col gap-5 max-w-3xl mx-auto relative pb-20">
           {/* Form Title Card */}
-          <div
-            style={{
-              backgroundColor: "white",
-              borderRadius: "8px",
-              padding: "24px",
-            }}
-          >
+          <div className="bg-white rounded-lg p-6 shadow-sm">
             {isEditingTitle ? (
               <input
                 type="text"
@@ -267,25 +229,13 @@ const FormEditor = ({}: FormEditorParams) => {
                 onChange={handleTitleChange}
                 onBlur={() => setIsEditingTitle(false)}
                 onKeyDown={(e) => e.key === "Enter" && setIsEditingTitle(false)}
-                style={{
-                  fontSize: "32px",
-                  fontWeight: "bold",
-                  width: "100%",
-                  border: "none",
-                  outline: "none",
-                  marginBottom: "16px",
-                }}
+                className="text-3xl font-bold w-full border-none focus:outline-none mb-4"
                 autoFocus
               />
             ) : (
               <h1
                 onClick={() => setIsEditingTitle(true)}
-                style={{
-                  fontSize: "32px",
-                  fontWeight: "bold",
-                  marginBottom: "16px",
-                  cursor: "pointer",
-                }}
+                className="text-3xl font-bold mb-4 cursor-pointer"
               >
                 {form.title}
               </h1>
@@ -293,80 +243,19 @@ const FormEditor = ({}: FormEditorParams) => {
             <input
               type="text"
               placeholder="Form description"
-              style={{
-                width: "100%",
-                border: "none",
-                outline: "none",
-                color: "#666",
-                fontSize: "16px",
-              }}
+              className="w-full border-none focus:outline-none text-gray-600 text-base"
             />
           </div>
-          {/* Warning Dialog */}
-          {showWarning && (
-            <div
-              style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: "rgba(0,0,0,0.5)",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                zIndex: 1000,
-              }}
-            >
-              <div
-                style={{
-                  backgroundColor: "white",
-                  padding: "24px",
-                  borderRadius: "8px",
-                  maxWidth: "400px",
-                  textAlign: "center",
-                }}
-              >
-                <h2 style={{ marginBottom: "16px" }}>Are you sure?</h2>
-                <p style={{ marginBottom: "24px", color: "#666" }}>
-                  Once submitted, this form cannot be edited further.
-                </p>
-                <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-                  <button
-                    onClick={() => setShowWarning(false)}
-                    style={{
-                      padding: "8px 16px",
-                      border: "1px solid #ccc",
-                      borderRadius: "4px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleConfirmSubmit}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: "#4CAF50",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Confirm Submit
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
+  
           {/* Questions Container */}
           <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="droppable-sections">
+            <Droppable droppableId="sections">
               {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-5">
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="flex flex-col gap-5"
+                >
                   {form.sectionsOrder.map((sectionId, index) => {
                     const section = form.sectionsMap.get(sectionId);
                     return section ? (
@@ -375,10 +264,10 @@ const FormEditor = ({}: FormEditorParams) => {
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            style={{
-                              ...provided.draggableProps.style,
-                            }}
-                            className={`bg-white rounded-lg ${snapshot.isDragging ? "shadow-lg" : ""}`}
+                            style={provided.draggableProps.style}
+                            className={`bg-white rounded-lg ${
+                              snapshot.isDragging ? "shadow-lg" : "shadow-sm"
+                            }`}
                           >
                             <div
                               {...provided.dragHandleProps}
@@ -386,7 +275,9 @@ const FormEditor = ({}: FormEditorParams) => {
                             >
                               <EllipsisHorizontalIcon className="w-6 h-6 text-gray-400" />
                             </div>
-                            <div className="p-6">{renderSection(section, sectionId)}</div>
+                            <div className="p-6">
+                              {renderSection(section, sectionId)}
+                            </div>
                           </div>
                         )}
                       </Draggable>
@@ -397,6 +288,32 @@ const FormEditor = ({}: FormEditorParams) => {
               )}
             </Droppable>
           </DragDropContext>
+  
+          {/* Warning Dialog */}
+          {showWarning && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg max-w-md text-center">
+                <h2 className="text-xl font-bold mb-4">Are you sure?</h2>
+                <p className="text-gray-600 mb-6">
+                  Once submitted, this form cannot be edited further.
+                </p>
+                <div className="flex justify-center gap-3">
+                  <button
+                    onClick={() => setShowWarning(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmSubmit}
+                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                  >
+                    Confirm Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </StrictMode>
