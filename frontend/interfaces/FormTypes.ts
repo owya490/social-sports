@@ -1,6 +1,7 @@
 import { UserId } from "./UserTypes";
 
 export interface Form {
+  formId: FormId;
   title: FormTitle;
   userId: UserId;
   formActive: boolean;

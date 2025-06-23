@@ -1,152 +1,21 @@
 "use client";
 import { FormPreviewCard } from "@/components/organiser/forms/FormPreviewCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
-import { Form, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
-import { useState } from "react";
+import { useUser } from "@/components/utility/UserContext";
+import { Form } from "@/interfaces/FormTypes";
+import { getFormsForUser } from "@/services/src/forms/formsServices";
+import { useEffect, useState } from "react";
 
 const FormsGallery = () => {
-  const [forms, setForms] = useState<Form[]>([
-    {
-      title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
-      userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
-      formActive: true,
-      sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
-      sectionsMap: new Map<SectionId, FormSection>([
-        [
-          "S123",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "What division do you play in SVL?",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-        [
-          "ABC",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "HOOO is big b brians best briend??",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-      ]),
-    },
-    {
-      title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
-      userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
-      formActive: true,
-      sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
-      sectionsMap: new Map<SectionId, FormSection>([
-        [
-          "S123",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "What division do you play in SVL?",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-        [
-          "ABC",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "HOOO is big b brians best briend??",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-      ]),
-    },
-    {
-      title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
-      userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
-      formActive: true,
-      sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
-      sectionsMap: new Map<SectionId, FormSection>([
-        [
-          "S123",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "What division do you play in SVL?",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-        [
-          "ABC",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "HOOO is big b brians best briend??",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-      ]),
-    },
-    {
-      title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
-      userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
-      formActive: true,
-      sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
-      sectionsMap: new Map<SectionId, FormSection>([
-        [
-          "S123",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "What division do you play in SVL?",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-        [
-          "ABC",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "HOOO is big b brians best briend??",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-      ]),
-    },
-    {
-      title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
-      userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
-      formActive: true,
-      sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
-      sectionsMap: new Map<SectionId, FormSection>([
-        [
-          "S123",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "What division do you play in SVL?",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-        [
-          "ABC",
-          {
-            type: FormSectionType.TEXT,
-            answer: undefined,
-            question: "HOOO is big b brians best briend??",
-            imageUrl: null, // image attached to question
-            required: true,
-          },
-        ],
-      ]),
-    },
-  ]);
+  const [forms, setForms] = useState<Form[]>([]);
+  const { user } = useUser();
+  useEffect(() => {
+    const fetchForms = async () => {
+      const forms = await getFormsForUser(user.userId);
+      setForms(forms);
+    };
+    fetchForms();
+  }, []);
 
   return (
     <div className="md:ml-14 mt-14">
@@ -161,6 +30,7 @@ const FormsGallery = () => {
                   formTitle={form.title}
                   sectionsOrder={form.sectionsOrder}
                   sectionsMap={form.sectionsMap}
+                  formId={form.formId}
                 />
               );
             })}
@@ -172,3 +42,146 @@ const FormsGallery = () => {
 };
 
 export default FormsGallery;
+
+// [
+//   {
+//     title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
+//     userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
+//     formActive: true,
+//     sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
+//     sectionsMap: new Map<SectionId, FormSection>([
+//       [
+//         "S123",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "What division do you play in SVL?",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//       [
+//         "ABC",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "HOOO is big b brians best briend??",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//     ]),
+//   },
+//   {
+//     title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
+//     userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
+//     formActive: true,
+//     sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
+//     sectionsMap: new Map<SectionId, FormSection>([
+//       [
+//         "S123",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "What division do you play in SVL?",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//       [
+//         "ABC",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "HOOO is big b brians best briend??",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//     ]),
+//   },
+//   {
+//     title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
+//     userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
+//     formActive: true,
+//     sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
+//     sectionsMap: new Map<SectionId, FormSection>([
+//       [
+//         "S123",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "What division do you play in SVL?",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//       [
+//         "ABC",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "HOOO is big b brians best briend??",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//     ]),
+//   },
+//   {
+//     title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
+//     userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
+//     formActive: true,
+//     sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
+//     sectionsMap: new Map<SectionId, FormSection>([
+//       [
+//         "S123",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "What division do you play in SVL?",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//       [
+//         "ABC",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "HOOO is big b brians best briend??",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//     ]),
+//   },
+//   {
+//     title: "[Div 1 Mens 2025] Going Global SVL Try Outs",
+//     userId: "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2",
+//     formActive: true,
+//     sectionsOrder: ["S123", "ABC"], // keeps track of ordering for editing forms
+//     sectionsMap: new Map<SectionId, FormSection>([
+//       [
+//         "S123",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "What division do you play in SVL?",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//       [
+//         "ABC",
+//         {
+//           type: FormSectionType.TEXT,
+//           answer: undefined,
+//           question: "HOOO is big b brians best briend??",
+//           imageUrl: null, // image attached to question
+//           required: true,
+//         },
+//       ],
+//     ]),
+//   },
+// ]
