@@ -1,4 +1,5 @@
 import { FormSection, SectionId } from "@/interfaces/FormTypes";
+import { TrashIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 
 interface TextSectionBuilderProps {
   section: FormSection;
@@ -34,14 +35,14 @@ export const TextSectionBuilder = ({
           onClick={() => onDelete(sectionId)}
           className="flex items-center gap-1 px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
         >
-          <span>🗑️</span>
+          <TrashIcon className="w-4 h-4 stroke-2" />
           <span>Delete</span>
         </button>
         <button
           onClick={() => onDuplicate(section, sectionId)}
           className="flex items-center gap-1 px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
         >
-          <span>📋</span>
+          <DocumentDuplicateIcon className="w-4 h-4 stroke-2" />
           <span>Duplicate</span>
         </button>
         <span className="text-sm text-gray-600">Required</span>
