@@ -11,13 +11,14 @@ import {
   CameraIcon,
   ChartBarIcon,
   HomeIcon,
+  PencilSquareIcon,
   StarIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
-import { Fragment, useEffect, useState, ReactNode } from "react";
+import { Fragment, ReactNode, useEffect, useState } from "react";
 
 interface OrganiserNavbarProps {
   currPage: string;
@@ -177,6 +178,14 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
           tooltipContent="Current Event"
         >
           <BookmarkSquareIcon className="w-6 stroke-1 stroke-core-text" />
+        </NavButton>
+
+        <NavButton
+          href={`/organiser/forms/gallery`}
+          isActive={currPage === "FormsGallery"}
+          tooltipContent="Forms"
+        >
+          <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
 
         <NavButton href="/organiser/metrics" isActive={currPage === "Metrics"} tooltipContent="Metrics">
