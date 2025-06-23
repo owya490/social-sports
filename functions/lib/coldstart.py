@@ -37,7 +37,7 @@ def coldstart(event: scheduler_fn.ScheduledEvent) -> None:
     logger = Logger(f"coldstart_logger_{uid}")
     logger.add_tag("uuid", uid)
 
-    logger.info(f"Pinging {len(ENDPOINTS_TO_PING)} endpoints to keep them warm.")
+    logger.info(f"Pinging {ENDPOINTS_TO_PING} endpoints to keep them warm.")
     results = []
     for url in ENDPOINTS_TO_PING:
         try:
