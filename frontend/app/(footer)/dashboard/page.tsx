@@ -48,10 +48,6 @@ export default function Dashboard() {
       return { event: null, location: null, user: null };
     }
     const searchParams = new URLSearchParams(window.location.search);
-    console.log(searchParams);
-    console.log(searchParams.get("event"));
-    console.log(searchParams.get("location"));
-    console.log(searchParams.get("user"));
     return {
       event: searchParams.get("event"),
       location: searchParams.get("location"),
@@ -85,18 +81,14 @@ export default function Dashboard() {
       setLoading(true);
       const { event, location, user } = getQueryParams();
       const type = determineSearchType(event, location, user);
-      console.log("type: " + type.toString());
       switch (type) {
         case SearchType.EVENT:
-          console.log("search type is event");
           await fetchEvents(event || "", location || "");
           return;
         case SearchType.USER:
-          console.log("search type is user");
           await fetchUsers(user || "");
           return;
         default:
-          console.log("search type is default");
           await fetchEvents(event || "", location || "");
           return;
       }
@@ -105,15 +97,12 @@ export default function Dashboard() {
     const fetchEvents = async (event: string, location: string) => {
       await sleep(500);
       if (event === "UNDEFINED") {
-        console.log("owen");
         return false;
       }
 
       if (typeof event === "string" && typeof location === "string") {
         if (event.trim() === "") {
-          console.log("no event name");
           getAllEvents().then((events) => {
-            console.log(events);
             setEventDataList(events);
             setSearchDataList(events);
             setAllEventsDataList(events);
@@ -167,8 +156,11 @@ export default function Dashboard() {
             } catch (error) {
               // no-op - this is fine, just search normally
             }
-            // 2. if it doesn't exist, try do token search
-            users = [...users, ...(await searchUserByKeyword(user))];
+            // 2. if it doesn't exist, try do token search and dedupe the list by userId
+            const dedupedUsers = (await searchUserByKeyword(user)).filter(
+              (user) => !users.some((u) => u.userId === user.userId)
+            );
+            users = [...users, ...dedupedUsers];
             setPublicUserDataList(users);
           }
         }
