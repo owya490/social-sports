@@ -37,9 +37,8 @@ public class FulfilmentSessionRepository {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
             DocumentSnapshot maybeSnapshot = sessionDocRef.get().get();
-            logger.info("GET FULFILMENT SESSION: {}", objectMapper.writeValueAsString(maybeSnapshot));
             if (maybeSnapshot.exists()) {
-                return Optional.ofNullable(maybeSnapshot.toObject(FulfilmentSession.class)); // TODO: this is the potential problem line
+                return Optional.of(FulfilmentSession.fromFirestore(maybeSnapshot));
             }
             return Optional.empty();
         } catch (Exception e) {

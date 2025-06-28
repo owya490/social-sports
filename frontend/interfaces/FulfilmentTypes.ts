@@ -16,12 +16,11 @@ export type CheckoutFulfilmentSessionType = {
 /**
  * Types of fulfilment entities that can be processed in a fulfilment session.
  *
- * NOTE: The string values here should match the name of the Java classes representing each type of
- * fulfilment entity in `functions/fulfilment/models`.
+ * NOTE: The string values here should match the name of the enum itself.
  */
 export enum FulfilmentEntityType {
-  STRIPE = "StripeFulfilmentEntity",
-  FORMS = "FormsFulfilmentEntity",
+  STRIPE = "STRIPE",
+  FORMS = "FORMS",
 }
 
 /**

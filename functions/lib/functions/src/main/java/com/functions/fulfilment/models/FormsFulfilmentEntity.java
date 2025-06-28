@@ -12,6 +12,9 @@ import java.util.List;
 @SuperBuilder
 @NoArgsConstructor
 public class FormsFulfilmentEntity extends FulfilmentEntity {
+    {
+        setType(FulfilmentEntityType.FORMS);
+    }
     private String formId;
     /**
      * List of non-committed form responses.

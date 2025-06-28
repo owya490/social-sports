@@ -7,11 +7,12 @@ import com.functions.fulfilment.models.*;
 import com.functions.fulfilment.models.responses.ExecNextFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.services.StripeService;
+import com.functions.utils.UrlUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Optional;
 
 public class FulfilmentService {
@@ -37,12 +38,15 @@ public class FulfilmentService {
             EventData eventData = maybeEventData.get();
 
             List<FulfilmentEntity> fulfilmentEntities = new ArrayList<>();
-            String currNextUrl = endUrl;
 
-            ListIterator<FulfilmentEntityType> it = fulfilmentEntityTypes.listIterator(fulfilmentEntityTypes.size());
-            // we iterate backwards through the fulfilmentEntityTypes list so we have the nextUrl available in each iteration
-            while (it.hasPrevious()) {
-                FulfilmentEntityType type = it.previous();
+            fulfilmentEntities.add(
+                    StartFulfilmentEntity.builder()
+                            .url(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/%s", eventId)).orElse("https://sportshub.net.au/dashboard"))
+                            .type(FulfilmentEntityType.STRIPE)
+                            .build()
+            );
+
+            for (FulfilmentEntityType type : fulfilmentEntityTypes) {
                 switch (type) {
                     case STRIPE: {
                         Optional<String> stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(
@@ -55,9 +59,7 @@ public class FulfilmentService {
                             logger.error("initFulfilmentSession: No Stripe checkout link found for event ID: {}", eventId);
                             continue;
                         }
-
-                        fulfilmentEntities.add(StripeFulfilmentEntity.builder().stripeCheckoutLink(stripeCheckoutLink.get()).nextUrl(currNextUrl).build());
-                        currNextUrl = stripeCheckoutLink.get();
+                        fulfilmentEntities.add(StripeFulfilmentEntity.builder().url(stripeCheckoutLink.get()).type(FulfilmentEntityType.STRIPE).build());
                         break;
                     }
                     case FORMS: {
@@ -71,10 +73,9 @@ public class FulfilmentService {
                                         .formId(formId.get())
                                         .formResponseIds(new ArrayList<>())
                                         .submittedFormResponseIds(new ArrayList<>())
-                                        .nextUrl(currNextUrl)
+                                        .url("") // TODO: need to update url to the form URL: https://owenyang.atlassian.net/browse/SPORTSHUB-367
                                         .build()
                         );
-                        // TODO: need to update currNextUrl to the form URL: https://owenyang.atlassian.net/browse/SPORTSHUB-367
                         break;
                     }
                 }
@@ -121,26 +122,26 @@ public class FulfilmentService {
             int currentIndex = fulfilmentSession.getCurrentFulfilmentIndex();
             List<FulfilmentEntity> fulfilmentEntities = fulfilmentSession.getFulfilmentEntities();
 
-            if (currentIndex == fulfilmentEntities.size()) {
-                logger.info("All fulfilment entities already executed for session ID: {}", fulfilmentSessionId);
-                return Optional.of(new ExecNextFulfilmentEntityResponse(null, currentIndex, fulfilmentEntities.size()));
-            }
-
             if (currentIndex < 0 || currentIndex > fulfilmentEntities.size()) {
                 logger.error("Invalid current index: {} for fulfilment session ID: {}", currentIndex, fulfilmentSessionId);
                 return Optional.empty();
             }
 
-            FulfilmentEntity currentEntity = fulfilmentEntities.get(currentIndex);
+            int nextIndex = currentIndex + 1;
+            if (nextIndex == fulfilmentEntities.size()) {
+                logger.info("All fulfilment entities already executed for session ID: {}", fulfilmentSessionId);
+                return Optional.of(new ExecNextFulfilmentEntityResponse(null, currentIndex, fulfilmentEntities.size()));
+            }
 
-            Integer newIndex = currentIndex + 1;
-            fulfilmentSession.setCurrentFulfilmentIndex(newIndex);
+            FulfilmentEntity nextEntity = fulfilmentEntities.get(nextIndex);
+
+            fulfilmentSession.setCurrentFulfilmentIndex(nextIndex);
             FulfilmentSessionRepository.updateFulfilmentSession(fulfilmentSessionId, fulfilmentSession);
 
             return Optional.of(
                     new ExecNextFulfilmentEntityResponse(
-                            currentEntity.getNextUrl(),
-                            newIndex,
+                            nextEntity.getUrl(),
+                            nextIndex,
                             fulfilmentEntities.size()
                     )
             );

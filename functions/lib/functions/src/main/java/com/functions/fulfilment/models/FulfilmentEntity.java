@@ -8,5 +8,10 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 public abstract class FulfilmentEntity {
-    private String nextUrl;
+    /**
+     * Store the type of FulfilmentEntity for the purpose of deserialisation from Firebase so we know
+     * which concrete class to instantiate. Unfortunately, Firebase does not support polymorphism directly.
+     */
+    private FulfilmentEntityType type;
+    private String url;
 }

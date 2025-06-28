@@ -69,9 +69,7 @@ public class InitFulfilmentSessionEndpoint implements HttpFunction {
     private static List<FulfilmentEntityType> toFulfilmentEntityTypes(List<String> fulfilmentEntityTypeStrings) {
         return fulfilmentEntityTypeStrings
                 .stream()
-                .map(FulfilmentEntityType::fromTypeNameString)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .map(FulfilmentEntityType::valueOf)
                 .toList();
     }
 }

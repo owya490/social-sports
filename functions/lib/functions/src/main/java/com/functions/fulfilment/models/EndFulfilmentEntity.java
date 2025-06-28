@@ -9,8 +9,8 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @NoArgsConstructor
-public class StripeFulfilmentEntity extends FulfilmentEntity {
+public class EndFulfilmentEntity extends  FulfilmentEntity {
     {
-        setType(FulfilmentEntityType.STRIPE);
+        setType(FulfilmentEntityType.END);
     }
 }
