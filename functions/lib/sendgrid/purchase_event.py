@@ -63,11 +63,11 @@ def send_email_with_loop(logger, email, name, event_name, order_id, date_purchas
 
 
 def get_organiser_email_for_ticket_email(logger: Logger, organiser_id: str) -> str:
-  maybe_organiser_data = db.collection("Users/Active/Private").document(organiser_id).get()
-  if (not maybe_organiser_data.exists):
+  maybe_organiser_snapshot = db.collection("Users/Active/Private").document(organiser_id).get()
+  if (not maybe_organiser_snapshot.exists):
     logger.error(f"Organiser does not exist: organiserId={organiser_id}")
     return None
-  organiser_data = maybe_organiser_data.to_dict()
+  organiser_data = maybe_organiser_snapshot.to_dict()
   if (organiser_data.get("sendOrganiserTicketEmails", False)):
     try:
       return organiser_data.get("contactInformation").get("email")
