@@ -102,11 +102,11 @@ export default function SearchBar() {
       }}
       onMouseEnter={() => {
         setIsHovered(true);
-        console.log("hovered");
       }}
     >
       <input
-        className={`h-9 w-64 border-0 focus:ring-0 font-thin ${isFocused ? "" : `${isHovered ? "bg-core-hover" : ""}`}`}
+        // className={`h-9 w-64 border-0 focus:ring-0 font-thin ${isFocused ? "" : `${isHovered ? "bg-core-hover" : ""}`}`}
+        className={`h-9 w-64 border-0 focus:ring-0 font-thin bg-transparent`}
         type="text"
         placeholder={`Search for ${searchTypeSelected.charAt(0).toUpperCase() + searchTypeSelected.slice(1)}`}
         value={searchParameter}
