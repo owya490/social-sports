@@ -2,7 +2,6 @@ package com.functions.fulfilment.repositories;
 
 import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.FulfilmentSession;
-import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
@@ -11,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.UUID;
+
+import static com.functions.utils.JavaUtils.objectMapper;
 
 public class FulfilmentSessionRepository {
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSessionRepository.class);
@@ -36,6 +37,7 @@ public class FulfilmentSessionRepository {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
             DocumentSnapshot maybeSnapshot = sessionDocRef.get().get();
+            logger.info("GET FULFILMENT SESSION: {}", objectMapper.writeValueAsString(maybeSnapshot));
             if (maybeSnapshot.exists()) {
                 return Optional.ofNullable(maybeSnapshot.toObject(FulfilmentSession.class)); // TODO: this is the potential problem line
             }
@@ -51,7 +53,7 @@ public class FulfilmentSessionRepository {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
             sessionDocRef.set(updatedSession).get();
         } catch (Exception e) {
-            logger.error("Failed to update fulfilment session for sessionId: {}, fulfilmentSession: {}", JavaUtils.objectMapper.writeValueAsString(updatedSession), updatedSession, e);
+            logger.error("Failed to update fulfilment session for sessionId: {}, fulfilmentSession: {}", objectMapper.writeValueAsString(updatedSession), updatedSession, e);
             throw new Exception("Failed to update fulfilment session for sessionId: " + sessionId, e);
         }
     }
