@@ -28,6 +28,17 @@ public class FulfilmentSessionRepository {
         }
     }
 
+    public static String createFulfilmentSession(String fulfilmentSessionId, FulfilmentSession fulfilmentSession) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(fulfilmentSessionId);
+            sessionDocRef.create(fulfilmentSession).get();
+            return sessionDocRef.getId();
+        } catch (Exception e) {
+            logger.error("Failed to create fulfilment session for eventId: {}", fulfilmentSession.getEventId(), e);
+            throw new Exception("Failed to create fulfilment session for eventId: " + fulfilmentSession.getEventId(), e);
+        }
+    }
+
     private static DocumentReference getFulfilmentSessionDocRef(String sessionId) {
         Firestore db = FirebaseService.getFirestore();
         return db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH).document(sessionId);

@@ -1,7 +1,6 @@
 "use client";
 
 import { FulfilmentEntityType, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
-import { URL } from "@/interfaces/Types";
 import { timestampToDateString } from "@/services/src/datetimeUtils";
 import {
   execNextFulfilmentEntity,
@@ -9,7 +8,6 @@ import {
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
-import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { displayPrice } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
@@ -146,7 +144,6 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                         fulfilmentSessionId = await initFulfilmentSession({
                           type: "checkout",
                           fulfilmentEntityTypes: [FulfilmentEntityType.STRIPE],
-                          endUrl: getUrlWithCurrentHostname(`/event/success/${props.eventId}`) as URL,
                           eventId: props.eventId,
                           numTickets: attendeeCount,
                         });

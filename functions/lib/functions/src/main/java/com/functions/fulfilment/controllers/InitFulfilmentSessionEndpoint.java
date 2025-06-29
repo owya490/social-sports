@@ -49,7 +49,7 @@ public class InitFulfilmentSessionEndpoint implements HttpFunction {
             return;
         }
 
-        Optional<String> maybeFulfilmentSessionId = FulfilmentService.initCheckoutFulfilmentSession(data.eventId(), data.numTickets(), toFulfilmentEntityTypes(data.fulfilmentEntityTypes()), data.endUrl());
+        Optional<String> maybeFulfilmentSessionId = FulfilmentService.initCheckoutFulfilmentSession(data.eventId(), data.numTickets(), toFulfilmentEntityTypes(data.fulfilmentEntityTypes()));
 
         if (maybeFulfilmentSessionId.isPresent()) {
             logger.info("Fulfilment session successfully created: {}", maybeFulfilmentSessionId.get());

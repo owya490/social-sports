@@ -1,7 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
 import { FulfilmentEntityType, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
-import { URL } from "@/interfaces/Types";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   execNextFulfilmentEntity,
@@ -9,7 +8,6 @@ import {
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
-import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { displayPrice } from "@/utilities/priceUtils";
 import {
   CalendarDaysIcon,
@@ -167,7 +165,6 @@ export default function EventPayment(props: EventPaymentProps) {
                           fulfilmentSessionId = await initFulfilmentSession({
                             type: "checkout",
                             fulfilmentEntityTypes: [FulfilmentEntityType.STRIPE],
-                            endUrl: getUrlWithCurrentHostname(`/event/success/${props.eventId}`) as URL,
                             eventId: props.eventId,
                             numTickets: attendeeCount,
                           });

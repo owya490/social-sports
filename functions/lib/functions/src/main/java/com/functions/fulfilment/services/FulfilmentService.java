@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
@@ -26,9 +27,9 @@ public class FulfilmentService {
      */
     public static Optional<String> initCheckoutFulfilmentSession(String eventId,
                                                                  Integer numTickets,
-                                                                 List<FulfilmentEntityType> fulfilmentEntityTypes,
-                                                                 String endUrl) {
+                                                                 List<FulfilmentEntityType> fulfilmentEntityTypes) {
         try {
+            String fulfilmentSessionId = UUID.randomUUID().toString();
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
             if (maybeEventData.isEmpty()) {
                 logger.error("Failed to find event data for event ID: {}", eventId);
@@ -53,7 +54,8 @@ public class FulfilmentService {
                                 eventId,
                                 eventData.getIsPrivate(),
                                 numTickets,
-                                Optional.empty()
+                                Optional.empty(),
+                                fulfilmentSessionId
                         );
                         if (stripeCheckoutLink.isEmpty()) {
                             logger.error("initFulfilmentSession: No Stripe checkout link found for event ID: {}", eventId);
@@ -81,11 +83,11 @@ public class FulfilmentService {
                 }
             }
 
-            return FulfilmentService.createFulfilmentSession(eventId, fulfilmentEntities).flatMap(fulfilmentSessionId -> {
-                if (fulfilmentSessionId.isEmpty()) {
+            return FulfilmentService.createFulfilmentSession(fulfilmentSessionId, eventId, fulfilmentEntities).flatMap(sessionId -> {
+                if (sessionId.isEmpty()) {
                     throw new RuntimeException("Failed to create fulfilment session for event ID: " + eventId);
                 }
-                return Optional.of(fulfilmentSessionId);
+                return Optional.of(sessionId);
             });
         } catch (Exception e) {
             logger.error("Failed to init checkout fulfilment session: {}", eventId, e);
@@ -93,9 +95,9 @@ public class FulfilmentService {
         return Optional.empty();
     }
 
-    private static Optional<String> createFulfilmentSession(String eventId, List<FulfilmentEntity> fulfilmentEntities) {
+    private static Optional<String> createFulfilmentSession(String sessionId, String eventId, List<FulfilmentEntity> fulfilmentEntities) {
         try {
-            String fulfilmentSessionId = FulfilmentSessionRepository.createFulfilmentSession(FulfilmentSession.builder()
+            String fulfilmentSessionId = FulfilmentSessionRepository.createFulfilmentSession(sessionId, FulfilmentSession.builder()
                     .fulfilmentSessionStartTime(com.google.cloud.Timestamp.now())
                     .eventId(eventId)
                     .fulfilmentEntities(fulfilmentEntities)

@@ -18,7 +18,8 @@ public class StripeService {
     public static Optional<String> getStripeCheckoutFromEventId(String eventId,
                                                                 boolean isPrivate,
                                                                 Integer numTickets,
-                                                                Optional<String> successUrl) {
+                                                                Optional<String> successUrl,
+                                                                String fulfilmentSessionId) {
         try {
             return FirebaseService.callFirebaseFunction(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID,
                     Map.of(

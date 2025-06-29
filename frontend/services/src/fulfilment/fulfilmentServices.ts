@@ -9,7 +9,6 @@ import {
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
 } from "@/interfaces/FulfilmentTypes";
-import { URL } from "@/interfaces/Types";
 import { Logger } from "@/observability/logger";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { getExecNextFulfilmentEntityUrl, getInitFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
@@ -35,8 +34,7 @@ export async function initFulfilmentSession(
         return await initCheckoutFulfilmentSession(
           fulfilmentSessionType.eventId,
           fulfilmentSessionType.numTickets,
-          fulfilmentSessionType.fulfilmentEntityTypes,
-          fulfilmentSessionType.endUrl
+          fulfilmentSessionType.fulfilmentEntityTypes
         );
       }
     }
@@ -52,8 +50,7 @@ export async function initFulfilmentSession(
 async function initCheckoutFulfilmentSession(
   eventId: EventId,
   numTickets: number,
-  fulfilmentEntityTypes: FulfilmentEntityType[],
-  endUrl: URL
+  fulfilmentEntityTypes: FulfilmentEntityType[]
 ): Promise<FulfilmentSessionId> {
   fulfilmentServiceLogger.info(
     `initCheckoutFulfilmentSessionNew: Initializing fulfilment session for event ID: ${eventId}`
@@ -63,7 +60,6 @@ async function initCheckoutFulfilmentSession(
     eventId,
     numTickets,
     fulfilmentEntityTypes,
-    endUrl,
   };
 
   try {

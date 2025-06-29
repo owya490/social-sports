@@ -4,7 +4,7 @@ import { URL } from "./Types";
 
 export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
-export type FulfilmentSessionType = { fulfilmentEntityTypes: FulfilmentEntityType[]; endUrl: URL } & ({
+export type FulfilmentSessionType = { fulfilmentEntityTypes: FulfilmentEntityType[] } & ({
   type: "checkout";
 } & CheckoutFulfilmentSessionType);
 
@@ -30,7 +30,6 @@ export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
   numTickets: number;
   fulfilmentEntityTypes: FulfilmentEntityType[];
-  endUrl: URL;
 };
 
 /**

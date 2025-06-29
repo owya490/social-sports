@@ -5,6 +5,5 @@ import java.util.List;
 public record InitCheckoutFulfilmentSessionRequest(
         String eventId,
         Integer numTickets,
-        List<String> fulfilmentEntityTypes,
-        String endUrl
+        List<String> fulfilmentEntityTypes
 ){}
