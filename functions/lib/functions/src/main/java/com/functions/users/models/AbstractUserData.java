@@ -39,6 +39,7 @@ public abstract class AbstractUserData {
 	private List<String> organiserEvents = new ArrayList<>();
 	private List<String> recurrenceTemplates = new ArrayList<>();
 	private List<String> publicOrganiserEvents = new ArrayList<>();
+	private Boolean sendOrganiserTicketEmails = false;
 
 	@Data
 	public static class ContactInformation {
