@@ -7,8 +7,8 @@ import { updateUser } from "@/services/src/users/usersService";
 const OrganiserSettingsCard = () => {
   const { user, setUser } = useUser();
 
-  const updateSendOrganiserTicketEmail = (event: boolean) => {
-    updateUser(user.userId, { sendOrganiserTicketEmails: event });
+  const updateSendOrganiserTicketEmail = async (event: boolean) => {
+    await updateUser(user.userId, { sendOrganiserTicketEmails: event });
   };
 
   return (
