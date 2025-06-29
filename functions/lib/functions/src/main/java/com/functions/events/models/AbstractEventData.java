@@ -13,6 +13,9 @@ import com.google.cloud.Timestamp;
 import lombok.Data;
 
 
+/**
+ * NOTE: This type should be updated to match the AbstractEventData interface `frontend/interfaces/EventTypes.ts`
+ */
 @Data
 public abstract class AbstractEventData {
 	@JsonSerialize(using = JavaUtils.TimestampSerializer.class)
@@ -52,6 +55,8 @@ public abstract class AbstractEventData {
 	private Boolean paused;
 	@Nullable
 	private String eventLink;
+	@Nullable
+	private String formId;
 
 	@Data
 	public static class LocationLatLng {

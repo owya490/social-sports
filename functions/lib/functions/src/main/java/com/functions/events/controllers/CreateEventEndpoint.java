@@ -1,6 +1,6 @@
 package com.functions.events.controllers;
 
-import com.functions.FirebaseService;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.events.models.NewEventData;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.Firestore;
