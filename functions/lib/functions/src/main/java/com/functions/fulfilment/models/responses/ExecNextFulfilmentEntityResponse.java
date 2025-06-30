@@ -6,7 +6,7 @@ import javax.annotation.Nullable;
 public record ExecNextFulfilmentEntityResponse(
         // Null if there are no more fulfilment entities to process
         @Nullable
-        String nextUrl,
+        String url,
         // NOTE: 0 based index of the current fulfilment entity
         @Nonnull
         Integer currentFulfilmentEntityIndex,

@@ -126,9 +126,9 @@ export async function execNextFulfilmentEntity(
 
     const response = (await rawResponse.json()) as ExecNextFulfilmentEntityResponse;
 
-    if (response.nextUrl) {
-      fulfilmentServiceLogger.info(`execNextFulfilmentEntityNew: Redirecting to next URL: ${response.nextUrl}`);
-      router.push(response.nextUrl);
+    if (response.url) {
+      fulfilmentServiceLogger.info(`execNextFulfilmentEntityNew: Redirecting to next URL: ${response.url}`);
+      router.push(response.url);
     } else {
       fulfilmentServiceLogger.info(
         `execNextFulfilmentEntityNew: No more fulfilment entities to execute for session ID: ${fulfilmentSessionId}`

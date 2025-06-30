@@ -53,7 +53,7 @@ export type ExecNextFulfilmentEntityResponse = {
   /**
    * Empty if there are no more fulfilment entities to process
    */
-  nextUrl?: URL;
+  url?: URL;
   /**
    * NOTE: 0 based index of the current fulfilment entity
    */
