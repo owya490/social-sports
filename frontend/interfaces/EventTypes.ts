@@ -42,7 +42,7 @@ interface AbstractEventData {
   promotionalCodesEnabled: boolean; // should default to false
   paused: boolean; // should default to false
   eventLink: string;
-  formId?: FormId;
+  formId: FormId | null;
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -92,6 +92,7 @@ export const EmptyEventData: EventData = {
   promotionalCodesEnabled: false,
   paused: false,
   eventLink: "",
+  formId: null,
 };
 
 export interface EventMetadata {
