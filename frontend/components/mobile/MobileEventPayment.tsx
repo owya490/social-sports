@@ -1,19 +1,22 @@
 "use client";
 
+import { FulfilmentEntityType, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
 import { timestampToDateString } from "@/services/src/datetimeUtils";
+import {
+  execNextFulfilmentEntity,
+  FULFILMENT_SESSION_ENABLED,
+  initFulfilmentSession,
+} from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
-import {
-  CurrencyDollarIcon,
-  MapPinIcon,
-} from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
-import { SameDayEventDateTime, DifferentDayEventDateTime } from "../events/EventPayment";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
+import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
+import { DifferentDayEventDateTime, SameDayEventDateTime } from "../events/EventPayment";
 
 interface MobileEventPaymentProps {
   location: string;
@@ -133,8 +136,35 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   onClick={async () => {
                     props.setLoading(true);
                     window.scrollTo(0, 0);
-                    const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
-                    router.push(link);
+
+                    // We'll put this behind a flag for now just in case we need to quickly disable this.
+                    if (FULFILMENT_SESSION_ENABLED) {
+                      let fulfilmentSessionId: FulfilmentSessionId | undefined = undefined;
+                      try {
+                        fulfilmentSessionId = await initFulfilmentSession({
+                          type: "checkout",
+                          fulfilmentEntityTypes: [FulfilmentEntityType.STRIPE],
+                          eventId: props.eventId,
+                          numTickets: attendeeCount,
+                        });
+
+                        await execNextFulfilmentEntity(fulfilmentSessionId, router);
+
+                        // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
+                      } catch {
+                        // Clean up fulfilment session if it fails
+
+                        router.push("/error");
+                      }
+                    } else {
+                      const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                        props.eventId,
+                        props.isPrivate,
+                        attendeeCount
+                      );
+
+                      router.push(stripeCheckoutLink);
+                    }
                   }}
                 >
                   Book Now
@@ -144,7 +174,10 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
           </div>
         ) : (
           <>
-            <InvertedHighlightButton onClick={handleContactClick} className="text-lg rounded-2xl border border-black w-full py-3">
+            <InvertedHighlightButton
+              onClick={handleContactClick}
+              className="text-lg rounded-2xl border border-black w-full py-3"
+            >
               Contact Now
             </InvertedHighlightButton>
             <Dialog open={openModal} handler={setOpenModal}>

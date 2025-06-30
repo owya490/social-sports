@@ -1,4 +1,7 @@
+import { FormId } from "@/interfaces/FormTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { getPublicUserById, updateUser } from "../../users/usersService";
 import { FORMS_MAX_EVENTS, FORMS_REFRESH_MILLIS, LocalStorageKeys } from "../formsConstants";
 
 const createFormUtilsLogger = new Logger("createFormUtilsLogger");
@@ -31,4 +34,20 @@ export function rateLimitCreateForm(): boolean {
   localStorage.setItem(LocalStorageKeys.FormsOperationCount5Min, "1");
   localStorage.setItem(LocalStorageKeys.FormsLastCreateUpdateOperationTimestamp, now.toUTCString());
   return true;
+}
+
+/**
+ * Helper function to append a formId for a specified user.
+ */
+export async function appendFormIdForUser(formId: FormId, userId: UserId): Promise<void> {
+  try {
+    const publicUserData = await getPublicUserById(userId);
+    publicUserData.forms !== undefined && publicUserData.forms !== null
+      ? publicUserData.forms.push(formId)
+      : (publicUserData.forms = [formId]);
+    await updateUser(userId, publicUserData);
+    createFormUtilsLogger.info(`Successfully appended formId ${formId} to userId: ${userId}`);
+  } catch (error) {
+    createFormUtilsLogger.error(`appendFormIdForUser Error: ${error}`);
+  }
 }
