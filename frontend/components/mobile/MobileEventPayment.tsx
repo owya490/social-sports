@@ -151,7 +151,6 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                         await execNextFulfilmentEntity(fulfilmentSessionId, router);
 
                         // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
-                        // For now, we'll just manually delete the session after processing.
                       } catch {
                         // Clean up fulfilment session if it fails
 
