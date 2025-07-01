@@ -1,31 +1,17 @@
-import { CustomEventLink, CustomEventLinkType } from "@/interfaces/CustomLinkTypes";
+import { CustomEventLink, CustomEventLinkType, EMPTY_CUSTOM_EVENT_LINK } from "@/interfaces/CustomLinkTypes";
 import { EventData } from "@/interfaces/EventTypes";
 import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { DocumentDuplicateIcon, PencilIcon } from "@heroicons/react/24/outline";
+import {
+  deleteCustomEventLink,
+  saveCustomEventLink,
+} from "@/services/src/events/customEventLinks/customEventLinksService";
+import { DocumentDuplicateIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Button, Chip, IconButton, Input, Option, Select, Tooltip, Typography } from "@material-tailwind/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 const TABLE_HEAD = ["Custom Link Name", "Custom Link", "Type", "Reference", ""];
-
-const SAMPLE_LINKS: CustomEventLink[] = [
-  {
-    id: "1",
-    customEventLinkName: "Soccer Link",
-    customEventLink: "soccer-2024",
-    type: "event",
-    referenceId: "event1",
-    referenceName: "Weekly Soccer",
-  },
-  {
-    id: "2",
-    customEventLinkName: "Tennis Recurring Link",
-    customEventLink: "tennis-recurring",
-    type: "recurring",
-    referenceId: "template2",
-    referenceName: "Tennis Recurring",
-  },
-];
 
 interface CustomEventLinksTableProps {
   user: UserData;
@@ -45,20 +31,67 @@ export default function CustomEventLinksTable({
   const [updatedLinks, setUpdatedLinks] = useState<CustomEventLink[]>(links);
   const [editIds, setEditIds] = useState<string[]>([]);
 
+  useEffect(() => {
+    setUpdatedLinks(links);
+  }, [links]);
+
   const handleEdit = (id: string) => setEditIds((prev) => [...prev, id]);
-  const handleSave = (id: string) => {
+  const handleAddLink = () => {
+    const newId = uuidv4();
+    const newLink: CustomEventLink = {
+      ...EMPTY_CUSTOM_EVENT_LINK,
+      id: newId,
+    };
+    setUpdatedLinks((prev) => [...prev, newLink]);
+    setEditIds((prev) => [...prev, newId]);
+  };
+  const handleSave = async (id: string) => {
+    const updatedLink = updatedLinks.find((l) => l.id === id)!;
+    // Validation: required fields
+    const missingFields = [];
+    if (!updatedLink.customEventLinkName) missingFields.push("Custom Link Name");
+    if (!updatedLink.customEventLink) missingFields.push("Custom Link");
+    if (!updatedLink.type) missingFields.push("Type");
+    if (missingFields.length > 0) {
+      window.alert(`Please fill in the following fields: ${missingFields.join(", ")}`);
+      return;
+    }
+    // Custom Link format validation
+    const customLinkRegex = /^[a-zA-Z0-9-]+$/;
+    if (updatedLink.customEventLink && !customLinkRegex.test(updatedLink.customEventLink)) {
+      window.alert("Custom Link must only contain letters, numbers, and hyphens (no spaces or special characters).");
+      return;
+    }
     setEditIds((prev) => prev.filter((editId) => editId !== id));
-    // get everything from links, except for the one specified by the id, get from updatedLinks
-    console.log(links.map((link) => (link.id === id ? updatedLinks.find((l) => l.id === id)! : link)));
-    setLinks(links.map((link) => (link.id === id ? updatedLinks.find((l) => l.id === id)! : link)));
+    const isNew = !links.some((l) => l.id === id);
+    if (isNew) {
+      setLinks([...links, updatedLink]);
+    } else {
+      // get everything from links, except for the one specified by the id, get from updatedLinks
+      setLinks(links.map((link) => (link.id === id ? updatedLink : link)));
+    }
+    await saveCustomEventLink(user.userId, updatedLink);
   };
   const handleCancel = (id: string) => {
     setEditIds((prev) => prev.filter((editId) => editId !== id));
-    // get everything from updatedLinks, except for the one specified by the id, get from links
-    setUpdatedLinks((prev) => prev.map((link) => (link.id === id ? links.find((l) => l.id === id)! : link)));
+    const isNew = !links.some((l) => l.id === id);
+    if (isNew) {
+      setUpdatedLinks((prev) => prev.filter((link) => link.id !== id));
+    }
+    {
+      // get everything from updatedLinks, except for the one specified by the id, get from links
+      setUpdatedLinks((prev) => prev.map((link) => (link.id === id ? links.find((l) => l.id === id)! : link)));
+    }
   };
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(`https://www.sportshub.net.au/event/${user.username}/${link}`);
+  };
+
+  const handleDelete = (id: string) => {
+    const link = updatedLinks.find((link) => link.id === id)!;
+    setUpdatedLinks((prev) => prev.filter((link) => link.id !== id));
+    setLinks(links.filter((link) => link.id !== id));
+    deleteCustomEventLink(user.userId, link);
   };
 
   // Utility function to update a field in updatedLinks by id
@@ -81,7 +114,7 @@ export default function CustomEventLinksTable({
             </span>
           </Typography>
         </div>
-        <Button className="flex items-center gap-3 shrink-0" size="sm">
+        <Button className="flex items-center gap-3 shrink-0" size="sm" onClick={handleAddLink}>
           + Add Link
         </Button>
       </div>
@@ -99,7 +132,7 @@ export default function CustomEventLinksTable({
             </tr>
           </thead>
           <tbody>
-            {links.map((link) => {
+            {updatedLinks.map((link) => {
               const isEditing = editIds.includes(link.id);
               return (
                 <tr key={link.id} className="align-top">
@@ -139,7 +172,14 @@ export default function CustomEventLinksTable({
                       <Select
                         label="Type"
                         value={link.type}
-                        onChange={(val) => handleFieldChange(link.id, "type", () => val as CustomEventLinkType)}
+                        onChange={(val) => {
+                          handleFieldChange(link.id, "type", () => val as CustomEventLinkType);
+                          handleFieldChange(link.id, "referenceId", () => null);
+                          handleFieldChange(link.id, "referenceName", () => null);
+                          // setUpdatedLinks((prev) =>
+                          //   prev.map((l) => (l.id === link.id ? { ...l, referenceId: null, referenceName: null } : l))
+                          // );
+                        }}
                       >
                         <Option value="event">Event</Option>
                         <Option value="recurring">Recurring</Option>
@@ -159,14 +199,34 @@ export default function CustomEventLinksTable({
                     {isEditing ? (
                       <Select
                         label={link.type === "event" ? "Event Reference" : "Recurring Reference"}
-                        value={link.referenceId ?? undefined}
+                        value={link.referenceId ?? ""}
                         onChange={(val) => {
-                          handleFieldChange(link.id, "referenceId", () => val ?? null);
-                          handleFieldChange(link.id, "referenceName", () =>
-                            link.type === "event"
-                              ? activeEvents.find((event) => event.eventId === val)!.name
-                              : activeRecurringTemplates.find((template) => template.recurrenceTemplateId === val)!
-                                  .eventData.name
+                          console.log("val", val);
+                          console.log(
+                            "activeRecurringTemplates",
+                            val
+                              ? link.type === "event"
+                                ? activeEvents.find((event) => event.eventId === val)!.name
+                                : activeRecurringTemplates.find((template) => template.recurrenceTemplateId === val)!
+                                    .eventData.name
+                              : null
+                          );
+                          setUpdatedLinks((prev) =>
+                            prev.map((l) =>
+                              l.id === link.id
+                                ? {
+                                    ...l,
+                                    referenceId: val ?? null,
+                                    referenceName: val
+                                      ? link.type === "event"
+                                        ? activeEvents.find((event) => event.eventId === val)!.name
+                                        : activeRecurringTemplates.find(
+                                            (template) => template.recurrenceTemplateId === val
+                                          )!.eventData.name
+                                      : null,
+                                  }
+                                : l
+                            )
                           );
                         }}
                       >
@@ -215,6 +275,11 @@ export default function CustomEventLinksTable({
                         <Tooltip content="Copy Link">
                           <IconButton variant="text" onClick={() => handleCopyLink(link.customEventLink)}>
                             <DocumentDuplicateIcon className="h-4 w-4" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip content="Delete Link">
+                          <IconButton variant="text" onClick={() => handleDelete(link.id)}>
+                            <TrashIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
                       </>

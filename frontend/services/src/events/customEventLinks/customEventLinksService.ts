@@ -2,7 +2,7 @@ import { CustomEventLink, EMPTY_CUSTOM_EVENT_LINK } from "@/interfaces/CustomLin
 import { EventId } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 
 export const customEventLinksServiceLogger = new Logger("customEventLinksServiceLogger");
@@ -14,11 +14,32 @@ export async function getAllOrganiserCustomEventLinks(userId: UserId): Promise<C
     const customEventLinks = customEventLinkDocs.docs.map((doc) => ({
       ...EMPTY_CUSTOM_EVENT_LINK,
       ...(doc.data() as CustomEventLink),
-      id: doc.id,
     }));
     return customEventLinks;
   } catch (error) {
     customEventLinksServiceLogger.error(`getAllOrganiserCustomEventLinks ${error}`);
+    throw error;
+  }
+}
+
+export async function saveCustomEventLink(userId: UserId, customEventLink: CustomEventLink): Promise<void> {
+  customEventLinksServiceLogger.info(`saveCustomEventLink, ${customEventLink}`);
+  try {
+    const customEventLinkDocRef = doc(db, "CustomLinks", "Events", userId, customEventLink.customEventLink);
+    await setDoc(customEventLinkDocRef, customEventLink);
+  } catch (error) {
+    customEventLinksServiceLogger.error(`saveCustomEventLink ${error}`);
+    throw error;
+  }
+}
+
+export async function deleteCustomEventLink(userId: UserId, customEventLink: CustomEventLink): Promise<void> {
+  customEventLinksServiceLogger.info(`deleteCustomEventLink, ${customEventLink}`);
+  try {
+    const customEventLinkDocRef = doc(db, "CustomLinks", "Events", userId, customEventLink.customEventLink);
+    await deleteDoc(customEventLinkDocRef);
+  } catch (error) {
+    customEventLinksServiceLogger.error(`deleteCustomEventLink ${error}`);
     throw error;
   }
 }
@@ -32,7 +53,7 @@ export async function getCustomEventLink(userId: UserId, customEventLink: string
       throw new Error("Custom event link not found");
     }
     const data = customEventLinkDoc.data() as CustomEventLink;
-    return { ...EMPTY_CUSTOM_EVENT_LINK, ...data, id: customEventLinkDocRef.id };
+    return { ...EMPTY_CUSTOM_EVENT_LINK, ...data };
   } catch (error) {
     customEventLinksServiceLogger.error(`getCustomEventLink ${error}`);
     throw error;
