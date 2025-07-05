@@ -32,6 +32,8 @@ Our blog is powered by [HUGO](https://gohugo.io/), the industry standard and **f
 
 Want to geek out more? Check out [Hugo's official site](https://gohugo.io/about/).
 
+We opted with a this pre-built framework route as we want to keep our blog maintenance overhead to a minimum. Seeing we are only a team of 6 engineers, we want to prioritize our time developing features on SPORTSHUB, rather than building our blog site from scratch and having to cop maintenance overhead of a custom solution.
+
 ### The Architecture: Simple, Robust, Scalable
 
 Here's a peek under the hood:
