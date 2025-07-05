@@ -1,0 +1,51 @@
+baseURL: https://sportshub.net.au/
+languageCode: en-us
+title: SPORTSHUB
+theme: hextra
+params:
+  theme:
+    default: light
+    displayToggle: false
+  
+  navbar:
+    displayTitle: true
+    displayLogo: true
+    logo:
+      src: /images/logo.png
+      alt: SPORTSHUB
+      link: /blogs
+      width: 40
+  
+  footer:
+    enable: true
+    displayCopyright: true
+    displayPoweredBy: true
+    width: normal
+
+  # Display the last modification date
+  displayUpdatedDate: true
+  dateFormat: "January 2, 2006"
+  
+  blog:
+    list:
+      displayTags: true
+      # date | lastmod | publishDate | title | weight
+      sortBy: date
+      sortOrder: desc # or "asc"
+
+    article:
+      displayPagination: true
+
+  toc:
+    displayTags: true
+  
+  search:
+    enable: true
+    type: flexsearch
+
+    flexsearch:
+      # index page by: content | summary | heading | title
+      index: content
+      # full | forward | reverse | strict
+      # https://github.com/nextapps-de/flexsearch/#tokenizer-prefix-search
+      tokenize: forward
