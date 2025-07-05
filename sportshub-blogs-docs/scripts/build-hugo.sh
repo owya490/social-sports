@@ -8,13 +8,13 @@ echo "🚀 Starting Hugo build and integration process..."
 # Get the script directory and navigate to project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-HUGO_DIR="$PROJECT_ROOT/frontend/sportshub-blogs-docs"
+HUGO_DIR="$PROJECT_ROOT/sportshub-blogs-docs"
 VERCEL_PUBLIC_DIR="$PROJECT_ROOT/frontend/public"
 
 echo "📁 Project root: $PROJECT_ROOT"
 echo "📁 Hugo directory: $HUGO_DIR"
 echo "📁 Vercel public directory: $VERCEL_PUBLIC_DIR"
-exit 0
+
 # Check if Hugo directory exists
 if [ ! -d "$HUGO_DIR" ]; then
     echo "❌ Hugo directory not found at $HUGO_DIR"
