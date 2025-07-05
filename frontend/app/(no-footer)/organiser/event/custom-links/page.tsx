@@ -20,13 +20,13 @@ export default function CustomLinks() {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchEvents = () => {
       const events = Promise.all(
         user.publicUpcomingOrganiserEvents.map(async (eventId) => await getEventById(eventId))
       );
       events.then((events) => setActiveEvents(events));
     };
-    const fetchRecurringTemplates = async () => {
+    const fetchRecurringTemplates = () => {
       const templates = Promise.all(
         user.recurrenceTemplates.map(async (templateId) => await getRecurrenceTemplate(templateId))
       );
@@ -37,8 +37,8 @@ export default function CustomLinks() {
     };
 
     const fetch = async () => {
-      await fetchEvents();
-      await fetchRecurringTemplates();
+      fetchEvents();
+      fetchRecurringTemplates();
       const links = await getAllOrganiserCustomEventLinks(user.userId);
       setLinks(links);
       setLoading(false);
