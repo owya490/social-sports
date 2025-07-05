@@ -36,6 +36,7 @@ export default function CustomEventLinksTable({
   }, [links]);
 
   const handleEdit = (id: string) => setEditIds((prev) => [...prev, id]);
+
   const handleAddLink = () => {
     const newId = uuidv4();
     const newLink: CustomEventLink = {
@@ -45,6 +46,7 @@ export default function CustomEventLinksTable({
     setUpdatedLinks((prev) => [...prev, newLink]);
     setEditIds((prev) => [...prev, newId]);
   };
+
   const handleSave = async (id: string) => {
     const updatedLink = updatedLinks.find((l) => l.id === id)!;
     // Validation: required fields
@@ -72,6 +74,7 @@ export default function CustomEventLinksTable({
     }
     await saveCustomEventLink(user.userId, updatedLink);
   };
+
   const handleCancel = (id: string) => {
     setEditIds((prev) => prev.filter((editId) => editId !== id));
     const isNew = !links.some((l) => l.id === id);
@@ -83,6 +86,7 @@ export default function CustomEventLinksTable({
       setUpdatedLinks((prev) => prev.map((link) => (link.id === id ? links.find((l) => l.id === id)! : link)));
     }
   };
+  
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(`https://www.sportshub.net.au/event/${user.username}/${link}`);
   };
@@ -176,9 +180,7 @@ export default function CustomEventLinksTable({
                           handleFieldChange(link.id, "type", () => val as CustomEventLinkType);
                           handleFieldChange(link.id, "referenceId", () => null);
                           handleFieldChange(link.id, "referenceName", () => null);
-                          // setUpdatedLinks((prev) =>
-                          //   prev.map((l) => (l.id === link.id ? { ...l, referenceId: null, referenceName: null } : l))
-                          // );
+                          handleFieldChange(link.id, "eventReference", () => null);
                         }}
                       >
                         <Option value="event">Event</Option>
@@ -201,16 +203,6 @@ export default function CustomEventLinksTable({
                         label={link.type === "event" ? "Event Reference" : "Recurring Reference"}
                         value={link.referenceId ?? ""}
                         onChange={(val) => {
-                          console.log("val", val);
-                          console.log(
-                            "activeRecurringTemplates",
-                            val
-                              ? link.type === "event"
-                                ? activeEvents.find((event) => event.eventId === val)!.name
-                                : activeRecurringTemplates.find((template) => template.recurrenceTemplateId === val)!
-                                    .eventData.name
-                              : null
-                          );
                           setUpdatedLinks((prev) =>
                             prev.map((l) =>
                               l.id === link.id
@@ -224,6 +216,16 @@ export default function CustomEventLinksTable({
                                             (template) => template.recurrenceTemplateId === val
                                           )!.eventData.name
                                       : null,
+                                    eventReference:
+                                      link.type === "event"
+                                        ? val ?? null
+                                        : Object.entries(
+                                            activeRecurringTemplates.find(
+                                              (template) => template.recurrenceTemplateId === val
+                                            )!.recurrenceData.pastRecurrences
+                                          )
+                                            .map(([dateStr, id]) => ({ date: new Date(dateStr), id }))
+                                            .sort((a, b) => b.date.getTime() - a.date.getTime())[0].id,
                                   }
                                 : l
                             )

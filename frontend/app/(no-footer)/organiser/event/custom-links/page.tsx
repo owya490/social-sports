@@ -30,7 +30,10 @@ export default function CustomLinks() {
       const templates = Promise.all(
         user.recurrenceTemplates.map(async (templateId) => await getRecurrenceTemplate(templateId))
       );
-      templates.then((templates) => setActiveRecurringTemplates(templates));
+      templates.then((templates) => {
+        const filteredTemplates = templates.filter((template) => template.recurrenceData.recurrenceEnabled);
+        setActiveRecurringTemplates(filteredTemplates);
+      });
     };
 
     const fetch = async () => {

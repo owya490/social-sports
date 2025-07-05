@@ -64,10 +64,10 @@ export async function getEventIdFromCustomEventLink(userId: UserId, customEventL
   customEventLinksServiceLogger.info(`getEventIdFromCustomEventLink, ${customEventLink}`);
   try {
     const customEventLinkDoc = await getCustomEventLink(userId, customEventLink);
-    if (customEventLinkDoc.referenceId === null) {
+    if (customEventLinkDoc.eventReference === null) {
       throw new Error("EventId is undefined");
     }
-    return customEventLinkDoc.referenceId as EventId;
+    return customEventLinkDoc.eventReference as EventId;
   } catch (error) {
     customEventLinksServiceLogger.error(`getEventIdFromCustomEventLink ${error}`);
     throw error;
