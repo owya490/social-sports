@@ -10,6 +10,7 @@ tags:
   - Blogs
   - Tech
   - HUGO
+image: https://www.blogtyrant.com/wp-content/uploads/2022/04/how-to-start-a-sports-blog.png
 ---
 ![SPORT BLOG](https://www.blogtyrant.com/wp-content/uploads/2022/04/how-to-start-a-sports-blog.png)
 # Welcome to the brand new **SPORTSHUB Blogs**! 🎉
