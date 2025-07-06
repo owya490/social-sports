@@ -1,5 +1,11 @@
 package com.functions.fulfilment.controllers;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.fulfilment.models.FulfilmentEntityType;
 import com.functions.fulfilment.models.requests.InitCheckoutFulfilmentSessionRequest;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
@@ -9,11 +15,6 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Optional;
 
 public class InitFulfilmentSessionEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(InitFulfilmentSessionEndpoint.class);

@@ -1,17 +1,18 @@
 package com.functions.fulfilment.repositories;
 
+import static com.functions.utils.JavaUtils.objectMapper;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.FulfilmentSession;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.functions.utils.JavaUtils.objectMapper;
 
 public class FulfilmentSessionRepository {
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSessionRepository.class);
