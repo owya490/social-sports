@@ -48,13 +48,13 @@ export async function getForm(formId: FormId): Promise<Form> {
   }
 }
 
-export async function getFormIdByEventId(eventId: EventId, bypassCache: boolean = false): Promise<FormId | undefined> {
+export async function getFormIdByEventId(eventId: EventId, bypassCache: boolean = false): Promise<FormId | null> {
   formsServiceLogger.info(`getFormIdByEventId: ${eventId}`);
   try {
     const event = await getEventById(eventId, bypassCache);
-    if (event.formId === undefined) {
+    if (!event.formId) {
       formsServiceLogger.info(`getFormIdByEventId: No form associated with eventId: ${eventId}`);
-      return undefined; // No form associated with this event
+      return null; // No form associated with this event
     }
     formsServiceLogger.info(
       `getFormIdByEventId: Successfully retrieved formId: ${event.formId} for eventId: ${eventId}`
@@ -70,7 +70,7 @@ export async function getFormByEventId(eventId: EventId, bypassCache: boolean = 
   formsServiceLogger.info(`getFormByEventId: ${eventId}`);
   try {
     const formId = await getFormIdByEventId(eventId, bypassCache);
-    if (formId === undefined) {
+    if (!formId) {
       formsServiceLogger.info(`getFormByEventId: No form associated with eventId: ${eventId}`);
       return undefined; // No form associated with this event
     }
@@ -301,29 +301,6 @@ export async function getActiveFormsForUser(userId: UserId): Promise<Form[]> {
   } catch (error) {
     formsServiceLogger.error(
       `getActiveFormsForUser: Error getting active forms for userId: ${userId}, error: ${error}`
-    );
-    throw error;
-  }
-}
-
-// Function to get deleted forms for a specific user
-export async function getDeletedFormsForUser(userId: UserId): Promise<Form[]> {
-  formsServiceLogger.info(`getInactiveFormsForUser: ${userId}`);
-  try {
-    const deletedForms: Form[] = [];
-    const publicUserData = await getPublicUserById(userId);
-    for (const formId of publicUserData.forms ?? []) {
-      const form = await getForm(formId);
-      if (!form.formActive) {
-        deletedForms.push(form);
-      }
-    }
-
-    formsServiceLogger.info(`getDeletedFormsForUser: Successfully retrieved deleted forms for userId: ${userId}`);
-    return deletedForms;
-  } catch (error) {
-    formsServiceLogger.error(
-      `getDeletedFormsForUser: Error getting inactive forms for userId: ${userId}, error: ${error}`
     );
     throw error;
   }
