@@ -2,6 +2,8 @@ import { UserId } from "./UserTypes";
 
 export interface Form {
   title: FormTitle;
+  description: FormDescription;
+
   userId: UserId;
   formActive: boolean;
   sectionsOrder: SectionId[]; // keeps track of ordering for editing forms
@@ -10,6 +12,7 @@ export interface Form {
 
 export type FormId = string;
 export type FormTitle = string;
+export type FormDescription = string;
 export type SectionId = string;
 export type FormResponseId = string;
 
