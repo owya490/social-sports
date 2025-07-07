@@ -1,3 +1,5 @@
+import { EventId } from "@/interfaces/EventTypes";
+import { Form, FormId, FormResponse } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { FORM_RESPONSE_MAX_EVENTS, FORM_RESPONSE_REFRESH_MILLIS, LocalStorageKeys } from "../formsConstants";
 
@@ -36,4 +38,12 @@ export function rateLimitCreateFormResponse(): boolean {
   localStorage.setItem(LocalStorageKeys.FormResponseOperationCount5Min, "1");
   localStorage.setItem(LocalStorageKeys.FormResponseLastCreateUpdateOperationTimestamp, now.toUTCString());
   return true;
+}
+
+export function extractFormResponseFromForm(formId: FormId, eventId: EventId, form: Form): FormResponse {
+  return {
+    formId: formId,
+    eventId: eventId,
+    responseMap: form.sectionsMap,
+  };
 }
