@@ -41,17 +41,23 @@ const filterEventsBySport = (a: EventData, eventData: EventData | undefined) => 
 
 export default function RecommendedEvents(props: RecommendedEventsProps) {
   const { eventData } = props;
+  const [loading, setLoading] = useState(true);
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
-    getAllEvents().then((data) => {
-      data = data
-        .filter((a) => {
-          return filterEventsBySport(a, eventData);
-        })
-        .sort((a, b) => {
-          return sortByProximityFromHere(a, b, eventData);
-        });
-      setRecommendedEvents(data.slice(0, NUMBER_OF_RECOMMENDED_EVENTS));
+    const getRecommendedEvents = async () => {
+      await getAllEvents().then((data) => {
+        data = data
+          .filter((a) => {
+            return filterEventsBySport(a, eventData);
+          })
+          .sort((a, b) => {
+            return sortByProximityFromHere(a, b, eventData);
+          });
+        setRecommendedEvents(data.slice(0, NUMBER_OF_RECOMMENDED_EVENTS));
+      });
+    };
+    getRecommendedEvents().then(() => {
+      setLoading(false);
     });
   }, []);
 
@@ -106,6 +112,7 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
                         location={event.location}
                         price={event.price}
                         vacancy={event.vacancy}
+                        loading={loading}
                       />
                     </div>
                   );
