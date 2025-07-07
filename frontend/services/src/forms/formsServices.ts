@@ -7,6 +7,7 @@ import { rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { EventId } from "@/interfaces/EventTypes";
 import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
 import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
+import { getFullUserById, getPublicUserById } from "../users/usersService";
 import { UserId } from "@/interfaces/UserTypes";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
@@ -212,29 +213,15 @@ export async function updateFormResponse(
 export async function getFormsForUser(userId: UserId): Promise<Form[]> {
   formsServiceLogger.info(`getFormsForUser: ${userId}`);
   try {
-    const activeFormsCollectionRef = collection(db, FormPaths.FormsActive);
-    const deletedFormsCollectionRef = collection(db, FormPaths.FormsDeleted);
-
-    const [activeFormsSnapshot, deletedFormsSnapshot] = await Promise.all([
-      getDocs(activeFormsCollectionRef),
-      getDocs(deletedFormsCollectionRef),
-    ]);
+    const organiser = await getFullUserById(userId);
 
     const allForms: Form[] = [];
-
-    activeFormsSnapshot.forEach((docSnapshot) => {
-      const formData = docSnapshot.data() as Form;
-      if (formData.userId === userId) {
-        allForms.push(formData);
-      }
-    });
-
-    deletedFormsSnapshot.forEach((docSnapshot) => {
-      const formData = docSnapshot.data() as Form;
-      if (formData.userId === userId) {
-        allForms.push(formData);
-      }
-    });
+    // get all forms from the organiser
+    for (const formId of organiser.forms) {
+      const form = await getForm(formId);
+      form.formId = formId;
+      allForms.push(form);
+    }
 
     return allForms;
   } catch (error) {
