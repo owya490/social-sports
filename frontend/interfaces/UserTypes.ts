@@ -38,6 +38,7 @@ export interface PrivateUserData {
   publicOrganiserEvents: string[];
   recurrenceTemplates: string[];
   forms: FormId[];
+  sendOrganiserTicketEmails: boolean;
 }
 
 export interface NewUserData extends PublicUserData, PrivateUserData {
@@ -84,6 +85,7 @@ export const EmptyPrivateUserData: PrivateUserData = {
   stripeAccount: null,
   stripeAccountActive: null,
   forms: [],
+  sendOrganiserTicketEmails: false,
 };
 
 export const EmptyUserData: UserData = {
