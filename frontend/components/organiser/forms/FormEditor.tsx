@@ -70,7 +70,7 @@ const FormEditor = ({}: FormEditorParams) => {
   const [form, setForm] = useState<Form>(initialForm);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
-  const [showBackWarning, setShowBackWarning] = useState(false); // Move this inside the component
+  const [showBackWarning, setShowBackWarning] = useState(false);
   const isFormModified = form.title !== initialForm.title || form.sectionsOrder.length > 0;
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 
@@ -81,13 +81,12 @@ const FormEditor = ({}: FormEditorParams) => {
     }));
   };
 
-  // Add this after your existing code but before the final return statement
+
   const handleSubmitClick = () => {
     setShowWarning(true);
   };
 
   const handleConfirmSubmit = () => {
-    // Implement actual submit logic here
     console.log("Form submitted:", form);
     setShowWarning(false);
   };
@@ -121,7 +120,6 @@ const FormEditor = ({}: FormEditorParams) => {
       sectionsOrder: [...prevForm.sectionsOrder, newSectionId],
       sectionsMap: new Map(prevForm.sectionsMap).set(newSectionId, {
         ...section,
-        // Deep copy the options array if it exists
         ...(section.type === FormSectionType.DROPDOWN_SELECT && {
           options: [...section.options],
         }),
