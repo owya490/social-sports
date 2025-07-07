@@ -6,7 +6,7 @@ const OrganiserSettingsStripeCard = (props: { stripeId: string }) => {
   return (
     <div>
       <div>
-        <div className="border-organiser-darker-light-gray border-solid border-2 rounded-3xl px-4 pt-2 relative">
+        <div className="pt-2 relative">
           <Image src={StripeLogo} alt="Stripe Logo" className="w-28" />
           <div className="p-4 space-y-4">
             <a href="https://dashboard.stripe.com/login" target="_blank" className="flex space-x-2">

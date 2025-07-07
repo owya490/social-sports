@@ -1,0 +1,6 @@
+[submodule "frontend/hugo/themes/hextra"]
+	path = frontend/hugo/themes/hextra
+	url = https://github.com/owya490/sportshub-x-hextra.git
+[submodule "sportshub-blogs-docs/themes/hextra"]
+	path = sportshub-blogs-docs/themes/hextra
+	url = https://github.com/owya490/sportshub-x-hextra.git

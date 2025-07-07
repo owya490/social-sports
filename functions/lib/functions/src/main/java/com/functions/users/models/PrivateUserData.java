@@ -1,11 +1,12 @@
 package com.functions.users.models;
 
-import com.functions.users.models.AbstractUserData.ActiveBooking;
-import com.functions.users.models.AbstractUserData.ContactInformation;
-import lombok.Data;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.functions.users.models.AbstractUserData.ActiveBooking;
+import com.functions.users.models.AbstractUserData.ContactInformation;
+
+import lombok.Data;
 
 /** 
  * Private User Data fields
@@ -25,4 +26,5 @@ public class PrivateUserData {
 	private List<String> organiserEvents = new ArrayList<>();
 	private List<String> recurrenceTemplates = new ArrayList<>();
 	private List<String> publicOrganiserEvents = new ArrayList<>();
+	private Boolean sendOrganiserTicketEmails = false;
 }

@@ -595,7 +595,7 @@ export async function updateEventCapacityById(eventId: EventId, capacity: number
       }
     });
   } catch (error) {
-    eventServiceLogger.error(`Error updating event capacity for ${eventId} ${error}`);
+    eventServiceLogger.error(`Error updating event capacity for ${eventId}: ${error}`);
   }
   return valid;
 }
