@@ -45,7 +45,6 @@ def calculate_stripe_fee(price: float) -> int:
   # can just do the calculation and return a whole integer
   return int(math.ceil(30 + (price * 0.017)))
 
-
 @firestore.transactional
 def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger: Logger, event_id: str, quantity: int, is_private: bool, cancel_url: str, success_url: str):
   logger.info(f"Creating stripe checkout session for {event_id} for {quantity} tickets.")
