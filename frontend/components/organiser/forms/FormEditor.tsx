@@ -11,6 +11,7 @@ import { ReactSortable } from "react-sortablejs";
 
 const initialForm: Form = {
   title: "Untitled Form",
+  description: "",
   userId: "user123",
   formActive: true,
   sectionsOrder: [],
@@ -73,12 +74,12 @@ const FormEditor = ({}: FormEditorParams) => {
   const isFormModified = form.title !== initialForm.title || form.sectionsOrder.length > 0;
   const [isEditingDescription, setIsEditingDescription] = useState(false);
 
-const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  setForm(prevForm => ({
-    ...prevForm,
-    description: e.target.value,
-  }));
-};
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      description: e.target.value,
+    }));
+  };
 
   // Add this after your existing code but before the final return statement
   const handleSubmitClick = () => {
@@ -202,8 +203,8 @@ const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100 p-5">
-      {/* Sticky Back Button - separate from navbar */}
+    <div className="flex min-h-screen bg-gray-100 p-8 justify-center">
+      {/* Sticky Back Button */}
       <div className="fixed top-20 left-4 z-50">
         <button
           onClick={handleBackClick}
@@ -213,8 +214,7 @@ const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           <span className="text-base font-medium text-gray-700">Back</span>
         </button>
       </div>
-
-      {/* Back Button Warning Dialog - put it right here */}
+      {/* Back Button Warning Dialog */}
       {showBackWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md text-center">
@@ -237,7 +237,6 @@ const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           </div>
         </div>
       )}
-
       {/* Left Navbar */}
       <div className="sticky top-40 w-16 bg-white rounded-lg p-6 mr-5 flex flex-col gap-4 items-center h-fit shadow-sm border border-gray-200 z-40">
         <div className="flex flex-col space-y-3">
@@ -275,11 +274,10 @@ const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           </FormNavButton>
         </div>
       </div>
-
       {/* Main Form Area */}
       <div className="flex-1 flex flex-col gap-5 max-w-3xl mx-auto relative pb-20">
         {/* Form Title Card */}
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="bg-white rounded-lg p-8 shadow-sm">
           {isEditingTitle ? (
             <input
               type="text"
@@ -287,19 +285,37 @@ const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               onChange={handleTitleChange}
               onBlur={() => setIsEditingTitle(false)}
               onKeyDown={(e) => e.key === "Enter" && setIsEditingTitle(false)}
-              className="text-3xl font-bold w-full border-none focus:outline-none mb-4"
+              className="text-4xl font-bold w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:border-gray-300 mb-4 shadow-sm"
               autoFocus
             />
           ) : (
-            <h1 onClick={() => setIsEditingTitle(true)} className="text-3xl font-bold mb-4 cursor-pointer">
+            <h1
+              onClick={() => setIsEditingTitle(true)}
+              className="w-full text-4xl font-bold mb-4 cursor-pointer hover:text-blue-600 hover:bg-gray-50 p-2 rounded-md transition-colors border-2 border-transparent hover:border-gray-200"
+            >
               {form.title}
             </h1>
           )}
-          <input
-            type="text"
-            placeholder="Form description"
-            className="w-full border-none focus:outline-none text-gray-600 text-base"
-          />
+
+          {isEditingDescription ? (
+            <input
+              type="text"
+              value={form.description}
+              onChange={handleDescriptionChange}
+              onBlur={() => setIsEditingDescription(false)}
+              onKeyDown={(e) => e.key === "Enter" && setIsEditingDescription(false)}
+              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:border-gray-300 text-gray-600 text-lg shadow-sm"
+              placeholder="Enter form description"
+              autoFocus
+            />
+          ) : (
+            <div
+              onClick={() => setIsEditingDescription(true)}
+              className="w-full text-gray-600 text-lg cursor-pointer hover:text-blue-600 hover:bg-gray-50 p-2 rounded-md transition-colors border-2 border-transparent hover:border-gray-200"
+            >
+              {form.description || "Click to add form description"}
+            </div>
+          )}
         </div>
 
         {/* Questions Container */}
