@@ -93,7 +93,6 @@ export const EmptyEventData: EventData = {
 };
 
 export interface EventMetadata {
-  formId: any;
   eventId?: EventId;
   purchaserMap: Record<EmailHash, Purchaser>;
   completeTicketCount: number;
@@ -109,7 +108,6 @@ export const EmptyEventMetadata: EventMetadata = {
   completedStripeCheckoutSessionIds: [],
   organiserId: "",
   orderIds: [],
-  formId: "",
 };
 
 export interface Purchaser {

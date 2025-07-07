@@ -182,7 +182,7 @@ export default function EventPage({ params }: EventPageProps) {
                 setEventMetadata={setEventMetadata}
               />
             )}
-            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventMetadata={eventMetadata} eventId={eventId} />}
+            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} />}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}
