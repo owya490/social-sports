@@ -138,7 +138,11 @@ export default function EventPage({ params }: EventPageProps) {
           eventCapacity={eventCapacity}
           eventPrice={eventPrice}
         />
-        <MobileEventDrilldownNavTabs currSidebarPage={currSidebarPage} setCurrSidebarPage={setCurrSidebarPage} />
+        <MobileEventDrilldownNavTabs
+          navigationTabs={["Details", "Attendees", "Images", "Settings"]}
+          currSidebarPage={currSidebarPage}
+          setCurrSidebarPage={setCurrSidebarPage}
+        />
         <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
           <div id="side-panel" className="z-20">
             <EventDrilldownSidePanel

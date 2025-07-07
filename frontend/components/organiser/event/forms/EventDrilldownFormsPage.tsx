@@ -109,40 +109,38 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
         <div className="text-2xl md:text-4xl font-extrabold">Form Responses</div>
       </div>
 
-      <div className="flex flex-col overflow-x-auto">
-        {/* Header Row */}
-        <div className="min-w-max grid auto-cols-max grid-flow-col justify-start text-organiser-title-gray-text font-bold text-xs md:text-base">
-          {allSectionIds.map((sectionId) => (
-            <div key={sectionId} className="px-4 py-2 whitespace-nowrap border-b border-gray-300">
-              {sectionIdToQuestion.get(sectionId) || `Untitled (${sectionId})`}
-            </div>
-          ))}
-          <div className="px-1.5 flex items-center">
-            <EllipsisVerticalIcon className="w-6 stroke-0" />
-          </div>
-        </div>
-
-        <div className="inline-block w-full h-0.5 my-0 md:my-2 self-stretch bg-organiser-title-gray-text"></div>
-
-        {/* Response Rows */}
-        {formResponses.map((response, idx) => (
-          <div
-            key={`response-${idx}`}
-            className="min-w-max grid auto-cols-max grid-flow-col justify-start text-xs md:text-base"
-          >
-            {allSectionIds.map((sectionId) => {
-              const section = response.responseMap.get(sectionId);
-              return (
-                <div key={`${idx}-${sectionId}`} className="px-4 py-2 whitespace-nowrap border-b border-gray-300">
-                  {getAnswerDisplay(section)}
-                </div>
-              );
-            })}
-            <div className="px-1.5 flex items-center">
-              <EllipsisVerticalIcon className="w-6 stroke-0" />
-            </div>
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <table className="min-w-full table-auto border border-gray-300">
+          <thead className="bg-gray-100 text-xs md:text-base text-left">
+            <tr>
+              {allSectionIds.map((sectionId) => (
+                <th key={sectionId} className="px-4 py-2 border-b border-gray-300">
+                  {sectionIdToQuestion.get(sectionId) || `Untitled (${sectionId})`}
+                </th>
+              ))}
+              <th className="px-2 w-10">
+                <EllipsisVerticalIcon className="w-5 stroke-0" />
+              </th>
+            </tr>
+          </thead>
+          <tbody className="text-xs md:text-base">
+            {formResponses.map((response, idx) => (
+              <tr key={`response-${idx}`} className="even:bg-gray-50">
+                {allSectionIds.map((sectionId) => {
+                  const section = response.responseMap.get(sectionId);
+                  return (
+                    <td key={`${idx}-${sectionId}`} className="px-4 py-2 border-b border-gray-300 whitespace-nowrap">
+                      {getAnswerDisplay(section)}
+                    </td>
+                  );
+                })}
+                <td className="px-2 text-center">
+                  <EllipsisVerticalIcon className="w-5 stroke-0" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
