@@ -17,8 +17,8 @@ interface CustomEventLinksTableProps {
   user: UserData;
   activeEvents: EventData[];
   activeRecurringTemplates: RecurrenceTemplate[];
-  links: CustomEventLink[];
-  setLinks: (links: CustomEventLink[]) => void;
+  links: Record<string, CustomEventLink>;
+  setLinks: (links: Record<string, CustomEventLink>) => void;
 }
 
 export default function CustomEventLinksTable({
@@ -28,7 +28,7 @@ export default function CustomEventLinksTable({
   links,
   setLinks,
 }: CustomEventLinksTableProps) {
-  const [updatedLinks, setUpdatedLinks] = useState<CustomEventLink[]>(links);
+  const [updatedLinks, setUpdatedLinks] = useState<Record<string, CustomEventLink>>(links);
   const [editIds, setEditIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -43,12 +43,13 @@ export default function CustomEventLinksTable({
       ...EMPTY_CUSTOM_EVENT_LINK,
       id: newId,
     };
-    setUpdatedLinks((prev) => [...prev, newLink]);
+    setUpdatedLinks((prev) => ({ ...prev, [newId]: newLink }));
     setEditIds((prev) => [...prev, newId]);
   };
 
   const handleSave = async (id: string) => {
-    const updatedLink = updatedLinks.find((l) => l.id === id)!;
+    const updatedLink = updatedLinks[id];
+
     // Validation: required fields
     const missingFields = [];
     if (!updatedLink.customEventLinkName) missingFields.push("Custom Link Name");
@@ -58,43 +59,112 @@ export default function CustomEventLinksTable({
       window.alert(`Please fill in the following fields: ${missingFields.join(", ")}`);
       return;
     }
-    // Custom Link format validation
-    const customLinkRegex = /^[a-zA-Z0-9-]+$/;
-    if (updatedLink.customEventLink && !customLinkRegex.test(updatedLink.customEventLink)) {
-      window.alert("Custom Link must only contain letters, numbers, and hyphens (no spaces or special characters).");
+
+    // Validation: length constraints
+    if (updatedLink.customEventLinkName && updatedLink.customEventLinkName.length > 50) {
+      window.alert("Custom Link Name must be no longer than 50 characters.");
       return;
     }
+
+    if (updatedLink.customEventLink && updatedLink.customEventLink.length > 30) {
+      window.alert("Custom Link must be no longer than 30 characters.");
+      return;
+    }
+
+    // Validation: minimum length constraints
+    if (updatedLink.customEventLinkName && updatedLink.customEventLinkName.length < 3) {
+      window.alert("Custom Link Name must be at least 3 characters long.");
+      return;
+    }
+
+    if (updatedLink.customEventLink && updatedLink.customEventLink.length < 3) {
+      window.alert("Custom Link must be at least 3 characters long.");
+      return;
+    }
+
+    // Custom Link format validation - check for uppercase letters and spaces
+    if (updatedLink.customEventLink) {
+      if (updatedLink.customEventLink !== updatedLink.customEventLink.toLowerCase()) {
+        window.alert("Custom Link must be in lowercase only (no uppercase letters).");
+        return;
+      }
+      if (updatedLink.customEventLink.includes(" ")) {
+        window.alert("Custom Link cannot contain spaces.");
+        return;
+      }
+      const customLinkRegex = /^[a-z0-9-]+$/;
+      if (!customLinkRegex.test(updatedLink.customEventLink)) {
+        window.alert(
+          "Custom Link must only contain lowercase letters, numbers, and hyphens (no spaces or special characters)."
+        );
+        return;
+      }
+    }
+
+    // Validation: check for duplicate custom links (case-insensitive)
+    const isNew = !Object.keys(links).includes(id);
+    const duplicateLink = isNew
+      ? Object.values(links).find((l) => l.customEventLink.toLowerCase() === updatedLink.customEventLink.toLowerCase())
+      : false;
+
+    if (duplicateLink) {
+      window.alert(
+        `A custom link with the name "${updatedLink.customEventLink}" already exists. Please choose a different link.`
+      );
+      return;
+    }
+
+    // Validation: check for consecutive hyphens or leading/trailing hyphens
+    if (
+      updatedLink.customEventLink &&
+      (updatedLink.customEventLink.startsWith("-") ||
+        updatedLink.customEventLink.endsWith("-") ||
+        updatedLink.customEventLink.includes("--"))
+    ) {
+      window.alert("Custom Link cannot start or end with hyphens, and cannot contain consecutive hyphens.");
+      return;
+    }
+
+    // Validation: reference must be selected when type is chosen
+    if (!updatedLink.referenceId) {
+      window.alert(`Please select a ${updatedLink.type === "event" ? "event" : "recurring template"} reference.`);
+      return;
+    }
+
     setEditIds((prev) => prev.filter((editId) => editId !== id));
-    const isNew = !links.some((l) => l.id === id);
+
     if (isNew) {
-      setLinks([...links, updatedLink]);
+      setLinks({ ...links, [id]: updatedLink });
     } else {
       // get everything from links, except for the one specified by the id, get from updatedLinks
-      setLinks(links.map((link) => (link.id === id ? updatedLink : link)));
+      setLinks({ ...links, [id]: updatedLink });
     }
     await saveCustomEventLink(user.userId, updatedLink);
   };
 
   const handleCancel = (id: string) => {
     setEditIds((prev) => prev.filter((editId) => editId !== id));
-    const isNew = !links.some((l) => l.id === id);
-    if (isNew) {
-      setUpdatedLinks((prev) => prev.filter((link) => link.id !== id));
-    }
-    {
-      // get everything from updatedLinks, except for the one specified by the id, get from links
-      setUpdatedLinks((prev) => prev.map((link) => (link.id === id ? links.find((l) => l.id === id)! : link)));
+    if (Object.keys(links).includes(id)) {
+      setUpdatedLinks({ ...updatedLinks, [id]: links[id] });
+    } else {
+      const updatedLinkCopy = { ...updatedLinks };
+      delete updatedLinkCopy[id];
+      setUpdatedLinks(updatedLinkCopy);
     }
   };
-  
+
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(`https://www.sportshub.net.au/event/${user.username}/${link}`);
   };
 
   const handleDelete = (id: string) => {
-    const link = updatedLinks.find((link) => link.id === id)!;
-    setUpdatedLinks((prev) => prev.filter((link) => link.id !== id));
-    setLinks(links.filter((link) => link.id !== id));
+    const link = updatedLinks[id];
+    const updatedLinkCopy = { ...updatedLinks };
+    delete updatedLinkCopy[id];
+    setUpdatedLinks(updatedLinkCopy);
+    const linksCopy = { ...links };
+    delete linksCopy[id];
+    setLinks(linksCopy);
     deleteCustomEventLink(user.userId, link);
   };
 
@@ -104,7 +174,9 @@ export default function CustomEventLinksTable({
     field: T,
     valueFn: (prev: CustomEventLink) => CustomEventLink[T]
   ) {
-    setUpdatedLinks((prev) => prev.map((l) => (l.id === id ? { ...l, [field]: valueFn(l) } : l)));
+    setUpdatedLinks((prev) => {
+      return { ...prev, [id]: { ...prev[id], [field]: valueFn(prev[id]) } };
+    });
   }
 
   return (
@@ -136,7 +208,7 @@ export default function CustomEventLinksTable({
             </tr>
           </thead>
           <tbody>
-            {updatedLinks.map((link) => {
+            {Object.values(updatedLinks).map((link) => {
               const isEditing = editIds.includes(link.id);
               return (
                 <tr key={link.id} className="align-top">
@@ -162,7 +234,11 @@ export default function CustomEventLinksTable({
                         label="Custom Link"
                         crossOrigin={undefined}
                         value={link.customEventLink}
-                        onChange={(e) => handleFieldChange(link.id, "customEventLink", () => e.target.value)}
+                        onChange={(e) => {
+                          // Convert to lowercase and remove whitespaces
+                          const processedValue = e.target.value.toLowerCase().replace(/\s/g, "");
+                          handleFieldChange(link.id, "customEventLink", () => processedValue);
+                        }}
                       />
                     ) : (
                       <Typography variant="small" color="blue-gray" className="font-normal">
@@ -203,33 +279,32 @@ export default function CustomEventLinksTable({
                         label={link.type === "event" ? "Event Reference" : "Recurring Reference"}
                         value={link.referenceId ?? ""}
                         onChange={(val) => {
-                          setUpdatedLinks((prev) =>
-                            prev.map((l) =>
-                              l.id === link.id
-                                ? {
-                                    ...l,
-                                    referenceId: val ?? null,
-                                    referenceName: val
-                                      ? link.type === "event"
-                                        ? activeEvents.find((event) => event.eventId === val)!.name
-                                        : activeRecurringTemplates.find(
-                                            (template) => template.recurrenceTemplateId === val
-                                          )!.eventData.name
-                                      : null,
-                                    eventReference:
-                                      link.type === "event"
-                                        ? val ?? null
-                                        : Object.entries(
-                                            activeRecurringTemplates.find(
-                                              (template) => template.recurrenceTemplateId === val
-                                            )!.recurrenceData.pastRecurrences
-                                          )
-                                            .map(([dateStr, id]) => ({ date: new Date(dateStr), id }))
-                                            .sort((a, b) => b.date.getTime() - a.date.getTime())[0].id,
-                                  }
-                                : l
-                            )
-                          );
+                          setUpdatedLinks((prev) => {
+                            return {
+                              ...prev,
+                              [link.id]: {
+                                ...prev[link.id],
+                                referenceId: val ?? null,
+                                referenceName: val
+                                  ? link.type === "event"
+                                    ? activeEvents.find((event) => event.eventId === val)!.name
+                                    : activeRecurringTemplates.find(
+                                        (template) => template.recurrenceTemplateId === val
+                                      )!.eventData.name
+                                  : null,
+                                eventReference:
+                                  link.type === "event"
+                                    ? val ?? null
+                                    : Object.entries(
+                                        activeRecurringTemplates.find(
+                                          (template) => template.recurrenceTemplateId === val
+                                        )!.recurrenceData.pastRecurrences
+                                      )
+                                        .map(([dateStr, id]) => ({ date: new Date(dateStr), id }))
+                                        .sort((a, b) => b.date.getTime() - a.date.getTime())[0].id,
+                              },
+                            };
+                          });
                         }}
                       >
                         {link.type === "event"

@@ -16,7 +16,7 @@ export default function CustomLinks() {
   const { user } = useUser();
   const [activeEvents, setActiveEvents] = useState<EventData[]>([]);
   const [activeRecurringTemplates, setActiveRecurringTemplates] = useState<RecurrenceTemplate[]>([]);
-  const [links, setLinks] = useState<CustomEventLink[]>([]);
+  const [links, setLinks] = useState<Record<string, CustomEventLink>>({});
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function CustomLinks() {
       fetchEvents();
       fetchRecurringTemplates();
       const links = await getAllOrganiserCustomEventLinks(user.userId);
-      setLinks(links);
+      setLinks(Object.fromEntries(links.map((link) => [link.id, link])));
       setLoading(false);
     };
 

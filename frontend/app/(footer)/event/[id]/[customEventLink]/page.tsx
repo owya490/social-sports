@@ -38,7 +38,6 @@ async function getEventIdFromUserAndEventLink(username: string, customEventLink:
     const eventId = await getEventIdFromCustomEventLink(userId, customEventLink);
     return eventId;
   } catch (error) {
-    console.error(error);
     return "404";
   }
 }
