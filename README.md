@@ -4,7 +4,6 @@
 
 [![Website](https://img.shields.io/badge/Website-sportshub.net.au-blue?style=flat-square)](https://www.sportshub.net.au)
 [![Blog](https://img.shields.io/badge/Blog-SPORTSHUB%20Blogs-green?style=flat-square)](https://sportshub.net.au/blogs)
-[![Tech Stack](https://img.shields.io/badge/Tech%20Stack-Next.js%20%7C%20Firebase%20%7C%20Stripe-orange?style=flat-square)]()
 
 ---
 
