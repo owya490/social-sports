@@ -1,8 +1,8 @@
 package com.functions.events.repositories;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.Collections;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,16 +17,22 @@ public class CustomEventLinksRepository {
 
 
   public static void saveCustomEventLink(String userId, CustomEventLink customEventLink) {
+    try {
     logger.info("Saving custom event link for user {}", userId);
     db.collection("CustomLinks")
       .document("Events")
       .collection(userId)
-      .document(customEventLink.customEventLink())
+      .document(customEventLink.getCustomEventLink())
       .set(customEventLink);
+    } catch (Exception e) {
+      logger.error("Error saving custom event link", e);
+      throw e;
+    }
   }
 
   public static List<CustomEventLink> getAllEventLinksPointedToRecurrence(String userId, String recurrenceTemplateId) {
     try {
+      logger.info("Getting all event links pointed to recurrence for user {}", userId);
       return db
         .collection("CustomLinks")
         .document("Events")
@@ -34,7 +40,7 @@ public class CustomEventLinksRepository {
         .whereEqualTo("type", CustomEventLink.Type.RECURRING_EVENT.getType())
         .whereEqualTo("referenceId", recurrenceTemplateId).get().get()
         .toObjects(CustomEventLink.class);
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (Exception e) {
       logger.error("Error getting all event links pointed to recurrence", e);
       return Collections.emptyList();
     }

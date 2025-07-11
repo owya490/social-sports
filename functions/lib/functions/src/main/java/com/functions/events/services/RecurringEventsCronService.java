@@ -31,6 +31,7 @@ public class RecurringEventsCronService {
     }
 
     public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, RecurrenceTemplate targetRecurrenceTemplate, boolean createEventWorkflow) throws Exception {
+        logger.info("Creating events from recurrence templates. today: {}, targetRecurrenceTemplateId: {}, targetRecurrenceTemplate: {}, createEventWorkflow: {}", today, targetRecurrenceTemplateId, targetRecurrenceTemplate, createEventWorkflow);
         Map<String, RecurrenceTemplate> activeRecurrenceTemplates;
         if (targetRecurrenceTemplateId == null) {
             activeRecurrenceTemplates = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplates();
@@ -70,7 +71,9 @@ public class RecurringEventsCronService {
                     String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
                     LocalDate eventCreationDate = TimeUtils.convertTimestampToLocalDateTime(recurrenceTimestamp).toLocalDate()
                             .minusDays(recurrenceData.getCreateDaysBefore());
+                    logger.info("Event Creation Date: {}", eventCreationDate);
                     if (!pastRecurrences.containsKey(recurrenceTimestampString) && (today.equals(eventCreationDate) || createEventWorkflow) && (recurrenceTemplate.getRecurrenceData().getRecurrenceEnabled())) {
+                        logger.info("Creating event for recurrence template: {} for recurrence timestamp: {}", recurrenceTemplateId, recurrenceTimestampString);
                         NewEventData newEventDataDeepCopy = JavaUtils.deepCopy(newEventData, NewEventData.class);
                         long eventLengthMillis = newEventDataDeepCopy.getEndDate().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
                         long eventDeadlineDeltaMillis = newEventDataDeepCopy.getRegistrationDeadline().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
@@ -84,7 +87,6 @@ public class RecurringEventsCronService {
                         createdEventIds.add(newEventId);
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
 
-                        // Update custom event links references
                         // Update custom event links references
                         try {
                             CustomEventLinksService.updateEventLinksPointedToRecurrence(newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, newEventId);
