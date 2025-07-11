@@ -37,6 +37,7 @@ async function getEventIdFromUserAndEventLink(username: string, customEventLink:
     const userId = (await getUsernameMapping(username)).userId;
     const eventId = await getEventIdFromCustomEventLink(userId, customEventLink);
     return eventId;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     return "404";
   }

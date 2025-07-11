@@ -18,11 +18,12 @@ export default function EventPage({ params }: any) {
   const [eventTags, setEventTags] = useState<Tag[]>([]);
   const router = useRouter();
 
-  if (eventId === "404") {
-    router.push("/404");
-  }
-
   useEffect(() => {
+    if (eventId === "404") {
+      router.push("/404");
+      return;
+    }
+
     getEventById(eventId)
       .then((event) => {
         setEventData(event);
