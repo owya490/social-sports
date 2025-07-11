@@ -11,6 +11,7 @@ import { getEventById } from "@/services/src/events/eventsService";
 import { getRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function CustomLinks() {
   const { user } = useUser();
@@ -18,34 +19,31 @@ export default function CustomLinks() {
   const [activeRecurringTemplates, setActiveRecurringTemplates] = useState<RecurrenceTemplate[]>([]);
   const [links, setLinks] = useState<Record<string, CustomEventLink>>({});
   const [loading, setLoading] = useState<boolean>(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchEvents = () => {
-      const events = Promise.all(
-        user.publicUpcomingOrganiserEvents.map(async (eventId) => await getEventById(eventId))
-      );
-      events.then((events) => setActiveEvents(events));
-    };
-    const fetchRecurringTemplates = () => {
-      const templates = Promise.all(
-        user.recurrenceTemplates.map(async (templateId) => await getRecurrenceTemplate(templateId))
-      );
-      templates.then((templates) => {
-        const filteredTemplates = templates.filter((template) => template.recurrenceData.recurrenceEnabled);
-        setActiveRecurringTemplates(filteredTemplates);
-      });
-    };
+    const fetchData = async () => {
+      try {
+        const [events, templates, links] = await Promise.all([
+          Promise.all(user.publicUpcomingOrganiserEvents.map(async (eventId: string) => await getEventById(eventId))),
+          Promise.all(user.recurrenceTemplates.map(async (templateId: string) => await getRecurrenceTemplate(templateId))),
+          getAllOrganiserCustomEventLinks(user.userId),
+        ]);
+        const filteredTemplates = templates.filter(template => template.recurrenceData.recurrenceEnabled);
 
-    const fetch = async () => {
-      fetchEvents();
-      fetchRecurringTemplates();
-      const links = await getAllOrganiserCustomEventLinks(user.userId);
-      setLinks(Object.fromEntries(links.map((link) => [link.id, link])));
-      setLoading(false);
-    };
+        setActiveEvents(events);
+        setActiveRecurringTemplates(filteredTemplates);
+        setLinks(Object.fromEntries(links.map((link) => [link.id, link])));
+      } catch (error) {
+        console.error("Error fetching custom event links:", error);
+        router.push("/error");
+      } finally {
+        setLoading(false);
+      }
+    }
 
     if (user.userId) {
-      fetch();
+      fetchData();
     }
   }, [user]);
   return loading ? (

@@ -16,8 +16,12 @@ export default function EventPage({ params }: any) {
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [eventTags, setEventTags] = useState<Tag[]>([]);
-
   const router = useRouter();
+
+  if (eventId === "404") {
+    router.push("/404");
+  }
+
   useEffect(() => {
     getEventById(eventId)
       .then((event) => {

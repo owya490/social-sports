@@ -16,8 +16,8 @@ export default function NotFound() {
         <div className="max-w-md mx-auto mb-12">
           <h2 className="text-3xl font-bold text-core-text mb-4">Page Not Found</h2>
           <p className="text-lg text-gray-600 mb-8 font-light">
-            Oops! The page you're looking for doesn't exist. It might have been moved, deleted, or you entered the wrong
-            URL.
+            Oops! The page you&apos;re looking for doesn&apos;t exist. It might have been moved, deleted, or you entered
+            the wrong URL.
           </p>
         </div>
 

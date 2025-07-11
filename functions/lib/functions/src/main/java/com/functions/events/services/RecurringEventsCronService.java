@@ -85,7 +85,13 @@ public class RecurringEventsCronService {
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
 
                         // Update custom event links references
-                        CustomEventLinksService.updateEventLinksPointedToRecurrence(newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, newEventId);
+                        // Update custom event links references
+                        try {
+                            CustomEventLinksService.updateEventLinksPointedToRecurrence(newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, newEventId);
+                        } catch (Exception e) {
+                            logger.error("Failed to update custom event links for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
+                            // Continue with event creation even if custom links update fails
+                        }
                     }
 
                     if (!recurrenceData.getAllRecurrences().isEmpty()) {

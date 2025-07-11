@@ -133,13 +133,14 @@ export default function CustomEventLinksTable({
 
     setEditIds((prev) => prev.filter((editId) => editId !== id));
 
-    if (isNew) {
-      setLinks({ ...links, [id]: updatedLink });
-    } else {
-      // get everything from links, except for the one specified by the id, get from updatedLinks
-      setLinks({ ...links, [id]: updatedLink });
+    try {
+      await saveCustomEventLink(user.userId, updatedLink);
+    } catch (error) {
+      console.error("Error saving custom event link:", error);
+      window.alert("Error saving custom event link. Please try again.");
+      return;
     }
-    await saveCustomEventLink(user.userId, updatedLink);
+    setLinks({ ...links, [id]: updatedLink });
   };
 
   const handleCancel = (id: string) => {
@@ -157,15 +158,21 @@ export default function CustomEventLinksTable({
     navigator.clipboard.writeText(`https://www.sportshub.net.au/event/${user.username}/${link}`);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const link = updatedLinks[id];
+    try {
+      await deleteCustomEventLink(user.userId, link);
+    } catch (error) {
+      console.error("Error deleting custom event link:", error);
+      window.alert("Error deleting custom event link. Please try again.");
+      return;
+    }
     const updatedLinkCopy = { ...updatedLinks };
     delete updatedLinkCopy[id];
     setUpdatedLinks(updatedLinkCopy);
     const linksCopy = { ...links };
     delete linksCopy[id];
     setLinks(linksCopy);
-    deleteCustomEventLink(user.userId, link);
   };
 
   // Utility function to update a field in updatedLinks by id
