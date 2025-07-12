@@ -12,19 +12,19 @@ public class FormsService {
 
     public static Optional<String> getFormIdByEventId(String eventId) {
         try {
-            EventsRepository.getEventById(eventId).flatMap(maybeEventData -> {
+            return EventsRepository.getEventById(eventId).map(maybeEventData -> {
                 String maybeFormId = maybeEventData.getFormId();
                 if (maybeFormId != null) {
                     logger.info("Found form ID {} for event ID {}", maybeFormId, eventId);
-                    return Optional.of(maybeFormId);
+                    return maybeFormId;
                 } else {
                     logger.warn("No form ID found for event ID {}", eventId);
-                    return Optional.empty();
+                    return null;
                 }
             });
         } catch (Exception e) {
             logger.error("Error trying to get form ID for event ID {}: {}", eventId, e.getMessage());
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 }

@@ -1,5 +1,7 @@
 package com.functions.fulfilment.models;
 
+import static com.functions.utils.JavaUtils.objectMapper;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +10,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.events.models.EventData;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
 
@@ -23,7 +26,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FulfilmentSession {
     Timestamp fulfilmentSessionStartTime;
-    String eventId;
+    EventData eventData;
     List<FulfilmentEntity> fulfilmentEntities;
     Integer currentFulfilmentIndex;
 
@@ -36,39 +39,45 @@ public class FulfilmentSession {
      * a list of abstract FulfilmentEntity class, it will not know which concrete class to instantiate.
      */
     public static FulfilmentSession fromFirestore(DocumentSnapshot snapshot) {
-        FulfilmentSession session = new FulfilmentSession();
-        session.setEventId(snapshot.getString("eventId"));
-        session.setFulfilmentSessionStartTime(snapshot.getTimestamp("fulfilmentSessionStartTime"));
-        session.setCurrentFulfilmentIndex(snapshot.getLong("currentFulfilmentIndex") != null ?
-                Objects.requireNonNull(snapshot.getLong("currentFulfilmentIndex")).intValue() : null);
-
         List<FulfilmentEntity> entities = new ArrayList<>();
         List<Map<String, Object>> entitiesList = (List<Map<String, Object>>) snapshot.get("fulfilmentEntities");
 
         if (entitiesList != null) {
             for (Map<String, Object> entityData : entitiesList) {
-                FulfilmentEntityType type = FulfilmentEntityType.valueOf((String) entityData.get("type"));
-                switch (type) {
+                try {
+                    // Convert the map to JSON string, then deserialize using Jackson
+                    String json = objectMapper.writeValueAsString(entityData);
+                    FulfilmentEntityType type = FulfilmentEntityType.valueOf((String) entityData.get("type"));
+                    FulfilmentEntity entity;
+                    switch (type) {
                     case START:
-                        entities.add(StartFulfilmentEntity.builder().url((String) entityData.get("url")).type(FulfilmentEntityType.valueOf((String) entityData.get("type"))).build());
+                        entity = objectMapper
+                        .readValue(json, StartFulfilmentEntity.class);
                         break;
                     case STRIPE:
-                        entities.add(StripeFulfilmentEntity.builder().url((String) entityData.get("url")).type(FulfilmentEntityType.valueOf((String) entityData.get("type"))).build());
+                        entity = objectMapper
+                        .readValue(json, StripeFulfilmentEntity.class);
                         break;
                     case FORMS:
-                        entities.add(FormsFulfilmentEntity.builder().formId((String) entityData.get("formId"))
-                                .formResponseIds((List<String>) entityData.get("formResponseIds"))
-                                .submittedFormResponseIds((List<String>) entityData.get("submittedFormResponseIds"))
-                                .url((String) entityData.get("url"))
-                                .type(FulfilmentEntityType.valueOf((String) entityData.get("type"))).build());
+                        entity = objectMapper
+                        .readValue(json, FormsFulfilmentEntity.class);
                         break;
                     default:
                         throw new IllegalArgumentException("Unknown FulfilmentEntity type: " + entityData.get("type"));
+                    }
+                    entities.add(entity);
+                } catch (Exception e) {
+                    logger.error("Failed to deserialize FulfilmentEntity: {}", entityData, e);
                 }
             }
         }
-
-        session.setFulfilmentEntities(entities);
-        return session;
+        return FulfilmentSession.builder()
+            .eventData(objectMapper.convertValue(snapshot.get("eventData"), EventData.class))
+            .fulfilmentSessionStartTime(snapshot.getTimestamp("fulfilmentSessionStartTime"))
+            .currentFulfilmentIndex(snapshot.getLong("currentFulfilmentIndex") != null
+                ? Objects.requireNonNull(snapshot.getLong("currentFulfilmentIndex")).intValue()
+                : null)
+            .fulfilmentEntities(entities)
+            .build();
     }
 }

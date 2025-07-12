@@ -18,15 +18,8 @@ public class FulfilmentSessionRepository {
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSessionRepository.class);
 
     public static String createFulfilmentSession(FulfilmentSession fulfilmentSession) throws Exception {
-        try {
-            String fulfilmentSessionId = UUID.randomUUID().toString();
-            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(fulfilmentSessionId);
-            sessionDocRef.create(fulfilmentSession).get();
-            return sessionDocRef.getId();
-        } catch (Exception e) {
-            logger.error("Failed to create fulfilment session for eventId: {}", fulfilmentSession.getEventId(), e);
-            throw new Exception("Failed to create fulfilment session for eventId: " + fulfilmentSession.getEventId(), e);
-        }
+        String fulfilmentSessionId = UUID.randomUUID().toString();
+        return createFulfilmentSession(fulfilmentSessionId, fulfilmentSession);
     }
 
     public static String createFulfilmentSession(String fulfilmentSessionId, FulfilmentSession fulfilmentSession) throws Exception {
@@ -35,8 +28,8 @@ public class FulfilmentSessionRepository {
             sessionDocRef.create(fulfilmentSession).get();
             return sessionDocRef.getId();
         } catch (Exception e) {
-            logger.error("Failed to create fulfilment session for eventId: {}", fulfilmentSession.getEventId(), e);
-            throw new Exception("Failed to create fulfilment session for eventId: " + fulfilmentSession.getEventId(), e);
+            logger.error("Failed to create fulfilment session for eventId: {}", fulfilmentSession.getEventData().getEventId(), e);
+            throw new Exception("Failed to create fulfilment session for eventId: " + fulfilmentSession.getEventData().getEventId(), e);
         }
     }
 
