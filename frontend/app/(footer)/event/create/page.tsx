@@ -257,6 +257,8 @@ export default function CreateEvent() {
       promotionalCodesEnabled: formData.promotionalCodesEnabled,
       paused: formData.paused,
       eventLink: formData.eventLink,
+      // TODO: Implement option to add form in event creation workflow
+      formId: null,
     };
   }
 
