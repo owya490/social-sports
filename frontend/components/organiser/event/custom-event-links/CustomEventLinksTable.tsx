@@ -6,6 +6,7 @@ import {
   deleteCustomEventLink,
   saveCustomEventLink,
 } from "@/services/src/events/customEventLinks/customEventLinksService";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { DocumentDuplicateIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Button, Chip, IconButton, Input, Option, Select, Tooltip, Typography } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
@@ -50,84 +51,7 @@ export default function CustomEventLinksTable({
   const handleSave = async (id: string) => {
     const updatedLink = updatedLinks[id];
 
-    // Validation: required fields
-    const missingFields = [];
-    if (!updatedLink.customEventLinkName) missingFields.push("Custom Link Name");
-    if (!updatedLink.customEventLink) missingFields.push("Custom Link");
-    if (!updatedLink.type) missingFields.push("Type");
-    if (missingFields.length > 0) {
-      window.alert(`Please fill in the following fields: ${missingFields.join(", ")}`);
-      return;
-    }
-
-    // Validation: length constraints
-    if (updatedLink.customEventLinkName && updatedLink.customEventLinkName.length > 50) {
-      window.alert("Custom Link Name must be no longer than 50 characters.");
-      return;
-    }
-
-    if (updatedLink.customEventLink && updatedLink.customEventLink.length > 30) {
-      window.alert("Custom Link must be no longer than 30 characters.");
-      return;
-    }
-
-    // Validation: minimum length constraints
-    if (updatedLink.customEventLinkName && updatedLink.customEventLinkName.length < 3) {
-      window.alert("Custom Link Name must be at least 3 characters long.");
-      return;
-    }
-
-    if (updatedLink.customEventLink && updatedLink.customEventLink.length < 3) {
-      window.alert("Custom Link must be at least 3 characters long.");
-      return;
-    }
-
-    // Custom Link format validation - check for uppercase letters and spaces
-    if (updatedLink.customEventLink) {
-      if (updatedLink.customEventLink !== updatedLink.customEventLink.toLowerCase()) {
-        window.alert("Custom Link must be in lowercase only (no uppercase letters).");
-        return;
-      }
-      if (updatedLink.customEventLink.includes(" ")) {
-        window.alert("Custom Link cannot contain spaces.");
-        return;
-      }
-      const customLinkRegex = /^[a-z0-9-]+$/;
-      if (!customLinkRegex.test(updatedLink.customEventLink)) {
-        window.alert(
-          "Custom Link must only contain lowercase letters, numbers, and hyphens (no spaces or special characters)."
-        );
-        return;
-      }
-    }
-
-    // Validation: check for duplicate custom links (case-insensitive)
-    const isNew = !Object.keys(links).includes(id);
-    const duplicateLink = isNew
-      ? Object.values(links).find((l) => l.customEventLink.toLowerCase() === updatedLink.customEventLink.toLowerCase())
-      : false;
-
-    if (duplicateLink) {
-      window.alert(
-        `A custom link with the name "${updatedLink.customEventLink}" already exists. Please choose a different link.`
-      );
-      return;
-    }
-
-    // Validation: check for consecutive hyphens or leading/trailing hyphens
-    if (
-      updatedLink.customEventLink &&
-      (updatedLink.customEventLink.startsWith("-") ||
-        updatedLink.customEventLink.endsWith("-") ||
-        updatedLink.customEventLink.includes("--"))
-    ) {
-      window.alert("Custom Link cannot start or end with hyphens, and cannot contain consecutive hyphens.");
-      return;
-    }
-
-    // Validation: reference must be selected when type is chosen
-    if (!updatedLink.referenceId) {
-      window.alert(`Please select a ${updatedLink.type === "event" ? "event" : "recurring template"} reference.`);
+    if (!validateCustomLink(updatedLink)) {
       return;
     }
 
@@ -143,6 +67,91 @@ export default function CustomEventLinksTable({
     setLinks({ ...links, [id]: updatedLink });
   };
 
+  const validateCustomLink = (link: CustomEventLink) => {
+    // Validation: required fields
+    const missingFields = [];
+    if (!link.customEventLinkName) missingFields.push("Custom Link Name");
+    if (!link.customEventLink) missingFields.push("Custom Link");
+    if (!link.type) missingFields.push("Type");
+    if (missingFields.length > 0) {
+      window.alert(`Please fill in the following fields: ${missingFields.join(", ")}`);
+      return false;
+    }
+
+    // Validation: length constraints
+    if (link.customEventLinkName && link.customEventLinkName.length > 50) {
+      window.alert("Custom Link Name must be no longer than 50 characters.");
+      return false;
+    }
+
+    if (link.customEventLink && link.customEventLink.length > 30) {
+      window.alert("Custom Link must be no longer than 30 characters.");
+      return false;
+    }
+
+    // Validation: minimum length constraints
+    if (link.customEventLinkName && link.customEventLinkName.length < 3) {
+      window.alert("Custom Link Name must be at least 3 characters long.");
+      return false;
+    }
+
+    if (link.customEventLink && link.customEventLink.length < 3) {
+      window.alert("Custom Link must be at least 3 characters long.");
+      return false;
+    }
+
+    // Custom Link format validation - check for uppercase letters and spaces
+    if (link.customEventLink) {
+      if (link.customEventLink !== link.customEventLink.toLowerCase()) {
+        window.alert("Custom Link must be in lowercase only (no uppercase letters).");
+        return false;
+      }
+      if (link.customEventLink.includes(" ")) {
+        window.alert("Custom Link cannot contain spaces.");
+        return false;
+      }
+      const customLinkRegex = /^[a-z0-9-]+$/;
+      if (!customLinkRegex.test(link.customEventLink)) {
+        window.alert(
+          "Custom Link must only contain lowercase letters, numbers, and hyphens (no spaces or special characters)."
+        );
+        return false;
+      }
+    }
+
+    // Validation: check for duplicate custom links (case-insensitive)
+    const isNew = !Object.keys(links).includes(link.id);
+    const duplicateLink = isNew
+      ? Object.values(links).find((l) => l.customEventLink.toLowerCase() === link.customEventLink.toLowerCase())
+      : false;
+
+    if (duplicateLink) {
+      window.alert(
+        `A custom link with the name "${link.customEventLink}" already exists. Please choose a different link.`
+      );
+      return false;
+    }
+
+    // Validation: check for consecutive hyphens or leading/trailing hyphens
+    if (
+      link.customEventLink &&
+      (link.customEventLink.startsWith("-") ||
+        link.customEventLink.endsWith("-") ||
+        link.customEventLink.includes("--"))
+    ) {
+      window.alert("Custom Link cannot start or end with hyphens, and cannot contain consecutive hyphens.");
+      return false;
+    }
+
+    // Validation: reference must be selected when type is chosen
+    if (!link.referenceId) {
+      window.alert(`Please select a ${link.type === "event" ? "event" : "recurring template"} reference.`);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleCancel = (id: string) => {
     setEditIds((prev) => prev.filter((editId) => editId !== id));
     if (Object.keys(links).includes(id)) {
@@ -155,7 +164,7 @@ export default function CustomEventLinksTable({
   };
 
   const handleCopyLink = (link: string) => {
-    navigator.clipboard.writeText(`https://www.sportshub.net.au/event/${user.username}/${link}`);
+    navigator.clipboard.writeText(`${getUrlWithCurrentHostname(`/event/${user.username}/${link}`)}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -176,15 +185,11 @@ export default function CustomEventLinksTable({
   };
 
   // Utility function to update a field in updatedLinks by id
-  function handleFieldChange<T extends keyof CustomEventLink>(
+  const handleFieldChange = <T extends keyof CustomEventLink>(
     id: string,
     field: T,
     valueFn: (prev: CustomEventLink) => CustomEventLink[T]
-  ) {
-    setUpdatedLinks((prev) => {
-      return { ...prev, [id]: { ...prev[id], [field]: valueFn(prev[id]) } };
-    });
-  }
+  ) => setUpdatedLinks((prev) => ({ ...prev, [id]: { ...prev[id], [field]: valueFn(prev[id]) } }));
 
   return (
     <div className="w-full">
@@ -305,7 +310,7 @@ export default function CustomEventLinksTable({
                                     : Object.entries(
                                         activeRecurringTemplates.find(
                                           (template) => template.recurrenceTemplateId === val
-                                        )!.recurrenceData.pastRecurrences
+                                        )!.recurrenceData.pastRecurrences ?? {}
                                       )
                                         .map(([dateStr, id]) => ({ date: new Date(dateStr), id }))
                                         .sort((a, b) => b.date.getTime() - a.date.getTime())[0].id,
