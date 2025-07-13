@@ -144,11 +144,13 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   except Exception as e:
     logger.error(f"Error reading legacy event fields: {e}")
 
-  if vacancy1 is not None and vacancy1 >= quantity:
+  if vacancy1 is not None and vacancy1 >= quantity and price1 is not None:
     vacancy = vacancy1
     price = price1
     source = "ticketType"
+    #Update both
     transaction.update(ticket_type_ref, {"availableQuantity": vacancy - quantity})
+    transaction.update(event_ref, {"vacancy": vacancy - quantity})
   elif vacancy2 is not None and vacancy2 >= quantity:
     vacancy = vacancy2
     price = price2
@@ -192,7 +194,8 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
           "name": event.get("name"),
           "metadata": {
             "eventId": event_id,
-            "isPrivate": is_private
+            "isPrivate": is_private,
+            "ticketTypeId": ticket_type_id if ticket_type_id is not None else ""
           }
         },
         "unit_amount": price

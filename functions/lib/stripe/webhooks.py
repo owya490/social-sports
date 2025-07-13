@@ -70,7 +70,7 @@ def add_stripe_event_and_checkout_tags(logger: Logger, event: Event):
 
 # Will return orderId for email to pick up and read order information. If this function fails, either logic error or transactions fail, it will return None
 @firestore.transactional
-def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer, full_name: str, phone_number: str, payment_details: stripe.checkout.Session.TotalDetails) -> str | None: # Typing of customer is customer details
+def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer, full_name: str, phone_number: str, payment_details: stripe.checkout.Session.TotalDetails, ticket_type_id: str | None = None) -> str | None: # Typing of customer is customer details
   # Update the event to include the new attendees
   private_path = "Private" if is_private else "Public"
   event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
@@ -160,7 +160,8 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
       "eventId": event_id,
       "orderId": order_id_ref.id,
       "price": item.price.unit_amount,
-      "purchaseDate": purchase_time
+      "purchaseDate": purchase_time,
+      "ticketTypeId": ticket_type_id if ticket_type_id is not None else "",
     })
     ticket_list.append(tickets_id_ref.id)
 
@@ -205,7 +206,7 @@ def record_checkout_session_by_customer_email(transaction: Transaction, event_id
 
 
 @firestore.transactional
-def restock_tickets_after_expired_checkout(transaction: Transaction, checkout_session_id: str, event_id: str, is_private: bool, line_items):
+def restock_tickets_after_expired_checkout(transaction: Transaction, checkout_session_id: str, event_id: str, is_private: bool, line_items, ticket_type_id: str | None = None):
   private_path = "Private" if is_private else "Public"
   event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
   event_metadata_ref = db.collection(f"EventsMetadata").document(event_id)
@@ -213,7 +214,9 @@ def restock_tickets_after_expired_checkout(transaction: Transaction, checkout_se
   item = line_items["data"][0] # we only offer one item type per checkout (can buy multiple quantities)
 
   transaction.update(event_ref, {"vacancy": firestore.Increment(item.quantity)})
-
+  if ticket_type_id is not None:
+    ticket_type_ref = event_ref.collection("TicketTypes").document(ticket_type_id)
+    transaction.update(ticket_type_ref, {"availableQuantity": firestore.Increment(item.quantity)})
   # Add current checkout session to the processed list
   transaction.update(
     event_metadata_ref, 
@@ -223,13 +226,13 @@ def restock_tickets_after_expired_checkout(transaction: Transaction, checkout_se
   )
 
 
-def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer_details, checkout_session: stripe.checkout.Session, full_name: str, phone_number: str):
+def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer_details, checkout_session: stripe.checkout.Session, full_name: str, phone_number: str, ticket_type_id: str | None = None):
   # Check if this checkout_session_id has already been processed.
   if (check_if_session_has_been_processed_already(transaction, logger, checkout_session_id, event_id)):
     logger.info(f"Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}")
     return https_fn.Response(status=200)
   
-  orderId = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number, checkout_session.total_details)
+  orderId = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number, checkout_session.total_details, ticket_type_id)
   if orderId == None:
     logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
     return https_fn.Response(status=500) 
@@ -248,13 +251,13 @@ def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Log
   return https_fn.Response(status=200)
   
 
-def fulfilment_workflow_on_expired_session(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items):
+def fulfilment_workflow_on_expired_session(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items, ticket_type_id: str | None = None):
   # Check if this checkout_session_id has already been processed.
   if (check_if_session_has_been_processed_already(transaction, logger, checkout_session_id, event_id)):
     logger.info(f"Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}")
     return https_fn.Response(status=200)
 
-  restock_tickets_after_expired_checkout(transaction, checkout_session_id, event_id, is_private, line_items)
+  restock_tickets_after_expired_checkout(transaction, checkout_session_id, event_id, is_private, line_items, ticket_type_id)
       
   logger.info(f"Successfully handled checkout.session.expired webhook event. session={checkout_session_id}")
   return https_fn.Response(status=200)
@@ -321,7 +324,6 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
       if session.metadata is None:
         logger.error(f"Unable to retrieve session metadata from session, returned none. session={session.id}")
         return https_fn.Response(status=400)
-
       try:
         session_metadata = SessionMetadata(**session.metadata)
       except ValueError as v:
@@ -362,8 +364,8 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
 
       logger.info(f"Attempting to fulfill completed event ticket purchase. session={session.id}, eventId={session_metadata.eventId}, line_items={line_items}, customer={customer_details.email}")
       transaction = db.transaction()
-      
-      return fulfilment_workflow_on_ticket_purchase(transaction, logger, checkout_session_id, session_metadata.eventId, session_metadata.isPrivate, line_items, customer_details, session, full_name, phone_number)
+      ticket_type_id = session_metadata.ticket_type_id or None
+      return fulfilment_workflow_on_ticket_purchase(transaction, logger, checkout_session_id, session_metadata.eventId, session_metadata.isPrivate, line_items, customer_details, session, full_name, phone_number, session_metadata.ticket_type_id)
 
     # Handle the checkout.session.expired event
     case "checkout.session.expired":
@@ -400,7 +402,8 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
         return https_fn.Response(status=500)
 
       transaction = db.transaction()
-      return fulfilment_workflow_on_expired_session(transaction, logger, checkout_session_id, session_metadata.eventId, session_metadata.isPrivate, line_items)
+      ticket_type_id = session_metadata.ticket_type_id or None
+      return fulfilment_workflow_on_expired_session(transaction, logger, checkout_session_id, session_metadata.eventId, session_metadata.isPrivate, line_items, ticket_type_id)
     
     # Default case
     case _:
