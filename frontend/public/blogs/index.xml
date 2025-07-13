@@ -16,6 +16,47 @@
     
     
     <item>
+      <title>[Feature] Custom Event Links</title>
+      <link>http://localhost:1313/blogs/features/custom-event-links/</link>
+      <pubDate>Sun, 13 Jul 2025 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost:1313/blogs/features/custom-event-links/</guid>
+      <description>
+        
+        
+        &lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/link-wallpaper.png&#34; alt=&#34;Link Wallpaper&#34;  loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
+&lt;h1&gt;Introducing &lt;strong&gt;Custom Event Links&lt;/strong&gt; 🔗&lt;/h1&gt;&lt;p&gt;We&amp;rsquo;re excited to announce our latest feature that&amp;rsquo;s going to make sharing your events easier than ever! Say hello to &lt;strong&gt;Custom Event Links&lt;/strong&gt; - your new best friend for seamless event promotion.&lt;/p&gt;
+&lt;h2&gt;What are Custom Event Links?&lt;span class=&#34;hx:absolute hx:-mt-20&#34; id=&#34;what-are-custom-event-links&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#what-are-custom-event-links&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Custom Event Links allow you to create a permanent, branded URL on SPORTSHUB that you can share anywhere - social media, emails, business cards, you name it! The best part? These links are &lt;strong&gt;smart&lt;/strong&gt; - they automatically update to point to your latest event in your recurring event series.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://localhost:1313/images/custom-event-link.png&#34; alt=&#34;Custom Event Link&#34;  loading=&#34;lazy&#34; /&gt;&lt;/p&gt;
+&lt;h2&gt;How it Works&lt;span class=&#34;hx:absolute hx:-mt-20&#34; id=&#34;how-it-works&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#how-it-works&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;⭐ For Single Events&lt;span class=&#34;hx:absolute hx:-mt-20&#34; id=&#34;-for-single-events&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#-for-single-events&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Create a custom link like &lt;code&gt;sportshub.net.au/event/username/your-brand&lt;/code&gt; that points directly to your event. Perfect for one-off tournaments, recurring workshops, or special events.&lt;/p&gt;
+&lt;h3&gt;🗓️ For Recurring Events&lt;span class=&#34;hx:absolute hx:-mt-20&#34; id=&#34;-for-recurring-events&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#-for-recurring-events&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Set up a custom link that automatically updates to your next recurring event. No more broken links or manual updates - your link stays fresh and always points to the current event in your series.&lt;/p&gt;
+&lt;h2&gt;Why You&amp;rsquo;ll Love It&lt;span class=&#34;hx:absolute hx:-mt-20&#34; id=&#34;why-youll-love-it&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#why-youll-love-it&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;🎯 &lt;strong&gt;Brand Consistency:&lt;/strong&gt; Keep your links clean and professional&lt;/li&gt;
+&lt;li&gt;⚡ &lt;strong&gt;Always Current:&lt;/strong&gt; Links automatically update for recurring events&lt;/li&gt;
+&lt;li&gt;📱 &lt;strong&gt;Share Anywhere:&lt;/strong&gt; Works on all platforms and devices&lt;/li&gt;
+&lt;li&gt;🔄 &lt;strong&gt;Zero Maintenance:&lt;/strong&gt; Set it once, forget about it&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Perfect For&lt;span class=&#34;hx:absolute hx:-mt-20&#34; id=&#34;perfect-for&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#perfect-for&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Sports Clubs&lt;/strong&gt; running weekly sessions&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Event Organizers&lt;/strong&gt; with regular tournaments&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Anyone&lt;/strong&gt; who wants a professional, permanent event link&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Getting Started&lt;span class=&#34;hx:absolute hx:-mt-20&#34; id=&#34;getting-started&#34;&gt;&lt;/span&gt;
+    &lt;a href=&#34;#getting-started&#34; class=&#34;subheading-anchor&#34; aria-label=&#34;Permalink for this section&#34;&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Head over to your organiser dashboard and look for the &amp;ldquo;Custom Links&amp;rdquo; section. Create your first custom link in just a few clicks!&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;Ready to make your events easier to share? &lt;a href=&#34;https://www.sportshub.net.au/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Try Custom Event Links today&lt;/a&gt;!&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Built with&lt;/em&gt; ❤️  &lt;em&gt;by the &lt;a href=&#34;https://www.sportshub.net.au/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;SPORTSHUB&lt;/a&gt; team.&lt;/em&gt;&lt;/p&gt;
+
+      </description>
+    </item>
+    
+    <item>
       <title>Introducing SPORTSHUB Blogs</title>
       <link>http://localhost:1313/blogs/introducing-sportshub-blogs/</link>
       <pubDate>Fri, 04 Jul 2025 00:00:00 +0000</pubDate>
