@@ -25,18 +25,26 @@ def move_event_to_inactive(
     old_event_ref: DocumentReference,
     new_event_ref: DocumentReference,
 ):
-
-    # Get the event in the transaction to ensure operations are atomic
     event_snapshot = old_event_ref.get(transaction=transaction)
+    if not event_snapshot.exists:
+        raise ValueError(f"Event document at {old_event_ref.path} does not exist.")
+
     event_dict = event_snapshot.to_dict()
     event_dict.update({"isActive": False})
 
-    # Set the document in InActive
     transaction.set(new_event_ref, event_dict)
 
-    # Delete from the active partition
-    transaction.delete(old_event_ref)
+    ticket_types_ref = old_event_ref.collection("TicketTypes")
+    ticket_types = ticket_types_ref.stream(transaction=transaction)
 
+    for ticket_doc in ticket_types:
+        ticket_data = ticket_doc.to_dict()
+        new_ticket_ref = new_event_ref.collection("TicketTypes").document(ticket_doc.id)
+
+        transaction.set(new_ticket_ref, ticket_data)
+        transaction.delete(ticket_doc.reference)
+
+    transaction.delete(old_event_ref)
 
 # Function to move an event from the upcoming organiser events to past
 def remove_event_from_upcoming_organiser_events(
