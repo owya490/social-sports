@@ -3,7 +3,7 @@ title: "Introducing SPORTSHUB Blogs"
 date: "2025-07-04"
 authors:
   - name: Owen Yang
-    image: https://scontent.fsyd14-1.fna.fbcdn.net/v/t39.30808-6/476959321_2377170309310150_5899559973306755834_n.jpg?stp=cp6_dst-jpg_tt6&_nc_cat=102&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=ra7oRmbUQLIQ7kNvwH1pGKZ&_nc_oc=AdmJLdXbATjHcqxXPa0Aw-0y8az4aqVjgWSFR28fbnBenKBkUIpIGvPi3i4azgFavwo&_nc_zt=23&_nc_ht=scontent.fsyd14-1.fna&_nc_gid=nxqh6OLFM0Gp5CySNQByRg&oh=00_AfPqIi8mGvw4k01iRTfE9kfGhKHep62qfunsIIgunUhg3g&oe=686DC9FE
+    image: /images/owen-dp.jpg
     link: https://github.com/owya490
 tags:
   - SPORTSHUB
@@ -11,12 +11,17 @@ tags:
   - Tech
   - HUGO
 image: https://www.blogtyrant.com/wp-content/uploads/2022/04/how-to-start-a-sports-blog.png
+description: We're super excited to launch this space where we'll be sharing all the latest and greatest from the SPORTSHUB team.
 ---
+
 ![SPORT BLOG](https://www.blogtyrant.com/wp-content/uploads/2022/04/how-to-start-a-sports-blog.png)
+
 # Welcome to the brand new **SPORTSHUB Blogs**! 🎉
 
-We're super excited to launch this space where we'll be sharing all the latest and greatest from the SPORTSHUB team. 
+We're super excited to launch this space where we'll be sharing all the latest and greatest from the SPORTSHUB team.
+
 <!--more-->
+
 Expect a mix of **feature release announcements**, deep dives into our **engineering adventures**, and maybe even a few behind-the-scenes stories (with memes, if we're feeling brave).
 
 ## Why a Blog?
@@ -47,6 +52,7 @@ Here's a peek under the hood:
 ![Hugo Logo](https://gohugo.io/images/hugo-logo-wide.svg)
 
 &nbsp;
+
 ## Meet Hextra: Our Theme of Choice
 
 We wanted our blog to look as good as it reads, so we picked the [Hextra theme](https://github.com/imfing/hextra) for Hugo. It's modern, clean, and super customizable. Plus, it comes with all the bells and whistles:
