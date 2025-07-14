@@ -1,5 +1,10 @@
 package com.functions.events.controllers;
 
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.UpdateRecurrenceTemplateResponse;
 import com.functions.events.services.RecurringEventsService;
@@ -7,10 +12,6 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 public class UpdateRecurrenceTemplateEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(UpdateRecurrenceTemplateEndpoint.class);
@@ -19,9 +20,20 @@ public class UpdateRecurrenceTemplateEndpoint implements HttpFunction {
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         // Set CORS headers for all responses
         response.appendHeader("Access-Control-Allow-Origin", "*");
-        response.appendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+        response.appendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
         response.appendHeader("Access-Control-Max-Age", "3600"); // Cache preflight for 1 hour
+
+        // Handle GET Ping requests for prewarming the cloud functions reducing cold start times
+        if ("GET".equalsIgnoreCase(request.getMethod())) {
+            logger.info("Handling GET request: {}", request);
+            response.setStatusCode(200);
+            if (request.getHeaders().get("Action").get(0).equals("Ping")) {
+                logger.info("Handling Ping request: {}", request);
+                response.getWriter().write("Pong!");
+                return;
+            }
+        }
 
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
