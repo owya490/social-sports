@@ -13,6 +13,13 @@ import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./form
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
+/**
+ * Creates a new active form in Firestore and associates it with the user.
+ *
+ * @param form - The form data to be created
+ * @returns The unique ID of the newly created form
+ * @throws If rate limiting is exceeded or the Firestore operation fails
+ */
 export async function createForm(form: Form): Promise<FormId> {
   if (!rateLimitCreateForm()) {
     formsServiceLogger.warn("Rate Limited!!!");
@@ -34,7 +41,12 @@ export async function createForm(form: Form): Promise<FormId> {
   }
 }
 
-/** Searches through all collections for form with formId */
+/**
+ * Retrieves a form by its ID from any collection.
+ *
+ * @param formId - The unique identifier of the form to retrieve
+ * @returns The form data associated with the specified form ID
+ */
 export async function getForm(formId: FormId): Promise<Form> {
   try {
     const formDocSnapshot = await findFormDoc(formId);
@@ -48,6 +60,13 @@ export async function getForm(formId: FormId): Promise<Form> {
   }
 }
 
+/**
+ * Retrieves the form ID associated with a given event ID.
+ *
+ * @param eventId - The ID of the event to look up
+ * @param bypassCache - If true, bypasses any cache when fetching the event
+ * @returns The form ID if associated with the event, or null if none exists
+ */
 export async function getFormIdByEventId(eventId: EventId, bypassCache: boolean = false): Promise<FormId | null> {
   formsServiceLogger.info(`getFormIdByEventId: ${eventId}`);
   try {
@@ -66,6 +85,13 @@ export async function getFormIdByEventId(eventId: EventId, bypassCache: boolean 
   }
 }
 
+/**
+ * Retrieves the form associated with a given event ID.
+ *
+ * @param eventId - The ID of the event to look up
+ * @param bypassCache - If true, bypasses any caching when retrieving the form ID
+ * @returns The form associated with the event, or undefined if no form is linked to the event
+ */
 export async function getFormByEventId(eventId: EventId, bypassCache: boolean = false): Promise<Form | undefined> {
   formsServiceLogger.info(`getFormByEventId: ${eventId}`);
   try {
@@ -81,6 +107,11 @@ export async function getFormByEventId(eventId: EventId, bypassCache: boolean = 
   }
 }
 
+/**
+ * Retrieves all active forms from the Firestore active forms collection.
+ *
+ * @returns An array of active form objects.
+ */
 export async function getActiveForms(): Promise<Form[]> {
   formsServiceLogger.info("getActiveForms");
   try {
@@ -100,6 +131,11 @@ export async function getActiveForms(): Promise<Form[]> {
   }
 }
 
+/**
+ * Retrieves all deleted forms from the Firestore deleted forms collection.
+ *
+ * @returns An array of deleted form objects.
+ */
 export async function getDeletedForms(): Promise<Form[]> {
   formsServiceLogger.info("getDeletedForms");
   try {
@@ -119,6 +155,11 @@ export async function getDeletedForms(): Promise<Form[]> {
   }
 }
 
+/**
+ * Updates an existing active form with the provided partial form data.
+ *
+ * Throws an error if the form does not exist.
+ */
 export async function updateActiveForm(formData: Partial<Form>, formId: FormId): Promise<void> {
   formsServiceLogger.info(`updateActiveForm: ${formId}`);
   try {
@@ -139,7 +180,13 @@ export async function updateActiveForm(formData: Partial<Form>, formId: FormId):
   }
 }
 
-/** Move form from active to deleted */
+/**
+ * Moves a form from the active forms collection to the deleted forms collection in Firestore.
+ *
+ * The form's data is copied to the deleted collection with `formActive` set to `false` and a `deletedAt` timestamp, and the original active form document is removed.
+ *
+ * @throws If the form with the specified ID does not exist.
+ */
 export async function deleteForm(formId: FormId): Promise<void> {
   formsServiceLogger.info(`deleteForm with formId: ${formId}`);
   const batch: WriteBatch = writeBatch(db);
@@ -171,6 +218,15 @@ export async function deleteForm(formId: FormId): Promise<void> {
   }
 }
 
+/**
+ * Creates a new submitted form response document for a specific event and form in Firestore.
+ *
+ * @param formResponse - The form response data to be stored
+ * @param eventId - The ID of the event associated with the form response
+ * @returns The unique ID of the created form response document
+ *
+ * @throws If rate limiting is exceeded or if the Firestore operation fails
+ */
 export async function createFormResponse(formResponse: FormResponse, eventId: EventId): Promise<FormResponseId> {
   if (!rateLimitCreateFormResponse()) {
     formsServiceLogger.warn("Rate Limited!!!");
@@ -248,7 +304,12 @@ export async function updateFormResponse(
   }
 }
 
-// Function to get all forms for a specific user
+/**
+ * Retrieves all forms, both active and deleted, associated with a specific user.
+ *
+ * @param userId - The ID of the user whose forms are to be retrieved
+ * @returns An array of forms belonging to the specified user
+ */
 export async function getFormsForUser(userId: UserId): Promise<Form[]> {
   formsServiceLogger.info(`getFormsForUser: ${userId}`);
   try {
@@ -283,7 +344,14 @@ export async function getFormsForUser(userId: UserId): Promise<Form[]> {
   }
 }
 
-// Function to get active forms for a specific user
+/**
+ * Retrieves all active forms associated with a specific user.
+ *
+ * Fetches the user's public data to obtain their form IDs, retrieves each form, and returns only those that are currently active.
+ *
+ * @param userId - The unique identifier of the user whose active forms are to be retrieved
+ * @returns An array of active forms belonging to the user
+ */
 export async function getActiveFormsForUser(userId: UserId): Promise<Form[]> {
   formsServiceLogger.info(`getActiveFormsForUser: ${userId}`);
   try {

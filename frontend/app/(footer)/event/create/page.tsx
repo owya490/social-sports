@@ -79,6 +79,11 @@ const INITIAL_DATA: FormData = {
   newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
 };
 
+/**
+ * Renders a multi-step event creation form with image upload, preview, and recurrence options.
+ *
+ * Handles form state, validation, image previews, and submission workflow, including event creation, image upload, and notification. Redirects to the event page upon successful creation or displays error alerts on failure. Only accessible to authenticated users.
+ */
 export default function CreateEvent() {
   const { user } = useUser();
   const router = useRouter();

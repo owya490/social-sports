@@ -17,6 +17,19 @@ import com.google.cloud.functions.HttpResponse;
 public class ExecNextFulfilmentEntityEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(ExecNextFulfilmentEntityEndpoint.class);
 
+    /**
+     * Handles HTTP requests to execute the next fulfilment entity in a session.
+     *
+     * <p>Supports only POST requests with a JSON body containing a fulfilment session ID.
+     * Responds with appropriate CORS headers for all requests, including handling OPTIONS preflight requests.
+     * Returns a 200 OK response with the next fulfilment entity if found, 404 Not Found if not found,
+     * 400 Bad Request for invalid input, and 405 Method Not Allowed for unsupported HTTP methods.
+     * All responses are serialized as JSON.
+     *
+     * @param request the incoming HTTP request
+     * @param response the HTTP response to be sent
+     * @throws Exception if an unexpected error occurs during request processing
+     */
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         // Set CORS headers for all responses

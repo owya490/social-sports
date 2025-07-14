@@ -33,6 +33,11 @@ interface MobileEventPaymentProps {
   eventLink: string;
 }
 
+/**
+ * Renders a mobile-friendly event payment interface, allowing users to view event details, select ticket quantity, and proceed with booking or contacting the organizer.
+ *
+ * Displays event date, location, and price, and dynamically adjusts available actions based on event status, registration period, payment activation, and ticket availability. Supports both direct payment (with Stripe or fulfilment session) and organizer contact flows.
+ */
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const router = useRouter();
   const [attendeeCount, setAttendeeCount] = useState(1);

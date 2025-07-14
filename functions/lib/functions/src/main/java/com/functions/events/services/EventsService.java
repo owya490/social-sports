@@ -48,6 +48,13 @@ public class EventsService {
         return newEventDocRef.getId();
     }
 
+    /**
+     * Creates and stores metadata for a new event in Firestore within the given transaction.
+     *
+     * @param transaction the Firestore transaction used for the write operation
+     * @param eventId the unique identifier of the event for which metadata is being created
+     * @param data the data object containing information about the new event
+     */
     private static void createEventMetadata(Transaction transaction, String eventId, NewEventData data) {
         logger.info("Creating Event Metadata: {}", eventId);
         Firestore db = FirebaseService.getFirestore();

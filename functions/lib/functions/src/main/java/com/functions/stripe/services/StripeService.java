@@ -16,6 +16,16 @@ public class StripeService {
 
     public static final String FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID = "get_stripe_checkout_url_by_event_id";
 
+    /**
+     * Retrieves a Stripe checkout URL for a given event ID by invoking a Firebase cloud function.
+     *
+     * @param eventId The unique identifier of the event.
+     * @param isPrivate Indicates whether the event is private.
+     * @param numTickets The number of tickets to purchase.
+     * @param successUrl Optional URL to redirect to upon successful checkout; if not provided, a default event success URL is used.
+     * @param fulfilmentSessionId The session identifier for fulfillment (not used in this method).
+     * @return An {@code Optional<String>} containing the Stripe checkout URL if successful, or empty if an error occurs or the URL is unavailable.
+     */
     public static Optional<String> getStripeCheckoutFromEventId(String eventId,
                                                                 boolean isPrivate,
                                                                 Integer numTickets,

@@ -17,11 +17,26 @@ import com.google.cloud.firestore.Firestore;
 public class FulfilmentSessionRepository {
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSessionRepository.class);
 
+    /**
+     * Creates a new fulfilment session in Firestore with a generated unique session ID.
+     *
+     * @param fulfilmentSession the fulfilment session data to store
+     * @return the generated session ID of the newly created fulfilment session
+     * @throws Exception if the session could not be created in Firestore
+     */
     public static String createFulfilmentSession(FulfilmentSession fulfilmentSession) throws Exception {
         String fulfilmentSessionId = UUID.randomUUID().toString();
         return createFulfilmentSession(fulfilmentSessionId, fulfilmentSession);
     }
 
+    /**
+     * Creates a new fulfilment session document in Firestore with the specified session ID and session data.
+     *
+     * @param fulfilmentSessionId the unique identifier for the fulfilment session document
+     * @param fulfilmentSession the fulfilment session data to store
+     * @return the Firestore document ID of the created fulfilment session
+     * @throws Exception if the session creation fails
+     */
     public static String createFulfilmentSession(String fulfilmentSessionId, FulfilmentSession fulfilmentSession) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(fulfilmentSessionId);
@@ -33,11 +48,24 @@ public class FulfilmentSessionRepository {
         }
     }
 
+    /**
+     * Returns a Firestore DocumentReference for the fulfilment session document with the specified session ID.
+     *
+     * @param sessionId the unique identifier of the fulfilment session
+     * @return the DocumentReference pointing to the fulfilment session document in Firestore
+     */
     private static DocumentReference getFulfilmentSessionDocRef(String sessionId) {
         Firestore db = FirebaseService.getFirestore();
         return db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH).document(sessionId);
     }
 
+    /**
+     * Retrieves a fulfilment session by its session ID from Firestore.
+     *
+     * @param sessionId the unique identifier of the fulfilment session to retrieve
+     * @return an {@code Optional} containing the {@code FulfilmentSession} if found, or {@code Optional.empty()} if not found
+     * @throws Exception if an error occurs while accessing Firestore
+     */
     public static Optional<FulfilmentSession> getFulfilmentSession(String sessionId) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
@@ -52,6 +80,13 @@ public class FulfilmentSessionRepository {
         }
     }
 
+    /**
+     * Updates the fulfilment session document in Firestore with the specified session ID using the provided session data.
+     *
+     * @param sessionId the unique identifier of the fulfilment session to update
+     * @param updatedSession the new data to replace the existing fulfilment session
+     * @throws Exception if the update operation fails
+     */
     public static void updateFulfilmentSession(String sessionId, FulfilmentSession updatedSession) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
@@ -62,6 +97,12 @@ public class FulfilmentSessionRepository {
         }
     }
 
+    /**
+     * Deletes the fulfilment session document identified by the given session ID from Firestore.
+     *
+     * @param sessionId the unique identifier of the fulfilment session to delete
+     * @throws Exception if the deletion fails or an error occurs during the Firestore operation
+     */
     public static void deleteFulfilmentSession(String sessionId) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);

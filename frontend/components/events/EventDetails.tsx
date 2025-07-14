@@ -15,6 +15,11 @@ interface EventDetailsProps {
 
 export const MAX_TICKETS_PER_ORDER = 7;
 
+/**
+ * Renders detailed information about an event, including its image, description, tags, and payment options, with layouts optimized for both mobile and desktop screens.
+ *
+ * @param props - Contains event data, associated tags, and a loading state setter.
+ */
 export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
 

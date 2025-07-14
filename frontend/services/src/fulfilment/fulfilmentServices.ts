@@ -19,11 +19,12 @@ export const FULFILMENT_SESSION_ENABLED = false;
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 
 /**
- * Main entry point for creating fulfilment sessions.
- * Initializes a fulfilment session based on the provided fulfilment session type.
+ * Initializes a fulfilment session based on the specified session type and returns the session ID.
  *
- * NOTE: Fulfilment entities are initialized in the order they are provided in
- * `fulfilmentSessionType.fulfilmentEntityTypes`.
+ * The fulfilment entities are initialized in the order specified by `fulfilmentSessionType.fulfilmentEntityTypes`.
+ *
+ * @param fulfilmentSessionType - The configuration for the fulfilment session, including type, event ID, ticket count, and entity types.
+ * @returns The unique identifier for the newly created fulfilment session.
  */
 export async function initFulfilmentSession(
   fulfilmentSessionType: FulfilmentSessionType
@@ -45,7 +46,14 @@ export async function initFulfilmentSession(
 }
 
 /**
- * Initializes a checkout fulfilment session for the given event ID with specified fulfilment entity types.
+ * Creates a checkout fulfilment session for a specific event and ticket quantity with the given fulfilment entity types.
+ *
+ * @param eventId - The unique identifier of the event for which the fulfilment session is being created.
+ * @param numTickets - The number of tickets involved in the session.
+ * @param fulfilmentEntityTypes - The types of fulfilment entities to include in the session.
+ * @returns The unique identifier of the newly created fulfilment session.
+ *
+ * @throws If the session initialization fails due to a network error or a non-successful response from the backend.
  */
 async function initCheckoutFulfilmentSession(
   eventId: EventId,
@@ -91,8 +99,9 @@ async function initCheckoutFulfilmentSession(
 }
 
 /**
- * Executes the next fulfilment entity in the session.
- * Returns a boolean indicating whether there are more fulfilment entities to execute.
+ * Executes the next fulfilment entity in the specified session and navigates to the provided URL if one is returned.
+ *
+ * If the response includes a URL, the router is redirected to that URL. If no URL is present, it indicates that there are no more fulfilment entities to execute.
  */
 export async function execNextFulfilmentEntity(
   fulfilmentSessionId: FulfilmentSessionId,

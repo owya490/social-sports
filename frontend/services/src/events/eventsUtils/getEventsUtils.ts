@@ -106,6 +106,13 @@ export async function getAllEventsFromCollectionRef(
   }
 }
 
+/**
+ * Retrieves and reconstructs event data from local storage.
+ *
+ * Parses the cached event data JSON, restores Firestore `Timestamp` fields, and returns an array of fully typed `EventData` objects, including the `formId` property.
+ *
+ * @returns An array of `EventData` objects reconstructed from local storage.
+ */
 function getEventsDataFromLocalStorage(): EventData[] {
   const eventsData: EventData[] = JSON.parse(localStorage.getItem(LocalStorageKeys.EventsData)!);
   const eventsDataFinal: EventData[] = [];

@@ -74,6 +74,11 @@ public class FirebaseService {
         }
     }
 
+    /**
+     * Initializes Firebase, Firestore, Google Cloud Logging, and PostHog analytics clients using environment variables and service account credentials.
+     *
+     * @throws Exception if the Firebase project name is not set or if Firebase initialization fails.
+     */
     private static void initialize() throws Exception {
         String credentialsPath = "functions_key.json";
         posthogApiKey = Global.getEnv("POSTHOG_API_KEY");
@@ -110,10 +115,22 @@ public class FirebaseService {
         posthog = new PostHog.Builder(posthogApiKey).host(posthogHost).build();
     }
 
+    /**
+     * Returns the Firestore database instance used for Firebase operations.
+     *
+     * @return the Firestore client instance
+     */
     public static Firestore getFirestore() {
         return db;
     }
 
+    /**
+     * Invokes a Firebase Cloud Function by name with the provided request data and returns the parsed response.
+     *
+     * @param functionName the name of the Firebase Cloud Function to call
+     * @param requestData the data to send as the request payload
+     * @return an {@code Optional} containing the {@code CallFirebaseFunctionResponse} if the call succeeds and returns a valid response; otherwise, an empty {@code Optional}
+     */
     public static Optional<CallFirebaseFunctionResponse> callFirebaseFunction(String functionName, Object requestData) {
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION, System.getenv("PROJECT_NAME"), functionName);

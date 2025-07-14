@@ -19,6 +19,19 @@ import com.google.cloud.functions.HttpResponse;
 public class InitFulfilmentSessionEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(InitFulfilmentSessionEndpoint.class);
 
+    /**
+     * Handles HTTP requests to initialize a fulfilment session, supporting only POST and OPTIONS methods.
+     *
+     * <p>
+     * For POST requests, parses the JSON request body to extract fulfilment session parameters and attempts to create a new session.
+     * Responds with the session ID on success, or an error message with the appropriate HTTP status code on failure.
+     * Handles CORS preflight (OPTIONS) requests and rejects unsupported HTTP methods with a 405 status.
+     * </p>
+     *
+     * @param request  the incoming HTTP request
+     * @param response the HTTP response to be sent
+     * @throws Exception if an unexpected error occurs during processing
+     */
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         // Set CORS headers for all responses
@@ -67,6 +80,13 @@ public class InitFulfilmentSessionEndpoint implements HttpFunction {
         }
     }
 
+    /**
+     * Converts a list of string representations of fulfilment entity types to their corresponding {@link FulfilmentEntityType} enum values.
+     *
+     * @param fulfilmentEntityTypeStrings list of fulfilment entity type names as strings
+     * @return list of {@link FulfilmentEntityType} enum values corresponding to the input strings
+     * @throws IllegalArgumentException if any string does not match a valid {@link FulfilmentEntityType}
+     */
     private static List<FulfilmentEntityType> toFulfilmentEntityTypes(List<String> fulfilmentEntityTypeStrings) {
         return fulfilmentEntityTypeStrings
                 .stream()

@@ -32,11 +32,15 @@ public class FulfilmentSession {
 
     private static Logger logger = LoggerFactory.getLogger(FulfilmentSession.class);
 
-    /**
-     * This method handles the deserialization of FulfilmentSession from a Firestore DocumentSnapshot.
-     * <p>
-     * Firestore deserialization can't take advantage of java polymorphism - when deserializing
-     * a list of abstract FulfilmentEntity class, it will not know which concrete class to instantiate.
+    /****
+     * Deserializes a Firestore DocumentSnapshot into a FulfilmentSession instance.
+     *
+     * This method reconstructs a FulfilmentSession by manually deserializing its list of FulfilmentEntity objects,
+     * correctly instantiating each entity's concrete subclass based on its type. Unknown entity types result in an
+     * IllegalArgumentException. Deserialization errors for individual entities are logged and do not halt processing.
+     *
+     * @param snapshot the Firestore DocumentSnapshot containing session data
+     * @return a FulfilmentSession object populated with data from the snapshot
      */
     public static FulfilmentSession fromFirestore(DocumentSnapshot snapshot) {
         List<FulfilmentEntity> entities = new ArrayList<>();

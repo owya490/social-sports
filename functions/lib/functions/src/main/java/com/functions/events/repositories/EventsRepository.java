@@ -13,6 +13,16 @@ import java.util.Optional;
 public class EventsRepository {
     private static final Logger logger = LoggerFactory.getLogger(EventsRepository.class);
 
+    /**
+     * Retrieves an event by its ID from Firestore and returns it as an {@code Optional<EventData>}.
+     *
+     * Attempts to locate and map the event document corresponding to the provided event ID across multiple Firestore collection paths.
+     * If the event is found and successfully mapped, the event ID is set on the resulting {@code EventData} object and it is returned wrapped in an {@code Optional}.
+     * If the event is not found or an error occurs during retrieval or mapping, an empty {@code Optional} is returned.
+     *
+     * @param eventId the unique identifier of the event to retrieve
+     * @return an {@code Optional} containing the {@code EventData} if found and mapped successfully; otherwise, an empty {@code Optional}
+     */
     public static Optional<EventData> getEventById(String eventId) {
         try {
             EventData eventData = findEventDocumentSnapshot(eventId).toObject(EventData.class);
@@ -29,6 +39,13 @@ public class EventsRepository {
         }
     }
 
+    /**
+     * Searches for a Firestore document matching the given event ID across all configured event collection paths.
+     *
+     * @param eventId the unique identifier of the event to search for
+     * @return the DocumentSnapshot of the found event document
+     * @throws Exception if no document is found or if an error occurs during Firestore operations
+     */
     private static DocumentSnapshot findEventDocumentSnapshot(String eventId) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         try {
