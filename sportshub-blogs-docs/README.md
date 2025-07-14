@@ -18,7 +18,7 @@ Create a new markdown file with the following naming convention:
 blog-post-title.md
 ```
 
-Example: `2introducing-sportshub-blogs.md`
+Example: `introducing-sportshub-blogs.md`
 
 ### 2. Blog Post Structure
 
