@@ -59,7 +59,15 @@ interface CreateEventResponse {
   eventId: string;
 }
 
-//Function to create a Event
+/**
+ * Creates a new event in Firestore, updates the organiser's event lists, and clears relevant caches.
+ *
+ * Adds tokenized name and location fields to the event data, sets event status and privacy, and writes the event and its metadata using a Firestore batch. Updates the organiser's user document to include the new event, and, if public, adds it to the organiser's upcoming public events. Busts local caches for events and users. Throws an error if rate limited.
+ *
+ * @param data - The data for the new event
+ * @param externalBatch - Optional Firestore batch to use for the operation
+ * @returns The ID of the newly created event
+ */
 export async function createEvent(data: NewEventData, externalBatch?: WriteBatch): Promise<EventId> {
   if (!rateLimitCreateEvents()) {
     eventServiceLogger.warn("Rate Limited!!!");

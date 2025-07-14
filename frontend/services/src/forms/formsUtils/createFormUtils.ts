@@ -6,6 +6,13 @@ import { FORMS_MAX_EVENTS, FORMS_REFRESH_MILLIS, LocalStorageKeys } from "../for
 
 const createFormUtilsLogger = new Logger("createFormUtilsLogger");
 
+/**
+ * Enforces a rate limit on form creation and update operations based on recent activity.
+ *
+ * Checks local storage for the number of form operations performed within a configured time window and restricts further actions if the maximum allowed threshold is exceeded. Returns `true` if the operation is permitted, or `false` if rate limited.
+ *
+ * @returns Whether the form creation or update operation is allowed under the current rate limit
+ */
 export function rateLimitCreateForm(): boolean {
   const now = new Date();
   const maybeFormsOperationCount5Min = localStorage.getItem(LocalStorageKeys.FormsOperationCount5Min);
@@ -37,7 +44,9 @@ export function rateLimitCreateForm(): boolean {
 }
 
 /**
- * Helper function to append a formId for a specified user.
+ * Appends a form ID to the specified user's list of forms, creating the list if it does not exist.
+ *
+ * Retrieves the user's public data, updates the `forms` array to include the new form ID, and persists the change.
  */
 export async function appendFormIdForUser(formId: FormId, userId: UserId): Promise<void> {
   try {

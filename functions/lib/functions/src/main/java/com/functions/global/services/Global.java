@@ -15,6 +15,12 @@ public class Global {
             .ignoreIfMissing()
             .load();
 
+    /**
+     * Retrieves the value of the specified environment variable.
+     *
+     * @param key the name of the environment variable to retrieve
+     * @return the value of the environment variable, or {@code null} if not found or if the environment is not initialized
+     */
     public static String getEnv(String key) {
         if (dotenv == null) {
             logger.error("Dotenv is not initialized");

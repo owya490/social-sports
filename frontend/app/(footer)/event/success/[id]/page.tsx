@@ -4,7 +4,11 @@ import { EmptyEventData, EventId } from "@/interfaces/EventTypes";
 import { getEventById } from "@/services/src/events/eventsService";
 import { useEffect, useState } from "react";
 
-// Error components must be Client Components
+/**
+ * Displays a booking confirmation message for a sports event after fetching event details by ID.
+ *
+ * Shows a loading indicator while retrieving event data, then presents a thank-you message with event and organiser information upon completion.
+ */
 
 export default function Success({ params }: any) {
   const eventId: EventId = params.id;

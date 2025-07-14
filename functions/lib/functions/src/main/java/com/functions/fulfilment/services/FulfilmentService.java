@@ -28,9 +28,14 @@ public class FulfilmentService {
 
 
     /**
-     * Initializes a checkout fulfilment session for the given event ID with specified fulfilment entity types.
-     * <p>
-     * NOTE: fulfilmentEntityTypes specifies the order of fulfilment entities to be executed.
+     * Initializes a checkout fulfilment session for a given event and sequence of fulfilment entity types.
+     *
+     * Generates a unique fulfilment session ID, retrieves event data, and constructs a list of fulfilment entities in the specified order (e.g., START, STRIPE, FORMS). If any required resource (such as a Stripe checkout link or form ID) is missing, the method logs an error and returns an empty Optional. On success, the session is persisted and the session ID is returned.
+     *
+     * @param eventId the ID of the event for which to initialize the fulfilment session
+     * @param numTickets the number of tickets for the event
+     * @param fulfilmentEntityTypes the ordered list of fulfilment entity types to include in the session
+     * @return an Optional containing the fulfilment session ID if initialization succeeds; otherwise, an empty Optional
      */
     public static Optional<String> initCheckoutFulfilmentSession(String eventId,
                                                                  Integer numTickets,
@@ -101,6 +106,16 @@ public class FulfilmentService {
         return Optional.empty();
     }
 
+    /**
+     * Creates and persists a fulfilment session with the specified session ID, event ID, and list of fulfilment entities.
+     *
+     * Initializes the session with the current timestamp, associates it with the event data, and sets the current fulfilment index to zero.
+     *
+     * @param sessionId Unique identifier for the fulfilment session.
+     * @param eventId Identifier of the event associated with the session.
+     * @param fulfilmentEntities Ordered list of fulfilment entities to be processed in the session.
+     * @return An Optional containing the created fulfilment session ID if successful; otherwise, an empty Optional if creation fails.
+     */
     private static Optional<String> createFulfilmentSession(String sessionId, String eventId, List<FulfilmentEntity> fulfilmentEntities) {
         try {
             String fulfilmentSessionId = FulfilmentSessionRepository.createFulfilmentSession(sessionId, FulfilmentSession.builder()
@@ -118,6 +133,16 @@ public class FulfilmentService {
         }
     }
 
+    /**
+     * Advances the fulfilment session to the next fulfilment entity and returns its execution details.
+     *
+     * Retrieves the fulfilment session by ID, increments the current fulfilment index, updates the session,
+     * and returns a response containing the URL of the next fulfilment entity, the updated index, and the total number of entities.
+     * If all entities have been executed, returns a response with a null URL to indicate completion.
+     *
+     * @param fulfilmentSessionId the ID of the fulfilment session to advance
+     * @return an Optional containing the execution response for the next fulfilment entity, or Optional.empty() if the session is not found or an error occurs
+     */
     public static Optional<ExecNextFulfilmentEntityResponse> execNextFulfilmentEntity(String fulfilmentSessionId) {
         try {
             Optional<FulfilmentSession> maybeFulfilmentSession = FulfilmentSessionRepository.getFulfilmentSession(fulfilmentSessionId);
@@ -159,6 +184,13 @@ public class FulfilmentService {
         }
     }
 
+    /**
+     * Deletes the fulfilment session associated with the specified session ID.
+     *
+     * If the session does not exist or deletion fails, the error is logged and no exception is thrown.
+     *
+     * @param fulfilmentSessionId the unique identifier of the fulfilment session to delete
+     */
     public static void deleteFulfilmentSession(String fulfilmentSessionId) {
         try {
             FulfilmentSessionRepository.deleteFulfilmentSession(fulfilmentSessionId);

@@ -38,6 +38,13 @@ interface EventPaymentProps {
   eventLink: string;
 }
 
+/**
+ * Displays event payment and scheduling details, allowing users to book tickets or contact the organizer.
+ *
+ * Renders event date, time, location, and price. Handles ticket selection and booking flow, including integration with Stripe checkout or a fulfilment session based on feature flags. Shows appropriate UI for sold-out, closed, or past events, and provides a contact dialog for non-payment events.
+ *
+ * @returns The event payment and registration UI component.
+ */
 export default function EventPayment(props: EventPaymentProps) {
   const router = useRouter();
   const [attendeeCount, setAttendeeCount] = useState(1);

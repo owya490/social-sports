@@ -7,7 +7,13 @@ import { doc, DocumentData, DocumentReference, getDoc, QueryDocumentSnapshot } f
 import { formsServiceLogger } from "../formsServices";
 import { EventId } from "@/interfaces/EventTypes";
 
-/** Find form doc from within the sub collections in the Forms table */
+/**
+ * Searches all form template subcollections for a document reference matching the given form ID.
+ *
+ * @param formId - The unique identifier of the form to locate
+ * @returns The Firestore document reference for the form if found
+ * @throws If no matching form document is found in any subcollection
+ */
 export async function findFormDocRef(formId: FormId): Promise<DocumentReference<DocumentData, DocumentData>> {
   try {
     // Search through paths
@@ -46,6 +52,15 @@ export async function findFormDoc(formId: FormId): Promise<QueryDocumentSnapshot
   }
 }
 
+/**
+ * Searches all configured subcollections to locate and return a Firestore document reference for a specific form response.
+ *
+ * @param formId - The ID of the form associated with the response
+ * @param eventId - The ID of the event associated with the response
+ * @param formResponseId - The unique identifier of the form response to locate
+ * @returns The Firestore document reference for the matching form response
+ * @throws If no matching form response document is found in any subcollection
+ */
 export async function findFormResponseDocRef(
   formId: FormId,
   eventId: EventId,
