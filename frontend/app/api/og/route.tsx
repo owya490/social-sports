@@ -97,8 +97,9 @@ export function GET(request: NextRequest) {
       width: 1200,
       height: 630,
       headers: {
-        // Cache for 1 year (31536000 seconds) since OG images rarely change
-        "Cache-Control": "public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400",
+        // TODO: This is a temporary attempt to fix. Real fix may involve storing the images.
+        // Cache for 1 day (86400 seconds) for testing and debugging
+        "Cache-Control": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=3600",
         // Add ETag for better cache validation
         ETag: `"og-${Buffer.from(src + title).toString("base64")}"`,
         // Set content type explicitly
