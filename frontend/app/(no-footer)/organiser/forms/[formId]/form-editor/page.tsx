@@ -9,8 +9,8 @@ const FormEditorPage = () => {
   const params = useParams();
   const formId = params?.formId as string;
 
-  console.log('FormEditorPage params:', params); // Debugging line
-  console.log('FormEditorPage formId:', formId); // Debugging line
+  console.info('FormEditorPage params:', params); 
+  console.info('FormEditorPage formId:', formId); 
 
   return (
     <div>

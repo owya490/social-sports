@@ -81,7 +81,6 @@ const FormEditor = ({}: FormEditorParams) => {
     }));
   };
 
-
   const handleSubmitClick = () => {
     setShowWarning(true);
   };
@@ -331,7 +330,6 @@ const FormEditor = ({}: FormEditorParams) => {
               <div className="drag-handle cursor-grab active:cursor-grabbing hover:bg-gray-100 transition-colors flex items-center justify-center h-8 bg-gray-50 rounded-t-lg border-b border-gray-200">
                 <EllipsisHorizontalIcon className="w-5 h-5 text-gray-400" />
               </div>
-
               {/* Section Content */}
               <div className="p-6">{item.section && renderSection(item.section, item.id)}</div>
             </div>
