@@ -30,9 +30,9 @@ export async function addDefaultTicketTypes(eventId: string, capacity: number, p
     {
       id: "General",
       name: "General",
-      price: 20,
+      price: price,
       availableQuantity: capacity,
-      soldQuantity: price,
+      soldQuantity: 0,
     },
   ];
   for (const ticketType of DEFAULT_TICKET_TYPES) {
