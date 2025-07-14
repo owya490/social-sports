@@ -63,7 +63,7 @@ def send_create_event_email_with_loops(logger: Logger, email, organiser_name, ev
     ),
     region="australia-southeast1",
 )
-def send_email_on_create_event(req: https_fn.CallableRequest):
+def send_email_on_create_event_v2(req: https_fn.CallableRequest):
     uid = str(uuid.uuid4())
     logger = Logger(f"loops_create_event_logger_{uid}")
     logger.add_tag("uuid", uid)
