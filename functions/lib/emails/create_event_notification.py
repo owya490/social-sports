@@ -15,31 +15,34 @@ from lib.utils.priceUtils import centsToDollars
 class CreateEventRequest:
     eventId: str
     visibility: str
+   
 
 def send_create_event_email_with_loops(logger: Logger, email, organiser_name, event_data, request_data):
     headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
     body = {
-        "transactionalId": "cmd2y9sms12mxux0i3tcmdp9v",
-        "email": email,
-        "dataVariables": {
-            "first_name": organiser_name,
-            "event_name": event_data.get("name"),
-            "event_location": event_data.get("location"),
-            "event_startDate": (
-                event_data.get("startDate").timestamp_pb().ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
-                if event_data.get("startDate") else ""
-            ),
-            "event_endDate": (
-                event_data.get("endDate").timestamp_pb().ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
-                if event_data.get("endDate") else ""
-            ),
-            "event_sport": event_data.get("sport"),
-            "event_price": centsToDollars(event_data.get("price")),
-            "event_capacity": event_data.get("capacity"),
-            "event_isPrivate": request_data.visibility,
-            "event_id": request_data.eventId,
-        }
+    "transactionalId": "YOUR_LOOPS_CREATE_EVENT_TEMPLATE_ID",
+    "email": email,
+    "dataVariables": {
+        "name": organiser_name,
+        "eventName": event_data.get("name"),
+        "startDate": (
+            event_data.get("startDate").timestamp_pb().ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
+            if event_data.get("startDate") else ""
+        ),
+        "endDate": (
+            event_data.get("endDate").timestamp_pb().ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
+            if event_data.get("endDate") else ""
+        ),
+        "eventLocation": event_data.get("location"),
+        "eventPrice": centsToDollars(event_data.get("price")),
+        "eventCapacity": event_data.get("capacity"),
+        "eventSport": event_data.get("sport"),
+        "eventId": request_data.eventId, 
+        "eventPrivacy": request_data.visibility,
+        "eventRecurrence": event_data.get("recurrence"),
+        "eventLink": event_data.get("eventLink") or "",
     }
+}
 
     logger.info(f"Sending Loops transactional email with id {body['transactionalId']} to {email} for eventId {request_data.eventId}")
 
@@ -70,6 +73,11 @@ def send_email_on_create_event_v2(req: https_fn.CallableRequest):
 
     body_data = req.data
 
+    # Log all body variables for debugging
+    logger.info(f"Request body: {body_data}")
+    for key, value in body_data.items():
+        logger.info(f"Body variable: {key} = {value}")
+
     try:
         request_data = CreateEventRequest(**body_data)
     except Exception as v:
@@ -78,6 +86,7 @@ def send_email_on_create_event_v2(req: https_fn.CallableRequest):
         )
         return https_fn.Response("Invalid request body", status=400)
 
+    # --- Data Extraction (matches email_reminder.py style) ---
     event_ref = db.collection(f"Events/Active/{request_data.visibility}").document(request_data.eventId)
     event_snapshot = event_ref.get()
     if not event_snapshot.exists:
