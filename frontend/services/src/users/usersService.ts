@@ -178,6 +178,7 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
     const publicDataToUpdate = extractPublicUserData(newData);
     const privateDataToUpdate = extractPrivateUserData(newData);
 
+    console.log("publicDataToUpdate", publicDataToUpdate);
     // Update public & private user data
     if (transaction) {
       transaction.update(publicUserDocRef, publicDataToUpdate);

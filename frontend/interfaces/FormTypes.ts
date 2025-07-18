@@ -3,6 +3,7 @@ import { Branded } from "./index";
 
 export interface Form {
   title: FormTitle;
+  description: FormDescription;
   userId: UserId;
   formActive: boolean;
   sectionsOrder: SectionId[]; // keeps track of ordering for editing forms
@@ -11,6 +12,7 @@ export interface Form {
 
 export type FormId = Branded<string, "FormId">;
 export type FormTitle = Branded<string, "FormTitle">;
+export type FormDescription = Branded<string, "FormDescription">;
 export type SectionId = Branded<string, "SectionId">;
 export type FormResponseId = Branded<string, "FormResponseId">;
 
