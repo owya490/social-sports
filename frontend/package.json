@@ -26,6 +26,7 @@
     "@next/font": "^14.2.15",
     "@opentelemetry/instrumentation-document-load": "^0.34.1",
     "@react-google-maps/api": "^2.19.3",
+    "@sidekickicons/react": "^0.13.0",
     "@tabler/icons-react": "^2.46.0",
     "@tailwindcss/forms": "^0.5.7",
     "@tiptap/extension-highlight": "^2.5.8",

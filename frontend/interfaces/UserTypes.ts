@@ -19,7 +19,7 @@ export interface PublicUserData {
   };
   publicUpcomingOrganiserEvents: EventId[];
   bio: string;
-  forms?: [FormId];
+  forms: FormId[];
 }
 
 export interface PrivateUserData {
@@ -65,6 +65,7 @@ export const EmptyPublicUserData: PublicUserData = {
   nameTokens: [],
   publicUpcomingOrganiserEvents: [],
   bio: "",
+  forms: [],
 };
 
 // BEWARE - PLEASE TAKE CARE WHEN EDITING THESE AS THEY WILL AFFECT DESERIALISATION AND DEFAULT USER CREATION

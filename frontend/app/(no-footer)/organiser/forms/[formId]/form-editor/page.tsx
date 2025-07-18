@@ -1,20 +1,15 @@
 "use client";
 
-import React from 'react';
-import { useParams } from 'next/navigation';
-import FormEditor from '@/components/organiser/forms/FormEditor';
+import FormEditor from "@/components/organiser/forms/FormEditor";
+import { FormId } from "@/interfaces/FormTypes";
+import { useParams } from "next/navigation";
 
 const FormEditorPage = () => {
-  
   const params = useParams();
-  const formId = params?.formId as string;
-
-  console.info('FormEditorPage params:', params); 
-  console.info('FormEditorPage formId:', formId); 
+  const formId = params?.formId as FormId;
 
   return (
     <div>
-      <h1 className='my-10'></h1>
       <FormEditor formId={formId} />
     </div>
   );

@@ -4,7 +4,6 @@ import { Branded } from "./index";
 export interface Form {
   title: FormTitle;
   description: FormDescription;
-
   userId: UserId;
   formActive: boolean;
   sectionsOrder: SectionId[]; // keeps track of ordering for editing forms

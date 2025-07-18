@@ -1,7 +1,10 @@
 "use client";
 
 import { DropdownSelectSectionBuilder } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionBuilder";
+import { HeaderSectionBuilder } from "@/components/forms/sections/header-section/HeaderSectionBuilder";
 import { TextSectionBuilder } from "@/components/forms/sections/text-section/TextSectionBuilder";
+import Loading from "@/components/loading/Loading";
+import { useUser } from "@/components/utility/UserContext";
 import {
   Form,
   FormDescription,
@@ -11,103 +14,70 @@ import {
   FormTitle,
   SectionId,
 } from "@/interfaces/FormTypes";
-import {
-  ArrowLeftIcon,
-  DocumentTextIcon,
-  EllipsisHorizontalIcon,
-  ListBulletIcon,
-  PaperAirplaneIcon,
-} from "@heroicons/react/24/outline";
-import { Tooltip } from "@material-tailwind/react";
-import { ReactNode, useState } from "react";
+import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
+import { ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ReactSortable } from "react-sortablejs";
+import EmptyInfoSection from "./EmptyInfoSection";
+import FormDesktopEditBar from "./FormDesktopEditBar";
+import FormMobileEditBar from "./FormMobileEditBar";
+import { v4 as uuidv4 } from "uuid";
+
 
 const initialForm: Form = {
   title: "Untitled Form" as FormTitle,
   description: "" as FormDescription,
-  userId: "user123",
+  userId: "",
   formActive: true,
   sectionsOrder: [],
   sectionsMap: {},
 };
 
-// Add the ResponsiveTooltip component
-interface ResponsiveTooltipProps {
-  content: string;
-  children: ReactNode;
-}
-
-// Add this interface above your FormEditor component
-interface FormNavButtonProps {
-  onClick: () => void;
-  tooltipContent: string;
-  children: ReactNode;
-}
-
 export interface FormEditorParams {
   formId: FormId;
 }
 
-// Update the FormNavButton component
-const FormNavButton = ({ onClick, tooltipContent, children }: FormNavButtonProps) => {
-  return (
-    <ResponsiveTooltip content={tooltipContent}>
-      <button
-        onClick={onClick}
-        className="flex items-center justify-center h-10 w-10 rounded-md hover:bg-core-hover transition ease-in-out"
-      >
-        {children}
-      </button>
-    </ResponsiveTooltip>
-  );
-};
+const CREATE_FORM_ID = "create-form";
 
-const ResponsiveTooltip = ({ content, children }: ResponsiveTooltipProps) => {
-  return (
-    <div className="relative">
-      <div className="hidden sm:block">
-        <Tooltip content={content} placement="right" className="absolute left-full ml-2">
-          {children}
-        </Tooltip>
-      </div>
-      <div className="block sm:hidden">
-        <Tooltip content={content} placement="top">
-          {children}
-        </Tooltip>
-      </div>
-    </div>
-  );
-};
-
-const FormEditor = ({}: FormEditorParams) => {
+const FormEditor = ({ formId }: FormEditorParams) => {
+  const router = useRouter();
+  const { user } = useUser();
+  const [isLoading, setIsLoading] = useState(true);
   const [form, setForm] = useState<Form>(initialForm);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [showWarning, setShowWarning] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false);
-  const isFormModified = form.title !== initialForm.title || form.sectionsOrder.length > 0;
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const isFormModified =
+    form.title !== initialForm.title || form.description !== initialForm.description || form.sectionsOrder.length > 0;
 
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prevForm) => ({
-      ...prevForm,
-      description: e.target.value as FormDescription,
-    }));
-  };
+  useEffect(() => {
+    const fetchForm = async () => {
+      if (user) {
+        if (formId === CREATE_FORM_ID) {
+          setForm((prevForm) => ({ ...prevForm, userId: user.userId }));
+        } else {
+          const form = await getForm(formId);
+          setForm(form);
+        }
+      }
+      setIsLoading(false);
+    };
+    fetchForm();
+  }, [user]);
 
-  const handleSubmitClick = () => {
-    setShowWarning(true);
-  };
-
-  const handleConfirmSubmit = () => {
-    console.log("Form submitted:", form);
-    setShowWarning(false);
-  };
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prevForm) => ({
-      ...prevForm,
-      title: e.target.value as FormTitle,
-    }));
+  const handleSubmitClick = async () => {
+    setIsSubmitting(true);
+    if (isFormModified) {
+      if (formId === CREATE_FORM_ID) {
+        if (form.userId !== "") {
+          const newFormId = await createForm(form);
+          router.push(`/organiser/forms/${newFormId}/form-editor`);
+        }
+      } else {
+        updateActiveForm(form, formId);
+      }
+    }
+    setIsSubmitting(false);
   };
 
   const handleBackClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -122,6 +92,20 @@ const FormEditor = ({}: FormEditorParams) => {
   const handleConfirmBack = () => {
     setShowBackWarning(false);
     window.history.back();
+  };
+
+  const updateFormTitle = (newTitle: FormTitle) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      title: newTitle,
+    }));
+  };
+
+  const updateFormDescription = (newDescription: FormDescription) => {
+    setForm((prevForm) => ({
+      ...prevForm,
+      description: newDescription,
+    }));
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -155,12 +139,43 @@ const FormEditor = ({}: FormEditorParams) => {
   };
 
   const addSection = (section: FormSection) => {
-    const newSectionId: SectionId = `section-${form.sectionsOrder.length + 1}` as SectionId;
+    // each section has a unique id
+    const newSectionId: SectionId = uuidv4() as SectionId;
     setForm((prevForm) => ({
       ...prevForm,
       sectionsOrder: [...prevForm.sectionsOrder, newSectionId],
       sectionsMap: { ...prevForm.sectionsMap, [newSectionId]: section },
     }));
+  };
+
+  const moveSectionUp = (sectionId: SectionId) => {
+    setForm((prevForm) => {
+      const currentIndex = prevForm.sectionsOrder.indexOf(sectionId);
+      if (currentIndex <= 0) return prevForm; // Already at top
+
+      const newOrder = [...prevForm.sectionsOrder];
+      [newOrder[currentIndex], newOrder[currentIndex - 1]] = [newOrder[currentIndex - 1], newOrder[currentIndex]];
+
+      return {
+        ...prevForm,
+        sectionsOrder: newOrder,
+      };
+    });
+  };
+
+  const moveSectionDown = (sectionId: SectionId) => {
+    setForm((prevForm) => {
+      const currentIndex = prevForm.sectionsOrder.indexOf(sectionId);
+      if (currentIndex >= prevForm.sectionsOrder.length - 1) return prevForm; // Already at bottom
+
+      const newOrder = [...prevForm.sectionsOrder];
+      [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
+
+      return {
+        ...prevForm,
+        sectionsOrder: newOrder,
+      };
+    });
   };
 
   const sortableItems = form.sectionsOrder
@@ -214,17 +229,20 @@ const FormEditor = ({}: FormEditorParams) => {
         );
     }
   };
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
-    <div className="flex min-h-screen bg-gray-100 p-8 justify-center">
+    <div className="flex min-h-screen bg-gray-100 p-8 justify-center pt-20">
       {/* Sticky Back Button */}
-      <div className="fixed top-20 left-4 z-50">
+      <div className="fixed top-20 left-2 md:left-8 z-50">
         <button
           onClick={handleBackClick}
-          className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-md hover:bg-gray-50 transition-colors border border-gray-200"
+          className="flex items-center justify-center min-w-16 gap-2 px-2.5 py-2.5 bg-white rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
         >
           <ArrowLeftIcon className="w-5 h-5 text-gray-700" />
-          <span className="text-base font-medium text-gray-700">Back</span>
+          <span className="text-base font-medium text-gray-700 hidden md:block">Back</span>
         </button>
       </div>
       {/* Back Button Warning Dialog */}
@@ -250,131 +268,107 @@ const FormEditor = ({}: FormEditorParams) => {
           </div>
         </div>
       )}
-      {/* Left Navbar */}
-      <div className="sticky top-40 w-16 bg-white rounded-lg p-6 mr-5 flex flex-col gap-4 items-center h-fit shadow-sm border border-gray-200 z-40">
-        <div className="flex flex-col space-y-3">
-          <FormNavButton
-            onClick={() =>
-              addSection({
-                type: FormSectionType.TEXT,
-                question: "",
-                imageUrl: null,
-                required: true,
-              })
-            }
-            tooltipContent="Add Text Question"
-          >
-            <DocumentTextIcon className="w-6 h-6 stroke-1 text-gray-600" />
-          </FormNavButton>
-
-          <FormNavButton
-            onClick={() =>
-              addSection({
-                type: FormSectionType.DROPDOWN_SELECT,
-                question: "",
-                options: [""],
-                imageUrl: null,
-                required: true,
-              })
-            }
-            tooltipContent="Add Dropdown Question"
-          >
-            <ListBulletIcon className="w-6 h-6 stroke-1 text-gray-600" />
-          </FormNavButton>
-
-          <FormNavButton onClick={handleSubmitClick} tooltipContent="Submit Form">
-            <PaperAirplaneIcon className="w-6 h-6 fill-black text-black" />
-          </FormNavButton>
-        </div>
-      </div>
+      {/* Mobile Top Navbar */}
+      <FormMobileEditBar
+        onAddTextSection={() => {
+          console.log("Add Text Question");
+          addSection({
+            type: FormSectionType.TEXT,
+            question: "",
+            imageUrl: null,
+            required: true,
+          });
+        }}
+        onAddDropdownSection={() =>
+          addSection({
+            type: FormSectionType.DROPDOWN_SELECT,
+            question: "",
+            options: [""],
+            imageUrl: null,
+            required: true,
+          })
+        }
+        onSaveForm={handleSubmitClick}
+        isFormModified={isFormModified}
+        isSubmitting={isSubmitting}
+      />
+      {/* Desktop Left Navbar */}
+      <FormDesktopEditBar
+        onAddTextSection={() =>
+          addSection({
+            type: FormSectionType.TEXT,
+            question: "",
+            imageUrl: null,
+            required: true,
+          })
+        }
+        onAddDropdownSection={() =>
+          addSection({
+            type: FormSectionType.DROPDOWN_SELECT,
+            question: "",
+            options: [""],
+            imageUrl: null,
+            required: true,
+          })
+        }
+        onSaveForm={handleSubmitClick}
+        isFormModified={isFormModified}
+        isSubmitting={isSubmitting}
+      />
       {/* Main Form Area */}
-      <div className="flex-1 flex flex-col gap-5 max-w-3xl mx-auto relative pb-20">
-        {/* Form Title Card */}
-        <div className="bg-white rounded-lg p-8 shadow-sm">
-          {isEditingTitle ? (
-            <input
-              type="text"
-              value={form.title}
-              onChange={handleTitleChange}
-              onBlur={() => setIsEditingTitle(false)}
-              onKeyDown={(e) => e.key === "Enter" && setIsEditingTitle(false)}
-              className="text-4xl font-bold w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:border-gray-300 mb-4 shadow-sm"
-              autoFocus
-            />
-          ) : (
-            <h1
-              onClick={() => setIsEditingTitle(true)}
-              className="w-full text-4xl font-bold mb-4 cursor-pointer hover:text-blue-600 hover:bg-gray-50 p-2 rounded-md transition-colors border-2 border-transparent hover:border-gray-200"
-            >
-              {form.title}
-            </h1>
-          )}
+      <div className="flex-1 w-full flex justify-center">
+        <div className="flex-1 flex flex-col gap-5 max-w-3xl relative pb-20 mt-16 md:ml-0  md:mt-0">
+          {/* Form Title Card */}
+          <HeaderSectionBuilder
+            formTitle={form.title}
+            formDescription={form.description}
+            updateFormTitle={updateFormTitle}
+            updateFormDescription={updateFormDescription}
+          />
 
-          {isEditingDescription ? (
-            <input
-              type="text"
-              value={form.description}
-              onChange={handleDescriptionChange}
-              onBlur={() => setIsEditingDescription(false)}
-              onKeyDown={(e) => e.key === "Enter" && setIsEditingDescription(false)}
-              className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:border-gray-300 text-gray-600 text-lg shadow-sm"
-              placeholder="Enter form description"
-              autoFocus
-            />
-          ) : (
-            <div
-              onClick={() => setIsEditingDescription(true)}
-              className="w-full text-gray-600 text-lg cursor-pointer hover:text-blue-600 hover:bg-gray-50 p-2 rounded-md transition-colors border-2 border-transparent hover:border-gray-200"
-            >
-              {form.description || "Click to add form description"}
-            </div>
-          )}
+          <EmptyInfoSection formSectionsOrder={form.sectionsOrder} />
+
+          {/* Questions Container */}
+          <ReactSortable
+            list={sortableItems}
+            setList={handleSort}
+            handle=".drag-handle"
+            className="flex flex-col gap-6"
+            animation={200}
+            delay={2}
+          >
+            {sortableItems.map((item) => (
+              <div key={item.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                {/* Mobile Up/Down Arrows */}
+                <div className="md:hidden flex justify-center items-center gap-2 py-2 bg-gray-50 border-b border-gray-200">
+                  <button
+                    onClick={() => moveSectionUp(item.id)}
+                    disabled={form.sectionsOrder.indexOf(item.id) === 0}
+                    className="p-1 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ArrowUpIcon className="w-4 h-4 text-gray-600" />
+                  </button>
+                  <button
+                    onClick={() => moveSectionDown(item.id)}
+                    disabled={form.sectionsOrder.indexOf(item.id) === form.sectionsOrder.length - 1}
+                    className="p-1 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ArrowDownIcon className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+                {/* Smaller Section Header with Centered Drag Handle */}
+                <div
+                  className="drag-handle cursor-grab active:cursor-grabbing hover:bg-gray-100 transition-colors items-center justify-center h-8 bg-gray-50 rounded-t-lg border-b border-gray-200 hidden md:flex"
+                  style={{ touchAction: "none" }}
+                >
+                  <EllipsisHorizontalIcon className="w-5 h-5 text-gray-400" />
+                </div>
+                {/* Section Content */}
+                <div className="p-6">{item.section && renderSection(item.section, item.id)}</div>
+              </div>
+            ))}
+          </ReactSortable>
         </div>
-
-        {/* Questions Container */}
-        <ReactSortable
-          list={sortableItems}
-          setList={handleSort}
-          handle=".drag-handle"
-          className="flex flex-col gap-6"
-          animation={200}
-          delay={2}
-        >
-          {sortableItems.map((item) => (
-            <div key={item.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              {/* Smaller Section Header with Centered Drag Handle */}
-              <div className="drag-handle cursor-grab active:cursor-grabbing hover:bg-gray-100 transition-colors flex items-center justify-center h-8 bg-gray-50 rounded-t-lg border-b border-gray-200">
-                <EllipsisHorizontalIcon className="w-5 h-5 text-gray-400" />
-              </div>
-              {/* Section Content */}
-              <div className="p-6">{item.section && renderSection(item.section, item.id)}</div>
-            </div>
-          ))}
-        </ReactSortable>
-
-        {/* Warning Dialog */}
-        {showWarning && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md text-center">
-              <h2 className="text-xl font-bold mb-4">Are you sure?</h2>
-              <p className="text-gray-600 mb-6">Once submitted, this form cannot be edited further.</p>
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={() => setShowWarning(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmSubmit}
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-                >
-                  Confirm Submit
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
