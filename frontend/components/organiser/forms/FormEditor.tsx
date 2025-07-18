@@ -1,21 +1,34 @@
 "use client";
 
-import { Form, FormId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
-import { useState, ReactNode } from "react";
-import { Tooltip } from "@material-tailwind/react";
-import { DocumentTextIcon, ListBulletIcon, PaperAirplaneIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
-import { TextSectionBuilder } from "@/components/forms/sections/text-section/TextSectionBuilder";
 import { DropdownSelectSectionBuilder } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionBuilder";
-import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import { TextSectionBuilder } from "@/components/forms/sections/text-section/TextSectionBuilder";
+import {
+  Form,
+  FormDescription,
+  FormId,
+  FormSection,
+  FormSectionType,
+  FormTitle,
+  SectionId,
+} from "@/interfaces/FormTypes";
+import {
+  ArrowLeftIcon,
+  DocumentTextIcon,
+  EllipsisHorizontalIcon,
+  ListBulletIcon,
+  PaperAirplaneIcon,
+} from "@heroicons/react/24/outline";
+import { Tooltip } from "@material-tailwind/react";
+import { ReactNode, useState } from "react";
 import { ReactSortable } from "react-sortablejs";
 
 const initialForm: Form = {
-  title: "Untitled Form",
-  description: "",
+  title: "Untitled Form" as FormTitle,
+  description: "" as FormDescription,
   userId: "user123",
   formActive: true,
   sectionsOrder: [],
-  sectionsMap: new Map<SectionId, FormSection>(),
+  sectionsMap: {},
 };
 
 // Add the ResponsiveTooltip component
@@ -77,7 +90,7 @@ const FormEditor = ({}: FormEditorParams) => {
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prevForm) => ({
       ...prevForm,
-      description: e.target.value,
+      description: e.target.value as FormDescription,
     }));
   };
 
@@ -93,7 +106,7 @@ const FormEditor = ({}: FormEditorParams) => {
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prevForm) => ({
       ...prevForm,
-      title: e.target.value,
+      title: e.target.value as FormTitle,
     }));
   };
 
@@ -113,23 +126,26 @@ const FormEditor = ({}: FormEditorParams) => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const duplicateSection = (section: FormSection, sectionId: SectionId) => {
-    const newSectionId: SectionId = `section-${form.sectionsOrder.length + 1}`;
+    const newSectionId: SectionId = `section-${form.sectionsOrder.length + 1}` as SectionId;
     setForm((prevForm) => ({
       ...prevForm,
       sectionsOrder: [...prevForm.sectionsOrder, newSectionId],
-      sectionsMap: new Map(prevForm.sectionsMap).set(newSectionId, {
-        ...section,
-        ...(section.type === FormSectionType.DROPDOWN_SELECT && {
-          options: [...section.options],
-        }),
-      }),
+      sectionsMap: {
+        ...prevForm.sectionsMap,
+        [newSectionId]: {
+          ...section,
+          ...(section.type === FormSectionType.DROPDOWN_SELECT && {
+            options: [...section.options],
+          }),
+        },
+      },
     }));
   };
 
   const deleteSection = (sectionId: SectionId) => {
     setForm((prevForm) => {
-      const newMap = new Map(prevForm.sectionsMap);
-      newMap.delete(sectionId);
+      const newMap = { ...prevForm.sectionsMap };
+      delete newMap[sectionId];
       return {
         ...prevForm,
         sectionsOrder: prevForm.sectionsOrder.filter((id) => id !== sectionId),
@@ -139,18 +155,18 @@ const FormEditor = ({}: FormEditorParams) => {
   };
 
   const addSection = (section: FormSection) => {
-    const newSectionId: SectionId = `section-${form.sectionsOrder.length + 1}`;
+    const newSectionId: SectionId = `section-${form.sectionsOrder.length + 1}` as SectionId;
     setForm((prevForm) => ({
       ...prevForm,
       sectionsOrder: [...prevForm.sectionsOrder, newSectionId],
-      sectionsMap: new Map(prevForm.sectionsMap).set(newSectionId, section),
+      sectionsMap: { ...prevForm.sectionsMap, [newSectionId]: section },
     }));
   };
 
   const sortableItems = form.sectionsOrder
     .map((sectionId) => ({
       id: sectionId,
-      section: form.sectionsMap.get(sectionId),
+      section: form.sectionsMap[sectionId],
     }))
     .filter((item) => item.section);
 
@@ -173,7 +189,7 @@ const FormEditor = ({}: FormEditorParams) => {
             onUpdate={(updatedSection) => {
               setForm((prevForm) => ({
                 ...prevForm,
-                sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
+                sectionsMap: { ...prevForm.sectionsMap, [sectionId]: updatedSection },
               }));
             }}
             onDelete={deleteSection}
@@ -189,7 +205,7 @@ const FormEditor = ({}: FormEditorParams) => {
             onUpdate={(updatedSection) => {
               setForm((prevForm) => ({
                 ...prevForm,
-                sectionsMap: new Map(prevForm.sectionsMap).set(sectionId, updatedSection),
+                sectionsMap: { ...prevForm.sectionsMap, [sectionId]: updatedSection },
               }));
             }}
             onDelete={deleteSection}
@@ -324,7 +340,7 @@ const FormEditor = ({}: FormEditorParams) => {
           animation={200}
           delay={2}
         >
-          {sortableItems.map((item, index) => (
+          {sortableItems.map((item) => (
             <div key={item.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
               {/* Smaller Section Header with Centered Drag Handle */}
               <div className="drag-handle cursor-grab active:cursor-grabbing hover:bg-gray-100 transition-colors flex items-center justify-center h-8 bg-gray-50 rounded-t-lg border-b border-gray-200">

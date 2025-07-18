@@ -289,6 +289,22 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
     logger.error(f"Invalid Signature provided error={e}. payload={payload} signature={sig_header}, returned 400.")
     return https_fn.Response(status=400)
 
+# TODO: Remove this once we have a better way to handle these events
+  ignored_event_ids = [
+      "evt_1RjMHy07zElMsiFTumaTH9ms",
+      "evt_1RjMHt07zElMsiFTesLivdAa",
+      "evt_1RjMGz07zElMsiFTDAMNvH4X",
+      "evt_1RjMGz07zElMsiFTDAMNvH4X",
+  ]
+  if event["id"] in ignored_event_ids:
+      logger.info(f"Ignoring event. event={event}")
+      return https_fn.Response(status=200)
+
+  SPORTSHUB_URL = "www.sportshub.net.au"
+  if SPORTSHUB_URL not in event["data"]["object"]["cancel_url"] and SPORTSHUB_URL not in event["data"]["object"]["success_url"]:
+    logger.info(f"Ignoring event as it is not a SPORTSHUB event. event={event} success_url={event['data']['object']['success_url']} cancel_url={event['data']['object']['cancel_url']}")
+    return https_fn.Response(status=200)
+
   match event["type"]:
     # Handle the checkout.session.completed event
     case "checkout.session.completed":

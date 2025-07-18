@@ -18,6 +18,9 @@ export default function Footer() {
           <Link href="/event/create" className="mx-2">
             Create Event
           </Link>
+          <Link href="/blogs" className="mx-2">
+            Blogs
+          </Link>
         </ol>
         <Link href="/contact" className="ml-auto flex justify-center items-center mr-4">
           <LightBulbIcon className="h-4 mr-1" />

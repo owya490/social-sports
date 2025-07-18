@@ -1,6 +1,6 @@
 package com.functions.events.services;
 
-import com.functions.FirebaseService;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.NewEventData;
 import com.functions.events.utils.EventsMetadataUtils;
@@ -12,7 +12,7 @@ import com.google.cloud.firestore.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.functions.FirebaseService.CollectionPaths.*;
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.*;
 
 public class EventsService {
     private static final Logger logger = LoggerFactory.getLogger(EventsService.class);
@@ -41,7 +41,10 @@ public class EventsService {
         transaction.set(newEventDocRef, JavaUtils.toMap(data));
         createEventMetadata(transaction, newEventDocRef.getId(), data);
         EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), newEventDocRef.getId());
-        EventsUtils.addEventIdToUserOrganiserPublicUpcomingEvents(data.getOrganiserId(), newEventDocRef.getId());
+        // If the event is public, add it to the user's public upcoming events
+        if (!data.getIsPrivate()) {
+            EventsUtils.addEventIdToUserOrganiserPublicUpcomingEvents(data.getOrganiserId(), newEventDocRef.getId());
+        }
         return newEventDocRef.getId();
     }
 
@@ -53,5 +56,6 @@ public class EventsService {
 
         transaction.set(eventMetadataDocRef, eventMetadata);
     }
+
 }
 
