@@ -4,7 +4,8 @@ from lib.constants import *
 from lib.emails import *
 from lib.emails.email_reminder import *
 from lib.move_inactive_events import *
-# Sendgrid
+from lib.emails.create_event_notification import *
+# Sendgrid``
 from lib.sendgrid import *
 from lib.sendgrid.create_event import *
 from lib.sendgrid.purchase_event import *
