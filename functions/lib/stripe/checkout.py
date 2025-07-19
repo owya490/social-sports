@@ -142,6 +142,11 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
         }
       }]
   
+  # 6a. TODO REMOVE AFTER 2 WEEKS FOR RAPTORS
+  RAPTOR_BSOC_EVENT_IDS = ["mcixD9jhIMR8Lh8UiEax", "SmAsmIOSINbolcKgc0Rb"]
+  if (event_id in RAPTOR_BSOC_EVENT_IDS):
+    price = price + calculate_stripe_fee(price * quantity)
+
   # 7. check if promotional codes is enabled for this event
   promotional_codes_enabled = False
   if (event.get("promotionalCodesEnabled") is True):

@@ -1,7 +1,7 @@
 // TODO: functions to abstract away editing forms
 
 import { FormId, FormResponseId, SectionId } from "@/interfaces/FormTypes";
-import { FormPaths, FormResponsePaths } from "../formsConstants";
+import { FormResponsePaths, FormTemplatePaths } from "../formsConstants";
 import { db } from "../../firebase";
 import { doc, DocumentData, DocumentReference, getDoc, QueryDocumentSnapshot } from "firebase/firestore";
 import { formsServiceLogger } from "../formsServices";
@@ -11,11 +11,10 @@ import { EventId } from "@/interfaces/EventTypes";
 export async function findFormDocRef(formId: FormId): Promise<DocumentReference<DocumentData, DocumentData>> {
   try {
     // Search through paths
-    for (const path of Object.values(FormPaths)) {
+    for (const path of Object.values(FormTemplatePaths)) {
       // Attempt to retrieve the document from current subcollection
       const formDocRef = doc(db, path, formId);
       const formDoc = await getDoc(formDocRef);
-
       if (formDoc.exists()) {
         formsServiceLogger.info(`Found form document reference for formId: ${formId}, form: ${formDoc}`);
         return formDocRef;
@@ -55,14 +54,14 @@ export async function findFormResponseDocRef(
   try {
     // Search through paths
     for (const path of Object.values(FormResponsePaths)) {
-      const formDocResponseRef = doc(db, path, formId, eventId, formResponseId);
-      const formDoc = await getDoc(formDocResponseRef);
+      const formResponseDocRef = doc(db, path, formId, eventId, formResponseId);
+      const formDoc = await getDoc(formResponseDocRef);
 
       if (formDoc.exists()) {
         formsServiceLogger.info(
           `findFormResponseDocRef: Found form response document reference for formResponseId: ${formResponseId}, formId: ${formId}, eventId: ${eventId}`
         );
-        return formDocResponseRef;
+        return formResponseDocRef;
       }
     }
 
