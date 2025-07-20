@@ -1,4 +1,4 @@
-import { EventId } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 
 import {
   CollectionReference,
@@ -127,4 +127,48 @@ export function createEventDocRef(eventId: EventId, isActive: boolean, isPrivate
   const docRef = doc(db, CollectionPaths.Events, activeStatus, privateStatus, eventId);
   eventServiceLogger.debug(`Created document reference: ${docRef.path}`);
   return docRef;
+}
+
+export function stripHtmlTags(html: string): string {
+  // First, convert HTML line break tags to spaces
+  const withSpaces = html
+    .replace(/<br\s*\/?>/gi, " ") // <br> and <br/>
+    .replace(/<\/?(p|div|h[1-6]|li|ul|ol|blockquote)[^>]*>/gi, " ") // Block elements
+    .replace(/<\/?(tr|td|th)[^>]*>/gi, " "); // Table elements
+
+  // Remove all remaining HTML tags
+  const withoutTags = withSpaces.replace(/<[^>]*>/g, "");
+
+  // Decode common HTML entities
+  const withoutEntities = withoutTags
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, " ");
+
+  // Clean up extra whitespace and newlines
+  return withoutEntities.replace(/\s+/g, " ").trim();
+}
+
+export function generateEventPageMetadata(event: EventData) {
+  return {
+    title: `SportsHub | Book your next sports session`,
+    description: `SportsHub is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!`,
+    openGraph: {
+      title: `${event.name}`,
+      description: `${stripHtmlTags(event.description)}`,
+      images: [
+        {
+          url: event.image
+            ? `/api/og/?src=${encodeURIComponent(event.image)}&title=${encodeURIComponent(event.name)}`
+            : `/api/og/`,
+          width: 1200,
+          height: 630,
+          alt: "Event Image",
+        },
+      ],
+    },
+  };
 }

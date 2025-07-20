@@ -105,7 +105,6 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     eventServiceLogger.info(`createEvent succeeded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
-    console.error(error);
     eventServiceLogger.error(`createEvent ${error}`);
     throw error;
   }
@@ -277,7 +276,7 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
   }
 }
 
-export async function archiveAndDeleteEvent(eventId: EventId, userId: String, email: String): Promise<void> {
+export async function archiveAndDeleteEvent(eventId: EventId, userId: string, email: string): Promise<void> {
   eventServiceLogger.info(`Starting process to archive and delete event: ${eventId}`);
 
   const batch: WriteBatch = writeBatch(db);
@@ -308,6 +307,9 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: String, em
       }
     }
 
+    const publicUser = await getPublicUserById(userId);
+    const upcomingOrganiserEvents = publicUser.publicUpcomingOrganiserEvents;
+
     // Add all event fields to the deleted document, with additional deletion metadata
     batch.set(deletedEventRef, {
       ...eventData, // Copy all fields from the original event
@@ -321,6 +323,12 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: String, em
       organiserEvents: arrayRemove(eventId),
       deletedEvents: arrayUnion(eventId),
     });
+
+    if (upcomingOrganiserEvents.includes(eventId)) {
+      batch.update(doc(db, "Users/Active/Public/" + userId), {
+        publicUpcomingOrganiserEvents: arrayRemove(eventId),
+      });
+    }
 
     await batch.commit();
 
@@ -595,7 +603,7 @@ export async function updateEventCapacityById(eventId: EventId, capacity: number
       }
     });
   } catch (error) {
-    eventServiceLogger.error(`Error updating event capacity for ${eventId} ${error}`);
+    eventServiceLogger.error(`Error updating event capacity for ${eventId}: ${error}`);
   }
   return valid;
 }

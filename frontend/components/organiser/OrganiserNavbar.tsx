@@ -1,7 +1,5 @@
 "use client";
 
-import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
-import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import { useUser } from "@components/utility/UserContext";
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
@@ -11,13 +9,14 @@ import {
   CameraIcon,
   ChartBarIcon,
   HomeIcon,
+  LinkIcon,
+  PencilSquareIcon,
   StarIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
-import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
-import { Fragment, useEffect, useState, ReactNode } from "react";
+import { Fragment, ReactNode, useEffect, useState } from "react";
 
 interface OrganiserNavbarProps {
   currPage: string;
@@ -69,12 +68,10 @@ const NavButton = ({ href, isActive, tooltipContent, children }: NavButtonProps)
 
 export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
   const { user } = useUser();
-  const [_eventDataList, setEventDataList] = useState<EventData[]>([EmptyEventData, EmptyEventData]);
-  const [_closestEvent, setClosestEvent] = useState<EventData | null>(null);
   const [eventId, setEventId] = useState<string>("dashboard");
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const getEventId = () => {
       if (user.userId === "") {
         return;
       }
@@ -89,25 +86,9 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         setEventId(lastPart);
         return;
       }
-
-      try {
-        const events = await getOrganiserEvents(user.userId);
-
-        const futureEvents = events.filter((event) => {
-          return event.startDate.seconds - Timestamp.now().seconds > 0;
-        });
-
-        futureEvents.sort((a, b) => a.startDate.seconds - b.startDate.seconds);
-
-        setEventDataList(futureEvents);
-        setClosestEvent(futureEvents.length > 0 ? futureEvents[0] : null);
-        setEventId(futureEvents.length > 0 ? `${futureEvents[0].eventId}` : "dashboard");
-      } catch (error) {
-        console.error("getOrganiserEvents() Error: " + error);
-      }
     };
 
-    fetchEvents();
+    getEventId();
   }, [user]);
 
   return (
@@ -165,6 +146,19 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
                       </Link>
                     )}
                   </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <Link
+                        href="/organiser/event/custom-links"
+                        className={`${
+                          active ? "text-core-text bg-core-hover" : "text-core-text"
+                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                      >
+                        <LinkIcon className="w-6 stroke-1 mr-2" />
+                        Custom Event Links
+                      </Link>
+                    )}
+                  </Menu.Item>
                 </div>
               </MenuItems>
             </Transition>
@@ -177,6 +171,10 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
           tooltipContent="Current Event"
         >
           <BookmarkSquareIcon className="w-6 stroke-1 stroke-core-text" />
+        </NavButton>
+
+        <NavButton href={`/organiser/forms/gallery`} isActive={currPage === "FormsGallery"} tooltipContent="Forms">
+          <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
 
         <NavButton href="/organiser/metrics" isActive={currPage === "Metrics"} tooltipContent="Metrics">
