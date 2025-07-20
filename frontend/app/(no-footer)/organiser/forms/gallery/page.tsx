@@ -1,9 +1,11 @@
 "use client";
+import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { FormPreviewCard } from "@/components/organiser/forms/FormPreviewCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyForm, Form, FormId } from "@/interfaces/FormTypes";
 import { getFormsForUser } from "@/services/src/forms/formsServices";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const FormsGallery = () => {
@@ -34,6 +36,12 @@ const FormsGallery = () => {
       <div className="w-full flex justify-center">
         <div className="screen-width-primary">
           <h1 className="text-4xl md:text-5xl lg:text-6xl my-6">Form Gallery</h1>
+          {/* create form button */}
+          <div className="flex justify-end mb-4">
+            <Link href="/organiser/forms/create-form/editor">
+              <InvertedHighlightButton text="Create Form" className="px-4 py-2" />
+            </Link>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {forms.map((form) => {
               return (

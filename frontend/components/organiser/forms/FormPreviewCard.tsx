@@ -1,5 +1,6 @@
 "use client";
 
+import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionResponse";
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
 import LoadingSkeletonFormGalleryCard from "@/components/loading/LoadingSkeletonFormGalleryCard";
 import { FormId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
@@ -68,14 +69,32 @@ export const FormPreviewCard = ({
       onClick={handleCardClick}
     >
       {/* Form Preview Section */}
-      <div className="h-64 overflow-hidden p-4 ml-7 sm:ml-2 md:ml-0 2xl:ml-2 pointer-events-none select-none">
+      <div className="h-64 overflow-hidden px-4 ml-7 sm:ml-2 md:ml-0 2xl:ml-2 pointer-events-none select-none">
         <div className="scale-[0.4] origin-top-left w-[40rem] sm:w-[28rem] md:w-[28rem] lg:w-[30rem] xl:w-[32rem]">
           <h1 className="font-bold text-3xl mb-2 line-clamp-1">{formTitle}</h1>
           {sectionsOrder.map((sectionId) => {
             const section = sectionsMap[sectionId]; // force the not undefined for now
             switch (section.type) {
               case FormSectionType.TEXT:
-                return <TextSectionResponse key={sectionId} textSection={section} answerOnChange={() => {}} />;
+                return (
+                  <TextSectionResponse
+                    key={sectionId}
+                    textSection={section}
+                    answerOnChange={() => {}}
+                    canEdit={false}
+                  />
+                );
+              case FormSectionType.DROPDOWN_SELECT:
+                return (
+                  <DropdownSelectSectionResponse
+                    key={sectionId}
+                    dropdownSelectSection={section}
+                    answerOnChange={() => {}}
+                    canEdit={false}
+                  />
+                );
+              default:
+                return null;
             }
           })}
         </div>
@@ -111,18 +130,21 @@ export const FormPreviewCard = ({
                 {/* Form Editor */}
                 <Link
                   className="w-full py-3 px-4 border border-core-outline rounded-lg text-xs hover:bg-core-hover transition-colors duration-200 text-center"
-                  href={`/organiser/forms/${formId}/form-editor`}
+                  href={`/organiser/forms/${formId}/editor`}
                 >
-                  Form Editor
+                  Form <br className="hidden md:block" />
+                  Editor
                 </Link>
 
                 {/* View as Responder */}
                 <Link
-                  href={`/organiser/forms/${formId}/responses`}
+                  href={`/organiser/forms/${formId}/preview`}
                   className="w-full py-3 px-4 hover:bg-core-hover border border-core-outline rounded-lg text-xs transition-colors duration-200 text-center"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  View as Responder
+                  Form
+                  <br className="hidden md:block" />
+                  Preview
                 </Link>
               </div>
             </div>

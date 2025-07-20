@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { EventId } from "./EventTypes";
 import { UserId } from "./UserTypes";
 import { Branded } from "./index";
 
@@ -72,6 +73,9 @@ export interface DateTimeSection extends AbstractSection {
 /** Contains the answers of the form from the responder */
 export interface FormResponse {
   formId: FormId;
+  eventId: EventId;
+  formResponseId: FormResponseId;
+  responseSectionsOrder: SectionId[];
   responseMap: Record<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
   submissionTime: Timestamp;
@@ -90,6 +94,9 @@ export const EmptyForm: Form = {
 
 export const EmptyFormResponse: FormResponse = {
   formId: "" as FormId,
+  eventId: "" as EventId,
+  formResponseId: "" as FormResponseId,
+  responseSectionsOrder: [],
   responseMap: {},
   submissionTime: new Timestamp(0, 0),
 };

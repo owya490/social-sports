@@ -6,7 +6,7 @@ import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, wri
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
 import { getPrivateUserById } from "../users/usersService";
-import { FormPaths, FormResponseStatus, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
+import { FormPaths, FormResponsePaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
@@ -171,7 +171,8 @@ export async function deleteForm(formId: FormId): Promise<void> {
   }
 }
 
-export async function createFormResponse(formResponse: FormResponse, eventId: EventId): Promise<FormResponseId> {
+// TODO this should be saving it to the fulfillment session instead of the submitted collection
+export async function createFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
   if (!rateLimitCreateFormResponse()) {
     formsServiceLogger.warn("Rate Limited!!!");
     throw "createFormResponse: Rate Limited";
@@ -180,10 +181,8 @@ export async function createFormResponse(formResponse: FormResponse, eventId: Ev
   formsServiceLogger.info(`createFormResponse: ${formResponse}`);
   try {
     const batch = writeBatch(db);
-    const docRef = doc(
-      collection(db, FormsRootPath, FormPaths.FormResponses, FormResponseStatus.Submitted, formResponse.formId, eventId)
-    );
-    batch.set(docRef, formResponse);
+    const docRef = doc(db, FormResponsePaths.Temp + "/" + formResponse.formId + "/" + formResponse.eventId);
+    batch.set(docRef, { ...formResponse, formResponseId: docRef.id as FormResponseId, submissionTime: Timestamp.now() });
     await batch.commit();
     formsServiceLogger.info(
       `createFormResponse: Form response created with formResponseId: ${docRef.id}, formResponse: ${formResponse}`
@@ -213,6 +212,8 @@ export async function getFormResponse(
     }
 
     const responseDoc = responseSnapshot.data() as FormResponse;
+    responseDoc.formId = formId;
+    responseDoc.eventId = eventId;
     return { ...EmptyFormResponse, ...responseDoc };
   } catch (error) {
     formsServiceLogger.error(
@@ -239,7 +240,7 @@ export async function updateFormResponse(
       );
     }
 
-    await updateDoc(docRef, formResponse);
+    await updateDoc(docRef, { ...formResponse, formResponseId: responseId, submissionTime: Timestamp.now() });
   } catch (error) {
     formsServiceLogger.error(
       `updateFormResponse: Error editing form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}, updated form response: ${formResponse}, error: ${error}`
