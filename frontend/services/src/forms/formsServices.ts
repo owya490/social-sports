@@ -6,7 +6,7 @@ import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, wri
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
 import { getPrivateUserById } from "../users/usersService";
-import { FormPaths, FormResponsePaths, FormResponseStatus, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
+import { FormPaths, FormResponsePaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
@@ -181,8 +181,8 @@ export async function createFormResponse(formResponse: FormResponse): Promise<Fo
   formsServiceLogger.info(`createFormResponse: ${formResponse}`);
   try {
     const batch = writeBatch(db);
-    const docRef = doc(db, FormResponsePaths.Temp + "/" + formResponse.formId + "/" + formResponse.eventId); 
-    batch.set(docRef, formResponse);
+    const docRef = doc(db, FormResponsePaths.Temp + "/" + formResponse.formId + "/" + formResponse.eventId);
+    batch.set(docRef, { ...formResponse, formResponseId: docRef.id as FormResponseId, submissionTime: Timestamp.now() });
     await batch.commit();
     formsServiceLogger.info(
       `createFormResponse: Form response created with formResponseId: ${docRef.id}, formResponse: ${formResponse}`
@@ -240,7 +240,7 @@ export async function updateFormResponse(
       );
     }
 
-    await updateDoc(docRef, formResponse);
+    await updateDoc(docRef, { ...formResponse, formResponseId: responseId, submissionTime: Timestamp.now() });
   } catch (error) {
     formsServiceLogger.error(
       `updateFormResponse: Error editing form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}, updated form response: ${formResponse}, error: ${error}`
@@ -292,4 +292,3 @@ export async function getActiveFormsForUser(userId: UserId): Promise<Form[]> {
     throw error;
   }
 }
-

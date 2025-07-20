@@ -2,11 +2,10 @@
 import FormResponder from "@/components/forms/FormResponder";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 const ViewForm = () => {
   const params = useParams();
-  const router = useRouter();
   const formId = params?.formId as FormId;
   const eventId = params?.eventId as EventId;
 

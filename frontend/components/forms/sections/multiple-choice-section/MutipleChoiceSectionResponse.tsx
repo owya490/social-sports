@@ -19,6 +19,7 @@ export const MutipleChoiceSectionResponse = ({
         {multipleChoiceSection.options.map((option, idx) => {
           return (
             <Radio
+              key={idx}
               className="focus:ring-0"
               name={option}
               value={option}

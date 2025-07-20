@@ -1,5 +1,5 @@
 "use client";
-import { BlackHighlightButton, InvertedHighlightButton } from "@/components/elements/HighlightButton";
+import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { FormPreviewCard } from "@/components/organiser/forms/FormPreviewCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";

@@ -102,6 +102,7 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
     fetchFormData();
   }, []);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const onSubmit = () => {
     if (!form) return;
     if (!canEdit) return;
