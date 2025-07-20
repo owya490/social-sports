@@ -4,7 +4,6 @@ import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
-import pytz
 import requests
 from firebase_admin import firestore
 from firebase_functions import https_fn, options, scheduler_fn

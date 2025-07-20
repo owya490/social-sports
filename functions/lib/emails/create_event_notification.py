@@ -10,7 +10,7 @@ from lib.constants import SYDNEY_TIMEZONE, db
 from lib.emails.constants import LOOPS_API_KEY
 from lib.logging import Logger
 from lib.utils.priceUtils import centsToDollars
-from lib.sendgrid.commons import get_user_data, get_user_email
+from lib.sendgrid.commons import get_user_data_private, get_user_data_public, get_user_email
 import traceback
 
 @dataclass
@@ -116,11 +116,14 @@ def send_email_on_create_event_v2(req: https_fn.CallableRequest):
         logger.info(f"Organiser ID: {organiser_id}")
 
         try:
-            organiser_data = get_user_data(organiser_id)
-            logger.info(f"Fetched organiser_data: {json.dumps(organiser_data, default=str)}")
-            email = get_user_email(organiser_id, organiser_data)
-            organiser_name = organiser_data.get("firstName", "")
-            logger.info(f"Organiser email: {email}, name: {organiser_name}")
+            organiser_data_public = get_user_data_public(organiser_id)
+            logger.info(f"Fetched organiser_data: {json.dumps(organiser_data_public, default=str)}")
+            organiser_data_private = get_user_data_private(organiser_id)
+            logger.info(f"Fetched organiser_data: {json.dumps(organiser_data_private, default=str)}")
+
+            email = get_user_email(organiser_id, organiser_data_private)
+            organiser_name = organiser_data_public.get("firstName")            
+            logger.info(f"Organiser email: {email} Name: {organiser_name}")
         except Exception as e:
             logger.error(f"Error getting organiser info for organiserId={organiser_id}: {e}")
             logger.error(traceback.format_exc())
