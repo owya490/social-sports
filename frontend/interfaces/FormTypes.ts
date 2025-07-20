@@ -1,13 +1,16 @@
+import { Timestamp } from "firebase/firestore";
 import { UserId } from "./UserTypes";
 import { Branded } from "./index";
 
 export interface Form {
+  formId: FormId;
   title: FormTitle;
   description: FormDescription;
   userId: UserId;
   formActive: boolean;
   sectionsOrder: SectionId[]; // keeps track of ordering for editing forms
   sectionsMap: Record<SectionId, FormSection>;
+  lastUpdated: Timestamp | null;
 }
 
 export type FormId = Branded<string, "FormId">;
@@ -71,5 +74,22 @@ export interface FormResponse {
   formId: FormId;
   responseMap: Record<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
-  submissionTime?: number;
+  submissionTime: Timestamp;
 }
+
+export const EmptyForm: Form = {
+  formId: "" as FormId,
+  title: "" as FormTitle,
+  description: "" as FormDescription,
+  userId: "" as UserId,
+  formActive: true,
+  sectionsOrder: [],
+  sectionsMap: {},
+  lastUpdated: null,
+};
+
+export const EmptyFormResponse: FormResponse = {
+  formId: "" as FormId,
+  responseMap: {},
+  submissionTime: new Timestamp(0, 0),
+};

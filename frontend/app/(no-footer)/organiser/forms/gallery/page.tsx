@@ -2,20 +2,25 @@
 import { FormPreviewCard } from "@/components/organiser/forms/FormPreviewCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
-import { Form } from "@/interfaces/FormTypes";
+import { EmptyForm, Form } from "@/interfaces/FormTypes";
 import { getFormsForUser } from "@/services/src/forms/formsServices";
 import { useEffect, useState } from "react";
 
 const FormsGallery = () => {
-  const [forms, setForms] = useState<Form[]>([]);
   const { user } = useUser();
+  const [isLoading, setIsLoading] = useState(true);
+  const [forms, setForms] = useState<Form[]>(Array(8).fill(EmptyForm));
+
   useEffect(() => {
     const fetchForms = async () => {
       const forms = await getFormsForUser(user.userId);
       setForms(forms);
+      setIsLoading(false);   
     };
-    fetchForms();
-  }, []);
+    if (user.userId !== "") {
+      fetchForms();
+    }
+  }, [user]);
 
   return (
     <div className="md:ml-14 mt-14">
@@ -24,13 +29,17 @@ const FormsGallery = () => {
         <div className="screen-width-primary">
           <h1 className="text-4xl md:text-5xl lg:text-6xl my-6">Form Gallery</h1>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {forms.map((form, idx) => {
+            {forms.map((form) => {
               return (
                 <FormPreviewCard
+                  formDescription={form.description}
+                  key={form.formId}
                   formTitle={form.title}
                   sectionsOrder={form.sectionsOrder}
                   sectionsMap={form.sectionsMap}
                   formId={form.formId}
+                  lastUpdated={form.lastUpdated}
+                  isLoading={isLoading}
                 />
               );
             })}
