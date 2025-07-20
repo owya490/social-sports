@@ -16,6 +16,7 @@ import {
   SectionId,
 } from "@/interfaces/FormTypes";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
+import { sleep } from "@/utilities/sleepUtil";
 import { ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -62,12 +63,14 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       if (formId === CREATE_FORM_ID) {
         if (form.userId !== "") {
           const newFormId = await createForm(form);
-          router.push(`/organiser/forms/${newFormId}/form-editor`);
+          router.push(`/organiser/forms/${newFormId}/editor`);
         }
       } else {
         updateActiveForm(form, formId);
       }
     }
+    // sleep (1s)
+    await sleep(1000);
     setIsSubmitting(false);
   };
 

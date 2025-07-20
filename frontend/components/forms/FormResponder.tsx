@@ -4,13 +4,15 @@ import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropd
 import { FormHeaderSectionResponse } from "@/components/forms/sections/form-header-section/FormHeaderSectionResponse";
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
 import Loading from "@/components/loading/Loading";
-import { Form, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { EventId } from "@/interfaces/EventTypes";
+import { Form, FormId, FormResponseId, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { FormResponsePaths } from "@/services/src/forms/formsConstants";
 import {
   createFormResponse,
   formsServiceLogger,
   getForm,
+  getFormIdByEventId,
   getFormResponse,
   updateFormResponse,
 } from "@/services/src/forms/formsServices";
@@ -21,23 +23,41 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface FormResponderProps {
-  formId: string;
-  eventId: string;
-  formResponseId: string | null;
+  formId: FormId;
+  eventId: EventId;
+  formResponseId: FormResponseId | null;
+  canEditForm?: boolean;
+  isPreview?: boolean;
 }
 
-const FormResponder = ({ formId, eventId, formResponseId }: FormResponderProps) => {
+const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview }: FormResponderProps) => {
+  // if we are in preview mode, we can't edit the form
+  canEditForm = isPreview === true ? false : canEditForm;
+
   const router = useRouter();
   const [form, setForm] = useState<Form | null>(null);
   const [organiser, setOrganiser] = useState<PublicUserData>(EmptyPublicUserData);
   const [loading, setLoading] = useState<boolean>(true);
-  const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [canEdit, setCanEdit] = useState<boolean>(canEditForm ?? false);
+
+  function setCanEditWrapper(canEdit: boolean) {
+    setCanEdit(canEditForm ?? canEdit);
+  }
 
   useEffect(() => {
     const fetchFormData = async () => {
       if (!formId) {
         router.push("/error");
         return;
+      }
+
+      if (isPreview === false) {
+        // check the form is actually attached to the event as we are not in preview mode
+        const expectedFormId = await getFormIdByEventId(eventId);
+        if (expectedFormId !== formId) {
+          router.push("/error");
+          return;
+        }
       }
 
       try {
@@ -48,8 +68,10 @@ const FormResponder = ({ formId, eventId, formResponseId }: FormResponderProps) 
         const organiserData = await getPublicUserById(formData.userId);
         setOrganiser(organiserData);
 
-        // Fetch form response data if it exists and replace the form sectionsMap with the form responseMap
-        fetchFormResponseData();
+        if (isPreview === false) {
+          // Fetch form response data if it exists and replace the form sectionsMap with the form responseMap
+          fetchFormResponseData();
+        }
       } catch (error) {
         formsServiceLogger.error(`Error fetching form: ${error}`);
         router.push("/error");
@@ -63,7 +85,7 @@ const FormResponder = ({ formId, eventId, formResponseId }: FormResponderProps) 
       const docRef = await findFormResponseDocRef(formId, eventId, formResponseId);
       if (docRef.path.includes(FormResponsePaths.Temp)) {
         // Since the form response is in the temp collection, we can allow the user to edit the form response
-        setCanEdit(true);
+        setCanEditWrapper(true);
       }
       // Now get the form response data itself
       const formResponseData = await getFormResponse(formId, eventId, formResponseId);
@@ -71,7 +93,8 @@ const FormResponder = ({ formId, eventId, formResponseId }: FormResponderProps) 
         if (!prevForm) return prevForm;
         return {
           ...prevForm,
-          sectionsMap: new Map(formResponseData.responseMap),
+          responseSectionsOrder: formResponseData.responseSectionsOrder,
+          sectionsMap: formResponseData.responseMap,
         };
       });
     };
@@ -81,6 +104,7 @@ const FormResponder = ({ formId, eventId, formResponseId }: FormResponderProps) 
 
   const onSubmit = () => {
     if (!form) return;
+    if (!canEdit) return;
     const formResponse = extractFormResponseFromForm(formId, eventId, form);
     if (formResponseId === null) {
       // Since FormResponseId is null, this is a new form response and we save it to the temp collection
@@ -98,17 +122,17 @@ const FormResponder = ({ formId, eventId, formResponseId }: FormResponderProps) 
       if (!prevForm) return prevForm;
 
       // Create a new Map copy
-      const newSectionsMap = new Map(prevForm.sectionsMap);
+      const newSectionsMap = prevForm.sectionsMap;
 
       // Get the section to update
-      const section = newSectionsMap.get(sectionId);
+      const section = newSectionsMap[sectionId];
       if (!section) return prevForm; // no change if section not found
 
       // Update the answer (create a new object to keep immutability)
       const updatedSection = { ...section, answer: newAnswer };
 
       // Set it back into the new Map
-      newSectionsMap.set(sectionId, updatedSection);
+      newSectionsMap[sectionId] = updatedSection;
 
       // Return a new form object with updated Map
       return {
@@ -140,7 +164,7 @@ const FormResponder = ({ formId, eventId, formResponseId }: FormResponderProps) 
             organiser={organiser}
           />
           {form.sectionsOrder.map((sectionId) => {
-            const section = form.sectionsMap.get(sectionId);
+            const section = form.sectionsMap[sectionId];
             if (!section) return null; // Skip if section not found
 
             switch (section.type) {
@@ -170,7 +194,7 @@ const FormResponder = ({ formId, eventId, formResponseId }: FormResponderProps) 
                 return null;
             }
           })}
-          <div className="w-full flex">
+          <div className={`w-full ${canEdit ? "flex" : "hidden"}`}>
             <BlackHighlightButton type="submit" text="Submit" className="border-1 px-3 bg-white ml-auto" />
           </div>
         </div>

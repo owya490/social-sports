@@ -65,7 +65,7 @@ export default function Dashboard() {
                   </Link>
                 </div>
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray  rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                  <Link href={`/organiser/forms/create-form/form-editor`}>
+                  <Link href={`/organiser/forms/create-form/editor`}>
                     <div className="h-full flex justify-center items-center">
                       <p>Create a form</p>
                     </div>
