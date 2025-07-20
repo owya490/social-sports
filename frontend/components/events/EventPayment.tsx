@@ -1,6 +1,12 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { FulfilmentEntityType, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import {
+  execNextFulfilmentEntity,
+  FULFILMENT_SESSION_ENABLED,
+  initFulfilmentSession,
+} from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import {
@@ -151,8 +157,35 @@ export default function EventPayment(props: EventPaymentProps) {
                     onClick={async () => {
                       props.setLoading(true);
                       window.scrollTo(0, 0);
-                      const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
-                      router.push(link);
+
+                      // We'll put this behind a flag for now just in case we need to quickly disable this.
+                      if (FULFILMENT_SESSION_ENABLED) {
+                        let fulfilmentSessionId: FulfilmentSessionId | undefined = undefined;
+                        try {
+                          fulfilmentSessionId = await initFulfilmentSession({
+                            type: "checkout",
+                            fulfilmentEntityTypes: [FulfilmentEntityType.STRIPE],
+                            eventId: props.eventId,
+                            numTickets: attendeeCount,
+                          });
+
+                          await execNextFulfilmentEntity(fulfilmentSessionId, router);
+
+                          // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
+                        } catch {
+                          // Clean up fulfilment session if it fails
+
+                          router.push("/error");
+                        }
+                      } else {
+                        const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                          props.eventId,
+                          props.isPrivate,
+                          attendeeCount
+                        );
+
+                        router.push(stripeCheckoutLink);
+                      }
                     }}
                   >
                     Book Now

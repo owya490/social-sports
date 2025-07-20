@@ -1,4 +1,5 @@
 import { UserId } from "./UserTypes";
+import { Branded } from "./index";
 
 export interface Form {
   formId: FormId;
@@ -6,13 +7,13 @@ export interface Form {
   userId: UserId;
   formActive: boolean;
   sectionsOrder: SectionId[]; // keeps track of ordering for editing forms
-  sectionsMap: Map<SectionId, FormSection>;
+  sectionsMap: Record<SectionId, FormSection>;
 }
 
-export type FormId = string;
-export type FormTitle = string;
-export type SectionId = string;
-export type FormResponseId = string;
+export type FormId = Branded<string, "FormId">;
+export type FormTitle = Branded<string, "FormTitle">;
+export type SectionId = Branded<string, "SectionId">;
+export type FormResponseId = Branded<string, "FormResponseId">;
 
 export type FormSection =
   | TextSection
@@ -67,7 +68,7 @@ export interface DateTimeSection extends AbstractSection {
 /** Contains the answers of the form from the responder */
 export interface FormResponse {
   formId: FormId;
-  responseMap: Map<SectionId, FormSection>;
+  responseMap: Record<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
   submissionTime?: number;
 }
