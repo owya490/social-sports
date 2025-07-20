@@ -72,7 +72,7 @@ export const FormPreviewCard = ({
       <div className="h-64 overflow-hidden p-4 ml-7 sm:ml-2 md:ml-0 2xl:ml-2 pointer-events-none select-none">
         <div className="scale-[0.4] origin-top-left w-[40rem] sm:w-[28rem] md:w-[28rem] lg:w-[30rem] xl:w-[32rem]">
           <h1 className="font-bold text-3xl mb-2 line-clamp-1">{formTitle}</h1>
-          {sectionsOrder.map((sectionId, idx) => {
+          {sectionsOrder.map((sectionId) => {
             const section = sectionsMap[sectionId]; // force the not undefined for now
             switch (section.type) {
               case FormSectionType.TEXT:

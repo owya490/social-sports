@@ -71,7 +71,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
   const [eventId, setEventId] = useState<string>("dashboard");
 
   useEffect(() => {
-    const fetchEvents = async () => {
+    const getEventId = () => {
       if (user.userId === "") {
         return;
       }
@@ -88,7 +88,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
       }
     };
 
-    fetchEvents();
+    getEventId();
   }, [user]);
 
   return (
