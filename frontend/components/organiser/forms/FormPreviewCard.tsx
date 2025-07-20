@@ -111,16 +111,15 @@ export const FormPreviewCard = ({
               <div className="flex gap-3 mt-4">
                 {/* Form Editor */}
                 <Link
-                  href={`organiser/forms/${formId}/form-editor`}
                   className="w-full py-3 px-4 border border-core-outline rounded-lg text-xs hover:bg-core-hover transition-colors duration-200 text-center"
-                  onClick={(e) => e.stopPropagation()}
+                  href={`/organiser/forms/${formId}/form-editor`}
                 >
                   Form Editor
                 </Link>
 
                 {/* View as Responder */}
                 <Link
-                  href={`organiser/forms/${formId}/responses`}
+                  href={`/organiser/forms/${formId}/responses`}
                   className="w-full py-3 px-4 hover:bg-core-hover border border-core-outline rounded-lg text-xs transition-colors duration-200 text-center"
                   onClick={(e) => e.stopPropagation()}
                 >

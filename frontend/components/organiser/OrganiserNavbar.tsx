@@ -1,7 +1,5 @@
 "use client";
 
-import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
-import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import { useUser } from "@components/utility/UserContext";
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
@@ -11,13 +9,12 @@ import {
   CameraIcon,
   ChartBarIcon,
   HomeIcon,
-  PencilSquareIcon,
   LinkIcon,
+  PencilSquareIcon,
   StarIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
-import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { Fragment, ReactNode, useEffect, useState } from "react";
 
@@ -71,8 +68,6 @@ const NavButton = ({ href, isActive, tooltipContent, children }: NavButtonProps)
 
 export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
   const { user } = useUser();
-  const [_eventDataList, setEventDataList] = useState<EventData[]>([EmptyEventData, EmptyEventData]);
-  const [_closestEvent, setClosestEvent] = useState<EventData | null>(null);
   const [eventId, setEventId] = useState<string>("dashboard");
 
   useEffect(() => {
@@ -90,22 +85,6 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         const lastPart = pathParts[pathParts.length - 1];
         setEventId(lastPart);
         return;
-      }
-
-      try {
-        const events = await getOrganiserEvents(user.userId);
-
-        const futureEvents = events.filter((event) => {
-          return event.startDate.seconds - Timestamp.now().seconds > 0;
-        });
-
-        futureEvents.sort((a, b) => a.startDate.seconds - b.startDate.seconds);
-
-        setEventDataList(futureEvents);
-        setClosestEvent(futureEvents.length > 0 ? futureEvents[0] : null);
-        setEventId(futureEvents.length > 0 ? `${futureEvents[0].eventId}` : "dashboard");
-      } catch (error) {
-        console.error("getOrganiserEvents() Error: " + error);
       }
     };
 
@@ -194,11 +173,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
           <BookmarkSquareIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
 
-        <NavButton
-          href={`/organiser/forms/gallery`}
-          isActive={currPage === "FormsGallery"}
-          tooltipContent="Forms"
-        >
+        <NavButton href={`/organiser/forms/gallery`} isActive={currPage === "FormsGallery"} tooltipContent="Forms">
           <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
 

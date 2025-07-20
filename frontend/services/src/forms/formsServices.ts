@@ -41,7 +41,7 @@ export async function getForm(formId: FormId): Promise<Form> {
     const formDoc = formDocSnapshot.data() as Form;
 
     formsServiceLogger.info(`getForm: Successfully retrieved information for formId: ${formId}`);
-    return { ...EmptyForm, ...formDoc };
+    return { ...EmptyForm, ...formDoc, formId: formId };
   } catch (error) {
     formsServiceLogger.error(`getForm: Error getting form for formId: ${formId}, error: ${error}`);
     throw error;
@@ -90,7 +90,7 @@ export async function getActiveForms(): Promise<Form[]> {
 
     activeFormsSnapshot.forEach((docSnapshot) => {
       const formData = docSnapshot.data() as Form;
-      activeForms.push({ ...EmptyForm, ...formData });
+      activeForms.push({ ...EmptyForm, ...formData, formId: docSnapshot.id as FormId });
     });
 
     return activeForms;
@@ -109,7 +109,7 @@ export async function getDeletedForms(): Promise<Form[]> {
 
     deletedFormsSnapshot.forEach((docSnapshot) => {
       const formData = docSnapshot.data() as Form;
-      deletedForms.push({ ...EmptyForm, ...formData });
+      deletedForms.push({ ...EmptyForm, ...formData, formId: docSnapshot.id as FormId });
     });
 
     return deletedForms;
