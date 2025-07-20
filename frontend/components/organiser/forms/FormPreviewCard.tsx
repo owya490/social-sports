@@ -1,7 +1,7 @@
 "use client";
 
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
-import LoadingSkeletonEventCard from "@/components/loading/LoadingSkeletonEventCard";
+import LoadingSkeletonFormGalleryCard from "@/components/loading/LoadingSkeletonFormGalleryCard";
 import { FormId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
@@ -56,7 +56,7 @@ export const FormPreviewCard = ({
 
   // skeleton loading state
   if (isLoading) {
-    return <LoadingSkeletonEventCard />;
+    return <LoadingSkeletonFormGalleryCard />;
   }
 
   return (
@@ -66,7 +66,6 @@ export const FormPreviewCard = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleCardClick}
-      // href={`organiser/forms/${formId}/form-editor`}
     >
       {/* Form Preview Section */}
       <div className="h-64 overflow-hidden p-4 ml-7 sm:ml-2 md:ml-0 2xl:ml-2 pointer-events-none select-none">
@@ -85,7 +84,7 @@ export const FormPreviewCard = ({
       {/* Metadata/Action Section */}
       <div
         className={`absolute bottom-0 left-0 right-0 bg-white transition-all duration-300 ease-in-out border-t border-core-outline ${
-          isExpanded ? "h-full text-wrap" : "h-20 text-nowrap"
+          isExpanded ? "h-full border-t-0 text-wrap" : "h-20 text-nowrap"
         }`}
       >
         {/* Content Container */}
