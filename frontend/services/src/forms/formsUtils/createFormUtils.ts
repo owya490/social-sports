@@ -40,6 +40,7 @@ export function rateLimitCreateForm(): boolean {
  * Helper function to append a formId for a specified user.
  */
 export async function appendFormIdForUser(formId: FormId, userId: UserId): Promise<void> {
+  createFormUtilsLogger.info(`Appending formId ${formId} to userId: ${userId}`);
   try {
     const privateUserData = await getPrivateUserById(userId);
     privateUserData.forms !== undefined && privateUserData.forms !== null
