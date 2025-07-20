@@ -2,7 +2,6 @@ import { UserId } from "./UserTypes";
 import { Branded } from "./index";
 
 export interface Form {
-  formId: FormId;
   title: FormTitle;
   userId: UserId;
   formActive: boolean;

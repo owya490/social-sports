@@ -1,11 +1,11 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
-import { UserId } from "@/interfaces/UserTypes";
+import { PrivateUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { collection, doc, getDoc, getDocs, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
-import { getPublicUserById, getFullUserById } from "../users/usersService";
+import { getPrivateUserById, getPublicUserById } from "../users/usersService";
 import { FormPaths, FormResponseStatus, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
@@ -252,13 +252,12 @@ export async function updateFormResponse(
 export async function getFormsForUser(userId: UserId): Promise<Form[]> {
   formsServiceLogger.info(`getFormsForUser: ${userId}`);
   try {
-    const organiser = await getFullUserById(userId);
+    const organiser: PrivateUserData = await getPrivateUserById(userId);
 
     const allForms: Form[] = [];
     // get all forms from the organiser
     for (const formId of organiser.forms) {
       const form = await getForm(formId);
-      form.formId = formId;
       allForms.push(form);
     }
 
@@ -274,8 +273,8 @@ export async function getActiveFormsForUser(userId: UserId): Promise<Form[]> {
   formsServiceLogger.info(`getActiveFormsForUser: ${userId}`);
   try {
     const activeForms: Form[] = [];
-    const publicUserData = await getPublicUserById(userId);
-    for (const formId of publicUserData.forms ?? []) {
+    const privateUserData = await getPrivateUserById(userId);
+    for (const formId of privateUserData.forms ?? []) {
       const form = await getForm(formId);
       if (form.formActive) {
         activeForms.push(form);
