@@ -10,6 +10,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 public class StartFulfilmentEntity extends FulfilmentEntity {
+    private String url;
+    
     {
         setType(FulfilmentEntityType.START);
     }

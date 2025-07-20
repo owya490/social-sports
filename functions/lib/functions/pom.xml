@@ -82,6 +82,18 @@
       <artifactId>dotenv-java</artifactId>
       <version>3.2.0</version>
     </dependency>
+    <!-- Apache HTTP Client for making HTTP requests -->
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.14</version>
+    </dependency>
+    <!-- Apache Commons Logging (required by httpclient) -->
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.2</version>
+    </dependency>
   </dependencies>
 
   <build>

@@ -1,133 +1,143 @@
 package com.functions.fulfilment.models;
 
+import static com.functions.utils.JavaUtils.objectMapper;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.events.models.EventData;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.annotation.DocumentId;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Data
-@Builder(toBuilder = true)
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
 @AllArgsConstructor
-public class FulfilmentSession {
+public abstract class FulfilmentSession {
     /**
      * Firestore document ID
      */
     @DocumentId
     private String id;
 
+    /**
+     * Store the type of FulfilmentSession for the purpose of deserialisation from
+     * Firebase so we know
+     * which concrete class to instantiate. Unfortunately, Firebase does not support
+     * polymorphism directly.
+     */
+    private FulfilmentSessionType type;
+
     private Timestamp fulfilmentSessionStartTime;
-    private String eventId;
+    private EventData eventData;
     /**
      * Map of FulfilmentEntityIds to FulfilmentEntity objects.
      */
     private Map<String, FulfilmentEntity> fulfilmentEntityMap;
     /**
-     * List of FulfilmentEntityIds specifying their order in the fulfilment session workflow.
+     * List of FulfilmentEntityIds specifying their order in the fulfilment session
+     * workflow.
      */
-    private List<String> fulfilmentEntityOrder;
+    private List<String> fulfilmentEntityIds;
 
     private static Logger logger = LoggerFactory.getLogger(FulfilmentSession.class);
 
     /**
-     * This method handles the deserialization of FulfilmentSession from a Firestore DocumentSnapshot.
+     * This method handles the deserialization of FulfilmentSession from a Firestore
+     * DocumentSnapshot.
      * <p>
-     * Firestore deserialization can't take advantage of java polymorphism - when deserializing
-     * a list of abstract FulfilmentEntity class, it will not know which concrete class to instantiate.
+     * Firestore deserialization can't take advantage of java polymorphism - when
+     * deserializing
+     * a list of abstract FulfilmentEntity class, it will not know which concrete
+     * class to instantiate.
      */
     public static FulfilmentSession fromFirestore(DocumentSnapshot snapshot) {
-        FulfilmentSession session = new FulfilmentSession();
-        session.setId(snapshot.getId());
-        session.setEventId(snapshot.getString("eventId"));
-        session.setFulfilmentSessionStartTime(snapshot.getTimestamp("fulfilmentSessionStartTime"));
+        // Read the fulfilmentEntityMap directly from Firestore
+        @SuppressWarnings("unchecked")
+        Map<String, Object> rawEntityMap = (Map<String, Object>) snapshot.get("fulfilmentEntityMap");
+        Map<String, FulfilmentEntity> entityMap = new HashMap<>();
 
-        Map<String, FulfilmentEntity> entityMap = new LinkedHashMap<>();
-        List<String> entityOrder = new ArrayList<>();
+        if (rawEntityMap != null) {
+            for (Map.Entry<String, Object> entry : rawEntityMap.entrySet()) {
+                String entityId = entry.getKey();
+                @SuppressWarnings("unchecked")
+                Map<String, Object> entityData = (Map<String, Object>) entry.getValue();
 
-        List<Map<String, Object>> entitiesList = (List<Map<String, Object>>) snapshot.get("fulfilmentEntities");
+                try {
+                    // Convert the map to JSON string, then deserialize using Jackson
+                    String json = objectMapper.writeValueAsString(entityData);
+                    FulfilmentEntityType type = FulfilmentEntityType.valueOf((String) entityData.get("type"));
 
-        if (entitiesList != null) {
-            for (Map<String, Object> entityData : entitiesList) {
-                String entityId = (String) entityData.get("id");
-                FulfilmentEntityType type = FulfilmentEntityType.valueOf((String) entityData.get("type"));
-                FulfilmentEntity entity;
+                    FulfilmentEntity entity;
+                    switch (type) {
+                        case START:
+                            entity = objectMapper
+                                    .readValue(json, StartFulfilmentEntity.class);
+                            break;
+                        case STRIPE:
+                            entity = objectMapper
+                                    .readValue(json, StripeFulfilmentEntity.class);
+                            break;
+                        case FORMS:
+                            entity = objectMapper
+                                    .readValue(json, FormsFulfilmentEntity.class);
+                            break;
+                        case END:
+                            entity = objectMapper
+                                    .readValue(json, EndFulfilmentEntity.class);
+                            break;
+                        default:
+                            throw new IllegalArgumentException(
+                                    "Unknown FulfilmentEntity type: " + entityData.get("type"));
+                    }
 
-                switch (type) {
-                    case START:
-                        entity = StartFulfilmentEntity.builder().url((String) entityData.get("url")).type(type).build();
-                        break;
-                    case STRIPE:
-                        entity = StripeFulfilmentEntity.builder().url((String) entityData.get("url")).type(type).build();
-                        break;
-                    case FORMS:
-                        entity = FormsFulfilmentEntity.builder().formId((String) entityData.get("formId"))
-                                .formResponseIds((List<String>) entityData.get("formResponseIds"))
-                                .submittedFormResponseIds((List<String>) entityData.get("submittedFormResponseIds"))
-                                .url((String) entityData.get("url"))
-                                .type(type).build();
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unknown FulfilmentEntity type: " + entityData.get("type"));
+                    entityMap.put(entityId, entity);
+                } catch (Exception e) {
+                    logger.error("Failed to deserialize FulfilmentEntity: {}", entityData, e);
                 }
-
-                entityMap.put(entityId, entity);
-                entityOrder.add(entityId);
             }
         }
 
-        session.setFulfilmentEntityMap(entityMap);
-        session.setFulfilmentEntityOrder(entityOrder);
-        return session;
-    }
-
-    public Map<String, Object> toFirestore() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("eventId", eventId);
-        data.put("fulfilmentSessionStartTime", fulfilmentSessionStartTime);
-
-        List<Map<String, Object>> entitiesList = new ArrayList<>();
-        for (String entityId : fulfilmentEntityOrder) {
-            FulfilmentEntity entity = fulfilmentEntityMap.get(entityId);
-            Map<String, Object> entityData = new HashMap<>();
-            entityData.put("id", entityId);
-            entityData.put("type", entity.getType().name());
-            entityData.put("url", entity.getUrl());
-            // Add other entity-specific fields here
-            entitiesList.add(entityData);
+        // Read the fulfilmentEntityIds directly from Firestore
+        @SuppressWarnings("unchecked")
+        List<String> entityIds = (List<String>) snapshot.get("fulfilmentEntityIds");
+        if (entityIds == null) {
+            entityIds = new ArrayList<>();
         }
 
-        data.put("fulfilmentEntities", entitiesList);
-        return data;
-    }
+        // Get the session type from Firestore
+        FulfilmentSessionType sessionType = FulfilmentSessionType.valueOf(
+                (String) snapshot.get("type"));
 
-    /**
-     * Validates whether the frontend should be allowed to route to a specific FulfilmentEntity.
-     * @param entityId The ID of the FulfilmentEntity to validate.
-     * @return The URL of the FulfilmentEntity if valid, otherwise an error message.
-     */
-    public Map<String, Object> validateAndGetResponse(String entityId) {
-        FulfilmentEntity entity = fulfilmentEntityMap.get(entityId);
-        if (entity == null) {
-            logger.warn("Invalid FulfilmentEntityId: " + entityId);
-            return Map.of("error", "User does not have permission to route to this URL yet.");
+        // Create the appropriate session type
+        switch (sessionType) {
+            case CHECKOUT:
+                Integer numTickets = null;
+                Long numTicketsLong = snapshot.getLong("numTickets");
+                if (numTicketsLong != null) {
+                    numTickets = numTicketsLong.intValue();
+                }
+                return CheckoutFulfilmentSession.builder()
+                        .eventData(objectMapper.convertValue(snapshot.get("eventData"), EventData.class))
+                        .fulfilmentSessionStartTime(snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .fulfilmentEntityMap(entityMap)
+                        .fulfilmentEntityIds(entityIds)
+                        .numTickets(numTickets)
+                        .build();
+            default:
+                throw new IllegalArgumentException("Unknown FulfilmentSession type: " + sessionType);
         }
-
-        // Add additional validation logic here if needed
-
-        return Map.of("url", entity.getUrl());
     }
 }

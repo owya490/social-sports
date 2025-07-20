@@ -121,11 +121,11 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy execNextFulfilmentEntity
+      - name: Deploy getNextFulfilmentEntity
         working-directory: functions/lib/functions
         run: |
-          gcloud functions deploy execNextFulfilmentEntity \
-            --entry-point com.functions.fulfilment.controllers.ExecNextFulfilmentEntityEndpoint \
+          gcloud functions deploy getNextFulfilmentEntity \
+            --entry-point com.functions.fulfilment.controllers.GetNextFulfilmentEntityEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \

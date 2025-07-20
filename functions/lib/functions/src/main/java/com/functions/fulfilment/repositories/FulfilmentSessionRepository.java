@@ -3,7 +3,6 @@ package com.functions.fulfilment.repositories;
 import static com.functions.utils.JavaUtils.objectMapper;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,26 +16,18 @@ import com.google.cloud.firestore.Firestore;
 public class FulfilmentSessionRepository {
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSessionRepository.class);
 
-    public static String createFulfilmentSession(FulfilmentSession fulfilmentSession) throws Exception {
-        try {
-            String fulfilmentSessionId = UUID.randomUUID().toString();
-            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(fulfilmentSessionId);
-            sessionDocRef.create(fulfilmentSession).get();
-            return sessionDocRef.getId();
-        } catch (Exception e) {
-            logger.error("Failed to create fulfilment session for eventId: {}", fulfilmentSession.getEventId(), e);
-            throw new Exception("Failed to create fulfilment session for eventId: " + fulfilmentSession.getEventId(), e);
-        }
-    }
-
-    public static String createFulfilmentSession(String fulfilmentSessionId, FulfilmentSession fulfilmentSession) throws Exception {
+    public static String createFulfilmentSession(String fulfilmentSessionId, FulfilmentSession fulfilmentSession)
+            throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(fulfilmentSessionId);
             sessionDocRef.create(fulfilmentSession).get();
             return sessionDocRef.getId();
         } catch (Exception e) {
-            logger.error("Failed to create fulfilment session for eventId: {}", fulfilmentSession.getEventId(), e);
-            throw new Exception("Failed to create fulfilment session for eventId: " + fulfilmentSession.getEventId(), e);
+            logger.error("Failed to create fulfilment session for eventId: {}",
+                    fulfilmentSession.getEventData().getEventId(), e);
+            throw new Exception(
+                    "Failed to create fulfilment session for eventId: " + fulfilmentSession.getEventData().getEventId(),
+                    e);
         }
     }
 
@@ -64,7 +55,8 @@ public class FulfilmentSessionRepository {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
             sessionDocRef.set(updatedSession).get();
         } catch (Exception e) {
-            logger.error("Failed to update fulfilment session for sessionId: {}, fulfilmentSession: {}", objectMapper.writeValueAsString(updatedSession), updatedSession, e);
+            logger.error("Failed to update fulfilment session for sessionId: {}, fulfilmentSession: {}",
+                    objectMapper.writeValueAsString(updatedSession), updatedSession, e);
             throw new Exception("Failed to update fulfilment session for sessionId: " + sessionId, e);
         }
     }

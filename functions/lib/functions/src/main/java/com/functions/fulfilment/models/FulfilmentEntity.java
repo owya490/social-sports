@@ -13,5 +13,4 @@ public abstract class FulfilmentEntity {
      * which concrete class to instantiate. Unfortunately, Firebase does not support polymorphism directly.
      */
     private FulfilmentEntityType type;
-    private String url;
 }

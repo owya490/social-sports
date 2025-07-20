@@ -1,10 +1,9 @@
 package com.functions.forms.services;
 
-import com.functions.events.repositories.EventsRepository;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
+import com.functions.events.repositories.EventsRepository;
 
 public class FormsService {
     private static final Logger logger = LoggerFactory.getLogger(FormsService.class);
@@ -22,8 +21,8 @@ public class FormsService {
                 }
             });
         } catch (Exception e) {
-            logger.error("Error trying to get form ID for event ID {}: {}", eventId, e.getMessage());
-            return Optional.empty();
+            logger.error("[FormsService] Error trying to get form ID for event ID {}: {}", eventId, e.getMessage());
+            throw new RuntimeException("[FormsService] Failed to retrieve form ID for event ID: " + eventId, e);
         }
     }
 }

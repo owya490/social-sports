@@ -1,17 +1,17 @@
 import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
 import {
-  ExecNextFulfilmentEntityRequest,
-  ExecNextFulfilmentEntityResponse,
-  FulfilmentEntityType,
+  FulfilmentEntityId,
   FulfilmentSessionId,
   FulfilmentSessionType,
+  GetNextFulfilmentEntityRequest,
+  GetNextFulfilmentEntityResponse,
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { getExecNextFulfilmentEntityUrl, getInitFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
+import { getGetNextFulfilmentEntityUrl, getInitFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
 export const FULFILMENT_SESSION_ENABLED = false;
@@ -27,15 +27,11 @@ export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
  */
 export async function initFulfilmentSession(
   fulfilmentSessionType: FulfilmentSessionType
-): Promise<FulfilmentSessionId> {
+): Promise<InitCheckoutFulfilmentSessionResponse> {
   try {
     switch (fulfilmentSessionType.type) {
       case "checkout": {
-        return await initCheckoutFulfilmentSession(
-          fulfilmentSessionType.eventId,
-          fulfilmentSessionType.numTickets,
-          fulfilmentSessionType.fulfilmentEntityTypes
-        );
+        return await initCheckoutFulfilmentSession(fulfilmentSessionType.eventId, fulfilmentSessionType.numTickets);
       }
     }
   } catch (error) {
@@ -49,9 +45,8 @@ export async function initFulfilmentSession(
  */
 async function initCheckoutFulfilmentSession(
   eventId: EventId,
-  numTickets: number,
-  fulfilmentEntityTypes: FulfilmentEntityType[]
-): Promise<FulfilmentSessionId> {
+  numTickets: number
+): Promise<InitCheckoutFulfilmentSessionResponse> {
   fulfilmentServiceLogger.info(
     `initCheckoutFulfilmentSessionNew: Initializing fulfilment session for event ID: ${eventId}`
   );
@@ -59,7 +54,6 @@ async function initCheckoutFulfilmentSession(
   const request: InitCheckoutFulfilmentSessionRequest = {
     eventId,
     numTickets,
-    fulfilmentEntityTypes,
   };
 
   try {
@@ -81,7 +75,7 @@ async function initCheckoutFulfilmentSession(
     }
 
     const response = (await rawResponse.json()) as InitCheckoutFulfilmentSessionResponse;
-    return response.fulfilmentSessionId;
+    return response;
   } catch (error) {
     fulfilmentServiceLogger.error(
       `initCheckoutFulfilmentSessionNew: Failed to initialize fulfilment session: ${error}`
@@ -94,20 +88,22 @@ async function initCheckoutFulfilmentSession(
  * Executes the next fulfilment entity in the session.
  * Returns a boolean indicating whether there are more fulfilment entities to execute.
  */
-export async function execNextFulfilmentEntity(
+export async function getNextFulfilmentEntity(
   fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentEntityId: FulfilmentEntityId,
   router: AppRouterInstance
 ): Promise<void> {
   fulfilmentServiceLogger.info(
-    `execNextFulfilmentEntityNew: Executing next fulfilment entity for session ID: ${fulfilmentSessionId}`
+    `getNextFulfilmentEntity: Executing next fulfilment entity for session ID: ${fulfilmentSessionId} for entity ID: ${fulfilmentEntityId}`
   );
 
-  const request: ExecNextFulfilmentEntityRequest = {
+  const request: GetNextFulfilmentEntityRequest = {
     fulfilmentSessionId,
+    currentFulfilmentEntityId: fulfilmentEntityId,
   };
 
   try {
-    const rawResponse = await fetch(getExecNextFulfilmentEntityUrl(), {
+    const rawResponse = await fetch(getGetNextFulfilmentEntityUrl(), {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -119,23 +115,23 @@ export async function execNextFulfilmentEntity(
     if (!rawResponse.ok) {
       const errorResponse = (await rawResponse.json()) as ErrorResponse;
       fulfilmentServiceLogger.error(
-        `execNextFulfilmentEntityNew: Cloud function error: Failed to execute next fulfilment entity: ${errorResponse.errorMessage}`
+        `getNextFulfilmentEntity: Cloud function error: Failed to execute next fulfilment entity: ${errorResponse.errorMessage}`
       );
-      throw new Error(`execNextFulfilmentEntityNew: ${errorResponse.errorMessage}`);
+      throw new Error(`getNextFulfilmentEntity: ${errorResponse.errorMessage}`);
     }
 
-    const response = (await rawResponse.json()) as ExecNextFulfilmentEntityResponse;
+    const response = (await rawResponse.json()) as GetNextFulfilmentEntityResponse;
 
     if (response.url) {
-      fulfilmentServiceLogger.info(`execNextFulfilmentEntityNew: Redirecting to next URL: ${response.url}`);
+      fulfilmentServiceLogger.info(`getNextFulfilmentEntity: Redirecting to next URL: ${response.url}`);
       router.push(response.url);
     } else {
       fulfilmentServiceLogger.info(
-        `execNextFulfilmentEntityNew: No more fulfilment entities to execute for session ID: ${fulfilmentSessionId}`
+        `getNextFulfilmentEntityNew: No more fulfilment entities to execute for session ID: ${fulfilmentSessionId}`
       );
     }
   } catch (error) {
-    fulfilmentServiceLogger.error(`execNextFulfilmentEntity: Failed to execute next fulfilment entity: ${error}`);
+    fulfilmentServiceLogger.error(`getNextFulfilmentEntity: Failed to execute next fulfilment entity: ${error}`);
     throw error;
   }
 }

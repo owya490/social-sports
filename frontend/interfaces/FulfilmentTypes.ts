@@ -4,9 +4,11 @@ import { URL } from "./Types";
 
 export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
-export type FulfilmentSessionType = { fulfilmentEntityTypes: FulfilmentEntityType[] } & ({
+export type FulfilmentEntityId = Branded<string, "FulfilmentEntityId">;
+
+export type FulfilmentSessionType = {
   type: "checkout";
-} & CheckoutFulfilmentSessionType);
+} & CheckoutFulfilmentSessionType;
 
 export type CheckoutFulfilmentSessionType = {
   eventId: EventId;
@@ -19,8 +21,10 @@ export type CheckoutFulfilmentSessionType = {
  * NOTE: The string values here should match the name of the enum itself.
  */
 export enum FulfilmentEntityType {
+  START = "START",
   STRIPE = "STRIPE",
   FORMS = "FORMS",
+  END = "END",
 }
 
 /**
@@ -29,7 +33,6 @@ export enum FulfilmentEntityType {
 export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
   numTickets: number;
-  fulfilmentEntityTypes: FulfilmentEntityType[];
 };
 
 /**
@@ -37,26 +40,28 @@ export type InitCheckoutFulfilmentSessionRequest = {
  */
 export type InitCheckoutFulfilmentSessionResponse = {
   fulfilmentSessionId: FulfilmentSessionId;
+  fulfilmentEntityId: FulfilmentEntityId;
 };
 
 /**
- * Payload we send to java execNextFulfilmentEntity function
+ * Payload we send to java getNextFulfilmentEntity function
  */
-export type ExecNextFulfilmentEntityRequest = {
+export type GetNextFulfilmentEntityRequest = {
   fulfilmentSessionId: FulfilmentSessionId;
+  currentFulfilmentEntityId: FulfilmentEntityId;
 };
 
 /**
- * Payload we receive from java execNextFulfilmentEntity
+ * Payload we receive from java getNextFulfilmentEntity
  */
-export type ExecNextFulfilmentEntityResponse = {
+export type GetNextFulfilmentEntityResponse = {
+  fulfilmentEntityType: FulfilmentEntityType;
   /**
-   * Empty if there are no more fulfilment entities to process
+   * Null if there are no more fulfilment entities.
    */
-  url?: URL;
+  fulfilmentEntityId: FulfilmentEntityId | null;
   /**
-   * NOTE: 0 based index of the current fulfilment entity
+   * Url of the next fulfilment entity, if applicable.
    */
-  currentFulfilmentEntityIndex: number;
-  numFulfilmentEntities: number;
+  url: URL | null;
 };

@@ -1,10 +1,9 @@
 "use client";
 
-import { FulfilmentEntityType, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
 import { timestampToDateString } from "@/services/src/datetimeUtils";
 import {
-  execNextFulfilmentEntity,
   FULFILMENT_SESSION_ENABLED,
+  getNextFulfilmentEntity,
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
@@ -139,16 +138,14 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
 
                     // We'll put this behind a flag for now just in case we need to quickly disable this.
                     if (FULFILMENT_SESSION_ENABLED) {
-                      let fulfilmentSessionId: FulfilmentSessionId | undefined = undefined;
                       try {
-                        fulfilmentSessionId = await initFulfilmentSession({
+                        const { fulfilmentSessionId, fulfilmentEntityId } = await initFulfilmentSession({
                           type: "checkout",
-                          fulfilmentEntityTypes: [FulfilmentEntityType.STRIPE],
                           eventId: props.eventId,
                           numTickets: attendeeCount,
                         });
 
-                        await execNextFulfilmentEntity(fulfilmentSessionId, router);
+                        await getNextFulfilmentEntity(fulfilmentSessionId, fulfilmentEntityId, router);
 
                         // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
                       } catch {
