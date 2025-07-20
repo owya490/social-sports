@@ -22,6 +22,7 @@ import com.functions.fulfilment.models.FulfilmentSession;
 import com.functions.fulfilment.models.StartFulfilmentEntity;
 import com.functions.fulfilment.models.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
+import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
@@ -193,6 +194,60 @@ public class FulfilmentService {
         }
     }
 
+    private static Optional<GetPrevFulfilmentEntityResponse> getPrevFulfilmentEntity(
+            String fulfilmentSessionId, int currentIndex) {
+        try {
+            logger.info("[FulfilmentService] Getting previous fulfilment entity for session ID: {} at index: {}",
+                    fulfilmentSessionId, currentIndex);
+            Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
+            if (maybeFulfilmentSession.isEmpty()) {
+                return Optional.empty();
+            }
+
+            FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+            List<String> fulfilmentEntityIds = fulfilmentSession.getFulfilmentEntityIds();
+            Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
+
+            // Validate current index
+            if (currentIndex < 0 || currentIndex >= fulfilmentEntityIds.size()) {
+                logger.error("Invalid current index: {} for fulfilment session ID: {}",
+                        currentIndex, fulfilmentSessionId);
+                return Optional.empty();
+            }
+
+            // Calculate previous index
+            int prevIndex = currentIndex - 1;
+            if (prevIndex < 0) {
+                logger.info(
+                        "Reached beginning of fulfilment workflow for session ID: {} because previous index {} is out of bounds",
+                        fulfilmentSessionId, prevIndex);
+                return Optional.empty();
+            }
+
+            // Get previous entity
+            String prevEntityId = fulfilmentEntityIds.get(prevIndex);
+            FulfilmentEntity prevEntity = fulfilmentEntityMap.get(prevEntityId);
+
+            if (prevEntity == null) {
+                logger.error("Fulfilment entity not found for ID: {} in session: {}", prevEntityId,
+                        fulfilmentSessionId);
+                return Optional.empty();
+            }
+
+            logger.info("[FulfilmentService] Previous fulfilment entity found: {} -> {}",
+                    prevEntity.getType(), prevEntityId);
+
+            return Optional.of(new GetPrevFulfilmentEntityResponse(
+                    prevEntity.getType(),
+                    prevEntityId,
+                    getEntityUrl(prevEntity)));
+        } catch (Exception e) {
+            logger.error("Failed to get previous fulfilment entity for session ID: {}",
+                    fulfilmentSessionId, e);
+            return Optional.empty();
+        }
+    }
+
     /**
      * Gets the first fulfilment entity to start the workflow. This is a convenience
      * method that starts from index -1 (before the first entity).
@@ -237,6 +292,49 @@ public class FulfilmentService {
             return getNextFulfilmentEntity(fulfilmentSessionId, currentIndex);
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity by current ID for session: {}",
+                    fulfilmentSessionId, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Gets the previous fulfilment entity before the specified current entity ID.
+     * If currentEntityId is null or empty, returns empty (no previous entity).
+     */
+    public static Optional<GetPrevFulfilmentEntityResponse> getPrevFulfilmentEntityByCurrentId(
+            String fulfilmentSessionId, String currentEntityId) {
+        try {
+            logger.info(
+                    "[FulfilmentService] Getting previous fulfilment entity for session: {} with current entity ID: {}",
+                    fulfilmentSessionId, currentEntityId);
+
+            // If no current entity ID provided, there's no previous entity
+            if (currentEntityId == null || currentEntityId.isEmpty()) {
+                logger.info("No current entity ID provided, no previous entity available");
+                return Optional.empty();
+            }
+
+            // Get session and find current entity index
+            Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
+            if (maybeFulfilmentSession.isEmpty()) {
+                return Optional.empty();
+            }
+
+            FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+            List<String> fulfilmentEntityIds = fulfilmentSession.getFulfilmentEntityIds();
+
+            // Find the index of the current entity
+            int currentIndex = fulfilmentEntityIds.indexOf(currentEntityId);
+            if (currentIndex == -1) {
+                logger.error("Current entity ID not found in session: {} -> {}",
+                        fulfilmentSessionId, currentEntityId);
+                return Optional.empty();
+            }
+
+            // Get the previous entity
+            return getPrevFulfilmentEntity(fulfilmentSessionId, currentIndex);
+        } catch (Exception e) {
+            logger.error("Failed to get previous fulfilment entity by current ID for session: {}",
                     fulfilmentSessionId, e);
             return Optional.empty();
         }
