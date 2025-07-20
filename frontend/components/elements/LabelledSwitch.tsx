@@ -11,7 +11,7 @@ interface LabelledSwitchProps {
 }
 export const LabelledSwitch = ({ title, description, state, setState, updateData }: LabelledSwitchProps) => {
   return (
-    <div className="lg:flex w-full items-center">
+    <div className="flex w-full items-center gap-4">
       <div>
         <h3 className="font-bold">{title}</h3>
         <p className="text-core-text font-light text-sm">{description}</p>
