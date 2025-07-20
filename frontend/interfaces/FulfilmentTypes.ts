@@ -55,7 +55,10 @@ export type GetNextFulfilmentEntityRequest = {
  * Payload we receive from java getNextFulfilmentEntity
  */
 export type GetNextFulfilmentEntityResponse = {
-  fulfilmentEntityType: FulfilmentEntityType;
+  /**
+   * Null if there are no more fulfilment entities.
+   */
+  type: FulfilmentEntityType | null;
   /**
    * Null if there are no more fulfilment entities.
    */

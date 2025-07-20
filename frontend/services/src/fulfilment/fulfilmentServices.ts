@@ -10,7 +10,6 @@ import {
   InitCheckoutFulfilmentSessionResponse,
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { getGetNextFulfilmentEntityUrl, getInitFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
@@ -90,9 +89,8 @@ async function initCheckoutFulfilmentSession(
  */
 export async function getNextFulfilmentEntity(
   fulfilmentSessionId: FulfilmentSessionId,
-  fulfilmentEntityId: FulfilmentEntityId,
-  router: AppRouterInstance
-): Promise<void> {
+  fulfilmentEntityId: FulfilmentEntityId
+): Promise<GetNextFulfilmentEntityResponse> {
   fulfilmentServiceLogger.info(
     `getNextFulfilmentEntity: Executing next fulfilment entity for session ID: ${fulfilmentSessionId} for entity ID: ${fulfilmentEntityId}`
   );
@@ -119,17 +117,7 @@ export async function getNextFulfilmentEntity(
       );
       throw new Error(`getNextFulfilmentEntity: ${errorResponse.errorMessage}`);
     }
-
-    const response = (await rawResponse.json()) as GetNextFulfilmentEntityResponse;
-
-    if (response.url) {
-      fulfilmentServiceLogger.info(`getNextFulfilmentEntity: Redirecting to next URL: ${response.url}`);
-      router.push(response.url);
-    } else {
-      fulfilmentServiceLogger.info(
-        `getNextFulfilmentEntityNew: No more fulfilment entities to execute for session ID: ${fulfilmentSessionId}`
-      );
-    }
+    return (await rawResponse.json()) as GetNextFulfilmentEntityResponse;
   } catch (error) {
     fulfilmentServiceLogger.error(`getNextFulfilmentEntity: Failed to execute next fulfilment entity: ${error}`);
     throw error;

@@ -1,5 +1,7 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { FulfilmentEntityType } from "@/interfaces/FulfilmentTypes";
+import { Logger } from "@/observability/logger";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   FULFILMENT_SESSION_ENABLED,
@@ -21,6 +23,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
+
+const EventPaymentLogger = new Logger("EventPaymentLogger");
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -166,7 +170,16 @@ export default function EventPayment(props: EventPaymentProps) {
                             numTickets: attendeeCount,
                           });
 
-                          await getNextFulfilmentEntity(fulfilmentSessionId, fulfilmentEntityId, router);
+                          const response = await getNextFulfilmentEntity(fulfilmentSessionId, fulfilmentEntityId);
+
+                          if (response.type === FulfilmentEntityType.STRIPE && response.url) {
+                            router.push(response.url);
+                          } else {
+                            EventPaymentLogger.warn(
+                              `getNextFulfilmentEntity: No more fulfilment entities found for fulfilmentSessionId: ${fulfilmentSessionId}`
+                            );
+                            props.setLoading(false);
+                          }
 
                           // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
                         } catch {
