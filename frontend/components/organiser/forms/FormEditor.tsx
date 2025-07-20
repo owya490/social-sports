@@ -6,6 +6,7 @@ import { TextSectionBuilder } from "@/components/forms/sections/text-section/Tex
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import {
+  EmptyForm,
   Form,
   FormDescription,
   FormId,
@@ -19,21 +20,10 @@ import { ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, EllipsisHorizontalIcon } fro
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReactSortable } from "react-sortablejs";
+import { v4 as uuidv4 } from "uuid";
 import EmptyInfoSection from "./EmptyInfoSection";
 import FormDesktopEditBar from "./FormDesktopEditBar";
 import FormMobileEditBar from "./FormMobileEditBar";
-import { v4 as uuidv4 } from "uuid";
-
-
-const initialForm: Form = {
-  title: "Untitled Form" as FormTitle,
-  description: "" as FormDescription,
-  userId: "",
-  formActive: true,
-  sectionsOrder: [],
-  sectionsMap: {},
-};
-
 export interface FormEditorParams {
   formId: FormId;
 }
@@ -44,6 +34,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   const router = useRouter();
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
+  const initialForm = { ...EmptyForm, title: "Untitled Form" as FormTitle };
   const [form, setForm] = useState<Form>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false);
@@ -52,7 +43,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
 
   useEffect(() => {
     const fetchForm = async () => {
-      if (user) {
+      if (user.userId !== "") {
         if (formId === CREATE_FORM_ID) {
           setForm((prevForm) => ({ ...prevForm, userId: user.userId }));
         } else {

@@ -19,7 +19,6 @@ export interface PublicUserData {
   };
   publicUpcomingOrganiserEvents: EventId[];
   bio: string;
-  forms: FormId[];
 }
 
 export interface PrivateUserData {
@@ -38,6 +37,7 @@ export interface PrivateUserData {
   organiserEvents: string[];
   publicOrganiserEvents: string[];
   recurrenceTemplates: string[];
+  forms: FormId[];
   sendOrganiserTicketEmails: boolean;
 }
 
@@ -65,7 +65,6 @@ export const EmptyPublicUserData: PublicUserData = {
   nameTokens: [],
   publicUpcomingOrganiserEvents: [],
   bio: "",
-  forms: [],
 };
 
 // BEWARE - PLEASE TAKE CARE WHEN EDITING THESE AS THEY WILL AFFECT DESERIALISATION AND DEFAULT USER CREATION
@@ -85,6 +84,7 @@ export const EmptyPrivateUserData: PrivateUserData = {
   recurrenceTemplates: [],
   stripeAccount: null,
   stripeAccountActive: null,
+  forms: [],
   sendOrganiserTicketEmails: false,
 };
 

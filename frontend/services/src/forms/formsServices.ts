@@ -1,11 +1,11 @@
 import { EventId } from "@/interfaces/EventTypes";
-import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
-import { UserId } from "@/interfaces/UserTypes";
+import { EmptyForm, EmptyFormResponse, Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
+import { PrivateUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { collection, doc, getDoc, getDocs, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
-import { getPublicUserById } from "../users/usersService";
+import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormResponseStatus, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
@@ -22,7 +22,7 @@ export async function createForm(form: Form): Promise<FormId> {
   try {
     const batch = writeBatch(db);
     const docRef = doc(collection(db, FormsRootPath, FormPaths.FormTemplates, FormStatus.Active));
-    batch.set(docRef, form);
+    batch.set(docRef, { ...form, formId: docRef.id as FormId, lastUpdated: Timestamp.now() });
     await batch.commit();
     await appendFormIdForUser(docRef.id as FormId, form.userId);
     formsServiceLogger.info(`Form created successfully with formId: ${docRef.id}, form: ${form}`);
@@ -41,7 +41,7 @@ export async function getForm(formId: FormId): Promise<Form> {
     const formDoc = formDocSnapshot.data() as Form;
 
     formsServiceLogger.info(`getForm: Successfully retrieved information for formId: ${formId}`);
-    return formDoc;
+    return { ...EmptyForm, ...formDoc, formId: formId };
   } catch (error) {
     formsServiceLogger.error(`getForm: Error getting form for formId: ${formId}, error: ${error}`);
     throw error;
@@ -90,7 +90,7 @@ export async function getActiveForms(): Promise<Form[]> {
 
     activeFormsSnapshot.forEach((docSnapshot) => {
       const formData = docSnapshot.data() as Form;
-      activeForms.push(formData);
+      activeForms.push({ ...EmptyForm, ...formData, formId: docSnapshot.id as FormId });
     });
 
     return activeForms;
@@ -109,7 +109,7 @@ export async function getDeletedForms(): Promise<Form[]> {
 
     deletedFormsSnapshot.forEach((docSnapshot) => {
       const formData = docSnapshot.data() as Form;
-      deletedForms.push(formData);
+      deletedForms.push({ ...EmptyForm, ...formData, formId: docSnapshot.id as FormId });
     });
 
     return deletedForms;
@@ -130,7 +130,7 @@ export async function updateActiveForm(formData: Partial<Form>, formId: FormId):
       throw new Error(`Form with id: '${formId}' not found`);
     }
 
-    await updateDoc(formDocRef, formData);
+    await updateDoc(formDocRef, { ...formData, lastUpdated: Timestamp.now() });
 
     formsServiceLogger.info(`Successfully updated form with id: '${formId}' and contents: ${formData}`);
   } catch (error) {
@@ -213,7 +213,7 @@ export async function getFormResponse(
     }
 
     const responseDoc = responseSnapshot.data() as FormResponse;
-    return responseDoc;
+    return { ...EmptyFormResponse, ...responseDoc };
   } catch (error) {
     formsServiceLogger.error(
       `getFormResponse: Error getting form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}`
@@ -252,29 +252,15 @@ export async function updateFormResponse(
 export async function getFormsForUser(userId: UserId): Promise<Form[]> {
   formsServiceLogger.info(`getFormsForUser: ${userId}`);
   try {
-    const activeFormsCollectionRef = collection(db, FormTemplatePaths.FormsActive);
-    const deletedFormsCollectionRef = collection(db, FormTemplatePaths.FormsDeleted);
-
-    const [activeFormsSnapshot, deletedFormsSnapshot] = await Promise.all([
-      getDocs(activeFormsCollectionRef),
-      getDocs(deletedFormsCollectionRef),
-    ]);
+    const organiser: PrivateUserData = await getPrivateUserById(userId);
+    console.log("organiser", organiser);
 
     const allForms: Form[] = [];
-
-    activeFormsSnapshot.forEach((docSnapshot) => {
-      const formData = docSnapshot.data() as Form;
-      if (formData.userId === userId) {
-        allForms.push(formData);
-      }
-    });
-
-    deletedFormsSnapshot.forEach((docSnapshot) => {
-      const formData = docSnapshot.data() as Form;
-      if (formData.userId === userId) {
-        allForms.push(formData);
-      }
-    });
+    // get all forms from the organiser
+    for (const formId of organiser.forms) {
+      const form = await getForm(formId);
+      allForms.push({ ...EmptyForm, ...form });
+    }
 
     return allForms;
   } catch (error) {
@@ -288,11 +274,11 @@ export async function getActiveFormsForUser(userId: UserId): Promise<Form[]> {
   formsServiceLogger.info(`getActiveFormsForUser: ${userId}`);
   try {
     const activeForms: Form[] = [];
-    const publicUserData = await getPublicUserById(userId);
-    for (const formId of publicUserData.forms ?? []) {
+    const privateUserData = await getPrivateUserById(userId);
+    for (const formId of privateUserData.forms ?? []) {
       const form = await getForm(formId);
       if (form.formActive) {
-        activeForms.push(form);
+        activeForms.push({ ...EmptyForm, ...form });
       }
     }
 
