@@ -1,3 +1,5 @@
 import os
 
 LOOPS_API_KEY = os.environ.get("LOOPS_API_KEY")
+LOOPS_CREATE_EVENT_EMAIL_TEMPLATE_ID = "cmd2y9sms12mxux0i3tcmdp9v"
+LOOPS_EMAIL_REMINDER_TEMPLATE_ID = "cm5dwlbsj034sasyzg1w6sg39"

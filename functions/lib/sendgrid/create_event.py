@@ -1,13 +1,11 @@
-import os
 import uuid
 from dataclasses import dataclass
 
-import pytz
 from firebase_functions import https_fn, options
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import SYDNEY_TIMEZONE, db
 from lib.logging import Logger
-from lib.sendgrid.commons import get_user_data, get_user_email
+from lib.sendgrid.commons import get_user_data_private, get_user_email
 from lib.sendgrid.constants import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
                                     SENDGRID_API_KEY,
                                     SENDGRID_UNSUBSCRIBE_GROUP_ID)
@@ -73,7 +71,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
     organiser_id = event_data.get("organiserId")
 
     try:
-        organiser_data = get_user_data(organiser_id)
+        organiser_data = get_user_data_private(organiser_id)
         email = get_user_email(organiser_id, organiser_data)
     except Exception as e:
         logger.error("Error occurred in getting organiser email.", e)

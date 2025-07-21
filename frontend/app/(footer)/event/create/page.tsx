@@ -18,8 +18,8 @@ import {
   getUsersEventThumbnailsUrls,
   uploadAndGetImageAndThumbnailUrls,
 } from "@/services/src/imageService";
+import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
-import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
 import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -206,7 +206,7 @@ export default function CreateEvent() {
       } else {
         newEventId = await createEvent(newEventData);
       }
-      await sendEmailOnCreateEvent(newEventId, newEventData.isPrivate ? "Private" : "Public");
+      await sendEmailOnCreateEventV2(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
@@ -324,3 +324,5 @@ export default function CreateEvent() {
     </div>
   );
 }
+
+
