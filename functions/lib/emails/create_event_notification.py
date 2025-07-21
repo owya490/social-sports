@@ -40,8 +40,7 @@ def send_create_event_email_with_loops(logger: Logger, email, organiser_name, ev
             "eventSport": event_data.get("sport"),
             "eventId": request_data.eventId,
             "eventPrivacy": request_data.visibility,
-            # "eventRecurrence": event_data.get("recurrence"),
-            # "eventLink": event_data.get("eventLink") or "",
+            "eventLink": event_data.get("eventLink") or "",
         }
     }
 
