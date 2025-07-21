@@ -1,17 +1,24 @@
+import { Timestamp } from "firebase/firestore";
+import { EventId } from "./EventTypes";
 import { UserId } from "./UserTypes";
+import { Branded } from "./index";
 
 export interface Form {
+  formId: FormId;
   title: FormTitle;
+  description: FormDescription;
   userId: UserId;
   formActive: boolean;
   sectionsOrder: SectionId[]; // keeps track of ordering for editing forms
-  sectionsMap: Map<SectionId, FormSection>;
+  sectionsMap: Record<SectionId, FormSection>;
+  lastUpdated: Timestamp | null;
 }
 
-export type FormId = string;
-export type FormTitle = string;
-export type SectionId = string;
-export type FormResponseId = string;
+export type FormId = Branded<string, "FormId">;
+export type FormTitle = Branded<string, "FormTitle">;
+export type FormDescription = Branded<string, "FormDescription">;
+export type SectionId = Branded<string, "SectionId">;
+export type FormResponseId = Branded<string, "FormResponseId">;
 
 export type FormSection =
   | TextSection
@@ -66,7 +73,30 @@ export interface DateTimeSection extends AbstractSection {
 /** Contains the answers of the form from the responder */
 export interface FormResponse {
   formId: FormId;
-  responseMap: Map<SectionId, FormSection>;
+  eventId: EventId;
+  formResponseId: FormResponseId;
+  responseSectionsOrder: SectionId[];
+  responseMap: Record<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
-  submissionTime?: number;
+  submissionTime: Timestamp;
 }
+
+export const EmptyForm: Form = {
+  formId: "" as FormId,
+  title: "" as FormTitle,
+  description: "" as FormDescription,
+  userId: "" as UserId,
+  formActive: true,
+  sectionsOrder: [],
+  sectionsMap: {},
+  lastUpdated: null,
+};
+
+export const EmptyFormResponse: FormResponse = {
+  formId: "" as FormId,
+  eventId: "" as EventId,
+  formResponseId: "" as FormResponseId,
+  responseSectionsOrder: [],
+  responseMap: {},
+  submissionTime: new Timestamp(0, 0),
+};

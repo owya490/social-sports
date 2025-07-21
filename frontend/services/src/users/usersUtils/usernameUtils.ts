@@ -35,6 +35,10 @@ export async function generateUsername(firstName: string): Promise<string> {
 }
 
 export async function updateUsername(userId: UserId, username: string) {
+  // if the username includes whitespace, fail the update
+  if (username.includes(" ")) {
+    return false;
+  }
   // run in a transaction
   return await runTransaction(db, async (transaction) => {
     // all username is in lowercase

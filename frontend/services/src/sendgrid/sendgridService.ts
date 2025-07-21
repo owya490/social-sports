@@ -8,7 +8,9 @@ import {
 const sendgridServiceLogger = new Logger("sendgridServiceLogger");
 
 interface SendgridSendEmailOnCreateEvent {
+  message: string;
   status: number;
+  success: boolean;
 }
 
 export async function sendEmailOnCreateEvent(eventId: string, visibility: string) {
@@ -20,7 +22,7 @@ export async function sendEmailOnCreateEvent(eventId: string, visibility: string
   const sendEmailFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_SEND_EMAIL_ON_CREATE_EVENT);
   return sendEmailFunction(content)
     .then((result) => {
-      const data = JSON.parse(result.data as string) as SendgridSendEmailOnCreateEvent;
+      const data = result.data as SendgridSendEmailOnCreateEvent;
       return data.status;
     })
     .catch((error) => {

@@ -83,6 +83,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
             "error": "Failed to get organiser details"
         }
 
+    logger.info(f"Sending email to {email} for event {request_data.eventId}.")
     try:
         subject = "Thank you for creating " + event_data["name"]
         message = Mail(
@@ -124,7 +125,7 @@ def send_email_on_create_event(req: https_fn.CallableRequest):
 
         if not (response.status_code >= 200 and response.status_code < 300):
             raise Exception(f"SendGrid failed to send message. e={response.body}")
-
+        
         return {
             "success": True,
             "status": 200,

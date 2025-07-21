@@ -6,9 +6,9 @@ import com.functions.users.models.UserData;
 import com.functions.users.utils.UsersUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
-import com.functions.FirebaseService;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
-import com.functions.FirebaseService.CollectionPaths;
+import com.functions.firebase.services.FirebaseService.CollectionPaths;
 
 public class Users {
 

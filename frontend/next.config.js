@@ -56,6 +56,18 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: "/blogs",
+        destination: "/blogs/index.html",
+      },
+      {
+        source: "/blogs/:slug+",
+        destination: "/blogs/:slug+/index.html",
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

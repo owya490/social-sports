@@ -27,4 +27,5 @@ public class PrivateUserData {
 	private List<String> recurrenceTemplates = new ArrayList<>();
 	private List<String> publicOrganiserEvents = new ArrayList<>();
 	private Boolean sendOrganiserTicketEmails = false;
+	private List<String> forms = new ArrayList<>();
 }
