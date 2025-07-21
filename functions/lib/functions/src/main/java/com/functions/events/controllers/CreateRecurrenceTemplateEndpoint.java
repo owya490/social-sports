@@ -1,11 +1,5 @@
 package com.functions.events.controllers;
 
-import java.util.Map;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.functions.events.models.requests.CreateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.CreateRecurrenceTemplateResponse;
 import com.functions.events.services.RecurringEventsService;
@@ -13,6 +7,11 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.Optional;
 
 public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(CreateRecurrenceTemplateEndpoint.class);
