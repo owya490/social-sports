@@ -31,13 +31,6 @@ public class CreateEventEndpoint implements HttpFunction {
             return;
         }
 
-        // GCP apparently sends health checks with the path being the root path "/"
-        if (request.getMethod().equalsIgnoreCase("GET") && request.getPath().equals("/")) {
-            logger.info("Processed health check from GCP. Returning function with request: {}.", request);
-            response.setStatusCode(204); // No Content
-            return;
-        }
-
         if (!(request.getMethod().equalsIgnoreCase("POST"))) {
             logger.warn("Invalid request type made to CreateEventEndpoint: {}", request.getMethod());
             response.setStatusCode(405); // Method Not Allowed

@@ -1,5 +1,10 @@
 package com.functions.events.controllers;
 
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.UpdateRecurrenceTemplateResponse;
 import com.functions.events.services.RecurringEventsService;
@@ -7,10 +12,6 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 public class UpdateRecurrenceTemplateEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(UpdateRecurrenceTemplateEndpoint.class);
@@ -26,13 +27,6 @@ public class UpdateRecurrenceTemplateEndpoint implements HttpFunction {
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             logger.info("Handling OPTIONS request: {}", request);
-            response.setStatusCode(204); // No Content
-            return;
-        }
-
-        // GCP apparently sends health checks with the path being the root path "/"
-        if (request.getMethod().equalsIgnoreCase("GET") && request.getPath().equals("/")) {
-            logger.info("Processed health check from GCP. Returning function with request: {}.", request);
             response.setStatusCode(204); // No Content
             return;
         }
@@ -54,22 +48,19 @@ public class UpdateRecurrenceTemplateEndpoint implements HttpFunction {
             return;
         }
 
-        Optional<String> maybeRecurrenceTemplateId = RecurringEventsService.updateRecurrenceTemplate(data.recurrenceTemplateId(), data.eventData(), data.recurrenceData());
+        Optional<String> maybeRecurrenceTemplateId = RecurringEventsService
+                .updateRecurrenceTemplate(data.recurrenceTemplateId(), data.eventData(), data.recurrenceData());
 
         if (maybeRecurrenceTemplateId.isPresent()) {
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
-                            new UpdateRecurrenceTemplateResponse(maybeRecurrenceTemplateId.get())
-                    )
-            );
+                            new UpdateRecurrenceTemplateResponse(maybeRecurrenceTemplateId.get())));
         } else {
             response.setStatusCode(500);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
-                            new UpdateRecurrenceTemplateResponse("")
-                    )
-            );
+                            new UpdateRecurrenceTemplateResponse("")));
         }
     }
 }
