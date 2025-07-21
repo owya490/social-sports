@@ -10,6 +10,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 public class StripeFulfilmentEntity extends FulfilmentEntity {
+    private String url;
+    
     {
         setType(FulfilmentEntityType.STRIPE);
     }

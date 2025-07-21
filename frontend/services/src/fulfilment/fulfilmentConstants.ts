@@ -6,8 +6,8 @@ export const INIT_FULFILMENT_SESSION_URL = {
   PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/initFulfilmentSession",
 };
 
-export const EXEC_NEXT_FULFILMENT_ENTITY_URL = {
-  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/execNextFulfilmentEntity",
-  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/execNextFulfilmentEntity",
-  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/execNextFulfilmentEntity",
+export const GET_NEXT_FULFILMENT_ENTITY_URL = {
+  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/getNextFulfilmentEntity",
+  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/getNextFulfilmentEntity",
+  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/getNextFulfilmentEntity",
 };

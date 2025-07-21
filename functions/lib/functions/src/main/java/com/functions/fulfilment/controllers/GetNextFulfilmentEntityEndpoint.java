@@ -5,8 +5,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.fulfilment.models.requests.ExecNextFulfilmentEntityRequest;
-import com.functions.fulfilment.models.responses.ExecNextFulfilmentEntityResponse;
+import com.functions.fulfilment.models.requests.GetNextFulfilmentEntityRequest;
+import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.utils.JavaUtils;
@@ -14,8 +14,8 @@ import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
-public class ExecNextFulfilmentEntityEndpoint implements HttpFunction {
-    private static final Logger logger = LoggerFactory.getLogger(ExecNextFulfilmentEntityEndpoint.class);
+public class GetNextFulfilmentEntityEndpoint implements HttpFunction {
+    private static final Logger logger = LoggerFactory.getLogger(GetNextFulfilmentEntityEndpoint.class);
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
@@ -34,34 +34,39 @@ public class ExecNextFulfilmentEntityEndpoint implements HttpFunction {
         if (!(request.getMethod().equalsIgnoreCase("POST"))) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("The ExecNextFulfilmentEntityEndpoing only supports POST requests.")));
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
+                    "[GetNextFulfilmentEntityEndpoint] GetNextFulfilmentEntityEndpoint only supports POST requests.")));
             return;
         }
 
-        ExecNextFulfilmentEntityRequest data;
+        GetNextFulfilmentEntityRequest data;
         try {
-            data = JavaUtils.objectMapper.readValue(request.getReader(), ExecNextFulfilmentEntityRequest.class);
+            data = JavaUtils.objectMapper.readValue(request.getReader(), GetNextFulfilmentEntityRequest.class);
         } catch (Exception e) {
             response.setStatusCode(400);
             logger.error("Could not parse input:", e);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("Invalid request data: " + e.getMessage())));
+            response.getWriter().write(JavaUtils.objectMapper
+                    .writeValueAsString(new ErrorResponse("Invalid request data: " + e.getMessage())));
             return;
         }
 
-        Optional<ExecNextFulfilmentEntityResponse> maybeResponse = FulfilmentService.execNextFulfilmentEntity(data.fulfilmentSessionId());
+        // Use the new service method that handles entity IDs directly
+        Optional<GetNextFulfilmentEntityResponse> maybeResponse = FulfilmentService.getNextFulfilmentEntityByCurrentId(
+                data.fulfilmentSessionId(),
+                data.currentFulfilmentEntityId());
 
         if (maybeResponse.isPresent()) {
-            logger.info("Next fulfilment entity executed successfully for session: {}", data.fulfilmentSessionId());
+            logger.info("Next fulfilment entity retrieved successfully for session: {}",
+                    data.fulfilmentSessionId());
             response.setStatusCode(200);
             response.getWriter().write(
-                    JavaUtils.objectMapper.writeValueAsString(maybeResponse.get())
-            );
+                    JavaUtils.objectMapper.writeValueAsString(maybeResponse.get()));
         } else {
-            logger.error("No next fulfilment entity found for session: {}", data.fulfilmentSessionId());
+            logger.info("No more fulfilment entities found for session: {}", data.fulfilmentSessionId());
             response.setStatusCode(404);
             response.getWriter().write(
-                    JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("No next fulfilment entity found for session: " + data.fulfilmentSessionId()))
-            );
+                    JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
+                            "No more fulfilment entities found for session: " + data.fulfilmentSessionId())));
         }
     }
 }
