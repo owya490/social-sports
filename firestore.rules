@@ -35,6 +35,20 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
 
+    match /Events/{activeModifier}/{accessModifier}/{eventId}/TicketTypes/{ticketID} {
+      // Allow everyone to read ticket types (optional — remove if you want to restrict read too)
+      allow read: if true;
+
+      // Only the organiser can perform any write operation
+      allow write: if request.auth != null
+        && request.auth.uid == get(
+          /databases/$(database)/documents/Events/$(activeModifier)/$(accessModifier)/$(eventId)
+        ).data.organiserId;
+
+      // CREATE
+      allow create: if request.auth != null;
+    }
+
     // Only events organisers can read and write to their Events metadata fields. Allow write if EventsMetadata doesn't exist initially.
     match /EventsMetadata/{eventId} {
     	// GET, UPDATE, DELETE
@@ -78,11 +92,78 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
 
-    match /DeletedEvents/{eventId} {
+		match /DeletedEvents/{eventId} {
       // GET, UPDATE
       allow read, update: if request.auth != null && resource.data.organiserId == request.auth.uid;
       // CREATE
       allow create: if request.auth != null;
+    }
+    
+    // TEMPORARY Everyone can read, and write to RecurrenceEvents Table.
+    match /RecurringEvents/{activeModifier}/{accessModifier}/{eventId} {
+    	allow read, write: if true;
+    }
+    
+    match /Usernames/{username} {
+      allow read: if true;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+    
+    match /Forms/FormTemplates/Active/{formId} {
+    	allow read: if true;
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    match /Forms/FormTemplates/Deleted/{formId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    match /Forms/FormResponses/Submitted/{formId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+    
+    match /Forms/FormResponses/Submitted/{formId}/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+    
+    match /Forms/FormResponses/Submitted/{formId}/{eventId}/{formResponseId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+    
+    match /Forms/FormResponses/Temp/{formId}/{eventId}/{formResponseId} {
+    	allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+    }
+    
+    match /Comments/{targetUserId}/UserComments/{commentId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /FulfilmentSessions/{fulfilmentSessionId} {
+    	allow read, write: if true;
+    }
+    
+    // Everyone should be allowed to read from the Custom Event Links Table for routing
+    // Only allow the organiser who owns the Custom Event Link to write
+    match /CustomLinks/Events/{userId}/{customLink} {
+    	allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
