@@ -1,0 +1,24 @@
+{
+  "name": "chrome-extension",
+  "version": "1.0.0",
+  "main": "popup.js",
+  "scripts": {
+    "build": "webpack --mode production",
+    "start": "webpack --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "copy-webpack-plugin": "^13.0.0",
+    "dotenv-webpack": "^8.1.0",
+    "firebase": "^11.7.3"
+  },
+  "devDependencies": {
+    "html-webpack-plugin": "^5.6.3",
+    "webpack": "^5.99.8",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.1"
+  }
+}
