@@ -32,13 +32,6 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
             return;
         }
 
-        // GCP apparently sends health checks with the path being the root path "/"
-        if (request.getMethod().equalsIgnoreCase("GET") && request.getPath().equals("/")) {
-            logger.info("Processed health check from GCP. Returning function with request: {}.", request);
-            response.setStatusCode(204); // No Content
-            return;
-        }
-
         if (!(request.getMethod().equalsIgnoreCase("GET"))) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "GET"); // Inform client that only GET is allowed
@@ -51,6 +44,7 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
 
         List<String> createdEvents = createEventsFromRecurrenceTemplates(sydneyDate);
 
-        response.getWriter().write("Recurring events processed for: " + sydneyDate + "Created events: " + createdEvents);
+        response.getWriter()
+                .write("Recurring events processed for: " + sydneyDate + "Created events: " + createdEvents);
     }
 }
