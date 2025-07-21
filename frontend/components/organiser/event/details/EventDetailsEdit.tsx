@@ -3,6 +3,7 @@ import {
   CheckIcon,
   ClockIcon,
   CurrencyDollarIcon,
+  DocumentTextIcon,
   ExclamationTriangleIcon,
   LinkIcon,
   MapPinIcon,
@@ -15,7 +16,10 @@ import { useEffect } from "react";
 
 import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 
+import { useUser } from "@/components/utility/UserContext";
 import { EventData } from "@/interfaces/EventTypes";
+import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import {
   formatDateToString,
   formatStringToDate,
@@ -26,6 +30,7 @@ import {
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
+import { getActiveFormsForUser, getForm } from "@/services/src/forms/formsServices";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
@@ -43,6 +48,7 @@ export const EventDetailsEdit = ({
   eventPrice,
   eventRegistrationDeadline,
   eventEventLink,
+  eventFormId,
   loading,
   isActive,
   updateData,
@@ -58,11 +64,39 @@ export const EventDetailsEdit = ({
   eventPrice: number;
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
+  eventFormId: FormId | null;
   loading: boolean;
   isActive: boolean;
   updateData: (id: string, data: any) => any;
   isRecurrenceTemplate: boolean;
 }) => {
+  const { user } = useUser();
+  const [forms, setForms] = useState<Form[]>([
+    {
+      formId: "null" as FormId,
+      title: "No Form" as FormTitle,
+      description: "" as FormDescription,
+      userId: "" as UserId,
+      formActive: true,
+      sectionsOrder: [],
+      sectionsMap: {},
+      lastUpdated: null,
+    },
+  ]);
+  const [attachForm, setAttachForm] = useState<Form | null>(null);
+  useEffect(() => {
+    const fetchForms = async () => {
+      const activeForms = await getActiveFormsForUser(user.userId);
+      setForms([...forms, ...activeForms]);
+      if (eventFormId) {
+        setAttachForm(await getForm(eventFormId));
+      }
+    };
+    if (user.userId !== "") {
+      fetchForms();
+    }
+  }, [user]);
+
   const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
@@ -179,6 +213,16 @@ export const EventDetailsEdit = ({
     return { eventLink: newEditEventLink };
   };
 
+  // Attach Form
+  const [newEditAttachFormId, setNewEditAttachFormId] = useState<FormId | null>(null);
+  const [attachFormId, setAttachFormId] = useState<FormId | null>(null);
+
+  const handleAttachFormUpdate = (): Partial<EventData> => {
+    setAttachFormId(newEditAttachFormId);
+    setAttachForm(forms.find((form) => form.formId === newEditAttachFormId) ?? null);
+    return { formId: newEditAttachFormId };
+  };
+
   // loading useEffect to populate states
   useEffect(() => {
     setNewEditStartDate(timestampToDateString(eventStartDate));
@@ -209,6 +253,9 @@ export const EventDetailsEdit = ({
 
     setNewEditEventLink(eventEventLink);
     setEventLink(eventEventLink);
+
+    setNewEditAttachFormId(eventFormId);
+    setAttachFormId(eventFormId);
   }, [loading]);
 
   // UseEffect triggered on certain field mutations to ensure entry is valid
@@ -263,6 +310,7 @@ export const EventDetailsEdit = ({
       ...handleSportUpdate(),
       ...handlePriceUpdate(),
       ...handleEventLinkUpdate(),
+      ...handleAttachFormUpdate(),
     };
     if (!isRecurrenceTemplate) {
       await handleCapacityUpdate();
@@ -290,6 +338,7 @@ export const EventDetailsEdit = ({
     setNewEditCapacity(capacity);
     setNewEditPrice(price);
     setNewEditEventLink(eventLink);
+    setNewEditAttachFormId(attachFormId);
   };
 
   return (
@@ -625,6 +674,48 @@ export const EventDetailsEdit = ({
                           }}
                         />
                       ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+        <div className="px-2 flex flex-row space-x-2">
+          <DocumentTextIcon className="w-4 mt-2 shrink-0" />
+          <div>
+            {loading ? (
+              <Skeleton
+                style={{
+                  height: 12,
+                  width: 100,
+                }}
+              />
+            ) : (
+              <>
+                {isEdit ? (
+                  <div className="flex">
+                    <Select
+                      label="Attach Form"
+                      size="lg"
+                      value={newEditAttachFormId ?? ""}
+                      onChange={(e: string | any) => {
+                        setNewEditAttachFormId(e === "null" ? null : (e as FormId));
+                      }}
+                    >
+                      {forms.map((form) => {
+                        return (
+                          <Option key={form.formId} value={form.formId}>
+                            <p className="text-sm line-clamp-2">{form.title}</p>
+                          </Option>
+                        );
+                      })}
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="mt-2">
+                    <div className="text-sm line-clamp-2">
+                      {attachForm === null ? "No form attached" : attachForm.title}
+                    </div>
                   </div>
                 )}
               </>
