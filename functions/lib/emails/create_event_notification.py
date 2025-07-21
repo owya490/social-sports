@@ -7,7 +7,7 @@ from google.protobuf.timestamp_pb2 import Timestamp
 import requests
 from firebase_functions import https_fn, options
 from lib.constants import SYDNEY_TIMEZONE, db
-from lib.emails.constants import LOOPS_API_KEY
+from lib.emails.constants import LOOPS_API_KEY, LOOPS_CREATE_EVENT_EMAIL_TEMPLATE_ID
 from lib.logging import Logger
 from lib.utils.priceUtils import centsToDollars
 from lib.sendgrid.commons import get_user_data_private, get_user_data_public, get_user_email
@@ -21,7 +21,7 @@ class CreateEventRequest:
 def send_create_event_email_with_loops(logger: Logger, email, organiser_name, event_data, request_data):
     headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
     body = {
-        "transactionalId": "cmd2y9sms12mxux0i3tcmdp9v",
+        "transactionalId": LOOPS_CREATE_EVENT_EMAIL_TEMPLATE_ID,
         "email": email,
         "dataVariables": {
             "name": organiser_name,

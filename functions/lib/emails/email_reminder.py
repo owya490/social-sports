@@ -14,7 +14,7 @@ from lib.auth import *
 from lib.constants import *
 from lib.constants import (ACTIVE_PRIVATE, ACTIVE_PUBLIC, EVENT_METADATA,
                            SYDNEY_TIMEZONE)
-from lib.emails.constants import LOOPS_API_KEY
+from lib.emails.constants import LOOPS_API_KEY, LOOPS_EMAIL_REMINDER_TEMPLATE_ID
 from lib.logging import Logger
 
 
@@ -85,7 +85,7 @@ def get_active_events_starting_tomorrow(logger: Logger, tomorrow: date, collecti
 def send_email_with_loop(logger: Logger, email, name, event_name, event_id, start_date, end_date, location):
   headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
   body = {
-    "transactionalId": "cm5dwlbsj034sasyzg1w6sg39",
+    "transactionalId": LOOPS_EMAIL_REMINDER_TEMPLATE_ID,
     "email": email,
     "dataVariables": {
         "name": name,
