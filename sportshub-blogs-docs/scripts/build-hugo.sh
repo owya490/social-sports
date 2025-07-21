@@ -36,6 +36,10 @@ else
     echo "Hugo already installed"
 fi
 
+# Delete the public directory
+echo "🔨 Deleting public directory..."
+rm -rf "$HUGO_DIR/public"
+
 # Build Hugo static files
 echo "🔨 Building Hugo static files..."
 hugo --minify

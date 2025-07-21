@@ -31,4 +31,4 @@ jobs:
       - name: react tests
         run: cd frontend && npm test
       - name: java functions tests
-        run: cd functions/lib/functions && mvn clean install
+        run: cd functions/lib/functions && mvn clean verify
