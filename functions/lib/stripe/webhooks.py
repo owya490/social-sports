@@ -212,7 +212,19 @@ def restock_tickets_after_expired_checkout(transaction: Transaction, checkout_se
 
   item = line_items["data"][0] # we only offer one item type per checkout (can buy multiple quantities)
 
-  transaction.update(event_ref, {"vacancy": firestore.Increment(item.quantity)})
+  # Restock tickets by reducing sold quantity from General ticket type
+  from lib.utils.ticketUtils import update_ticket_type_sold_quantity, get_general_ticket_type, get_ticket_types_for_event
+  
+  # Create a simple logger for this operation
+  import logging
+  logger = logging.getLogger(__name__)
+  
+  ticket_types = get_ticket_types_for_event(transaction, event_ref, logger)
+  general_ticket = get_general_ticket_type(ticket_types)
+  
+  if general_ticket:
+    # Reduce sold quantity (negative increment) - this will also sync event vacancy
+    update_ticket_type_sold_quantity(transaction, event_ref, "General", -item.quantity, logger)
 
   # Add current checkout session to the processed list
   transaction.update(

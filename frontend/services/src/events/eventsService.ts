@@ -46,6 +46,7 @@ import {
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
 import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
+import { addDefaultTicketTypes } from "../ticket/ticketService";
 import {
   bustEventsLocalStorageCache,
   findEventDoc,
@@ -102,6 +103,14 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     bustEventsLocalStorageCache();
     bustUserLocalStorageCache();
 
+    // Add default ticket types after event creation
+    try {
+      await addDefaultTicketTypes(docRef.id, data.capacity, data.price);
+    } catch (ticketError) {
+      // Don't fail the event creation if ticket types fail
+      eventServiceLogger.error(`Failed to create default ticket types for event ${docRef.id}: ${ticketError}`);
+    }
+
     eventServiceLogger.info(`createEvent succeeded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
@@ -120,9 +129,18 @@ export async function createEventV2(data: NewEventData) {
     eventData: data,
   };
   const createEventFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_EVENT);
-  return createEventFunction(content).then((result) => {
-    const data = JSON.parse(result.data as string) as CreateEventResponse;
-    return data.eventId;
+  return createEventFunction(content).then(async (result) => {
+    const resultData = JSON.parse(result.data as string) as CreateEventResponse;
+    
+    // Add default ticket types after event creation
+    try {
+      await addDefaultTicketTypes(resultData.eventId, data.capacity, data.price);
+    } catch (ticketError) {
+      // Don't fail the event creation if ticket types fail
+      eventServiceLogger.error(`Failed to create default ticket types for event ${resultData.eventId}: ${ticketError}`);
+    }
+    
+    return resultData.eventId;
   });
 }
 
@@ -466,6 +484,14 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId): P
       }
       eventMetadata.completeTicketCount = totalEventTickets;
 
+      // Reduce General ticket availability instead of just event vacancy
+      // This properly handles organizer adding people without payment
+      const generalTicketDocRef = doc(eventDocRef, "TicketTypes", "General");
+      transaction.update(generalTicketDocRef, {
+        availableQuantity: increment(-attendeeInfo.ticketCount)
+      });
+      
+      // Also update event vacancy to keep frontend in sync
       eventDataWithoutOrganiser.vacancy -= attendeeInfo.ticketCount;
 
       transaction.update(eventDocRef, eventDataWithoutOrganiser as Partial<EventData>);
