@@ -63,7 +63,17 @@ const FulfilmentSessionEntityPage = ({
         <div></div>
       );
     case FulfilmentEntityType.END:
-      return <div className="mt-14">End Fulfilment Entity</div>;
+      if (getFulfilmentEntityInfoResponse.url === null) {
+        fulfilmentSessionEntityPageLogger.error(
+          `End Fulfilment Entity URL is null when it should not be, getFulfilmentEntityInfoResponse: ${JSON.stringify(
+            getFulfilmentEntityInfoResponse
+          )}`
+        );
+        router.push("https://sportshub.net.au/dashboard");
+        return;
+      }
+      router.push(getFulfilmentEntityInfoResponse.url);
+      return;
     default:
       return <div className="mt-14">Unknown Fulfilment Entity Type</div>;
   }
