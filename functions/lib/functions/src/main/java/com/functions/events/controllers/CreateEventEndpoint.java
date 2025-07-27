@@ -1,16 +1,17 @@
 package com.functions.events.controllers;
 
-import com.functions.firebase.services.FirebaseService;
+import static com.functions.events.services.EventsService.createEvent;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.events.models.NewEventData;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static com.functions.events.services.EventsService.createEvent;
 
 public class CreateEventEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(CreateEventEndpoint.class);
@@ -51,9 +52,7 @@ public class CreateEventEndpoint implements HttpFunction {
         Firestore db = FirebaseService.getFirestore();
 
         try {
-            String eventId = db.runTransaction(transaction ->
-                    createEvent(data, transaction)
-            ).get();
+            String eventId = db.runTransaction(transaction -> createEvent(data, transaction)).get();
 
             response.setStatusCode(200);
             response.getWriter().write("Event created successfully with ID: " + eventId + "\n");

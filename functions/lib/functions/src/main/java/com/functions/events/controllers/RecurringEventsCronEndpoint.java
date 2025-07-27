@@ -44,6 +44,7 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
 
         List<String> createdEvents = createEventsFromRecurrenceTemplates(sydneyDate);
 
-        response.getWriter().write("Recurring events processed for: " + sydneyDate + "Created events: " + createdEvents);
+        response.getWriter()
+                .write("Recurring events processed for: " + sydneyDate + "Created events: " + createdEvents);
     }
 }

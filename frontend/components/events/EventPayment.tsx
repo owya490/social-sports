@@ -170,6 +170,14 @@ export default function EventPayment(props: EventPaymentProps) {
                             numTickets: attendeeCount,
                           });
 
+                          if (!fulfilmentSessionId || !fulfilmentEntityId) {
+                            EventPaymentLogger.error(
+                              `initFulfilmentSession: Failed to initialize fulfilment session for eventId: ${props.eventId}`
+                            );
+                            router.push("/error");
+                            return;
+                          }
+
                           const response = await getNextFulfilmentEntity(fulfilmentSessionId, fulfilmentEntityId);
 
                           if (response.type === FulfilmentEntityType.STRIPE && response.url) {
