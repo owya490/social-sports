@@ -82,10 +82,6 @@ public abstract class FulfilmentSession {
 
                     FulfilmentEntity entity;
                     switch (type) {
-                        case START:
-                            entity = objectMapper
-                                    .readValue(json, StartFulfilmentEntity.class);
-                            break;
                         case STRIPE:
                             entity = objectMapper
                                     .readValue(json, StripeFulfilmentEntity.class);

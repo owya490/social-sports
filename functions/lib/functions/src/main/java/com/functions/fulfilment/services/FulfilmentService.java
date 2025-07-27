@@ -1,5 +1,6 @@
 package com.functions.fulfilment.services;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,8 +20,8 @@ import com.functions.fulfilment.models.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.FulfilmentEntity;
 import com.functions.fulfilment.models.FulfilmentEntityType;
 import com.functions.fulfilment.models.FulfilmentSession;
-import com.functions.fulfilment.models.StartFulfilmentEntity;
 import com.functions.fulfilment.models.StripeFulfilmentEntity;
+import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
@@ -48,7 +49,8 @@ public class FulfilmentService {
             }
 
             EventData eventData = maybeEventData.get();
-            List<FulfilmentEntity> fulfilmentEntities = constructCheckoutFulfilmentEntities(eventId,
+            List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructCheckoutFulfilmentEntities(
+                    eventId,
                     eventData, numTickets, fulfilmentSessionId);
 
             return FulfilmentService.createFulfilmentSession(fulfilmentSessionId, eventId,
@@ -65,22 +67,20 @@ public class FulfilmentService {
         return Optional.empty();
     }
 
-    private static List<FulfilmentEntity> constructCheckoutFulfilmentEntities(String eventId,
+    private static List<SimpleEntry<String, FulfilmentEntity>> constructCheckoutFulfilmentEntities(
+            String eventId,
             EventData eventData, Integer numTickets, String fulfilmentSessionId) {
-        List<FulfilmentEntity> fulfilmentEntities = new ArrayList<>();
+        // Pair of FulfilmentEntityId and FulfilmentEntity
+        List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = new ArrayList<>();
 
-        // 1. START entity
-        fulfilmentEntities.add(StartFulfilmentEntity.builder()
-                .url(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/%s", eventId))
-                        .orElse("https://sportshub.net.au/dashboard"))
-                .type(FulfilmentEntityType.START).build());
+        List<FulfilmentEntity> tempEntities = new ArrayList<>();
 
-        // 2. FORMS entities - one for each ticket
+        // 1. FORMS entities - one for each ticket
         try {
             Optional<String> formId = FormsService.getFormIdByEventId(eventId);
             if (formId.isPresent()) {
                 for (int i = 0; i < numTickets; i++) {
-                    fulfilmentEntities.add(FormsFulfilmentEntity.builder().formId(formId.get())
+                    tempEntities.add(FormsFulfilmentEntity.builder().formId(formId.get())
                             .type(FulfilmentEntityType.FORMS).build());
                 }
             }
@@ -90,34 +90,62 @@ public class FulfilmentService {
                     "[FulfilmentService] Failed to construct FORMS entities for event ID: " + eventId, e);
         }
 
-        // 3. STRIPE entity
-        Optional<String> stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(eventId,
-                eventData.getIsPrivate(), numTickets, Optional.empty(), fulfilmentSessionId);
-        if (stripeCheckoutLink.isPresent()) {
-            fulfilmentEntities.add(StripeFulfilmentEntity.builder().url(stripeCheckoutLink.get())
-                    .type(FulfilmentEntityType.STRIPE).build());
-        }
+        // 2. STRIPE entity (will be updated with correct success URL later)
+        tempEntities.add(StripeFulfilmentEntity.builder().url("") // Placeholder URL
+                .type(FulfilmentEntityType.STRIPE).build());
 
-        // 4. END entity
-        fulfilmentEntities.add(EndFulfilmentEntity.builder()
+        // 3. END entity
+        tempEntities.add(EndFulfilmentEntity.builder()
                 .url(UrlUtils
                         .getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
                         .orElse("https://sportshub.net.au/dashboard"))
                 .type(FulfilmentEntityType.END).build());
 
+        List<String> entityIds = new ArrayList<>();
+        for (int i = 0; i < tempEntities.size(); i++) {
+            entityIds.add(UUID.randomUUID().toString());
+        }
+
+        // TODO: simplify this piece of code once we modularise stripe checkout python
+        // logic
+        for (int i = 0; i < tempEntities.size(); i++) {
+            FulfilmentEntity entity = tempEntities.get(i);
+            String entityId = entityIds.get(i);
+
+            if (entity.getType() == FulfilmentEntityType.STRIPE) {
+                // For STRIPE entity, set success URL to point to next entity
+                String nextEntityId = (i + 1 < entityIds.size()) ? entityIds.get(i + 1) : null;
+                String successUrl = UrlUtils.getUrlWithCurrentEnvironment(
+                        String.format("/fulfilment/%s/%s", fulfilmentSessionId, nextEntityId))
+                        .orElse("https://sportshub.net.au/dashboard");
+
+                Optional<String> stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(eventId,
+                        eventData.getIsPrivate(), numTickets, Optional.of(successUrl), fulfilmentSessionId);
+
+                if (stripeCheckoutLink.isPresent()) {
+                    entity = StripeFulfilmentEntity.builder().url(stripeCheckoutLink.get())
+                            .type(FulfilmentEntityType.STRIPE).build();
+                    fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
+                }
+            } else {
+                fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
+            }
+        }
+
         return fulfilmentEntities;
     }
 
     private static Optional<String> createFulfilmentSession(String sessionId, String eventId,
-            Integer numTickets, List<FulfilmentEntity> fulfilmentEntities) {
+            Integer numTickets, List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities) {
         try {
             // Convert list to map and order
             Map<String, FulfilmentEntity> entityMap = new HashMap<>();
             List<String> entityOrder = new ArrayList<>();
 
-            for (int i = 0; i < fulfilmentEntities.size(); i++) {
-                String entityId = UUID.randomUUID().toString();
-                entityMap.put(entityId, fulfilmentEntities.get(i));
+            for (SimpleEntry<String, FulfilmentEntity> entry : fulfilmentEntities) {
+                String entityId = entry.getKey();
+                FulfilmentEntity entity = entry.getValue();
+                entityMap.put(entityId, entity);
                 entityOrder.add(entityId);
             }
 
@@ -152,7 +180,6 @@ public class FulfilmentService {
 
             FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
             List<String> fulfilmentEntityIds = fulfilmentSession.getFulfilmentEntityIds();
-            Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
 
             // Validate current index
             if (currentIndex < -1 || currentIndex >= fulfilmentEntityIds.size()) {
@@ -172,21 +199,12 @@ public class FulfilmentService {
 
             // Get next entity
             String nextEntityId = fulfilmentEntityIds.get(nextIndex);
-            FulfilmentEntity nextEntity = fulfilmentEntityMap.get(nextEntityId);
 
-            if (nextEntity == null) {
-                logger.error("Fulfilment entity not found for ID: {} in session: {}", nextEntityId,
-                        fulfilmentSessionId);
-                return Optional.empty();
-            }
-
-            logger.info("[FulfilmentService] Next fulfilment entity found: {} -> {}",
-                    nextEntity.getType(), nextEntityId);
+            logger.info("[FulfilmentService] Next fulfilment entity found: {}",
+                    nextEntityId);
 
             return Optional.of(new GetNextFulfilmentEntityResponse(
-                    nextEntity.getType(),
-                    nextEntityId,
-                    getEntityUrl(nextEntity)));
+                    nextEntityId));
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity for session ID: {}",
                     fulfilmentSessionId, e);
@@ -206,7 +224,6 @@ public class FulfilmentService {
 
             FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
             List<String> fulfilmentEntityIds = fulfilmentSession.getFulfilmentEntityIds();
-            Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
 
             // Validate current index
             if (currentIndex < 0 || currentIndex >= fulfilmentEntityIds.size()) {
@@ -226,21 +243,12 @@ public class FulfilmentService {
 
             // Get previous entity
             String prevEntityId = fulfilmentEntityIds.get(prevIndex);
-            FulfilmentEntity prevEntity = fulfilmentEntityMap.get(prevEntityId);
 
-            if (prevEntity == null) {
-                logger.error("Fulfilment entity not found for ID: {} in session: {}", prevEntityId,
-                        fulfilmentSessionId);
-                return Optional.empty();
-            }
-
-            logger.info("[FulfilmentService] Previous fulfilment entity found: {} -> {}",
-                    prevEntity.getType(), prevEntityId);
+            logger.info("[FulfilmentService] Previous fulfilment entity found for entityId: {}",
+                    prevEntityId);
 
             return Optional.of(new GetPrevFulfilmentEntityResponse(
-                    prevEntity.getType(),
-                    prevEntityId,
-                    getEntityUrl(prevEntity)));
+                    prevEntityId));
         } catch (Exception e) {
             logger.error("Failed to get previous fulfilment entity for session ID: {}",
                     fulfilmentSessionId, e);
@@ -363,8 +371,6 @@ public class FulfilmentService {
      */
     private static String getEntityUrl(FulfilmentEntity entity) {
         switch (entity.getType()) {
-            case START:
-                return ((StartFulfilmentEntity) entity).getUrl();
             case STRIPE:
                 return ((StripeFulfilmentEntity) entity).getUrl();
             case END:
@@ -386,6 +392,34 @@ public class FulfilmentService {
             logger.info("Fulfilment session deleted successfully for ID: {}", fulfilmentSessionId);
         } catch (Exception e) {
             logger.error("Failed to delete fulfilment session for ID: {}", fulfilmentSessionId, e);
+        }
+    }
+
+    public static Optional<GetFulfilmentEntityInfoResponse> getFulfilmentEntityInfo(
+            String fulfilmentSessionId, String fulfilmentEntityId) {
+        try {
+            Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
+            if (maybeFulfilmentSession.isEmpty()) {
+                return Optional.empty();
+            }
+
+            FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+            Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
+
+            FulfilmentEntity entity = fulfilmentEntityMap.get(fulfilmentEntityId);
+            if (entity == null) {
+                logger.error("Fulfilment entity not found for ID: {} in session: {}", fulfilmentEntityId,
+                        fulfilmentSessionId);
+                return Optional.empty();
+            }
+
+            return Optional.of(new GetFulfilmentEntityInfoResponse(
+                    entity.getType(),
+                    getEntityUrl(entity)));
+        } catch (Exception e) {
+            logger.error("Failed to get fulfilment entity info for session ID: {} and entity ID: {}",
+                    fulfilmentSessionId, fulfilmentEntityId, e);
+            return Optional.empty();
         }
     }
 }

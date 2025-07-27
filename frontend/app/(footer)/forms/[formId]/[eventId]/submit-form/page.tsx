@@ -2,13 +2,9 @@
 import FormResponder from "@/components/forms/FormResponder";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
-import { useParams } from "next/navigation";
 
-const ViewForm = () => {
-  const params = useParams();
-  const formId = params?.formId as FormId;
-  const eventId = params?.eventId as EventId;
-
+const ViewForm = ({ params }: { params: { formId: FormId; eventId: EventId } }) => {
+  const { formId, eventId } = params;
   return <FormResponder formId={formId} eventId={eventId} formResponseId={null} canEditForm={true} />;
 };
 

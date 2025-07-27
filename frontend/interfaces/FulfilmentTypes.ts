@@ -21,7 +21,6 @@ export type CheckoutFulfilmentSessionType = {
  * NOTE: The string values here should match the name of the enum itself.
  */
 export enum FulfilmentEntityType {
-  START = "START",
   STRIPE = "STRIPE",
   FORMS = "FORMS",
   END = "END",
@@ -40,7 +39,6 @@ export type InitCheckoutFulfilmentSessionRequest = {
  */
 export type InitCheckoutFulfilmentSessionResponse = {
   fulfilmentSessionId: FulfilmentSessionId;
-  fulfilmentEntityId: FulfilmentEntityId;
 };
 
 /**
@@ -48,7 +46,7 @@ export type InitCheckoutFulfilmentSessionResponse = {
  */
 export type GetNextFulfilmentEntityRequest = {
   fulfilmentSessionId: FulfilmentSessionId;
-  currentFulfilmentEntityId: FulfilmentEntityId;
+  currentFulfilmentEntityId: FulfilmentEntityId | null;
 };
 
 /**
@@ -58,13 +56,27 @@ export type GetNextFulfilmentEntityResponse = {
   /**
    * Null if there are no more fulfilment entities.
    */
-  type: FulfilmentEntityType | null;
+  fulfilmentEntityId: FulfilmentEntityId | null;
+};
+
+/**
+ * Payload we send to java getFulfilmentEntityInfo function
+ */
+export type GetFulfilmentEntityInfoRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  fulfilmentEntityId: FulfilmentEntityId;
+};
+
+/**
+ * Payload we receive from java getFulfilmentEntityInfo function
+ */
+export type GetFulfilmentEntityInfoResponse = {
   /**
    * Null if there are no more fulfilment entities.
    */
-  fulfilmentEntityId: FulfilmentEntityId | null;
+  type: FulfilmentEntityType | null;
   /**
-   * Url of the next fulfilment entity, if applicable.
+   * Url of the specified fulfilment entity, if applicable.
    */
   url: URL | null;
 };

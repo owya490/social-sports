@@ -50,7 +50,6 @@ public class GetPrevFulfilmentEntityEndpoint implements HttpFunction {
             return;
         }
 
-        // Use the new service method that handles entity IDs directly
         Optional<GetPrevFulfilmentEntityResponse> maybeResponse = FulfilmentService.getPrevFulfilmentEntityByCurrentId(
                 data.fulfilmentSessionId(),
                 data.currentFulfilmentEntityId());

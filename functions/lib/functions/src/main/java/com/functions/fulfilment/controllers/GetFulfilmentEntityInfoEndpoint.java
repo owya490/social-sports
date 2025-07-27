@@ -5,8 +5,8 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.fulfilment.models.requests.GetNextFulfilmentEntityRequest;
-import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
+import com.functions.fulfilment.models.requests.GetFulfilmentEntityInfoRequest;
+import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.utils.JavaUtils;
@@ -14,8 +14,8 @@ import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
-public class GetNextFulfilmentEntityEndpoint implements HttpFunction {
-    private static final Logger logger = LoggerFactory.getLogger(GetNextFulfilmentEntityEndpoint.class);
+public class GetFulfilmentEntityInfoEndpoint implements HttpFunction {
+    private static final Logger logger = LoggerFactory.getLogger(GetFulfilmentEntityInfoEndpoint.class);
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
@@ -35,13 +35,13 @@ public class GetNextFulfilmentEntityEndpoint implements HttpFunction {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
-                    "[GetNextFulfilmentEntityEndpoint] GetNextFulfilmentEntityEndpoint only supports POST requests.")));
+                    "[GetFulfilmentEntityInfoEndpoint] GetFulfilmentEntityInfoEndpoint only supports GET requests.")));
             return;
         }
 
-        GetNextFulfilmentEntityRequest data;
+        GetFulfilmentEntityInfoRequest data;
         try {
-            data = JavaUtils.objectMapper.readValue(request.getReader(), GetNextFulfilmentEntityRequest.class);
+            data = JavaUtils.objectMapper.readValue(request.getReader(), GetFulfilmentEntityInfoRequest.class);
         } catch (Exception e) {
             response.setStatusCode(400);
             logger.error("Could not parse input:", e);
@@ -50,22 +50,22 @@ public class GetNextFulfilmentEntityEndpoint implements HttpFunction {
             return;
         }
 
-        Optional<GetNextFulfilmentEntityResponse> maybeResponse = FulfilmentService.getNextFulfilmentEntityByCurrentId(
+        Optional<GetFulfilmentEntityInfoResponse> maybeResponse = FulfilmentService.getFulfilmentEntityInfo(
                 data.fulfilmentSessionId(),
-                data.currentFulfilmentEntityId());
+                data.fulfilmentEntityId());
 
         if (maybeResponse.isPresent()) {
-            logger.info("Next fulfilment entity retrieved successfully for session: {}",
+            logger.info("Fulfilment entity info retrieved successfully for session: {}",
                     data.fulfilmentSessionId());
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(maybeResponse.get()));
         } else {
-            logger.info("No more fulfilment entities found for session: {}", data.fulfilmentSessionId());
+            logger.info("No fulfilment entity info found for session: {}", data.fulfilmentSessionId());
             response.setStatusCode(404);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
-                            "No more fulfilment entities found for session: " + data.fulfilmentSessionId())));
+                            "No fulfilment entity info found for session: " + data.fulfilmentSessionId())));
         }
     }
 }

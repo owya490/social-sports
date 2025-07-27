@@ -4,16 +4,23 @@ import {
   FulfilmentEntityId,
   FulfilmentSessionId,
   FulfilmentSessionType,
+  GetFulfilmentEntityInfoRequest,
+  GetFulfilmentEntityInfoResponse,
   GetNextFulfilmentEntityRequest,
   GetNextFulfilmentEntityResponse,
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
-import { getGetNextFulfilmentEntityUrl, getInitFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
+import { getUrlWithCurrentHostname } from "../urlUtils";
+import {
+  getFulfilmentEntityInfoUrl,
+  getGetNextFulfilmentEntityUrl,
+  getInitFulfilmentSessionUrl,
+} from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = false;
+export const FULFILMENT_SESSION_ENABLED = true;
 
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 
@@ -83,21 +90,41 @@ async function initCheckoutFulfilmentSession(
   }
 }
 
-/**
- * Executes the next fulfilment entity in the session.
- * Returns a boolean indicating whether there are more fulfilment entities to execute.
- */
-export async function getNextFulfilmentEntity(
+export async function getNextFulfilmentEntityUrl(
   fulfilmentSessionId: FulfilmentSessionId,
-  fulfilmentEntityId: FulfilmentEntityId
+  currentFulfilmentEntityId?: FulfilmentEntityId
+): Promise<string | undefined> {
+  fulfilmentServiceLogger.info(
+    `getNextFulfilmentEntityUrl: Fetching next fulfilment entity URL for session ID: ${fulfilmentSessionId} and entity ID: ${currentFulfilmentEntityId}`
+  );
+
+  const response = await getNextFulfilmentEntity(fulfilmentSessionId, currentFulfilmentEntityId);
+
+  if (response.fulfilmentEntityId === null) {
+    fulfilmentServiceLogger.info(
+      `getNextFulfilmentEntityUrl: No more fulfilment entities found for session ID: ${fulfilmentSessionId}`
+    );
+    return undefined;
+  }
+
+  return getUrlWithCurrentHostname(`/fulfilment/${fulfilmentSessionId}/${response.fulfilmentEntityId}`);
+}
+
+/**
+ * Retrieves the entity ID of the next fulfilment entity ID in the fulfilment session given a fulfilment entity ID.
+ * If the specified fulfilment entity ID is null, it retrieves the first fulfilment entity.
+ */
+async function getNextFulfilmentEntity(
+  fulfilmentSessionId: FulfilmentSessionId,
+  currentFulfilmentEntityId?: FulfilmentEntityId
 ): Promise<GetNextFulfilmentEntityResponse> {
   fulfilmentServiceLogger.info(
-    `getNextFulfilmentEntity: Executing next fulfilment entity for session ID: ${fulfilmentSessionId} for entity ID: ${fulfilmentEntityId}`
+    `getNextFulfilmentEntity: Executing next fulfilment entity for session ID: ${fulfilmentSessionId} for entity ID: ${currentFulfilmentEntityId}`
   );
 
   const request: GetNextFulfilmentEntityRequest = {
     fulfilmentSessionId,
-    currentFulfilmentEntityId: fulfilmentEntityId,
+    currentFulfilmentEntityId: currentFulfilmentEntityId ?? null,
   };
 
   try {
@@ -120,6 +147,44 @@ export async function getNextFulfilmentEntity(
     return (await rawResponse.json()) as GetNextFulfilmentEntityResponse;
   } catch (error) {
     fulfilmentServiceLogger.error(`getNextFulfilmentEntity: Failed to execute next fulfilment entity: ${error}`);
+    throw error;
+  }
+}
+
+export async function getFulfilmentEntityInfo(
+  fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentEntityId: FulfilmentEntityId
+): Promise<GetFulfilmentEntityInfoResponse> {
+  fulfilmentServiceLogger.info(
+    `getFulfilmentEntityInfo: Fetching fulfilment entity info for session ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
+  );
+
+  const request: GetFulfilmentEntityInfoRequest = {
+    fulfilmentSessionId,
+    fulfilmentEntityId,
+  };
+
+  try {
+    const rawResponse = await fetch(getFulfilmentEntityInfoUrl(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!rawResponse.ok) {
+      const errorResponse = (await rawResponse.json()) as ErrorResponse;
+      fulfilmentServiceLogger.error(
+        `getFulfilmentEntityInfo: Cloud function error: Failed to fetch fulfilment entity info: ${errorResponse.errorMessage}`
+      );
+      throw new Error(`getFulfilmentEntityInfo: ${errorResponse.errorMessage}`);
+    }
+
+    return (await rawResponse.json()) as GetFulfilmentEntityInfoResponse;
+  } catch (error) {
+    fulfilmentServiceLogger.error(`getFulfilmentEntityInfo: Failed to fetch fulfilment entity info: ${error}`);
     throw error;
   }
 }

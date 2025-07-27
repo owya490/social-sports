@@ -1,11 +1,10 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
-import { FulfilmentEntityType } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   FULFILMENT_SESSION_ENABLED,
-  getNextFulfilmentEntity,
+  getNextFulfilmentEntityUrl,
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
@@ -164,13 +163,13 @@ export default function EventPayment(props: EventPaymentProps) {
                       // We'll put this behind a flag for now just in case we need to quickly disable this.
                       if (FULFILMENT_SESSION_ENABLED) {
                         try {
-                          const { fulfilmentSessionId, fulfilmentEntityId } = await initFulfilmentSession({
+                          const { fulfilmentSessionId } = await initFulfilmentSession({
                             type: "checkout",
                             eventId: props.eventId,
                             numTickets: attendeeCount,
                           });
 
-                          if (!fulfilmentSessionId || !fulfilmentEntityId) {
+                          if (!fulfilmentSessionId) {
                             EventPaymentLogger.error(
                               `initFulfilmentSession: Failed to initialize fulfilment session for eventId: ${props.eventId}`
                             );
@@ -178,16 +177,17 @@ export default function EventPayment(props: EventPaymentProps) {
                             return;
                           }
 
-                          const response = await getNextFulfilmentEntity(fulfilmentSessionId, fulfilmentEntityId);
-
-                          if (response.type === FulfilmentEntityType.STRIPE && response.url) {
-                            router.push(response.url);
-                          } else {
-                            EventPaymentLogger.warn(
-                              `getNextFulfilmentEntity: No more fulfilment entities found for fulfilmentSessionId: ${fulfilmentSessionId}`
+                          const nextEntityUrl = await getNextFulfilmentEntityUrl(fulfilmentSessionId);
+                          if (nextEntityUrl === undefined) {
+                            EventPaymentLogger.error(
+                              `getNextFulfilmentEntityUrl: No url response received for fulfilmentSessionId: ${fulfilmentSessionId}`
                             );
-                            props.setLoading(false);
+                            router.push("/error");
+                            return;
                           }
+
+                          router.push(nextEntityUrl);
+                          return;
 
                           // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
                         } catch {
