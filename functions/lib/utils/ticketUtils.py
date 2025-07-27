@@ -29,16 +29,39 @@ class TicketType:
 def get_ticket_types_for_event(transaction: Transaction, event_ref, logger: logging.Logger) -> List[TicketType]:
     """Get all ticket types for a given event"""
     try:
+        # Get document references first (outside transaction)
         ticket_types_collection = event_ref.collection("TicketTypes")
-        ticket_types_docs = ticket_types_collection.get(transaction=transaction)
+        
+        # For this specific case, we know we have Admin and General tickets
+        # Let's get them directly by their known IDs
+        admin_ref = ticket_types_collection.document("Admin")
+        general_ref = ticket_types_collection.document("General")
+        
+        # Get the documents within the transaction
+        admin_doc = transaction.get(admin_ref)
+        general_doc = transaction.get(general_ref)
         
         ticket_types = []
-        for doc in ticket_types_docs:
-            data = doc.data()
+        
+        # Process Admin ticket if it exists
+        if admin_doc.exists:
+            data = admin_doc.to_dict()
             ticket_type = TicketType(
-                id=data.get("id"),
-                name=data.get("name"),
-                price=data.get("price"),
+                id="Admin",
+                name=data.get("name", "Admin"),
+                price=data.get("price", 0),
+                available_quantity=data.get("availableQuantity", 999999),  # Infinite for admin
+                sold_quantity=data.get("soldQuantity", 0)
+            )
+            ticket_types.append(ticket_type)
+        
+        # Process General ticket if it exists
+        if general_doc.exists:
+            data = general_doc.to_dict()
+            ticket_type = TicketType(
+                id="General",
+                name=data.get("name", "General"),
+                price=data.get("price", 0),
                 available_quantity=data.get("availableQuantity", 0),
                 sold_quantity=data.get("soldQuantity", 0)
             )
@@ -50,9 +73,7 @@ def get_ticket_types_for_event(transaction: Transaction, event_ref, logger: logg
         logger.error(f"Failed to get ticket types for event {event_ref.path}: {e}")
         return []
 
-def get_total_available_tickets(ticket_types: List[TicketType]) -> int:
-    """Calculate total available tickets across all ticket types"""
-    return sum(tt.remaining_quantity for tt in ticket_types)
+
 
 def get_general_ticket_type(ticket_types: List[TicketType]) -> Optional[TicketType]:
     """Get the 'General' ticket type, fallback to lowest priced ticket"""
@@ -91,31 +112,39 @@ def update_ticket_type_sold_quantity(transaction: Transaction, event_ref, ticket
         logger.error(f"Failed to update ticket type sold quantity: {e}")
         raise e
 
-def reduce_general_ticket_availability(transaction: Transaction, event_ref, quantity: int, logger: logging.Logger):
+def use_admin_tickets(transaction: Transaction, event_ref, quantity: int, logger: logging.Logger):
     """
-    Reduce General ticket availability when organizer manually adds people.
-    This is used when organizers add attendees without payment (using Admin tickets conceptually,
-    but reducing the general pool so total event capacity is respected).
+    Use Admin tickets for organizer additions.
+    Admin tickets consume General availability but don't count as General sales.
     """
     try:
+        admin_ticket_ref = event_ref.collection("TicketTypes").document("Admin")
         general_ticket_ref = event_ref.collection("TicketTypes").document("General")
+        
+        # Track Admin ticket usage
+        transaction.update(admin_ticket_ref, {
+            "soldQuantity": firestore.Increment(quantity)
+        })
+        
+        # Consume General availability (but not soldQuantity since no payment)
         transaction.update(general_ticket_ref, {
             "availableQuantity": firestore.Increment(-quantity)
         })
         
-        # Also reduce event vacancy since total capacity is reduced
+        # Reduce event vacancy since Admin tickets consume public spots
         transaction.update(event_ref, {
             "vacancy": firestore.Increment(-quantity)
         })
         
-        logger.info(f"Reduced General ticket availability by {quantity} for organizer addition and synced event vacancy")
+        logger.info(f"Used {quantity} Admin tickets, reduced General availability and event vacancy")
     except Exception as e:
-        logger.error(f"Failed to reduce general ticket availability: {e}")
+        logger.error(f"Failed to use admin tickets: {e}")
         raise e
 
 def reserve_tickets(transaction: Transaction, event_ref, quantity: int, logger: logging.Logger) -> Optional[TicketType]:
     """
     Reserve tickets by finding the appropriate ticket type and updating its sold quantity.
+    For public checkout, this only uses General tickets (not Admin tickets).
     Returns the ticket type used for the reservation.
     """
     ticket_types = get_ticket_types_for_event(transaction, event_ref, logger)
@@ -124,17 +153,16 @@ def reserve_tickets(transaction: Transaction, event_ref, quantity: int, logger: 
         logger.warning(f"No ticket types found for event {event_ref.path}")
         return None
     
-    total_available = get_total_available_tickets(ticket_types)
-    if total_available < quantity:
-        logger.warning(f"Not enough tickets available. Requested: {quantity}, Available: {total_available}")
-        return None
-    
-    # Use the general ticket type for reservations
+    # Use the general ticket type for public reservations (not Admin tickets)
     general_ticket = get_general_ticket_type(ticket_types)
-    if not general_ticket or general_ticket.remaining_quantity < quantity:
-        logger.warning(f"General ticket type doesn't have enough availability. Requested: {quantity}, Available: {general_ticket.remaining_quantity if general_ticket else 0}")
+    if not general_ticket:
+        logger.warning(f"No General ticket type found for event {event_ref.path}")
+        return None
+        
+    if general_ticket.remaining_quantity < quantity:
+        logger.warning(f"General ticket type doesn't have enough availability. Requested: {quantity}, Available: {general_ticket.remaining_quantity}")
         return None
     
-    # Reserve the tickets
+    # Reserve the tickets using General ticket type
     update_ticket_type_sold_quantity(transaction, event_ref, general_ticket.id, quantity, logger)
     return general_ticket 

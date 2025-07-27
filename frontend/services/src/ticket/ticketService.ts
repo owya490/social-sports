@@ -64,11 +64,17 @@ export async function updateTicketTypeSoldQuantity(eventId: string, ticketTypeId
   }
 }
 
-export async function reduceGeneralTicketAvailability(eventId: string, quantity: number): Promise<void> {
+export async function useAdminTickets(eventId: string, quantity: number): Promise<void> {
   try {
     const eventDocSnapshot = await findEventDoc(eventId);
     const eventDocRef = eventDocSnapshot.ref;
+    const adminTicketDocRef = doc(eventDocRef, "TicketTypes", "Admin");
     const generalTicketDocRef = doc(eventDocRef, "TicketTypes", "General");
+
+    // Admin tickets consume General availability but don't count as General sales
+    await updateDoc(adminTicketDocRef, {
+      soldQuantity: increment(quantity)
+    });
 
     await updateDoc(generalTicketDocRef, {
       availableQuantity: increment(-quantity)
@@ -78,9 +84,9 @@ export async function reduceGeneralTicketAvailability(eventId: string, quantity:
       vacancy: increment(-quantity)
     });
 
-    eventServiceLogger.info(`Reduced General ticket availability by ${quantity} for organizer addition and synced event vacancy`);
+    eventServiceLogger.info(`Used ${quantity} Admin tickets, reduced General availability and event vacancy`);
   } catch (error) {
-    eventServiceLogger.error(`Failed to reduce general ticket availability: ${error}`);
+    eventServiceLogger.error(`Failed to use admin tickets: ${error}`);
     throw error;
   }
 }

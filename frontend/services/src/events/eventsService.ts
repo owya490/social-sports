@@ -447,15 +447,18 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId): P
 
     // Run transaction to ensure read and write are atomic
     await runTransaction(db, async (transaction) => {
-      // GET OPERATION: First check whether there is enough ticket allocation
+      // GET OPERATION: First check whether there is enough total capacity
       const eventDocRef = await findEventDocRef(eventId);
       const eventDataWithoutOrganiser = (await transaction.get(eventDocRef)).data() as EventDataWithoutOrganiser;
-      if (eventDataWithoutOrganiser.vacancy < attendeeInfo.ticketCount) {
-        throw new Error("Not enough tickets!");
-      }
-
+      
       const eventMetadataDocRef = findEventMetadataDocRefByEventId(eventId);
       let eventMetadata = (await transaction.get(eventMetadataDocRef)).data() as EventMetadata;
+      
+      // Check if there's enough General ticket availability for Admin ticket usage
+      // Admin tickets consume General availability but don't count as sales
+      if (eventDataWithoutOrganiser.vacancy < attendeeInfo.ticketCount) {
+        throw new Error(`Not enough General ticket availability for Admin tickets! Available: ${eventDataWithoutOrganiser.vacancy}, Requested: ${attendeeInfo.ticketCount}`);
+      }
 
       // Check if email has is already in the purchaserMap
       if (!(attendeeEmailHash in eventMetadata.purchaserMap)) {
@@ -484,14 +487,20 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId): P
       }
       eventMetadata.completeTicketCount = totalEventTickets;
 
-      // Reduce General ticket availability instead of just event vacancy
-      // This properly handles organizer adding people without payment
+      // Use Admin tickets for organizer additions (no payment, infinite quantity)
+      // But consume General ticket availability to reduce public spots
+      const adminTicketDocRef = doc(eventDocRef, "TicketTypes", "Admin");
       const generalTicketDocRef = doc(eventDocRef, "TicketTypes", "General");
+      
+      transaction.update(adminTicketDocRef, {
+        soldQuantity: increment(attendeeInfo.ticketCount)
+      });
+      
       transaction.update(generalTicketDocRef, {
         availableQuantity: increment(-attendeeInfo.ticketCount)
       });
       
-      // Also update event vacancy to keep frontend in sync
+      // Reduce event vacancy since Admin tickets consume public spots
       eventDataWithoutOrganiser.vacancy -= attendeeInfo.ticketCount;
 
       transaction.update(eventDocRef, eventDataWithoutOrganiser as Partial<EventData>);

@@ -107,16 +107,18 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
       return json.dumps({"url": ERROR_URL})
 
   # 3. check ticket types availability and reserve tickets 
-  from lib.utils.ticketUtils import reserve_tickets, get_ticket_types_for_event, get_total_available_tickets
+  from lib.utils.ticketUtils import reserve_tickets, get_ticket_types_for_event, get_general_ticket_type
   
   ticket_types = get_ticket_types_for_event(transaction, event_ref, logger)
   if not ticket_types:
     logger.error(f"No ticket types found for event {event_ref.path}. Returning status=500")
     return json.dumps({"url": ERROR_URL})
   
-  total_available = get_total_available_tickets(ticket_types)
-  if total_available < quantity:
-    logger.warning(f"Provided event {event_ref.path} does not have enough tickets to fulfill this order. quantity_requested={quantity} available={total_available}")
+  # Check only General ticket availability for public checkout (not Admin tickets)
+  general_ticket = get_general_ticket_type(ticket_types)
+  if not general_ticket or general_ticket.remaining_quantity < quantity:
+    available_qty = general_ticket.remaining_quantity if general_ticket else 0
+    logger.warning(f"Provided event {event_ref.path} does not have enough General tickets to fulfill this order. quantity_requested={quantity} available={available_qty}")
     return json.dumps({"url": cancel_url})
   
   # 4. reserve tickets and get price from ticket type
