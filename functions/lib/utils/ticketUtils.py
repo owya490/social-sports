@@ -29,17 +29,14 @@ class TicketType:
 def get_ticket_types_for_event(transaction: Transaction, event_ref, logger: logging.Logger) -> List[TicketType]:
     """Get all ticket types for a given event"""
     try:
-        # Get document references first (outside transaction)
+        # Get document references and retrieve them using the same pattern as webhooks.py
         ticket_types_collection = event_ref.collection("TicketTypes")
-        
-        # For this specific case, we know we have Admin and General tickets
-        # Let's get them directly by their known IDs
         admin_ref = ticket_types_collection.document("Admin")
         general_ref = ticket_types_collection.document("General")
         
-        # Get the documents within the transaction
-        admin_doc = transaction.get(admin_ref)
-        general_doc = transaction.get(general_ref)
+        # Get documents using the same pattern as webhooks.py: doc_ref.get(transaction=transaction)
+        admin_doc = admin_ref.get(transaction=transaction)
+        general_doc = general_ref.get(transaction=transaction)
         
         ticket_types = []
         
