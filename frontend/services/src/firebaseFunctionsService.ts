@@ -15,6 +15,7 @@ export const FIREBASE_FUNCTIONS_SEND_EMAIL_ON_DELETE_EVENT = "send_email_on_dele
 
 // Email - Loops
 export const FIREBASE_FUNCTIONS_SEND_EMAIL_ON_CREATE_EVENT_V2 = "send_email_on_create_event_v2";
+export const FIREBASE_FUNCTIONS_SEND_EMAIL_ON_DELETE_EVENT_V2 = "send_email_on_delete_event_v2"
 
 export function getFirebaseFunctionByName(name: string): HttpsCallable {
   const functions = getFunctions(app, "australia-southeast1");
