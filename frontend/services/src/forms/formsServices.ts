@@ -171,8 +171,7 @@ export async function deleteForm(formId: FormId): Promise<void> {
   }
 }
 
-// TODO this should be saving it to the fulfillment session instead of the submitted collection
-export async function createFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
+export async function createTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
   if (!rateLimitCreateFormResponse()) {
     formsServiceLogger.warn("Rate Limited!!!");
     throw "createFormResponse: Rate Limited";
@@ -182,7 +181,11 @@ export async function createFormResponse(formResponse: FormResponse): Promise<Fo
   try {
     const batch = writeBatch(db);
     const docRef = doc(db, FormResponsePaths.Temp + "/" + formResponse.formId + "/" + formResponse.eventId);
-    batch.set(docRef, { ...formResponse, formResponseId: docRef.id as FormResponseId, submissionTime: Timestamp.now() });
+    batch.set(docRef, {
+      ...formResponse,
+      formResponseId: docRef.id as FormResponseId,
+      submissionTime: Timestamp.now(),
+    });
     await batch.commit();
     formsServiceLogger.info(
       `createFormResponse: Form response created with formResponseId: ${docRef.id}, formResponse: ${formResponse}`

@@ -1,4 +1,5 @@
 import { EventId } from "./EventTypes";
+import { FormId, FormResponseId } from "./FormTypes";
 import { Branded } from "./index";
 import { URL } from "./Types";
 
@@ -60,6 +61,24 @@ export type GetNextFulfilmentEntityResponse = {
 };
 
 /**
+ * Payload we send to java getPrevFulfilmentEntity function
+ */
+export type GetPrevFulfilmentEntityRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  currentFulfilmentEntityId: FulfilmentEntityId;
+};
+
+/**
+ * Payload we receive from java getPrevFulfilmentEntity
+ */
+export type GetPrevFulfilmentEntityResponse = {
+  /**
+   * Null if there are no previous fulfilment entities.
+   */
+  fulfilmentEntityId: FulfilmentEntityId | null;
+};
+
+/**
  * Payload we send to java getFulfilmentEntityInfo function
  */
 export type GetFulfilmentEntityInfoRequest = {
@@ -79,4 +98,11 @@ export type GetFulfilmentEntityInfoResponse = {
    * Url of the specified fulfilment entity, if applicable.
    */
   url: URL | null;
+
+  /**
+   * Forms specific fields.
+   */
+  eventId: EventId | null;
+  formId: FormId | null;
+  formResponseId: FormResponseId | null;
 };

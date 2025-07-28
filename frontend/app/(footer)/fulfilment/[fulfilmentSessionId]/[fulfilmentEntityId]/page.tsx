@@ -1,5 +1,7 @@
 "use client";
 
+import FormResponder from "@/components/forms/FormResponder";
+import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
 import Loading from "@/components/loading/Loading";
 import {
   FulfilmentEntityId,
@@ -8,10 +10,17 @@ import {
   GetFulfilmentEntityInfoResponse,
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
-import { getFulfilmentEntityInfo } from "@/services/src/fulfilment/fulfilmentServices";
+import {
+  getFulfilmentEntityInfo,
+  getNextFulfilmentEntityUrl,
+  getPrevFulfilmentEntityUrl,
+} from "@/services/src/fulfilment/fulfilmentServices";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+/**
+ * Routing page for fulfilment session entities.
+ */
 const FulfilmentSessionEntityPage = ({
   params,
 }: {
@@ -46,7 +55,9 @@ const FulfilmentSessionEntityPage = ({
     case FulfilmentEntityType.STRIPE:
       if (getFulfilmentEntityInfoResponse.url === null) {
         fulfilmentSessionEntityPageLogger.error(
-          `Stripe Fulfilment Entity URL is null when it should not be, getFulfilmentEntityInfoResponse: ${JSON.stringify(
+          `Stripe Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${
+            params.fulfilmentSessionId
+          }, fulfilmentEntityId: ${params.fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
             getFulfilmentEntityInfoResponse
           )}`
         );
@@ -55,17 +66,59 @@ const FulfilmentSessionEntityPage = ({
       }
       router.push(getFulfilmentEntityInfoResponse.url);
     case FulfilmentEntityType.FORMS:
+      if (getFulfilmentEntityInfoResponse.formId === null || getFulfilmentEntityInfoResponse.eventId === null) {
+        fulfilmentSessionEntityPageLogger.error(
+          `Forms Fulfilment Entity formId or eventId is null when it should not be, fulfilmentSessionId: ${
+            params.fulfilmentSessionId
+          }, fulfilmentEntityId: ${params.fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
+            getFulfilmentEntityInfoResponse
+          )}`
+        );
+        router.push("/error");
+        return;
+      }
+
+      const handleNext = async () => {
+        try {
+          const nextUrl = await getNextFulfilmentEntityUrl(params.fulfilmentSessionId, params.fulfilmentEntityId);
+          if (nextUrl) {
+            router.push(nextUrl);
+          } else {
+            fulfilmentSessionEntityPageLogger.info("No next fulfilment entity available");
+          }
+        } catch (error) {
+          fulfilmentSessionEntityPageLogger.error(`Error navigating to next entity: ${error}`);
+        }
+      };
+
+      const handlePrev = async () => {
+        try {
+          const prevUrl = await getPrevFulfilmentEntityUrl(params.fulfilmentSessionId, params.fulfilmentEntityId);
+          if (prevUrl) {
+            router.push(prevUrl);
+          } else {
+            fulfilmentSessionEntityPageLogger.info("No previous fulfilment entity available");
+          }
+        } catch (error) {
+          fulfilmentSessionEntityPageLogger.error(`Error navigating to previous entity: ${error}`);
+        }
+      };
+
       return (
-        // <FormResponder
-        //   formId={getFulfilmentEntityInfoResponse.formId}
-        //   eventId={getFulfilmentEntityInfoResponse.eventId}
-        // />
-        <div></div>
+        <FulfilmentEntityPage onNext={handleNext} onPrev={handlePrev}>
+          <FormResponder
+            formId={getFulfilmentEntityInfoResponse.formId}
+            eventId={getFulfilmentEntityInfoResponse.eventId}
+            formResponseId={getFulfilmentEntityInfoResponse.formResponseId}
+          />
+        </FulfilmentEntityPage>
       );
     case FulfilmentEntityType.END:
       if (getFulfilmentEntityInfoResponse.url === null) {
         fulfilmentSessionEntityPageLogger.error(
-          `End Fulfilment Entity URL is null when it should not be, getFulfilmentEntityInfoResponse: ${JSON.stringify(
+          `End Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${
+            params.fulfilmentSessionId
+          }, fulfilmentEntityId: ${params.fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
             getFulfilmentEntityInfoResponse
           )}`
         );

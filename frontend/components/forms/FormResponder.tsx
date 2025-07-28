@@ -5,11 +5,11 @@ import { FormHeaderSectionResponse } from "@/components/forms/sections/form-head
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
 import Loading from "@/components/loading/Loading";
 import { EventId } from "@/interfaces/EventTypes";
-import { Form, FormId, FormResponseId, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse, FormResponseId, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { FormResponsePaths } from "@/services/src/forms/formsConstants";
 import {
-  createFormResponse,
+  createTempFormResponse,
   formsServiceLogger,
   getForm,
   getFormIdByEventId,
@@ -26,6 +26,7 @@ interface FormResponderProps {
   formId: FormId;
   eventId: EventId;
   formResponseId: FormResponseId | null;
+  onSaveFormResponse?: (formResponse: FormResponse) => void;
   canEditForm?: boolean;
   isPreview?: boolean;
 }
@@ -109,7 +110,7 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
     const formResponse = extractFormResponseFromForm(formId, eventId, form);
     if (formResponseId === null) {
       // Since FormResponseId is null, this is a new form response and we save it to the temp collection
-      createFormResponse(formResponse);
+      createTempFormResponse(formResponse);
     } else {
       // Since FormResponseId is not null, this is an existing form response
       updateFormResponse(formId, eventId, formResponseId, formResponse);

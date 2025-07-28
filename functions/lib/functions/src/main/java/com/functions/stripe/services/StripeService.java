@@ -16,6 +16,7 @@ public class StripeService {
 
     public static final String FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID = "get_stripe_checkout_url_by_event_id";
 
+    // TODO: configure cancel URL
     public static Optional<String> getStripeCheckoutFromEventId(String eventId,
             boolean isPrivate,
             Integer numTickets,
@@ -25,6 +26,9 @@ public class StripeService {
             // TODO: remove price getting from stripe function. The price value should be
             // from the stored
             // event data in the fulfilment session.
+            logger.info(
+                    "Getting Stripe checkout URL for event ID: {}, isPrivate: {}, numTickets: {}, successUrl: {}, fulfilmentSessionId: {}",
+                    eventId, isPrivate, numTickets, successUrl.orElse("N/A"), fulfilmentSessionId);
             return FirebaseService.callFirebaseFunction(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID,
                     Map.of(
                             "eventId", eventId,

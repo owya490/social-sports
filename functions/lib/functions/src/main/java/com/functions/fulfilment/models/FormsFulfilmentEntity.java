@@ -13,5 +13,5 @@ public class FormsFulfilmentEntity extends FulfilmentEntity {
     {
         setType(FulfilmentEntityType.FORMS);
     }
-    private String formId;
+    private String formResponseId;
 }

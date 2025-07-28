@@ -80,7 +80,7 @@ public class FulfilmentService {
             Optional<String> formId = FormsService.getFormIdByEventId(eventId);
             if (formId.isPresent()) {
                 for (int i = 0; i < numTickets; i++) {
-                    tempEntities.add(FormsFulfilmentEntity.builder().formId(formId.get())
+                    tempEntities.add(FormsFulfilmentEntity.builder().formResponseId(null)
                             .type(FulfilmentEntityType.FORMS).build());
                 }
             }
@@ -123,6 +123,7 @@ public class FulfilmentService {
                         eventData.getIsPrivate(), numTickets, Optional.of(successUrl), fulfilmentSessionId);
 
                 if (stripeCheckoutLink.isPresent()) {
+                    logger.info("Created Stripe checkout link for event ID {}: {}", eventId, stripeCheckoutLink.get());
                     entity = StripeFulfilmentEntity.builder().url(stripeCheckoutLink.get())
                             .type(FulfilmentEntityType.STRIPE).build();
                     fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
@@ -415,7 +416,12 @@ public class FulfilmentService {
 
             return Optional.of(new GetFulfilmentEntityInfoResponse(
                     entity.getType(),
-                    getEntityUrl(entity)));
+                    getEntityUrl(entity),
+                    maybeFulfilmentSession.get().getEventData().getEventId(),
+                    maybeFulfilmentSession.get().getEventData().getFormId(),
+                    entity instanceof FormsFulfilmentEntity
+                            ? ((FormsFulfilmentEntity) entity).getFormResponseId()
+                            : null));
         } catch (Exception e) {
             logger.error("Failed to get fulfilment entity info for session ID: {} and entity ID: {}",
                     fulfilmentSessionId, fulfilmentEntityId, e);

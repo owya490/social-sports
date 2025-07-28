@@ -12,6 +12,12 @@ export const GET_NEXT_FULFILMENT_ENTITY_URL = {
   PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/getNextFulfilmentEntity",
 };
 
+export const GET_PREV_FULFILMENT_ENTITY_URL = {
+  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/getPrevFulfilmentEntity",
+  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/getPrevFulfilmentEntity",
+  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/getPrevFulfilmentEntity",
+};
+
 export const GET_FULFILMENT_ENTITY_INFO_URL = {
   DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/getFulfilmentEntityInfo",
   PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/getFulfilmentEntityInfo",

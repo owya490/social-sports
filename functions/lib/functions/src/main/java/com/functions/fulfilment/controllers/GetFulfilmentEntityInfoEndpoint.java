@@ -55,17 +55,19 @@ public class GetFulfilmentEntityInfoEndpoint implements HttpFunction {
                 data.fulfilmentEntityId());
 
         if (maybeResponse.isPresent()) {
-            logger.info("Fulfilment entity info retrieved successfully for session: {}",
-                    data.fulfilmentSessionId());
+            logger.info("Fulfilment entity info retrieved successfully for session: {} and entity Id: {}, {}",
+                    data.fulfilmentSessionId(), data.fulfilmentEntityId(), maybeResponse.get().toString());
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(maybeResponse.get()));
         } else {
-            logger.info("No fulfilment entity info found for session: {}", data.fulfilmentSessionId());
+            logger.info("No fulfilment entity info found for session: {}, entity Id: {}", data.fulfilmentSessionId(),
+                    data.fulfilmentEntityId());
             response.setStatusCode(404);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
-                            "No fulfilment entity info found for session: " + data.fulfilmentSessionId())));
+                            "No fulfilment entity info found for session: " + data.fulfilmentSessionId()
+                                    + " and entity Id: " + data.fulfilmentEntityId())));
         }
     }
 }
