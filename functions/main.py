@@ -6,6 +6,7 @@ from lib.emails.email_reminder import *
 from lib.move_inactive_events import *
 from lib.emails.create_event_notification import *
 from lib.emails.delete_event_notification import *
+from lib.emails.purchase_event import *
 # Stripe
 from lib.stripe import *
 from lib.stripe.checkout import *
