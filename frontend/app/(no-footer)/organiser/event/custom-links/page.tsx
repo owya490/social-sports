@@ -10,8 +10,8 @@ import { getAllOrganiserCustomEventLinks } from "@/services/src/events/customEve
 import { getEventById } from "@/services/src/events/eventsService";
 import { getRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function CustomLinks() {
   const { user } = useUser();
@@ -26,10 +26,12 @@ export default function CustomLinks() {
       try {
         const [events, templates, links] = await Promise.all([
           Promise.all(user.publicUpcomingOrganiserEvents.map(async (eventId: string) => await getEventById(eventId))),
-          Promise.all(user.recurrenceTemplates.map(async (templateId: string) => await getRecurrenceTemplate(templateId))),
+          Promise.all(
+            user.recurrenceTemplates.map(async (templateId: string) => await getRecurrenceTemplate(templateId))
+          ),
           getAllOrganiserCustomEventLinks(user.userId),
         ]);
-        const filteredTemplates = templates.filter(template => template.recurrenceData.recurrenceEnabled);
+        const filteredTemplates = templates.filter((template) => template.recurrenceData.recurrenceEnabled);
 
         setActiveEvents(events);
         setActiveRecurringTemplates(filteredTemplates);
@@ -40,7 +42,7 @@ export default function CustomLinks() {
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     if (user.userId) {
       fetchData();
@@ -51,7 +53,7 @@ export default function CustomLinks() {
   ) : (
     <div className="sm:ml-14 mt-16">
       <div className="screen-width-primary sm:mx-auto">
-        <OrganiserNavbar currPage="EventDashboard" />
+        <OrganiserNavbar />
         <div className="text-4xl md:text-3xl lg:text-4xl py-6">Custom Event Links</div>
         <CustomEventLinksTable
           user={user}
