@@ -8,6 +8,7 @@ import Tick from "@svgs/Verified_tick.png";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
 
 interface EventCardProps {
@@ -38,6 +39,18 @@ export default function EventCard(props: EventCardProps) {
     isClickable = false,
   } = props;
 
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Preload images for better performance
+  useEffect(() => {
+    const imageToLoad = thumbnail || image;
+    if (imageToLoad) {
+      const img = new window.Image();
+      img.onload = () => setImageLoaded(true);
+      img.src = imageToLoad;
+    }
+  }, [image, thumbnail]);
+
   const cardContent = (
     <div className="bg-white text-left w-full hover:cursor-pointer hover:scale-[1.02] transition-all duration-300 md:min-w-72">
       {loading ? (
@@ -47,9 +60,9 @@ export default function EventCard(props: EventCardProps) {
       ) : (
         <>
           <div
-            className="w-full"
+            className={`w-full ${imageLoaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
             style={{
-              backgroundImage: `url(${thumbnail ? thumbnail : image})`,
+              backgroundImage: imageLoaded ? `url(${thumbnail || image})` : "none",
               backgroundSize: "cover",
               backgroundPosition: "center center",
               aspectRatio: "1/1",
