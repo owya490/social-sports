@@ -4,7 +4,7 @@ import { EventMetadata } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
-import { sendEmailOnDeleteEvent } from "@/services/src/sendgrid/sendgridService";
+import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -54,7 +54,7 @@ const EventDrilldownSettingsPage = ({
     try {
       setDeleteLoading(true);
       await archiveAndDeleteEvent(eventId, user.userId, auth.currentUser?.email || "");
-      await sendEmailOnDeleteEvent(eventId);
+      await sendEmailOnDeleteEventV2(eventId);
       bustEventsLocalStorageCache();
       setDeleteLoading(false);
       router.push("/organiser/event/dashboard");
