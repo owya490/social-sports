@@ -3,7 +3,6 @@
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSettings";
 import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
 import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
@@ -116,8 +115,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   };
 
   return (
-    <div className="sm:ml-14 mt-14">
-      <OrganiserNavbar currPage="EventDrilldown" />
+    <>
       <EventDrilldownBanner
         name={eventName}
         startDate={eventStartDate}
@@ -125,7 +123,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         vacancy={eventVacancy}
         loading={loading}
       />
-      <div className="sm:px-10 sm:pb-10">
+      <div className="sm:pb-10">
         <RecurringTemplateDrilldownSettings
           loading={loading}
           updating={updatingRecurrenceData}
@@ -196,6 +194,6 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

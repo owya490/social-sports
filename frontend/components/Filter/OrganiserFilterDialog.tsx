@@ -5,6 +5,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../ListBox";
+import { HighlightButton } from "../elements/HighlightButton";
 
 export enum SortByCategory {
   HOT,
@@ -160,7 +161,7 @@ export default function OrganiserFilterDialog({
         separator="to"
         displayFormat={"DD/MM/YYYY"}
         onChange={handleDateRangeChange}
-        inputClassName="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+        inputClassName="w-full p-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
       />
     ),
     [datepickerKey, dateRange]
@@ -258,7 +259,7 @@ export default function OrganiserFilterDialog({
                 type="text"
                 id="search"
                 name="search"
-                className="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+                className="w-full p-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
                 placeholder="Search for anything"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
@@ -281,7 +282,7 @@ export default function OrganiserFilterDialog({
                     type="checkbox"
                     name="Past"
                     value="Past"
-                    className="mr-2"
+                    className="mr-2 h-4 w-4 rounded border-gray-300 text-black focus:ring-1 focus:ring-black"
                     checked={eventStatusValue.includes("past")}
                     onChange={() => toggleStatusCheckboxValue("past")}
                   />
@@ -294,7 +295,7 @@ export default function OrganiserFilterDialog({
                     type="checkbox"
                     name="Future"
                     value="Future"
-                    className="mr-2"
+                    className="mr-2 h-4 w-4 rounded border-gray-300 text-black focus:ring-1 focus:ring-black"
                     checked={eventStatusValue.includes("future")}
                     onChange={() => toggleStatusCheckboxValue("future")}
                   />
@@ -319,7 +320,7 @@ export default function OrganiserFilterDialog({
                     type="checkbox"
                     name="Public"
                     value="Public"
-                    className="mr-2"
+                    className="mr-2 h-4 w-4 rounded border-gray-300 text-black focus:ring-1 focus:ring-black"
                     checked={eventTypeValue.includes("public")}
                     onChange={() => toggleTypeCheckboxValue("public")}
                   />
@@ -332,7 +333,7 @@ export default function OrganiserFilterDialog({
                     type="checkbox"
                     name="Private"
                     value="Private"
-                    className="mr-2"
+                    className="mr-2 h-4 w-4 rounded border-gray-300 text-black focus:ring-1 focus:ring-black"
                     checked={eventTypeValue.includes("private")}
                     onChange={() => toggleTypeCheckboxValue("private")}
                   />
@@ -357,7 +358,7 @@ export default function OrganiserFilterDialog({
                 id="minPrice"
                 name="minPrice"
                 placeholder="Min"
-                className="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+                className="w-full p-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
                 value={minPriceValue !== null ? minPriceValue.toString() : ""}
                 onChange={(e) => {
                   const newValue = parseFloat(e.target.value);
@@ -371,7 +372,7 @@ export default function OrganiserFilterDialog({
                 id="maxPrice"
                 name="maxPrice"
                 placeholder="Max"
-                className="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+                className="w-full p-2 border rounded-xl focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
                 value={maxPriceValue !== null ? maxPriceValue.toString() : ""}
                 onChange={(e) => {
                   const newValue = parseFloat(e.target.value);
@@ -391,19 +392,12 @@ export default function OrganiserFilterDialog({
           {showDateRange && <div className="flex justify-start items-center z-50">{DatepickerComponent}</div>}
         </div>
         <div className="mt-5 w-full flex items-center">
-          <button
-            className="hover:underline cursor-pointer rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-            onClick={handleClearAll}
-          >
+          <HighlightButton className="hover:bg-gray-300" onClick={handleClearAll}>
             Clear all
-          </button>
-          <button
-            type="button"
-            className="ml-auto inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-            onClick={applyFilters}
-          >
+          </HighlightButton>
+          <HighlightButton className="ml-auto hover:bg-gray-300" onClick={applyFilters}>
             Apply Filters!
-          </button>
+          </HighlightButton>
         </div>
       </div>
     </div>

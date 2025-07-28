@@ -47,24 +47,21 @@ export default function Login() {
   };
 
   return (
-    <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
+    <div className="flex p-4 sm:min-h-[80vh] justify-center items-center">
       <Alert
         open={alertStatus}
         onClose={handleAlertClose}
         color="red"
-        className="absolute ml-auto mr-auto left-0 right-0 top-24 w-fit"
+        className="absolute ml-auto mr-auto top-16 md:top-20 w-fit"
       >
         {errorMessage}
       </Alert>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+      <div className="max-w-sm md:min-w-96">
         <h1 className="text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
           Sign in to your account
         </h1>
-      </div>
-
-      <div className="mt-8 mx-auto w-full max-w-sm">
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-4 mt-8" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="block font-medium leading-6 text-gray-900">
               Email address
