@@ -11,6 +11,8 @@ authors:
 image: "https://cdn.modrinth.com/data/66emo7X3/15dcaeb3ac082e22d733b681406004dec390428f.png"
 ---
 
+![CDG Stat Tracker App Dashboard](/images/CDG-STATTRAKR.png)
+
 # Turning Code Commits into Epic Quests: Our 4-Hour Hackathon Success Story
 
 What happens when you give a group of passionate developers just four hours and complete creative freedom? Magic happens. This year's Compass Digital Group anniversary celebration proved that some of the best innovations come from tight deadlines and ambitious ideas.
