@@ -61,8 +61,8 @@ const EventDrilldownSettingsPage = ({
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/Delete_UPDATE_EVENT_RATELIMITED");
-      } else if (error == "Sendgrid failed") {
-        logger.error("Sendgrid failed");
+      } else if (error == "Loops failed") {
+        logger.error("Loops failed");
       } else {
         router.push("/error");
       }
