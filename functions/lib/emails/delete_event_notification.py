@@ -1,17 +1,19 @@
 import json
 import time
 import uuid
+import base64
 from dataclasses import dataclass
+from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
 
 import requests
 from firebase_functions import https_fn, options
-from lib.sendgrid.commons import get_user_data_public
 from lib.constants import SYDNEY_TIMEZONE, db
-from lib.emails.constants import LOOPS_API_KEY, LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID, LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID
+from lib.emails.constants import LOOPS_API_KEY, LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID, LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID
 from lib.logging import Logger
 from lib.utils.priceUtils import centsToDollars
-
+from lib.sendgrid.commons import get_user_data_public
+import traceback
 
 @dataclass
 class DeleteEventRequest:
@@ -20,6 +22,27 @@ class DeleteEventRequest:
     def __post_init__(self):
         if not isinstance(self.eventId, str):
             raise ValueError("Event Id must be provided as a string.")
+
+def generate_attendee_list_txt(attendees: list) -> str:
+    """Generate a text file with attendee details and return it as a base64 string."""
+    
+    # Create the text content
+    txt_content = "Event Attendees List\n"
+    txt_content += "=" * 50 + "\n\n"
+    
+    for i, attendee in enumerate(attendees, 1):
+        txt_content += f"Attendee #{i}\n"
+        txt_content += f"Name: {attendee.get('name', 'N/A')}\n"
+        txt_content += f"Email: {attendee.get('email', 'N/A')}\n"
+        txt_content += f"Tickets: {attendee.get('tickets', 'N/A')}\n"
+        txt_content += "-" * 30 + "\n\n"
+    
+    txt_content += f"Total Attendees: {len(attendees)}\n"
+    txt_content += f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    
+    # Convert to base64
+    txt_bytes = txt_content.encode('utf-8')
+    return base64.b64encode(txt_bytes).decode('utf-8')
 
 @https_fn.on_call(
     cors=options.CorsOptions(
@@ -65,7 +88,7 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
     event_price = event_delete_data.get("price")
     event_status = event_delete_data.get("isActive")
     organiser_email = event_delete_data.get("userEmail")
-    organiser_id = event_delete_data.get("organiserId")  
+    organiser_id = event_delete_data.get("organiserId")
     event_date = event_delete_data.get("startDate") 
     date_string = event_date.strftime("%Y-%m-%d %H")
     purchaser_map = event_metadata_data.get("purchaserMap", {})
@@ -77,6 +100,7 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
             "event_price": event_price,
             "event_status": event_status,
             "organiser_email": organiser_email,
+            "organiser_id": organiser_id,
             "event_date": event_date,
         }.items()
         if value is None
@@ -111,8 +135,8 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
     try:
         headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
         logger.info(f"Attendees data: {json.dumps(attendees, default=str)}")
-    
-    # Get organiser data the same way as create event notification
+        
+        # Get organiser data
         try:
             organiser_data_public = get_user_data_public(organiser_id)
             logger.info(f"Fetched organiser_data_public: {json.dumps(organiser_data_public, default=str)}")
@@ -121,7 +145,11 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
         except Exception as e:
             logger.error(f"Error getting organiser info for organiserId={organiser_id}: {e}")
             organiser_name = ""  # Fallback to empty string
-    
+
+        # Generate attendee list as base64 text file
+        attendee_list_b64 = generate_attendee_list_txt(attendees)
+        logger.info(f"Generated attendee list file (base64 length): {len(attendee_list_b64)}")
+
         organiser_body = {
             "transactionalId": LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID,
             "email": organiser_email,
@@ -129,12 +157,25 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
                 "organiser_name": organiser_name,
                 "event_name": event_name,
                 "event_date": date_string,
-                "attendees": attendees
+            },
+            "attachments": [
+                {
+                "filename": "attendees_list.txt",
+                "contentType": "text/plain",
+                "data": attendee_list_b64
+                }
+            ]
             }
-        }
         logger.info(f"Organiser email payload: {json.dumps(organiser_body, default=str)}")
         response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(organiser_body), headers=headers)
-        logger.info(f"Organizer email sent to {organiser_email} for event: {event_name}")
+        logger.info(f"Loops API response status: {response.status_code}")
+        logger.info(f"Loops API response body: {response.text}")
+        
+        if response.status_code != 200:
+            logger.error(f"Failed to send organizer email. Status: {response.status_code}, Body: {response.text}")
+        else:
+            logger.info(f"Organizer email sent successfully to {organiser_email}")
+            
     except Exception as e:
         logger.error(f"Failed to send email to organizer. Exception: {e}")
     
@@ -148,10 +189,11 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
             try:
                 headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
                 attendee_body = {
-                    "transactionalId": LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID,  # Replace with actual template ID
+                    "transactionalId": LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID,
                     "email": purchaser_email,
                     "dataVariables": {
                         "event_name": event_name,
+                        "event_price": event_price,
                         "ticket_count": ticket_count,
                         "organiser_email": organiser_email,
                     }
