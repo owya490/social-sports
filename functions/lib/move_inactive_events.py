@@ -70,10 +70,11 @@ def remove_event_from_upcoming_organiser_events(
         )
 
     # might as well scan upcoming events to see if we missed any
-    for upcoming_event_id in upcoming_events:
+    for upcoming_event_id in upcoming_events[:]: # build a shallow copy to not cause concurrent modification issues
         upcoming_event = db.collection(ACTIVE_PUBLIC).document(upcoming_event_id).get()
         if not upcoming_event.exists:
-            raise ValueError(f"eventId {event_id} not found in public active events")
+            upcoming_events.remove(upcoming_event_id)
+            continue
         event_dict = upcoming_event.to_dict()
         event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
 
@@ -140,7 +141,7 @@ def get_and_move_private_inactive_events(today: date):
 
 
 @scheduler_fn.on_schedule(
-    schedule="every day 00:00",
+    schedule="every day 00:05", # Ensure we don't run into concurrency issues with recurrent events cron.
     region="australia-southeast1",
     timezone=scheduler_fn.Timezone("Australia/Sydney"),
 )

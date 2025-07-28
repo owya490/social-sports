@@ -2,6 +2,7 @@
 
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
+import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSettings";
 import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
 import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
@@ -132,6 +133,12 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
           submitNewRecurrenceData={submitNewRecurrenceData}
           isRecurrenceEnded={recurrenceEnded}
         />
+        <MobileEventDrilldownNavTabs
+          navigationTabs={["Details", "Past Events", "Settings"]}
+          currSidebarPage={currSidebarPage}
+          setCurrSidebarPage={setCurrSidebarPage}
+        />
+
         <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
           <div id="side-panel" className="z-20">
             <RecurringTemplateDrilldownSidePanel
@@ -166,7 +173,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                 />
               </>
             )}
-            {currSidebarPage === "PastEvents" && (
+            {currSidebarPage === "Past Events" && (
               <>
                 <RecurringTemplatePastEvents pastEvents={pastEvents} />
               </>

@@ -1,6 +1,6 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
-import { FormId } from "./FormTypes";
 import { EventId } from "./EventTypes";
+import { FormId } from "./FormTypes";
 
 export type UserId = string;
 
@@ -33,11 +33,12 @@ export interface PrivateUserData {
     email: string;
   };
   activeBookings: string[];
-  stripeAccount?: string;
-  stripeAccountActive?: boolean;
+  stripeAccount: string | null;
+  stripeAccountActive: boolean | null;
   organiserEvents: string[];
   publicOrganiserEvents: string[];
   recurrenceTemplates: string[];
+  sendOrganiserTicketEmails: boolean;
 }
 
 export interface NewUserData extends PublicUserData, PrivateUserData {
@@ -81,8 +82,9 @@ export const EmptyPrivateUserData: PrivateUserData = {
   organiserEvents: [],
   publicOrganiserEvents: [],
   recurrenceTemplates: [],
-  stripeAccount: undefined,
-  stripeAccountActive: undefined,
+  stripeAccount: null,
+  stripeAccountActive: null,
+  sendOrganiserTicketEmails: false,
 };
 
 export const EmptyUserData: UserData = {

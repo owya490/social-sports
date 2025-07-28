@@ -11,6 +11,7 @@ import {
   CameraIcon,
   ChartBarIcon,
   HomeIcon,
+  LinkIcon,
   StarIcon,
   UserIcon,
 } from "@heroicons/react/24/outline";
@@ -167,6 +168,19 @@ export default function OrganiserNavbar() {
                         >
                           <ArrowPathIcon className="w-6 stroke-1 mr-2" />
                           Recurring Events
+                        </Link>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <Link
+                          href="/organiser/event/custom-links"
+                          className={`${
+                            active ? "text-core-text bg-core-hover" : "text-core-text"
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          <LinkIcon className="w-6 stroke-1 mr-2" />
+                          Custom Event Links
                         </Link>
                       )}
                     </Menu.Item>
