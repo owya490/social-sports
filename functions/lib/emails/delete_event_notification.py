@@ -7,7 +7,7 @@ from google.protobuf.timestamp_pb2 import Timestamp
 import requests
 from firebase_functions import https_fn, options
 from lib.constants import SYDNEY_TIMEZONE, db
-from lib.emails.constants import LOOPS_API_KEY, LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID
+from lib.emails.constants import LOOPS_API_KEY, LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID, LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID
 from lib.logging import Logger
 from lib.utils.priceUtils import centsToDollars
 import traceback
@@ -109,7 +109,7 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
     try:
         headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
         organiser_body = {
-            "transactionalId": "YOUR_ORGANISER_DELETE_TEMPLATE_ID",  # Replace with actual template ID
+            "transactionalId": LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID,  # Replace with actual template ID
             "email": organiser_email,
             "dataVariables": {
                 "organiser_name": "",
