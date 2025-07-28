@@ -1,3 +1,7 @@
+########################
+# DEPRECATED DO NO USE #
+########################
+
 import uuid
 from dataclasses import dataclass
 
@@ -5,7 +9,7 @@ from firebase_functions import https_fn, options
 from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import SYDNEY_TIMEZONE, db
 from lib.logging import Logger
-from lib.sendgrid.commons import get_user_data_private, get_user_email
+from functions.lib.emails.commons import get_user_data_private, get_user_email
 from lib.sendgrid.constants import (CREATE_EVENT_EMAIL_TEMPLATE_ID,
                                     SENDGRID_API_KEY,
                                     SENDGRID_UNSUBSCRIBE_GROUP_ID)

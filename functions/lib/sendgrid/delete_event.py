@@ -1,10 +1,14 @@
+########################
+# DEPRECATED DO NO USE #
+########################
+
 import os
 from time import sleep
 import uuid
 from dataclasses import dataclass
 from firebase_functions import https_fn, options
 from google.protobuf.timestamp_pb2 import Timestamp
-from lib.sendgrid.commons import cents_to_dollars
+from functions.lib.emails.commons import cents_to_dollars
 from lib.constants import db  
 from lib.logging import Logger  
 from lib.sendgrid.constants import DELETE_EVENT_ORGANISER_EMAIL_TEMPLATE_ID, DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID, SENDGRID_API_KEY
