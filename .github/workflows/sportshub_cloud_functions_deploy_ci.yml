@@ -190,4 +190,4 @@ jobs:
         working-directory: functions
         run: |
           source venv/bin/activate
-          firebase deploy --only functions:move_inactive_events,functions:stripe_webhook_checkout_fulfilment,functions:create_stripe_standard_account,functions:get_stripe_checkout_url_by_event_id,functions:send_email_on_delete_event,functions:send_email_on_create_event,functions:email_reminder,functions:send_email_on_create_event_v2, functions:send_email_on_delete_event_v2 --force
+          firebase deploy --only functions:move_inactive_events,functions:stripe_webhook_checkout_fulfilment,functions:create_stripe_standard_account,functions:get_stripe_checkout_url_by_event_id,functions:send_email_on_delete_event,functions:send_email_on_create_event,functions:email_reminder,functions:send_email_on_create_event_v2,functions:send_email_on_delete_event_v2 --force
