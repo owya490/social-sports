@@ -99,6 +99,7 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}
+                        thumbnail={event.thumbnail}
                         name={event.name}
                         organiser={event.organiser}
                         startTime={event.startDate}

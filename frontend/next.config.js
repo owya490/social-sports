@@ -21,7 +21,7 @@ const nextConfig = {
     REACT_APP_EMAILJS_USER_ID: process.env.REACT_APP_EMAILJS_USER_ID,
     ENVIRONMENT: process.env.ENVIRONMENT,
     GOOGLE_MAPS_DEV_API_KEY: process.env.GOOGLE_MAPS_DEV_API_KEY,
-    GOOGLE_MAPS_PROD_API_KEY: process.env.GOOGLE_MAPS_PROD_API_KEY
+    GOOGLE_MAPS_PROD_API_KEY: process.env.GOOGLE_MAPS_PROD_API_KEY,
   },
   images: {
     domains: ["firebasestorage.googleapis.com"],
@@ -45,9 +45,26 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/event",
+        destination: "/dashboard",
+        permanent: true,
+      },
+      {
         source: "/organiser",
         destination: "/organiser/dashboard",
         permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/blogs",
+        destination: "/blogs/index.html",
+      },
+      {
+        source: "/blogs/:slug+",
+        destination: "/blogs/:slug+/index.html",
       },
     ];
   },

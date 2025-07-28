@@ -26,6 +26,9 @@ export default function Success({ params }: any) {
           You have successfully booked {event.name} organised by {event.organiser.firstName}.
         </p>
         <p className="font-light">Keen to see you soon!</p>
+        <p className="text-xs text-gray-500 mt-4">
+          Please check your email for your ticket details. If you don&apos;t see it, check your spam or junk folder.
+        </p>
       </div>
     </div>
   );

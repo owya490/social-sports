@@ -3,16 +3,20 @@
 import ShareModal from "@/components/events/ShareModal";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldownCommunicationPage";
-import EventDrilldownDetailsPage from "@/components/organiser/EventDrilldownDetailsPage";
-import EventDrilldownManageAttendeesPage from "@/components/organiser/EventDrilldownManageAttendeesPage";
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
+import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
+import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
+import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
+import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
+import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
-import { EmptyUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { eventServiceLogger, getEventById } from "@/services/src/events/eventsService";
+import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -27,22 +31,33 @@ interface EventPageProps {
 //brians
 export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
-  const [eventData, setEventData] = useState<EventData>();
+  const [_eventData, setEventData] = useState<EventData>();
   const [loading, setLoading] = useState<boolean>(true);
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
   const [eventEndDate, setEventEndDate] = useState<Timestamp>(Timestamp.now());
-  const [eventOrganiser, setEventOrganiser] = useState<UserData>(EmptyUserData);
+  const [eventOrganiser, setEventOrganiser] = useState<PublicUserData>(EmptyPublicUserData);
   const [eventVacancy, setEventVacancy] = useState<number>(0);
   const [eventDescription, setEventDescription] = useState<string>("");
   const [eventLocation, setEventLocation] = useState<string>("");
+  const [eventSport, setEventSport] = useState<string>("");
   const [eventPrice, setEventPrice] = useState<number>(0);
   const [eventImage, setEventImage] = useState<string>("");
+  const [eventThumbnail, setEventThumbnail] = useState<string>("");
   const [eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
   const [eventMetadata, setEventMetadata] = useState<EventMetadata>(EmptyEventMetadata);
+  const [eventPaused, setEventPaused] = useState<boolean>(false);
+  const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
+  const [eventEventLink, setEventEventLink] = useState<string>("");
+  const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
+  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
+  const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
+  const [eventIsActive, setEventIsActive] = useState<boolean>(false);
 
   const router = useRouter();
+
+  const { user } = useUser();
 
   const eventId: EventId = params.id;
   useEffect(() => {
@@ -56,10 +71,19 @@ export default function EventPage({ params }: EventPageProps) {
         setEventVacancy(event.vacancy);
         setEventDescription(event.description);
         setEventLocation(event.location);
+        setEventSport(event.sport);
         setEventPrice(event.price);
         setEventImage(event.image);
+        setEventThumbnail(event.thumbnail);
         setEventAccessCount(event.accessCount);
         setEventCapacity(event.capacity);
+        setEventPaused(event.paused);
+        setEventPaymentsActive(event.paymentsActive);
+        setEventRegistrationDeadline(event.registrationDeadline);
+        setEventEventLink(event.eventLink);
+        setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
+        setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
+        setEventIsActive(event.isActive);
       })
       .finally(async () => {
         await sleep(500);
@@ -76,14 +100,17 @@ export default function EventPage({ params }: EventPageProps) {
 
   useEffect(() => {
     window.onscroll = () => {
-      if (window.scrollY > 310) {
-        document.getElementById("side-panel")!.classList.add("fixed");
-        document.getElementById("side-panel")!.classList.add("top-[110px]");
-        document.getElementById("event-drilldown-details-page")!.classList.add("ml-[296px]");
-      } else if (window.scrollY <= 310) {
-        document.getElementById("side-panel")!.classList.remove("fixed");
-        document.getElementById("side-panel")!.classList.remove("top-[110px]");
-        document.getElementById("event-drilldown-details-page")!.classList.remove("ml-[296px]");
+      // Prevent side panel on small screen as its doesn't exist
+      if (window.innerWidth > 640) {
+        if (window.scrollY > 310) {
+          document.getElementById("side-panel")!.classList.add("fixed");
+          document.getElementById("side-panel")!.classList.add("top-[110px]");
+          document.getElementById("event-drilldown-details-page")!.classList.add("ml-[296px]");
+        } else if (window.scrollY <= 310) {
+          document.getElementById("side-panel")!.classList.remove("fixed");
+          document.getElementById("side-panel")!.classList.remove("top-[110px]");
+          document.getElementById("event-drilldown-details-page")!.classList.remove("ml-[296px]");
+        }
       }
     };
 
@@ -93,7 +120,7 @@ export default function EventPage({ params }: EventPageProps) {
   }, []);
 
   return (
-    <div className="ml-14 mt-16">
+    <div className="sm:ml-14 mt-14">
       <OrganiserNavbar currPage="EventDrilldown" />
       <EventDrilldownBanner
         name={eventName}
@@ -102,7 +129,7 @@ export default function EventPage({ params }: EventPageProps) {
         vacancy={eventVacancy}
         loading={loading}
       />
-      <div className="p-10">
+      <div className="sm:px-10 sm:pb-10">
         <EventDrilldownStatBanner
           loading={loading}
           eventAccessCount={eventAccessCount}
@@ -110,7 +137,12 @@ export default function EventPage({ params }: EventPageProps) {
           eventCapacity={eventCapacity}
           eventPrice={eventPrice}
         />
-        <div className="flex flex-row mt-10 max-w-6xl xl:mx-auto">
+        <MobileEventDrilldownNavTabs
+          navigationTabs={["Details", "Attendees", "Images", "Settings"]}
+          currSidebarPage={currSidebarPage}
+          setCurrSidebarPage={setCurrSidebarPage}
+        />
+        <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
           <div id="side-panel" className="z-20">
             <EventDrilldownSidePanel
               loading={loading}
@@ -120,7 +152,7 @@ export default function EventPage({ params }: EventPageProps) {
               eventStartDate={eventStartDate}
             />
           </div>
-          <div id="event-drilldown-details-page" className="w-full">
+          <div id="event-drilldown-details-page" className="w-full mb-20 sm:mb-0">
             {currSidebarPage === "Details" && (
               <>
                 <EventDrilldownDetailsPage
@@ -130,19 +162,53 @@ export default function EventPage({ params }: EventPageProps) {
                   eventEndDate={eventEndDate}
                   eventDescription={eventDescription}
                   eventLocation={eventLocation}
+                  eventSport={eventSport}
+                  eventCapacity={eventCapacity}
+                  eventVacancy={eventVacancy}
                   eventPrice={eventPrice}
                   eventImage={eventImage}
                   eventId={eventId}
+                  eventRegistrationDeadline={eventRegistrationDeadline}
+                  eventEventLink={eventEventLink}
+                  isActive={eventIsActive}
+                  updateData={updateEventById}
+                  isRecurrenceTemplate={false}
                 />
                 <ShareModal eventId={eventId} />
               </>
             )}
-            {currSidebarPage === "Manage Attendees" && (
+            {currSidebarPage === "Attendees" && (
               <EventDrilldownManageAttendeesPage
                 eventMetadata={eventMetadata}
                 eventId={eventId}
                 setEventVacancy={setEventVacancy}
                 setEventMetadata={setEventMetadata}
+              />
+            )}
+            {currSidebarPage === "Images" && (
+              <EventDrilldownImagesPage
+                user={user}
+                eventId={eventId}
+                sport={eventSport}
+                eventImagePreviewUrl={eventImage}
+                eventThumbnailPreviewUrl={eventThumbnail}
+              />
+            )}
+            {currSidebarPage === "Settings" && (
+              <EventDrilldownSettingsPage
+                eventMetadata={eventMetadata}
+                eventName={eventName}
+                eventStartDate={eventStartDate}
+                router={router}
+                eventId={eventId}
+                paused={eventPaused}
+                setPaused={setEventPaused}
+                paymentsActive={eventPaymentsActive}
+                setPaymentsActive={setEventPaymentsActive}
+                stripeFeeToCustomer={eventStripeFeeToCustomer}
+                setStripeFeeToCustomer={setEventStripeFeeToCustomer}
+                promotionalCodesEnabled={eventPromotionalCodesEnabled}
+                setPromotionalCodesEnabled={setEventPromotionalCodesEnabled}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

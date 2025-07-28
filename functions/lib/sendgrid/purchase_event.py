@@ -1,12 +1,16 @@
+import json
 import os
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 
+import requests
 from google.protobuf.timestamp_pb2 import Timestamp
-from lib.constants import db
+from lib.constants import SYDNEY_TIMEZONE, db
 from lib.logging import Logger
-from lib.sendgrid.constants import (PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
+from lib.sendgrid.constants import (LOOPS_API_KEY,
+                                    PURCHASE_EVENT_EMAIL_TEMPLATE_ID,
                                     SENDGRID_API_KEY)
 from lib.utils.priceUtils import centsToDollars
 from sendgrid import SendGridAPIClient
@@ -26,6 +30,52 @@ class SendGridPurchaseEventRequest:
       raise ValueError("Event Id must be provided as a string.")
     if not isinstance(self.visibility, str):
       raise ValueError("Visibility must be provided as a string.")
+
+
+def send_email_with_loop(logger, email, name, event_name, order_id, date_purchased, quantity, price, start_date, end_date, location):
+  headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
+  body = {
+    "transactionalId": "cm4r78nk301ehx79nrrxaijgl",
+    "email": email,
+    "dataVariables": {
+        "name": name,
+        "eventName": event_name,
+        "orderId": order_id, 
+        "datePurchased": date_purchased,
+        "quantity": quantity,
+        "price": price,
+        "startDate" : start_date,
+        "endDate": end_date,
+        "location": location
+    }
+  }
+
+  response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
+  
+  # Retry once more on rate limit after waiting 1 second
+  if (response.status_code == 429):
+    time.sleep(1)
+    response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(body), headers=headers)
+
+  if (response.status_code != 200):
+    logger.error(f"Failed to send payment confirmation for orderId={order_id}, body={response.json()}")
+    raise Exception("Failed to send payment confirmation.")
+
+
+def get_organiser_email_for_ticket_email(logger: Logger, organiser_id: str) -> str | None:
+  maybe_organiser_snapshot = db.collection("Users/Active/Private").document(organiser_id).get()
+  if (not maybe_organiser_snapshot.exists):
+    logger.error(f"Organiser does not exist: organiserId={organiser_id}")
+    return None
+  organiser_data = maybe_organiser_snapshot.to_dict()
+  if (organiser_data.get("sendOrganiserTicketEmails", False)):
+    try:
+      return organiser_data.get("contactInformation").get("email")
+    except:
+      logger.error(f"Failed to find organiser email for sendOrganiserTicketEmail. organiserId={organiser_id}")
+      return None
+  
+  return None
 
 
 # Left as normal python function as only invoked from the Stripe webhook oncall function. Not exposed to outside world.
@@ -59,10 +109,10 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
 
     start_date: Timestamp = event_data.get("startDate").timestamp_pb()
     end_date: Timestamp = event_data.get("endDate").timestamp_pb()
-    start_date_string =  start_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
-    end_date_string =  end_date.ToDatetime().strftime("%m/%d/%Y, %H:%M")
+    start_date_string =  start_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
+    end_date_string =  end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
     date_purchased: Timestamp = order_data.get("datePurchased").timestamp_pb()
-    date_purchased_string = date_purchased.ToDatetime().strftime("%m/%d/%Y, %H:%M")
+    date_purchased_string = date_purchased.ToDatetime().astimezone(SYDNEY_TIMEZONE).strftime("%m/%d/%Y, %H:%M")
 
     message.dynamic_template_data = {
       "first_name": request_data.first_name,
@@ -76,16 +126,23 @@ def send_email_on_purchase_event(request_data: SendGridPurchaseEventRequest):
       "date_purchased": date_purchased_string
     }
 
-    message.template_id = PURCHASE_EVENT_EMAIL_TEMPLATE_ID
+    # send email to attendee first
+    send_email_with_loop(logger, request_data.email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"))
+
+    # also check if we need to send this to organiser
+    organiser_email = get_organiser_email_for_ticket_email(logger, event_data.get("organiserId"))
+    if (not organiser_email == None):
+      send_email_with_loop(logger, organiser_email, request_data.first_name, event_data.get("name"), request_data.orderId, date_purchased_string, str(len(order_data.get("tickets"))), str(centsToDollars(event_data.get("price"))), start_date_string, end_date_string, event_data.get("location"))
+
 
     # TODO possibly either move this to common or make sendgrid service/ client in python
-    sg = SendGridAPIClient(SENDGRID_API_KEY)
-    response = sg.send(message)
-    logger.info(response.status_code)
+    # sg = SendGridAPIClient(SENDGRID_API_KEY)
+    # response = sg.send(message)
+    # logger.info(response.status_code)
 
     # Normally sendgrid return 202, reqeust in progress, but any 2XX response is acceptable.
-    if (not (response.status_code >= 200 and response.status_code < 300)):
-      raise Exception(f"Sendgrid failed to send message. e={response.body}")
+    # if (not (response.status_code >= 200 and response.status_code < 300)):
+    #   raise Exception(f"Sendgrid failed to send message. e={response.body}")
 
     return True
   except Exception as e:

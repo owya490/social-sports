@@ -1,5 +1,5 @@
-import { EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
-import { UserData } from "@/interfaces/UserTypes";
+import { EmptyEventData, EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
+import { PublicUserData } from "@/interfaces/UserTypes";
 import {
   CollectionReference,
   DocumentData,
@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
-import { CollectionPaths, EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
+import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 
 // const router = useRouter();
@@ -66,7 +66,7 @@ export function tryGetAllActivePublicEventsFromLocalStorage(currentDate: Date) {
 }
 
 export function bustEventsLocalStorageCache() {
-  localStorage.removeItem(LocalStorageKeys.LastFetchedEventData)
+  localStorage.removeItem(LocalStorageKeys.LastFetchedEventData);
 }
 
 // Function to retrieve all events
@@ -89,6 +89,7 @@ export async function getAllEventsFromCollectionRef(
       try {
         const organiser = await getPublicUserById(event.organiserId);
         eventsData.push({
+          ...EmptyEventData, // initiate default values
           ...event,
           organiser: organiser,
         });
@@ -111,7 +112,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
   eventsData.map((event) => {
     eventsDataFinal.push({
       eventId: event.eventId,
-      organiser: event.organiser as UserData,
+      organiser: event.organiser as PublicUserData,
       startDate: new Timestamp(event.startDate.seconds, event.startDate.nanoseconds),
       endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
       location: event.location,
@@ -123,6 +124,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       name: event.name,
       description: event.description,
       image: event.image,
+      thumbnail: event.thumbnail,
       eventTags: event.eventTags,
       isActive: event.isActive,
       attendees: event.attendees,
@@ -135,6 +137,11 @@ function getEventsDataFromLocalStorage(): EventData[] {
       },
       isPrivate: event.isPrivate,
       paymentsActive: event.paymentsActive,
+      stripeFeeToCustomer: event.stripeFeeToCustomer,
+      promotionalCodesEnabled: event.promotionalCodesEnabled,
+      paused: event.paused,
+      eventLink: event.eventLink,
+      formId: event.formId,
     });
   });
   return eventsDataFinal;

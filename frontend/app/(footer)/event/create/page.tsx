@@ -1,44 +1,61 @@
 "use client";
-import { HighlightButton, InvertedHighlightButton } from "@/components/elements/HighlightButton";
+import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import CreateEventStepper from "@/components/events/create/CreateEventStepper";
-import { DescriptionImageForm } from "@/components/events/create/DescriptionImageForm";
 import { BasicInformation } from "@/components/events/create/forms/BasicForm";
+import { DescriptionForm } from "@/components/events/create/forms/DescriptionForm";
+import { FormWrapper } from "@/components/events/create/forms/FormWrapper";
+import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { PreviewForm } from "@/components/events/create/forms/PreviewForm";
-import { TagForm } from "@/components/events/create/forms/TagForm";
 import { useMultistepForm } from "@/components/events/create/forms/useMultistepForm";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
-import { uploadUserImage } from "@/services/src/imageService";
-import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
+import {
+  getUsersEventImagesUrls,
+  getUsersEventThumbnailsUrls,
+  uploadAndGetImageAndThumbnailUrls,
+} from "@/services/src/imageService";
+import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
+import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
+import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 export type FormData = {
   startDate: string;
   endDate: string;
+  registrationEndDate: string;
   location: string;
   sport: string;
   price: number;
   capacity: number;
   name: string;
   description: string;
-  image: File | undefined;
+  image: File | string | undefined;
+  thumbnail: File | string | undefined;
   tags: string[];
   isPrivate: boolean;
   startTime: string;
   endTime: string;
+  registrationEndTime: string;
   paymentsActive: boolean;
   lat: number;
   long: number;
+  stripeFeeToCustomer: boolean;
+  promotionalCodesEnabled: boolean;
+  paused: boolean;
+  eventLink: string;
+  newRecurrenceData: NewRecurrenceFormData;
 };
 
 const INITIAL_DATA: FormData = {
   startDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   endDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
+  registrationEndDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   location: "",
   sport: "volleyball",
   price: 1500, // $15 default price, set to 1500 as it is in cents
@@ -46,13 +63,20 @@ const INITIAL_DATA: FormData = {
   name: "",
   description: "",
   image: undefined,
+  thumbnail: undefined,
   tags: [],
   isPrivate: false,
   startTime: "10:00",
-  endTime: "18:00",
+  endTime: "10:00",
+  registrationEndTime: "10:00",
   paymentsActive: false,
   lat: 0,
   long: 0,
+  stripeFeeToCustomer: false,
+  promotionalCodesEnabled: false,
+  paused: false,
+  eventLink: "",
+  newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
 };
 
 export default function CreateEvent() {
@@ -62,9 +86,24 @@ export default function CreateEvent() {
 
   const [loading, setLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [hasAlert, setHasAlert] = useState(false);
+  const [AlertMessage, setAlertMessage] = useState("");
 
   const [data, setData] = useState(INITIAL_DATA);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState("");
+
+  const [eventThumbnailsUrls, setEventThumbnailUrls] = useState<string[]>([]);
+  const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchUserImages = async () => {
+      setEventThumbnailUrls(await getUsersEventThumbnailsUrls(user.userId));
+      setEventImageUrls(await getUsersEventImagesUrls(user.userId));
+    };
+    fetchUserImages();
+  }, [user]);
 
   const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
     <BasicInformation
@@ -74,20 +113,29 @@ export default function CreateEvent() {
       user={user}
       setLoading={setLoading}
       setHasError={setHasError}
+      locationError={locationError}
+      setLocationError={setLocationError}
     />,
-    <TagForm key="tag-form" {...data} updateField={updateFields} />,
-    <DescriptionImageForm
-      key="description-image-form"
-      {...data}
-      imagePreviewUrl={imagePreviewUrl}
-      setImagePreviewUrl={setImagePreviewUrl}
-      updateField={updateFields}
-    />,
+    <FormWrapper key="image-form-wrapper">
+      <ImageForm
+        key="image-form"
+        {...data}
+        imagePreviewUrl={imagePreviewUrl}
+        setImagePreviewUrl={setImagePreviewUrl}
+        updateField={updateFields}
+        eventThumbnailsUrls={eventThumbnailsUrls}
+        eventImageUrls={eventImageUrls}
+        thumbnailPreviewUrl={thumbnailPreviewUrl}
+        setThumbnailPreviewUrl={setThumbnailPreviewUrl}
+      />
+    </FormWrapper>,
+    <DescriptionForm key="description-image-form" {...data} updateField={updateFields} />,
     <PreviewForm
       key="preview-form"
       form={data}
       user={user}
       imagePreviewUrl={imagePreviewUrl}
+      thumbnailPreviewUrl={thumbnailPreviewUrl}
       updateField={updateFields}
     />,
   ]);
@@ -101,9 +149,26 @@ export default function CreateEvent() {
   function submit(e: FormEvent) {
     e.preventDefault();
 
+    let formHasError = false;
+    let errorMessage = "";
+
+    if (isFirstStep) {
+      if (data.location === "") {
+        formHasError = true;
+        errorMessage = "Location is required.";
+      }
+    }
+
+    if (formHasError) {
+      setHasError(true);
+      setAlertMessage(errorMessage);
+      setHasAlert(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     if (!isLastStep) {
       next();
-
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -115,22 +180,33 @@ export default function CreateEvent() {
     } catch (e) {
       console.log(e);
     }
-    window.scrollTo({ top: 0, behavior: "smooth" }); // You can use 'auto' instead of 'smooth' for instant scrolling
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  useEffect(() => {
+    if (hasError) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [hasError]);
 
   async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
     setLoading(true);
-    var imageUrl =
-      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
+    const [imageUrl, thumbnailUrl] = await uploadAndGetImageAndThumbnailUrls(user.userId, { ...formData });
 
-    if (formData.image !== undefined) {
-      imageUrl = await uploadUserImage(user.userId, formData.image);
-    }
-    const newEventData = await convertFormDataToEventData(formData, user, imageUrl);
+    const newEventData = convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
+    const newRecurrenceData = formData.newRecurrenceData;
     let newEventId = "";
     try {
-      newEventId = await createEvent(newEventData);
-      await sendEmailOnCreateEvent(newEventId, newEventData.isPrivate ? "Private" : "Public");
+      if (newRecurrenceData.recurrenceEnabled) {
+        const [firstEventId, _newRecurrenceTemplateId] = await createRecurrenceTemplate(
+          newEventData,
+          newRecurrenceData
+        );
+        newEventId = firstEventId;
+      } else {
+        newEventId = await createEvent(newEventData);
+      }
+      await sendEmailOnCreateEventV2(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
@@ -143,11 +219,12 @@ export default function CreateEvent() {
     return newEventId;
   }
 
-  async function convertFormDataToEventData(
+  function convertFormDataToEventData(
     formData: FormData,
     user: UserData,
-    imageUrl: string
-  ): Promise<NewEventData> {
+    imageUrl: string,
+    thumbnailUrl: string
+  ): NewEventData {
     return {
       location: formData.location,
       capacity: formData.capacity,
@@ -156,6 +233,7 @@ export default function CreateEvent() {
       name: formData.name,
       description: formData.description,
       image: imageUrl,
+      thumbnail: thumbnailUrl,
       eventTags: formData.tags,
       isActive: true,
       isPrivate: formData.isPrivate,
@@ -163,7 +241,10 @@ export default function CreateEvent() {
       attendeesMetadata: {},
       accessCount: 0,
       organiserId: user.userId,
-      registrationDeadline: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
+      registrationDeadline: convertDateAndTimeStringToTimestamp(
+        formData.registrationEndDate,
+        formData.registrationEndTime
+      ),
       locationLatLng: {
         lat: formData.lat,
         lng: formData.long,
@@ -172,6 +253,12 @@ export default function CreateEvent() {
       paymentsActive: formData.paymentsActive,
       startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
+      stripeFeeToCustomer: formData.stripeFeeToCustomer,
+      promotionalCodesEnabled: formData.promotionalCodesEnabled,
+      paused: formData.paused,
+      eventLink: formData.eventLink,
+      // TODO: Implement option to add form in event creation workflow
+      formId: null,
     };
   }
 
@@ -182,7 +269,11 @@ export default function CreateEvent() {
     dateObject.setMinutes(parseInt(timeArr[1]));
     return Timestamp.fromDate(dateObject);
   }
-
+  const handleAlertClose = () => {
+    setHasError(false);
+    setHasAlert(false);
+    setAlertMessage("");
+  };
   return loading ? (
     <Loading />
   ) : (
@@ -197,7 +288,14 @@ export default function CreateEvent() {
             </div>
             <div className="absolute top-2 right-2">{/* {currentStep + 1} / {steps.length} */}</div>
             {step}
-
+            <Alert
+              open={hasAlert}
+              onClose={() => handleAlertClose()}
+              color="red"
+              className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+            >
+              {AlertMessage !== "" ? AlertMessage : "Error Submitting Form"}
+            </Alert>
             <div className="flex mt-8 w-11/12 lg:w-2/3 xl:w-full m-auto">
               {!isFirstStep && (
                 <InvertedHighlightButton type="button" className="px-7" onClick={back}>
@@ -206,18 +304,18 @@ export default function CreateEvent() {
               )}
               {!isLastStep && (
                 //TODO: Add service layer protection
-                <HighlightButton
+                <InvertedHighlightButton
                   type="submit"
                   className={`px-7 ml-auto lg:mr-2 ${hasError ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                   disabled={hasError}
                 >
                   Next
-                </HighlightButton>
+                </InvertedHighlightButton>
               )}
               {isLastStep && (
-                <HighlightButton type="submit" className="px-7 ml-auto">
+                <InvertedHighlightButton type="submit" className="px-7 ml-auto">
                   Create Event
-                </HighlightButton>
+                </InvertedHighlightButton>
               )}
             </div>
           </form>
@@ -226,3 +324,5 @@ export default function CreateEvent() {
     </div>
   );
 }
+
+

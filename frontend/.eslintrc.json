@@ -1,3 +1,21 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-unused-vars": "off", // Turn off the base rule to avoid conflicts
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_", // Ignore unused function arguments starting with "_"
+        "varsIgnorePattern": "^_" // Ignore unused variables starting with "_"
+      }
+    ],
+    "require-await": "error"
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"], // Apply TypeScript rules only for TS/TSX files
+      "parser": "@typescript-eslint/parser",
+      "plugins": ["@typescript-eslint"]
+    }
+  ]
 }

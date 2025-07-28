@@ -5,6 +5,7 @@ import { Tag } from "@/interfaces/TagTypes";
 import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
+import { URL } from "@/interfaces/Types";
 
 interface EventDetailsProps {
   eventData: EventData;
@@ -16,11 +17,12 @@ export const MAX_TICKETS_PER_ORDER = 7;
 
 export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
+
   return (
     <div className="flex justify-center w-full">
-      <div className="pb-10 screen-width-primary">
+      <div className="pb-10 w-full md:screen-width-primary">
         <div className="sm:rounded-xl overflow-hidden">
-          <EventImage imageSrc={eventData.image} />
+          <EventImage imageSrc={eventData.image as URL} />
         </div>
 
         <div className="lg:flex w-full mt-5">
@@ -28,13 +30,16 @@ export function EventDetails(props: EventDetailsProps) {
             <MobileEventPayment
               startDate={eventData.startDate}
               endDate={eventData.endDate}
+              registrationEndDate={eventData.registrationDeadline}
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
               isPaymentsActive={eventData.paymentsActive}
               eventId={eventData.eventId}
               isPrivate={eventData.isPrivate}
+              paused={eventData.paused}
               setLoading={setLoading}
+              eventLink={eventData.eventLink}
             />
           </div>
 
@@ -45,7 +50,7 @@ export function EventDetails(props: EventDetailsProps) {
             />
             <div className="flex">
               <div className="hidden lg:block">
-                <TagGroup tags={props.eventTags} />
+                <TagGroup tags={eventTags} />
               </div>
             </div>
           </div>
@@ -53,13 +58,16 @@ export function EventDetails(props: EventDetailsProps) {
             <EventPayment
               startDate={eventData.startDate}
               endDate={eventData.endDate}
+              registrationEndDate={eventData.registrationDeadline}
               location={eventData.location}
               price={eventData.price}
               vacancy={eventData.vacancy}
               isPaymentsActive={eventData.paymentsActive}
               eventId={eventData.eventId}
               isPrivate={eventData.isPrivate}
+              paused={eventData.paused}
               setLoading={setLoading}
+              eventLink={eventData.eventLink}
             />
           </div>
         </div>

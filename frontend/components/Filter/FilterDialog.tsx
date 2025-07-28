@@ -112,7 +112,6 @@ export default function FilterDialog({
   setAppliedDateRange,
   srcLocation,
   setSrcLocation,
-  selectedSport,
   setSelectedSport,
   applyFilters,
   isFilterModalOpen,
@@ -280,7 +279,10 @@ export default function FilterDialog({
                       </div>
 
                       <Datepicker
-                        value={dateRange}
+                        value={{
+                          startDate: dateRange && dateRange.startDate ? new Date(dateRange.startDate) : new Date(),
+                          endDate: dateRange && dateRange.endDate ? new Date(dateRange.endDate) : new Date(),
+                        }}
                         minDate={new Date()}
                         separator="to"
                         displayFormat={"DD/MM/YYYY"}
@@ -290,7 +292,12 @@ export default function FilterDialog({
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
-                        <p className={"text-lg font-bold"}>Max Proximity</p>
+                        <p className="text-lg">
+                          <span className="font-bold">Max Proximity</span>
+                          <span className="italic">
+                            {srcLocation === "" ? " - No location specified" : " to " + srcLocation}
+                          </span>
+                        </p>
                       </div>
                       <div className="w-full mt-3 mb-5 flex items-center">
                         <p className="mr-2 whitespace-nowrap">

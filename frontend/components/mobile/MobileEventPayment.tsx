@@ -1,21 +1,22 @@
 "use client";
 
-import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
-import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import { FulfilmentEntityType, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
+import { timestampToDateString } from "@/services/src/datetimeUtils";
 import {
-  CalendarDaysIcon,
-  ClockIcon,
-  CurrencyDollarIcon,
-  MapPinIcon,
-  PlayCircleIcon,
-} from "@heroicons/react/24/outline";
-import { Option, Select } from "@material-tailwind/react";
+  execNextFulfilmentEntity,
+  FULFILMENT_SESSION_ENABLED,
+  initFulfilmentSession,
+} from "@/services/src/fulfilment/fulfilmentServices";
+import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import { displayPrice } from "@/utilities/priceUtils";
+import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { InvertedHighlightButton } from "../elements/HighlightButton";
 import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
-import { displayPrice } from "@/utilities/priceUtils";
+import { DifferentDayEventDateTime, SameDayEventDateTime } from "../events/EventPayment";
 
 interface MobileEventPaymentProps {
   location: string;
@@ -23,15 +24,19 @@ interface MobileEventPaymentProps {
   vacancy: number;
   startDate: Timestamp;
   endDate: Timestamp;
+  registrationEndDate: Timestamp;
   eventId: string;
   isPaymentsActive: boolean;
   isPrivate: boolean;
+  paused: boolean;
   setLoading: (value: boolean) => void;
+  eventLink: string;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const router = useRouter();
   const [attendeeCount, setAttendeeCount] = useState(1);
+  const [openModal, setOpenModal] = useState(false);
 
   const handleAttendeeCount = (value?: string) => {
     if (value) {
@@ -39,7 +44,17 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
     }
   };
 
-  const { startDate, endDate } = props;
+  const handleContactClick = () => {
+    if (props.eventLink) {
+      setOpenModal(true);
+    } else {
+      console.warn("No event link provided!");
+    }
+  };
+
+  const { startDate, endDate, registrationEndDate, paused } = props;
+  const eventInPast = Timestamp.now() > endDate;
+  const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
 
   return (
     <div className="mx-2">
@@ -51,7 +66,6 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
           ) : (
             <DifferentDayEventDateTime startDate={startDate} endDate={endDate} />
           )}
-
           <div className="mb-1 mt-2 sm:mb-3">
             <h2 className="font-semibold text-sm">Location & Price</h2>
             <div className="flex items-center">
@@ -66,20 +80,29 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
               </a>
             </div>
           </div>
-
           <div className="mb-4">
             <h2 className="hidden sm:block font-semibold">Price</h2>
             <div className="flex items-center">
               <CurrencyDollarIcon className="w-4 h-4 mr-2" />
-              <p className="text-md font-light mr-[5%]">${displayPrice(props.price)} AUD per person</p>
+              <p className="text-md font-light mr-[5%]">${displayPrice(props.price)} AUD</p>
             </div>
           </div>
         </div>
       </div>
-      <hr className="px-2 h-[1px] mx-auto bg-gray-300 border-0 rounded dark:bg-gray-400 mb-4"></hr>
-      <div className="relative flex justify-center mb-6 w-full">
-        {props.isPaymentsActive ? (
-          <div className="w-full space-y-6">
+      <hr className="px-2 h-[1px] mx-auto bg-core-outline border-0 rounded dark:bg-gray-400 mb-4"></hr>
+      <div className="relative flex mb-6 w-full">
+        {eventRegistrationClosed ? (
+          <div>
+            <h2 className="font-semibold">Event registration has closed.</h2>
+            <p className="text-xs font-light">Please check with the organiser for more details.</p>
+          </div>
+        ) : eventInPast ? (
+          <div>
+            <h2 className="font-semibold">Event has already finished.</h2>
+            <p className="text-xs font-light">Please check with the organiser for future events.</p>
+          </div>
+        ) : props.isPaymentsActive ? (
+          <div className="w-full">
             {props.vacancy === 0 ? (
               <div>
                 <h2 className="font-semibold">Event currently sold out.</h2>
@@ -87,34 +110,25 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
               </div>
             ) : (
               <>
-                <div className="!text-black !border-black">
-                  <Select
-                    className="border-black border-t-transparent text-black"
-                    label="Select Ticket Amount"
-                    size="lg"
-                    value={`${attendeeCount}`}
-                    onChange={handleAttendeeCount}
-                    labelProps={{
-                      className: "text-black before:border-black after:border-black",
-                    }}
-                    menuProps={{
-                      className: "text-black",
-                    }}
-                  >
-                    {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
-                      .fill(0)
-                      .map((_, idx) => {
-                        const count = idx + 1;
-                        return (
-                          <Option key={`attendee-option-${count}`} value={`${count}`}>
-                            {count} Ticket{count > 1 ? "s" : ""}
-                          </Option>
-                        );
-                      })}
-                  </Select>
-                </div>
+                <Select
+                  label="Select Ticket Amount"
+                  size="lg"
+                  value={`${attendeeCount}`}
+                  onChange={handleAttendeeCount}
+                >
+                  {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
+                    .fill(0)
+                    .map((_, idx) => {
+                      const count = idx + 1;
+                      return (
+                        <Option key={`attendee-option-${count}`} value={`${count}`}>
+                          {count} Ticket{count > 1 ? "s" : ""}
+                        </Option>
+                      );
+                    })}
+                </Select>
                 <button
-                  className="text-lg rounded-2xl border border-black w-full py-3"
+                  className="font-semibold rounded-2xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline w-full py-3 transition-all duration-300 mb-2"
                   style={{
                     textAlign: "center",
                     position: "relative",
@@ -122,8 +136,35 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   onClick={async () => {
                     props.setLoading(true);
                     window.scrollTo(0, 0);
-                    const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
-                    // router.push(link);
+
+                    // We'll put this behind a flag for now just in case we need to quickly disable this.
+                    if (FULFILMENT_SESSION_ENABLED) {
+                      let fulfilmentSessionId: FulfilmentSessionId | undefined = undefined;
+                      try {
+                        fulfilmentSessionId = await initFulfilmentSession({
+                          type: "checkout",
+                          fulfilmentEntityTypes: [FulfilmentEntityType.STRIPE],
+                          eventId: props.eventId,
+                          numTickets: attendeeCount,
+                        });
+
+                        await execNextFulfilmentEntity(fulfilmentSessionId, router);
+
+                        // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
+                      } catch {
+                        // Clean up fulfilment session if it fails
+
+                        router.push("/error");
+                      }
+                    } else {
+                      const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                        props.eventId,
+                        props.isPrivate,
+                        attendeeCount
+                      );
+
+                      router.push(stripeCheckoutLink);
+                    }
                   }}
                 >
                   Book Now
@@ -132,69 +173,38 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
             )}
           </div>
         ) : (
-          <Link href="#" className="w-full">
-            <div
+          <>
+            <InvertedHighlightButton
+              onClick={handleContactClick}
               className="text-lg rounded-2xl border border-black w-full py-3"
-              style={{
-                textAlign: "center",
-                position: "relative",
-              }}
             >
               Contact Now
-            </div>
-          </Link>
+            </InvertedHighlightButton>
+            <Dialog open={openModal} handler={setOpenModal}>
+              <DialogHeader className="mx-2 text-lg font-medium leading-6">Contact Event Organizer</DialogHeader>
+              <DialogBody>
+                <p className="mx-2 text-base font-medium text-black">You are going to be redirected to:</p>
+                <p className="mx-2 text-base font-medium text-blue-900">{props.eventLink}</p>
+              </DialogBody>
+              <DialogFooter className="flex justify-between">
+                <Button className="mx-2 bg-gray-200" variant="text" color="black" onClick={() => setOpenModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="ml-2"
+                  variant="filled"
+                  color="black"
+                  onClick={() => {
+                    window.location.href = props.eventLink;
+                  }}
+                >
+                  Proceed
+                </Button>
+              </DialogFooter>
+            </Dialog>
+          </>
         )}
       </div>
     </div>
   );
 }
-
-const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
-  const { hours, minutes } = duration(startDate, endDate);
-  return (
-    <>
-      <h2 className="font-semibold">Date and Time</h2>
-      <div className="flex items-center">
-        <CalendarDaysIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{timestampToDateString(startDate)}</p>
-      </div>
-      <div className="flex items-center">
-        <ClockIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">
-          {timestampToTimeOfDay(startDate)} - {timestampToTimeOfDay(endDate)}
-        </p>
-      </div>
-      <div className="flex items-center">
-        <PlayCircleIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">
-          {hours} hrs {minutes} mins
-        </p>
-      </div>
-    </>
-  );
-};
-
-const DifferentDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
-  return (
-    <>
-      <h2 className="font-semibold">Start Date</h2>
-      <div className="flex items-center">
-        <CalendarDaysIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(startDate)}`}</p>
-      </div>
-      <div className="flex items-center">
-        <ClockIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(startDate)}`}</p>
-      </div>
-      <h2 className=" font-semibold">End Date</h2>
-      <div className="flex items-center">
-        <CalendarDaysIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(endDate)}`}</p>
-      </div>
-      <div className="flex items-center">
-        <ClockIcon className="w-4 mr-2" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(endDate)}`}</p>
-      </div>
-    </>
-  );
-};

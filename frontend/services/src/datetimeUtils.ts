@@ -20,14 +20,17 @@ export function timestampToTimeOfDay24Hour(timestamp: Timestamp) {
   return `${hours < 10 ? `0${hours}` : hours}:${minutes < 10 ? `0${minutes}` : minutes}`;
 }
 
-export function timestampToDateString(timestamp: Timestamp) {
+export function timestampToDateString(timestamp: Timestamp): string {
   let date = timestamp.toDate();
   //   let date = new Date(timestamp).toDateString();
   return date.toDateString();
 }
 
 export function timestampToEventCardDateString(timestamp: Timestamp) {
-  return `${timestampToDateString(timestamp).toUpperCase()} · ${timestampToTimeOfDay24Hour(timestamp)} AEST`;
+  // return `${timestampToDateString(timestamp).toUpperCase()} · ${timestampToTimeOfDay24Hour(timestamp)} AEST`;
+  return `${timestampToDateString(timestamp).toUpperCase().replace("2025", "")} · ${timestampToTimeOfDay24Hour(
+    timestamp
+  )} AEST`;
 }
 
 export function formatTimeTo12Hour(time: string) {
@@ -125,4 +128,12 @@ export function duration(startDate: Timestamp, endDate: Timestamp) {
   const minutes = Math.floor((durationInMillis % (1000 * 60 * 60)) / (1000 * 60));
 
   return { hours, minutes };
+}
+
+/**
+ * Returns number of days between two firebase Timestamps - rounds up the difference.
+ */
+export function durationInDaysCeil(startDate: Timestamp, endDate: Timestamp): number {
+  const { hours } = duration(startDate, endDate);
+  return Math.ceil(hours / 24);
 }

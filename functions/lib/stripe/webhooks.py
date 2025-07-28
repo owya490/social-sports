@@ -14,7 +14,7 @@ from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
-from lib.constants import db, posthog
+from lib.constants import db
 from lib.logging import Logger
 from lib.sendgrid.purchase_event import (SendGridPurchaseEventRequest,
                                          send_email_on_purchase_event)
@@ -70,7 +70,7 @@ def add_stripe_event_and_checkout_tags(logger: Logger, event: Event):
 
 # Will return orderId for email to pick up and read order information. If this function fails, either logic error or transactions fail, it will return None
 @firestore.transactional
-def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer, full_name: str, phone_number: str) -> str | None: # Typing of customer is customer details
+def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer, full_name: str, phone_number: str, payment_details: stripe.checkout.Session.TotalDetails) -> str | None: # Typing of customer is customer details
   # Update the event to include the new attendees
   private_path = "Private" if is_private else "Public"
   event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
@@ -146,6 +146,12 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
   purchase_time = datetime.now()
   order_id_ref = db.collection("Orders").document()
 
+  application_fees = 0
+  discounts = 0
+  if payment_details is not None:
+    application_fees = 0 if payment_details.amount_shipping is None else payment_details.amount_shipping 
+    discounts = payment_details.amount_discount
+
   ticket_list = []
   # Create Tickets for each individual ticket
   for i in range(item.quantity):
@@ -164,6 +170,8 @@ def fulfill_completed_event_ticket_purchase(transaction: Transaction, logger: Lo
     "email": customer.email,
     "fullName": full_name,
     "phone": phone_number,
+    "applicationFees": application_fees,
+    "discounts": discounts,
     "tickets": ticket_list,
   })
 
@@ -215,15 +223,15 @@ def restock_tickets_after_expired_checkout(transaction: Transaction, checkout_se
   )
 
 
-def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer_details, checkout_session, full_name: str, phone_number: str):
+def fulfilment_workflow_on_ticket_purchase(transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str, is_private: bool, line_items: ListObject[LineItem], customer_details, checkout_session: stripe.checkout.Session, full_name: str, phone_number: str):
   # Check if this checkout_session_id has already been processed.
   if (check_if_session_has_been_processed_already(transaction, logger, checkout_session_id, event_id)):
     logger.info(f"Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}")
     return https_fn.Response(status=200)
   
-  orderId = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number)
+  orderId = fulfill_completed_event_ticket_purchase(transaction, logger, checkout_session_id, event_id, is_private, line_items, customer_details, full_name, phone_number, checkout_session.total_details)
   if orderId == None:
-    logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id.id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
+    logger.error(f"Fulfillment of event ticket purchase was unsuccessful. session={checkout_session_id}, eventId={event_id}, line_items={line_items}, customer={customer_details.email}")
     return https_fn.Response(status=500) 
   
   # Send email to purchasing consumer. Retry sending email 3 times, before exiting and completing order. If email breaks, its not the end of the world.
@@ -280,13 +288,21 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
     # Invalid signature
     logger.error(f"Invalid Signature provided error={e}. payload={payload} signature={sig_header}, returned 400.")
     return https_fn.Response(status=400)
-  
-  # Get stripe test events enabled feature flag from posthog
-  stripe_webhook_test_events_enabled = posthog.feature_enabled("stripe_webhook_test_events", "")
 
-  # If its not enabled and the event is a test event, return early
-  if not stripe_webhook_test_events_enabled and not event["livemode"]:
-    logger.info("Test events are not permitted, returning 200 early.")
+# TODO: Remove this once we have a better way to handle these events
+  ignored_event_ids = [
+      "evt_1RjMHy07zElMsiFTumaTH9ms",
+      "evt_1RjMHt07zElMsiFTesLivdAa",
+      "evt_1RjMGz07zElMsiFTDAMNvH4X",
+      "evt_1RjMGz07zElMsiFTDAMNvH4X",
+  ]
+  if event["id"] in ignored_event_ids:
+      logger.info(f"Ignoring event. event={event}")
+      return https_fn.Response(status=200)
+
+  SPORTSHUB_URL = "www.sportshub.net.au"
+  if SPORTSHUB_URL not in event["data"]["object"]["cancel_url"] and SPORTSHUB_URL not in event["data"]["object"]["success_url"]:
+    logger.info(f"Ignoring event as it is not a SPORTSHUB event. event={event} success_url={event['data']['object']['success_url']} cancel_url={event['data']['object']['cancel_url']}")
     return https_fn.Response(status=200)
 
   match event["type"]:

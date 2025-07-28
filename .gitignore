@@ -12,3 +12,11 @@ node_modules
 */.next/*
 .next
 *.log
+.DS_Store
+.idea
+.vscode
+functions/venv/pyvenv.cfg
+
+# Ignore Next.js auto-generated TypeScript definitions
+next-env.d.ts
+.DS_Store

@@ -19,7 +19,7 @@ const EventDrilldownSidePanel = ({
   eventStartDate,
 }: EventDrilldownSidePanelProps) => {
   return (
-    <div className="bg-organiser-light-gray mr-10 w-64 rounded-3xl">
+    <div className="bg-organiser-light-gray mr-10 w-48 md:w-64 rounded-3xl hidden sm:block">
       <div className="p-8">
         <div className="text-xl font-extrabold">{loading ? <Skeleton style={{ height: 40 }} /> : eventName}</div>
         <div className="text-organiser-dark-gray-text text-sm font-bold">
@@ -38,11 +38,27 @@ const EventDrilldownSidePanel = ({
         </div>
         <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
-            currSidebarPage === "Manage Attendees" ? "bg-white" : ""
+            currSidebarPage === "Attendees" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
-          onClick={() => setCurrSidebarPage("Manage Attendees")}
+          onClick={() => setCurrSidebarPage("Attendees")}
         >
           Manage Attendees
+        </div>
+        <div
+          className={`text-organiser-dark-gray-text font-bold text-md ${
+            currSidebarPage === "Images" ? "bg-white" : ""
+          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          onClick={() => setCurrSidebarPage("Images")}
+        >
+          Images
+        </div>
+        <div
+          className={`text-organiser-dark-gray-text font-bold text-md ${
+            currSidebarPage === "Settings" ? "bg-white" : ""
+          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          onClick={() => setCurrSidebarPage("Settings")}
+        >
+          Settings
         </div>
         {/* <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
@@ -51,8 +67,8 @@ const EventDrilldownSidePanel = ({
           onClick={() => setCurrSidebarPage("Communication")}
         >
           Communication
-        </div>
-        <div
+        </div> */}
+        {/* <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
             currSidebarPage === "Share" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}

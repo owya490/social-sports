@@ -1,4 +1,5 @@
 import { EventId } from "@/interfaces/EventTypes";
+import { URL } from "@/interfaces/Types";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import {
@@ -37,13 +38,18 @@ export async function getStripeStandardAccountLink(organiserId: string, returnUr
     });
 }
 
-export async function getStripeCheckoutFromEventId(eventId: EventId, isPrivate: boolean, quantity: number) {
+export async function getStripeCheckoutFromEventId(
+  eventId: EventId,
+  isPrivate: boolean,
+  quantity: number,
+  successUrl?: URL
+) {
   const content = {
     eventId: eventId,
     isPrivate: isPrivate,
     quantity: quantity,
     cancelUrl: getUrlWithCurrentHostname(`/event/${eventId}`),
-    successUrl: getUrlWithCurrentHostname(`/event/success/${eventId}`),
+    successUrl: successUrl ?? getUrlWithCurrentHostname(`/event/success/${eventId}`),
   };
   stripeServiceLogger.info(`Getting stripe checkout for ${eventId} for ${quantity} tickets.`);
   const getStripeCheckoutFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID);
