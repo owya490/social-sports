@@ -325,7 +325,7 @@ def fulfilment_workflow_on_ticket_purchase(
     # Send email to purchasing consumer. Retry sending email 3 times, before exiting and completing order. If email breaks, its not the end of the world.
     for i in range(3):
         success = send_email_on_purchase_event(
-            SendGridPurchaseEventRequest(
+            PurchaseEventRequest(
                 event_id,
                 "Private" if is_private else "Public",
                 customer_details.email,
