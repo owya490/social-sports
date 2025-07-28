@@ -1,8 +1,9 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
-import { FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
+import { FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { db } from "@/services/src/firebase";
+import { getFormResponsesForEvent } from "@/services/src/forms/formsServices";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import { collection, doc, getDoc, getDocs, Timestamp } from "firebase/firestore";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 
 interface EventDrilldownFormsPageProps {
@@ -28,7 +29,7 @@ const formatTimestamp = (ts: Timestamp | undefined): string => {
 };
 
 const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
-  const [formResponses, setFormResponses] = useState<(FormResponse & { submissionTime?: Timestamp })[]>([]);
+  const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,22 +64,8 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
           return;
         }
 
-        const responseCollectionRef = collection(db, "Forms", "FormResponses", "Submitted", formId, eventId);
-        const responsesSnapshot = await getDocs(responseCollectionRef);
-
-        const responses: (FormResponse & { submissionTime?: Timestamp })[] = responsesSnapshot.docs.map((doc) => {
-          const data = doc.data();
-          const responseMapObj = data.responseMap || {};
-          const responseMap = new Map<string, FormSection>(Object.entries(responseMapObj));
-
-          return {
-            ...data,
-            responseMap,
-            submissionTime: data.submissionTime,
-          } as FormResponse & { submissionTime?: Timestamp };
-        });
-
-        setFormResponses(responses);
+        const formResponse = await getFormResponsesForEvent(formId as FormId, eventId);
+        setFormResponses(formResponse);
       } catch (err) {
         console.error("Failed to load form responses:", err);
         setError("Failed to load form responses");
@@ -97,7 +84,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   // Collect unique questions across all responses
   const questionSet = new Set<string>();
   formResponses.forEach((response) => {
-    response.responseMap.forEach((section) => {
+    Object.values(response.responseMap).forEach((section) => {
       if (section?.question?.trim()) {
         questionSet.add(section.question.trim());
       }
@@ -116,7 +103,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
     const row: Record<string, string> = { index: (idx + 1).toString() };
 
     sortedQuestions.forEach((question) => {
-      const section = Array.from(response.responseMap.values()).find((s) => s?.question?.trim() === question);
+      const section = Object.values(response.responseMap).find((s) => s?.question?.trim() === question);
       // Extract answer as string
       let answer = "—";
       if (section) {
@@ -174,7 +161,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
                 <div key={`response-${idx}`} className="table-row">
                   <div className="table-cell min-w-[40px] px-3 py-2 align-top">{idx + 1}</div>
                   {sortedQuestions.map((question, j) => {
-                    const section = Array.from(response.responseMap.values()).find(
+                    const section = Object.values(response.responseMap).find(
                       (s) => s?.question?.trim() === question
                     );
                     return (

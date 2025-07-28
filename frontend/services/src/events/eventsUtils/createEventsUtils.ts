@@ -35,10 +35,10 @@ export function rateLimitCreateEvents(): boolean {
 
 export function extractEventsMetadataFields(eventData: NewEventData): EventMetadata {
   return {
-  purchaserMap: {},
-  completedStripeCheckoutSessionIds: [],
-  organiserId: eventData.organiserId,
-  completeTicketCount: 0,
-  orderIds: [],
-};
+    purchaserMap: {},
+    completedStripeCheckoutSessionIds: [],
+    organiserId: eventData.organiserId,
+    completeTicketCount: 0,
+    orderIds: [],
+  };
 }
