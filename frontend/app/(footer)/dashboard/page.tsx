@@ -75,6 +75,7 @@ export default function Dashboard() {
             setEventDataList(tempEventDataList);
             setSearchDataList(tempEventDataList);
           } catch (error) {
+            console.error(error);
             router.push("/error");
           }
         }
