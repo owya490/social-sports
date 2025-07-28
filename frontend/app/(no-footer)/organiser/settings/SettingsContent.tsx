@@ -1,6 +1,7 @@
 "use client";
 
 import StripeSetup from "@/components/elements/StripeSetup";
+import OrganiserSettingsCard from "@/components/organiser/settings/OrganiserSettingsCard";
 import OrganiserSettingsStripeCard from "@/components/organiser/settings/OrganiserSettingsStripeCard";
 import { useUser } from "@/components/utility/UserContext";
 import { getStripeAccId } from "@/services/src/stripe/stripeService";
@@ -30,6 +31,7 @@ export default function SettingsContent() {
 
   return (
     <div className="py-10 px-2 sm:p-20 space-y-6">
+      <OrganiserSettingsCard />
       <OrganiserSettingsStripeCard stripeId={stripeId} />
       {!user.stripeAccountActive && <StripeSetup userId={user.userId} />}
     </div>
