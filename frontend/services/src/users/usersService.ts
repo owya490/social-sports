@@ -1,4 +1,4 @@
-import { PrivateUserData, PublicUserData, UserData, UserId, UsernameMap } from "@/interfaces/UserTypes";
+import { EmptyUserData, PrivateUserData, PublicUserData, UserData, UserId, UsernameMap } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
 import { deleteDoc, doc, getDoc, runTransaction, setDoc, Transaction, updateDoc } from "firebase/firestore";
@@ -126,7 +126,7 @@ export async function getFullUserById(userId: UserId): Promise<UserData> {
     const privateUserData = privateDoc.data() as PrivateUserData;
 
     // Merge public and private data into one JSON object
-    const fullUserData = { ...publicUserData, ...privateUserData, userId };
+    const fullUserData = { ...EmptyUserData, ...publicUserData, ...privateUserData, userId };
     return fullUserData;
   } catch (error) {
     if (error instanceof UserNotFoundError) {
