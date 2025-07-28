@@ -12,7 +12,7 @@ from lib.constants import SYDNEY_TIMEZONE, db
 from lib.emails.constants import LOOPS_API_KEY, LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID, LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID
 from lib.logging import Logger
 from lib.utils.priceUtils import centsToDollars
-from lib.sendgrid.commons import get_user_data_public
+from lib.emails.commons import get_user_data_public
 import traceback
 
 @dataclass

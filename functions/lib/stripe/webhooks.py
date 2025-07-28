@@ -16,7 +16,7 @@ from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import db
 from lib.logging import Logger
-from lib.sendgrid.purchase_event import (SendGridPurchaseEventRequest,
+from functions.lib.emails.purchase_event import (SendGridPurchaseEventRequest,
                                          send_email_on_purchase_event)
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject

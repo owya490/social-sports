@@ -10,7 +10,7 @@ from lib.constants import SYDNEY_TIMEZONE, db
 from lib.emails.constants import LOOPS_API_KEY, LOOPS_CREATE_EVENT_EMAIL_TEMPLATE_ID
 from lib.logging import Logger
 from lib.utils.priceUtils import centsToDollars
-from lib.sendgrid.commons import (
+from lib.emails.commons import (
     get_user_data_private,
     get_user_data_public,
     get_user_email,
