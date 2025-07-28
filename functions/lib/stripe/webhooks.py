@@ -14,9 +14,9 @@ from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
-from lib.constants import db
-from lib.logging import Logger
+from lib.constants import IS_PROD, db
 from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
+from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
 
@@ -418,19 +418,16 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
         return https_fn.Response(status=400)
 
     # TODO: Remove this once we have a better way to handle these events
-    ignored_event_ids = [
-        "evt_1RjMHy07zElMsiFTumaTH9ms",
-        "evt_1RjMHt07zElMsiFTesLivdAa",
-        "evt_1RjMGz07zElMsiFTDAMNvH4X",
-        "evt_1RjMGz07zElMsiFTDAMNvH4X",
-    ]
+    ignored_event_ids = []
     if event["id"] in ignored_event_ids:
         logger.info(f"Ignoring event. event={event}")
         return https_fn.Response(status=200)
 
     SPORTSHUB_URL = "www.sportshub.net.au"
+    # If we are not in prod, we only want to process events from SPORTSHUB_URL
     if (
-        SPORTSHUB_URL not in event["data"]["object"]["cancel_url"]
+        not IS_PROD
+        and SPORTSHUB_URL not in event["data"]["object"]["cancel_url"]
         and SPORTSHUB_URL not in event["data"]["object"]["success_url"]
     ):
         logger.info(
