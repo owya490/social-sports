@@ -6,11 +6,12 @@ from google.protobuf.timestamp_pb2 import Timestamp
 
 import requests
 from firebase_functions import https_fn, options
+from lib.sendgrid.commons import get_user_data_public
 from lib.constants import SYDNEY_TIMEZONE, db
 from lib.emails.constants import LOOPS_API_KEY, LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID, LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID
 from lib.logging import Logger
 from lib.utils.priceUtils import centsToDollars
-import traceback
+
 
 @dataclass
 class DeleteEventRequest:
@@ -64,6 +65,7 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
     event_price = event_delete_data.get("price")
     event_status = event_delete_data.get("isActive")
     organiser_email = event_delete_data.get("userEmail")
+    organiser_id = event_delete_data.get("organiserId")  
     event_date = event_delete_data.get("startDate") 
     date_string = event_date.strftime("%Y-%m-%d %H")
     purchaser_map = event_metadata_data.get("purchaserMap", {})
@@ -108,16 +110,29 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
     # Send organizer email
     try:
         headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
+        logger.info(f"Attendees data: {json.dumps(attendees, default=str)}")
+    
+    # Get organiser data the same way as create event notification
+        try:
+            organiser_data_public = get_user_data_public(organiser_id)
+            logger.info(f"Fetched organiser_data_public: {json.dumps(organiser_data_public, default=str)}")
+            organiser_name = organiser_data_public.get("firstName", "")
+            logger.info(f"Organiser name: {organiser_name}")
+        except Exception as e:
+            logger.error(f"Error getting organiser info for organiserId={organiser_id}: {e}")
+            organiser_name = ""  # Fallback to empty string
+    
         organiser_body = {
-            "transactionalId": LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID,  # Replace with actual template ID
+            "transactionalId": LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID,
             "email": organiser_email,
             "dataVariables": {
-                "organiser_name": "",
+                "organiser_name": organiser_name,
                 "event_name": event_name,
                 "event_date": date_string,
                 "attendees": attendees
             }
         }
+        logger.info(f"Organiser email payload: {json.dumps(organiser_body, default=str)}")
         response = requests.post("https://app.loops.so/api/v1/transactional", data=json.dumps(organiser_body), headers=headers)
         logger.info(f"Organizer email sent to {organiser_email} for event: {event_name}")
     except Exception as e:
