@@ -25,6 +25,8 @@ interface EventDrilldownSettingsPageProps {
   setStripeFeeToCustomer: (event: boolean) => void;
   promotionalCodesEnabled: boolean;
   setPromotionalCodesEnabled: (event: boolean) => void;
+  hideVacancy: boolean;
+  setHideVacancy: (event: boolean) => void;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -41,6 +43,8 @@ const EventDrilldownSettingsPage = ({
   setStripeFeeToCustomer,
   promotionalCodesEnabled,
   setPromotionalCodesEnabled,
+  hideVacancy,
+  setHideVacancy,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
@@ -118,6 +122,17 @@ const EventDrilldownSettingsPage = ({
         updateData={(event: boolean) => {
           updateEventById(eventId, {
             promotionalCodesEnabled: event,
+          });
+        }}
+      />
+      <LabelledSwitch
+        title={"Hide Vacancy"}
+        description={"Enable to hide the vacant ticket count from the event page."}
+        state={hideVacancy}
+        setState={setHideVacancy}
+        updateData={(event: boolean) => {
+          updateEventById(eventId, {
+            hideVacancy: event,
           });
         }}
       />

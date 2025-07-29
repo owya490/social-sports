@@ -50,6 +50,7 @@ export type FormData = {
   paused: boolean;
   eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
+  hideVacancy: boolean;
 };
 
 const INITIAL_DATA: FormData = {
@@ -77,6 +78,7 @@ const INITIAL_DATA: FormData = {
   paused: false,
   eventLink: "",
   newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
+  hideVacancy: false,
 };
 
 export default function CreateEvent() {
@@ -257,6 +259,7 @@ export default function CreateEvent() {
       promotionalCodesEnabled: formData.promotionalCodesEnabled,
       paused: formData.paused,
       eventLink: formData.eventLink,
+      hideVacancy: formData.hideVacancy,
       // TODO: Implement option to add form in event creation workflow
       formId: null,
     };
@@ -324,5 +327,3 @@ export default function CreateEvent() {
     </div>
   );
 }
-
-
