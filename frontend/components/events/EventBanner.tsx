@@ -45,7 +45,9 @@ export default function EventBanner(props: EventBannerProps) {
                     </div>
                   </div>
                 )}
-                <p className="font-bold text-xs ml-auto md:hidden">{`${props.vacancy} Tickets Left`}</p>
+                {!props.hideVacancy && (
+                  <p className="font-bold text-xs ml-auto md:hidden">{`${props.vacancy} Tickets Left`}</p>
+                )}
               </div>
 
               <p className="text-xs hidden md:block ml-4 font-light">
