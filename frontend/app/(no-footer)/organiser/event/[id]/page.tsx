@@ -54,6 +54,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
+  const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const router = useRouter();
@@ -86,6 +87,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
         setEventIsActive(event.isActive);
         setEventFormId(event.formId);
+        setEventHideVacancy(event.hideVacancy);
       })
       .finally(async () => {
         await sleep(500);
@@ -212,6 +214,8 @@ export default function EventPage({ params }: EventPageProps) {
                 setStripeFeeToCustomer={setEventStripeFeeToCustomer}
                 promotionalCodesEnabled={eventPromotionalCodesEnabled}
                 setPromotionalCodesEnabled={setEventPromotionalCodesEnabled}
+                hideVacancy={eventHideVacancy}
+                setHideVacancy={setEventHideVacancy}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

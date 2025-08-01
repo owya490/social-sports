@@ -12,6 +12,8 @@ app = initialize_app()
 
 firebase_project = os.environ.get("PROJECT_NAME")
 
+IS_PROD = firebase_project == "socialsportsprod"
+
 db: google.cloud.firestore.Client = firestore.Client(project=firebase_project)
 
 client = google.cloud.logging.Client()
