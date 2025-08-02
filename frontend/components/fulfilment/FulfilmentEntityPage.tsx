@@ -1,8 +1,7 @@
 "use client";
 
-import ChevronLeftButton from "@/components/elements/ChevronLeftButton";
-import ChevronRightButton from "@/components/elements/ChevronRightButton";
 import { ReactNode } from "react";
+import { BlackHighlightButton } from "../elements/HighlightButton";
 
 interface FulfilmentEntityPageProps {
   children: ReactNode;
@@ -26,22 +25,30 @@ const FulfilmentEntityPage = ({
       {/* Navigation buttons positioned at bottom corners */}
       <div className="fixed bottom-6 left-0 right-0 pointer-events-none z-50">
         <div className="flex justify-between px-8 sm:px-12">
-          {/* Previous button - bottom left */}
           <div
             className={`pointer-events-auto ${
               showPrevButton && onPrev ? "opacity-100" : "opacity-0 pointer-events-none"
             } transition-opacity duration-200`}
           >
-            <ChevronLeftButton handleClick={onPrev || (() => {})} />
+            <BlackHighlightButton
+              type="submit"
+              text="Prev"
+              className="border-1 px-3 bg-white ml-auto"
+              onClick={onPrev || (() => {})}
+            />
           </div>
 
-          {/* Next button - bottom right */}
           <div
             className={`pointer-events-auto ${
               showNextButton && onNext ? "opacity-100" : "opacity-0 pointer-events-none"
             } transition-opacity duration-200`}
           >
-            <ChevronRightButton handleClick={onNext || (() => {})} />
+            <BlackHighlightButton
+              type="submit"
+              text="Next"
+              className="border-1 px-3 bg-white ml-auto"
+              onClick={onNext || (() => {})}
+            />
           </div>
         </div>
       </div>

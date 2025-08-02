@@ -106,3 +106,12 @@ export type GetFulfilmentEntityInfoResponse = {
   formId: FormId | null;
   formResponseId: FormResponseId | null;
 };
+
+/**
+ * Payload we send to java updateFulfilmentEntityWithFormResponseId function
+ */
+export type UpdateFulfilmentEntityWithFormResponseIdRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  fulfilmentEntityId: FulfilmentEntityId;
+  formResponseId: FormResponseId;
+};

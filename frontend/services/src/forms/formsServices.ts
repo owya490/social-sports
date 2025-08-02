@@ -174,13 +174,19 @@ export async function deleteForm(formId: FormId): Promise<void> {
 export async function createTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
   if (!rateLimitCreateFormResponse()) {
     formsServiceLogger.warn("Rate Limited!!!");
-    throw "createFormResponse: Rate Limited";
+    throw "createTempFormResponse: Rate Limited";
   }
 
-  formsServiceLogger.info(`createFormResponse: ${formResponse}`);
+  formsServiceLogger.info(`createTempFormResponse: ${formResponse}`);
   try {
     const batch = writeBatch(db);
-    const docRef = doc(db, FormResponsePaths.Temp + "/" + formResponse.formId + "/" + formResponse.eventId);
+    const docRef = doc(
+      db,
+      FormResponsePaths.Temp,
+      formResponse.formId,
+      formResponse.eventId,
+      formResponse.formResponseId
+    );
     batch.set(docRef, {
       ...formResponse,
       formResponseId: docRef.id as FormResponseId,

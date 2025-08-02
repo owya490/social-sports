@@ -428,4 +428,47 @@ public class FulfilmentService {
             return Optional.empty();
         }
     }
+
+    /**
+     * @param fulfilmentSessionId
+     * @param fulfilmentEntityId
+     * @param formResponseId
+     * @return `true` if the fulfilment entity was updated successfully, `false`
+     *         otherwise
+     */
+    public static boolean updateFulfilmentEntityWithFormResponseId(String fulfilmentSessionId,
+            String fulfilmentEntityId,
+            String formResponseId) {
+        try {
+            Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
+            if (maybeFulfilmentSession.isEmpty()) {
+                logger.error("Fulfilment session not found for ID: {}", fulfilmentSessionId);
+                return false;
+            }
+
+            FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+            Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
+
+            FulfilmentEntity entity = fulfilmentEntityMap.get(fulfilmentEntityId);
+            if (entity == null || !(entity instanceof FormsFulfilmentEntity)) {
+                logger.error("Invalid fulfilment entity ID: {} for session: {}", fulfilmentEntityId,
+                        fulfilmentSessionId);
+                return false;
+            }
+
+            ((FormsFulfilmentEntity) entity).setFormResponseId(formResponseId);
+            fulfilmentEntityMap.put(fulfilmentEntityId, entity);
+            fulfilmentSession.setFulfilmentEntityMap(fulfilmentEntityMap);
+            FulfilmentSessionRepository.updateFulfilmentSession(fulfilmentSessionId, fulfilmentSession);
+            logger.info(
+                    "Fulfilment session updated successfully for ID: {} with form response ID: {} for entity ID: {}",
+                    fulfilmentSessionId, formResponseId, fulfilmentEntityId);
+            return true;
+        } catch (Exception e) {
+            logger.error(
+                    "Failed to update fulfilment entity with form response ID for session ID: {} and entity ID: {}",
+                    fulfilmentSessionId, fulfilmentEntityId, e);
+            return false;
+        }
+    }
 }

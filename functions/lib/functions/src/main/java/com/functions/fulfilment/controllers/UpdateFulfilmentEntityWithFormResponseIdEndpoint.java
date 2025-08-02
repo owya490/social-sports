@@ -1,12 +1,9 @@
 package com.functions.fulfilment.controllers;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.fulfilment.models.requests.GetFulfilmentEntityInfoRequest;
-import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
+import com.functions.fulfilment.models.requests.UpdateFulfilmentEntityWithFormResponseIdRequest;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.utils.JavaUtils;
@@ -14,8 +11,9 @@ import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
-public class GetFulfilmentEntityInfoEndpoint implements HttpFunction {
-    private static final Logger logger = LoggerFactory.getLogger(GetFulfilmentEntityInfoEndpoint.class);
+public class UpdateFulfilmentEntityWithFormResponseIdEndpoint implements HttpFunction {
+    private static final Logger logger = LoggerFactory
+            .getLogger(UpdateFulfilmentEntityWithFormResponseIdEndpoint.class);
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
@@ -27,21 +25,25 @@ public class GetFulfilmentEntityInfoEndpoint implements HttpFunction {
 
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            logger.info("Handling OPTIONS request: {}", request);
             response.setStatusCode(204); // No Content
             return;
         }
 
         if (!(request.getMethod().equalsIgnoreCase("POST"))) {
+            logger.warn("Invalid request type made to UpdateFulfilmentEntityWithFormResponseIdEndpoint: {}",
+                    request.getMethod());
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
-                    "[GetFulfilmentEntityInfoEndpoint] GetFulfilmentEntityInfoEndpoint only supports GET requests.")));
+            response.getWriter()
+                    .write("The UpdateFulfilmentEntityWithFormResponseIdEndpoint only supports POST requests.");
             return;
         }
 
-        GetFulfilmentEntityInfoRequest data;
+        UpdateFulfilmentEntityWithFormResponseIdRequest data;
         try {
-            data = JavaUtils.objectMapper.readValue(request.getReader(), GetFulfilmentEntityInfoRequest.class);
+            data = JavaUtils.objectMapper.readValue(request.getReader(),
+                    UpdateFulfilmentEntityWithFormResponseIdRequest.class);
         } catch (Exception e) {
             response.setStatusCode(400);
             logger.error("Could not parse input:", e);
@@ -50,24 +52,24 @@ public class GetFulfilmentEntityInfoEndpoint implements HttpFunction {
             return;
         }
 
-        Optional<GetFulfilmentEntityInfoResponse> maybeResponse = FulfilmentService.getFulfilmentEntityInfo(
-                data.fulfilmentSessionId(),
-                data.fulfilmentEntityId());
+        boolean success = FulfilmentService.updateFulfilmentEntityWithFormResponseId(data.fulfilmentSessionId(),
+                data.fulfilmentEntityId(), data.formResponseId());
 
-        if (maybeResponse.isPresent()) {
-            logger.info("Fulfilment entity info retrieved successfully for session: {} and entity Id: {}, {}",
-                    data.fulfilmentSessionId(), data.fulfilmentEntityId(), maybeResponse.get().toString());
+        if (success) {
             response.setStatusCode(200);
-            response.getWriter().write(
-                    JavaUtils.objectMapper.writeValueAsString(maybeResponse.get()));
+            response.getWriter().write("Fulfilment entity updated successfully.\n");
         } else {
-            logger.error("No fulfilment entity info found for session: {}, entity Id: {}", data.fulfilmentSessionId(),
-                    data.fulfilmentEntityId());
-            response.setStatusCode(404);
+            logger.error(
+                    "Failed to update fulfilment entity with form response ID for session ID: {} and entity ID: {}",
+                    data.fulfilmentSessionId(), data.fulfilmentEntityId());
+            response.setStatusCode(500);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
-                            "No fulfilment entity info found for session: " + data.fulfilmentSessionId()
-                                    + " and entity Id: " + data.fulfilmentEntityId())));
+                            "Error updating fulfilment entity " + data.fulfilmentEntityId() + " for session: "
+                                    + data.fulfilmentSessionId()
+                                    + " with form response ID: " + data.formResponseId())));
         }
+
     }
+
 }

@@ -1,5 +1,6 @@
 import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
+import { FormResponseId } from "@/interfaces/FormTypes";
 import {
   FulfilmentEntityId,
   FulfilmentSessionId,
@@ -12,6 +13,7 @@ import {
   GetPrevFulfilmentEntityResponse,
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
+  UpdateFulfilmentEntityWithFormResponseIdRequest,
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { getUrlWithCurrentHostname } from "../urlUtils";
@@ -20,6 +22,7 @@ import {
   getGetNextFulfilmentEntityUrl,
   getGetPrevFulfilmentEntityUrl,
   getInitFulfilmentSessionUrl,
+  getUpdateFulfilmentEntityWithFormResponseIdUrl,
 } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
@@ -256,6 +259,50 @@ export async function getFulfilmentEntityInfo(
     return response;
   } catch (error) {
     fulfilmentServiceLogger.error(`getFulfilmentEntityInfo: Failed to fetch fulfilment entity info: ${error}`);
+    throw error;
+  }
+}
+
+export async function updateFulfilmentEntityWithFormResponseId(
+  fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentEntityId: FulfilmentEntityId,
+  formResponseId: FormResponseId
+): Promise<void> {
+  fulfilmentServiceLogger.info(
+    `updateFulfilmentEntityWithFormResponseId: Updating fulfilment entity with form response ID for session ID: ${fulfilmentSessionId}, entity ID: ${fulfilmentEntityId}, form response ID: ${formResponseId}`
+  );
+
+  const request: UpdateFulfilmentEntityWithFormResponseIdRequest = {
+    fulfilmentSessionId,
+    fulfilmentEntityId,
+    formResponseId,
+  };
+
+  try {
+    const rawResponse = await fetch(getUpdateFulfilmentEntityWithFormResponseIdUrl(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!rawResponse.ok) {
+      const errorResponse = (await rawResponse.json()) as ErrorResponse;
+      fulfilmentServiceLogger.error(
+        `updateFulfilmentEntityWithFormResponseId: Cloud function error: Failed to fetch fulfilment entity info: ${errorResponse.errorMessage}`
+      );
+      throw new Error(`updateFulfilmentEntityWithFormResponseId: ${errorResponse.errorMessage}`);
+    }
+
+    fulfilmentServiceLogger.info(
+      `updateFulfilmentEntityWithResponseId: Successfully updated fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with formResponseId: ${formResponseId}`
+    );
+  } catch (error) {
+    fulfilmentServiceLogger.error(
+      `updateFulfilmentEntityWithFormResponseId: Failed to update fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with form response ID ${formResponseId}: ${error}`
+    );
     throw error;
   }
 }

@@ -3,6 +3,7 @@
 import FormResponder from "@/components/forms/FormResponder";
 import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
 import Loading from "@/components/loading/Loading";
+import { FormResponseId } from "@/interfaces/FormTypes";
 import {
   FulfilmentEntityId,
   FulfilmentEntityType,
@@ -14,6 +15,7 @@ import {
   getFulfilmentEntityInfo,
   getNextFulfilmentEntityUrl,
   getPrevFulfilmentEntityUrl,
+  updateFulfilmentEntityWithFormResponseId,
 } from "@/services/src/fulfilment/fulfilmentServices";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -47,6 +49,32 @@ const FulfilmentSessionEntityPage = ({
     fetchFulfilmentEntityInfo();
   }, []);
 
+  const handleNext = async () => {
+    try {
+      const nextUrl = await getNextFulfilmentEntityUrl(params.fulfilmentSessionId, params.fulfilmentEntityId);
+      if (nextUrl) {
+        router.push(nextUrl);
+      } else {
+        fulfilmentSessionEntityPageLogger.info("No next fulfilment entity available");
+      }
+    } catch (error) {
+      fulfilmentSessionEntityPageLogger.error(`Error navigating to next entity: ${error}`);
+    }
+  };
+
+  const handlePrev = async () => {
+    try {
+      const prevUrl = await getPrevFulfilmentEntityUrl(params.fulfilmentSessionId, params.fulfilmentEntityId);
+      if (prevUrl) {
+        router.push(prevUrl);
+      } else {
+        fulfilmentSessionEntityPageLogger.info("No previous fulfilment entity available");
+      }
+    } catch (error) {
+      fulfilmentSessionEntityPageLogger.error(`Error navigating to previous entity: ${error}`);
+    }
+  };
+
   if (loading) {
     return <Loading />;
   }
@@ -78,30 +106,16 @@ const FulfilmentSessionEntityPage = ({
         return;
       }
 
-      const handleNext = async () => {
-        try {
-          const nextUrl = await getNextFulfilmentEntityUrl(params.fulfilmentSessionId, params.fulfilmentEntityId);
-          if (nextUrl) {
-            router.push(nextUrl);
-          } else {
-            fulfilmentSessionEntityPageLogger.info("No next fulfilment entity available");
-          }
-        } catch (error) {
-          fulfilmentSessionEntityPageLogger.error(`Error navigating to next entity: ${error}`);
-        }
-      };
+      const onSaveFormResponse = async (formResponseId: FormResponseId): Promise<void> => {
+        fulfilmentSessionEntityPageLogger.info(
+          `Form response saved with ID: ${formResponseId}, fulfilmentSessionId: ${params.fulfilmentSessionId}, fulfilmentEntityId: ${params.fulfilmentEntityId}`
+        );
 
-      const handlePrev = async () => {
-        try {
-          const prevUrl = await getPrevFulfilmentEntityUrl(params.fulfilmentSessionId, params.fulfilmentEntityId);
-          if (prevUrl) {
-            router.push(prevUrl);
-          } else {
-            fulfilmentSessionEntityPageLogger.info("No previous fulfilment entity available");
-          }
-        } catch (error) {
-          fulfilmentSessionEntityPageLogger.error(`Error navigating to previous entity: ${error}`);
-        }
+        await updateFulfilmentEntityWithFormResponseId(
+          params.fulfilmentSessionId,
+          params.fulfilmentEntityId,
+          formResponseId
+        );
       };
 
       return (
@@ -110,6 +124,9 @@ const FulfilmentSessionEntityPage = ({
             formId={getFulfilmentEntityInfoResponse.formId}
             eventId={getFulfilmentEntityInfoResponse.eventId}
             formResponseId={getFulfilmentEntityInfoResponse.formResponseId}
+            onSaveFormResponse={onSaveFormResponse}
+            canEditForm={true}
+            isPreview={false}
           />
         </FulfilmentEntityPage>
       );

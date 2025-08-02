@@ -1,8 +1,9 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
-import { FORM_RESPONSE_MAX_EVENTS, FORM_RESPONSE_REFRESH_MILLIS, LocalStorageKeys } from "../formsConstants";
 import { Timestamp } from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
+import { FORM_RESPONSE_MAX_EVENTS, FORM_RESPONSE_REFRESH_MILLIS, LocalStorageKeys } from "../formsConstants";
 
 const createFormResponseLogger = new Logger("createFormResponseLogger");
 
@@ -46,7 +47,7 @@ export function extractFormResponseFromForm(formId: FormId, eventId: EventId, fo
     formId: formId,
     eventId: eventId,
     responseMap: form.sectionsMap,
-    formResponseId: "" as FormResponseId,
+    formResponseId: uuidv4() as FormResponseId,
     responseSectionsOrder: form.sectionsOrder,
     submissionTime: Timestamp.now(),
   };

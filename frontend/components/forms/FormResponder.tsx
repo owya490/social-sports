@@ -5,8 +5,9 @@ import { FormHeaderSectionResponse } from "@/components/forms/sections/form-head
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
 import Loading from "@/components/loading/Loading";
 import { EventId } from "@/interfaces/EventTypes";
-import { Form, FormId, FormResponse, FormResponseId, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponseId, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { FormResponsePaths } from "@/services/src/forms/formsConstants";
 import {
   createTempFormResponse,
@@ -22,16 +23,25 @@ import { getPublicUserById } from "@/services/src/users/usersService";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+const formResponderLogger = new Logger("formResponderLogger");
+
 interface FormResponderProps {
   formId: FormId;
   eventId: EventId;
   formResponseId: FormResponseId | null;
-  onSaveFormResponse?: (formResponse: FormResponse) => void;
+  onSaveFormResponse?: (formResponseId: FormResponseId) => void;
   canEditForm?: boolean;
   isPreview?: boolean;
 }
 
-const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview }: FormResponderProps) => {
+const FormResponder = ({
+  formId,
+  eventId,
+  formResponseId,
+  canEditForm,
+  isPreview,
+  onSaveFormResponse,
+}: FormResponderProps) => {
   // if we are in preview mode, we can't edit the form
   canEditForm = isPreview === true ? false : canEditForm;
 
@@ -71,7 +81,7 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
 
         if (isPreview === false) {
           // Fetch form response data if it exists and replace the form sectionsMap with the form responseMap
-          fetchFormResponseData();
+          await fetchFormResponseData();
         }
       } catch (error) {
         formsServiceLogger.error(`Error fetching form: ${error}`);
@@ -103,16 +113,25 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
     fetchFormData();
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (!form) return;
     if (!canEdit) return;
     const formResponse = extractFormResponseFromForm(formId, eventId, form);
     if (formResponseId === null) {
+      formResponderLogger.info(
+        `Form response ID is null, creating a new form response for formId: ${formId}, eventId: ${eventId}`
+      );
       // Since FormResponseId is null, this is a new form response and we save it to the temp collection
-      createTempFormResponse(formResponse);
+      const formResponseId = await createTempFormResponse(formResponse);
+      formResponderLogger.info(
+        `New form response created with ID: ${formResponseId}, formId: ${formId}, eventId: ${eventId}`
+      );
+      if (onSaveFormResponse) {
+        onSaveFormResponse(formResponseId);
+      }
     } else {
       // Since FormResponseId is not null, this is an existing form response
+      // TODO: are we allowing to edit temp form response only (and not submitted ones)?
       updateFormResponse(formId, eventId, formResponseId, formResponse);
     }
   };
@@ -160,11 +179,7 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
     <div className="bg-core-hover min-h-screen pb-24">
       <div className="pt-20 flex w-screen justify-center">
         <div className="screen-width-primary space-y-8 md:px-32">
-          <FormHeaderSectionResponse
-            formTitle={form.title}
-            formDescription="Welcome to the volleyball tryout registration! Please fill out this form to provide your personal details, volleyball experience, and position preferences. This information will help our coaches evaluate your skills and organize the tryouts effectively. Good luck!"
-            organiser={organiser}
-          />
+          <FormHeaderSectionResponse formTitle={form.title} formDescription={form.description} organiser={organiser} />
           {form.sectionsOrder.map((sectionId) => {
             const section = form.sectionsMap[sectionId];
             if (!section) return null; // Skip if section not found
@@ -197,7 +212,12 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
             }
           })}
           <div className={`w-full ${canEdit ? "flex" : "hidden"}`}>
-            <BlackHighlightButton type="submit" text="Submit" className="border-1 px-3 bg-white ml-auto" />
+            <BlackHighlightButton
+              type="submit"
+              text="Submit"
+              className="border-1 px-3 bg-white ml-auto"
+              onClick={onSubmit}
+            />
           </div>
         </div>
       </div>

@@ -23,3 +23,12 @@ export const GET_FULFILMENT_ENTITY_INFO_URL = {
   PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/getFulfilmentEntityInfo",
   PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/getFulfilmentEntityInfo",
 };
+
+export const UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID_URL = {
+  DEVELOPMENT:
+    "https://australia-southeast1-socialsports-44162.cloudfunctions.net/updateFulfilmentEntityWithFormResponseId",
+  PREVIEW:
+    "https://australia-southeast1-socialsports-44162.cloudfunctions.net/updateFulfilmentEntityWithFormResponseId",
+  PRODUCTION:
+    "https://australia-southeast1-socialsportsprod.cloudfunctions.net/updateFulfilmentEntityWithFormResponseId",
+};
