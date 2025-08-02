@@ -2,7 +2,7 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { db } from "@/services/src/firebase";
 import { getFormResponsesForEvent } from "@/services/src/forms/formsServices";
-import { ChevronDownIcon, ChevronUpIcon, EllipsisVerticalIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 
@@ -33,6 +33,17 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headersExpanded, setHeadersExpanded] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+
+  const toggleRowExpansion = (rowIndex: number) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(rowIndex)) {
+      newExpandedRows.delete(rowIndex);
+    } else {
+      newExpandedRows.add(rowIndex);
+    }
+    setExpandedRows(newExpandedRows);
+  };
 
   useEffect(() => {
     const fetchResponses = async () => {
@@ -126,79 +137,87 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   });
 
   return (
-    <div className="w-full my-2">
+    <div className="md:w-[calc(100%-18rem)] my-2">
       <div className="flex items-center justify-between mb-4 px-1 md:px-0">
         <h1 className="text-2xl font-extrabold">Form Responses</h1>
         <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
       </div>
 
-      {/* Horizontally scrollable wrapper */}
-      <div className="w-full">
-        {/* Table with fixed layout and scroll support */}
-        <div className="border border-core-outline rounded-lg max-h-[600px] overflow-scroll relative">
-          <div className="table table-auto w-full text-left">
-            {/* Header */}
-            <div className="table-header-group text-organiser-title-gray-text font-bold text-sm bg-core-hover border-b border-core-outline sticky top-0 z-20">
-              <div className="table-row">
-                <div className="table-cell px-3 py-2 border-r border-core-outline w-[30px]">#</div>
-                {sortedQuestions.map((question, i) => (
-                  <div
-                    key={`header-${i}`}
-                    className={`table-cell px-3 py-2 max-w-[200px] min-w-[100px] md:min-w-[0px] border-r border-core-outline ${
-                      headersExpanded
-                        ? "break-words whitespace-pre-wrap"
-                        : "whitespace-nowrap overflow-hidden text-ellipsis"
-                    }`}
-                    title={!headersExpanded ? question : undefined}
-                  >
-                    {question}
-                  </div>
-                ))}
-                <div className="table-cell px-3 py-2 border-r border-core-outline w-[400px]">Submission Time</div>
-                <div className="table-cell px-2 align-middle w-[30px] sticky right-0 bg-core-hover z-10">
-                  <button
-                    onClick={() => setHeadersExpanded(!headersExpanded)}
-                    className="flex items-center justify-center w-6 h-6 hover:bg-gray-200 rounded transition-colors"
-                  >
-                    {headersExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-                  </button>
+      {/* Table with fixed layout and scroll support */}
+      <div className="border border-core-outline rounded-lg max-h-[600px] overflow-scroll">
+        <div className="table table-auto text-left">
+          {/* Header */}
+          <div className="table-header-group text-organiser-title-gray-text font-bold text-sm bg-core-hover border-b border-core-outline sticky top-0 z-20">
+            <div className="table-row">
+              <div className="table-cell px-3 py-2 border-r border-core-outline w-[30px]">#</div>
+              {sortedQuestions.map((question, i) => (
+                <div
+                  key={`header-${i}`}
+                  className={`table-cell px-3 py-2 max-w-[200px] min-w-[100px] md:min-w-[0px] border-r border-core-outline ${
+                    headersExpanded
+                      ? "break-words whitespace-pre-wrap"
+                      : "whitespace-nowrap overflow-hidden text-ellipsis"
+                  }`}
+                  title={!headersExpanded ? question : undefined}
+                >
+                  {question}
                 </div>
+              ))}
+              <div className="table-cell px-3 py-2 border-r border-core-outline w-[400px]">Submission Time</div>
+              <div className="table-cell px-2 align-middle w-[30px] sticky right-0 bg-core-hover z-10">
+                <button
+                  onClick={() => setHeadersExpanded(!headersExpanded)}
+                  className="flex items-center justify-center w-6 h-6 hover:bg-gray-200 rounded transition-colors"
+                >
+                  {headersExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
+                </button>
               </div>
             </div>
+          </div>
 
-            {/* Body */}
-            <div className="table-row-group text-sm">
-              {formResponses.map((response, idx) => {
-                const isLast = idx === formResponses.length - 1;
-                const rowClasses = isLast ? "" : "border-b border-blue-gray-50";
+          {/* Body */}
+          <div className="table-row-group text-sm">
+            {formResponses.map((response, idx) => {
+              const isLast = idx === formResponses.length - 1;
+              const rowClasses = isLast ? "" : "border-b border-blue-gray-50";
 
-                return (
-                  <div key={`response-${idx}`} className={`table-row ${rowClasses}`}>
-                    <div className="table-cell px-3 py-2 align-top border-r border-core-outline w-[30px]">
-                      {idx + 1}
-                    </div>
-                    {sortedQuestions.map((question, j) => {
-                      const section = Object.values(response.responseMap).find((s) => s?.question?.trim() === question);
-                      return (
-                        <div
-                          key={`cell-${idx}-${j}`}
-                          className="table-cell px-3 py-2 w-[200px] break-words whitespace-pre-wrap align-top border-r border-core-outline"
-                        >
-                          {getAnswerDisplay(section)}
-                        </div>
-                      );
-                    })}
-                    <div className="table-cell px-3 py-2 w-[400px] whitespace-nowrap align-top border-r border-core-outline">
-                      {formatTimestamp(response.submissionTime)}
-                    </div>
-                    <div className="table-cell px-3 py-2 w-[30px] align-top sticky right-0 bg-white border-l border-core-outline">
-                      {/* TODO Add option to expand and also add option to view form response */}
-                      <EllipsisVerticalIcon className="w-5" />
-                    </div>
+              return (
+                <div key={`response-${idx}`} className={`table-row ${rowClasses}`}>
+                  <div className="table-cell px-3 py-2 align-top border-r border-core-outline w-[30px]">{idx + 1}</div>
+                  {sortedQuestions.map((question, j) => {
+                    const section = Object.values(response.responseMap).find((s) => s?.question?.trim() === question);
+                    const isRowExpanded = expandedRows.has(idx);
+                    return (
+                      <div
+                        key={`cell-${idx}-${j}`}
+                        className={`table-cell px-3 py-2 max-w-[200px] min-w-[100px] md:min-w-[0px] border-r border-core-outline ${
+                          isRowExpanded
+                            ? "break-words whitespace-pre-wrap"
+                            : "whitespace-nowrap overflow-x-hidden text-ellipsis"
+                        }`}
+                      >
+                        {getAnswerDisplay(section)}
+                      </div>
+                    );
+                  })}
+                  <div className="table-cell px-3 py-2 w-[400px] whitespace-nowrap align-top border-r border-core-outline">
+                    {formatTimestamp(response.submissionTime)}
                   </div>
-                );
-              })}
-            </div>
+                  <div className="table-cell px-3 py-2 w-[30px] align-top sticky right-0 bg-white border-l border-core-outline">
+                    <button
+                      onClick={() => toggleRowExpansion(idx)}
+                      className="flex items-center justify-center w-4 h-4 hover:bg-gray-200 rounded transition-colors"
+                    >
+                      {expandedRows.has(idx) ? (
+                        <ChevronUpIcon className="w-4 h-4" />
+                      ) : (
+                        <ChevronDownIcon className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
