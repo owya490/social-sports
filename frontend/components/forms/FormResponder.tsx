@@ -30,7 +30,13 @@ interface FormResponderProps {
   isPreview?: boolean;
 }
 
-const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview }: FormResponderProps) => {
+const FormResponder = ({
+  formId,
+  eventId,
+  formResponseId,
+  canEditForm = false,
+  isPreview = false,
+}: FormResponderProps) => {
   // if we are in preview mode, we can't edit the form
   canEditForm = isPreview === true ? false : canEditForm;
 
@@ -62,15 +68,19 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
 
       try {
         const formData = await getForm(formId);
-        setForm(formData);
 
         // Fetch organiser data after form is loaded
         const organiserData = await getPublicUserById(formData.userId);
         setOrganiser(organiserData);
 
+        console.log("preview", isPreview);
+
         if (isPreview === false) {
+          console.log("fetching form response data");
           // Fetch form response data if it exists and replace the form sectionsMap with the form responseMap
-          fetchFormResponseData();
+          await fetchFormResponseData(formData);
+        } else {
+          setForm(formData);
         }
       } catch (error) {
         formsServiceLogger.error(`Error fetching form: ${error}`);
@@ -80,7 +90,7 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
       }
     };
 
-    const fetchFormResponseData = async () => {
+    const fetchFormResponseData = async (formData: Form) => {
       if (!formResponseId) return;
       const docRef = await findFormResponseDocRef(formId, eventId, formResponseId);
       if (docRef.path.includes(FormResponsePaths.Temp)) {
@@ -89,13 +99,10 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
       }
       // Now get the form response data itself
       const formResponseData = await getFormResponse(formId, eventId, formResponseId);
-      setForm((prevForm) => {
-        if (!prevForm) return prevForm;
-        return {
-          ...prevForm,
-          responseSectionsOrder: formResponseData.responseSectionsOrder,
-          sectionsMap: formResponseData.responseMap,
-        };
+      setForm({
+        ...formData,
+        sectionsOrder: formResponseData.responseSectionsOrder,
+        sectionsMap: formResponseData.responseMap,
       });
     };
 
@@ -122,8 +129,8 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
     setForm((prevForm) => {
       if (!prevForm) return prevForm;
 
-      // Create a new Map copy
-      const newSectionsMap = prevForm.sectionsMap;
+      // Create a proper copy of the sectionsMap
+      const newSectionsMap = { ...prevForm.sectionsMap };
 
       // Get the section to update
       const section = newSectionsMap[sectionId];
@@ -159,13 +166,12 @@ const FormResponder = ({ formId, eventId, formResponseId, canEditForm, isPreview
     <div className="bg-core-hover min-h-screen pb-24">
       <div className="pt-20 flex w-screen justify-center">
         <div className="screen-width-primary space-y-8 md:px-32">
-          <FormHeaderSectionResponse
-            formTitle={form.title}
-            formDescription="Welcome to the volleyball tryout registration! Please fill out this form to provide your personal details, volleyball experience, and position preferences. This information will help our coaches evaluate your skills and organize the tryouts effectively. Good luck!"
-            organiser={organiser}
-          />
+          <FormHeaderSectionResponse formTitle={form.title} formDescription={form.description} organiser={organiser} />
           {form.sectionsOrder.map((sectionId) => {
-            const section = form.sectionsMap[sectionId];
+            console.log("sectionId", sectionId);
+            console.log("form.sectionsMap", form.sectionsMap);
+            const section = form.sectionsMap[sectionId.trim() as SectionId];
+            console.log("section", section);
             if (!section) return null; // Skip if section not found
 
             switch (section.type) {

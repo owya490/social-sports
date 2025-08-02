@@ -4,6 +4,7 @@ import { db } from "@/services/src/firebase";
 import { getFormResponsesForEvent } from "@/services/src/forms/formsServices";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
 interface EventDrilldownFormsPageProps {
@@ -34,6 +35,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   const [error, setError] = useState<string | null>(null);
   const [headersExpanded, setHeadersExpanded] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [formId, setFormId] = useState<string | null>(null);
 
   const toggleRowExpansion = (rowIndex: number) => {
     const newExpandedRows = new Set(expandedRows);
@@ -63,6 +65,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
               const data = eventDocSnap.data();
               if (data?.formId) {
                 formId = data.formId;
+                setFormId(formId);
                 break;
               }
             }
@@ -137,7 +140,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   });
 
   return (
-    <div className="md:w-[calc(100%-18rem)] my-2">
+    <div className="md:max-w-[calc(100%-18rem)] my-2">
       <div className="flex items-center justify-between mb-4 px-1 md:px-0">
         <h1 className="text-2xl font-extrabold">Form Responses</h1>
         <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
@@ -201,7 +204,9 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
                     );
                   })}
                   <div className="table-cell px-3 py-2 w-[400px] whitespace-nowrap align-top border-r border-core-outline">
-                    {formatTimestamp(response.submissionTime)}
+                    <Link className="underline text-blue-800" href={`/forms/${formId}/${eventId}/${response.formResponseId}`}>
+                      {formatTimestamp(response.submissionTime)}
+                    </Link>
                   </div>
                   <div className="table-cell px-3 py-2 w-[30px] align-top sticky right-0 bg-white border-l border-core-outline">
                     <button
