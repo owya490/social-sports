@@ -5,7 +5,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-// TODO: flesh out fields for FormsFulfilmentEntity
 @Data
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
@@ -14,5 +13,5 @@ public class FormsFulfilmentEntity extends FulfilmentEntity {
     {
         setType(FulfilmentEntityType.FORMS);
     }
-    private String formId;
+    private String formResponseId;
 }

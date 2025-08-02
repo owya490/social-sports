@@ -1,4 +1,8 @@
+import { EventId } from "@/interfaces/EventTypes";
+import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
+import { Timestamp } from "firebase/firestore";
+import { v4 as uuidv4 } from "uuid";
 import { FORM_RESPONSE_MAX_EVENTS, FORM_RESPONSE_REFRESH_MILLIS, LocalStorageKeys } from "../formsConstants";
 
 const createFormResponseLogger = new Logger("createFormResponseLogger");
@@ -36,4 +40,15 @@ export function rateLimitCreateFormResponse(): boolean {
   localStorage.setItem(LocalStorageKeys.FormResponseOperationCount5Min, "1");
   localStorage.setItem(LocalStorageKeys.FormResponseLastCreateUpdateOperationTimestamp, now.toUTCString());
   return true;
+}
+
+export function extractFormResponseFromForm(formId: FormId, eventId: EventId, form: Form): FormResponse {
+  return {
+    formId: formId,
+    eventId: eventId,
+    responseMap: form.sectionsMap,
+    formResponseId: uuidv4() as FormResponseId,
+    responseSectionsOrder: form.sectionsOrder,
+    submissionTime: Timestamp.now(),
+  };
 }
