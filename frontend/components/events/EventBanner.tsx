@@ -10,6 +10,7 @@ interface EventBannerProps {
   startDate: Timestamp;
   organiser: PublicUserData;
   vacancy: number;
+  hideVacancy: boolean;
 }
 
 export default function EventBanner(props: EventBannerProps) {
@@ -44,7 +45,9 @@ export default function EventBanner(props: EventBannerProps) {
                     </div>
                   </div>
                 )}
-                <p className="font-bold text-xs ml-auto md:hidden">{`${props.vacancy} Tickets Left`}</p>
+                {!props.hideVacancy && (
+                  <p className="font-bold text-xs ml-auto md:hidden">{`${props.vacancy} Tickets Left`}</p>
+                )}
               </div>
 
               <p className="text-xs hidden md:block ml-4 font-light">
@@ -52,7 +55,9 @@ export default function EventBanner(props: EventBannerProps) {
               </p>
             </div>
           </div>
-          <div className="ml-auto text-2xl hidden md:block text-core-text font-light">{`${props.vacancy} Tickets Left`}</div>
+          {!props.hideVacancy && (
+            <div className="ml-auto text-2xl hidden md:block text-core-text font-light">{`${props.vacancy} Tickets Left`}</div>
+          )}
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 package com.functions.events.controllers;
 
-import com.functions.firebase.services.FirebaseService;
 import com.functions.events.models.NewEventData;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.functions.HttpFunction;
@@ -31,7 +31,7 @@ public class CreateEventEndpoint implements HttpFunction {
         }
 
         if (!(request.getMethod().equalsIgnoreCase("POST"))) {
-            logger.error("Invalid request type made to CreateEventEndpoint: {}", request.getMethod());
+            logger.warn("Invalid request type made to CreateEventEndpoint: {}", request.getMethod());
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
             response.getWriter().write("The CreateEventEndpoint only supports POST requests.");
@@ -51,9 +51,7 @@ public class CreateEventEndpoint implements HttpFunction {
         Firestore db = FirebaseService.getFirestore();
 
         try {
-            String eventId = db.runTransaction(transaction ->
-                    createEvent(data, transaction)
-            ).get();
+            String eventId = db.runTransaction(transaction -> createEvent(data, transaction)).get();
 
             response.setStatusCode(200);
             response.getWriter().write("Event created successfully with ID: " + eventId + "\n");

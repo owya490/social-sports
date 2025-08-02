@@ -57,6 +57,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
+  const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
@@ -92,6 +93,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventPaymentsActive(recurrenceTemplate.eventData.paymentsActive);
         setEventStripeFeeToCustomer(recurrenceTemplate.eventData.stripeFeeToCustomer);
         setEventPromotionalCodesEnabled(recurrenceTemplate.eventData.promotionalCodesEnabled);
+        setEventHideVacancy(recurrenceTemplate.eventData.hideVacancy);
         const isRecurrenceEnded = calculateRecurrenceEnded(recurrenceTemplate);
         setRecurrenceEnded(isRecurrenceEnded);
         // Edge case, if the recurrence is ended, it should not be enabled
@@ -194,6 +196,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   setStripeFeeToCustomer={setEventStripeFeeToCustomer}
                   promotionalCodesEnabled={eventPromotionalCodesEnabled}
                   setPromotionalCodesEnabled={setEventPromotionalCodesEnabled}
+                  hideVacancy={eventHideVacancy}
+                  setHideVacancy={setEventHideVacancy}
                 />
               </>
             )}

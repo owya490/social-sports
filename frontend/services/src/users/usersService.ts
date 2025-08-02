@@ -1,13 +1,4 @@
-import {
-  EmptyPrivateUserData,
-  EmptyPublicUserData,
-  EmptyUserData,
-  PrivateUserData,
-  PublicUserData,
-  UserData,
-  UserId,
-  UsernameMap,
-} from "@/interfaces/UserTypes";
+import { EmptyPrivateUserData, EmptyPublicUserData, EmptyUserData, PrivateUserData, PublicUserData, UserData, UserId, UsernameMap } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
 import { deleteDoc, doc, getDoc, runTransaction, setDoc, Transaction, updateDoc } from "firebase/firestore";

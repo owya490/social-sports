@@ -4,7 +4,7 @@ import { EventMetadata } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
-import { sendEmailOnDeleteEvent } from "@/services/src/sendgrid/sendgridService";
+import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -25,6 +25,8 @@ interface EventDrilldownSettingsPageProps {
   setStripeFeeToCustomer: (event: boolean) => void;
   promotionalCodesEnabled: boolean;
   setPromotionalCodesEnabled: (event: boolean) => void;
+  hideVacancy: boolean;
+  setHideVacancy: (event: boolean) => void;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -41,6 +43,8 @@ const EventDrilldownSettingsPage = ({
   setStripeFeeToCustomer,
   promotionalCodesEnabled,
   setPromotionalCodesEnabled,
+  hideVacancy,
+  setHideVacancy,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
@@ -54,15 +58,15 @@ const EventDrilldownSettingsPage = ({
     try {
       setDeleteLoading(true);
       await archiveAndDeleteEvent(eventId, user.userId, auth.currentUser?.email || "");
-      await sendEmailOnDeleteEvent(eventId);
+      await sendEmailOnDeleteEventV2(eventId);
       bustEventsLocalStorageCache();
       setDeleteLoading(false);
       router.push("/organiser/event/dashboard");
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/Delete_UPDATE_EVENT_RATELIMITED");
-      } else if (error == "Sendgrid failed") {
-        logger.error("Sendgrid failed");
+      } else if (error == "Loops failed") {
+        logger.error("Loops failed");
       } else {
         router.push("/error");
       }
@@ -118,6 +122,17 @@ const EventDrilldownSettingsPage = ({
         updateData={(event: boolean) => {
           updateEventById(eventId, {
             promotionalCodesEnabled: event,
+          });
+        }}
+      />
+      <LabelledSwitch
+        title={"Hide Vacancy"}
+        description={"Enable to hide the vacant ticket count from the event page."}
+        state={hideVacancy}
+        setState={setHideVacancy}
+        updateData={(event: boolean) => {
+          updateEventById(eventId, {
+            hideVacancy: event,
           });
         }}
       />

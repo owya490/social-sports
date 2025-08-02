@@ -46,6 +46,14 @@ const EventDrilldownSidePanel = ({
         </div>
         <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
+            currSidebarPage === "Forms" ? "bg-white" : ""
+          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          onClick={() => setCurrSidebarPage("Forms")}
+        >
+          Forms
+        </div>
+        <div
+          className={`text-organiser-dark-gray-text font-bold text-md ${
             currSidebarPage === "Images" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
           onClick={() => setCurrSidebarPage("Images")}

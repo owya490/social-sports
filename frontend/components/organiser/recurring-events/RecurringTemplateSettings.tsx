@@ -13,6 +13,8 @@ interface RecurringTemplateSettingsProps {
   setStripeFeeToCustomer: (event: boolean) => void;
   promotionalCodesEnabled: boolean;
   setPromotionalCodesEnabled: (event: boolean) => void;
+  hideVacancy: boolean;
+  setHideVacancy: (event: boolean) => void;
 }
 
 export const RecurringTemplateSettings = ({
@@ -23,6 +25,8 @@ export const RecurringTemplateSettings = ({
   setStripeFeeToCustomer,
   promotionalCodesEnabled,
   setPromotionalCodesEnabled,
+  hideVacancy,
+  setHideVacancy,
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   return (
@@ -73,6 +77,23 @@ export const RecurringTemplateSettings = ({
             setLoading(true);
             const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
               promotionalCodesEnabled: event,
+            });
+            if (success) {
+              setLoading(false);
+            } else {
+              window.location.reload();
+            }
+          }}
+        />
+        <LabelledSwitch
+          title={"Hide Vacancy"}
+          description={"Enable to hide the vacant ticket count from the event page."}
+          state={hideVacancy}
+          setState={setHideVacancy}
+          updateData={async (event: boolean) => {
+            setLoading(true);
+            const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+              hideVacancy: event,
             });
             if (success) {
               setLoading(false);

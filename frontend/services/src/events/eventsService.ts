@@ -242,9 +242,10 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
       );
     }
     await Promise.all(promisesList).then((results: (EventData | null)[]) => {
-      const filteredResults = results.filter((result) => result != null);
-      for (const event of results) {
-        eventDataList.push(event!);
+      const filteredResults = results.filter((result): result is EventData => result !== null);
+      console.log("filteredResults", filteredResults);
+      for (const event of filteredResults) {
+        eventDataList.push(event);
       }
     });
 

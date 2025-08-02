@@ -142,6 +142,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       paused: event.paused,
       eventLink: event.eventLink,
       formId: event.formId,
+      hideVacancy: event.hideVacancy,
     });
   });
   return eventsDataFinal;

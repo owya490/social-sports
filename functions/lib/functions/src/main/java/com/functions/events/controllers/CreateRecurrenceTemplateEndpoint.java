@@ -33,7 +33,7 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
 
         // Handle actual (POST) request
         if (!request.getMethod().equalsIgnoreCase("POST")) {
-            logger.error("Invalid request type made to CreateRecurrenceTemplateEndpoint: {}", request.getMethod());
+            logger.warn("Invalid request type made to CreateRecurrenceTemplateEndpoint: {}", request.getMethod());
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST"); // Inform client that only GET is allowed
             response.getWriter().write("The CreateRecurrenceTemplateEndpoint only supports POST requests.");
@@ -50,25 +50,22 @@ public class CreateRecurrenceTemplateEndpoint implements HttpFunction {
             return;
         }
 
-        Optional<Map.Entry<String, String>> maybeRecurrenceTemplateId = RecurringEventsService.createRecurrenceTemplate(data.eventData(), data.recurrenceData());
-
+        Optional<Map.Entry<String, String>> maybeRecurrenceTemplateId = RecurringEventsService
+                .createRecurrenceTemplate(data.eventData(), data.recurrenceData());
 
         if (maybeRecurrenceTemplateId.isPresent()) {
             logger.info("Recurrence template successfully created: {}", maybeRecurrenceTemplateId);
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
-                            new CreateRecurrenceTemplateResponse(maybeRecurrenceTemplateId.get().getKey(), maybeRecurrenceTemplateId.get().getValue())
-                    )
-            );
+                            new CreateRecurrenceTemplateResponse(maybeRecurrenceTemplateId.get().getKey(),
+                                    maybeRecurrenceTemplateId.get().getValue())));
         } else {
             logger.error("Recurrence template failed to be created");
             response.setStatusCode(500);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
-                            new CreateRecurrenceTemplateResponse("", "")
-                    )
-            );
+                            new CreateRecurrenceTemplateResponse("", "")));
         }
     }
 }

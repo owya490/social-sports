@@ -47,22 +47,19 @@ public class UpdateRecurrenceTemplateEndpoint implements HttpFunction {
             return;
         }
 
-        Optional<String> maybeRecurrenceTemplateId = RecurringEventsService.updateRecurrenceTemplate(data.recurrenceTemplateId(), data.eventData(), data.recurrenceData());
+        Optional<String> maybeRecurrenceTemplateId = RecurringEventsService
+                .updateRecurrenceTemplate(data.recurrenceTemplateId(), data.eventData(), data.recurrenceData());
 
         if (maybeRecurrenceTemplateId.isPresent()) {
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
-                            new UpdateRecurrenceTemplateResponse(maybeRecurrenceTemplateId.get())
-                    )
-            );
+                            new UpdateRecurrenceTemplateResponse(maybeRecurrenceTemplateId.get())));
         } else {
             response.setStatusCode(500);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
-                            new UpdateRecurrenceTemplateResponse("")
-                    )
-            );
+                            new UpdateRecurrenceTemplateResponse("")));
         }
     }
 }
