@@ -73,10 +73,7 @@ const FormResponder = ({
         const organiserData = await getPublicUserById(formData.userId);
         setOrganiser(organiserData);
 
-        console.log("preview", isPreview);
-
         if (isPreview === false) {
-          console.log("fetching form response data");
           // Fetch form response data if it exists and replace the form sectionsMap with the form responseMap
           await fetchFormResponseData(formData);
         } else {
@@ -168,10 +165,7 @@ const FormResponder = ({
         <div className="screen-width-primary space-y-8 md:px-32">
           <FormHeaderSectionResponse formTitle={form.title} formDescription={form.description} organiser={organiser} />
           {form.sectionsOrder.map((sectionId) => {
-            console.log("sectionId", sectionId);
-            console.log("form.sectionsMap", form.sectionsMap);
             const section = form.sectionsMap[sectionId.trim() as SectionId];
-            console.log("section", section);
             if (!section) return null; // Skip if section not found
 
             switch (section.type) {
