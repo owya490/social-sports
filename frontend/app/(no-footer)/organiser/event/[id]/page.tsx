@@ -143,7 +143,7 @@ export default function EventPage({ params }: EventPageProps) {
           eventPrice={eventPrice}
         />
         <MobileEventDrilldownNavTabs
-          navigationTabs={["Details", "Attendees", "Images", "Settings"]}
+          navigationTabs={["Details", "Attendees", "Forms", "Images", "Settings"]}
           currSidebarPage={currSidebarPage}
           setCurrSidebarPage={setCurrSidebarPage}
         />
