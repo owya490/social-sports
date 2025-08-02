@@ -1,9 +1,8 @@
 "use client";
 
-import FormResponder from "@/components/forms/FormResponder";
+import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
 import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
 import Loading from "@/components/loading/Loading";
-import { FormResponseId } from "@/interfaces/FormTypes";
 import {
   FulfilmentEntityId,
   FulfilmentEntityType,
@@ -15,10 +14,9 @@ import {
   getFulfilmentEntityInfo,
   getNextFulfilmentEntityUrl,
   getPrevFulfilmentEntityUrl,
-  updateFulfilmentEntityWithFormResponseId,
 } from "@/services/src/fulfilment/fulfilmentServices";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Routing page for fulfilment session entities.
@@ -33,6 +31,8 @@ const FulfilmentSessionEntityPage = ({
   const [loading, setLoading] = useState(true);
   const [getFulfilmentEntityInfoResponse, setGetFulfilmentEntityInfoResponse] =
     useState<GetFulfilmentEntityInfoResponse | null>(null);
+  const formResponderRef = useRef<FormResponderRef>(null);
+
   useEffect(() => {
     const fetchFulfilmentEntityInfo = async () => {
       const { fulfilmentSessionId, fulfilmentEntityId } = params;
@@ -106,25 +106,35 @@ const FulfilmentSessionEntityPage = ({
         return;
       }
 
-      const onSaveFormResponse = async (formResponseId: FormResponseId): Promise<void> => {
-        fulfilmentSessionEntityPageLogger.info(
-          `Form response saved with ID: ${formResponseId}, fulfilmentSessionId: ${params.fulfilmentSessionId}, fulfilmentEntityId: ${params.fulfilmentEntityId}`
-        );
+      const onFormsFulfilmentEntitySaveAndNext = async (): Promise<void> => {
+        if (!formResponderRef.current) {
+          fulfilmentSessionEntityPageLogger.error("FormResponder ref is not available");
+          return;
+        }
 
-        await updateFulfilmentEntityWithFormResponseId(
-          params.fulfilmentSessionId,
-          params.fulfilmentEntityId,
-          formResponseId
-        );
+        try {
+          const savedFormResponseId = await formResponderRef.current.save();
+          fulfilmentSessionEntityPageLogger.info(
+            `Form response saved with ID: ${savedFormResponseId}, fulfilmentSessionId: ${params.fulfilmentSessionId}, fulfilmentEntityId: ${params.fulfilmentEntityId}`
+          );
+
+          await handleNext();
+        } catch (error) {
+          fulfilmentSessionEntityPageLogger.error(`Error saving form and navigating to next: ${error}`);
+        }
       };
 
       return (
-        <FulfilmentEntityPage onNext={handleNext} onPrev={handlePrev}>
+        <FulfilmentEntityPage onNext={onFormsFulfilmentEntitySaveAndNext} onPrev={async () => await handlePrev()}>
           <FormResponder
+            ref={formResponderRef}
             formId={getFulfilmentEntityInfoResponse.formId}
             eventId={getFulfilmentEntityInfoResponse.eventId}
             formResponseId={getFulfilmentEntityInfoResponse.formResponseId}
-            onSaveFormResponse={onSaveFormResponse}
+            fulfilmentInfo={{
+              fulfilmentSessionId: params.fulfilmentSessionId,
+              fulfilmentEntityId: params.fulfilmentEntityId,
+            }}
             canEditForm={true}
             isPreview={false}
           />

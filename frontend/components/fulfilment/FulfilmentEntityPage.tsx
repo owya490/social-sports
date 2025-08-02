@@ -22,33 +22,35 @@ const FulfilmentEntityPage = ({
     <div className="relative min-h-screen">
       <div className="w-full h-full">{children}</div>
 
-      {/* Navigation buttons positioned at bottom corners */}
-      <div className="fixed bottom-6 left-0 right-0 pointer-events-none z-50">
-        <div className="flex justify-between px-8 sm:px-12">
-          <div
-            className={`pointer-events-auto ${
-              showPrevButton && onPrev ? "opacity-100" : "opacity-0 pointer-events-none"
-            } transition-opacity duration-200`}
-          >
-            <BlackHighlightButton
-              type="submit"
-              text="Prev"
-              className="border-1 px-3 bg-white ml-auto"
-              onClick={onPrev || (() => {})}
-            />
-          </div>
+      {/* Navigation buttons positioned to match form width */}
+      <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 pointer-events-none z-50">
+        <div className="screen-width-primary md:px-32">
+          <div className="flex justify-between gap-4">
+            <div
+              className={`pointer-events-auto flex-1 ${
+                showPrevButton && onPrev ? "opacity-100" : "opacity-0 pointer-events-none"
+              } transition-opacity duration-200`}
+            >
+              <BlackHighlightButton
+                type="submit"
+                text="Prev"
+                className="border-1 px-3 bg-white w-full"
+                onClick={onPrev || (() => {})}
+              />
+            </div>
 
-          <div
-            className={`pointer-events-auto ${
-              showNextButton && onNext ? "opacity-100" : "opacity-0 pointer-events-none"
-            } transition-opacity duration-200`}
-          >
-            <BlackHighlightButton
-              type="submit"
-              text="Next"
-              className="border-1 px-3 bg-white ml-auto"
-              onClick={onNext || (() => {})}
-            />
+            <div
+              className={`pointer-events-auto flex-1 ${
+                showNextButton && onNext ? "opacity-100" : "opacity-0 pointer-events-none"
+              } transition-opacity duration-200`}
+            >
+              <BlackHighlightButton
+                type="submit"
+                text="Save & Next"
+                className="border-1 px-3 bg-white w-full"
+                onClick={onNext || (() => {})}
+              />
+            </div>
           </div>
         </div>
       </div>
