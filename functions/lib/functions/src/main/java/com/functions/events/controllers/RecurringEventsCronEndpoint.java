@@ -1,18 +1,17 @@
 package com.functions.events.controllers;
 
-import static com.functions.events.services.RecurringEventsCronService.createEventsFromRecurrenceTemplates;
+import com.google.cloud.functions.HttpFunction;
+import com.google.cloud.functions.HttpRequest;
+import com.google.cloud.functions.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.cloud.functions.HttpFunction;
-import com.google.cloud.functions.HttpRequest;
-import com.google.cloud.functions.HttpResponse;
+import static com.functions.events.services.RecurringEventsCronService.createEventsFromRecurrenceTemplates;
 
 public class RecurringEventsCronEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronEndpoint.class);
@@ -44,6 +43,7 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
 
         List<String> createdEvents = createEventsFromRecurrenceTemplates(sydneyDate);
 
-        response.getWriter().write("Recurring events processed for: " + sydneyDate + "Created events: " + createdEvents);
+        response.getWriter()
+                .write("Recurring events processed for: " + sydneyDate + "Created events: " + createdEvents);
     }
 }
