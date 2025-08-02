@@ -21,6 +21,7 @@ public class StripeService {
             boolean isPrivate,
             Integer numTickets,
             Optional<String> successUrl,
+            Optional<String> cancelUrl,
             String fulfilmentSessionId) {
         try {
             // TODO: remove price getting from stripe function. The price value should be
@@ -35,8 +36,7 @@ public class StripeService {
                             "isPrivate", isPrivate,
                             "quantity", numTickets,
                             "cancelUrl",
-                            UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/%s", eventId))
-                                    .orElse("https://sportshub.net.au/dashboard"),
+                            cancelUrl.orElse("https://sportshub.net.au/dashboard"),
                             "successUrl",
                             successUrl.orElse(
                                     UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))

@@ -115,12 +115,19 @@ public class FulfilmentService {
             if (entity.getType() == FulfilmentEntityType.STRIPE) {
                 // For STRIPE entity, set success URL to point to next entity
                 String nextEntityId = (i + 1 < entityIds.size()) ? entityIds.get(i + 1) : null;
-                String successUrl = UrlUtils.getUrlWithCurrentEnvironment(
+                String successUrl = nextEntityId != null ? UrlUtils.getUrlWithCurrentEnvironment(
                         String.format("/fulfilment/%s/%s", fulfilmentSessionId, nextEntityId))
-                        .orElse("https://sportshub.net.au/dashboard");
+                        .orElse("https://sportshub.net.au/dashboard")
+                        : "https://sportshub.net.au/dashboard";
+
+                String prevEntityId = (i - 1 >= 0) ? entityIds.get(i - 1) : null;
+                String cancelUrl = prevEntityId != null ? UrlUtils.getUrlWithCurrentEnvironment(
+                        String.format("/fulfilment/%s/%s", fulfilmentSessionId, prevEntityId))
+                        .orElse("https://sportshub.net.au/dashboard") : "https://sportshub.net.au/dashboard";
 
                 Optional<String> stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(eventId,
-                        eventData.getIsPrivate(), numTickets, Optional.of(successUrl), fulfilmentSessionId);
+                        eventData.getIsPrivate(), numTickets, Optional.of(successUrl), Optional.of(cancelUrl),
+                        fulfilmentSessionId);
 
                 if (stripeCheckoutLink.isPresent()) {
                     logger.info("Created Stripe checkout link for event ID {}: {}", eventId, stripeCheckoutLink.get());
