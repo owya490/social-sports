@@ -38,6 +38,17 @@
   user-select: none;
   width: 100%;
   height: 900px;
+  /* height: 450px; */
+  overflow: visible !important;
+}
+
+.heroIllustrationRootPhone {
+  pointer-events: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  width: 100%;
+  height: 450px;
   overflow: visible !important;
 }
 
@@ -71,7 +82,27 @@
   border-radius: 20px;
 }
 
+/* Phone-specific Base Layer with 3D Transforms */
+.heroIllustrationBasePhone {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  border: 1px solid #1e1e1e;
+  background: transparent;
+  width: 350px;
+  height: 675px;
+  margin: 80px auto auto;
+  transform: scale(0.7) rotateX(47deg) rotateY(21deg) rotate(330deg);
+  transform-origin: top left;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  overflow: visible !important;
+  z-index: 5;
+  border-radius: 20px;
+}
+
 /* Ensure the image fills the transformed container */
-.heroIllustrationBase img {
+.heroIllustrationBase img,
+.heroIllustrationBasePhone img {
   border-radius: 20px;
 }

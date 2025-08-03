@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import ImageHero from "./ImageHero";
+import ImageHeroPhone from "./ImageHeroPhone";
 
 export default function Home() {
   const isMdOrBelow = false; //useIsScreenBelow("md");
@@ -11,19 +12,26 @@ export default function Home() {
       <div className="w-full flex items-center justify-center bg-transparent">
         <div className="screen-width-dashboard">
           {/* Hero Section */}
-          <div className="relative justify-center pt-32">
+          <div className="relative justify-center pt-24 md:pt-32">
             <div className=" px-6">
               {/* Text Content */}
-              <div className="max-w-2xl">
+              <div className="max-w-4xl">
                 {/* Main Headline */}
-                <h1 className="text-4xl font-bold text-core-text leading-tight mb-6">
+                <h1 className="hidden md:block text-5xl font-bold text-core-text leading-tight mb-6">
                   SPORTSHUB is a purpose-built platform for sports communities
+                </h1>
+                <h1 className="md:hidden text-6xl font-bold text-core-text leading-tight mb-6 text-center">
+                  Streamline your events
                 </h1>
 
                 {/* Subtitle */}
-                <h2 className="text-md text-gray-600 font-normal leading-relaxed mb-8">
+                <h2 className="hidden md:block max-w-2xl text-lg text-gray-600 font-normal leading-relaxed mb-8">
                   Connect players, organize events, and build thriving sports communities. Streamline bookings,
-                  payments, and team management.
+                  payments, team management and more.
+                </h2>
+
+                <h2 className="md:hidden text-lg text-gray-600 font-normal leading-relaxed mb-8 text-center">
+                  Connect players, organize events, accept payments and build thriving sports communities.
                 </h2>
 
                 {/* CTA Buttons */}
@@ -32,7 +40,7 @@ export default function Home() {
                     href="/register"
                     className="bg-core-text text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors duration-200 text-center"
                   >
-                    Start building
+                    Start organising
                   </Link>
                   <Link
                     href="/dashboard"
@@ -52,6 +60,7 @@ export default function Home() {
 
       {/* Hero Image */}
       <ImageHero />
+      <ImageHeroPhone />
 
       {/* Features Preview Section - Layered on top of image */}
   
