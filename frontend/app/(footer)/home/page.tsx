@@ -1,21 +1,20 @@
 "use client";
 
-import useIsScreenBelow from "@/components/hooks/useIsScreenBelow";
-import Image from "next/image";
 import Link from "next/link";
+import ImageHero from "./ImageHero";
 
 export default function Home() {
   const isMdOrBelow = false; //useIsScreenBelow("md");
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="w-full flex items-center justify-center">
+    <div className="min-h-screen">
+      <div className="w-full flex items-center justify-center bg-transparent">
         <div className="screen-width-dashboard">
           {/* Hero Section */}
-          <div className="relative justify-center pt-32 pb-8 overflow-hidden">
+          <div className="relative justify-center pt-32">
             <div className=" px-6">
               {/* Text Content */}
-              <div className="max-w-2xl mb-16">
+              <div className="max-w-2xl">
                 {/* Main Headline */}
                 <h1 className="text-4xl font-bold text-core-text leading-tight mb-6">
                   SPORTSHUB is a purpose-built platform for sports communities
@@ -28,7 +27,7 @@ export default function Home() {
                 </h2>
 
                 {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <div className="flex flex-col sm:flex-row gap-4">
                   <Link
                     href="/register"
                     className="bg-core-text text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors duration-200 text-center"
@@ -50,62 +49,13 @@ export default function Home() {
           </div>
         </div>
       </div>
-      {/* style={{ background: "linear-gradient(to bottom, transparent 50%, white 100%)" }} */}
-      <div className="w-full flex items-center justify-center mb-[900px] z-50" style={{ background: "linear-gradient(to bottom, transparent 50%, black 100%)" }}>
-        {/* Full Width Hero Image */}
-        <div
-          className="w-full relative"
-          style={{ perspective: "4000px", perspectiveOrigin: "100% 0", transformStyle: "preserve-3d" }}
-        >
-          <div
-            className="relative transition-transform duration-700 ease-out"
-            // translateX(2%) scale(1.2) rotateX(47deg) rotateY(31deg) rotate(324deg)
-            style={{
-              //md and below transform: scale(.7) rotateX(47deg) rotateY(21deg) rotate(330deg);
-              // transform: "translateX(0%) scale(1.2) rotateX(47deg) rotateY(31deg) rotate(324deg)",
-              transform: isMdOrBelow
-                ? "scale(0.5) rotateX(47deg) rotateY(21deg) rotate(330deg)"
-                : "translateX(0%) scale(1.2) rotateX(47deg) rotateY(31deg) rotate(324deg)",
-              transformOrigin: "top left",
-              position: "absolute",
-              inset: "0",
-              width: "1500px",
-              height: "847px",
-            }}
-          >
-            <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden mx-6">
-              <Image
-                src="/images/sportshub_hero_mock.png"
-                alt="SportHub Platform Preview"
-                width={1500}
-                height={847}
-                className="w-full h-auto"
-                priority
-              />
-            </div>
-          </div>
-          {/* Additional depth shadow */}
-          {/* <div
-          className="absolute inset-0 bg-gradient-to-bl from-gray-400/20 to-transparent blur-2xl scale-110 -z-10 mx-6"
-          style={{
-            transform: "rotateY(12deg) rotateX(-8deg) rotateZ(2deg) translateZ(-50px)",
-            transformStyle: "preserve-3d",
-          }}
-        ></div> */}
-        </div>
-      </div>
-      {/* Fade overlay - positioned below the image, covering bottom 1/3 */}
-      {/* <div
-        className="absolute bottom-[-640px] left-0 right-0 pointer-events-none z-50"
-        style={{
-          height: "500px",
-          background: "linear-gradient(to top, black 0%, transparent 100%)",
-          zIndex: 10,
-        }}
-      /> */}
 
-      {/* Features Preview Section */}
-      <div className="w-screen flex justify-center py-24 bg-gray-50">
+      {/* Hero Image */}
+      <ImageHero />
+
+      {/* Features Preview Section - Layered on top of image */}
+  
+      <div className="w-screen flex justify-center py-24 bg-white z-20 relative">
         <div className="screen-width-dashboard px-6 text-center">
           <h3 className="text-3xl md:text-4xl font-bold text-core-text mb-6">
             Everything you need to run sports events
