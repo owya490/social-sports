@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction } from "react";
 import { HighlightButton } from "./HighlightButton";
 
-export default function StripeSetup(props: { userId: string; setLoading: Dispatch<SetStateAction<boolean>> }) {
+export default function StripeSetup(props: { userId: string; setLoading?: Dispatch<SetStateAction<boolean>> }) {
   const router = useRouter();
 
   return (
@@ -15,7 +15,7 @@ export default function StripeSetup(props: { userId: string; setLoading: Dispatc
       <HighlightButton
         className="ml-auto "
         onClick={async () => {
-          props.setLoading(true);
+          props.setLoading?.(true);
           window.scrollTo(0, 0);
           const link = await getStripeStandardAccountLink(
             props.userId,
