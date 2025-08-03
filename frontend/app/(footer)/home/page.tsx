@@ -5,8 +5,6 @@ import ImageHero from "./ImageHero";
 import ImageHeroPhone from "./ImageHeroPhone";
 
 export default function Home() {
-  const isMdOrBelow = false; //useIsScreenBelow("md");
-
   return (
     <div className="min-h-screen">
       <div className="w-full flex items-center justify-center bg-transparent">
