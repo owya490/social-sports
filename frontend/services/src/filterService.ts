@@ -107,7 +107,7 @@ export function filterEventsByPrice(
 export function filterEventsByDate(eventDataList: EventData[], startDate: Timestamp, endDate: Timestamp): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
   eventDataListDeepClone = eventDataListDeepClone.filter(
-    (event) => event.startDate.toMillis() >= startDate.toMillis() && event.startDate.toMillis() <= endDate.toMillis()
+    (event) => event.startDate.toMillis() >= startDate.toMillis() && event.endDate.toMillis() <= endDate.toMillis()
   );
   return eventDataListDeepClone;
 }
