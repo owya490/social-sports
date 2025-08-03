@@ -9,7 +9,6 @@ export const RecurringTemplatePastEvents = ({ pastEvents }: RecurringTemplatePas
   // Adjusting the input to make it in a proper ISO string format (e.g., "2024-12-02T21:00:06+11:00")
   function toDate(dateString: string) {
     const isoDateString = dateString.replace(" ", "T").replace(" GMT", "").concat(":00");
-    console.log(isoDateString);
     return new Date(isoDateString);
   }
 
