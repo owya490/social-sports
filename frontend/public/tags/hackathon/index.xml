@@ -1,0 +1,115 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Hackathon</title><link>https://sportshub.net.au/tags/hackathon/</link><description>Recent content in Hackathon on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 28 Jul 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://sportshub.net.au/tags/hackathon/index.xml" rel="self" type="application/rss+xml"/><item><title>Gamifying Developer Productivity: How We Built a GitHub Stat Tracker in 4 Hours</title><link>https://sportshub.net.au/blogs/cdg-github-stat-tracker/</link><pubDate>Mon, 28 Jul 2025 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/blogs/cdg-github-stat-tracker/</guid><description>
+&lt;p>&lt;img src="https://sportshub.net.au/images/CDG-STATTRAKR.png" alt="CDG Stat Tracker App Dashboard" loading="lazy" />&lt;/p>
+&lt;h1>Turning Code Commits into Epic Quests: Our 4-Hour Hackathon Success Story&lt;/h1>&lt;p>What happens when you give a group of passionate developers just four hours and complete creative freedom? Magic happens. This year&amp;rsquo;s Compass Digital Group anniversary celebration proved that some of the best innovations come from tight deadlines and ambitious ideas.&lt;/p>
+&lt;h2>The Challenge: A 4-Hour Innovation Sprint&lt;span class="hx:absolute hx:-mt-20" id="the-challenge-a-4-hour-innovation-sprint">&lt;/span>
+&lt;a href="#the-challenge-a-4-hour-innovation-sprint" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Our annual celebration took an exciting turn this year with a hackathon format. The rules were simple: four hours, any technology, any idea. The goal? Create something that could genuinely impact our team&amp;rsquo;s workflow and productivity.&lt;/p>
+&lt;p>While other teams explored various directions, Reggie and I found ourselves drawn to a problem we&amp;rsquo;d been discussing for months: &lt;strong>how do we make coding more engaging and track our collective progress in a meaningful way?&lt;/strong>&lt;/p>
+&lt;h2>The Eureka Moment: Gamifying GitHub&lt;span class="hx:absolute hx:-mt-20" id="the-eureka-moment-gamifying-github">&lt;/span>
+&lt;a href="#the-eureka-moment-gamifying-github" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The idea hit us like lightning: what if we could transform our daily coding activities into a role-playing game? What if every commit, pull request, and code review became a &amp;ldquo;quest&amp;rdquo; that awarded experience points?&lt;/p>
+&lt;p>We envisioned a system where:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Commits&lt;/strong> became mini-quests worth XP&lt;/li>
+&lt;li>&lt;strong>Pull requests&lt;/strong> were major achievements&lt;/li>
+&lt;li>&lt;strong>Code reviews&lt;/strong> earned collaboration bonuses&lt;/li>
+&lt;li>&lt;strong>Monthly leaderboards&lt;/strong> created friendly competition&lt;/li>
+&lt;/ul>
+&lt;p>The concept was ambitious for a four-hour window, but we were determined to make it work.&lt;/p>
+&lt;h2>Building the GitHub Stat Tracker&lt;span class="hx:absolute hx:-mt-20" id="building-the-github-stat-tracker">&lt;/span>
+&lt;a href="#building-the-github-stat-tracker" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>The Technical Architecture&lt;span class="hx:absolute hx:-mt-20" id="the-technical-architecture">&lt;/span>
+&lt;a href="#the-technical-architecture" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Our solution centered around &lt;strong>GitHub webhooks&lt;/strong> – the perfect bridge between our development activities and our gamification system. Here&amp;rsquo;s how we structured it:&lt;/p>
+&lt;p>&lt;strong>Core Components:&lt;/strong>&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>Webhook Listener&lt;/strong>: Captures real-time GitHub events&lt;/li>
+&lt;li>&lt;strong>XP Calculator&lt;/strong>: Assigns points based on activity type and complexity&lt;/li>
+&lt;li>&lt;strong>Leaderboard Engine&lt;/strong>: Tracks monthly rankings and achievements&lt;/li>
+&lt;li>&lt;strong>Dashboard Interface&lt;/strong>: Displays stats, progress, and team standings&lt;/li>
+&lt;/ol>
+&lt;h3>Racing Against the Clock&lt;span class="hx:absolute hx:-mt-20" id="racing-against-the-clock">&lt;/span>
+&lt;a href="#racing-against-the-clock" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>With only four hours, every decision mattered. We split responsibilities:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Reggie&lt;/strong> tackled further research, XP calculation and feature ideas&lt;/li>
+&lt;li>&lt;strong>I&lt;/strong> vibe coded the rest&lt;/li>
+&lt;/ul>
+&lt;p>The time pressure actually helped us avoid over-engineering. We built exactly what we needed – no more, no less.&lt;/p>
+&lt;h3>The Psychology of Gamification&lt;span class="hx:absolute hx:-mt-20" id="the-psychology-of-gamification">&lt;/span>
+&lt;a href="#the-psychology-of-gamification" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>What surprised us most wasn&amp;rsquo;t just the productivity boost – it was how the system changed our team dynamics:&lt;/p>
+&lt;p>&lt;strong>Positive Competition:&lt;/strong> Instead of individual silos, we developed a culture of healthy competition mixed with collaboration.&lt;/p>
+&lt;p>&lt;strong>Visible Progress:&lt;/strong> Developers could finally see their daily contributions quantified and celebrated.&lt;/p>
+&lt;p>&lt;strong>Recognition System:&lt;/strong> Quiet contributors who might not speak up in meetings suddenly had their consistent efforts highlighted.&lt;/p>
+&lt;h2>Monthly Leaderboards: The Game Changer&lt;span class="hx:absolute hx:-mt-20" id="monthly-leaderboards-the-game-changer">&lt;/span>
+&lt;a href="#monthly-leaderboards-the-game-changer" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The monthly leaderboard became our secret weapon. Unlike daily or weekly cycles, the monthly format:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Sustained Motivation&lt;/strong>: Long enough to matter, short enough to feel achievable&lt;/li>
+&lt;li>&lt;strong>Comeback Opportunities&lt;/strong>: Bad weeks didn&amp;rsquo;t eliminate entire months&lt;/li>
+&lt;li>&lt;strong>Natural Reset&lt;/strong>: Fresh starts every month kept everyone engaged&lt;/li>
+&lt;/ul>
+&lt;h2>Technical Deep Dive: The Magic Behind the Scenes&lt;span class="hx:absolute hx:-mt-20" id="technical-deep-dive-the-magic-behind-the-scenes">&lt;/span>
+&lt;a href="#technical-deep-dive-the-magic-behind-the-scenes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>Webhook Integration&lt;span class="hx:absolute hx:-mt-20" id="webhook-integration">&lt;/span>
+&lt;a href="#webhook-integration" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-javascript" data-lang="javascript">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Simplified webhook handler
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#a6e22e">app&lt;/span>.&lt;span style="color:#a6e22e">post&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;/github-webhook&amp;#34;&lt;/span>, (&lt;span style="color:#a6e22e">req&lt;/span>, &lt;span style="color:#a6e22e">res&lt;/span>) =&amp;gt; {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">event&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#a6e22e">req&lt;/span>.&lt;span style="color:#a6e22e">headers&lt;/span>[&lt;span style="color:#e6db74">&amp;#34;x-github-event&amp;#34;&lt;/span>];
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">payload&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#a6e22e">req&lt;/span>.&lt;span style="color:#a6e22e">body&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">switch&lt;/span> (&lt;span style="color:#a6e22e">event&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">case&lt;/span> &lt;span style="color:#e6db74">&amp;#34;push&amp;#34;&lt;/span>&lt;span style="color:#f92672">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">awardCommitXP&lt;/span>(&lt;span style="color:#a6e22e">payload&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">break&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">case&lt;/span> &lt;span style="color:#e6db74">&amp;#34;pull_request&amp;#34;&lt;/span>&lt;span style="color:#f92672">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">awardPRXP&lt;/span>(&lt;span style="color:#a6e22e">payload&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">break&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">case&lt;/span> &lt;span style="color:#e6db74">&amp;#34;pull_request_review&amp;#34;&lt;/span>&lt;span style="color:#f92672">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">awardReviewXP&lt;/span>(&lt;span style="color:#a6e22e">payload&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">break&lt;/span>;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>});&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
+&lt;button
+class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
+title="Copy code"
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;h2>Lessons Learned: What We&amp;rsquo;d Do Differently&lt;span class="hx:absolute hx:-mt-20" id="lessons-learned-what-wed-do-differently">&lt;/span>
+&lt;a href="#lessons-learned-what-wed-do-differently" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>The Good&lt;span class="hx:absolute hx:-mt-20" id="the-good">&lt;/span>
+&lt;a href="#the-good" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Simple deployment&lt;/strong>: Minimal infrastructure meant quick iteration&lt;/li>
+&lt;li>&lt;strong>Real-time feedback&lt;/strong>: Instant XP awards kept momentum high&lt;/li>
+&lt;li>&lt;strong>Team buy-in&lt;/strong>: Everyone embraced the system from day one&lt;/li>
+&lt;/ul>
+&lt;h3>The Improvements&lt;span class="hx:absolute hx:-mt-20" id="the-improvements">&lt;/span>
+&lt;a href="#the-improvements" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Anti-gaming measures&lt;/strong>: Some developers found ways to inflate XP, ahem Owen &amp;amp; Brian&lt;/li>
+&lt;li>&lt;strong>Quality metrics&lt;/strong>: We need to balance quantity with code quality&lt;/li>
+&lt;li>&lt;strong>Team achievements&lt;/strong>: Individual focus sometimes overshadowed collaboration&lt;/li>
+&lt;/ul>
+&lt;h3>Knowledge Sharing&lt;span class="hx:absolute hx:-mt-20" id="knowledge-sharing">&lt;/span>
+&lt;a href="#knowledge-sharing" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>An unexpected benefit emerged: developers started sharing strategies for earning XP, which naturally led to:&lt;/p>
+&lt;ul>
+&lt;li>Best practice discussions&lt;/li>
+&lt;li>Code review technique improvements&lt;/li>
+&lt;li>Collaborative problem-solving approaches&lt;/li>
+&lt;/ul>
+&lt;h2>The Hackathon&amp;rsquo;s Lasting Legacy&lt;span class="hx:absolute hx:-mt-20" id="the-hackathons-lasting-legacy">&lt;/span>
+&lt;a href="#the-hackathons-lasting-legacy" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>What started as a four-hour experiment has become an integral part of our development culture. The GitHub Stat Tracker proves that sometimes the best solutions come from:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Tight constraints&lt;/strong> that force creative thinking&lt;/li>
+&lt;li>&lt;strong>Team collaboration&lt;/strong> under pressure&lt;/li>
+&lt;li>&lt;strong>Willingness to experiment&lt;/strong> with unconventional approaches&lt;/li>
+&lt;/ul>
+&lt;h2>Want to Build Your Own?&lt;span class="hx:absolute hx:-mt-20" id="want-to-build-your-own">&lt;/span>
+&lt;a href="#want-to-build-your-own" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Inspired to gamify your own development team? Here are our key recommendations:&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>Start simple&lt;/strong>: Basic webhook + XP calculation goes far&lt;/li>
+&lt;li>&lt;strong>Get team buy-in&lt;/strong>: Success depends on participation&lt;/li>
+&lt;li>&lt;strong>Iterate quickly&lt;/strong>: Listen to feedback and adjust rules&lt;/li>
+&lt;li>&lt;strong>Balance competition&lt;/strong>: Ensure healthy rivalry, not toxic behavior&lt;/li>
+&lt;li>&lt;strong>Celebrate everyone&lt;/strong>: Find ways to recognize all contribution styles&lt;/li>
+&lt;/ol>
+&lt;h2>Conclusion: The Power of Play in Professional Development&lt;span class="hx:absolute hx:-mt-20" id="conclusion-the-power-of-play-in-professional-development">&lt;/span>
+&lt;a href="#conclusion-the-power-of-play-in-professional-development" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The Compass Digital Group GitHub Stat Tracker stands as proof that work doesn&amp;rsquo;t have to feel like work. By introducing game mechanics into our development process, we&amp;rsquo;ve created a more engaging, productive, and collaborative environment.&lt;/p>
+&lt;p>In just four hours, we built something that continues to deliver value months later. But more importantly, we learned that the best productivity tools aren&amp;rsquo;t always the most sophisticated – sometimes they&amp;rsquo;re the ones that make people excited to contribute.&lt;/p>
+&lt;hr>
+&lt;p>&lt;em>Ready to gamify your own development workflow? Connect with us to learn more about implementing GitHub webhook-based stat tracking for your team.&lt;/em>&lt;/p></description></item></channel></rss>

@@ -29,6 +29,7 @@
     "@sidekickicons/react": "^0.13.0",
     "@tabler/icons-react": "^2.46.0",
     "@tailwindcss/forms": "^0.5.7",
+    "@tailwindcss/line-clamp": "^0.4.4",
     "@tiptap/extension-highlight": "^2.5.8",
     "@tiptap/extension-link": "^2.1.16",
     "@tiptap/extension-placeholder": "^2.1.16",

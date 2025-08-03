@@ -9,6 +9,7 @@ import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatB
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
+import EventDrilldownFormsPage from "@/components/organiser/event/forms/EventDrilldownFormsPage";
 import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
@@ -54,6 +55,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
+  const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const router = useRouter();
@@ -86,6 +88,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
         setEventIsActive(event.isActive);
         setEventFormId(event.formId);
+        setEventHideVacancy(event.hideVacancy);
       })
       .finally(async () => {
         await sleep(500);
@@ -140,7 +143,7 @@ export default function EventPage({ params }: EventPageProps) {
           eventPrice={eventPrice}
         />
         <MobileEventDrilldownNavTabs
-          navigationTabs={["Details", "Attendees", "Images", "Settings"]}
+          navigationTabs={["Details", "Attendees", "Forms", "Images", "Settings"]}
           currSidebarPage={currSidebarPage}
           setCurrSidebarPage={setCurrSidebarPage}
         />
@@ -188,6 +191,7 @@ export default function EventPage({ params }: EventPageProps) {
                 setEventMetadata={setEventMetadata}
               />
             )}
+            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} />}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}
@@ -212,6 +216,8 @@ export default function EventPage({ params }: EventPageProps) {
                 setStripeFeeToCustomer={setEventStripeFeeToCustomer}
                 promotionalCodesEnabled={eventPromotionalCodesEnabled}
                 setPromotionalCodesEnabled={setEventPromotionalCodesEnabled}
+                hideVacancy={eventHideVacancy}
+                setHideVacancy={setEventHideVacancy}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

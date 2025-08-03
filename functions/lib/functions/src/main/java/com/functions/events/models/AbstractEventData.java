@@ -57,6 +57,7 @@ public abstract class AbstractEventData {
 	private String eventLink;
 	@Nullable
 	private String formId;
+	private Boolean hideVacancy; // Optional field
 
 	@Data
 	public static class LocationLatLng {

@@ -182,7 +182,11 @@ export async function createFormResponse(formResponse: FormResponse): Promise<Fo
   try {
     const batch = writeBatch(db);
     const docRef = doc(db, FormResponsePaths.Temp + "/" + formResponse.formId + "/" + formResponse.eventId);
-    batch.set(docRef, { ...formResponse, formResponseId: docRef.id as FormResponseId, submissionTime: Timestamp.now() });
+    batch.set(docRef, {
+      ...formResponse,
+      formResponseId: docRef.id as FormResponseId,
+      submissionTime: Timestamp.now(),
+    });
     await batch.commit();
     formsServiceLogger.info(
       `createFormResponse: Form response created with formResponseId: ${docRef.id}, formResponse: ${formResponse}`
@@ -218,6 +222,25 @@ export async function getFormResponse(
   } catch (error) {
     formsServiceLogger.error(
       `getFormResponse: Error getting form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}`
+    );
+    throw error;
+  }
+}
+
+export async function getFormResponsesForEvent(formId: FormId, eventId: EventId): Promise<FormResponse[]> {
+  formsServiceLogger.info(`getFormResponsesForEvent: ${formId}, ${eventId}`);
+  try {
+    const responseCollectionRef = collection(db, "Forms", "FormResponses", "Submitted", formId, eventId);
+    const responsesSnapshot = await getDocs(responseCollectionRef);
+    const responses: FormResponse[] = responsesSnapshot.docs.map((doc) => {
+      const data = doc.data() as FormResponse;
+      return { ...data, formResponseId: doc.id as FormResponseId };
+    });
+
+    return responses;
+  } catch (error) {
+    formsServiceLogger.error(
+      `getFormResponsesForEvent: Error getting form responses for formId: ${formId}, eventId: ${eventId}`
     );
     throw error;
   }
