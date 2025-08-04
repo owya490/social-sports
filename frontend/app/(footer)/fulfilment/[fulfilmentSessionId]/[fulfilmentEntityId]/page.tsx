@@ -93,6 +93,7 @@ const FulfilmentSessionEntityPage = ({
         return;
       }
       router.push(getFulfilmentEntityInfoResponse.url);
+      return;
     case FulfilmentEntityType.FORMS:
       if (getFulfilmentEntityInfoResponse.formId === null || getFulfilmentEntityInfoResponse.eventId === null) {
         fulfilmentSessionEntityPageLogger.error(
