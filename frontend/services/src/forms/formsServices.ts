@@ -7,7 +7,6 @@ import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
 import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormResponsePaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
-import { rateLimitCreateFormResponse } from "./formsUtils/createFormResponseUtils";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
 
@@ -172,10 +171,10 @@ export async function deleteForm(formId: FormId): Promise<void> {
 }
 
 export async function createTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
-  if (!rateLimitCreateFormResponse()) {
-    formsServiceLogger.warn("Rate Limited!!!");
-    throw "createTempFormResponse: Rate Limited";
-  }
+  // if (!rateLimitCreateFormResponse()) {
+  //   formsServiceLogger.warn("Rate Limited!!!");
+  //   throw "createTempFormResponse: Rate Limited";
+  // }
 
   formsServiceLogger.info(`createTempFormResponse: ${formResponse}`);
   try {
