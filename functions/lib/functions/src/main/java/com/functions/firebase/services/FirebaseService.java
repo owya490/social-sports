@@ -44,9 +44,11 @@ public class FirebaseService {
                 "Events/Active/Public",
                 "Events/Active/Private",
                 "Events/InActive/Public",
-                "Events/InActive/Private"
-        );
+                "Events/InActive/Private");
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
+        public static final List<String> FORM_RESPONSE_PATHS = List.of(
+                "Forms/FormResponses/Submitted",
+                "Forms/FormResponses/Temp");
     }
 
     public static final String REGION = "australia-southeast1";
@@ -116,7 +118,8 @@ public class FirebaseService {
 
     public static Optional<CallFirebaseFunctionResponse> callFirebaseFunction(String functionName, Object requestData) {
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION, System.getenv("PROJECT_NAME"), functionName);
+            String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION,
+                    System.getenv("PROJECT_NAME"), functionName);
 
             HttpPost post = new HttpPost(functionUrl);
             post.setHeader("Content-Type", "application/json");

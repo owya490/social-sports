@@ -13,6 +13,11 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.forms.models.DropdownSelectSection;
+import com.functions.forms.models.FormResponse;
+import com.functions.forms.models.FormSection;
+import com.functions.forms.models.TextSection;
+import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsService;
 import com.functions.fulfilment.models.CheckoutFulfilmentSession;
 import com.functions.fulfilment.models.EndFulfilmentEntity;
@@ -80,8 +85,9 @@ public class FulfilmentService {
             Optional<String> formId = FormsService.getFormIdByEventId(eventId);
             if (formId.isPresent()) {
                 for (int i = 0; i < numTickets; i++) {
-                    tempEntities.add(FormsFulfilmentEntity.builder().formResponseId(null)
-                            .type(FulfilmentEntityType.FORMS).build());
+                    tempEntities.add(
+                            FormsFulfilmentEntity.builder().formId(formId.get()).eventId(eventId).formResponseId(null)
+                                    .type(FulfilmentEntityType.FORMS).build());
                 }
             }
         } catch (Exception e) {
@@ -304,6 +310,14 @@ public class FulfilmentService {
                 return Optional.empty();
             }
 
+            // Ensure the current fulfilment entity is completed before proceeding
+            if (completedFulfilmentEntity(fulfilmentSession.getFulfilmentEntityMap().get(currentEntityId))) {
+                logger.info("Current fulfilment entity is completed: {}", currentEntityId);
+            } else {
+                logger.warn("Current fulfilment entity is not completed: {}", currentEntityId);
+                return Optional.empty();
+            }
+
             // Get the next entity
             return getNextFulfilmentEntity(fulfilmentSessionId, currentIndex);
         } catch (Exception e) {
@@ -311,6 +325,54 @@ public class FulfilmentService {
                     fulfilmentSessionId, e);
             return Optional.empty();
         }
+    }
+
+    private static boolean completedFulfilmentEntity(FulfilmentEntity entity) {
+        if (entity == null || entity.getType() == null) {
+            return false;
+        }
+
+        if (entity.getType() == FulfilmentEntityType.FORMS) {
+            FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
+            Optional<FormResponse> maybeFormResponse = FormsRepository.getFormResponseById(formsEntity.getFormId(),
+                    formsEntity.getEventId(),
+                    formsEntity.getFormResponseId());
+            if (maybeFormResponse.isEmpty()) {
+                logger.info("Form response not found for form ID: {}, event ID: {}, response ID: {}",
+                        formsEntity.getFormId(), formsEntity.getEventId(), formsEntity.getFormResponseId());
+                return false;
+            }
+
+            FormResponse formResponse = maybeFormResponse.get();
+            // loop through each form section in response map and check that the answer is
+            // complete
+            for (Map.Entry<String, FormSection> entry : formResponse.getResponseMap().entrySet()) {
+                // for each form section entry, I need to check that the specific type of form
+                // section (e.g., text, dropdown) has an an answer
+                // that is not empty
+                FormSection section = entry.getValue();
+                switch (section.getType()) {
+                    case TEXT:
+                        TextSection textSection = (TextSection) section;
+                        if (textSection.getAnswer() == null || textSection.getAnswer().isEmpty()) {
+                            logger.info("Text section answer is empty for section ID: {}", entry.getKey());
+                            return false;
+                        }
+                        break;
+                    case DROPDOWN_SELECT:
+                        DropdownSelectSection dropdownSection = (DropdownSelectSection) section;
+                        if (dropdownSection.getAnswer() == null || dropdownSection.getAnswer().isEmpty()) {
+                            logger.info("Dropdown section answer is empty for section ID: {}", entry.getKey());
+                            return false;
+                        }
+                        break;
+                    default:
+                        logger.warn("Unknown form section type: {}", section.getType());
+                        return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
