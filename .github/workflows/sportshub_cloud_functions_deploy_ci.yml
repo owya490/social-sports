@@ -10,7 +10,7 @@ name: Deploy cloud functions to Cloud Run and Firebase
 on:
   push:
     branches:
-      - tickets-rebased-on-forms  # TEMPORARY: Trigger only on this branch for ticket types testing
+      - master
 
 jobs:
   deploy-java-cloud-run-functions:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev]  # TEMPORARY: Only deploy to DEV for ticket types changes
+        env: [dev, prod]
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -121,11 +121,11 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy getNextFulfilmentEntity
+      - name: Deploy execNextFulfilmentEntity
         working-directory: functions/lib/functions
         run: |
-          gcloud functions deploy getNextFulfilmentEntity \
-            --entry-point com.functions.fulfilment.controllers.GetNextFulfilmentEntityEndpoint \
+          gcloud functions deploy execNextFulfilmentEntity \
+            --entry-point com.functions.fulfilment.controllers.ExecNextFulfilmentEntityEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
@@ -139,7 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev]  # TEMPORARY: Only deploy to DEV for ticket types changes
+        env: [dev, prod]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -186,8 +186,8 @@ jobs:
           source venv/bin/activate
           firebase use --add ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
 
-      - name: Deploy modified ticket types functions
+      - name: Deploy all python functions
         working-directory: functions
         run: |
           source venv/bin/activate
-          firebase deploy --only functions:get_stripe_checkout_url_by_event_id,functions:stripe_webhook_checkout_fulfilment --force
+          firebase deploy --only functions:move_inactive_events,functions:stripe_webhook_checkout_fulfilment,functions:create_stripe_standard_account,functions:get_stripe_checkout_url_by_event_id,functions:send_email_on_delete_event,functions:send_email_on_create_event,functions:email_reminder,functions:send_email_on_create_event_v2 --force

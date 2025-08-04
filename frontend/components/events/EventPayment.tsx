@@ -169,7 +169,8 @@ export default function EventPayment(props: EventPaymentProps) {
                             eventId: props.eventId,
                             numTickets: attendeeCount,
                           });
-
+                          console.log("fulfilmentSessionId", fulfilmentSessionId);
+                          console.log("fulfilmentEntityId", fulfilmentEntityId);
                           if (!fulfilmentSessionId || !fulfilmentEntityId) {
                             EventPaymentLogger.error(
                               `initFulfilmentSession: Failed to initialize fulfilment session for eventId: ${props.eventId}`
@@ -201,7 +202,7 @@ export default function EventPayment(props: EventPaymentProps) {
                           props.isPrivate,
                           attendeeCount
                         );
-
+                        console.log("stripeCheckoutLink", stripeCheckoutLink);
                         router.push(stripeCheckoutLink);
                       }
                     }}
