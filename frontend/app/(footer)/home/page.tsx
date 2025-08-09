@@ -406,17 +406,17 @@ export default function Home() {
               </p>
             </div>
             {/* Feature Cards */}
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 items-stretch gap-8 md:gap-12 pt-2">
-              <div className="bg-white p-8">
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 items-stretch gap-2 md:gap-12 pt-2">
+              <div className="bg-white p-4 md:p-8">
                 <div className="flex items-start gap-3 mb-2">
                   <CalendarDaysIcon className="w-5 h-5 mt-0.5 text-core-text" />
                   <h4 className="text-lg font-bold text-core-text">Recurring Events</h4>
                 </div>
                 <p className="text-gray-600 leading-relaxed text-xs font-light">
-                  Schedule once, repeat automatically with flexible rules for daily, weekly, or custom cadences.
+                  Schedule once, repeat automatically with flexible rules for daily, weekly, or fortnightly.
                 </p>
               </div>
-              <div className="bg-white p-8">
+              <div className="bg-white p-4 md:p-8">
                 <div className="flex items-start gap-3 mb-2">
                   <ClipboardDocumentListIcon className="w-5 h-5 mt-0.5 text-core-text" />
                   <h4 className="text-lg font-bold text-core-text">Custom Forms</h4>
@@ -425,7 +425,7 @@ export default function Home() {
                   Collect exactly what you need with drag-and-drop fields and validation.
                 </p>
               </div>
-              <div className="bg-white p-8">
+              <div className="bg-white p-4 md:p-8">
                 <div className="flex items-start gap-3 mb-2">
                   <LinkIcon className="w-5 h-5 mt-0.5 text-core-text" />
                   <h4 className="text-lg font-bold text-core-text">Custom Links</h4>
@@ -434,7 +434,7 @@ export default function Home() {
                   Create branded, trackable links for events, forms and teams.
                 </p>
               </div>
-              <div className="bg-white p-8">
+              <div className="bg-white p-4 md:p-8">
                 <div className="flex items-start gap-3 mb-2">
                   <Squares2X2Icon className="w-5 h-5 mt-0.5 text-core-text" />
                   <h4 className="text-lg font-bold text-core-text">Organiser Platform</h4>
@@ -443,7 +443,7 @@ export default function Home() {
                   All-in-one dashboard for events, payments, participants and communication.
                 </p>
               </div>
-              <div className="bg-white p-8">
+              <div className="bg-white p-4 md:p-8">
                 <div className="flex items-start gap-3 mb-2">
                   <EnvelopeIcon className="w-5 h-5 mt-0.5 text-core-text" />
                   <h4 className="text-lg font-bold text-core-text">Email Reminders</h4>
@@ -452,7 +452,7 @@ export default function Home() {
                   Automated reminders and confirmations to keep everyone in the loop.
                 </p>
               </div>
-              <div className="bg-white p-8">
+              <div className="bg-white p-4 md:p-8">
                 <div className="flex items-start gap-3 mb-2">
                   <QrCodeIcon className="w-5 h-5 mt-0.5 text-core-text" />
                   <h4 className="text-lg font-bold text-core-text">QR Code Tickets</h4>
@@ -462,6 +462,26 @@ export default function Home() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tech-centric Platform Section */}
+      <div className="w-screen flex justify-center py-16 bg-gray-50">
+        <div className="screen-width-dashboard px-6 text-center">
+          <h3 className="text-3xl md:text-4xl font-bold text-core-text mb-3">
+            The world’s first tech‑centric sports event platform
+          </h3>
+          <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+            Built on a modern, battle‑tested stack for speed, reliability and scale.
+          </p>
+          <div className="flex-col md:flex-row flex-wrap flex items-center justify-center gap-x-10 gap-y-6">
+            <img src="/vercel.svg" alt="Vercel" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
+            <img src="/next.svg" alt="Next.js" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
+            <img src="/images/company-logos/firebase.svg" alt="Firebase" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
+            <img src="/images/company-logos/google-maps.png" alt="Google Maps" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
+            <img src="/images/company-logos/stripe.png" alt="Stripe" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
+            <img src="/images/company-logos/loops.png" alt="Loops" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
           </div>
         </div>
       </div>
