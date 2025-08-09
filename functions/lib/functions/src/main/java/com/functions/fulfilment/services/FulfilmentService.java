@@ -1,5 +1,6 @@
 package com.functions.fulfilment.services;
 
+import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +38,46 @@ import com.google.cloud.Timestamp;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
+    private static final int CLEANUP_CUTOFF_MINUTES = 30;
+
+    /**
+     * Cleanup fulfilment sessions older than the default cutoff minutes.
+     *
+     * @return number of sessions attempted to delete (same behavior as before)
+     */
+    public static int cleanupOldFulfilmentSessions() throws Exception {
+        return cleanupOldFulfilmentSessions(CLEANUP_CUTOFF_MINUTES);
+    }
+
+    /**
+     * Cleanup fulfilment sessions older than the specified cutoff in minutes.
+     *
+     * @param cutoffMinutes minutes threshold
+     * @return number of sessions attempted to delete
+     * @throws Exception when listing old sessions fails
+     */
+    public static int cleanupOldFulfilmentSessions(int cutoffMinutes) throws Exception {
+        long nowSeconds = Instant.now().getEpochSecond();
+        long cutoffSeconds = nowSeconds - TimeUnit.MINUTES.toSeconds(cutoffMinutes);
+        Timestamp cutoff = Timestamp.ofTimeSecondsAndNanos(cutoffSeconds, 0);
+
+        int deleted = 0;
+        try {
+            List<String> oldSessionIds = FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(cutoff);
+            for (String id : oldSessionIds) {
+                try {
+                    deleteFulfilmentSession(id);
+                    deleted++;
+                } catch (Exception e) {
+                    logger.error("[FulfilmentService] Failed to delete fulfilment session {} during cleanup", id, e);
+                }
+            }
+            return deleted;
+        } catch (Exception e) {
+            logger.error("[FulfilmentService] Error during cleanup of old fulfilment sessions", e);
+            throw e;
+        }
+    }
 
     /**
      * Initializes a checkout fulfilment session for the given event ID.
