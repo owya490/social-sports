@@ -10,6 +10,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 public class EndFulfilmentEntity extends  FulfilmentEntity {
+    private String url;
+    
     {
         setType(FulfilmentEntityType.END);
     }

@@ -1,4 +1,4 @@
-package com.functions.fulfilment.models;
+package com.functions.forms.models;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -9,8 +9,10 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @NoArgsConstructor
-public class StartFulfilmentEntity extends FulfilmentEntity {
+public class FileUploadSection extends FormSection {
+    private String fileUrl;
+
     {
-        setType(FulfilmentEntityType.START);
+        setType(FormSectionType.FILE_UPLOAD);
     }
 }
