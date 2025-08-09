@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import InfiniteCarousel from "./ClubCarousel";
 import ImageHero from "./ImageHero";
 import ImageHeroPhone from "./ImageHeroPhone";
-import InfiniteCarousel from "./ClubCarousel";
 
 export default function Home() {
   return (
@@ -64,23 +64,22 @@ export default function Home() {
       {/* Features Preview Section - Layered on top of image */}
 
       {/* Tech Companies Section */}
-      <div className="w-screen flex justify-center py-32 bg-white z-20 relative">
+      <div className="w-screen flex justify-center pt-32 bg-white z-20 relative">
         <div className="screen-width-dashboard px-6 text-center">
           <h3 className="text-2xl md:text-3xl font-bold text-core-text mb-4">Trusted by sports clubs worldwide</h3>
           <p className="text-gray-600 mb-12 max-w-2xl mx-auto">
             Join innovative sports clubs already using SPORTSHUB to organize their events and build thriving communities
           </p>
-
         </div>
       </div>
-      <div className="w-screen flex justify-center py-32 bg-white z-20 relative">
+      <div className="w-screen flex justify-center bg-white z-20 relative pb-32">
         <div className="md:screen-width-dashboard px-6 text-center">
           <InfiniteCarousel />
         </div>
       </div>
 
       {/* Payments Section */}
-      <div className="w-screen flex justify-center pt-24 bg-white relative overflow-hidden">
+      <div className="w-screen flex justify-center pt-12 bg-white relative overflow-hidden">
         <div className="screen-width-dashboard px-6">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-black text-white px-4 py-1 text-xs font-medium mb-6 rounded-full">
@@ -206,6 +205,164 @@ export default function Home() {
                 </p>
                 <div className="w-full flex justify-center">
                   <img className="w-3/4 h-auto" src="/images/mocks/event-card-stack-mock.png" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Event Create Section */}
+      <div className="w-screen flex justify-center pt-12 bg-white relative overflow-hidden">
+        <div className="screen-width-dashboard px-6">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 bg-black text-white px-4 py-1 text-xs font-medium mb-6 rounded-full">
+              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+              INSTANT PAYMENTS
+            </div>
+            <h3 className="text-4xl md:text-5xl font-bold text-black mb-6 leading-tight">
+              Get paid in{" "}
+              <span className="relative">
+                seconds
+                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></div>
+              </span>
+              , not weeks
+            </h3>
+            <p className="text-xl text-gray-700 mb-8 leading-relaxed">
+              Stripe-powered payments that process instantly. No waiting, no hassle. Just seamless transactions that
+              keep your events running smooth.
+            </p>
+            <div className="flex items-center gap-6 text-gray-600 text-sm z-40">
+              <span className="flex items-center gap-2">
+                <div className="w-1 h-1 bg-black rounded-full"></div>
+                0.2s average processing
+              </span>
+              <span className="flex items-center gap-2">
+                <div className="w-1 h-1 bg-black rounded-full"></div>
+                99.9% uptime
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-hidden justify-center block md:hidden">
+        <div
+          style={{
+            width: "1000px",
+            // height: "400px",
+            position: "relative",
+            inset: "0",
+            borderRadius: "10px",
+            background: "transparent",
+            margin: "0px auto auto",
+            transform: "scale(1.1) rotateX(40deg) rotateY(20deg) rotate(335deg)",
+            overflow: "visible",
+          }}
+        >
+          <img
+            src="/images/mocks/event-create-mock-2.png"
+            alt="Stripe checkout interface"
+            style={{
+              objectFit: "cover",
+              borderRadius: "10px",
+              display: "block",
+            }}
+          />
+        </div>
+      </div>
+      <div className="overflow-hidden justify-center translate-x-20 hidden md:block z-20">
+        <div
+          style={{
+            imageRendering: "auto",
+            width: "1200px",
+            // height: "600px",
+            position: "relative",
+            inset: "0",
+            borderRadius: "10px",
+            background: "transparent",
+            margin: "0px auto auto",
+            transformStyle: "preserve-3d",
+            transform: "rotateX(40deg) rotateY(20deg) rotate(335deg)",
+            overflow: "visible",
+            willChange: "transform",
+          }}
+        >
+          <img
+            src="/images/mocks/event-create-mock-4.png"
+            alt="Stripe checkout interface"
+            style={{
+              objectFit: "cover",
+              borderRadius: "10px",
+              display: "block",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Feature Overview: Additional */}
+      <div className="w-screen flex justify-center pb-24 bg-white relative">
+        <div className="absolute -top-16 md:-top-96 left-0 right-0 h-32 md:h-96 bg-gradient-to-t from-white to-transparent pointer-events-none z-40"></div>
+        <div className="screen-width-dashboard px-6 pt-20">
+          <div className="relative max-w-4xl mx-auto">
+            {/* T Border */}
+            {/* Horizontal line across the top */}
+            <div className="absolute top-0 left-0 right-0">
+              <div className="w-full h-px bg-core-outline"></div>
+            </div>
+            {/* Vertical line down the center */}
+            <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 hidden md:block">
+              <div className="w-px h-full bg-core-outline"></div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 pt-2">
+              {/* Feature: Cross-platform multi search */}
+              <div className="bg-white p-8">
+                <div className="mb-3 text-core-text">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                    <path
+                      fillRule="evenodd"
+                      d="M10.5 3.75a6.75 6.75 0 1 0 3.96 12.24l3.77 3.77a.75.75 0 1 0 1.06-1.06l-3.77-3.77A6.75 6.75 0 0 0 10.5 3.75Zm-5.25 6.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <h4 className="text-lg font-bold text-core-text mb-2">Cross-platform multi search</h4>
+                <p className="text-gray-600 leading-relaxed text-xs font-light mb-4">
+                  Search events, players, and clubs across web and mobile in one unified flow. lightning-fast results,
+                  rich filters and smart suggestions help you find exactly what you need.
+                </p>
+                <div className="flex items-center gap-4 text-gray-600 text-xs">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-1 h-1 bg-black rounded-full"></span> Real-time results
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-1 h-1 bg-black rounded-full"></span> Deep filters
+                  </span>
+                </div>
+              </div>
+
+              {/* Feature: Feature requests at your fingertips */}
+              <div className="bg-white p-8">
+                <div className="mb-3 text-core-text">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                    <path d="M8.5 3a1 1 0 0 1 .97.757l.4 1.595a1 1 0 0 0 .778.739l1.605.321a1 1 0 0 1 .46 1.71l-1.17 1.104a1 1 0 0 0-.3.93l.273 1.61a1 1 0 0 1-1.46 1.06l-1.44-.78a1 1 0 0 0-.94 0l-1.44.78a1 1 0 0 1-1.46-1.06l.272-1.61a1 1 0 0 0-.3-.93L3.55 8.122A1 1 0 0 1 4.01 6.41l1.606-.321a1 1 0 0 0 .778-.739l.4-1.595A1 1 0 0 1 8.5 3Z" />
+                    <path d="M15.75 13.5a.75.75 0 0 1 .75-.75h1.5V11a.75.75 0 0 1 1.5 0v1.75H21a.75.75 0 0 1 0 1.5h-1.5V16a.75.75 0 0 1-1.5 0v-1.75h-1.5a.75.75 0 0 1-.75-.75Z" />
+                  </svg>
+                </div>
+                <h4 className="text-lg font-bold text-core-text mb-2">Feature requests at your fingertips</h4>
+                <p className="text-gray-600 leading-relaxed text-xs font-light mb-4">
+                  Gather ideas, upvotes and feedback directly within SPORTSHUB. Prioritize with real usage signals and
+                  keep your community engaged with transparent roadmaps.
+                </p>
+                <div className="flex items-center gap-4 text-gray-600 text-xs">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-1 h-1 bg-black rounded-full"></span> In-app feedback
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="w-1 h-1 bg-black rounded-full"></span> Public roadmap
+                  </span>
                 </div>
               </div>
             </div>

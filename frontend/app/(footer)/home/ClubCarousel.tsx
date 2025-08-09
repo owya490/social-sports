@@ -20,7 +20,7 @@ const InfiniteCarousel = () => {
   const allImages = [...imagePaths, ...imagePaths]; // Duplicate for seamless loop
 
   return (
-    <div className="relative overflow-hidden w-full bg-white">
+    <div className="relative overflow-hidden w-full bg-white mt-6">
       <div className="flex animate-carousel whitespace-nowrap">
         {allImages.map((src, idx) => (
           <div key={idx} className="flex items-center justify-center w-20 h-20 opacity-80 mx-12 flex-shrink-0">
