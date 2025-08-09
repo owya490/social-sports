@@ -18,6 +18,7 @@ import {
 import { Logger } from "@/observability/logger";
 import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
+  getDeleteFulfilmentSessionUrl,
   getFulfilmentEntityInfoUrl,
   getGetNextFulfilmentEntityUrl,
   getGetPrevFulfilmentEntityUrl,
@@ -302,6 +303,42 @@ export async function updateFulfilmentEntityWithFormResponseId(
   } catch (error) {
     fulfilmentServiceLogger.error(
       `updateFulfilmentEntityWithFormResponseId: Failed to update fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with form response ID ${formResponseId}: ${error}`
+    );
+    throw error;
+  }
+}
+
+export async function deleteFulfilmentSession(fulfilmentSessionId: FulfilmentSessionId): Promise<void> {
+  fulfilmentServiceLogger.info(`deleteFulfilmentSession: Deleting fulfilment session with ID: ${fulfilmentSessionId}`);
+
+  const request: { fulfilmentSessionId: FulfilmentSessionId } = {
+    fulfilmentSessionId,
+  };
+
+  try {
+    const rawResponse = await fetch(getDeleteFulfilmentSessionUrl(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!rawResponse.ok) {
+      const errorResponse = (await rawResponse.json()) as ErrorResponse;
+      fulfilmentServiceLogger.error(
+        `deleteFulfilmentSession: Cloud function error: Failed to delete fulfilment session: ${errorResponse.errorMessage}`
+      );
+      throw new Error(`deleteFulfilmentSession: ${errorResponse.errorMessage}`);
+    }
+
+    fulfilmentServiceLogger.info(
+      `deleteFulfilmentSession: Successfully deleted fulfilment session with ID: ${fulfilmentSessionId}`
+    );
+  } catch (error) {
+    fulfilmentServiceLogger.error(
+      `deleteFulfilmentSession: Failed to delete fulfilment session with ID ${fulfilmentSessionId}: ${error}`
     );
     throw error;
   }

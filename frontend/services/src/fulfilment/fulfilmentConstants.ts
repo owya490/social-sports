@@ -32,3 +32,9 @@ export const UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID_URL = {
   PRODUCTION:
     "https://australia-southeast1-socialsportsprod.cloudfunctions.net/updateFulfilmentEntityWithFormResponseId",
 };
+
+export const DELETE_FULFILMENT_SESSION_URL = {
+  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/deleteFulfilmentSession",
+  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/deleteFulfilmentSession",
+  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/deleteFulfilmentSession",
+};

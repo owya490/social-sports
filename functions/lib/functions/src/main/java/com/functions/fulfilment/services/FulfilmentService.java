@@ -454,8 +454,6 @@ public class FulfilmentService {
         }
     }
 
-    // TODO: clean up the fulfilment session after completion using this delete
-    // method
     public static void deleteFulfilmentSession(String fulfilmentSessionId) {
         try {
             FulfilmentSessionRepository.deleteFulfilmentSession(fulfilmentSessionId);

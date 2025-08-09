@@ -115,3 +115,10 @@ export type UpdateFulfilmentEntityWithFormResponseIdRequest = {
   fulfilmentEntityId: FulfilmentEntityId;
   formResponseId: FormResponseId;
 };
+
+/**
+ * Payload we send to java deleteFulfilmentSession function
+ */
+export type DeleteFulfilmentSessionRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+};

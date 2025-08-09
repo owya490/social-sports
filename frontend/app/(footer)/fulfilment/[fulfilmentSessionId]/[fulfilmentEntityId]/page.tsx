@@ -11,6 +11,7 @@ import {
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import {
+  deleteFulfilmentSession,
   getFulfilmentEntityInfo,
   getNextFulfilmentEntityUrl,
   getPrevFulfilmentEntityUrl,
@@ -142,6 +143,10 @@ const FulfilmentSessionEntityPage = ({
         </FulfilmentEntityPage>
       );
     case FulfilmentEntityType.END:
+      deleteFulfilmentSession(params.fulfilmentSessionId);
+      fulfilmentSessionEntityPageLogger.info(
+        `Fulfilment session ended, fulfilmentSessionId: ${params.fulfilmentSessionId}, fulfilmentEntityId: ${params.fulfilmentEntityId}`
+      );
       if (getFulfilmentEntityInfoResponse.url === null) {
         fulfilmentSessionEntityPageLogger.error(
           `End Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${

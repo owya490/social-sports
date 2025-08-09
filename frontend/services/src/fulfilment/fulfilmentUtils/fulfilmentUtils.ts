@@ -1,5 +1,6 @@
 import { Environment, getEnvironment } from "@/utilities/environment";
 import {
+  DELETE_FULFILMENT_SESSION_URL,
   GET_FULFILMENT_ENTITY_INFO_URL,
   GET_NEXT_FULFILMENT_ENTITY_URL,
   GET_PREV_FULFILMENT_ENTITY_URL,
@@ -30,4 +31,9 @@ export function getFulfilmentEntityInfoUrl(): string {
 export function getUpdateFulfilmentEntityWithFormResponseIdUrl(): string {
   const env = getEnvironment();
   return UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID_URL[`${env || Environment.DEVELOPMENT}`];
+}
+
+export function getDeleteFulfilmentSessionUrl(): string {
+  const env = getEnvironment();
+  return DELETE_FULFILMENT_SESSION_URL[`${env || Environment.DEVELOPMENT}`];
 }

@@ -2,6 +2,8 @@ package com.functions.fulfilment.repositories;
 
 import static com.functions.utils.JavaUtils.objectMapper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -9,9 +11,13 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.FulfilmentSession;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 
 public class FulfilmentSessionRepository {
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSessionRepository.class);
@@ -68,6 +74,23 @@ public class FulfilmentSessionRepository {
         } catch (Exception e) {
             logger.error("Failed to delete fulfilment session for sessionId: {}", sessionId, e);
             throw new Exception("Failed to delete fulfilment session for sessionId: " + sessionId, e);
+        }
+    }
+
+    public static List<String> listFulfilmentSessionIdsOlderThan(Timestamp cutoff) throws Exception {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            Query query = db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)
+                    .whereLessThan("fulfilmentSessionStartTime", cutoff);
+            QuerySnapshot snapshots = query.get().get();
+            List<String> ids = new ArrayList<>();
+            for (QueryDocumentSnapshot doc : snapshots.getDocuments()) {
+                ids.add(doc.getId());
+            }
+            return ids;
+        } catch (Exception e) {
+            logger.error("Failed to list fulfilment sessions older than cutoff: {}", cutoff, e);
+            throw new Exception("Failed to list fulfilment sessions older than cutoff", e);
         }
     }
 }

@@ -96,6 +96,19 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
+      - name: Deploy cleanupOldFulfilmentSessionsCron
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy cleanupOldFulfilmentSessionsCron \
+            --entry-point com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
       - name: Deploy createEvent
         working-directory: functions/lib/functions
         run: |
@@ -146,6 +159,38 @@ jobs:
             --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
+
+      - name: Deploy updateFulfilmentEntityWithFormResponseId
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy updateFulfilmentEntityWithFormResponseId \
+            --entry-point com.functions.fulfilment.controllers.UpdateFulfilmentEntityWithFormResponseIdEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy deleteFulfilmentSession
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy deleteFulfilmentSession \
+            --entry-point com.functions.fulfilment.controllers.DeleteFulfilmentSessionEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy Cloud Scheduler jobs
+        working-directory: functions/lib/functions
+        run: |
+          bash ./deploySchedulerToGCloud.sh || true
+          bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }} || true
 
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}
