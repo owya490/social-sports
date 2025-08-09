@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+  EnvelopeIcon,
+  LinkIcon,
+  QrCodeIcon,
+  Squares2X2Icon,
+} from "@heroicons/react/24/outline";
 import Link from "next/link";
 import InfiniteCarousel from "./ClubCarousel";
 import ImageHero from "./ImageHero";
@@ -66,13 +74,14 @@ export default function Home() {
       {/* Tech Companies Section */}
       <div className="w-screen flex justify-center pt-32 bg-white z-20 relative">
         <div className="screen-width-dashboard px-6 text-center">
-          <h3 className="text-2xl md:text-3xl font-bold text-core-text mb-4">Trusted by sports clubs worldwide</h3>
-          <p className="text-gray-600 mb-12 max-w-2xl mx-auto">
-            Join innovative sports clubs already using SPORTSHUB to organize their events and build thriving communities
+          <h3 className="text-2xl md:text-3xl font-bold text-core-text mb-4">Trusted by sports clubs Australia wide</h3>
+          <p className="text-gray-600 mb-16 max-w-2xl mx-auto">
+            Join innovative sports clubs already using SPORTSHUB to organize their events and build thriving
+            communities.
           </p>
         </div>
       </div>
-      <div className="w-screen flex justify-center bg-white z-20 relative pb-32">
+      <div className="w-screen flex justify-center bg-white z-20 relative pb-28">
         <div className="md:screen-width-dashboard px-6 text-center">
           <InfiniteCarousel />
         </div>
@@ -94,7 +103,7 @@ export default function Home() {
               </span>
               , not weeks
             </h3>
-            <p className="text-xl text-gray-700 mb-8 leading-relaxed">
+            <p className="text-xl text-black font-thin mb-8 leading-relaxed">
               Stripe-powered payments that process instantly. No waiting, no hassle. Just seamless transactions that
               keep your events running smooth.
             </p>
@@ -176,7 +185,7 @@ export default function Home() {
             </div>
 
             {/* Feature Cards */}
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 pt-2">
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 pt-2">
               {/* Feature 1 */}
               <div className="bg-white p-8">
                 <h4 className="text-lg font-bold text-core-text mb-2">Manage events end to end</h4>
@@ -200,8 +209,8 @@ export default function Home() {
               <div className="bg-white p-8">
                 <h4 className="text-lg font-bold text-core-text mb-2">Gain the visibility you need</h4>
                 <p className="text-gray-600 leading-relaxed text-xs font-light mb-2">
-                  Get real-time insights into your events with detailed analytics and reporting. Track participation,
-                  revenue, engagement metrics, and performance to make data-driven decisions.
+                  Get more views on your event with SPORTSHUB — the one-stop shop for sports players. Boost your event's
+                  visibility and manage everything easily with our powerful organiser platform.
                 </p>
                 <div className="w-full flex justify-center">
                   <img className="w-3/4 h-auto" src="/images/mocks/event-card-stack-mock.png" />
@@ -218,92 +227,83 @@ export default function Home() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-black text-white px-4 py-1 text-xs font-medium mb-6 rounded-full">
               <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-              INSTANT PAYMENTS
+              ADVANCED EVENT CREATION
             </div>
             <h3 className="text-4xl md:text-5xl font-bold text-black mb-6 leading-tight">
-              Get paid in{" "}
+              Flexible{" "}
               <span className="relative">
-                seconds
+                event creation
                 <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></div>
               </span>
-              , not weeks
             </h3>
-            <p className="text-xl text-gray-700 mb-8 leading-relaxed">
-              Stripe-powered payments that process instantly. No waiting, no hassle. Just seamless transactions that
-              keep your events running smooth.
+            <p className="text-xl text-black font-thin mb-8 leading-relaxed">
+              Set time, location, capacity, pricing, form fields and more — everything in one simple builder. Make your
+              events pop with our powerful event creation.
             </p>
             <div className="flex items-center gap-6 text-gray-600 text-sm z-40">
               <span className="flex items-center gap-2">
                 <div className="w-1 h-1 bg-black rounded-full"></div>
-                0.2s average processing
+                Recurring Events
               </span>
               <span className="flex items-center gap-2">
                 <div className="w-1 h-1 bg-black rounded-full"></div>
-                99.9% uptime
+                Pricing & Capacity
+              </span>
+              <span className="flex items-center gap-2">
+                <div className="w-1 h-1 bg-black rounded-full"></div>
+                Custom Form Fields
               </span>
             </div>
           </div>
         </div>
       </div>
-
-      <div className="overflow-hidden justify-center block md:hidden">
-        <div
-          style={{
-            width: "1000px",
-            // height: "400px",
-            position: "relative",
-            inset: "0",
-            borderRadius: "10px",
-            background: "transparent",
-            margin: "0px auto auto",
-            transform: "scale(1.1) rotateX(40deg) rotateY(20deg) rotate(335deg)",
-            overflow: "visible",
-          }}
-        >
-          <img
-            src="/images/mocks/event-create-mock-2.png"
-            alt="Stripe checkout interface"
-            style={{
-              objectFit: "cover",
-              borderRadius: "10px",
-              display: "block",
-            }}
-          />
-        </div>
-      </div>
-      <div className="overflow-hidden justify-center translate-x-20 hidden md:block z-20">
-        <div
-          style={{
-            imageRendering: "auto",
-            width: "1200px",
-            // height: "600px",
-            position: "relative",
-            inset: "0",
-            borderRadius: "10px",
-            background: "transparent",
-            margin: "0px auto auto",
-            transformStyle: "preserve-3d",
-            transform: "rotateX(40deg) rotateY(20deg) rotate(335deg)",
-            overflow: "visible",
-            willChange: "transform",
-          }}
-        >
-          <img
-            src="/images/mocks/event-create-mock-4.png"
-            alt="Stripe checkout interface"
-            style={{
-              objectFit: "cover",
-              borderRadius: "10px",
-              display: "block",
-            }}
-          />
+      <div className="overflow-hidden flex justify-center z-20 w-full mt-8 md:mt-0">
+        <div className="screen-width-dashboard">
+          <div
+            className="-translate-y-16 lg:-translate-y-28"
+            style={{ perspective: "1500px", transformStyle: "preserve-3d" }}
+          >
+            <div className="flex justify-center" style={{ transform: "rotateX(50deg)" }}>
+              <div
+                style={{
+                  imageRendering: "auto",
+                  width: "100%",
+                  position: "relative",
+                  inset: "0",
+                  //just border radius top corners
+                  borderTopLeftRadius: "20px",
+                  borderTopRightRadius: "20px",
+                  borderTop: "1px solid lightgray",
+                  borderLeft: "1px solid lightgray",
+                  borderRight: "1px solid lightgray",
+                  paddingTop: "20px",
+                  background: "transparent",
+                  margin: "0px auto auto",
+                  transformStyle: "preserve-3d",
+                  // transform: "rotateX(40deg) rotateY(0deg)",
+                  overflow: "visible",
+                  willChange: "transform",
+                }}
+              >
+                <img
+                  src="/images/mocks/event-create-mock-4.png"
+                  alt="Event creation interface"
+                  style={{
+                    objectFit: "cover",
+                    borderRadius: "20px",
+                    display: "block",
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Feature Overview: Additional */}
       <div className="w-screen flex justify-center pb-24 bg-white relative">
-        <div className="absolute -top-16 md:-top-96 left-0 right-0 h-32 md:h-96 bg-gradient-to-t from-white to-transparent pointer-events-none z-40"></div>
-        <div className="screen-width-dashboard px-6 pt-20">
+        <div className="absolute -top-16 md:-top-64 left-0 right-0 h-32 md:h-64 bg-gradient-to-t from-white to-transparent pointer-events-none z-40"></div>
+        <div className="screen-width-dashboard px-6 pt-12">
           <div className="relative max-w-4xl mx-auto">
             {/* T Border */}
             {/* Horizontal line across the top */}
@@ -314,25 +314,28 @@ export default function Home() {
             <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 hidden md:block">
               <div className="w-px h-full bg-core-outline"></div>
             </div>
+            {/* <div className="absolute bottom-0 left-0 right-0">
+              <div className="w-full h-px bg-core-outline"></div>
+            </div> */}
 
             {/* Feature Cards */}
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 pt-2">
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 pt-2">
               {/* Feature: Cross-platform multi search */}
               <div className="bg-white p-8">
                 <h4 className="text-lg font-bold text-core-text mb-2">Cross-platform multi search</h4>
                 <p className="text-gray-600 leading-relaxed text-xs font-light mb-4">
-                  Search events, players, and clubs across web and mobile in one unified flow. lightning-fast results,
-                  rich filters and smart suggestions help you find exactly what you need.
+                  Search events, players, and clubs across web and mobile in one unified flow. lightning-fast results
+                  and rich filters to help you find exactly what you need.
                 </p>
                 <div className="relative">
                   <img
                     className="w-full h-auto border-t-[1px] border-core-outline border-l-[1px] rounded-tl-xl p-2"
-                    src="/images/mocks/search-bar-mock.png"
+                    src="/images/mocks/search-bar-mock-v3.png"
                     alt="Event management"
                   />
                   {/* Gradient overlays */}
                   <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-white to-transparent rounded-tl-xl pointer-events-none"></div>
-                  <div className="absolute top-0 bottom-0 right-0 w-1/2 bg-gradient-to-l from-white to-transparent rounded-tl-xl pointer-events-none"></div>
+                  <div className="absolute top-0 bottom-0 right-0 w-1/4 bg-gradient-to-l from-white to-transparent rounded-tl-xl pointer-events-none"></div>
                 </div>
               </div>
 
@@ -340,19 +343,87 @@ export default function Home() {
               <div className="bg-white p-8">
                 <h4 className="text-lg font-bold text-core-text mb-2">Feature requests at your fingertips</h4>
                 <p className="text-gray-600 leading-relaxed text-xs font-light mb-4">
-                  Gather ideas, upvotes and feedback directly within SPORTSHUB. Prioritize with real usage signals and
-                  keep your community engaged with transparent roadmaps.
+                  Our features are shaped by the needs of our community. If you have an idea or need a new feature, just
+                  reach out—SPORTSHUB is built for you, with you.
                 </p>
                 <div className="relative">
                   <img
-                    className="w-full h-auto border-t-[1px] border-core-outline border-l-[1px] rounded-tl-xl p-2"
+                    className="w-full h-auto border-t-[1px] border-core-outline border-l-[1px] rounded-tl-xl "
                     src="/images/mocks/business-card-mock.png"
                     alt="Event management"
                   />
                   {/* Gradient overlays */}
                   <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-white to-transparent rounded-tl-xl pointer-events-none"></div>
                   <div className="absolute top-0 bottom-0 right-0 w-1/2 bg-gradient-to-l from-white to-transparent rounded-tl-xl pointer-events-none"></div>
-                </div>              </div>
+                </div>{" "}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Feature Overview: Six Panels */}
+      <div className="w-screen flex justify-center pb-24 bg-white">
+        <div className="screen-width-dashboard px-6">
+          <div className="relative max-w-4xl mx-auto">
+
+
+            {/* Feature Cards */}
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 pt-2">
+              <div className="bg-white p-8">
+                <div className="flex items-start gap-3 mb-2">
+                  <CalendarDaysIcon className="w-5 h-5 mt-0.5 text-core-text" />
+                  <h4 className="text-lg font-bold text-core-text">Recurring Events</h4>
+                </div>
+                <p className="text-gray-600 leading-relaxed text-xs font-light">
+                  Schedule once, repeat automatically with flexible rules for daily, weekly, or custom cadences.
+                </p>
+              </div>
+              <div className="bg-white p-8">
+                <div className="flex items-start gap-3 mb-2">
+                  <ClipboardDocumentListIcon className="w-5 h-5 mt-0.5 text-core-text" />
+                  <h4 className="text-lg font-bold text-core-text">Custom Forms</h4>
+                </div>
+                <p className="text-gray-600 leading-relaxed text-xs font-light">
+                  Collect exactly what you need with drag-and-drop fields and validation.
+                </p>
+              </div>
+              <div className="bg-white p-8">
+                <div className="flex items-start gap-3 mb-2">
+                  <LinkIcon className="w-5 h-5 mt-0.5 text-core-text" />
+                  <h4 className="text-lg font-bold text-core-text">Custom Links</h4>
+                </div>
+                <p className="text-gray-600 leading-relaxed text-xs font-light">
+                  Create branded, trackable links for events, forms and teams.
+                </p>
+              </div>
+              <div className="bg-white p-8">
+                <div className="flex items-start gap-3 mb-2">
+                  <Squares2X2Icon className="w-5 h-5 mt-0.5 text-core-text" />
+                  <h4 className="text-lg font-bold text-core-text">Organiser Platform</h4>
+                </div>
+                <p className="text-gray-600 leading-relaxed text-xs font-light">
+                  All-in-one dashboard for events, payments, participants and communication.
+                </p>
+              </div>
+              <div className="bg-white p-8">
+                <div className="flex items-start gap-3 mb-2">
+                  <EnvelopeIcon className="w-5 h-5 mt-0.5 text-core-text" />
+                  <h4 className="text-lg font-bold text-core-text">Email Reminders</h4>
+                </div>
+                <p className="text-gray-600 leading-relaxed text-xs font-light">
+                  Automated reminders and confirmations to keep everyone in the loop.
+                </p>
+              </div>
+              <div className="bg-white p-8">
+                <div className="flex items-start gap-3 mb-2">
+                  <QrCodeIcon className="w-5 h-5 mt-0.5 text-core-text" />
+                  <h4 className="text-lg font-bold text-core-text">QR Code Tickets</h4>
+                </div>
+                <p className="text-gray-600 leading-relaxed text-xs font-light">
+                  Instant scannable tickets for faster check-in and tighter security.
+                </p>
+              </div>
             </div>
           </div>
         </div>
