@@ -319,52 +319,40 @@ export default function Home() {
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 pt-2">
               {/* Feature: Cross-platform multi search */}
               <div className="bg-white p-8">
-                <div className="mb-3 text-core-text">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                    <path
-                      fillRule="evenodd"
-                      d="M10.5 3.75a6.75 6.75 0 1 0 3.96 12.24l3.77 3.77a.75.75 0 1 0 1.06-1.06l-3.77-3.77A6.75 6.75 0 0 0 10.5 3.75Zm-5.25 6.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
                 <h4 className="text-lg font-bold text-core-text mb-2">Cross-platform multi search</h4>
                 <p className="text-gray-600 leading-relaxed text-xs font-light mb-4">
                   Search events, players, and clubs across web and mobile in one unified flow. lightning-fast results,
                   rich filters and smart suggestions help you find exactly what you need.
                 </p>
-                <div className="flex items-center gap-4 text-gray-600 text-xs">
-                  <span className="inline-flex items-center gap-2">
-                    <span className="w-1 h-1 bg-black rounded-full"></span> Real-time results
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="w-1 h-1 bg-black rounded-full"></span> Deep filters
-                  </span>
+                <div className="relative">
+                  <img
+                    className="w-full h-auto border-t-[1px] border-core-outline border-l-[1px] rounded-tl-xl p-2"
+                    src="/images/mocks/search-bar-mock.png"
+                    alt="Event management"
+                  />
+                  {/* Gradient overlays */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-white to-transparent rounded-tl-xl pointer-events-none"></div>
+                  <div className="absolute top-0 bottom-0 right-0 w-1/2 bg-gradient-to-l from-white to-transparent rounded-tl-xl pointer-events-none"></div>
                 </div>
               </div>
 
               {/* Feature: Feature requests at your fingertips */}
               <div className="bg-white p-8">
-                <div className="mb-3 text-core-text">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                    <path d="M8.5 3a1 1 0 0 1 .97.757l.4 1.595a1 1 0 0 0 .778.739l1.605.321a1 1 0 0 1 .46 1.71l-1.17 1.104a1 1 0 0 0-.3.93l.273 1.61a1 1 0 0 1-1.46 1.06l-1.44-.78a1 1 0 0 0-.94 0l-1.44.78a1 1 0 0 1-1.46-1.06l.272-1.61a1 1 0 0 0-.3-.93L3.55 8.122A1 1 0 0 1 4.01 6.41l1.606-.321a1 1 0 0 0 .778-.739l.4-1.595A1 1 0 0 1 8.5 3Z" />
-                    <path d="M15.75 13.5a.75.75 0 0 1 .75-.75h1.5V11a.75.75 0 0 1 1.5 0v1.75H21a.75.75 0 0 1 0 1.5h-1.5V16a.75.75 0 0 1-1.5 0v-1.75h-1.5a.75.75 0 0 1-.75-.75Z" />
-                  </svg>
-                </div>
                 <h4 className="text-lg font-bold text-core-text mb-2">Feature requests at your fingertips</h4>
                 <p className="text-gray-600 leading-relaxed text-xs font-light mb-4">
                   Gather ideas, upvotes and feedback directly within SPORTSHUB. Prioritize with real usage signals and
                   keep your community engaged with transparent roadmaps.
                 </p>
-                <div className="flex items-center gap-4 text-gray-600 text-xs">
-                  <span className="inline-flex items-center gap-2">
-                    <span className="w-1 h-1 bg-black rounded-full"></span> In-app feedback
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="w-1 h-1 bg-black rounded-full"></span> Public roadmap
-                  </span>
-                </div>
-              </div>
+                <div className="relative">
+                  <img
+                    className="w-full h-auto border-t-[1px] border-core-outline border-l-[1px] rounded-tl-xl p-2"
+                    src="/images/mocks/business-card-mock.png"
+                    alt="Event management"
+                  />
+                  {/* Gradient overlays */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-white to-transparent rounded-tl-xl pointer-events-none"></div>
+                  <div className="absolute top-0 bottom-0 right-0 w-1/2 bg-gradient-to-l from-white to-transparent rounded-tl-xl pointer-events-none"></div>
+                </div>              </div>
             </div>
           </div>
         </div>
