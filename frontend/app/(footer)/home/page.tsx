@@ -366,10 +366,18 @@ export default function Home() {
       <div className="w-screen flex justify-center pb-24 bg-white">
         <div className="screen-width-dashboard px-6">
           <div className="relative max-w-4xl mx-auto">
-
-
+            <div className="max-w-2xl mb-6">
+              <div className="inline-flex items-center gap-2 bg-black text-white px-3 py-1 text-xs font-medium rounded-full mb-3">
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                CORE FEATURES
+              </div>
+              <h3 className="text-3xl md:text-4xl font-bold text-core-text">Everything you need to run your events</h3>
+              <p className="text-black font-thin mt-2 text-sm md:text-base">
+                Modern tools for organisers, clubs and communities.
+              </p>
+            </div>
             {/* Feature Cards */}
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 pt-2">
+            <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 items-stretch gap-8 md:gap-12 pt-2">
               <div className="bg-white p-8">
                 <div className="flex items-start gap-3 mb-2">
                   <CalendarDaysIcon className="w-5 h-5 mt-0.5 text-core-text" />
