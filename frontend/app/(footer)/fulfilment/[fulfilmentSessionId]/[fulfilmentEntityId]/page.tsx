@@ -16,6 +16,7 @@ import {
   getNextFulfilmentEntityUrl,
   getPrevFulfilmentEntityUrl,
 } from "@/services/src/fulfilment/fulfilmentServices";
+import { Alert } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -34,6 +35,10 @@ const FulfilmentSessionEntityPage = ({
     useState<GetFulfilmentEntityInfoResponse | null>(null);
   const formResponderRef = useRef<FormResponderRef>(null);
 
+  // Error state management
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   useEffect(() => {
     const fetchFulfilmentEntityInfo = async () => {
       const { fulfilmentSessionId, fulfilmentEntityId } = params;
@@ -44,40 +49,63 @@ const FulfilmentSessionEntityPage = ({
         fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment entity info ${error}`);
         router.push("/error");
         return;
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchFulfilmentEntityInfo();
   }, []);
 
   const handleNext = async () => {
     try {
+      setLoading(true);
       const nextUrl = await getNextFulfilmentEntityUrl(params.fulfilmentSessionId, params.fulfilmentEntityId);
       if (nextUrl) {
         router.push(nextUrl);
       } else {
         fulfilmentSessionEntityPageLogger.info("No next fulfilment entity available");
+        setLoading(false);
       }
     } catch (error) {
       fulfilmentSessionEntityPageLogger.error(`Error navigating to next entity: ${error}`);
+      setErrorMessage("Failed to navigate to the next step. Please try again.");
+      setShowErrorAlert(true);
+      setLoading(false);
     }
   };
 
   const handlePrev = async () => {
     try {
+      setLoading(true);
       const prevUrl = await getPrevFulfilmentEntityUrl(params.fulfilmentSessionId, params.fulfilmentEntityId);
       if (prevUrl) {
         router.push(prevUrl);
       } else {
         fulfilmentSessionEntityPageLogger.info("No previous fulfilment entity available");
+        setLoading(false);
       }
     } catch (error) {
       fulfilmentSessionEntityPageLogger.error(`Error navigating to previous entity: ${error}`);
+      setErrorMessage("Failed to navigate to the previous step. Please try again.");
+      setShowErrorAlert(true);
+      setLoading(false);
     }
   };
 
   if (loading) {
-    return <Loading />;
+    return (
+      <>
+        <Loading />
+        <Alert
+          open={showErrorAlert}
+          onClose={() => setShowErrorAlert(false)}
+          color="red"
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 w-fit z-50"
+        >
+          {errorMessage}
+        </Alert>
+      </>
+    );
   }
 
   switch (getFulfilmentEntityInfoResponse?.type) {
@@ -91,10 +119,28 @@ const FulfilmentSessionEntityPage = ({
           )}`
         );
         router.push("/error");
-        return;
+        return (
+          <Alert
+            open={showErrorAlert}
+            onClose={() => setShowErrorAlert(false)}
+            color="red"
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 w-fit z-50"
+          >
+            {errorMessage}
+          </Alert>
+        );
       }
       router.push(getFulfilmentEntityInfoResponse.url);
-      return;
+      return (
+        <Alert
+          open={showErrorAlert}
+          onClose={() => setShowErrorAlert(false)}
+          color="red"
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 w-fit z-50"
+        >
+          {errorMessage}
+        </Alert>
+      );
     case FulfilmentEntityType.FORMS:
       if (getFulfilmentEntityInfoResponse.formId === null || getFulfilmentEntityInfoResponse.eventId === null) {
         fulfilmentSessionEntityPageLogger.error(
@@ -127,20 +173,30 @@ const FulfilmentSessionEntityPage = ({
       };
 
       return (
-        <FulfilmentEntityPage onNext={onFormsFulfilmentEntitySaveAndNext} onPrev={async () => await handlePrev()}>
-          <FormResponder
-            ref={formResponderRef}
-            formId={getFulfilmentEntityInfoResponse.formId}
-            eventId={getFulfilmentEntityInfoResponse.eventId}
-            formResponseId={getFulfilmentEntityInfoResponse.formResponseId}
-            fulfilmentInfo={{
-              fulfilmentSessionId: params.fulfilmentSessionId,
-              fulfilmentEntityId: params.fulfilmentEntityId,
-            }}
-            canEditForm={true}
-            isPreview={false}
-          />
-        </FulfilmentEntityPage>
+        <>
+          <FulfilmentEntityPage onNext={onFormsFulfilmentEntitySaveAndNext} onPrev={async () => await handlePrev()}>
+            <FormResponder
+              ref={formResponderRef}
+              formId={getFulfilmentEntityInfoResponse.formId}
+              eventId={getFulfilmentEntityInfoResponse.eventId}
+              formResponseId={getFulfilmentEntityInfoResponse.formResponseId}
+              fulfilmentInfo={{
+                fulfilmentSessionId: params.fulfilmentSessionId,
+                fulfilmentEntityId: params.fulfilmentEntityId,
+              }}
+              canEditForm={true}
+              isPreview={false}
+            />
+          </FulfilmentEntityPage>
+          <Alert
+            open={showErrorAlert}
+            onClose={() => setShowErrorAlert(false)}
+            color="red"
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 w-fit z-50"
+          >
+            {errorMessage}
+          </Alert>
+        </>
       );
     case FulfilmentEntityType.END:
       deleteFulfilmentSession(params.fulfilmentSessionId);
@@ -156,12 +212,42 @@ const FulfilmentSessionEntityPage = ({
           )}`
         );
         router.push("https://sportshub.net.au/dashboard");
-        return;
+        return (
+          <Alert
+            open={showErrorAlert}
+            onClose={() => setShowErrorAlert(false)}
+            color="red"
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 w-fit z-50"
+          >
+            {errorMessage}
+          </Alert>
+        );
       }
       router.push(getFulfilmentEntityInfoResponse.url);
-      return;
+      return (
+        <Alert
+          open={showErrorAlert}
+          onClose={() => setShowErrorAlert(false)}
+          color="red"
+          className="fixed top-4 left-1/2 transform -translate-x-1/2 w-fit z-50"
+        >
+          {errorMessage}
+        </Alert>
+      );
     default:
-      return <div className="mt-14">Unknown Fulfilment Entity Type</div>;
+      return (
+        <>
+          <div className="mt-14">Unknown Fulfilment Entity Type</div>
+          <Alert
+            open={showErrorAlert}
+            onClose={() => setShowErrorAlert(false)}
+            color="red"
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 w-fit z-50"
+          >
+            {errorMessage}
+          </Alert>
+        </>
+      );
   }
 };
 
