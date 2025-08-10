@@ -122,3 +122,19 @@ export type UpdateFulfilmentEntityWithFormResponseIdRequest = {
 export type DeleteFulfilmentSessionRequest = {
   fulfilmentSessionId: FulfilmentSessionId;
 };
+
+/**
+ * Payload we send to java getFulfilmentSessionInfo function
+ */
+export type GetFulfilmentSessionInfoRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  currentFulfilmentEntityId: FulfilmentEntityId | null;
+};
+
+/**
+ *  Payload we receive from java getFulfilmentSessionInfo function
+ */
+export type GetFulfilmentSessionInfoResponse = {
+  fulfilmentEntityTypes: FulfilmentEntityType[];
+  currentEntityIndex: number | null;
+};

@@ -186,6 +186,19 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
+      - name: Deploy getFulfilmentSessiionEntityTypes
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy getFulfilmentSessionEntityTypes \
+            --entry-point com.functions.fulfilment.controllers.GetFulfilmentSessionEntityTypesEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
       - name: Deploy Cloud Scheduler jobs
         working-directory: functions/lib/functions
         run: |

@@ -7,6 +7,7 @@ import {
   FulfilmentSessionType,
   GetFulfilmentEntityInfoRequest,
   GetFulfilmentEntityInfoResponse,
+  GetFulfilmentSessionInfoResponse,
   GetNextFulfilmentEntityRequest,
   GetNextFulfilmentEntityResponse,
   GetPrevFulfilmentEntityRequest,
@@ -20,6 +21,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
   getDeleteFulfilmentSessionUrl,
   getFulfilmentEntityInfoUrl,
+  getGetFulfilmentSessionInfoUrl,
   getGetNextFulfilmentEntityUrl,
   getGetPrevFulfilmentEntityUrl,
   getInitFulfilmentSessionUrl,
@@ -340,6 +342,50 @@ export async function deleteFulfilmentSession(fulfilmentSessionId: FulfilmentSes
     fulfilmentServiceLogger.error(
       `deleteFulfilmentSession: Failed to delete fulfilment session with ID ${fulfilmentSessionId}: ${error}`
     );
+    throw error;
+  }
+}
+
+export async function getFulfilmentSessionInfo(
+  fulfilmentSessionId: FulfilmentSessionId,
+  currentFulfilmentEntityId: FulfilmentEntityId | null
+): Promise<GetFulfilmentSessionInfoResponse> {
+  fulfilmentServiceLogger.info(
+    `getFulfilmentSessionInfo: Fetching fulfilment session info for session ID: ${fulfilmentSessionId}, current entity ID: ${currentFulfilmentEntityId}`
+  );
+
+  const request = {
+    fulfilmentSessionId,
+    currentFulfilmentEntityId,
+  };
+
+  try {
+    const rawResponse = await fetch(getGetFulfilmentSessionInfoUrl(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!rawResponse.ok) {
+      const errorResponse = (await rawResponse.json()) as ErrorResponse;
+      fulfilmentServiceLogger.error(
+        `getFulfilmentSessionInfo: Cloud function error: Failed to fetch fulfilment session info: ${errorResponse.errorMessage}`
+      );
+      throw new Error(`getFulfilmentSessionInfo: ${errorResponse.errorMessage}`);
+    }
+
+    const response = (await rawResponse.json()) as GetFulfilmentSessionInfoResponse;
+    fulfilmentServiceLogger.info(
+      `getFulfilmentSessionInfo: Successfully fetched fulfilment session info for session ID: ${fulfilmentSessionId}: ${JSON.stringify(
+        response
+      )}`
+    );
+    return response;
+  } catch (error) {
+    fulfilmentServiceLogger.error(`getFulfilmentSessionInfo: Failed to fetch fulfilment session info: ${error}`);
     throw error;
   }
 }

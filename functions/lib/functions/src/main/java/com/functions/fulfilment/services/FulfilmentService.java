@@ -29,6 +29,7 @@ import com.functions.fulfilment.models.FulfilmentEntityType;
 import com.functions.fulfilment.models.FulfilmentSession;
 import com.functions.fulfilment.models.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
+import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
@@ -534,6 +535,60 @@ public class FulfilmentService {
         } catch (Exception e) {
             logger.error("Failed to get fulfilment entity info for session ID: {} and entity ID: {}",
                     fulfilmentSessionId, fulfilmentEntityId, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Retrieves fulfilment session information including entity types and current
+     * position.
+     *
+     * @param fulfilmentSessionId       The ID of the fulfilment session
+     * @param currentFulfilmentEntityId The current fulfilment entity ID (optional)
+     * @return Optional containing the response with the list of fulfilment entity
+     *         types and current index, or empty if the session is not found
+     */
+    public static Optional<GetFulfilmentSessionInfoResponse> getFulfilmentSessionInfo(
+            String fulfilmentSessionId, String currentFulfilmentEntityId) {
+        try {
+            Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
+            if (maybeFulfilmentSession.isEmpty()) {
+                logger.error("Fulfilment session not found for ID: {}", fulfilmentSessionId);
+                return Optional.empty();
+            }
+
+            FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+            List<String> fulfilmentEntityIds = fulfilmentSession.getFulfilmentEntityIds();
+            Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
+
+            // Extract the types in the same order as the entity IDs
+            List<FulfilmentEntityType> fulfilmentEntityTypes = fulfilmentEntityIds.stream()
+                    .map(entityId -> {
+                        FulfilmentEntity entity = fulfilmentEntityMap.get(entityId);
+                        return entity != null ? entity.getType() : null;
+                    })
+                    .filter(type -> type != null) // Filter out any null types
+                    .collect(java.util.stream.Collectors.toList());
+
+            // Calculate current index if current entity ID is provided
+            Integer currentEntityIndex = null;
+            if (currentFulfilmentEntityId != null && !currentFulfilmentEntityId.isEmpty()) {
+                int index = fulfilmentEntityIds.indexOf(currentFulfilmentEntityId);
+                if (index != -1) {
+                    currentEntityIndex = index;
+                    logger.info("Current entity index for session {}: {}", fulfilmentSessionId, currentEntityIndex);
+                } else {
+                    logger.warn("Current entity ID {} not found in session {}", currentFulfilmentEntityId,
+                            fulfilmentSessionId);
+                }
+            }
+
+            logger.info("Retrieved {} fulfilment entity types for session: {}",
+                    fulfilmentEntityTypes.size(), fulfilmentSessionId);
+
+            return Optional.of(new GetFulfilmentSessionInfoResponse(fulfilmentEntityTypes, currentEntityIndex));
+        } catch (Exception e) {
+            logger.error("Failed to get fulfilment session info for session ID: {}", fulfilmentSessionId, e);
             return Optional.empty();
         }
     }
