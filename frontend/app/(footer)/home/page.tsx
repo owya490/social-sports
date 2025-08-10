@@ -238,7 +238,7 @@ export default function Home() {
               <div className="bg-white p-8">
                 <h4 className="text-lg font-bold text-core-text mb-2">Gain the visibility you need</h4>
                 <p className="text-gray-600 leading-relaxed text-xs font-light mb-2">
-                  Get more views on your event with SPORTSHUB — the one-stop shop for sports players. Boost your event's
+                  Get more views on your event with SPORTSHUB — the one-stop shop for sports players. Boost your event&apos;s
                   visibility and manage everything easily with our powerful organiser platform.
                 </p>
                 <div className="w-full flex justify-center">
