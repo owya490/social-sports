@@ -10,7 +10,11 @@ const ViewFormResponse = () => {
   const eventId = params?.eventId as EventId;
   const responseId = params?.responseId as FormResponseId;
 
-  return <FormResponder formId={formId} eventId={eventId} formResponseId={responseId} />;
+  return (
+    <div className="py-20">
+      <FormResponder formId={formId} eventId={eventId} formResponseId={responseId} />;
+    </div>
+  );
 };
 
 export default ViewFormResponse;

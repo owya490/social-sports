@@ -8,11 +8,13 @@ import {
   FulfilmentEntityType,
   FulfilmentSessionId,
   GetFulfilmentEntityInfoResponse,
+  GetFulfilmentSessionInfoResponse,
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import {
   deleteFulfilmentSession,
   getFulfilmentEntityInfo,
+  getFulfilmentSessionInfo,
   getNextFulfilmentEntityUrl,
   getPrevFulfilmentEntityUrl,
 } from "@/services/src/fulfilment/fulfilmentServices";
@@ -33,6 +35,7 @@ const FulfilmentSessionEntityPage = ({
   const [loading, setLoading] = useState(true);
   const [getFulfilmentEntityInfoResponse, setGetFulfilmentEntityInfoResponse] =
     useState<GetFulfilmentEntityInfoResponse | null>(null);
+  const [fulfilmentSessionInfo, setFulfilmentSessionInfo] = useState<GetFulfilmentSessionInfoResponse | null>(null);
   const formResponderRef = useRef<FormResponderRef>(null);
 
   // Error state management
@@ -49,11 +52,24 @@ const FulfilmentSessionEntityPage = ({
         fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment entity info ${error}`);
         router.push("/error");
         return;
-      } finally {
-        setLoading(false);
       }
     };
-    fetchFulfilmentEntityInfo();
+    const fetchFulfilmentSessionInfo = async () => {
+      const { fulfilmentSessionId, fulfilmentEntityId } = params;
+      try {
+        const fulfilmentSessionInfo = await getFulfilmentSessionInfo(fulfilmentSessionId, fulfilmentEntityId);
+        setFulfilmentSessionInfo(fulfilmentSessionInfo);
+        console.log("fulfilmentSessionInfo", fulfilmentSessionInfo);
+      } catch (error) {
+        fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment session info ${error}`);
+        router.push("/error");
+        return;
+      }
+    };
+
+    Promise.all([fetchFulfilmentEntityInfo(), fetchFulfilmentSessionInfo()]).then(() => {
+      setLoading(false);
+    });
   }, []);
 
   const handleNext = async () => {
@@ -174,7 +190,11 @@ const FulfilmentSessionEntityPage = ({
 
       return (
         <>
-          <FulfilmentEntityPage onNext={onFormsFulfilmentEntitySaveAndNext} onPrev={async () => await handlePrev()}>
+          <FulfilmentEntityPage
+            onNext={onFormsFulfilmentEntitySaveAndNext}
+            onPrev={async () => await handlePrev()}
+            fulfilmentSessionInfo={fulfilmentSessionInfo}
+          >
             <FormResponder
               ref={formResponderRef}
               formId={getFulfilmentEntityInfoResponse.formId}

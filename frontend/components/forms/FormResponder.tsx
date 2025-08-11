@@ -1,5 +1,5 @@
 "use client";
-import { BlackHighlightButton } from "@/components/elements/HighlightButton";
+import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionResponse";
 import { FormHeaderSectionResponse } from "@/components/forms/sections/form-header-section/FormHeaderSectionResponse";
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
@@ -22,6 +22,8 @@ import { extractFormResponseFromForm } from "@/services/src/forms/formsUtils/cre
 import { findFormResponseDocRef } from "@/services/src/forms/formsUtils/formsUtils";
 import { updateFulfilmentEntityWithFormResponseId } from "@/services/src/fulfilment/fulfilmentServices";
 import { getPublicUserById } from "@/services/src/users/usersService";
+import { ChevronUpIcon } from "@heroicons/react/24/outline";
+import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 
@@ -199,8 +201,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
     }
 
     return (
-      <div className="bg-core-hover min-h-screen pb-24">
-        <div className="pt-20 flex w-screen justify-center">
+      <div className="bg-core-hover">
+        <div className="flex w-screen justify-center">
           <div className="screen-width-primary space-y-8 md:px-32">
             <FormHeaderSectionResponse
               formTitle={form.title}
@@ -239,12 +241,28 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
               }
             })}
             <div className={`w-full ${canEdit ? "flex" : "hidden"}`}>
-              <BlackHighlightButton
-                type="submit"
-                text="Save"
-                className="border-1 px-3 bg-white ml-auto"
-                onClick={onSave}
-              />
+              <div className="w-fit ml-auto bg-white py-2 px-4 rounded-lg flex justify-between gap-4">
+                <InvertedHighlightButton
+                  type="submit"
+                  className="border-1 px-3 bg-white ml-auto"
+                  onClick={onSave}
+                >
+                  <span className="text-sm flex items-center gap-2">
+                    <FloppyDiskIcon className="h-4 w-4" /> Save
+                  </span>
+                </InvertedHighlightButton>
+                <InvertedHighlightButton
+                  type="submit"
+                  className="border-1 px-3 bg-white ml-auto"
+                  onClick={() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                >
+                  <span className="text-sm flex items-center gap-2">
+                    <ChevronUpIcon className="h-4 w-4" /> Return to Top
+                  </span>
+                </InvertedHighlightButton>
+              </div>
             </div>
           </div>
         </div>

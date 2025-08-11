@@ -586,7 +586,8 @@ public class FulfilmentService {
             logger.info("Retrieved {} fulfilment entity types for session: {}",
                     fulfilmentEntityTypes.size(), fulfilmentSessionId);
 
-            return Optional.of(new GetFulfilmentSessionInfoResponse(fulfilmentEntityTypes, currentEntityIndex));
+            return Optional.of(new GetFulfilmentSessionInfoResponse(fulfilmentEntityTypes, currentEntityIndex,
+                    fulfilmentSession.getFulfilmentSessionStartTime()));
         } catch (Exception e) {
             logger.error("Failed to get fulfilment session info for session ID: {}", fulfilmentSessionId, e);
             return Optional.empty();

@@ -12,7 +12,9 @@ const FormPreview = () => {
       <div className="mt-14">
         <OrganiserNavbar currPage="FormsGallery" />
       </div>
-      <FormResponder formId={formId} eventId={""} formResponseId={null} isPreview={true} />;
+      <div className="py-20">
+        <FormResponder formId={formId} eventId={""} formResponseId={null} isPreview={true} />;
+      </div>
     </div>
   );
 };

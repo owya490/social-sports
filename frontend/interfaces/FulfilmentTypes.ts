@@ -1,3 +1,4 @@
+import { Timestamp } from "firebase/firestore";
 import { EventId } from "./EventTypes";
 import { FormId, FormResponseId } from "./FormTypes";
 import { Branded } from "./index";
@@ -137,4 +138,5 @@ export type GetFulfilmentSessionInfoRequest = {
 export type GetFulfilmentSessionInfoResponse = {
   fulfilmentEntityTypes: FulfilmentEntityType[];
   currentEntityIndex: number | null;
+  fulfilmentSessionStartTime: Timestamp;
 };
