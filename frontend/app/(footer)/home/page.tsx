@@ -29,7 +29,7 @@ export default function Home() {
                 <h1 className="hidden md:block text-5xl font-bold text-core-text leading-tight mb-6">
                   SPORTSHUB is a purpose-built platform for sports communities
                 </h1>
-                <h1 className="md:hidden text-6xl font-bold text-core-text leading-tight mb-6 text-center">
+                <h1 className="md:hidden text-5xl font-bold text-core-text leading-tight mb-6 text-center">
                   Streamline your events
                 </h1>
 
@@ -39,14 +39,14 @@ export default function Home() {
                   payments, team management and more.
                 </h2>
 
-                <h2 className="md:hidden text-lg text-gray-600 font-normal leading-relaxed mb-8 text-center">
+                <h2 className="md:hidden text-sm text-gray-600 font-normal leading-relaxed mb-8 text-center">
                   Connect players, organize events, accept payments and build thriving sports communities.
                 </h2>
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
-                    href="/register"
+                    href="/organiser/dashboard"
                     className="bg-core-text text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors duration-200 text-center"
                   >
                     Start organising
@@ -90,7 +90,7 @@ export default function Home() {
       </div>
 
       {/* Modern Feature Tiles (light) under Sports Clubs */}
-      <div className="w-screen bg-white text-core-text flex justify-center pt-8 pb-20 relative">
+      <div className="w-screen bg-white text-core-text flex justify-center pt-8 pb-24 relative">
         <div className="screen-width-dashboard px-6">
           <div className="max-w-4xl">
             <h3 className="text-4xl md:text-6xl font-bold leading-tight">Made for modern sports communities</h3>
@@ -98,7 +98,10 @@ export default function Home() {
               Built with fast execution, relentless focus and a commitment to quality. Switch to a platform crafted for
               clubs, organisers and players.
             </p>
-            <a href="/register" className="inline-flex items-center gap-2 text-core-text hover:text-black mt-4 text-sm">
+            <a
+              href="/organiser/dashboard"
+              className="inline-flex items-center gap-2 text-core-text hover:text-black mt-4 text-sm"
+            >
               Make the switch
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M5.46967 11.4697C5.17678 11.7626 5.17678 12.2374 5.46967 12.5303C5.76256 12.8232 6.23744 12.8232 6.53033 12.5303L10.5303 8.53033C10.8207 8.23999 10.8236 7.77014 10.5368 7.47624L6.63419 3.47624C6.34492 3.17976 5.87009 3.17391 5.57361 3.46318C5.27713 3.75244 5.27128 4.22728 5.56054 4.52376L8.94583 7.99351L5.46967 11.4697Z" />
@@ -117,7 +120,7 @@ export default function Home() {
       </div>
 
       {/* Payments Section */}
-      <div className="w-screen flex justify-center pt-12 bg-white relative overflow-hidden">
+      <div className="w-screen flex justify-center pt-24 bg-white relative overflow-hidden">
         <div className="screen-width-dashboard px-6">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-black text-white px-4 py-1 text-xs font-medium mb-6 rounded-full">
@@ -174,7 +177,7 @@ export default function Home() {
           />
         </div>
       </div>
-      <div className="overflow-hidden justify-center pb-16 translate-x-8 hidden md:block">
+      <div className="overflow-hidden justify-center pb-8 translate-x-8 hidden md:block">
         <div
           style={{
             width: "1200px",
@@ -238,8 +241,8 @@ export default function Home() {
               <div className="bg-white p-8">
                 <h4 className="text-lg font-bold text-core-text mb-2">Gain the visibility you need</h4>
                 <p className="text-gray-600 leading-relaxed text-xs font-light mb-2">
-                  Get more views on your event with SPORTSHUB — the one-stop shop for sports players. Boost your event&apos;s
-                  visibility and manage everything easily with our powerful organiser platform.
+                  Get more views on your event with SPORTSHUB — the one-stop shop for sports players. Boost your
+                  event&apos;s visibility and manage everything easily with our powerful organiser platform.
                 </p>
                 <div className="w-full flex justify-center">
                   <img className="w-3/4 h-auto" src="/images/mocks/event-card-stack-mock.png" />
@@ -251,7 +254,7 @@ export default function Home() {
       </div>
 
       {/* Event Create Section */}
-      <div className="w-screen flex justify-center pt-12 bg-white relative overflow-hidden">
+      <div className="w-screen flex justify-center pt-24 bg-white relative overflow-hidden">
         <div className="screen-width-dashboard px-6">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-black text-white px-4 py-1 text-xs font-medium mb-6 rounded-full">
@@ -332,7 +335,7 @@ export default function Home() {
       {/* Feature Overview: Additional */}
       <div className="w-screen flex justify-center pb-24 bg-white relative">
         <div className="absolute -top-16 md:-top-64 left-0 right-0 h-32 md:h-64 bg-gradient-to-t from-white to-transparent pointer-events-none z-40"></div>
-        <div className="screen-width-dashboard px-6 pt-12">
+        <div className="screen-width-dashboard px-6">
           <div className="relative max-w-4xl mx-auto">
             {/* T Border */}
             {/* Horizontal line across the top */}
@@ -392,7 +395,7 @@ export default function Home() {
       </div>
 
       {/* Feature Overview: Six Panels */}
-      <div className="w-screen flex justify-center pb-24 bg-white">
+      <div className="w-screen flex justify-center py-24 bg-white">
         <div className="screen-width-dashboard px-6">
           <div className="relative max-w-4xl mx-auto">
             <div className="max-w-2xl mb-6">
@@ -467,7 +470,7 @@ export default function Home() {
       </div>
 
       {/* Tech-centric Platform Section */}
-      <div className="w-screen flex justify-center py-16 bg-gray-50">
+      <div className="w-screen flex justify-center py-24 bg-gray-50">
         <div className="screen-width-dashboard px-6 text-center">
           <h3 className="text-3xl md:text-4xl font-bold text-core-text mb-3">
             The world’s first tech‑centric sports event platform
@@ -476,18 +479,18 @@ export default function Home() {
             Built on a modern, battle‑tested stack for speed, reliability and scale.
           </p>
           <div className="flex-col md:flex-row flex-wrap flex items-center justify-center gap-x-10 gap-y-6">
-            <img src="/vercel.svg" alt="Vercel" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
-            <img src="/next.svg" alt="Next.js" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
-            <img src="/images/company-logos/firebase.svg" alt="Firebase" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
-            <img src="/images/company-logos/google-maps.png" alt="Google Maps" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
-            <img src="/images/company-logos/stripe.png" alt="Stripe" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
-            <img src="/images/company-logos/loops.png" alt="Loops" className="h-8 w-auto opacity-80 hover:opacity-100 transition" />
+            <img src="/vercel.svg" alt="Vercel" className="h-6 w-auto" />
+            <img src="/next.svg" alt="Next.js" className="h-6 w-auto" />
+            <img src="/images/company-logos/firebase.svg" alt="Firebase" className="h-6 w-auto" />
+            <img src="/images/company-logos/google-maps.png" alt="Google Maps" className="h-6 w-auto" />
+            <img src="/images/company-logos/stripe.png" alt="Stripe" className="h-6 w-auto" />
+            <img src="/images/company-logos/loops.png" alt="Loops" className="h-6 w-auto" />
           </div>
         </div>
       </div>
 
       {/* Final CTA Section */}
-      <div className="w-screen flex justify-center py-24 bg-gray-50">
+      <div className="w-screen flex justify-center pt-12 pb-28 bg-gray-50">
         <div className="screen-width-dashboard px-6 text-center">
           <h3 className="text-4xl md:text-5xl font-bold text-core-text mb-6">Ready to transform your events?</h3>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -496,7 +499,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/register"
+              href="/organiser/dashboard"
               className="inline-block bg-core-text text-white px-12 py-4 rounded-lg font-semibold text-lg hover:bg-gray-800 transition-colors duration-200"
             >
               Start organizing today
