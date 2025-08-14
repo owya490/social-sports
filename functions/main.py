@@ -12,6 +12,7 @@ from lib.stripe import *
 from lib.stripe.checkout import *
 from lib.stripe.create_account import *
 from lib.stripe.webhooks import *
+from lib.scraping.meetup import *
 
 # Util
 # from lib.utils.firebase_move_data import *
