@@ -499,10 +499,45 @@ public class FulfilmentService {
 
     public static void deleteFulfilmentSession(String fulfilmentSessionId) {
         try {
+            deleteTempFormResponsesForFulfilmentSession(fulfilmentSessionId);
             FulfilmentSessionRepository.deleteFulfilmentSession(fulfilmentSessionId);
             logger.info("Fulfilment session deleted successfully for ID: {}", fulfilmentSessionId);
         } catch (Exception e) {
             logger.error("Failed to delete fulfilment session for ID: {}", fulfilmentSessionId, e);
+        }
+    }
+
+    /**
+     * This function assumes that all form responses in a non-completed fulfilment
+     * session are temporary.
+     */
+    private static void deleteTempFormResponsesForFulfilmentSession(String fulfilmentSessionId) {
+        try {
+            Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
+            if (maybeFulfilmentSession.isEmpty()) {
+                logger.warn("No fulfilment session found for ID: {}", fulfilmentSessionId);
+                return;
+            }
+
+            FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+            Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
+
+            for (FulfilmentEntity entity : fulfilmentEntityMap.values()) {
+                if (entity instanceof FormsFulfilmentEntity) {
+                    FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
+                    if (formsEntity.getFormResponseId() != null) {
+                        FormsRepository.deleteTempFormResponse(formsEntity.getFormId(),
+                                formsEntity.getEventId(), formsEntity.getFormResponseId());
+                        logger.info(
+                                "Deleted temporary form response for form ID: {}, event ID: {}, form response ID: {}, in fulfilment session: {}",
+                                formsEntity.getFormId(), formsEntity.getEventId(), formsEntity.getFormResponseId(),
+                                fulfilmentSessionId);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Failed to delete temporary form responses for fulfilment session ID: {}",
+                    fulfilmentSessionId, e);
         }
     }
 

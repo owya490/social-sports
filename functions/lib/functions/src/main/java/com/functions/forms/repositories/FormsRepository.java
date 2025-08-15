@@ -1,5 +1,6 @@
 package com.functions.forms.repositories;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -25,7 +26,8 @@ public class FormsRepository {
      */
     public static Optional<FormResponse> getFormResponseById(String formId, String eventId, String formResponseId) {
         try {
-            DocumentSnapshot formResponseSnapshot = findFormResponseDocumentSnapshot(formId, eventId, formResponseId);
+            DocumentSnapshot formResponseSnapshot = findFormResponseDocumentSnapshot(formId, eventId, formResponseId,
+                    Optional.empty());
             FormResponse formResponse = FormResponse.fromFirestore(formResponseSnapshot);
 
             return Optional.of(formResponse);
@@ -37,10 +39,10 @@ public class FormsRepository {
     }
 
     private static DocumentSnapshot findFormResponseDocumentSnapshot(String formId, String eventId,
-            String formResponseId) throws Exception {
+            String formResponseId, Optional<List<String>> formResponsePaths) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         try {
-            for (String path : FirebaseService.CollectionPaths.FORM_RESPONSE_PATHS) {
+            for (String path : formResponsePaths.orElse(FirebaseService.CollectionPaths.FORM_RESPONSE_PATHS)) {
                 DocumentReference docRef = db.document(path + "/" + formId + "/" + eventId + "/" + formResponseId);
                 DocumentSnapshot maybeDocSnapshot = docRef.get().get();
                 if (maybeDocSnapshot.exists()) {
@@ -64,4 +66,24 @@ public class FormsRepository {
         }
     }
 
+    public static void deleteTempFormResponse(String formId, String eventId, String formResponseId) throws Exception {
+        try {
+            DocumentSnapshot formResponseSnapshot = findFormResponseDocumentSnapshot(formId, eventId,
+                    formResponseId, Optional.of(List.of(FirebaseService.CollectionPaths.TEMP_FORM_RESPONSE_PATH)));
+            if (formResponseSnapshot.exists()) {
+                DocumentReference docRef = formResponseSnapshot.getReference();
+                docRef.delete().get();
+                logger.info("Deleted temporary form response - formId: {}, eventId: {}, formResponseId: {}",
+                        formId, eventId, formResponseId);
+            } else {
+                logger.warn("Form response not found for deletion - formId: {}, eventId: {}, formResponseId: {}",
+                        formId, eventId, formResponseId);
+            }
+        } catch (Exception e) {
+            logger.error("Error deleting temporary form response - formId: {}, eventId: {}, formResponseId: {}",
+                    formId, eventId, formResponseId, e);
+            throw new Exception("Could not delete temporary form response - formId: " + formId + ", eventId: " + eventId
+                    + ", formResponseId: " + formResponseId, e);
+        }
+    }
 }

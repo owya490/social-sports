@@ -46,9 +46,11 @@ public class FirebaseService {
                 "Events/InActive/Public",
                 "Events/InActive/Private");
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
+        public static final String TEMP_FORM_RESPONSE_PATH = "Forms/FormResponses/Temp";
+        public static final String SUBMITTED_FORM_RESPONSE_PATH = "Forms/FormResponses/Submitted";
         public static final List<String> FORM_RESPONSE_PATHS = List.of(
-                "Forms/FormResponses/Submitted",
-                "Forms/FormResponses/Temp");
+                SUBMITTED_FORM_RESPONSE_PATH,
+                TEMP_FORM_RESPONSE_PATH);
     }
 
     public static final String REGION = "australia-southeast1";
