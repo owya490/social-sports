@@ -109,7 +109,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
           router.push("/error");
           return;
         }
-
+        console.log("BRIAN DEBUG FETCHING FORM DATA", formId, eventId, formResponseId);
         if (isPreview === false) {
           // check the form is actually attached to the event as we are not in preview mode
           const expectedFormId = await getFormIdByEventId(eventId);
@@ -242,11 +242,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
             })}
             <div className={`w-full ${canEdit ? "flex" : "hidden"}`}>
               <div className="w-fit ml-auto bg-white py-2 px-4 rounded-lg flex justify-between gap-4">
-                <InvertedHighlightButton
-                  type="submit"
-                  className="border-1 px-3 bg-white ml-auto"
-                  onClick={onSave}
-                >
+                <InvertedHighlightButton type="submit" className="border-1 px-3 bg-white ml-auto" onClick={onSave}>
                   <span className="text-sm flex items-center gap-2">
                     <FloppyDiskIcon className="h-4 w-4" /> Save
                   </span>
