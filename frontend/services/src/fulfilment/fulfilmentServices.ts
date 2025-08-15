@@ -2,6 +2,7 @@ import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormResponseId } from "@/interfaces/FormTypes";
 import {
+  CompleteFulfilmentSessionRequest,
   FulfilmentEntityId,
   FulfilmentSessionId,
   FulfilmentSessionType,
@@ -19,6 +20,7 @@ import {
 import { Logger } from "@/observability/logger";
 import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
+  getCompleteFulfilmentSessionUrl,
   getDeleteFulfilmentSessionUrl,
   getFulfilmentEntityInfoUrl,
   getGetFulfilmentSessionInfoUrl,
@@ -310,6 +312,7 @@ export async function updateFulfilmentEntityWithFormResponseId(
   }
 }
 
+// TODO: deprecate and remove this function in favour of `completeFulfilmentSession`
 export async function deleteFulfilmentSession(fulfilmentSessionId: FulfilmentSessionId): Promise<void> {
   fulfilmentServiceLogger.info(`deleteFulfilmentSession: Deleting fulfilment session with ID: ${fulfilmentSessionId}`);
 
@@ -386,6 +389,48 @@ export async function getFulfilmentSessionInfo(
     return response;
   } catch (error) {
     fulfilmentServiceLogger.error(`getFulfilmentSessionInfo: Failed to fetch fulfilment session info: ${error}`);
+    throw error;
+  }
+}
+
+export async function completeFulfilmentSession(
+  fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentEntityId: FulfilmentEntityId
+): Promise<void> {
+  fulfilmentServiceLogger.info(
+    `completeFulfilmentSession: Completing fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
+  );
+
+  const request: CompleteFulfilmentSessionRequest = {
+    fulfilmentSessionId,
+    fulfilmentEntityId,
+  };
+
+  try {
+    const rawResponse = await fetch(getCompleteFulfilmentSessionUrl(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!rawResponse.ok) {
+      const errorResponse = (await rawResponse.json()) as ErrorResponse;
+      fulfilmentServiceLogger.error(
+        `completeFulfilmentSession: Cloud function error: Failed to complete fulfilment session: ${errorResponse.errorMessage}`
+      );
+      throw new Error(`completeFulfilmentSession: ${errorResponse.errorMessage}`);
+    }
+
+    fulfilmentServiceLogger.info(
+      `completeFulfilmentSession: Successfully completed fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
+    );
+  } catch (error) {
+    fulfilmentServiceLogger.error(
+      `completeFulfilmentSession: Failed to complete fulfilment session with ID ${fulfilmentSessionId} and entity ID ${fulfilmentEntityId}: ${error}`
+    );
     throw error;
   }
 }

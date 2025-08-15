@@ -12,7 +12,7 @@ import {
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import {
-  deleteFulfilmentSession,
+  completeFulfilmentSession,
   getFulfilmentEntityInfo,
   getFulfilmentSessionInfo,
   getNextFulfilmentEntityUrl,
@@ -225,7 +225,7 @@ const FulfilmentSessionEntityPage = ({
         </>
       );
     case FulfilmentEntityType.END:
-      deleteFulfilmentSession(params.fulfilmentSessionId);
+      completeFulfilmentSession(params.fulfilmentSessionId, params.fulfilmentEntityId);
       fulfilmentSessionEntityPageLogger.info(
         `Fulfilment session ended, fulfilmentSessionId: ${params.fulfilmentSessionId}, fulfilmentEntityId: ${params.fulfilmentEntityId}`
       );

@@ -3,7 +3,7 @@ package com.functions.fulfilment.controllers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.fulfilment.models.requests.DeleteFulfilmentSessionRequest;
+import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.utils.JavaUtils;
@@ -11,9 +11,8 @@ import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
-// TODO: we can probably deprecate and remove this endpoint since we should be using `completeFulfilmentSessionEndpoint` instead
-public class DeleteFulfilmentSessionEndpoint implements HttpFunction {
-    private static final Logger logger = LoggerFactory.getLogger(DeleteFulfilmentSessionEndpoint.class);
+public class CompleteFulfilmentSessionEndpoint implements HttpFunction {
+    private static final Logger logger = LoggerFactory.getLogger(CompleteFulfilmentSessionEndpoint.class);
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
@@ -32,14 +31,14 @@ public class DeleteFulfilmentSessionEndpoint implements HttpFunction {
         if (!(request.getMethod().equalsIgnoreCase("POST"))) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
-                    "[DeleteFulfilmentSessionEndpoint] DeleteFulfilmentSessionEndpoint only supports POST requests.")));
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse("The CompleteFulfilmentSessionEndpoint only supports POST requests.")));
             return;
         }
 
-        DeleteFulfilmentSessionRequest data;
+        CompleteFulfilmentSessionRequest data;
         try {
-            data = JavaUtils.objectMapper.readValue(request.getReader(), DeleteFulfilmentSessionRequest.class);
+            data = JavaUtils.objectMapper.readValue(request.getReader(), CompleteFulfilmentSessionRequest.class);
         } catch (Exception e) {
             response.setStatusCode(400);
             logger.error("Could not parse input:", e);
@@ -48,16 +47,24 @@ public class DeleteFulfilmentSessionEndpoint implements HttpFunction {
             return;
         }
 
-        try {
-            FulfilmentService.deleteFulfilmentSession(data.fulfilmentSessionId());
-            logger.info("Fulfilment session deleted for ID: {}", data.fulfilmentSessionId());
+        boolean success = FulfilmentService.completeFulfilmentSession(data.fulfilmentSessionId(),
+                data.fulfilmentEntityId());
+
+        if (success) {
+            logger.info(
+                    "[CompleteFulfilmentSessionEndpoint] Fulfilment session completed successfully: {} for entity: {}",
+                    data.fulfilmentSessionId(), data.fulfilmentEntityId());
+
             response.setStatusCode(200);
-            response.getWriter().write("Fulfilment session deleted successfully.\n");
-        } catch (Exception e) {
-            logger.error("Failed to delete fulfilment session for ID: {}", data.fulfilmentSessionId(), e);
+            response.getWriter().write(
+                    "Fulfilment session completed successfully.");
+        } else {
+            logger.error("Failed to complete fulfilment session for ID: {} and entity ID: {}",
+                    data.fulfilmentSessionId(), data.fulfilmentEntityId());
             response.setStatusCode(500);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Failed to delete fulfilment session for ID: " + data.fulfilmentSessionId())));
+                    new ErrorResponse("Failed to complete fulfilment session for ID: " + data.fulfilmentSessionId() +
+                            " and entity ID: " + data.fulfilmentEntityId())));
         }
     }
 }

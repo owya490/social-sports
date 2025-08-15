@@ -269,6 +269,30 @@ public class FulfilmentService {
         }
     }
 
+    private static void copyTempFormResponsesToSubmitted(FulfilmentSession fulfilmentSession) {
+        try {
+            logger.info("[FulfilmentService] Copying temporary form responses to submitted for session ID: {}",
+                    fulfilmentSession.getId());
+
+            // Loop through all fulfilment entities in the session
+            for (String entityId : fulfilmentSession.getFulfilmentEntityIds()) {
+                FulfilmentEntity entity = fulfilmentSession.getFulfilmentEntityMap().get(entityId);
+                if (entity == null || entity.getType() != FulfilmentEntityType.FORMS) {
+                    continue; // Only process FORMS entities
+                }
+
+                FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
+                FormsRepository.copyTempFormResponseToSubmitted(formsEntity.getFormId(), formsEntity.getEventId(),
+                        formsEntity.getFormResponseId());
+
+                logger.info("Copied temporary form response to submitted for entity ID: {}, {}", entityId, entity);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to copy temporary form responses to submitted for session ID: {}",
+                    fulfilmentSession.getId(), e);
+        }
+    }
+
     private static Optional<GetPrevFulfilmentEntityResponse> getPrevFulfilmentEntity(
             String fulfilmentSessionId, int currentIndex) {
         try {
@@ -667,6 +691,48 @@ public class FulfilmentService {
         } catch (Exception e) {
             logger.error(
                     "Failed to update fulfilment entity with form response ID for session ID: {} and entity ID: {}",
+                    fulfilmentSessionId, fulfilmentEntityId, e);
+            return false;
+        }
+    }
+
+    /**
+     * Completes a fulfilment session. The entity ID passed in MUST correspond to an
+     * `END` fulfilment entity type.
+     * 
+     * @param fulfilmentSessionId The ID of the fulfilment session to complete
+     * @param fulfilmentEntityId  Should be the fulfilment entity ID of an `END`
+     *                            fulfilment entity; otherwise, we will fail the
+     *                            completion
+     * @return true if the completion was successful, false otherwise
+     */
+    public static boolean completeFulfilmentSession(String fulfilmentSessionId, String fulfilmentEntityId) {
+        try {
+            Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
+            if (maybeFulfilmentSession.isEmpty()) {
+                logger.error("Fulfilment session not found for ID: {}", fulfilmentSessionId);
+                return false;
+            }
+
+            FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+            Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
+
+            FulfilmentEntity entity = fulfilmentEntityMap.get(fulfilmentEntityId);
+            if (entity == null || entity.getType() != FulfilmentEntityType.END) {
+                logger.error("Invalid fulfilment entity ID: {} for entity: {} in session: {}", fulfilmentEntityId,
+                        entity,
+                        fulfilmentSessionId);
+                return false;
+            }
+
+            copyTempFormResponsesToSubmitted(fulfilmentSession);
+            deleteFulfilmentSession(fulfilmentSessionId);
+
+            logger.info("Fulfilment session completed successfully for ID: {} and entity ID: {}",
+                    fulfilmentSessionId, fulfilmentEntityId);
+            return true;
+        } catch (Exception e) {
+            logger.error("Failed to complete fulfilment session for ID: {} and entity ID: {}",
                     fulfilmentSessionId, fulfilmentEntityId, e);
             return false;
         }

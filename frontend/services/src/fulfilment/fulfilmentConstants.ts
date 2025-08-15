@@ -44,3 +44,9 @@ export const GET_FULFILMENT_SESSION_INFO_URL = {
   PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/getFulfilmentSessionInfo",
   PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/getFulfilmentSessionInfo",
 };
+
+export const COMPLETE_FULFILMENT_SESSION_URL = {
+  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/completeFulfilmentSession",
+  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/completeFulfilmentSession",
+  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/completeFulfilmentSession",
+};

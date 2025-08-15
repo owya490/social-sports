@@ -1,6 +1,7 @@
 package com.functions.forms.repositories;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -84,6 +85,41 @@ public class FormsRepository {
                     formId, eventId, formResponseId, e);
             throw new Exception("Could not delete temporary form response - formId: " + formId + ", eventId: " + eventId
                     + ", formResponseId: " + formResponseId, e);
+        }
+    }
+
+    public static void copyTempFormResponseToSubmitted(String formId, String eventId, String formResponseId)
+            throws Exception {
+        try {
+            DocumentSnapshot tempResponseSnapshot = findFormResponseDocumentSnapshot(formId, eventId,
+                    formResponseId, Optional.of(List.of(FirebaseService.CollectionPaths.TEMP_FORM_RESPONSE_PATH)));
+            if (tempResponseSnapshot.exists()) {
+                DocumentReference tempDocRef = tempResponseSnapshot.getReference();
+                DocumentReference submittedDocRef = FirebaseService.getFirestore()
+                        .document(FirebaseService.CollectionPaths.SUBMITTED_FORM_RESPONSE_PATH + "/" + formId + "/"
+                                + eventId + "/" + formResponseId);
+                Map<String, Object> maybeData = tempResponseSnapshot.getData();
+                if (maybeData == null) {
+                    throw new Exception("Temporary form response data is null - formId: " + formId + ", eventId: "
+                            + eventId + ", formResponseId: " + formResponseId);
+                }
+                submittedDocRef.set(maybeData).get();
+                tempDocRef.delete().get();
+                logger.info("Copied temporary form response to submitted - formId: {}, eventId: {}, formResponseId: {}",
+                        formId, eventId, formResponseId);
+            } else {
+                logger.warn(
+                        "Temporary form response not found for copying - formId: {}, eventId: {}, formResponseId: {}",
+                        formId, eventId, formResponseId);
+            }
+        } catch (Exception e) {
+            logger.error(
+                    "Error copying temporary form response to submitted - formId: {}, eventId: {}, formResponseId: {}",
+                    formId, eventId, formResponseId, e);
+            throw new Exception(
+                    "Could not copy temporary form response to submitted - formId: " + formId + ", eventId: "
+                            + eventId + ", formResponseId: " + formResponseId,
+                    e);
         }
     }
 }

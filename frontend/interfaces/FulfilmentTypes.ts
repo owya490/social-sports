@@ -140,3 +140,15 @@ export type GetFulfilmentSessionInfoResponse = {
   currentEntityIndex: number | null;
   fulfilmentSessionStartTime: Timestamp;
 };
+
+/**
+ * Payload we send to java completeFulfilmentSession function
+ */
+export type CompleteFulfilmentSessionRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  /**
+   * Should be the fulfilment entity ID of an entity of `END` type.
+   * Otherwise, the endpoint will return unsuccessful response.
+   */
+  fulfilmentEntityId: FulfilmentEntityId;
+};

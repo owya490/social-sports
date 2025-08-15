@@ -8,7 +8,7 @@ import com.functions.fulfilment.models.FulfilmentEntityType;
 import com.google.cloud.Timestamp;
 
 public record GetFulfilmentSessionInfoResponse(
-        List<FulfilmentEntityType> fulfilmentEntityTypes,
-        @Nullable Integer currentEntityIndex,
-        Timestamp fulfilmentSessionStartTime) {
+                List<FulfilmentEntityType> fulfilmentEntityTypes,
+                @Nullable Integer currentEntityIndex,
+                Timestamp fulfilmentSessionStartTime) {
 }
