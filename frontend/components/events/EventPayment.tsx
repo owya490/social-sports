@@ -186,7 +186,8 @@ export default function EventPayment(props: EventPaymentProps) {
                             return;
                           }
 
-                          router.push(nextEntityUrl);
+                          window.open(nextEntityUrl, "_blank", "noopener,noreferrer");
+                          props.setLoading(false);
                           return;
 
                           // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
