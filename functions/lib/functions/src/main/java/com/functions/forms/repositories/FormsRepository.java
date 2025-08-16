@@ -1,7 +1,6 @@
 package com.functions.forms.repositories;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -88,38 +87,85 @@ public class FormsRepository {
         }
     }
 
-    public static void copyTempFormResponseToSubmitted(String formId, String eventId, String formResponseId)
+    /**
+     * Retrieves a temporary FormResponse by ID
+     * 
+     * @param formId         The form ID
+     * @param eventId        The event ID
+     * @param formResponseId The form response ID
+     * @return Optional containing the FormResponse if found, empty otherwise
+     */
+    public static FormResponse getTempFormResponseById(String formId, String eventId, String formResponseId)
             throws Exception {
         try {
-            DocumentSnapshot tempResponseSnapshot = findFormResponseDocumentSnapshot(formId, eventId,
-                    formResponseId, Optional.of(List.of(FirebaseService.CollectionPaths.TEMP_FORM_RESPONSE_PATH)));
-            if (tempResponseSnapshot.exists()) {
-                DocumentReference tempDocRef = tempResponseSnapshot.getReference();
-                DocumentReference submittedDocRef = FirebaseService.getFirestore()
-                        .document(FirebaseService.CollectionPaths.SUBMITTED_FORM_RESPONSE_PATH + "/" + formId + "/"
-                                + eventId + "/" + formResponseId);
-                Map<String, Object> maybeData = tempResponseSnapshot.getData();
-                if (maybeData == null) {
-                    throw new Exception("Temporary form response data is null - formId: " + formId + ", eventId: "
-                            + eventId + ", formResponseId: " + formResponseId);
-                }
-                submittedDocRef.set(maybeData).get();
-                tempDocRef.delete().get();
-                logger.info("Copied temporary form response to submitted - formId: {}, eventId: {}, formResponseId: {}",
-                        formId, eventId, formResponseId);
-            } else {
-                logger.warn(
-                        "Temporary form response not found for copying - formId: {}, eventId: {}, formResponseId: {}",
-                        formId, eventId, formResponseId);
-            }
+            DocumentSnapshot formResponseSnapshot = findFormResponseDocumentSnapshot(formId, eventId, formResponseId,
+                    Optional.of(List.of(FirebaseService.CollectionPaths.TEMP_FORM_RESPONSE_PATH)));
+            FormResponse formResponse = FormResponse.fromFirestore(formResponseSnapshot);
+            return formResponse;
         } catch (Exception e) {
             logger.error(
-                    "Error copying temporary form response to submitted - formId: {}, eventId: {}, formResponseId: {}",
+                    "Error retrieving temporary form response by IDs - formId: {}, eventId: {}, formResponseId: {}",
                     formId, eventId, formResponseId, e);
             throw new Exception(
-                    "Could not copy temporary form response to submitted - formId: " + formId + ", eventId: "
-                            + eventId + ", formResponseId: " + formResponseId,
+                    "Could not retrieve temporary form response - formId: " + formId + ", eventId: " + eventId
+                            + ", formResponseId: " + formResponseId,
                     e);
+        }
+    }
+
+    /**
+     * Saves a FormResponse to the submitted collection
+     * 
+     * @param formResponse The FormResponse to save
+     * @throws Exception if there's an error saving the form response
+     */
+    public static void saveSubmittedFormResponse(FormResponse formResponse) throws Exception {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+
+            String docPath = FirebaseService.CollectionPaths.SUBMITTED_FORM_RESPONSE_PATH + "/" +
+                    formResponse.getFormId() + "/" + formResponse.getEventId() + "/" + formResponse.getFormResponseId();
+
+            DocumentReference docRef = db.document(docPath);
+            docRef.set(formResponse).get();
+
+            logger.info("Saved submitted form response - formId: {}, eventId: {}, formResponseId: {}",
+                    formResponse.getFormId(), formResponse.getEventId(), formResponse.getFormResponseId());
+        } catch (Exception e) {
+            logger.error("Error saving submitted form response - formId: {}, eventId: {}, formResponseId: {}",
+                    formResponse.getFormId(), formResponse.getEventId(), formResponse.getFormResponseId(), e);
+            throw new Exception("Could not save submitted form response - formId: " + formResponse.getFormId() +
+                    ", eventId: " + formResponse.getEventId() + ", formResponseId: " + formResponse.getFormResponseId(),
+                    e);
+        }
+    }
+
+    /**
+     * Saves a FormResponse as a temporary submission and returns the
+     * formResponseId
+     * 
+     * @param formResponse The FormResponse to save
+     * @return formResponseId
+     * @throws Exception if there's an error saving the form response
+     */
+    public static void saveTempFormResponse(FormResponse formResponse) throws Exception {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+
+            String docPath = FirebaseService.CollectionPaths.TEMP_FORM_RESPONSE_PATH + "/" +
+                    formResponse.getFormId() + "/" + formResponse.getEventId() + "/" + formResponse.getFormResponseId();
+
+            DocumentReference docRef = db.document(docPath);
+            docRef.set(formResponse).get();
+
+            logger.info("Saved temporary form response - formId: {}, eventId: {}, formResponseId: {}",
+                    formResponse.getFormId(), formResponse.getEventId(), formResponse.getFormResponseId());
+            return;
+        } catch (Exception e) {
+            logger.error("Error saving temporary form response - formId: {}, eventId: {}",
+                    formResponse.getFormId(), formResponse.getEventId(), e);
+            throw new Exception("Could not save temporary form response - formId: " + formResponse.getFormId() +
+                    ", eventId: " + formResponse.getEventId(), e);
         }
     }
 }

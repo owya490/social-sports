@@ -129,7 +129,8 @@ public class FulfilmentService {
             if (formId.isPresent()) {
                 for (int i = 0; i < numTickets; i++) {
                     tempEntities.add(
-                            FormsFulfilmentEntity.builder().formId(formId.get()).eventId(eventId).formResponseId(null)
+                            FormsFulfilmentEntity.builder().formId(formId.get()).eventId(eventId)
+                                    .formResponseId(null)
                                     .type(FulfilmentEntityType.FORMS).build());
                 }
             }
@@ -282,7 +283,7 @@ public class FulfilmentService {
                 }
 
                 FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
-                FormsRepository.copyTempFormResponseToSubmitted(formsEntity.getFormId(), formsEntity.getEventId(),
+                FormsService.copyTempFormResponseToSubmitted(formsEntity.getFormId(), formsEntity.getEventId(),
                         formsEntity.getFormResponseId());
 
                 logger.info("Copied temporary form response to submitted for entity ID: {}, {}", entityId, entity);
@@ -583,12 +584,15 @@ public class FulfilmentService {
                 return Optional.empty();
             }
 
+            logger.info("Retrieved fulfilment entity info for ID: {} in session: {}; entity: {}", fulfilmentEntityId,
+                    fulfilmentSessionId, entity);
+
             return Optional.of(new GetFulfilmentEntityInfoResponse(
                     entity.getType(),
                     getEntityUrl(entity),
                     maybeFulfilmentSession.get().getEventData().getEventId(),
                     maybeFulfilmentSession.get().getEventData().getFormId(),
-                    entity instanceof FormsFulfilmentEntity
+                    entity.getType() == FulfilmentEntityType.FORMS
                             ? ((FormsFulfilmentEntity) entity).getFormResponseId()
                             : null));
         } catch (Exception e) {

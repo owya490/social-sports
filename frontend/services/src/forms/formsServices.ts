@@ -1,14 +1,28 @@
 import { EventId } from "@/interfaces/EventTypes";
-import { EmptyForm, EmptyFormResponse, Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
+import {
+  EmptyForm,
+  EmptyFormResponse,
+  Form,
+  FormId,
+  FormResponse,
+  FormResponseId,
+  SaveTempFormResponseRequest,
+  SaveTempFormResponseResponse,
+} from "@/interfaces/FormTypes";
 import { PrivateUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
 import { getPrivateUserById } from "../users/usersService";
-import { FormPaths, FormResponsePaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
+import { FormPaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
-import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
+import {
+  findFormDoc,
+  findFormResponseDoc,
+  findFormResponseDocRef,
+  getSaveTempFormResponseUrl,
+} from "./formsUtils/formsUtils";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
@@ -170,39 +184,71 @@ export async function deleteForm(formId: FormId): Promise<void> {
   }
 }
 
-export async function createTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
-  // if (!rateLimitCreateFormResponse()) {
-  //   formsServiceLogger.warn("Rate Limited!!!");
-  //   throw "createTempFormResponse: Rate Limited";
-  // }
+export async function saveTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
+  formsServiceLogger.info(`saveTempFormResponse: ${JSON.stringify(formResponse)}`);
 
-  formsServiceLogger.info(`createTempFormResponse: ${formResponse}`);
+  const request: SaveTempFormResponseRequest = { formResponse };
+
   try {
-    const batch = writeBatch(db);
-    const docRef = doc(
-      db,
-      FormResponsePaths.Temp,
-      formResponse.formId,
-      formResponse.eventId,
-      formResponse.formResponseId
-    );
-    batch.set(docRef, {
-      ...formResponse,
-      formResponseId: docRef.id as FormResponseId,
-      submissionTime: Timestamp.now(),
+    const rawResponse = await fetch(getSaveTempFormResponseUrl(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
     });
-    await batch.commit();
+
+    if (!rawResponse.ok) {
+      formsServiceLogger.error(`saveTempFormResponse: Failed to save form response`);
+      throw new Error(`Failed to save form response`);
+    }
+
     formsServiceLogger.info(
-      `createFormResponse: Form response created with formResponseId: ${docRef.id}, formResponse: ${formResponse}`
+      `saveTempFormResponse: Successfully saved form response with formResponseId: ${formResponse.formResponseId}`
     );
-    return docRef.id as FormResponseId;
+    const responseData = (await rawResponse.json()) as SaveTempFormResponseResponse;
+    return responseData.formResponseId;
   } catch (error) {
     formsServiceLogger.error(
-      `createFormResponse Error: Failed to create submitted form response with formResponse: ${formResponse}`
+      `saveTempFormResponse: Failed to create submitted form response with formResponse: ${formResponse}`
     );
     throw error;
   }
 }
+
+// export async function createTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
+//   // if (!rateLimitCreateFormResponse()) {
+//   //   formsServiceLogger.warn("Rate Limited!!!");
+//   //   throw "createTempFormResponse: Rate Limited";
+//   // }
+
+//   formsServiceLogger.info(`createTempFormResponse: ${formResponse}`);
+//   try {
+//     const batch = writeBatch(db);
+//     const docRef = doc(
+//       db,
+//       FormResponsePaths.Temp,
+//       formResponse.formId,
+//       formResponse.eventId,
+//       formResponse.formResponseId
+//     );
+//     batch.set(docRef, {
+//       ...formResponse,
+//       formResponseId: docRef.id as FormResponseId,
+//       submissionTime: Timestamp.now(),
+//     });
+//     await batch.commit();
+//     formsServiceLogger.info(
+//       `createFormResponse: Form response created with formResponseId: ${docRef.id}, formResponse: ${formResponse}`
+//     );
+//     return docRef.id as FormResponseId;
+//   } catch (error) {
+//     formsServiceLogger.error(
+//       `createFormResponse Error: Failed to create submitted form response with formResponse: ${formResponse}`
+//     );
+//     throw error;
+//   }
+// }
 
 export async function getFormResponse(
   formId: FormId,

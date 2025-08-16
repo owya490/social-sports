@@ -1,5 +1,8 @@
 package com.functions.forms.models;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -15,6 +18,15 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 @NoArgsConstructor
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TextSection.class, name = "TEXT"),
+        @JsonSubTypes.Type(value = MultipleChoiceSection.class, name = "MULTIPLE_CHOICE"),
+        @JsonSubTypes.Type(value = DropdownSelectSection.class, name = "DROPDOWN_SELECT"),
+        @JsonSubTypes.Type(value = MultipleChoiceSection.class, name = "BINARY_CHOICE"), // Same as MULTIPLE_CHOICE
+        @JsonSubTypes.Type(value = FileUploadSection.class, name = "FILE_UPLOAD"),
+        @JsonSubTypes.Type(value = DateTimeSection.class, name = "DATE_TIME")
+})
 public abstract class FormSection {
     /**
      * Store the type of FormSection for the purpose of deserialisation from

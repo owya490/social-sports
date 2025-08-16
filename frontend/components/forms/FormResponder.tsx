@@ -11,11 +11,11 @@ import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { FormResponsePaths } from "@/services/src/forms/formsConstants";
 import {
-  createTempFormResponse,
   formsServiceLogger,
   getForm,
   getFormIdByEventId,
   getFormResponse,
+  saveTempFormResponse,
   updateFormResponse,
 } from "@/services/src/forms/formsServices";
 import { extractFormResponseFromForm } from "@/services/src/forms/formsUtils/createFormResponseUtils";
@@ -55,25 +55,27 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
     const [organiser, setOrganiser] = useState<PublicUserData>(EmptyPublicUserData);
     const [loading, setLoading] = useState<boolean>(true);
     const [canEdit, setCanEdit] = useState<boolean>(canEditForm ?? false);
+    const [formResponseIdState, setFormResponseIdState] = useState<FormResponseId | null>(formResponseId);
 
     function setCanEditWrapper(canEdit: boolean) {
       setCanEdit(canEditForm ?? canEdit);
     }
 
     const onSave = async (): Promise<FormResponseId | null> => {
+      formResponderLogger.info(`Saving form response for formId: ${formId}, eventId: ${eventId}`);
       if (!form) return null;
       if (!canEdit) return null;
       const formResponse = extractFormResponseFromForm(formId, eventId, form);
       let resultFormResponseId: FormResponseId;
 
-      if (formResponseId === null) {
+      if (formResponseIdState === null) {
         formResponderLogger.info(
           `Form response ID is null, creating a new form response for formId: ${formId}, eventId: ${eventId}`
         );
-        // Since FormResponseId is null, this is a new form response and we save it to the temp collection
-        const newFormResponseId = await createTempFormResponse(formResponse);
+        const newFormResponseId = await saveTempFormResponse(formResponse);
+        setFormResponseIdState(newFormResponseId);
         formResponderLogger.info(
-          `New form response created with ID: ${newFormResponseId}, formId: ${formId}, eventId: ${eventId}`
+          `New temp form response saved with ID: ${newFormResponseId}, formId: ${formId}, eventId: ${eventId}`
         );
 
         if (fulfilmentInfo) {
@@ -87,8 +89,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       } else {
         // Since FormResponseId is not null, this is an existing form response
         // TODO: are we allowing to edit temp form response only (and not submitted ones)?
-        await updateFormResponse(formId, eventId, formResponseId, formResponse);
-        resultFormResponseId = formResponseId;
+        await updateFormResponse(formId, eventId, formResponseIdState, formResponse);
+        resultFormResponseId = formResponseIdState;
       }
 
       return resultFormResponseId;
@@ -100,7 +102,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       () => ({
         save: onSave,
       }),
-      [form, canEdit, formResponseId, fulfilmentInfo]
+      [form, canEdit, formResponseIdState, fulfilmentInfo]
     );
 
     useEffect(() => {
@@ -109,7 +111,6 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
           router.push("/error");
           return;
         }
-        console.log("BRIAN DEBUG FETCHING FORM DATA", formId, eventId, formResponseId);
         if (isPreview === false) {
           // check the form is actually attached to the event as we are not in preview mode
           const expectedFormId = await getFormIdByEventId(eventId);
@@ -140,14 +141,14 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       };
 
       const fetchFormResponseData = async () => {
-        if (!formResponseId) return;
-        const docRef = await findFormResponseDocRef(formId, eventId, formResponseId);
+        if (!formResponseIdState) return;
+        const docRef = await findFormResponseDocRef(formId, eventId, formResponseIdState);
         if (docRef.path.includes(FormResponsePaths.Temp)) {
           // Since the form response is in the temp collection, we can allow the user to edit the form response
           setCanEditWrapper(true);
         }
         // Now get the form response data itself
-        const formResponseData = await getFormResponse(formId, eventId, formResponseId);
+        const formResponseData = await getFormResponse(formId, eventId, formResponseIdState);
         setForm((prevForm) => {
           if (!prevForm) return prevForm;
           return {
@@ -159,7 +160,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       };
 
       fetchFormData();
-    }, []);
+    }, [formResponseIdState]);
 
     const stringAnswerOnChange = (sectionId: SectionId, newAnswer: string) => {
       if (!form) return;

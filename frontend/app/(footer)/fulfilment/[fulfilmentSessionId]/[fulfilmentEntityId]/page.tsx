@@ -108,6 +108,12 @@ const FulfilmentSessionEntityPage = ({
       }
     } catch (error) {
       fulfilmentSessionEntityPageLogger.error(`Error navigating to previous entity: ${error}`);
+      // We need to update fulfilment entity info response to show the latest answers
+      const getFulfilmentEntityInfoResponse = await getFulfilmentEntityInfo(
+        params.fulfilmentSessionId,
+        params.fulfilmentEntityId
+      );
+      setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
       setErrorMessage("Failed to navigate to the previous step. Please try again.");
       setShowErrorAlert(true);
       setLoading(false);
