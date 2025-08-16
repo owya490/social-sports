@@ -8,11 +8,11 @@ const FormPreview = () => {
   const params = useParams();
   const formId = params?.formId as FormId;
   return (
-    <div>
+    <div className="bg-core-hover h-screen overflow-hidden">
       <div className="mt-14">
         <OrganiserNavbar currPage="FormsGallery" />
       </div>
-      <div className="py-20">
+      <div className="py-20 h-full overflow-y-auto">
         <FormResponder formId={formId} eventId={""} formResponseId={null} isPreview={true} />;
       </div>
     </div>
