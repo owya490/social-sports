@@ -32,6 +32,7 @@ const formResponderLogger = new Logger("formResponderLogger");
 export interface FormResponderRef {
   save: () => Promise<FormResponseId | null>;
   areAllRequiredFieldsFilled: () => boolean;
+  hasUnsavedChanges: () => boolean;
 }
 
 interface FormResponderProps {
@@ -45,10 +46,23 @@ interface FormResponderProps {
     fulfilmentEntityId: FulfilmentEntityId;
   };
   onValidationChange?: (isValid: boolean) => void;
+  onSaveLoadingChange?: (isLoading: boolean) => void;
 }
 
 const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
-  ({ formId, eventId, formResponseId, canEditForm, isPreview, fulfilmentInfo, onValidationChange }, ref) => {
+  (
+    {
+      formId,
+      eventId,
+      formResponseId,
+      canEditForm,
+      isPreview,
+      fulfilmentInfo,
+      onValidationChange,
+      onSaveLoadingChange,
+    },
+    ref
+  ) => {
     // if we are in preview mode, we can't edit the form
     canEditForm = isPreview === true ? false : canEditForm;
 
@@ -59,6 +73,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
     const [saveLoading, setSaveLoading] = useState<boolean>(false);
     const [canEdit, setCanEdit] = useState<boolean>(canEditForm ?? false);
     const [formResponseIdState, setFormResponseIdState] = useState<FormResponseId | null>(formResponseId);
+    const [hasUnsavedChangesState, setHasUnsavedChangesState] = useState<boolean>(false);
     function setCanEditWrapper(canEdit: boolean) {
       setCanEdit(canEditForm ?? canEdit);
     }
@@ -69,6 +84,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       if (!canEdit) return null;
 
       setSaveLoading(true);
+      onSaveLoadingChange?.(true);
       try {
         const formResponse = extractFormResponseFromForm(formId, eventId, form);
         let resultFormResponseId: FormResponseId;
@@ -96,9 +112,13 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
           resultFormResponseId = formResponseIdState;
         }
 
+        // Reset unsaved changes state after successful save
+        setHasUnsavedChangesState(false);
+
         return resultFormResponseId;
       } finally {
         setSaveLoading(false);
+        onSaveLoadingChange?.(false);
       }
     }; // Expose the save function to parent components
     useImperativeHandle(
@@ -106,8 +126,9 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       () => ({
         save: onSave,
         areAllRequiredFieldsFilled,
+        hasUnsavedChanges,
       }),
-      [form, canEdit, formResponseIdState, fulfilmentInfo, saveLoading]
+      [form, canEdit, formResponseIdState, fulfilmentInfo, saveLoading, hasUnsavedChangesState]
     );
 
     useEffect(() => {
@@ -195,8 +216,16 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       });
     };
 
+    // Function to check if there are unsaved changes
+    const hasUnsavedChanges = () => {
+      return hasUnsavedChangesState;
+    };
+
     const stringAnswerOnChange = (sectionId: SectionId, newAnswer: string) => {
       if (!form) return;
+
+      // Mark as having unsaved changes
+      setHasUnsavedChangesState(true);
 
       setForm((prevForm) => {
         if (!prevForm) return prevForm;

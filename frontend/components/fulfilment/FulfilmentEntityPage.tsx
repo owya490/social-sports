@@ -14,6 +14,7 @@ interface FulfilmentEntityPageProps {
   showPrevButton?: boolean;
   fulfilmentSessionInfo: GetFulfilmentSessionInfoResponse | null;
   areAllRequiredFieldsFilled?: boolean;
+  isSaving?: boolean;
 }
 
 const FulfilmentEntityPage = ({
@@ -24,6 +25,7 @@ const FulfilmentEntityPage = ({
   showPrevButton = true,
   fulfilmentSessionInfo,
   areAllRequiredFieldsFilled = true,
+  isSaving = false,
 }: FulfilmentEntityPageProps) => {
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
 
@@ -75,10 +77,15 @@ const FulfilmentEntityPage = ({
           <div className="flex items-center">
             <div
               className={`pointer-events-auto ${
-                showPrevButton && onPrev ? "opacity-100" : "opacity-0 pointer-events-none"
+                showPrevButton && onPrev && !isSaving ? "opacity-100" : "opacity-0 pointer-events-none"
               } transition-opacity duration-200`}
             >
-              <InvertedHighlightButton type="submit" className="border-1 px-4 bg-white" onClick={onPrev || (() => {})}>
+              <InvertedHighlightButton
+                type="submit"
+                className={`border-1 px-4 ${isSaving ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white"}`}
+                onClick={!isSaving ? onPrev || (() => {}) : undefined}
+                disabled={isSaving}
+              >
                 <span className="text-sm flex items-center gap-2">
                   <ChevronLeftIcon className="h-4 w-4" /> Prev
                 </span>
@@ -94,16 +101,16 @@ const FulfilmentEntityPage = ({
 
             <div
               className={`pointer-events-auto ${
-                showNextButton && onNext ? "opacity-100" : "opacity-0 pointer-events-none"
+                showNextButton && onNext && !isSaving ? "opacity-100" : "opacity-0 pointer-events-none"
               } transition-opacity duration-200 ml-auto`}
             >
               <InvertedHighlightButton
                 type="submit"
                 className={`border-1 px-4 ${
-                  areAllRequiredFieldsFilled ? "bg-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  areAllRequiredFieldsFilled && !isSaving ? "bg-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
-                onClick={areAllRequiredFieldsFilled ? onNext || (() => {}) : undefined}
-                disabled={!areAllRequiredFieldsFilled}
+                onClick={areAllRequiredFieldsFilled && !isSaving ? onNext || (() => {}) : undefined}
+                disabled={!areAllRequiredFieldsFilled || isSaving}
               >
                 <span className="text-sm flex items-center gap-2">
                   Next <ChevronRightIcon className="h-4 w-4" />

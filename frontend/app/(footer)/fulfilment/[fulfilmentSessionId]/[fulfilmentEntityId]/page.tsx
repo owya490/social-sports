@@ -2,6 +2,7 @@
 
 import { HighlightButton } from "@/components/elements/HighlightButton";
 import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
+import UnsavedChangesModal from "@/components/forms/UnsavedChangesModal";
 import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
 import Loading from "@/components/loading/Loading";
 import {
@@ -41,6 +42,10 @@ const FulfilmentSessionEntityPage = ({
   const [fulfilmentSessionInfo, setFulfilmentSessionInfo] = useState<GetFulfilmentSessionInfoResponse | null>(null);
   const formResponderRef = useRef<FormResponderRef>(null);
   const [areAllRequiredFieldsFilled, setAreAllRequiredFieldsFilled] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Unsaved changes modal state
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
 
   // Error state management
   const [showErrorAlert, setShowErrorAlert] = useState(false);
@@ -80,6 +85,10 @@ const FulfilmentSessionEntityPage = ({
     setAreAllRequiredFieldsFilled(isValid);
   };
 
+  const handleSaveLoadingChange = (isLoading: boolean) => {
+    setIsSaving(isLoading);
+  };
+
   const handleNext = async () => {
     try {
       setLoading(true);
@@ -105,6 +114,17 @@ const FulfilmentSessionEntityPage = ({
   };
 
   const handlePrev = async () => {
+    // Check if there are unsaved changes
+    if (formResponderRef.current?.hasUnsavedChanges()) {
+      setShowUnsavedChangesModal(true);
+      return;
+    }
+
+    // If no unsaved changes, proceed with navigation
+    await navigateToPrev();
+  };
+
+  const navigateToPrev = async () => {
     try {
       setLoading(true);
       const prevUrl = await getPrevFulfilmentEntityUrl(params.fulfilmentSessionId, params.fulfilmentEntityId);
@@ -126,6 +146,15 @@ const FulfilmentSessionEntityPage = ({
       setShowErrorAlert(true);
       setLoading(false);
     }
+  };
+
+  const handleUnsavedChangesConfirm = async () => {
+    setShowUnsavedChangesModal(false);
+    await navigateToPrev();
+  };
+
+  const handleUnsavedChangesCancel = () => {
+    setShowUnsavedChangesModal(false);
   };
 
   if (loading) {
@@ -215,6 +244,7 @@ const FulfilmentSessionEntityPage = ({
             onPrev={async () => await handlePrev()}
             fulfilmentSessionInfo={fulfilmentSessionInfo}
             areAllRequiredFieldsFilled={areAllRequiredFieldsFilled}
+            isSaving={isSaving}
           >
             <FormResponder
               ref={formResponderRef}
@@ -228,8 +258,14 @@ const FulfilmentSessionEntityPage = ({
               canEditForm={true}
               isPreview={false}
               onValidationChange={handleValidationChange}
+              onSaveLoadingChange={handleSaveLoadingChange}
             />
           </FulfilmentEntityPage>
+          <UnsavedChangesModal
+            isOpen={showUnsavedChangesModal}
+            onConfirm={handleUnsavedChangesConfirm}
+            onCancel={handleUnsavedChangesCancel}
+          />
           <Alert
             open={showErrorAlert}
             onClose={() => setShowErrorAlert(false)}
