@@ -39,7 +39,8 @@ export default function FulfilmentEntityStepper({ fulfilmentSessionInfo }: Fulfi
         // Increment occurrence for this type
         occurrenceByType[stepLabel] = (occurrenceByType[stepLabel] || 0) + 1;
         const showNumber = (countsByType[stepLabel] || 0) > 1;
-        const displayLabel = `${stepLabel}${showNumber ? ` ${occurrenceByType[stepLabel]}` : ""}`;
+        const formattedStepLabel = stepLabel.charAt(0).toUpperCase() + stepLabel.slice(1).toLowerCase();
+        const displayLabel = `${formattedStepLabel}${showNumber ? ` ${occurrenceByType[stepLabel]}` : ""}`;
 
         // Hide labels below md when there are more than 5 steps
         const labelVisibilityClass =
