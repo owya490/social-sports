@@ -2,9 +2,11 @@
 
 import { GetFulfilmentSessionInfoResponse } from "@/interfaces/FulfilmentTypes";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 import FulfilmentEntityStepper from "./FulfilmentEntityStepper";
+import TimeoutWarningModal from "./TimeoutWarningModal";
 
 interface FulfilmentEntityPageProps {
   children: ReactNode;
@@ -27,7 +29,10 @@ const FulfilmentEntityPage = ({
   areAllRequiredFieldsFilled = true,
   isSaving = false,
 }: FulfilmentEntityPageProps) => {
+  const router = useRouter();
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const [sessionExtended, setSessionExtended] = useState(false);
 
   useEffect(() => {
     setRemainingMs(null);
@@ -62,6 +67,31 @@ const FulfilmentEntityPage = ({
     return `${mm}:${ss}`;
   }, [remainingMs]);
 
+  // Handle timeout redirect and warning
+  useEffect(() => {
+    if (remainingMs === null) return;
+
+    // Show warning when 30 seconds remain (and haven't extended session)
+    if (remainingMs <= 30 * 1000 && remainingMs > 0 && !sessionExtended && !showTimeoutWarning) {
+      setShowTimeoutWarning(true);
+    }
+
+    // Redirect when time is up
+    if (remainingMs <= 0) {
+      // Small delay to ensure the timer shows 00:00 before redirecting
+      const timeoutId = setTimeout(() => {
+        router.push("/timeout");
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [remainingMs, router, sessionExtended, showTimeoutWarning]);
+
+  const handleStayActive = () => {
+    setShowTimeoutWarning(false);
+    setSessionExtended(true);
+  };
+
   return (
     <div className="relative min-h-screen bg-core-hover">
       <div className="w-full flex justify-center pb-8 md:pb-16">
@@ -94,7 +124,11 @@ const FulfilmentEntityPage = ({
 
             {/* Centered countdown timer */}
             <div className="flex-1 flex justify-center">
-              <span className="text-xs md:text-sm text-gray-600 select-none">
+              <span
+                className={`text-xs md:text-sm select-none transition-colors duration-300 ${
+                  remainingMs !== null && remainingMs <= 5 * 60 * 1000 ? "text-red-600 font-semibold" : "text-gray-600"
+                }`}
+              >
                 Time Remaining: {formattedRemaining ?? ""}
               </span>
             </div>
@@ -120,6 +154,11 @@ const FulfilmentEntityPage = ({
           </div>
         </div>
       </div>
+      <TimeoutWarningModal
+        isOpen={showTimeoutWarning}
+        remainingSeconds={Math.max(0, Math.floor((remainingMs || 0) / 1000))}
+        onStayActive={handleStayActive}
+      />
     </div>
   );
 };
