@@ -9,11 +9,11 @@ const FormPreview = () => {
   const formId = params?.formId as FormId;
   return (
     <div className="bg-core-hover h-screen overflow-hidden">
-      <div className="mt-14">
+      <div className="mt-8 sm:mt-14">
         <OrganiserNavbar currPage="FormsGallery" />
       </div>
-      <div className="py-20 h-full overflow-y-auto">
-        <FormResponder formId={formId} eventId={""} formResponseId={null} isPreview={true} />;
+      <div className="pt-10 pb-24 sm:pb-20 h-full overflow-y-auto">
+        <FormResponder formId={formId} eventId={""} formResponseId={null} isPreview={true} />
       </div>
     </div>
   );
