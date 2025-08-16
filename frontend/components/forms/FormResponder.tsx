@@ -54,9 +54,9 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
     const [form, setForm] = useState<Form | null>(null);
     const [organiser, setOrganiser] = useState<PublicUserData>(EmptyPublicUserData);
     const [loading, setLoading] = useState<boolean>(true);
+    const [saveLoading, setSaveLoading] = useState<boolean>(false);
     const [canEdit, setCanEdit] = useState<boolean>(canEditForm ?? false);
     const [formResponseIdState, setFormResponseIdState] = useState<FormResponseId | null>(formResponseId);
-
     function setCanEditWrapper(canEdit: boolean) {
       setCanEdit(canEditForm ?? canEdit);
     }
@@ -65,42 +65,46 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       formResponderLogger.info(`Saving form response for formId: ${formId}, eventId: ${eventId}`);
       if (!form) return null;
       if (!canEdit) return null;
-      const formResponse = extractFormResponseFromForm(formId, eventId, form);
-      let resultFormResponseId: FormResponseId;
 
-      if (formResponseIdState === null) {
-        formResponderLogger.info(
-          `Form response ID is null, creating a new form response for formId: ${formId}, eventId: ${eventId}`
-        );
-        const newFormResponseId = await saveTempFormResponse(formResponse);
-        setFormResponseIdState(newFormResponseId);
-        formResponderLogger.info(
-          `New temp form response saved with ID: ${newFormResponseId}, formId: ${formId}, eventId: ${eventId}`
-        );
+      setSaveLoading(true);
+      try {
+        const formResponse = extractFormResponseFromForm(formId, eventId, form);
+        let resultFormResponseId: FormResponseId;
 
-        if (fulfilmentInfo) {
-          await updateFulfilmentEntityWithFormResponseId(
-            fulfilmentInfo.fulfilmentSessionId,
-            fulfilmentInfo.fulfilmentEntityId,
-            newFormResponseId
+        if (formResponseIdState === null) {
+          formResponderLogger.info(
+            `Form response ID is null, creating a new form response for formId: ${formId}, eventId: ${eventId}`
           );
+          const newFormResponseId = await saveTempFormResponse(formResponse);
+          setFormResponseIdState(newFormResponseId);
+          formResponderLogger.info(
+            `New temp form response saved with ID: ${newFormResponseId}, formId: ${formId}, eventId: ${eventId}`
+          );
+
+          if (fulfilmentInfo) {
+            await updateFulfilmentEntityWithFormResponseId(
+              fulfilmentInfo.fulfilmentSessionId,
+              fulfilmentInfo.fulfilmentEntityId,
+              newFormResponseId
+            );
+          }
+          resultFormResponseId = newFormResponseId;
+        } else {
+          await updateTempFormResponse(formResponse, formResponseIdState);
+          resultFormResponseId = formResponseIdState;
         }
-        resultFormResponseId = newFormResponseId;
-      } else {
-        await updateTempFormResponse(formResponse, formResponseIdState);
-        resultFormResponseId = formResponseIdState;
+
+        return resultFormResponseId;
+      } finally {
+        setSaveLoading(false);
       }
-
-      return resultFormResponseId;
-    };
-
-    // Expose the save function to parent components
+    }; // Expose the save function to parent components
     useImperativeHandle(
       ref,
       () => ({
         save: onSave,
       }),
-      [form, canEdit, formResponseIdState, fulfilmentInfo]
+      [form, canEdit, formResponseIdState, fulfilmentInfo, saveLoading]
     );
 
     useEffect(() => {
@@ -187,7 +191,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       });
     };
 
-    if (loading) {
+    if (loading || saveLoading) {
       return <Loading />;
     }
 
