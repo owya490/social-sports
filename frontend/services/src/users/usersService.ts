@@ -1,4 +1,13 @@
-import { EmptyUserData, PrivateUserData, PublicUserData, UserData, UserId, UsernameMap } from "@/interfaces/UserTypes";
+import {
+  EmptyPrivateUserData,
+  EmptyPublicUserData,
+  EmptyUserData,
+  PrivateUserData,
+  PublicUserData,
+  UserData,
+  UserId,
+  UsernameMap,
+} from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
 import { deleteDoc, doc, getDoc, runTransaction, setDoc, Transaction, updateDoc } from "firebase/firestore";
@@ -71,7 +80,7 @@ export async function getPublicUserById(
     // set local storage with data
     if (client) setUsersDataIntoLocalStorage(userId, userData);
 
-    return userData;
+    return { ...EmptyPublicUserData, ...userData };
   } catch (error) {
     if (error instanceof UserNotFoundError) {
       userServiceLogger.error(`User ID=${userId} did not exist when expected by reference: ${error}`);
@@ -96,7 +105,7 @@ export async function getPrivateUserById(userId: UserId): Promise<PrivateUserDat
     }
     const userData = userDoc.data() as PrivateUserData;
     userData.userId = userId;
-    return userData;
+    return { ...EmptyPrivateUserData, ...userData };
   } catch (error) {
     if (error instanceof UserNotFoundError) {
       userServiceLogger.error(`User ID=${userId} did not exist when expected by reference: ${error}`);
@@ -178,6 +187,7 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
     const publicDataToUpdate = extractPublicUserData(newData);
     const privateDataToUpdate = extractPrivateUserData(newData);
 
+    console.log("publicDataToUpdate", publicDataToUpdate);
     // Update public & private user data
     if (transaction) {
       transaction.update(publicUserDocRef, publicDataToUpdate);

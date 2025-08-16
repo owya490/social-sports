@@ -49,7 +49,7 @@ export default function CustomLinks() {
   return loading ? (
     <Loading />
   ) : (
-    <div className="sm:ml-14 mt-16">
+    <div className="sm:ml-14 mt-14">
       <div className="screen-width-primary sm:mx-auto">
         <OrganiserNavbar currPage="EventDashboard" />
         <div className="text-4xl md:text-3xl lg:text-4xl py-6">Custom Event Links</div>

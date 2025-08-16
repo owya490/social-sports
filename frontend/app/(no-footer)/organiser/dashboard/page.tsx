@@ -56,11 +56,25 @@ export default function Dashboard() {
           <div className="lg:flex w-full mt-8 lg:max-h-[60vh]">
             <div className="grow lg:mr-8 md:flex flex-col md:w-[40rem]">
               <OrganiserChecklist />
-              <div className="hidden md:flex mt-8 grow min-h-[10vh] mb-10 md:mb-0">
-                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+              <div className="hidden md:grid grid-cols-2 gap-4 mt-8 grow min-h-[10vh] mb-10 md:mb-0">
+                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/event/create">
                     <div className="h-full flex justify-center items-center">
                       <p>Create an event</p>
+                    </div>
+                  </Link>
+                </div>
+                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray  rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                  <Link href={`/organiser/forms/create-form/editor`}>
+                    <div className="h-full flex justify-center items-center">
+                      <p>Create a form</p>
+                    </div>
+                  </Link>
+                </div>
+                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                  <Link href="/organiser/event/dashboard">
+                    <div className="h-full flex justify-center items-center">
+                      <p>View your events</p>
                     </div>
                   </Link>
                 </div>
