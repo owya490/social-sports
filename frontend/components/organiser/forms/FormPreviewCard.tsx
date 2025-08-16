@@ -4,6 +4,7 @@ import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropd
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
 import LoadingSkeletonFormGalleryCard from "@/components/loading/LoadingSkeletonFormGalleryCard";
 import { FormId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -53,6 +54,7 @@ export const FormPreviewCard = ({
 
   const handleCardClick = () => {
     setIsLocked(!isLocked);
+    setIsHovered(false);
   };
 
   // skeleton loading state
@@ -71,7 +73,7 @@ export const FormPreviewCard = ({
       {/* Form Preview Section */}
       <div className="h-64 overflow-hidden px-4 ml-7 sm:ml-2 md:ml-0 2xl:ml-2 pointer-events-none select-none">
         <div className="scale-[0.4] origin-top-left w-[40rem] sm:w-[28rem] md:w-[28rem] lg:w-[30rem] xl:w-[32rem]">
-          <h1 className="font-bold text-3xl mb-2 line-clamp-1">{formTitle}</h1>
+          <h1 className="font-bold text-3xl mb-2 truncate">{formTitle}</h1>
           {sectionsOrder.map((sectionId) => {
             const section = sectionsMap[sectionId]; // force the not undefined for now
             switch (section.type) {
@@ -110,18 +112,30 @@ export const FormPreviewCard = ({
         <div className={`p-4 h-full flex flex-col transition-all duration-300`}>
           {/* Title - moves to top on hover */}
           <div className={`transition-all duration-300 ${isExpanded ? "mb-4" : ""}`}>
-            <h3 className="text-lg font-semibold text-gray-800 text-left line-clamp-2">{formTitle}</h3>
-            {lastUpdated && (
-              <p className="font-thin text-xs text-left">
-                Last Updated{" "}
-                {lastUpdated.toDate().toLocaleDateString("en-AU", {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  timeZone: "Australia/Sydney",
-                })}
-              </p>
-            )}
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-gray-800 text-left truncate">{formTitle}</h3>
+                {lastUpdated && (
+                  <p className="font-thin text-xs text-left">
+                    Last Updated{" "}
+                    {lastUpdated.toDate().toLocaleDateString("en-AU", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      timeZone: "Australia/Sydney",
+                    })}
+                  </p>
+                )}
+              </div>
+              {/* Mobile interaction indicator */}
+              <div className="sm:hidden flex-shrink-0 ml-2">
+                {isExpanded ? (
+                  <ChevronDownIcon className="w-5 h-5 text-gray-600 transition-transform duration-300" />
+                ) : (
+                  <ChevronUpIcon className="w-5 h-5 text-gray-600 transition-transform duration-300" />
+                )}
+              </div>
+            </div>
             {/* Action Buttons - only show on hover */}
             <div className={` mt-4 transition-all duration-300 text-wrap ${isExpanded ? "opacity-100" : "opacity-0"}`}>
               {/* Form Description */}

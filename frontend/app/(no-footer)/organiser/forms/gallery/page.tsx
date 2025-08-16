@@ -31,7 +31,7 @@ const FormsGallery = () => {
   }, [user]);
 
   return (
-    <div className="md:ml-14 mt-14">
+    <div className="md:ml-14 mt-14 mb-14">
       <OrganiserNavbar currPage="FormsGallery" />
       <div className="w-full flex justify-center">
         <div className="screen-width-primary">
