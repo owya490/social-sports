@@ -95,7 +95,7 @@ export const EventDetailsEdit = ({
     if (user.userId !== "") {
       fetchForms();
     }
-  }, [user]);
+  }, [user, eventFormId]);
 
   const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const [dateWarning, setDateWarning] = useState<string | null>(null);
