@@ -15,4 +15,8 @@ public class FileUploadSection extends FormSection {
     {
         setType(FormSectionType.FILE_UPLOAD);
     }
+
+    public boolean hasFileUrl() {
+        return fileUrl != null && !fileUrl.isEmpty();
+    }
 }

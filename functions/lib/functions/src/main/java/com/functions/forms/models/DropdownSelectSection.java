@@ -18,4 +18,8 @@ public class DropdownSelectSection extends FormSection {
     {
         setType(FormSectionType.DROPDOWN_SELECT);
     }
+
+    public boolean hasAnswer() {
+        return answer != null && !answer.isEmpty();
+    }
 }

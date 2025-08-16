@@ -184,6 +184,9 @@ export async function deleteForm(formId: FormId): Promise<void> {
   }
 }
 
+/**
+ * Form response MUST have all required section answers completed.
+ */
 export async function saveTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
   formsServiceLogger.info(`saveTempFormResponse: ${JSON.stringify(formResponse)}`);
 
@@ -216,39 +219,26 @@ export async function saveTempFormResponse(formResponse: FormResponse): Promise<
   }
 }
 
-// export async function createTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
-//   // if (!rateLimitCreateFormResponse()) {
-//   //   formsServiceLogger.warn("Rate Limited!!!");
-//   //   throw "createTempFormResponse: Rate Limited";
-//   // }
+/**
+ * Form response MUST have all required section answers completed.
+ */
+export async function updateTempFormResponse(
+  formResponse: FormResponse,
+  formResponseId: FormResponseId
+): Promise<FormResponseId> {
+  formsServiceLogger.info(`updateTempFormResponse: ${JSON.stringify(formResponse)}`);
 
-//   formsServiceLogger.info(`createTempFormResponse: ${formResponse}`);
-//   try {
-//     const batch = writeBatch(db);
-//     const docRef = doc(
-//       db,
-//       FormResponsePaths.Temp,
-//       formResponse.formId,
-//       formResponse.eventId,
-//       formResponse.formResponseId
-//     );
-//     batch.set(docRef, {
-//       ...formResponse,
-//       formResponseId: docRef.id as FormResponseId,
-//       submissionTime: Timestamp.now(),
-//     });
-//     await batch.commit();
-//     formsServiceLogger.info(
-//       `createFormResponse: Form response created with formResponseId: ${docRef.id}, formResponse: ${formResponse}`
-//     );
-//     return docRef.id as FormResponseId;
-//   } catch (error) {
-//     formsServiceLogger.error(
-//       `createFormResponse Error: Failed to create submitted form response with formResponse: ${formResponse}`
-//     );
-//     throw error;
-//   }
-// }
+  formResponse.formResponseId = formResponseId; // Ensure the formResponseId is set
+
+  try {
+    return await saveTempFormResponse(formResponse);
+  } catch (error) {
+    formsServiceLogger.error(
+      `updateTempFormResponse: Failed to update existing temp form response Id: ${formResponseId} with formResponse: ${formResponse}`
+    );
+    throw error;
+  }
+}
 
 export async function getFormResponse(
   formId: FormId,

@@ -1,5 +1,7 @@
 package com.functions.forms.controllers;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,22 +50,22 @@ public class SaveTempFormResponseEndpoint implements HttpFunction {
             return;
         }
 
-        try {
-            String formResponseId = FormsService.saveTempFormResponse(data.formResponse());
+        Optional<String> maybeFormResponseId = FormsService.saveTempFormResponse(data.formResponse());
 
+        if (maybeFormResponseId.isPresent()) {
+            String formResponseId = maybeFormResponseId.get();
             logger.info("[SaveTempFormResponseEndpoint] Temporary form response saved successfully with ID: {}",
                     formResponseId);
-
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
                             new SaveTempFormResponseResponse(formResponseId)));
-        } catch (Exception e) {
+        } else {
             logger.error("Failed to save temporary form response for formId: {}, eventId: {}",
-                    data.formResponse().getFormId(), data.formResponse().getEventId(), e);
+                    data.formResponse().getFormId(), data.formResponse().getEventId());
             response.setStatusCode(500);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Failed to save temporary form response: " + e.getMessage())));
+                    new ErrorResponse("Failed to save temporary form response: ")));
         }
     }
 }

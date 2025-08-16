@@ -18,4 +18,8 @@ public class MultipleChoiceSection extends FormSection {
     {
         setType(FormSectionType.MULTIPLE_CHOICE);
     }
+
+    public boolean hasAnswer() {
+        return answer != null && !answer.isEmpty();
+    }
 }

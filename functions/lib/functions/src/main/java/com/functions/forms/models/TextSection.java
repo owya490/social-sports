@@ -15,4 +15,8 @@ public class TextSection extends FormSection {
     {
         setType(FormSectionType.TEXT);
     }
+
+    public boolean hasAnswer() {
+        return answer != null && !answer.isEmpty();
+    }
 }

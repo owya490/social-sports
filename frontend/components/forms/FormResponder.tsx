@@ -16,7 +16,7 @@ import {
   getFormIdByEventId,
   getFormResponse,
   saveTempFormResponse,
-  updateFormResponse,
+  updateTempFormResponse,
 } from "@/services/src/forms/formsServices";
 import { extractFormResponseFromForm } from "@/services/src/forms/formsUtils/createFormResponseUtils";
 import { findFormResponseDocRef } from "@/services/src/forms/formsUtils/formsUtils";
@@ -87,9 +87,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
         }
         resultFormResponseId = newFormResponseId;
       } else {
-        // Since FormResponseId is not null, this is an existing form response
-        // TODO: are we allowing to edit temp form response only (and not submitted ones)?
-        await updateFormResponse(formId, eventId, formResponseIdState, formResponse);
+        await updateTempFormResponse(formResponse, formResponseIdState);
         resultFormResponseId = formResponseIdState;
       }
 

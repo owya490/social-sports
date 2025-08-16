@@ -7,7 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.repositories.EventsRepository;
+import com.functions.forms.models.DateTimeSection;
+import com.functions.forms.models.DropdownSelectSection;
+import com.functions.forms.models.FileUploadSection;
 import com.functions.forms.models.FormResponse;
+import com.functions.forms.models.FormSection;
+import com.functions.forms.models.MultipleChoiceSection;
+import com.functions.forms.models.TextSection;
 import com.functions.forms.repositories.FormsRepository;
 
 public class FormsService {
@@ -32,14 +38,23 @@ public class FormsService {
     }
 
     /**
-     * Saves a FormResponse as a temporary submission
+     * Saves a FormResponse as a temporary submission.
+     * The form response must be complete (all required sections answered) to be
+     * saved.
      * 
      * @param formResponse The FormResponse to save
      * @return The generated formResponseId
      * @throws RuntimeException if there's an error saving the form response
      */
-    public static String saveTempFormResponse(FormResponse formResponse) {
+    public static Optional<String> saveTempFormResponse(FormResponse formResponse) {
         try {
+            if (!isFormResponseComplete(formResponse)) {
+                logger.error(
+                        "[FormsService] Trying to save incomplete form response for formId: {}, eventId: {}, formResponse: {}",
+                        formResponse.getFormId(), formResponse.getEventId(), formResponse);
+                return Optional.empty();
+            }
+
             logger.info("Saving temporary form response for formId: {}, eventId: {}",
                     formResponse.getFormId(), formResponse.getEventId());
 
@@ -56,13 +71,68 @@ public class FormsService {
             FormsRepository.saveTempFormResponse(formResponse);
 
             logger.info("Successfully saved temporary form response with ID: {}", formResponseId);
-            return formResponseId;
+            return Optional.of(formResponseId);
         } catch (Exception e) {
-            logger.error("[FormsService] Error saving temporary form response for formId: {}, eventId: {}: {}",
-                    formResponse.getFormId(), formResponse.getEventId(), e.getMessage());
-            throw new RuntimeException("[FormsService] Failed to save temporary form response for formId: " +
-                    formResponse.getFormId() + ", eventId: " + formResponse.getEventId(), e);
+            logger.error("[FormsService] Error saving temporary form response: {} - {}",
+                    formResponse, e.getMessage());
+            return Optional.empty();
         }
+    }
+
+    public static boolean isFormResponseComplete(FormResponse formResponse) {
+        logger.info("[FormsService] Checking if form response is complete: {}",
+                formResponse);
+        if (formResponse == null || formResponse.getResponseMap() == null) {
+            logger.info("[FormsService] Form response is null or has no response map: {}", formResponse);
+            return false;
+        }
+        // Check if all required sections have answers which are non-empty
+        for (String sectionId : formResponse.getResponseSectionsOrder()) {
+            FormSection section = formResponse.getResponseMap().get(sectionId);
+            logger.info("[FormsService] Checking sectionId: {}, section: {}", sectionId, section);
+            if (section == null) {
+                logger.error("[FormsService] Missing section in response map: {}, returning false", sectionId);
+                return false;
+            }
+
+            if (!section.isRequired()) {
+                logger.info("[FormsService] Section {} is not required, skipping: {}", sectionId, section);
+                continue;
+            }
+
+            switch (section.getType()) {
+                case TEXT:
+                    if (!((TextSection) section).hasAnswer()) {
+                        return false;
+                    }
+                    break;
+                case MULTIPLE_CHOICE:
+                    if (!((MultipleChoiceSection) section).hasAnswer()) {
+                        return false;
+                    }
+                    break;
+                case DROPDOWN_SELECT:
+                    if (!((DropdownSelectSection) section).hasAnswer()) {
+                        return false;
+                    }
+                    break;
+                case FILE_UPLOAD:
+                    if (!((FileUploadSection) section).hasFileUrl()) {
+                        return false;
+                    }
+                    break;
+                case DATE_TIME:
+                    if (!((DateTimeSection) section).hasTimestamp()) {
+                        return false;
+                    }
+                    break;
+                default:
+                    logger.error("[FormsService] Unknown section type: {}", section.getType());
+                    return false;
+            }
+        }
+        logger.info("[FormsService] Form response is complete: {}", formResponse);
+        return true;
     }
 
     /**

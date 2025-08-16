@@ -15,4 +15,8 @@ public class DateTimeSection extends FormSection {
     {
         setType(FormSectionType.DATE_TIME);
     }
+
+    public boolean hasTimestamp() {
+        return timestamp != null && !timestamp.isEmpty();
+    }
 }

@@ -15,10 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
-import com.functions.forms.models.DropdownSelectSection;
 import com.functions.forms.models.FormResponse;
-import com.functions.forms.models.FormSection;
-import com.functions.forms.models.TextSection;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsService;
 import com.functions.fulfilment.models.CheckoutFulfilmentSession;
@@ -382,7 +379,9 @@ public class FulfilmentService {
             if (completedFulfilmentEntity(fulfilmentSession.getFulfilmentEntityMap().get(currentEntityId))) {
                 logger.info("Current fulfilment entity is completed: {}", currentEntityId);
             } else {
-                logger.warn("Current fulfilment entity is not completed: {}", currentEntityId);
+                logger.error(
+                        "Attempting to get next fulfilment entity but current fulfilment entity is not completed: {}",
+                        currentEntityId);
                 return Optional.empty();
             }
 
@@ -412,32 +411,9 @@ public class FulfilmentService {
             }
 
             FormResponse formResponse = maybeFormResponse.get();
-            // loop through each form section in response map and check that the answer is
-            // complete
-            for (Map.Entry<String, FormSection> entry : formResponse.getResponseMap().entrySet()) {
-                // for each form section entry, I need to check that the specific type of form
-                // section (e.g., text, dropdown) has an an answer
-                // that is not empty
-                FormSection section = entry.getValue();
-                switch (section.getType()) {
-                    case TEXT:
-                        TextSection textSection = (TextSection) section;
-                        if (textSection.getAnswer() == null || textSection.getAnswer().isEmpty()) {
-                            logger.info("Text section answer is empty for section ID: {}", entry.getKey());
-                            return false;
-                        }
-                        break;
-                    case DROPDOWN_SELECT:
-                        DropdownSelectSection dropdownSection = (DropdownSelectSection) section;
-                        if (dropdownSection.getAnswer() == null || dropdownSection.getAnswer().isEmpty()) {
-                            logger.info("Dropdown section answer is empty for section ID: {}", entry.getKey());
-                            return false;
-                        }
-                        break;
-                    default:
-                        logger.warn("Unknown form section type: {}", section.getType());
-                        return false;
-                }
+            if (!FormsService.isFormResponseComplete(formResponse)) {
+
+                return false;
             }
         }
         return true;
