@@ -1,5 +1,6 @@
 "use client";
 
+import { HighlightButton } from "@/components/elements/HighlightButton";
 import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
 import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
 import Loading from "@/components/loading/Loading";
@@ -18,7 +19,9 @@ import {
   getNextFulfilmentEntityUrl,
   getPrevFulfilmentEntityUrl,
 } from "@/services/src/fulfilment/fulfilmentServices";
+import { HomeIcon } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -37,6 +40,7 @@ const FulfilmentSessionEntityPage = ({
     useState<GetFulfilmentEntityInfoResponse | null>(null);
   const [fulfilmentSessionInfo, setFulfilmentSessionInfo] = useState<GetFulfilmentSessionInfoResponse | null>(null);
   const formResponderRef = useRef<FormResponderRef>(null);
+  const [areAllRequiredFieldsFilled, setAreAllRequiredFieldsFilled] = useState(true);
 
   // Error state management
   const [showErrorAlert, setShowErrorAlert] = useState(false);
@@ -71,6 +75,10 @@ const FulfilmentSessionEntityPage = ({
       setLoading(false);
     });
   }, []);
+
+  const handleValidationChange = (isValid: boolean) => {
+    setAreAllRequiredFieldsFilled(isValid);
+  };
 
   const handleNext = async () => {
     try {
@@ -206,6 +214,7 @@ const FulfilmentSessionEntityPage = ({
             onNext={onFormsFulfilmentEntitySaveAndNext}
             onPrev={async () => await handlePrev()}
             fulfilmentSessionInfo={fulfilmentSessionInfo}
+            areAllRequiredFieldsFilled={areAllRequiredFieldsFilled}
           >
             <FormResponder
               ref={formResponderRef}
@@ -218,6 +227,7 @@ const FulfilmentSessionEntityPage = ({
               }}
               canEditForm={true}
               isPreview={false}
+              onValidationChange={handleValidationChange}
             />
           </FulfilmentEntityPage>
           <Alert
@@ -269,7 +279,32 @@ const FulfilmentSessionEntityPage = ({
     default:
       return (
         <>
-          <div className="mt-14">Unknown Fulfilment Entity Type</div>
+          <div className="min-h-screen flex items-center justify-center bg-white">
+            <div className="screen-width-dashboard text-center px-4">
+              {/* 404 Number */}
+              <div className="mb-8">
+                <h1 className="text-9xl font-extrabold text-core-text opacity-20">404</h1>
+              </div>
+
+              {/* Main Content */}
+              <div className="max-w-md mx-auto mb-12">
+                <h2 className="text-3xl font-bold text-core-text mb-4">Unknown Fulfilment Entity Type</h2>
+                <p className="text-lg text-gray-600 mb-8 font-light">
+                  We encountered an unexpected fulfilment entity type that we don&apos;t recognize. This might be due to
+                  a configuration issue or an outdated link.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link href="/dashboard">
+                  <HighlightButton text="Go to Dashboard" className="flex items-center gap-2">
+                    <HomeIcon className="h-5 w-5" />
+                  </HighlightButton>
+                </Link>
+              </div>
+            </div>
+          </div>
           <Alert
             open={showErrorAlert}
             onClose={() => setShowErrorAlert(false)}

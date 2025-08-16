@@ -13,6 +13,7 @@ interface FulfilmentEntityPageProps {
   showNextButton?: boolean;
   showPrevButton?: boolean;
   fulfilmentSessionInfo: GetFulfilmentSessionInfoResponse | null;
+  areAllRequiredFieldsFilled?: boolean;
 }
 
 const FulfilmentEntityPage = ({
@@ -22,6 +23,7 @@ const FulfilmentEntityPage = ({
   showNextButton = true,
   showPrevButton = true,
   fulfilmentSessionInfo,
+  areAllRequiredFieldsFilled = true,
 }: FulfilmentEntityPageProps) => {
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
 
@@ -95,7 +97,14 @@ const FulfilmentEntityPage = ({
                 showNextButton && onNext ? "opacity-100" : "opacity-0 pointer-events-none"
               } transition-opacity duration-200 ml-auto`}
             >
-              <InvertedHighlightButton type="submit" className="border-1 px-4 bg-white" onClick={onNext || (() => {})}>
+              <InvertedHighlightButton
+                type="submit"
+                className={`border-1 px-4 ${
+                  areAllRequiredFieldsFilled ? "bg-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                }`}
+                onClick={areAllRequiredFieldsFilled ? onNext || (() => {}) : undefined}
+                disabled={!areAllRequiredFieldsFilled}
+              >
                 <span className="text-sm flex items-center gap-2">
                   Next <ChevronRightIcon className="h-4 w-4" />
                 </span>

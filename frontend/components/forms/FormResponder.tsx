@@ -31,6 +31,7 @@ const formResponderLogger = new Logger("formResponderLogger");
 
 export interface FormResponderRef {
   save: () => Promise<FormResponseId | null>;
+  areAllRequiredFieldsFilled: () => boolean;
 }
 
 interface FormResponderProps {
@@ -43,10 +44,11 @@ interface FormResponderProps {
     fulfilmentSessionId: FulfilmentSessionId;
     fulfilmentEntityId: FulfilmentEntityId;
   };
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
-  ({ formId, eventId, formResponseId, canEditForm, isPreview, fulfilmentInfo }, ref) => {
+  ({ formId, eventId, formResponseId, canEditForm, isPreview, fulfilmentInfo, onValidationChange }, ref) => {
     // if we are in preview mode, we can't edit the form
     canEditForm = isPreview === true ? false : canEditForm;
 
@@ -103,6 +105,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       ref,
       () => ({
         save: onSave,
+        areAllRequiredFieldsFilled,
       }),
       [form, canEdit, formResponseIdState, fulfilmentInfo, saveLoading]
     );
@@ -164,6 +167,34 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       fetchFormData();
     }, [formResponseIdState]);
 
+    // Function to check if all required fields are filled
+    const areAllRequiredFieldsFilled = () => {
+      if (!form) return false;
+
+      return form.sectionsOrder.every((sectionId) => {
+        const section = form.sectionsMap[sectionId];
+        if (!section) return true; // Skip if section not found
+
+        // If section is required, check if it has a valid answer based on type
+        if (section.required) {
+          switch (section.type) {
+            case FormSectionType.TEXT:
+            case FormSectionType.MULTIPLE_CHOICE:
+            case FormSectionType.DROPDOWN_SELECT:
+              return section.answer && section.answer.trim() !== "";
+            case FormSectionType.FILE_UPLOAD:
+              return section.fileUrl && section.fileUrl.trim() !== "";
+            case FormSectionType.DATE_TIME:
+              return section.timestamp && section.timestamp.trim() !== "";
+            default:
+              return false;
+          }
+        }
+
+        return true; // Not required, so it's valid
+      });
+    };
+
     const stringAnswerOnChange = (sectionId: SectionId, newAnswer: string) => {
       if (!form) return;
 
@@ -190,6 +221,14 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
         };
       });
     };
+
+    // Call validation callback whenever form state changes
+    useEffect(() => {
+      if (onValidationChange && form) {
+        const isValid = areAllRequiredFieldsFilled();
+        onValidationChange(isValid);
+      }
+    }, [form, onValidationChange]);
 
     if (loading || saveLoading) {
       return <Loading />;
@@ -245,7 +284,14 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
             })}
             <div className={`w-full ${canEdit ? "flex" : "hidden"}`}>
               <div className="w-fit ml-auto bg-white py-2 px-4 rounded-lg flex justify-between gap-4">
-                <InvertedHighlightButton type="submit" className="border-1 px-3 bg-white ml-auto" onClick={onSave}>
+                <InvertedHighlightButton
+                  type="submit"
+                  className={`border-1 px-3 ml-auto ${
+                    areAllRequiredFieldsFilled() ? "bg-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  }`}
+                  onClick={areAllRequiredFieldsFilled() ? onSave : undefined}
+                  disabled={!areAllRequiredFieldsFilled()}
+                >
                   <span className="text-sm flex items-center gap-2">
                     <FloppyDiskIcon className="h-4 w-4" /> Save
                   </span>
