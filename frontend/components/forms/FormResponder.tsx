@@ -138,7 +138,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
           router.push("/error");
           return;
         }
-        if (isPreview === false) {
+        if (!isPreview) {
           // check the form is actually attached to the event as we are not in preview mode
           const expectedFormId = await getFormIdByEventId(eventId);
           if (expectedFormId !== formId) {
@@ -155,7 +155,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
           const organiserData = await getPublicUserById(formData.userId);
           setOrganiser(organiserData);
 
-          if (isPreview === false) {
+          if (!isPreview) {
             // Fetch form response data if it exists and replace the form sectionsMap with the form responseMap
             await fetchFormResponseData();
           }

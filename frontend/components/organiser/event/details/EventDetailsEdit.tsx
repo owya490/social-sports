@@ -697,7 +697,7 @@ export const EventDetailsEdit = ({
                     <Select
                       label="Attach Form"
                       size="lg"
-                      value={newEditAttachFormId ?? ""}
+                      value={newEditAttachFormId ?? "null"}
                       onChange={(e: string | any) => {
                         setNewEditAttachFormId(e === "null" ? null : (e as FormId));
                       }}

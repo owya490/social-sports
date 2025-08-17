@@ -267,6 +267,25 @@ export async function getFormResponse(
   }
 }
 
+export async function getFormResponsesForEvent(formId: FormId, eventId: EventId): Promise<FormResponse[]> {
+  formsServiceLogger.info(`getFormResponsesForEvent: ${formId}, ${eventId}`);
+  try {
+    const responseCollectionRef = collection(db, "Forms", "FormResponses", "Submitted", formId, eventId);
+    const responsesSnapshot = await getDocs(responseCollectionRef);
+    const responses: FormResponse[] = responsesSnapshot.docs.map((doc) => {
+      const data = doc.data() as FormResponse;
+      return { ...data, formResponseId: doc.id as FormResponseId };
+    });
+
+    return responses;
+  } catch (error) {
+    formsServiceLogger.error(
+      `getFormResponsesForEvent: Error getting form responses for formId: ${formId}, eventId: ${eventId}`
+    );
+    throw error;
+  }
+}
+
 export async function updateFormResponse(
   formId: FormId,
   eventId: EventId,

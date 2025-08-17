@@ -9,6 +9,7 @@ import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatB
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
+import EventDrilldownFormsPage from "@/components/organiser/event/forms/EventDrilldownFormsPage";
 import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
@@ -142,7 +143,7 @@ export default function EventPage({ params }: EventPageProps) {
           eventPrice={eventPrice}
         />
         <MobileEventDrilldownNavTabs
-          navigationTabs={["Details", "Attendees", "Images", "Settings"]}
+          navigationTabs={["Details", "Attendees", "Forms", "Images", "Settings"]}
           currSidebarPage={currSidebarPage}
           setCurrSidebarPage={setCurrSidebarPage}
         />
@@ -190,6 +191,7 @@ export default function EventPage({ params }: EventPageProps) {
                 setEventMetadata={setEventMetadata}
               />
             )}
+            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} />}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}

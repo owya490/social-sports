@@ -11,8 +11,8 @@ const ViewFormResponse = () => {
   const responseId = params?.responseId as FormResponseId;
 
   return (
-    <div className="py-20">
-      <FormResponder formId={formId} eventId={eventId} formResponseId={responseId} />;
+    <div className="py-20 bg-core-hover h-screen overflow-auto">
+      <FormResponder formId={formId} eventId={eventId} formResponseId={responseId} />
     </div>
   );
 };
