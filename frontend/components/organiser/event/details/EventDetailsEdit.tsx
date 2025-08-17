@@ -716,20 +716,18 @@ export const EventDetailsEdit = ({
                   </div>
                 ) : (
                   <div className="mt-2">
-                    <div className="text-sm line-clamp-2 flex items-center gap-2">
-                      {attachForm === null ? (
-                        "No form attached"
-                      ) : (
-                        <>
-                          <span>{attachForm.title}</span>
-                          <ArrowTopRightOnSquareIcon
-                            className="w-4 h-4 hover:text-blue-800 cursor-pointer shrink-0"
-                            onClick={() => router.push(`/organiser/forms/${attachForm.formId}/preview`)}
-                            title="View form preview"
-                          />
-                        </>
-                      )}
-                    </div>
+                    {attachForm === null ? (
+                      "No form attached"
+                    ) : (
+                      <div
+                        className="flex items-center gap-2 w-fit px-1 py-0.5 -mx-1 -my-0.5 rounded cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                        onClick={() => router.push(`/organiser/forms/${attachForm.formId}/preview`)}
+                        title="View form preview"
+                      >
+                        <span>{attachForm.title}</span>
+                        <ArrowTopRightOnSquareIcon className="w-4 h-4 text-blue-600 shrink-0" />
+                      </div>
+                    )}
                   </div>
                 )}
               </>
