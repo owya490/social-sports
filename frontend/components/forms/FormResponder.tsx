@@ -23,6 +23,7 @@ import { findFormResponseDocRef } from "@/services/src/forms/formsUtils/formsUti
 import { updateFulfilmentEntityWithFormResponseId } from "@/services/src/fulfilment/fulfilmentServices";
 import { getPublicUserById } from "@/services/src/users/usersService";
 import { ChevronUpIcon } from "@heroicons/react/24/outline";
+import { Tooltip } from "@material-tailwind/react";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
@@ -313,18 +314,41 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
             })}
             <div className={`w-full ${canEdit ? "flex" : "hidden"}`}>
               <div className="w-fit ml-auto bg-white py-2 px-4 rounded-lg flex justify-between gap-4">
-                <InvertedHighlightButton
-                  type="submit"
-                  className={`border-1 px-3 ml-auto ${
-                    areAllRequiredFieldsFilled() ? "bg-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  }`}
-                  onClick={areAllRequiredFieldsFilled() ? onSave : undefined}
-                  disabled={!areAllRequiredFieldsFilled()}
-                >
-                  <span className="text-sm flex items-center gap-2">
-                    <FloppyDiskIcon className="h-4 w-4" /> Save
-                  </span>
-                </InvertedHighlightButton>
+                {!areAllRequiredFieldsFilled() ? (
+                  <Tooltip
+                    content="Please fill out all required sections before saving"
+                    placement="top"
+                    className="bg-gray-800 text-white text-xs"
+                    animate={{
+                      mount: { scale: 1, y: 0 },
+                      unmount: { scale: 0, y: 25 },
+                    }}
+                  >
+                    <div>
+                      <InvertedHighlightButton
+                        type="submit"
+                        className="border-1 px-3 ml-auto bg-gray-100 text-gray-400 cursor-not-allowed"
+                        onClick={undefined}
+                        disabled={true}
+                      >
+                        <span className="text-sm flex items-center gap-2">
+                          <FloppyDiskIcon className="h-4 w-4" /> Save
+                        </span>
+                      </InvertedHighlightButton>
+                    </div>
+                  </Tooltip>
+                ) : (
+                  <InvertedHighlightButton
+                    type="submit"
+                    className="border-1 px-3 ml-auto bg-white"
+                    onClick={onSave}
+                    disabled={false}
+                  >
+                    <span className="text-sm flex items-center gap-2">
+                      <FloppyDiskIcon className="h-4 w-4" /> Save
+                    </span>
+                  </InvertedHighlightButton>
+                )}
                 <InvertedHighlightButton
                   type="submit"
                   className="border-1 px-3 bg-white ml-auto"
