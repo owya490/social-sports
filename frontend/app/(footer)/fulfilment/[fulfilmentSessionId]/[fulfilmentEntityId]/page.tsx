@@ -237,11 +237,19 @@ const FulfilmentSessionEntityPage = ({
         }
       };
 
+      // Determine if we should show prev/next buttons based on current position
+      const currentIndex = fulfilmentSessionInfo?.currentEntityIndex ?? 0;
+      const totalEntities = fulfilmentSessionInfo?.fulfilmentEntityTypes?.length ?? 0;
+      const isFirstEntity = currentIndex === 0;
+      const isLastEntity = currentIndex === totalEntities - 1;
+
       return (
         <>
           <FulfilmentEntityPage
             onNext={onFormsFulfilmentEntitySaveAndNext}
             onPrev={async () => await handlePrev()}
+            showPrevButton={!isFirstEntity}
+            showNextButton={!isLastEntity}
             fulfilmentSessionInfo={fulfilmentSessionInfo}
             areAllRequiredFieldsFilled={areAllRequiredFieldsFilled}
             isSaving={isSaving}
