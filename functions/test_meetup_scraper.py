@@ -1,45 +1,48 @@
+#!/usr/bin/env python3
+"""
+Standalone test script for Meetup scraper.
+This script replicates the scraping logic without modifying the original function.
+"""
+
 import json
-import logging
+import os
 import re
-from time import sleep
 import uuid
 from typing import Any, Dict, List, Optional, Set
+from time import sleep
 
-import requests
-from bs4 import BeautifulSoup
-from firebase_functions import https_fn, options
+try:
+    import requests
+    from bs4 import BeautifulSoup
+except ImportError:
+    print("Missing dependencies. Install with:")
+    print("pip install requests beautifulsoup4 lxml")
+    exit(1)
 
 
 class Logger:
+    """Simple logger for testing"""
     def __init__(self, logger_name):
-        self.logger = logging.getLogger(logger_name)
+        self.name = logger_name
         self.tags = {}
 
     def add_tag(self, key, value):
         self.tags[key] = value
 
     def add_tags(self, tags):
-        self.tags = self.tags | tags
-
-    def remove_tag(self, key):
-        self.tags.pop(key)
-
-    def remove_all_tag(self):
-        self.tags.clear()
-
-    def debug(self, message, tags={}):
-        self.logger.debug(message, extra={"labels": tags | self.tags})
+        self.tags.update(tags)
 
     def info(self, message, tags={}):
-        self.logger.info(message, extra={"labels": tags | self.tags})
+        print(f"[INFO] {message}")
 
     def warning(self, message, tags={}):
-        self.logger.warning(message, extra={"labels": tags | self.tags})
+        print(f"[WARNING] {message}")
 
     def error(self, message, tags={}):
-        self.logger.error(message, extra={"labels": tags | self.tags})
+        print(f"[ERROR] {message}")
 
 
+# Copy of constants from original file
 DEFAULT_MEETUP_FIND_URL = (
     "https://www.meetup.com/find/?keywords=volleyball&location=au--Sydney&source=EVENTS"
 )
@@ -55,6 +58,7 @@ PRICE_REGEX = re.compile(r"(?:A\$|\$)\s?(\d+)(?:\.\d{2})?")
 
 
 def _fetch_html(url: str, logger: Logger) -> str:
+    """Fetch HTML from URL"""
     resp = requests.get(url, headers=HEADERS, timeout=20)
     logger.info(f"Fetched URL with status {resp.status_code}. url={url}")
     resp.raise_for_status()
@@ -62,7 +66,7 @@ def _fetch_html(url: str, logger: Logger) -> str:
 
 
 def _extract_container_text(node) -> str:
-    # Join visible texts within a reasonable container depth
+    """Extract text from HTML node"""
     parts: List[str] = []
     for text in node.stripped_strings:
         parts.append(text)
@@ -70,6 +74,7 @@ def _extract_container_text(node) -> str:
 
 
 def _parse_events(html: str, base_url: str) -> List[Dict]:
+    """Parse events from HTML - copied from original"""
     soup = BeautifulSoup(html, "html.parser")
 
     # Gather candidate anchors that look like event links
@@ -155,6 +160,7 @@ def _parse_events(html: str, base_url: str) -> List[Dict]:
 
 
 def _parse_jsonld_from_soup(soup: BeautifulSoup) -> List[Dict[str, Any]]:
+    """Parse JSON-LD data from soup"""
     data: List[Dict[str, Any]] = []
     for script in soup.find_all("script", type="application/ld+json"):
         try:
@@ -174,6 +180,7 @@ def _parse_jsonld_from_soup(soup: BeautifulSoup) -> List[Dict[str, Any]]:
 
 
 def _parse_next_event_from_soup(soup: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    """Parse Next.js event data"""
     script = soup.find("script", id="__NEXT_DATA__", type="application/json")
     if not script or not (script.string or script.text):
         return None
@@ -188,6 +195,7 @@ def _parse_next_event_from_soup(soup: BeautifulSoup) -> Optional[Dict[str, Any]]
 
 
 def _first_non_empty(*values: Optional[str]) -> str:
+    """Return first non-empty value"""
     for v in values:
         if v and isinstance(v, str) and v.strip():
             return v.strip()
@@ -195,6 +203,7 @@ def _first_non_empty(*values: Optional[str]) -> str:
 
 
 def _safe_int_from_price(value: Optional[str]) -> Optional[int]:
+    """Extract integer price from string"""
     if not value:
         return None
     try:
@@ -207,6 +216,7 @@ def _safe_int_from_price(value: Optional[str]) -> Optional[int]:
 
 
 def _parse_event_detail(html: str, event_url: str, logger: Logger) -> Dict:
+    """Parse detailed event information - copied from original"""
     soup = BeautifulSoup(html, "html.parser")
 
     jsonld_items = _parse_jsonld_from_soup(soup)
@@ -344,49 +354,50 @@ def _parse_event_detail(html: str, event_url: str, logger: Logger) -> Dict:
     }
 
 
-@https_fn.on_request(
-    cors=options.CorsOptions(
-        cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["get", "post"]
-    ),
-    region="australia-southeast1",
-)
-def scrape_meetup_events(req: https_fn.Request) -> https_fn.Response:
-    """HTTP endpoint to scrape Meetup 'find' page.
-
-    Query params:
-      - url: Optional. If provided, overrides the default Meetup find URL.
-      - max: Optional int. Limit number of returned events.
-    """
-    uid = str(uuid.uuid4())
-    logger = Logger(f"meetup_scraper_{uid}")
-    logger.add_tag("uuid", uid)
-
+def test_with_local_files():
+    """Test using local HTML files"""
+    print("🧪 Testing with local HTML files...")
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    html_file = os.path.join(script_dir, "lib", "scraping", "html.txt")
+    event_html_file = os.path.join(script_dir, "lib", "scraping", "event_html.txt")
+    
+    if not os.path.exists(html_file):
+        print(f"❌ HTML file not found: {html_file}")
+        return None
+    
+    if not os.path.exists(event_html_file):
+        print(f"❌ Event HTML file not found: {event_html_file}")
+        return None
+    
+    logger = Logger("test_logger")
+    
     try:
-        # Get parameters from request
-        url = req.args.get('url', DEFAULT_MEETUP_FIND_URL)
-        max_items = int(req.args.get('max', 3))
-
-        html = _fetch_html(url, logger)
-        # print(html)
-        # with open("html.txt", "r") as f:
-        #     html = f.read()
-
-        listing = _parse_events(html, url)
-
-        # Navigate to each event and extract details
-        details: List[Dict] = []
+        # Read the main listing HTML
+        with open(html_file, "r", encoding="utf-8") as f:
+            html = f.read()
+        
+        print(f"📄 Loaded HTML file: {len(html)} characters")
+        
+        # Parse events from listing
+        listing = _parse_events(html, DEFAULT_MEETUP_FIND_URL)
+        print(f"🔍 Found {len(listing)} events in listing")
+        
+        # Read event detail HTML
+        with open(event_html_file, "r", encoding="utf-8") as f:
+            event_html = f.read()
+        
+        print(f"📄 Loaded event HTML file: {len(event_html)} characters")
+        
+        # Test event detail parsing
+        details = []
+        max_items = min(3, len(listing))
+        
         for idx, item in enumerate(listing[:max_items]):
-            # dont spam meet up
-            sleep(5)
-            event_url = item.get("url")
-            if not event_url:
-                continue
+            event_url = item.get("url", f"test_url_{idx}")
+            print(f"🔎 Parsing event {idx + 1}: {item.get('title', 'Unknown')}")
+            
             try:
-                event_html = _fetch_html(event_url, logger)
-                # with open("event_html.txt", "r") as f:
-                #     event_html = f.read()
-
-                # print(event_html)
                 detail = _parse_event_detail(event_html, event_url, logger)
                 # If listing had a detectable price and detail did not, fallback
                 if detail.get("price", 0) == 0 and item.get("price_text"):
@@ -394,34 +405,123 @@ def scrape_meetup_events(req: https_fn.Request) -> https_fn.Response:
                     if fallback_price is not None:
                         detail["price"] = fallback_price
                 details.append(detail)
+                print(f"✅ Successfully parsed event: {detail.get('eventName', 'Unknown')}")
             except Exception as e:
-                logger.warning(f"Failed to scrape detail for {event_url}: {e}")
+                print(f"❌ Failed to parse event detail: {e}")
                 continue
-
+        
         payload = {"count": len(details), "events": details}
-        # pretty print
-        print(json.dumps(payload, indent=4))
-        return https_fn.Response(
-            json.dumps(payload),
-            headers={"Content-Type": "application/json"},
-            status=200,
-        )
-
-    except requests.HTTPError as e:
-        logger.error(f"HTTP error while scraping: {e}")
-        return https_fn.Response(
-            json.dumps({"error": "http_error", "message": str(e)}),
-            headers={"Content-Type": "application/json"},
-            status=502,
-        )
+        
+        print("\n" + "="*50)
+        print("📊 RESULTS:")
+        print("="*50)
+        print(json.dumps(payload, indent=2))
+        
+        return payload
+        
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        return https_fn.Response(
-            json.dumps({"error": "unexpected_error", "message": str(e)}),
-            headers={"Content-Type": "application/json"},
-            status=500,
-        )
+        print(f"❌ Test failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def test_live_scraping():
+    """Test live scraping (makes actual HTTP requests)"""
+    print("🌐 Testing live scraping...")
+    print("⚠️  This will make actual HTTP requests to Meetup.com")
+    
+    response = input("Continue with live scraping? (y/N): ")
+    if response.lower() != 'y':
+        print("Skipping live scraping")
+        return None
+    
+    logger = Logger("live_test_logger")
+    
+    try:
+        url = DEFAULT_MEETUP_FIND_URL
+        max_items = 2  # Limit to 2 for testing
+        
+        print(f"🔄 Fetching: {url}")
+        html = _fetch_html(url, logger)
+        print(f"📄 Fetched HTML: {len(html)} characters")
+        
+        listing = _parse_events(html, url)
+        print(f"🔍 Found {len(listing)} events")
+        
+        # Navigate to each event and extract details
+        details = []
+        for idx, item in enumerate(listing[:max_items]):
+            print(f"\n⏳ Processing event {idx + 1}/{max_items}...")
+            print(f"   📍 {item.get('title', 'Unknown')}")
+            
+            # Rate limiting
+            if idx > 0:
+                print("   ⏱️  Waiting 5 seconds...")
+                sleep(5)
+            
+            event_url = item.get("url")
+            if not event_url:
+                print("   ❌ No URL found")
+                continue
+                
+            try:
+                print(f"   🔄 Fetching: {event_url}")
+                event_html = _fetch_html(event_url, logger)
+                
+                detail = _parse_event_detail(event_html, event_url, logger)
+                
+                # If listing had a detectable price and detail did not, fallback
+                if detail.get("price", 0) == 0 and item.get("price_text"):
+                    fallback_price = _safe_int_from_price(item.get("price_text"))
+                    if fallback_price is not None:
+                        detail["price"] = fallback_price
+                        
+                details.append(detail)
+                print(f"   ✅ Successfully scraped: {detail.get('eventName', 'Unknown')}")
+                
+            except Exception as e:
+                print(f"   ❌ Failed to scrape: {e}")
+                continue
+        
+        payload = {"count": len(details), "events": details}
+        
+        print("\n" + "="*50)
+        print("📊 LIVE SCRAPING RESULTS:")
+        print("="*50)
+        print(json.dumps(payload, indent=2))
+        
+        return payload
+        
+    except Exception as e:
+        print(f"❌ Live scraping failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def main():
+    """Main test function"""
+    print("🔍 Meetup Scraper Testing Tool")
+    print("="*50)
+    
+    print("\n1️⃣  Testing with local files (safe, yno network requests)")
+    local_result = test_with_local_files()
+    
+    if local_result:
+        print(f"\n✅ Local test completed - found {local_result['count']} events")
+    else:
+        print("\n❌ Local test failed")
+    
+    print("\n" + "="*50)
+    print("\n2️⃣  Optional: Live scraping test")
+    live_result = test_live_scraping()
+    
+    if live_result:
+        print(f"\n✅ Live test completed - found {live_result['count']} events")
+    
+    print("\n🏁 Testing completed!")
 
 
 if __name__ == "__main__":
-    scrape_meetup_events()
+    main()
