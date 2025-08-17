@@ -1,6 +1,7 @@
 "use client";
 
-import { GetFulfilmentSessionInfoResponse } from "@/interfaces/FulfilmentTypes";
+import { FulfilmentSessionId, GetFulfilmentSessionInfoResponse } from "@/interfaces/FulfilmentTypes";
+import { deleteFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
@@ -18,6 +19,7 @@ interface FulfilmentEntityPageProps {
   fulfilmentSessionInfo: GetFulfilmentSessionInfoResponse | null;
   areAllRequiredFieldsFilled?: boolean;
   isSaving?: boolean;
+  fulfilmentSessionId: FulfilmentSessionId;
 }
 
 const FulfilmentEntityPage = ({
@@ -29,11 +31,11 @@ const FulfilmentEntityPage = ({
   fulfilmentSessionInfo,
   areAllRequiredFieldsFilled = true,
   isSaving = false,
+  fulfilmentSessionId,
 }: FulfilmentEntityPageProps) => {
   const router = useRouter();
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
-  const [sessionExtended, setSessionExtended] = useState(false);
 
   // Mobile tooltip state (for disabled button clicks)
   const [showMobileTooltip, setShowMobileTooltip] = useState<"prev" | "next" | null>(null);
@@ -76,24 +78,24 @@ const FulfilmentEntityPage = ({
     if (remainingMs === null) return;
 
     // Show warning when 30 seconds remain (and haven't extended session)
-    if (remainingMs <= 30 * 1000 && remainingMs > 0 && !sessionExtended && !showTimeoutWarning) {
+    if (remainingMs <= 30 * 1000 && remainingMs > 0 && !showTimeoutWarning) {
       setShowTimeoutWarning(true);
     }
 
     // Redirect when time is up
     if (remainingMs <= 0) {
       // Small delay to ensure the timer shows 00:00 before redirecting
-      const timeoutId = setTimeout(() => {
+      const timeoutId = setTimeout(async () => {
+        await deleteFulfilmentSession(fulfilmentSessionId);
         router.push("/timeout");
       }, 100);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [remainingMs, router, sessionExtended, showTimeoutWarning]);
+  }, [remainingMs, router, showTimeoutWarning]);
 
-  const handleStayActive = () => {
+  const hideTimeoutWarningModal = () => {
     setShowTimeoutWarning(false);
-    setSessionExtended(true);
   };
 
   // Get tooltip messages based on disabled reasons
@@ -278,7 +280,7 @@ const FulfilmentEntityPage = ({
       <TimeoutWarningModal
         isOpen={showTimeoutWarning}
         remainingSeconds={Math.max(0, Math.floor((remainingMs || 0) / 1000))}
-        onStayActive={handleStayActive}
+        hideModal={hideTimeoutWarningModal}
       />
     </div>
   );

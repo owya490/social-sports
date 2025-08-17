@@ -253,6 +253,7 @@ const FulfilmentSessionEntityPage = ({
             fulfilmentSessionInfo={fulfilmentSessionInfo}
             areAllRequiredFieldsFilled={areAllRequiredFieldsFilled}
             isSaving={isSaving}
+            fulfilmentSessionId={params.fulfilmentSessionId}
           >
             <FormResponder
               ref={formResponderRef}
