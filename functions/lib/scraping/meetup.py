@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from datetime import datetime
 from time import sleep
 import uuid
 from typing import Any, Dict, List, Optional, Set
@@ -8,6 +9,8 @@ from typing import Any, Dict, List, Optional, Set
 import requests
 from bs4 import BeautifulSoup
 from firebase_functions import https_fn, options
+from google.cloud import firestore
+from google.cloud.firestore import Transaction
 
 
 class Logger:
@@ -52,6 +55,9 @@ HEADERS = {
 
 EVENT_HREF_REGEX = re.compile(r"/[^/]+/events/\d+/?")
 PRICE_REGEX = re.compile(r"(?:A\$|\$)\s?(\d+)(?:\.\d{2})?")
+
+# SportHub system organiser ID for scraped events
+SCRAPER_ORGANISER_ID = "scraper_system"
 
 
 def _fetch_html(url: str, logger: Logger) -> str:
@@ -344,6 +350,139 @@ def _parse_event_detail(html: str, event_url: str, logger: Logger) -> Dict:
     }
 
 
+def _parse_iso_datetime(date_string: str) -> Optional[datetime]:
+    """Parse ISO 8601 datetime string to Python datetime"""
+    if not date_string:
+        return None
+    try:
+        # Handle common formats
+        if 'T' in date_string:
+            # Remove timezone info for basic parsing
+            clean_date = date_string.split('+')[0].split('-')[0:3]
+            clean_date = '-'.join(clean_date[0:3]) + 'T' + date_string.split('T')[1].split('+')[0]
+            return datetime.fromisoformat(clean_date.replace('Z', ''))
+        return None
+    except Exception:
+        return None
+
+
+def _tokenize_text(text: str) -> List[str]:
+    """Tokenize text for search functionality"""
+    if not text:
+        return []
+    # Convert to lowercase and split on common separators
+    tokens = re.findall(r'\b\w+\b', text.lower())
+    return list(set(tokens))  # Remove duplicates
+
+
+def _convert_meetup_event_to_sportshub(meetup_event: Dict, logger: Logger) -> Dict:
+    """Convert a scraped Meetup event to SportHub event format"""
+    try:
+        # Parse dates
+        start_datetime = _parse_iso_datetime(meetup_event.get("startDate", ""))
+        end_datetime = _parse_iso_datetime(meetup_event.get("endDate", ""))
+        
+        # Default to 2 hours if no end time
+        if start_datetime and not end_datetime:
+            from datetime import timedelta
+            end_datetime = start_datetime + timedelta(hours=2)
+        
+        # Convert to Firestore Timestamp format (seconds since epoch)
+        start_timestamp = int(start_datetime.timestamp()) if start_datetime else 0
+        end_timestamp = int(end_datetime.timestamp()) if end_datetime else 0
+        
+        # Set registration deadline to 1 hour before event
+        from datetime import timedelta
+        reg_deadline = start_datetime - timedelta(hours=1) if start_datetime else None
+        reg_deadline_timestamp = int(reg_deadline.timestamp()) if reg_deadline else start_timestamp
+        
+        # Extract sport from description/name (default to volleyball for meetup scraper)
+        sport = "Volleyball"  # Default for this scraper
+        
+        # Create SportHub event structure
+        sportshub_event = {
+            # Required fields
+            "startDate": {"_seconds": start_timestamp, "_nanoseconds": 0},
+            "endDate": {"_seconds": end_timestamp, "_nanoseconds": 0},
+            "location": meetup_event.get("Location", ""),
+            "locationLatLng": {"lat": -33.8688, "lng": 151.2093},  # Default Sydney coordinates
+            "capacity": 20,  # Default capacity
+            "vacancy": 20,   # Default vacancy (same as capacity initially)
+            "price": meetup_event.get("price", 0),
+            "organiserId": SCRAPER_ORGANISER_ID,
+            "registrationDeadline": {"_seconds": reg_deadline_timestamp, "_nanoseconds": 0},
+            "name": meetup_event.get("eventName", "Scraped Event"),
+            "description": meetup_event.get("description", ""),
+            "nameTokens": _tokenize_text(meetup_event.get("eventName", "")),
+            "locationTokens": _tokenize_text(meetup_event.get("Location", "")),
+            "image": meetup_event.get("imageUrl", ""),
+            "thumbnail": meetup_event.get("imageUrl", ""),
+            "eventTags": ["scraped", "meetup", sport.lower()],
+            "isActive": True,
+            "isPrivate": False,  # Scraped events are public by default
+            "attendees": {},
+            "attendeesMetadata": {},
+            "accessCount": 0,
+            "sport": sport,
+            "paymentsActive": False,  # Disable payments for scraped events
+            "stripeFeeToCustomer": False,
+            "promotionalCodesEnabled": False,
+            "paused": False,
+            "eventLink": meetup_event.get("eventLink", ""),
+            "formId": None,
+            "hideVacancy": False,
+            # Scraped event metadata
+            "scrapedFrom": "meetup",
+            "originalEventUrl": meetup_event.get("eventLink", ""),
+            "scrapedAt": {"_seconds": int(datetime.now().timestamp()), "_nanoseconds": 0}
+        }
+        
+        logger.info(f"Converted Meetup event '{meetup_event.get('eventName')}' to SportHub format")
+        return sportshub_event
+        
+    except Exception as e:
+        logger.error(f"Failed to convert Meetup event to SportHub format: {e}")
+        raise
+
+
+def _store_scraped_events(events: List[Dict], logger: Logger) -> List[str]:
+    """Store converted events in the scraped_events collection"""
+    if not events:
+        return []
+    
+    try:
+        # Initialize Firestore client
+        db = firestore.Client()
+        stored_event_ids = []
+        
+        # Store each event in a transaction
+        for event in events:
+            @firestore.transactional
+            def store_event(transaction: Transaction):
+                # Create document reference in scraped_events collection
+                doc_ref = db.collection("scraped_events").document()
+                
+                # Add the document ID to the event data
+                event_with_id = {**event, "eventId": doc_ref.id}
+                
+                # Store in Firestore
+                transaction.set(doc_ref, event_with_id)
+                
+                logger.info(f"Stored scraped event: {doc_ref.id}")
+                return doc_ref.id
+            
+            # Execute transaction
+            event_id = store_event(db.transaction())
+            stored_event_ids.append(event_id)
+        
+        logger.info(f"Successfully stored {len(stored_event_ids)} scraped events")
+        return stored_event_ids
+        
+    except Exception as e:
+        logger.error(f"Failed to store scraped events: {e}")
+        raise
+
+
 @https_fn.on_request(
     cors=options.CorsOptions(
         cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["get", "post"]
@@ -351,11 +490,16 @@ def _parse_event_detail(html: str, event_url: str, logger: Logger) -> Dict:
     region="australia-southeast1",
 )
 def scrape_meetup_events(req: https_fn.Request) -> https_fn.Response:
-    """HTTP endpoint to scrape Meetup 'find' page.
+    """HTTP endpoint to scrape Meetup 'find' page and optionally create SportHub events.
 
     Query params:
       - url: Optional. If provided, overrides the default Meetup find URL.
-      - max: Optional int. Limit number of returned events.
+      - max: Optional int. Limit number of returned events (default: 3).
+      - create_events: Optional bool. If 'true', converts scraped events to SportHub format 
+        and stores them in the 'scraped_events' collection (default: false).
+    
+    Returns:
+      JSON response with scraped events and optionally created SportHub events.
     """
     uid = str(uuid.uuid4())
     logger = Logger(f"meetup_scraper_{uid}")
@@ -365,6 +509,7 @@ def scrape_meetup_events(req: https_fn.Request) -> https_fn.Response:
         # Get parameters from request
         url = req.args.get('url', DEFAULT_MEETUP_FIND_URL)
         max_items = int(req.args.get('max', 3))
+        create_events = req.args.get('create_events', 'false').lower() == 'true'
 
         html = _fetch_html(url, logger)
         # print(html)
@@ -398,7 +543,32 @@ def scrape_meetup_events(req: https_fn.Request) -> https_fn.Response:
                 logger.warning(f"Failed to scrape detail for {event_url}: {e}")
                 continue
 
-        payload = {"count": len(details), "events": details}
+        # Optional: Convert and store events as SportHub events
+        stored_event_ids = []
+        if create_events and details:
+            try:
+                logger.info(f"Converting {len(details)} events to SportHub format...")
+                sportshub_events = []
+                for event_detail in details:
+                    sportshub_event = _convert_meetup_event_to_sportshub(event_detail, logger)
+                    sportshub_events.append(sportshub_event)
+                
+                logger.info(f"Storing {len(sportshub_events)} events in scraped_events collection...")
+                stored_event_ids = _store_scraped_events(sportshub_events, logger)
+                logger.info(f"Successfully created {len(stored_event_ids)} SportHub events")
+                
+            except Exception as e:
+                logger.error(f"Failed to create SportHub events: {e}")
+                # Don't fail the whole request, just log the error
+
+        payload = {
+            "count": len(details), 
+            "events": details,
+            "created_events": len(stored_event_ids) if create_events else 0,
+            "created_event_ids": stored_event_ids if create_events else [],
+            "create_events_enabled": create_events
+        }
+        
         # pretty print
         print(json.dumps(payload, indent=4))
         return https_fn.Response(
