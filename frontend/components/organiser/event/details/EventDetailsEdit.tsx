@@ -1,4 +1,5 @@
 import {
+  ArrowTopRightOnSquareIcon,
   CalendarDaysIcon,
   CheckIcon,
   ClockIcon,
@@ -12,6 +13,7 @@ import {
   UserPlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { Input, Option, Select, Spinner } from "@material-tailwind/react";
@@ -71,6 +73,7 @@ export const EventDetailsEdit = ({
   isRecurrenceTemplate: boolean;
 }) => {
   const { user } = useUser();
+  const router = useRouter();
   const [forms, setForms] = useState<Form[]>([
     {
       formId: "null" as FormId,
@@ -713,8 +716,19 @@ export const EventDetailsEdit = ({
                   </div>
                 ) : (
                   <div className="mt-2">
-                    <div className="text-sm line-clamp-2">
-                      {attachForm === null ? "No form attached" : attachForm.title}
+                    <div className="text-sm line-clamp-2 flex items-center gap-2">
+                      {attachForm === null ? (
+                        "No form attached"
+                      ) : (
+                        <>
+                          <span>{attachForm.title}</span>
+                          <ArrowTopRightOnSquareIcon
+                            className="w-4 h-4 hover:text-blue-800 cursor-pointer shrink-0"
+                            onClick={() => router.push(`/organiser/forms/${attachForm.formId}/preview`)}
+                            title="View form preview"
+                          />
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
