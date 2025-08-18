@@ -16,7 +16,7 @@ export default function EventCreateSection() {
                 <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black"></div>
               </span>
             </h3>
-            <p className="text-xl text-black font-thin mb-8 leading-relaxed">
+            <p className="text-gray-600 font-light mb-8 leading-relaxed">
               Set time, location, capacity, pricing, form fields and more — everything in one simple builder. Make your
               events pop with our powerful event creation.
             </p>

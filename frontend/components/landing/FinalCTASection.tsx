@@ -5,7 +5,7 @@ export default function FinalCTASection() {
     <div className="w-screen flex justify-center pt-12 pb-28 bg-gray-50">
       <div className="screen-width-dashboard px-6 text-center">
         <h3 className="text-4xl md:text-5xl font-bold text-core-text mb-6">Ready to transform your events?</h3>
-        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        <p className="text-xl font-light text-gray-600 mb-8 max-w-2xl mx-auto">
           Join thousands of sports organizers already using SPORTSHUB to create memorable experiences and build thriving
           communities.
         </p>

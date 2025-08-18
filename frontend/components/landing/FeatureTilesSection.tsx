@@ -7,7 +7,7 @@ export default function FeatureTilesSection() {
       <div className="screen-width-dashboard px-6">
         <div className="max-w-4xl">
           <h3 className="text-4xl md:text-6xl font-bold leading-tight">Made for modern sports communities</h3>
-          <p className="text-gray-600 mt-4 max-w-2xl">
+          <p className="text-gray-600 font-light mt-4 max-w-2xl">
             Built with fast execution, relentless focus and a commitment to quality. Switch to a platform crafted for
             clubs, organisers and players.
           </p>

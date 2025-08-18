@@ -18,12 +18,12 @@ export default function HeroSection() {
               </h1>
               <div className="px-6 md:px-0">
                 {/* Subtitle */}
-                <h2 className="hidden md:block max-w-2xl text-lg text-gray-600 font-normal leading-relaxed mb-8">
+                <h2 className="hidden md:block max-w-2xl text-lg text-gray-600 font-light leading-relaxed mb-8">
                   Connect players, organize events, and build thriving sports communities. Streamline bookings,
                   payments, team management and more.
                 </h2>
 
-                <h2 className="md:hidden text-sm text-gray-600 font-normal leading-relaxed mb-8 text-center">
+                <h2 className="md:hidden text-sm text-gray-600 font-light leading-relaxed mb-8 text-center">
                   Connect players, organize events, accept payments and build thriving sports communities.
                 </h2>
 

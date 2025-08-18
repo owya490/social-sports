@@ -5,7 +5,7 @@ export default function TechPlatformSection() {
         <h3 className="text-3xl md:text-4xl font-bold text-core-text mb-3">
           The world&apos;s first tech‑centric sports event platform
         </h3>
-        <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
+        <p className="text-gray-600 font-light mb-8 max-w-2xl mx-auto">
           Built on a modern technologies to keep your events running with speed and reliability.
         </p>
         <div className="flex-col md:flex-row flex-wrap flex items-center justify-center gap-x-10 gap-y-6">

@@ -18,7 +18,7 @@ export default function CoreFeaturesSection() {
               CORE FEATURES
             </div>
             <h3 className="text-3xl md:text-4xl font-bold text-core-text">Everything you need to run your events</h3>
-            <p className="text-black font-thin mt-2 text-sm md:text-base">
+            <p className="text-gray-600 font-light mt-2 text-sm md:text-base">
               Modern tools for organisers, clubs and communities.
             </p>
           </div>
