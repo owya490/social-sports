@@ -1,5 +1,3 @@
-"use client";
-
 export default function EventCreateSection() {
   return (
     <>
@@ -52,7 +50,6 @@ export default function EventCreateSection() {
                   width: "100%",
                   position: "relative",
                   inset: "0",
-                  //just border radius top corners
                   borderTopLeftRadius: "20px",
                   borderTopRightRadius: "20px",
                   borderTop: "1px solid lightgray",
@@ -62,7 +59,6 @@ export default function EventCreateSection() {
                   background: "transparent",
                   margin: "0px auto auto",
                   transformStyle: "preserve-3d",
-                  // transform: "rotateX(40deg) rotateY(0deg)",
                   overflow: "visible",
                   willChange: "transform",
                 }}

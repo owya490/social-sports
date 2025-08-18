@@ -1,5 +1,3 @@
-"use client";
-
 export default function FeatureOverviewSection() {
   return (
     <div className="w-screen flex justify-center pb-24 bg-white">

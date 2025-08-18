@@ -1,5 +1,3 @@
-"use client";
-
 import FeatureTilesCarousel from "./FeatureTilesCarousel";
 import FeatureTilesGrid from "./FeatureTilesGrid";
 

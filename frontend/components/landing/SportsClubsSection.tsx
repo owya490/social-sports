@@ -1,5 +1,3 @@
-"use client";
-
 import ClubCarousel from "./ClubCarousel";
 
 export default function SportsClubsSection() {

@@ -1,5 +1,3 @@
-"use client";
-
 export default function TechPlatformSection() {
   return (
     <div className="w-screen flex justify-center py-24 bg-gray-50">

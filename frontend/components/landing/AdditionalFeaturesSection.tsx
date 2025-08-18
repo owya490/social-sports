@@ -14,9 +14,6 @@ export default function AdditionalFeaturesSection() {
           <div className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2 hidden md:block">
             <div className="w-px h-full bg-core-outline"></div>
           </div>
-          {/* <div className="absolute bottom-0 left-0 right-0">
-            <div className="w-full h-px bg-core-outline"></div>
-          </div> */}
 
           {/* Feature Cards */}
           <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 pt-2">

@@ -1,5 +1,3 @@
-"use client";
-
 import heroPhoneImage from "@/public/images/mocks/sportshub-iphone-web-mock.png";
 import Image from "next/image";
 import styles from "./ImageHero.module.css";

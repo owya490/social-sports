@@ -2,14 +2,14 @@
 
 import React, { useRef } from "react";
 
-type Card = {
+export type Card = {
   title: string;
   description: string;
   imageSrc: string;
   imageAlt: string;
 };
 
-const cards: Card[] = [
+export const cards: Card[] = [
   {
     title: "Simple yet powerful",
     description: "Clean, intuitive user experience, yet a feature rich platform, ready to power your events.",

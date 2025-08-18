@@ -15,7 +15,6 @@ export default function ImageHero() {
                 src={heroImage}
                 alt="SportHub Platform Interface"
                 fill
-                // style={{ objectFit: "cover", objectPosition: "center" }}
                 priority
                 className="hidden md:block"
               />
