@@ -3,7 +3,7 @@ export default function TechPlatformSection() {
     <div className="w-screen flex justify-center py-24 bg-gray-50">
       <div className="screen-width-dashboard px-6 text-center">
         <h3 className="text-3xl md:text-4xl font-bold text-core-text mb-3">
-          The world's first tech‑centric sports event platform
+          The world&apos;s first tech‑centric sports event platform
         </h3>
         <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
           Built on a modern technologies to keep your events running with speed and reliability.

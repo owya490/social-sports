@@ -3,7 +3,7 @@ import { cards } from "./FeatureTilesCarousel";
 export default function FeatureTilesGrid(): JSX.Element {
   return (
     <div className="hidden md:grid grid-cols-3 gap-6 mt-10">
-      {cards.map((card, index) => (
+      {cards.map((card) => (
         <article
           key={card.title}
           className="relative rounded-2xl overflow-hidden border border-core-outline bg-white shadow-sm"
