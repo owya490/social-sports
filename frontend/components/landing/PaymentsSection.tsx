@@ -17,7 +17,7 @@ export default function PaymentsSection() {
               </span>
               , not weeks
             </h3>
-            <p className="text-xl text-black font-thin mb-8 leading-relaxed">
+            <p className="text-gray-600 font-light mb-8 leading-relaxed">
               Stripe-powered payments that process instantly. No waiting, no chasing payments. Just seamless
               transactions that keep your events running smooth.
             </p>
