@@ -8,15 +8,23 @@ export default function TechPlatformSection() {
         <p className="text-gray-600 font-light mb-8 max-w-2xl mx-auto">
           Built on a modern technologies to keep your events running with speed and reliability.
         </p>
-        <div className="flex-col md:flex-row flex-wrap flex items-center justify-center gap-x-10 gap-y-6">
-          <div className="flex items-center gap-x-10">
+        <div className="grid grid-cols-2 md:flex items-center justify-center gap-x-4 md:gap-x-10 gap-y-6">
+          <div className="flex justify-center">
             <img src="/vercel.svg" alt="Vercel" className="h-6 w-auto" />
+          </div>
+          <div className="flex justify-center">
             <img src="/next.svg" alt="Next.js" className="h-6 w-auto" />
+          </div>
+          <div className="flex justify-center">
             <img src="/images/company-logos/firebase.svg" alt="Firebase" className="h-6 w-auto" />
           </div>
-          <div className="flex items-center gap-x-10">
+          <div className="flex justify-center">
             <img src="/images/company-logos/google-maps.png" alt="Google Maps" className="h-6 w-auto" />
+          </div>
+          <div className="flex justify-center">
             <img src="/images/company-logos/stripe.png" alt="Stripe" className="h-6 w-auto" />
+          </div>
+          <div className="flex justify-center">
             <img src="/images/company-logos/loops.png" alt="Loops" className="h-6 w-auto" />
           </div>
         </div>
