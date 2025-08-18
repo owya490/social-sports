@@ -13,19 +13,19 @@ const cards: Card[] = [
   {
     title: "Simple yet powerful",
     description: "Clean, intuitive user experience, yet a feature rich platform, ready to power your events.",
-    imageSrc: "/images/mocks/going-global-event-details-mock.png",
+    imageSrc: "/images/organiser/31.png",
     imageAlt: "Feature visual",
   },
   {
     title: "Designed to move fast",
     description: "Lightning‑quick flows for publishing events and collecting payments.",
-    imageSrc: "/images/mocks/speedometer.png",
+    imageSrc: "/images/organiser/30.png",
     imageAlt: "Speed visual",
   },
   {
     title: "Secure and private",
     description: "Privacy‑first design, secure payments and protected participant data.",
-    imageSrc: "/images/mocks/security.jpeg",
+    imageSrc: "/images/organiser/29.png",
     imageAlt: "Security visual",
   },
 ];
@@ -83,12 +83,11 @@ export default function FeatureTilesCarousel(): JSX.Element {
           className="snap-center shrink-0 group relative rounded-xl overflow-hidden border border-core-outline bg-white p-3 shadow-sm w-[220px] sm:w-[260px]"
         >
           <div className="relative">
-            <img src={card.imageSrc} alt={card.imageAlt} className="w-full h-36 object-fit rounded-lg" />
+            <div className="flex items-center justify-center">
+              <img src={card.imageSrc} alt={card.imageAlt} className="w-1/2 aspect-square object-cover rounded-lg" />
+            </div>
             <h4 className="mt-2 text-sm font-semibold">{card.title}</h4>
             <p className="text-gray-600 text-[11px] mt-1 leading-snug">{card.description}</p>
-          </div>
-          <div className="absolute bottom-2 right-2 h-6 w-6 rounded-full bg-gray-100 group-hover:bg-gray-200 flex items-center justify-center transition-colors">
-            <span className="text-base leading-none">+</span>
           </div>
         </article>
       ))}

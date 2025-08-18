@@ -1,7 +1,5 @@
 "use client";
 
-import BatteryIllustration from "./BatteryIllustration";
-
 type Card = {
   title: string;
   description: string;
@@ -13,19 +11,19 @@ const cards: Card[] = [
   {
     title: "Simple yet powerful",
     description: "Clean, intuitive user experience, yet a feature rich platform, ready to power your events.",
-    imageSrc: "/images/mocks/going-global-event-details-mock.png",
+    imageSrc: "/images/organiser/31.png",
     imageAlt: "Feature visual",
   },
   {
     title: "Designed to move fast",
     description: "Lightning‑quick flows for publishing events and collecting payments.",
-    imageSrc: "/images/mocks/speedometer.png",
+    imageSrc: "/images/organiser/30.png",
     imageAlt: "Speed visual",
   },
   {
     title: "Secure and private",
     description: "Privacy‑first design, secure payments and protected participant data.",
-    imageSrc: "/images/mocks/security.jpeg",
+    imageSrc: "/images/organiser/29.png",
     imageAlt: "Security visual",
   },
 ];
@@ -41,15 +39,11 @@ export default function FeatureTilesGrid(): JSX.Element {
           {/* Make the card a perfect square */}
           <div className="pt-[100%]" />
           <div className="absolute inset-0 p-6 flex flex-col">
-            {index === 0 ? (
-              <BatteryIllustration className="w-full h-2/3 rounded-xl border border-core-outline/50" />
-            ) : (
-              <img
-                src={card.imageSrc}
-                alt={card.imageAlt}
-                className="w-full h-2/3 object-contain rounded-xl border border-core-outline/50"
-              />
-            )}
+            <img
+              src={card.imageSrc}
+              alt={card.imageAlt}
+              className="w-full h-1/2 object-contain rounded-xl border border-core-outline/50"
+            />
             <h4 className="mt-4 text-lg font-semibold">{card.title}</h4>
             <p className="text-gray-600 text-sm mt-1 leading-relaxed">{card.description}</p>
             {/* <div className="absolute bottom-4 right-4 h-9 w-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
