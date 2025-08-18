@@ -9,10 +9,11 @@ const imagePaths = [
   "/images/club-logos/15.png",
   "/images/club-logos/16.png",
   "/images/club-logos/17.png",
+  "/images/club-logos/23.png",
   "/images/club-logos/18.png",
   "/images/club-logos/19.png",
-  "/images/club-logos/20.png",
-  "/images/club-logos/21.png",
+  // "/images/club-logos/20.png",
+  // "/images/club-logos/21.png",
   "/images/club-logos/22.png",
 ];
 
@@ -23,24 +24,24 @@ const ClubCarousel = () => {
     <div className="relative overflow-hidden w-full bg-white mt-6">
       <div className="md:hidden flex animate-carousel-mobile whitespace-nowrap">
         {allImages.map((src, idx) => (
-          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0">
+          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0 rounded-lg overflow-hidden">
             <img src={src} alt={`Club Logo ${idx}`} className="w-full h-full object-contain" />
           </div>
         ))}
         {allImages.map((src, idx) => (
-          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0">
+          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0 rounded-lg overflow-hidden">
             <img src={src} alt={`Club Logo ${idx}`} className="w-full h-full object-contain" />
           </div>
         ))}
       </div>
       <div className="hidden md:flex animate-carousel whitespace-nowrap">
         {allImages.map((src, idx) => (
-          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0">
+          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0 rounded-lg overflow-hidden">
             <img src={src} alt={`Club Logo ${idx}`} className="w-full h-full object-contain" />
           </div>
         ))}
         {allImages.map((src, idx) => (
-          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0">
+          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0 rounded-lg overflow-hidden">
             <img src={src} alt={`Club Logo ${idx}`} className="w-full h-full object-contain" />
           </div>
         ))}
