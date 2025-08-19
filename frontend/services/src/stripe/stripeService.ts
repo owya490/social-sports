@@ -51,10 +51,12 @@ export async function getStripeCheckoutFromEventId(
     cancelUrl: getUrlWithCurrentHostname(`/event/${eventId}`),
     successUrl: successUrl ?? getUrlWithCurrentHostname(`/event/success/${eventId}`),
   };
+  stripeServiceLogger.info(`Getting stripe checkout for ${eventId} for ${quantity} tickets.`);
   const getStripeCheckoutFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID);
   return getStripeCheckoutFunction(content)
     .then((result) => {
       const data = JSON.parse(result.data as string) as StripeGetCheckoutUrlResponse;
+      stripeServiceLogger.info(`Checkout link received for ${eventId}: ${data.url}`);
       return data.url;
     })
     .catch((error) => {
