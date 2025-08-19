@@ -1,7 +1,7 @@
 ---
-title: For Players
+title: 👟 For Players
 description: Discover, book, and manage your sports events effortlessly.
-weight: 20
+weight: 3
 ---
 
 Welcome to SPORTSHUB for players. This section covers how to:

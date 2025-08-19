@@ -2,6 +2,7 @@
 linkTitle: "Documentation"
 title: Introduction
 description: A customer-facing overview of SPORTSHUB for both organisers and players.
+weight: 1
 ---
 
 🏐 SPORTSHUB is a one‑stop platform for discovering, booking, and hosting social sports events. Whether you're a player looking to join a game or an organiser running leagues and social nights, SPORTSHUB helps you do it all—fast.

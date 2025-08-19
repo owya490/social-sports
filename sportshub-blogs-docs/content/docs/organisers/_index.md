@@ -1,7 +1,9 @@
 ---
-title: For Organisers
+title: 🎯 For Organisers
 description: Everything you need to create, manage, and grow your social sports events.
-weight: 10
+weight: 2
+sidebar:
+  open: true
 ---
 
 Welcome to SPORTSHUB for organisers. This section covers how to:
