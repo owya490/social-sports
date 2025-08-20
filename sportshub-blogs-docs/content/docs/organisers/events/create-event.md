@@ -41,7 +41,7 @@ Complete the essential event details including:
 
 ### 3. Upload Event Images
 
-![create-event-images](/images/docs/organisers/events/create-event-images.png)
+![create-event-images](/images/docs/organisers/events/create-event-images.jpg)
 
 Add visual appeal to your event by uploading:
 
