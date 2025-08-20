@@ -109,7 +109,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                 <p>Please check back later.</p>
               </div>
             ) : (
-              <>
+              <div className="flex flex-col gap-y-3">
                 <Select
                   label="Select Ticket Amount"
                   size="lg"
@@ -169,7 +169,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                 >
                   Book Now
                 </button>
-              </>
+              </div>
             )}
           </div>
         ) : (
