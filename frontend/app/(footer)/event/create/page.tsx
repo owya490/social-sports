@@ -44,7 +44,7 @@ export type FormData = {
   registrationEndTime: string;
   paymentsActive: boolean;
   lat: number;
-  long: number;
+  lng: number;
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
   paused: boolean;
@@ -72,7 +72,7 @@ const INITIAL_DATA: FormData = {
   registrationEndTime: "10:00",
   paymentsActive: false,
   lat: 0,
-  long: 0,
+  lng: 0,
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
   paused: false,
@@ -249,7 +249,7 @@ export default function CreateEvent() {
       ),
       locationLatLng: {
         lat: formData.lat,
-        lng: formData.long,
+        lng: formData.lng,
       },
       sport: formData.sport,
       paymentsActive: formData.paymentsActive,

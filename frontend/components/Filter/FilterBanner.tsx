@@ -8,7 +8,7 @@ import {
   filterEventsBySortBy,
   filterEventsBySport,
 } from "@/services/src/filterService";
-import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/locationUtils";
+import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/maps/mapsService";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import ChevronRightButton from "../elements/ChevronRightButton";

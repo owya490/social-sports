@@ -26,7 +26,7 @@ import {
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
-import { getLocationCoordinates } from "@/services/src/locationUtils";
+import { getLocationCoordinates, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
@@ -63,6 +63,8 @@ export const EventDetailsEdit = ({
   updateData: (id: string, data: any) => any;
   isRecurrenceTemplate: boolean;
 }) => {
+  loadGoogleMapsScript();
+
   const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);

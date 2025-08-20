@@ -35,7 +35,7 @@ export type BasicData = {
   isPrivate: boolean;
   paymentsActive: boolean;
   lat: number;
-  long: number;
+  lng: number;
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
   eventLink: string;
