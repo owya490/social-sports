@@ -4,17 +4,19 @@ description: Discover, book, and manage your sports events effortlessly.
 weight: 3
 ---
 
-Welcome to SPORTSHUB for players. This section covers how to:
 
-- Find the right event for you
-- Book with secure Stripe checkout
-- Manage tickets and email confirmations
-- Understand refunds and cancellations
-- Update your profile and preferences
+Welcome to SPORTSHUB! As a player, you can discover amazing sports events in your area and join communities of like-minded athletes.
 
-Start here:
+## What You Can Do
 
-- [How to find and book events](../getting-started)
-- Manage bookings (coming soon)
-- Refunds and cancellations (coming soon)
-- Profiles and notifications (coming soon)
+🔍 **Discover Events** - Browse local sports activities across volleyball, basketball, tennis, soccer, and more  
+💳 **Book Instantly** - Secure your spot with one-click Stripe checkout  
+📧 **Stay Updated** - Receive automatic confirmations, reminders, and organiser announcements  
+
+## Need Help?
+
+
+- **Booking issues**: Check your email for confirmations or contact the organiser
+- **Account questions**: Visit your profile settings or [contact support](/contact)
+
+Ready to join the action? **[Start exploring events →](https://www.sportshub.net.au/dashboard)**
