@@ -5,8 +5,8 @@ weight: 1
 tags:
   - Docs
   - Guide
-next: /docs/guide
-prev: /docs
+next: /docs/organisers
+prev: /docs/contact-us
 ---
 
 > SPORTSHUB is your one-stop platform for social sports - whether you're looking to join games or host events, we've got you covered.
@@ -45,7 +45,6 @@ _Looking to join sports events and activities_
 
 **Start here:** 👉 **[For Players Documentation](players/)**
 
-
 ## 🔍 Searching SPORTSHUB Docs
 
 Can't find what you're looking for? Use these tools to navigate our documentation:
@@ -55,7 +54,6 @@ Can't find what you're looking for? Use these tools to navigate our documentatio
 - **Tags & Categories** - Filter content by topic using the tag system
 
 💡 **Tip:** Try searching for specific features like "payments", "recurring events", or "refunds" to find relevant guides quickly.
-
 
 ## Need Help?
 
