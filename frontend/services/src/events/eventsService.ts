@@ -95,7 +95,6 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
         user.publicUpcomingOrganiserEvents.push(docRef.id);
       }
     }
-    eventServiceLogger.info(`create event user: ${JSON.stringify(user, null, 2)}`);
     await updateUser(data.organiserId, user);
 
     // We want to bust all our caches when we create a new event.

@@ -61,8 +61,8 @@ public abstract class AbstractEventData {
 
 	@Data
 	public static class LocationLatLng {
-		private Integer lat;
-		private Integer lng;
+		private Double lat;
+		private Double lng;
 	}
 
 	@Data

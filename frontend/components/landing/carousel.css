@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes scrollmobile {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-250%);
+  }
+}
+
+.animate-carousel-mobile {
+  animation: scrollmobile 120s linear infinite;
+}
+
+.animate-carousel {
+  animation: scroll 120s linear infinite;
+}
