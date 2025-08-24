@@ -26,10 +26,10 @@ import {
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
-import { getLocationCoordinates, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
+import { getLocationCoordinates, loadGoogleMapsScript, initializeAutocomplete } from "@/services/src/maps/mapsService";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Skeleton from "react-loading-skeleton";
 
 export const EventDetailsEdit = ({
@@ -70,6 +70,7 @@ export const EventDetailsEdit = ({
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [registrationDeadlineWarning, setRegistrationDeadlineWarning] = useState<string | null>(null);
   const [capacityWarning, setCapacityWarning] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string>("");
 
   // Date and Time
   const [isEdit, setIsEdit] = useState(false);
@@ -114,11 +115,60 @@ export const EventDetailsEdit = ({
   // Location
   const [newEditLocation, setNewEditLocation] = useState("");
   const [location, setLocation] = useState("");
+  const [locationLatLng, setLocationLatLng] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectionMade, setSelectionMade] = useState<boolean>(false);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const scriptLoadResult = loadGoogleMapsScript();
+  const isLoaded = scriptLoadResult ? scriptLoadResult.isLoaded : false;
+  const loadError = scriptLoadResult ? scriptLoadResult.loadError : undefined;
+
+  useEffect(() => {
+    if (isLoaded && inputRef.current && isEdit) {
+      // Find the actual input element within the Material-Tailwind Input component
+      const actualInput = inputRef.current.querySelector("input");
+      if (actualInput) {
+        autocompleteRef.current = initializeAutocomplete({ current: actualInput }, handlePlaceSelect);
+      }
+    }
+  }, [isLoaded, isEdit, newEditLocation]);
+
+  const handlePlaceSelect = async () => {
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.name && place.formatted_address) {
+        setSelectionMade(true);
+        const full_address = `${place.name}, ${place.formatted_address}`;
+        setNewEditLocation(full_address);
+        setLocationError("");
+
+        try {
+          const { lat, lng } = await getLocationCoordinates(full_address);
+          setLocationLatLng({ lat, lng });
+        } catch (error) {
+          // Silently handle error, don't show toast
+          setLocationError("Failed to get location coordinates");
+          setSelectionMade(false);
+        }
+      }
+    }
+  };
+
+  const handleLocationInputBlur = () => {
+    if (!selectionMade && isEdit && newEditLocation.trim() !== "") {
+      setLocationError("Please select a location from the dropdown");
+    }
+  };
 
   const handleLocationUpdate = async (): Promise<Partial<EventData>> => {
     setLocation(newEditLocation);
     const locationTokens = newEditLocation.toLowerCase().split(" ");
-    const latLng = await getLocationCoordinates(newEditLocation);
+
+    let latLng = locationLatLng;
+    if (!latLng) {
+      latLng = await getLocationCoordinates(newEditLocation);
+    }
 
     return {
       location: newEditLocation,
@@ -199,6 +249,7 @@ export const EventDetailsEdit = ({
 
     setNewEditLocation(eventLocation);
     setLocation(eventLocation);
+    setSelectionMade(true); // Mark as selected since this is existing location
 
     setNewEditSport(eventSport);
     setSport(eventSport);
@@ -257,6 +308,19 @@ export const EventDetailsEdit = ({
 
   // need to recurring and event snowflake divergence - capacity can be updated freely in recurrence templates
   const handleUpdate = async () => {
+    // Validate location before proceeding
+    if (!selectionMade && newEditLocation.trim() !== "") {
+      setLocationError("Please select a location from the dropdown");
+      setUpdateLoading(false);
+      return;
+    }
+
+    if (newEditLocation.trim() === "") {
+      setLocationError("Location is required");
+      setUpdateLoading(false);
+      return;
+    }
+
     setUpdateLoading(true);
     var data = {
       ...handleDateTimeUpdate(),
@@ -288,6 +352,8 @@ export const EventDetailsEdit = ({
     setNewEditEndDate(endDate);
     setNewEditEndTime(endTime);
     setNewEditLocation(location);
+    setSelectionMade(true); // Reset selection state
+    setLocationError(""); // Clear any errors
     setNewEditSport(sport);
     setNewEditCapacity(capacity);
     setNewEditPrice(price);
@@ -467,16 +533,27 @@ export const EventDetailsEdit = ({
             ) : (
               <>
                 {isEdit ? (
-                  <div className="flex">
-                    <Input
-                      className="w-80 sm:w-full"
-                      value={newEditLocation}
-                      onChange={(e) => {
-                        setNewEditLocation(e.target.value);
-                      }}
-                      crossOrigin="false"
-                      label="Location"
-                    />
+                  <div className="flex flex-col">
+                    {!isLoaded ? (
+                      <div>Loading...</div>
+                    ) : loadError ? (
+                      <div>Error loading maps</div>
+                    ) : (
+                      <div className="relative" ref={inputRef}>
+                        <Input
+                          className="w-80 sm:w-full"
+                          value={newEditLocation}
+                          onChange={(e) => {
+                            setNewEditLocation(e.target.value);
+                            setSelectionMade(false);
+                          }}
+                          onBlur={handleLocationInputBlur}
+                          crossOrigin="false"
+                          label="Location"
+                        />
+                      </div>
+                    )}
+                    {locationError && <div className="text-red-600 text-sm mt-2">{locationError}</div>}
                   </div>
                 ) : (
                   <div className="mt-2">{newEditLocation}</div>
@@ -597,7 +674,13 @@ export const EventDetailsEdit = ({
                       }`}
                       onClick={() => {
                         if (
-                          (!dateWarning && !timeWarning && !registrationDeadlineWarning && !capacityWarning) ||
+                          (!dateWarning &&
+                            !timeWarning &&
+                            !registrationDeadlineWarning &&
+                            !capacityWarning &&
+                            !locationError &&
+                            selectionMade &&
+                            newEditLocation.trim() !== "") ||
                           isRecurrenceTemplate
                         ) {
                           handleUpdate();
