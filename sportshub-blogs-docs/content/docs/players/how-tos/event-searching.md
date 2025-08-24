@@ -12,40 +12,38 @@ Find the perfect sports events near you with SPORTSHUB's powerful search and fil
 1. **Visit the Dashboard**
 
    - Go to [sportshub.net.au/dashboard](https://www.sportshub.net.au/dashboard)
-   - Browse all available events instantly
+   - Browse all public available events instantly
 
 2. **Use the Search Bar**
    - Enter event names or keywords
-   - Search by location (suburb, city, or landmark)
+   - Toggle to user search to search for organisers
+   <!-- - Search by location (suburb, city, or landmark) -->
    - Hit enter to see matching results
 
 ### Advanced Filtering
 
-Use our comprehensive filters to narrow down your options:
+Use our filtering tools to find exactly what you're looking for:
 
-**🏀 Sport Type**
+**🔥 Sort Events**
 
-- Volleyball, Basketball, Tennis, Soccer
-- Badminton, Table Tennis, Baseball, Oztag
-- And more sports added regularly
+- **HOT** - Popular and trending events
+- **Price** - Low to high pricing
+- **Date** - Upcoming events first
 
-**💰 Price Range**
+**💰 Filter by Max Price**
 
 - Set maximum price using the slider
 - Find free events or premium experiences
-- See all pricing upfront
 
-**📅 Date Range**
+**📅 Filter by Start Date Range**
 
 - Pick specific date ranges
 - Find weekend events or weekday activities
-- Plan ahead with future event searches
 
-**📍 Location & Distance**
+**📍 Filter by Max Proximity**
 
 - Enter your location for proximity search
 - Set maximum distance using the slider
-- Perfect for finding nearby events
 
 ### Search Tips
 
