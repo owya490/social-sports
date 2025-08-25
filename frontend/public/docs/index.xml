@@ -1,0 +1,619 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Introduction</title><link>https://sportshub.net.au/docs/</link><description>Recent content in Introduction on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://sportshub.net.au/docs/index.xml" rel="self" type="application/rss+xml"/><item><title>🚀 Welcome to SPORTSHUB Docs</title><link>https://sportshub.net.au/docs/getting-started/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/getting-started/</guid><description>
+&lt;blockquote>
+&lt;p>SPORTSHUB is your one-stop platform for social sports - whether you&amp;rsquo;re looking to join games or host events, we&amp;rsquo;ve got you covered.&lt;/p>
+&lt;/blockquote>
+&lt;p>Welcome to &lt;strong>SPORTSHUB docs&lt;/strong>! If you have questions and are seeking guidance on features and processes, you&amp;rsquo;ve come to the right place.&lt;/p>
+&lt;p>This documentation helps you get the most out of SPORTSHUB. You&amp;rsquo;ll find step-by-step guides, best practices, and answers to common questions - whether you&amp;rsquo;re booking your first event or managing a sports community of hundreds.&lt;/p>
+&lt;h2>New to SPORTSHUB? Choose Your Path&lt;span class="hx:absolute hx:-mt-20" id="new-to-sportshub-choose-your-path">&lt;/span>
+&lt;a href="#new-to-sportshub-choose-your-path" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>🎯 &lt;strong>I&amp;rsquo;m an Organiser&lt;/strong>&lt;span class="hx:absolute hx:-mt-20" id="-i">&lt;/span>
+&lt;a href="#-i" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;em>Running sports events, classes, or activities&lt;/em>&lt;/p>
+&lt;p>&lt;strong>What you can do:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Create and publish professional event listings&lt;/li>
+&lt;li>Accept payments and manage bookings automatically&lt;/li>
+&lt;li>Set up recurring events and promotional codes&lt;/li>
+&lt;li>Communicate with participants and track analytics&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Start here:&lt;/strong> 👉 &lt;strong>&lt;a href="organisers/" >For Organisers Documentation&lt;/a>&lt;/strong>&lt;/p>
+&lt;hr>
+&lt;h3>👟 &lt;strong>I&amp;rsquo;m a Player&lt;/strong>&lt;span class="hx:absolute hx:-mt-20" id="-i-1">&lt;/span>
+&lt;a href="#-i-1" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;em>Looking to join sports events and activities&lt;/em>&lt;/p>
+&lt;p>&lt;strong>What you can do:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Discover local sports events (volleyball, basketball, tennis, and more)&lt;/li>
+&lt;li>Book instantly with secure payments&lt;/li>
+&lt;li>Manage your bookings and receive confirmations&lt;/li>
+&lt;li>Connect with local sports communities&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Start here:&lt;/strong> 👉 &lt;strong>&lt;a href="players/" >For Players Documentation&lt;/a>&lt;/strong>&lt;/p>
+&lt;h2>🔍 Searching SPORTSHUB Docs&lt;span class="hx:absolute hx:-mt-20" id="-searching-sportshub-docs">&lt;/span>
+&lt;a href="#-searching-sportshub-docs" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Can&amp;rsquo;t find what you&amp;rsquo;re looking for? Use these tools to navigate our documentation:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Search Bar&lt;/strong> - Use the search function in the navigation bar at the top of any page&lt;/li>
+&lt;li>&lt;strong>Navigation Menu&lt;/strong> - Browse sections using the sidebar navigation&lt;/li>
+&lt;li>&lt;strong>Tags &amp;amp; Categories&lt;/strong> - Filter content by topic using the tag system&lt;/li>
+&lt;/ul>
+&lt;p>💡 &lt;strong>Tip:&lt;/strong> Try searching for specific features like &amp;ldquo;payments&amp;rdquo;, &amp;ldquo;recurring events&amp;rdquo;, or &amp;ldquo;refunds&amp;rdquo; to find relevant guides quickly.&lt;/p>
+&lt;h2>Need Help?&lt;span class="hx:absolute hx:-mt-20" id="need-help">&lt;/span>
+&lt;a href="#need-help" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>📧 &lt;strong>Contact Support:&lt;/strong> &lt;a href="https://sportshub.net.au/contact" >Get in touch with our team&lt;/a>&lt;/li>
+&lt;li>📚 &lt;strong>Browse Documentation:&lt;/strong> Explore detailed guides for &lt;a href="players/" >Players&lt;/a> or &lt;a href="organisers/" >Organisers&lt;/a>&lt;/li>
+&lt;li>🌐 &lt;strong>Visit SPORTSHUB:&lt;/strong> &lt;a href="https://www.sportshub.net.au/dashboard" target="_blank" rel="noopener">sportshub.net.au&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Ready to get started?&lt;/strong> Choose your path above and dive into the world of social sports! 🎾&lt;/p></description></item><item><title>Create Event</title><link>https://sportshub.net.au/docs/organisers/events/create-event/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/events/create-event/</guid><description>
+&lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This guide walks you through creating an event on SPORTSHUB. Whether you&amp;rsquo;re organizing a casual pickup game or a competitive tournament, the event creation process is designed to be intuitive while giving you full control over all the details that matter to your participants.&lt;/p>
+&lt;p>Creating an event allows you to:&lt;/p>
+&lt;ul>
+&lt;li>Set up public events that appear on the main dashboard for anyone to join&lt;/li>
+&lt;li>Create private events accessible only via direct link&lt;/li>
+&lt;li>Configure payment options for paid events&lt;/li>
+&lt;li>Add rich descriptions with images and detailed information&lt;/li>
+&lt;li>Manage participant and event logistics&lt;/li>
+&lt;/ul>
+&lt;h2>Step-by-Step Event Creation&lt;span class="hx:absolute hx:-mt-20" id="step-by-step-event-creation">&lt;/span>
+&lt;a href="#step-by-step-event-creation" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>1. Navigate to Create Event&lt;span class="hx:absolute hx:-mt-20" id="1-navigate-to-create-event">&lt;/span>
+&lt;a href="#1-navigate-to-create-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/events/create-event-button.png" alt="create-event-button" loading="lazy" />
+Click the &lt;strong>&amp;ldquo;Create Event&amp;rdquo;&lt;/strong> button located in the top right corner of any page. This will take you to the event creation form where you can configure all aspects of your event.&lt;/p>
+&lt;h3>2. Fill Out Basic Event Information&lt;span class="hx:absolute hx:-mt-20" id="2-fill-out-basic-event-information">&lt;/span>
+&lt;a href="#2-fill-out-basic-event-information" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/events/create-event-details.png" alt="create-event-details" loading="lazy" />
+Complete the essential event details including:&lt;/p>
+&lt;ul>
+&lt;li>Event title and sport type&lt;/li>
+&lt;li>Date, time, and duration&lt;/li>
+&lt;li>Location and venue details&lt;/li>
+&lt;li>Participant limits and pricing&lt;/li>
+&lt;li>Privacy settings (public/private)&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-green-200 hx:bg-green-100 hx:text-green-900 hx:dark:border-green-200/30 hx:dark:bg-green-900/30 hx:dark:text-green-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>&lt;/svg>Tip&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>To create paid events, you&amp;rsquo;ll need to have Stripe connected to your account. You can choose to absorb Stripe processing fees yourself or pass them on to participants by adjusting the settings in the Additional Settings during event creation.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;h3>3. Upload Event Images&lt;span class="hx:absolute hx:-mt-20" id="3-upload-event-images">&lt;/span>
+&lt;a href="#3-upload-event-images" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/events/create-event-images.jpg" alt="create-event-images" loading="lazy" />&lt;/p>
+&lt;p>Add visual appeal to your event by uploading:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Thumbnail image&lt;/strong>: A smaller image that appears in event listings and cards. This will need to be in a square aspect ratio.&lt;/li>
+&lt;li>&lt;strong>Event banner image&lt;/strong>: A larger hero image displayed on the event detail page. This will need to be in 16:9 aspect ratio.&lt;/li>
+&lt;/ul>
+&lt;p>High-quality images help attract more participants and give your event a professional appearance.&lt;/p>
+&lt;h3>4. Write a Meaningful Description&lt;span class="hx:absolute hx:-mt-20" id="4-write-a-meaningful-description">&lt;/span>
+&lt;a href="#4-write-a-meaningful-description" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Use the rich text editor to create a compelling event description that may include:&lt;/p>
+&lt;ul>
+&lt;li>What participants can expect&lt;/li>
+&lt;li>Skill level requirements&lt;/li>
+&lt;li>What to bring or wear&lt;/li>
+&lt;li>Any special instructions or rules&lt;/li>
+&lt;li>Contact information for questions&lt;/li>
+&lt;/ul>
+&lt;p>A well-written description helps set proper expectations and reduces participant questions.&lt;/p>
+&lt;h2>After Creating Your Event&lt;span class="hx:absolute hx:-mt-20" id="after-creating-your-event">&lt;/span>
+&lt;a href="#after-creating-your-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Once your event is created, you will receive an email confirmation and can:&lt;/p>
+&lt;h3>Find Your Event&lt;span class="hx:absolute hx:-mt-20" id="find-your-event">&lt;/span>
+&lt;a href="#find-your-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Public events&lt;/strong>: Appear on the main dashboard where anyone can discover and join them&lt;/li>
+&lt;li>&lt;strong>Private events&lt;/strong>: Only accessible via the direct link you can share with intended participants&lt;/li>
+&lt;/ul>
+&lt;h3>Manage Your Event&lt;span class="hx:absolute hx:-mt-20" id="manage-your-event">&lt;/span>
+&lt;a href="#manage-your-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Access comprehensive event management tools through the &lt;a href="https://sportshub.net.au/docs/organisers/organiser-hub/" >Organiser Hub&lt;/a>, where you can:&lt;/p>
+&lt;ul>
+&lt;li>Monitor registrations and participant details&lt;/li>
+&lt;li>Update event information&lt;/li>
+&lt;li>Manage and manually add/ remove Participants&lt;/li>
+&lt;li>Alter event settings and pause bookings.&lt;/li>
+&lt;/ul>
+&lt;p>Your newly created event will be immediately available for participants to join, and you&amp;rsquo;ll receive notifications as people register.&lt;/p></description></item><item><title>Event Searching</title><link>https://sportshub.net.au/docs/players/how-tos/event-searching/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/players/how-tos/event-searching/</guid><description>
+&lt;p>&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/search-bar.png" alt="search-bar" loading="lazy" />&lt;/p>
+&lt;h2>How to Search for Events&lt;span class="hx:absolute hx:-mt-20" id="how-to-search-for-events">&lt;/span>
+&lt;a href="#how-to-search-for-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Find the perfect sports events near you with SPORTSHUB&amp;rsquo;s powerful search and filtering tools.&lt;/p>
+&lt;h3>Quick Search&lt;span class="hx:absolute hx:-mt-20" id="quick-search">&lt;/span>
+&lt;a href="#quick-search" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>Visit the Dashboard&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Go to &lt;a href="https://www.sportshub.net.au/dashboard" target="_blank" rel="noopener">sportshub.net.au/dashboard&lt;/a>&lt;/li>
+&lt;li>Browse all public available events instantly&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Use the Search Bar&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Enter event names or keywords&lt;/li>
+&lt;li>Toggle to user search to search for organisers&lt;/li>
+&lt;/ul>
+&lt;ul>
+&lt;li>Hit enter to see matching results&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h3>Advanced Filtering&lt;span class="hx:absolute hx:-mt-20" id="advanced-filtering">&lt;/span>
+&lt;a href="#advanced-filtering" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Use our filtering tools to find exactly what you&amp;rsquo;re looking for:&lt;/p>
+&lt;p>&lt;strong>🔥 Sort Events&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>HOT&lt;/strong> - Popular and trending events&lt;/li>
+&lt;li>&lt;strong>Price&lt;/strong> - Low to high pricing&lt;/li>
+&lt;li>&lt;strong>Date&lt;/strong> - Upcoming events first&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>💰 Filter by Max Price&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Set maximum price using the slider&lt;/li>
+&lt;li>Find free events or premium experiences&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>📅 Filter by Start Date Range&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Pick specific date ranges&lt;/li>
+&lt;li>Find weekend events or weekday activities&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>📍 Filter by Max Proximity&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Enter your location for proximity search&lt;/li>
+&lt;li>Set maximum distance using the slider&lt;/li>
+&lt;/ul>
+&lt;h3>Search Tips&lt;span class="hx:absolute hx:-mt-20" id="search-tips">&lt;/span>
+&lt;a href="#search-tips" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Be Flexible&lt;/strong>: Try different keywords and locations&lt;/li>
+&lt;li>&lt;strong>Book Early&lt;/strong>: Popular events fill up quickly&lt;/li>
+&lt;li>&lt;strong>Check Regularly&lt;/strong>: New events are added frequently&lt;/li>
+&lt;li>&lt;strong>Use Filters&lt;/strong>: Combine multiple filters for better results&lt;/li>
+&lt;/ul>
+&lt;h3>Event Information&lt;span class="hx:absolute hx:-mt-20" id="event-information">&lt;/span>
+&lt;a href="#event-information" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Each event shows:&lt;/p>
+&lt;ul>
+&lt;li>Sport type and skill level&lt;/li>
+&lt;li>Date, time, and duration&lt;/li>
+&lt;li>Location with map integration&lt;/li>
+&lt;li>Price and available spots&lt;/li>
+&lt;li>Organizer details&lt;/li>
+&lt;/ul>
+&lt;h3>Mobile-Friendly&lt;span class="hx:absolute hx:-mt-20" id="mobile-friendly">&lt;/span>
+&lt;a href="#mobile-friendly" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Search works perfectly on your phone - find and book events on the go!&lt;/p>
+&lt;hr>
+&lt;p>&lt;strong>Start exploring&lt;/strong>: &lt;a href="https://www.sportshub.net.au/dashboard" target="_blank" rel="noopener">Find events near you →&lt;/a>&lt;/p></description></item><item><title>Login and Sign-up</title><link>https://sportshub.net.au/docs/organisers/signing-up/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/signing-up/</guid><description>
+&lt;p>Welcome to SPORTSHUB! Creating your account is quick and simple - all you need is an email address to get started.&lt;/p>
+&lt;h2>One Account, All Features&lt;span class="hx:absolute hx:-mt-20" id="one-account-all-features">&lt;/span>
+&lt;a href="#one-account-all-features" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>SPORTSHUB uses a unified account system. Whether you&amp;rsquo;re a player or organiser, you&amp;rsquo;ll have &lt;strong>one account&lt;/strong> that lets you:&lt;/p>
+&lt;p>✅ &lt;strong>Book events&lt;/strong> as a player&lt;br>
+✅ &lt;strong>Create and manage events&lt;/strong> as an organiser&lt;/p>
+&lt;h2>Creating Your Account&lt;span class="hx:absolute hx:-mt-20" id="creating-your-account">&lt;/span>
+&lt;a href="#creating-your-account" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>Step 1: Sign Up&lt;span class="hx:absolute hx:-mt-20" id="step-1-sign-up">&lt;/span>
+&lt;a href="#step-1-sign-up" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/login-register-buttons.png" alt="login-register-buttons" loading="lazy" />&lt;/p>
+&lt;ol>
+&lt;li>Visit &lt;a href="https://www.sportshub.net.au" target="_blank" rel="noopener">SPORTSHUB&lt;/a>&lt;/li>
+&lt;li>Click the &lt;strong>&amp;ldquo;Register&amp;rdquo;&lt;/strong> button on the homepage&lt;/li>
+&lt;li>&lt;strong>Or&lt;/strong> click &lt;strong>&amp;ldquo;Login&amp;rdquo;&lt;/strong> and then select &lt;strong>&amp;ldquo;Register Here&amp;rdquo;&lt;/strong> from the login page&lt;/li>
+&lt;/ol>
+&lt;h3>Step 2: Fill Out the Registration Form&lt;span class="hx:absolute hx:-mt-20" id="step-2-fill-out-the-registration-form">&lt;/span>
+&lt;a href="#step-2-fill-out-the-registration-form" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/register-form.png" alt="register-form" loading="lazy" />
+&lt;strong>Required information:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>First name&lt;/strong> (this will be your SPORTSHUB username)&lt;/li>
+&lt;li>&lt;strong>Email address&lt;/strong> (this will be your login username)&lt;/li>
+&lt;li>&lt;strong>Password&lt;/strong> (choose something secure)&lt;/li>
+&lt;/ul>
+&lt;h3>Step 3: Email Verification&lt;span class="hx:absolute hx:-mt-20" id="step-3-email-verification">&lt;/span>
+&lt;a href="#step-3-email-verification" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ol>
+&lt;li>After submitting the form, you&amp;rsquo;ll receive a &lt;strong>verification email&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>Check your inbox&lt;/strong> for the verification link&lt;/li>
+&lt;li>&lt;strong>⚠️ Important:&lt;/strong> Check your &lt;strong>spam and junk folders&lt;/strong> if you don&amp;rsquo;t see the email&lt;/li>
+&lt;li>Click the verification link to activate your account&lt;/li>
+&lt;/ol>
+&lt;h3>Step 4: Account Ready!&lt;span class="hx:absolute hx:-mt-20" id="step-4-account-ready">&lt;/span>
+&lt;a href="#step-4-account-ready" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Once verified, your SPORTSHUB account is ready to use. You can now:&lt;/p>
+&lt;ul>
+&lt;li>Browse and book events as a player&lt;/li>
+&lt;li>Create and manage events as an organiser&lt;/li>
+&lt;/ul>
+&lt;h2>Logging In&lt;span class="hx:absolute hx:-mt-20" id="logging-in">&lt;/span>
+&lt;a href="#logging-in" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>Returning Users&lt;span class="hx:absolute hx:-mt-20" id="returning-users">&lt;/span>
+&lt;a href="#returning-users" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ol>
+&lt;li>Click the &lt;strong>&amp;ldquo;Login&amp;rdquo;&lt;/strong> button on any SPORTSHUB page&lt;/li>
+&lt;li>Enter your &lt;strong>email address&lt;/strong> and &lt;strong>password&lt;/strong>&lt;/li>
+&lt;li>Click &lt;strong>&amp;ldquo;Sign In&amp;rdquo;&lt;/strong> to access your account&lt;/li>
+&lt;/ol>
+&lt;h2>Managing Your Profile&lt;span class="hx:absolute hx:-mt-20" id="managing-your-profile">&lt;/span>
+&lt;a href="#managing-your-profile" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Once logged in, you can customize your profile via profile settings.
+&lt;img src="https://sportshub.net.au/images/docs/organisers/profile-navigation.png" alt="profile-navigation" loading="lazy" />&lt;/p>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-green-200 hx:bg-green-100 hx:text-green-900 hx:dark:border-green-200/30 hx:dark:bg-green-900/30 hx:dark:text-green-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>&lt;/svg>Tip&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>If your display photo isn&amp;rsquo;t updating try &lt;strong>close and reopen&lt;/strong> your browser completely or &lt;strong>try a different browser&lt;/strong>.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;h2>Need Help?&lt;span class="hx:absolute hx:-mt-20" id="need-help">&lt;/span>
+&lt;a href="#need-help" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>Email not received?&lt;/strong> Check spam/junk folders and wait a few minutes&lt;/li>
+&lt;li>&lt;strong>Login issues?&lt;/strong> Verify your email and password are correct&lt;/li>
+&lt;li>&lt;strong>Profile problems?&lt;/strong> Try the browser troubleshooting steps above&lt;/li>
+&lt;li>&lt;strong>Still stuck?&lt;/strong> &lt;a href="https://sportshub.net.au/contact" >Contact our support team&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;p>Ready to join the SPORTSHUB community? &lt;strong>&lt;a href="https://www.sportshub.net.au/register" target="_blank" rel="noopener">Sign up now →&lt;/a>&lt;/strong>&lt;/p></description></item><item><title>Manage Events</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/manage-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/manage-events/</guid><description>
+&lt;h2>🚧 Under Construction 🚧&lt;span class="hx:absolute hx:-mt-20" id="-under-construction-">&lt;/span>
+&lt;a href="#-under-construction-" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This feature and documentation page is currently being developed and will be available soon!&lt;/p>
+&lt;p>📝 ✨ Coming Soon ✨ 📝&lt;/p></description></item><item><title>Manage Recurring Events</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</guid><description>
+&lt;h2>🚧 Under Construction 🚧&lt;span class="hx:absolute hx:-mt-20" id="-under-construction-">&lt;/span>
+&lt;a href="#-under-construction-" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This feature and documentation page is currently being developed and will be available soon!&lt;/p>
+&lt;p>📝 ✨ Coming Soon ✨ 📝&lt;/p></description></item><item><title>Stripe Setup</title><link>https://sportshub.net.au/docs/organisers/stripe/stripe-setup/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/stripe/stripe-setup/</guid><description>
+&lt;h2>Prerequisites&lt;span class="hx:absolute hx:-mt-20" id="prerequisites">&lt;/span>
+&lt;a href="#prerequisites" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Before setting up your Stripe account, ensure you have the following documents and information ready:&lt;/p>
+&lt;h3>Required Documents&lt;span class="hx:absolute hx:-mt-20" id="required-documents">&lt;/span>
+&lt;a href="#required-documents" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Government-issued ID&lt;/strong> (driver&amp;rsquo;s license, passport, or national ID card)&lt;/li>
+&lt;li>&lt;strong>Business details &amp;amp; documents&lt;/strong> (if applicable - ABN, business name, business address)&lt;/li>
+&lt;li>&lt;strong>Bank account details&lt;/strong> for payouts (BSB and account number)&lt;/li>
+&lt;/ul>
+&lt;h3>Required Information&lt;span class="hx:absolute hx:-mt-20" id="required-information">&lt;/span>
+&lt;a href="#required-information" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>Your full legal name and date of birth&lt;/li>
+&lt;li>Complete business address (if running a business)&lt;/li>
+&lt;li>Phone number and email address&lt;/li>
+&lt;li>Business description and website (if applicable)&lt;/li>
+&lt;/ul>
+&lt;h2>Step-by-Step Setup Guide&lt;span class="hx:absolute hx:-mt-20" id="step-by-step-setup-guide">&lt;/span>
+&lt;a href="#step-by-step-setup-guide" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>1. Navigate to Personal Settings&lt;span class="hx:absolute hx:-mt-20" id="1-navigate-to-personal-settings">&lt;/span>
+&lt;a href="#1-navigate-to-personal-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/organiser-hub-personal-settings.png" alt="organiser-hub-personal-settings" loading="lazy" />&lt;/p>
+&lt;p>Visit your &lt;strong>Organiser Hub&lt;/strong> and navigate to the &lt;strong>Personal Settings&lt;/strong> tab. You should see a &lt;strong>&amp;ldquo;Register for Stripe&amp;rdquo;&lt;/strong> card displayed. Click the &lt;strong>Register&lt;/strong> button to begin the setup process.&lt;/p>
+&lt;h3>2. Stripe Account Access&lt;span class="hx:absolute hx:-mt-20" id="2-stripe-account-access">&lt;/span>
+&lt;a href="#2-stripe-account-access" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-login-register.png" alt="stripe-login-register" loading="lazy" />&lt;/p>
+&lt;p>Once redirected to the Stripe page, you have two options:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Existing Stripe users&lt;/strong>: Log in with your existing Stripe account credentials&lt;/li>
+&lt;li>&lt;strong>New users&lt;/strong>: Create a new Stripe account by clicking &amp;ldquo;Sign up&amp;rdquo;&lt;/li>
+&lt;/ul>
+&lt;h3>3. Complete Stripe Account Creation&lt;span class="hx:absolute hx:-mt-20" id="3-complete-stripe-account-creation">&lt;/span>
+&lt;a href="#3-complete-stripe-account-creation" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Follow Stripe&amp;rsquo;s guided setup process:&lt;/p>
+&lt;p>&lt;strong>Business Information&lt;/strong> (if applicable)
+&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-business-info.jpg" alt="stripe-business-info" loading="lazy" />&lt;/p>
+&lt;ul>
+&lt;li>Describe your business type&lt;/li>
+&lt;li>Enter your ABN or business registration details&lt;/li>
+&lt;li>Provide your business address and other information&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Personal Information&lt;/strong>&lt;/p>
+&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-personal-info.jpg" alt="stripe-business-info" loading="lazy" />&lt;/p>
+&lt;ul>
+&lt;li>Enter your full legal name and date of birth&lt;/li>
+&lt;li>Provide contact information&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-blue-200 hx:bg-blue-100 hx:text-blue-900 hx:dark:border-blue-200/30 hx:dark:bg-blue-900/30 hx:dark:text-blue-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>&lt;/svg>Note&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>You will be required to Upload a photo of your government-issued ID to enable payouts after registering with Stripe. This is for legal requirements.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;p>&lt;strong>Banking Information &amp;amp; Public Details&lt;/strong>&lt;/p>
+&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-bank-info.jpg" alt="stripe-bank-details" loading="lazy" />&lt;/p>
+&lt;ul>
+&lt;li>Add your Australian bank account details (BSB and account number)&lt;/li>
+&lt;li>Set your payout schedule preference&lt;/li>
+&lt;li>Add public details for customer facing features&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-green-200 hx:bg-green-100 hx:text-green-900 hx:dark:border-green-200/30 hx:dark:bg-green-900/30 hx:dark:text-green-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>&lt;/svg>Tip&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Stripe will ask you to opt into Climate Conributions and Stripe Tax. Feel free to decline and opt out by pressing &amp;ldquo;No Thanks&amp;rdquo; and &amp;ldquo;Not right now&amp;rdquo; respectively.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;h3>4. Verify Integration in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="4-verify-integration-in-sportshub">&lt;/span>
+&lt;a href="#4-verify-integration-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-integration-success.png" alt="stripe-integration-success" loading="lazy" />&lt;/p>
+&lt;p>Once you return to your SPORTSHUB &lt;em>Organiser Hub Personal Settings&lt;/em> tab, &lt;strong>please hit the Register for Stripe button again.&lt;/strong> This helps our system update to ensure your account is synced between parties.&lt;/p>
+&lt;p>Finally, to verify integration success, check for:&lt;/p>
+&lt;ul>
+&lt;li>Your &lt;strong>Stripe Account ID&lt;/strong> is now displayed&lt;/li>
+&lt;li>The &lt;strong>&amp;ldquo;Register for Stripe&amp;rdquo;&lt;/strong> card has disappeared&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-amber-200 hx:bg-amber-100 hx:text-amber-900 hx:dark:border-amber-200/30 hx:dark:bg-amber-900/30 hx:dark:text-amber-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>&lt;/svg>Warning&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>If your Stripe integration doesn&amp;rsquo;t appear immediately, wait a few minutes, click the register button again/ refresh the page. The connection process can take a moment to sync between systems.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;h3>5. Test Paid Event Creation&lt;span class="hx:absolute hx:-mt-20" id="5-test-paid-event-creation">&lt;/span>
+&lt;a href="#5-test-paid-event-creation" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/create-paid-event-test.png" alt="create-paid-event-test" loading="lazy" />&lt;/p>
+&lt;p>Navigate to &lt;strong>Create Event&lt;/strong> and verify that you can now:&lt;/p>
+&lt;ul>
+&lt;li>Set event pricing in the event details&lt;/li>
+&lt;li>Access enabling paid events via event creation settings&lt;/li>
+&lt;li>Create paid events successfully&lt;/li>
+&lt;/ul>
+&lt;p>Your Stripe integration is now complete! You can start creating paid events and collecting secure payments from your participants.&lt;/p>
+&lt;h2>Need Help?&lt;span class="hx:absolute hx:-mt-20" id="need-help">&lt;/span>
+&lt;a href="#need-help" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>If you encounter any issues during setup, contact &lt;a href="https://www.sportshub.net.au/contact" target="_blank" rel="noopener">SPORTSHUB Support&lt;/a> for assistance with your Stripe integration.&lt;/p></description></item><item><title>Book an Event</title><link>https://sportshub.net.au/docs/players/how-tos/book-an-event/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/players/how-tos/book-an-event/</guid><description>
+&lt;h2>How to Book an Event&lt;span class="hx:absolute hx:-mt-20" id="how-to-book-an-event">&lt;/span>
+&lt;a href="#how-to-book-an-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Booking sports events on SPORTSHUB is quick and secure with our integrated Stripe checkout.&lt;/p>
+&lt;h3>Step-by-Step Booking&lt;span class="hx:absolute hx:-mt-20" id="step-by-step-booking">&lt;/span>
+&lt;a href="#step-by-step-booking" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>Find Your Event&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Browse events on the &lt;a href="https://www.sportshub.net.au/dashboard" target="_blank" rel="noopener">dashboard&lt;/a>&lt;/li>
+&lt;li>Click on any event that interests you&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Choose Your Tickets&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Select the number of tickets you need&lt;/li>
+&lt;li>Review the event details and price&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Complete Payment Workflow&lt;/strong>
+&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/book-now-button.png" alt="book-now-button" loading="lazy" />&lt;/p>
+&lt;ul>
+&lt;li>Click &lt;strong>&amp;ldquo;Book Now&amp;rdquo;&lt;/strong> to proceed to secure checkout&lt;/li>
+&lt;li>Fill out any Forms needed by the organiser&lt;/li>
+&lt;li>Enter your payment details:
+&lt;ul>
+&lt;li>Full name for booking&lt;/li>
+&lt;li>Phone number&lt;/li>
+&lt;li>Payment information&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Apply any promotional codes if available&lt;/li>
+&lt;/ul>
+&lt;p>&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/stripe-payment-page.png" alt="stripe-payment-page" loading="lazy" />&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Confirmation&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>You&amp;rsquo;ll receive an email confirmation immediately from &lt;a href="mailto:info@sportshub.net.au" >info@sportshub.net.au&lt;/a>
+&lt;ul>
+&lt;li>Please check your spam or junk if you do not see the confirmation.&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Your booking is secured once payment is processed&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;p>&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/booking-confirmation-email.png" alt="booking-confirmation-email" loading="lazy" />&lt;/p>
+&lt;h3>Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes">&lt;/span>
+&lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Registration Deadlines&lt;/strong>: Pay attention to registration closing times&lt;/li>
+&lt;li>&lt;strong>Payment Security&lt;/strong>: All payments are processed securely through Stripe&lt;/li>
+&lt;li>&lt;strong>Ticket Limits&lt;/strong>: Events have limited capacity - book early to avoid disappointment
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-blue-200 hx:bg-blue-100 hx:text-blue-900 hx:dark:border-blue-200/30 hx:dark:bg-blue-900/30 hx:dark:text-blue-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>&lt;/svg>We secure you tickets the moment you click book now.&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Your tickets are secured for a &lt;strong>max of 30 minutes&lt;/strong> before your session expires.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;/li>
+&lt;/ul>
+&lt;h3>After Booking&lt;span class="hx:absolute hx:-mt-20" id="after-booking">&lt;/span>
+&lt;a href="#after-booking" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>Check your email for confirmation and event details&lt;/li>
+&lt;li>Add the event to your calendar&lt;/li>
+&lt;li>Contact the organiser if you have questions about the event&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;p>&lt;strong>Need help?&lt;/strong> &lt;a href="https://sportshub.net.au/contact" >Contact support&lt;/a> or reach out to the event organiser directly.&lt;/p></description></item><item><title>Coupon Codes</title><link>https://sportshub.net.au/docs/organisers/stripe/coupon-codes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/stripe/coupon-codes/</guid><description>
+&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/coupon-codes.jpg" alt="coupon-codes" loading="lazy" />&lt;/p>
+&lt;p>Coupon codes allow you to offer discounts to your event participants. Follow these steps to create and manage coupons in Stripe.&lt;/p>
+&lt;h2>Creating a Coupon in Stripe&lt;span class="hx:absolute hx:-mt-20" id="creating-a-coupon-in-stripe">&lt;/span>
+&lt;a href="#creating-a-coupon-in-stripe" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>Navigate to Stripe Dashboard&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Go to &lt;a href="https://dashboard.stripe.com/coupons/create" target="_blank" rel="noopener">Stripe Coupons&lt;/a>&lt;/li>
+&lt;li>Alternatively, search for &amp;ldquo;coupons&amp;rdquo; in the Stripe dashboard search bar&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Configure Your Coupon&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Discount Type&lt;/strong>: Choose between:
+&lt;ul>
+&lt;li>&lt;strong>Percentage off&lt;/strong>: e.g., 20% off&lt;/li>
+&lt;li>&lt;strong>Fixed amount off&lt;/strong>: e.g., $10 off&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Coupon Code&lt;/strong>: Create a customer-facing code (e.g., &amp;ldquo;EARLY20&amp;rdquo;, &amp;ldquo;WELCOME10&amp;rdquo;)&lt;/li>
+&lt;li>&lt;strong>Expiry Date&lt;/strong>: Set when the coupon expires&lt;/li>
+&lt;li>&lt;strong>Usage Limits&lt;/strong>: Control how many times the coupon can be used&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h2>Enabling Coupons in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="enabling-coupons-in-sportshub">&lt;/span>
+&lt;a href="#enabling-coupons-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/promotional-codes-enabled.png" alt="promotional-codes-enabled" loading="lazy" />&lt;/p>
+&lt;p>To use your Stripe coupons for SPORTSHUB events:&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>During Event Creation&lt;/strong>: Enable &amp;ldquo;Promotional Codes&amp;rdquo; in the event creation form&lt;/li>
+&lt;li>&lt;strong>Existing Events&lt;/strong>: Go to Event Settings and enable promotional codes&lt;/li>
+&lt;/ol>
+&lt;h2>Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes">&lt;/span>
+&lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>Cross-Event Usage&lt;/strong>: Coupons work across all your events, not just specific ones&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-amber-200 hx:bg-amber-100 hx:text-amber-900 hx:dark:border-amber-200/30 hx:dark:bg-amber-900/30 hx:dark:text-amber-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>&lt;/svg>&amp;gt; &lt;strong>100% Discount Bug&lt;/strong>: If you pass application fees to customers, you cannot offer 100% discounts as Stripe doesn&amp;rsquo;t allow this configuration.&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;/div>
+&lt;/div>
+&lt;/div></description></item><item><title>Recurring Events</title><link>https://sportshub.net.au/docs/organisers/events/recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/events/recurring-events/</guid><description>
+&lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Recurring events are perfect for &amp;ldquo;set and forget&amp;rdquo; activities that happen on a regular schedule. Whether you&amp;rsquo;re running weekly training sessions, monthly tournaments, or fortnightly social games, this feature automatically creates events at your chosen intervals, saving you time and ensuring consistency for your participants.&lt;/p>
+&lt;p>This feature is ideal for:&lt;/p>
+&lt;ul>
+&lt;li>Regular training sessions or classes&lt;/li>
+&lt;li>Weekly social games&lt;/li>
+&lt;li>Any event that follows a predictable schedule&lt;/li>
+&lt;/ul>
+&lt;h2>Setting Up Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="setting-up-recurring-events">&lt;/span>
+&lt;a href="#setting-up-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Enable recurring events during event creation by accessing the &lt;strong>Additional Settings&lt;/strong> section and configuring the recurrence parameters.&lt;/p>
+&lt;h2>Recurrence Parameters&lt;span class="hx:absolute hx:-mt-20" id="recurrence-parameters">&lt;/span>
+&lt;a href="#recurrence-parameters" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/events/recurring-event-parameters.png" alt="recurring-event-parameters" loading="lazy" />&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Parameter&lt;/th>
+&lt;th>Description&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>&lt;strong>Enable Recurrence&lt;/strong>&lt;/td>
+&lt;td>Toggle to activate the recurring event feature for this event&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Recurrence Frequency&lt;/strong>&lt;/td>
+&lt;td>Choose how often events repeat: Weekly, Fortnightly, or Monthly&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Number of Recurrences&lt;/strong>&lt;/td>
+&lt;td>Set the total number of events to create (&lt;strong>not including&lt;/strong> the initial event)&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Create Days Prior&lt;/strong>&lt;/td>
+&lt;td>Specify how many days before each event date the event page should be created and become available for bookings&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h2>Preview Your Recurring Schedule&lt;span class="hx:absolute hx:-mt-20" id="preview-your-recurring-schedule">&lt;/span>
+&lt;a href="#preview-your-recurring-schedule" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/events/recurring-event-schedule.png" alt="recurring-event-schedule" loading="lazy" />&lt;/p>
+&lt;p>During event creation, you&amp;rsquo;ll see a table showing all future recurrence dates based on your settings. This preview helps you verify the schedule is correct before creating the events.&lt;/p>
+&lt;h2>How Recurring Events Work&lt;span class="hx:absolute hx:-mt-20" id="how-recurring-events-work">&lt;/span>
+&lt;a href="#how-recurring-events-work" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>First Event&lt;/strong>: Created immediately upon submission and is available for booking right away&lt;/li>
+&lt;li>&lt;strong>Future Events&lt;/strong>: Created automatically according to your &amp;ldquo;Create Days Prior&amp;rdquo; setting&lt;/li>
+&lt;li>&lt;strong>Consistent Details&lt;/strong>: Each recurring event uses the same title, description, images, and settings as your original event&lt;/li>
+&lt;/ul>
+&lt;h2>Managing Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="managing-recurring-events">&lt;/span>
+&lt;a href="#managing-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>After creation, you can view and manage your recurring event template through the &lt;a href="https://sportshub.net.au/docs/organisers/organiser-hub/" >Organiser Hub&lt;/a>. This allows you to:&lt;/p>
+&lt;ul>
+&lt;li>Reference all events in the series&lt;/li>
+&lt;li>Make changes to future events if needed&lt;/li>
+&lt;li>Manage the overall recurring schedule&lt;/li>
+&lt;/ul>
+&lt;p>Recurring events provide a powerful way to maintain regular activities with minimal ongoing effort, ensuring your community always knows when and where to find your events.&lt;/p></description></item><item><title>Contact Organiser</title><link>https://sportshub.net.au/docs/players/how-tos/contact-organiser/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/players/how-tos/contact-organiser/</guid><description>
+&lt;h2>How to Contact an Event Organizer&lt;span class="hx:absolute hx:-mt-20" id="how-to-contact-an-event-organizer">&lt;/span>
+&lt;a href="#how-to-contact-an-event-organizer" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Need to ask questions about an event? Here are two simple ways to get in touch with organizers.&lt;/p>
+&lt;h3>Contact Methods&lt;span class="hx:absolute hx:-mt-20" id="contact-methods">&lt;/span>
+&lt;a href="#contact-methods" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;strong>1. Free Events - Visit Event Link&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>For free events, click the event link provided&lt;/li>
+&lt;li>This will take you to the organizer&amp;rsquo;s preferred contact method (WhatsApp, website, etc.)&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>2. Organizer Profile&lt;/strong>
+&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/contact-info.png" alt="contact-info" loading="lazy" />&lt;/p>
+&lt;ul>
+&lt;li>Go to the organizer&amp;rsquo;s profile page&lt;/li>
+&lt;li>Find their email address and phone number&lt;/li>
+&lt;li>Contact them directly using your preferred method&lt;/li>
+&lt;/ul>
+&lt;h3>When to Contact the Organizer&lt;span class="hx:absolute hx:-mt-20" id="when-to-contact-the-organizer">&lt;/span>
+&lt;a href="#when-to-contact-the-organizer" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;strong>Contact the organizer for anything event-specific:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Event details, requirements, or changes&lt;/li>
+&lt;li>Skill levels or equipment needed&lt;/li>
+&lt;li>Payments, refunds, or booking issues&lt;/li>
+&lt;li>Directions or parking information&lt;/li>
+&lt;li>Special accommodations&lt;/li>
+&lt;li>Any questions about the event itself&lt;/li>
+&lt;/ul>
+&lt;h3>When to Contact SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="when-to-contact-sportshub">&lt;/span>
+&lt;a href="#when-to-contact-sportshub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;strong>Contact SPORTSHUB for platform-related issues:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Technical problems with the website&lt;/li>
+&lt;li>Account or login issues&lt;/li>
+&lt;li>General platform questions&lt;/li>
+&lt;li>Reporting inappropriate content&lt;/li>
+&lt;/ul>
+&lt;h3>Best Practices&lt;span class="hx:absolute hx:-mt-20" id="best-practices">&lt;/span>
+&lt;a href="#best-practices" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Be Specific&lt;/strong>: Clearly state your question or request&lt;/li>
+&lt;li>&lt;strong>Be Polite&lt;/strong>: Remember organizers are often volunteers&lt;/li>
+&lt;li>&lt;strong>Check Event Details First&lt;/strong>: Many questions are answered in the event description&lt;/li>
+&lt;li>&lt;strong>Contact Early&lt;/strong>: Don&amp;rsquo;t wait until the last minute for important questions&lt;/li>
+&lt;/ul>
+&lt;hr>
+&lt;p>&lt;strong>Platform issues?&lt;/strong> &lt;a href="https://sportshub.net.au/contact" >Contact SPORTSHUB support&lt;/a> | &lt;strong>Event questions?&lt;/strong> Contact the organizer directly&lt;/p></description></item><item><title>Custom Links</title><link>https://sportshub.net.au/docs/organisers/events/custom-links/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/events/custom-links/</guid><description>
+&lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Custom links allow you to create memorable, branded URLs for your events that are much easier to share and remember than the default event ID links. Instead of sharing a long, complex URL, you can create something simple like &lt;code>https://wwww.sportshub.net.au/event/&amp;lt;username&amp;gt;/weekly-tennis&lt;/code> that participants can easily type and remember.&lt;/p>
+&lt;p>Custom links are particularly valuable for:&lt;/p>
+&lt;ul>
+&lt;li>Regular events that you promote frequently&lt;/li>
+&lt;li>Social media sharing and marketing&lt;/li>
+&lt;li>Recurring events that automatically update to the latest occurrence&lt;/li>
+&lt;/ul>
+&lt;h2>Creating Custom Links&lt;span class="hx:absolute hx:-mt-20" id="creating-custom-links">&lt;/span>
+&lt;a href="#creating-custom-links" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Navigate to the &lt;strong>Custom Links&lt;/strong> section in your &lt;a href="https://sportshub.net.au/organiser/event/custom-links" >Organiser Hub&lt;/a> under the Events menu to set up your custom links.
+&lt;img src="https://sportshub.net.au/images/docs/organisers/events/custom-links.png" alt="custom-links" loading="lazy" />&lt;/p>
+&lt;h2>Setting Up Your Custom Link&lt;span class="hx:absolute hx:-mt-20" id="setting-up-your-custom-link">&lt;/span>
+&lt;a href="#setting-up-your-custom-link" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>Custom Link Name&lt;span class="hx:absolute hx:-mt-20" id="custom-link-name">&lt;/span>
+&lt;a href="#custom-link-name" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Choose a descriptive name for internal reference - this helps you identify the purpose of each custom link in your dashboard.&lt;/p>
+&lt;h3>Custom Link URL&lt;span class="hx:absolute hx:-mt-20" id="custom-link-url">&lt;/span>
+&lt;a href="#custom-link-url" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Create your custom URL following these simple rules:&lt;/p>
+&lt;ul>
+&lt;li>Must be between 3 and 30 characters long&lt;/li>
+&lt;li>Use only lowercase letters, numbers, and hyphens&lt;/li>
+&lt;li>No spaces or special characters allowed&lt;/li>
+&lt;li>Must be unique across the your custom links&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Good examples:&lt;/strong> &lt;code>weekly-tennis&lt;/code>, &lt;code>friday-soccer&lt;/code>, &lt;code>badminton-club&lt;/code>&lt;/p>
+&lt;p>&lt;strong>Avoid:&lt;/strong> &lt;code>Weekly Tennis&lt;/code> (spaces), &lt;code>TENNIS&lt;/code> (uppercase), &lt;code>tennis@club&lt;/code> (special characters)&lt;/p>
+&lt;h3>Link Type Selection&lt;span class="hx:absolute hx:-mt-20" id="link-type-selection">&lt;/span>
+&lt;a href="#link-type-selection" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Choose between two link types:&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Link Type&lt;/th>
+&lt;th>Description&lt;/th>
+&lt;th>Best For&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>&lt;strong>Event Reference&lt;/strong>&lt;/td>
+&lt;td>Points to a specific single event&lt;/td>
+&lt;td>One-off events, special tournaments, unique occasions&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>Recurring Event Reference&lt;/strong>&lt;/td>
+&lt;td>Points to a recurring event template&lt;/td>
+&lt;td>Regular weekly/monthly activities, ongoing classes&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;h3>Event Selection&lt;span class="hx:absolute hx:-mt-20" id="event-selection">&lt;/span>
+&lt;a href="#event-selection" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>After choosing your link type, select from:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Upcoming events&lt;/strong> (for event references)&lt;/li>
+&lt;li>&lt;strong>Active recurring templates&lt;/strong> (for recurring event references)&lt;/li>
+&lt;/ul>
+&lt;h2>Benefits of Custom Links&lt;span class="hx:absolute hx:-mt-20" id="benefits-of-custom-links">&lt;/span>
+&lt;a href="#benefits-of-custom-links" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>Automatic Updates&lt;span class="hx:absolute hx:-mt-20" id="automatic-updates">&lt;/span>
+&lt;a href="#automatic-updates" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>For recurring events, your custom link automatically redirects to the next upcoming event in the series. This means you can share the same link everywhere without constantly updating it.&lt;/p>
+&lt;h3>Professional Appearance&lt;span class="hx:absolute hx:-mt-20" id="professional-appearance">&lt;/span>
+&lt;a href="#professional-appearance" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Your final URL will look like: &lt;code>https://www.sportshub.net.au/event/username/custom-link&lt;/code>&lt;/p>
+&lt;p>This creates a clean, professional appearance that builds trust and is easy to share across all your marketing channels.&lt;/p>
+&lt;h3>Easy Sharing&lt;span class="hx:absolute hx:-mt-20" id="easy-sharing">&lt;/span>
+&lt;a href="#easy-sharing" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Custom links are perfect for:&lt;/p>
+&lt;ul>
+&lt;li>Social media posts and bios where a consistent link prevents continuous updating&lt;/li>
+&lt;li>A recognisable link that allows your audience to quickly identify which event is which&lt;/li>
+&lt;li>A repeating social sport session where users can bookmark one link and access the new event weekly&lt;/li>
+&lt;/ul>
+&lt;p>Custom links transform complex event URLs into memorable, brandable web addresses that make promoting your events significantly easier.&lt;/p></description></item><item><title>Contact Us</title><link>https://sportshub.net.au/docs/contact-us/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/contact-us/</guid><description>
+&lt;p>Need help or have questions? Here are the best ways to reach the SPORTSHUB team:&lt;/p>
+&lt;h3>Primary Contact Methods&lt;span class="hx:absolute hx:-mt-20" id="primary-contact-methods">&lt;/span>
+&lt;a href="#primary-contact-methods" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;span class="hx:inline-block hx:align-text-bottom icon">&lt;svg height=1em xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>&lt;/svg>&lt;/span>
+&lt;strong>Website&lt;/strong>: Visit our &lt;a href="https://sportshub.net.au/contact" >contact page&lt;/a> for the quickest response&lt;/li>
+&lt;li>&lt;span class="hx:inline-block hx:align-text-bottom icon">&lt;svg height=1em xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>&lt;/svg>&lt;/span>
+&lt;strong>Email&lt;/strong>: &lt;a href="mailto:info@sportshub.net.au" >info@sportshub.net.au&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;h3>Social Media&lt;span class="hx:absolute hx:-mt-20" id="social-media">&lt;/span>
+&lt;a href="#social-media" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;span class="hx:inline-block hx:align-text-bottom icon">&lt;svg height=1em xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 15">&lt;path fill="currentColor" fill-rule="evenodd" d="M12.91 12.909c.326-.327.582-.72.749-1.151c.16-.414.27-.886.302-1.578c.032-.693.04-.915.04-2.68c0-1.765-.008-1.987-.04-2.68c-.032-.692-.142-1.164-.302-1.578a3.185 3.185 0 0 0-.75-1.151a3.187 3.187 0 0 0-1.151-.75c-.414-.16-.886-.27-1.578-.302C9.487 1.007 9.265 1 7.5 1c-1.765 0-1.987.007-2.68.04c-.692.03-1.164.14-1.578.301a3.2 3.2 0 0 0-1.151.75a3.2 3.2 0 0 0-.75 1.151c-.16.414-.27.886-.302 1.578C1.007 5.513 1 5.735 1 7.5c0 1.765.007 1.987.04 2.68c.03.692.14 1.164.301 1.578c.164.434.42.826.75 1.151c.325.33.718.586 1.151.75c.414.16.886.27 1.578.302c.693.031.915.039 2.68.039c1.765 0 1.987-.008 2.68-.04c.692-.03 1.164-.14 1.578-.301a3.323 3.323 0 0 0 1.151-.75ZM2 6.735v1.53c-.002.821-.002 1.034.02 1.5c.026.586.058 1.016.156 1.34c.094.312.199.63.543 1.012c.344.383.675.556 1.097.684c.423.127.954.154 1.415.175c.522.024.73.024 1.826.024H8.24c.842.001 1.054.002 1.526-.02c.585-.027 1.015-.059 1.34-.156c.311-.094.629-.2 1.011-.543c.383-.344.556-.676.684-1.098c.127-.422.155-.953.176-1.414C13 9.247 13 9.04 13 7.947v-.89c0-1.096 0-1.303-.023-1.826c-.021-.461-.049-.992-.176-1.414c-.127-.423-.3-.754-.684-1.098c-.383-.344-.7-.449-1.011-.543c-.325-.097-.755-.13-1.34-.156A27.29 27.29 0 0 0 8.24 2H7.057c-1.096 0-1.304 0-1.826.023c-.461.021-.992.049-1.415.176c-.422.128-.753.301-1.097.684c-.344.383-.45.7-.543 1.012c-.098.324-.13.754-.156 1.34c-.022.466-.022.679-.02 1.5ZM7.5 5.25a2.25 2.25 0 1 0 0 4.5a2.25 2.25 0 0 0 0-4.5ZM4.25 7.5a3.25 3.25 0 1 1 6.5 0a3.25 3.25 0 0 1-6.5 0Zm6.72-2.72a.75.75 0 1 0 0-1.5a.75.75 0 0 0 0 1.5Z" clip-rule="evenodd"/>&lt;/svg>&lt;/span>
+&lt;strong>Instagram&lt;/strong>: &lt;a href="https://www.instagram.com/sportshub.net.au/" target="_blank" rel="noopener">@sportshub_au&lt;/a>&lt;/li>
+&lt;li>&lt;span class="hx:inline-block hx:align-text-bottom icon">&lt;svg height=1em xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>&lt;/svg>&lt;/span>
+&lt;strong>TikTok&lt;/strong>: &lt;a href="https://www.tiktok.com/@sportshub.net.au" target="_blank" rel="noopener">@sportshub_au&lt;/a>&lt;/li>
+&lt;li>&lt;span class="hx:inline-block hx:align-text-bottom icon">&lt;svg height=1em xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">&lt;path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>&lt;/svg>&lt;/span>
+&lt;strong>LinkedIn&lt;/strong>: &lt;a href="https://www.linkedin.com/company/sportshub-au" target="_blank" rel="noopener">SPORTSHUB&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;p>We&amp;rsquo;re here to help with any questions about organizing or joining sports events!&lt;/p></description></item><item><title>Forms</title><link>https://sportshub.net.au/docs/organisers/events/forms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/events/forms/</guid><description>
+&lt;h2>🚧 Under Construction 🚧&lt;span class="hx:absolute hx:-mt-20" id="-under-construction-">&lt;/span>
+&lt;a href="#-under-construction-" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This feature and documentation page is currently being developed and will be available soon!&lt;/p>
+&lt;p>📝 ✨ Coming Soon ✨ 📝&lt;/p></description></item></channel></rss>
