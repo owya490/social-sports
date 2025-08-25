@@ -137,3 +137,13 @@ export function durationInDaysCeil(startDate: Timestamp, endDate: Timestamp): nu
   const { hours } = duration(startDate, endDate);
   return Math.ceil(hours / 24);
 }
+
+export function setDateToStartOfDay(date: Date): Date {
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+export function setDateToEndOfDay(date: Date): Date {
+  date.setHours(23, 59, 59, 999);
+  return date;
+}
