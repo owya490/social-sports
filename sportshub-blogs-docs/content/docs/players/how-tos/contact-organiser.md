@@ -5,38 +5,41 @@ weight: 3
 
 ## How to Contact an Event Organizer
 
-Need to ask questions about an event? Here's how to get in touch with organizers.
-
-### When to Contact an Organizer
-
-- Ask about event details or requirements
-- Inquire about skill levels or equipment needed
-- Request special accommodations
-- Get directions or parking information
-- Report issues or concerns
-
-### How to Contact
-
-1. **From the Event Page**
-
-   - Navigate to any event you're interested in
-   - Look for the **"Contact Now"** button (appears when booking is closed or unavailable)
-   - Click the button to proceed
-
-2. **Contact Process**
-   - A dialog will appear showing the organizer's contact link
-   - Click **"Proceed"** to be redirected to their preferred contact method
-   - This opens in a new tab for your convenience
+Need to ask questions about an event? Here are two simple ways to get in touch with organizers.
 
 ### Contact Methods
 
-Organizers may use various contact methods:
+**1. Free Events - Visit Event Link**
 
-- WhatsApp groups
-- Email addresses
-- Social media pages
-- Custom contact forms
-- Phone numbers
+- For free events, click the event link provided
+- This will take you to the organizer's preferred contact method (WhatsApp, website, etc.)
+
+**2. Organizer Profile**
+![contact-info](/images/docs/players/how-tos/contact-info.png)
+
+- Go to the organizer's profile page
+- Find their email address and phone number
+- Contact them directly using your preferred method
+
+### When to Contact the Organizer
+
+**Contact the organizer for anything event-specific:**
+
+- Event details, requirements, or changes
+- Skill levels or equipment needed
+- Payments, refunds, or booking issues
+- Directions or parking information
+- Special accommodations
+- Any questions about the event itself
+
+### When to Contact SPORTSHUB
+
+**Contact SPORTSHUB for platform-related issues:**
+
+- Technical problems with the website
+- Account or login issues
+- General platform questions
+- Reporting inappropriate content
 
 ### Best Practices
 
@@ -45,12 +48,6 @@ Organizers may use various contact methods:
 - **Check Event Details First**: Many questions are answered in the event description
 - **Contact Early**: Don't wait until the last minute for important questions
 
-### If You Can't Reach an Organizer
-
-- Check the event page for additional contact information
-- [Contact SPORTSHUB support](/contact) if you encounter issues
-- Look for alternative similar events
-
 ---
 
-**Tip**: Join the event's communication channels (like WhatsApp groups) for the best experience and real-time updates!
+**Platform issues?** [Contact SPORTSHUB support](/contact) | **Event questions?** Contact the organizer directly

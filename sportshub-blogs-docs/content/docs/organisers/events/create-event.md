@@ -64,7 +64,7 @@ A well-written description helps set proper expectations and reduces participant
 
 ## After Creating Your Event
 
-Once your event is created, you can:
+Once your event is created, you will receive an email confirmation and can:
 
 ### Find Your Event
 

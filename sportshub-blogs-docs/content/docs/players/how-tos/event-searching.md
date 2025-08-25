@@ -3,6 +3,8 @@ title: Event Searching
 weight: 1
 ---
 
+![search-bar](/images/docs/players/how-tos/search-bar.png)
+
 ## How to Search for Events
 
 Find the perfect sports events near you with SPORTSHUB's powerful search and filtering tools.

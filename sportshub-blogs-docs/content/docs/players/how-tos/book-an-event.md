@@ -19,32 +19,40 @@ Booking sports events on SPORTSHUB is quick and secure with our integrated Strip
    - Select the number of tickets you need
    - Review the event details and price
 
-3. **Complete Payment**
+3. **Complete Payment Workflow**
+   ![book-now-button](/images/docs/players/how-tos/book-now-button.png)
 
    - Click **"Book Now"** to proceed to secure checkout
-   - Enter your details:
+   - Fill out any Forms needed by the organiser
+   - Enter your payment details:
      - Full name for booking
      - Phone number
      - Payment information
    - Apply any promotional codes if available
 
+   ![stripe-payment-page](/images/docs/players/how-tos/stripe-payment-page.png)
+
 4. **Confirmation**
-   - You'll receive an email confirmation immediately
+   - You'll receive an email confirmation immediately from info@sportshub.net.au
+     - Please check your spam or junk if you do not see the confirmation.
    - Your booking is secured once payment is processed
+
+![booking-confirmation-email](/images/docs/players/how-tos/booking-confirmation-email.png)
 
 ### Important Notes
 
 - **Registration Deadlines**: Pay attention to registration closing times
 - **Payment Security**: All payments are processed securely through Stripe
-- **Promotional Codes**: Look out for discount codes from organizers
 - **Ticket Limits**: Events have limited capacity - book early to avoid disappointment
+  > [!NOTE] We secure you tickets the moment you click book now.
+  > Your tickets are secured for a **max of 30 minutes** before your session expires.
 
 ### After Booking
 
 - Check your email for confirmation and event details
 - Add the event to your calendar
-- Contact the organizer if you have questions about the event
+- Contact the organiser if you have questions about the event
 
 ---
 
-**Need help?** [Contact support](/contact) or reach out to the event organizer directly.
+**Need help?** [Contact support](/contact) or reach out to the event organiser directly.
