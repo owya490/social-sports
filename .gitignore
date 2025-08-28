@@ -1,10 +1,10 @@
 node_modules
 */venv/lib/*
 */venv/bin/*
-*/.DS_Store/*
-*/.DS_Store
 */.next/*
-*public/.DS_Store*
+
+# macOS
+**/.DS_Store
 .env*
 .next/
 .swc/
@@ -12,11 +12,9 @@ node_modules
 */.next/*
 .next
 *.log
-.DS_Store
 .idea
 .vscode
 functions/venv/pyvenv.cfg
 
 # Ignore Next.js auto-generated TypeScript definitions
 next-env.d.ts
-.DS_Store
