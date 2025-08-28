@@ -4,9 +4,9 @@ import BaseballImage from "./../public/images/sport-icons/reshot-icon-baseball-b
 import BasketballImage from "./../public/images/sport-icons/reshot-icon-basketball-YHLJCPQSNE.svg";
 import CricketImage from "./../public/images/sport-icons/reshot-icon-cricket-bat-and-ball-6ZKUANYD2F.svg";
 import SoccerImage from "./../public/images/sport-icons/reshot-icon-football-9BL6YR7JAD.svg";
-import OztagImage from "./../public/images/sport-icons/reshot-icon-football-9BL6YR7JAD.svg";
-import TableTennisImage from "./../public/images/sport-icons/reshot-icon-table-tennis-HFEQCNR95U.svg";
+import OztagImage from "./../public/images/sport-icons/reshot-icon-football-ii-YZ9N4X356K.svg";
 import TennisImage from "./../public/images/sport-icons/reshot-icon-softball-LMUT5BZ9GJ.svg";
+import TableTennisImage from "./../public/images/sport-icons/reshot-icon-table-tennis-HFEQCNR95U.svg";
 import VolleyballImage from "./../public/images/sport-icons/reshot-icon-volley-ball-NHZFG6TPSC.svg";
 
 export interface SportConfig {
@@ -66,7 +66,7 @@ export const SPORTS_CONFIG: Record<string, SportConfig> = {
     defaultThumbnailUrl:
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Ftennis-default.jpg?alt=media&token=2dd4f5c1-30f0-4c9d-9dcf-72b40e7f14e1",
   },
-  tableTennis: {
+  "table-tennis": {
     name: "Table Tennis",
     value: "table-tennis",
     iconImage: TableTennisImage,
