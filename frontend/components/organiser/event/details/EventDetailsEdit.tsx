@@ -15,6 +15,7 @@ import { useEffect } from "react";
 
 import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 
+import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventData } from "@/interfaces/EventTypes";
 import {
   formatDateToString,
@@ -507,14 +508,14 @@ export const EventDetailsEdit = ({
                         setNewEditSport(e);
                       }}
                     >
-                      <Option value="volleyball">Volleyball</Option>
-                      <Option value="badminton">Badminton</Option>
-                      <Option value="basketball">Basketball</Option>
-                      <Option value="soccer">Soccer</Option>
-                      <Option value="tennis">Tennis</Option>
-                      <Option value="table-tennis">Table Tennis</Option>
-                      <Option value="oztag">Oztag</Option>
-                      <Option value="baseball">Baseball</Option>
+                      {Object.entries(SPORTS_CONFIG).map((entry, idx) => {
+                        const sportInfo = entry[1];
+                        return (
+                          <Option key={idx} value={sportInfo.value}>
+                            {sportInfo.name}
+                          </Option>
+                        );
+                      })}
                     </Select>
                   </div>
                 ) : (
