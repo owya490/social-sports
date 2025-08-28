@@ -55,9 +55,9 @@ menu:
       name: Documentation
       pageRef: /docs
       weight: 1
-    - identifier: blog
-      name: Blog
-      pageRef: /blog
+    - identifier: blogs
+      name: Blogs
+      pageRef: /blogs
       weight: 3
     - name: Search
       weight: 6
