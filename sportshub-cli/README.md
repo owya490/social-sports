@@ -68,13 +68,117 @@ sportshub leads create --organiserName "Syrio Volleyball Academy" --website "syr
 sportshub leads create --organiserName "Owen"
 ```
 
+### Search for Existing Lead Tickets
+
+```bash
+# Search for tickets by organiser name
+sportshub leads search --organiserName "syrio volleyball"
+```
+
+### Progress Lead Tickets
+
+```bash
+# Progress to next status by organiser name (if only one ticket found)
+sportshub leads progress --organiserName "syrio volleyball"
+
+# Progress specific ticket to next status
+sportshub leads progress --ticketNumber "SH-123"
+
+# Set specific status
+sportshub leads progress --ticketNumber "SH-123" --status "CONTACTED"
+```
+
+**Status progression order:**
+
+1. OPPORTUNITY
+2. CONTACTED
+3. MEETING SCHEDULED
+4. ONBOARDING
+5. ONBOARDED
+6. LOST (end status)
+
+### Show All Active Leads
+
+```bash
+# Display all active leads grouped by status (excludes ONBOARDED and LOST)
+sportshub leads show
+```
+
 ### Example Output
+
+**Creating a ticket:**
 
 ```
 🎫 Creating Jira ticket...
 Summary: New Lead: Maria
 ✅ Lead ticket created: SH-456
 🔗 https://yourcompany.atlassian.net/browse/SH-456
+```
+
+**Searching for tickets:**
+
+```
+🔍 Searching for tickets...
+Organiser: syrio volleyball
+
+✅ Found 2 ticket(s):
+
+1. SH-123
+   Summary: New Lead: Syrio Volleyball Academy
+   URL: https://yourcompany.atlassian.net/browse/SH-123
+
+2. SH-456
+   Summary: Follow-up: Syrio Volleyball Training Program
+   URL: https://yourcompany.atlassian.net/browse/SH-456
+```
+
+**Progressing a ticket:**
+
+```
+🔍 Searching for tickets...
+Organiser: syrio volleyball
+✅ Found ticket: SH-123
+📋 Processing ticket: SH-123
+Current status: Opportunity
+🔄 Transitioning to: CONTACTED
+✅ Successfully transitioned to Contacted
+🔗 https://yourcompany.atlassian.net/browse/SH-123
+```
+
+**Showing all active leads:**
+
+```
+📋 Fetching all lead tickets...
+
+✅ Found 5 active lead(s):
+
+🌱 OPPORTUNITY
+─────────────
+  1. SH-234
+     Summary: New Lead: Basketball Academy
+     URL: https://yourcompany.atlassian.net/browse/SH-234
+
+  2. SH-567
+     Summary: New Lead: Tennis Club
+     URL: https://yourcompany.atlassian.net/browse/SH-567
+
+📞 CONTACTED
+────────────
+  1. SH-123
+     Summary: New Lead: Syrio Volleyball Academy
+     URL: https://yourcompany.atlassian.net/browse/SH-123
+
+📅 MEETING SCHEDULED
+────────────────────
+  1. SH-345
+     Summary: New Lead: Soccer Training Center
+     URL: https://yourcompany.atlassian.net/browse/SH-345
+
+🚀 ONBOARDING
+─────────────
+  1. SH-678
+     Summary: New Lead: Swimming Academy
+     URL: https://yourcompany.atlassian.net/browse/SH-678
 ```
 
 ## Development
