@@ -118,21 +118,29 @@ export const EventDetailsEdit = ({
   const [locationLatLng, setLocationLatLng] = useState<{ lat: number; lng: number } | null>(null);
   const [selectionMade, setSelectionMade] = useState<boolean>(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputWrapperRef = useRef<HTMLDivElement>(null);
 
   const scriptLoadResult = loadGoogleMapsScript();
   const isLoaded = scriptLoadResult ? scriptLoadResult.isLoaded : false;
   const loadError = scriptLoadResult ? scriptLoadResult.loadError : undefined;
 
   useEffect(() => {
-    if (isLoaded && inputRef.current && isEdit) {
-      // Find the actual input element within the Material-Tailwind Input component
-      const actualInput = inputRef.current.querySelector("input");
-      if (actualInput) {
-        autocompleteRef.current = initializeAutocomplete({ current: actualInput }, handlePlaceSelect);
+    if (!isLoaded || !isEdit || !inputWrapperRef.current) return;
+    const actualInput = inputWrapperRef.current.querySelector("input");
+    if (actualInput) {
+      // clear any prior listeners before re-attaching
+      if (autocompleteRef.current) {
+        google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
+      autocompleteRef.current = initializeAutocomplete({ current: actualInput }, handlePlaceSelect);
     }
-  }, [isLoaded, isEdit, newEditLocation]);
+    return () => {
+      if (autocompleteRef.current) {
+        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        autocompleteRef.current = null;
+      }
+    };
+  }, [isLoaded, isEdit]);
 
   const handlePlaceSelect = async () => {
     if (autocompleteRef.current) {
@@ -167,7 +175,12 @@ export const EventDetailsEdit = ({
 
     let latLng = locationLatLng;
     if (!latLng) {
-      latLng = await getLocationCoordinates(newEditLocation);
+      try {
+        latLng = await getLocationCoordinates(newEditLocation);
+      } catch (e) {
+        setLocationError("Failed to get location coordinates");
+        throw e;
+      }
     }
 
     return {
@@ -539,7 +552,7 @@ export const EventDetailsEdit = ({
                     ) : loadError ? (
                       <div>Error loading maps</div>
                     ) : (
-                      <div className="relative" ref={inputRef}>
+                      <div className="relative" ref={inputWrapperRef}>
                         <Input
                           className="w-80 sm:w-full"
                           value={newEditLocation}
