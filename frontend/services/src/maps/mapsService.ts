@@ -58,7 +58,7 @@ export const getLocationCoordinates = (location: string): Promise<{ lat: number;
         const latLng = results[0].geometry.location;
         const latitude = latLng.lat();
         const longitude = latLng.lng();
-        resolve({ lat: latitude, lng: longitude }); 
+        resolve({ lat: latitude, lng: longitude });
       } else {
         reject(new Error("Location not Found"));
       }
