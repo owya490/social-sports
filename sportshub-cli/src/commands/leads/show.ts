@@ -1,7 +1,7 @@
 import chalk from "chalk";
-import { JiraService } from "../services/jira";
-import { LEAD_STATUS_ORDER } from "../types/config";
-import { ConfigManager } from "../utils/config";
+import { JiraService } from "../../services/jira";
+import { LEAD_STATUS_ORDER } from "../../types/config";
+import { ConfigManager } from "../../utils/config";
 
 export async function leadsShowCommand(): Promise<void> {
   try {
@@ -33,8 +33,7 @@ export async function leadsShowCommand(): Promise<void> {
           .toUpperCase()
           .replace(/[^A-Z\s]/g, "")
           .trim();
-        // return !normalizedStatus.includes("ONBOARD") && !normalizedStatus.includes("LOST");
-        return true;
+        return !normalizedStatus.includes("LOST");
       });
 
       if (activeLeads.length === 0) {
@@ -83,7 +82,7 @@ export async function leadsShowCommand(): Promise<void> {
       let displayedAnyGroup = false;
 
       // First show our standard statuses in order
-      LEAD_STATUS_ORDER.forEach((status) => {
+      LEAD_STATUS_ORDER.reverse().forEach((status) => {
         const leadsInStatus = groupedLeads.get(status) || [];
         if (leadsInStatus.length > 0) {
           displayedAnyGroup = true;

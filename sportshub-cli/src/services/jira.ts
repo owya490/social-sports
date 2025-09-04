@@ -70,6 +70,16 @@ export interface UpdateStatusResponse {
   message?: string;
 }
 
+export interface AddCommentRequest {
+  issueKey: string;
+  comment: string;
+}
+
+export interface AddCommentResponse {
+  success: boolean;
+  message?: string;
+}
+
 export class JiraService {
   private config: JiraConfig;
   private baseUrl: string;
@@ -360,6 +370,65 @@ export class JiraService {
       return {
         success: true,
         message: `Successfully transitioned to ${targetTransition.to.name}`,
+      };
+    } catch (error: any) {
+      let errorMessage = `${error.response?.status || "Unknown"} ${error.response?.statusText || "Error"}`;
+
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.errorMessages && errorData.errorMessages.length > 0) {
+          errorMessage += ` - ${errorData.errorMessages.join(", ")}`;
+        } else if (errorData.errors) {
+          const errors = Object.values(errorData.errors).join(", ");
+          errorMessage += ` - ${errors}`;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      return {
+        success: false,
+        message: errorMessage,
+      };
+    }
+  }
+
+  /**
+   * Adds a comment to an issue
+   */
+  async addComment(request: AddCommentRequest): Promise<AddCommentResponse> {
+    const axios = require("axios");
+
+    const payload = {
+      body: {
+        type: "doc",
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: request.comment,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    try {
+      await axios.post(`${this.baseUrl}/issue/${request.issueKey}/comment`, payload, {
+        headers: {
+          Authorization: this.authHeader,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      });
+
+      return {
+        success: true,
+        message: "Comment added successfully",
       };
     } catch (error: any) {
       let errorMessage = `${error.response?.status || "Unknown"} ${error.response?.statusText || "Error"}`;

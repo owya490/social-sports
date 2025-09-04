@@ -3,6 +3,7 @@ export interface JiraConfig {
   email: string;
   apiToken: string;
   defaultProjectKey: string;
+  openRouterApiToken: string;
 }
 
 export interface ConfigFile {
@@ -10,6 +11,7 @@ export interface ConfigFile {
   email?: string;
   apiToken?: string;
   defaultProjectKey?: string;
+  openRouterApiToken?: string;
 }
 
 export type LeadStatus = "OPPORTUNITY" | "CONTACTED" | "MEETING SCHEDULED" | "ONBOARDING" | "ONBOARDED" | "LOST";

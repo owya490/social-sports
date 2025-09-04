@@ -1,12 +1,42 @@
 import chalk from "chalk";
-import { JiraService } from "../services/jira";
-import { ALL_LEAD_STATUSES, LEAD_STATUS_ORDER, LeadStatus } from "../types/config";
-import { ConfigManager } from "../utils/config";
+import * as fs from "fs";
+import { JiraService } from "../../services/jira";
+import { OpenRouterService } from "../../services/openrouter";
+import { ALL_LEAD_STATUSES, LEAD_STATUS_ORDER, LeadStatus } from "../../types/config";
+import { ConfigManager } from "../../utils/config";
 
 export interface LeadsProgressOptions {
   organiserName?: string;
   ticketNumber?: string;
   status?: LeadStatus;
+  file?: string;
+}
+
+async function processFileContent(filePath: string): Promise<string> {
+  try {
+    console.log(chalk.gray(`📁 Reading file: ${filePath}`));
+
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File not found: ${filePath}`);
+    }
+
+    const content = fs.readFileSync(filePath, "utf8");
+
+    // Remove excessive whitespace and normalize text
+    const cleanedContent = content
+      .replace(/\s+/g, " ") // Replace multiple whitespaces with single space
+      .replace(/\n\s*\n/g, "\n") // Remove empty lines
+      .trim();
+
+    if (!cleanedContent || cleanedContent.length < 10) {
+      throw new Error("File contains insufficient content for analysis");
+    }
+
+    console.log(chalk.gray(`📝 Processed ${cleanedContent.length} characters from file`));
+    return cleanedContent;
+  } catch (error) {
+    throw new Error(`Failed to process file: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
 }
 
 function getNextStatus(currentStatus: string): LeadStatus | null {
@@ -49,6 +79,7 @@ export async function leadsProgressCommand(options: LeadsProgressOptions): Promi
 
     const config = configManager.getConfig();
     const jiraService = new JiraService(config);
+    const openRouterService = new OpenRouterService(config);
 
     // Validate input - must provide either organiserName or ticketNumber
     if (!options.organiserName && !options.ticketNumber) {
@@ -145,6 +176,40 @@ export async function leadsProgressCommand(options: LeadsProgressOptions): Promi
 
         const issueUrl = jiraService.getIssueUrl(targetTicketNumber);
         console.log(chalk.blue(`🔗 ${issueUrl}`));
+
+        // Process file if provided
+        if (options.file) {
+          try {
+            console.log(chalk.blue("\n📄 Processing file for summary..."));
+
+            const fileContent = await processFileContent(options.file);
+
+            console.log(chalk.gray("🤖 Generating summary with AI..."));
+            const analysis = await openRouterService.summarizeFileContent(fileContent);
+
+            if (analysis.summary) {
+              console.log(chalk.gray("💬 Adding summary as comment to ticket..."));
+
+              const commentResult = await jiraService.addComment({
+                issueKey: targetTicketNumber,
+                comment: `📋 **${new Date().toDateString()} Summary**:\n\n${analysis.summary}`,
+              });
+
+              if (commentResult.success) {
+                console.log(chalk.green("✅ File summary added as comment"));
+              } else {
+                console.log(chalk.yellow(`⚠️  Failed to add comment: ${commentResult.message}`));
+              }
+            } else if (analysis.error) {
+              console.log(chalk.yellow(`⚠️  AI analysis failed: ${analysis.error}`));
+              console.log(chalk.gray("File content was processed but could not be summarized"));
+            }
+          } catch (error) {
+            console.log(
+              chalk.yellow(`⚠️  File processing failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+            );
+          }
+        }
       } else {
         console.log(chalk.red(`❌ Failed to update status: ${updateResult.message}`));
         process.exit(1);

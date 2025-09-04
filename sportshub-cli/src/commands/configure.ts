@@ -86,6 +86,19 @@ export async function configureCommand(): Promise<void> {
         },
         filter: (input: string) => input.trim().toUpperCase(),
       },
+      {
+        type: "password",
+        name: "openRouterApiToken",
+        message: "OpenRouter API Token:",
+        default: existingConfig?.openRouterApiToken,
+        validate: (input: string) => {
+          if (!input.trim()) {
+            return "OpenRouter API Token is required";
+          }
+          return true;
+        },
+        filter: (input: string) => input.trim(),
+      },
     ]);
 
     const config: JiraConfig = {
@@ -93,6 +106,7 @@ export async function configureCommand(): Promise<void> {
       email: answers.email,
       apiToken: answers.apiToken,
       defaultProjectKey: answers.defaultProjectKey,
+      openRouterApiToken: answers.openRouterApiToken,
     };
 
     // Test the configuration by making a simple API call

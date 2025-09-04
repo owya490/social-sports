@@ -3,9 +3,10 @@
 import chalk from "chalk";
 import { Command } from "commander";
 import { configureCommand } from "./commands/configure";
-import { leadsCreateCommand, leadsSearchCommand } from "./commands/leads";
-import { leadsProgressCommand } from "./commands/progress";
-import { leadsShowCommand } from "./commands/show";
+import { leadsCreateCommand } from "./commands/leads/create";
+import { leadsProgressCommand } from "./commands/leads/progress";
+import { leadsSearchCommand } from "./commands/leads/search";
+import { leadsShowCommand } from "./commands/leads/show";
 
 const program = new Command();
 
@@ -77,12 +78,14 @@ leadsCommand
     "--status <status>",
     "Specific status to transition to (OPPORTUNITY, CONTACTED, MEETING SCHEDULED, ONBOARDING, ONBOARDED, LOST)"
   )
+  .option("-f, --file <path>", "Text file to analyze and summarize as a comment")
   .action(async (options) => {
     try {
       await leadsProgressCommand({
         organiserName: options.organiserName,
         ticketNumber: options.ticketNumber,
         status: options.status,
+        file: options.file,
       });
     } catch (error) {
       console.error(chalk.red("❌ Failed to progress lead ticket:"), error);
@@ -115,6 +118,7 @@ Examples:
   $ sportshub leads progress --organiserName "syrio volleyball"
   $ sportshub leads progress --ticketNumber "SO-123"
   $ sportshub leads progress --ticketNumber "SO-123" --status "CONTACTED"
+  $ sportshub leads progress --ticketNumber "SO-123" -f meeting-notes.txt
   $ sportshub leads show
 `
 );

@@ -55,7 +55,13 @@ export class ConfigManager {
    * Validates that all required config fields are present
    */
   validateConfig(config: ConfigFile): config is JiraConfig {
-    return !!(config.jiraBaseUrl && config.email && config.apiToken && config.defaultProjectKey);
+    return !!(
+      config.jiraBaseUrl &&
+      config.email &&
+      config.apiToken &&
+      config.defaultProjectKey &&
+      config.openRouterApiToken
+    );
   }
 
   /**
