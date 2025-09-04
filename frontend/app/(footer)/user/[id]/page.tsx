@@ -58,7 +58,7 @@ export default function UserProfilePage({ params }: any) {
   return loading ? (
     <Loading />
   ) : (
-    <div className="mt-16 w-full flex justify-center mb-8">
+    <div className="w-full flex justify-center mb-8">
       <div className="screen-width-primary">
         <div className="md:flex gap-16">
           <div id="col-1" className="pt-8 min-w-80">

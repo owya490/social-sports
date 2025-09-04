@@ -6,7 +6,6 @@ import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldo
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
 import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
@@ -122,8 +121,7 @@ export default function EventPage({ params }: EventPageProps) {
   }, []);
 
   return (
-    <div className="sm:ml-14 mt-14">
-      <OrganiserNavbar currPage="EventDrilldown" />
+    <>
       <EventDrilldownBanner
         name={eventName}
         startDate={eventStartDate}
@@ -131,7 +129,7 @@ export default function EventPage({ params }: EventPageProps) {
         vacancy={eventVacancy}
         loading={loading}
       />
-      <div className="sm:px-10 sm:pb-10">
+      <div className=" sm:pb-10">
         <EventDrilldownStatBanner
           loading={loading}
           eventAccessCount={eventAccessCount}
@@ -220,6 +218,6 @@ export default function EventPage({ params }: EventPageProps) {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
