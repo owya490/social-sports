@@ -33,6 +33,7 @@ import {
 } from "@/services/src/datetimeUtils";
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
 import { getActiveFormsForUser, getForm } from "@/services/src/forms/formsServices";
+import { FULFILMENT_SESSION_ENABLED } from "@/services/src/fulfilment/fulfilmentServices";
 import { getLocationCoordinates } from "@/services/src/locationUtils";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
@@ -683,57 +684,59 @@ export const EventDetailsEdit = ({
             )}
           </div>
         </div>
-        <div className="px-2 flex flex-row space-x-2">
-          <DocumentTextIcon className="w-4 mt-2 shrink-0" />
-          <div>
-            {loading ? (
-              <Skeleton
-                style={{
-                  height: 12,
-                  width: 100,
-                }}
-              />
-            ) : (
-              <>
-                {isEdit ? (
-                  <div className="flex">
-                    <Select
-                      label="Attach Form"
-                      size="lg"
-                      value={newEditAttachFormId ?? "null"}
-                      onChange={(e: string | any) => {
-                        setNewEditAttachFormId(e === "null" ? null : (e as FormId));
-                      }}
-                    >
-                      {forms.map((form) => {
-                        return (
-                          <Option key={form.formId} value={form.formId}>
-                            <p className="text-sm line-clamp-2">{form.title}</p>
-                          </Option>
-                        );
-                      })}
-                    </Select>
-                  </div>
-                ) : (
-                  <div className="mt-2">
-                    {attachForm === null ? (
-                      "No form attached"
-                    ) : (
-                      <div
-                        className="flex items-center gap-2 w-fit px-1 py-0.5 -mx-1 -my-0.5 rounded cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                        onClick={() => router.push(`/organiser/forms/${attachForm.formId}/preview`)}
-                        title="View form preview"
+        {FULFILMENT_SESSION_ENABLED && (
+          <div className="px-2 flex flex-row space-x-2">
+            <DocumentTextIcon className="w-4 mt-2 shrink-0" />
+            <div>
+              {loading ? (
+                <Skeleton
+                  style={{
+                    height: 12,
+                    width: 100,
+                  }}
+                />
+              ) : (
+                <>
+                  {isEdit ? (
+                    <div className="flex">
+                      <Select
+                        label="Attach Form"
+                        size="lg"
+                        value={newEditAttachFormId ?? "null"}
+                        onChange={(e: string | any) => {
+                          setNewEditAttachFormId(e === "null" ? null : (e as FormId));
+                        }}
                       >
-                        <span>{attachForm.title}</span>
-                        <ArrowTopRightOnSquareIcon className="w-4 h-4 text-blue-600 shrink-0" />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
+                        {forms.map((form) => {
+                          return (
+                            <Option key={form.formId} value={form.formId}>
+                              <p className="text-sm line-clamp-2">{form.title}</p>
+                            </Option>
+                          );
+                        })}
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="mt-2">
+                      {attachForm === null ? (
+                        "No form attached"
+                      ) : (
+                        <div
+                          className="flex items-center gap-2 w-fit px-1 py-0.5 -mx-1 -my-0.5 rounded cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                          onClick={() => router.push(`/organiser/forms/${attachForm.formId}/preview`)}
+                          title="View form preview"
+                        >
+                          <span>{attachForm.title}</span>
+                          <ArrowTopRightOnSquareIcon className="w-4 h-4 text-blue-600 shrink-0" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        )}
         <div className="px-2 flex flex-row space-x-2">
           <LinkIcon className="w-4 mt-2 shrink-0" />
           <div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { FULFILMENT_SESSION_ENABLED } from "@/services/src/fulfilment/fulfilmentServices";
 import { useUser } from "@components/utility/UserContext";
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
@@ -181,9 +182,11 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
         >
           <BookmarkSquareIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
-        <NavButton href={`/organiser/forms/gallery`} isActive={currPage === "FormsGallery"} tooltipContent="Forms">
-          <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
-        </NavButton>
+        {FULFILMENT_SESSION_ENABLED && (
+          <NavButton href={`/organiser/forms/gallery`} isActive={currPage === "FormsGallery"} tooltipContent="Forms">
+            <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
+          </NavButton>
+        )}
         <NavButton href="/organiser/metrics" isActive={currPage === "Metrics"} tooltipContent="Metrics">
           <ChartBarIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
