@@ -1,3 +1,4 @@
+import { SportConfig, SPORTS_CONFIG } from "@/config/SportsConfig";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { getDownloadURL, listAll, ref, StorageReference, uploadBytes } from "firebase/storage";
@@ -42,35 +43,11 @@ export async function getUsersEventImagesUrls(userID: string): Promise<string[]>
 }
 
 export function getThumbnailUrlsBySport(sport: string) {
-  switch (sport) {
-    case "volleyball": {
-      return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Fvolleyball-default.jpg?alt=media&token=4bad4cf7-8d53-4bb5-a657-6d8ea871d6fd";
-    }
-    case "badminton": {
-      return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Fbadminton-default.jpg?alt=media&token=187db12a-6e04-44da-aedc-04c5a1db99f7";
-    }
-    case "basketball": {
-      return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Fbasketball-default.jpg?alt=media&token=3871475e-a25c-4fa0-bf3a-875241da48c4";
-    }
-    case "soccer": {
-      return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Fsoccer-default.jpg?alt=media&token=131621c2-8e69-4c90-b3fa-1d4522bcc700";
-    }
-    case "tennis": {
-      return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Ftennis-default.jpg?alt=media&token=2dd4f5c1-30f0-4c9d-9dcf-72b40e7f14e1";
-    }
-    case "table-tennis": {
-      return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Ftable-tennis-default.jpg?alt=media&token=2a07940e-b45e-4e19-b442-d1bbe8c69a35";
-    }
-    case "oztag": {
-      return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Foztag-default.jpg?alt=media&token=acc4d712-398b-424b-bae2-0cafff22d0a4";
-    }
-    case "baseball": {
-      return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Fbaseball-default.jpg?alt=media&token=c890c369-2793-44bb-b618-0b1e39cc64cc";
-    }
-    default: {
-      return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Fthumbnail-default.jpg?alt=media&token=f58676d3-98b5-47c1-84ef-77dc38ed320e";
-    }
+  const sportConfig: SportConfig = SPORTS_CONFIG[sport];
+  if (sportConfig) {
+    return sportConfig.defaultThumbnailUrl;
   }
+  return "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Fthumbnail-default.jpg?alt=media&token=f58676d3-98b5-47c1-84ef-77dc38ed320e";
 }
 
 export async function uploadAndGetImageAndThumbnailUrls(userId: UserId, formData: AllImageData & { sport: string }) {

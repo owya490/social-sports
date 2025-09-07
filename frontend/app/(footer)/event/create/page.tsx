@@ -9,6 +9,7 @@ import { PreviewForm } from "@/components/events/create/forms/PreviewForm";
 import { useMultistepForm } from "@/components/events/create/forms/useMultistepForm";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
+import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
@@ -58,7 +59,7 @@ const INITIAL_DATA: FormData = {
   endDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   registrationEndDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   location: "",
-  sport: "volleyball",
+  sport: SPORTS_CONFIG.volleyball.value,
   price: 1500, // $15 default price, set to 1500 as it is in cents
   capacity: 20,
   name: "",
