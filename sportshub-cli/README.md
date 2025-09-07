@@ -113,7 +113,7 @@ sportshub leads progress --ticketNumber "SH-123" -f meeting-notes.txt
 ### Show All Active Leads
 
 ```bash
-# Display all active leads grouped by status (excludes ONBOARDED and LOST)
+# Display all active leads grouped by status (excludes LOST)
 sportshub leads show
 ```
 

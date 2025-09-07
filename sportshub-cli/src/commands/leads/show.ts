@@ -82,7 +82,7 @@ export async function leadsShowCommand(): Promise<void> {
       let displayedAnyGroup = false;
 
       // First show our standard statuses in order
-      LEAD_STATUS_ORDER.reverse().forEach((status) => {
+      [...LEAD_STATUS_ORDER].reverse().forEach((status) => {
         const leadsInStatus = groupedLeads.get(status) || [];
         if (leadsInStatus.length > 0) {
           displayedAnyGroup = true;
