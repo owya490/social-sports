@@ -7,7 +7,7 @@ next: /docs/organiser/events/forms
 
 ## Overview
 
-Custom links allow you to create memorable, branded URLs for your events that are much easier to share and remember than the default event ID links. Instead of sharing a long, complex URL, you can create something simple like `https://wwww.sportshub.net.au/event/<username>/weekly-tennis` that participants can easily type and remember.
+Custom links allow you to create memorable, branded URLs for your events that are much easier to share and remember than the default event ID links. Instead of sharing a long, complex URL, you can create something simple like `https://www.sportshub.net.au/event/<username>/weekly-tennis` that participants can easily type and remember.
 
 Custom links are particularly valuable for:
 

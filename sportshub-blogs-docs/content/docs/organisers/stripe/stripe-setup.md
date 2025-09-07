@@ -69,7 +69,7 @@ Follow Stripe's guided setup process:
 - Add public details for customer facing features
 
 > [!TIP]
-> Stripe will ask you to opt into Climate Conributions and Stripe Tax. Feel free to decline and opt out by pressing "No Thanks" and "Not right now" respectively.
+> Stripe will ask you to opt into Climate Contributions and Stripe Tax. Feel free to decline and opt out by pressing "No Thanks" and "Not right now" respectively.
 
 ### 4. Verify Integration in SPORTSHUB
 
