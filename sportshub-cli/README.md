@@ -9,26 +9,36 @@ A CLI tool for Sportshub Leads to quickly create Jira tickets related to new lea
 - ✅ Input validation and error handling
 - 🌐 Automatic website URL formatting
 - 📱 Beautiful terminal interface
+- 🤖 AI-powered text summarization for meeting notes
 
 ## Installation
 
-### Local Installation
+### Quick Installation
 
-1. Clone or copy the sportshub-cli directory
-2. Navigate to the directory:
+1. Navigate to the sportshub-cli directory:
    ```bash
    cd sportshub-cli
    ```
-3. Install dependencies:
+2. Run the install script:
    ```bash
-   npm install
-   ```
-4. Build and link globally:
-   ```bash
-   npm run install-local
+   ./install.sh
    ```
 
 The CLI will now be available globally as `sportshub`.
+
+### Manual Installation
+
+If you prefer manual installation or the install script doesn't work:
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Build and link globally:
+   ```bash
+   npm run build
+   npm link
+   ```
 
 ### Manual Installation on Other Computers
 
@@ -86,6 +96,9 @@ sportshub leads progress --ticketNumber "SH-123"
 
 # Set specific status
 sportshub leads progress --ticketNumber "SH-123" --status "CONTACTED"
+
+# Add meeting notes or file summary when progressing
+sportshub leads progress --ticketNumber "SH-123" -f meeting-notes.txt
 ```
 
 **Status progression order:**
@@ -195,15 +208,20 @@ Current status: Opportunity
 ```
 src/
 ├── commands/
-│   ├── configure.ts    # Configuration command
-│   └── leads.ts        # Leads management commands
+│   ├── configure.ts       # Configuration command
+│   └── leads/
+│       ├── create.ts      # Create lead tickets
+│       ├── progress.ts    # Progress lead status
+│       ├── search.ts      # Search lead tickets
+│       └── show.ts        # Show all active leads
 ├── services/
-│   └── jira.ts         # Jira API integration
+│   ├── jira.ts           # Jira API integration
+│   └── openrouter.ts     # AI-powered text summarization
 ├── types/
-│   └── config.ts       # TypeScript type definitions
+│   └── config.ts         # TypeScript type definitions
 ├── utils/
-│   └── config.ts       # Configuration management
-└── index.ts            # CLI entry point
+│   └── config.ts         # Configuration management
+└── index.ts              # CLI entry point
 ```
 
 ## Error Handling

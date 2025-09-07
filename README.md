@@ -59,6 +59,7 @@ At SPORTSHUB, we're not just building a platform — we're building something we
 - **GitHub Actions** - CI/CD pipeline
 - **Hugo** - Blog platform
 - **Jest** - Testing framework
+- **Sportshub CLI** - In-house CLI tool
 
 ---
 
@@ -111,6 +112,10 @@ SPORTSHUB Platform
 │   ├── Email Notifications
 │   ├── Event Management
 │   └── Analytics
+├── CLI Tool (Node.js)
+│   ├── Lead Management
+│   ├── Jira Integration
+│   └── Workflow Automation
 └── Infrastructure
     ├── Firebase Hosting
     ├── Firestore Database
