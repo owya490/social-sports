@@ -19,6 +19,7 @@ import { useEffect } from "react";
 import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 
 import { useUser } from "@/components/utility/UserContext";
+import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventData } from "@/interfaces/EventTypes";
 import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
@@ -34,7 +35,7 @@ import {
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
 import { getActiveFormsForUser, getForm } from "@/services/src/forms/formsServices";
 import { FULFILMENT_SESSION_ENABLED } from "@/services/src/fulfilment/fulfilmentServices";
-import { getLocationCoordinates } from "@/services/src/locationUtils";
+import { getLocationCoordinates, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
@@ -73,6 +74,8 @@ export const EventDetailsEdit = ({
   updateData: (id: string, data: any) => any;
   isRecurrenceTemplate: boolean;
 }) => {
+  loadGoogleMapsScript();
+
   const { user } = useUser();
   const router = useRouter();
   const [forms, setForms] = useState<Form[]>([
@@ -558,14 +561,14 @@ export const EventDetailsEdit = ({
                         setNewEditSport(e);
                       }}
                     >
-                      <Option value="volleyball">Volleyball</Option>
-                      <Option value="badminton">Badminton</Option>
-                      <Option value="basketball">Basketball</Option>
-                      <Option value="soccer">Soccer</Option>
-                      <Option value="tennis">Tennis</Option>
-                      <Option value="table-tennis">Table Tennis</Option>
-                      <Option value="oztag">Oztag</Option>
-                      <Option value="baseball">Baseball</Option>
+                      {Object.entries(SPORTS_CONFIG).map((entry, idx) => {
+                        const sportInfo = entry[1];
+                        return (
+                          <Option key={idx} value={sportInfo.value}>
+                            {sportInfo.name}
+                          </Option>
+                        );
+                      })}
                     </Select>
                   </div>
                 ) : (

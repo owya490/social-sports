@@ -1,4 +1,4 @@
-import { initializeAutocomplete, loadGoogleMapsScript, validateLocation } from "@/services/src/maps/mapsService";
+import { initializeAutocomplete, loadGoogleMapsScript, getLocationCoordinates } from "@/services/src/maps/mapsService";
 import React, { useEffect, useRef, useState } from "react";
 import { BasicData } from "../events/create/forms/BasicForm";
 
@@ -40,8 +40,8 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({
         updateField({ location: full_address });
 
         try {
-          const { lat, long } = await validateLocation(full_address);
-          updateField({ lat, long });
+          const { lat, lng } = await getLocationCoordinates(full_address);
+          updateField({ lat, lng });
           setHasError(false);
           setLocationError("");
         } catch (error) {
