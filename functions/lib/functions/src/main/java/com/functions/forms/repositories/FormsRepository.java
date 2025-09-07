@@ -51,11 +51,6 @@ public class FormsRepository {
                     return maybeDocSnapshot;
                 }
             }
-
-            // If no document is found, log and throw an exception
-            logger.error(
-                    "No form response document found in any subcollection - formId: {}, eventId: {}, formResponseId: {}",
-                    formId, eventId, formResponseId);
             throw new Exception("No form response document found - formId: " + formId + ", eventId: " + eventId
                     + ", formResponseId: " + formResponseId);
         } catch (Exception e) {

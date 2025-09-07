@@ -265,7 +265,6 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       {/* Mobile Top Navbar */}
       <FormMobileEditBar
         onAddTextSection={() => {
-          console.log("Add Text Question");
           addSection({
             type: FormSectionType.TEXT,
             question: "",

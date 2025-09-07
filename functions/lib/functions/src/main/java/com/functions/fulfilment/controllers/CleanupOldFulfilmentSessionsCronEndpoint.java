@@ -36,6 +36,7 @@ public class CleanupOldFulfilmentSessionsCronEndpoint implements HttpFunction {
         try {
             int deleted = FulfilmentService.cleanupOldFulfilmentSessions();
             response.setStatusCode(200);
+            logger.info("Cleanup completed. Deleted sessions: {}", deleted);
             response.getWriter().write("Cleanup completed. Deleted sessions: " + deleted + "\n");
         } catch (Exception e) {
             logger.error("Error during cleanup of old fulfilment sessions", e);

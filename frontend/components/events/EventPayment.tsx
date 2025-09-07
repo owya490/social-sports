@@ -193,7 +193,9 @@ export default function EventPayment(props: EventPaymentProps) {
                           // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
                         } catch {
                           // Clean up fulfilment session if it fails, we can do this through a CRON later down the line
-
+                          EventPaymentLogger.error(
+                            `EventPayment: Error in starting fulfilment session for eventId: ${props.eventId}`
+                          );
                           router.push("/error");
                         }
                       } else {

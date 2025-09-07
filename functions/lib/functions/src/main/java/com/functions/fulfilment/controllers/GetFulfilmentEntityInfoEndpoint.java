@@ -1,10 +1,5 @@
 package com.functions.fulfilment.controllers;
 
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.functions.fulfilment.models.requests.GetFulfilmentEntityInfoRequest;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.services.FulfilmentService;
@@ -13,6 +8,10 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 public class GetFulfilmentEntityInfoEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(GetFulfilmentEntityInfoEndpoint.class);
@@ -35,7 +34,7 @@ public class GetFulfilmentEntityInfoEndpoint implements HttpFunction {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
-                    "[GetFulfilmentEntityInfoEndpoint] GetFulfilmentEntityInfoEndpoint only supports GET requests.")));
+                    "GetFulfilmentEntityInfoEndpoint only supports GET requests.")));
             return;
         }
 

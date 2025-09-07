@@ -45,15 +45,17 @@ export const DropdownSelectSectionBuilder = ({
               value={option}
               placeholder={`Option ${index + 1}`}
               onChange={(e) => {
-                const updatedSection = { ...section };
-                updatedSection.options[index] = e.target.value;
+                const updatedOptions = [...section.options];
+                updatedOptions[index] = e.target.value;
 
                 // Add new option field if last field is being typed in
-                if (index === updatedSection.options.length - 1 && e.target.value.trim() !== "") {
-                  updatedSection.options.push("");
+                if (index === updatedOptions.length - 1 && e.target.value.trim() !== "") {
+                  updatedOptions.push("");
                 }
-
-                onUpdate(updatedSection);
+                onUpdate({
+                  ...section,
+                  options: updatedOptions,
+                });
               }}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />

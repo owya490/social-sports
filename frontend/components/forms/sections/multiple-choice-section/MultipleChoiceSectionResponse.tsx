@@ -2,7 +2,7 @@ import { MultipleChoiceSection } from "@/interfaces/FormTypes";
 import { Radio } from "@material-tailwind/react";
 import Image from "next/image";
 
-export const MutipleChoiceSectionResponse = ({
+export const MultipleChoiceSectionResponse = ({
   multipleChoiceSection,
   answerOnChange,
 }: {
@@ -25,7 +25,7 @@ export const MutipleChoiceSectionResponse = ({
               value={option}
               label={option}
               crossOrigin={undefined}
-              checked={multipleChoiceSection.answer === option ? true : false}
+              checked={multipleChoiceSection.answer === option}
               onChange={(e) => {
                 answerOnChange(e.target.value);
               }}

@@ -4,11 +4,16 @@ import { FormPreviewCard } from "@/components/organiser/forms/FormPreviewCard";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyForm, Form, FormId } from "@/interfaces/FormTypes";
+import { Logger } from "@/observability/logger";
 import { getFormsForUser } from "@/services/src/forms/formsServices";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+const formsGalleryLogger = new Logger("formsGalleryLogger");
+
 const FormsGallery = () => {
+  const router = useRouter();
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -21,8 +26,13 @@ const FormsGallery = () => {
 
   useEffect(() => {
     const fetchForms = async () => {
-      const forms = await getFormsForUser(user.userId);
-      setForms([...forms]);
+      try {
+        const forms = await getFormsForUser(user.userId);
+        setForms([...forms]);
+      } catch (error) {
+        formsGalleryLogger.error(`Failed to fetch forms: ${JSON.stringify(error)}`);
+        router.push("/error");
+      }
       setIsLoading(false);
     };
     if (user.userId !== "") {

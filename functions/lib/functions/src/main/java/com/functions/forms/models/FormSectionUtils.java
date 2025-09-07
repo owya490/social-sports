@@ -1,11 +1,10 @@
 package com.functions.forms.models;
 
-import java.util.Map;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 
 /**
  * Utility class for handling FormSection deserialization from Firebase.
@@ -25,30 +24,28 @@ public class FormSectionUtils {
      */
     public static FormSection fromFirebaseData(Map<String, Object> sectionData) throws Exception {
         try {
-            // Convert the map to JSON string, then deserialize using Jackson
-            String json = objectMapper.writeValueAsString(sectionData);
             FormSectionType type = FormSectionType.valueOf((String) sectionData.get("type"));
 
             FormSection section;
             switch (type) {
                 case TEXT:
-                    section = objectMapper.readValue(json, TextSection.class);
+                    section = objectMapper.convertValue(sectionData, TextSection.class);
                     break;
                 case MULTIPLE_CHOICE:
-                    section = objectMapper.readValue(json, MultipleChoiceSection.class);
+                    section = objectMapper.convertValue(sectionData, MultipleChoiceSection.class);
                     break;
                 case DROPDOWN_SELECT:
-                    section = objectMapper.readValue(json, DropdownSelectSection.class);
+                    section = objectMapper.convertValue(sectionData, DropdownSelectSection.class);
                     break;
                 case FILE_UPLOAD:
-                    section = objectMapper.readValue(json, FileUploadSection.class);
+                    section = objectMapper.convertValue(sectionData, FileUploadSection.class);
                     break;
                 case DATE_TIME:
-                    section = objectMapper.readValue(json, DateTimeSection.class);
+                    section = objectMapper.convertValue(sectionData, DateTimeSection.class);
                     break;
                 case BINARY_CHOICE:
                     // BINARY_CHOICE is handled the same as MULTIPLE_CHOICE
-                    section = objectMapper.readValue(json, MultipleChoiceSection.class);
+                    section = objectMapper.convertValue(sectionData, MultipleChoiceSection.class);
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown FormSection type: " + sectionData.get("type"));

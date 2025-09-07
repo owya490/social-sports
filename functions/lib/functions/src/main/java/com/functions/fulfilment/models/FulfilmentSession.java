@@ -1,25 +1,23 @@
 package com.functions.fulfilment.models;
 
-import static com.functions.utils.JavaUtils.objectMapper;
+import com.functions.events.models.EventData;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.annotation.DocumentId;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.functions.events.models.EventData;
-import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.annotation.DocumentId;
-
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import static com.functions.utils.JavaUtils.objectMapper;
 
 @Data
 @SuperBuilder(toBuilder = true)
@@ -65,52 +63,54 @@ public abstract class FulfilmentSession {
      */
     public static FulfilmentSession fromFirestore(DocumentSnapshot snapshot) {
         // Read the fulfilmentEntityMap directly from Firestore
-        @SuppressWarnings("unchecked")
         Map<String, Object> rawEntityMap = (Map<String, Object>) snapshot.get("fulfilmentEntityMap");
+        if (rawEntityMap == null) {
+            throw new IllegalArgumentException("fulfilmentEntityMap is missing in Firestore document");
+        }
         Map<String, FulfilmentEntity> entityMap = new HashMap<>();
 
-        if (rawEntityMap != null) {
-            for (Map.Entry<String, Object> entry : rawEntityMap.entrySet()) {
-                String entityId = entry.getKey();
-                @SuppressWarnings("unchecked")
-                Map<String, Object> entityData = (Map<String, Object>) entry.getValue();
+        for (Map.Entry<String, Object> entry : rawEntityMap.entrySet()) {
+            String entityId = entry.getKey();
 
-                try {
-                    // Convert the map to JSON string, then deserialize using Jackson
-                    String json = objectMapper.writeValueAsString(entityData);
-                    FulfilmentEntityType type = FulfilmentEntityType.valueOf((String) entityData.get("type"));
+            Map<String, Object> entityData = (Map<String, Object>) entry.getValue();
+            if (entityData == null) {
+                throw new IllegalArgumentException("Entity data is null for entityId: " + entityId);
+            }
 
-                    FulfilmentEntity entity;
-                    switch (type) {
-                        case STRIPE:
-                            entity = objectMapper
-                                    .readValue(json, StripeFulfilmentEntity.class);
-                            break;
-                        case FORMS:
-                            entity = objectMapper
-                                    .readValue(json, FormsFulfilmentEntity.class);
-                            break;
-                        case END:
-                            entity = objectMapper
-                                    .readValue(json, EndFulfilmentEntity.class);
-                            break;
-                        default:
-                            throw new IllegalArgumentException(
-                                    "Unknown FulfilmentEntity type: " + entityData.get("type"));
-                    }
+            try {
+                // Convert the map to JSON string, then deserialize using Jackson
+                String json = objectMapper.writeValueAsString(entityData);
+                FulfilmentEntityType type = FulfilmentEntityType.valueOf((String) entityData.get("type"));
 
-                    entityMap.put(entityId, entity);
-                } catch (Exception e) {
-                    logger.error("Failed to deserialize FulfilmentEntity: {}", entityData, e);
+                FulfilmentEntity entity;
+                switch (type) {
+                    case STRIPE:
+                        entity = objectMapper
+                                .readValue(json, StripeFulfilmentEntity.class);
+                        break;
+                    case FORMS:
+                        entity = objectMapper
+                                .readValue(json, FormsFulfilmentEntity.class);
+                        break;
+                    case END:
+                        entity = objectMapper
+                                .readValue(json, EndFulfilmentEntity.class);
+                        break;
+                    default:
+                        throw new IllegalArgumentException(
+                                "Unknown FulfilmentEntity type: " + entityData.get("type"));
                 }
+
+                entityMap.put(entityId, entity);
+            } catch (Exception e) {
+                logger.error("Failed to deserialize FulfilmentEntity: {}", entityData, e);
             }
         }
 
         // Read the fulfilmentEntityIds directly from Firestore
-        @SuppressWarnings("unchecked")
         List<String> entityIds = (List<String>) snapshot.get("fulfilmentEntityIds");
         if (entityIds == null) {
-            entityIds = new ArrayList<>();
+            throw new IllegalArgumentException("fulfilmentEntityIds is missing in Firestore document");
         }
 
         // Get the session type from Firestore

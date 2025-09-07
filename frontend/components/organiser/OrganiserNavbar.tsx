@@ -107,7 +107,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
           {({ open }) => {
             return (
               <>
-                <div className="flex items-centers">
+                <div className="flex items-center">
                   <ResponsiveTooltip content="Events" disabled={open}>
                     <MenuButton
                       className={`flex justify-center items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-core-hover transition ease-in-out ${

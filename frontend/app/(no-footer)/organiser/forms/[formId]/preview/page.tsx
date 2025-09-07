@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 
 const FormPreview = () => {
   const params = useParams();
-  const formId = params?.formId as FormId;
+  const formId = (typeof params?.formId === "string" ? params.formId : params.formId[0]) as FormId;
   return (
     <div className="bg-core-hover h-screen overflow-hidden">
       <div className="mt-8 sm:mt-14">

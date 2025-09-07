@@ -1,8 +1,5 @@
 package com.functions.fulfilment.controllers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.functions.fulfilment.models.requests.UpdateFulfilmentEntityWithFormResponseIdRequest;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.global.models.responses.ErrorResponse;
@@ -10,6 +7,8 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UpdateFulfilmentEntityWithFormResponseIdEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory
@@ -36,7 +35,9 @@ public class UpdateFulfilmentEntityWithFormResponseIdEndpoint implements HttpFun
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
             response.getWriter()
-                    .write("The UpdateFulfilmentEntityWithFormResponseIdEndpoint only supports POST requests.");
+                    .write(JavaUtils.objectMapper.writeValueAsString(
+                            new ErrorResponse(
+                                    "The UpdateFulfilmentEntityWithFormResponseIdEndpoint only supports POST requests.")));
             return;
         }
 
@@ -48,7 +49,8 @@ public class UpdateFulfilmentEntityWithFormResponseIdEndpoint implements HttpFun
             response.setStatusCode(400);
             logger.error("Could not parse input:", e);
             response.getWriter().write(JavaUtils.objectMapper
-                    .writeValueAsString(new ErrorResponse("Invalid request data: " + e.getMessage())));
+                    .writeValueAsString(
+                            new ErrorResponse("Invalid request data: " + e.getMessage())));
             return;
         }
 
@@ -65,9 +67,11 @@ public class UpdateFulfilmentEntityWithFormResponseIdEndpoint implements HttpFun
             response.setStatusCode(500);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(new ErrorResponse(
-                            "Error updating fulfilment entity " + data.fulfilmentEntityId() + " for session: "
+                            "Error updating fulfilment entity " + data.fulfilmentEntityId()
+                                    + " for session: "
                                     + data.fulfilmentSessionId()
-                                    + " with form response ID: " + data.formResponseId())));
+                                    + " with form response ID: "
+                                    + data.formResponseId())));
         }
 
     }

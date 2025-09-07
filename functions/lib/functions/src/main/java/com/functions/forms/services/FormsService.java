@@ -32,7 +32,7 @@ public class FormsService {
                 }
             });
         } catch (Exception e) {
-            logger.error("[FormsService] Error trying to get form ID for event ID {}: {}", eventId, e.getMessage());
+            logger.error("Error trying to get form ID for event ID {}: {}", eventId, e.getMessage());
             throw new RuntimeException("[FormsService] Failed to retrieve form ID for event ID: " + eventId, e);
         }
     }

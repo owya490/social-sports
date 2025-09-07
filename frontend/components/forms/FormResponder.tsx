@@ -231,8 +231,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       setForm((prevForm) => {
         if (!prevForm) return prevForm;
 
-        // Create a new Map copy
-        const newSectionsMap = prevForm.sectionsMap;
+        // Create a new Map copy to avoid mutation
+        const newSectionsMap = { ...prevForm.sectionsMap };
 
         // Get the section to update
         const section = newSectionsMap[sectionId];
@@ -241,10 +241,10 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
         // Update the answer (create a new object to keep immutability)
         const updatedSection = { ...section, answer: newAnswer };
 
-        // Set it back into the new Map
+        // Set it back into the new object
         newSectionsMap[sectionId] = updatedSection;
 
-        // Return a new form object with updated Map
+        // Return a new form object with updated sections
         return {
           ...prevForm,
           sectionsMap: newSectionsMap,
