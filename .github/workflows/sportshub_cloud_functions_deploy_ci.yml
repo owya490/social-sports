@@ -229,7 +229,7 @@ jobs:
         working-directory: functions/lib/functions
         run: |
           gcloud functions deploy saveTempFormResponse \
-            --entry-point com.functions.fulfilment.controllers.SaveTempFormResponseEndpoint \
+            --entry-point com.functions.forms.controllers.SaveTempFormResponseEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
