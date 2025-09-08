@@ -9,6 +9,7 @@ import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurrin
 import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
 import { RecurringTemplateSettings } from "@/components/organiser/recurring-events/RecurringTemplateSettings";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { FormId } from "@/interfaces/FormTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
   NewRecurrenceFormData,
@@ -59,6 +60,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState<boolean>(false);
+  const [eventFormId, setEventFormId] = useState<FormId | null>(null);
 
   const router = useRouter();
 
@@ -83,6 +85,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventIsActive(recurrenceTemplate.eventData.isActive);
         setEventRegistrationDeadline(recurrenceTemplate.eventData.registrationDeadline);
         setEventEventLink(recurrenceTemplate.eventData.eventLink);
+        setEventFormId(recurrenceTemplate.eventData.formId);
         const newRecurrenceData = extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData);
         setNewRecurrenceData(newRecurrenceData);
         setPastEvents(recurrenceTemplate.recurrenceData.pastRecurrences);
@@ -174,6 +177,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   eventEventLink={eventEventLink}
                   updateData={updateRecurrenceTemplateEventData}
                   isRecurrenceTemplate={true}
+                  eventFormId={eventFormId}
                 />
               </>
             )}
