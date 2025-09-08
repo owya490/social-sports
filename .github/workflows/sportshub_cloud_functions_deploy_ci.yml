@@ -147,6 +147,19 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
+      - name: Deploy getPrevFulfilmentEntity
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy getPrevFulfilmentEntity \
+            --entry-point com.functions.fulfilment.controllers.GetPrevFulfilmentEntityEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
       - name: Deploy getFulfilmentEntityInfo
         working-directory: functions/lib/functions
         run: |
@@ -186,11 +199,37 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy getFulfilmentSessiionEntityTypes
+      - name: Deploy getFulfilmentSessionInfo
         working-directory: functions/lib/functions
         run: |
-          gcloud functions deploy getFulfilmentSessionEntityTypes \
-            --entry-point com.functions.fulfilment.controllers.GetFulfilmentSessionEntityTypesEndpoint \
+          gcloud functions deploy getFulfilmentSessionInfo \
+            --entry-point com.functions.fulfilment.controllers.GetFulfilmentSessionInfoEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy completeFulfilmentSession
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy completeFulfilmentSession \
+            --entry-point com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy saveTempFormResponse
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy saveTempFormResponse \
+            --entry-point com.functions.fulfilment.controllers.SaveTempFormResponseEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
