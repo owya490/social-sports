@@ -192,8 +192,8 @@ export default function EventPage({ params }: EventPageProps) {
                 user={user}
                 eventId={eventId}
                 sport={eventSport}
-                eventImagePreviewUrl={eventImage}
-                eventThumbnailPreviewUrl={eventThumbnail}
+                eventImage={eventImage}
+                eventThumbnail={eventThumbnail}
               />
             )}
             {currSidebarPage === "Settings" && (

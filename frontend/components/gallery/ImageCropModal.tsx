@@ -42,25 +42,43 @@ export const ImageCropModal = ({
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isProcessing, setIsProcessing] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const [imageSrc, setImageSrc] = useState<string>("");
+  const [hasValidCrop, setHasValidCrop] = useState(false);
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { width, height } = e.currentTarget;
-      setCrop(centerAspectCrop(width, height, aspectRatio));
+      const initialCrop = centerAspectCrop(width, height, aspectRatio);
+      setCrop(initialCrop);
+      // Immediately set a completed crop so the user can't proceed without a crop
+      setCompletedCrop({
+        x: (initialCrop.x / 100) * width,
+        y: (initialCrop.y / 100) * height,
+        width: (initialCrop.width / 100) * width,
+        height: (initialCrop.height / 100) * height,
+        unit: "px",
+      });
+      setHasValidCrop(true);
     },
     [aspectRatio]
   );
 
-  // Convert file to data URL when modal opens
+  // Reset state when modal opens/closes
   useEffect(() => {
-    if (imageFile && isOpen) {
+    if (isOpen && imageFile) {
       const reader = new FileReader();
       reader.onload = () => {
         setImageSrc(reader.result as string);
       };
       reader.readAsDataURL(imageFile);
+      setHasValidCrop(false);
+    } else if (!isOpen) {
+      // Reset state when modal closes
+      setImageSrc("");
+      setCrop(undefined);
+      setCompletedCrop(undefined);
+      setHasValidCrop(false);
+      setIsProcessing(false);
     }
   }, [imageFile, isOpen]);
 
@@ -108,7 +126,8 @@ export const ImageCropModal = ({
   );
 
   const handleCropAccept = async () => {
-    if (!completedCrop || !imgRef.current) {
+    if (!completedCrop || !imgRef.current || !hasValidCrop) {
+      alert("Please select a crop area before proceeding.");
       return;
     }
 
@@ -119,6 +138,7 @@ export const ImageCropModal = ({
       onClose();
     } catch (error) {
       console.error("Error cropping image:", error);
+      alert("Error processing the cropped image. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -127,9 +147,9 @@ export const ImageCropModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h2 className="text-xl font-semibold text-core-text">
             Crop {cropType === "thumbnail" ? "Thumbnail (Square)" : "Event Image (16:9)"}
           </h2>
@@ -143,27 +163,45 @@ export const ImageCropModal = ({
         </div>
 
         {imageSrc && (
-          <div className="mb-4">
-            <ReactCrop
-              crop={crop}
-              onChange={(c) => setCrop(c)}
-              onComplete={(c) => setCompletedCrop(c)}
-              aspect={aspectRatio}
-              minWidth={cropType === "thumbnail" ? 100 : 160}
-              minHeight={cropType === "thumbnail" ? 100 : 90}
-            >
-              <img
-                ref={imgRef}
-                alt="Crop preview"
-                src={imageSrc}
-                onLoad={onImageLoad}
-                className="max-w-full max-h-96 object-contain"
-              />
-            </ReactCrop>
+          <div className="mb-4 flex-1 min-h-0">
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full flex flex-col">
+              <p className="text-sm text-gray-600 mb-3 flex-shrink-0">
+                Drag the corners to adjust the crop area. The aspect ratio is locked to{" "}
+                {cropType === "thumbnail" ? "1:1 (Square)" : "16:9"}.
+              </p>
+              <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(pixelCrop, percentCrop) => {
+                    setCrop(percentCrop);
+                  }}
+                  onComplete={(pixelCrop) => {
+                    setCompletedCrop(pixelCrop);
+                    setHasValidCrop(pixelCrop.width > 0 && pixelCrop.height > 0);
+                  }}
+                  aspect={aspectRatio}
+                  minWidth={cropType === "thumbnail" ? 100 : 160}
+                  minHeight={cropType === "thumbnail" ? 100 : 90}
+                  keepSelection={true}
+                  ruleOfThirds={true}
+                  className="max-h-full"
+                >
+                  <img
+                    ref={imgRef}
+                    alt="Crop preview"
+                    src={imageSrc}
+                    onLoad={onImageLoad}
+                    className="max-w-full max-h-full object-contain"
+                    style={{ userSelect: "none", maxHeight: "calc(90vh - 240px)" }}
+                    draggable={false}
+                  />
+                </ReactCrop>
+              </div>
+            </div>
           </div>
         )}
 
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-end space-x-4 flex-shrink-0">
           <button
             onClick={onClose}
             className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
@@ -172,9 +210,9 @@ export const ImageCropModal = ({
             Cancel
           </button>
           <InvertedHighlightButton
-            text={isProcessing ? "Processing..." : "Accept Crop"}
+            text={isProcessing ? "Processing..." : "Upload Image"}
             onClick={handleCropAccept}
-            disabled={!completedCrop || isProcessing}
+            disabled={!hasValidCrop || !completedCrop || isProcessing}
           />
         </div>
 

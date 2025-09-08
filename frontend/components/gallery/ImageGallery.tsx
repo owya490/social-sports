@@ -1,11 +1,15 @@
 "use client";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { UserData } from "@/interfaces/UserTypes";
-import { getUsersEventImagesUrls, getUsersEventThumbnailsUrls, uploadUserImage } from "@/services/src/imageService";
+import {
+  getUsersEventImagesUrls,
+  getUsersEventThumbnailsUrls,
+  uploadEventImage,
+  uploadEventThumbnail,
+} from "@/services/src/imageService";
 import imageCompression from "browser-image-compression";
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import { ImageUploadCard } from "./ImageUploadCard";
+import { ImageSection } from "./ImageSection";
 
 interface ImageGalleryProps {
   user: UserData;
@@ -56,13 +60,11 @@ export const ImageGallery = ({ user }: ImageGalleryProps) => {
       const compressedFile = await imageCompression(file, options);
 
       // Upload to Firebase
-      const path = type === "thumbnail" ? "/eventThumbnails" : "/eventImages";
-      const downloadUrl = await uploadUserImage(user.userId, path, compressedFile);
-
-      // Update local state
       if (type === "thumbnail") {
+        const downloadUrl = await uploadEventThumbnail(user.userId, compressedFile);
         setThumbnailUrls((prev) => [downloadUrl, ...prev]);
       } else {
+        const downloadUrl = await uploadEventImage(user.userId, compressedFile);
         setImageUrls((prev) => [downloadUrl, ...prev]);
       }
     } catch (error) {
@@ -92,48 +94,24 @@ export const ImageGallery = ({ user }: ImageGalleryProps) => {
       )}
 
       {/* Thumbnails Section */}
-      <div>
-        <h2 className="text-xl font-semibold text-core-text mb-4">Event Thumbnails</h2>
-        <p className="text-sm text-gray-600 mb-4">Square aspect ratio (1:1) - Used for event cards on the dashboard</p>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <ImageUploadCard type="thumbnail" onImageUploaded={(file) => handleImageUpload(file, "thumbnail")} />
-
-          {thumbnailUrls.map((url, index) => (
-            <div key={index} className="relative group">
-              <Image
-                src={url}
-                alt={`Thumbnail ${index + 1}`}
-                width={300}
-                height={300}
-                className="w-full aspect-square object-cover rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+      <ImageSection
+        title="Event Thumbnails"
+        description="Square aspect ratio (1:1) - Used for event cards on the dashboard"
+        type="thumbnail"
+        imageUrls={thumbnailUrls}
+        onImageUploaded={(file) => handleImageUpload(file, "thumbnail")}
+        gridCols="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      />
 
       {/* Event Images Section */}
-      <div>
-        <h2 className="text-xl font-semibold text-core-text mb-4">Event Images</h2>
-        <p className="text-sm text-gray-600 mb-4">16:9 aspect ratio - Used for event detail pages</p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <ImageUploadCard type="image" onImageUploaded={(file) => handleImageUpload(file, "image")} />
-
-          {imageUrls.map((url, index) => (
-            <div key={index} className="relative group">
-              <Image
-                src={url}
-                alt={`Event image ${index + 1}`}
-                width={400}
-                height={225}
-                className="w-full aspect-video object-cover rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+      <ImageSection
+        title="Event Images"
+        description="16:9 aspect ratio - Used for event detail pages"
+        type="image"
+        imageUrls={imageUrls}
+        onImageUploaded={(file) => handleImageUpload(file, "image")}
+        gridCols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+      />
 
       {/* Empty State */}
       {!loading && thumbnailUrls.length === 0 && imageUrls.length === 0 && (
