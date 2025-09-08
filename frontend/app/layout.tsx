@@ -34,7 +34,7 @@ const aileron = localFont({
 });
 /* eslint-enable */
 
-export const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
 // eslint-disable-next-line
 const montserrat = Montserrat({ subsets: ["latin"] });
@@ -61,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="md:hidden">
               <MobileNavbar />
             </div>
-            <div className="min-h-screen">{children}</div>
+            <div className="mt-[3.75rem]">{children}</div>
           </body>
         </UserContext>
       </GrafanaFaro>
