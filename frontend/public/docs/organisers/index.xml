@@ -95,7 +95,20 @@
 &lt;li>Real-time updates and communication tools&lt;/li>
 &lt;li>Mobile-friendly interface for on-the-go management&lt;/li>
 &lt;/ul>
-&lt;p>Get started by creating your first event and watch your sports community grow!&lt;/p></description></item><item><title>Organiser Hub</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/</guid><description/></item><item><title>Stripe</title><link>https://sportshub.net.au/docs/organisers/stripe/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/stripe/</guid><description>
+&lt;p>Get started by creating your first event and watch your sports community grow!&lt;/p></description></item><item><title>Organiser Hub</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/</guid><description>
+&lt;p>The Organiser Hub is your central command center for managing all aspects of your sporting events. This dedicated dashboard provides event organizers with comprehensive tools to streamline event management from creation to completion.&lt;/p>
+&lt;h2>What is the Organiser Hub?&lt;span class="hx:absolute hx:-mt-20" id="what-is-the-organiser-hub">&lt;/span>
+&lt;a href="#what-is-the-organiser-hub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The Organiser Hub is a specialized interface designed exclusively for event organizers. It serves as a one-stop platform where you can oversee all your events, track participant engagement, and manage administrative tasks efficiently.&lt;/p>
+&lt;h2>Key Features&lt;span class="hx:absolute hx:-mt-20" id="key-features">&lt;/span>
+&lt;a href="#key-features" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>Event Dashboard&lt;/strong>: View all your events at a glance with real-time status updates&lt;/li>
+&lt;li>&lt;strong>Event Management&lt;/strong>: One view to manage all your events, change locations, update description and more&lt;/li>
+&lt;li>&lt;strong>Participant Management&lt;/strong>: Monitor registrations, payments, and attendee communications&lt;/li>
+&lt;li>&lt;strong>Settings Management&lt;/strong>: Configure your organizer preferences and Stripe details&lt;/li>
+&lt;/ul>
+&lt;h2>Getting Started&lt;span class="hx:absolute hx:-mt-20" id="getting-started">&lt;/span>
+&lt;a href="#getting-started" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>To access the Organiser Hub, simply log in to your organizer account and navigate to the dashboard. From here, you can manage existing events or create new ones using our intuitive event management tools.&lt;/p>
+&lt;p>The hub is designed to save you time and provide clarity on all your event operations, ensuring you can focus on delivering exceptional sporting experiences.&lt;/p></description></item><item><title>Stripe</title><link>https://sportshub.net.au/docs/organisers/stripe/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/stripe/</guid><description>
 &lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe.jpg" alt="stripe" loading="lazy" />&lt;/p>
 &lt;h2>Stripe Payment Processing&lt;span class="hx:absolute hx:-mt-20" id="stripe-payment-processing">&lt;/span>
 &lt;a href="#stripe-payment-processing" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>SPORTSHUB uses &lt;a href="https://stripe.com" target="_blank" rel="noopener">Stripe&lt;/a> as chosen our payment provider - the world&amp;rsquo;s largest online payments service trusted by millions of businesses globally. This partnership ensures your participants can pay securely and easily while you receive payments reliably.&lt;/p>
