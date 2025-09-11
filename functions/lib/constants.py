@@ -16,6 +16,8 @@ GCLOUD_PROJECT = os.environ.get("GCLOUD_PROJECT")
 
 IS_PROD = GCLOUD_PROJECT == "socialsportsprod"
 
+MIN_INSTANCE = 1 if IS_PROD else 0
+
 # If none resolves to use Google Application Credentials                                                                                                                      
 db: google.cloud.firestore.Client = firestore.Client(project=firebase_project)
                  
