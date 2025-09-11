@@ -180,7 +180,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
           if (!prevForm) return prevForm;
           return {
             ...prevForm,
-            responseSectionsOrder: formResponseData.responseSectionsOrder,
+            sectionsOrder: formResponseData.responseSectionsOrder,
             sectionsMap: formResponseData.responseMap,
           };
         });
