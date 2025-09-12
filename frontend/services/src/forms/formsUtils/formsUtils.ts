@@ -2,10 +2,9 @@
 
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId, FormResponseId, SectionId } from "@/interfaces/FormTypes";
-import { Environment, getEnvironment } from "@/utilities/environment";
 import { doc, DocumentData, DocumentReference, getDoc, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
-import { FormResponsePaths, FormTemplatePaths, SAVE_TEMP_FORM_RESPONSE_URL } from "../formsConstants";
+import { FormResponsePaths, FormTemplatePaths } from "../formsConstants";
 import { formsServiceLogger } from "../formsServices";
 
 /** Find form doc from within the sub collections in the Forms table */
@@ -104,9 +103,4 @@ export async function findFormResponseDoc(
 }
 export function archiveSection(sectionId: SectionId): void {
   // TODO
-}
-
-export function getSaveTempFormResponseUrl(): string {
-  const env = getEnvironment();
-  return SAVE_TEMP_FORM_RESPONSE_URL[`${env || Environment.DEVELOPMENT}`];
 }

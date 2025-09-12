@@ -25,7 +25,7 @@ export function getGetPrevFulfilmentEntityUrl(): string {
   return GET_PREV_FULFILMENT_ENTITY_URL[`${env || Environment.DEVELOPMENT}`];
 }
 
-export function getFulfilmentEntityInfoUrl(): string {
+export function getGetFulfilmentEntityInfoUrl(): string {
   const env = getEnvironment();
   return GET_FULFILMENT_ENTITY_INFO_URL[`${env || Environment.DEVELOPMENT}`];
 }

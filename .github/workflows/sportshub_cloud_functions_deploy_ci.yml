@@ -225,19 +225,6 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy saveTempFormResponse
-        working-directory: functions/lib/functions
-        run: |
-          gcloud functions deploy saveTempFormResponse \
-            --entry-point com.functions.forms.controllers.SaveTempFormResponseEndpoint \
-            --runtime java17 \
-            --trigger-http \
-            --allow-unauthenticated \
-            --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --memory 512
-
       - name: Deploy Cloud Scheduler jobs
         continue-on-error: true
         working-directory: functions/lib/functions

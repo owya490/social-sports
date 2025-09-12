@@ -9,20 +9,17 @@ import {
   SaveTempFormResponseRequest,
   SaveTempFormResponseResponse,
 } from "@/interfaces/FormTypes";
+import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
 import { PrivateUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
+import { getGlobalFunctionsEndpointUrl } from "../functions/functionsUtils";
 import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
-import {
-  findFormDoc,
-  findFormResponseDoc,
-  findFormResponseDocRef,
-  getSaveTempFormResponseUrl,
-} from "./formsUtils/formsUtils";
+import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
@@ -190,10 +187,13 @@ export async function deleteForm(formId: FormId): Promise<void> {
 export async function saveTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
   formsServiceLogger.info(`saveTempFormResponse: ${JSON.stringify(formResponse)}`);
 
-  const request: SaveTempFormResponseRequest = { formResponse };
+  const request: UnifiedRequest<SaveTempFormResponseRequest> = {
+    endpointType: EndpointType.SAVE_TEMP_FORM_RESPONSE,
+    data: { formResponse },
+  };
 
   try {
-    const rawResponse = await fetch(getSaveTempFormResponseUrl(), {
+    const rawResponse = await fetch(getGlobalFunctionsEndpointUrl(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -209,7 +209,8 @@ export async function saveTempFormResponse(formResponse: FormResponse): Promise<
     formsServiceLogger.info(
       `saveTempFormResponse: Successfully saved form response with formResponseId: ${formResponse.formResponseId}`
     );
-    const responseData = (await rawResponse.json()) as SaveTempFormResponseResponse;
+    const responseData = ((await rawResponse.json()) as UnifiedResponse<SaveTempFormResponseResponse>).data;
+    formsServiceLogger.debug(`saveTempFormResponse: Response data: ${responseData}`);
     return responseData.formResponseId;
   } catch (error) {
     formsServiceLogger.error(

@@ -22,7 +22,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
   getCompleteFulfilmentSessionUrl,
   getDeleteFulfilmentSessionUrl,
-  getFulfilmentEntityInfoUrl,
+  getGetFulfilmentEntityInfoUrl,
   getGetFulfilmentSessionInfoUrl,
   getGetNextFulfilmentEntityUrl,
   getGetPrevFulfilmentEntityUrl,
@@ -31,7 +31,7 @@ import {
 } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = false;
+export const FULFILMENT_SESSION_ENABLED = true;
 
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 
@@ -236,7 +236,7 @@ export async function getFulfilmentEntityInfo(
   };
 
   try {
-    const rawResponse = await fetch(getFulfilmentEntityInfoUrl(), {
+    const rawResponse = await fetch(getGetFulfilmentEntityInfoUrl(), {
       method: "POST",
       headers: {
         Accept: "application/json",
