@@ -2,6 +2,7 @@ package com.functions.global.models;
 
 import com.functions.events.models.NewEventData;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
+import com.functions.forms.models.responses.SaveTempFormResponseResponse;
 
 /**
  * Enum defining all available endpoint types with their corresponding request and response classes.
@@ -9,7 +10,7 @@ import com.functions.forms.models.requests.SaveTempFormResponseRequest;
  */
 public enum EndpointType {
     SAVE_TEMP_FORM_RESPONSE(SaveTempFormResponseRequest.class,
-            String.class), CREATE_EVENT(NewEventData.class, String.class);
+            SaveTempFormResponseResponse.class), CREATE_EVENT(NewEventData.class, String.class);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;

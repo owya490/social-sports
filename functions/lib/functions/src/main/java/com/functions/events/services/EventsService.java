@@ -34,11 +34,14 @@ public class EventsService {
         String isPrivate = data.getIsPrivate() ? PRIVATE : PUBLIC;
         DocumentReference newEventDocRef =
                 db.collection(EVENTS).document(isActive).collection(isPrivate).document();
-        data.setNameTokens(EventsUtils.tokenizeText(data.getName()));
-        data.setLocationTokens(EventsUtils.tokenizeText(data.getLocation()));
+        final String safeName = data.getName() == null ? "" : data.getName();
+        final String safeLocation = data.getLocation() == null ? "" : data.getLocation();
+        data.setNameTokens(EventsUtils.tokenizeText(safeName));
+        data.setLocationTokens(EventsUtils.tokenizeText(safeLocation));
         transaction.set(newEventDocRef, JavaUtils.toMap(data));
-        createEventMetadata(transaction, newEventDocRef.getId(), data);
-        EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), newEventDocRef.getId());
+        final String eventId = newEventDocRef.getId();
+        createEventMetadata(transaction, eventId, data);
+        EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), eventId);
         // If the event is public, add it to the user's public upcoming events
         if (!data.getIsPrivate()) {
             EventsUtils.addEventIdToUserOrganiserPublicUpcomingEvents(data.getOrganiserId(),

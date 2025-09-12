@@ -58,6 +58,13 @@ public class GlobalFunctionsEndpoint implements HttpFunction {
                 return;
             }
 
+            if (unifiedRequest.endpointType() == null || unifiedRequest.data() == null) {
+                response.setStatusCode(400);
+                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                        new ErrorResponse("Both endpointType and data are required.")));
+                return;
+            }
+
             Object result = routeRequest(unifiedRequest);
 
             response.setStatusCode(200);

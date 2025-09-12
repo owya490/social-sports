@@ -197,21 +197,25 @@ export async function saveTempFormResponse(formResponse: FormResponse): Promise<
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(request),
     });
 
     if (!rawResponse.ok) {
-      formsServiceLogger.error(`saveTempFormResponse: Failed to save form response`);
-      throw new Error(`Failed to save form response`);
+      const errorText = await rawResponse.text().catch(() => "");
+      formsServiceLogger.error(
+        `saveTempFormResponse: Failed to save form response. status=${rawResponse.status} body=${errorText}`
+      );
+      throw new Error(`Failed to save form response (status ${rawResponse.status})`);
     }
 
+    const { data } = (await rawResponse.json()) as UnifiedResponse<SaveTempFormResponseResponse>;
     formsServiceLogger.info(
-      `saveTempFormResponse: Successfully saved form response with formResponseId: ${formResponse.formResponseId}`
+      `saveTempFormResponse: Successfully saved form response with formResponseId: ${data.formResponseId}`
     );
-    const responseData = ((await rawResponse.json()) as UnifiedResponse<SaveTempFormResponseResponse>).data;
-    formsServiceLogger.debug(`saveTempFormResponse: Response data: ${responseData}`);
-    return responseData.formResponseId;
+    formsServiceLogger.debug(`saveTempFormResponse: Response data: ${JSON.stringify(data)}`);
+    return data.formResponseId;
   } catch (error) {
     formsServiceLogger.error(
       `saveTempFormResponse: Failed to create submitted form response with formResponse: ${formResponse}`
