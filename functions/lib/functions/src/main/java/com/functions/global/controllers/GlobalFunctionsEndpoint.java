@@ -1,8 +1,5 @@
 package com.functions.global.controllers;
 
-import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.functions.events.models.NewEventData;
 import com.functions.events.services.EventsService;
 import com.functions.firebase.services.FirebaseService;
@@ -18,10 +15,14 @@ import com.google.cloud.firestore.Firestore;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 /**
  * Unified endpoint that routes requests to specific handlers based on the endpoint type.
- * 
+ * <p>
  * This provides a single entry point for all function calls while maintaining type safety.
  */
 public class GlobalFunctionsEndpoint implements HttpFunction {
