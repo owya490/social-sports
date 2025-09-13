@@ -185,7 +185,8 @@ export async function deleteForm(formId: FormId): Promise<void> {
  * Form response MUST have all required section answers completed.
  */
 export async function saveTempFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
-  formsServiceLogger.info(`saveTempFormResponse: ${JSON.stringify(formResponse)}`);
+  const { formId, eventId } = formResponse;
+  formsServiceLogger.info(`saveTempFormResponse: formId=${formId}, eventId=${eventId}`);
 
   const request: UnifiedRequest<SaveTempFormResponseRequest> = {
     endpointType: EndpointType.SAVE_TEMP_FORM_RESPONSE,
@@ -210,12 +211,15 @@ export async function saveTempFormResponse(formResponse: FormResponse): Promise<
       throw new Error(`Failed to save form response (status ${rawResponse.status})`);
     }
 
-    const { data } = (await rawResponse.json()) as UnifiedResponse<SaveTempFormResponseResponse>;
+    const json = (await rawResponse.json()) as UnifiedResponse<SaveTempFormResponseResponse>;
+    if (!json?.data || typeof json.data.formResponseId !== "string") {
+      throw new Error("Malformed response from GlobalFunctionsEndpoint");
+    }
     formsServiceLogger.info(
-      `saveTempFormResponse: Successfully saved form response with formResponseId: ${data.formResponseId}`
+      `saveTempFormResponse: Successfully saved form response with formResponseId: ${json.data.formResponseId}`
     );
-    formsServiceLogger.debug(`saveTempFormResponse: Response data: ${JSON.stringify(data)}`);
-    return data.formResponseId;
+    formsServiceLogger.debug(`saveTempFormResponse: Response data: ${JSON.stringify(json.data)}`);
+    return json.data.formResponseId;
   } catch (error) {
     formsServiceLogger.error(
       `saveTempFormResponse: Failed to create submitted form response with formResponse: ${formResponse}`

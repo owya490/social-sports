@@ -29,7 +29,7 @@ public class GlobalFunctionsEndpoint implements HttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
-        setCorsHeaders(response);
+        setResponseHeaders(response);
 
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
@@ -92,6 +92,9 @@ public class GlobalFunctionsEndpoint implements HttpFunction {
             throws Exception {
         SaveTempFormResponseRequest request = JavaUtils.objectMapper
                 .treeToValue(unifiedRequest.data(), SaveTempFormResponseRequest.class);
+        if (request == null || request.formResponse() == null) {
+            throw new IllegalArgumentException("formResponse is required");
+        }
 
         Optional<String> maybeFormResponseId =
                 FormsService.saveTempFormResponse(request.formResponse());
@@ -122,10 +125,11 @@ public class GlobalFunctionsEndpoint implements HttpFunction {
         return "Event created successfully with ID: " + eventId;
     }
 
-    private void setCorsHeaders(HttpResponse response) {
+    private void setResponseHeaders(HttpResponse response) {
         response.appendHeader("Access-Control-Allow-Origin", "*");
         response.appendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
         response.appendHeader("Access-Control-Max-Age", "3600"); // Cache preflight for 1 hour
+        response.appendHeader("Content-Type", "application/json; charset=UTF-8");
     }
 }
