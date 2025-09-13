@@ -6,4 +6,3 @@ posthog>=3.4.0
 sendgrid>=6.11.0
 requests>=2.32.3
 pytz>=2024.2
-types-protobuf>=4.0.0
