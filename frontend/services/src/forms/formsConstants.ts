@@ -48,9 +48,3 @@ export enum LocalStorageKeys {
   FormResponseOperationCount5Sec = "formResponseOperationCount5Sec",
   FormResponseLastCreateUpdateOperationTimestamp = "formResponseLastCreateUpdateOperationTimestamp",
 }
-
-export const SAVE_TEMP_FORM_RESPONSE_URL = {
-  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/saveTempFormResponse",
-  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/saveTempFormResponse",
-  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/saveTempFormResponse",
-};

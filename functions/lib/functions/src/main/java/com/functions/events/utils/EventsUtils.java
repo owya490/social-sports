@@ -9,28 +9,31 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class EventsUtils {
-	public static List<String> tokenizeText(String text) {
-		return Arrays.stream(text.toLowerCase().split("\\s+"))
-				.filter(token -> !token.isEmpty()).collect(Collectors.toList());
-	}
+    public static List<String> tokenizeText(String text) {
+        return Arrays.stream(text.toLowerCase().split("\\s+")).filter(token -> !token.isEmpty())
+                .collect(Collectors.toList());
+    }
 
-	public static void addEventIdToUserOrganiserPublicUpcomingEvents(String userId, String eventId) throws Exception {
-		PublicUserData publicUserData = Users.getPublicUserDataById(userId);
+    public static void addEventIdToUserOrganiserPublicUpcomingEvents(String userId, String eventId)
+            throws Exception {
+        PublicUserData publicUserData = Users.getPublicUserDataById(userId);
 
-		List<String> publicUpcomingOrganiserEvents = publicUserData.getPublicUpcomingOrganiserEvents();
-		publicUpcomingOrganiserEvents.add(eventId);
-		publicUserData.setPublicUpcomingOrganiserEvents(publicUpcomingOrganiserEvents);
-	
-		Users.updatePublicUserData(userId, publicUserData);
-	}
+        List<String> publicUpcomingOrganiserEvents =
+                publicUserData.getPublicUpcomingOrganiserEvents();
+        publicUpcomingOrganiserEvents.add(eventId);
+        publicUserData.setPublicUpcomingOrganiserEvents(publicUpcomingOrganiserEvents);
 
-	public static void addEventIdToUserOrganiserEvents(String userId, String eventId) throws Exception {
-		PrivateUserData privateUserData = Users.getPrivateUserDataById(userId);
+        Users.updatePublicUserData(userId, publicUserData);
+    }
 
-		List<String> organiserEvents = privateUserData.getOrganiserEvents();
-		organiserEvents.add(eventId);
-		privateUserData.setOrganiserEvents(organiserEvents);
+    public static void addEventIdToUserOrganiserEvents(String userId, String eventId)
+            throws Exception {
+        PrivateUserData privateUserData = Users.getPrivateUserDataById(userId);
 
-		Users.updatePrivateUserData(userId, privateUserData);
-	}
+        List<String> organiserEvents = privateUserData.getOrganiserEvents();
+        organiserEvents.add(eventId);
+        privateUserData.setOrganiserEvents(organiserEvents);
+
+        Users.updatePrivateUserData(userId, privateUserData);
+    }
 }
