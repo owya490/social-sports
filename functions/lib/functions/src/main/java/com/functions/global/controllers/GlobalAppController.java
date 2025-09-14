@@ -68,11 +68,16 @@ public class GlobalAppController implements HttpFunction {
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(UnifiedResponse.success(result)));
 
+        } catch (IllegalArgumentException e) {
+            logger.warn("Bad request: {}", e.getMessage());
+            response.setStatusCode(400);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
         } catch (Exception e) {
             logger.error("Error processing request", e);
             response.setStatusCode(500);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Internal server error: " + e.getMessage())));
+                    new ErrorResponse("Internal server error")));
         }
     }
 
@@ -93,7 +98,7 @@ public class GlobalAppController implements HttpFunction {
             case CREATE_EVENT -> {
                 NewEventData request = JavaUtils.objectMapper
                         .treeToValue(unifiedRequest.data(), NewEventData.class);
-                Service<?, NewEventData> service = ServiceRegistry.getService(endpointType);
+                Service<String, NewEventData> service = ServiceRegistry.getService(endpointType);
                 yield service.handle(request);
             }
         };

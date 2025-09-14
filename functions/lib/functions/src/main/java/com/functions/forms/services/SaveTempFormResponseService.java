@@ -57,6 +57,9 @@ public class SaveTempFormResponseService implements Service<SaveTempFormResponse
 
             // Generate a unique formResponseId if not already set
             String formResponseId = formResponse.getFormResponseId();
+            if (formResponseId != null && formResponseId.contains("/")) {
+                throw new IllegalArgumentException("formResponseId must not contain '/'");
+            }
             if (formResponseId == null || formResponseId.isEmpty()) {
                 formResponseId = UUID.randomUUID().toString();
                 formResponse.setFormResponseId(formResponseId);
