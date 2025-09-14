@@ -15,7 +15,7 @@ import { Logger } from "@/observability/logger";
 import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
-import { getGlobalFunctionsEndpointUrl } from "../functions/functionsUtils";
+import { getGlobalAppControllerUrl } from "../functions/functionsUtils";
 import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
@@ -194,7 +194,7 @@ export async function saveTempFormResponse(formResponse: FormResponse): Promise<
   };
 
   try {
-    const rawResponse = await fetch(getGlobalFunctionsEndpointUrl(), {
+    const rawResponse = await fetch(getGlobalAppControllerUrl(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -213,7 +213,7 @@ export async function saveTempFormResponse(formResponse: FormResponse): Promise<
 
     const json = (await rawResponse.json()) as UnifiedResponse<SaveTempFormResponseResponse>;
     if (!json?.data || typeof json.data.formResponseId !== "string") {
-      throw new Error("Malformed response from GlobalFunctionsEndpoint");
+      throw new Error("Malformed response from GlobalAppController");
     }
     formsServiceLogger.info(
       `saveTempFormResponse: Successfully saved form response with formResponseId: ${json.data.formResponseId}`

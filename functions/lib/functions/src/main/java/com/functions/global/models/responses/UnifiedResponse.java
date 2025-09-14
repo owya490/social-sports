@@ -3,7 +3,7 @@ package com.functions.global.models.responses;
 /**
  * Unified response wrapper for successful responses only.
  * <p>
- * This class is used to wrap successful response data from the GlobalFunctionsEndpoint. For error
+ * This class is used to wrap successful response data from the GlobalAppController. For error
  * responses, use ErrorResponse.java instead, which provides a consistent error format across all
  * endpoints.
  * <p>

@@ -7,7 +7,7 @@ import com.functions.global.models.EndpointType;
 
 /**
  * Unified request wrapper that contains the endpoint type and request data. This allows the
- * GlobalFunctionsEndpoint to route requests to the correct handler while maintaining type safety
+ * GlobalAppController to route requests to the correct handler while maintaining type safety
  * through Jackson deserialization.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)

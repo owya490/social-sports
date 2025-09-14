@@ -3,11 +3,13 @@ package com.functions.global.models;
 import com.functions.events.models.NewEventData;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
 import com.functions.forms.models.responses.SaveTempFormResponseResponse;
+import lombok.Getter;
 
 /**
  * Enum defining all available endpoint types with their corresponding request and response classes.
- * This enables type-safe routing and deserialization in the GlobalFunctionsEndpoint.
+ * This enables type-safe routing and deserialization in the GlobalAppController.
  */
+@Getter
 public enum EndpointType {
     SAVE_TEMP_FORM_RESPONSE(SaveTempFormResponseRequest.class,
             SaveTempFormResponseResponse.class), CREATE_EVENT(NewEventData.class, String.class);
@@ -20,11 +22,4 @@ public enum EndpointType {
         this.responseClass = responseClass;
     }
 
-    public Class<?> getRequestClass() {
-        return requestClass;
-    }
-
-    public Class<?> getResponseClass() {
-        return responseClass;
-    }
 }

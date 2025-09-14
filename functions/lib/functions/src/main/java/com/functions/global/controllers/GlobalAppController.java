@@ -1,32 +1,28 @@
 package com.functions.global.controllers;
 
 import com.functions.events.models.NewEventData;
-import com.functions.events.services.EventsService;
-import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
 import com.functions.forms.models.responses.SaveTempFormResponseResponse;
-import com.functions.forms.services.FormsService;
 import com.functions.global.models.EndpointType;
+import com.functions.global.models.Service;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
+import com.functions.global.services.ServiceRegistry;
 import com.functions.utils.JavaUtils;
-import com.google.cloud.firestore.Firestore;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-
 /**
  * Unified endpoint that routes requests to specific handlers based on the endpoint type.
  * <p>
  * This provides a single entry point for all function calls while maintaining type safety.
  */
-public class GlobalFunctionsEndpoint implements HttpFunction {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalFunctionsEndpoint.class);
+public class GlobalAppController implements HttpFunction {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalAppController.class);
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
@@ -42,7 +38,7 @@ public class GlobalFunctionsEndpoint implements HttpFunction {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("The GlobalFunctionsEndpoint only supports POST requests.")));
+                    new ErrorResponse("The GlobalAppController only supports POST requests.")));
             return;
         }
 
@@ -83,47 +79,24 @@ public class GlobalFunctionsEndpoint implements HttpFunction {
     private Object routeRequest(UnifiedRequest unifiedRequest) throws Exception {
         EndpointType endpointType = unifiedRequest.endpointType();
 
+        if (!ServiceRegistry.hasService(endpointType)) {
+            throw new IllegalArgumentException("No service registered for endpoint type: " + endpointType);
+        }
+
         return switch (endpointType) {
-            case SAVE_TEMP_FORM_RESPONSE -> handleSaveTempFormResponse(unifiedRequest);
-            case CREATE_EVENT -> handleCreateEvent(unifiedRequest);
+            case SAVE_TEMP_FORM_RESPONSE -> {
+                SaveTempFormResponseRequest request = JavaUtils.objectMapper
+                        .treeToValue(unifiedRequest.data(), SaveTempFormResponseRequest.class);
+                Service<SaveTempFormResponseResponse, SaveTempFormResponseRequest> service = ServiceRegistry.getService(endpointType);
+                yield service.handle(request);
+            }
+            case CREATE_EVENT -> {
+                NewEventData request = JavaUtils.objectMapper
+                        .treeToValue(unifiedRequest.data(), NewEventData.class);
+                Service<?, NewEventData> service = ServiceRegistry.getService(endpointType);
+                yield service.handle(request);
+            }
         };
-    }
-
-    private SaveTempFormResponseResponse handleSaveTempFormResponse(UnifiedRequest unifiedRequest)
-            throws Exception {
-        SaveTempFormResponseRequest request = JavaUtils.objectMapper
-                .treeToValue(unifiedRequest.data(), SaveTempFormResponseRequest.class);
-        if (request == null || request.formResponse() == null) {
-            throw new IllegalArgumentException("formResponse is required");
-        }
-
-        Optional<String> maybeFormResponseId =
-                FormsService.saveTempFormResponse(request.formResponse());
-
-        if (maybeFormResponseId.isPresent()) {
-            String formResponseId = maybeFormResponseId.get();
-            logger.info(
-                    "[GlobalFunctionsEndpoint] Temporary form response saved successfully with ID: {}",
-                    formResponseId);
-            return new SaveTempFormResponseResponse(formResponseId);
-        } else {
-            logger.error("Failed to save temporary form response for formId: {}, eventId: {}",
-                    request.formResponse().getFormId(), request.formResponse().getEventId());
-            throw new RuntimeException("Failed to save temporary form response");
-        }
-    }
-
-    private String handleCreateEvent(UnifiedRequest unifiedRequest) throws Exception {
-        NewEventData request =
-                JavaUtils.objectMapper.treeToValue(unifiedRequest.data(), NewEventData.class);
-
-        Firestore db = FirebaseService.getFirestore();
-        String eventId =
-                db.runTransaction(transaction -> EventsService.createEvent(request, transaction))
-                        .get();
-
-        logger.info("[GlobalFunctionsEndpoint] Event created successfully with ID: {}", eventId);
-        return "Event created successfully with ID: " + eventId;
     }
 
     private void setResponseHeaders(HttpResponse response) {

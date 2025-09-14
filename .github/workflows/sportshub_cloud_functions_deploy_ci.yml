@@ -213,6 +213,19 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
+      - name: Deploy
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy globalAppController \
+            --entry-point com.functions.global.controllers.GlobalAppController \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
       - name: Deploy Cloud Scheduler jobs
         continue-on-error: true
         working-directory: functions/lib/functions

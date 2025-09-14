@@ -5,6 +5,7 @@ import com.functions.events.models.NewEventData;
 import com.functions.events.utils.EventsMetadataUtils;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.global.models.Service;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
@@ -14,8 +15,27 @@ import org.slf4j.LoggerFactory;
 
 import static com.functions.firebase.services.FirebaseService.CollectionPaths.*;
 
-public class EventsService {
-    private static final Logger logger = LoggerFactory.getLogger(EventsService.class);
+public class CreateEventService implements Service<String, NewEventData> {
+    private static final Logger logger = LoggerFactory.getLogger(CreateEventService.class);
+
+    @Override
+    public String handle(NewEventData request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Event data is required");
+        }
+
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            String eventId = db.runTransaction(transaction ->
+                    createEvent(request, transaction)).get();
+
+            logger.info("Event created successfully with ID: {}", eventId);
+            return "Event created successfully with ID: " + eventId;
+        } catch (Exception e) {
+            logger.error("Failed to create event", e);
+            throw new RuntimeException("Failed to create event: " + e.getMessage(), e);
+        }
+    }
 
     /**
      * Create a new event in firebase with a transaction.
@@ -23,6 +43,7 @@ public class EventsService {
      * @param data        data of the new event.
      * @param transaction the firestore transaction object
      */
+    // TODO: make createEvent private method and expose only handle method on Service
     public static String createEvent(NewEventData data, Transaction transaction) throws Exception {
         logger.info("Creating event: {}", data.getName());
         Firestore db = FirebaseService.getFirestore();
@@ -56,6 +77,4 @@ public class EventsService {
 
         transaction.set(eventMetadataDocRef, eventMetadata);
     }
-
 }
-
