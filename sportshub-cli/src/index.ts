@@ -38,7 +38,7 @@ const leadsCommand = program.command("leads").description("Manage lead-related o
 leadsCommand
   .command("create")
   .description("Create a new lead ticket in Jira")
-  .requiredOption("--organiserName <name>", "Name of the organiser")
+  .requiredOption("-o, --organiserName <name>", "Name of the organiser")
   .option("--website <url>", "Website of the organiser/company")
   .action(async (options) => {
     try {
@@ -56,7 +56,7 @@ leadsCommand
 leadsCommand
   .command("search")
   .description("Search for existing lead tickets by organiser name")
-  .requiredOption("--organiserName <name>", "Name of the organiser to search for")
+  .requiredOption("-o, --organiserName <name>", "Name of the organiser to search for")
   .action(async (options) => {
     try {
       await leadsSearchCommand({
@@ -72,7 +72,7 @@ leadsCommand
 leadsCommand
   .command("progress")
   .description("Progress a lead ticket to the next status")
-  .option("--organiserName <name>", "Name of the organiser to find ticket for")
+  .option("-o, --organiserName <name>", "Name of the organiser to find ticket for")
   .option("--ticketNumber <number>", "Specific ticket number to update")
   .option(
     "--status <status>",
@@ -112,10 +112,10 @@ program.addHelpText(
   `
 Examples:
   $ sportshub configure
-  $ sportshub leads create --organiserName "Syrio Volleyball Academy" --website "syrio.com"
-  $ sportshub leads create --organiserName "Owen"
+  $ sportshub leads create -o "Syrio Volleyball Academy" --website "syrio.com"
+  $ sportshub leads create -o "Owen"
   $ sportshub leads search --organiserName "syrio volleyball"
-  $ sportshub leads progress --organiserName "syrio volleyball"
+  $ sportshub leads progress -o "syrio volleyball"
   $ sportshub leads progress --ticketNumber "SO-123"
   $ sportshub leads progress --ticketNumber "SO-123" --status "CONTACTED"
   $ sportshub leads progress --ticketNumber "SO-123" -f meeting-notes.txt
