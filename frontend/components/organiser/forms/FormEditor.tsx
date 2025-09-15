@@ -57,6 +57,22 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     fetchForm();
   }, [user]);
 
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isFormModified) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isFormModified]);
+
   const handleSubmitClick = async () => {
     setIsSubmitting(true);
     if (isFormModified) {
@@ -103,15 +119,15 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const duplicateSection = (section: FormSection, sectionId: SectionId) => {
-    const newSectionId: SectionId = uuidv4() as SectionId;  // Use UUID for uniqueness
-    
+  const duplicateSection = (section: FormSection, sectionId: SectionId) => {
+    const newSectionId: SectionId = uuidv4() as SectionId; // Use UUID for uniqueness
+
     setForm((prevForm) => ({
       ...prevForm,
       sectionsOrder: [...prevForm.sectionsOrder, newSectionId],
       sectionsMap: {
         ...prevForm.sectionsMap,
-        [newSectionId]: JSON.parse(JSON.stringify(section))  // Deep clone everything
+        [newSectionId]: JSON.parse(JSON.stringify(section)), // Deep clone everything
       },
     }));
   };
