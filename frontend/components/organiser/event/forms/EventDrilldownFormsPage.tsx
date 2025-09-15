@@ -99,23 +99,23 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   if (formResponses.length === 0) return <div>No responses submitted</div>;
 
   // Collect unique questions across all responses
-  const questionSet = new Set<[SectionId, string]>();
+  const questionSet = new Map<SectionId, string>();
   formResponses.forEach((response) => {
     Object.entries(response.responseMap).forEach(([sectionId, section]) => {
       if (section?.question?.trim()) {
-        questionSet.add([sectionId as SectionId, section.question.trim()]);
+        questionSet.set(sectionId as SectionId, section.question.trim());
       }
     });
   });
 
-  const sortedQuestions = Array.from(questionSet).sort((a, b) => a[1].localeCompare(b[1]));
+  const sortedQuestions = Array.from(questionSet.entries()).sort((a, b) => a[1].localeCompare(b[1]));
 
   // Calculate minimum table width: 30px (index) + 150px per question + 400px (submission time) + 30px (expand button)
   const minTableWidth = 30 + sortedQuestions.length * 150 + 400 + 30;
 
   const csvHeaders = [
     { label: "#", key: "index" },
-    ...sortedQuestions.map((q) => ({ label: q[1], key: q[1] })),
+    ...sortedQuestions.map(([sectionId, label]) => ({ label, key: sectionId })),
     { label: "Submission Time", key: "submissionTime" },
   ];
 
@@ -136,7 +136,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
             answer = "—";
         }
       }
-      row[question[1]] = answer;
+      row[question[0]] = answer;
     });
 
     row.submissionTime = formatTimestamp(response.submissionTime);
@@ -194,6 +194,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
                     <Link
                       className="underline text-blue-800"
                       target="_blank"
+                      rel="noopener noreferrer"
                       href={`/organiser/forms/${formId}/${eventId}/${response.formResponseId}`}
                     >
                       {idx + 1}
@@ -219,6 +220,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
                     <Link
                       className="underline text-blue-800"
                       target="_blank"
+                      rel="noopener noreferrer"
                       href={`/organiser/forms/${formId}/${eventId}/${response.formResponseId}`}
                     >
                       {formatTimestamp(response.submissionTime)}
