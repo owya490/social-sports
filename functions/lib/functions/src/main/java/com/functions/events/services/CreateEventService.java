@@ -1,22 +1,39 @@
 package com.functions.events.services;
 
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.ACTIVE;
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.EVENTS;
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.EVENTS_METADATA;
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.INACTIVE;
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.PRIVATE;
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.PUBLIC;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.NewEventData;
 import com.functions.events.utils.EventsMetadataUtils;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.global.models.Service;
+import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import static com.functions.firebase.services.FirebaseService.CollectionPaths.*;
-
-public class CreateEventService implements Service<String, NewEventData> {
+public class CreateEventService implements Service<NewEventData, String> {
     private static final Logger logger = LoggerFactory.getLogger(CreateEventService.class);
+
+    @Override
+    public NewEventData parse(UnifiedRequest data) {
+        try {
+            return JavaUtils.objectMapper.treeToValue(data.data(), NewEventData.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse NewEventData", e);
+        }
+    }
 
     @Override
     public String handle(NewEventData request) {

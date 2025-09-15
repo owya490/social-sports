@@ -1,10 +1,9 @@
 package com.functions.global.controllers;
 
-import com.functions.events.models.NewEventData;
-import com.functions.forms.models.requests.SaveTempFormResponseRequest;
-import com.functions.forms.models.responses.SaveTempFormResponseResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.global.models.EndpointType;
-import com.functions.global.models.Service;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
@@ -13,8 +12,6 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Unified endpoint that routes requests to specific handlers based on the endpoint type.
@@ -88,20 +85,8 @@ public class GlobalAppController implements HttpFunction {
             throw new IllegalArgumentException("No service registered for endpoint type: " + endpointType);
         }
 
-        return switch (endpointType) {
-            case SAVE_TEMP_FORM_RESPONSE -> {
-                SaveTempFormResponseRequest request = JavaUtils.objectMapper
-                        .treeToValue(unifiedRequest.data(), SaveTempFormResponseRequest.class);
-                Service<SaveTempFormResponseResponse, SaveTempFormResponseRequest> service = ServiceRegistry.getService(endpointType);
-                yield service.handle(request);
-            }
-            case CREATE_EVENT -> {
-                NewEventData request = JavaUtils.objectMapper
-                        .treeToValue(unifiedRequest.data(), NewEventData.class);
-                Service<String, NewEventData> service = ServiceRegistry.getService(endpointType);
-                yield service.handle(request);
-            }
-        };
+        var service = ServiceRegistry.getService(endpointType);
+        return service.handle(service.parse(unifiedRequest));
     }
 
     private void setResponseHeaders(HttpResponse response) {
