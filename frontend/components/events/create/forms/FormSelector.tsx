@@ -53,9 +53,7 @@ export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) =
   }, [user.userId]);
 
   const handleFormSelection = (value: string | undefined) => {
-    console.log("Selected value:", value);
     const selectedFormId = value === "" || !value ? null : (value as FormId);
-    console.log("Updating with formId:", selectedFormId);
     updateField(selectedFormId);
   };
 

@@ -37,7 +37,7 @@ export function DescriptionForm({ description, formId, updateField, user }: Desc
           <div className="w-full mt-8">
             <DescriptionRichTextEditor description={description} updateDescription={updateDescription} />
           </div>
-          {!FULFILMENT_SESSION_ENABLED && (
+          {FULFILMENT_SESSION_ENABLED && (
             <>
               <div className="w-full mt-8">
                 <FormSelector formId={formId} updateField={updateFormId} user={user} />
