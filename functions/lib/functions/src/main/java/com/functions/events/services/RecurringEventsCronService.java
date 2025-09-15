@@ -1,6 +1,19 @@
 package com.functions.events.services;
 
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
@@ -9,12 +22,6 @@ import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.*;
 
 public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
@@ -75,7 +82,7 @@ public class RecurringEventsCronService {
                         Timestamp newRegistrationDeadline = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventDeadlineDeltaMillis) * 1000);
                         newEventDataDeepCopy.setEndDate(newEndDate);
                         newEventDataDeepCopy.setRegistrationDeadline(newRegistrationDeadline);
-                        String newEventId = CreateEventService.createEvent(newEventDataDeepCopy, transaction);
+                        String newEventId = CreateEventHandler.createEvent(newEventDataDeepCopy, transaction);
                         logger.info("New event id: {}", newEventId);
                         createdEventIds.add(newEventId);
                         pastRecurrences.put(recurrenceTimestampString, newEventId);

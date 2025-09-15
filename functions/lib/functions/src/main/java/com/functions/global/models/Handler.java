@@ -8,7 +8,7 @@ import com.functions.global.models.requests.UnifiedRequest;
  * @param <S> request data type
  * @param <T> response data type
  */
-public interface Service<S, T> {
+public interface Handler<S, T> {
     S parse(UnifiedRequest data);
 
     T handle(S parsedRequestData);

@@ -1,4 +1,4 @@
-package com.functions.forms.services;
+package com.functions.forms.handlers;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -6,18 +6,19 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
 import com.functions.forms.models.responses.SaveTempFormResponseResponse;
 import com.functions.forms.repositories.FormsRepository;
-import com.functions.global.models.Service;
+import com.functions.forms.services.FormsUtils;
+import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 
-public class SaveTempFormResponseService implements Service<SaveTempFormResponseRequest, SaveTempFormResponseResponse> {
-    private static final Logger logger = LoggerFactory.getLogger(SaveTempFormResponseService.class);
+public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponseRequest, SaveTempFormResponseResponse> {
+    private static final Logger logger = LoggerFactory.getLogger(SaveTempFormResponseHandler.class);
 
     @Override
     public SaveTempFormResponseRequest parse(UnifiedRequest data) {
