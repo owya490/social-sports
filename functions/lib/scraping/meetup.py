@@ -355,14 +355,22 @@ def _parse_iso_datetime(date_string: str) -> Optional[datetime]:
     if not date_string:
         return None
     try:
-        # Handle common formats
+        # Handle ISO format with timezone (e.g., "2025-09-15T18:30:00+10:00")
         if 'T' in date_string:
-            # Remove timezone info for basic parsing
-            clean_date = date_string.split('+')[0].split('-')[0:3]
-            clean_date = '-'.join(clean_date[0:3]) + 'T' + date_string.split('T')[1].split('+')[0]
-            return datetime.fromisoformat(clean_date.replace('Z', ''))
+            # Try parsing with timezone first
+            try:
+                from datetime import datetime
+                import re
+                # Handle timezone offset like +10:00, +1000, -05:00, etc.
+                dt = datetime.fromisoformat(date_string.replace('Z', '+00:00'))
+                return dt
+            except ValueError:
+                # Fallback: remove timezone and parse
+                clean_date = re.sub(r'[+-]\d{2}:?\d{2}$', '', date_string)
+                clean_date = clean_date.replace('Z', '')
+                return datetime.fromisoformat(clean_date)
         return None
-    except Exception:
+    except Exception as e:
         return None
 
 
@@ -387,14 +395,27 @@ def _convert_meetup_event_to_sportshub(meetup_event: Dict, logger: Logger) -> Di
             from datetime import timedelta
             end_datetime = start_datetime + timedelta(hours=2)
         
-        # Convert to Firestore Timestamp format (seconds since epoch)
-        start_timestamp = int(start_datetime.timestamp()) if start_datetime else 0
-        end_timestamp = int(end_datetime.timestamp()) if end_datetime else 0
+        # Convert to Firestore Timestamp objects
+        from google.cloud.firestore import SERVER_TIMESTAMP
+        from google.cloud import firestore
+        
+        if start_datetime:
+            start_timestamp = firestore.Timestamp.from_datetime(start_datetime)
+        else:
+            start_timestamp = SERVER_TIMESTAMP
+            
+        if end_datetime:
+            end_timestamp = firestore.Timestamp.from_datetime(end_datetime)
+        else:
+            end_timestamp = SERVER_TIMESTAMP
         
         # Set registration deadline to 1 hour before event
         from datetime import timedelta
-        reg_deadline = start_datetime - timedelta(hours=1) if start_datetime else None
-        reg_deadline_timestamp = int(reg_deadline.timestamp()) if reg_deadline else start_timestamp
+        if start_datetime:
+            reg_deadline = start_datetime - timedelta(hours=1)
+            reg_deadline_timestamp = firestore.Timestamp.from_datetime(reg_deadline)
+        else:
+            reg_deadline_timestamp = SERVER_TIMESTAMP
         
         # Extract sport from description/name (default to volleyball for meetup scraper)
         sport = "Volleyball"  # Default for this scraper
@@ -402,15 +423,15 @@ def _convert_meetup_event_to_sportshub(meetup_event: Dict, logger: Logger) -> Di
         # Create SportHub event structure
         sportshub_event = {
             # Required fields
-            "startDate": {"_seconds": start_timestamp, "_nanoseconds": 0},
-            "endDate": {"_seconds": end_timestamp, "_nanoseconds": 0},
+            "startDate": start_timestamp,
+            "endDate": end_timestamp,
             "location": meetup_event.get("Location", ""),
             "locationLatLng": {"lat": -33.8688, "lng": 151.2093},  # Default Sydney coordinates
             "capacity": 20,  # Default capacity
             "vacancy": 20,   # Default vacancy (same as capacity initially)
             "price": meetup_event.get("price", 0),
             "organiserId": SCRAPER_ORGANISER_ID,
-            "registrationDeadline": {"_seconds": reg_deadline_timestamp, "_nanoseconds": 0},
+            "registrationDeadline": reg_deadline_timestamp,
             "name": meetup_event.get("eventName", "Scraped Event"),
             "description": meetup_event.get("description", ""),
             "nameTokens": _tokenize_text(meetup_event.get("eventName", "")),
@@ -434,7 +455,7 @@ def _convert_meetup_event_to_sportshub(meetup_event: Dict, logger: Logger) -> Di
             # Scraped event metadata
             "scrapedFrom": "meetup",
             "originalEventUrl": meetup_event.get("eventLink", ""),
-            "scrapedAt": {"_seconds": int(datetime.now().timestamp()), "_nanoseconds": 0}
+            "scrapedAt": firestore.Timestamp.from_datetime(datetime.now())
         }
         
         logger.info(f"Converted Meetup event '{meetup_event.get('eventName')}' to SportHub format")

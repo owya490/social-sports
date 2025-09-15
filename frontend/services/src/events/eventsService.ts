@@ -25,6 +25,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  Timestamp,
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
@@ -138,6 +139,89 @@ export async function createEventMetadata(batch: WriteBatch, eventId: EventId, d
   }
 }
 
+async function getScrapedEventById(eventId: EventId): Promise<EventData | null> {
+  try {
+    const scrapedEventRef = doc(db, "scraped_events", eventId);
+    const scrapedEventDoc = await getDoc(scrapedEventRef);
+
+    if (!scrapedEventDoc.exists()) {
+      return null;
+    }
+
+    const eventData = scrapedEventDoc.data();
+
+    // Helper function to convert timestamp format
+    const convertTimestamp = (timestampData: any): Timestamp => {
+      if (!timestampData) {
+        return Timestamp.now();
+      }
+
+      // If it's already a Timestamp object, return as is
+      if (timestampData.toDate && typeof timestampData.toDate === "function") {
+        return timestampData;
+      }
+
+      // If it's in the manual format {_seconds, _nanoseconds}
+      if (timestampData._seconds !== undefined) {
+        return new Timestamp(timestampData._seconds, timestampData._nanoseconds || 0);
+      }
+
+      // If it's in the format {seconds, nanoseconds}
+      if (timestampData.seconds !== undefined) {
+        return new Timestamp(timestampData.seconds, timestampData.nanoseconds || 0);
+      }
+
+      // Fallback to current timestamp
+      return Timestamp.now();
+    };
+
+    // Convert scraped event to EventData format
+    const convertedEvent: EventData = {
+      ...EmptyEventData,
+      eventId: eventId,
+      name: eventData.name || "",
+      description: eventData.description || "",
+      startDate: convertTimestamp(eventData.startDate),
+      endDate: convertTimestamp(eventData.endDate),
+      location: eventData.location || "",
+      locationLatLng: eventData.locationLatLng || { lat: 0, lng: 0 },
+      capacity: eventData.capacity || 20,
+      vacancy: eventData.vacancy || 20,
+      price: eventData.price || 0,
+      organiserId: eventData.organiserId || "scraper_system",
+      registrationDeadline: convertTimestamp(eventData.registrationDeadline),
+      image: eventData.image || "",
+      thumbnail: eventData.thumbnail || "",
+      eventTags: [...(eventData.eventTags || []), "scraped"],
+      isActive: eventData.isActive !== false,
+      isPrivate: eventData.isPrivate || false,
+      attendees: eventData.attendees || {},
+      attendeesMetadata: eventData.attendeesMetadata || {},
+      accessCount: eventData.accessCount || 0,
+      sport: eventData.sport || "Volleyball",
+      paymentsActive: false, // Scraped events don't have payments
+      stripeFeeToCustomer: false,
+      promotionalCodesEnabled: false,
+      paused: eventData.paused || false,
+      eventLink: eventData.eventLink || "",
+      formId: null,
+      hideVacancy: eventData.hideVacancy || false,
+      // Create a fake organiser for scraped events
+      organiser: {
+        ...EmptyPublicUserData,
+        userId: "scraper_system",
+        firstName: "SportHub",
+        surname: "Scraper",
+      },
+    };
+
+    return convertedEvent;
+  } catch (error) {
+    console.error("Error getting scraped event by ID:", error);
+    return null;
+  }
+}
+
 export async function getEventById(
   eventId: EventId,
   bypassCache: boolean = true,
@@ -145,7 +229,23 @@ export async function getEventById(
 ): Promise<EventData> {
   eventServiceLogger.info(`getEventById, ${eventId}`);
   try {
-    const eventDoc = await findEventDoc(eventId);
+    // First try to find it in regular event collections
+    let eventDoc;
+    try {
+      eventDoc = await findEventDoc(eventId);
+    } catch (error) {
+      // If not found in regular collections, try scraped events
+      console.log(`Event ${eventId} not found in regular collections, checking scraped events...`);
+      const scrapedEvent = await getScrapedEventById(eventId);
+      if (scrapedEvent) {
+        console.log(`Found event ${eventId} in scraped events`);
+        return scrapedEvent;
+      }
+      // If not found anywhere, throw the original error
+      throw error;
+    }
+
+    // If found in regular collections, process normally
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
     var organiser: PublicUserData = EmptyPublicUserData;
@@ -191,6 +291,96 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
     throw error;
   }
 }
+export async function getAllScrapedEvents(): Promise<EventData[]> {
+  eventServiceLogger.info(`getAllScrapedEvents`);
+  try {
+    const scrapedEventsRef = collection(db, "scraped_events");
+    const snapshot = await getDocs(scrapedEventsRef);
+    const scrapedEvents: EventData[] = [];
+
+    console.log(`Found ${snapshot.size} documents in scraped_events collection`);
+
+    snapshot.forEach((doc) => {
+      const eventData = doc.data();
+
+      // Helper function to convert timestamp format
+      const convertTimestamp = (timestampData: any): Timestamp => {
+        if (!timestampData) {
+          return Timestamp.now();
+        }
+
+        // If it's already a Timestamp object, return as is
+        if (timestampData.toDate && typeof timestampData.toDate === "function") {
+          return timestampData;
+        }
+
+        // If it's in the manual format {_seconds, _nanoseconds}
+        if (timestampData._seconds !== undefined) {
+          return new Timestamp(timestampData._seconds, timestampData._nanoseconds || 0);
+        }
+
+        // If it's in the format {seconds, nanoseconds}
+        if (timestampData.seconds !== undefined) {
+          return new Timestamp(timestampData.seconds, timestampData.nanoseconds || 0);
+        }
+
+        // Fallback to current timestamp
+        return Timestamp.now();
+      };
+
+      // Convert scraped event to EventData format
+      const convertedEvent: EventData = {
+        ...EmptyEventData,
+        eventId: doc.id,
+        name: eventData.name || "",
+        description: eventData.description || "",
+        startDate: convertTimestamp(eventData.startDate),
+        endDate: convertTimestamp(eventData.endDate),
+        location: eventData.location || "",
+        locationLatLng: eventData.locationLatLng || { lat: 0, lng: 0 },
+        capacity: eventData.capacity || 20,
+        vacancy: eventData.vacancy || 20,
+        price: eventData.price || 0,
+        organiserId: eventData.organiserId || "scraper_system",
+        registrationDeadline: convertTimestamp(eventData.registrationDeadline),
+        image: eventData.image || "",
+        thumbnail: eventData.thumbnail || "",
+        eventTags: [...(eventData.eventTags || []), "scraped"],
+        isActive: eventData.isActive !== false,
+        isPrivate: eventData.isPrivate || false,
+        attendees: eventData.attendees || {},
+        attendeesMetadata: eventData.attendeesMetadata || {},
+        accessCount: eventData.accessCount || 0,
+        sport: eventData.sport || "Volleyball",
+        paymentsActive: false, // Scraped events don't have payments
+        stripeFeeToCustomer: false,
+        promotionalCodesEnabled: false,
+        paused: eventData.paused || false,
+        eventLink: eventData.eventLink || "",
+        formId: null,
+        hideVacancy: eventData.hideVacancy || false,
+        // Create a fake organiser for scraped events
+        organiser: {
+          ...EmptyPublicUserData,
+          userId: "scraper_system",
+          firstName: "SportHub",
+          surname: "Scraper",
+        },
+      };
+
+      scrapedEvents.push(convertedEvent);
+    });
+
+    console.log(`Converted ${scrapedEvents.length} scraped events successfully`);
+    eventServiceLogger.debug(`getAllScrapedEvents Success - found ${scrapedEvents.length} events`);
+    return scrapedEvents;
+  } catch (error) {
+    console.error("Error getting scraped events:", error);
+    eventServiceLogger.error(`Error getting scraped events ${error}`);
+    throw error;
+  }
+}
+
 export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   eventServiceLogger.info(`getAllEvents`);
   try {
@@ -218,6 +408,48 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   } catch (error) {
     console.error("Error getting all events:", error);
     eventServiceLogger.error(`Error getting all events ${error}`);
+    throw error;
+  }
+}
+
+export async function getAllEventsIncludingScraped(isActive?: boolean, isPrivate?: boolean): Promise<EventData[]> {
+  eventServiceLogger.info(`getAllEventsIncludingScraped`);
+  try {
+    const [regularEvents, scrapedEvents] = await Promise.all([
+      getAllEvents(isActive, isPrivate),
+      getAllScrapedEvents(),
+    ]);
+
+    // Combine and sort by start date
+    const allEvents = [...regularEvents, ...scrapedEvents];
+    allEvents.sort((a, b) => {
+      // Handle Timestamp objects properly - get seconds from both formats
+      const getSeconds = (timestamp: any): number => {
+        if (!timestamp) return 0;
+
+        // If it's a Timestamp object with toMillis method
+        if (timestamp.toMillis && typeof timestamp.toMillis === "function") {
+          return Math.floor(timestamp.toMillis() / 1000);
+        }
+
+        // If it's in {seconds, nanoseconds} format
+        if (typeof timestamp === "object" && "seconds" in timestamp) {
+          return timestamp.seconds;
+        }
+
+        return 0;
+      };
+
+      return getSeconds(a.startDate) - getSeconds(b.startDate);
+    });
+
+    eventServiceLogger.debug(
+      `getAllEventsIncludingScraped Success - ${regularEvents.length} regular + ${scrapedEvents.length} scraped = ${allEvents.length} total`
+    );
+    return allEvents;
+  } catch (error) {
+    console.error("Error getting all events including scraped:", error);
+    eventServiceLogger.error(`Error getting all events including scraped ${error}`);
     throw error;
   }
 }

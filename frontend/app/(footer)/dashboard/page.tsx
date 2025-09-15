@@ -3,7 +3,12 @@ import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
-import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
+import {
+  getAllEvents,
+  getAllEventsIncludingScraped,
+  getEventById,
+  searchEventsByKeyword,
+} from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import Image from "next/image";
@@ -59,7 +64,7 @@ export default function Dashboard() {
       if (typeof event === "string" && typeof location === "string") {
         if (event.trim() === "") {
           console.log("no event name");
-          const events = await getAllEvents();
+          const events = await getAllEventsIncludingScraped();
           console.log(events);
           setEventDataList(events);
           setSearchDataList(events);
@@ -185,6 +190,7 @@ export default function Dashboard() {
                   price={event.price}
                   vacancy={event.vacancy}
                   loading={loading}
+                  isScrapedEvent={event.eventTags?.includes("scraped") || event.organiserId === "scraper_system"}
                   key={eventIdx}
                 />
               );

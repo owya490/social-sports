@@ -23,6 +23,7 @@ interface EventCardProps {
   vacancy: number;
   loading?: boolean;
   isClickable?: boolean;
+  isScrapedEvent?: boolean;
 }
 
 export default function EventCard(props: EventCardProps) {
@@ -35,8 +36,10 @@ export default function EventCard(props: EventCardProps) {
     startTime,
     location,
     price,
+    vacancy,
     loading = false,
     isClickable = false,
+    isScrapedEvent = false,
   } = props;
 
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -59,16 +62,23 @@ export default function EventCard(props: EventCardProps) {
         </div>
       ) : (
         <>
-          <div
-            className={`w-full ${imageLoaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
-            style={{
-              backgroundImage: imageLoaded ? `url(${thumbnail || image})` : "none",
-              backgroundSize: "cover",
-              backgroundPosition: "center center",
-              aspectRatio: "1/1",
-              borderRadius: "1rem",
-            }}
-          ></div>
+          <div className="relative">
+            <div
+              className={`w-full ${imageLoaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+              style={{
+                backgroundImage: imageLoaded ? `url(${thumbnail || image})` : "none",
+                backgroundSize: "cover",
+                backgroundPosition: "center center",
+                aspectRatio: "1/1",
+                borderRadius: "1rem",
+              }}
+            ></div>
+            {isScrapedEvent && (
+              <div className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                From Meetup
+              </div>
+            )}
+          </div>
           <div className="p-4">
             <div className="flex">
               <h4 className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>
