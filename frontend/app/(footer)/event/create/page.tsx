@@ -11,6 +11,7 @@ import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { FormId } from "@/interfaces/FormTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
@@ -52,6 +53,7 @@ export type FormData = {
   eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
   hideVacancy: boolean;
+  formId: FormId | null;
 };
 
 const INITIAL_DATA: FormData = {
@@ -80,6 +82,7 @@ const INITIAL_DATA: FormData = {
   eventLink: "",
   newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
   hideVacancy: false,
+  formId: null,
 };
 
 export default function CreateEvent() {
@@ -132,7 +135,7 @@ export default function CreateEvent() {
         setThumbnailPreviewUrl={setThumbnailPreviewUrl}
       />
     </FormWrapper>,
-    <DescriptionForm key="description-image-form" {...data} updateField={updateFields} />,
+    <DescriptionForm key="description-image-form" {...data} updateField={updateFields} user={user} />,
     <PreviewForm
       key="preview-form"
       form={data}
@@ -261,8 +264,7 @@ export default function CreateEvent() {
       paused: formData.paused,
       eventLink: formData.eventLink,
       hideVacancy: formData.hideVacancy,
-      // TODO: Implement option to add form in event creation workflow
-      formId: null,
+      formId: formData.formId,
     };
   }
 
