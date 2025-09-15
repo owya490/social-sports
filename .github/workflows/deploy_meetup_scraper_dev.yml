@@ -1,0 +1,72 @@
+name: Deploy Meetup Scraper to Dev
+
+on:
+  push:
+    branches:
+      - SPORTSHUB-379/scrape-meetup
+    paths:
+      - "functions/lib/scraping/**"
+      - "functions/main.py"
+      - "functions/requirements.txt"
+
+jobs:
+  deploy-meetup-scraper-dev:
+    name: Deploy Meetup Scraper to Dev Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Authenticate Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.SOCIALSPORTSDEV_GCLOUD_CREDENTIALS }}
+
+      - name: Install Firebase CLI
+        run: |
+          npm install -g firebase-tools@13.2.1
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Set up Python environment
+        working-directory: functions
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Create functions_key.json from base64-encoded secret
+        working-directory: functions
+        run: |
+          echo '${{ secrets.SOCIALSPORTSDEV_FUNCTIONS_KEY_JSON_BASE64_ENCODED }}' | base64 -d > functions_key.json
+
+      - name: Set .env variables
+        working-directory: functions
+        run: |
+          echo "STRIPE_API_KEY=\"${{ secrets.SOCIALSPORTSDEV_STRIPE_API_KEY }}\"" >> .env
+          echo "STRIPE_WEBHOOK_ENDPOINT_SECRET=\"${{ secrets.SOCIALSPORTSDEV_STRIPE_WEBHOOK_ENDPOINT_SECRET }}\"" >> .env
+          echo "POSTHOG_API_KEY=\"${{ secrets.SOCIALSPORTSDEV_POSTHOG_API_KEY }}\"" >> .env
+          echo "BEARER_TOKEN=\"${{ secrets.SOCIALSPORTSDEV_BEARER_TOKEN }}\"" >> .env
+          echo "SENDGRID_API_KEY=\"${{ secrets.SOCIALSPORTSDEV_SENDGRID_API_KEY }}\"" >> .env
+          echo "LOOPS_API_KEY=\"${{ secrets.SOCIALSPORTSDEV_LOOPS_API_KEY }}\"" >> .env
+
+      - name: Set firebase project to dev
+        working-directory: functions
+        run: |
+          source venv/bin/activate
+          firebase use --add socialsports-44162
+
+      - name: Deploy meetup scraper function to dev
+        working-directory: functions
+        run: |
+          source venv/bin/activate
+          firebase deploy --only functions:scrape_meetup_events --force
+
+      - name: Output deployment info
+        run: |
+          echo "✅ Meetup scraper deployed to dev environment"
+          echo "🔗 Function URL: https://australia-southeast1-socialsports-44162.cloudfunctions.net/scrape_meetup_events"
+          echo "📖 Usage: Add query parameters 'url' and 'max' to customize scraping"

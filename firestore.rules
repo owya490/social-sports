@@ -84,5 +84,13 @@ service cloud.firestore {
       // CREATE
       allow create: if request.auth != null;
     }
+
+    // Allow everyone to read scraped events (they are public events from Meetup)
+    match /scraped_events/{eventId} {
+      // GET
+      allow read: if true;
+      // Only cloud functions can write (no direct client writes allowed)
+      allow write: if false;
+    }
   }
 }
