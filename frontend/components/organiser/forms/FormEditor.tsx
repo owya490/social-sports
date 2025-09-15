@@ -103,19 +103,15 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const duplicateSection = (section: FormSection, sectionId: SectionId) => {
-    const newSectionId: SectionId = `section-${form.sectionsOrder.length + 1}` as SectionId;
+    const duplicateSection = (section: FormSection, sectionId: SectionId) => {
+    const newSectionId: SectionId = uuidv4() as SectionId;  // Use UUID for uniqueness
+    
     setForm((prevForm) => ({
       ...prevForm,
       sectionsOrder: [...prevForm.sectionsOrder, newSectionId],
       sectionsMap: {
         ...prevForm.sectionsMap,
-        [newSectionId]: {
-          ...section,
-          ...(section.type === FormSectionType.DROPDOWN_SELECT && {
-            options: [...section.options],
-          }),
-        },
+        [newSectionId]: JSON.parse(JSON.stringify(section))  // Deep clone everything
       },
     }));
   };
