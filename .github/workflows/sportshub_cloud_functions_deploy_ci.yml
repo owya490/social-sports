@@ -109,18 +109,6 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy createEvent
-        working-directory: functions/lib/functions
-        run: |
-          gcloud functions deploy createEvent \
-            --entry-point com.functions.events.controllers.CreateEventEndpoint \
-            --runtime java17 \
-            --trigger-http \
-            --allow-unauthenticated \
-            --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
-
       - name: Deploy initFulfilmentSession
         working-directory: functions/lib/functions
         run: |
@@ -225,11 +213,11 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy saveTempFormResponse
+      - name: Deploy
         working-directory: functions/lib/functions
         run: |
-          gcloud functions deploy saveTempFormResponse \
-            --entry-point com.functions.forms.controllers.SaveTempFormResponseEndpoint \
+          gcloud functions deploy globalAppController \
+            --entry-point com.functions.global.controllers.GlobalAppController \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
