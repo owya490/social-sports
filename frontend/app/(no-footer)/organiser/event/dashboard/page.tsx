@@ -133,11 +133,6 @@ export default function OrganiserDashboard() {
     closeModal();
   }
 
-  // trigger sort by when eventDataList changes
-  useEffect(() => {
-    setEventDataList(filterEventsBySortBy(eventDataList, appliedSortByCategoryValue));
-  }, [eventDataList]);
-
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   });
@@ -257,24 +252,23 @@ export default function OrganiserDashboard() {
               </div>
             ) : (
               <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-6 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-auto">
-                {eventDataList
-                  .map((event, eventIdx) => {
-                    return (
-                      <div className="w-full" key={eventIdx}>
-                        <OrganiserEventCard
-                          eventId={event.eventId}
-                          image={event.image}
-                          name={event.name}
-                          organiser={event.organiser}
-                          startTime={event.startDate}
-                          location={event.location}
-                          price={event.price}
-                          vacancy={event.vacancy}
-                          loading={loading}
-                        />
-                      </div>
-                    );
-                  })}
+                {filterEventsBySortBy(eventDataList, appliedSortByCategoryValue).map((event, eventIdx) => {
+                  return (
+                    <div className="w-full" key={eventIdx}>
+                      <OrganiserEventCard
+                        eventId={event.eventId}
+                        image={event.image}
+                        name={event.name}
+                        organiser={event.organiser}
+                        startTime={event.startDate}
+                        location={event.location}
+                        price={event.price}
+                        vacancy={event.vacancy}
+                        loading={loading}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
