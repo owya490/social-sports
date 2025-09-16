@@ -16,7 +16,7 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
-from lib.constants import db
+from lib.constants import db, MIN_INSTANCE
 from lib.logging import Logger
 from lib.stripe.commons import ERROR_URL
 
@@ -236,7 +236,14 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   return json.dumps({"url": checkout.url})
 
 
-@https_fn.on_call(cors=options.CorsOptions(cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
+@https_fn.on_call(cors=options.CorsOptions(
+  cors_origins=["https://www.sportshub.net.au", "*"], 
+  cors_methods=["post"]), 
+  region="australia-southeast1", 
+  min_instances=MIN_INSTANCE,
+  memory=options.MemoryOption.MB_256,
+  cpu=0.5
+)
 def get_stripe_checkout_url_by_event_id(req: https_fn.CallableRequest):
   uid = str(uuid.uuid4())
   logger = Logger(f"stripe_checkout_logger_{uid}")

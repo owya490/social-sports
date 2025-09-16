@@ -1,8 +1,9 @@
 package com.functions.utils;
 
-import com.functions.global.services.Global;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.functions.global.handlers.Global;
 
 import java.util.Optional;
 

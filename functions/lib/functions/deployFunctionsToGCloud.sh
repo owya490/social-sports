@@ -26,6 +26,23 @@ gcloud functions deploy createRecurrenceTemplate \
     --region australia-southeast1 \
     --project socialsports-44162 \
     --set-env-vars PROJECT_NAME=socialsports-44162 \
+gcloud functions deploy updateRecurrenceTemplate \
+    --entry-point com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint \
+    --runtime java17 \
+    --trigger-http \
+    --allow-unauthenticated \
+    --region australia-southeast1 \
+    --project socialsports-44162 \
+    --set-env-vars PROJECT_NAME=socialsports-44162 \
+
+gcloud functions deploy createRecurrenceTemplate \
+    --entry-point com.functions.events.controllers.CreateRecurrenceTemplateEndpoint \
+    --runtime java17 \
+    --trigger-http \
+    --allow-unauthenticated \
+    --region australia-southeast1 \
+    --project socialsports-44162 \
+    --set-env-vars PROJECT_NAME=socialsports-44162 \
 
 # Deploy recurringEventsCron to DEV
 gcloud functions deploy recurringEventsCron \

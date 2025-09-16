@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.models.requests.CallFirebaseFunctionRequest;
 import com.functions.firebase.models.responses.CallFirebaseFunctionResponse;
-import com.functions.global.services.Global;
+import com.functions.global.handlers.Global;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.logging.Logging;

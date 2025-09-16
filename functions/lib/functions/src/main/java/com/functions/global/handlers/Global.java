@@ -1,4 +1,4 @@
-package com.functions.global.services;
+package com.functions.global.handlers;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import org.slf4j.Logger;

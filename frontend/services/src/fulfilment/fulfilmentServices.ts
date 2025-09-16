@@ -22,7 +22,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
   getCompleteFulfilmentSessionUrl,
   getDeleteFulfilmentSessionUrl,
-  getFulfilmentEntityInfoUrl,
+  getGetFulfilmentEntityInfoUrl,
   getGetFulfilmentSessionInfoUrl,
   getGetNextFulfilmentEntityUrl,
   getGetPrevFulfilmentEntityUrl,
@@ -236,7 +236,7 @@ export async function getFulfilmentEntityInfo(
   };
 
   try {
-    const rawResponse = await fetch(getFulfilmentEntityInfoUrl(), {
+    const rawResponse = await fetch(getGetFulfilmentEntityInfoUrl(), {
       method: "POST",
       headers: {
         Accept: "application/json",
