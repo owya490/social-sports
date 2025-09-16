@@ -28,6 +28,9 @@ class StripeCheckoutRequest:
   quantity: int
   cancelUrl: str
   successUrl: str
+  completeFulfilmentSession: bool
+  fulfilmentSessionId: Optional[str]
+  endFulfilmentEntityId: Optional[str]
 
   def __post_init__(self):
     if not isinstance(self.eventId, str):
@@ -48,7 +51,7 @@ def calculate_stripe_fee(price: float) -> int:
 
 
 @firestore.transactional
-def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger: Logger, event_id: str, quantity: int, is_private: bool, cancel_url: str, success_url: str) -> str:
+def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger: Logger, event_id: str, quantity: int, is_private: bool, cancel_url: str, success_url: str, complete_fulfilment_session: bool, fulfilment_session_id: Optional[str], end_fulfilment_entity_id: Optional[str]) -> str:
   logger.info(f"Creating stripe checkout session for {event_id} for {quantity} tickets.")
   private_path = "Private" if is_private else "Public"
 
@@ -199,7 +202,10 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
     }],
     "metadata": {
       "eventId": event_id,
-      "isPrivate": str(is_private)
+      "isPrivate": str(is_private),
+      "completeFulfilmentSession": str(complete_fulfilment_session),
+      "fulfilmentSessionId": str(fulfilment_session_id) if fulfilment_session_id is not None else "",
+      "endFulfilmentEntityId": str(end_fulfilment_entity_id) if end_fulfilment_entity_id is not None else ""
     },
     "custom_fields": [
       {
@@ -248,4 +254,6 @@ def get_stripe_checkout_url_by_event_id(req: https_fn.CallableRequest):
   logger.add_tag("eventId", request_data.eventId)
   transaction = db.transaction()
   return create_stripe_checkout_session_by_event_id(transaction, logger, request_data.eventId, request_data.quantity, 
-                                                    request_data.isPrivate, request_data.cancelUrl, request_data.successUrl)
+                                                    request_data.isPrivate, request_data.cancelUrl, request_data.successUrl,
+                                                    request_data.completeFulfilmentSession, request_data.fulfilmentSessionId,
+                                                    request_data.endFulfilmentEntityId)
