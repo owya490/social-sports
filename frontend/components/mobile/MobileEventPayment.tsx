@@ -1,10 +1,10 @@
 "use client";
 
-import { FulfilmentEntityType, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
+import { Logger } from "@/observability/logger";
 import { timestampToDateString } from "@/services/src/datetimeUtils";
 import {
-  execNextFulfilmentEntity,
   FULFILMENT_SESSION_ENABLED,
+  getNextFulfilmentEntityUrl,
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
@@ -17,6 +17,8 @@ import { useState } from "react";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
 import { DifferentDayEventDateTime, SameDayEventDateTime } from "../events/EventPayment";
+
+const MobileEventPaymentLogger = new Logger("MobileEventPaymentLogger");
 
 interface MobileEventPaymentProps {
   location: string;
@@ -109,7 +111,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                 <p>Please check back later.</p>
               </div>
             ) : (
-              <>
+              <div className="flex flex-col gap-y-3">
                 <Select
                   label="Select Ticket Amount"
                   size="lg"
@@ -139,20 +141,37 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
 
                     // We'll put this behind a flag for now just in case we need to quickly disable this.
                     if (FULFILMENT_SESSION_ENABLED) {
-                      let fulfilmentSessionId: FulfilmentSessionId | undefined = undefined;
                       try {
-                        fulfilmentSessionId = await initFulfilmentSession({
+                        const { fulfilmentSessionId } = await initFulfilmentSession({
                           type: "checkout",
-                          fulfilmentEntityTypes: [FulfilmentEntityType.STRIPE],
                           eventId: props.eventId,
                           numTickets: attendeeCount,
                         });
 
-                        await execNextFulfilmentEntity(fulfilmentSessionId, router);
+                        if (!fulfilmentSessionId) {
+                          MobileEventPaymentLogger.error(
+                            `initFulfilmentSession: Failed to initialize fulfilment session for eventId: ${props.eventId}`
+                          );
+                          router.push("/error");
+                          return;
+                        }
+
+                        const nextEntityUrl = await getNextFulfilmentEntityUrl(fulfilmentSessionId);
+                        if (nextEntityUrl === undefined) {
+                          MobileEventPaymentLogger.error(
+                            `getNextFulfilmentEntityUrl: No url response received for fulfilmentSessionId: ${fulfilmentSessionId}`
+                          );
+                          router.push("/error");
+                          return;
+                        }
+
+                        window.open(nextEntityUrl, "_blank", "noopener,noreferrer");
+                        props.setLoading(false);
+                        return;
 
                         // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
                       } catch {
-                        // Clean up fulfilment session if it fails
+                        // Clean up fulfilment session if it fails, we can do this through a CRON later down the line
 
                         router.push("/error");
                       }
@@ -169,7 +188,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                 >
                   Book Now
                 </button>
-              </>
+              </div>
             )}
           </div>
         ) : (

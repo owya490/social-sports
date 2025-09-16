@@ -3,7 +3,7 @@ import { QueryFieldFilterConstraint, Timestamp, collection, getDocs, limit, quer
 import geofire from "geofire-common";
 import { SortByCategory } from "../../components/Filter/FilterDialog";
 import { db } from "./firebase";
-import { getDistanceBetweenTwoCoords } from "./locationUtils";
+import { getDistanceBetweenTwoCoords } from "./maps/mapsService";
 
 interface ProximityInfo {
   center: geofire.Geopoint;

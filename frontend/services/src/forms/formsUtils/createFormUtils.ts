@@ -1,7 +1,7 @@
 import { FormId } from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { getPublicUserById, updateUser } from "../../users/usersService";
+import { getPrivateUserById, updateUser } from "../../users/usersService";
 import { FORMS_MAX_EVENTS, FORMS_REFRESH_MILLIS, LocalStorageKeys } from "../formsConstants";
 
 const createFormUtilsLogger = new Logger("createFormUtilsLogger");
@@ -40,12 +40,13 @@ export function rateLimitCreateForm(): boolean {
  * Helper function to append a formId for a specified user.
  */
 export async function appendFormIdForUser(formId: FormId, userId: UserId): Promise<void> {
+  createFormUtilsLogger.info(`Appending formId ${formId} to userId: ${userId}`);
   try {
-    const publicUserData = await getPublicUserById(userId);
-    publicUserData.forms !== undefined && publicUserData.forms !== null
-      ? publicUserData.forms.push(formId)
-      : (publicUserData.forms = [formId]);
-    await updateUser(userId, publicUserData);
+    const privateUserData = await getPrivateUserById(userId);
+    privateUserData.forms !== undefined && privateUserData.forms !== null
+      ? privateUserData.forms.push(formId)
+      : (privateUserData.forms = [formId]);
+    await updateUser(userId, privateUserData);
     createFormUtilsLogger.info(`Successfully appended formId ${formId} to userId: ${userId}`);
   } catch (error) {
     createFormUtilsLogger.error(`appendFormIdForUser Error: ${error}`);

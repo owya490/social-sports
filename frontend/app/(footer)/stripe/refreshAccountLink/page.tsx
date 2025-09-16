@@ -16,7 +16,7 @@ export default function RefreshAccountLink() {
     if (user !== null && user === EmptyUserData) {
       router.push("/error");
     }
-    const returnUrl = getUrlWithCurrentHostname("/organiser");
+    const returnUrl = getUrlWithCurrentHostname("/organiser/dashboard");
     const refreshUrl = getRefreshAccountLinkUrl();
     getStripeStandardAccountLink(user.userId, returnUrl, refreshUrl).then((link) => {
       router.push(link);

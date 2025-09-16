@@ -1,12 +1,10 @@
 package com.functions.fulfilment.controllers;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.fulfilment.models.FulfilmentEntityType;
 import com.functions.fulfilment.models.requests.InitCheckoutFulfilmentSessionRequest;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
 import com.functions.fulfilment.services.FulfilmentService;
@@ -36,7 +34,8 @@ public class InitFulfilmentSessionEndpoint implements HttpFunction {
         if (!(request.getMethod().equalsIgnoreCase("POST"))) {
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("The InitFulfilmentSessionEndpoint only supports POST requests.")));
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse("The InitFulfilmentSessionEndpoint only supports POST requests.")));
             return;
         }
 
@@ -46,31 +45,27 @@ public class InitFulfilmentSessionEndpoint implements HttpFunction {
         } catch (Exception e) {
             response.setStatusCode(400);
             logger.error("Could not parse input:", e);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("Invalid request data: " + e.getMessage())));
+            response.getWriter().write(JavaUtils.objectMapper
+                    .writeValueAsString(new ErrorResponse("Invalid request data: " + e.getMessage())));
             return;
         }
 
-        Optional<String> maybeFulfilmentSessionId = FulfilmentService.initCheckoutFulfilmentSession(data.eventId(), data.numTickets(), toFulfilmentEntityTypes(data.fulfilmentEntityTypes()));
+        Optional<String> maybeFulfilmentSessionId = FulfilmentService.initCheckoutFulfilmentSession(data.eventId(),
+                data.numTickets());
 
         if (maybeFulfilmentSessionId.isPresent()) {
-            logger.info("Fulfilment session successfully created: {}", maybeFulfilmentSessionId.get());
+            logger.info("[InitFulfilmentSessionEndpoint] Fulfilment session successfully created: {}",
+                    maybeFulfilmentSessionId.get());
+
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(
-                            new InitCheckoutFulfilmentSessionResponse(maybeFulfilmentSessionId.get())
-                    )
-            );
+                            new InitCheckoutFulfilmentSessionResponse(maybeFulfilmentSessionId.get())));
         } else {
             logger.error("Failed to create fulfilment session for event ID: {}", data.eventId());
             response.setStatusCode(500);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("Failed to create fulfilment session for event ID: " + data.eventId())));
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse("Failed to create fulfilment session for event ID: " + data.eventId())));
         }
-    }
-
-    private static List<FulfilmentEntityType> toFulfilmentEntityTypes(List<String> fulfilmentEntityTypeStrings) {
-        return fulfilmentEntityTypeStrings
-                .stream()
-                .map(FulfilmentEntityType::valueOf)
-                .toList();
     }
 }

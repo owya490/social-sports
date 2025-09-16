@@ -68,7 +68,7 @@ fi
 echo "📋 Copying Hugo static files to Vercel public directory..."
 
 # Copy directories: blogs, css, js, tags
-for dir in "blogs" "css" "js" "tags" ; do
+for dir in "blogs" "docs" "css" "js" "tags"; do
     if [ -d "$HUGO_PUBLIC_DIR/$dir" ]; then
         echo "📁 Copying $dir directory..."
         cp -r "$HUGO_PUBLIC_DIR/$dir" "$VERCEL_PUBLIC_DIR/"
@@ -117,10 +117,10 @@ fi
 
 echo "🎉 Hugo integration completed successfully!"
 echo "📊 Summary of copied items:"
-echo "   - Directories: blogs, css, js, tags, categories"
+echo "   - Directories: blogs, css, js, tags, docs"
 echo "   - Top-level files: HTML, XML, favicons, etc."
 echo "   - Images: merged with existing public/images"
-echo "   - Search files: en.search.js, en.search-data.json, index.xml, sitemap.xml"
+# echo "   - Search files: en.search.js, en.search-data.json, index.xml, sitemap.xml"
 
 # Optional: List what was copied
 echo ""

@@ -95,7 +95,6 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
         user.publicUpcomingOrganiserEvents.push(docRef.id);
       }
     }
-    eventServiceLogger.info(`create event user: ${JSON.stringify(user, null, 2)}`);
     await updateUser(data.organiserId, user);
 
     // We want to bust all our caches when we create a new event.
@@ -243,6 +242,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
     }
     await Promise.all(promisesList).then((results: (EventData | null)[]) => {
       const filteredResults = results.filter((result): result is EventData => result !== null);
+      console.log("filteredResults", filteredResults);
       for (const event of filteredResults) {
         eventDataList.push(event);
       }

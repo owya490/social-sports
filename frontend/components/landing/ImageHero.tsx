@@ -1,0 +1,27 @@
+"use client";
+
+import heroImage from "@/public/images/mocks/sportshub-mac-web-mock.png";
+import Image from "next/image";
+import styles from "./ImageHero.module.css";
+
+export default function ImageHero() {
+  return (
+    <div className={`${styles.heroImageContainer} hidden md:block`}>
+      <div className={styles.bleedRoot}>
+        <div className={styles.heroIllustrationRoot}>
+          <div className={styles.heroIllustrationPerspective}>
+            <div className={styles.heroIllustrationBase}>
+              <Image
+                src={heroImage}
+                alt="SportHub Platform Interface"
+                fill
+                priority
+                className="hidden md:block"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
