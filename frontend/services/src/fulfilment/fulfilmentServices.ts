@@ -2,7 +2,6 @@ import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormResponseId } from "@/interfaces/FormTypes";
 import {
-  CompleteFulfilmentSessionRequest,
   FulfilmentEntityId,
   FulfilmentSessionId,
   FulfilmentSessionType,
@@ -17,21 +16,21 @@ import {
   InitCheckoutFulfilmentSessionResponse,
   UpdateFulfilmentEntityWithFormResponseIdRequest,
 } from "@/interfaces/FulfilmentTypes";
+import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
+import { getGlobalAppControllerUrl } from "../functions/functionsUtils";
 import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
-  getCompleteFulfilmentSessionUrl,
   getDeleteFulfilmentSessionUrl,
   getGetFulfilmentEntityInfoUrl,
   getGetFulfilmentSessionInfoUrl,
   getGetNextFulfilmentEntityUrl,
   getGetPrevFulfilmentEntityUrl,
-  getInitFulfilmentSessionUrl,
   getUpdateFulfilmentEntityWithFormResponseIdUrl,
 } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = false;
+export const FULFILMENT_SESSION_ENABLED = true;
 
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 
@@ -68,13 +67,16 @@ async function initCheckoutFulfilmentSession(
     `initCheckoutFulfilmentSessionNew: Initializing fulfilment session for event ID: ${eventId}`
   );
 
-  const request: InitCheckoutFulfilmentSessionRequest = {
-    eventId,
-    numTickets,
+  const request: UnifiedRequest<InitCheckoutFulfilmentSessionRequest> = {
+    endpointType: EndpointType.INIT_FULFILMENT_SESSION,
+    data: {
+      eventId,
+      numTickets,
+    },
   };
 
   try {
-    const rawResponse = await fetch(getInitFulfilmentSessionUrl(), {
+    const rawResponse = await fetch(getGlobalAppControllerUrl(), {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -91,8 +93,8 @@ async function initCheckoutFulfilmentSession(
       throw new Error(`initCheckoutFulfilmentSessionNew: ${errorResponse.errorMessage}`);
     }
 
-    const response = (await rawResponse.json()) as InitCheckoutFulfilmentSessionResponse;
-    return response;
+    const response = (await rawResponse.json()) as UnifiedResponse<InitCheckoutFulfilmentSessionResponse>;
+    return response.data;
   } catch (error) {
     fulfilmentServiceLogger.error(
       `initCheckoutFulfilmentSessionNew: Failed to initialize fulfilment session: ${error}`
@@ -393,44 +395,44 @@ export async function getFulfilmentSessionInfo(
   }
 }
 
-export async function completeFulfilmentSession(
-  fulfilmentSessionId: FulfilmentSessionId,
-  fulfilmentEntityId: FulfilmentEntityId
-): Promise<void> {
-  fulfilmentServiceLogger.info(
-    `completeFulfilmentSession: Completing fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
-  );
+// export async function completeFulfilmentSession(
+//   fulfilmentSessionId: FulfilmentSessionId,
+//   fulfilmentEntityId: FulfilmentEntityId
+// ): Promise<void> {
+//   fulfilmentServiceLogger.info(
+//     `completeFulfilmentSession: Completing fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
+//   );
 
-  const request: CompleteFulfilmentSessionRequest = {
-    fulfilmentSessionId,
-    fulfilmentEntityId,
-  };
+//   const request: CompleteFulfilmentSessionRequest = {
+//     fulfilmentSessionId,
+//     fulfilmentEntityId,
+//   };
 
-  try {
-    const rawResponse = await fetch(getCompleteFulfilmentSessionUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
+//   try {
+//     const rawResponse = await fetch(getCompleteFulfilmentSessionUrl(), {
+//       method: "POST",
+//       headers: {
+//         Accept: "application/json",
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify(request),
+//     });
 
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `completeFulfilmentSession: Cloud function error: Failed to complete fulfilment session: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`completeFulfilmentSession: ${errorResponse.errorMessage}`);
-    }
+//     if (!rawResponse.ok) {
+//       const errorResponse = (await rawResponse.json()) as ErrorResponse;
+//       fulfilmentServiceLogger.error(
+//         `completeFulfilmentSession: Cloud function error: Failed to complete fulfilment session: ${errorResponse.errorMessage}`
+//       );
+//       throw new Error(`completeFulfilmentSession: ${errorResponse.errorMessage}`);
+//     }
 
-    fulfilmentServiceLogger.info(
-      `completeFulfilmentSession: Successfully completed fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
-    );
-  } catch (error) {
-    fulfilmentServiceLogger.error(
-      `completeFulfilmentSession: Failed to complete fulfilment session with ID ${fulfilmentSessionId} and entity ID ${fulfilmentEntityId}: ${error}`
-    );
-    throw error;
-  }
-}
+//     fulfilmentServiceLogger.info(
+//       `completeFulfilmentSession: Successfully completed fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
+//     );
+//   } catch (error) {
+//     fulfilmentServiceLogger.error(
+//       `completeFulfilmentSession: Failed to complete fulfilment session with ID ${fulfilmentSessionId} and entity ID ${fulfilmentEntityId}: ${error}`
+//     );
+//     throw error;
+//   }
+// }

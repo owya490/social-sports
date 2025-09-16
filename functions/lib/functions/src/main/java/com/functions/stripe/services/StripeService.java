@@ -41,8 +41,8 @@ public class StripeService {
                             UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
                                     .orElse("https://sportshub.net.au/dashboard")),
                     true,
-                    Optional.of(fulfilmentSessionId),
-                    Optional.of(endFulfilmentEntityId)
+                    fulfilmentSessionId,
+                    endFulfilmentEntityId
             );
 
             return FirebaseService.callFirebaseFunction(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID, request)

@@ -5,13 +5,7 @@ import com.functions.events.repositories.EventsRepository;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
-import com.functions.fulfilment.models.CheckoutFulfilmentSession;
-import com.functions.fulfilment.models.EndFulfilmentEntity;
-import com.functions.fulfilment.models.FormsFulfilmentEntity;
-import com.functions.fulfilment.models.FulfilmentEntity;
-import com.functions.fulfilment.models.FulfilmentEntityType;
-import com.functions.fulfilment.models.FulfilmentSession;
-import com.functions.fulfilment.models.StripeFulfilmentEntity;
+import com.functions.fulfilment.models.*;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -22,14 +16,10 @@ import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class FulfilmentService {
@@ -82,7 +72,7 @@ public class FulfilmentService {
      * Initializes a checkout fulfilment session for the given event ID.
      */
     public static Optional<String> initCheckoutFulfilmentSession(String eventId,
-            Integer numTickets) {
+                                                                 Integer numTickets) {
         try {
             // TODO: optimistically reserve tickets and at the current price using a
             // transaction
@@ -101,12 +91,12 @@ public class FulfilmentService {
 
             return FulfilmentService.createFulfilmentSession(fulfilmentSessionId, eventId,
                     numTickets, fulfilmentEntities).map(sessionId -> {
-                        if (sessionId.isEmpty()) {
-                            throw new RuntimeException(
-                                    "Failed to create fulfilment session for event ID: " + eventId);
-                        }
-                        return sessionId;
-                    });
+                if (sessionId.isEmpty()) {
+                    throw new RuntimeException(
+                            "Failed to create fulfilment session for event ID: " + eventId);
+                }
+                return sessionId;
+            });
         } catch (Exception e) {
             logger.error("Failed to init checkout fulfilment session: {}", eventId, e);
         }
@@ -168,17 +158,17 @@ public class FulfilmentService {
                 String nextEntityId = (i + 1 < entityIds.size()) ? entityIds.get(i + 1) : null;
                 String successUrl = nextEntityId != null
                         ? UrlUtils
-                                .getUrlWithCurrentEnvironment(String.format("/fulfilment/%s/%s",
-                                        fulfilmentSessionId, nextEntityId))
-                                .orElse("https://sportshub.net.au/dashboard")
+                        .getUrlWithCurrentEnvironment(String.format("/fulfilment/%s/%s",
+                                fulfilmentSessionId, nextEntityId))
+                        .orElse("https://sportshub.net.au/dashboard")
                         : "https://sportshub.net.au/dashboard";
 
                 String prevEntityId = (i - 1 >= 0) ? entityIds.get(i - 1) : null;
                 String cancelUrl = prevEntityId != null
                         ? UrlUtils
-                                .getUrlWithCurrentEnvironment(String.format("/fulfilment/%s/%s",
-                                        fulfilmentSessionId, prevEntityId))
-                                .orElse("https://sportshub.net.au/dashboard")
+                        .getUrlWithCurrentEnvironment(String.format("/fulfilment/%s/%s",
+                                fulfilmentSessionId, prevEntityId))
+                        .orElse("https://sportshub.net.au/dashboard")
                         : "https://sportshub.net.au/dashboard";
 
                 Optional<String> stripeCheckoutLink = StripeService.getStripeCheckoutUrlFromEventId(
@@ -191,6 +181,9 @@ public class FulfilmentService {
                     entity = StripeFulfilmentEntity.builder().url(stripeCheckoutLink.get())
                             .type(FulfilmentEntityType.STRIPE).build();
                     fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
+                } else {
+                    throw new RuntimeException("Failed to create Stripe checkout link for event ID: "
+                            + eventId);
                 }
             } else {
                 fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
@@ -201,7 +194,7 @@ public class FulfilmentService {
     }
 
     private static String getEndFulfilmentEntityId(String eventId,
-            List<FulfilmentEntity> tempEntities, List<String> entityIds) {
+                                                   List<FulfilmentEntity> tempEntities, List<String> entityIds) {
         int endEntityIndex = -1;
         for (int i = 0; i < tempEntities.size(); i++) {
             if (tempEntities.get(i).getType() == FulfilmentEntityType.END) {
@@ -218,7 +211,7 @@ public class FulfilmentService {
     }
 
     private static Optional<String> createFulfilmentSession(String sessionId, String eventId,
-            Integer numTickets, List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities) {
+                                                            Integer numTickets, List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities) {
         try {
             // Convert list to map and order
             Map<String, FulfilmentEntity> entityMap = new HashMap<>();
@@ -647,10 +640,10 @@ public class FulfilmentService {
     /**
      * Retrieves fulfilment session information including entity types and current position.
      *
-     * @param fulfilmentSessionId The ID of the fulfilment session
+     * @param fulfilmentSessionId       The ID of the fulfilment session
      * @param currentFulfilmentEntityId The current fulfilment entity ID (optional)
      * @return Optional containing the response with the list of fulfilment entity types and current
-     *         index, or empty if the session is not found
+     * index, or empty if the session is not found
      */
     public static Optional<GetFulfilmentSessionInfoResponse> getFulfilmentSessionInfo(
             String fulfilmentSessionId, String currentFulfilmentEntityId) {
@@ -671,9 +664,9 @@ public class FulfilmentService {
             // Extract the types in the same order as the entity IDs
             List<FulfilmentEntityType> fulfilmentEntityTypes =
                     fulfilmentEntityIds.stream().map(entityId -> {
-                        FulfilmentEntity entity = fulfilmentEntityMap.get(entityId);
-                        return entity != null ? entity.getType() : null;
-                    }).filter(type -> type != null) // Filter out any null types
+                                FulfilmentEntity entity = fulfilmentEntityMap.get(entityId);
+                                return entity != null ? entity.getType() : null;
+                            }).filter(type -> type != null) // Filter out any null types
                             .collect(java.util.stream.Collectors.toList());
 
             // Calculate current index if current entity ID is provided
@@ -709,7 +702,7 @@ public class FulfilmentService {
      * @return `true` if the fulfilment entity was updated successfully, `false` otherwise
      */
     public static boolean updateFulfilmentEntityWithFormResponseId(String fulfilmentSessionId,
-            String fulfilmentEntityId, String formResponseId) {
+                                                                   String fulfilmentEntityId, String formResponseId) {
         try {
             Optional<FulfilmentSession> maybeFulfilmentSession =
                     getFulfilmentSessionById(fulfilmentSessionId);
@@ -751,12 +744,12 @@ public class FulfilmentService {
      * fulfilment entity type.
      *
      * @param fulfilmentSessionId The ID of the fulfilment session to complete
-     * @param fulfilmentEntityId Should be the fulfilment entity ID of an `END` fulfilment entity;
-     *        otherwise, we will fail the completion
+     * @param fulfilmentEntityId  Should be the fulfilment entity ID of an `END` fulfilment entity;
+     *                            otherwise, we will fail the completion
      * @return true if the completion was successful, false otherwise
      */
     public static boolean completeFulfilmentSession(String fulfilmentSessionId,
-            String fulfilmentEntityId) {
+                                                    String fulfilmentEntityId) {
         try {
             Optional<FulfilmentSession> maybeFulfilmentSession =
                     getFulfilmentSessionById(fulfilmentSessionId);

@@ -1,7 +1,5 @@
 package com.functions.stripe.models.requests;
 
-import java.util.Optional;
-
 public record GetStripeCheckoutUrlByEventIdRequest(
         String eventId,
         Boolean isPrivate,
@@ -9,7 +7,7 @@ public record GetStripeCheckoutUrlByEventIdRequest(
         String cancelUrl,
         String successUrl,
         Boolean completeFulfilmentSession,
-        Optional<String> fulfilmentSessionId,
-        Optional<String> endFulfilmentEntityId
+        String fulfilmentSessionId,
+        String endFulfilmentEntityId
 ) {
 }
