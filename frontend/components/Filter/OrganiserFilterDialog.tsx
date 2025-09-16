@@ -24,7 +24,7 @@ export const DATE_ASCENDING_SORTBY_STRING = "Date Ascending";
 export const DATE_DESCENDING_SORTBY_STRING = "Date Descending";
 
 export const DEFAULT_SEARCH = "";
-export const DEFAULT_EVENT_STATUS = "future";
+export const DEFAULT_EVENT_STATUS = "";
 export const DEFAULT_EVENT_TYPE = "";
 export const DEFAULT_MIN_PRICE = null;
 export const DEFAULT_MAX_PRICE = null;

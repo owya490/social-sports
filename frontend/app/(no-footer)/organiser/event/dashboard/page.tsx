@@ -129,6 +129,8 @@ export default function OrganiserDashboard() {
 
     // Filter by SORT BY is done in useEffect below
     setAppliedSortByCategoryValue(sortByCategoryValue);
+    let newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
+    filteredEventDataList = newEventDataList;
     setEventDataList([...filteredEventDataList]);
     closeModal();
   }
