@@ -1,4 +1,4 @@
-package com.functions.events.services;
+package com.functions.events.handlers;
 
 import static com.functions.firebase.services.FirebaseService.CollectionPaths.ACTIVE;
 import static com.functions.firebase.services.FirebaseService.CollectionPaths.EVENTS;
@@ -16,15 +16,15 @@ import com.functions.events.models.NewEventData;
 import com.functions.events.utils.EventsMetadataUtils;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
-import com.functions.global.models.Service;
+import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
 
-public class CreateEventService implements Service<NewEventData, String> {
-    private static final Logger logger = LoggerFactory.getLogger(CreateEventService.class);
+public class CreateEventHandler implements Handler<NewEventData, String> {
+    private static final Logger logger = LoggerFactory.getLogger(CreateEventHandler.class);
 
     @Override
     public NewEventData parse(UnifiedRequest data) {

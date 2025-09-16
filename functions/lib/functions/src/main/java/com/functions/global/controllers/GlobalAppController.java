@@ -3,11 +3,11 @@ package com.functions.global.controllers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.global.handlers.HandlerRegistry;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
-import com.functions.global.services.ServiceRegistry;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
@@ -81,12 +81,12 @@ public class GlobalAppController implements HttpFunction {
     private Object routeRequest(UnifiedRequest unifiedRequest) throws Exception {
         EndpointType endpointType = unifiedRequest.endpointType();
 
-        if (!ServiceRegistry.hasService(endpointType)) {
-            throw new IllegalArgumentException("No service registered for endpoint type: " + endpointType);
+        if (!HandlerRegistry.hasHandler(endpointType)) {
+            throw new IllegalArgumentException("No handler registered for endpoint type: " + endpointType);
         }
 
-        var service = ServiceRegistry.getService(endpointType);
-        return service.handle(service.parse(unifiedRequest));
+        var handler = HandlerRegistry.getHandler(endpointType);
+        return handler.handle(handler.parse(unifiedRequest));
     }
 
     private void setResponseHeaders(HttpResponse response) {
