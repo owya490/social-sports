@@ -49,7 +49,7 @@ public class StripeService {
                         } catch (Exception e) {
                             logger.error("Failed to parse Stripe checkout response for event ID {}: {}", eventId,
                                     e.getMessage());
-                            return null;
+                            throw new RuntimeException("Failed to parse Stripe checkout response", e);
                         }
                     }).orElseThrow(() -> new RuntimeException("Failed to get Stripe checkout URL"));
         } catch (Exception e) {

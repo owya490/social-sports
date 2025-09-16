@@ -160,16 +160,14 @@ public class FulfilmentService {
                                 String.format("/fulfilment/%s/%s", fulfilmentSessionId, prevEntityId))
                         .orElse("https://sportshub.net.au/dashboard") : "https://sportshub.net.au/dashboard";
 
-                Optional<String> stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(eventId,
+                String stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.of(successUrl), Optional.of(cancelUrl),
                         fulfilmentSessionId);
 
-                if (stripeCheckoutLink.isPresent()) {
-                    logger.info("Created Stripe checkout link for event ID {}: {}", eventId, stripeCheckoutLink.get());
-                    entity = StripeFulfilmentEntity.builder().url(stripeCheckoutLink.get())
-                            .type(FulfilmentEntityType.STRIPE).build();
-                    fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
-                }
+                logger.info("Created Stripe checkout link for event ID {}: {}", eventId, stripeCheckoutLink.get());
+                entity = StripeFulfilmentEntity.builder().url(stripeCheckoutLink.get())
+                        .type(FulfilmentEntityType.STRIPE).build();
+                fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
             } else {
                 fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
             }
