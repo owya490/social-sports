@@ -17,7 +17,7 @@ public class StripeService {
     public static final String FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID = "get_stripe_checkout_url_by_event_id";
 
     // TODO: configure cancel URL
-    public static Optional<String> getStripeCheckoutFromEventId(String eventId,
+    public static String getStripeCheckoutFromEventId(String eventId,
             boolean isPrivate,
             Integer numTickets,
             Optional<String> successUrl,
@@ -51,10 +51,10 @@ public class StripeService {
                                     e.getMessage());
                             return null;
                         }
-                    }).filter(url -> url != null);
+                    }).orElseThrow(() -> new RuntimeException("Failed to get Stripe checkout URL"));
         } catch (Exception e) {
             logger.error("Error getting Stripe checkout URL for event ID {}: {}", eventId, e.getMessage());
-            return Optional.empty();
+            throw new RuntimeException("Failed to get Stripe checkout URL", e);
         }
     }
 }

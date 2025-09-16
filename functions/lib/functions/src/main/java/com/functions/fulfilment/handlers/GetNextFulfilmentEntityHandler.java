@@ -27,10 +27,7 @@ public class GetNextFulfilmentEntityHandler implements Handler<GetNextFulfilment
 
     @Override
     public GetNextFulfilmentEntityResponse handle(GetNextFulfilmentEntityRequest request) {
-        if (request == null || request.fulfilmentSessionId() == null || request.currentFulfilmentEntityId() == null) {
-            throw new IllegalArgumentException("fulfilmentSessionId and currentFulfilmentEntityId are required");
-        }
-
+  
         Optional<GetNextFulfilmentEntityResponse> maybeResponse = FulfilmentService.getNextFulfilmentEntityByCurrentId(
                 request.fulfilmentSessionId(), request.currentFulfilmentEntityId());
 
