@@ -7,7 +7,7 @@ import {
   getNextFulfilmentEntityUrl,
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
-import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import { getStripeCheckoutUrlFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
@@ -176,7 +176,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                         router.push("/error");
                       }
                     } else {
-                      const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                      const stripeCheckoutLink = await getStripeCheckoutUrlFromEventId(
                         props.eventId,
                         props.isPrivate,
                         attendeeCount

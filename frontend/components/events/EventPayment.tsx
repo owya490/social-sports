@@ -7,7 +7,7 @@ import {
   getNextFulfilmentEntityUrl,
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
-import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import { getStripeCheckoutUrlFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import {
   CalendarDaysIcon,
@@ -199,7 +199,7 @@ export default function EventPayment(props: EventPaymentProps) {
                           router.push("/error");
                         }
                       } else {
-                        const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                        const stripeCheckoutLink = await getStripeCheckoutUrlFromEventId(
                           props.eventId,
                           props.isPrivate,
                           attendeeCount

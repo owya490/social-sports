@@ -3,8 +3,11 @@ package com.functions.stripe.models.requests;
 public record GetStripeCheckoutUrlByEventIdRequest(
         String eventId,
         Boolean isPrivate,
-        Integer numTickets,
+        Integer quantity,
         String cancelUrl,
-        String successUrl
+        String successUrl,
+        Boolean completeFulfilmentSession,
+        String fulfilmentSessionId,
+        String endFulfilmentEntityId
 ) {
 }

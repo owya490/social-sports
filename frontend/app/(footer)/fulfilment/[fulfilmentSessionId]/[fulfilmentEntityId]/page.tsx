@@ -15,7 +15,6 @@ import {
 import { URL } from "@/interfaces/Types";
 import { Logger } from "@/observability/logger";
 import {
-  completeFulfilmentSession,
   getFulfilmentEntityInfo,
   getFulfilmentSessionInfo,
   getNextFulfilmentEntityUrl,
@@ -333,7 +332,7 @@ function EndFulfilmentHandler({
     let cancelled = false;
     (async () => {
       try {
-        await completeFulfilmentSession(fulfilmentSessionId, fulfilmentEntityId);
+        // await completeFulfilmentSession(fulfilmentSessionId, fulfilmentEntityId);
         if (cancelled) return;
         logger.info(
           `Fulfilment session ended, fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}`

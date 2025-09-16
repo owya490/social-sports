@@ -1,4 +1,8 @@
 import { EventId } from "@/interfaces/EventTypes";
+import {
+  GetStripeCheckoutUrlFromEventIdRequest,
+  GetStripeGetCheckoutUrlFromEventIdResponse,
+} from "@/interfaces/StripeTypes";
 import { URL } from "@/interfaces/Types";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
@@ -11,10 +15,6 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import { getPrivateUserById } from "../users/usersService";
 
 interface StripeCreateStandardAccountResponse {
-  url: string;
-}
-
-interface StripeGetCheckoutUrlResponse {
   url: string;
 }
 
@@ -38,23 +38,26 @@ export async function getStripeStandardAccountLink(organiserId: string, returnUr
     });
 }
 
-export async function getStripeCheckoutFromEventId(
+export async function getStripeCheckoutUrlFromEventId(
   eventId: EventId,
   isPrivate: boolean,
   quantity: number,
   successUrl?: URL
 ) {
-  const content = {
+  const content: GetStripeCheckoutUrlFromEventIdRequest = {
     eventId: eventId,
     isPrivate: isPrivate,
     quantity: quantity,
-    cancelUrl: getUrlWithCurrentHostname(`/event/${eventId}`),
-    successUrl: successUrl ?? getUrlWithCurrentHostname(`/event/success/${eventId}`),
+    cancelUrl: getUrlWithCurrentHostname(`/event/${eventId}`) as URL,
+    successUrl: successUrl ?? (getUrlWithCurrentHostname(`/event/success/${eventId}`) as URL),
+    completeFulfilmentSession: false,
+    fulfilmentSessionId: undefined,
+    endFulfilmentEntityId: undefined,
   };
   const getStripeCheckoutFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID);
   return getStripeCheckoutFunction(content)
     .then((result) => {
-      const data = JSON.parse(result.data as string) as StripeGetCheckoutUrlResponse;
+      const data = JSON.parse(result.data as string) as GetStripeGetCheckoutUrlFromEventIdResponse;
       return data.url;
     })
     .catch((error) => {

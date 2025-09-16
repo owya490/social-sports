@@ -6,14 +6,13 @@ import {
   GET_FULFILMENT_SESSION_INFO_URL,
   GET_NEXT_FULFILMENT_ENTITY_URL,
   GET_PREV_FULFILMENT_ENTITY_URL,
-  INIT_FULFILMENT_SESSION_URL,
   UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID_URL,
 } from "../fulfilmentConstants";
 
-export function getInitFulfilmentSessionUrl(): string {
-  const env = getEnvironment();
-  return INIT_FULFILMENT_SESSION_URL[`${env || Environment.DEVELOPMENT}`];
-}
+// export function getInitFulfilmentSessionUrl(): string {
+//   const env = getEnvironment();
+//   return INIT_FULFILMENT_SESSION_URL[`${env || Environment.DEVELOPMENT}`];
+// }
 
 export function getGetNextFulfilmentEntityUrl(): string {
   const env = getEnvironment();
