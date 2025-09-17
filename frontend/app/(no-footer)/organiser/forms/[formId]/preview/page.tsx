@@ -4,6 +4,7 @@ import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { FormId } from "@/interfaces/FormTypes";
 import { useParams } from "next/navigation";
 
+// This page is used to preview a form after it is built
 const FormPreview = () => {
   const params = useParams();
   const formId = (typeof params?.formId === "string" ? params.formId : params.formId[0]) as FormId;

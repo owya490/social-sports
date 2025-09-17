@@ -1,5 +1,6 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
-import { FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
+import { FormId, FormResponse, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { Logger } from "@/observability/logger";
 import { db } from "@/services/src/firebase";
 import { getFormResponsesForEvent } from "@/services/src/forms/formsServices";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
@@ -30,6 +31,7 @@ const formatTimestamp = (ts: Timestamp | null): string => {
 };
 
 const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
+  const logger = new Logger("EventDrilldownFormsPageLogger");
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +84,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
         const formResponse = await getFormResponsesForEvent(formId as FormId, eventId);
         setFormResponses(formResponse);
       } catch (err) {
-        console.error("Failed to load form responses:", err);
+        logger.error(`Failed to load form responses: ${err}`);
         setError("Failed to load form responses");
       } finally {
         setLoading(false);
@@ -97,20 +99,23 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   if (formResponses.length === 0) return <div>No responses submitted</div>;
 
   // Collect unique questions across all responses
-  const questionSet = new Set<string>();
+  const questionSet = new Map<SectionId, string>();
   formResponses.forEach((response) => {
-    Object.values(response.responseMap).forEach((section) => {
+    Object.entries(response.responseMap).forEach(([sectionId, section]) => {
       if (section?.question?.trim()) {
-        questionSet.add(section.question.trim());
+        questionSet.set(sectionId as SectionId, section.question.trim());
       }
     });
   });
 
-  const sortedQuestions = Array.from(questionSet).sort((a, b) => a.localeCompare(b));
+  const sortedQuestions = Array.from(questionSet.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+
+  // Calculate minimum table width: 30px (index) + 150px per question + 400px (submission time) + 30px (expand button)
+  const minTableWidth = 30 + sortedQuestions.length * 150 + 400 + 30;
 
   const csvHeaders = [
     { label: "#", key: "index" },
-    ...sortedQuestions.map((q) => ({ label: q, key: q })),
+    ...sortedQuestions.map(([sectionId, label]) => ({ label, key: sectionId })),
     { label: "Submission Time", key: "submissionTime" },
   ];
 
@@ -118,7 +123,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
     const row: Record<string, string> = { index: (idx + 1).toString() };
 
     sortedQuestions.forEach((question) => {
-      const section = Object.values(response.responseMap).find((s) => s?.question?.trim() === question);
+      const section = Object.entries(response.responseMap).find((s) => s[0] === question[0])?.[1];
       // Extract answer as string
       let answer = "—";
       if (section) {
@@ -131,7 +136,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
             answer = "—";
         }
       }
-      row[question] = answer;
+      row[question[0]] = answer;
     });
 
     row.submissionTime = formatTimestamp(response.submissionTime);
@@ -140,15 +145,15 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   });
 
   return (
-    <div className="md:max-w-[calc(100%-18rem)] my-2">
+    <div className="w-full md:w-[calc(100%-18rem)] my-2">
       <div className="flex items-center justify-between mb-4 px-1 md:px-0">
         <h1 className="text-2xl font-extrabold">Form Responses</h1>
         <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
       </div>
 
       {/* Table with fixed layout and scroll support */}
-      <div className="border border-core-outline rounded-lg max-h-[600px] overflow-scroll">
-        <div className="table table-auto text-left">
+      <div className="border border-core-outline rounded-lg max-h-[600px] overflow-x-auto overflow-y-auto w-full">
+        <div className="table table-auto text-left w-full" style={{ minWidth: `${minTableWidth}px` }}>
           {/* Header */}
           <div className="table-header-group text-organiser-title-gray-text font-bold text-sm bg-core-hover border-b border-core-outline sticky top-0 z-20">
             <div className="table-row">
@@ -156,14 +161,13 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
               {sortedQuestions.map((question, i) => (
                 <div
                   key={`header-${i}`}
-                  className={`table-cell px-3 py-2 max-w-[200px] min-w-[100px] md:min-w-[0px] border-r border-core-outline ${
+                  className={`table-cell px-3 py-2 min-w-[100px] md:min-w-[150px] max-w-[300px] border-r border-core-outline ${
                     headersExpanded
                       ? "break-words whitespace-pre-wrap"
                       : "whitespace-nowrap overflow-hidden text-ellipsis"
                   }`}
-                  title={!headersExpanded ? question : undefined}
                 >
-                  {question}
+                  {question[1]}
                 </div>
               ))}
               <div className="table-cell px-3 py-2 border-r border-core-outline w-[400px]">Submission Time</div>
@@ -186,14 +190,23 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
 
               return (
                 <div key={`response-${idx}`} className={`table-row ${rowClasses}`}>
-                  <div className="table-cell px-3 py-2 align-top border-r border-core-outline w-[30px]">{idx + 1}</div>
+                  <div className="table-cell px-3 py-2 align-top border-r border-core-outline w-[30px]">
+                    <Link
+                      className="underline text-blue-800"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={`/organiser/forms/${formId}/${eventId}/${response.formResponseId}`}
+                    >
+                      {idx + 1}
+                    </Link>
+                  </div>
                   {sortedQuestions.map((question, j) => {
-                    const section = Object.values(response.responseMap).find((s) => s?.question?.trim() === question);
+                    const section = Object.entries(response.responseMap).find((s) => s[0] === question[0])?.[1];
                     const isRowExpanded = expandedRows.has(idx);
                     return (
                       <div
                         key={`cell-${idx}-${j}`}
-                        className={`table-cell px-3 py-2 max-w-[200px] min-w-[100px] md:min-w-[0px] border-r border-core-outline ${
+                        className={`table-cell px-3 py-2 min-w-[100px] md:min-w-[150px] max-w-[300px] border-r border-core-outline ${
                           isRowExpanded
                             ? "break-words whitespace-pre-wrap"
                             : "whitespace-nowrap overflow-x-hidden text-ellipsis"
@@ -206,7 +219,9 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
                   <div className="table-cell px-3 py-2 w-[400px] whitespace-nowrap align-top border-r border-core-outline">
                     <Link
                       className="underline text-blue-800"
-                      href={`/forms/${formId}/${eventId}/${response.formResponseId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={`/organiser/forms/${formId}/${eventId}/${response.formResponseId}`}
                     >
                       {formatTimestamp(response.submissionTime)}
                     </Link>
