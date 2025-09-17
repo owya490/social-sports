@@ -17,9 +17,9 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
       const file = e.target.files[0];
 
       // Validate file type
-      const validTypes = ["image/jpeg", "image/png", "image/gif"];
+      const validTypes = ["image/jpeg", "image/png"];
       if (!validTypes.includes(file.type)) {
-        alert("Please upload a valid image file (jpg, png, gif).");
+        alert("Please upload a valid image file (jpg, png).");
         return;
       }
 

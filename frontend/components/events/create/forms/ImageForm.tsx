@@ -27,9 +27,9 @@ export function ImageForm({
 
   // Validate image type
   const validateImage = (file: File) => {
-    const validTypes = ["image/jpeg", "image/png", "image/gif"];
+    const validTypes = ["image/jpeg", "image/png"];
     if (!validTypes.includes(file.type)) {
-      setErrorMessage("Please upload a valid image file (jpg, png, gif).");
+      setErrorMessage("Please upload a valid image file (jpg, png).");
       return false;
     }
     return true;
