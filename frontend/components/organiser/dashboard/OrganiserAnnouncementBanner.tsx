@@ -15,7 +15,10 @@ export const OrganiserAnnouncementBanner = () => {
             <svg viewBox="0 0 2 2" aria-hidden="true" className="mx-2 inline h-0.5 w-0.5 fill-current">
               <circle r={1} cx={1} cy={1} />
             </svg>
-            Allow customers to apply Promo Codes at Checkout.
+            <a className="text-blue-700 underline font-bold" href="/organiser/gallery">
+              Organiser Image Gallery
+            </a>{" "}
+            now open with in-built image cropping.
           </p>
           <button
             onClick={() => {
