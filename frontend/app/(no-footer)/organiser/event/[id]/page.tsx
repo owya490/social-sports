@@ -191,7 +191,6 @@ export default function EventPage({ params }: EventPageProps) {
               <EventDrilldownImagesPage
                 user={user}
                 eventId={eventId}
-                sport={eventSport}
                 eventImage={eventImage}
                 eventThumbnail={eventThumbnail}
               />

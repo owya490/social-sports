@@ -13,7 +13,6 @@ import { useEffect, useState } from "react";
 interface EventDrilldownImagesPageProps {
   user: UserData;
   eventId: string;
-  sport: string;
   eventImage: string;
   eventThumbnail: string;
 }
@@ -21,7 +20,6 @@ interface EventDrilldownImagesPageProps {
 export const EventDrilldownImagesPage = ({
   user,
   eventId,
-  sport,
   eventImage,
   eventThumbnail,
 }: EventDrilldownImagesPageProps) => {
