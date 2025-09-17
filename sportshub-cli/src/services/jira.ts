@@ -162,6 +162,7 @@ export class JiraService {
 
   /**
    * Searches for issues by organiser name
+   * Uses /rest/api/3/search/jql endpoint (migrated from deprecated /rest/api/3/search)
    */
   async searchIssues(request: SearchRequest): Promise<SearchIssuesResponse> {
     const axios = require("axios");
@@ -171,7 +172,7 @@ export class JiraService {
 
     try {
       const response = await axios.post(
-        `${this.baseUrl}/search`,
+        `${this.baseUrl}/search/jql`,
         {
           jql: jql,
           maxResults: 50,
@@ -217,6 +218,7 @@ export class JiraService {
 
   /**
    * Gets all lead tickets from the project
+   * Uses /rest/api/3/search/jql endpoint (migrated from deprecated /rest/api/3/search)
    */
   async getAllLeads(projectKey: string): Promise<GetAllLeadsResponse> {
     const axios = require("axios");
@@ -226,7 +228,7 @@ export class JiraService {
 
     try {
       const response = await axios.post(
-        `${this.baseUrl}/search`,
+        `${this.baseUrl}/search/jql`,
         {
           jql: jql,
           maxResults: 100,

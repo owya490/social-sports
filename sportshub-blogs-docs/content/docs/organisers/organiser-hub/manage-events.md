@@ -15,7 +15,7 @@ The Event Dashboard is your main view for accessing all your events. Here you ca
 - **Filter by Date Range**: Narrow down events to specific time periods using the date filter
 - **Apply Custom Filters**: Use additional filters to find specific events quickly
 - **Monitor Status**: Check real-time status updates for each event
-  ![event-dashboard](/images/docs/organisers/organiser-hub/event-dashboard.png)
+  ![event-dashboard](/images/docs/organisers/organiser-hub/event-dashboard.jpg)
 
 ### Accessing Your Events
 

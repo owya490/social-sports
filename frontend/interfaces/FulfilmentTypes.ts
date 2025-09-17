@@ -1,12 +1,16 @@
+import { Timestamp } from "firebase/firestore";
 import { EventId } from "./EventTypes";
+import { FormId, FormResponseId } from "./FormTypes";
 import { Branded } from "./index";
 import { URL } from "./Types";
 
 export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
-export type FulfilmentSessionType = { fulfilmentEntityTypes: FulfilmentEntityType[] } & ({
+export type FulfilmentEntityId = Branded<string, "FulfilmentEntityId">;
+
+export type FulfilmentSessionType = {
   type: "checkout";
-} & CheckoutFulfilmentSessionType);
+} & CheckoutFulfilmentSessionType;
 
 export type CheckoutFulfilmentSessionType = {
   eventId: EventId;
@@ -21,6 +25,7 @@ export type CheckoutFulfilmentSessionType = {
 export enum FulfilmentEntityType {
   STRIPE = "STRIPE",
   FORMS = "FORMS",
+  END = "END",
 }
 
 /**
@@ -29,7 +34,6 @@ export enum FulfilmentEntityType {
 export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
   numTickets: number;
-  fulfilmentEntityTypes: FulfilmentEntityType[];
 };
 
 /**
@@ -40,23 +44,111 @@ export type InitCheckoutFulfilmentSessionResponse = {
 };
 
 /**
- * Payload we send to java execNextFulfilmentEntity function
+ * Payload we send to java getNextFulfilmentEntity function
  */
-export type ExecNextFulfilmentEntityRequest = {
+export type GetNextFulfilmentEntityRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  currentFulfilmentEntityId: FulfilmentEntityId | null;
+};
+
+/**
+ * Payload we receive from java getNextFulfilmentEntity
+ */
+export type GetNextFulfilmentEntityResponse = {
+  /**
+   * Null if there are no more fulfilment entities.
+   */
+  fulfilmentEntityId: FulfilmentEntityId | null;
+};
+
+/**
+ * Payload we send to java getPrevFulfilmentEntity function
+ */
+export type GetPrevFulfilmentEntityRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  currentFulfilmentEntityId: FulfilmentEntityId;
+};
+
+/**
+ * Payload we receive from java getPrevFulfilmentEntity
+ */
+export type GetPrevFulfilmentEntityResponse = {
+  /**
+   * Null if there are no previous fulfilment entities.
+   */
+  fulfilmentEntityId: FulfilmentEntityId | null;
+};
+
+/**
+ * Payload we send to java getFulfilmentEntityInfo function
+ */
+export type GetFulfilmentEntityInfoRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  fulfilmentEntityId: FulfilmentEntityId;
+};
+
+/**
+ * Payload we receive from java getFulfilmentEntityInfo function
+ */
+export type GetFulfilmentEntityInfoResponse = {
+  /**
+   * Null if there are no more fulfilment entities.
+   */
+  type: FulfilmentEntityType | null;
+  /**
+   * Url of the specified fulfilment entity, if applicable.
+   */
+  url: URL | null;
+
+  /**
+   * Forms specific fields.
+   */
+  eventId: EventId | null;
+  formId: FormId | null;
+  formResponseId: FormResponseId | null;
+};
+
+/**
+ * Payload we send to java updateFulfilmentEntityWithFormResponseId function
+ */
+export type UpdateFulfilmentEntityWithFormResponseIdRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  fulfilmentEntityId: FulfilmentEntityId;
+  formResponseId: FormResponseId;
+};
+
+/**
+ * Payload we send to java deleteFulfilmentSession function
+ */
+export type DeleteFulfilmentSessionRequest = {
   fulfilmentSessionId: FulfilmentSessionId;
 };
 
 /**
- * Payload we receive from java execNextFulfilmentEntity
+ * Payload we send to java getFulfilmentSessionInfo function
  */
-export type ExecNextFulfilmentEntityResponse = {
+export type GetFulfilmentSessionInfoRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  currentFulfilmentEntityId: FulfilmentEntityId | null;
+};
+
+/**
+ *  Payload we receive from java getFulfilmentSessionInfo function
+ */
+export type GetFulfilmentSessionInfoResponse = {
+  fulfilmentEntityTypes: FulfilmentEntityType[];
+  currentEntityIndex: number | null;
+  fulfilmentSessionStartTime: Timestamp;
+};
+
+/**
+ * Payload we send to java completeFulfilmentSession function
+ */
+export type CompleteFulfilmentSessionRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
   /**
-   * Empty if there are no more fulfilment entities to process
+   * Should be the fulfilment entity ID of an entity of `END` type.
+   * Otherwise, the endpoint will return unsuccessful response.
    */
-  url?: URL;
-  /**
-   * NOTE: 0 based index of the current fulfilment entity
-   */
-  currentFulfilmentEntityIndex: number;
-  numFulfilmentEntities: number;
+  fulfilmentEntityId: FulfilmentEntityId;
 };

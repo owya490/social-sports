@@ -56,7 +56,7 @@
 &lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-green-200 hx:bg-green-100 hx:text-green-900 hx:dark:border-green-200/30 hx:dark:bg-green-900/30 hx:dark:text-green-200">
 &lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>&lt;/svg>Tip&lt;/p>
 &lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
-&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Stripe will ask you to opt into Climate Conributions and Stripe Tax. Feel free to decline and opt out by pressing &amp;ldquo;No Thanks&amp;rdquo; and &amp;ldquo;Not right now&amp;rdquo; respectively.&lt;/p>&lt;/div>
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Stripe will ask you to opt into Climate Contributions and Stripe Tax. Feel free to decline and opt out by pressing &amp;ldquo;No Thanks&amp;rdquo; and &amp;ldquo;Not right now&amp;rdquo; respectively.&lt;/p>&lt;/div>
 &lt;/div>
 &lt;/div>
 &lt;h3>4. Verify Integration in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="4-verify-integration-in-sportshub">&lt;/span>

@@ -96,23 +96,11 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy createEvent
+      - name: Deploy cleanupOldFulfilmentSessionsCron
         working-directory: functions/lib/functions
         run: |
-          gcloud functions deploy createEvent \
-            --entry-point com.functions.events.controllers.CreateEventEndpoint \
-            --runtime java17 \
-            --trigger-http \
-            --allow-unauthenticated \
-            --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
-
-      - name: Deploy initFulfilmentSession
-        working-directory: functions/lib/functions
-        run: |
-          gcloud functions deploy initFulfilmentSession \
-            --entry-point com.functions.fulfilment.controllers.InitFulfilmentSessionEndpoint \
+          gcloud functions deploy cleanupOldFulfilmentSessionsCron \
+            --entry-point com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
@@ -121,11 +109,11 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy execNextFulfilmentEntity
+      - name: Deploy deleteFulfilmentSession
         working-directory: functions/lib/functions
         run: |
-          gcloud functions deploy execNextFulfilmentEntity \
-            --entry-point com.functions.fulfilment.controllers.ExecNextFulfilmentEntityEndpoint \
+          gcloud functions deploy deleteFulfilmentSession \
+            --entry-point com.functions.fulfilment.controllers.DeleteFulfilmentSessionEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
@@ -133,6 +121,44 @@ jobs:
             --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
+
+      - name: Deploy completeFulfilmentSession
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy completeFulfilmentSession \
+            --entry-point com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy globalAppController \
+            --entry-point com.functions.global.controllers.GlobalAppController \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy Cloud Scheduler jobs
+        continue-on-error: true
+        working-directory: functions/lib/functions
+        run: |
+          bash ./deploySchedulerToGCloud.sh
+          bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }}
+
+      - name: Report scheduler deployment status
+        if: failure()
+        run: |
+          echo "::warning::Cloud Scheduler deployment failed but workflow is continuing. Please check the scheduler deployment logs above for details."
 
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}

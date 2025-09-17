@@ -119,7 +119,7 @@ Complete the essential event details including:&lt;/p>
 &lt;/ul>
 &lt;p>Recurring events provide a powerful way to maintain regular activities with minimal ongoing effort, ensuring your community always knows when and where to find your events.&lt;/p></description></item><item><title>Custom Links</title><link>https://sportshub.net.au/docs/organisers/events/custom-links/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/events/custom-links/</guid><description>
 &lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
-&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Custom links allow you to create memorable, branded URLs for your events that are much easier to share and remember than the default event ID links. Instead of sharing a long, complex URL, you can create something simple like &lt;code>https://wwww.sportshub.net.au/event/&amp;lt;username&amp;gt;/weekly-tennis&lt;/code> that participants can easily type and remember.&lt;/p>
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Custom links allow you to create memorable, branded URLs for your events that are much easier to share and remember than the default event ID links. Instead of sharing a long, complex URL, you can create something simple like &lt;code>https://www.sportshub.net.au/event/&amp;lt;username&amp;gt;/weekly-tennis&lt;/code> that participants can easily type and remember.&lt;/p>
 &lt;p>Custom links are particularly valuable for:&lt;/p>
 &lt;ul>
 &lt;li>Regular events that you promote frequently&lt;/li>

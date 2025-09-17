@@ -83,7 +83,7 @@ export const ImageCropModal = ({
   }, [imageFile, isOpen]);
 
   const getCroppedImg = useCallback(
-    async (image: HTMLImageElement, crop: PixelCrop): Promise<File> => {
+    (image: HTMLImageElement, crop: PixelCrop): Promise<File> => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 

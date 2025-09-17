@@ -1,8 +1,10 @@
 import {
+  ArrowTopRightOnSquareIcon,
   CalendarDaysIcon,
   CheckIcon,
   ClockIcon,
   CurrencyDollarIcon,
+  DocumentTextIcon,
   ExclamationTriangleIcon,
   LinkIcon,
   MapPinIcon,
@@ -11,12 +13,16 @@ import {
   UserPlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 
+import { useUser } from "@/components/utility/UserContext";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventData } from "@/interfaces/EventTypes";
+import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import {
   formatDateToString,
   formatStringToDate,
@@ -27,6 +33,8 @@ import {
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
+import { getActiveFormsForUser, getForm } from "@/services/src/forms/formsServices";
+import { FULFILMENT_SESSION_ENABLED } from "@/services/src/fulfilment/fulfilmentServices";
 import { getLocationCoordinates, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
@@ -44,6 +52,7 @@ export const EventDetailsEdit = ({
   eventPrice,
   eventRegistrationDeadline,
   eventEventLink,
+  eventFormId,
   loading,
   isActive,
   updateData,
@@ -59,12 +68,41 @@ export const EventDetailsEdit = ({
   eventPrice: number;
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
+  eventFormId: FormId | null;
   loading: boolean;
   isActive: boolean;
   updateData: (id: string, data: any) => any;
   isRecurrenceTemplate: boolean;
 }) => {
   loadGoogleMapsScript();
+
+  const { user } = useUser();
+  const router = useRouter();
+  const [forms, setForms] = useState<Form[]>([
+    {
+      formId: "null" as FormId,
+      title: "No Form" as FormTitle,
+      description: "" as FormDescription,
+      userId: "" as UserId,
+      formActive: true,
+      sectionsOrder: [],
+      sectionsMap: {},
+      lastUpdated: null,
+    },
+  ]);
+  const [attachForm, setAttachForm] = useState<Form | null>(null);
+  useEffect(() => {
+    const fetchForms = async () => {
+      const activeForms = await getActiveFormsForUser(user.userId);
+      setForms([...forms, ...activeForms]);
+      if (eventFormId) {
+        setAttachForm(await getForm(eventFormId));
+      }
+    };
+    if (user.userId !== "") {
+      fetchForms();
+    }
+  }, [user, eventFormId]);
 
   const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const [dateWarning, setDateWarning] = useState<string | null>(null);
@@ -182,6 +220,16 @@ export const EventDetailsEdit = ({
     return { eventLink: newEditEventLink };
   };
 
+  // Attach Form
+  const [newEditAttachFormId, setNewEditAttachFormId] = useState<FormId | null>(null);
+  const [attachFormId, setAttachFormId] = useState<FormId | null>(null);
+
+  const handleAttachFormUpdate = (): Partial<EventData> => {
+    setAttachFormId(newEditAttachFormId);
+    setAttachForm(forms.find((form) => form.formId === newEditAttachFormId) ?? null);
+    return { formId: newEditAttachFormId };
+  };
+
   // loading useEffect to populate states
   useEffect(() => {
     setNewEditStartDate(timestampToDateString(eventStartDate));
@@ -212,6 +260,9 @@ export const EventDetailsEdit = ({
 
     setNewEditEventLink(eventEventLink);
     setEventLink(eventEventLink);
+
+    setNewEditAttachFormId(eventFormId);
+    setAttachFormId(eventFormId);
   }, [loading]);
 
   // UseEffect triggered on certain field mutations to ensure entry is valid
@@ -266,6 +317,7 @@ export const EventDetailsEdit = ({
       ...handleSportUpdate(),
       ...handlePriceUpdate(),
       ...handleEventLinkUpdate(),
+      ...handleAttachFormUpdate(),
     };
     if (!isRecurrenceTemplate) {
       await handleCapacityUpdate();
@@ -293,6 +345,7 @@ export const EventDetailsEdit = ({
     setNewEditCapacity(capacity);
     setNewEditPrice(price);
     setNewEditEventLink(eventLink);
+    setNewEditAttachFormId(attachFormId);
   };
 
   return (
@@ -634,6 +687,59 @@ export const EventDetailsEdit = ({
             )}
           </div>
         </div>
+        {FULFILMENT_SESSION_ENABLED && (
+          <div className="px-2 flex flex-row space-x-2">
+            <DocumentTextIcon className="w-4 mt-2 shrink-0" />
+            <div>
+              {loading ? (
+                <Skeleton
+                  style={{
+                    height: 12,
+                    width: 100,
+                  }}
+                />
+              ) : (
+                <>
+                  {isEdit ? (
+                    <div className="flex">
+                      <Select
+                        label="Attach Form"
+                        size="lg"
+                        value={newEditAttachFormId ?? "null"}
+                        onChange={(e: string | any) => {
+                          setNewEditAttachFormId(e === "null" ? null : (e as FormId));
+                        }}
+                      >
+                        {forms.map((form) => {
+                          return (
+                            <Option key={form.formId} value={form.formId}>
+                              <p className="text-sm line-clamp-2">{form.title}</p>
+                            </Option>
+                          );
+                        })}
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="mt-2">
+                      {attachForm === null ? (
+                        "No form attached"
+                      ) : (
+                        <div
+                          className="flex items-center gap-2 w-fit px-1 py-0.5 -mx-1 -my-0.5 rounded cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                          onClick={() => router.push(`/organiser/forms/${attachForm.formId}/preview`)}
+                          title="View form preview"
+                        >
+                          <span>{attachForm.title}</span>
+                          <ArrowTopRightOnSquareIcon className="w-4 h-4 text-blue-600 shrink-0" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
         <div className="px-2 flex flex-row space-x-2">
           <LinkIcon className="w-4 mt-2 shrink-0" />
           <div>

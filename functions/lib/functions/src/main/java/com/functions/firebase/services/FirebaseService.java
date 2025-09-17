@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.models.requests.CallFirebaseFunctionRequest;
 import com.functions.firebase.models.responses.CallFirebaseFunctionResponse;
-import com.functions.global.services.Global;
+import com.functions.global.handlers.Global;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.logging.Logging;
@@ -44,9 +44,13 @@ public class FirebaseService {
                 "Events/Active/Public",
                 "Events/Active/Private",
                 "Events/InActive/Public",
-                "Events/InActive/Private"
-        );
+                "Events/InActive/Private");
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
+        public static final String TEMP_FORM_RESPONSE_PATH = "Forms/FormResponses/Temp";
+        public static final String SUBMITTED_FORM_RESPONSE_PATH = "Forms/FormResponses/Submitted";
+        public static final List<String> FORM_RESPONSE_PATHS = List.of(
+                SUBMITTED_FORM_RESPONSE_PATH,
+                TEMP_FORM_RESPONSE_PATH);
     }
 
     public static final String REGION = "australia-southeast1";
@@ -116,7 +120,8 @@ public class FirebaseService {
 
     public static Optional<CallFirebaseFunctionResponse> callFirebaseFunction(String functionName, Object requestData) {
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION, System.getenv("PROJECT_NAME"), functionName);
+            String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION,
+                    System.getenv("PROJECT_NAME"), functionName);
 
             HttpPost post = new HttpPost(functionUrl);
             post.setHeader("Content-Type", "application/json");
