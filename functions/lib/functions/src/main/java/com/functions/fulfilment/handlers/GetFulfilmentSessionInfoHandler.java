@@ -27,10 +27,6 @@ public class GetFulfilmentSessionInfoHandler implements Handler<GetFulfilmentSes
 
     @Override
     public GetFulfilmentSessionInfoResponse handle(GetFulfilmentSessionInfoRequest request) {
-        if (request == null || request.fulfilmentSessionId() == null) {
-            throw new IllegalArgumentException("fulfilmentSessionId is required");
-        }
-
         Optional<GetFulfilmentSessionInfoResponse> maybeResponse = FulfilmentService.getFulfilmentSessionInfo(
                 request.fulfilmentSessionId(), request.currentFulfilmentEntityId());
 

@@ -27,10 +27,6 @@ public class GetFulfilmentEntityInfoHandler implements Handler<GetFulfilmentEnti
 
     @Override
     public GetFulfilmentEntityInfoResponse handle(GetFulfilmentEntityInfoRequest request) {
-        if (request == null || request.fulfilmentSessionId() == null || request.fulfilmentEntityId() == null) {
-            throw new IllegalArgumentException("fulfilmentSessionId and fulfilmentEntityId are required");
-        }
-
         Optional<GetFulfilmentEntityInfoResponse> maybeResponse = FulfilmentService.getFulfilmentEntityInfo(
                 request.fulfilmentSessionId(), request.fulfilmentEntityId());
 

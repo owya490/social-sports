@@ -24,11 +24,6 @@ public class UpdateFulfilmentEntityWithFormResponseIdHandler implements Handler<
 
     @Override
     public String handle(UpdateFulfilmentEntityWithFormResponseIdRequest request) {
-        if (request == null || request.fulfilmentSessionId() == null || 
-            request.fulfilmentEntityId() == null || request.formResponseId() == null) {
-            throw new IllegalArgumentException("fulfilmentSessionId, fulfilmentEntityId, and formResponseId are required");
-        }
-
         boolean success = FulfilmentService.updateFulfilmentEntityWithFormResponseId(
                 request.fulfilmentSessionId(), request.fulfilmentEntityId(), request.formResponseId());
 

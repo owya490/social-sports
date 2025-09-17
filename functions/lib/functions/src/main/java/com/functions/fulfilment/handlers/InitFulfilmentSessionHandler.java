@@ -27,10 +27,6 @@ public class InitFulfilmentSessionHandler implements Handler<InitCheckoutFulfilm
 
     @Override
     public InitCheckoutFulfilmentSessionResponse handle(InitCheckoutFulfilmentSessionRequest request) {
-        if (request == null || request.eventId() == null || request.numTickets() == null) {
-            throw new IllegalArgumentException("eventId and numTickets are required");
-        }
-
         Optional<String> maybeFulfilmentSessionId = FulfilmentService.initCheckoutFulfilmentSession(
                 request.eventId(), request.numTickets());
 
