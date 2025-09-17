@@ -1,7 +1,7 @@
 import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
+import { Logger } from "@/observability/logger";
 import { Environment, getEnvironment } from "@/utilities/environment";
 import { GLOBAL_APP_CONTROLLER_URL } from "./functionsConstants";
-import { Logger } from "@/observability/logger";
 
 const functionsUtilsLogger = new Logger("functionsUtilsLogger");
 
@@ -34,7 +34,11 @@ export async function executeGlobalAppControllerFunction<S, T>(endpointType: End
   }
 
   const json = (await rawResponse.json()) as UnifiedResponse<T>;
-    if (!json?.data) {
+  // This ensures:
+  // 1. json is not null or undefined
+  // 2. json is an object
+  // 3. The "data" property exists in the object
+  if (!json || typeof json !== "object" || !("data" in json)) {
     throw new Error("Malformed response from GlobalAppController");
   }
   return json.data;
