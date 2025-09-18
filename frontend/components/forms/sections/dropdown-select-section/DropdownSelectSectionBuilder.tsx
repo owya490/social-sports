@@ -1,5 +1,6 @@
 import { DropdownSelectSection, FormSection, SectionId } from "@/interfaces/FormTypes";
-import { DocumentDuplicateIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { DocumentDuplicateIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useCallback, useRef } from "react";
 
 interface DropdownSelectSectionBuilderProps {
   section: DropdownSelectSection;
@@ -16,6 +17,90 @@ export const DropdownSelectSectionBuilder = ({
   onDelete,
   onDuplicate,
 }: DropdownSelectSectionBuilderProps) => {
+  const optionInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Helper function to check if last option is empty
+  const isLastOptionEmpty = () => {
+    return section.options[section.options.length - 1] === "";
+  };
+
+  // Helper function to update section
+  const updateSection = useCallback(
+    (updates: Partial<DropdownSelectSection>) => {
+      onUpdate({ ...section, ...updates });
+    },
+    [section, onUpdate]
+  );
+
+  // Handle option text changes
+  const handleOptionChange = useCallback(
+    (index: number, value: string) => {
+      const updatedOptions = [...section.options];
+      updatedOptions[index] = value;
+      updateSection({ options: updatedOptions });
+    },
+    [section.options, updateSection]
+  );
+
+  // Handle adding new option
+  const handleAddOption = useCallback(
+    (focusIndex?: number) => {
+      // Prevent adding new option if the last one is empty
+      if (isLastOptionEmpty()) {
+        // If focusIndex is provided, focus the last (empty) option instead
+        if (focusIndex !== undefined) {
+          setTimeout(() => {
+            const lastIndex = section.options.length - 1;
+            const targetInput = optionInputRefs.current[lastIndex];
+            if (targetInput) {
+              targetInput.focus();
+            }
+          }, 0);
+        }
+        return;
+      }
+
+      const updatedOptions = [...section.options, ""];
+      updateSection({ options: updatedOptions });
+
+      // Focus the new input after DOM update
+      if (focusIndex !== undefined) {
+        setTimeout(() => {
+          const targetInput = optionInputRefs.current[focusIndex];
+          if (targetInput) {
+            targetInput.focus();
+          }
+        }, 0);
+      }
+    },
+    [section.options, updateSection]
+  );
+
+  // Handle removing option
+  const handleRemoveOption = useCallback(
+    (index: number) => {
+      const updatedOptions = section.options.filter((_, i) => i !== index);
+
+      // Ensure we always have at least one option (add empty one if needed)
+      if (updatedOptions.length === 0) {
+        updatedOptions.push("");
+      }
+
+      updateSection({ options: updatedOptions });
+    },
+    [section.options, updateSection]
+  );
+
+  // Handle key events on option inputs
+  const handleOptionKeyDown = useCallback(
+    (e: React.KeyboardEvent, index: number) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleAddOption(index + 1);
+      }
+    },
+    [handleAddOption]
+  );
   return (
     <div className="flex flex-col gap-4">
       {/* Question Input */}
@@ -24,13 +109,7 @@ export const DropdownSelectSectionBuilder = ({
           type="text"
           value={section.question}
           placeholder="Enter your question here?"
-          onChange={(e) => {
-            const updatedSection = {
-              ...section,
-              question: e.target.value,
-            };
-            onUpdate(updatedSection);
-          }}
+          onChange={(e) => updateSection({ question: e.target.value })}
           className="w-full flex-1 px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
@@ -41,40 +120,48 @@ export const DropdownSelectSectionBuilder = ({
           <div key={index} className="flex items-center gap-2">
             <span className="text-sm text-gray-600 w-5 text-right">{index + 1}.</span>
             <input
+              ref={(el) => {
+                if (optionInputRefs.current) {
+                  optionInputRefs.current[index] = el;
+                }
+              }}
               type="text"
               value={option}
               placeholder={`Option ${index + 1}`}
-              onChange={(e) => {
-                const updatedOptions = [...section.options];
-                updatedOptions[index] = e.target.value;
-
-                // Add new option field if last field is being typed in
-                if (index === updatedOptions.length - 1 && e.target.value.trim() !== "") {
-                  updatedOptions.push("");
-                }
-                onUpdate({
-                  ...section,
-                  options: updatedOptions,
-                });
-              }}
+              onChange={(e) => handleOptionChange(index, e.target.value)}
+              onKeyDown={(e) => handleOptionKeyDown(e, index)}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
 
-            {/* Delete option button - only show if not last option */}
-            {index !== section.options.length - 1 && (
-              <button
-                onClick={() => {
-                  const updatedSection = { ...section };
-                  updatedSection.options = updatedSection.options.filter((_, i) => i !== index);
-                  onUpdate(updatedSection);
-                }}
-                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
-              >
-                <span>×</span>
-              </button>
-            )}
+            {/* Delete option button */}
+            <button
+              onClick={() => handleRemoveOption(index)}
+              disabled={section.options.length === 1 && isLastOptionEmpty()}
+              className={`p-1.5 rounded-md ${
+                section.options.length === 1 && isLastOptionEmpty()
+                  ? "text-gray-300 cursor-not-allowed"
+                  : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              }`}
+              aria-label={`Remove option ${index + 1}`}
+            >
+              <span>×</span>
+            </button>
           </div>
         ))}
+
+        {/* Add option button */}
+        <div className="w-full flex justify-center">
+          <button
+            className={`border p-2 rounded-md ${
+              isLastOptionEmpty() ? "border-gray-200 cursor-not-allowed" : "border-gray-300 hover:bg-core-hover"
+            }`}
+            onClick={() => handleAddOption()}
+            disabled={isLastOptionEmpty()}
+            aria-label="Add new option"
+          >
+            <PlusIcon width={16} className={isLastOptionEmpty() ? "text-gray-300" : "text-gray-600"} />
+          </button>
+        </div>
       </div>
 
       {/* Section Controls */}
@@ -95,17 +182,12 @@ export const DropdownSelectSectionBuilder = ({
         </button>
         <span className="text-sm text-gray-600">Required</span>
         <button
-          onClick={() => {
-            const updatedSection = {
-              ...section,
-              required: !section.required,
-            };
-            onUpdate(updatedSection);
-          }}
+          onClick={() => updateSection({ required: !section.required })}
           className="relative w-9 h-5 rounded-full transition-colors duration-300"
           style={{
             backgroundColor: section.required ? "#4CAF50" : "#ccc",
           }}
+          aria-label={`Toggle required field ${section.required ? "off" : "on"}`}
         >
           <div
             className={`absolute w-4 h-4 bg-white rounded-full top-0.5 transition-all duration-300 ${
