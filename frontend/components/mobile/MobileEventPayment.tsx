@@ -2,7 +2,11 @@
 
 import { Logger } from "@/observability/logger";
 import { timestampToDateString } from "@/services/src/datetimeUtils";
-import { evaluateFulfilmentSessionEnabled, getNextFulfilmentEntityUrl, initFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
+import {
+  evaluateFulfilmentSessionEnabled,
+  getNextFulfilmentEntityUrl,
+  initFulfilmentSession,
+} from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
@@ -161,8 +165,8 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                           return;
                         }
 
-                        window.open(nextEntityUrl, "_blank", "noopener,noreferrer");
-                        props.setLoading(false);
+                        router.push(nextEntityUrl);
+                        // props.setLoading(false);
                         return;
 
                         // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
