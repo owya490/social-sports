@@ -3,7 +3,7 @@ import { EventId } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
-  FULFILMENT_SESSION_ENABLED,
+  evaluateFulfilmentSessionEnabled,
   getNextFulfilmentEntityUrl,
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
@@ -161,7 +161,7 @@ export default function EventPayment(props: EventPaymentProps) {
                       window.scrollTo(0, 0);
 
                       // We'll put this behind a flag for now just in case we need to quickly disable this.
-                      if (FULFILMENT_SESSION_ENABLED) {
+                      if (evaluateFulfilmentSessionEnabled("", props.eventId)) {
                         try {
                           const { fulfilmentSessionId } = await initFulfilmentSession({
                             type: "checkout",
