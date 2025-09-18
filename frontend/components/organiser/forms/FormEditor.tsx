@@ -76,27 +76,17 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   // Helper function to filter empty options from dropdown sections
   const filterEmptyOptions = (form: Form): Form => {
     const filteredSectionsMap = { ...form.sectionsMap };
-    let hasFilteredOptions = false;
 
     Object.keys(filteredSectionsMap).forEach((sectionId) => {
       const section = filteredSectionsMap[sectionId as SectionId];
       if (section.type === FormSectionType.DROPDOWN_SELECT && "options" in section) {
-        // Filter out empty options, but ensure at least one option remains
-        const originalLength = section.options.length;
+        // Filter out empty options, but ensure at least one option remains. Maybe consider throwing an error here
         const nonEmptyOptions = section.options.filter((option: string) => option.trim() !== "");
         const finalOptions = nonEmptyOptions.length > 0 ? nonEmptyOptions : [""];
-
-        if (originalLength !== finalOptions.length) {
-          hasFilteredOptions = true;
-        }
 
         section.options = finalOptions;
       }
     });
-
-    if (hasFilteredOptions) {
-      console.log("Form saved: Empty options were automatically removed from dropdown questions.");
-    }
 
     return { ...form, sectionsMap: filteredSectionsMap };
   };
