@@ -322,7 +322,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       />
       {/* Main Form Area */}
       <div className="flex-1 w-full flex justify-center">
-        <div className="flex-1 flex flex-col gap-5 max-w-3xl relative pb-20 mt-16 md:ml-0  md:mt-0">
+        <div className="flex-1 flex flex-col gap-5 max-w-3xl relative pb-24 pt-4 md:ml-0 md:pb-20 md:pt-0">
           {/* Form Title Card */}
           <HeaderSectionBuilder
             formTitle={form.title}
