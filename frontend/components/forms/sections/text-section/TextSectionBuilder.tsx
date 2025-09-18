@@ -1,5 +1,5 @@
 import { FormSection, SectionId } from "@/interfaces/FormTypes";
-import { TrashIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+import { DocumentDuplicateIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 interface TextSectionBuilderProps {
   section: FormSection;
@@ -9,12 +9,12 @@ interface TextSectionBuilderProps {
   onDuplicate: (section: FormSection, sectionId: SectionId) => void;
 }
 
-export const TextSectionBuilder = ({ 
-  section, 
-  sectionId, 
-  onUpdate, 
-  onDelete, 
-  onDuplicate 
+export const TextSectionBuilder = ({
+  section,
+  sectionId,
+  onUpdate,
+  onDelete,
+  onDuplicate,
 }: TextSectionBuilderProps) => {
   return (
     <div className="flex flex-col gap-4">
@@ -48,20 +48,20 @@ export const TextSectionBuilder = ({
         <span className="text-sm text-gray-600">Required</span>
         <button
           onClick={() => {
-            const updatedSection = { 
-              ...section, 
-              required: !section.required 
+            const updatedSection = {
+              ...section,
+              required: !section.required,
             };
             onUpdate(updatedSection);
           }}
           className="relative w-9 h-5 rounded-full transition-colors duration-300"
           style={{
-            backgroundColor: section.required ? '#4CAF50' : '#ccc'
+            backgroundColor: section.required ? "#4CAF50" : "#ccc",
           }}
         >
-          <div 
+          <div
             className={`absolute w-4 h-4 bg-white rounded-full top-0.5 transition-all duration-300 ${
-              section.required ? 'left-[18px]' : 'left-0.5'
+              section.required ? "left-[18px]" : "left-0.5"
             }`}
           />
         </button>
