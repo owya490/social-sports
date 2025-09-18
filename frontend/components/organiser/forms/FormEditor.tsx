@@ -73,16 +73,47 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     };
   }, [isFormModified]);
 
+  // Helper function to filter empty options from dropdown sections
+  const filterEmptyOptions = (form: Form): Form => {
+    const filteredSectionsMap = { ...form.sectionsMap };
+    let hasFilteredOptions = false;
+
+    Object.keys(filteredSectionsMap).forEach((sectionId) => {
+      const section = filteredSectionsMap[sectionId as SectionId];
+      if (section.type === FormSectionType.DROPDOWN_SELECT && "options" in section) {
+        // Filter out empty options, but ensure at least one option remains
+        const originalLength = section.options.length;
+        const nonEmptyOptions = section.options.filter((option: string) => option.trim() !== "");
+        const finalOptions = nonEmptyOptions.length > 0 ? nonEmptyOptions : [""];
+
+        if (originalLength !== finalOptions.length) {
+          hasFilteredOptions = true;
+        }
+
+        section.options = finalOptions;
+      }
+    });
+
+    if (hasFilteredOptions) {
+      console.log("Form saved: Empty options were automatically removed from dropdown questions.");
+    }
+
+    return { ...form, sectionsMap: filteredSectionsMap };
+  };
+
   const handleSubmitClick = async () => {
     setIsSubmitting(true);
     if (isFormModified) {
+      // Filter empty options before saving
+      const formToSave = filterEmptyOptions(form);
+
       if (formId === CREATE_FORM_ID) {
         if (form.userId !== "") {
-          const newFormId = await createForm(form);
+          const newFormId = await createForm(formToSave);
           router.push(`/organiser/forms/${newFormId}/editor`);
         }
       } else {
-        updateActiveForm(form, formId);
+        updateActiveForm(formToSave, formId);
       }
     }
     // sleep (1s)
@@ -254,7 +285,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       {/* Back Button Warning Dialog */}
       {showBackWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md text-center">
+          <div className="bg-white p-6 rounded-lg max-w-md text-center mx-4">
             <h2 className="text-xl font-bold mb-4">Are you sure?</h2>
             <p className="text-gray-600 mb-6">Any unsaved changes will be lost. Do you want to continue?</p>
             <div className="flex justify-center gap-3">
