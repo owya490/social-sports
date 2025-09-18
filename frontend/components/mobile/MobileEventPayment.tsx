@@ -2,11 +2,7 @@
 
 import { Logger } from "@/observability/logger";
 import { timestampToDateString } from "@/services/src/datetimeUtils";
-import {
-  FULFILMENT_SESSION_ENABLED,
-  getNextFulfilmentEntityUrl,
-  initFulfilmentSession,
-} from "@/services/src/fulfilment/fulfilmentServices";
+import { evaluateFulfilmentSessionEnabled, getNextFulfilmentEntityUrl, initFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
 import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
@@ -140,7 +136,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     window.scrollTo(0, 0);
 
                     // We'll put this behind a flag for now just in case we need to quickly disable this.
-                    if (FULFILMENT_SESSION_ENABLED) {
+                    if (evaluateFulfilmentSessionEnabled("", props.eventId)) {
                       try {
                         const { fulfilmentSessionId } = await initFulfilmentSession({
                           type: "checkout",

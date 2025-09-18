@@ -155,6 +155,7 @@ export default function EventPage({ params }: EventPageProps) {
               setCurrSidebarPage={setCurrSidebarPage}
               eventName={eventName}
               eventStartDate={eventStartDate}
+              user={user}
             />
           </div>
           <div id="event-drilldown-details-page" className="w-full mb-20 sm:mb-0">

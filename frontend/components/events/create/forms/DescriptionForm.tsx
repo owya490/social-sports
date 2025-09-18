@@ -1,7 +1,7 @@
 "use client";
 import { FormId } from "@/interfaces/FormTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { FULFILMENT_SESSION_ENABLED } from "@/services/src/fulfilment/fulfilmentServices";
+import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
 import DescriptionRichTextEditor from "../../../editor/DescriptionRichTextEditor";
 import { FormSelector } from "./FormSelector";
 import { FormWrapper } from "./FormWrapper";
@@ -37,7 +37,7 @@ export function DescriptionForm({ description, formId, updateField, user }: Desc
           <div className="w-full mt-8">
             <DescriptionRichTextEditor description={description} updateDescription={updateDescription} />
           </div>
-          {FULFILMENT_SESSION_ENABLED && (
+          {evaluateFulfilmentSessionEnabled(user.userId, "") && (
             <>
               <div className="w-full mt-8">
                 <FormSelector formId={formId} updateField={updateFormId} user={user} />
