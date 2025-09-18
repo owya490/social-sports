@@ -2,6 +2,7 @@
 
 import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionResponse";
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
+import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
 import LoadingSkeletonFormGalleryCard from "@/components/loading/LoadingSkeletonFormGalleryCard";
 import { FormId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
@@ -139,7 +140,9 @@ export const FormPreviewCard = ({
             {/* Action Buttons - only show on hover */}
             <div className={` mt-4 transition-all duration-300 text-wrap ${isExpanded ? "opacity-100" : "opacity-0"}`}>
               {/* Form Description */}
-              <p className="text-xs text-left mt-4 line-clamp-5">{formDescription}</p>
+              <p className="text-xs text-left font-light mt-4 line-clamp-5">
+                <RichTextEditorContent description={formDescription} />
+              </p>
               <div className="flex gap-3 mt-4">
                 {/* Form Editor */}
                 <Link

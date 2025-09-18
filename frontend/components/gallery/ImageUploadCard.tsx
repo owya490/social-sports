@@ -1,6 +1,6 @@
 "use client";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ImageCropModal } from "./ImageCropModal";
 
 interface ImageUploadCardProps {
@@ -11,6 +11,7 @@ interface ImageUploadCardProps {
 export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps) => {
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -20,6 +21,8 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
       const validTypes = ["image/jpeg", "image/png"];
       if (!validTypes.includes(file.type)) {
         alert("Please upload a valid image file (jpg, png).");
+        // Clear the input value to allow selecting the same file again
+        e.target.value = "";
         return;
       }
 
@@ -32,6 +35,19 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
     onImageUploaded(croppedFile);
     setSelectedFile(null);
     setShowCropModal(false);
+    // Clear the input value to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropModal(false);
+    setSelectedFile(null);
+    // Clear the input value to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const aspectRatio = type === "thumbnail" ? 1 : 16 / 9;
@@ -45,6 +61,7 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
         }`}
       >
         <input
+          ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={handleFileSelect}
@@ -61,10 +78,7 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
       {selectedFile && (
         <ImageCropModal
           isOpen={showCropModal}
-          onClose={() => {
-            setShowCropModal(false);
-            setSelectedFile(null);
-          }}
+          onClose={handleCropCancel}
           onCropComplete={handleCropComplete}
           imageFile={selectedFile}
           aspectRatio={aspectRatio}

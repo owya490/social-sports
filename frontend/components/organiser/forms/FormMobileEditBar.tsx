@@ -1,13 +1,14 @@
 "use client";
 
-import { DocumentTextIcon, ListBulletIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon, ListBulletIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { Spinner } from "@material-tailwind/react";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import { FormNavButton } from "./FormUtilityComponents";
-import { Spinner } from "@material-tailwind/react";
 
 interface FormMobileEditBarProps {
   onAddTextSection: () => void;
   onAddDropdownSection: () => void;
+  onAddImageSection: () => void;
   onSaveForm: () => void;
   isFormModified: boolean;
   isSubmitting: boolean;
@@ -16,6 +17,7 @@ interface FormMobileEditBarProps {
 const FormMobileEditBar = ({
   onAddTextSection,
   onAddDropdownSection,
+  onAddImageSection,
   onSaveForm,
   isFormModified,
   isSubmitting,
@@ -29,6 +31,10 @@ const FormMobileEditBar = ({
 
         <FormNavButton onClick={onAddDropdownSection} tooltipContent="Add Dropdown Question">
           <ListBulletIcon className="w-5 h-5 stroke-1 text-gray-600" />
+        </FormNavButton>
+
+        <FormNavButton onClick={onAddImageSection} tooltipContent="Add Image Section">
+          <PhotoIcon className="w-5 h-5 stroke-1 text-gray-600" />
         </FormNavButton>
         {isSubmitting ? (
           <Spinner className="w-10 h-5" />

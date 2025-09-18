@@ -2,6 +2,8 @@
 
 import { DropdownSelectSectionBuilder } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionBuilder";
 import { HeaderSectionBuilder } from "@/components/forms/sections/header-section/HeaderSectionBuilder";
+import { ImageSectionBuilder } from "@/components/forms/sections/image-section/ImageSectionBuilder";
+import { ImageSelectionDialog } from "@/components/forms/sections/image-section/ImageSelectionDialog";
 import { TextSectionBuilder } from "@/components/forms/sections/text-section/TextSectionBuilder";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
@@ -13,6 +15,7 @@ import {
   FormSection,
   FormSectionType,
   FormTitle,
+  ImageSection,
   SectionId,
 } from "@/interfaces/FormTypes";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
@@ -39,6 +42,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   const [form, setForm] = useState<Form>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false);
+  const [showImageSelectionDialog, setShowImageSelectionDialog] = useState(false);
   const isFormModified =
     form.title !== initialForm.title || form.description !== initialForm.description || form.sectionsOrder.length > 0;
 
@@ -154,6 +158,17 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     }));
   };
 
+  const handleImageSelectionComplete = (imageUrl: string) => {
+    addSection({
+      type: FormSectionType.IMAGE,
+      question: "",
+      title: "",
+      imageUrl: imageUrl,
+      required: false,
+    });
+    setShowImageSelectionDialog(false);
+  };
+
   const moveSectionUp = (sectionId: SectionId) => {
     setForm((prevForm) => {
       const currentIndex = prevForm.sectionsOrder.indexOf(sectionId);
@@ -233,6 +248,22 @@ const FormEditor = ({ formId }: FormEditorParams) => {
             onDuplicate={duplicateSection}
           />
         );
+
+      case FormSectionType.IMAGE:
+        return (
+          <ImageSectionBuilder
+            imageSection={section as ImageSection}
+            sectionId={sectionId}
+            onUpdate={(updatedSection) => {
+              setForm((prevForm) => ({
+                ...prevForm,
+                sectionsMap: { ...prevForm.sectionsMap, [sectionId]: updatedSection },
+              }));
+            }}
+            onDelete={deleteSection}
+            onDuplicate={duplicateSection}
+          />
+        );
     }
   };
   if (isLoading) {
@@ -293,6 +324,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
             required: true,
           })
         }
+        onAddImageSection={() => setShowImageSelectionDialog(true)}
         onSaveForm={handleSubmitClick}
         isFormModified={isFormModified}
         isSubmitting={isSubmitting}
@@ -316,6 +348,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
             required: true,
           })
         }
+        onAddImageSection={() => setShowImageSelectionDialog(true)}
         onSaveForm={handleSubmitClick}
         isFormModified={isFormModified}
         isSubmitting={isSubmitting}
@@ -375,6 +408,13 @@ const FormEditor = ({ formId }: FormEditorParams) => {
           </ReactSortable>
         </div>
       </div>
+
+      {/* Image Selection Dialog */}
+      <ImageSelectionDialog
+        isOpen={showImageSelectionDialog}
+        onClose={() => setShowImageSelectionDialog(false)}
+        onImageSelected={handleImageSelectionComplete}
+      />
     </div>
   );
 };
