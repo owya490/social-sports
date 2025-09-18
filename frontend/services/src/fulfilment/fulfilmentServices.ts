@@ -25,7 +25,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import { getCompleteFulfilmentSessionUrl, getDeleteFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = true;
+export const FULFILMENT_SESSION_ENABLED = false;
 
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 
