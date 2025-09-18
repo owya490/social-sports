@@ -1,6 +1,7 @@
 "use client";
 
-import { evaluateFulfilmentSessionEnabled, useUser } from "@components/utility/UserContext";
+import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
+import { useUser } from "@components/utility/UserContext";
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowPathIcon,
