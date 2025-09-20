@@ -24,11 +24,21 @@
 
     <url>
 
-        <loc>https://www.sportshub.net.au/contact</loc>
+        <loc>https://www.sportshub.net.au/aboutUs</loc>
 
         <changefreq>weekly</changefreq>
         
         <priority>0.6</priority>
+
+    </url>
+
+    <url>
+
+        <loc>https://www.sportshub.net.au/contact</loc>
+
+        <changefreq>weekly</changefreq>
+        
+        <priority>0.4</priority>
 
     </url>
     
