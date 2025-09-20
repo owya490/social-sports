@@ -6,6 +6,7 @@ import noSearchResultLineDrawing from "@/public/images/no-search-result-line-dra
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
+import { Head } from "next/document";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
@@ -133,6 +134,34 @@ export default function Dashboard() {
   }, [showLoginSuccess]);
 
   return (
+    <>
+      <Head>
+        <title>SPORTSHUB | Find your next social sport session!</title>
+        <meta
+          name="description"
+          content="Sportshub helps you find and book local sports events. Explore upcoming tournaments, register easily, and enjoy the game."
+        />
+        <meta name="robots" content="index, follow" />
+
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "SPORTSHUB",
+              "url": "https://www.sportshub.net.au",
+              "logo": "https://www.sportshub.net.au/images/logo.png",
+              "sameAs": [
+                "https://www.instagram.com/sportshub.net.au/",
+                "https://www.linkedin.com/company/sportshub-au"
+              ]
+            }),
+          }}
+        />
+      </Head>
+
     <div>
       <div className="flex justify-center">
         <FilterBanner
@@ -192,5 +221,6 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+    </>
   );
 }
