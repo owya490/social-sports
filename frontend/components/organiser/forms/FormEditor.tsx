@@ -100,12 +100,12 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       setShowBackWarning(true);
       return;
     }
-    window.history.back();
+    router.push(`/organiser/forms/gallery`);
   };
 
   const handleConfirmBack = () => {
     setShowBackWarning(false);
-    window.history.back();
+    router.push(`/organiser/forms/gallery`);
   };
 
   const updateFormTitle = (newTitle: FormTitle) => {
@@ -122,8 +122,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     }));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const duplicateSection = (section: FormSection, sectionId: SectionId) => {
+  const duplicateSection = (section: FormSection) => {
     const newSectionId: SectionId = uuidv4() as SectionId; // Use UUID for uniqueness
 
     setForm((prevForm) => ({
@@ -162,7 +161,6 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     addSection({
       type: FormSectionType.IMAGE,
       question: "",
-      title: "",
       imageUrl: imageUrl,
       required: false,
     });

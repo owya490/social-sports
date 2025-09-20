@@ -3,7 +3,7 @@ import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { getDownloadURL, listAll, ref, StorageReference, uploadBytes } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
-import { storage } from "./firebase";
+import { storage } from "../firebase";
 
 export interface AllImageData {
   image: string | undefined;

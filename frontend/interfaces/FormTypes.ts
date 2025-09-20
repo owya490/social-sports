@@ -74,7 +74,6 @@ export interface DateTimeSection extends AbstractSection {
 
 export interface ImageSection extends AbstractSection {
   type: FormSectionType.IMAGE;
-  title: string; // title for the image card
   imageUrl: string;
 }
 

@@ -1,10 +1,11 @@
 "use client";
+import { ImageConfig, ImageType } from "@/services/src/images/imageTypes";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useRef, useState } from "react";
 import { ImageCropModal } from "./ImageCropModal";
 
 interface ImageUploadCardProps {
-  type: "thumbnail" | "image";
+  type: ImageType;
   onImageUploaded: (file: File) => void;
 }
 
@@ -50,15 +51,14 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
     }
   };
 
-  const aspectRatio = type === "thumbnail" ? 1 : 16 / 9;
-  const aspectText = type === "thumbnail" ? "1:1 (Square)" : "16:9";
+  const config = ImageConfig[type];
+  const aspectRatio = config.defaultAspectRatio;
+  const aspectText = config.aspectText;
 
   return (
     <>
       <div
-        className={`relative border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors cursor-pointer group ${
-          type === "thumbnail" ? "aspect-square" : "aspect-video"
-        }`}
+        className={`relative border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors cursor-pointer group ${config.containerAspect}`}
       >
         <input
           ref={fileInputRef}
@@ -69,8 +69,8 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
         />
 
         <div className="flex flex-col items-center justify-center h-full p-4 text-gray-500 group-hover:text-gray-600">
-          <PlusIcon className="w-8 h-8 mb-2" />
-          <p className="text-sm font-medium text-center">Add {type === "thumbnail" ? "Thumbnail" : "Event Image"}</p>
+          <PlusIcon className="w-8 h-8 md:mb-2" />
+          <p className="text-sm font-medium text-center">Add {config.displayName}</p>
           <p className="text-xs text-gray-400 mt-1">{aspectText}</p>
         </div>
       </div>

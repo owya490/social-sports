@@ -3,7 +3,8 @@
 import { BlackHighlightButton, InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { ImageSection } from "@/components/gallery/ImageSection";
 import { useUser } from "@/components/utility/UserContext";
-import { getUsersFormImagesUrls, uploadFormImage } from "@/services/src/imageService";
+import { getUsersFormImagesUrls, uploadFormImage } from "@/services/src/images/imageService";
+import { ImageType } from "@/services/src/images/imageTypes";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import imageCompression from "browser-image-compression";
 import { useEffect, useState } from "react";
@@ -131,9 +132,9 @@ export const ImageSelectionDialog = ({ isOpen, onClose, onImageSelected }: Image
           {/* Image Selection */}
           <ImageSection
             title="Select or Upload Form Image"
-            description="Choose an existing form image or upload a new one. The image will be cropped to 16:9 aspect ratio for best display."
-            type="image"
-            imageUrls={formImageUrls.slice(0, 10)} // Show up to 10 images
+            description="Choose an existing form image or upload a new one. This can be either landscape (5:4) or portrait (4:5) orientation."
+            type={ImageType.FORM}
+            imageUrls={formImageUrls.slice(0, 5)} // Show up to 5 images
             onImageUploaded={handleImageUpload}
             gridCols="grid-cols-2 md:grid-cols-3"
             selectedImageUrl={selectedImageUrl}

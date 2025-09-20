@@ -77,6 +77,11 @@ public class FormsUtils {
                         return false;
                     }
                     break;
+                case IMAGE:
+                    if (!((ImageSection) section).hasImageUrl()) {
+                        return false;
+                    }
+                    break;
                 default:
                     logger.error("[FormsUtils] Unknown section type: {}", section.getType());
                     return false;

@@ -2,7 +2,7 @@ import { FormData } from "@/app/(footer)/event/create/page";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
-import { getThumbnailUrlsBySport } from "@/services/src/imageService";
+import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
 import { displayPrice } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 

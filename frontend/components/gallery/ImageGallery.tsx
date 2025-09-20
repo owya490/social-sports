@@ -6,7 +6,7 @@ import {
   getUsersEventThumbnailsUrls,
   uploadEventImage,
   uploadEventThumbnail,
-} from "@/services/src/imageService";
+} from "@/services/src/images/imageService";
 import imageCompression from "browser-image-compression";
 import { useEffect, useState } from "react";
 import { ImageSection } from "./ImageSection";

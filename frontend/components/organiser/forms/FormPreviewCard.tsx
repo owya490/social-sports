@@ -1,8 +1,9 @@
 "use client";
 
-import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionResponse";
-import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
 import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
+import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionResponse";
+import { ImageSectionResponse } from "@/components/forms/sections/image-section/ImageSectionResponse";
+import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
 import LoadingSkeletonFormGalleryCard from "@/components/loading/LoadingSkeletonFormGalleryCard";
 import { FormId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
@@ -96,6 +97,8 @@ export const FormPreviewCard = ({
                     canEdit={false}
                   />
                 );
+              case FormSectionType.IMAGE:
+                return <ImageSectionResponse key={sectionId} imageSection={section} />;
               default:
                 return null;
             }
@@ -140,7 +143,7 @@ export const FormPreviewCard = ({
             {/* Action Buttons - only show on hover */}
             <div className={` mt-4 transition-all duration-300 text-wrap ${isExpanded ? "opacity-100" : "opacity-0"}`}>
               {/* Form Description */}
-              <p className="text-xs text-left font-light mt-4 line-clamp-5">
+              <p className="text-xs text-left font-light mt-4 h-32 overflow-hidden">
                 <RichTextEditorContent description={formDescription} />
               </p>
               <div className="flex gap-3 mt-4">
@@ -159,8 +162,7 @@ export const FormPreviewCard = ({
                   className="w-full py-3 px-4 hover:bg-core-hover border border-core-outline rounded-lg text-xs transition-colors duration-200 text-center"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Form
-                  <br className="hidden md:block" />
+                  Form <br className="hidden md:block" />
                   Preview
                 </Link>
               </div>

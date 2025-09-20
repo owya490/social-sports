@@ -26,15 +26,15 @@ const FormDesktopEditBar = ({
     <div className="hidden md:flex sticky top-40 w-fit bg-white rounded-lg p-6 mr-5 flex-col gap-4 items-center h-fit border border-gray-200 z-40">
       <div className="flex flex-col space-y-3">
         <FormNavButton onClick={onAddTextSection} tooltipContent="Add Text Question">
-          <DocumentTextIcon className="w-6 h-6 stroke-1 text-gray-600" />
+          <DocumentTextIcon className="w-6 h-6 stroke-1 text-black" />
         </FormNavButton>
 
         <FormNavButton onClick={onAddDropdownSection} tooltipContent="Add Dropdown Question">
-          <ListBulletIcon className="w-6 h-6 stroke-1 text-gray-600" />
+          <ListBulletIcon className="w-6 h-6 stroke-1 text-black" />
         </FormNavButton>
 
         <FormNavButton onClick={onAddImageSection} tooltipContent="Add Image Section">
-          <PhotoIcon className="w-6 h-6 stroke-1 text-gray-600" />
+          <PhotoIcon className="w-6 h-6 stroke-1 text-black" />
         </FormNavButton>
 
         {isSubmitting ? (

@@ -1,6 +1,6 @@
 import { ImageSection } from "@/components/gallery/ImageSection";
 import { UserData } from "@/interfaces/UserTypes";
-import { AllImageData, uploadEventImage, uploadEventThumbnail } from "@/services/src/imageService";
+import { AllImageData, uploadEventImage, uploadEventThumbnail } from "@/services/src/images/imageService";
 import imageCompression from "browser-image-compression";
 import { useState } from "react";
 

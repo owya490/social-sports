@@ -3,6 +3,7 @@ import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes
 import { UserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { getActiveFormsForUser } from "@/services/src/forms/formsServices";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 
@@ -32,23 +33,23 @@ export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) =
     lastUpdated: null,
   };
 
+  const fetchUserForms = async () => {
+    if (!user.userId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      const userForms = await getActiveFormsForUser(user.userId);
+      setForms([EMPTY_FORM, ...userForms]);
+    } catch (err) {
+      logger.error(`Failed to load user forms: ${err}`);
+      setError("Failed to load forms");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUserForms = async () => {
-      if (!user.userId) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-        const userForms = await getActiveFormsForUser(user.userId);
-        setForms([EMPTY_FORM, ...userForms]);
-      } catch (err) {
-        logger.error(`Failed to load user forms: ${err}`);
-        setError("Failed to load forms");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserForms();
   }, [user.userId]);
 
@@ -77,24 +78,26 @@ export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) =
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <label className="text-black text-lg font-semibold">Select a Registration Form</label>
-          <p className="text-sm mt-2 mb-4">
-            Choose an existing form to collect participant registrations for this event.
-          </p>
+      <div>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <label className="text-black text-lg font-semibold">Select a Registration Form</label>
+          </div>
+          <div className="ml-2">
+            <InvertedHighlightButton
+              type="button"
+              onClick={() => window.open("/organiser/forms/create-form/editor", "_blank")}
+            >
+              Create Form
+            </InvertedHighlightButton>
+          </div>
         </div>
-        <div className="ml-4">
-          <InvertedHighlightButton
-            type="button"
-            onClick={() => window.open("/organiser/forms/create-form/editor", "_blank")}
-          >
-            Create Form
-          </InvertedHighlightButton>
-        </div>
+        <p className="text-sm mt-2 mb-4">
+          Choose an existing form to collect participant registrations for this event.
+        </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="mt-4 flex ">
         <Select
           key={`form-select-${formId || "none"}`}
           size="lg"
@@ -108,6 +111,11 @@ export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) =
             </Option>
           ))}
         </Select>
+        <div className="flex items-center justify-center ml-2 ">
+          <button onClick={fetchUserForms} className="hover:bg-core-hover rounded-md p-1">
+            <ArrowPathIcon className="h-5 w-5 text-black" />
+          </button>
+        </div>
       </div>
     </div>
   );

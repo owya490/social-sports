@@ -26,15 +26,15 @@ const FormMobileEditBar = ({
     <div className="md:hidden fixed top-20 left-20 right-2 z-40">
       <div className="bg-white rounded-lg border border-gray-200 flex justify-center items-center gap-4">
         <FormNavButton onClick={onAddTextSection} tooltipContent="Add Text Question">
-          <DocumentTextIcon className="w-5 h-5 stroke-1 text-gray-600" />
+          <DocumentTextIcon className="w-5 h-5 stroke-1 text-black" />
         </FormNavButton>
 
         <FormNavButton onClick={onAddDropdownSection} tooltipContent="Add Dropdown Question">
-          <ListBulletIcon className="w-5 h-5 stroke-1 text-gray-600" />
+          <ListBulletIcon className="w-5 h-5 stroke-1 text-black" />
         </FormNavButton>
 
         <FormNavButton onClick={onAddImageSection} tooltipContent="Add Image Section">
-          <PhotoIcon className="w-5 h-5 stroke-1 text-gray-600" />
+          <PhotoIcon className="w-5 h-5 stroke-1 text-black" />
         </FormNavButton>
         {isSubmitting ? (
           <Spinner className="w-10 h-5" />

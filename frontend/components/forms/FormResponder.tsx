@@ -27,6 +27,7 @@ import { Tooltip } from "@material-tailwind/react";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { ImageSectionResponse } from "./sections/image-section/ImageSectionResponse";
 
 const formResponderLogger = new Logger("formResponderLogger");
 
@@ -304,6 +305,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
                       canEdit={canEdit}
                     />
                   );
+                case FormSectionType.IMAGE:
+                  return <ImageSectionResponse key={sectionId} imageSection={section} />;
                 default:
                   return null;
               }
