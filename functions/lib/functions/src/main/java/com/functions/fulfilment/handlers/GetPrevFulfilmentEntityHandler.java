@@ -27,10 +27,6 @@ public class GetPrevFulfilmentEntityHandler implements Handler<GetPrevFulfilment
 
     @Override
     public GetPrevFulfilmentEntityResponse handle(GetPrevFulfilmentEntityRequest request) {
-        if (request == null || request.fulfilmentSessionId() == null || request.currentFulfilmentEntityId() == null) {
-            throw new IllegalArgumentException("fulfilmentSessionId and currentFulfilmentEntityId are required");
-        }
-
         Optional<GetPrevFulfilmentEntityResponse> maybeResponse = FulfilmentService.getPrevFulfilmentEntityByCurrentId(
                 request.fulfilmentSessionId(), request.currentFulfilmentEntityId());
 

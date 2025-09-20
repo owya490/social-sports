@@ -3,7 +3,7 @@
 import { Logger } from "@/observability/logger";
 import { timestampToDateString } from "@/services/src/datetimeUtils";
 import {
-  FULFILMENT_SESSION_ENABLED,
+  evaluateFulfilmentSessionEnabled,
   getNextFulfilmentEntityUrl,
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
@@ -140,7 +140,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     window.scrollTo(0, 0);
 
                     // We'll put this behind a flag for now just in case we need to quickly disable this.
-                    if (FULFILMENT_SESSION_ENABLED) {
+                    if (evaluateFulfilmentSessionEnabled("", props.eventId)) {
                       try {
                         const { fulfilmentSessionId } = await initFulfilmentSession({
                           type: "checkout",
@@ -165,8 +165,8 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                           return;
                         }
 
-                        window.open(nextEntityUrl, "_blank", "noopener,noreferrer");
-                        props.setLoading(false);
+                        router.push(nextEntityUrl);
+                        // props.setLoading(false);
                         return;
 
                         // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365

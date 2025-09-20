@@ -29,7 +29,7 @@ export const ProfilePhotoPanel = ({ user, setUser }: ProfilePhotoPanelProps) => 
 
   // Validate image type
   const validateImage = (file: File) => {
-    const validTypes = ["image/jpeg", "image/png", "image/gif"];
+    const validTypes = ["image/jpeg", "image/png"];
     if (!validTypes.includes(file.type)) {
       return false;
     }

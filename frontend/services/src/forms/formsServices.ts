@@ -9,13 +9,13 @@ import {
   SaveTempFormResponseRequest,
   SaveTempFormResponseResponse,
 } from "@/interfaces/FormTypes";
-import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
+import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { PrivateUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
-import { getGlobalAppControllerUrl } from "../functions/functionsUtils";
+import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
@@ -188,38 +188,19 @@ export async function saveTempFormResponse(formResponse: FormResponse): Promise<
   const { formId, eventId } = formResponse;
   formsServiceLogger.info(`saveTempFormResponse: formId=${formId}, eventId=${eventId}`);
 
-  const request: UnifiedRequest<SaveTempFormResponseRequest> = {
-    endpointType: EndpointType.SAVE_TEMP_FORM_RESPONSE,
-    data: { formResponse },
-  };
-
   try {
-    const rawResponse = await fetch(getGlobalAppControllerUrl(), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(request),
+    const response = await executeGlobalAppControllerFunction<
+      SaveTempFormResponseRequest,
+      SaveTempFormResponseResponse
+    >(EndpointType.SAVE_TEMP_FORM_RESPONSE, {
+      formResponse,
     });
 
-    if (!rawResponse.ok) {
-      const errorText = await rawResponse.text().catch(() => "");
-      formsServiceLogger.error(
-        `saveTempFormResponse: Failed to save form response. status=${rawResponse.status} body=${errorText}`
-      );
-      throw new Error(`Failed to save form response (status ${rawResponse.status})`);
-    }
-
-    const json = (await rawResponse.json()) as UnifiedResponse<SaveTempFormResponseResponse>;
-    if (!json?.data || typeof json.data.formResponseId !== "string") {
-      throw new Error("Malformed response from GlobalAppController");
-    }
     formsServiceLogger.info(
-      `saveTempFormResponse: Successfully saved form response with formResponseId: ${json.data.formResponseId}`
+      `saveTempFormResponse: Successfully saved form response with formResponseId: ${response.formResponseId}`
     );
-    formsServiceLogger.debug(`saveTempFormResponse: Response data: ${JSON.stringify(json.data)}`);
-    return json.data.formResponseId;
+    formsServiceLogger.debug(`saveTempFormResponse: Response data: ${JSON.stringify(response)}`);
+    return response.formResponseId;
   } catch (error) {
     formsServiceLogger.error(
       `saveTempFormResponse: Failed to create submitted form response with formResponse: ${formResponse}`

@@ -11,13 +11,14 @@ import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { FormId } from "@/interfaces/FormTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
 import {
+  getImageAndThumbnailUrlsWithDefaults,
   getUsersEventImagesUrls,
   getUsersEventThumbnailsUrls,
-  uploadAndGetImageAndThumbnailUrls,
 } from "@/services/src/imageService";
 import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
@@ -36,8 +37,8 @@ export type FormData = {
   capacity: number;
   name: string;
   description: string;
-  image: File | string | undefined;
-  thumbnail: File | string | undefined;
+  image: string | undefined;
+  thumbnail: string | undefined;
   tags: string[];
   isPrivate: boolean;
   startTime: string;
@@ -52,6 +53,7 @@ export type FormData = {
   eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
   hideVacancy: boolean;
+  formId: FormId | null;
 };
 
 const INITIAL_DATA: FormData = {
@@ -80,6 +82,7 @@ const INITIAL_DATA: FormData = {
   eventLink: "",
   newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
   hideVacancy: false,
+  formId: null,
 };
 
 export default function CreateEvent() {
@@ -94,8 +97,6 @@ export default function CreateEvent() {
   const [AlertMessage, setAlertMessage] = useState("");
 
   const [data, setData] = useState(INITIAL_DATA);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState("");
 
   const [eventThumbnailsUrls, setEventThumbnailUrls] = useState<string[]>([]);
   const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
@@ -123,24 +124,16 @@ export default function CreateEvent() {
       <ImageForm
         key="image-form"
         {...data}
-        imagePreviewUrl={imagePreviewUrl}
-        setImagePreviewUrl={setImagePreviewUrl}
+        user={user}
         updateField={updateFields}
         eventThumbnailsUrls={eventThumbnailsUrls}
         eventImageUrls={eventImageUrls}
-        thumbnailPreviewUrl={thumbnailPreviewUrl}
-        setThumbnailPreviewUrl={setThumbnailPreviewUrl}
+        setThumbnailUrls={setEventThumbnailUrls}
+        setImageUrls={setEventImageUrls}
       />
     </FormWrapper>,
-    <DescriptionForm key="description-image-form" {...data} updateField={updateFields} />,
-    <PreviewForm
-      key="preview-form"
-      form={data}
-      user={user}
-      imagePreviewUrl={imagePreviewUrl}
-      thumbnailPreviewUrl={thumbnailPreviewUrl}
-      updateField={updateFields}
-    />,
+    <DescriptionForm key="description-image-form" {...data} updateField={updateFields} user={user} />,
+    <PreviewForm key="preview-form" form={data} user={user} updateField={updateFields} />,
   ]);
 
   function updateFields(fields: Partial<FormData>) {
@@ -194,7 +187,7 @@ export default function CreateEvent() {
 
   async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
     setLoading(true);
-    const [imageUrl, thumbnailUrl] = await uploadAndGetImageAndThumbnailUrls(user.userId, { ...formData });
+    const [imageUrl, thumbnailUrl] = getImageAndThumbnailUrlsWithDefaults({ ...formData });
 
     const newEventData = convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
     const newRecurrenceData = formData.newRecurrenceData;
@@ -261,8 +254,7 @@ export default function CreateEvent() {
       paused: formData.paused,
       eventLink: formData.eventLink,
       hideVacancy: formData.hideVacancy,
-      // TODO: Implement option to add form in event creation workflow
-      formId: null,
+      formId: formData.formId,
     };
   }
 

@@ -7,6 +7,7 @@ import {
   FulfilmentSessionType,
   GetFulfilmentEntityInfoRequest,
   GetFulfilmentEntityInfoResponse,
+  GetFulfilmentSessionInfoRequest,
   GetFulfilmentSessionInfoResponse,
   GetNextFulfilmentEntityRequest,
   GetNextFulfilmentEntityResponse,
@@ -16,21 +17,34 @@ import {
   InitCheckoutFulfilmentSessionResponse,
   UpdateFulfilmentEntityWithFormResponseIdRequest,
 } from "@/interfaces/FulfilmentTypes";
-import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
+import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
-import { getGlobalAppControllerUrl } from "../functions/functionsUtils";
+import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getUrlWithCurrentHostname } from "../urlUtils";
-import {
-  getDeleteFulfilmentSessionUrl,
-  getGetFulfilmentEntityInfoUrl,
-  getGetFulfilmentSessionInfoUrl,
-  getGetNextFulfilmentEntityUrl,
-  getGetPrevFulfilmentEntityUrl,
-  getUpdateFulfilmentEntityWithFormResponseIdUrl,
-} from "./fulfilmentUtils/fulfilmentUtils";
+import { getDeleteFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = true;
+export const FULFILMENT_SESSION_ENABLED = false;
+
+const fulfilmentSessionEnabledUserIdList = [
+  "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
+  "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
+  "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", // owen dev
+];
+const fulfilmentSessionEnabledEventIdList: string[] = [
+  "brian was here",
+  // "0kcqoQMnRE9OV3ezstZt", // syrio jersey
+];
+
+export const evaluateFulfilmentSessionEnabled = (userId: string, eventId: EventId) => {
+  if (userId && fulfilmentSessionEnabledUserIdList.includes(userId)) {
+    return true;
+  }
+  if (eventId && fulfilmentSessionEnabledEventIdList.includes(eventId)) {
+    return true;
+  }
+  return FULFILMENT_SESSION_ENABLED;
+};
 
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 
@@ -66,35 +80,15 @@ async function initCheckoutFulfilmentSession(
   fulfilmentServiceLogger.info(
     `initCheckoutFulfilmentSessionNew: Initializing fulfilment session for event ID: ${eventId}`
   );
-
-  const request: UnifiedRequest<InitCheckoutFulfilmentSessionRequest> = {
-    endpointType: EndpointType.INIT_FULFILMENT_SESSION,
-    data: {
+  try {
+    const response = await executeGlobalAppControllerFunction<
+      InitCheckoutFulfilmentSessionRequest,
+      InitCheckoutFulfilmentSessionResponse
+    >(EndpointType.INIT_FULFILMENT_SESSION, {
       eventId,
       numTickets,
-    },
-  };
-
-  try {
-    const rawResponse = await fetch(getGlobalAppControllerUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
     });
-
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `initCheckoutFulfilmentSessionNew: Cloud function error: Failed to initialize fulfilment session: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`initCheckoutFulfilmentSessionNew: ${errorResponse.errorMessage}`);
-    }
-
-    const response = (await rawResponse.json()) as UnifiedResponse<InitCheckoutFulfilmentSessionResponse>;
-    return response.data;
+    return response;
   } catch (error) {
     fulfilmentServiceLogger.error(
       `initCheckoutFulfilmentSessionNew: Failed to initialize fulfilment session: ${error}`
@@ -161,23 +155,12 @@ async function getNextFulfilmentEntity(
   };
 
   try {
-    const rawResponse = await fetch(getGetNextFulfilmentEntityUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
+    const response = await executeGlobalAppControllerFunction<
+      GetNextFulfilmentEntityRequest,
+      GetNextFulfilmentEntityResponse
+    >(EndpointType.GET_NEXT_FULFILMENT_ENTITY, request);
 
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `getNextFulfilmentEntity: Cloud function error: Failed to execute next fulfilment entity: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`getNextFulfilmentEntity: ${errorResponse.errorMessage}`);
-    }
-    return (await rawResponse.json()) as GetNextFulfilmentEntityResponse;
+    return response;
   } catch (error) {
     fulfilmentServiceLogger.error(`getNextFulfilmentEntity: Failed to execute next fulfilment entity: ${error}`);
     throw error;
@@ -201,23 +184,12 @@ async function getPrevFulfilmentEntity(
   };
 
   try {
-    const rawResponse = await fetch(getGetPrevFulfilmentEntityUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
+    const response = await executeGlobalAppControllerFunction<
+      GetPrevFulfilmentEntityRequest,
+      GetPrevFulfilmentEntityResponse
+    >(EndpointType.GET_PREV_FULFILMENT_ENTITY, request);
 
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `getPrevFulfilmentEntity: Cloud function error: Failed to execute previous fulfilment entity: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`getPrevFulfilmentEntity: ${errorResponse.errorMessage}`);
-    }
-    return (await rawResponse.json()) as GetPrevFulfilmentEntityResponse;
+    return response;
   } catch (error) {
     fulfilmentServiceLogger.error(`getPrevFulfilmentEntity: Failed to execute previous fulfilment entity: ${error}`);
     throw error;
@@ -238,24 +210,10 @@ export async function getFulfilmentEntityInfo(
   };
 
   try {
-    const rawResponse = await fetch(getGetFulfilmentEntityInfoUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `getFulfilmentEntityInfo: Cloud function error: Failed to fetch fulfilment entity info: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`getFulfilmentEntityInfo: ${errorResponse.errorMessage}`);
-    }
-
-    const response = (await rawResponse.json()) as GetFulfilmentEntityInfoResponse;
+    const response = await executeGlobalAppControllerFunction<
+      GetFulfilmentEntityInfoRequest,
+      GetFulfilmentEntityInfoResponse
+    >(EndpointType.GET_FULFILMENT_ENTITY_INFO, request);
 
     fulfilmentServiceLogger.info(
       `getFulfilmentEntityInfo: Successfully fetched fulfilment entity info for session ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}: ${JSON.stringify(
@@ -286,26 +244,15 @@ export async function updateFulfilmentEntityWithFormResponseId(
   };
 
   try {
-    const rawResponse = await fetch(getUpdateFulfilmentEntityWithFormResponseIdUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `updateFulfilmentEntityWithFormResponseId: Cloud function error: Failed to fetch fulfilment entity info: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`updateFulfilmentEntityWithFormResponseId: ${errorResponse.errorMessage}`);
-    }
+    const response = await executeGlobalAppControllerFunction<UpdateFulfilmentEntityWithFormResponseIdRequest, void>(
+      EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
+      request
+    );
 
     fulfilmentServiceLogger.info(
       `updateFulfilmentEntityWithResponseId: Successfully updated fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with formResponseId: ${formResponseId}`
     );
+    return response;
   } catch (error) {
     fulfilmentServiceLogger.error(
       `updateFulfilmentEntityWithFormResponseId: Failed to update fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with form response ID ${formResponseId}: ${error}`
@@ -365,24 +312,11 @@ export async function getFulfilmentSessionInfo(
   };
 
   try {
-    const rawResponse = await fetch(getGetFulfilmentSessionInfoUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
+    const response = await executeGlobalAppControllerFunction<
+      GetFulfilmentSessionInfoRequest,
+      GetFulfilmentSessionInfoResponse
+    >(EndpointType.GET_FULFILMENT_SESSION_INFO, request);
 
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `getFulfilmentSessionInfo: Cloud function error: Failed to fetch fulfilment session info: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`getFulfilmentSessionInfo: ${errorResponse.errorMessage}`);
-    }
-
-    const response = (await rawResponse.json()) as GetFulfilmentSessionInfoResponse;
     fulfilmentServiceLogger.info(
       `getFulfilmentSessionInfo: Successfully fetched fulfilment session info for session ID: ${fulfilmentSessionId}: ${JSON.stringify(
         response

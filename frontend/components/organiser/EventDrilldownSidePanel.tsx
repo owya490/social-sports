@@ -1,5 +1,6 @@
+import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { FULFILMENT_SESSION_ENABLED } from "@/services/src/fulfilment/fulfilmentServices";
+import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
 import { Timestamp } from "firebase/firestore";
 import { Dispatch, SetStateAction } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -10,6 +11,7 @@ interface EventDrilldownSidePanelProps {
   setCurrSidebarPage: Dispatch<SetStateAction<string>>;
   eventName: string;
   eventStartDate: Timestamp;
+  user: UserData;
 }
 
 const EventDrilldownSidePanel = ({
@@ -18,6 +20,7 @@ const EventDrilldownSidePanel = ({
   setCurrSidebarPage,
   eventName,
   eventStartDate,
+  user,
 }: EventDrilldownSidePanelProps) => {
   return (
     <div className="bg-organiser-light-gray mr-10 w-48 md:w-64 rounded-3xl hidden sm:block">
@@ -45,7 +48,7 @@ const EventDrilldownSidePanel = ({
         >
           Manage Attendees
         </div>
-        {FULFILMENT_SESSION_ENABLED && (
+        {evaluateFulfilmentSessionEnabled(user.userId, "") && (
           <div
             className={`text-organiser-dark-gray-text font-bold text-md ${
               currSidebarPage === "Forms" ? "bg-white" : ""
