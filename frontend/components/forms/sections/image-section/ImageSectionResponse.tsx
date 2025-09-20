@@ -1,7 +1,7 @@
 "use client";
 
 import { ImageSection } from "@/interfaces/FormTypes";
-import { ImageOrientation } from "@/services/src/images/imageTypes";
+import { ImageOrientation } from "@/interfaces/ImageTypes";
 import { determineOrientation } from "@/services/src/images/imageUtils";
 import Image from "next/image";
 import { useState } from "react";

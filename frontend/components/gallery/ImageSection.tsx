@@ -1,32 +1,33 @@
 "use client";
-import { ImageConfig, ImageOrientation, ImageType } from "@/services/src/images/imageTypes";
+import { ImageConfig, ImageOrientation, ImageType } from "@/interfaces/ImageTypes";
 import { determineOrientation } from "@/services/src/images/imageUtils";
 import Image from "next/image";
 import { useState } from "react";
 import { ImageUploadCard } from "./ImageUploadCard";
 
 interface ImageSectionProps {
-  title: string;
-  description: string;
   type: ImageType;
   imageUrls: string[];
   onImageUploaded: (file: File) => void;
   gridCols: string;
   selectedImageUrl?: string;
   onImageSelect?: (url: string) => void;
+  title?: string;
+  description?: string;
 }
 
 export const ImageSection = ({
-  title,
-  description,
   type,
   imageUrls,
   onImageUploaded,
   gridCols,
   selectedImageUrl,
   onImageSelect,
+  title,
+  description,
 }: ImageSectionProps) => {
   const [imageOrientations, setImageOrientations] = useState<{ [key: string]: ImageOrientation }>({});
+  const config = ImageConfig[type];
 
   const handleImageLoad = (url: string, e: any) => {
     if (type === ImageType.FORM) {
@@ -38,8 +39,8 @@ export const ImageSection = ({
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-core-text mb-4">{title}</h2>
-      <p className="text-sm text-gray-600 mb-4">{description}</p>
+      <h2 className="text-xl font-semibold text-core-text mb-4">{title || config.title}</h2>
+      <p className="text-sm text-gray-600 mb-4">{description || config.description}</p>
 
       <div className={`grid ${gridCols} gap-4`}>
         <ImageUploadCard type={type} onImageUploaded={onImageUploaded} />

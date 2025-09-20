@@ -1,4 +1,5 @@
 import { ImageSection } from "@/components/gallery/ImageSection";
+import { ImageConfig, ImageType } from "@/interfaces/ImageTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { AllImageData, uploadEventImage, uploadEventThumbnail } from "@/services/src/images/imageService";
 import imageCompression from "browser-image-compression";
@@ -26,9 +27,9 @@ export function ImageForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Validate image type
-  const validateImage = (file: File) => {
-    const validTypes = ["image/jpeg", "image/png"];
-    if (!validTypes.includes(file.type)) {
+  const validateImage = (file: File, imageType: ImageType) => {
+    const config = ImageConfig[imageType];
+    if (!config.supportedTypes.includes(file.type)) {
       setErrorMessage("Please upload a valid image file (jpg, png).");
       return false;
     }
@@ -37,7 +38,8 @@ export function ImageForm({
 
   // Compress image before upload
   const handleImageUpload = async (imageFile: File, updateFieldName: "thumbnail" | "image") => {
-    if (!validateImage(imageFile)) {
+    const imageType = updateFieldName === "thumbnail" ? ImageType.THUMBNAIL : ImageType.IMAGE;
+    if (!validateImage(imageFile, imageType)) {
       return;
     }
     const options = {
@@ -88,9 +90,7 @@ export function ImageForm({
         ⚠️ If your image upload button isn&apos;t working, try closing and reopening the browser.
       </div>
       <ImageSection
-        title="Event Thumbnail"
-        description="Please upload an image for your event thumbnail. This image will be the image seen for your event on the dashboard event cards. (Best to have a square image)"
-        type="thumbnail"
+        type={ImageType.THUMBNAIL}
         imageUrls={eventThumbnailsUrls.slice(0, 5)}
         onImageUploaded={(file: File) => {
           handleImageUpload(file, "thumbnail");
@@ -102,9 +102,7 @@ export function ImageForm({
       {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
 
       <ImageSection
-        title="Event Image"
-        description="Please upload an event image for your event. This image will be seen on your event details page. (Best to have an aspect ratio of 16:9)"
-        type="image"
+        type={ImageType.IMAGE}
         imageUrls={eventImageUrls.slice(0, 5)}
         onImageUploaded={(file: File) => {
           handleImageUpload(file, "image");

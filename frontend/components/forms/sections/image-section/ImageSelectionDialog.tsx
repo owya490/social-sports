@@ -3,8 +3,8 @@
 import { BlackHighlightButton, InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { ImageSection } from "@/components/gallery/ImageSection";
 import { useUser } from "@/components/utility/UserContext";
+import { ImageConfig, ImageType } from "@/interfaces/ImageTypes";
 import { getUsersFormImagesUrls, uploadFormImage } from "@/services/src/images/imageService";
-import { ImageType } from "@/services/src/images/imageTypes";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import imageCompression from "browser-image-compression";
 import { useEffect, useState } from "react";
@@ -40,8 +40,8 @@ export const ImageSelectionDialog = ({ isOpen, onClose, onImageSelected }: Image
   }, [isOpen, user.userId]);
 
   const validateImage = (file: File) => {
-    const validTypes = ["image/jpeg", "image/png"];
-    if (!validTypes.includes(file.type)) {
+    const config = ImageConfig[ImageType.FORM];
+    if (!config.supportedTypes.includes(file.type)) {
       setErrorMessage("Please upload a valid image file (jpg, png).");
       return false;
     }
@@ -131,8 +131,6 @@ export const ImageSelectionDialog = ({ isOpen, onClose, onImageSelected }: Image
 
           {/* Image Selection */}
           <ImageSection
-            title="Select or Upload Form Image"
-            description="Choose an existing form image or upload a new one. This can be either landscape (5:4) or portrait (4:5) orientation."
             type={ImageType.FORM}
             imageUrls={formImageUrls.slice(0, 5)} // Show up to 5 images
             onImageUploaded={handleImageUpload}

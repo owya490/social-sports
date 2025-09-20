@@ -1,7 +1,7 @@
 "use client";
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
-import { ImageType } from "@/services/src/images/imageTypes";
+import { ImageType } from "@/interfaces/ImageTypes";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from "react-image-crop";

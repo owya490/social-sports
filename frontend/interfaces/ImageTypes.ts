@@ -28,6 +28,9 @@ interface TypeConfig {
   containerAspect: "aspect-square" | "aspect-video" | "aspect-[5/4]";
   defaultImageWidth: number;
   defaultImageHeight: number;
+  title: string;
+  description: string;
+  supportedTypes: string[];
 }
 
 export const ImageConfig: Record<ImageType, TypeConfig> = {
@@ -47,6 +50,9 @@ export const ImageConfig: Record<ImageType, TypeConfig> = {
     containerAspect: "aspect-square",
     defaultImageWidth: 300,
     defaultImageHeight: 300,
+    title: "Event Thumbnails",
+    description: "Square aspect ratio (1:1) - Used for event cards on the dashboard",
+    supportedTypes: ["image/jpeg", "image/png"],
   },
   [ImageType.IMAGE]: {
     allowedOrientations: [ImageOrientation.LANDSCAPE], // Only landscape for regular images
@@ -64,6 +70,9 @@ export const ImageConfig: Record<ImageType, TypeConfig> = {
     containerAspect: "aspect-video",
     defaultImageWidth: 400,
     defaultImageHeight: 225,
+    title: "Event Images",
+    description: "16:9 aspect ratio - Used for event detail pages",
+    supportedTypes: ["image/jpeg", "image/png"],
   },
   [ImageType.FORM]: {
     allowedOrientations: [ImageOrientation.LANDSCAPE, ImageOrientation.PORTRAIT],
@@ -87,5 +96,9 @@ export const ImageConfig: Record<ImageType, TypeConfig> = {
     containerAspect: "aspect-[5/4]",
     defaultImageWidth: 400,
     defaultImageHeight: 225,
+    title: "Select or Upload Form Image",
+    description:
+      "Choose an existing form image or upload a new one. This can be either landscape (5:4) or portrait (4:5) orientation.",
+    supportedTypes: ["image/jpeg", "image/png"],
   },
 };

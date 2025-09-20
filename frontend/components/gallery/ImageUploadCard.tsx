@@ -1,5 +1,5 @@
 "use client";
-import { ImageConfig, ImageType } from "@/services/src/images/imageTypes";
+import { ImageConfig, ImageType } from "@/interfaces/ImageTypes";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useRef, useState } from "react";
 import { ImageCropModal } from "./ImageCropModal";
@@ -18,9 +18,8 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
-      // Validate file type
-      const validTypes = ["image/jpeg", "image/png"];
-      if (!validTypes.includes(file.type)) {
+      // Validate file type using config
+      if (!config.supportedTypes.includes(file.type)) {
         alert("Please upload a valid image file (jpg, png).");
         // Clear the input value to allow selecting the same file again
         e.target.value = "";
