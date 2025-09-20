@@ -6,7 +6,6 @@ import noSearchResultLineDrawing from "@/public/images/no-search-result-line-dra
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
-import Head from "next/head";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
