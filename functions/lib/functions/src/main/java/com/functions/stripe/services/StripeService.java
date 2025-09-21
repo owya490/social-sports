@@ -35,10 +35,10 @@ public class StripeService {
                     eventId,
                     isPrivate,
                     numTickets,
-                    cancelUrl.orElse("https://sportshub.net.au/dashboard"),
+                    cancelUrl.orElse(UrlUtils.SPORTSHUB_URL),
                     successUrl.orElse(
                             UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
-                                    .orElse("https://sportshub.net.au/dashboard")),
+                                    .orElse(UrlUtils.SPORTSHUB_URL)),
                     true,
                     fulfilmentSessionId,
                     endFulfilmentEntityId

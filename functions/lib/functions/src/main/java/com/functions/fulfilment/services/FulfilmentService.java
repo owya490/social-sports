@@ -159,8 +159,8 @@ public class FulfilmentService {
                         ? UrlUtils
                         .getUrlWithCurrentEnvironment(String.format("/fulfilment/%s/%s",
                                 fulfilmentSessionId, prevEntityId))
-                        .orElse("https://www.sportshub.net.au/dashboard")
-                        : "https://sportshub.net.au/dashboard";
+                        .orElse(UrlUtils.SPORTSHUB_URL)
+                        : UrlUtils.SPORTSHUB_URL;
 
                 String stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
