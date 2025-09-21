@@ -27,6 +27,26 @@ import { getCompleteFulfilmentSessionUrl, getDeleteFulfilmentSessionUrl } from "
 // Flag for development purposes to enable or disable fulfilment session functionality.
 export const FULFILMENT_SESSION_ENABLED = false;
 
+const fulfilmentSessionEnabledUserIdList = [
+  "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
+  "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
+  "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", // owen dev
+];
+const fulfilmentSessionEnabledEventIdList: string[] = [
+  "brian was here"
+  // "0kcqoQMnRE9OV3ezstZt", // syrio jersey
+];
+
+export const evaluateFulfilmentSessionEnabled = (userId: string, eventId: EventId) => {
+  if (userId && fulfilmentSessionEnabledUserIdList.includes(userId)) {
+    return true;
+  }
+  if (eventId && fulfilmentSessionEnabledEventIdList.includes(eventId)) {
+    return true;
+  }
+  return FULFILMENT_SESSION_ENABLED;
+};
+
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 
 /**
