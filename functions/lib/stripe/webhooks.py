@@ -18,6 +18,7 @@ from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purcha
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
+from urllib.parse import urlparse
 
 
 @dataclass
@@ -351,7 +352,6 @@ def complete_fulfilment_session_request(logger: Logger, fulfilment_session_id: s
         raise
 
 
-# TODO: pass fulfilment session info through and set fulfilment session to completed
 def fulfilment_workflow_on_ticket_purchase(
     transaction: Transaction,
     logger: Logger,
@@ -500,13 +500,11 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
         logger.info(f"Ignoring event. event={event}")
         return https_fn.Response(status=200)
 
-    SPORTSHUB_URL = "www.sportshub.net.au"
-    # If we are in prod, we only want to process events from SPORTSHUB_URL
-    if (
-        IS_PROD
-        and SPORTSHUB_URL not in event["data"]["object"]["cancel_url"]
-        and SPORTSHUB_URL not in event["data"]["object"]["success_url"]
-    ):
+    ALLOWED_HOSTS = {"www.sportshub.net.au", "sportshub.net.au"}
+    # If we are in prod, only process events for our allowed hosts
+    cancel_host = urlparse(event["data"]["object"]["cancel_url"]).netloc
+    success_host = urlparse(event["data"]["object"]["success_url"]).netloc
+    if IS_PROD and cancel_host not in ALLOWED_HOSTS and success_host not in ALLOWED_HOSTS:
         logger.info(
             f"Ignoring event as it is not a SPORTSHUB event. event={event} success_url={event['data']['object']['success_url']} cancel_url={event['data']['object']['cancel_url']}"
         )
