@@ -31,6 +31,13 @@ export const SPORTS_CONFIG: Record<string, SportConfig> = {
     defaultThumbnailUrl:
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Fbadminton-default.jpg?alt=media&token=187db12a-6e04-44da-aedc-04c5a1db99f7",
   },
+  "pickle-ball": {
+    name: "Pickle Ball",
+    value: "pickle-ball",
+    iconImage: TableTennisImage,
+    defaultThumbnailUrl:
+      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Fpickle-ball-default.jpg?alt=media&token=1233d387-1bc2-4b10-a4a6-8d20ab918337",
+  },
   cricket: {
     name: "Cricket",
     value: "cricket",
@@ -65,13 +72,6 @@ export const SPORTS_CONFIG: Record<string, SportConfig> = {
     iconImage: TennisImage,
     defaultThumbnailUrl:
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Ftennis-default.jpg?alt=media&token=2dd4f5c1-30f0-4c9d-9dcf-72b40e7f14e1",
-  },
-  "table-tennis": {
-    name: "Table Tennis",
-    value: "table-tennis",
-    iconImage: TableTennisImage,
-    defaultThumbnailUrl:
-      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2FeventThumbnails%2Ftable-tennis-default.jpg?alt=media&token=2a07940e-b45e-4e19-b442-d1bbe8c69a35",
   },
   oztag: {
     name: "Oztag",
