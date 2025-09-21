@@ -17,7 +17,7 @@ export default function SearchSport() {
     Basketball: { image: BasketballImage },
     Soccer: { image: SoccerImage },
     Tennis: { image: TennisImage },
-    "Table Tennis": { image: PingPongImage },
+    "Pickle Ball": { image: PingPongImage },
     Oztag: { image: RugbyImage },
     Baseball: { image: BaseballImage },
   };
