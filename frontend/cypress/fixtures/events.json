@@ -1,0 +1,17 @@
+{
+  "events": [
+    {
+      "eventId": "test-event-1",
+      "name": "Test Volleyball Event",
+      "location": "Test Sports Center",
+      "sport": "volleyball",
+      "capacity": 20,
+      "vacancy": 15,
+      "price": 1500,
+      "isActive": true,
+      "isPrivate": false,
+      "organiserId": "test-user-123"
+    }
+  ],
+  "totalEvents": 1
+}

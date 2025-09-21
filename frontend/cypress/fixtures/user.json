@@ -1,0 +1,31 @@
+{
+  "userId": "test-user-123",
+  "username": "testuser",
+  "firstName": "Test",
+  "surname": "User",
+  "profilePicture": "https://example.com/profile.jpg",
+  "isSearchable": true,
+  "nameTokens": ["test", "user"],
+  "publicContactInformation": {
+    "mobile": "+61400000000",
+    "email": "test@example.com"
+  },
+  "publicUpcomingOrganiserEvents": [],
+  "bio": "Test user for Cypress testing",
+  "age": "25",
+  "dob": "1999-01-01",
+  "gender": "Other",
+  "location": "Melbourne, Australia",
+  "contactInformation": {
+    "mobile": "+61400000000",
+    "email": "test@example.com"
+  },
+  "activeBookings": [],
+  "stripeAccount": "acct_test123",
+  "stripeAccountActive": true,
+  "organiserEvents": [],
+  "publicOrganiserEvents": [],
+  "recurrenceTemplates": [],
+  "forms": [],
+  "sendOrganiserTicketEmails": true
+}
