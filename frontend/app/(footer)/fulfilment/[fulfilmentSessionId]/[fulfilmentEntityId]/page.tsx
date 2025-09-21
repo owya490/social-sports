@@ -330,7 +330,7 @@ function EndFulfilmentHandler({
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    (() => {
       try {
         if (cancelled) return;
         logger.info(
