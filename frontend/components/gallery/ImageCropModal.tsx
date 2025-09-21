@@ -1,10 +1,11 @@
 "use client";
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
-import { ImageType } from "@/interfaces/ImageTypes";
+import { ImageConfig, ImageOrientation, ImageType } from "@/interfaces/ImageTypes";
+import { switchableOrientations, switchOrientation } from "@/services/src/images/imageUtils";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useRef, useState } from "react";
-import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from "react-image-crop";
+import ReactCrop, { centerCrop, Crop, makeAspectCrop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
 interface ImageCropModalProps {
@@ -12,7 +13,6 @@ interface ImageCropModalProps {
   onClose: () => void;
   onCropComplete: (croppedFile: File) => void;
   imageFile: File;
-  aspectRatio: number; // 1 for square (thumbnail), 16/9 for event image
   cropType: ImageType;
 }
 
@@ -32,22 +32,15 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: numbe
   );
 }
 
-export const ImageCropModal = ({
-  isOpen,
-  onClose,
-  onCropComplete,
-  imageFile,
-  aspectRatio,
-  cropType,
-}: ImageCropModalProps) => {
+export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cropType }: ImageCropModalProps) => {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isProcessing, setIsProcessing] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageSrc, setImageSrc] = useState<string>("");
   const [hasValidCrop, setHasValidCrop] = useState(false);
-  const [isLandscape, setIsLandscape] = useState(true); // For form images: true = 16:9 landscape, false = 9:16 portrait
-  const [currentAspectRatio, setCurrentAspectRatio] = useState(aspectRatio);
+  const [orientation, setOrientation] = useState<ImageOrientation>(ImageOrientation.LANDSCAPE); // For form images
+  const [currentAspectRatio, setCurrentAspectRatio] = useState(ImageConfig[cropType].defaultAspectRatio);
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -69,12 +62,10 @@ export const ImageCropModal = ({
 
   // Initialize aspect ratio based on crop type
   useEffect(() => {
-    if (cropType === ImageType.FORM) {
-      setCurrentAspectRatio(isLandscape ? 5 / 4 : 4 / 5);
-    } else {
-      setCurrentAspectRatio(aspectRatio);
-    }
-  }, [cropType, aspectRatio, isLandscape]);
+    const config = ImageConfig[cropType];
+    const orientationConfig = config.orientationConfigs[orientation];
+    setCurrentAspectRatio(orientationConfig?.aspectRatio || config.defaultAspectRatio);
+  }, [cropType, orientation]);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -85,10 +76,8 @@ export const ImageCropModal = ({
       };
       reader.readAsDataURL(imageFile);
       setHasValidCrop(false);
-      // Reset form image orientation to landscape when opening
-      if (cropType === ImageType.FORM) {
-        setIsLandscape(true);
-      }
+      // Reset image orientation to landscape when opening
+      setOrientation(ImageOrientation.LANDSCAPE);
     } else if (!isOpen) {
       // Reset state when modal closes
       setImageSrc("");
@@ -96,7 +85,7 @@ export const ImageCropModal = ({
       setCompletedCrop(undefined);
       setHasValidCrop(false);
       setIsProcessing(false);
-      setIsLandscape(true);
+      setOrientation(ImageOrientation.LANDSCAPE);
     }
   }, [imageFile, isOpen, cropType]);
 
@@ -144,12 +133,15 @@ export const ImageCropModal = ({
   );
 
   const toggleOrientation = () => {
-    if (cropType === ImageType.FORM && imgRef.current) {
-      const newIsLandscape = !isLandscape;
-      setIsLandscape(newIsLandscape);
+    if (switchableOrientations(cropType) && imgRef.current) {
+      const newOrientation = switchOrientation(orientation);
+      setOrientation(newOrientation);
 
-      // Recalculate crop immediately with new aspect ratio
-      const newAspectRatio = newIsLandscape ? 5 / 4 : 4 / 5;
+      // Recalculate crop immediately with new aspect ratio from config
+      const config = ImageConfig[cropType];
+      const orientationConfig = config.orientationConfigs[newOrientation];
+      const newAspectRatio = orientationConfig?.aspectRatio || config.defaultAspectRatio;
+
       const { width, height } = imgRef.current;
       const newCrop = centerAspectCrop(width, height, newAspectRatio);
 
@@ -192,11 +184,14 @@ export const ImageCropModal = ({
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h2 className="text-xl font-semibold text-core-text">
             Crop{" "}
-            {cropType === ImageType.THUMBNAIL
-              ? "Thumbnail (Square)"
-              : cropType === ImageType.FORM
-              ? `Form Image (${isLandscape ? "5:4 Landscape" : "4:5 Portrait"})`
-              : "Event Image (16:9)"}
+            {(() => {
+              const config = ImageConfig[cropType];
+              if (switchableOrientations(cropType)) {
+                const orientationConfig = config.orientationConfigs[orientation];
+                return `${config.displayName} (${orientationConfig?.aspectText})`;
+              }
+              return `${config.displayName} (${config.aspectText})`;
+            })()}
           </h2>
           <button
             onClick={onClose}
@@ -213,16 +208,12 @@ export const ImageCropModal = ({
               <div className="mb-3 flex-shrink-0 flex justify-between items-center">
                 <p className="text-sm text-gray-600">
                   Drag the corners to adjust the crop area. The aspect ratio is locked to{" "}
-                  {cropType === ImageType.THUMBNAIL
-                    ? "1:1 (Square)"
-                    : cropType === ImageType.FORM
-                    ? isLandscape
-                      ? "5:4 (Landscape)"
-                      : "4:5 (Portrait)"
-                    : "16:9"}
+                  {(() => {
+                    return ImageConfig[cropType].orientationConfigs[orientation]?.aspectText;
+                  })()}
                   .
                 </p>
-                {cropType === ImageType.FORM && (
+                {switchableOrientations(cropType) && (
                   <button
                     onClick={toggleOrientation}
                     className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
@@ -244,24 +235,14 @@ export const ImageCropModal = ({
                     setHasValidCrop(pixelCrop.width > 0 && pixelCrop.height > 0);
                   }}
                   aspect={currentAspectRatio}
-                  minWidth={
-                    cropType === ImageType.THUMBNAIL
-                      ? 100
-                      : cropType === ImageType.FORM
-                      ? isLandscape
-                        ? 125
-                        : 80
-                      : 160
-                  }
-                  minHeight={
-                    cropType === ImageType.THUMBNAIL
-                      ? 100
-                      : cropType === ImageType.FORM
-                      ? isLandscape
-                        ? 100
-                        : 100
-                      : 90
-                  }
+                  minWidth={(() => {
+                    const config = ImageConfig[cropType];
+                    return config.orientationConfigs[orientation]?.minCropWidth || 200;
+                  })()}
+                  minHeight={(() => {
+                    const config = ImageConfig[cropType];
+                    return config.orientationConfigs[orientation]?.minCropHeight || 200;
+                  })()}
                   keepSelection={true}
                   ruleOfThirds={true}
                   className="max-h-full"

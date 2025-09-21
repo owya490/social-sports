@@ -10,6 +10,7 @@ export enum ImageOrientation {
 }
 
 interface OrientationConfig {
+  aspectText: string;
   aspectRatio: number;
   minCropWidth: number;
   minCropHeight: number;
@@ -38,9 +39,10 @@ export const ImageConfig: Record<ImageType, TypeConfig> = {
     allowedOrientations: [ImageOrientation.LANDSCAPE], // Only landscape for thumbnails
     orientationConfigs: {
       [ImageOrientation.LANDSCAPE]: {
+        aspectText: "1:1 (Square)",
         aspectRatio: 1,
-        minCropWidth: 100,
-        minCropHeight: 100,
+        minCropWidth: 300,
+        minCropHeight: 300,
         displayWidth: "w-full",
       },
     },
@@ -58,9 +60,10 @@ export const ImageConfig: Record<ImageType, TypeConfig> = {
     allowedOrientations: [ImageOrientation.LANDSCAPE], // Only landscape for regular images
     orientationConfigs: {
       [ImageOrientation.LANDSCAPE]: {
+        aspectText: "16:9",
         aspectRatio: 16 / 9,
-        minCropWidth: 160,
-        minCropHeight: 90,
+        minCropWidth: 320,
+        minCropHeight: 180,
         displayWidth: "w-full",
       },
     },
@@ -78,15 +81,17 @@ export const ImageConfig: Record<ImageType, TypeConfig> = {
     allowedOrientations: [ImageOrientation.LANDSCAPE, ImageOrientation.PORTRAIT],
     orientationConfigs: {
       [ImageOrientation.LANDSCAPE]: {
+        aspectText: "5:4",
         aspectRatio: 5 / 4,
-        minCropWidth: 125,
-        minCropHeight: 100,
+        minCropWidth: 400,
+        minCropHeight: 320,
         displayWidth: "w-full",
       },
       [ImageOrientation.PORTRAIT]: {
+        aspectText: "4:5",
         aspectRatio: 4 / 5,
-        minCropWidth: 80,
-        minCropHeight: 100,
+        minCropWidth: 320,
+        minCropHeight: 400,
         displayWidth: "w-1/2",
       },
     },

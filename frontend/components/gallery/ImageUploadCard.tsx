@@ -51,7 +51,6 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
   };
 
   const config = ImageConfig[type];
-  const aspectRatio = config.defaultAspectRatio;
   const aspectText = config.aspectText;
 
   return (
@@ -80,7 +79,6 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
           onClose={handleCropCancel}
           onCropComplete={handleCropComplete}
           imageFile={selectedFile}
-          aspectRatio={aspectRatio}
           cropType={type}
         />
       )}
