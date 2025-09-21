@@ -159,7 +159,7 @@ public class FulfilmentService {
                         ? UrlUtils
                         .getUrlWithCurrentEnvironment(String.format("/fulfilment/%s/%s",
                                 fulfilmentSessionId, prevEntityId))
-                        .orElse("https://sportshub.net.au/dashboard")
+                        .orElse("https://www.sportshub.net.au/dashboard")
                         : "https://sportshub.net.au/dashboard";
 
                 String stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(eventId,
@@ -558,33 +558,6 @@ public class FulfilmentService {
             FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
             Map<String, FulfilmentEntity> fulfilmentEntityMap =
                     fulfilmentSession.getFulfilmentEntityMap();
-
-            if (fulfilmentSession.isCompleted()) {
-                switch (fulfilmentSession.getType()) {
-                    case CHECKOUT:
-                        logger.info(
-                                "Fulfilment session is already completed, deleting fulfilment session and redirecting to event booking success page");
-                        completeFulfilmentSession(fulfilmentSessionId, fulfilmentEntityId);
-                        for (FulfilmentEntity entity : fulfilmentEntityMap.values()) {
-                            if (entity.getType() == FulfilmentEntityType.END) {
-                                return Optional.of(new GetFulfilmentEntityInfoResponse(
-                                        entity.getType(), getEntityUrl(entity), null, null, null));
-                            }
-                        }
-                        logger.warn(
-                                "END entity not found in completed fulfilment session: {}, defaulting to dashboard",
-                                fulfilmentSessionId);
-                        return Optional
-                                .of(new GetFulfilmentEntityInfoResponse(FulfilmentEntityType.END,
-                                        UrlUtils.getUrlWithCurrentEnvironment("/dashboard")
-                                                .orElse("https://sportshub.net.au/dashboard"),
-                                        null, null, null));
-                    default:
-                        logger.error("Unhandled fulfilment session type on completion: {}",
-                                maybeFulfilmentSession.get().getType());
-                        return Optional.empty();
-                }
-            }
 
             FulfilmentEntity entity = fulfilmentEntityMap.get(fulfilmentEntityId);
             if (entity == null) {

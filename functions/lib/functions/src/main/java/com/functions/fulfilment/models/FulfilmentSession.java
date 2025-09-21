@@ -46,7 +46,6 @@ public abstract class FulfilmentSession {
      * List of FulfilmentEntityIds specifying their order in the fulfilment session workflow.
      */
     private List<String> fulfilmentEntityIds;
-    private boolean completed = false;
 
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSession.class);
 

@@ -9,9 +9,9 @@ import java.util.Optional;
 public class UrlUtils {
     private static final Logger logger = LoggerFactory.getLogger(UrlUtils.class);
 
-    // NOTE: this url MUST match the one in webhooks.py, otherwise, we risk fulfilment sessions
+    // NOTE: this url MUST contain the substring of the one in webhooks.py, otherwise, we risk fulfilment sessions
     // not being correctly processed by stripe webhook.
-    public static final String SPORTSHUB_URL = "www.sportshub.net.au";
+    public static final String SPORTSHUB_URL = "https://www.sportshub.net.au";
 
     public static Optional<String> getUrlWithCurrentEnvironment(String url) {
         try {
@@ -19,8 +19,8 @@ public class UrlUtils {
 
             if (environment == null || environment.isEmpty()) {
                 logger.warn(
-                        "Environment variable 'DEPLOYMENT_ENV' is not set or empty. Defaulting to 'dev'.");
-                environment = "prod"; // Default to prod if not set
+                        "Environment variable 'DEPLOYMENT_ENV' is not set or empty. Defaulting to 'prod'.");
+                environment = "prod";
             }
 
             if (environment.equals("dev")) {
