@@ -135,7 +135,7 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy
+      - name: Deploy globalAppController
         working-directory: functions/lib/functions
         run: |
           gcloud functions deploy globalAppController \
@@ -146,7 +146,9 @@ jobs:
             --region australia-southeast1 \
             --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --memory 512
+            --memory 512 \
+            --concurrency 80 \
+            --min-instances 1
 
       - name: Deploy Cloud Scheduler jobs
         continue-on-error: true

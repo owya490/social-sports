@@ -34,7 +34,7 @@ import {
 } from "@/services/src/datetimeUtils";
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
 import { getActiveFormsForUser, getForm } from "@/services/src/forms/formsServices";
-import { FULFILMENT_SESSION_ENABLED } from "@/services/src/fulfilment/fulfilmentServices";
+import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
 import { getLocationCoordinates, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
@@ -687,7 +687,7 @@ export const EventDetailsEdit = ({
             )}
           </div>
         </div>
-        {FULFILMENT_SESSION_ENABLED && (
+        {evaluateFulfilmentSessionEnabled(user.userId, "") && (
           <div className="px-2 flex flex-row space-x-2">
             <DocumentTextIcon className="w-4 mt-2 shrink-0" />
             <div>
