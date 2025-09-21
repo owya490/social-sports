@@ -145,8 +145,7 @@ public class FulfilmentService {
 
         String endFulfilmentEntityId = getEndFulfilmentEntityId(eventId, tempEntities, entityIds);
 
-        // TODO: simplify this piece of code once we modularise stripe checkout python
-        // logic
+        // TODO: simplify this piece of code once we modularise stripe checkout python logic
         for (int i = 0; i < tempEntities.size(); i++) {
             FulfilmentEntity entity = tempEntities.get(i);
             String entityId = entityIds.get(i);
@@ -154,12 +153,6 @@ public class FulfilmentService {
             if (entity.getType() == FulfilmentEntityType.STRIPE) {
                 // For STRIPE entity, set success URL to point to next entity
                 String nextEntityId = (i + 1 < entityIds.size()) ? entityIds.get(i + 1) : null;
-                String successUrl = nextEntityId != null
-                        ? UrlUtils
-                        .getUrlWithCurrentEnvironment(String.format("/fulfilment/%s/%s",
-                                fulfilmentSessionId, nextEntityId))
-                        .orElse("https://sportshub.net.au/dashboard")
-                        : "https://sportshub.net.au/dashboard";
 
                 String prevEntityId = (i - 1 >= 0) ? entityIds.get(i - 1) : null;
                 String cancelUrl = prevEntityId != null
@@ -170,7 +163,7 @@ public class FulfilmentService {
                         : "https://sportshub.net.au/dashboard";
 
                 String stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(eventId,
-                        eventData.getIsPrivate(), numTickets, Optional.of(successUrl), Optional.of(cancelUrl),
+                        eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
                         fulfilmentSessionId, endFulfilmentEntityId);
 
                 logger.info("Created Stripe checkout link for event ID {}: {}", eventId, stripeCheckoutLink);

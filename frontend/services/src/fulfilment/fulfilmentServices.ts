@@ -24,7 +24,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import { getDeleteFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = false;
+export const FULFILMENT_SESSION_ENABLED = true;
 
 const fulfilmentSessionEnabledUserIdList = [
   "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
@@ -328,45 +328,3 @@ export async function getFulfilmentSessionInfo(
     throw error;
   }
 }
-
-// export async function completeFulfilmentSession(
-//   fulfilmentSessionId: FulfilmentSessionId,
-//   fulfilmentEntityId: FulfilmentEntityId
-// ): Promise<void> {
-//   fulfilmentServiceLogger.info(
-//     `completeFulfilmentSession: Completing fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
-//   );
-
-//   const request: CompleteFulfilmentSessionRequest = {
-//     fulfilmentSessionId,
-//     fulfilmentEntityId,
-//   };
-
-//   try {
-//     const rawResponse = await fetch(getCompleteFulfilmentSessionUrl(), {
-//       method: "POST",
-//       headers: {
-//         Accept: "application/json",
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify(request),
-//     });
-
-//     if (!rawResponse.ok) {
-//       const errorResponse = (await rawResponse.json()) as ErrorResponse;
-//       fulfilmentServiceLogger.error(
-//         `completeFulfilmentSession: Cloud function error: Failed to complete fulfilment session: ${errorResponse.errorMessage}`
-//       );
-//       throw new Error(`completeFulfilmentSession: ${errorResponse.errorMessage}`);
-//     }
-
-//     fulfilmentServiceLogger.info(
-//       `completeFulfilmentSession: Successfully completed fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
-//     );
-//   } catch (error) {
-//     fulfilmentServiceLogger.error(
-//       `completeFulfilmentSession: Failed to complete fulfilment session with ID ${fulfilmentSessionId} and entity ID ${fulfilmentEntityId}: ${error}`
-//     );
-//     throw error;
-//   }
-// }
