@@ -74,8 +74,11 @@ public class FulfilmentService {
     public static Optional<String> initCheckoutFulfilmentSession(String eventId,
                                                                  Integer numTickets) {
         try {
-            // TODO: optimistically reserve tickets and at the current price using a
-            // transaction
+            if (numTickets == null || numTickets <= 0) {
+                logger.error("Invalid numTickets {} for eventId {}", numTickets, eventId);
+                return Optional.empty();
+            }
+            // TODO: optimistically reserve tickets and at the current price using a transaction
 
             String fulfilmentSessionId = UUID.randomUUID().toString();
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
@@ -135,7 +138,7 @@ public class FulfilmentService {
         tempEntities.add(EndFulfilmentEntity.builder()
                 .url(UrlUtils
                         .getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
-                        .orElse("https://sportshub.net.au/dashboard"))
+                        .orElse(UrlUtils.SPORTSHUB_URL + "/dashboard"))
                 .type(FulfilmentEntityType.END).build());
 
         List<String> entityIds = new ArrayList<>();
