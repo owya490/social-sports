@@ -4,7 +4,6 @@
  * NOTE: The string values here should match the name of the enum itself.
  */
 export enum EndpointType {
-  INIT_FULFILMENT_SESSION = "INIT_FULFILMENT_SESSION",
   SAVE_TEMP_FORM_RESPONSE = "SAVE_TEMP_FORM_RESPONSE",
   CREATE_EVENT = "CREATE_EVENT",
   INIT_FULFILMENT_SESSION = "INIT_FULFILMENT_SESSION",
