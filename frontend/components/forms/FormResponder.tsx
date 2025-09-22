@@ -1,7 +1,7 @@
 "use client";
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionResponse";
-import { FormHeaderSectionResponse } from "@/components/forms/sections/form-header-section/FormHeaderSectionResponse";
+import { HeaderSectionResponse } from "@/components/forms/sections/header-section/HeaderSectionResponse";
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
 import Loading from "@/components/loading/Loading";
 import { EventId } from "@/interfaces/EventTypes";
@@ -27,6 +27,7 @@ import { Tooltip } from "@material-tailwind/react";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { ImageSectionResponse } from "./sections/image-section/ImageSectionResponse";
 
 const formResponderLogger = new Logger("formResponderLogger");
 
@@ -276,11 +277,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       <div className="bg-core-hover">
         <div className="flex w-screen justify-center">
           <div className="screen-width-primary space-y-8 md:px-32">
-            <FormHeaderSectionResponse
-              formTitle={form.title}
-              formDescription={form.description}
-              organiser={organiser}
-            />
+            <HeaderSectionResponse formTitle={form.title} formDescription={form.description} organiser={organiser} />
             {form.sectionsOrder.map((sectionId) => {
               const section = form.sectionsMap[sectionId];
               if (!section) return null; // Skip if section not found
@@ -308,6 +305,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
                       canEdit={canEdit}
                     />
                   );
+                case FormSectionType.IMAGE:
+                  return <ImageSectionResponse key={sectionId} imageSection={section} />;
                 default:
                   return null;
               }

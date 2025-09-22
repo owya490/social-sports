@@ -7,7 +7,7 @@ interface DropdownSelectSectionBuilderProps {
   sectionId: SectionId;
   onUpdate: (section: FormSection) => void;
   onDelete: (sectionId: SectionId) => void;
-  onDuplicate: (section: FormSection, sectionId: SectionId) => void;
+  onDuplicate: (section: FormSection) => void;
 }
 
 export const DropdownSelectSectionBuilder = ({
@@ -188,7 +188,7 @@ export const DropdownSelectSectionBuilder = ({
           <span>Delete</span>
         </button>
         <button
-          onClick={() => onDuplicate(section, sectionId)}
+          onClick={() => onDuplicate(section)}
           className="flex items-center gap-1 px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
         >
           <DocumentDuplicateIcon className="w-4 h-4 stroke-2" />

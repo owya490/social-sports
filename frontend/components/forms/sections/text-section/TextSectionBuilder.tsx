@@ -6,7 +6,7 @@ interface TextSectionBuilderProps {
   sectionId: SectionId;
   onUpdate: (section: FormSection) => void;
   onDelete: (sectionId: SectionId) => void;
-  onDuplicate: (section: FormSection, sectionId: SectionId) => void;
+  onDuplicate: (section: FormSection) => void;
 }
 
 export const TextSectionBuilder = ({
@@ -30,6 +30,18 @@ export const TextSectionBuilder = ({
           className="w-full flex-1 px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
+
+      {/* Preview of response field */}
+      <div className="pb-2.5">
+        <input
+          type="text"
+          value=""
+          placeholder="Short answer text will go here"
+          disabled
+          className="w-[50%] min-w-64 px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-400 cursor-not-allowed text-sm"
+        />
+      </div>
+
       <div className="flex justify-end items-center gap-2">
         <button
           onClick={() => onDelete(sectionId)}
@@ -39,7 +51,7 @@ export const TextSectionBuilder = ({
           <span>Delete</span>
         </button>
         <button
-          onClick={() => onDuplicate(section, sectionId)}
+          onClick={() => onDuplicate(section)}
           className="flex items-center gap-1 px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
         >
           <DocumentDuplicateIcon className="w-4 h-4 stroke-2" />

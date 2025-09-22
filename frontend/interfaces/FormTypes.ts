@@ -25,7 +25,8 @@ export type FormSection =
   | MultipleChoiceSection
   | DropdownSelectSection
   | FileUploadSection
-  | DateTimeSection;
+  | DateTimeSection
+  | ImageSection;
 
 export enum FormSectionType {
   TEXT = "TEXT",
@@ -34,6 +35,7 @@ export enum FormSectionType {
   BINARY_CHOICE = "BINARY_CHOICE",
   FILE_UPLOAD = "FILE_UPLOAD",
   DATE_TIME = "DATE_TIME",
+  IMAGE = "IMAGE",
 }
 
 interface AbstractSection {
@@ -68,6 +70,11 @@ export interface FileUploadSection extends AbstractSection {
 export interface DateTimeSection extends AbstractSection {
   type: FormSectionType.DATE_TIME;
   timestamp?: string; // uct time
+}
+
+export interface ImageSection extends AbstractSection {
+  type: FormSectionType.IMAGE;
+  imageUrl: string;
 }
 
 /** Contains the answers of the form from the responder */

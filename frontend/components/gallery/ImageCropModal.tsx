@@ -1,8 +1,11 @@
 "use client";
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
+import { ImageConfig, ImageOrientation, ImageType } from "@/interfaces/ImageTypes";
+import { switchableOrientations, switchOrientation } from "@/services/src/images/imageUtils";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useRef, useState } from "react";
-import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from "react-image-crop";
+import ReactCrop, { centerCrop, Crop, makeAspectCrop, PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
 interface ImageCropModalProps {
@@ -10,8 +13,7 @@ interface ImageCropModalProps {
   onClose: () => void;
   onCropComplete: (croppedFile: File) => void;
   imageFile: File;
-  aspectRatio: number; // 1 for square (thumbnail), 16/9 for event image
-  cropType: "thumbnail" | "image";
+  cropType: ImageType;
 }
 
 function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number) {
@@ -30,25 +32,20 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: numbe
   );
 }
 
-export const ImageCropModal = ({
-  isOpen,
-  onClose,
-  onCropComplete,
-  imageFile,
-  aspectRatio,
-  cropType,
-}: ImageCropModalProps) => {
+export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cropType }: ImageCropModalProps) => {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isProcessing, setIsProcessing] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageSrc, setImageSrc] = useState<string>("");
   const [hasValidCrop, setHasValidCrop] = useState(false);
+  const [orientation, setOrientation] = useState<ImageOrientation>(ImageOrientation.LANDSCAPE); // For form images
+  const [currentAspectRatio, setCurrentAspectRatio] = useState(ImageConfig[cropType].defaultAspectRatio);
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { width, height } = e.currentTarget;
-      const initialCrop = centerAspectCrop(width, height, aspectRatio);
+      const initialCrop = centerAspectCrop(width, height, currentAspectRatio);
       setCrop(initialCrop);
       // Immediately set a completed crop so the user can't proceed without a crop
       setCompletedCrop({
@@ -60,8 +57,15 @@ export const ImageCropModal = ({
       });
       setHasValidCrop(true);
     },
-    [aspectRatio]
+    [currentAspectRatio]
   );
+
+  // Initialize aspect ratio based on crop type
+  useEffect(() => {
+    const config = ImageConfig[cropType];
+    const orientationConfig = config.orientationConfigs[orientation];
+    setCurrentAspectRatio(orientationConfig?.aspectRatio || config.defaultAspectRatio);
+  }, [cropType, orientation]);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -72,6 +76,8 @@ export const ImageCropModal = ({
       };
       reader.readAsDataURL(imageFile);
       setHasValidCrop(false);
+      // Reset image orientation to landscape when opening
+      setOrientation(ImageOrientation.LANDSCAPE);
     } else if (!isOpen) {
       // Reset state when modal closes
       setImageSrc("");
@@ -79,8 +85,9 @@ export const ImageCropModal = ({
       setCompletedCrop(undefined);
       setHasValidCrop(false);
       setIsProcessing(false);
+      setOrientation(ImageOrientation.LANDSCAPE);
     }
-  }, [imageFile, isOpen]);
+  }, [imageFile, isOpen, cropType]);
 
   const getCroppedImg = useCallback(
     (image: HTMLImageElement, crop: PixelCrop): Promise<File> => {
@@ -125,6 +132,31 @@ export const ImageCropModal = ({
     [imageFile]
   );
 
+  const toggleOrientation = () => {
+    if (switchableOrientations(cropType) && imgRef.current) {
+      const newOrientation = switchOrientation(orientation);
+      setOrientation(newOrientation);
+
+      // Recalculate crop immediately with new aspect ratio from config
+      const config = ImageConfig[cropType];
+      const orientationConfig = config.orientationConfigs[newOrientation];
+      const newAspectRatio = orientationConfig?.aspectRatio || config.defaultAspectRatio;
+
+      const { width, height } = imgRef.current;
+      const newCrop = centerAspectCrop(width, height, newAspectRatio);
+
+      setCrop(newCrop);
+      setCompletedCrop({
+        x: (newCrop.x / 100) * width,
+        y: (newCrop.y / 100) * height,
+        width: (newCrop.width / 100) * width,
+        height: (newCrop.height / 100) * height,
+        unit: "px",
+      });
+      setHasValidCrop(true);
+    }
+  };
+
   const handleCropAccept = async () => {
     if (!completedCrop || !imgRef.current || !hasValidCrop) {
       alert("Please select a crop area before proceeding.");
@@ -151,7 +183,15 @@ export const ImageCropModal = ({
       <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h2 className="text-xl font-semibold text-core-text">
-            Crop {cropType === "thumbnail" ? "Thumbnail (Square)" : "Event Image (16:9)"}
+            Crop{" "}
+            {(() => {
+              const config = ImageConfig[cropType];
+              if (switchableOrientations(cropType)) {
+                const orientationConfig = config.orientationConfigs[orientation];
+                return `${config.displayName} (${orientationConfig?.aspectText})`;
+              }
+              return `${config.displayName} (${config.aspectText})`;
+            })()}
           </h2>
           <button
             onClick={onClose}
@@ -165,10 +205,25 @@ export const ImageCropModal = ({
         {imageSrc && (
           <div className="mb-4 flex-1 min-h-0">
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full flex flex-col">
-              <p className="text-sm text-gray-600 mb-3 flex-shrink-0">
-                Drag the corners to adjust the crop area. The aspect ratio is locked to{" "}
-                {cropType === "thumbnail" ? "1:1 (Square)" : "16:9"}.
-              </p>
+              <div className="mb-3 flex-shrink-0 flex justify-between items-center">
+                <p className="text-sm text-gray-600">
+                  Drag the corners to adjust the crop area. The aspect ratio is locked to{" "}
+                  {(() => {
+                    return ImageConfig[cropType].orientationConfigs[orientation]?.aspectText;
+                  })()}
+                  .
+                </p>
+                {switchableOrientations(cropType) && (
+                  <button
+                    onClick={toggleOrientation}
+                    className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
+                    disabled={isProcessing}
+                  >
+                    <ArrowPathIcon className="w-4 h-4" />
+                    Rotate
+                  </button>
+                )}
+              </div>
               <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
                 <ReactCrop
                   crop={crop}
@@ -179,9 +234,15 @@ export const ImageCropModal = ({
                     setCompletedCrop(pixelCrop);
                     setHasValidCrop(pixelCrop.width > 0 && pixelCrop.height > 0);
                   }}
-                  aspect={aspectRatio}
-                  minWidth={cropType === "thumbnail" ? 100 : 160}
-                  minHeight={cropType === "thumbnail" ? 100 : 90}
+                  aspect={currentAspectRatio}
+                  minWidth={(() => {
+                    const config = ImageConfig[cropType];
+                    return config.orientationConfigs[orientation]?.minCropWidth || 200;
+                  })()}
+                  minHeight={(() => {
+                    const config = ImageConfig[cropType];
+                    return config.orientationConfigs[orientation]?.minCropHeight || 200;
+                  })()}
                   keepSelection={true}
                   ruleOfThirds={true}
                   className="max-h-full"
