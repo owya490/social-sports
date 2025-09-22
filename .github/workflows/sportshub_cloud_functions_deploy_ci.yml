@@ -150,8 +150,7 @@ jobs:
             --concurrency 80 \
             --min-instances 1 \
             --max-instances 5 \
-            --cpu 1 \
-            --cpu-boost
+            --cpu 1
 
       - name: Deploy Cloud Scheduler jobs
         continue-on-error: true
