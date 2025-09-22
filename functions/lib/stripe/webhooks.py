@@ -423,12 +423,12 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
         logger.info(f"Ignoring event. event={event}")
         return https_fn.Response(status=200)
 
-    SPORTSHUB_URL = "www.sportshub.net.au"
+    SPORTSHUB_URL = "sportshub"
     # If we are in prod, we only want to process events from SPORTSHUB_URL
     if (
         IS_PROD
-        and SPORTSHUB_URL not in event["data"]["object"]["cancel_url"]
-        and SPORTSHUB_URL not in event["data"]["object"]["success_url"]
+        and SPORTSHUB_URL not in str(event["data"]["object"]["cancel_url"]).lower()
+        and SPORTSHUB_URL not in str(event["data"]["object"]["success_url"]).lower()
     ):
         logger.info(
             f"Ignoring event as it is not a SPORTSHUB event. event={event} success_url={event['data']['object']['success_url']} cancel_url={event['data']['object']['cancel_url']}"
