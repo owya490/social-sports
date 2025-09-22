@@ -44,29 +44,19 @@ export const DropdownSelectSectionBuilder = ({
 
   // Handle adding new option
   const handleAddOption = useCallback(
-    (focusIndex?: number) => {
-      // Prevent adding new option if the last one is empty
-      if (isLastOptionEmpty()) {
-        // If focusIndex is provided, focus the last (empty) option instead
-        if (focusIndex !== undefined) {
-          setTimeout(() => {
-            const lastIndex = section.options.length - 1;
-            const targetInput = optionInputRefs.current[lastIndex];
-            if (targetInput) {
-              targetInput.focus();
-            }
-          }, 0);
-        }
-        return;
+    (atIndex?: number) => {
+      const updatedOptions = [...section.options];
+      if (atIndex !== undefined) {
+        updatedOptions.splice(atIndex, 0, "");
+      } else {
+        updatedOptions.push("");
       }
-
-      const updatedOptions = [...section.options, ""];
       updateSection({ options: updatedOptions });
 
       // Focus the new input after DOM update
-      if (focusIndex !== undefined) {
+      if (atIndex !== undefined) {
         setTimeout(() => {
-          const targetInput = optionInputRefs.current[focusIndex];
+          const targetInput = optionInputRefs.current[atIndex];
           if (targetInput) {
             targetInput.focus();
           }
@@ -91,15 +81,39 @@ export const DropdownSelectSectionBuilder = ({
     [section.options, updateSection]
   );
 
+  // Handle removing empty option with delete key
+  const handleDeleteEmptyOption = useCallback(
+    (index: number) => {
+      // Only remove if we have more than one option
+      if (section.options.length > 1) {
+        const updatedOptions = section.options.filter((_, i) => i !== index);
+        updateSection({ options: updatedOptions });
+
+        // Focus the previous option if available, otherwise focus the next one
+        setTimeout(() => {
+          const targetIndex = index > 0 ? index - 1 : 0;
+          const targetInput = optionInputRefs.current[targetIndex];
+          if (targetInput) {
+            targetInput.focus();
+          }
+        }, 0);
+      }
+    },
+    [section.options, updateSection]
+  );
+
   // Handle key events on option inputs
   const handleOptionKeyDown = useCallback(
     (e: React.KeyboardEvent, index: number) => {
       if (e.key === "Enter") {
         e.preventDefault();
         handleAddOption(index + 1);
+      } else if (e.key === "Backspace" && section.options[index] === "") {
+        e.preventDefault();
+        handleDeleteEmptyOption(index);
       }
     },
-    [handleAddOption]
+    [handleAddOption, section.options, handleDeleteEmptyOption]
   );
   return (
     <div className="flex flex-col gap-4">
