@@ -19,7 +19,7 @@ At SPORTSHUB, we're not just building a platform — we're building something we
 
 ### For Players 🏃‍♂️
 
-- **Discover Events**: Find local sports events across multiple sports (volleyball, badminton, basketball, soccer, tennis, table tennis, oztag, baseball)
+- **Discover Events**: Find local sports events across multiple sports (volleyball, badminton, pickle ball, cricket, basketball, soccer, tennis, oztag, baseball)
 - **Easy Booking**: One-click booking with integrated Stripe payments
 - **Real-time Updates**: Live availability and event status
 
