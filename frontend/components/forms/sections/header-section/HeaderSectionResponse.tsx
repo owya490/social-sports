@@ -17,9 +17,9 @@ export const HeaderSectionResponse = ({
         <h1 className="font-bold text-3xl mb-2">{formTitle}</h1>
         <UserInlineDisplay organiser={organiser} />
       </div>
-      <p className="font-light text-sm text-left">
+      <div className="font-light text-sm text-left">
         <RichTextEditorContent description={formDescription} />
-      </p>
+      </div>
     </div>
   );
 };
