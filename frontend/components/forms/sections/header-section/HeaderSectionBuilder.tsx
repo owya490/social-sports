@@ -52,12 +52,12 @@ export const HeaderSectionBuilder = ({
       )}
 
       {isEditingDescription ? (
-        <div onBlur={() => setIsEditingDescription(false)}>
+        <>
           <DescriptionRichTextEditor description={formDescription} updateDescription={handleDescriptionChange} />
           <InvertedHighlightButton className="mt-2 ml-auto" onClick={() => setIsEditingDescription(false)}>
             Done
           </InvertedHighlightButton>
-        </div>
+        </>
       ) : (
         <button
           className="w-full border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 focus:outline-none focus:border-gray-300 text-left text-sm"
