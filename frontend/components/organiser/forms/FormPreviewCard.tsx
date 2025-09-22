@@ -143,9 +143,9 @@ export const FormPreviewCard = ({
             {/* Action Buttons - only show on hover */}
             <div className={` mt-4 transition-all duration-300 text-wrap ${isExpanded ? "opacity-100" : "opacity-0"}`}>
               {/* Form Description */}
-              <p className="text-xs text-left font-light mt-4 h-32 overflow-hidden">
+              <div className="text-xs text-left font-light mt-4 h-32 overflow-hidden">
                 <RichTextEditorContent description={formDescription} />
-              </p>
+              </div>
               <div className="flex gap-3 mt-4">
                 {/* Form Editor */}
                 <Link
