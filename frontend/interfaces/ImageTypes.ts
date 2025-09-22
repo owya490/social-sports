@@ -100,7 +100,7 @@ export const ImageConfig: Record<ImageType, TypeConfig> = {
     displayName: "Form Image",
     containerAspect: "aspect-[5/4]",
     defaultImageWidth: 400,
-    defaultImageHeight: 225,
+    defaultImageHeight: 320,
     title: "Select or Upload Form Image",
     description:
       "Choose an existing form image or upload a new one. This can be either landscape (5:4) or portrait (4:5) orientation.",
