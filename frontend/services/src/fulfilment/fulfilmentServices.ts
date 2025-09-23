@@ -47,6 +47,13 @@ export const evaluateFulfilmentSessionEnabled = (userId: string, eventId: EventI
   if (eventId && fulfilmentSessionEnabledEventIdList.includes(eventId)) {
     return true;
   }
+  // return true for sydgrassvolleyball and raptors volleyball
+  if (eventId && eventId === "98PJNSoCmNU5zslxa1wIdZ3mPdf2") {
+    return true;
+  }
+  if (eventId && eventId === "Pvwt23x0JrdlzomKHnJYcy3tJ8z2") {
+    return true;
+  }
   return FULFILMENT_SESSION_ENABLED;
 };
 
