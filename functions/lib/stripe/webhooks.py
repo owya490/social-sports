@@ -37,7 +37,6 @@ class SessionMetadata:
             self.isPrivate = isPrivate
         if isinstance(completeFulfilmentSession, str):
             self.completeFulfilmentSession = completeFulfilmentSession.lower() == "true"
-        else: 
             self.completeFulfilmentSession = bool(completeFulfilmentSession)  # Treat empty strings as absent 
             self.fulfilmentSessionId = fulfilmentSessionId
             self.endFulfilmentEntityId = endFulfilmentEntityId
