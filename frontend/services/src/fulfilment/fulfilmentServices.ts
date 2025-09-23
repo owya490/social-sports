@@ -30,9 +30,11 @@ const fulfilmentSessionEnabledUserIdList = [
   "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
   "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
   "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", // owen dev
+  "98PJNSoCmNU5zslxa1wIdZ3mPdf2", // sydgrassvolleyball
+  "Pvwt23x0JrdlzomKHnJYcy3tJ8z2", // raptors volleyball
 ];
 const fulfilmentSessionEnabledEventIdList: string[] = [
-  "brian was here",
+  "yr1bmHx9mpss5jAXPhEE", // sportshub test event
   // "0kcqoQMnRE9OV3ezstZt", // syrio jersey
 ];
 

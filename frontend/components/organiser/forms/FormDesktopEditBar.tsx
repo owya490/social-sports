@@ -1,6 +1,6 @@
 "use client";
 
-import { DocumentTextIcon, ListBulletIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon, ListBulletIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "@material-tailwind/react";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import { FormNavButton } from "./FormUtilityComponents";
@@ -8,6 +8,7 @@ import { FormNavButton } from "./FormUtilityComponents";
 interface FormDesktopEditBarProps {
   onAddTextSection: () => void;
   onAddDropdownSection: () => void;
+  onAddImageSection: () => void;
   onSaveForm: () => void;
   isFormModified: boolean;
   isSubmitting: boolean;
@@ -16,6 +17,7 @@ interface FormDesktopEditBarProps {
 const FormDesktopEditBar = ({
   onAddTextSection,
   onAddDropdownSection,
+  onAddImageSection,
   onSaveForm,
   isFormModified,
   isSubmitting,
@@ -24,11 +26,15 @@ const FormDesktopEditBar = ({
     <div className="hidden md:flex sticky top-40 w-fit bg-white rounded-lg p-6 mr-5 flex-col gap-4 items-center h-fit border border-gray-200 z-40">
       <div className="flex flex-col space-y-3">
         <FormNavButton onClick={onAddTextSection} tooltipContent="Add Text Question">
-          <DocumentTextIcon className="w-6 h-6 stroke-1 text-gray-600" />
+          <DocumentTextIcon className="w-6 h-6 stroke-1 text-black" />
         </FormNavButton>
 
         <FormNavButton onClick={onAddDropdownSection} tooltipContent="Add Dropdown Question">
-          <ListBulletIcon className="w-6 h-6 stroke-1 text-gray-600" />
+          <ListBulletIcon className="w-6 h-6 stroke-1 text-black" />
+        </FormNavButton>
+
+        <FormNavButton onClick={onAddImageSection} tooltipContent="Add Image Section">
+          <PhotoIcon className="w-6 h-6 stroke-1 text-black" />
         </FormNavButton>
 
         {isSubmitting ? (

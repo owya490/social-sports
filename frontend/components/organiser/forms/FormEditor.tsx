@@ -2,8 +2,11 @@
 
 import { DropdownSelectSectionBuilder } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionBuilder";
 import { HeaderSectionBuilder } from "@/components/forms/sections/header-section/HeaderSectionBuilder";
+import { ImageSectionBuilder } from "@/components/forms/sections/image-section/ImageSectionBuilder";
+import { ImageSelectionDialog } from "@/components/forms/sections/image-section/ImageSelectionDialog";
 import { TextSectionBuilder } from "@/components/forms/sections/text-section/TextSectionBuilder";
 import Loading from "@/components/loading/Loading";
+import Modal from "@/components/utility/Modal";
 import { useUser } from "@/components/utility/UserContext";
 import {
   EmptyForm,
@@ -13,6 +16,7 @@ import {
   FormSection,
   FormSectionType,
   FormTitle,
+  ImageSection,
   SectionId,
 } from "@/interfaces/FormTypes";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
@@ -39,8 +43,21 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   const [form, setForm] = useState<Form>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false);
+  const [showImageSelectionDialog, setShowImageSelectionDialog] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isModalClosing, setIsModalClosing] = useState(false);
   const isFormModified =
     form.title !== initialForm.title || form.description !== initialForm.description || form.sectionsOrder.length > 0;
+
+  // Handle modal close with proper timing to avoid content flash
+  const handleCloseErrorModal = () => {
+    setIsModalClosing(true);
+    // Clear the error after the modal exit animation completes (200ms based on Headless UI data-leave:duration-200)
+    setTimeout(() => {
+      setSaveError(null);
+      setIsModalClosing(false);
+    }, 250); // Adding 50ms buffer to ensure animation completes
+  };
 
   useEffect(() => {
     const fetchForm = async () => {
@@ -73,21 +90,68 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     };
   }, [isFormModified]);
 
+  // Helper function to filter empty options from dropdown sections
+  const filterEmptyOptions = (form: Form): Form => {
+    const filteredSectionsMap = { ...form.sectionsMap };
+    const sectionsWithNoValidOptions: string[] = [];
+
+    Object.keys(filteredSectionsMap).forEach((sectionId) => {
+      const section = filteredSectionsMap[sectionId as SectionId];
+      if (section.type === FormSectionType.DROPDOWN_SELECT && "options" in section) {
+        // Filter out empty options
+        const nonEmptyOptions = section.options.filter((option: string) => option.trim() !== "");
+
+        if (nonEmptyOptions.length === 0) {
+          sectionsWithNoValidOptions.push(section.question || "Untitled dropdown question");
+        } else {
+          section.options = nonEmptyOptions;
+        }
+      }
+    });
+
+    // Throw error if any dropdown sections have no valid options
+    if (sectionsWithNoValidOptions.length > 0) {
+      const questionsList = sectionsWithNoValidOptions.map((q) => `"${q}"`).join(", ");
+      throw new Error(
+        `The following dropdown question${sectionsWithNoValidOptions.length > 1 ? "s" : ""} ${
+          sectionsWithNoValidOptions.length > 1 ? "have" : "has"
+        } no valid options: ${questionsList}. Please add at least one option to each dropdown question.`
+      );
+    }
+
+    return { ...form, sectionsMap: filteredSectionsMap };
+  };
+
   const handleSubmitClick = async () => {
     setIsSubmitting(true);
-    if (isFormModified) {
-      if (formId === CREATE_FORM_ID) {
-        if (form.userId !== "") {
-          const newFormId = await createForm(form);
-          router.push(`/organiser/forms/${newFormId}/editor`);
+    setSaveError(null);
+
+    try {
+      if (isFormModified) {
+        const formToSave = filterEmptyOptions(form);
+
+        if (formId === CREATE_FORM_ID) {
+          if (form.userId !== "") {
+            const newFormId = await createForm(formToSave);
+            router.push(`/organiser/forms/${newFormId}/editor`);
+          }
+        } else {
+          await updateActiveForm(formToSave, formId);
         }
-      } else {
-        updateActiveForm(form, formId);
       }
+      // sleep (1s)
+      await sleep(1000);
+    } catch (error) {
+      // Handle validation errors from filterEmptyOptions
+      if (error instanceof Error) {
+        setSaveError(error.message);
+      } else {
+        setSaveError("An unexpected error occurred while saving the form. Please try again.");
+      }
+      console.error("Form save error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-    // sleep (1s)
-    await sleep(1000);
-    setIsSubmitting(false);
   };
 
   const handleBackClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -96,12 +160,12 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       setShowBackWarning(true);
       return;
     }
-    window.history.back();
+    router.push(`/organiser/forms/gallery`);
   };
 
   const handleConfirmBack = () => {
     setShowBackWarning(false);
-    window.history.back();
+    router.push(`/organiser/forms/gallery`);
   };
 
   const updateFormTitle = (newTitle: FormTitle) => {
@@ -118,8 +182,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     }));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const duplicateSection = (section: FormSection, sectionId: SectionId) => {
+  const duplicateSection = (section: FormSection) => {
     const newSectionId: SectionId = uuidv4() as SectionId; // Use UUID for uniqueness
 
     setForm((prevForm) => ({
@@ -152,6 +215,16 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       sectionsOrder: [...prevForm.sectionsOrder, newSectionId],
       sectionsMap: { ...prevForm.sectionsMap, [newSectionId]: section },
     }));
+  };
+
+  const handleImageSelectionComplete = (imageUrl: string) => {
+    addSection({
+      type: FormSectionType.IMAGE,
+      question: "",
+      imageUrl: imageUrl,
+      required: false,
+    });
+    setShowImageSelectionDialog(false);
   };
 
   const moveSectionUp = (sectionId: SectionId) => {
@@ -233,6 +306,22 @@ const FormEditor = ({ formId }: FormEditorParams) => {
             onDuplicate={duplicateSection}
           />
         );
+
+      case FormSectionType.IMAGE:
+        return (
+          <ImageSectionBuilder
+            imageSection={section as ImageSection}
+            sectionId={sectionId}
+            onUpdate={(updatedSection) => {
+              setForm((prevForm) => ({
+                ...prevForm,
+                sectionsMap: { ...prevForm.sectionsMap, [sectionId]: updatedSection },
+              }));
+            }}
+            onDelete={deleteSection}
+            onDuplicate={duplicateSection}
+          />
+        );
     }
   };
   if (isLoading) {
@@ -254,7 +343,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       {/* Back Button Warning Dialog */}
       {showBackWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md text-center">
+          <div className="bg-white p-6 rounded-lg max-w-md text-center mx-4">
             <h2 className="text-xl font-bold mb-4">Are you sure?</h2>
             <p className="text-gray-600 mb-6">Any unsaved changes will be lost. Do you want to continue?</p>
             <div className="flex justify-center gap-3">
@@ -274,6 +363,23 @@ const FormEditor = ({ formId }: FormEditorParams) => {
           </div>
         </div>
       )}
+
+      {/* Save Error Dialog */}
+      <Modal
+        isOpen={!!saveError && !isModalClosing}
+        onClose={handleCloseErrorModal}
+        title="Cannot Save Form"
+        state="error"
+        maxWidth="lg"
+        primaryButton={{
+          text: "OK",
+          onClick: handleCloseErrorModal,
+        }}
+      >
+        <div className="text-left">
+          <p className="text-sm text-gray-700 dark:text-gray-300">{saveError}</p>
+        </div>
+      </Modal>
       {/* Mobile Top Navbar */}
       <FormMobileEditBar
         onAddTextSection={() => {
@@ -293,6 +399,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
             required: true,
           })
         }
+        onAddImageSection={() => setShowImageSelectionDialog(true)}
         onSaveForm={handleSubmitClick}
         isFormModified={isFormModified}
         isSubmitting={isSubmitting}
@@ -316,13 +423,14 @@ const FormEditor = ({ formId }: FormEditorParams) => {
             required: true,
           })
         }
+        onAddImageSection={() => setShowImageSelectionDialog(true)}
         onSaveForm={handleSubmitClick}
         isFormModified={isFormModified}
         isSubmitting={isSubmitting}
       />
       {/* Main Form Area */}
       <div className="flex-1 w-full flex justify-center">
-        <div className="flex-1 flex flex-col gap-5 max-w-3xl relative pb-20 mt-16 md:ml-0  md:mt-0">
+        <div className="flex-1 flex flex-col gap-5 max-w-3xl relative pb-24 pt-4 md:ml-0 md:pb-20 md:pt-0">
           {/* Form Title Card */}
           <HeaderSectionBuilder
             formTitle={form.title}
@@ -375,6 +483,13 @@ const FormEditor = ({ formId }: FormEditorParams) => {
           </ReactSortable>
         </div>
       </div>
+
+      {/* Image Selection Dialog */}
+      <ImageSelectionDialog
+        isOpen={showImageSelectionDialog}
+        onClose={() => setShowImageSelectionDialog(false)}
+        onImageSelected={handleImageSelectionComplete}
+      />
     </div>
   );
 };

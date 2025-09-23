@@ -1,12 +1,13 @@
 "use client";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
+import { ImageType } from "@/interfaces/ImageTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import {
   getUsersEventImagesUrls,
   getUsersEventThumbnailsUrls,
   uploadEventImage,
   uploadEventThumbnail,
-} from "@/services/src/imageService";
+} from "@/services/src/images/imageService";
 import imageCompression from "browser-image-compression";
 import { useEffect, useState } from "react";
 import { ImageSection } from "./ImageSection";
@@ -95,9 +96,7 @@ export const ImageGallery = ({ user }: ImageGalleryProps) => {
 
       {/* Thumbnails Section */}
       <ImageSection
-        title="Event Thumbnails"
-        description="Square aspect ratio (1:1) - Used for event cards on the dashboard"
-        type="thumbnail"
+        type={ImageType.THUMBNAIL}
         imageUrls={thumbnailUrls}
         onImageUploaded={(file) => handleImageUpload(file, "thumbnail")}
         gridCols="grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
@@ -105,9 +104,7 @@ export const ImageGallery = ({ user }: ImageGalleryProps) => {
 
       {/* Event Images Section */}
       <ImageSection
-        title="Event Images"
-        description="16:9 aspect ratio - Used for event detail pages"
-        type="image"
+        type={ImageType.IMAGE}
         imageUrls={imageUrls}
         onImageUploaded={(file) => handleImageUpload(file, "image")}
         gridCols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"

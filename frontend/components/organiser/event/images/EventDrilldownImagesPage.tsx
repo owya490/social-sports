@@ -5,7 +5,7 @@ import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { UserData } from "@/interfaces/UserTypes";
 import { updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
-import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/imageService";
+import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Spinner } from "@material-tailwind/react";
 import { useEffect, useState } from "react";

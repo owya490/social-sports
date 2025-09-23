@@ -1,20 +1,20 @@
 import { FormSection, SectionId } from "@/interfaces/FormTypes";
-import { TrashIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline";
+import { DocumentDuplicateIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 interface TextSectionBuilderProps {
   section: FormSection;
   sectionId: SectionId;
   onUpdate: (section: FormSection) => void;
   onDelete: (sectionId: SectionId) => void;
-  onDuplicate: (section: FormSection, sectionId: SectionId) => void;
+  onDuplicate: (section: FormSection) => void;
 }
 
-export const TextSectionBuilder = ({ 
-  section, 
-  sectionId, 
-  onUpdate, 
-  onDelete, 
-  onDuplicate 
+export const TextSectionBuilder = ({
+  section,
+  sectionId,
+  onUpdate,
+  onDelete,
+  onDuplicate,
 }: TextSectionBuilderProps) => {
   return (
     <div className="flex flex-col gap-4">
@@ -30,6 +30,18 @@ export const TextSectionBuilder = ({
           className="w-full flex-1 px-3 py-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
+
+      {/* Preview of response field */}
+      <div className="pb-2.5">
+        <input
+          type="text"
+          value=""
+          placeholder="Short answer text will go here"
+          disabled
+          className="w-[50%] min-w-64 px-3 py-2 border border-gray-200 rounded-md bg-gray-50 text-gray-400 cursor-not-allowed text-sm"
+        />
+      </div>
+
       <div className="flex justify-end items-center gap-2">
         <button
           onClick={() => onDelete(sectionId)}
@@ -39,7 +51,7 @@ export const TextSectionBuilder = ({
           <span>Delete</span>
         </button>
         <button
-          onClick={() => onDuplicate(section, sectionId)}
+          onClick={() => onDuplicate(section)}
           className="flex items-center gap-1 px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
         >
           <DocumentDuplicateIcon className="w-4 h-4 stroke-2" />
@@ -48,20 +60,20 @@ export const TextSectionBuilder = ({
         <span className="text-sm text-gray-600">Required</span>
         <button
           onClick={() => {
-            const updatedSection = { 
-              ...section, 
-              required: !section.required 
+            const updatedSection = {
+              ...section,
+              required: !section.required,
             };
             onUpdate(updatedSection);
           }}
           className="relative w-9 h-5 rounded-full transition-colors duration-300"
           style={{
-            backgroundColor: section.required ? '#4CAF50' : '#ccc'
+            backgroundColor: section.required ? "#4CAF50" : "#ccc",
           }}
         >
-          <div 
+          <div
             className={`absolute w-4 h-4 bg-white rounded-full top-0.5 transition-all duration-300 ${
-              section.required ? 'left-[18px]' : 'left-0.5'
+              section.required ? "left-[18px]" : "left-0.5"
             }`}
           />
         </button>
