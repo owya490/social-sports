@@ -24,7 +24,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import { getDeleteFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = true;
+export const FULFILMENT_SESSION_ENABLED = false;
 
 const fulfilmentSessionEnabledUserIdList = [
   "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
