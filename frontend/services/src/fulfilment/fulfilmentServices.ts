@@ -36,6 +36,7 @@ const fulfilmentSessionEnabledUserIdList = [
 ];
 const fulfilmentSessionEnabledEventIdList: string[] = [
   "yr1bmHx9mpss5jAXPhEE", // sportshub test event
+  "5p3V3XRykiYZava8WAM8",
   // "0kcqoQMnRE9OV3ezstZt", // syrio jersey
 ];
 
