@@ -1,18 +1,5 @@
 package com.functions.fulfilment.services;
 
-import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.forms.models.FormResponse;
@@ -33,6 +20,17 @@ import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
@@ -454,13 +452,14 @@ public class FulfilmentService {
 
     /**
      * Helper method to retrieve and validate a fulfilment session by ID.
+     * Returns Optional.empty() if the session is not found, which is treated as normal behavior.
      */
     private static Optional<FulfilmentSession> getFulfilmentSessionById(String fulfilmentSessionId) {
         try {
             Optional<FulfilmentSession> maybeFulfilmentSession = FulfilmentSessionRepository
                     .getFulfilmentSession(fulfilmentSessionId);
             if (maybeFulfilmentSession.isEmpty()) {
-                logger.error("Fulfilment session not found for ID: {}", fulfilmentSessionId);
+                logger.warn("Fulfilment session not found for ID: {}", fulfilmentSessionId);
             }
             return maybeFulfilmentSession;
         } catch (Exception e) {
@@ -581,7 +580,7 @@ public class FulfilmentService {
         try {
             Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
             if (maybeFulfilmentSession.isEmpty()) {
-                logger.error("Fulfilment session not found for ID: {}", fulfilmentSessionId);
+                logger.warn("Fulfilment session not found for ID: {}", fulfilmentSessionId);
                 return Optional.empty();
             }
 
@@ -635,7 +634,7 @@ public class FulfilmentService {
         try {
             Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
             if (maybeFulfilmentSession.isEmpty()) {
-                logger.error("Fulfilment session not found for ID: {}", fulfilmentSessionId);
+                logger.warn("Fulfilment session not found for ID: {}", fulfilmentSessionId);
                 return false;
             }
 
@@ -679,7 +678,7 @@ public class FulfilmentService {
         try {
             Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId);
             if (maybeFulfilmentSession.isEmpty()) {
-                logger.error("Fulfilment session not found for ID: {}", fulfilmentSessionId);
+                logger.warn("Fulfilment session not found for ID: {}", fulfilmentSessionId);
                 return false;
             }
 
