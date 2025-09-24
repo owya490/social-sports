@@ -6,7 +6,7 @@ PROJECT_ID=${1:-socialsports-44162}
 REGION=${2:-australia-southeast1}
 FUNCTION_URL=${3:-"https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron"}
 
-JOB_NAME=recurring-events-job
+JOB_NAME=recurring-events-cron-job
 
 # Create or update Cloud Scheduler job recurring events cron at midnight every day
 if gcloud scheduler jobs describe "$JOB_NAME" --location="$REGION" --project "$PROJECT_ID" >/dev/null 2>&1; then

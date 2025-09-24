@@ -11,10 +11,6 @@ on:
   push:
     branches:
       - master
-      - brian2w/fix-scheduler-deploy
-  pull_request:
-    branches:
-      - brian2w/fix-scheduler-deploy
 
 jobs:
   deploy-java-cloud-run-functions:
@@ -22,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev]
+        env: [dev, prod]
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -173,7 +169,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev]
+        env: [dev, prod]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
