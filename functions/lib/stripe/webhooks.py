@@ -118,6 +118,9 @@ def fulfill_completed_event_ticket_purchase(
     full_name: str,
     phone_number: str,
     payment_details: stripe.checkout.Session.TotalDetails,
+    complete_fulfilment_session: bool,
+    fulfilment_session_id: str,
+    end_fulfilment_entity_id: str,
 ) -> str | None:  # Typing of customer is customer details
     # Update the event to include the new attendees
     private_path = "Private" if is_private else "Public"
@@ -273,6 +276,15 @@ def fulfill_completed_event_ticket_purchase(
             )
         },
     )
+    
+    if (
+        complete_fulfilment_session
+        and fulfilment_session_id
+        and end_fulfilment_entity_id
+    ):
+        complete_fulfilment_session_request(
+            logger, fulfilment_session_id, end_fulfilment_entity_id
+        )
 
     return order_id_ref.id
 
@@ -408,6 +420,9 @@ def fulfilment_workflow_on_ticket_purchase(
         full_name,
         phone_number,
         checkout_session.total_details,
+        complete_fulfilment_session,
+        fulfilment_session_id,
+        end_fulfilment_entity_id,
     )
     if orderId == None:
         logger.error(
@@ -415,14 +430,6 @@ def fulfilment_workflow_on_ticket_purchase(
         )
         return https_fn.Response(status=500)
 
-    if (
-        complete_fulfilment_session
-        and fulfilment_session_id
-        and end_fulfilment_entity_id
-    ):
-        complete_fulfilment_session_request(
-            logger, fulfilment_session_id, end_fulfilment_entity_id
-        )
 
     # Send email to purchasing consumer. Retry sending email 3 times, before exiting and completing order. If email breaks, its not the end of the world.
     success = False
