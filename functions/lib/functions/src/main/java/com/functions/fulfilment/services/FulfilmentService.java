@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
@@ -53,14 +54,15 @@ public class FulfilmentService {
      * @throws Exception when listing old sessions fails
      */
     public static int cleanupOldFulfilmentSessions(int cutoffMinutes) throws Exception {
+        logger.info("Starting cleanup of old fulfilment sessions with cutoff: {} minutes", cutoffMinutes);
         long nowSeconds = Instant.now().getEpochSecond();
         long cutoffSeconds = nowSeconds - TimeUnit.MINUTES.toSeconds(cutoffMinutes);
         Timestamp cutoff = Timestamp.ofTimeSecondsAndNanos(cutoffSeconds, 0);
 
         int deleted = 0;
         try {
-            List<String> oldSessionIds =
-                    FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(cutoff);
+            List<String> oldSessionIds = FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(cutoff);
+            logger.info("Found old fulfilment sessions to delete: {}", oldSessionIds);
             for (String id : oldSessionIds) {
                 try {
                     deleteFulfilmentSessionAndTempFormResponses(id);
@@ -101,13 +103,16 @@ public class FulfilmentService {
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities =
                     constructCheckoutFulfilmentEntities(eventId, eventData, numTickets,
                             fulfilmentSessionId);
-
+            logger.info("Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, fulfilmentEntities: {}", 
+                    eventId, numTickets, fulfilmentSessionId, fulfilmentEntities.stream().map(SimpleEntry::getValue).collect(Collectors.toList()));
             return FulfilmentService.createFulfilmentSession(fulfilmentSessionId, eventId,
                     numTickets, fulfilmentEntities).map(sessionId -> {
                 if (sessionId.isEmpty()) {
+                    logger.error("Empty session ID returned from createFulfilmentSession for event ID: {}", eventId);
                     throw new RuntimeException(
                             "Failed to create fulfilment session for event ID: " + eventId);
                 }
+                logger.info("Created fulfilment session for event ID: {}, session ID: {}", eventId, sessionId);
                 return sessionId;
             });
         } catch (Exception e) {

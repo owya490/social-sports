@@ -35,6 +35,9 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
             throw new IllegalArgumentException("formResponse is required");
         }
 
+        logger.info("Handling save temporary form response request for formId: {}, eventId: {}, formResponse: {}",
+                request.formResponse().getFormId(), request.formResponse().getEventId(), request.formResponse());
+
         Optional<String> maybeFormResponseId = saveTempFormResponse(request.formResponse());
 
         if (maybeFormResponseId.isPresent()) {

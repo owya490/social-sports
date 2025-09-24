@@ -28,11 +28,12 @@ export const FULFILMENT_SESSION_ENABLED = false;
 
 const fulfilmentSessionEnabledUserIdList = [
   // "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
+  "98PJNSoCmNU5zslxa1wIdZ3mPdf2", // sydgrassvolleyball
+  "Pvwt23x0JrdlzomKHnJYcy3tJ8z2", // raptors volleyball
+  "zrTARSTmbsf2hOozuCLCK154AMv1", // obsidian volleyball
   "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
   "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", // owen dev
   "4jCSqGcc1PV7EWDL4CagipVIi8n2", // brian dev
-  // "98PJNSoCmNU5zslxa1wIdZ3mPdf2", // sydgrassvolleyball
-  // "Pvwt23x0JrdlzomKHnJYcy3tJ8z2", // raptors volleyball
 ];
 const fulfilmentSessionEnabledEventIdList: string[] = [
   "yr1bmHx9mpss5jAXPhEE", // sportshub test event
