@@ -266,26 +266,21 @@ public class FulfilmentService {
     }
 
     private static void copyTempFormResponsesToSubmitted(FulfilmentSession fulfilmentSession) {
-        try {
-            logger.info("[FulfilmentService] Copying temporary form responses to submitted for session ID: {}",
-                    fulfilmentSession.getId());
+        logger.info("[FulfilmentService] Copying temporary form responses to submitted for session ID: {}",
+                fulfilmentSession.getId());
 
-            // Loop through all fulfilment entities in the session
-            for (String entityId : fulfilmentSession.getFulfilmentEntityIds()) {
-                FulfilmentEntity entity = fulfilmentSession.getFulfilmentEntityMap().get(entityId);
-                if (entity == null || entity.getType() != FulfilmentEntityType.FORMS) {
-                    continue; // Only process FORMS entities
-                }
-
-                FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
-                FormsUtils.copyTempFormResponseToSubmitted(formsEntity.getFormId(), formsEntity.getEventId(),
-                        formsEntity.getFormResponseId());
-
-                logger.info("Copied temporary form response to submitted for entity ID: {}, {}", entityId, entity);
+        // Loop through all fulfilment entities in the session
+        for (String entityId : fulfilmentSession.getFulfilmentEntityIds()) {
+            FulfilmentEntity entity = fulfilmentSession.getFulfilmentEntityMap().get(entityId);
+            if (entity == null || entity.getType() != FulfilmentEntityType.FORMS) {
+                continue; // Only process FORMS entities
             }
-        } catch (Exception e) {
-            logger.error("Failed to copy temporary form responses to submitted for session ID: {}",
-                    fulfilmentSession.getId(), e);
+
+            FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
+            FormsUtils.copyTempFormResponseToSubmitted(formsEntity.getFormId(), formsEntity.getEventId(),
+                    formsEntity.getFormResponseId());
+
+            logger.info("Copied temporary form response to submitted for entity ID: {}, {}", entityId, entity);
         }
     }
 
