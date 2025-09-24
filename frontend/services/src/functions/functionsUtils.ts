@@ -1,3 +1,5 @@
+import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
+import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
 import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
 import { Environment, getEnvironment } from "@/utilities/environment";
@@ -24,6 +26,14 @@ export async function executeGlobalAppControllerFunction<S, T>(endpointType: End
     },
     body: JSON.stringify(request),
   });
+
+  if (rawResponse.status === 404) {
+    const errorResponse = (await rawResponse.json()) as ErrorResponse;
+    functionsUtilsLogger.error(
+      `executeGlobalAppControllerFunction: Requested object not found. status=404 message=${errorResponse.errorMessage}`
+    );
+    throw new NotFoundError("Fulfilment object not found");
+  }
 
   if (!rawResponse.ok) {
     const errorText = await rawResponse.text().catch(() => "");
