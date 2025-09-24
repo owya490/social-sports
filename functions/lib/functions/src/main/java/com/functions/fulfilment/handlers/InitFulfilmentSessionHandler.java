@@ -1,10 +1,5 @@
 package com.functions.fulfilment.handlers;
 
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.fulfilment.models.requests.InitCheckoutFulfilmentSessionRequest;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
@@ -12,6 +7,10 @@ import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 public class InitFulfilmentSessionHandler implements Handler<InitCheckoutFulfilmentSessionRequest, InitCheckoutFulfilmentSessionResponse> {
     private static final Logger logger = LoggerFactory.getLogger(InitFulfilmentSessionHandler.class);

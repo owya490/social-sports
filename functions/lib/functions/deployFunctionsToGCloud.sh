@@ -1,4 +1,4 @@
-#!/bin/
+#!/bin/bash
 
 # Currently available functions are:
 # updateRecurrenceTemplate

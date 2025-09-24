@@ -98,34 +98,64 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   if (error) return <div className="text-red-600">{error}</div>;
   if (formResponses.length === 0) return <div>No responses submitted</div>;
 
-  // Collect unique questions across all responses
-  const questionSet = new Map<SectionId, string>();
+  // Collect all unique question identifiers across all responses
+  const allQuestionIdentifiers = new Set<string>();
+
+  // First pass: collect all possible question identifiers (including duplicates within responses)
   formResponses.forEach((response) => {
-    Object.entries(response.responseMap).forEach(([sectionId, section]) => {
-      if (section?.question?.trim()) {
-        questionSet.set(sectionId as SectionId, section.question.trim());
+    const questionCounts = new Map<string, number>();
+
+    Object.entries(response.responseMap).forEach(([_, section]) => {
+      if (section.type !== FormSectionType.IMAGE) {
+        const question = section.question.trim();
+        const count = questionCounts.get(question) || 0;
+        questionCounts.set(question, count + 1);
+
+        const uniqueIdentifier = count === 0 ? question : `${question} ${count + 1}`;
+        allQuestionIdentifiers.add(uniqueIdentifier);
       }
     });
   });
 
-  const sortedQuestions = Array.from(questionSet.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+  const sortedQuestions = Array.from(allQuestionIdentifiers).sort((a, b) => a.localeCompare(b));
+
+  // Helper function to create question identifier to section mapping for each response
+  const createQuestionMappingForResponse = (responseMap: Record<SectionId, FormSection>): Map<string, FormSection> => {
+    const questionCounts = new Map<string, number>();
+    const questionMapping = new Map<string, FormSection>();
+
+    Object.entries(responseMap).forEach(([_, section]) => {
+      if (section.type !== FormSectionType.IMAGE) {
+        const question = section.question.trim();
+        const count = questionCounts.get(question) || 0;
+        questionCounts.set(question, count + 1);
+
+        const uniqueIdentifier = count === 0 ? question : `${question} ${count + 1}`;
+        questionMapping.set(uniqueIdentifier, section);
+      }
+    });
+
+    return questionMapping;
+  };
 
   // Calculate minimum table width: 30px (index) + 150px per question + 400px (submission time) + 30px (expand button)
   const minTableWidth = 30 + sortedQuestions.length * 150 + 400 + 30;
 
   const csvHeaders = [
     { label: "#", key: "index" },
-    ...sortedQuestions.map(([sectionId, label]) => ({ label, key: sectionId })),
+    ...sortedQuestions.map((question) => ({ label: question, key: question })),
     { label: "Submission Time", key: "submissionTime" },
   ];
 
   const csvData = formResponses.map((response, idx) => {
     const row: Record<string, string> = { index: (idx + 1).toString() };
+    const questionMapping = createQuestionMappingForResponse(response.responseMap);
 
-    sortedQuestions.forEach((question) => {
-      const section = Object.entries(response.responseMap).find((s) => s[0] === question[0])?.[1];
-      // Extract answer as string
+    // For each sorted question identifier, get the corresponding answer
+    sortedQuestions.forEach((questionId) => {
+      const section = questionMapping.get(questionId);
       let answer = "—";
+
       if (section) {
         switch (section.type) {
           case FormSectionType.TEXT:
@@ -136,7 +166,8 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
             answer = "—";
         }
       }
-      row[question[0]] = answer;
+
+      row[questionId] = answer;
     });
 
     row.submissionTime = formatTimestamp(response.submissionTime);
@@ -167,7 +198,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
                       : "whitespace-nowrap overflow-hidden text-ellipsis"
                   }`}
                 >
-                  {question[1]}
+                  {question}
                 </div>
               ))}
               <div className="table-cell px-3 py-2 border-r border-core-outline w-[400px]">Submission Time</div>
@@ -187,6 +218,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
             {formResponses.map((response, idx) => {
               const isLast = idx === formResponses.length - 1;
               const rowClasses = isLast ? "" : "border-b border-blue-gray-50";
+              const questionMapping = createQuestionMappingForResponse(response.responseMap);
 
               return (
                 <div key={`response-${idx}`} className={`table-row ${rowClasses}`}>
@@ -200,8 +232,8 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
                       {idx + 1}
                     </Link>
                   </div>
-                  {sortedQuestions.map((question, j) => {
-                    const section = Object.entries(response.responseMap).find((s) => s[0] === question[0])?.[1];
+                  {sortedQuestions.map((questionId, j) => {
+                    const section = questionMapping.get(questionId);
                     const isRowExpanded = expandedRows.has(idx);
                     return (
                       <div
