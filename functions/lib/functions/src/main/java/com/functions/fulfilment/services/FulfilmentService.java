@@ -575,7 +575,8 @@ public class FulfilmentService {
 
             FulfilmentEntity entity = fulfilmentEntityMap.get(fulfilmentEntityId);
             if (entity == null) {
-                logger.error("Fulfilment entity not found for ID: {} in session: {}", fulfilmentEntityId,
+                // fulfilment entity id is client inputted, so we can't control the input, hence only log a warning, rather than an error
+                logger.warn("Fulfilment entity not found for ID: {} in session: {}", fulfilmentEntityId,
                         fulfilmentSessionId);
                 return Optional.empty();
             }

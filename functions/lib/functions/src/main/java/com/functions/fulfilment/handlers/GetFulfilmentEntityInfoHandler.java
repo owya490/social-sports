@@ -1,10 +1,10 @@
 package com.functions.fulfilment.handlers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
 import com.functions.fulfilment.models.requests.GetFulfilmentEntityInfoRequest;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.services.FulfilmentService;
-import com.functions.global.exceptions.NotFoundException;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
@@ -36,7 +36,7 @@ public class GetFulfilmentEntityInfoHandler implements Handler<GetFulfilmentEnti
         } else {
             logger.warn("No fulfilment entity info found for session: {}, entity Id: {}", 
                     request.fulfilmentSessionId(), request.fulfilmentEntityId());
-            throw new NotFoundException("No fulfilment entity info found for session: " + request.fulfilmentSessionId()
+            throw new FulfilmentEntityNotFoundException("No fulfilment entity info found for session: " + request.fulfilmentSessionId()
                     + " and entity Id: " + request.fulfilmentEntityId());
         }
     }
