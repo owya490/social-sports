@@ -35,11 +35,13 @@ class SessionMetadata:
             self.isPrivate = isPrivate.lower() == "true"
         else:
             self.isPrivate = isPrivate
+
         if isinstance(completeFulfilmentSession, str):
             self.completeFulfilmentSession = completeFulfilmentSession.lower() == "true"
-            self.completeFulfilmentSession = bool(completeFulfilmentSession)  # Treat empty strings as absent 
-            self.fulfilmentSessionId = fulfilmentSessionId
-            self.endFulfilmentEntityId = endFulfilmentEntityId
+        else:
+            self.completeFulfilmentSession = completeFulfilmentSession
+        self.fulfilmentSessionId = fulfilmentSessionId
+        self.endFulfilmentEntityId = endFulfilmentEntityId
 
     def __post_init__(self):
         if not isinstance(self.eventId, str):
