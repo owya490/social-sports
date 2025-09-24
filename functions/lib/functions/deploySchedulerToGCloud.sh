@@ -8,7 +8,7 @@ FUNCTION_URL=${3:-"https://australia-southeast1-socialsports-44162.cloudfunction
 
 JOB_NAME=recurring-events-job
 
-# Create or update Cloud Scheduler job to hit the recurring events function daily at midnight
+# Create or update Cloud Scheduler job recurring events cron at midnight every day
 if gcloud scheduler jobs describe "$JOB_NAME" --location="$REGION" --project "$PROJECT_ID" >/dev/null 2>&1; then
   echo "Updating existing scheduler job: $JOB_NAME"
   gcloud scheduler jobs update http "$JOB_NAME" \
