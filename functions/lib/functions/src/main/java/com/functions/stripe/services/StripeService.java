@@ -1,14 +1,15 @@
 package com.functions.stripe.services;
 
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.models.requests.GetStripeCheckoutUrlByEventIdRequest;
 import com.functions.stripe.models.responses.GetStripeCheckoutUrlByEventIdResponse;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.UrlUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 public class StripeService {
     private static final Logger logger = LoggerFactory.getLogger(StripeService.class);
@@ -27,18 +28,18 @@ public class StripeService {
             // TODO: remove price getting from stripe function. The price value should be
             // from the stored
             // event data in the fulfilment session.
+            String newSuccessUrl = successUrl.orElse(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
+                    .orElse(UrlUtils.SPORTSHUB_URL));
             logger.info(
                     "Getting Stripe checkout URL for event ID: {}, isPrivate: {}, numTickets: {}, successUrl: {}, fulfilmentSessionId: {}",
-                    eventId, isPrivate, numTickets, successUrl.orElse("N/A"), fulfilmentSessionId);
+                    eventId, isPrivate, numTickets, newSuccessUrl, fulfilmentSessionId);
 
             GetStripeCheckoutUrlByEventIdRequest request = new GetStripeCheckoutUrlByEventIdRequest(
                     eventId,
                     isPrivate,
                     numTickets,
                     cancelUrl.orElse(UrlUtils.SPORTSHUB_URL),
-                    successUrl.orElse(
-                            UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
-                                    .orElse(UrlUtils.SPORTSHUB_URL)),
+                    newSuccessUrl,
                     true,
                     fulfilmentSessionId,
                     endFulfilmentEntityId
