@@ -8,10 +8,10 @@ import com.functions.global.exceptions.NotFoundException;
  */
 public class FulfilmentEntityNotFoundException extends NotFoundException {
     public FulfilmentEntityNotFoundException(String entityId) {
-        super("No fulfilment session found for ID: " + entityId);
+        super("No fulfilment entity found for ID: " + entityId);
     }
     
     public FulfilmentEntityNotFoundException(String entityId, Throwable cause) {
-        super("No fulfilment session found for ID: " + entityId, cause);
+        super("No fulfilment entity found for ID: " + entityId, cause);
     }
 }

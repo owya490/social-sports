@@ -1,6 +1,7 @@
 package com.functions.global.controllers;
 
-import com.functions.global.exceptions.NotFoundException;
+import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
+import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
 import com.functions.global.handlers.HandlerRegistry;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
@@ -70,7 +71,12 @@ public class GlobalAppController implements HttpFunction {
             response.setStatusCode(400);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
                     new ErrorResponse(e.getMessage())));
-        } catch (NotFoundException e) {
+        } catch (FulfilmentEntityNotFoundException e) {
+            logger.warn("Resource not found: {}", e.getMessage());
+            response.setStatusCode(404);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
+        } catch (FulfilmentSessionNotFoundException e) {
             logger.warn("Resource not found: {}", e.getMessage());
             response.setStatusCode(404);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
