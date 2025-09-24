@@ -5,7 +5,7 @@ import Skeleton from "react-loading-skeleton";
 interface EventDrilldownStatBannerProps {
   loading: boolean;
   eventAccessCount: number;
-  eventVacancy: number;
+  completeTicketCount: number;
   eventCapacity: number;
   eventPrice: number;
 }
@@ -13,7 +13,7 @@ interface EventDrilldownStatBannerProps {
 const EventDrilldownStatBanner = ({
   loading,
   eventAccessCount,
-  eventVacancy,
+  completeTicketCount,
   eventCapacity,
   eventPrice,
 }: EventDrilldownStatBannerProps) => {
@@ -30,7 +30,7 @@ const EventDrilldownStatBanner = ({
                 }}
               />
             ) : (
-              `$A${((eventCapacity - eventVacancy) * displayPrice(eventPrice)).toFixed(2)}`
+              `$A${(completeTicketCount * displayPrice(eventPrice)).toFixed(2)}`
             )}
           </div>
         </div>
@@ -45,7 +45,7 @@ const EventDrilldownStatBanner = ({
                 }}
               />
             ) : (
-              `${eventCapacity - eventVacancy}/${eventCapacity}`
+              completeTicketCount === 0 ? `${completeTicketCount}/${eventCapacity}` : `${eventCapacity - completeTicketCount}/${eventCapacity}`
             )}
           </div>
         </div>
