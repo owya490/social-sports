@@ -70,73 +70,117 @@ public class FirebaseService {
 
     static {
         try {
+            logger.info("Initializing FirebaseService...");
             if (FirebaseApp.getApps().isEmpty()) {
+                logger.debug("No Firebase apps found, initializing...");
                 initialize();
+            } else {
+                logger.debug("Firebase apps already exist: {}", FirebaseApp.getApps().size());
             }
         } catch (Exception e) {
-            logger.error("Error initializing FirebaseService: " + e.getMessage());
+            logger.error("Error initializing FirebaseService: {}", e.getMessage(), e);
         }
     }
 
     private static void initialize() throws Exception {
+        logger.info("Starting Firebase initialization process");
+        
         String credentialsPath = "functions_key.json";
         posthogApiKey = Global.getEnv("POSTHOG_API_KEY");
         posthogHost = "https://app.posthog.com";
         firebaseProject = Global.getEnv("PROJECT_NAME");
+
+        logger.debug("Configuration: credentialsPath={}, posthogHost={}, firebaseProject={}, posthogApiKey={}",
+                credentialsPath, posthogHost, firebaseProject, posthogApiKey != null ? "[PRESENT]" : "[MISSING]");
 
         if (firebaseProject == null) {
             logger.error("Firebase project name is not set in the environment variables.");
             throw new Exception("Firebase project name is not set in the environment variables.");
         }
 
+        logger.debug("Loading Firebase credentials from: {}", credentialsPath);
         FileInputStream serviceAccount = new FileInputStream(credentialsPath);
         FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .setProjectId(firebaseProject)
                 .build();
+                
         boolean hasBeenInitialised = false;
         List<FirebaseApp> firebaseApps = FirebaseApp.getApps();
+        logger.debug("Checking existing Firebase apps: {}", firebaseApps.size());
+        
         for (FirebaseApp app : firebaseApps) {
+            logger.debug("Found Firebase app: {}", app.getName());
             if (app.getName().equals(FirebaseApp.DEFAULT_APP_NAME)) {
                 hasBeenInitialised = true;
+                logger.debug("Default Firebase app already initialized");
             }
         }
+        
         if (!hasBeenInitialised) {
+            logger.info("Initializing new Firebase app");
             FirebaseApp.initializeApp(options);
+        } else {
+            logger.debug("Firebase app already initialized, skipping");
         }
 
         if (FirebaseApp.getApps().isEmpty()) {
+            logger.error("Firebase initialization failed - no apps available after initialization");
             throw new Exception("Firebase not initialized");
         }
+        
+        logger.debug("Initializing Firestore client");
         db = FirestoreClient.getFirestore();
+        
+        logger.debug("Initializing Cloud Logging client");
         logging = LoggingOptions.getDefaultInstance().getService();
 
+        logger.debug("Initializing PostHog client");
         posthog = new PostHog.Builder(posthogApiKey).host(posthogHost).build();
+        
+        logger.info("Firebase initialization completed successfully");
     }
 
     public static Firestore getFirestore() {
+        if (db == null) {
+            logger.warn("Firestore client is null - Firebase may not be properly initialized");
+        }
         return db;
     }
 
     public static Optional<CallFirebaseFunctionResponse> callFirebaseFunction(String functionName, Object requestData) {
+        logger.info("Calling Firebase function: {}", functionName);
+        logger.debug("Request data type: {}", requestData != null ? requestData.getClass().getSimpleName() : "null");
+        
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION,
                     System.getenv("PROJECT_NAME"), functionName);
+            
+            logger.debug("Function URL: {}", functionUrl);
 
             HttpPost post = new HttpPost(functionUrl);
             post.setHeader("Content-Type", "application/json");
 
             String jsonData = objectMapper.writeValueAsString(new CallFirebaseFunctionRequest(requestData));
+            logger.debug("Request payload size: {} characters", jsonData.length());
             post.setEntity(new StringEntity(jsonData));
 
+            logger.debug("Executing HTTP request to Firebase function");
             try (CloseableHttpResponse response = client.execute(post)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 String responseBody = EntityUtils.toString(response.getEntity());
+                
+                logger.info("Firebase function response: function={}, statusCode={}, responseSize={}", 
+                        functionName, statusCode, responseBody.length());
 
                 if (statusCode < 400) {
-                    return Optional.of(objectMapper.readValue(responseBody, CallFirebaseFunctionResponse.class));
+                    logger.debug("Parsing successful response from Firebase function: {}", functionName);
+                    CallFirebaseFunctionResponse parsedResponse = objectMapper.readValue(responseBody, CallFirebaseFunctionResponse.class);
+                    logger.info("Successfully called Firebase function: {}", functionName);
+                    return Optional.of(parsedResponse);
                 } else {
-                    logger.error("Error response from Firebase function {}: {}", functionName, responseBody);
+                    logger.error("Error response from Firebase function {}: statusCode={}, response={}", 
+                            functionName, statusCode, responseBody);
                     return Optional.empty();
                 }
             }

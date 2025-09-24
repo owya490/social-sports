@@ -1,11 +1,5 @@
 package com.functions.forms.handlers;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
@@ -15,6 +9,11 @@ import com.functions.forms.services.FormsUtils;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
+import java.util.UUID;
 
 
 public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponseRequest, SaveTempFormResponseResponse> {
@@ -50,8 +49,6 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
 
     /**
      * Saves a FormResponse as a temporary submission.
-     * The form response must be complete (all required sections answered) to be
-     * saved.
      *
      * @param formResponse The FormResponse to save
      * @return The generated formResponseId
@@ -66,8 +63,8 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
                 return Optional.empty();
             }
 
-            logger.info("Saving temporary form response for formId: {}, eventId: {}",
-                    formResponse.getFormId(), formResponse.getEventId());
+            logger.info("Saving temporary form response for formId: {}, eventId: {}, formResponse: {}",
+                    formResponse.getFormId(), formResponse.getEventId(), formResponse);
 
             // Generate a unique formResponseId if not already set
             String formResponseId = formResponse.getFormResponseId();
@@ -76,6 +73,7 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
             }
             if (formResponseId == null || formResponseId.isEmpty()) {
                 formResponseId = UUID.randomUUID().toString();
+                logger.info("[SaveTempFormResponseHandler] Generated new formResponseId: {}", formResponseId);
                 formResponse.setFormResponseId(formResponseId);
             }
 
@@ -84,11 +82,11 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
 
             FormsRepository.saveTempFormResponse(formResponse);
 
-            logger.info("Successfully saved temporary form response with ID: {}", formResponseId);
+            logger.info("Successfully saved temporary form response with ID: {}, formResponse: {}", formResponseId, formResponse);
             return Optional.of(formResponseId);
         } catch (Exception e) {
-            logger.error("[FormsUtils] Error saving temporary form response: {} - {}",
-                    formResponse, e.getMessage());
+            logger.error("[FormsUtils] Error saving temporary form response: {} - {}, formResponse: {}",
+                    formResponse, e.getMessage(), formResponse);
             return Optional.empty();
         }
     }

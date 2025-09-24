@@ -1,30 +1,11 @@
 package com.functions.fulfilment.services;
 
-import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
-import com.functions.fulfilment.models.CheckoutFulfilmentSession;
-import com.functions.fulfilment.models.EndFulfilmentEntity;
-import com.functions.fulfilment.models.FormsFulfilmentEntity;
-import com.functions.fulfilment.models.FulfilmentEntity;
-import com.functions.fulfilment.models.FulfilmentEntityType;
-import com.functions.fulfilment.models.FulfilmentSession;
-import com.functions.fulfilment.models.StripeFulfilmentEntity;
+import com.functions.fulfilment.models.*;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -33,6 +14,13 @@ import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
@@ -55,24 +43,35 @@ public class FulfilmentService {
      * @throws Exception when listing old sessions fails
      */
     public static int cleanupOldFulfilmentSessions(int cutoffMinutes) throws Exception {
+        logger.info("Starting cleanup of old fulfilment sessions with cutoff: {} minutes", cutoffMinutes);
+
         long nowSeconds = Instant.now().getEpochSecond();
         long cutoffSeconds = nowSeconds - TimeUnit.MINUTES.toSeconds(cutoffMinutes);
         Timestamp cutoff = Timestamp.ofTimeSecondsAndNanos(cutoffSeconds, 0);
 
+        logger.debug("Cleanup cutoff timestamp: {}", cutoff);
+
         int deleted = 0;
         try {
+            logger.debug("Listing old fulfilment sessions");
             List<String> oldSessionIds = FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(cutoff);
+            logger.info("Found {} old fulfilment sessions to delete", oldSessionIds.size());
+
             for (String id : oldSessionIds) {
+                logger.debug("Attempting to delete fulfilment session: {}", id);
                 try {
                     deleteFulfilmentSession(id);
                     deleted++;
+                    logger.debug("Successfully deleted fulfilment session: {}", id);
                 } catch (Exception e) {
-                    logger.error("[FulfilmentService] Failed to delete fulfilment session {} during cleanup", id, e);
+                    logger.error("Failed to delete fulfilment session {} during cleanup: {}", id, e.getMessage(), e);
                 }
             }
+
+            logger.info("Cleanup completed: {} sessions deleted out of {} found", deleted, oldSessionIds.size());
             return deleted;
         } catch (Exception e) {
-            logger.error("[FulfilmentService] Error during cleanup of old fulfilment sessions", e);
+            logger.error("Error during cleanup of old fulfilment sessions: {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -80,13 +79,24 @@ public class FulfilmentService {
     /**
      * Initializes a checkout fulfilment session for the given event ID.
      */
-    public static Optional<String> initCheckoutFulfilmentSession(String eventId,
-                                                                 Integer numTickets) {
-        try {
-            // TODO: optimistically reserve tickets and at the current price using a
-            // transaction
+    public static Optional<String> initCheckoutFulfilmentSession(String eventId, Integer numTickets) {
+        logger.info("Initializing checkout fulfilment session: eventId={}, numTickets={}", eventId, numTickets);
 
+        if (eventId == null || eventId.isEmpty()) {
+            logger.error("Event ID is null or empty");
+            return Optional.empty();
+        }
+
+        if (numTickets == null || numTickets <= 0) {
+            logger.error("Invalid number of tickets: {}", numTickets);
+            return Optional.empty();
+        }
+
+        try {
             String fulfilmentSessionId = UUID.randomUUID().toString();
+            logger.debug("Generated fulfilment session ID: {}", fulfilmentSessionId);
+
+            logger.debug("Retrieving event data for eventId: {}", eventId);
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
             if (maybeEventData.isEmpty()) {
                 logger.error("Failed to find event data for event ID: {}", eventId);
@@ -94,59 +104,82 @@ public class FulfilmentService {
             }
 
             EventData eventData = maybeEventData.get();
+            logger.debug("Retrieved event data: name={}, price={}", eventData.getName(), eventData.getPrice());
+
+            logger.debug("Constructing checkout fulfilment entities");
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructCheckoutFulfilmentEntities(
-                    eventId,
-                    eventData, numTickets, fulfilmentSessionId);
+                    eventId, eventData, numTickets, fulfilmentSessionId);
+
+            logger.info("Created {} fulfilment entities for session", fulfilmentEntities.size());
 
             return FulfilmentService.createFulfilmentSession(fulfilmentSessionId, eventId,
                     numTickets, fulfilmentEntities).map(sessionId -> {
                 if (sessionId.isEmpty()) {
-                    throw new RuntimeException(
-                            "Failed to create fulfilment session for event ID: " + eventId);
+                    logger.error("Empty session ID returned from createFulfilmentSession");
+                    throw new RuntimeException("Failed to create fulfilment session for event ID: " + eventId);
                 }
+                logger.info("Successfully created fulfilment session: {}", sessionId);
                 return sessionId;
             });
         } catch (Exception e) {
-            logger.error("Failed to init checkout fulfilment session: {}", eventId, e);
+            logger.error("Failed to init checkout fulfilment session for eventId: {}, numTickets: {}, error: {}",
+                    eventId, numTickets, e.getMessage(), e);
         }
         return Optional.empty();
     }
 
     private static List<SimpleEntry<String, FulfilmentEntity>> constructCheckoutFulfilmentEntities(
-            String eventId,
-            EventData eventData, Integer numTickets, String fulfilmentSessionId) {
+            String eventId, EventData eventData, Integer numTickets, String fulfilmentSessionId) {
+        logger.info("Constructing checkout fulfilment entities: eventId={}, numTickets={}, sessionId={}",
+                eventId, numTickets, fulfilmentSessionId);
+
         // Pair of FulfilmentEntityId and FulfilmentEntity
         List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = new ArrayList<>();
-
         List<FulfilmentEntity> tempEntities = new ArrayList<>();
 
         // 1. FORMS entities - one for each ticket
         try {
+            logger.debug("Creating FORMS entities for {} tickets", numTickets);
             Optional<String> formId = FormsUtils.getFormIdByEventId(eventId);
             if (formId.isPresent()) {
+                logger.debug("Found form ID: {}", formId.get());
                 for (int i = 0; i < numTickets; i++) {
-                    tempEntities.add(
-                            FormsFulfilmentEntity.builder().formId(formId.get()).eventId(eventId)
-                                    .formResponseId(null)
-                                    .type(FulfilmentEntityType.FORMS).build());
+                    FormsFulfilmentEntity entity = FormsFulfilmentEntity.builder()
+                            .formId(formId.get())
+                            .eventId(eventId)
+                            .formResponseId(null)
+                            .type(FulfilmentEntityType.FORMS)
+                            .build();
+                    tempEntities.add(entity);
+                    logger.debug("Created FORMS entity {} of {}", i + 1, numTickets);
                 }
+            } else {
+                logger.warn("No form ID found for event: {}", eventId);
             }
         } catch (Exception e) {
-            logger.error("[FulfilmentService] Error constructing FORMS entities for event ID: {}", eventId, e);
-            throw new RuntimeException(
-                    "[FulfilmentService] Failed to construct FORMS entities for event ID: " + eventId, e);
+            logger.error("Error constructing FORMS entities for event ID: {}, error: {}", eventId, e.getMessage(), e);
+            throw new RuntimeException("Failed to construct FORMS entities for event ID: " + eventId, e);
         }
 
         // 2. STRIPE entity (will be updated with correct success URL later)
-        tempEntities.add(StripeFulfilmentEntity.builder().url("") // Placeholder URL
-                .type(FulfilmentEntityType.STRIPE).build());
+        logger.debug("Creating STRIPE entity");
+        tempEntities.add(StripeFulfilmentEntity.builder()
+                .url("") // Placeholder URL
+                .type(FulfilmentEntityType.STRIPE)
+                .build());
 
         // 3. END entity
+        logger.debug("Creating END entity");
+        String endUrl = UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
+                .orElse("https://sportshub.net.au/dashboard");
+        logger.debug("End URL: {}", endUrl);
+
         tempEntities.add(EndFulfilmentEntity.builder()
-                .url(UrlUtils
-                        .getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
-                        .orElse("https://sportshub.net.au/dashboard"))
-                .type(FulfilmentEntityType.END).build());
+                .url(endUrl)
+                .type(FulfilmentEntityType.END)
+                .build());
+
+        logger.info("Created {} temp entities total", tempEntities.size());
 
         List<String> entityIds = new ArrayList<>();
         for (int i = 0; i < tempEntities.size(); i++) {

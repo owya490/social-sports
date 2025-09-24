@@ -28,28 +28,44 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
 
     @Override
     public NewEventData parse(UnifiedRequest data) {
+        logger.debug("Parsing NewEventData from UnifiedRequest");
         try {
-            return JavaUtils.objectMapper.treeToValue(data.data(), NewEventData.class);
+            NewEventData parsed = JavaUtils.objectMapper.treeToValue(data.data(), NewEventData.class);
+            logger.info("Successfully parsed NewEventData: name={}, organiser={}, isActive={}, isPrivate={}",
+                    parsed.getName(), parsed.getOrganiserId(), parsed.getIsActive(), parsed.getIsPrivate());
+            return parsed;
         } catch (JsonProcessingException e) {
+            logger.error("Failed to parse NewEventData: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to parse NewEventData", e);
         }
     }
 
     @Override
     public String handle(NewEventData request) {
+        logger.info("Handling CreateEventRequest");
+
         if (request == null) {
+            logger.error("Event data is null");
             throw new IllegalArgumentException("Event data is required");
         }
 
+        logger.info("Creating event: name={}, organiser={}, location={}, isActive={}, isPrivate={}",
+                request.getName(), request.getOrganiserId(), request.getLocation(),
+                request.getIsActive(), request.getIsPrivate());
+
         try {
+            logger.debug("Starting Firestore transaction for event creation");
             Firestore db = FirebaseService.getFirestore();
-            String eventId = db.runTransaction(transaction ->
-                    createEvent(request, transaction)).get();
+            String eventId = db.runTransaction(transaction -> {
+                logger.debug("Executing event creation transaction");
+                return createEvent(request, transaction);
+            }).get();
 
             logger.info("Event created successfully with ID: {}", eventId);
             return "Event created successfully with ID: " + eventId;
         } catch (Exception e) {
-            logger.error("Failed to create event", e);
+            logger.error("Failed to create event: name={}, organiser={}, error={}",
+                    request.getName(), request.getOrganiserId(), e.getMessage(), e);
             throw new RuntimeException("Failed to create event: " + e.getMessage(), e);
         }
     }
@@ -62,36 +78,60 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
      */
     // TODO: make createEvent private method and expose only handle method on Service
     public static String createEvent(NewEventData data, Transaction transaction) throws Exception {
-        logger.info("Creating event: {}", data.getName());
+        logger.info("Creating event in transaction: name={}, organiser={}", data.getName(), data.getOrganiserId());
+
         Firestore db = FirebaseService.getFirestore();
         String isActive = data.getIsActive() ? ACTIVE : INACTIVE;
         String isPrivate = data.getIsPrivate() ? PRIVATE : PUBLIC;
+
+        logger.debug("Event collection path: {}/{}/{}", EVENTS, isActive, isPrivate);
+
         DocumentReference newEventDocRef =
                 db.collection(EVENTS).document(isActive).collection(isPrivate).document();
+
         final String safeName = data.getName() == null ? "" : data.getName();
         final String safeLocation = data.getLocation() == null ? "" : data.getLocation();
+
+        logger.debug("Tokenizing event name and location for search");
         data.setNameTokens(EventsUtils.tokenizeText(safeName));
         data.setLocationTokens(EventsUtils.tokenizeText(safeLocation));
+
+        logger.debug("Setting event document in transaction");
         transaction.set(newEventDocRef, JavaUtils.toMap(data));
+
         final String eventId = newEventDocRef.getId();
+        logger.info("Generated event ID: {}", eventId);
+
+        logger.debug("Creating event metadata");
         createEventMetadata(transaction, eventId, data);
+
+        logger.debug("Adding event to organiser's events");
         EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), eventId);
+
         // If the event is public, add it to the user's public upcoming events
         if (!data.getIsPrivate()) {
-            EventsUtils.addEventIdToUserOrganiserPublicUpcomingEvents(data.getOrganiserId(),
-                    newEventDocRef.getId());
+            logger.debug("Adding public event to organiser's upcoming events");
+            EventsUtils.addEventIdToUserOrganiserPublicUpcomingEvents(data.getOrganiserId(), eventId);
+        } else {
+            logger.debug("Event is private, skipping public upcoming events update");
         }
-        return newEventDocRef.getId();
+
+        logger.info("Event creation completed successfully: eventId={}", eventId);
+        return eventId;
     }
 
-    private static void createEventMetadata(Transaction transaction, String eventId,
-                                            NewEventData data) {
-        logger.info("Creating Event Metadata: {}", eventId);
+    private static void createEventMetadata(Transaction transaction, String eventId, NewEventData data) {
+        logger.info("Creating Event Metadata for eventId: {}", eventId);
+
         Firestore db = FirebaseService.getFirestore();
-        EventMetadata eventMetadata =
-                EventsMetadataUtils.extractEventsMetadataFieldsForNewEvent(data);
+
+        logger.debug("Extracting metadata fields from event data");
+        EventMetadata eventMetadata = EventsMetadataUtils.extractEventsMetadataFieldsForNewEvent(data);
+
         DocumentReference eventMetadataDocRef = db.collection(EVENTS_METADATA).document(eventId);
+        logger.debug("Setting event metadata document in transaction");
 
         transaction.set(eventMetadataDocRef, eventMetadata);
+        logger.info("Event metadata creation completed for eventId: {}", eventId);
     }
 }
