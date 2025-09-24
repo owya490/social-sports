@@ -27,6 +27,9 @@ public class GetFulfilmentEntityInfoHandler implements Handler<GetFulfilmentEnti
 
     @Override
     public GetFulfilmentEntityInfoResponse handle(GetFulfilmentEntityInfoRequest request) {
+        logger.info("Handling get fulfilment entity info request for session: {}, entity Id: {}, request: {}",
+                request.fulfilmentSessionId(), request.fulfilmentEntityId(), request);
+                
         Optional<GetFulfilmentEntityInfoResponse> maybeResponse = FulfilmentService.getFulfilmentEntityInfo(
                 request.fulfilmentSessionId(), request.fulfilmentEntityId());
 
@@ -35,8 +38,8 @@ public class GetFulfilmentEntityInfoHandler implements Handler<GetFulfilmentEnti
                     request.fulfilmentSessionId(), request.fulfilmentEntityId(), maybeResponse.get().toString());
             return maybeResponse.get();
         } else {
-            logger.error("No fulfilment entity info found for session: {}, entity Id: {}", 
-                    request.fulfilmentSessionId(), request.fulfilmentEntityId());
+            logger.error("No fulfilment entity info found for session: {}, entity Id: {}, request: {}", 
+                    request.fulfilmentSessionId(), request.fulfilmentEntityId(), request);
             throw new RuntimeException("No fulfilment entity info found for session: " + request.fulfilmentSessionId()
                     + " and entity Id: " + request.fulfilmentEntityId());
         }

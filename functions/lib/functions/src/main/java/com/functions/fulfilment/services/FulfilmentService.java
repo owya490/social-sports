@@ -1,11 +1,31 @@
 package com.functions.fulfilment.services;
 
+import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
-import com.functions.fulfilment.models.*;
+import com.functions.fulfilment.models.CheckoutFulfilmentSession;
+import com.functions.fulfilment.models.EndFulfilmentEntity;
+import com.functions.fulfilment.models.FormsFulfilmentEntity;
+import com.functions.fulfilment.models.FulfilmentEntity;
+import com.functions.fulfilment.models.FulfilmentEntityType;
+import com.functions.fulfilment.models.FulfilmentSession;
+import com.functions.fulfilment.models.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -14,13 +34,6 @@ import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
@@ -43,14 +56,15 @@ public class FulfilmentService {
      * @throws Exception when listing old sessions fails
      */
     public static int cleanupOldFulfilmentSessions(int cutoffMinutes) throws Exception {
+        logger.info("Starting cleanup of old fulfilment sessions with cutoff: {} minutes", cutoffMinutes);
         long nowSeconds = Instant.now().getEpochSecond();
         long cutoffSeconds = nowSeconds - TimeUnit.MINUTES.toSeconds(cutoffMinutes);
         Timestamp cutoff = Timestamp.ofTimeSecondsAndNanos(cutoffSeconds, 0);
 
         int deleted = 0;
         try {
-            List<String> oldSessionIds =
-                    FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(cutoff);
+            List<String> oldSessionIds = FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(cutoff);
+            logger.info("Found old fulfilment sessions to delete: {}", oldSessionIds);
             for (String id : oldSessionIds) {
                 try {
                     deleteFulfilmentSessionAndTempFormResponses(id);
@@ -91,13 +105,16 @@ public class FulfilmentService {
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities =
                     constructCheckoutFulfilmentEntities(eventId, eventData, numTickets,
                             fulfilmentSessionId);
-
+            logger.info("Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, fulfilmentEntities: {}", 
+                    eventId, numTickets, fulfilmentSessionId, fulfilmentEntities.stream().map(SimpleEntry::getValue).collect(Collectors.toList()));
             return FulfilmentService.createFulfilmentSession(fulfilmentSessionId, eventId,
                     numTickets, fulfilmentEntities).map(sessionId -> {
                 if (sessionId.isEmpty()) {
+                    logger.error("Empty session ID returned from createFulfilmentSession for event ID: {}", eventId);
                     throw new RuntimeException(
                             "Failed to create fulfilment session for event ID: " + eventId);
                 }
+                logger.info("Created fulfilment session for event ID: {}, session ID: {}", eventId, sessionId);
                 return sessionId;
             });
         } catch (Exception e) {
