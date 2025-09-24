@@ -1,8 +1,7 @@
 package com.functions.global.controllers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
+import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
 import com.functions.global.handlers.HandlerRegistry;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
@@ -12,6 +11,8 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Unified endpoint that routes requests to specific handlers based on the endpoint type.
@@ -68,6 +69,16 @@ public class GlobalAppController implements HttpFunction {
         } catch (IllegalArgumentException e) {
             logger.warn("Bad request: {}", e.getMessage());
             response.setStatusCode(400);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
+        } catch (FulfilmentEntityNotFoundException e) {
+            logger.warn("Resource not found: {}", e.getMessage());
+            response.setStatusCode(404);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
+        } catch (FulfilmentSessionNotFoundException e) {
+            logger.warn("Resource not found: {}", e.getMessage());
+            response.setStatusCode(404);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
                     new ErrorResponse(e.getMessage())));
         } catch (Exception e) {
