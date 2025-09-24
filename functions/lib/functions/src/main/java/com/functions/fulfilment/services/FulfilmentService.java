@@ -53,7 +53,7 @@ public class FulfilmentService {
                     FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(cutoff);
             for (String id : oldSessionIds) {
                 try {
-                    deleteFulfilmentSession(id);
+                    deleteFulfilmentSessionAndTempFormResponses(id);
                     deleted++;
                 } catch (Exception e) {
                     logger.error(
@@ -281,12 +281,12 @@ public class FulfilmentService {
                     "[FulfilmentService] Copying temporary form responses to submitted for session ID: {}",
                     fulfilmentSession.getId());
 
-            // Loop through all fulfilment entities in the session
-            for (String entityId : fulfilmentSession.getFulfilmentEntityIds()) {
-                FulfilmentEntity entity = fulfilmentSession.getFulfilmentEntityMap().get(entityId);
-                if (entity == null || entity.getType() != FulfilmentEntityType.FORMS) {
-                    continue; // Only process FORMS entities
-                }
+        // Loop through all fulfilment entities in the session
+        for (String entityId : fulfilmentSession.getFulfilmentEntityIds()) {
+            FulfilmentEntity entity = fulfilmentSession.getFulfilmentEntityMap().get(entityId);
+            if (entity == null || entity.getType() != FulfilmentEntityType.FORMS) {
+                continue; // Only process FORMS entities
+            }
 
                 FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
                 FormsUtils.copyTempFormResponseToSubmitted(formsEntity.getFormId(),
@@ -505,7 +505,7 @@ public class FulfilmentService {
         }
     }
 
-    public static void deleteFulfilmentSession(String fulfilmentSessionId) {
+    public static void deleteFulfilmentSessionAndTempFormResponses(String fulfilmentSessionId) {
         try {
             deleteTempFormResponsesForFulfilmentSession(fulfilmentSessionId);
             FulfilmentSessionRepository.deleteFulfilmentSession(fulfilmentSessionId);
@@ -719,7 +719,7 @@ public class FulfilmentService {
             }
 
             copyTempFormResponsesToSubmitted(fulfilmentSession);
-            deleteFulfilmentSession(fulfilmentSessionId);
+            FulfilmentSessionRepository.deleteFulfilmentSession(fulfilmentSessionId);
 
             logger.info("Fulfilment session completed successfully for ID: {} and entity ID: {}",
                     fulfilmentSessionId, fulfilmentEntityId);

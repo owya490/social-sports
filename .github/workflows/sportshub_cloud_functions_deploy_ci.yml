@@ -156,7 +156,7 @@ jobs:
         continue-on-error: true
         working-directory: functions/lib/functions
         run: |
-          bash ./deploySchedulerToGCloud.sh
+          bash ./deploySchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/recurringEventsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron' }}
           bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }}
 
       - name: Report scheduler deployment status
