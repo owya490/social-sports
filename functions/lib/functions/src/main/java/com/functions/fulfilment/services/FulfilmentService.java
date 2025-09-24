@@ -64,7 +64,7 @@ public class FulfilmentService {
             List<String> oldSessionIds = FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(cutoff);
             for (String id : oldSessionIds) {
                 try {
-                    deleteFulfilmentSession(id);
+                    deleteFulfilmentSessionAndTempFormResponses(id);
                     deleted++;
                 } catch (Exception e) {
                     logger.error("[FulfilmentService] Failed to delete fulfilment session {} during cleanup", id, e);
@@ -493,7 +493,7 @@ public class FulfilmentService {
         }
     }
 
-    public static void deleteFulfilmentSession(String fulfilmentSessionId) {
+    public static void deleteFulfilmentSessionAndTempFormResponses(String fulfilmentSessionId) {
         try {
             deleteTempFormResponsesForFulfilmentSession(fulfilmentSessionId);
             FulfilmentSessionRepository.deleteFulfilmentSession(fulfilmentSessionId);
@@ -700,7 +700,7 @@ public class FulfilmentService {
             }
 
             copyTempFormResponsesToSubmitted(fulfilmentSession);
-            deleteFulfilmentSession(fulfilmentSessionId);
+            FulfilmentSessionRepository.deleteFulfilmentSession(fulfilmentSessionId);
 
             logger.info("Fulfilment session completed successfully for ID: {} and entity ID: {}",
                     fulfilmentSessionId, fulfilmentEntityId);

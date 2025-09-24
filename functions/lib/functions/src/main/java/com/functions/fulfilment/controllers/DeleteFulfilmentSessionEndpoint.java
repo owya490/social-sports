@@ -49,7 +49,7 @@ public class DeleteFulfilmentSessionEndpoint implements HttpFunction {
         }
 
         try {
-            FulfilmentService.deleteFulfilmentSession(data.fulfilmentSessionId());
+            FulfilmentService.deleteFulfilmentSessionAndTempFormResponses(data.fulfilmentSessionId());
             logger.info("Fulfilment session deleted for ID: {}", data.fulfilmentSessionId());
             response.setStatusCode(200);
             response.getWriter().write("Fulfilment session deleted successfully.\n");
