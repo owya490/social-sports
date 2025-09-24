@@ -39,8 +39,7 @@ public class GetFulfilmentEntityInfoHandler implements Handler<GetFulfilmentEnti
         } else {
             logger.warn("No fulfilment entity info found for session: {}, entity Id: {}, request: {}", 
                     request.fulfilmentSessionId(), request.fulfilmentEntityId(), request);
-            throw new FulfilmentEntityNotFoundException("No fulfilment entity info found for session: " + request.fulfilmentSessionId()
-                    + " and entity Id: " + request.fulfilmentEntityId());
+            throw new FulfilmentEntityNotFoundException(request.fulfilmentEntityId());
         }
     }
 }
