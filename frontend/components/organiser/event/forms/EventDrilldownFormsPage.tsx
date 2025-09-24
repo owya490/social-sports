@@ -124,7 +124,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
     const questionCounts = new Map<string, number>();
     const questionMapping = new Map<string, FormSection>();
 
-    Object.entries(responseMap).forEach(([sectionId, section]) => {
+    Object.entries(responseMap).forEach(([_, section]) => {
       if (section.type !== FormSectionType.IMAGE) {
         const question = section.question.trim();
         const count = questionCounts.get(question) || 0;
