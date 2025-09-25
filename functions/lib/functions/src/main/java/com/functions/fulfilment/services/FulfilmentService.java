@@ -285,12 +285,16 @@ public class FulfilmentService {
         }
     }
 
-    private static void copyTempFormResponsesToSubmitted(FulfilmentSession fulfilmentSession,
-                                                         Transaction transaction) {
+    /**
+     * Copies temporary form responses to submitted collection using pre-read data.
+     * This method is designed for use within transactions where all reads must occur before writes.
+     */
+    private static void copyTempFormResponsesToSubmittedWithData(FulfilmentSession fulfilmentSession,
+                                                                 Map<String, FormResponse> tempFormResponses,
+                                                                 Transaction transaction) {
         try {
             logger.info(
-
-                    "[FulfilmentService] Copying temporary form responses to submitted for session ID: {}",
+                    "[FulfilmentService] Copying temporary form responses to submitted with pre-read data for session ID: {}",
                     fulfilmentSession.getId());
 
             // Loop through all fulfilment entities in the session
@@ -301,17 +305,24 @@ public class FulfilmentService {
                 }
 
                 FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
-                FormsUtils.copyTempFormResponseToSubmitted(formsEntity.getFormId(),
-                        formsEntity.getEventId(), formsEntity.getFormResponseId(),
-                        Optional.of(transaction));
+                String key = formsEntity.getFormId() + ":" + formsEntity.getEventId() + ":" + formsEntity.getFormResponseId();
 
-                logger.info("Copied temporary form response to submitted for entity ID: {}, {}",
+                FormResponse tempFormResponse = tempFormResponses.get(key);
+                if (tempFormResponse == null) {
+                    logger.error("Pre-read form response not found for key: {}", key);
+                    throw new RuntimeException("Pre-read form response not found for key: " + key);
+                }
 
-                        entityId, entity);
+                // Copy the temp form response to submitted using pre-read data
+                FormsUtils.copyTempFormResponseToSubmittedWithData(tempFormResponse, Optional.of(transaction));
+
+                logger.info("Copied temporary form response to submitted for entity ID: {}, key: {}",
+                        entityId, key);
             }
         } catch (Exception e) {
             logger.error("Failed to copy temporary form responses to submitted for session ID: {}",
                     fulfilmentSession.getId(), e);
+            throw e;
         }
     }
 
@@ -746,7 +757,36 @@ public class FulfilmentService {
                         return false;
                     }
 
-                    copyTempFormResponsesToSubmitted(fulfilmentSession, transaction);
+                    // Read 2: Get all temporary form responses that need to be copied
+                    Map<String, FormResponse> tempFormResponses = new HashMap<>();
+                    for (String entityId : fulfilmentSession.getFulfilmentEntityIds()) {
+                        FulfilmentEntity currentEntity = fulfilmentSession.getFulfilmentEntityMap().get(entityId);
+                        if (currentEntity == null || currentEntity.getType() != FulfilmentEntityType.FORMS) {
+                            continue; // Only process FORMS entities
+                        }
+
+                        FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) currentEntity;
+                        try {
+                            FormResponse tempFormResponse = FormsRepository.getTempFormResponseById(
+                                    formsEntity.getFormId(), formsEntity.getEventId(),
+                                    formsEntity.getFormResponseId(), Optional.of(transaction));
+
+                            String key = formsEntity.getFormId() + ":" + formsEntity.getEventId() + ":" + formsEntity.getFormResponseId();
+                            tempFormResponses.put(key, tempFormResponse);
+                            logger.info("Read temporary form response for entity ID: {}, key: {}", entityId, key);
+                        } catch (Exception e) {
+                            logger.error("Failed to read temporary form response for entity ID: {}, formId: {}, eventId: {}, formResponseId: {}",
+                                    entityId, formsEntity.getFormId(), formsEntity.getEventId(), formsEntity.getFormResponseId(), e);
+                            throw e;
+                        }
+                    }
+
+                    // PHASE 2: PERFORM ALL WRITES
+
+                    // Write 1: Copy temp form responses to submitted collection
+                    copyTempFormResponsesToSubmittedWithData(fulfilmentSession, tempFormResponses, transaction);
+
+                    // Write 2: Delete fulfilment session
                     FulfilmentSessionRepository.deleteFulfilmentSession(fulfilmentSessionId,
                             Optional.of(transaction));
 

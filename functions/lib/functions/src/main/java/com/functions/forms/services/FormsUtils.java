@@ -1,18 +1,12 @@
 package com.functions.forms.services;
 
 import com.functions.events.repositories.EventsRepository;
-import com.functions.forms.models.DateTimeSection;
-import com.functions.forms.models.DropdownSelectSection;
-import com.functions.forms.models.FileUploadSection;
-import com.functions.forms.models.FormResponse;
-import com.functions.forms.models.FormSection;
-import com.functions.forms.models.ImageSection;
-import com.functions.forms.models.MultipleChoiceSection;
-import com.functions.forms.models.TextSection;
+import com.functions.forms.models.*;
 import com.functions.forms.repositories.FormsRepository;
 import com.google.cloud.firestore.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.Optional;
 
 public class FormsUtils {
@@ -149,6 +143,53 @@ public class FormsUtils {
                     "[FormsUtils] Failed to copy temporary form response to submitted - formId: "
                             + formId + ", eventId: " + eventId + ", formResponseId: "
                             + formResponseId,
+                    e);
+        }
+    }
+
+    /**
+     * Copies a temporary form response to the submitted collection using pre-read data and deletes the temporary version.
+     * This method is designed for use within transactions where all reads must occur before writes.
+     *
+     * @param tempFormResponse The pre-read temporary form response
+     * @param transaction      Optional transaction to use for atomic operations
+     * @throws RuntimeException if there's an error during the copy operation
+     */
+    public static void copyTempFormResponseToSubmittedWithData(FormResponse tempFormResponse, Optional<Transaction> transaction) {
+        try {
+            String logPrefix = transaction.isPresent() ? "transactional " : "";
+            logger.info(
+                    "Starting {}copy of pre-read temporary form response to submitted - formId: {}, eventId: {}, formResponseId: {}",
+                    logPrefix, tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId());
+
+            // Step 1: Set submission time for the final submission
+            tempFormResponse.setSubmissionTime(com.google.cloud.Timestamp.now());
+
+            // Step 2: Save to submitted collection
+            FormsRepository.saveSubmittedFormResponse(tempFormResponse, transaction);
+            logger.info("Successfully saved pre-read form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}, formResponse: {}",
+                    transaction.isPresent() ? "transaction" : "regular operation",
+                    tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId(), tempFormResponse);
+
+            // Step 3: Delete from temporary collection
+            FormsRepository.deleteTempFormResponse(tempFormResponse.getFormId(), tempFormResponse.getEventId(),
+                    tempFormResponse.getFormResponseId(), transaction);
+            logger.info("Successfully deleted temporary form response using {}",
+                    transaction.isPresent() ? "transaction" : "regular operation");
+
+            logger.info(
+                    "Successfully copied pre-read temporary form response to submitted using {} - formId: {}, eventId: {}, formResponseId: {}",
+                    transaction.isPresent() ? "transaction" : "regular operation",
+                    tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId());
+        } catch (Exception e) {
+            logger.error(
+                    "[FormsUtils] Error copying pre-read temporary form response to submitted using {} - formId: {}, eventId: {}, formResponseId: {}: {}",
+                    transaction.isPresent() ? "transaction" : "regular operation",
+                    tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId(), e.getMessage());
+            throw new RuntimeException(
+                    "[FormsUtils] Failed to copy pre-read temporary form response to submitted - formId: "
+                            + tempFormResponse.getFormId() + ", eventId: " + tempFormResponse.getEventId() + ", formResponseId: "
+                            + tempFormResponse.getFormResponseId(),
                     e);
         }
     }
