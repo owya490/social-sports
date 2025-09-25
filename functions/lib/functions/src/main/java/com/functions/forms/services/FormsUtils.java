@@ -31,8 +31,7 @@ public class FormsUtils {
                 }
             });
         } catch (Exception e) {
-            logger.error("Error trying to get form ID for event ID {}: {}", eventId,
-                    e.getMessage());
+            logger.error("Error trying to get form ID for event ID {}", eventId, e);
             throw new RuntimeException(
                     "[FormsUtils] Failed to retrieve form ID for event ID: " + eventId, e);
         }
@@ -129,8 +128,8 @@ public class FormsUtils {
 
             // Step 3: Save to submitted collection
             FormsRepository.saveSubmittedFormResponse(tempFormResponse, transaction);
-            logger.info("Successfully saved form response to submitted collection using {}",
-                    transaction.isPresent() ? "transaction" : "regular operation - formId: {}, eventId: {}, formResponseId: {} , formResponse: {}", formId, eventId, formResponseId, tempFormResponse);
+            logger.info("Successfully saved form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}, formResponse: {}",
+                    transaction.isPresent() ? "transaction" : "regular operation", formId, eventId, formResponseId, tempFormResponse);
 
             // Step 4: Delete from temporary collection
             FormsRepository.deleteTempFormResponse(formId, eventId, formResponseId, transaction);

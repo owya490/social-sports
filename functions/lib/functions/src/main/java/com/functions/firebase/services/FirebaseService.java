@@ -156,7 +156,7 @@ public class FirebaseService {
             return result;
         } catch (Exception e) {
             logger.error("Transaction failed: " + e.getMessage());
+            throw new RuntimeException("Firestore transaction failed", e);
         }
-        return null;
     }
 }
