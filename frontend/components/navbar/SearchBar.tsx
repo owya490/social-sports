@@ -34,38 +34,31 @@ export default function SearchBar() {
   }, [pathname, searchParams]);
 
   const handleSearchClick = () => {
-    console.log("search");
     const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
     router.push(searchUrl);
   };
   const handleKeyPress = (e: { key: string }) => {
     if (e.key === "Enter") {
-      console.log("search");
       const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
       router.push(searchUrl);
     }
   };
   return (
-    <div className="flex border border-1 border-core-outline rounded-full h-10 pl-5 pr-1 w-fit items-center bg-white shadow-sm">
+    <div className="flex border border-1 border-core-outline rounded-full h-10 pl-5 pr-1 items-center bg-white shadow-sm min-w-0 max-w-full">
       <input
-        // className="h-9 max-w-[160px] xl:max-w-[220px] border-0 focus:ring-0"
-        className="h-9 w-64 border-0 focus:ring-0"
+        className="h-9 w-full min-w-0 max-w-[200px] md:max-w-[250px] lg:max-w-[300px] border-0 focus:ring-0"
         type="text"
         placeholder="Search for events"
+        aria-label="Search for sports events"
         value={event}
         onChange={(e) => setEvent(e.target.value)}
         onKeyDown={handleKeyPress}
       />
-      {/* <div className="h-full bg-black w-[1px] mx-2"></div> */}
-      {/* <input
-        className="h-9 max-w-[160px] xl:max-w-[220px] border-0 focus:ring-0"
-        type="text"
-        placeholder="Sydney, AU"
-        value={location}
-        onChange={(e) => setLocation(e.target.value)}
-        onKeyDown={handleKeyPress}
-      /> */}
-      <button onClick={handleSearchClick} className="w-7 h-7 rounded-full border border-black bg-black">
+      <button
+        onClick={handleSearchClick}
+        className="w-7 h-7 rounded-full border border-black bg-black flex-shrink-0"
+        aria-label="Search events"
+      >
         <SearchIcon />
       </button>
     </div>

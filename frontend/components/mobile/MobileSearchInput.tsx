@@ -101,13 +101,14 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
             id="search_input"
             className="w-56 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
             placeholder="Search Events"
+            aria-label="Search for sports events"
             value={event}
             onChange={(event) => {
               setEvent(event.target.value);
             }}
             onKeyDown={handleKeyPress}
           />
-          <button onClick={handleSearch}>
+          <button onClick={handleSearch} aria-label="Search events">
             <ArrowRightIcon className="ml-4 w-7 h-7" />
           </button>
         </div>

@@ -5,10 +5,8 @@ import { useUser } from "@components/utility/UserContext";
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowPathIcon,
-  BookmarkSquareIcon,
   CalendarIcon,
   CameraIcon,
-  ChartBarIcon,
   HomeIcon,
   LinkIcon,
   PencilSquareIcon,
@@ -17,7 +15,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import Link from "next/link";
-import { Fragment, ReactNode, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Fragment, ReactNode } from "react";
 
 interface OrganiserNavbarProps {
   currPage: string;
@@ -72,35 +71,22 @@ const NavButton = ({ href, isActive, tooltipContent, children }: NavButtonProps)
   );
 };
 
-export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
+export default function OrganiserNavbar() {
   const { user } = useUser();
-  const [eventId, setEventId] = useState<string>("dashboard");
-
-  useEffect(() => {
-    const getEventId = () => {
-      if (user.userId === "") {
-        return;
-      }
-
-      if (
-        currPage === "EventDrilldown" &&
-        typeof window !== "undefined" &&
-        window.location.pathname.includes("/organiser/event/")
-      ) {
-        const pathParts = window.location.pathname.split("/");
-        const lastPart = pathParts[pathParts.length - 1];
-        setEventId(lastPart);
-        return;
-      }
-    };
-
-    getEventId();
-  }, [user]);
+  const currPage = usePathname();
 
   return (
-    <div className="bg-white border-r-[1px] border-core-outline fixed bottom-0 sm:bottom-auto inset-x-0 sm:inset-x-auto sm:left-0 sm:h-screen z-40">
+    <nav
+      className="bg-white border-r-[1px] border-core-outline fixed bottom-0 sm:bottom-auto inset-x-0 sm:inset-x-auto sm:left-0 sm:h-screen z-40"
+      role="navigation"
+      aria-label="Organiser navigation"
+    >
       <div className="flex justify-center items-center h-12 sm:h-auto sm:w-14 sm:flex-col sm:mt-14 sm:space-y-3 sm:space-x-0 space-x-3">
-        <NavButton href="/organiser/dashboard/" isActive={currPage === "Dashboard"} tooltipContent="Dashboard">
+        <NavButton
+          href="/organiser/dashboard/"
+          isActive={currPage.startsWith("/organiser/dashboard")}
+          tooltipContent="Dashboard"
+        >
           <HomeIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
         <Menu as="div" className="relative inline-block text-left">
@@ -111,7 +97,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
                   <ResponsiveTooltip content="Events" disabled={open}>
                     <MenuButton
                       className={`flex justify-center items-center self-center h-10 w-10 sm:h-10 sm:w-10 sm:m-auto rounded-md hover:bg-core-hover transition ease-in-out ${
-                        currPage === "EventDashboard" && "bg-core-hover"
+                        currPage.startsWith("/organiser/event") && "bg-core-hover"
                       }`}
                     >
                       <CalendarIcon className="w-6 stroke-1 stroke-core-text" />
@@ -145,7 +131,7 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
                       <Menu.Item>
                         {({ active }) => (
                           <Link
-                            href="/organiser/recurring-events"
+                            href="/organiser/event/recurring-events"
                             className={`${
                               active ? "text-core-text bg-core-hover" : "text-core-text"
                             } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
@@ -175,28 +161,30 @@ export default function OrganiserNavbar({ currPage }: OrganiserNavbarProps) {
             );
           }}
         </Menu>{" "}
-        <NavButton
-          href={`/organiser/event/${eventId}`}
-          isActive={currPage === "EventDrilldown"}
-          tooltipContent="Current Event"
-        >
-          <BookmarkSquareIcon className="w-6 stroke-1 stroke-core-text" />
-        </NavButton>
         {evaluateFulfilmentSessionEnabled(user.userId, "") && (
-          <NavButton href={`/organiser/forms/gallery`} isActive={currPage === "FormsGallery"} tooltipContent="Forms">
+          <NavButton
+            href={`/organiser/forms/gallery`}
+            isActive={currPage.startsWith("/organiser/forms/gallery")}
+            tooltipContent="Forms"
+          >
             <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
           </NavButton>
         )}
-        <NavButton href="/organiser/metrics" isActive={currPage === "Metrics"} tooltipContent="Metrics">
-          <ChartBarIcon className="w-6 stroke-1 stroke-core-text" />
-        </NavButton>
-        <NavButton href="/organiser/gallery" isActive={currPage === "Gallery"} tooltipContent="Gallery">
+        <NavButton
+          href="/organiser/gallery"
+          isActive={currPage.startsWith("/organiser/gallery")}
+          tooltipContent="Gallery"
+        >
           <CameraIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
-        <NavButton href="/organiser/settings" isActive={currPage === "Settings"} tooltipContent="Settings">
+        <NavButton
+          href="/organiser/settings"
+          isActive={currPage.startsWith("/organiser/settings")}
+          tooltipContent="Settings"
+        >
           <UserIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
       </div>
-    </div>
+    </nav>
   );
 }

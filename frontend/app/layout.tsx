@@ -1,3 +1,4 @@
+import AccessibilitySkipNavigation from "@/components/accessibility/SkipNavigation";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
 import UserContext from "@/components/utility/UserContext";
@@ -49,26 +50,6 @@ const montserrat = Montserrat({ subsets: ["latin"] });
 
 // const inter = Inter({ subsets: ["latin"] }); old font, just replace aileron with inter to swap back
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <GrafanaFaro>
-        <UserContext>
-          <body className={`${inter.className}`}>
-            <div className="hidden md:block">
-              <Navbar />
-            </div>
-            <div className="md:hidden">
-              <MobileNavbar />
-            </div>
-            <div className="min-h-screen">{children}</div>
-          </body>
-        </UserContext>
-      </GrafanaFaro>
-    </html>
-  );
-}
-
 export const metadata: Metadata = {
   title: "SPORTSHUB",
   description:
@@ -88,3 +69,26 @@ export const metadata: Metadata = {
     ],
   },
 };
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <GrafanaFaro>
+        <UserContext>
+          <body className={`${inter.className}`}>
+            <AccessibilitySkipNavigation />
+            <div className="md:hidden">
+              <MobileNavbar />
+            </div>
+            <div className="hidden md:block">
+              <Navbar />
+            </div>
+            <main id="main-content" className="min-h-screen mt-[3.75rem]">
+              {children}
+            </main>
+          </body>
+        </UserContext>
+      </GrafanaFaro>
+    </html>
+  );
+}

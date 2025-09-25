@@ -25,7 +25,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import { getCompleteFulfilmentSessionUrl, getDeleteFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = false;
+export const FULFILMENT_SESSION_ENABLED = true;
 
 const fulfilmentSessionEnabledUserIdList = [
   "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
@@ -33,7 +33,7 @@ const fulfilmentSessionEnabledUserIdList = [
   "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", // owen dev
 ];
 const fulfilmentSessionEnabledEventIdList: string[] = [
-  "brian was here"
+  "brian was here",
   // "0kcqoQMnRE9OV3ezstZt", // syrio jersey
 ];
 
