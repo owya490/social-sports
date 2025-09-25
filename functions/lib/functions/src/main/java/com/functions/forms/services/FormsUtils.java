@@ -1,12 +1,18 @@
 package com.functions.forms.services;
 
 import com.functions.events.repositories.EventsRepository;
-import com.functions.forms.models.*;
+import com.functions.forms.models.DateTimeSection;
+import com.functions.forms.models.DropdownSelectSection;
+import com.functions.forms.models.FileUploadSection;
+import com.functions.forms.models.FormResponse;
+import com.functions.forms.models.FormSection;
+import com.functions.forms.models.ImageSection;
+import com.functions.forms.models.MultipleChoiceSection;
+import com.functions.forms.models.TextSection;
 import com.functions.forms.repositories.FormsRepository;
 import com.google.cloud.firestore.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.Optional;
 
 public class FormsUtils {
@@ -124,7 +130,7 @@ public class FormsUtils {
             // Step 3: Save to submitted collection
             FormsRepository.saveSubmittedFormResponse(tempFormResponse, transaction);
             logger.info("Successfully saved form response to submitted collection using {}",
-                    transaction.isPresent() ? "transaction" : "regular operation");
+                    transaction.isPresent() ? "transaction" : "regular operation - formId: {}, eventId: {}, formResponseId: {} , formResponse: {}", formId, eventId, formResponseId, tempFormResponse);
 
             // Step 4: Delete from temporary collection
             FormsRepository.deleteTempFormResponse(formId, eventId, formResponseId, transaction);

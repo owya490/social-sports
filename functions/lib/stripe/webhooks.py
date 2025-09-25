@@ -3,19 +3,20 @@
 ###############################
 
 import hashlib
-import json
-import sys
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
+from urllib.parse import urlparse
 
+import requests
 import stripe
 from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import IS_PROD, db
-from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
+from lib.emails.purchase_event import (PurchaseEventRequest,
+                                       send_email_on_purchase_event)
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
@@ -25,19 +26,48 @@ from stripe import Event, LineItem, ListObject
 class SessionMetadata:
     eventId: str
     isPrivate: bool
+    completeFulfilmentSession: bool
+    fulfilmentSessionId: str
+    endFulfilmentEntityId: str
 
-    def __init__(self, eventId, isPrivate):
+    def __init__(
+        self,
+        eventId,
+        isPrivate,
+        fulfilmentSessionId,
+        completeFulfilmentSession,
+        endFulfilmentEntityId,
+    ):
         self.eventId = eventId
         if isinstance(isPrivate, str):
             self.isPrivate = isPrivate.lower() == "true"
         else:
             self.isPrivate = isPrivate
 
+        if isinstance(completeFulfilmentSession, str):
+            self.completeFulfilmentSession = completeFulfilmentSession.lower() == "true"
+        else:
+            self.completeFulfilmentSession = completeFulfilmentSession
+        self.fulfilmentSessionId = fulfilmentSessionId
+        self.endFulfilmentEntityId = endFulfilmentEntityId
+
     def __post_init__(self):
         if not isinstance(self.eventId, str):
             raise ValueError("Event Id must be provided as a string.")
         if not isinstance(self.isPrivate, bool):
             raise ValueError("Is Private must be provided as a boolean.")
+        if not isinstance(self.completeFulfilmentSession, bool):
+            raise ValueError(
+                "Complete Fulfilment Session must be provided as a boolean."
+            )
+        if self.fulfilmentSessionId is not None and not isinstance(
+            self.fulfilmentSessionId, str
+        ):
+            raise ValueError(
+                "Fulfilment Session Id must be provided as a string or None."
+            )
+        if not isinstance(self.endFulfilmentEntityId, str):
+            raise ValueError("End Fulfilment Entity Id must be provided as a string.")
 
 
 @firestore.transactional
@@ -89,6 +119,9 @@ def fulfill_completed_event_ticket_purchase(
     full_name: str,
     phone_number: str,
     payment_details: stripe.checkout.Session.TotalDetails,
+    complete_fulfilment_session: bool,
+    fulfilment_session_id: str,
+    end_fulfilment_entity_id: str,
 ) -> str | None:  # Typing of customer is customer details
     # Update the event to include the new attendees
     private_path = "Private" if is_private else "Public"
@@ -193,8 +226,18 @@ def fulfill_completed_event_ticket_purchase(
 
     ticket_list = []
     # Create Tickets for each individual ticket
-    for i in range(item.quantity):
+    if item.quantity is None:
+        logger.error(f"Item quantity is None, cannot create tickets. item={item}")
+        return None
+
+    for _ in range(item.quantity):
         tickets_id_ref = db.collection("Tickets").document()
+
+        # Check if price and unit_amount exist
+        if item.price is None or item.price.unit_amount is None:
+            logger.error(f"Item price or unit_amount is None. item.price={item.price}")
+            return None
+
         transaction.create(
             tickets_id_ref,
             {
@@ -234,6 +277,15 @@ def fulfill_completed_event_ticket_purchase(
             )
         },
     )
+    
+    if (
+        complete_fulfilment_session
+        and fulfilment_session_id
+        and end_fulfilment_entity_id
+    ):
+        complete_fulfilment_session_request(
+            logger, fulfilment_session_id, end_fulfilment_entity_id
+        )
 
     return order_id_ref.id
 
@@ -283,6 +335,57 @@ def restock_tickets_after_expired_checkout(
     )
 
 
+def complete_fulfilment_session_request(
+    logger: Logger, fulfilment_session_id: str, fulfilment_entity_id: str
+) -> None:
+    """Complete fulfilment session by calling the Java cloud function."""
+    logger.info(
+        f"complete_fulfilment_session: Completing fulfilment session with ID: {fulfilment_session_id} and entity ID: {fulfilment_entity_id}"
+    )
+
+    prod_url = "https://australia-southeast1-socialsportsprod.cloudfunctions.net"
+    dev_url = "https://australia-southeast1-socialsports-44162.cloudfunctions.net"
+
+    # Determine the correct URL based on environment
+    base_url = prod_url if IS_PROD else dev_url
+    url = f"{base_url}/completeFulfilmentSession"
+
+    request_data = {
+        "fulfilmentSessionId": fulfilment_session_id,
+        "fulfilmentEntityId": fulfilment_entity_id,
+    }
+
+    try:
+        response = requests.post(
+            url,
+            json=request_data,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            timeout=30,
+        )
+
+        if not response.ok:
+            error_response = response.json()
+            error_message = error_response.get(
+                "errorMessage", f"HTTP {response.status_code}"
+            )
+            logger.error(
+                f"complete_fulfilment_session: Cloud function error: Failed to complete fulfilment session: {error_message}"
+            )
+            raise Exception(f"complete_fulfilment_session: {error_message}")
+
+        logger.info(
+            f"complete_fulfilment_session: Successfully completed fulfilment session with ID: {fulfilment_session_id} and entity ID: {fulfilment_entity_id}"
+        )
+    except requests.RequestException as error:
+        logger.error(
+            f"complete_fulfilment_session: Failed to complete fulfilment session with ID {fulfilment_session_id} and entity ID {fulfilment_entity_id}: {error}"
+        )
+        raise
+
+
 def fulfilment_workflow_on_ticket_purchase(
     transaction: Transaction,
     logger: Logger,
@@ -294,6 +397,9 @@ def fulfilment_workflow_on_ticket_purchase(
     checkout_session: stripe.checkout.Session,
     full_name: str,
     phone_number: str,
+    complete_fulfilment_session: bool,
+    fulfilment_session_id: str,
+    end_fulfilment_entity_id: str,
 ):
     # Check if this checkout_session_id has already been processed.
     if check_if_session_has_been_processed_already(
@@ -315,6 +421,9 @@ def fulfilment_workflow_on_ticket_purchase(
         full_name,
         phone_number,
         checkout_session.total_details,
+        complete_fulfilment_session,
+        fulfilment_session_id,
+        end_fulfilment_entity_id,
     )
     if orderId == None:
         logger.error(
@@ -322,8 +431,10 @@ def fulfilment_workflow_on_ticket_purchase(
         )
         return https_fn.Response(status=500)
 
+
     # Send email to purchasing consumer. Retry sending email 3 times, before exiting and completing order. If email breaks, its not the end of the world.
-    for i in range(3):
+    success = False
+    for _ in range(3):
         success = send_email_on_purchase_event(
             PurchaseEventRequest(
                 event_id,
@@ -418,7 +529,7 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
         return https_fn.Response(status=400)
 
     # TODO: Remove this once we have a better way to handle these events
-    ignored_event_ids = []
+    ignored_event_ids = ["evt_1SAvvn05pkiJLNbsHt1mHThW"]
     if event["id"] in ignored_event_ids:
         logger.info(f"Ignoring event. event={event}")
         return https_fn.Response(status=200)
@@ -465,6 +576,9 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
 
             try:
                 session_metadata = SessionMetadata(**session.metadata)
+                logger.info(
+                    f"Completed session_metadata for event id {session_metadata.eventId} fulfilment session {session_metadata.fulfilmentSessionId}: {session_metadata}. Original Stripe session metadata: {session.metadata}"
+                )
             except ValueError as v:
                 logger.error(
                     f"Session Metadata did not contain necessary fields of eventId or isPrivate. session.metadata={session.metadata} error={v}"
@@ -483,9 +597,21 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
             for field in session.custom_fields:
                 match (field.key):
                     case "attendeeFullName":
-                        full_name = field.text.value
+                        if field.text is not None and field.text.value is not None:
+                            full_name = field.text.value
+                        else:
+                            logger.error(
+                                f"attendeeFullName field text or value is None. field={field}"
+                            )
+                            return https_fn.Response(status=400)
                     case "attendeePhone":
-                        phone_number = field.text.value
+                        if field.text is not None and field.text.value is not None:
+                            phone_number = field.text.value
+                        else:
+                            logger.error(
+                                f"attendeePhone field text or value is None. field={field}"
+                            )
+                            return https_fn.Response(status=400)
                     case _:
                         logger.error(
                             f"Encountered custom field that is not registered. custom_field={field}"
@@ -529,6 +655,9 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
                 session,
                 full_name,
                 phone_number,
+                session_metadata.completeFulfilmentSession,
+                session_metadata.fulfilmentSessionId,
+                session_metadata.endFulfilmentEntityId,
             )
 
         # Handle the checkout.session.expired event
@@ -561,6 +690,9 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
 
             try:
                 session_metadata = SessionMetadata(**session.metadata)
+                logger.info(
+                    f"Expired session metadata for event id {session_metadata.eventId} fulfilment session {session_metadata.fulfilmentSessionId}: {session_metadata}. Original Stripe session metadata: {session.metadata}"
+                )
             except ValueError as v:
                 logger.error(
                     f"Session Metadata did not contain necessary fields of eventId or isPrivate. session.metadata={session.metadata} error={v}"

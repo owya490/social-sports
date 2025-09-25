@@ -7,7 +7,7 @@ import {
   getNextFulfilmentEntityUrl,
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
-import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import { getStripeCheckoutUrlFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import {
   CalendarDaysIcon,
@@ -38,6 +38,7 @@ interface EventPaymentProps {
   paused: boolean;
   setLoading: (value: boolean) => void;
   eventLink: string;
+  organiserId: string;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
@@ -161,7 +162,7 @@ export default function EventPayment(props: EventPaymentProps) {
                       window.scrollTo(0, 0);
 
                       // We'll put this behind a flag for now just in case we need to quickly disable this.
-                      if (evaluateFulfilmentSessionEnabled("", props.eventId)) {
+                      if (evaluateFulfilmentSessionEnabled(props.organiserId, props.eventId)) {
                         try {
                           const { fulfilmentSessionId } = await initFulfilmentSession({
                             type: "checkout",
@@ -199,7 +200,7 @@ export default function EventPayment(props: EventPaymentProps) {
                           router.push("/error");
                         }
                       } else {
-                        const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                        const stripeCheckoutLink = await getStripeCheckoutUrlFromEventId(
                           props.eventId,
                           props.isPrivate,
                           attendeeCount
