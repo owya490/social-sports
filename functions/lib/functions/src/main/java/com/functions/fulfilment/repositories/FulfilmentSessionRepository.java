@@ -3,25 +3,21 @@ package com.functions.fulfilment.repositories;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.FulfilmentSession;
 import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.Query;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
-import com.google.cloud.firestore.QuerySnapshot;
-import com.google.cloud.firestore.Transaction;
+import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 import static com.functions.utils.JavaUtils.objectMapper;
 
 public class FulfilmentSessionRepository {
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSessionRepository.class);
 
     public static String createFulfilmentSession(String fulfilmentSessionId,
-            FulfilmentSession fulfilmentSession) throws Exception {
+                                                 FulfilmentSession fulfilmentSession) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(fulfilmentSessionId);
             sessionDocRef.create(fulfilmentSession).get();
@@ -41,16 +37,14 @@ public class FulfilmentSessionRepository {
     }
 
     public static Optional<FulfilmentSession> getFulfilmentSession(String sessionId,
-            Optional<Transaction> transaction) throws Exception {
+                                                                   Optional<Transaction> transaction) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
             DocumentSnapshot maybeSnapshot;
 
             if (transaction.isPresent()) {
-                // Use transaction
                 maybeSnapshot = transaction.get().get(sessionDocRef).get();
             } else {
-                // Use regular operation
                 maybeSnapshot = sessionDocRef.get().get();
             }
 

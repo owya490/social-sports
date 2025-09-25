@@ -6,13 +6,7 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
-import com.functions.fulfilment.models.CheckoutFulfilmentSession;
-import com.functions.fulfilment.models.EndFulfilmentEntity;
-import com.functions.fulfilment.models.FormsFulfilmentEntity;
-import com.functions.fulfilment.models.FulfilmentEntity;
-import com.functions.fulfilment.models.FulfilmentEntityType;
-import com.functions.fulfilment.models.FulfilmentSession;
-import com.functions.fulfilment.models.StripeFulfilmentEntity;
+import com.functions.fulfilment.models.*;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -24,14 +18,10 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -105,7 +95,7 @@ public class FulfilmentService {
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities =
                     constructCheckoutFulfilmentEntities(eventId, eventData, numTickets,
                             fulfilmentSessionId);
-            logger.info("Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, fulfilmentEntities: {}", 
+            logger.info("Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, fulfilmentEntities: {}",
                     eventId, numTickets, fulfilmentSessionId, fulfilmentEntities.stream().map(SimpleEntry::getValue).collect(Collectors.toList()));
             return FulfilmentService.createFulfilmentSession(fulfilmentSessionId, eventId,
                     numTickets, fulfilmentEntities).map(sessionId -> {
@@ -299,24 +289,24 @@ public class FulfilmentService {
                                                          Transaction transaction) {
         try {
             logger.info(
-                    
-                "[FulfilmentService] Copying temporary form responses to submitted for session ID: {}",
+
+                    "[FulfilmentService] Copying temporary form responses to submitted for session ID: {}",
                     fulfilmentSession.getId());
 
-        // Loop through all fulfilment entities in the session
-        for (String entityId : fulfilmentSession.getFulfilmentEntityIds()) {
-            FulfilmentEntity entity = fulfilmentSession.getFulfilmentEntityMap().get(entityId);
-            if (entity == null || entity.getType() != FulfilmentEntityType.FORMS) {
-                continue; // Only process FORMS entities
-            }
+            // Loop through all fulfilment entities in the session
+            for (String entityId : fulfilmentSession.getFulfilmentEntityIds()) {
+                FulfilmentEntity entity = fulfilmentSession.getFulfilmentEntityMap().get(entityId);
+                if (entity == null || entity.getType() != FulfilmentEntityType.FORMS) {
+                    continue; // Only process FORMS entities
+                }
 
                 FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
                 FormsUtils.copyTempFormResponseToSubmitted(formsEntity.getFormId(),
                         formsEntity.getEventId(), formsEntity.getFormResponseId(),
-                    Optional.of(transaction));
+                        Optional.of(transaction));
 
                 logger.info("Copied temporary form response to submitted for entity ID: {}, {}",
-                   
+
                         entityId, entity);
             }
         } catch (Exception e) {
@@ -699,7 +689,7 @@ public class FulfilmentService {
                     fulfilmentSession.getFulfilmentEntityMap();
 
             FulfilmentEntity entity = fulfilmentEntityMap.get(fulfilmentEntityId);
-            if (entity == null || !(entity instanceof FormsFulfilmentEntity)) {
+            if (!(entity instanceof FormsFulfilmentEntity)) {
                 logger.error("Invalid fulfilment entity ID: {} for session: {}", fulfilmentEntityId,
                         fulfilmentSessionId);
                 return false;
@@ -737,10 +727,9 @@ public class FulfilmentService {
             Boolean result = FirebaseService.createFirestoreTransaction(transaction -> {
                 try {
                     Optional<FulfilmentSession> maybeFulfilmentSession =
-                           
-                    getFulfilmentSessionById(fulfilmentSessionId, Optional.of(transaction));
+                            getFulfilmentSessionById(fulfilmentSessionId, Optional.of(transaction));
                     if (maybeFulfilmentSession.isEmpty()) {
-                        logger.warn("Fulfilment session not found for ID: {}",
+                        logger.error("completeFulfilmentSession: Fulfilment session not found for ID: {}",
                                 fulfilmentSessionId);
                         return false;
                     }
