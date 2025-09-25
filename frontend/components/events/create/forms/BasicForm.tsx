@@ -1,6 +1,7 @@
 // BasicInformation.tsx
 
 import LocationAutocompleteForm from "@/components/utility/AutoComplete";
+import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
@@ -323,14 +324,14 @@ export function BasicInformation({
                 updateField({ sport: e });
               }}
             >
-              <Option value="volleyball">Volleyball</Option>
-              <Option value="badminton">Badminton</Option>
-              <Option value="basketball">Basketball</Option>
-              <Option value="soccer">Soccer</Option>
-              <Option value="tennis">Tennis</Option>
-              <Option value="table-tennis">Table Tennis</Option>
-              <Option value="oztag">Oztag</Option>
-              <Option value="baseball">Baseball</Option>
+              {Object.entries(SPORTS_CONFIG).map((entry, idx) => {
+                const sportInfo = entry[1];
+                return (
+                  <Option key={idx} value={sportInfo.value}>
+                    {sportInfo.name}
+                  </Option>
+                );
+              })}
             </Select>
           </div>
         </div>

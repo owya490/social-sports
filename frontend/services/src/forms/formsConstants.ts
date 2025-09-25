@@ -1,8 +1,8 @@
 export const FORMS_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 minutes
-export const FORM_RESPONSE_REFRESH_MILLIS = 5 * 60 * 1000; // Millis of 5 minutes
+export const FORM_RESPONSE_REFRESH_MILLIS = 5 * 1000; // Millis of 5 seconds
 
 export const FORMS_MAX_EVENTS = 5;
-export const FORM_RESPONSE_MAX_EVENTS = 5;
+export const FORM_RESPONSE_MAX_EVENTS = 2;
 
 export const FormsRootPath = "Forms";
 
@@ -45,6 +45,6 @@ export type FormResponsePath = (typeof FormResponsePaths)[keyof typeof FormRespo
 export enum LocalStorageKeys {
   FormsOperationCount5Min = "formsOperationCount5Min",
   FormsLastCreateUpdateOperationTimestamp = "formsLastCreateUpdateOperationTimestamp",
-  FormResponseOperationCount5Min = "formResponseOperationCount5Min",
+  FormResponseOperationCount5Sec = "formResponseOperationCount5Sec",
   FormResponseLastCreateUpdateOperationTimestamp = "formResponseLastCreateUpdateOperationTimestamp",
 }

@@ -1,13 +1,13 @@
 export const fulfilmentSessionsRootPath = "FulfilmentSessions";
 
-export const INIT_FULFILMENT_SESSION_URL = {
-  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/initFulfilmentSession",
-  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/initFulfilmentSession",
-  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/initFulfilmentSession",
+export const DELETE_FULFILMENT_SESSION_URL = {
+  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/deleteFulfilmentSession",
+  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/deleteFulfilmentSession",
+  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/deleteFulfilmentSession",
 };
 
-export const EXEC_NEXT_FULFILMENT_ENTITY_URL = {
-  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/execNextFulfilmentEntity",
-  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/execNextFulfilmentEntity",
-  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/execNextFulfilmentEntity",
+export const COMPLETE_FULFILMENT_SESSION_URL = {
+  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/completeFulfilmentSession",
+  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/completeFulfilmentSession",
+  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/completeFulfilmentSession",
 };

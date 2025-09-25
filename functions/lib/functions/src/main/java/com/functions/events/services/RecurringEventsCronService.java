@@ -1,6 +1,5 @@
 package com.functions.events.services;
 
-import static com.functions.events.services.EventsService.createEvent;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -14,6 +13,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
@@ -82,7 +82,7 @@ public class RecurringEventsCronService {
                         Timestamp newRegistrationDeadline = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventDeadlineDeltaMillis) * 1000);
                         newEventDataDeepCopy.setEndDate(newEndDate);
                         newEventDataDeepCopy.setRegistrationDeadline(newRegistrationDeadline);
-                        String newEventId = createEvent(newEventDataDeepCopy, transaction);
+                        String newEventId = CreateEventHandler.createEvent(newEventDataDeepCopy, transaction);
                         logger.info("New event id: {}", newEventId);
                         createdEventIds.add(newEventId);
                         pastRecurrences.put(recurrenceTimestampString, newEventId);

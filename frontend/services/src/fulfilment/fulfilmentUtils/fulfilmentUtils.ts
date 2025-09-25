@@ -1,12 +1,12 @@
 import { Environment, getEnvironment } from "@/utilities/environment";
-import { EXEC_NEXT_FULFILMENT_ENTITY_URL, INIT_FULFILMENT_SESSION_URL } from "../fulfilmentConstants";
+import { COMPLETE_FULFILMENT_SESSION_URL, DELETE_FULFILMENT_SESSION_URL } from "../fulfilmentConstants";
 
-export function getInitFulfilmentSessionUrl(): string {
+export function getDeleteFulfilmentSessionUrl(): string {
   const env = getEnvironment();
-  return INIT_FULFILMENT_SESSION_URL[`${env || Environment.DEVELOPMENT}`];
+  return DELETE_FULFILMENT_SESSION_URL[`${env || Environment.DEVELOPMENT}`];
 }
 
-export function getExecNextFulfilmentEntityUrl(): string {
+export function getCompleteFulfilmentSessionUrl(): string {
   const env = getEnvironment();
-  return EXEC_NEXT_FULFILMENT_ENTITY_URL[`${env || Environment.DEVELOPMENT}`];
+  return COMPLETE_FULFILMENT_SESSION_URL[`${env || Environment.DEVELOPMENT}`];
 }

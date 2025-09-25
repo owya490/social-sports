@@ -35,15 +35,6 @@ export const DEFAULT_END_DATE = null;
 export const PROXIMITY_SLIDER_MAX_VALUE = 100;
 export const PRICE_SLIDER_MAX_VALUE = 100;
 
-export const VOLLEYBALL_SPORT_STRING = "Volleyball";
-export const BADMINTON_SPORT_STRING = "Badminton";
-export const BASKETBALL_SPORT_STRING = "Basketball";
-export const SOCCER_SPORT_STRING = "Soccer";
-export const TENNIS_SPORT_STRING = "Tennis";
-export const TABLE_TENNIS_SPORT_STRING = "Table Tennis";
-export const OZTAG_SPORT_STRING = "Oztag";
-export const BASEBALL_SPORT_STRING = "Baseball";
-
 export const EMPTY_LOCATION_STRING = "";
 
 interface FilterDialogProps {
