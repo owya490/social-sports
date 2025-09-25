@@ -19,7 +19,7 @@ import {
   getImageAndThumbnailUrlsWithDefaults,
   getUsersEventImagesUrls,
   getUsersEventThumbnailsUrls,
-} from "@/services/src/imageService";
+} from "@/services/src/images/imageService";
 import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 import { Alert } from "@material-tailwind/react";

@@ -2,6 +2,8 @@
 
 import { DropdownSelectSectionBuilder } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionBuilder";
 import { HeaderSectionBuilder } from "@/components/forms/sections/header-section/HeaderSectionBuilder";
+import { ImageSectionBuilder } from "@/components/forms/sections/image-section/ImageSectionBuilder";
+import { ImageSelectionDialog } from "@/components/forms/sections/image-section/ImageSelectionDialog";
 import { TextSectionBuilder } from "@/components/forms/sections/text-section/TextSectionBuilder";
 import Loading from "@/components/loading/Loading";
 import Modal from "@/components/utility/Modal";
@@ -14,6 +16,7 @@ import {
   FormSection,
   FormSectionType,
   FormTitle,
+  ImageSection,
   SectionId,
 } from "@/interfaces/FormTypes";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
@@ -40,6 +43,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   const [form, setForm] = useState<Form>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false);
+  const [showImageSelectionDialog, setShowImageSelectionDialog] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isModalClosing, setIsModalClosing] = useState(false);
   const isFormModified =
@@ -156,12 +160,12 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       setShowBackWarning(true);
       return;
     }
-    window.history.back();
+    router.push(`/organiser/forms/gallery`);
   };
 
   const handleConfirmBack = () => {
     setShowBackWarning(false);
-    window.history.back();
+    router.push(`/organiser/forms/gallery`);
   };
 
   const updateFormTitle = (newTitle: FormTitle) => {
@@ -178,8 +182,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     }));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const duplicateSection = (section: FormSection, sectionId: SectionId) => {
+  const duplicateSection = (section: FormSection) => {
     const newSectionId: SectionId = uuidv4() as SectionId; // Use UUID for uniqueness
 
     setForm((prevForm) => ({
@@ -212,6 +215,16 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       sectionsOrder: [...prevForm.sectionsOrder, newSectionId],
       sectionsMap: { ...prevForm.sectionsMap, [newSectionId]: section },
     }));
+  };
+
+  const handleImageSelectionComplete = (imageUrl: string) => {
+    addSection({
+      type: FormSectionType.IMAGE,
+      question: "",
+      imageUrl: imageUrl,
+      required: false,
+    });
+    setShowImageSelectionDialog(false);
   };
 
   const moveSectionUp = (sectionId: SectionId) => {
@@ -282,6 +295,22 @@ const FormEditor = ({ formId }: FormEditorParams) => {
         return (
           <DropdownSelectSectionBuilder
             section={section}
+            sectionId={sectionId}
+            onUpdate={(updatedSection) => {
+              setForm((prevForm) => ({
+                ...prevForm,
+                sectionsMap: { ...prevForm.sectionsMap, [sectionId]: updatedSection },
+              }));
+            }}
+            onDelete={deleteSection}
+            onDuplicate={duplicateSection}
+          />
+        );
+
+      case FormSectionType.IMAGE:
+        return (
+          <ImageSectionBuilder
+            imageSection={section as ImageSection}
             sectionId={sectionId}
             onUpdate={(updatedSection) => {
               setForm((prevForm) => ({
@@ -370,6 +399,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
             required: true,
           })
         }
+        onAddImageSection={() => setShowImageSelectionDialog(true)}
         onSaveForm={handleSubmitClick}
         isFormModified={isFormModified}
         isSubmitting={isSubmitting}
@@ -393,6 +423,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
             required: true,
           })
         }
+        onAddImageSection={() => setShowImageSelectionDialog(true)}
         onSaveForm={handleSubmitClick}
         isFormModified={isFormModified}
         isSubmitting={isSubmitting}
@@ -452,6 +483,13 @@ const FormEditor = ({ formId }: FormEditorParams) => {
           </ReactSortable>
         </div>
       </div>
+
+      {/* Image Selection Dialog */}
+      <ImageSelectionDialog
+        isOpen={showImageSelectionDialog}
+        onClose={() => setShowImageSelectionDialog(false)}
+        onImageSelected={handleImageSelectionComplete}
+      />
     </div>
   );
 };

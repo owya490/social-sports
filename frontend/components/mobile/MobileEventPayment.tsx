@@ -7,7 +7,7 @@ import {
   getNextFulfilmentEntityUrl,
   initFulfilmentSession,
 } from "@/services/src/fulfilment/fulfilmentServices";
-import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import { getStripeCheckoutUrlFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
@@ -33,6 +33,7 @@ interface MobileEventPaymentProps {
   paused: boolean;
   setLoading: (value: boolean) => void;
   eventLink: string;
+  organiserId: string;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
@@ -140,7 +141,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     window.scrollTo(0, 0);
 
                     // We'll put this behind a flag for now just in case we need to quickly disable this.
-                    if (evaluateFulfilmentSessionEnabled("", props.eventId)) {
+                    if (evaluateFulfilmentSessionEnabled(props.organiserId, props.eventId)) {
                       try {
                         const { fulfilmentSessionId } = await initFulfilmentSession({
                           type: "checkout",
@@ -176,7 +177,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                         router.push("/error");
                       }
                     } else {
-                      const stripeCheckoutLink = await getStripeCheckoutFromEventId(
+                      const stripeCheckoutLink = await getStripeCheckoutUrlFromEventId(
                         props.eventId,
                         props.isPrivate,
                         attendeeCount

@@ -1,12 +1,20 @@
 package com.functions.forms.services;
 
-import com.functions.events.repositories.EventsRepository;
-import com.functions.forms.models.*;
-import com.functions.forms.repositories.FormsRepository;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
+import com.functions.events.repositories.EventsRepository;
+import com.functions.forms.models.DateTimeSection;
+import com.functions.forms.models.DropdownSelectSection;
+import com.functions.forms.models.FileUploadSection;
+import com.functions.forms.models.FormResponse;
+import com.functions.forms.models.FormSection;
+import com.functions.forms.models.ImageSection;
+import com.functions.forms.models.MultipleChoiceSection;
+import com.functions.forms.models.TextSection;
+import com.functions.forms.repositories.FormsRepository;
 
 public class FormsUtils {
     private static final Logger logger = LoggerFactory.getLogger(FormsUtils.class);
@@ -77,6 +85,11 @@ public class FormsUtils {
                         return false;
                     }
                     break;
+                case IMAGE:
+                    if (!((ImageSection) section).hasImageUrl()) {
+                        return false;
+                    }
+                    break;
                 default:
                     logger.error("[FormsUtils] Unknown section type: {}", section.getType());
                     return false;
@@ -110,7 +123,7 @@ public class FormsUtils {
 
             // Step 3: Save to submitted collection
             FormsRepository.saveSubmittedFormResponse(tempFormResponse);
-            logger.info("Successfully saved form response to submitted collection");
+            logger.info("Successfully saved form response to submitted collection - formId: {}, eventId: {}, formResponseId: {} , formResponse: {}", formId, eventId, formResponseId, tempFormResponse);
 
             // Step 4: Delete from temporary collection
             FormsRepository.deleteTempFormResponse(formId, eventId, formResponseId);

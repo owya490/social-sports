@@ -3,7 +3,7 @@ import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { getDownloadURL, listAll, ref, StorageReference, uploadBytes } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
-import { storage } from "./firebase";
+import { storage } from "../firebase";
 
 export interface AllImageData {
   image: string | undefined;
@@ -12,6 +12,7 @@ export interface AllImageData {
 
 export const EVENT_THUMBNAIL_PATH = "/eventThumbnails";
 export const EVENT_IMAGE_PATH = "/eventImages";
+export const FORM_IMAGE_PATH = "/formImages";
 
 export const imageServiceLogger = new Logger("imageServiceLogger");
 
@@ -33,6 +34,20 @@ export async function getUsersEventThumbnailsUrls(userID: string): Promise<strin
 export async function getUsersEventImagesUrls(userID: string): Promise<string[]> {
   const userRef = ref(storage, "users/" + userID + EVENT_IMAGE_PATH);
 
+  try {
+    const res = await listAll(userRef);
+    const urls = res.items.map((itemRef) => {
+      return getDownloadURL(itemRef);
+    });
+    return await Promise.all(urls);
+  } catch (error) {
+    imageServiceLogger.error(`Error fetching images ${error}`);
+    return [];
+  }
+}
+
+export async function getUsersFormImagesUrls(userId: UserId): Promise<string[]> {
+  const userRef = ref(storage, "users/" + userId + FORM_IMAGE_PATH);
   try {
     const res = await listAll(userRef);
     const urls = res.items.map((itemRef) => {
@@ -78,6 +93,10 @@ export async function uploadEventThumbnail(userId: UserId, file: File): Promise<
 
 export async function uploadEventImage(userId: UserId, file: File): Promise<string> {
   return await uploadUserImage(userId, EVENT_IMAGE_PATH, file);
+}
+
+export async function uploadFormImage(userId: UserId, file: File): Promise<string> {
+  return await uploadUserImage(userId, FORM_IMAGE_PATH, file);
 }
 
 export async function getEventImageLocation(eventID: string): Promise<string[]> {

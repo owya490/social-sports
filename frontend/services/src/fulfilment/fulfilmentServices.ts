@@ -2,7 +2,6 @@ import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormResponseId } from "@/interfaces/FormTypes";
 import {
-  CompleteFulfilmentSessionRequest,
   FulfilmentEntityId,
   FulfilmentSessionId,
   FulfilmentSessionType,
@@ -22,18 +21,24 @@ import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getUrlWithCurrentHostname } from "../urlUtils";
-import { getCompleteFulfilmentSessionUrl, getDeleteFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
+import { getDeleteFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
 export const FULFILMENT_SESSION_ENABLED = true;
 
 const fulfilmentSessionEnabledUserIdList = [
-  "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
+  // "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
+  "98PJNSoCmNU5zslxa1wIdZ3mPdf2", // sydgrassvolleyball
+  "Pvwt23x0JrdlzomKHnJYcy3tJ8z2", // raptors volleyball
+  "zrTARSTmbsf2hOozuCLCK154AMv1", // obsidian volleyball
   "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
   "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", // owen dev
+  "4jCSqGcc1PV7EWDL4CagipVIi8n2", // brian dev
 ];
 const fulfilmentSessionEnabledEventIdList: string[] = [
-  "brian was here",
+  "yr1bmHx9mpss5jAXPhEE", // sportshub test event
+  "EWCtdSlpJJePnQUuiy5K", // brian test event
+  // "5p3V3XRykiYZava8WAM8",
   // "0kcqoQMnRE9OV3ezstZt", // syrio jersey
 ];
 
@@ -326,48 +331,6 @@ export async function getFulfilmentSessionInfo(
     return response;
   } catch (error) {
     fulfilmentServiceLogger.error(`getFulfilmentSessionInfo: Failed to fetch fulfilment session info: ${error}`);
-    throw error;
-  }
-}
-
-export async function completeFulfilmentSession(
-  fulfilmentSessionId: FulfilmentSessionId,
-  fulfilmentEntityId: FulfilmentEntityId
-): Promise<void> {
-  fulfilmentServiceLogger.info(
-    `completeFulfilmentSession: Completing fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
-  );
-
-  const request: CompleteFulfilmentSessionRequest = {
-    fulfilmentSessionId,
-    fulfilmentEntityId,
-  };
-
-  try {
-    const rawResponse = await fetch(getCompleteFulfilmentSessionUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `completeFulfilmentSession: Cloud function error: Failed to complete fulfilment session: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`completeFulfilmentSession: ${errorResponse.errorMessage}`);
-    }
-
-    fulfilmentServiceLogger.info(
-      `completeFulfilmentSession: Successfully completed fulfilment session with ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}`
-    );
-  } catch (error) {
-    fulfilmentServiceLogger.error(
-      `completeFulfilmentSession: Failed to complete fulfilment session with ID ${fulfilmentSessionId} and entity ID ${fulfilmentEntityId}: ${error}`
-    );
     throw error;
   }
 }

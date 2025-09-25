@@ -1,7 +1,7 @@
 "use client";
 import { UserData } from "@/interfaces/UserTypes";
 import Upload from "@/public/images/upload.png";
-import { uploadProfilePhoto } from "@/services/src/imageService";
+import { uploadProfilePhoto } from "@/services/src/images/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import imageCompression from "browser-image-compression";
 import { deleteObject, getMetadata, getStorage, ref } from "firebase/storage";

@@ -150,14 +150,13 @@ jobs:
             --concurrency 80 \
             --min-instances 1 \
             --max-instances 5 \
-            --cpu 1 \
-            --cpu-boost
+            --cpu 1
 
       - name: Deploy Cloud Scheduler jobs
         continue-on-error: true
         working-directory: functions/lib/functions
         run: |
-          bash ./deploySchedulerToGCloud.sh
+          bash ./deploySchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/recurringEventsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron' }}
           bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }}
 
       - name: Report scheduler deployment status

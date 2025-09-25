@@ -1,5 +1,8 @@
 "use client";
 
+import DescriptionRichTextEditor from "@/components/editor/DescriptionRichTextEditor";
+import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
+import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { FormDescription, FormTitle } from "@/interfaces/FormTypes";
 import { useState } from "react";
 
@@ -23,8 +26,8 @@ export const HeaderSectionBuilder = ({
     updateFormTitle(e.target.value as FormTitle);
   };
 
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateFormDescription(e.target.value as FormDescription);
+  const handleDescriptionChange = (e: string) => {
+    updateFormDescription(e as FormDescription);
   };
 
   return (
@@ -49,23 +52,19 @@ export const HeaderSectionBuilder = ({
       )}
 
       {isEditingDescription ? (
-        <input
-          type="text"
-          value={formDescription}
-          onChange={handleDescriptionChange}
-          onBlur={() => setIsEditingDescription(false)}
-          onKeyDown={(e) => e.key === "Enter" && setIsEditingDescription(false)}
-          className="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:border-gray-300 text-gray-600 text-lg"
-          placeholder="Enter form description"
-          autoFocus
-        />
+        <>
+          <DescriptionRichTextEditor description={formDescription} updateDescription={handleDescriptionChange} />
+          <InvertedHighlightButton className="mt-2 ml-auto" onClick={() => setIsEditingDescription(false)}>
+            Done
+          </InvertedHighlightButton>
+        </>
       ) : (
-        <div
+        <button
+          className="w-full border border-gray-200 rounded-lg px-4 py-2 hover:bg-gray-50 focus:outline-none focus:border-gray-300 text-left text-sm"
           onClick={() => setIsEditingDescription(true)}
-          className="w-full text-gray-600 text-lg cursor-pointer hover:text-blue-600 hover:bg-gray-50 p-2 rounded-md transition-colors border-2 border-transparent hover:border-gray-200"
         >
-          {formDescription || "Click to add form description"}
-        </div>
+          {formDescription ? <RichTextEditorContent description={formDescription} /> : "Click to add form description"}
+        </button>
       )}
     </div>
   );

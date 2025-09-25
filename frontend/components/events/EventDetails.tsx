@@ -40,6 +40,7 @@ export function EventDetails(props: EventDetailsProps) {
               paused={eventData.paused}
               setLoading={setLoading}
               eventLink={eventData.eventLink}
+              organiserId={eventData.organiserId}
             />
           </div>
 
@@ -68,6 +69,7 @@ export function EventDetails(props: EventDetailsProps) {
               paused={eventData.paused}
               setLoading={setLoading}
               eventLink={eventData.eventLink}
+              organiserId={eventData.organiserId}
             />
           </div>
         </div>

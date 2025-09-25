@@ -47,6 +47,9 @@ public class FormSectionUtils {
                     // BINARY_CHOICE is handled the same as MULTIPLE_CHOICE
                     section = objectMapper.convertValue(sectionData, MultipleChoiceSection.class);
                     break;
+                case IMAGE:
+                    section = objectMapper.convertValue(sectionData, ImageSection.class);
+                    break;
                 default:
                     throw new IllegalArgumentException("Unknown FormSection type: " + sectionData.get("type"));
             }
