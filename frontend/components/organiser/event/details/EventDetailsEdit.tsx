@@ -193,7 +193,7 @@ export const EventDetailsEdit = ({
         try {
           const { lat, lng } = await getLocationCoordinates(full_address);
           setLocationLatLng({ lat, lng });
-        } catch (error) {
+        } catch {
           // Silently handle error, don't show toast
           setLocationError("Failed to get location coordinates");
           setSelectionMade(false);
