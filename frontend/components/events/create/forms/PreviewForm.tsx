@@ -57,7 +57,7 @@ export const PreviewForm = ({ form, user }: PreviewFormProps) => {
         <div className="col-span-1 mt-6 mx-2 space-y-6">
           <div>
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Sport</div>
-            <p className="text-m">{form.sport}</p>
+            <p className="text-m capitalize">{form.sport}</p>
           </div>
 
           <div>
