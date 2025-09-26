@@ -2,7 +2,7 @@
 title: Manage Events
 weight: 1
 prev: /docs/organisers/organiser-hub
-next: /docs/organisers/manage-recurring-events
+next: /docs/organisers/organiser-hub/manage-recurring-events
 ---
 
 The Organiser Hub provides comprehensive event management tools to help you efficiently oversee all your sporting events from one central location.
