@@ -95,8 +95,15 @@ public class FulfilmentService {
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities =
                     constructCheckoutFulfilmentEntities(eventId, eventData, numTickets,
                             fulfilmentSessionId);
-            logger.info("Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, fulfilmentEntities: {}",
-                    eventId, numTickets, fulfilmentSessionId, fulfilmentEntities.stream().map(SimpleEntry::getValue).collect(Collectors.toList()));
+            logger.info("Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, entityTypes: {}",
+                    eventId, numTickets, fulfilmentSessionId,
+                    fulfilmentEntities.stream()
+                            .map(e -> e.getValue().getType())
+                            .collect(Collectors.toList()));
+            logger.debug("Constructed fulfilment entities (full): {}",
+                    fulfilmentEntities.stream()
+                            .map(SimpleEntry::getValue)
+                            .collect(Collectors.toList()));
             return FulfilmentService.createFulfilmentSession(fulfilmentSessionId, eventId,
                     numTickets, fulfilmentEntities).map(sessionId -> {
                 if (sessionId.isEmpty()) {
