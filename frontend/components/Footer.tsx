@@ -15,6 +15,9 @@ export default function Footer() {
           <Link href="/organiser/dashboard" className="mx-2">
             Organiser Hub
           </Link>
+          <Link href="/landing" className="mx-2">
+            Landing
+          </Link>
           <Link href="/event/create" className="mx-2">
             Create Event
           </Link>

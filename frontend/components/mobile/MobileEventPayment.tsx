@@ -33,6 +33,7 @@ interface MobileEventPaymentProps {
   paused: boolean;
   setLoading: (value: boolean) => void;
   eventLink: string;
+  organiserId: string;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
@@ -140,7 +141,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     window.scrollTo(0, 0);
 
                     // We'll put this behind a flag for now just in case we need to quickly disable this.
-                    if (evaluateFulfilmentSessionEnabled("", props.eventId)) {
+                    if (evaluateFulfilmentSessionEnabled(props.organiserId, props.eventId)) {
                       try {
                         const { fulfilmentSessionId } = await initFulfilmentSession({
                           type: "checkout",
