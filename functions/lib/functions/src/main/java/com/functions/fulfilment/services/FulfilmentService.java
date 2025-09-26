@@ -178,8 +178,8 @@ public class FulfilmentService {
                         eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
                         fulfilmentSessionId, endFulfilmentEntityId);
 
-                logger.info("Created Stripe checkout link for event ID {}: {}", eventId,
-                        stripeCheckoutLink);
+                logger.info("Created Stripe checkout link for event ID {}", eventId);
+                logger.debug("Stripe checkout link: {}", stripeCheckoutLink);
                 entity = StripeFulfilmentEntity.builder().url(stripeCheckoutLink)
                         .type(FulfilmentEntityType.STRIPE).build();
                 fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
@@ -440,6 +440,12 @@ public class FulfilmentService {
 
         if (entity.getType() == FulfilmentEntityType.FORMS) {
             FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
+            if (formsEntity.getFormResponseId() == null || formsEntity.getFormResponseId().isEmpty()) {
+                logger.info(
+                        "Form response ID missing for form ID: {}, event ID: {}; treating entity as incomplete",
+                        formsEntity.getFormId(), formsEntity.getEventId());
+                return false;
+            }
             Optional<FormResponse> maybeFormResponse =
                     FormsRepository.getFormResponseById(formsEntity.getFormId(),
                             formsEntity.getEventId(), formsEntity.getFormResponseId());
