@@ -1,5 +1,5 @@
 ---
-title: "Building SPORTSHUB Forms"
+title: "[Feature] SPORTSHUB Forms"
 date: "2025-09-25"
 authors:
   - name: Brian Wang
