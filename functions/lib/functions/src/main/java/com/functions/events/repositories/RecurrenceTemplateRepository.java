@@ -1,9 +1,8 @@
 package com.functions.events.repositories;
 
-import com.functions.firebase.services.FirebaseService;
 import com.functions.events.models.RecurrenceTemplate;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
-import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,19 +125,6 @@ public class RecurrenceTemplateRepository {
         return recurrenceTemplateId;
     }
 
-    public static <T> T createFirestoreTransaction(Transaction.Function<T> consumer) {
-        Firestore db = FirebaseService.getFirestore();
-        ApiFuture<T> futureTransaction = db.runTransaction(consumer);
-        try {
-            // Wait for the transaction to complete
-            T result = futureTransaction.get();
-            logger.info("Transaction completed with result: " + result);
-            return result;
-        } catch (Exception e) {
-            logger.error("Transaction failed: " + e.getMessage());
-        }
-        return null;
-    }
 
     public static Map<String, RecurrenceTemplate> getAllActiveRecurrenceTemplates() {
         Firestore db = FirebaseService.getFirestore();
