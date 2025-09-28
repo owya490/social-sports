@@ -12,7 +12,6 @@ import OrganiserFilterDialog, {
 } from "@/components/Filter/OrganiserFilterDialog";
 import OrganiserFilterDialogMobile from "@/components/Filter/OrganiserFilterDialogMobile";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
@@ -160,11 +159,10 @@ export default function OrganiserDashboard() {
   }
 
   return (
-    <div className="w-screen pt-14 lg:pb-10 md:pl-7 h-fit max-h-screen overflow-y-auto">
-      <OrganiserNavbar currPage={"EventDashboard"} />
+    <>
       <div className="flex justify-center">
         <div className="flex flex-col items-center md:items-start">
-          <div className="flex flex-row items-center justify-center">
+          <div className="">
             <div className="text-4xl md:text-5xl lg:text-6xl my-6 md:ml-4 lg:ml-0">Event Dashboard</div>
             <div className="lg:hidden ml-4">
               <OrganiserFilterDialogMobile
@@ -218,7 +216,7 @@ export default function OrganiserDashboard() {
               />
             </div>
             {loading ? (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-8 justify-items-center overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
+              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-8 justify-items-center lg:overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] lg:h-[80vh]">
                 {loadingEventDataList.map((event, eventIdx) => {
                   return (
                     <div className="w-full" key={eventIdx}>
@@ -253,7 +251,7 @@ export default function OrganiserDashboard() {
                 </div>
               </div>
             ) : (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-6 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-auto">
+              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-6 justify-items-center lg:max-h-screen lg:overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[calc(100vh-12rem)] lg:h-auto">
                 {filterEventsBySortBy(eventDataList, appliedSortByCategoryValue).map((event, eventIdx) => {
                   return (
                     <div className="w-full" key={eventIdx}>
@@ -276,6 +274,6 @@ export default function OrganiserDashboard() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

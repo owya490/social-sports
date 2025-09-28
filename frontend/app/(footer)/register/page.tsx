@@ -71,7 +71,7 @@ export default function Register() {
   };
 
   return (
-    <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
+    <div className="flex p-6 h-[calc(100vh-3.5rem)] flex-1 flex-col pt-20 sm:pt-40">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <Alert
           open={passwordMismatch}
