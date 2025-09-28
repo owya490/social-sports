@@ -1,8 +1,8 @@
 ---
 title: Manage Recurring Events
-weight: 1
-prev: /docs/organisers/manage-events
-next: /docs/organisers/organiser-hub
+weight: 2
+prev: /docs/organisers/organiser-hub/manage-events
+next: /docs/organisers/organiser-hub/forms
 ---
 
 ![recurring-event-edit](/images/docs/organisers/organiser-hub/recurring-event-edit.png)
