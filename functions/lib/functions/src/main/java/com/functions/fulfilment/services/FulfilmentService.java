@@ -1,5 +1,19 @@
 package com.functions.fulfilment.services;
 
+import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.forms.models.FormResponse;
@@ -20,22 +34,10 @@ import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
-    private static final int CLEANUP_CUTOFF_MINUTES = 30;
+    private static final int CLEANUP_CUTOFF_MINUTES = 35;
 
     /**
      * Cleanup fulfilment sessions older than the default cutoff minutes.
@@ -65,6 +67,7 @@ public class FulfilmentService {
             logger.info("Found old fulfilment sessions to delete: {}", oldSessionIds);
             for (String id : oldSessionIds) {
                 try {
+                    logger.info("Deleting fulfilment session: {}, session: {}", id, FulfilmentSessionRepository.getFulfilmentSession(id));
                     deleteFulfilmentSessionAndTempFormResponses(id);
                     deleted++;
                 } catch (Exception e) {
@@ -725,6 +728,7 @@ public class FulfilmentService {
             }
 
             FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+            logger.info("Fulfilment session found for ID: {}, session: {}", fulfilmentSessionId, fulfilmentSession);
             Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
 
             FulfilmentEntity entity = fulfilmentEntityMap.get(fulfilmentEntityId);

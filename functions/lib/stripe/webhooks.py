@@ -3,6 +3,7 @@
 ###############################
 
 import hashlib
+import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
@@ -15,8 +16,7 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import IS_PROD, db
-from lib.emails.purchase_event import (PurchaseEventRequest,
-                                       send_email_on_purchase_event)
+from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
@@ -119,9 +119,6 @@ def fulfill_completed_event_ticket_purchase(
     full_name: str,
     phone_number: str,
     payment_details: stripe.checkout.Session.TotalDetails,
-    complete_fulfilment_session: bool,
-    fulfilment_session_id: str,
-    end_fulfilment_entity_id: str,
 ) -> str | None:  # Typing of customer is customer details
     # Update the event to include the new attendees
     private_path = "Private" if is_private else "Public"
@@ -277,15 +274,6 @@ def fulfill_completed_event_ticket_purchase(
             )
         },
     )
-    
-    if (
-        complete_fulfilment_session
-        and fulfilment_session_id
-        and end_fulfilment_entity_id
-    ):
-        complete_fulfilment_session_request(
-            logger, fulfilment_session_id, end_fulfilment_entity_id
-        )
 
     return order_id_ref.id
 
@@ -355,35 +343,52 @@ def complete_fulfilment_session_request(
         "fulfilmentEntityId": fulfilment_entity_id,
     }
 
-    try:
-        response = requests.post(
-            url,
-            json=request_data,
-            headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            },
-            timeout=30,
-        )
+    # Retry 3 times with 2s backoff between each
+    max_retries = 3
+    backoff_seconds = 2
 
-        if not response.ok:
-            error_response = response.json()
-            error_message = error_response.get(
-                "errorMessage", f"HTTP {response.status_code}"
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(
+                url,
+                json=request_data,
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                timeout=30,
             )
+
+            if not response.ok:
+                error_response = response.json()
+                error_message = error_response.get(
+                    "errorMessage", f"HTTP {response.status_code}"
+                )
+                logger.error(
+                    f"complete_fulfilment_session: Cloud function error: Failed to complete fulfilment session: {error_message}"
+                )
+                raise Exception(f"complete_fulfilment_session: {error_message}")
+
+            logger.info(
+                f"complete_fulfilment_session: Successfully completed fulfilment session with ID: {fulfilment_session_id} and entity ID: {fulfilment_entity_id}"
+            )
+            return  # Success, exit the retry loop
+
+        except requests.RequestException as error:
+            attempt_num = attempt + 1
             logger.error(
-                f"complete_fulfilment_session: Cloud function error: Failed to complete fulfilment session: {error_message}"
+                f"complete_fulfilment_session: Attempt {attempt_num}/{max_retries} failed to complete fulfilment session with ID {fulfilment_session_id} and entity ID {fulfilment_entity_id}: {error}"
             )
-            raise Exception(f"complete_fulfilment_session: {error_message}")
 
-        logger.info(
-            f"complete_fulfilment_session: Successfully completed fulfilment session with ID: {fulfilment_session_id} and entity ID: {fulfilment_entity_id}"
-        )
-    except requests.RequestException as error:
-        logger.error(
-            f"complete_fulfilment_session: Failed to complete fulfilment session with ID {fulfilment_session_id} and entity ID {fulfilment_entity_id}: {error}"
-        )
-        raise
+            if attempt_num == max_retries:
+                logger.error(
+                    f"complete_fulfilment_session: All {max_retries} attempts failed. Giving up."
+                )
+            else:
+                logger.info(
+                    f"complete_fulfilment_session: Retrying in {backoff_seconds} seconds..."
+                )
+                time.sleep(backoff_seconds)
 
 
 def fulfilment_workflow_on_ticket_purchase(
@@ -421,9 +426,6 @@ def fulfilment_workflow_on_ticket_purchase(
         full_name,
         phone_number,
         checkout_session.total_details,
-        complete_fulfilment_session,
-        fulfilment_session_id,
-        end_fulfilment_entity_id,
     )
     if orderId == None:
         logger.error(
@@ -431,6 +433,14 @@ def fulfilment_workflow_on_ticket_purchase(
         )
         return https_fn.Response(status=500)
 
+    if (
+        complete_fulfilment_session
+        and fulfilment_session_id
+        and end_fulfilment_entity_id
+    ):
+        complete_fulfilment_session_request(
+            logger, fulfilment_session_id, end_fulfilment_entity_id
+        )
 
     # Send email to purchasing consumer. Retry sending email 3 times, before exiting and completing order. If email breaks, its not the end of the world.
     success = False
