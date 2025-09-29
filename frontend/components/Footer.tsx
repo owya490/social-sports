@@ -9,7 +9,7 @@ export default function Footer() {
           © 2025 SPORTSHUB
         </Link>
         <ol className="hidden sm:block">
-          <Link href="/dashboard" className="mx-2">
+          <Link href="/" className="mx-2">
             Dashboard
           </Link>
           <Link href="/organiser/dashboard" className="mx-2">

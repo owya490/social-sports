@@ -74,7 +74,7 @@ export default function UserContext({ children }: { children: any }) {
           const userData = await getTempUserData(auth.currentUser.uid);
           console.log("userData", userData);
           if (!userData) {
-            router.push("/dashboard");
+            router.push("/");
           }
         }
       }

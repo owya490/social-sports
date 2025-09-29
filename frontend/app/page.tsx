@@ -112,7 +112,7 @@ export default function Dashboard() {
     if (login === "success") {
       setShowLoginSuccess(true);
 
-      router.replace("/dashboard");
+      router.replace("/");
     }
   }, [router]);
 

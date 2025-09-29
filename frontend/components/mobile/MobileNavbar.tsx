@@ -23,7 +23,7 @@ export default function MobileNavbar() {
   return (
     <div className="bg-white fixed top-0 w-screen z-50">
       <div className="flex items-center py-2 px-4">
-        <Link href="/dashboard">
+        <Link href="/">
           <Image src={Logo} alt="Logo" className="w-10 h-10 mr-4" />
         </Link>
 

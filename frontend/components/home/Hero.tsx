@@ -12,7 +12,7 @@ export default function Hero() {
           </h1>
           <p className="font-light mt-4">
             Find your next Social Sports Session right here on{" "}
-            <Link href="/dashboard" className="font-semibold hover:underline">
+            <Link href="/" className="font-semibold hover:underline">
               Sports Hub.
             </Link>
           </p>
