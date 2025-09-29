@@ -24,6 +24,9 @@ export default function Footer() {
           <Link href="/blogs" className="mx-2">
             Blogs
           </Link>
+          <Link href="/docs" className="mx-2">
+            Docs
+          </Link>
         </ol>
         <Link href="/contact" className="ml-auto flex justify-center items-center mr-4">
           <LightBulbIcon className="h-4 mr-1" />
