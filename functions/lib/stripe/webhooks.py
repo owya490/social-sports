@@ -336,11 +336,14 @@ def complete_fulfilment_session_request(
 
     # Determine the correct URL based on environment
     base_url = prod_url if IS_PROD else dev_url
-    url = f"{base_url}/completeFulfilmentSession"
+    url = f"{base_url}/globalAppController"
 
     request_data = {
-        "fulfilmentSessionId": fulfilment_session_id,
-        "fulfilmentEntityId": fulfilment_entity_id,
+        "endpointType": "COMPLETE_FULFILMENT_SESSION",
+        "data": {
+            "fulfilmentSessionId": fulfilment_session_id,
+            "fulfilmentEntityId": fulfilment_entity_id,
+        },
     }
 
     # Retry 3 times with 2s backoff between each
