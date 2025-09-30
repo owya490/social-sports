@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
-    private static final int CLEANUP_CUTOFF_MINUTES = 30;
+    private static final int CLEANUP_CUTOFF_MINUTES = 35;
 
     /**
      * Cleanup fulfilment sessions older than the default cutoff minutes.
@@ -134,16 +134,14 @@ public class FulfilmentService {
                 for (int i = 0; i < numTickets; i++) {
                     tempEntities.add(
                             FormsFulfilmentEntity.builder().formId(formId.get()).eventId(eventId)
-                                    .formResponseId(null).type(FulfilmentEntityType.FORMS).build());
+                                    .formResponseId(null)
+                                    .type(FulfilmentEntityType.FORMS).build());
                 }
             }
         } catch (Exception e) {
-            logger.error("[FulfilmentService] Error constructing FORMS entities for event ID: {}",
-                    eventId, e);
+            logger.error("[FulfilmentService] Error constructing FORMS entities for event ID: {}", eventId, e);
             throw new RuntimeException(
-                    "[FulfilmentService] Failed to construct FORMS entities for event ID: "
-                            + eventId,
-                    e);
+                    "[FulfilmentService] Failed to construct FORMS entities for event ID: " + eventId, e);
         }
 
         // 2. STRIPE entity (will be updated with correct success URL later)
@@ -234,10 +232,10 @@ public class FulfilmentService {
                     .eventData(EventsRepository.getEventById(eventId)
                             .orElseThrow(() -> new Exception("Event not found for ID: " + eventId)))
                     .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityOrder)
-                    .numTickets(numTickets).build();
+                    .numTickets(numTickets)
+                    .build();
 
-            String fulfilmentSessionId =
-                    FulfilmentSessionRepository.createFulfilmentSession(sessionId, session);
+            String fulfilmentSessionId = FulfilmentSessionRepository.createFulfilmentSession(sessionId, session);
 
             logger.info("Fulfilment session created with ID: {} for event ID: {}",
                     fulfilmentSessionId, eventId);
@@ -251,8 +249,7 @@ public class FulfilmentService {
     private static Optional<GetNextFulfilmentEntityResponse> getNextFulfilmentEntity(
             String fulfilmentSessionId, int currentIndex) {
         try {
-            logger.info(
-                    "[FulfilmentService] Getting next fulfilment entity for session ID: {} at index: {}",
+            logger.info("[FulfilmentService] Getting next fulfilment entity for session ID: {} at index: {}",
                     fulfilmentSessionId, currentIndex);
             Optional<FulfilmentSession> maybeFulfilmentSession =
                     getFulfilmentSessionById(fulfilmentSessionId, Optional.empty());
@@ -282,9 +279,11 @@ public class FulfilmentService {
             // Get next entity
             String nextEntityId = fulfilmentEntityIds.get(nextIndex);
 
-            logger.info("[FulfilmentService] Next fulfilment entity found: {}", nextEntityId);
+            logger.info("[FulfilmentService] Next fulfilment entity found: {}",
+                    nextEntityId);
 
-            return Optional.of(new GetNextFulfilmentEntityResponse(nextEntityId));
+            return Optional.of(new GetNextFulfilmentEntityResponse(
+                    nextEntityId));
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity for session ID: {}",
                     fulfilmentSessionId, e);
@@ -301,7 +300,7 @@ public class FulfilmentService {
                                                                  Transaction transaction) {
         try {
             logger.info(
-                    "[FulfilmentService] Copying temporary form responses to submitted with pre-read data for session ID: {}",
+                    "[FulfilmentService] Copying temporary form responses to submitted for session ID: {}",
                     fulfilmentSession.getId());
 
             // Loop through all fulfilment entities in the session
@@ -759,6 +758,7 @@ public class FulfilmentService {
                     }
 
                     FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+                    logger.info("Fulfilment session found for ID: {}, session: {}", fulfilmentSessionId, fulfilmentSession);
                     Map<String, FulfilmentEntity> fulfilmentEntityMap =
                             fulfilmentSession.getFulfilmentEntityMap();
 

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.forms.handlers.SaveTempFormResponseHandler;
+import com.functions.fulfilment.handlers.CompleteFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.GetFulfilmentEntityInfoHandler;
 import com.functions.fulfilment.handlers.GetFulfilmentSessionInfoHandler;
 import com.functions.fulfilment.handlers.GetNextFulfilmentEntityHandler;
@@ -30,6 +31,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_NEXT_FULFILMENT_ENTITY, new GetNextFulfilmentEntityHandler());
         handlers.put(EndpointType.GET_FULFILMENT_SESSION_INFO, new GetFulfilmentSessionInfoHandler());
         handlers.put(EndpointType.GET_FULFILMENT_ENTITY_INFO, new GetFulfilmentEntityInfoHandler());
+        handlers.put(EndpointType.COMPLETE_FULFILMENT_SESSION, new CompleteFulfilmentSessionHandler());
     }
 
     /**

@@ -59,7 +59,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
     setRecentSearches(prevSearches);
 
     // const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
-    const searchUrl = `/dashboard?event=${encodeURIComponent(event)}`;
+    const searchUrl = `/?event=${encodeURIComponent(event)}`;
     router.push(searchUrl);
     setSearchExpanded();
   };
@@ -157,7 +157,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
                   <span key={i} className="flex items-center my-1">
                     <ClockIcon className="w-4 h-4 mr-1" />
                     <Link
-                      href={`/dashboard?event=${search}`}
+                      href={`/?event=${search}`}
                       className="font-light text-base"
                       onClick={setSearchExpanded}
                     >{`${search} - Sydney`}</Link>
