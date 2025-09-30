@@ -359,7 +359,7 @@ def complete_fulfilment_session_request(
                     "Accept": "application/json",
                     "Content-Type": "application/json",
                 },
-                timeout=30,
+                timeout=10,
             )
 
             if not response.ok:
@@ -377,7 +377,7 @@ def complete_fulfilment_session_request(
             )
             return  # Success, exit the retry loop
 
-        except requests.RequestException as error:
+        except Exception as error:
             attempt_num = attempt + 1
             logger.error(
                 f"complete_fulfilment_session: Attempt {attempt_num}/{max_retries} failed to complete fulfilment session with ID {fulfilment_session_id} and entity ID {fulfilment_entity_id}: {error}"
