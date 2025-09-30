@@ -1,5 +1,5 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – SPORTSHUB</title><link>https://sportshub.net.au/tags/sportshub/</link><description>Recent content on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 25 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://sportshub.net.au/tags/sportshub/index.xml" rel="self" type="application/rss+xml"/><item><title>[Feature] SPORTSHUB Forms</title><link>https://sportshub.net.au/blogs/features/sportshub-forms/</link><pubDate>Thu, 25 Sep 2025 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/blogs/features/sportshub-forms/</guid><description>
-&lt;p&gt;&lt;img src="https://sportshub.net.au/images/forms-thumbnail.png" alt="Forms Architecture" loading="lazy" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://sportshub.net.au/images/forms-thumbnail-landscape.png" alt="Forms Architecture" loading="lazy" /&gt;&lt;/p&gt;
 &lt;h1&gt;Building SPORTSHUB Forms 📝&lt;/h1&gt;&lt;p&gt;One of SPORTSHUB&amp;rsquo;s most powerful features is our &lt;strong&gt;Forms system&lt;/strong&gt; – allowing event organizers to collect custom information from attendees during the ticket purchase process. But what makes this feature truly special isn&amp;rsquo;t just what it does for users, but how we built it by fundamentally rethinking our payment architecture.&lt;/p&gt;
 &lt;h2&gt;What Are SPORTSHUB Forms?&lt;span class="hx:absolute hx:-mt-20" id="what-are-sportshub-forms"&gt;&lt;/span&gt;
 &lt;a href="#what-are-sportshub-forms" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;SPORTSHUB Forms transform the ticket purchasing experience by allowing event organizers to get the necessary information they need from attendees – all in one smooth, integrated workflow. Instead of juggling separate surveys, emails, and spreadsheets, organizers can gather everything from dietary preferences to emergency contacts right during checkout.&lt;/p&gt;
@@ -22,7 +22,6 @@
 &lt;li&gt;Choose from text input, multiple choice/dropdown and image sections&lt;/li&gt;
 &lt;li&gt;Set required fields to ensure you get critical information&lt;/li&gt;
 &lt;li&gt;Real-time validation prevents errors and incomplete submissions&lt;/li&gt;
-&lt;li&gt;Conditional logic to show/hide sections based on previous answers&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;&lt;strong&gt;📊 Organized Data Collection&lt;/strong&gt;&lt;/p&gt;
 &lt;ul&gt;
@@ -32,7 +31,11 @@
 &lt;/ul&gt;
 &lt;p&gt;&lt;img src="https://sportshub.net.au/images/forms-example.png" alt="Forms Example" loading="lazy" /&gt;&lt;/p&gt;
 &lt;h2&gt;The Technical Challenge: Generalizing Payment Workflows&lt;span class="hx:absolute hx:-mt-20" id="the-technical-challenge-generalizing-payment-workflows"&gt;&lt;/span&gt;
-&lt;a href="#the-technical-challenge-generalizing-payment-workflows" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Initially, SPORTSHUB had a simple ticket purchasing flow: select tickets → pay with Stripe → done. But forms introduced a new complexity: we needed a &lt;strong&gt;multi-step workflow&lt;/strong&gt; that could handle different types of interactions before, during, and after payment.&lt;/p&gt;
+&lt;a href="#the-technical-challenge-generalizing-payment-workflows" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Initially, SPORTSHUB had a simple ticket purchasing flow:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Select tickets → Pay with Stripe → Done.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;But forms introduced a new complexity: we needed a &lt;strong&gt;multi-step workflow&lt;/strong&gt; that could handle different types of interactions before, during, and after payment.&lt;/p&gt;
 &lt;h3&gt;From Simple to Multi-Step&lt;span class="hx:absolute hx:-mt-20" id="from-simple-to-multi-step"&gt;&lt;/span&gt;
 &lt;a href="#from-simple-to-multi-step" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-typescript" data-lang="typescript"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// Before: Simple ticket purchase
@@ -53,6 +56,7 @@ title="Copy code"
 &lt;p&gt;&lt;img src="https://sportshub.net.au/images/forms-workflow.png" alt="Forms Workflow" loading="lazy" /&gt;&lt;/p&gt;
 &lt;h2&gt;Fulfilment Sessions: The Foundation&lt;span class="hx:absolute hx:-mt-20" id="fulfilment-sessions-the-foundation"&gt;&lt;/span&gt;
 &lt;a href="#fulfilment-sessions-the-foundation" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;We realized we needed to abstract the concept of &amp;ldquo;completing a purchase&amp;rdquo; into a series of &lt;strong&gt;fulfilment entities&lt;/strong&gt; that could be processed in sequence.&lt;/p&gt;
+&lt;p&gt;The beauty of this system lies in its &lt;strong&gt;modular design&lt;/strong&gt;. Each fulfillment entity is completely independent and interchangeable, allowing us to easily swap components or add new functionality without touching existing code. Need to switch from Stripe to PayPal? Simply replace the &lt;code&gt;STRIPE&lt;/code&gt; entity. Want to add a waiver signing step? Insert a &lt;code&gt;WAIVER&lt;/code&gt; entity before payment. This plug-and-play approach gives us incredible flexibility to customize the user journey for different event types while maintaining a clean, maintainable codebase.&lt;/p&gt;
 &lt;h3&gt;The Core Concept&lt;span class="hx:absolute hx:-mt-20" id="the-core-concept"&gt;&lt;/span&gt;
 &lt;a href="#the-core-concept" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
 &lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;enum&lt;/span&gt; FulfilmentEntityType {
@@ -252,18 +256,9 @@ title="Copy code"
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; INIT_FULFILMENT_SESSION(InitCheckoutFulfilmentSessionRequest.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;, InitCheckoutFulfilmentSessionResponse.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;),
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;, GetFulfilmentEntityInfoResponse.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;),
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#75715e"&gt;// ... all other endpoints&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
-&lt;button
-class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
-title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;class&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;HandlerRegistry&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;class&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;HandlerRegistry&lt;/span&gt; {
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;private&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;static&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;final&lt;/span&gt; Map&lt;span style="color:#f92672"&gt;&amp;lt;&lt;/span&gt;EndpointType, Handler&lt;span style="color:#f92672"&gt;&amp;lt;?&lt;/span&gt;, &lt;span style="color:#f92672"&gt;?&amp;gt;&amp;gt;&lt;/span&gt; handlers &lt;span style="color:#f92672"&gt;=&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;new&lt;/span&gt; HashMap&lt;span style="color:#f92672"&gt;&amp;lt;&amp;gt;&lt;/span&gt;();
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;static&lt;/span&gt; {
@@ -283,34 +278,8 @@ title="Copy code"
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;h3&gt;Frontend Integration&lt;span class="hx:absolute hx:-mt-20" id="frontend-integration"&gt;&lt;/span&gt;
-&lt;a href="#frontend-integration" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The frontend sends all requests to a single endpoint:&lt;/p&gt;
-&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-typescript" data-lang="typescript"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;export&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;async&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;function&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;executeGlobalAppControllerFunction&lt;/span&gt;&amp;lt;&lt;span style="color:#f92672"&gt;S&lt;/span&gt;, &lt;span style="color:#a6e22e"&gt;T&lt;/span&gt;&amp;gt;(
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#a6e22e"&gt;endpointType&lt;/span&gt;: &lt;span style="color:#66d9ef"&gt;EndpointType&lt;/span&gt;,
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#a6e22e"&gt;data&lt;/span&gt;: &lt;span style="color:#66d9ef"&gt;S&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;)&lt;span style="color:#f92672"&gt;:&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;Promise&lt;/span&gt;&amp;lt;&lt;span style="color:#f92672"&gt;T&lt;/span&gt;&amp;gt; {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;const&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;request&lt;/span&gt;: &lt;span style="color:#66d9ef"&gt;UnifiedRequest&lt;/span&gt;&amp;lt;&lt;span style="color:#f92672"&gt;S&lt;/span&gt;&amp;gt; &lt;span style="color:#f92672"&gt;=&lt;/span&gt; {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#a6e22e"&gt;endpointType&lt;/span&gt;: &lt;span style="color:#66d9ef"&gt;endpointType&lt;/span&gt;,
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#a6e22e"&gt;data&lt;/span&gt;: &lt;span style="color:#66d9ef"&gt;data&lt;/span&gt;,
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; };
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;const&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;response&lt;/span&gt; &lt;span style="color:#f92672"&gt;=&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;await&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;fetch&lt;/span&gt;(&lt;span style="color:#a6e22e"&gt;getGlobalAppControllerUrl&lt;/span&gt;(), {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#a6e22e"&gt;method&lt;/span&gt;&lt;span style="color:#f92672"&gt;:&lt;/span&gt; &lt;span style="color:#e6db74"&gt;&amp;#34;POST&amp;#34;&lt;/span&gt;,
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#a6e22e"&gt;headers&lt;/span&gt;&lt;span style="color:#f92672"&gt;:&lt;/span&gt; { &lt;span style="color:#e6db74"&gt;&amp;#34;Content-Type&amp;#34;&lt;/span&gt;&lt;span style="color:#f92672"&gt;:&lt;/span&gt; &lt;span style="color:#e6db74"&gt;&amp;#34;application/json&amp;#34;&lt;/span&gt; },
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#a6e22e"&gt;body&lt;/span&gt;: &lt;span style="color:#66d9ef"&gt;JSON.stringify&lt;/span&gt;(&lt;span style="color:#a6e22e"&gt;request&lt;/span&gt;),
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; });
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;return&lt;/span&gt; (&lt;span style="color:#66d9ef"&gt;await&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;response&lt;/span&gt;.&lt;span style="color:#a6e22e"&gt;json&lt;/span&gt;()).&lt;span style="color:#a6e22e"&gt;data&lt;/span&gt;;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
-&lt;button
-class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
-title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
+&lt;a href="#frontend-integration" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The frontend sends all requests to a single endpoint via a central &lt;code&gt;executeGlobalAppControllerFunction&lt;/code&gt; method, ensuring
+our code remains modular to easily add any new functionalities on the GlobalAppController.&lt;/p&gt;
 &lt;h3&gt;The Benefits&lt;span class="hx:absolute hx:-mt-20" id="the-benefits"&gt;&lt;/span&gt;
 &lt;a href="#the-benefits" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;Performance Improvements:&lt;/strong&gt;&lt;/p&gt;
 &lt;ul&gt;

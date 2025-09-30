@@ -16,7 +16,7 @@ image: /images/forms-thumbnail.png
 description: Deep dive into how we built SPORTSHUB's Forms feature by generalizing our payment workflow and unifying our backend architecture with the GlobalAppController.
 ---
 
-![Forms Architecture](/images/forms-thumbnail.png)
+![Forms Architecture](/images/forms-thumbnail-landscape.png)
 
 # Building SPORTSHUB Forms 📝
 
@@ -46,7 +46,6 @@ SPORTSHUB Forms transform the ticket purchasing experience by allowing event org
 - Choose from text input, multiple choice/dropdown and image sections
 - Set required fields to ensure you get critical information
 - Real-time validation prevents errors and incomplete submissions
-- Conditional logic to show/hide sections based on previous answers
 
 **📊 Organized Data Collection**
 - All responses automatically organized by event and ticket
@@ -58,7 +57,10 @@ SPORTSHUB Forms transform the ticket purchasing experience by allowing event org
 
 ## The Technical Challenge: Generalizing Payment Workflows
 
-Initially, SPORTSHUB had a simple ticket purchasing flow: select tickets → pay with Stripe → done. But forms introduced a new complexity: we needed a **multi-step workflow** that could handle different types of interactions before, during, and after payment.
+Initially, SPORTSHUB had a simple ticket purchasing flow: 
+> Select tickets → Pay with Stripe → Done. 
+
+But forms introduced a new complexity: we needed a **multi-step workflow** that could handle different types of interactions before, during, and after payment.
 
 ### From Simple to Multi-Step
 
@@ -76,7 +78,9 @@ This required us to completely rethink our payment architecture and led to the c
 
 ## Fulfilment Sessions: The Foundation
 
-We realized we needed to abstract the concept of "completing a purchase" into a series of **fulfilment entities** that could be processed in sequence.
+We realized we needed to abstract the concept of "completing a purchase" into a series of **fulfilment entities** that could be processed in sequence. 
+
+The beauty of this system lies in its **modular design**. Each fulfillment entity is completely independent and interchangeable, allowing us to easily swap components or add new functionality without touching existing code. Need to switch from Stripe to PayPal? Simply replace the `STRIPE` entity. Want to add a waiver signing step? Insert a `WAIVER` entity before payment. This plug-and-play approach gives us incredible flexibility to customize the user journey for different event types while maintaining a clean, maintainable codebase.
 
 ### The Core Concept
 
@@ -235,9 +239,7 @@ public enum EndpointType {
     GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class),
     // ... all other endpoints
 }
-```
 
-```java
 public class HandlerRegistry {
     private static final Map<EndpointType, Handler<?, ?>> handlers = new HashMap<>();
     
@@ -252,27 +254,8 @@ public class HandlerRegistry {
 
 ### Frontend Integration
 
-The frontend sends all requests to a single endpoint:
-
-```typescript
-export async function executeGlobalAppControllerFunction<S, T>(
-  endpointType: EndpointType, 
-  data: S
-): Promise<T> {
-  const request: UnifiedRequest<S> = {
-    endpointType: endpointType,
-    data: data,
-  };
-
-  const response = await fetch(getGlobalAppControllerUrl(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
-
-  return (await response.json()).data;
-}
-```
+The frontend sends all requests to a single endpoint via a central `executeGlobalAppControllerFunction` method, ensuring
+our code remains modular to easily add any new functionalities on the GlobalAppController.
 
 ### The Benefits
 
