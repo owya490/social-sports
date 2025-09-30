@@ -35,13 +35,13 @@ export default function SearchBar() {
 
   const handleSearchClick = () => {
     console.log("search");
-    const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
+    const searchUrl = `/?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
     router.push(searchUrl);
   };
   const handleKeyPress = (e: { key: string }) => {
     if (e.key === "Enter") {
       console.log("search");
-      const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
+      const searchUrl = `/?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
       router.push(searchUrl);
     }
   };

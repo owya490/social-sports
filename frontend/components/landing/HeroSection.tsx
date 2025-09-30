@@ -36,7 +36,7 @@ export default function HeroSection() {
                     Start organising
                   </Link>
                   <Link
-                    href="/dashboard"
+                    href="/"
                     className="text-core-text px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 text-center flex items-center justify-center gap-2"
                   >
                     Explore events

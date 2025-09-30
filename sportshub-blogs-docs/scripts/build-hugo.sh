@@ -78,11 +78,16 @@ for dir in "blogs" "docs" "css" "js" "tags"; do
     fi
 done
 
-# Copy top-level files (excluding directories we already copied)
+# Copy top-level files (excluding directories we already copied and sitemap.xml)
 echo "📄 Copying top-level files..."
 for file in "$HUGO_PUBLIC_DIR"/*; do
     if [ -f "$file" ]; then
         filename=$(basename "$file")
+        # Skip sitemap.xml to avoid merge conflicts
+        if [ "$filename" = "sitemap.xml" ]; then
+            echo "⏭️  Skipping $filename to avoid merge conflicts..."
+            continue
+        fi
         echo "📄 Copying $filename..."
         cp "$file" "$VERCEL_PUBLIC_DIR/"
         echo "✅ Copied $filename"
