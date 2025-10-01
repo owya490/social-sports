@@ -30,7 +30,7 @@ const EventDrilldownStatBanner = ({
                 }}
               />
             ) : (
-              `$A${(completeTicketCount * displayPrice(eventPrice)).toFixed(2)}`
+              `$A${(completeTicketCount ?? 0 * displayPrice(eventPrice)).toFixed(2)}`
             )}
           </div>
         </div>
