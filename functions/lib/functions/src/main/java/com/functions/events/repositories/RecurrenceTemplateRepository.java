@@ -1,7 +1,7 @@
 package com.functions.events.repositories;
 
-import com.functions.firebase.services.FirebaseService;
 import com.functions.events.models.RecurrenceTemplate;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
@@ -64,8 +64,7 @@ public class RecurrenceTemplateRepository {
             if (maybeSnapshot.exists()) {
                 return Optional.ofNullable(maybeSnapshot.toObject(RecurrenceTemplate.class));
             }
-        }
-        catch (InterruptedException | ExecutionException ignored) {
+        } catch (InterruptedException | ExecutionException ignored) {
             // No op, no retries for now
         }
         return Optional.empty();
@@ -115,7 +114,7 @@ public class RecurrenceTemplateRepository {
 
     public static String moveRecurrenceTemplateToActive(String recurrenceTemplateId, RecurrenceTemplate recurrenceTemplate) throws ExecutionException, InterruptedException {
         boolean isRecurrencePrivate = recurrenceTemplate.getEventData().getIsPrivate();
-        
+
         // 1. Update the recurrence template back to active
         recurrenceTemplate.getEventData().setIsActive(true);
         // 2. Recreate the recurrence template in the active folder with the same ID
@@ -140,7 +139,7 @@ public class RecurrenceTemplateRepository {
         return null;
     }
 
-    public static Map<String, RecurrenceTemplate> getAllActiveRecurrenceTemplates() {
+    public static Map<String, RecurrenceTemplate> getAllActiveRecurrenceTemplates(Transaction transaction) {
         Firestore db = FirebaseService.getFirestore();
 
         final CollectionReference activePrivateRecurrenceTemplateRef = db.collection(RECURRING_EVENTS)
@@ -150,9 +149,9 @@ public class RecurrenceTemplateRepository {
 
         try {
             return Stream.concat(
-                    activePrivateRecurrenceTemplateRef.get().get().getDocuments().stream(),
-                    activePublicRecurrenceTemplateRef.get().get().getDocuments().stream()
-            ).map(snapshot -> Map.entry(snapshot.getId(), snapshot.toObject(RecurrenceTemplate.class)))
+                            transaction.get(activePrivateRecurrenceTemplateRef).get().getDocuments().stream(),
+                            transaction.get(activePublicRecurrenceTemplateRef).get().getDocuments().stream()
+                    ).map(snapshot -> Map.entry(snapshot.getId(), snapshot.toObject(RecurrenceTemplate.class)))
                     .collect(Collectors.toMap(
                             Map.Entry::getKey,
                             Map.Entry::getValue
