@@ -45,7 +45,7 @@ const EventDrilldownStatBanner = ({
                 }}
               />
             ) : (
-              completeTicketCount === 0 ? `${completeTicketCount}/${eventCapacity}` : `${eventCapacity - completeTicketCount}/${eventCapacity}`
+               `${completeTicketCount ?? 0}/${eventCapacity}`
             )}
           </div>
         </div>
