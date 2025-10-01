@@ -1,15 +1,5 @@
 package com.functions.events.handlers;
 
-import static com.functions.firebase.services.FirebaseService.CollectionPaths.ACTIVE;
-import static com.functions.firebase.services.FirebaseService.CollectionPaths.EVENTS;
-import static com.functions.firebase.services.FirebaseService.CollectionPaths.EVENTS_METADATA;
-import static com.functions.firebase.services.FirebaseService.CollectionPaths.INACTIVE;
-import static com.functions.firebase.services.FirebaseService.CollectionPaths.PRIVATE;
-import static com.functions.firebase.services.FirebaseService.CollectionPaths.PUBLIC;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.NewEventData;
@@ -22,6 +12,10 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.*;
 
 public class CreateEventHandler implements Handler<NewEventData, String> {
     private static final Logger logger = LoggerFactory.getLogger(CreateEventHandler.class);
@@ -75,11 +69,11 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
         transaction.set(newEventDocRef, JavaUtils.toMap(data));
         final String eventId = newEventDocRef.getId();
         createEventMetadata(transaction, eventId, data);
-        EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), eventId);
+        EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), eventId, transaction);
         // If the event is public, add it to the user's public upcoming events
         if (!data.getIsPrivate()) {
             EventsUtils.addEventIdToUserOrganiserPublicUpcomingEvents(data.getOrganiserId(),
-                    newEventDocRef.getId());
+                    newEventDocRef.getId(), transaction);
         }
         return newEventDocRef.getId();
     }
