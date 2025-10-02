@@ -1,27 +1,22 @@
 package com.functions.events.services;
 
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
 
 public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
@@ -49,7 +44,7 @@ public class RecurringEventsCronService {
             RecurrenceTemplate recurrenceTemplate = recurrenceTemplateAndId.getValue();
 
             // Create new transaction
-            RecurrenceTemplateRepository.createFirestoreTransaction(transaction -> {
+            FirebaseService.createFirestoreTransaction(transaction -> {
                 if (recurrenceTemplate == null) {
                     throw new Exception(
                             "Could not turn recurringEventSnapshot object into RecurringEvent pojo using toObject: "
@@ -119,7 +114,7 @@ public class RecurringEventsCronService {
 
         for (
                 String recurringEventId : moveToInactiveRecurringEvents) {
-            RecurrenceTemplateRepository.createFirestoreTransaction(transaction -> {
+            FirebaseService.createFirestoreTransaction(transaction -> {
                 moveRecurringEventToInactive(recurringEventId, transaction);
                 return null;
             });
