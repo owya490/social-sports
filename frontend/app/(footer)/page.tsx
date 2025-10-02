@@ -10,6 +10,7 @@ import Head from "next/head";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
+import SEO from "@/components/SEO/SEO";
 
 export default function Dashboard() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -42,6 +43,48 @@ export default function Dashboard() {
       event: searchParams.get("event") || "",
       location: searchParams.get("location") || "",
     };
+  };
+
+  // Dynamic SEO functions
+  const getDynamicTitle = () => {
+    const { event, location } = getQueryParams();
+    
+    if (event && location) {
+      return `${event.charAt(0).toUpperCase() + event.slice(1)} Events in ${location}`;
+    } else if (event) {
+      return `${event.charAt(0).toUpperCase() + event.slice(1)} Events Near You`;
+    } else {
+      return "Find Sports Events Near You";
+    }
+  };
+
+  const getDynamicDescription = () => {
+    const { event, location } = getQueryParams();
+    
+    if (event && location) {
+      return `Discover ${event} events in ${location}. Join local sports activities, tournaments and casual games. Connect with athletes in your area.`;
+    } else if (event) {
+      return `Find ${event} events near you. Join tournaments, leagues and casual games. Connect with local ${event} enthusiasts.`;
+    } else if (location) {
+      return `Find sports events in ${location}. Cricket, basketball, soccer, tennis and more activities in your area.`;
+    } else {
+      return "Discover and book local sports events on SPORTSHUB. Find basketball, volleyball, soccer, tennis and more recreational sports activities in your area.";
+    }
+  };
+
+  const getDynamicUrl = () => {
+    const { event, location } = getQueryParams();
+    let url = "https://sportshub.net.au/";
+    
+    const params = new URLSearchParams();
+    if (event) params.set('event', event);
+    if (location) params.set('location', location);
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    return url;
   };
 
   useLayoutEffect(() => {
@@ -135,71 +178,13 @@ export default function Dashboard() {
 
   return (
     <>
-      <Head>
-        {/* SEO Meta Tags for Dashboard/Homepage */}
-        <title>SPORTSHUB | Find Sports Events Near You</title>
-        <meta
-          name="description"
-          content="Discover and book local sports events on SPORTSHUB. Find basketball, volleyball, soccer, tennis and more recreational sports activities in your area."
-        />
-        <meta
-          name="keywords"
-          content="sportshub, local sports events, book sports, recreational sports, australia sports, find sports near me, sports activities"
-        />
-
-        {/* Open Graph Tags for Social Sharing */}
-        <meta property="og:title" content="SPORTSHUB Dashboard - Find Sports Events Near You" />
-        <meta
-          property="og:description"
-          content="Discover and book local sports events. Basketball, volleyball, soccer, tennis and more!"
-        />
-        <meta property="og:url" content="https://sportshub.net.au/" />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://sportshub.net.au/images/logo.png" />
-
-        {/* Twitter Card Tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="SPORTSHUB Dashboard - Find Sports Events Near You" />
-        <meta
-          name="twitter:description"
-          content="Discover and book local sports events. Basketball, volleyball, soccer, tennis and more!"
-        />
-        <meta name="twitter:image" content="https://sportshub.net.au/images/logo.png" />
-
-        {/* Additional SEO Tags */}
-        <meta name="robots" content="index, follow" />
-        <meta name="author" content="SPORTSHUB" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="canonical" href="https://sportshub.net.au/" />
-
-        {/* Local Business Schema for Australian Sports Platform */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            name: "SPORTSHUB Dashboard",
-            description: "Find and book local sports events in Australia",
-            url: "https://sportshub.net.au/",
-            mainEntity: {
-              "@type": "SearchResultsPage",
-              name: "Sports Events Search",
-              description: "Search and discover local sports activities and events",
-            },
-            breadcrumb: {
-              "@type": "BreadcrumbList",
-              itemListElement: [
-                {
-                  "@type": "ListItem",
-                  position: 1,
-                  name: "Home",
-                  item: "https://sportshub.net.au/",
-                },
-              ],
-            },
-          })}
-        </script>
-      </Head>
-
+      {/* Replace all the static Head content with dynamic SEO */}
+      <SEO 
+        title={getDynamicTitle()}
+        description={getDynamicDescription()}
+        url={getDynamicUrl()}
+        image="https://sportshub.net.au/images/logo.png"
+      />
       <div>
         <div className="flex justify-center">
           <FilterBanner
