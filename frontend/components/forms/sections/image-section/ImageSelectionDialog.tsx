@@ -56,14 +56,20 @@ export const ImageSelectionDialog = ({ isOpen, onClose, onImageSelected }: Image
     setIsUploading(true);
     setErrorMessage(null);
 
-    const options = {
-      maxSizeMB: 2,
-      useWebWorker: true,
-    };
-
     try {
-      const compressedFile = await imageCompression(imageFile, options);
-      const downloadUrl = await uploadFormImage(user.userId, compressedFile);
+      let fileToUpload = imageFile;
+      const fileSizeInMB = imageFile.size / (1024 * 1024);
+
+      // Only compress if file is 2MB or larger
+      if (fileSizeInMB >= 2) {
+        const options = {
+          maxSizeMB: 2,
+          useWebWorker: true,
+        };
+        fileToUpload = await imageCompression(imageFile, options);
+      }
+
+      const downloadUrl = await uploadFormImage(user.userId, fileToUpload);
 
       const updatedImages = [downloadUrl, ...formImageUrls];
       setFormImageUrls(updatedImages);
