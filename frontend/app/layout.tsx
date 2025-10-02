@@ -2,6 +2,8 @@ import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
 import UserContext from "@/components/utility/UserContext";
 import GrafanaFaro from "@/observability/GrafanaFaro";
+import { Environment, getEnvironment } from "@/utilities/environment";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import localFont from "next/font/local";
@@ -120,6 +122,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </body>
         </UserContext>
       </GrafanaFaro>
+      {/* Google Analytics only in production */}
+      {getEnvironment() === Environment.PRODUCTION && <GoogleAnalytics gaId="G-MQB86E2KJM" />}
     </html>
   );
 }
