@@ -153,9 +153,9 @@ export default function Dashboard() {
           property="og:description"
           content="Discover and book local sports events. Basketball, volleyball, soccer, tennis and more!"
         />
-        <meta property="og:url" content="https://sportshub.net.au/" />
+        <meta property="og:url" content="https://www.sportshub.net.au/" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://sportshub.net.au/images/logo.png" />
+        <meta property="og:image" content="https://www.sportshub.net.au/images/logo.png" />
 
         {/* Twitter Card Tags */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -164,13 +164,13 @@ export default function Dashboard() {
           name="twitter:description"
           content="Discover and book local sports events. Basketball, volleyball, soccer, tennis and more!"
         />
-        <meta name="twitter:image" content="https://sportshub.net.au/images/logo.png" />
+        <meta name="twitter:image" content="https://www.sportshub.net.au/images/logo.png" />
 
         {/* Additional SEO Tags */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="SPORTSHUB" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="canonical" href="https://sportshub.net.au/" />
+        <link rel="canonical" href="https://www.sportshub.net.au/" />
 
         {/* Local Business Schema for Australian Sports Platform */}
         <script type="application/ld+json">
@@ -179,7 +179,7 @@ export default function Dashboard() {
             "@type": "WebPage",
             name: "SPORTSHUB Dashboard",
             description: "Find and book local sports events in Australia",
-            url: "https://sportshub.net.au/",
+            url: "https://www.sportshub.net.au/",
             mainEntity: {
               "@type": "SearchResultsPage",
               name: "Sports Events Search",
@@ -192,7 +192,7 @@ export default function Dashboard() {
                   "@type": "ListItem",
                   position: 1,
                   name: "Home",
-                  item: "https://sportshub.net.au/",
+                  item: "https://www.sportshub.net.au/",
                 },
               ],
             },
