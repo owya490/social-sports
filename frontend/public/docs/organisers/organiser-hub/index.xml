@@ -1,129 +1,129 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Organiser Hub</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/</link><description>Recent content in Organiser Hub on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://sportshub.net.au/docs/organisers/organiser-hub/index.xml" rel="self" type="application/rss+xml"/><item><title>Manage Events</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/manage-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/manage-events/</guid><description>
-&lt;p&gt;The Organiser Hub provides comprehensive event management tools to help you efficiently oversee all your sporting events from one central location.&lt;/p&gt;
-&lt;h2&gt;Event Dashboard&lt;span class="hx:absolute hx:-mt-20" id="event-dashboard"&gt;&lt;/span&gt;
-&lt;a href="#event-dashboard" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The Event Dashboard is your main view for accessing all your events. Here you can:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;View All Events&lt;/strong&gt;: See both past and future events in one organized list&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Filter by Date Range&lt;/strong&gt;: Narrow down events to specific time periods using the date filter&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Apply Custom Filters&lt;/strong&gt;: Use additional filters to find specific events quickly&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Monitor Status&lt;/strong&gt;: Check real-time status updates for each event
-&lt;img src="https://sportshub.net.au/images/docs/organisers/organiser-hub/event-dashboard.jpg" alt="event-dashboard" loading="lazy" /&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Accessing Your Events&lt;span class="hx:absolute hx:-mt-20" id="accessing-your-events"&gt;&lt;/span&gt;
-&lt;a href="#accessing-your-events" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ol&gt;
-&lt;li&gt;Navigate to the Organiser Hub dashboard&lt;/li&gt;
-&lt;li&gt;Use the filter options to refine your event list:
-&lt;ul&gt;
-&lt;li&gt;Select date ranges to view events from specific periods&lt;/li&gt;
-&lt;li&gt;Apply event type and status filters as needed&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;Click on any event to access detailed management options&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h2&gt;Event Management&lt;span class="hx:absolute hx:-mt-20" id="event-management"&gt;&lt;/span&gt;
-&lt;a href="#event-management" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Once you select an event from the dashboard, you can:&lt;/p&gt;
-&lt;h3&gt;Edit Event Details&lt;span class="hx:absolute hx:-mt-20" id="edit-event-details"&gt;&lt;/span&gt;
-&lt;a href="#edit-event-details" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/organiser-hub/event-details-edit.png" alt="event-details-edit" loading="lazy" /&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Update event title, description, and information&lt;/li&gt;
-&lt;li&gt;Modify event dates and times&lt;/li&gt;
-&lt;li&gt;Change venue location and address&lt;/li&gt;
-&lt;li&gt;Adjust participant limits and pricing&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Event Settings&lt;span class="hx:absolute hx:-mt-20" id="event-settings"&gt;&lt;/span&gt;
-&lt;a href="#event-settings" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;Configure registration settings&lt;/li&gt;
-&lt;li&gt;Set up payment options and coupons&lt;/li&gt;
-&lt;li&gt;Manage communication preferences&lt;/li&gt;
-&lt;li&gt;Update cancellation policies&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Real-time Updates&lt;span class="hx:absolute hx:-mt-20" id="real-time-updates"&gt;&lt;/span&gt;
-&lt;a href="#real-time-updates" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;All changes are saved automatically and reflect immediately for participants viewing your event. This ensures your event information is always current and accurate.&lt;/p&gt;
-&lt;h2&gt;Tips for Effective Event Management&lt;span class="hx:absolute hx:-mt-20" id="tips-for-effective-event-management"&gt;&lt;/span&gt;
-&lt;a href="#tips-for-effective-event-management" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Regular Updates&lt;/strong&gt;: Keep event details current, especially for location or timing changes&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Use Filters&lt;/strong&gt;: Leverage dashboard filters to quickly find specific events&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Monitor Participation&lt;/strong&gt;: Check registration numbers regularly to track event success&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Manage Recurring Events</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</guid><description>
-&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/organiser-hub/recurring-event-edit.png" alt="recurring-event-edit" loading="lazy" /&gt;
-Recurring events allow you to automatically generate multiple instances of the same event at regular intervals. This is perfect for regular training sessions, weekly leagues, or monthly tournaments.&lt;/p&gt;
-&lt;h2&gt;Managing Recurrence&lt;span class="hx:absolute hx:-mt-20" id="managing-recurrence"&gt;&lt;/span&gt;
-&lt;a href="#managing-recurrence" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Recurrence settings:&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Enable Recurrence&lt;/strong&gt;: Toggle the &amp;ldquo;Enable Recurrence for this Event&amp;rdquo; switch&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Select Frequency&lt;/strong&gt;: Choose how often your event should repeat:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Weekly&lt;/strong&gt;: Event repeats every week on the same day&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Fortnightly&lt;/strong&gt;: Event repeats every two weeks&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Monthly&lt;/strong&gt;: Event repeats every month on the same date&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Configure Settings&lt;/strong&gt;:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Number of recurrences&lt;/strong&gt;: Set how many times the event should repeat (up to 99 times)&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Days prior for event creation&lt;/strong&gt;: Choose how many days before each occurrence the event should be automatically created&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h2&gt;Recurrence Preview&lt;span class="hx:absolute hx:-mt-20" id="recurrence-preview"&gt;&lt;/span&gt;
-&lt;a href="#recurrence-preview" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Once configured, you&amp;rsquo;ll see a preview table showing:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;The sequence number of each occurrence&lt;/li&gt;
-&lt;li&gt;The exact date for each recurring event instance&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;This preview helps you verify the schedule is correct before saving.&lt;/p&gt;
-&lt;h2&gt;Managing Individual Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="managing-individual-recurring-events"&gt;&lt;/span&gt;
-&lt;a href="#managing-individual-recurring-events" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Each recurring event instance can be managed independently. All child recurrences can be viewed in the &amp;ldquo;Past Event&amp;rdquo; tab.&lt;/p&gt;
-&lt;h3&gt;Edit Event Details&lt;span class="hx:absolute hx:-mt-20" id="edit-event-details"&gt;&lt;/span&gt;
-&lt;a href="#edit-event-details" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;Update event title, description, and information for specific occurrences&lt;/li&gt;
-&lt;li&gt;Modify event dates and times if needed&lt;/li&gt;
-&lt;li&gt;Change venue location for particular instances&lt;/li&gt;
-&lt;li&gt;Adjust participant limits and pricing per event&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Event Settings&lt;span class="hx:absolute hx:-mt-20" id="event-settings"&gt;&lt;/span&gt;
-&lt;a href="#event-settings" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;Configure registration settings for each occurrence&lt;/li&gt;
-&lt;li&gt;Set up payment options and coupons&lt;/li&gt;
-&lt;li&gt;Manage communication preferences&lt;/li&gt;
-&lt;li&gt;Update cancellation policies&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes"&gt;&lt;/span&gt;
-&lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;Changes to one recurring event instance don&amp;rsquo;t automatically apply to others&lt;/li&gt;
-&lt;li&gt;Each occurrence maintains its own participant list and registration data&lt;/li&gt;
-&lt;li&gt;You can modify or cancel individual events without affecting the entire series&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;Best Practices for Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="best-practices-for-recurring-events"&gt;&lt;/span&gt;
-&lt;a href="#best-practices-for-recurring-events" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Plan Ahead&lt;/strong&gt;: Set appropriate lead times for event creation to give participants time to register&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Consistent Scheduling&lt;/strong&gt;: Keep timing consistent across recurring events for participant convenience&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Regular Monitoring&lt;/strong&gt;: Check each occurrence individually to ensure details remain accurate&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Communication&lt;/strong&gt;: Use the series to establish routine but communicate any changes to specific instances clearly&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;Modifying Recurrence Settings&lt;span class="hx:absolute hx:-mt-20" id="modifying-recurrence-settings"&gt;&lt;/span&gt;
-&lt;a href="#modifying-recurrence-settings" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;To change recurrence settings for future events:&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;Access the Recurring event template settings from organiser hub, event navigation&lt;/li&gt;
-&lt;li&gt;Modify the recurrence configuration&lt;/li&gt;
-&lt;li&gt;Save changes - this will apply to future occurrences only&lt;/li&gt;
-&lt;li&gt;Existing created events will retain their individual settings&lt;/li&gt;
-&lt;/ol&gt;</description></item><item><title>SPORTSHUB Forms</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/forms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/forms/</guid><description>
-&lt;p&gt;SPORTSHUB Forms revolutionize how you collect player information and payments for your events. Say goodbye to the hassle of juggling multiple platforms - no more Google Forms for data collection and separate bank transfers for payments. With SPORTSHUB Forms, you can seamlessly collect all the information you need and process payments in one integrated platform.&lt;/p&gt;
-&lt;h2&gt;Why Use SPORTSHUB Forms?&lt;span class="hx:absolute hx:-mt-20" id="why-use-sportshub-forms"&gt;&lt;/span&gt;
-&lt;a href="#why-use-sportshub-forms" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;All-in-One Solution&lt;span class="hx:absolute hx:-mt-20" id="all-in-one-solution"&gt;&lt;/span&gt;
-&lt;a href="#all-in-one-solution" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Streamlined Process&lt;/strong&gt;: Collect player data and payments simultaneously during event registration&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Unified Experience&lt;/strong&gt;: Players complete everything in one smooth checkout flow&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;No More Manual Work&lt;/strong&gt;: Eliminate the need to cross-reference form responses with payment records&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Benefits for Organisers&lt;span class="hx:absolute hx:-mt-20" id="benefits-for-organisers"&gt;&lt;/span&gt;
-&lt;a href="#benefits-for-organisers" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Automatic Data Collection&lt;/strong&gt;: All responses are automatically stored and organized, available for CSV download&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Real-time Insights&lt;/strong&gt;: View form responses instantly as players register&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Reduced Admin&lt;/strong&gt;: No more chasing payments or manually organizing spreadsheets&lt;/li&gt;
-&lt;/ul&gt;</description></item></channel></rss>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Organiser Hub</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/</link><description>Recent content in Organiser Hub on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://www.sportshub.net.au/docs/organisers/organiser-hub/index.xml" rel="self" type="application/rss+xml"/><item><title>Manage Events</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-events/</guid><description>
+&lt;p>The Organiser Hub provides comprehensive event management tools to help you efficiently oversee all your sporting events from one central location.&lt;/p>
+&lt;h2>Event Dashboard&lt;span class="hx:absolute hx:-mt-20" id="event-dashboard">&lt;/span>
+&lt;a href="#event-dashboard" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The Event Dashboard is your main view for accessing all your events. Here you can:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>View All Events&lt;/strong>: See both past and future events in one organized list&lt;/li>
+&lt;li>&lt;strong>Filter by Date Range&lt;/strong>: Narrow down events to specific time periods using the date filter&lt;/li>
+&lt;li>&lt;strong>Apply Custom Filters&lt;/strong>: Use additional filters to find specific events quickly&lt;/li>
+&lt;li>&lt;strong>Monitor Status&lt;/strong>: Check real-time status updates for each event
+&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/event-dashboard.jpg" alt="event-dashboard" loading="lazy" />&lt;/li>
+&lt;/ul>
+&lt;h3>Accessing Your Events&lt;span class="hx:absolute hx:-mt-20" id="accessing-your-events">&lt;/span>
+&lt;a href="#accessing-your-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ol>
+&lt;li>Navigate to the Organiser Hub dashboard&lt;/li>
+&lt;li>Use the filter options to refine your event list:
+&lt;ul>
+&lt;li>Select date ranges to view events from specific periods&lt;/li>
+&lt;li>Apply event type and status filters as needed&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>Click on any event to access detailed management options&lt;/li>
+&lt;/ol>
+&lt;h2>Event Management&lt;span class="hx:absolute hx:-mt-20" id="event-management">&lt;/span>
+&lt;a href="#event-management" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Once you select an event from the dashboard, you can:&lt;/p>
+&lt;h3>Edit Event Details&lt;span class="hx:absolute hx:-mt-20" id="edit-event-details">&lt;/span>
+&lt;a href="#edit-event-details" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/event-details-edit.png" alt="event-details-edit" loading="lazy" />&lt;/p>
+&lt;ul>
+&lt;li>Update event title, description, and information&lt;/li>
+&lt;li>Modify event dates and times&lt;/li>
+&lt;li>Change venue location and address&lt;/li>
+&lt;li>Adjust participant limits and pricing&lt;/li>
+&lt;/ul>
+&lt;h3>Event Settings&lt;span class="hx:absolute hx:-mt-20" id="event-settings">&lt;/span>
+&lt;a href="#event-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>Configure registration settings&lt;/li>
+&lt;li>Set up payment options and coupons&lt;/li>
+&lt;li>Manage communication preferences&lt;/li>
+&lt;li>Update cancellation policies&lt;/li>
+&lt;/ul>
+&lt;h3>Real-time Updates&lt;span class="hx:absolute hx:-mt-20" id="real-time-updates">&lt;/span>
+&lt;a href="#real-time-updates" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>All changes are saved automatically and reflect immediately for participants viewing your event. This ensures your event information is always current and accurate.&lt;/p>
+&lt;h2>Tips for Effective Event Management&lt;span class="hx:absolute hx:-mt-20" id="tips-for-effective-event-management">&lt;/span>
+&lt;a href="#tips-for-effective-event-management" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>Regular Updates&lt;/strong>: Keep event details current, especially for location or timing changes&lt;/li>
+&lt;li>&lt;strong>Use Filters&lt;/strong>: Leverage dashboard filters to quickly find specific events&lt;/li>
+&lt;li>&lt;strong>Monitor Participation&lt;/strong>: Check registration numbers regularly to track event success&lt;/li>
+&lt;/ul></description></item><item><title>Manage Recurring Events</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</guid><description>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/recurring-event-edit.png" alt="recurring-event-edit" loading="lazy" />
+Recurring events allow you to automatically generate multiple instances of the same event at regular intervals. This is perfect for regular training sessions, weekly leagues, or monthly tournaments.&lt;/p>
+&lt;h2>Managing Recurrence&lt;span class="hx:absolute hx:-mt-20" id="managing-recurrence">&lt;/span>
+&lt;a href="#managing-recurrence" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Recurrence settings:&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>Enable Recurrence&lt;/strong>: Toggle the &amp;ldquo;Enable Recurrence for this Event&amp;rdquo; switch&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Select Frequency&lt;/strong>: Choose how often your event should repeat:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Weekly&lt;/strong>: Event repeats every week on the same day&lt;/li>
+&lt;li>&lt;strong>Fortnightly&lt;/strong>: Event repeats every two weeks&lt;/li>
+&lt;li>&lt;strong>Monthly&lt;/strong>: Event repeats every month on the same date&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Configure Settings&lt;/strong>:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Number of recurrences&lt;/strong>: Set how many times the event should repeat (up to 99 times)&lt;/li>
+&lt;li>&lt;strong>Days prior for event creation&lt;/strong>: Choose how many days before each occurrence the event should be automatically created&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h2>Recurrence Preview&lt;span class="hx:absolute hx:-mt-20" id="recurrence-preview">&lt;/span>
+&lt;a href="#recurrence-preview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Once configured, you&amp;rsquo;ll see a preview table showing:&lt;/p>
+&lt;ul>
+&lt;li>The sequence number of each occurrence&lt;/li>
+&lt;li>The exact date for each recurring event instance&lt;/li>
+&lt;/ul>
+&lt;p>This preview helps you verify the schedule is correct before saving.&lt;/p>
+&lt;h2>Managing Individual Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="managing-individual-recurring-events">&lt;/span>
+&lt;a href="#managing-individual-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Each recurring event instance can be managed independently. All child recurrences can be viewed in the &amp;ldquo;Past Event&amp;rdquo; tab.&lt;/p>
+&lt;h3>Edit Event Details&lt;span class="hx:absolute hx:-mt-20" id="edit-event-details">&lt;/span>
+&lt;a href="#edit-event-details" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>Update event title, description, and information for specific occurrences&lt;/li>
+&lt;li>Modify event dates and times if needed&lt;/li>
+&lt;li>Change venue location for particular instances&lt;/li>
+&lt;li>Adjust participant limits and pricing per event&lt;/li>
+&lt;/ul>
+&lt;h3>Event Settings&lt;span class="hx:absolute hx:-mt-20" id="event-settings">&lt;/span>
+&lt;a href="#event-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>Configure registration settings for each occurrence&lt;/li>
+&lt;li>Set up payment options and coupons&lt;/li>
+&lt;li>Manage communication preferences&lt;/li>
+&lt;li>Update cancellation policies&lt;/li>
+&lt;/ul>
+&lt;h3>Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes">&lt;/span>
+&lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>Changes to one recurring event instance don&amp;rsquo;t automatically apply to others&lt;/li>
+&lt;li>Each occurrence maintains its own participant list and registration data&lt;/li>
+&lt;li>You can modify or cancel individual events without affecting the entire series&lt;/li>
+&lt;/ul>
+&lt;h2>Best Practices for Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="best-practices-for-recurring-events">&lt;/span>
+&lt;a href="#best-practices-for-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>Plan Ahead&lt;/strong>: Set appropriate lead times for event creation to give participants time to register&lt;/li>
+&lt;li>&lt;strong>Consistent Scheduling&lt;/strong>: Keep timing consistent across recurring events for participant convenience&lt;/li>
+&lt;li>&lt;strong>Regular Monitoring&lt;/strong>: Check each occurrence individually to ensure details remain accurate&lt;/li>
+&lt;li>&lt;strong>Communication&lt;/strong>: Use the series to establish routine but communicate any changes to specific instances clearly&lt;/li>
+&lt;/ul>
+&lt;h2>Modifying Recurrence Settings&lt;span class="hx:absolute hx:-mt-20" id="modifying-recurrence-settings">&lt;/span>
+&lt;a href="#modifying-recurrence-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>To change recurrence settings for future events:&lt;/p>
+&lt;ol>
+&lt;li>Access the Recurring event template settings from organiser hub, event navigation&lt;/li>
+&lt;li>Modify the recurrence configuration&lt;/li>
+&lt;li>Save changes - this will apply to future occurrences only&lt;/li>
+&lt;li>Existing created events will retain their individual settings&lt;/li>
+&lt;/ol></description></item><item><title>SPORTSHUB Forms</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/</guid><description>
+&lt;p>SPORTSHUB Forms revolutionize how you collect player information and payments for your events. Say goodbye to the hassle of juggling multiple platforms - no more Google Forms for data collection and separate bank transfers for payments. With SPORTSHUB Forms, you can seamlessly collect all the information you need and process payments in one integrated platform.&lt;/p>
+&lt;h2>Why Use SPORTSHUB Forms?&lt;span class="hx:absolute hx:-mt-20" id="why-use-sportshub-forms">&lt;/span>
+&lt;a href="#why-use-sportshub-forms" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>All-in-One Solution&lt;span class="hx:absolute hx:-mt-20" id="all-in-one-solution">&lt;/span>
+&lt;a href="#all-in-one-solution" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Streamlined Process&lt;/strong>: Collect player data and payments simultaneously during event registration&lt;/li>
+&lt;li>&lt;strong>Unified Experience&lt;/strong>: Players complete everything in one smooth checkout flow&lt;/li>
+&lt;li>&lt;strong>No More Manual Work&lt;/strong>: Eliminate the need to cross-reference form responses with payment records&lt;/li>
+&lt;/ul>
+&lt;h3>Benefits for Organisers&lt;span class="hx:absolute hx:-mt-20" id="benefits-for-organisers">&lt;/span>
+&lt;a href="#benefits-for-organisers" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Automatic Data Collection&lt;/strong>: All responses are automatically stored and organized, available for CSV download&lt;/li>
+&lt;li>&lt;strong>Real-time Insights&lt;/strong>: View form responses instantly as players register&lt;/li>
+&lt;li>&lt;strong>Reduced Admin&lt;/strong>: No more chasing payments or manually organizing spreadsheets&lt;/li>
+&lt;/ul></description></item></channel></rss>

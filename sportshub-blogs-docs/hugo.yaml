@@ -1,4 +1,4 @@
-baseURL: https://sportshub.net.au/
+baseURL: https://www.sportshub.net.au/
 languageCode: en-us
 title: SPORTSHUB
 theme: hextra
@@ -65,7 +65,7 @@ menu:
         type: search
     - name: GitHub
       weight: 7
-      url: "https://sportshub.net.au/dashboard"
+      url: "https://www.sportshub.net.au/"
       params:
         icon: sparkles
   sidebar:
@@ -76,9 +76,9 @@ menu:
       weight: 1
     - identifier: sportshubDashboard
       name: "SPORTSHUB Dashboard ↗"
-      url: "https://sportshub.net.au/dashboard"
+      url: "https://www.sportshub.net.au/"
       weight: 2
     - identifier: sportshubBlogs
       name: "SPORTSHUB Blogs ↗"
-      url: "https://sportshub.net.au/blogs"
+      url: "https://www.sportshub.net.au/blogs"
       weight: 3
