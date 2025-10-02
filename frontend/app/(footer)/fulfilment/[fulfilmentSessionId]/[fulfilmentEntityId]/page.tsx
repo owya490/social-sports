@@ -5,6 +5,7 @@ import FormResponder, { FormResponderRef } from "@/components/forms/FormResponde
 import UnsavedChangesModal from "@/components/forms/UnsavedChangesModal";
 import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
 import Loading from "@/components/loading/Loading";
+import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
 import {
   FulfilmentEntityId,
   FulfilmentEntityType,
@@ -15,7 +16,6 @@ import {
 import { URL } from "@/interfaces/Types";
 import { Logger } from "@/observability/logger";
 import {
-  completeFulfilmentSession,
   getFulfilmentEntityInfo,
   getFulfilmentSessionInfo,
   getNextFulfilmentEntityUrl,
@@ -59,6 +59,10 @@ const FulfilmentSessionEntityPage = ({
         const getFulfilmentEntityInfoResponse = await getFulfilmentEntityInfo(fulfilmentSessionId, fulfilmentEntityId);
         setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
       } catch (error) {
+        if (error instanceof NotFoundError) {
+          router.push("/event/404");
+          return;
+        }
         fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment entity info ${error}`);
         router.push("/error");
         return;
@@ -71,6 +75,10 @@ const FulfilmentSessionEntityPage = ({
         setFulfilmentSessionInfo(fulfilmentSessionInfo);
         fulfilmentSessionEntityPageLogger.info(`fulfilmentSessionInfo: ${JSON.stringify(fulfilmentSessionInfo)}`);
       } catch (error) {
+        if (error instanceof NotFoundError) {
+          router.push("/event/404");
+          return;
+        }
         fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment session info ${error}`);
         router.push("/error");
         return;
@@ -107,6 +115,10 @@ const FulfilmentSessionEntityPage = ({
         const refreshed = await getFulfilmentEntityInfo(params.fulfilmentSessionId, params.fulfilmentEntityId);
         setGetFulfilmentEntityInfoResponse(refreshed);
       } catch (refreshError) {
+        if (refreshError instanceof NotFoundError) {
+          router.push("/event/404");
+          return;
+        }
         fulfilmentSessionEntityPageLogger.error(`Error refreshing fulfilment entity info: ${refreshError}`);
       } finally {
         setErrorMessage("Failed to navigate to the next step. Please try again.");
@@ -147,6 +159,10 @@ const FulfilmentSessionEntityPage = ({
         );
         setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
       } catch (refreshError) {
+        if (refreshError instanceof NotFoundError) {
+          router.push("/event/404");
+          return;
+        }
         fulfilmentSessionEntityPageLogger.error(`Error refreshing fulfilment entity info: ${refreshError}`);
       } finally {
         setErrorMessage("Failed to navigate to the previous step. Please try again.");
@@ -302,7 +318,7 @@ const FulfilmentSessionEntityPage = ({
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Link href="/dashboard">
+                <Link href="/">
                   <HighlightButton text="Go to Dashboard" className="flex items-center gap-2">
                     <HomeIcon className="h-5 w-5" />
                   </HighlightButton>
@@ -331,9 +347,8 @@ function EndFulfilmentHandler({
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    (() => {
       try {
-        await completeFulfilmentSession(fulfilmentSessionId, fulfilmentEntityId);
         if (cancelled) return;
         logger.info(
           `Fulfilment session ended, fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}`
@@ -344,7 +359,7 @@ function EndFulfilmentHandler({
           logger.error(
             `End Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}`
           );
-          router.push("/dashboard");
+          router.push("/");
         }
       } catch (error) {
         if (!cancelled) {

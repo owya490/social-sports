@@ -52,6 +52,61 @@ const montserrat = Montserrat({ subsets: ["latin"] });
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Sitelinks Search Box for Google Hierarchical Display */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              url: "https://sportshub.net.au",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate: "https://sportshub.net.au/dashboard?search={search_term_string}",
+                },
+                "query-input": "required name=search_term_string",
+              },
+              mainEntity: {
+                "@type": "ItemList",
+                name: "Main Site Sections",
+                itemListElement: [
+                  {
+                    "@type": "SiteNavigationElement",
+                    position: 1,
+                    name: "Platform Overview",
+                    description: "Learn about Australia's leading social sports platform",
+                    url: "https://sportshub.net.au/landing",
+                  },
+                  {
+                    "@type": "SiteNavigationElement",
+                    position: 2,
+                    name: "Login",
+                    description: "Access your sports account",
+                    url: "https://sportshub.net.au/login",
+                  },
+                  {
+                    "@type": "SiteNavigationElement",
+                    position: 3,
+                    name: "Blogs",
+                    description: "Sports tips, updates and community stories",
+                    url: "https://sportshub.net.au/blogs",
+                  },
+                  {
+                    "@type": "SiteNavigationElement",
+                    position: 4,
+                    name: "Documentation",
+                    description: "Documentation and support guides",
+                    url: "https://sportshub.net.au/docs",
+                  },
+                ],
+              },
+            }),
+          }}
+        />
+      </head>
       <GrafanaFaro>
         <UserContext>
           <body className={`${inter.className}`}>
@@ -70,9 +125,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 
 export const metadata: Metadata = {
-  title: "SPORTSHUB",
+  title: "SPORTSHUB | Find your next social sport session!",
   description:
-    "SportsHub is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!",
+    "SPORTSHUB is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!",
   icons: {
     icon: [
       {

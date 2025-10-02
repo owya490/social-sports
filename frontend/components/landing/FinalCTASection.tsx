@@ -17,7 +17,7 @@ export default function FinalCTASection() {
             Start organizing today
           </Link>
           <Link
-            href="/dashboard"
+            href="/"
             className="inline-block text-core-text px-12 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center gap-2"
           >
             Explore events
