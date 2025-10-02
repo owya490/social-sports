@@ -138,7 +138,7 @@ export default function EventPage({ params }: EventPageProps) {
         <EventDrilldownStatBanner
           loading={loading}
           eventAccessCount={eventAccessCount}
-          eventVacancy={eventVacancy}
+          completeTicketCount={eventMetadata.completeTicketCount}
           eventCapacity={eventCapacity}
           eventPrice={eventPrice}
         />
