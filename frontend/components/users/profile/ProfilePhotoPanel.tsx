@@ -36,8 +36,15 @@ export const ProfilePhotoPanel = ({ user, setUser }: ProfilePhotoPanelProps) => 
     return true;
   };
 
-  // Compress image before upload
+  // Compress image before upload only if it's over 1MB
   const handleImageUpload = async (imageFile: File) => {
+    const fileSizeInMB = imageFile.size / (1024 * 1024);
+
+    // Skip compression if file is under 1MB
+    if (fileSizeInMB < 1) {
+      return imageFile;
+    }
+
     const options = {
       maxSizeMB: 2, // Maximum size of the image after compression
       useWebWorker: true,

@@ -52,20 +52,24 @@ export const ImageGallery = ({ user }: ImageGalleryProps) => {
 
     setUploading(true);
     try {
-      // Compress the image before upload
-      const options = {
-        maxSizeMB: 2,
-        useWebWorker: true,
-      };
+      let fileToUpload = file;
+      const fileSizeInMB = file.size / (1024 * 1024);
 
-      const compressedFile = await imageCompression(file, options);
+      // Only compress if file is 2MB or larger
+      if (fileSizeInMB >= 2) {
+        const options = {
+          maxSizeMB: 2,
+          useWebWorker: true,
+        };
+        fileToUpload = await imageCompression(file, options);
+      }
 
       // Upload to Firebase
       if (type === "thumbnail") {
-        const downloadUrl = await uploadEventThumbnail(user.userId, compressedFile);
+        const downloadUrl = await uploadEventThumbnail(user.userId, fileToUpload);
         setThumbnailUrls((prev) => [downloadUrl, ...prev]);
       } else {
-        const downloadUrl = await uploadEventImage(user.userId, compressedFile);
+        const downloadUrl = await uploadEventImage(user.userId, fileToUpload);
         setImageUrls((prev) => [downloadUrl, ...prev]);
       }
     } catch (error) {
