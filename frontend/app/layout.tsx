@@ -55,6 +55,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        {/* Stable favicon for Google indexing */}
+        <link rel="icon" href="/icons/icon_black_square.jpg" />
+
         {/* Sitelinks Search Box for Google Hierarchical Display */}
         <script
           type="application/ld+json"
