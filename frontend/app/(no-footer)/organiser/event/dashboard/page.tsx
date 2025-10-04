@@ -1,7 +1,5 @@
 "use client";
 import OrganiserFilterDialog, {
-  DAY_END_TIME_STRING,
-  DAY_START_TIME_STRING,
   DEFAULT_END_DATE,
   DEFAULT_EVENT_STATUS,
   DEFAULT_EVENT_TYPE,
@@ -19,6 +17,7 @@ import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
+import { setDateToEndOfDay, setDateToStartOfDay } from "@/services/src/datetimeUtils";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import {
   filterEventsByDate,
@@ -58,6 +57,30 @@ export default function OrganiserDashboard() {
     endDate: DEFAULT_END_DATE,
   });
 
+  const { user } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
+  const loadingEventDataList: EventData[] = [
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+  ];
+  const [eventDataList, setEventDataList] = useState<EventData[]>([
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+  ]);
+
   const logger = new Logger("OrganiserDashboard");
 
   function applyFilters() {
@@ -93,46 +116,24 @@ export default function OrganiserDashboard() {
 
     // Filter by DATERANGE
     if (dateRange.startDate && dateRange.endDate) {
+      const startDateObj = setDateToStartOfDay(new Date(dateRange.startDate));
+      const endDateObj = setDateToEndOfDay(new Date(dateRange.endDate));
       let newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
-        Timestamp.fromDate(new Date(dateRange.startDate + DAY_START_TIME_STRING)),
-        Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
+        Timestamp.fromDate(startDateObj),
+        Timestamp.fromDate(endDateObj)
       );
       filteredEventDataList = newEventDataList;
       setAppliedDateRange(dateRange);
     }
 
-    // Filter by SORT BY
+    // Filter by SORT BY is done in useEffect below
+    setAppliedSortByCategoryValue(sortByCategoryValue);
     let newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
     filteredEventDataList = newEventDataList;
-    setAppliedSortByCategoryValue(sortByCategoryValue);
     setEventDataList([...filteredEventDataList]);
     closeModal();
   }
-
-  const { user } = useUser();
-  const [loading, setLoading] = useState(true);
-  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const loadingEventDataList: EventData[] = [
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ];
-  const [eventDataList, setEventDataList] = useState<EventData[]>([
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ]);
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
@@ -159,7 +160,7 @@ export default function OrganiserDashboard() {
   }
 
   return (
-    <div className="w-screen pt-14 lg:pt-16 lg:pb-10 md:pl-7 h-fit max-h-screen overflow-y-auto">
+    <div className="w-screen pt-14 lg:pb-10 md:pl-7 h-fit max-h-screen overflow-y-auto">
       <OrganiserNavbar currPage={"EventDashboard"} />
       <div className="flex justify-center">
         <div className="flex flex-col items-center md:items-start">
@@ -253,33 +254,23 @@ export default function OrganiserDashboard() {
               </div>
             ) : (
               <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-6 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-auto">
-                {eventDataList
-                  .sort((event1, event2) => {
-                    if (event1.accessCount > event2.accessCount) {
-                      return 1;
-                    }
-                    if (event2.accessCount < event2.accessCount) {
-                      return -1;
-                    }
-                    return 0;
-                  })
-                  .map((event, eventIdx) => {
-                    return (
-                      <div className="w-full" key={eventIdx}>
-                        <OrganiserEventCard
-                          eventId={event.eventId}
-                          image={event.image}
-                          name={event.name}
-                          organiser={event.organiser}
-                          startTime={event.startDate}
-                          location={event.location}
-                          price={event.price}
-                          vacancy={event.vacancy}
-                          loading={loading}
-                        />
-                      </div>
-                    );
-                  })}
+                {filterEventsBySortBy(eventDataList, appliedSortByCategoryValue).map((event, eventIdx) => {
+                  return (
+                    <div className="w-full" key={eventIdx}>
+                      <OrganiserEventCard
+                        eventId={event.eventId}
+                        image={event.image}
+                        name={event.name}
+                        organiser={event.organiser}
+                        startTime={event.startDate}
+                        location={event.location}
+                        price={event.price}
+                        vacancy={event.vacancy}
+                        loading={loading}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

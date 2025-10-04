@@ -9,11 +9,18 @@ from google.cloud import firestore
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "./functions_key.json"
 
 app = initialize_app()
-
+# I think this is none
 firebase_project = os.environ.get("PROJECT_NAME")
 
-db: google.cloud.firestore.Client = firestore.Client(project=firebase_project)
+GCLOUD_PROJECT = os.environ.get("GCLOUD_PROJECT")
 
+IS_PROD = GCLOUD_PROJECT == "socialsportsprod"
+
+MIN_INSTANCE = 1 if IS_PROD else 0
+
+# If none resolves to use Google Application Credentials                                                                                                                      
+db: google.cloud.firestore.Client = firestore.Client(project=firebase_project)
+                 
 client = google.cloud.logging.Client()
 client.setup_logging()
 

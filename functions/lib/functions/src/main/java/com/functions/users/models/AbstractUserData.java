@@ -22,7 +22,6 @@ public abstract class AbstractUserData {
 	private ContactInformation publicContactInformation;
 	private List<String> publicUpcomingOrganiserEvents = new ArrayList<>();
 	private String username;
-	private List<String> forms = new ArrayList<>();
 
 	/** 
 	 * Private User Data fields
@@ -40,6 +39,7 @@ public abstract class AbstractUserData {
 	private List<String> recurrenceTemplates = new ArrayList<>();
 	private List<String> publicOrganiserEvents = new ArrayList<>();
 	private Boolean sendOrganiserTicketEmails = false;
+	private List<String> forms = new ArrayList<>();
 
 	@Data
 	public static class ContactInformation {

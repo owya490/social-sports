@@ -28,7 +28,7 @@ const Settings = () => {
   return loading ? (
     <Loading />
   ) : (
-    <div className="md:ml-14 mt-16">
+    <div className="md:ml-14 mt-14">
       <div className="max-w-5xl lg:mx-auto">
         <OrganiserNavbar currPage="Settings" />
         <div className="p-2 space-y-4">

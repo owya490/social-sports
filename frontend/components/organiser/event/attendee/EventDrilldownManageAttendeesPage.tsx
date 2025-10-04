@@ -1,6 +1,5 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { EventMetadata } from "@/interfaces/EventTypes";
-import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/outline";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import InviteAttendeeDialog from "./AddAttendeeDialog";
@@ -80,7 +79,6 @@ const EventDrilldownManageAttendeesPage = ({
           {sortedAttendeeEntries.map(({ attendeeName, purchaser }) => (
             <EventDrilldownAttendeeCard
               attendeeName={attendeeName}
-              image={DEFAULT_USER_PROFILE_PICTURE}
               purchaser={purchaser}
               key={`${purchaser.email}-${attendeeName}`}
               eventId={eventId}

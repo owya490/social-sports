@@ -40,19 +40,19 @@ export default function SearchBar() {
 
   const handleSearchClick = () => {
     // Default to events
-    var searchUrl = `/dashboard?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(location)}`;
+    var searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(location)}`;
     if (searchTypeSelected == "users") {
-      searchUrl = `/dashboard?user=${encodeURIComponent(searchParameter)}`;
+      searchUrl = `/?user=${encodeURIComponent(searchParameter)}`;
     }
     router.push(searchUrl);
   };
   const handleKeyPress = (e: { key: string }) => {
     if (e.key === "Enter") {
-      var searchUrl = `/dashboard?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(
+      var searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(
         location
       )}`;
       if (searchTypeSelected == "users") {
-        searchUrl = `/dashboard?user=${encodeURIComponent(searchParameter)}`;
+        searchUrl = `/?user=${encodeURIComponent(searchParameter)}`;
       }
       router.push(searchUrl);
     }

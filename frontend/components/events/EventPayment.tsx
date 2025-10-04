@@ -1,7 +1,13 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { Logger } from "@/observability/logger";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
-import { getStripeCheckoutFromEventId } from "@/services/src/stripe/stripeService";
+import {
+  evaluateFulfilmentSessionEnabled,
+  getNextFulfilmentEntityUrl,
+  initFulfilmentSession,
+} from "@/services/src/fulfilment/fulfilmentServices";
+import { getStripeCheckoutUrlFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import {
   CalendarDaysIcon,
@@ -17,6 +23,8 @@ import { useState } from "react";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
 
+const EventPaymentLogger = new Logger("EventPaymentLogger");
+
 interface EventPaymentProps {
   startDate: Timestamp;
   endDate: Timestamp;
@@ -30,6 +38,7 @@ interface EventPaymentProps {
   paused: boolean;
   setLoading: (value: boolean) => void;
   eventLink: string;
+  organiserId: string;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
@@ -151,8 +160,54 @@ export default function EventPayment(props: EventPaymentProps) {
                     onClick={async () => {
                       props.setLoading(true);
                       window.scrollTo(0, 0);
-                      const link = await getStripeCheckoutFromEventId(props.eventId, props.isPrivate, attendeeCount);
-                      router.push(link);
+
+                      // We'll put this behind a flag for now just in case we need to quickly disable this.
+                      if (evaluateFulfilmentSessionEnabled(props.organiserId, props.eventId)) {
+                        try {
+                          const { fulfilmentSessionId } = await initFulfilmentSession({
+                            type: "checkout",
+                            eventId: props.eventId,
+                            numTickets: attendeeCount,
+                          });
+
+                          if (!fulfilmentSessionId) {
+                            EventPaymentLogger.error(
+                              `initFulfilmentSession: Failed to initialize fulfilment session for eventId: ${props.eventId}`
+                            );
+                            router.push("/error");
+                            return;
+                          }
+
+                          const nextEntityUrl = await getNextFulfilmentEntityUrl(fulfilmentSessionId);
+                          if (nextEntityUrl === undefined) {
+                            EventPaymentLogger.error(
+                              `getNextFulfilmentEntityUrl: No url response received for fulfilmentSessionId: ${fulfilmentSessionId}`
+                            );
+                            router.push("/error");
+                            return;
+                          }
+
+                          router.push(nextEntityUrl);
+                          // props.setLoading();
+                          return;
+
+                          // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
+                        } catch {
+                          // Clean up fulfilment session if it fails, we can do this through a CRON later down the line
+                          EventPaymentLogger.error(
+                            `EventPayment: Error in starting fulfilment session for eventId: ${props.eventId}`
+                          );
+                          router.push("/error");
+                        }
+                      } else {
+                        const stripeCheckoutLink = await getStripeCheckoutUrlFromEventId(
+                          props.eventId,
+                          props.isPrivate,
+                          attendeeCount
+                        );
+
+                        router.push(stripeCheckoutLink);
+                      }
                     }}
                   >
                     Book Now

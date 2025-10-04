@@ -141,6 +141,8 @@ function getEventsDataFromLocalStorage(): EventData[] {
       promotionalCodesEnabled: event.promotionalCodesEnabled,
       paused: event.paused,
       eventLink: event.eventLink,
+      formId: event.formId,
+      hideVacancy: event.hideVacancy,
     });
   });
   return eventsDataFinal;

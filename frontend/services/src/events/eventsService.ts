@@ -95,7 +95,6 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
         user.publicUpcomingOrganiserEvents.push(docRef.id);
       }
     }
-    eventServiceLogger.info(`create event user: ${JSON.stringify(user, null, 2)}`);
     await updateUser(data.organiserId, user);
 
     // We want to bust all our caches when we create a new event.
@@ -105,7 +104,6 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     eventServiceLogger.info(`createEvent succeeded for ${docRef.id}`);
     return docRef.id;
   } catch (error) {
-    console.error(error);
     eventServiceLogger.error(`createEvent ${error}`);
     throw error;
   }
@@ -113,7 +111,7 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
 
 export async function createEventV2(data: NewEventData) {
   if (!rateLimitCreateEvents()) {
-    console.log("Rate Limited!!!");
+    eventServiceLogger.warn("Rate Limited!!!");
     throw "Rate Limited";
   }
   eventServiceLogger.info("createEventV2");
@@ -187,7 +185,6 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
     eventServiceLogger.info(`searchEventsByKeyword success`);
     return eventsData;
   } catch (error) {
-    console.error("Error searching events:", error);
     eventServiceLogger.error(`searchEventsByKeyword ${error}`);
     throw error;
   }
@@ -218,7 +215,6 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
       return await getAllEventsFromCollectionRef(eventRef);
     }
   } catch (error) {
-    console.error("Error getting all events:", error);
     eventServiceLogger.error(`Error getting all events ${error}`);
     throw error;
   }
@@ -244,9 +240,9 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
       );
     }
     await Promise.all(promisesList).then((results: (EventData | null)[]) => {
-      const filteredResults = results.filter((result) => result != null);
-      for (const event of results) {
-        eventDataList.push(event!);
+      const filteredResults = results.filter((result): result is EventData => result !== null);
+      for (const event of filteredResults) {
+        eventDataList.push(event);
       }
     });
 
@@ -271,14 +267,13 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
 
     await updateDoc(eventDocRef, updatedData);
 
-    console.log(`Event with Id '${eventId}' updated successfully.`);
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
     eventServiceLogger.error(`updateEventById ${error}`);
   }
 }
 
-export async function archiveAndDeleteEvent(eventId: EventId, userId: String, email: String): Promise<void> {
+export async function archiveAndDeleteEvent(eventId: EventId, userId: string, email: string): Promise<void> {
   eventServiceLogger.info(`Starting process to archive and delete event: ${eventId}`);
 
   const batch: WriteBatch = writeBatch(db);
@@ -309,6 +304,9 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: String, em
       }
     }
 
+    const publicUser = await getPublicUserById(userId);
+    const upcomingOrganiserEvents = publicUser.publicUpcomingOrganiserEvents;
+
     // Add all event fields to the deleted document, with additional deletion metadata
     batch.set(deletedEventRef, {
       ...eventData, // Copy all fields from the original event
@@ -322,6 +320,12 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: String, em
       organiserEvents: arrayRemove(eventId),
       deletedEvents: arrayUnion(eventId),
     });
+
+    if (upcomingOrganiserEvents.includes(eventId)) {
+      batch.update(doc(db, "Users/Active/Public/" + userId), {
+        publicUpcomingOrganiserEvents: arrayRemove(eventId),
+      });
+    }
 
     await batch.commit();
 
@@ -372,12 +376,10 @@ export async function incrementEventAccessCountById(
 ) {
   try {
     eventServiceLogger.info(`Incrementing ${eventId} by ${count}`);
-    console.log(`${eventId}, ${isActive}, ${isPrivate}`);
     await updateDoc(createEventDocRef(eventId, isActive, isPrivate), {
       accessCount: increment(count),
     });
   } catch (error) {
-    console.error("Error incrementing event access count:", error);
     eventServiceLogger.error(`incrementEventAccessCountById ${error}`);
     // You can handle the error here, such as logging it or throwing it further.
     throw error;

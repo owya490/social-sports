@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { FormId } from "./FormTypes";
 import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
 
 export type EventId = string;
@@ -41,6 +42,8 @@ interface AbstractEventData {
   promotionalCodesEnabled: boolean; // should default to false
   paused: boolean; // should default to false
   eventLink: string;
+  formId: FormId | null;
+  hideVacancy: boolean; // should default to false
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -90,6 +93,8 @@ export const EmptyEventData: EventData = {
   promotionalCodesEnabled: false,
   paused: false,
   eventLink: "",
+  formId: null,
+  hideVacancy: false,
 };
 
 export interface EventMetadata {

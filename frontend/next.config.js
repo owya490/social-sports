@@ -40,8 +40,8 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/",
-        destination: "/dashboard",
+        source: "/dashboard",
+        destination: "/",
         permanent: true,
       },
       {
@@ -65,6 +65,14 @@ const nextConfig = {
       {
         source: "/blogs/:slug+",
         destination: "/blogs/:slug+/index.html",
+      },
+      {
+        source: "/docs",
+        destination: "/docs/index.html",
+      },
+      {
+        source: "/docs/:slug+",
+        destination: "/docs/:slug+/index.html",
       },
     ];
   },

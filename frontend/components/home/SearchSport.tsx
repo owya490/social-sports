@@ -17,7 +17,7 @@ export default function SearchSport() {
     Basketball: { image: BasketballImage },
     Soccer: { image: SoccerImage },
     Tennis: { image: TennisImage },
-    "Table Tennis": { image: PingPongImage },
+    "Pickle Ball": { image: PingPongImage },
     Oztag: { image: RugbyImage },
     Baseball: { image: BaseballImage },
   };
@@ -35,7 +35,7 @@ export default function SearchSport() {
       <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
       <div className="flex my-5">
         <h5 className="font-bold text-lg">Search by Sports</h5>
-        <Link href="/dashboard" className="text-sm font-light ml-auto cursor-pointer hover:underline">
+        <Link href="/" className="text-sm font-light ml-auto cursor-pointer hover:underline">
           See all
         </Link>
       </div>

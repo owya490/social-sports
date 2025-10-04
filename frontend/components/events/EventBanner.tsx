@@ -10,14 +10,15 @@ interface EventBannerProps {
   startDate: Timestamp;
   organiser: PublicUserData;
   vacancy: number;
+  hideVacancy: boolean;
 }
 
 export default function EventBanner(props: EventBannerProps) {
   return (
-    <div className="bg-white w-100% px-5 md:px-10 pt-0 flex justify-center">
-      <div className="screen-width-primary">
+    <div className="bg-white w-100% px-2 md:px-10 pt-0 flex md:justify-center">
+      <div className="screen-width-primary px-0 md:px-3">
         <div className="flex items-center">
-          <div className="mt-8">
+          <div className="mt-8 w-full">
             <p className="font-bold text-xs block md:hidden">{timestampToEventCardDateString(props.startDate)}</p>
             <h1 className="text-3xl md:text-4xl text-core-text">{props.name}</h1>
 
@@ -44,7 +45,9 @@ export default function EventBanner(props: EventBannerProps) {
                     </div>
                   </div>
                 )}
-                <p className="font-bold text-xs ml-auto md:hidden">{`${props.vacancy} Tickets Left`}</p>
+                {!props.hideVacancy && (
+                  <p className="font-bold text-xs ml-auto md:hidden">{`${props.vacancy} Tickets Left`}</p>
+                )}
               </div>
 
               <p className="text-xs hidden md:block ml-4 font-light">
@@ -52,7 +55,9 @@ export default function EventBanner(props: EventBannerProps) {
               </p>
             </div>
           </div>
-          <div className="ml-auto text-2xl hidden md:block text-core-text font-light">{`${props.vacancy} Tickets Left`}</div>
+          {!props.hideVacancy && (
+            <div className="ml-auto text-2xl hidden md:block text-core-text font-light">{`${props.vacancy} Tickets Left`}</div>
+          )}
         </div>
       </div>
     </div>

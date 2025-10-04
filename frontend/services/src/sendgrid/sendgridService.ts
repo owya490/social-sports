@@ -8,9 +8,14 @@ import {
 const sendgridServiceLogger = new Logger("sendgridServiceLogger");
 
 interface SendgridSendEmailOnCreateEvent {
+  message: string;
   status: number;
+  success: boolean;
 }
 
+/*
+DEPRECATED DO NO USE 
+*/
 export async function sendEmailOnCreateEvent(eventId: string, visibility: string) {
   const content = {
     eventId: eventId,
@@ -20,7 +25,7 @@ export async function sendEmailOnCreateEvent(eventId: string, visibility: string
   const sendEmailFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_SEND_EMAIL_ON_CREATE_EVENT);
   return sendEmailFunction(content)
     .then((result) => {
-      const data = JSON.parse(result.data as string) as SendgridSendEmailOnCreateEvent;
+      const data = result.data as SendgridSendEmailOnCreateEvent;
       return data.status;
     })
     .catch((error) => {
@@ -29,6 +34,9 @@ export async function sendEmailOnCreateEvent(eventId: string, visibility: string
     });
 }
 
+/*
+DEPRECATED DO NO USE 
+*/
 export async function sendEmailOnDeleteEvent(eventId: string) {
   const sendEmailFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_SEND_EMAIL_ON_DELETE_EVENT);
 

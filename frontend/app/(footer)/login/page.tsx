@@ -29,7 +29,7 @@ export default function Login() {
         const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
         if (userCreated !== null) {
           setUser(await getFullUserById(userCreated));
-          router.push("/dashboard?login=success"); // Redirect only if user creation is successful
+          router.push("/?login=success"); // Redirect only if user creation is successful
         } else {
           throw new Error("Could not find user");
         }

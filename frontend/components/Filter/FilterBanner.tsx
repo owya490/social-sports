@@ -1,5 +1,6 @@
 "use client";
 
+import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventData } from "@/interfaces/EventTypes";
 import {
   filterEventsByDate,
@@ -8,22 +9,11 @@ import {
   filterEventsBySortBy,
   filterEventsBySport,
 } from "@/services/src/filterService";
-import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/locationUtils";
+import { SYDNEY_LAT, SYDNEY_LNG, getLocationCoordinates } from "@/services/src/maps/mapsService";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import ChevronRightButton from "../elements/ChevronRightButton";
-import BadmintonImage from "./../../public/images/sport-icons/reshot-icon-badminton-L2HG8MEXV6.svg";
-import BaseballImage from "./../../public/images/sport-icons/reshot-icon-baseball-bat-4VRP9QE3SA.svg";
-import BasketballImage from "./../../public/images/sport-icons/reshot-icon-basketball-YHLJCPQSNE.svg";
-import SoccerImage from "./../../public/images/sport-icons/reshot-icon-football-9BL6YR7JAD.svg";
-import RugbyImage from "./../../public/images/sport-icons/reshot-icon-football-ii-YZ9N4X356K.svg";
-import TennisImage from "./../../public/images/sport-icons/reshot-icon-softball-LMUT5BZ9GJ.svg";
-import PingPongImage from "./../../public/images/sport-icons/reshot-icon-table-tennis-HFEQCNR95U.svg";
-import VolleyballImage from "./../../public/images/sport-icons/reshot-icon-volley-ball-NHZFG6TPSC.svg";
 import FilterDialog, {
-  BADMINTON_SPORT_STRING,
-  BASEBALL_SPORT_STRING,
-  BASKETBALL_SPORT_STRING,
   DAY_END_TIME_STRING,
   DAY_START_TIME_STRING,
   DEFAULT_END_DATE,
@@ -31,14 +21,9 @@ import FilterDialog, {
   DEFAULT_MAX_PROXIMITY,
   DEFAULT_SORT_BY_CATEGORY,
   DEFAULT_START_DATE,
-  OZTAG_SPORT_STRING,
   PRICE_SLIDER_MAX_VALUE,
   PROXIMITY_SLIDER_MAX_VALUE,
-  SOCCER_SPORT_STRING,
   SortByCategory,
-  TABLE_TENNIS_SPORT_STRING,
-  TENNIS_SPORT_STRING,
-  VOLLEYBALL_SPORT_STRING,
 } from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
 
@@ -90,49 +75,6 @@ export default function FilterBanner({
   }
 
   const [selectedSport, setSelectedSport] = useState("");
-
-  const icons = {
-    volleyball: {
-      image: VolleyballImage,
-      style: "w-8 h-8",
-      sport_name: VOLLEYBALL_SPORT_STRING,
-    },
-    badminton: {
-      image: BadmintonImage,
-      style: "w-8 h-8",
-      sport_name: BADMINTON_SPORT_STRING,
-    },
-    basketball: {
-      image: BasketballImage,
-      style: "w-8 h-8",
-      sport_name: BASKETBALL_SPORT_STRING,
-    },
-    soccer: {
-      image: SoccerImage,
-      style: "w-8 h-8",
-      sport_name: SOCCER_SPORT_STRING,
-    },
-    tennis: {
-      image: TennisImage,
-      style: "w-8 h-8",
-      sport_name: TENNIS_SPORT_STRING,
-    },
-    "table tennis": {
-      image: PingPongImage,
-      style: "w-8 h-8",
-      sport_name: TABLE_TENNIS_SPORT_STRING,
-    },
-    oztag: {
-      image: RugbyImage,
-      style: "w-8 h-8",
-      sport_name: OZTAG_SPORT_STRING,
-    },
-    baseball: {
-      image: BaseballImage,
-      style: "w-8 h-8",
-      sport_name: BASEBALL_SPORT_STRING,
-    },
-  };
 
   const scroll = () => {
     document.getElementById("filter-overflow")?.scrollBy({
@@ -225,7 +167,7 @@ export default function FilterBanner({
           id="filter-overflow"
           className="overflow-auto flex items-center my-2 snap-x snap-mandatory transition-all no-scrollbar"
         >
-          {Object.entries(icons).map((entry, idx) => {
+          {Object.entries(SPORTS_CONFIG).map((entry, idx) => {
             const sportIdentifierString = entry[0];
             const sportInfo = entry[1];
             if (idx === 0) {
@@ -233,9 +175,9 @@ export default function FilterBanner({
                 <FilterIcon
                   key={idx}
                   sportIdentifierString={sportIdentifierString}
-                  image={sportInfo.image}
-                  style={sportInfo.style}
-                  name={sportInfo.sport_name}
+                  image={sportInfo.iconImage}
+                  style={"h-8 w-8"}
+                  name={sportInfo.name}
                   isFirst={true}
                   setEventDataList={setEventDataList}
                   allEventsDataList={eventDataList}
@@ -249,9 +191,9 @@ export default function FilterBanner({
               <FilterIcon
                 key={idx}
                 sportIdentifierString={sportIdentifierString}
-                image={sportInfo.image}
-                style={sportInfo.style}
-                name={sportInfo.sport_name}
+                image={sportInfo.iconImage}
+                style={"h-8 w-8"}
+                name={sportInfo.name}
                 isFirst={false}
                 setEventDataList={setEventDataList}
                 allEventsDataList={eventDataList}

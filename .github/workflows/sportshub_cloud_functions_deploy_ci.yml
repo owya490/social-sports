@@ -55,6 +55,8 @@ jobs:
           echo "BEARER_TOKEN=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_BEARER_TOKEN' || 'SOCIALSPORTSDEV_BEARER_TOKEN'] }}\"" >> .env
           echo "SENDGRID_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_SENDGRID_API_KEY' || 'SOCIALSPORTSDEV_SENDGRID_API_KEY'] }}\"" >> .env
           echo "LOOPS_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_LOOPS_API_KEY' || 'SOCIALSPORTSDEV_LOOPS_API_KEY'] }}\"" >> .env
+          echo "DEPLOYMENT_ENV=\"${{ matrix.env == 'prod' && 'prod' || 'dev' }}\"" >> .env
+          echo "PROJECT_NAME=\"${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}\"" >> .env
 
       # Deploy Java Cloud Run functions
       - name: Deploy updateRecurrenceTemplate
@@ -94,17 +96,73 @@ jobs:
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512
 
-      - name: Deploy createEvent
+      - name: Deploy cleanupOldFulfilmentSessionsCron
         working-directory: functions/lib/functions
         run: |
-          gcloud functions deploy createEvent \
-            --entry-point com.functions.events.controllers.CreateEventEndpoint \
+          gcloud functions deploy cleanupOldFulfilmentSessionsCron \
+            --entry-point com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
             --region australia-southeast1 \
             --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy deleteFulfilmentSession
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy deleteFulfilmentSession \
+            --entry-point com.functions.fulfilment.controllers.DeleteFulfilmentSessionEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy completeFulfilmentSession
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy completeFulfilmentSession \
+            --entry-point com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512
+
+      - name: Deploy globalAppController
+        working-directory: functions/lib/functions
+        run: |
+          gcloud functions deploy globalAppController \
+            --entry-point com.functions.global.controllers.GlobalAppController \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --memory 512 \
+            --concurrency 80 \
+            --min-instances 1 \
+            --max-instances 5 \
+            --cpu 1
+
+      - name: Deploy Cloud Scheduler jobs
+        continue-on-error: true
+        working-directory: functions/lib/functions
+        run: |
+          bash ./deploySchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/recurringEventsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron' }}
+          bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }}
+
+      - name: Report scheduler deployment status
+        if: failure()
+        run: |
+          echo "::warning::Cloud Scheduler deployment failed but workflow is continuing. Please check the scheduler deployment logs above for details."
 
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}
@@ -162,4 +220,4 @@ jobs:
         working-directory: functions
         run: |
           source venv/bin/activate
-          firebase deploy --only functions:move_inactive_events,functions:stripe_webhook_checkout_fulfilment,functions:create_stripe_standard_account,functions:get_stripe_checkout_url_by_event_id,functions:send_email_on_delete_event,functions:send_email_on_create_event,functions:email_reminder --force
+          firebase deploy --only functions:move_inactive_events,functions:stripe_webhook_checkout_fulfilment,functions:create_stripe_standard_account,functions:get_stripe_checkout_url_by_event_id,functions:send_email_on_delete_event,functions:send_email_on_create_event,functions:email_reminder,functions:send_email_on_create_event_v2,functions:send_email_on_delete_event_v2 --force

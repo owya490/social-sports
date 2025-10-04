@@ -1,9 +1,12 @@
 package com.functions.events.services;
 
+
+import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
@@ -15,8 +18,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
 
-import static com.functions.events.services.EventsService.createEvent;
-
 public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
 
@@ -25,6 +26,7 @@ public class RecurringEventsCronService {
     }
 
     public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, RecurrenceTemplate targetRecurrenceTemplate, boolean createEventWorkflow) throws Exception {
+        logger.info("Creating events from recurrence templates. today: {}, targetRecurrenceTemplateId: {}, targetRecurrenceTemplate: {}, createEventWorkflow: {}", today, targetRecurrenceTemplateId, targetRecurrenceTemplate, createEventWorkflow);
         Map<String, RecurrenceTemplate> activeRecurrenceTemplates;
         if (targetRecurrenceTemplateId == null) {
             activeRecurrenceTemplates = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplates();
@@ -42,7 +44,7 @@ public class RecurringEventsCronService {
             RecurrenceTemplate recurrenceTemplate = recurrenceTemplateAndId.getValue();
 
             // Create new transaction
-            RecurrenceTemplateRepository.createFirestoreTransaction(transaction -> {
+            FirebaseService.createFirestoreTransaction(transaction -> {
                 if (recurrenceTemplate == null) {
                     throw new Exception(
                             "Could not turn recurringEventSnapshot object into RecurringEvent pojo using toObject: "
@@ -64,7 +66,9 @@ public class RecurringEventsCronService {
                     String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
                     LocalDate eventCreationDate = TimeUtils.convertTimestampToLocalDateTime(recurrenceTimestamp).toLocalDate()
                             .minusDays(recurrenceData.getCreateDaysBefore());
+                    logger.info("Event Creation Date: {}", eventCreationDate);
                     if (!pastRecurrences.containsKey(recurrenceTimestampString) && (today.equals(eventCreationDate) || createEventWorkflow) && (recurrenceTemplate.getRecurrenceData().getRecurrenceEnabled())) {
+                        logger.info("Creating event for recurrence template: {} for recurrence timestamp: {}", recurrenceTemplateId, recurrenceTimestampString);
                         NewEventData newEventDataDeepCopy = JavaUtils.deepCopy(newEventData, NewEventData.class);
                         long eventLengthMillis = newEventDataDeepCopy.getEndDate().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
                         long eventDeadlineDeltaMillis = newEventDataDeepCopy.getRegistrationDeadline().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
@@ -73,10 +77,18 @@ public class RecurringEventsCronService {
                         Timestamp newRegistrationDeadline = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventDeadlineDeltaMillis) * 1000);
                         newEventDataDeepCopy.setEndDate(newEndDate);
                         newEventDataDeepCopy.setRegistrationDeadline(newRegistrationDeadline);
-                        String newEventId = createEvent(newEventDataDeepCopy, transaction);
+                        String newEventId = CreateEventHandler.createEvent(newEventDataDeepCopy, transaction);
                         logger.info("New event id: {}", newEventId);
                         createdEventIds.add(newEventId);
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
+
+                        // Update custom event links references
+                        try {
+                            CustomEventLinksService.updateEventLinksPointedToRecurrence(newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, newEventId);
+                        } catch (Exception e) {
+                            logger.error("Failed to update custom event links for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
+                            // Continue with event creation even if custom links update fails
+                        }
                     }
 
                     if (!recurrenceData.getAllRecurrences().isEmpty()) {
@@ -102,7 +114,7 @@ public class RecurringEventsCronService {
 
         for (
                 String recurringEventId : moveToInactiveRecurringEvents) {
-            RecurrenceTemplateRepository.createFirestoreTransaction(transaction -> {
+            FirebaseService.createFirestoreTransaction(transaction -> {
                 moveRecurringEventToInactive(recurringEventId, transaction);
                 return null;
             });

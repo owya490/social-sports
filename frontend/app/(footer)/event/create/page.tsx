@@ -9,17 +9,19 @@ import { PreviewForm } from "@/components/events/create/forms/PreviewForm";
 import { useMultistepForm } from "@/components/events/create/forms/useMultistepForm";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
+import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { FormId } from "@/interfaces/FormTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { createEvent } from "@/services/src/events/eventsService";
 import {
+  getImageAndThumbnailUrlsWithDefaults,
   getUsersEventImagesUrls,
   getUsersEventThumbnailsUrls,
-  uploadAndGetImageAndThumbnailUrls,
-} from "@/services/src/imageService";
+} from "@/services/src/images/imageService";
+import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
-import { sendEmailOnCreateEvent } from "@/services/src/sendgrid/sendgridService";
 import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -35,8 +37,8 @@ export type FormData = {
   capacity: number;
   name: string;
   description: string;
-  image: File | string | undefined;
-  thumbnail: File | string | undefined;
+  image: string | undefined;
+  thumbnail: string | undefined;
   tags: string[];
   isPrivate: boolean;
   startTime: string;
@@ -44,12 +46,14 @@ export type FormData = {
   registrationEndTime: string;
   paymentsActive: boolean;
   lat: number;
-  long: number;
+  lng: number;
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
   paused: boolean;
   eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
+  hideVacancy: boolean;
+  formId: FormId | null;
 };
 
 const INITIAL_DATA: FormData = {
@@ -57,7 +61,7 @@ const INITIAL_DATA: FormData = {
   endDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   registrationEndDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
   location: "",
-  sport: "volleyball",
+  sport: SPORTS_CONFIG.volleyball.value,
   price: 1500, // $15 default price, set to 1500 as it is in cents
   capacity: 20,
   name: "",
@@ -71,12 +75,14 @@ const INITIAL_DATA: FormData = {
   registrationEndTime: "10:00",
   paymentsActive: false,
   lat: 0,
-  long: 0,
+  lng: 0,
   stripeFeeToCustomer: false,
   promotionalCodesEnabled: false,
   paused: false,
   eventLink: "",
   newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
+  hideVacancy: false,
+  formId: null,
 };
 
 export default function CreateEvent() {
@@ -91,8 +97,6 @@ export default function CreateEvent() {
   const [AlertMessage, setAlertMessage] = useState("");
 
   const [data, setData] = useState(INITIAL_DATA);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState("");
 
   const [eventThumbnailsUrls, setEventThumbnailUrls] = useState<string[]>([]);
   const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
@@ -120,24 +124,16 @@ export default function CreateEvent() {
       <ImageForm
         key="image-form"
         {...data}
-        imagePreviewUrl={imagePreviewUrl}
-        setImagePreviewUrl={setImagePreviewUrl}
+        user={user}
         updateField={updateFields}
         eventThumbnailsUrls={eventThumbnailsUrls}
         eventImageUrls={eventImageUrls}
-        thumbnailPreviewUrl={thumbnailPreviewUrl}
-        setThumbnailPreviewUrl={setThumbnailPreviewUrl}
+        setThumbnailUrls={setEventThumbnailUrls}
+        setImageUrls={setEventImageUrls}
       />
     </FormWrapper>,
-    <DescriptionForm key="description-image-form" {...data} updateField={updateFields} />,
-    <PreviewForm
-      key="preview-form"
-      form={data}
-      user={user}
-      imagePreviewUrl={imagePreviewUrl}
-      thumbnailPreviewUrl={thumbnailPreviewUrl}
-      updateField={updateFields}
-    />,
+    <DescriptionForm key="description-image-form" {...data} updateField={updateFields} user={user} />,
+    <PreviewForm key="preview-form" form={data} user={user} updateField={updateFields} />,
   ]);
 
   function updateFields(fields: Partial<FormData>) {
@@ -191,7 +187,7 @@ export default function CreateEvent() {
 
   async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
     setLoading(true);
-    const [imageUrl, thumbnailUrl] = await uploadAndGetImageAndThumbnailUrls(user.userId, { ...formData });
+    const [imageUrl, thumbnailUrl] = getImageAndThumbnailUrlsWithDefaults({ ...formData });
 
     const newEventData = convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
     const newRecurrenceData = formData.newRecurrenceData;
@@ -206,7 +202,7 @@ export default function CreateEvent() {
       } else {
         newEventId = await createEvent(newEventData);
       }
-      await sendEmailOnCreateEvent(newEventId, newEventData.isPrivate ? "Private" : "Public");
+      await sendEmailOnCreateEventV2(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
@@ -247,7 +243,7 @@ export default function CreateEvent() {
       ),
       locationLatLng: {
         lat: formData.lat,
-        lng: formData.long,
+        lng: formData.lng,
       },
       sport: formData.sport,
       paymentsActive: formData.paymentsActive,
@@ -257,6 +253,8 @@ export default function CreateEvent() {
       promotionalCodesEnabled: formData.promotionalCodesEnabled,
       paused: formData.paused,
       eventLink: formData.eventLink,
+      hideVacancy: formData.hideVacancy,
+      formId: formData.formId,
     };
   }
 

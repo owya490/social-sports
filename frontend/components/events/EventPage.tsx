@@ -16,9 +16,14 @@ export default function EventPage({ params }: any) {
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [eventTags, setEventTags] = useState<Tag[]>([]);
-
   const router = useRouter();
+
   useEffect(() => {
+    if (eventId === "404") {
+      router.push("/404");
+      return;
+    }
+
     getEventById(eventId)
       .then((event) => {
         setEventData(event);
@@ -51,6 +56,7 @@ export default function EventPage({ params }: any) {
         startDate={eventData.startDate}
         organiser={eventData.organiser}
         vacancy={eventData.vacancy}
+        hideVacancy={eventData.hideVacancy}
       />
       <div className="mt-1 mb-10">
         <EventDetails eventData={eventData} eventTags={eventTags} setLoading={setLoading} />

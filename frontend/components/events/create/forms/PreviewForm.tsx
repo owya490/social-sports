@@ -2,22 +2,20 @@ import { FormData } from "@/app/(footer)/event/create/page";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
-import { getThumbnailUrlsBySport } from "@/services/src/imageService";
+import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
 import { displayPrice } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 
 type BasicData = {
   form: FormData;
   user: UserData;
-  imagePreviewUrl: string;
-  thumbnailPreviewUrl: string;
 };
 
 type PreviewFormProps = BasicData & {
   updateField: (fields: Partial<FormData>) => void;
 };
 
-export const PreviewForm = ({ form, user, imagePreviewUrl, thumbnailPreviewUrl }: PreviewFormProps) => {
+export const PreviewForm = ({ form, user }: PreviewFormProps) => {
   const dateString = form.startDate + " " + form.startTime;
   var [datePart, timePart] = dateString.split(" ");
   var [year, month, day] = datePart.split("-");
@@ -59,7 +57,7 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, thumbnailPreviewUrl }
         <div className="col-span-1 mt-6 mx-2 space-y-6">
           <div>
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Sport</div>
-            <p className="text-m">{form.sport}</p>
+            <p className="text-m capitalize">{form.sport}</p>
           </div>
 
           <div>
@@ -89,16 +87,14 @@ export const PreviewForm = ({ form, user, imagePreviewUrl, thumbnailPreviewUrl }
           <EventCard
             eventId=""
             image={
-              imagePreviewUrl === ""
+              form.image === "" || form.image === undefined
                 ? "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5"
-                : imagePreviewUrl
+                : form.image
             }
             thumbnail={
-              typeof form.thumbnail === "string"
-                ? form.thumbnail
-                : form.thumbnail === undefined
+              form.thumbnail === "" || form.thumbnail === undefined
                 ? getThumbnailUrlsBySport(form.sport)
-                : thumbnailPreviewUrl
+                : form.thumbnail
             }
             name={form.name}
             organiser={user}

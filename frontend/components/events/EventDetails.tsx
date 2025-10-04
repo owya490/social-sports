@@ -5,6 +5,7 @@ import { Tag } from "@/interfaces/TagTypes";
 import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
+import { URL } from "@/interfaces/Types";
 
 interface EventDetailsProps {
   eventData: EventData;
@@ -21,7 +22,7 @@ export function EventDetails(props: EventDetailsProps) {
     <div className="flex justify-center w-full">
       <div className="pb-10 w-full md:screen-width-primary">
         <div className="sm:rounded-xl overflow-hidden">
-          <EventImage imageSrc={eventData.image} />
+          <EventImage imageSrc={eventData.image as URL} />
         </div>
 
         <div className="lg:flex w-full mt-5">
@@ -39,6 +40,7 @@ export function EventDetails(props: EventDetailsProps) {
               paused={eventData.paused}
               setLoading={setLoading}
               eventLink={eventData.eventLink}
+              organiserId={eventData.organiserId}
             />
           </div>
 
@@ -67,6 +69,7 @@ export function EventDetails(props: EventDetailsProps) {
               paused={eventData.paused}
               setLoading={setLoading}
               eventLink={eventData.eventLink}
+              organiserId={eventData.organiserId}
             />
           </div>
         </div>
