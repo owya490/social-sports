@@ -132,18 +132,8 @@ export const metadata: Metadata = {
   title: "SPORTSHUB | Find your next social sport session!",
   description:
     "SPORTSHUB is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!",
-  icons: {
-    icon: [
-      {
-        media: "(prefers-color-scheme: light)",
-        url: "/images/icon-light.png",
-        href: "/images/icon-light.png",
-      },
-      {
-        media: "(prefers-color-scheme: dark)",
-        url: "/images/icon-dark.png",
-        href: "/images/icon-dark.png",
-      },
-    ],
+  appleWebApp: {
+    title: "SPORTSHUB",
   },
+  // Icon is done via icon0.svg and icon1.png. The svg has @media (prefers-color-scheme: dark) hence differentiating dark and light modes.
 };
