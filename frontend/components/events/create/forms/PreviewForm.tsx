@@ -102,7 +102,8 @@ export const PreviewForm = ({ form, user }: PreviewFormProps) => {
             location={form.location}
             price={form.price}
             vacancy={form.capacity}
-            isClickable={true} // Pass true to make it non-clickable
+            isClickable={false} // Pass false to make it non-clickable
+            loading={false} // doesnt need to load
           />
         </div>
       </div>
