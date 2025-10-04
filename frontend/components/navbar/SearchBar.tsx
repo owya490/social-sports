@@ -4,6 +4,7 @@ import { SearchIcon } from "@/svgs/SearchIcon";
 import { Select } from "@headlessui/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { SearchType } from "../../interfaces/EventTypes";
 
 export default function SearchBar() {
   const [searchParameter, setSearchParameter] = useState("");
@@ -11,6 +12,8 @@ export default function SearchBar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [searchTypeSelected, setSearchTypeSelected] = useState<SearchType>(SearchType.EVENT);
+
 
   useEffect(() => {
     // Function to update state based on URL query parameters
@@ -24,14 +27,14 @@ export default function SearchBar() {
       const user = searchParams.get("user");
       const event = searchParams.get("event");
       const location = searchParams.get("location");
-      if (user) {
+      if (user !== null) {
         setSearchParameter(user);
-        setSearchTypeSelected("users");
+        setSearchTypeSelected(SearchType.USER);
       }
-      if (event) {
+      if (event !== null) {
         setSearchParameter(event);
       }
-      if (location) {
+      if (location !== null) {
         setLocation(location);
       }
     };
@@ -41,7 +44,7 @@ export default function SearchBar() {
   const handleSearchClick = () => {
     // Default to events
     var searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(location)}`;
-    if (searchTypeSelected == "users") {
+    if (searchTypeSelected == SearchType.USER) {
       searchUrl = `/?user=${encodeURIComponent(searchParameter)}`;
     }
     router.push(searchUrl);
@@ -51,14 +54,13 @@ export default function SearchBar() {
       var searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(
         location
       )}`;
-      if (searchTypeSelected == "users") {
+      if (searchTypeSelected == SearchType.USER) {
         searchUrl = `/?user=${encodeURIComponent(searchParameter)}`;
       }
       router.push(searchUrl);
     }
   };
 
-  const [searchTypeSelected, setSearchTypeSelected] = useState("events");
 
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -108,7 +110,7 @@ export default function SearchBar() {
         // className={`h-9 w-64 border-0 focus:ring-0 font-thin ${isFocused ? "" : `${isHovered ? "bg-core-hover" : ""}`}`}
         className={`h-9 w-64 border-0 focus:ring-0 font-thin bg-transparent`}
         type="text"
-        placeholder={`Search for ${searchTypeSelected.charAt(0).toUpperCase() + searchTypeSelected.slice(1)}`}
+        placeholder={`Search for ${SearchType[searchTypeSelected].charAt(0).toUpperCase() + SearchType[searchTypeSelected].toString().toLowerCase().slice(1)}s`}
         value={searchParameter}
         onChange={(e) => setSearchParameter(e.target.value)}
         onKeyDown={handleKeyPress}
@@ -130,13 +132,13 @@ export default function SearchBar() {
         <Select
           ref={selectRef}
           className={`rounded-full font-thin border-0 py-1 px-1 pl-3 w-[5.65rem] hover:bg-core-hover focus:ring-0`}
-          onChange={(e) => {
+          onChange={(e: any) => {
             setSearchTypeSelected(e.target.value);
           }}
           value={searchTypeSelected}
         >
-          <option value="events">Events</option>
-          <option value="users">Users</option>
+          <option value={SearchType.EVENT}>Events</option>
+          <option value={SearchType.USER}>Users</option>
         </Select>
       </div>
       <button

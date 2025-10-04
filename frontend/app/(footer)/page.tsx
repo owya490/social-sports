@@ -103,28 +103,25 @@ export default function Dashboard() {
 
       if (typeof event === "string" && typeof location === "string") {
         if (event.trim() === "") {
-          getAllEvents().then((events) => {
-            setEventDataList(events);
-            setSearchDataList(events);
-            setAllEventsDataList(events);
-          });
+          const events = await getAllEvents();
+          setEventDataList(events);
+          setSearchDataList(events);
+          setAllEventsDataList(events);
+          setPublicUserDataList([]);
         } else {
-          searchEventsByKeyword(event, location)
-            .then(async (events) => {
-              let tempEventDataList: EventData[] = [];
-              for (const singleEvent of events) {
-                const eventData = await getEventById(singleEvent.eventId);
-                tempEventDataList.push(eventData);
-              }
-              return tempEventDataList;
-            })
-            .then((tempEventDataList: EventData[]) => {
-              setEventDataList(tempEventDataList);
-              setSearchDataList(tempEventDataList);
-            })
-            .catch(() => {
-              router.push("/error");
-            });
+          try {
+            const events = await searchEventsByKeyword(event, location);
+            let tempEventDataList: EventData[] = [];
+            for (const singleEvent of events) {
+              const eventData = await getEventById(singleEvent.eventId);
+              tempEventDataList.push(eventData);
+            }
+            setEventDataList(tempEventDataList);
+            setSearchDataList(tempEventDataList);
+            setPublicUserDataList([]);
+          } catch {
+            router.push("/error");
+          }
         }
       }
       setSrcLocation(location);
@@ -144,9 +141,8 @@ export default function Dashboard() {
         if (typeof user === "string") {
           // if the search is empty, get everyone and display
           if (user.trim() === "") {
-            getAllPublicUsers().then((users) => {
-              setPublicUserDataList(users);
-            });
+            const users = await getAllPublicUsers();
+            setPublicUserDataList(users);
           } else {
             // the search is not empty
             // 1. try search the user up by username and if so add it to the first element of the list
@@ -298,23 +294,25 @@ export default function Dashboard() {
             Successfully logged in!
           </Alert>
         </div>
-        <div className="flex flex-col justify-center items-center w-full min-h-[60vh] mt-4 px-3 sm:px-20 lg:px-3 pb-10">
-          {loading === false && eventDataList.length === 0 && publicUserDataList.length === 0 && (
-            <div className="flex flex-col justify-center items-center w-full">
-              <div>
-                <Image
-                  src={noSearchResultLineDrawing}
-                  alt="noSearchResultLineDrawing"
-                  width={500}
-                  height={300}
-                  className="opacity-60"
-                />
-                <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                  Sorry, we couldn&apos;t find any results
+        <div className="flex flex-col items-center w-full min-h-[60vh] mt-4 px-3 sm:px-20 lg:px-3 pb-10">
+          {loading === false &&
+            ((searchType === SearchType.EVENT && eventDataList.length === 0) ||
+              (searchType === SearchType.USER && publicUserDataList.length === 0)) && (
+              <div className="flex flex-col justify-center items-center w-full">
+                <div>
+                  <Image
+                    src={noSearchResultLineDrawing}
+                    alt="noSearchResultLineDrawing"
+                    width={500}
+                    height={300}
+                    className="opacity-60"
+                  />
+                  <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
+                    Sorry, we couldn&apos;t find any results
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-6 gap-4 lg:gap-8 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
             {searchType === SearchType.USER
               ? publicUserDataList
@@ -329,6 +327,7 @@ export default function Dashboard() {
                         username={user.username}
                         email={user.publicContactInformation.email}
                         image={user.profilePicture}
+                        description={user.bio}
                         loading={loading}
                       />
                     );
