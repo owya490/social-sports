@@ -1,3 +1,4 @@
+import { SearchType } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
 import {
   ArrowRightIcon,
@@ -20,28 +21,36 @@ interface MobileSearchInputProps {
 export default function MobileSearchInput(props: MobileSearchInputProps) {
   // Commented out the location param and related as search by location is broken, ask Edwin to fix later, just delete duplicate code underneath commments
   const { searchExpanded, setSearchExpanded } = props;
-  const [event, setEvent] = useState("");
+  const [searchParameter, setSearchParameter] = useState("");
   // const [location, setLocation] = useState("Sydney");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [searchTypeSelected, setSearchTypeSelected] = useState<SearchType>(SearchType.EVENT);
 
   useEffect(() => {
     // Function to update state based on URL query parameters
     const updateStateFromQuery = () => {
       if (typeof window === "undefined") {
         // Return some default or empty values when not in a browser environment
-        setEvent("");
+        setSearchParameter("");
         // setLocation("");
         return;
       }
       const searchParams = new URLSearchParams(window.location.search);
 
+      const userParam = searchParams.get("user");
       const eventParam = searchParams.get("event");
       // const locationParam = searchParams.get("location");
 
-      setEvent(eventParam || "");
+      if (userParam !== null) {
+        setSearchParameter(userParam);
+        setSearchTypeSelected(SearchType.USER);
+      } else if (eventParam !== null) {
+        setSearchParameter(eventParam);
+        setSearchTypeSelected(SearchType.EVENT);
+      }
       // setLocation(locationParam || "");
     };
     updateStateFromQuery();
@@ -51,15 +60,18 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
     const maybePrevSearches = sessionStorage.getItem("recentSearches");
     let prevSearches = maybePrevSearches ? deserialize_list(maybePrevSearches) : [];
 
-    // const currentSearch = event + ":" + location;
-    const currentSearch = event;
+    // Store search with type prefix for recent searches
+    const currentSearch = `${searchTypeSelected}:${searchParameter}`;
 
     prevSearches = [currentSearch, ...prevSearches.slice(0, 4)];
     sessionStorage.setItem("recentSearches", serialize_list(prevSearches));
     setRecentSearches(prevSearches);
 
-    // const searchUrl = `/dashboard?event=${encodeURIComponent(event)}&location=${encodeURIComponent(location)}`;
-    const searchUrl = `/?event=${encodeURIComponent(event)}`;
+    // Build search URL based on search type
+    let searchUrl = `/?event=${encodeURIComponent(searchParameter)}`;
+    if (searchTypeSelected === SearchType.USER) {
+      searchUrl = `/?user=${encodeURIComponent(searchParameter)}`;
+    }
     router.push(searchUrl);
     setSearchExpanded();
   };
@@ -95,15 +107,35 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
             <ChevronDownIcon />
           </button>
         </div>
-        <div className="w-full flex items-center mt-8">
+        <div className="w-full mt-6">
+          <div className="flex gap-2 mb-4">
+            <button
+              className={`px-4 py-1 rounded-full text-sm transition-all ${
+                searchTypeSelected === SearchType.EVENT ? "bg-black text-white" : "bg-gray-200 text-gray-700"
+              }`}
+              onClick={() => setSearchTypeSelected(SearchType.EVENT)}
+            >
+              Events
+            </button>
+            <button
+              className={`px-4 py-1 rounded-full text-sm transition-all ${
+                searchTypeSelected === SearchType.USER ? "bg-black text-white" : "bg-gray-200 text-gray-700"
+              }`}
+              onClick={() => setSearchTypeSelected(SearchType.USER)}
+            >
+              Users
+            </button>
+          </div>
+        </div>
+        <div className="w-full flex items-center mt-4">
           <MagnifyingGlassIcon className="w-7 h-7 mr-2" />
           <input
             id="search_input"
             className="w-56 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
-            placeholder="Search Events"
-            value={event}
+            placeholder={`Search ${searchTypeSelected === SearchType.EVENT ? "Events" : "Users"}`}
+            value={searchParameter}
             onChange={(event) => {
-              setEvent(event.target.value);
+              setSearchParameter(event.target.value);
             }}
             onKeyDown={handleKeyPress}
           />
@@ -137,30 +169,22 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
             {recentSearches.length === 0 ? (
               <p className="text-sm font-light">None</p>
             ) : (
-              // recentSearches.map((search, i) => {
-              //   const splitSearch = search.split(":");
-              //   const recentEvent = splitSearch[0];
-              //   const recentLocation = splitSearch[1];
-              //   return (
-              //     <span key={i} className="flex items-center my-1">
-              //       <ClockIcon className="w-4 h-4 mr-1" />
-              //       <Link
-              //         href={`/dashboard?event=${recentEvent}&location=${recentLocation}`}
-              //         className="font-light text-base"
-              //         onClick={setSearchExpanded}
-              //       >{`${recentEvent} - ${recentLocation}`}</Link>
-              //     </span>
-              //   );
-              // })
               recentSearches.map((search, i) => {
+                const splitSearch = search.split(":");
+                const searchType = splitSearch[0];
+                const searchQuery = splitSearch[1] || search; // Fallback for old format
+
+                // Determine if it's a user or event search
+                const isUserSearch = searchType === String(SearchType.USER);
+                const searchUrl = isUserSearch ? `/?user=${searchQuery}` : `/?event=${searchQuery}`;
+                const displayType = isUserSearch ? "User" : "Event";
+
                 return (
                   <span key={i} className="flex items-center my-1">
                     <ClockIcon className="w-4 h-4 mr-1" />
-                    <Link
-                      href={`/?event=${search}`}
-                      className="font-light text-base"
-                      onClick={setSearchExpanded}
-                    >{`${search} - Sydney`}</Link>
+                    <Link href={searchUrl} className="font-light text-base" onClick={setSearchExpanded}>
+                      {splitSearch.length > 1 ? `${searchQuery} (${displayType})` : search}
+                    </Link>
                   </span>
                 );
               })
