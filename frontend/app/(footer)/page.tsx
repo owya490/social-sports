@@ -4,8 +4,10 @@ import EventCard from "@/components/events/EventCard";
 import { UserCard } from "@/components/users/UserCard";
 import { EmptyEventData, EventData, SearchType } from "@/interfaces/EventTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
+import { getErrorUrl } from "@/services/src/urlUtils";
 import {
   getAllPublicUsers,
   getPublicUserById,
@@ -20,6 +22,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 
 export default function Dashboard() {
+  const logger = new Logger("DashboardLogger");
   const [loading, setLoading] = useState<boolean>(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
   const [eventDataList, setEventDataList] = useState<EventData[]>([
@@ -119,8 +122,9 @@ export default function Dashboard() {
             setEventDataList(tempEventDataList);
             setSearchDataList(tempEventDataList);
             setPublicUserDataList([]);
-          } catch {
-            router.push("/error");
+          } catch (error) {
+            logger.error(`Error: ${error}`);
+            router.push(getErrorUrl(error));
           }
         }
       }
@@ -150,7 +154,7 @@ export default function Dashboard() {
             try {
               const { userId } = await getUsernameMapping(user);
               users.push(await getPublicUserById(userId));
-            } catch (error) {
+            } catch (_error) {
               // no-op - this is fine, just search normally
             }
             // 2. if it doesn't exist, try do token search and dedupe the list by userId
@@ -162,7 +166,8 @@ export default function Dashboard() {
           }
         }
       } catch (error) {
-        router.push("/error");
+        logger.error(`Error: ${error}`);
+        router.push(getErrorUrl(error));
       }
       setEventDataList([]);
       setLoading(false);

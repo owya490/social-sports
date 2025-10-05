@@ -14,10 +14,13 @@ import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Logger } from "@/observability/logger";
+import { getErrorUrl } from "@/services/src/urlUtils";
 
 export default function UserProfilePage({ params }: any) {
   const userId: UserId = params.id;
   const router = useRouter();
+  const logger = new Logger("UserProfilePageLogger");
   const [loading, setLoading] = useState(true);
   const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyPublicUserData);
   const [upcomingOrganiserEvents, setUpcomingOrganiserEvents] = useState<EventData[]>([]);
@@ -40,24 +43,23 @@ export default function UserProfilePage({ params }: any) {
         const userIdMapFromUsername = await getUsernameMapping(userId);
         const user = await getPublicUserById(userIdMapFromUsername.userId);
         setPublicUserProfile(user);
-        fetchEvents(user);
+        await fetchEvents(user);
       } catch (error) {
         if (error instanceof UserNotFoundError) {
           try {
             const userById = await getPublicUserById(userId, true);
             setPublicUserProfile(userById);
-            fetchEvents(userById);
+            await fetchEvents(userById);
             return;
           } catch (error) {
-            console.log(error);
+            logger.error(`Error fetching user profile: ${error}`);
             if (error instanceof UserNotFoundError) {
-              console.log("here!");
               router.push("/not-found");
               return;
             }
           }
         }
-        router.push("/error");
+        router.push(getErrorUrl(error));
       }
     };
     fetchUserProfile();

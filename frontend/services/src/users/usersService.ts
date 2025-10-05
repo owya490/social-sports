@@ -193,7 +193,7 @@ export async function getAllPublicUsers(isActive?: boolean): Promise<PublicUserD
       setUsersDataIntoLocalStorage(doc.id, publicUserData);
       publicUsersData.push(publicUserData);
     });
-    localStorage.setItem(UsersLocalStorageKeys.LastFetchedAllUserData, new Date().valueOf.toString());
+    localStorage.setItem(UsersLocalStorageKeys.LastFetchedAllUserData, new Date().valueOf().toString());
     return publicUsersData;
   } catch (error) {
     userServiceLogger.error(`getAllPublicUsers ${error}`);

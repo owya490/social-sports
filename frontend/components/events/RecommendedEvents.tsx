@@ -45,20 +45,17 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
     const getRecommendedEvents = async () => {
-      await getAllEvents().then((data) => {
-        data = data
-          .filter((a) => {
-            return filterEventsBySport(a, eventData);
-          })
-          .sort((a, b) => {
-            return sortByProximityFromHere(a, b, eventData);
-          });
-        setRecommendedEvents(data.slice(0, NUMBER_OF_RECOMMENDED_EVENTS));
+      const data = await getAllEvents();
+      const filteredData = data.filter((a) => {
+        return filterEventsBySport(a, eventData);
       });
-    };
-    getRecommendedEvents().then(() => {
+      const sortedData = filteredData.sort((a, b) => {
+        return sortByProximityFromHere(a, b, eventData);
+      });
+      setRecommendedEvents(sortedData.slice(0, NUMBER_OF_RECOMMENDED_EVENTS));
       setLoading(false);
-    });
+    };
+    getRecommendedEvents();
   }, []);
 
   const scrollLeft = () => {

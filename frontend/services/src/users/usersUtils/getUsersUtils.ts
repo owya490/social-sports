@@ -43,7 +43,7 @@ export function getUsersDataFromLocalStorage(userId: UserId): PublicUserData {
   return usersDataObject[userId];
 }
 
-export function getAllUsersDataFromLocalStorage() : PublicUserData[] {
+export function getAllUsersDataFromLocalStorage(): PublicUserData[] {
   const usersDataObject: IUsersDataLocalStorage = JSON.parse(localStorage.getItem(UsersLocalStorageKeys.UsersData)!);
   return Object.values(usersDataObject);
 }
@@ -65,18 +65,19 @@ export async function fetchUsersByTokenMatch(
   searchKeywords: string[]
 ): Promise<PublicUserData[]> {
   try {
-    const publicUserDataList: PublicUserData[] = [];
+    const publicUserDataById = new Map<UserId, PublicUserData>();
     for (const token of searchKeywords) {
       const q = query(eventCollectionRef, where("nameTokens", "array-contains", token));
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((publicUserDoc) => {
         const publicUserData = publicUserDoc.data() as PublicUserData;
         publicUserData.userId = publicUserDoc.id;
-        publicUserDataList.push(publicUserData);
+        publicUserDataById.set(publicUserData.userId, publicUserData);
       });
     }
     userServiceLogger.info("User token matches fetched successfully.");
-    return publicUserDataList;
+    // dedupe the list by userId
+    return Array.from(publicUserDataById.values());
   } catch (error) {
     console.error("Error fetching user token matches:", error);
     userServiceLogger.error(`Error fetching user token matches:", ${error}`);

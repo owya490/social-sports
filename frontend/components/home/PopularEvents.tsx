@@ -7,28 +7,19 @@ import ChevronLeftButton from "../elements/ChevronLeftButton";
 import ChevronRightButton from "../elements/ChevronRightButton";
 import EventCard from "../events/EventCard";
 
-interface PopularEventsProps {
-  eventData?: EventData;
-}
-
-export default function PopularEvents(_props: PopularEventsProps) {
+export default function PopularEvents() {
   const [loading, setLoading] = useState(true);
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
     const getRecommendedEvents = async () => {
-      const newRecommendedEvents: EventData[] = [];
-      await getAllEvents().then((data) => {
-        for (let i = 0; i < 5; i++) {
-          if (data[i] !== undefined) {
-            newRecommendedEvents.push(data[i]);
-          }
-        }
-        setRecommendedEvents(newRecommendedEvents);
+      const data = await getAllEvents();
+      const sortedData = data.sort((a, b) => {
+        return b.accessCount - a.accessCount;
       });
-    };
-    getRecommendedEvents().then(() => {
+      setRecommendedEvents(sortedData.slice(0, 5));
       setLoading(false);
-    })
+    };
+    getRecommendedEvents();
   }, []);
 
   const scrollLeft = () => {
