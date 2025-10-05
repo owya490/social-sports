@@ -1,10 +1,8 @@
 "use client";
 import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
-import ChevronLeftButton from "@/components/elements/ChevronLeftButton";
-import ChevronRightButton from "@/components/elements/ChevronRightButton";
-import EventCard from "@/components/events/EventCard";
 import Loading from "@/components/loading/Loading";
 import OrganiserCalendar from "@/components/users/profile/OrganiserCalendar";
+import UpcomingEventsCarousel from "@/components/users/profile/UpcomingEventsCarousel";
 import { EventData } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
@@ -25,6 +23,7 @@ export default function UserProfilePage({ params }: any) {
   const [loading, setLoading] = useState(true);
   const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyPublicUserData);
   const [upcomingOrganiserEvents, setUpcomingOrganiserEvents] = useState<EventData[]>([]);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
   useEffect(() => {
     const fetchEvents = async (user: PublicUserData) => {
       const eventPromises = (user.publicUpcomingOrganiserEvents || []).map(
@@ -65,22 +64,6 @@ export default function UserProfilePage({ params }: any) {
     };
     fetchUserProfile();
   }, []);
-
-  const scrollLeft = () => {
-    document.getElementById("recommended-event-overflow")?.scrollBy({
-      top: 0,
-      left: -50,
-      behavior: "smooth",
-    });
-  };
-
-  const scrollRight = () => {
-    document.getElementById("recommended-event-overflow")?.scrollBy({
-      top: 0,
-      left: 50,
-      behavior: "smooth",
-    });
-  };
 
   return loading ? (
     <Loading />
@@ -131,57 +114,32 @@ export default function UserProfilePage({ params }: any) {
           </div>
           <div id="col-2" className="pt-8">
             <h1 className="hidden md:block text-3xl font-bold">{`About ${publicUserProfile.firstName} ${publicUserProfile.surname}`}</h1>
-            <p className="md:pt-8 pb-6 font-light">
-              <RichTextEditorContent description={publicUserProfile.bio || "No bio provided."} />
-            </p>
+            <div className="md:pt-8 pb-6">
+              <div className={`font-light ${isBioExpanded ? "" : "line-clamp-4 md:line-clamp-5"}`}>
+                <RichTextEditorContent description={publicUserProfile.bio || "No bio provided."} />
+              </div>
+              {publicUserProfile.bio && publicUserProfile.bio.length > 100 && (
+                <button
+                  onClick={() => setIsBioExpanded(!isBioExpanded)}
+                  className="text-sm text-core-text hover:underline mt-2 font-medium"
+                >
+                  {isBioExpanded ? "Read Less" : "Read More"}
+                </button>
+              )}
+            </div>
             <div className="h-[1px] bg-core-outline my-4"></div>
           </div>
         </div>
+        <div className="md:hidden">
+          <UpcomingEventsCarousel organiser={publicUserProfile} events={upcomingOrganiserEvents} loading={loading} />
+        </div>
         {/* Calendar View Section */}
         <OrganiserCalendar organiser={publicUserProfile} events={upcomingOrganiserEvents} />
-        <div className="block">
-          <div className="w-full flex justify-center">
-            <div className="flex my-5 w-full">
-              <h5 className="font-bold text-lg">{`Upcoming Events by ${publicUserProfile.firstName} ${publicUserProfile.surname}`}</h5>
-            </div>
-          </div>
+
+        {/* Upcoming Events Carousel */}
+        <div className="hidden md:block">
+          <UpcomingEventsCarousel organiser={publicUserProfile} events={upcomingOrganiserEvents} loading={loading} />
         </div>
-        {upcomingOrganiserEvents.length !== 0 ? (
-          <div className="flex items-center">
-            <div className="hidden sm:block pr-2">
-              <ChevronLeftButton handleClick={scrollLeft} />
-            </div>
-
-            <div id="recommended-event-overflow" className="flex overflow-x-auto pb-4 snap-x snap-mandatory w-full">
-              <div className="flex space-x-2 xl:space-x-8">
-                {upcomingOrganiserEvents.map((event, i) => {
-                  return (
-                    <div key={`recommended-event-${i}`} className="snap-start w-[300px] min-h-[250px]">
-                      <EventCard
-                        eventId={event.eventId}
-                        image={event.image}
-                        thumbnail={event.thumbnail}
-                        name={event.name}
-                        organiser={event.organiser}
-                        startTime={event.startDate}
-                        location={event.location}
-                        price={event.price}
-                        vacancy={event.vacancy}
-                        loading={loading}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="hidden sm:block pl-2">
-              <ChevronRightButton handleClick={scrollRight} />
-            </div>
-          </div>
-        ) : (
-          <p className="font-thin">No upcoming events by this organiser.</p>
-        )}
       </div>
     </div>
   );

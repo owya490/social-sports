@@ -135,8 +135,8 @@ export default function OrganiserCalendar({ organiser, events }: OrganiserCalend
   }
 
   return (
-    <div className="py-8">
-      <div className="md:flex gap-4 max-h-[400px]">
+    <div className="pt-8">
+      <div className="md:flex gap-4 max-h-[430px]">
         {/* Mobile: Sliding View */}
         <div className="md:hidden w-full overflow-hidden">
           <div
@@ -197,7 +197,7 @@ export default function OrganiserCalendar({ organiser, events }: OrganiserCalend
                     <p>{selectedDate ? "No events on this day" : "Please select a date to view events"}</p>
                   </div>
                 ) : (
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto pb-12">
+                  <div className="space-y-4 pb-12">
                     {eventsForSelectedDate.map((event) => (
                       <CalendarEventCard
                         key={event.eventId}
@@ -218,7 +218,7 @@ export default function OrganiserCalendar({ organiser, events }: OrganiserCalend
         {/* Desktop: Side by Side View */}
         <div className="hidden md:flex gap-4 w-full">
           {/* Calendar */}
-          <div className="md:w-1/2">
+          <div className="flex-shrink-0">
             <div className="flex md:pr-8">
               <DayPicker
                 mode="single"
@@ -249,7 +249,7 @@ export default function OrganiserCalendar({ organiser, events }: OrganiserCalend
           </div>
 
           {/* Events List */}
-          <div className="md:w-1/2">
+          <div className="flex-1">
             <div className="min-h-[300px]">
               <h3 className="text-xl font-semibold mb-4">
                 {selectedDate
@@ -266,7 +266,7 @@ export default function OrganiserCalendar({ organiser, events }: OrganiserCalend
                   <p>{selectedDate ? "No events on this day" : "Please select a date to view events"}</p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                <div className="space-y-4 max-h-[430px] overflow-y-auto">
                   {eventsForSelectedDate.map((event) => (
                     <CalendarEventCard
                       key={event.eventId}
