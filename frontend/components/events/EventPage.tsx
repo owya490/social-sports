@@ -20,7 +20,7 @@ export default function EventPage({ params }: any) {
 
   useEffect(() => {
     if (eventId === "404") {
-      router.push("/404");
+      router.push("/not-found");
       return;
     }
 

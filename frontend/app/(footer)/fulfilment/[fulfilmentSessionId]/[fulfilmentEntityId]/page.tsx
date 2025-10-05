@@ -60,7 +60,7 @@ const FulfilmentSessionEntityPage = ({
         setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
       } catch (error) {
         if (error instanceof NotFoundError) {
-          router.push("/event/404");
+          router.push("/not-found");
           return;
         }
         fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment entity info ${error}`);
@@ -76,7 +76,7 @@ const FulfilmentSessionEntityPage = ({
         fulfilmentSessionEntityPageLogger.info(`fulfilmentSessionInfo: ${JSON.stringify(fulfilmentSessionInfo)}`);
       } catch (error) {
         if (error instanceof NotFoundError) {
-          router.push("/event/404");
+          router.push("/not-found");
           return;
         }
         fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment session info ${error}`);
@@ -116,7 +116,7 @@ const FulfilmentSessionEntityPage = ({
         setGetFulfilmentEntityInfoResponse(refreshed);
       } catch (refreshError) {
         if (refreshError instanceof NotFoundError) {
-          router.push("/event/404");
+          router.push("/not-found");
           return;
         }
         fulfilmentSessionEntityPageLogger.error(`Error refreshing fulfilment entity info: ${refreshError}`);
@@ -160,7 +160,7 @@ const FulfilmentSessionEntityPage = ({
         setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
       } catch (refreshError) {
         if (refreshError instanceof NotFoundError) {
-          router.push("/event/404");
+          router.push("/not-found");
           return;
         }
         fulfilmentSessionEntityPageLogger.error(`Error refreshing fulfilment entity info: ${refreshError}`);
