@@ -28,7 +28,7 @@ export default function UserContext({ children }: { children: any }) {
   const pathname = usePathname();
   const [userLoading, setUserLoading] = useState(true);
 
-  const protectedRoutes = ["/organiser", "/profile"];
+  const protectedRoutes = ["/organiser", "/profile", "/event/create"];
   const LoginRegisterRoutes = ["/register", "/login"];
   useEffect(() => {
     const unsubscriber = onAuthStateChanged(auth, async (userAuth) => {

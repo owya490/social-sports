@@ -4,9 +4,12 @@ import ChevronLeftButton from "@/components/elements/ChevronLeftButton";
 import ChevronRightButton from "@/components/elements/ChevronRightButton";
 import EventCard from "@/components/events/EventCard";
 import Loading from "@/components/loading/Loading";
+import OrganiserCalendar from "@/components/users/profile/OrganiserCalendar";
 import { EventData } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { getEventById } from "@/services/src/events/eventsService";
+import { getErrorUrl } from "@/services/src/urlUtils";
 import { UserNotFoundError } from "@/services/src/users/userErrors";
 import { getPublicUserById, getUsernameMapping } from "@/services/src/users/usersService";
 import { EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
@@ -14,8 +17,6 @@ import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Logger } from "@/observability/logger";
-import { getErrorUrl } from "@/services/src/urlUtils";
 
 export default function UserProfilePage({ params }: any) {
   const userId: UserId = params.id;
@@ -136,6 +137,8 @@ export default function UserProfilePage({ params }: any) {
             <div className="h-[1px] bg-core-outline my-4"></div>
           </div>
         </div>
+        {/* Calendar View Section */}
+        <OrganiserCalendar organiser={publicUserProfile} events={upcomingOrganiserEvents} />
         <div className="block">
           <div className="w-full flex justify-center">
             <div className="flex my-5 w-full">
@@ -149,7 +152,7 @@ export default function UserProfilePage({ params }: any) {
               <ChevronLeftButton handleClick={scrollLeft} />
             </div>
 
-            <div id="recommended-event-overflow" className="flex overflow-x-auto pb-4 snap-x snap-mandatory">
+            <div id="recommended-event-overflow" className="flex overflow-x-auto pb-4 snap-x snap-mandatory w-full">
               <div className="flex space-x-2 xl:space-x-8">
                 {upcomingOrganiserEvents.map((event, i) => {
                   return (
