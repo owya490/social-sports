@@ -19,5 +19,5 @@ function isLocalHost(hostname: string) {
 }
 
 export function getErrorUrl(error: any) {
-  return getUrlWithCurrentHostname(`/error?message=${error as string}`);
+  return `/error?message=${encodeURIComponent(error as string)}`;
 }

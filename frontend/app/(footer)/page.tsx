@@ -154,7 +154,7 @@ export default function Dashboard() {
             try {
               const { userId } = await getUsernameMapping(user);
               users.push(await getPublicUserById(userId));
-            } catch (_error) {
+            } catch {
               // no-op - this is fine, just search normally
             }
             // 2. if it doesn't exist, try do token search and dedupe the list by userId

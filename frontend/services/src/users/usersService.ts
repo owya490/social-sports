@@ -365,5 +365,3 @@ export async function createUsernameMapping(username: string, userId: UserId): P
     throw new UsersServiceError(username);
   }
 }
-
-export async function temp() {}

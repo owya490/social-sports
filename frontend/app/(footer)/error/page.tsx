@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Error() {
+export default function ErrorPage() {
   const searchParams = useSearchParams();
   const errorMessage = searchParams?.get("message");
   const router = useRouter();
