@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - master
+      - Tickets
 
 jobs:
   deploy-java-cloud-run-functions:
@@ -18,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: ${{ github.ref == 'refs/heads/master' && fromJSON('["dev", "prod"]') || fromJSON('["dev"]') }}
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -169,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: ${{ github.ref == 'refs/heads/master' && fromJSON('["dev", "prod"]') || fromJSON('["dev"]') }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

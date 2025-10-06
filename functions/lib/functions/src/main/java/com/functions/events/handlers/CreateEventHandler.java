@@ -15,6 +15,7 @@ import com.functions.events.models.EventMetadata;
 import com.functions.events.models.NewEventData;
 import com.functions.events.utils.EventsMetadataUtils;
 import com.functions.events.utils.EventsUtils;
+import com.functions.events.utils.TicketTypesUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
@@ -43,8 +44,7 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
 
         try {
             Firestore db = FirebaseService.getFirestore();
-            String eventId = db.runTransaction(transaction ->
-                    createEvent(request, transaction)).get();
+            String eventId = db.runTransaction(transaction -> createEvent(request, transaction)).get();
 
             logger.info("Event created successfully with ID: {}", eventId);
             return "Event created successfully with ID: " + eventId;
@@ -60,14 +60,14 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
      * @param data        data of the new event.
      * @param transaction the firestore transaction object
      */
-    // TODO: make createEvent private method and expose only handle method on Service
+    // TODO: make createEvent private method and expose only handle method on
+    // Service
     public static String createEvent(NewEventData data, Transaction transaction) throws Exception {
         logger.info("Creating event: {}", data.getName());
         Firestore db = FirebaseService.getFirestore();
         String isActive = data.getIsActive() ? ACTIVE : INACTIVE;
         String isPrivate = data.getIsPrivate() ? PRIVATE : PUBLIC;
-        DocumentReference newEventDocRef =
-                db.collection(EVENTS).document(isActive).collection(isPrivate).document();
+        DocumentReference newEventDocRef = db.collection(EVENTS).document(isActive).collection(isPrivate).document();
         final String safeName = data.getName() == null ? "" : data.getName();
         final String safeLocation = data.getLocation() == null ? "" : data.getLocation();
         data.setNameTokens(EventsUtils.tokenizeText(safeName));
@@ -75,6 +75,10 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
         transaction.set(newEventDocRef, JavaUtils.toMap(data));
         final String eventId = newEventDocRef.getId();
         createEventMetadata(transaction, eventId, data);
+
+        // Create default ticket types for the new event
+        TicketTypesUtils.createDefaultTicketTypes(transaction, newEventDocRef, data.getCapacity(), data.getPrice());
+
         EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), eventId);
         // If the event is public, add it to the user's public upcoming events
         if (!data.getIsPrivate()) {
@@ -85,11 +89,10 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
     }
 
     private static void createEventMetadata(Transaction transaction, String eventId,
-                                            NewEventData data) {
+            NewEventData data) {
         logger.info("Creating Event Metadata: {}", eventId);
         Firestore db = FirebaseService.getFirestore();
-        EventMetadata eventMetadata =
-                EventsMetadataUtils.extractEventsMetadataFieldsForNewEvent(data);
+        EventMetadata eventMetadata = EventsMetadataUtils.extractEventsMetadataFieldsForNewEvent(data);
         DocumentReference eventMetadataDocRef = db.collection(EVENTS_METADATA).document(eventId);
 
         transaction.set(eventMetadataDocRef, eventMetadata);

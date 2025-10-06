@@ -35,6 +35,7 @@ import { db } from "../firebase";
 import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../firebaseFunctionsService";
 import { getFullUserById, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
+import { addDefaultTicketTypes } from "../ticket/ticketService";
 import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
 import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
 import {
@@ -96,6 +97,9 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
       }
     }
     await updateUser(data.organiserId, user);
+
+    // Create default ticket types for the new event
+    await addDefaultTicketTypes(docRef.id, data.capacity, data.price);
 
     // We want to bust all our caches when we create a new event.
     bustEventsLocalStorageCache();

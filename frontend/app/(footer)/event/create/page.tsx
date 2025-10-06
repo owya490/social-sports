@@ -202,6 +202,7 @@ export default function CreateEvent() {
       } else {
         newEventId = await createEvent(newEventData);
       }
+
       await sendEmailOnCreateEventV2(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
