@@ -54,6 +54,8 @@
     "firebase": "^11.7.1",
     "geofire-common": "^6.0.0",
     "grafana": "^1.0.1",
+    "qr-scanner": "^1.4.2",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-beautiful-dnd": "^13.1.1",
     "react-csv": "^2.2.2",
