@@ -15,7 +15,7 @@ public class CustomEventLinksService {
     public static List<String> updateEventLinksPointedToRecurrence(String userId, String recurrenceTemplateId, String eventId, Transaction transaction) {
         logger.info("Updating event links pointed to recurrence template {} with transaction", recurrenceTemplateId);
         List<CustomEventLink> allReferencedEventLinks = CustomEventLinksRepository.getAllEventLinksPointedToRecurrence(userId, recurrenceTemplateId);
-        logger.info("All referenced event links: {}", allReferencedEventLinks);
+        logger.debug("All referenced event links: {}", allReferencedEventLinks);
         allReferencedEventLinks.forEach(eventLink -> {
             CustomEventLink updatedEventLink = new CustomEventLink(
                     eventLink.getCustomEventLink(),
