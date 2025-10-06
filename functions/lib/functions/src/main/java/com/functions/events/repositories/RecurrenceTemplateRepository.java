@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -149,6 +150,13 @@ public class RecurrenceTemplateRepository {
         }
         return Map.of();
     }
+
+    // TODO make this more efficient
+    public static Set<String> getAllActiveRecurrenceTemplateIds() {
+        return getAllActiveRecurrenceTemplates().keySet();
+    }
+
+
 
     private static DocumentReference getRecurrenceTemplateDocRef(boolean isActive, boolean isPrivate) {
         Firestore db = FirebaseService.getFirestore();
