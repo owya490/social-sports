@@ -18,10 +18,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, ReactNode } from "react";
 
-interface OrganiserNavbarProps {
-  currPage: string;
-}
-
 interface ResponsiveTooltipProps {
   content: string;
   children: ReactNode;

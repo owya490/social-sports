@@ -6,7 +6,7 @@ const MetricsPage = () => {
     <div>
       <div className="sm:ml-14 sm:mt-14">
         <div className="max-w-5xl lg:mx-auto">
-          <OrganiserNavbar currPage="Metrics" />
+          <OrganiserNavbar />
           <UnderConstruction />
         </div>
       </div>

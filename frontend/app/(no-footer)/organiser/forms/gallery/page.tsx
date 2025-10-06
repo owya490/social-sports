@@ -42,7 +42,7 @@ const FormsGallery = () => {
 
   return (
     <div className="md:ml-14 mt-14 mb-14">
-      <OrganiserNavbar currPage="FormsGallery" />
+      <OrganiserNavbar />
       <div className="w-full flex justify-center">
         <div className="screen-width-primary">
           <h1 className="text-4xl md:text-5xl lg:text-6xl my-6">Form Gallery</h1>

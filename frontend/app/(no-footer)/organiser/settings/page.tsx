@@ -30,7 +30,7 @@ const Settings = () => {
   ) : (
     <div className="md:ml-14 mt-14">
       <div className="max-w-5xl lg:mx-auto">
-        <OrganiserNavbar currPage="Settings" />
+        <OrganiserNavbar />
         <div className="p-2 space-y-4">
           <OrganiserSettingsCard />
           <OrganiserSettingsStripeCard stripeId={stripeId} />

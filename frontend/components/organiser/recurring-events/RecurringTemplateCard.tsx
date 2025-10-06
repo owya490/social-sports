@@ -33,7 +33,7 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
 
   return (
     <Link href={`/organiser/recurring-events/${props.recurrenceTemplateId}`}>
-      <div className="bg-white rounded-lg text-left border-gray-300 border w-full sm:w-[600px] xl:w-[580px] 2xl:w-[640px] hover:cursor-pointer">
+      <div className="bg-white rounded-lg text-left border-gray-300 border w-full hover:cursor-pointer">
         {props.loading ? (
           <div>
             <LoadingSkeletonOrganiserEventCard />
@@ -61,29 +61,27 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
                   <p className="ml-1 font-light text-sm">{`$${displayPrice(props.price)} AUD`}</p>
                 </div>
               </div>
-              <div className="grid md:grid-cols-2">
-                <div>
+              <div className="grid md:grid-cols-2 gap-2">
+                <div className="space-y-1">
                   <div className="flex items-center">
-                    <p className="text-sm font-thin ">{`Frequency: ${props.frequency}`}</p>
+                    <p className="text-sm font-thin">{`Frequency: ${props.frequency}`}</p>
                   </div>
                   <div className="flex items-center">
-                    <p className="text-sm font-thin ">{`Recurrence Amount: ${props.recurrenceAmount} times`}</p>
+                    <p className="text-sm font-thin">{`Recurrence Amount: ${props.recurrenceAmount} times`}</p>
                   </div>
                   <div className="flex items-center">
                     <p className="text-sm font-thin">{`Creating events ${props.createDaysBefore} days before`}</p>
                   </div>
                 </div>
-                <div>
-                  <div className="flex items-center">
-                    <Switch
-                      color="teal"
-                      label={`Recurrence is ${props.recurrenceEnabled ? "" : "Not"} Enabled`}
-                      size="sm"
-                      className="my-4"
-                      disabled={props.disabled}
-                      checked={props.recurrenceEnabled}
-                    />
-                  </div>
+                <div className="flex items-center">
+                  <Switch
+                    color="teal"
+                    label={`Recurrence is ${props.recurrenceEnabled ? "" : "Not"} Enabled`}
+                    size="sm"
+                    className="my-4"
+                    disabled={props.disabled}
+                    checked={props.recurrenceEnabled}
+                  />
                 </div>
               </div>
             </div>

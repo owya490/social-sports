@@ -11,7 +11,7 @@ const FormPreview = () => {
   return (
     <div className="bg-core-hover h-screen overflow-hidden">
       <div className="mt-8 sm:mt-14">
-        <OrganiserNavbar currPage="FormsGallery" />
+        <OrganiserNavbar />
       </div>
       <div className="pt-10 pb-24 sm:pb-20 h-full overflow-y-auto">
         <FormResponder formId={formId} eventId={""} formResponseId={null} isPreview={true} />
