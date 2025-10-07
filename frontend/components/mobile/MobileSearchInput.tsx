@@ -103,13 +103,14 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
         }
       >
         <div className="w-full flex justify-center">
-          <button className="h-8 w-8" onClick={setSearchExpanded}>
+          <button type="button" className="h-8 w-8" onClick={setSearchExpanded} aria-label="Close search">
             <ChevronDownIcon />
           </button>
         </div>
         <div className="w-full mt-6">
           <div className="flex gap-2 mb-4">
             <button
+              type="button"
               className={`px-4 py-1 rounded-full text-sm transition-all ${
                 searchTypeSelected === SearchType.EVENT ? "bg-black text-white" : "bg-gray-200 text-gray-700"
               }`}
@@ -118,6 +119,7 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
               Events
             </button>
             <button
+              type="button"
               className={`px-4 py-1 rounded-full text-sm transition-all ${
                 searchTypeSelected === SearchType.USER ? "bg-black text-white" : "bg-gray-200 text-gray-700"
               }`}
@@ -133,14 +135,18 @@ export default function MobileSearchInput(props: MobileSearchInputProps) {
             id="search_input"
             className="w-56 placeholder:text-2xl text-2xl border-b-2 border-gray-400 outline-none rounded-2xl"
             placeholder={`Search ${searchTypeSelected === SearchType.EVENT ? "Events" : "Users"}`}
-            aria-label="Search for sports events"
+            aria-label={`Search for ${searchTypeSelected === SearchType.EVENT ? "events" : "users"}`}
             value={searchParameter}
             onChange={(event) => {
               setSearchParameter(event.target.value);
             }}
             onKeyDown={handleKeyPress}
           />
-          <button onClick={handleSearch} aria-label="Search events">
+          <button
+            type="button"
+            onClick={handleSearch}
+            aria-label={`Search ${searchTypeSelected === SearchType.EVENT ? "events" : "users"}`}
+          >
             <ArrowRightIcon className="ml-4 w-7 h-7" />
           </button>
         </div>
