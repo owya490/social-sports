@@ -141,7 +141,7 @@ export const FormPreviewCard = ({
               </div>
             </div>
             {/* Action Buttons - only show on hover */}
-            <div className={` mt-4 transition-all duration-300 text-wrap ${isExpanded ? "opacity-100" : "opacity-0"}`}>
+            <div className={`mt-12 transition-all duration-300 text-wrap ${isExpanded ? "opacity-100" : "opacity-0"}`}>
               {/* Form Description */}
               <div className="text-xs text-left font-light mt-4 h-32 overflow-hidden">
                 <RichTextEditorContent description={formDescription} />
@@ -152,8 +152,7 @@ export const FormPreviewCard = ({
                   className="w-full py-3 px-4 border border-core-outline rounded-lg text-xs hover:bg-core-hover transition-colors duration-200 text-center"
                   href={`/organiser/forms/${formId}/editor`}
                 >
-                  Form <br className="hidden md:block" />
-                  Editor
+                  Edit
                 </Link>
 
                 {/* View as Responder */}
@@ -162,7 +161,6 @@ export const FormPreviewCard = ({
                   className="w-full py-3 px-4 hover:bg-core-hover border border-core-outline rounded-lg text-xs transition-colors duration-200 text-center"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Form <br className="hidden md:block" />
                   Preview
                 </Link>
               </div>

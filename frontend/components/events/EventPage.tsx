@@ -50,7 +50,7 @@ export default function EventPage({ params }: any) {
   return loading ? (
     <Loading />
   ) : (
-    <div className="text-black mt-12">
+    <>
       <EventBanner
         name={eventData.name}
         startDate={eventData.startDate}
@@ -70,6 +70,6 @@ export default function EventPage({ params }: any) {
       <div className="lg:hidden">
         <MobileEventDetailFooter date={eventData.startDate} />
       </div> */}
-    </div>
+    </>
   );
 }

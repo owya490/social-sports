@@ -7,11 +7,11 @@ import {
   ArrowPathIcon,
   CalendarIcon,
   CameraIcon,
+  Cog6ToothIcon,
   HomeIcon,
   LinkIcon,
   PencilSquareIcon,
   StarIcon,
-  UserIcon,
 } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import Link from "next/link";
@@ -60,11 +60,11 @@ const NavButton = ({ href, isActive, tooltipContent, children }: NavButtonProps)
         className={`
           flex justify-center items-center
           /* Mobile: Enhanced floating button design */
-          h-12 w-12 rounded-xl
+          h-12 w-12 rounded-full
           transition-all duration-200 ease-out
           ${isActive ? "bg-black/10 shadow-inner" : "hover:bg-black/5 active:bg-black/10 active:scale-95"}
           /* Desktop: Traditional design */
-          sm:h-10 sm:w-10 sm:rounded-md sm:shadow-none
+          sm:h-10 sm:w-10 sm:rounded-full sm:shadow-none
           ${isActive ? "sm:bg-core-hover" : "sm:hover:bg-core-hover sm:active:scale-100"}
         `}
       >
@@ -82,12 +82,12 @@ export default function OrganiserNavbar() {
     <nav
       className="
         /* Mobile: Modern floating design */
-        fixed bottom-4 left-6 right-6 z-40
+        fixed bottom-6 left-1/2 -translate-x-1/2 z-40
         bg-white/80 backdrop-blur-lg border border-gray-200/50
-        rounded-2xl shadow-lg shadow-black/10
+        rounded-full shadow-lg shadow-black/10
         /* Desktop: Traditional sidebar */
-        sm:bg-white sm:backdrop-blur-none sm:border-r-[1px] sm:border-core-outline
-        sm:bottom-auto sm:inset-x-auto sm:left-0 sm:h-screen sm:rounded-none sm:shadow-none
+        sm:bg-white sm:backdrop-blur-none sm:border-r-[1px] sm:border-t-0 sm:border-core-outline
+        sm:bottom-auto sm:inset-x-auto sm:left-0 sm:translate-x-0 sm:h-screen sm:rounded-none sm:shadow-none
       "
       role="navigation"
       aria-label="Organiser navigation"
@@ -95,10 +95,9 @@ export default function OrganiserNavbar() {
       <div
         className="
         /* Mobile: Horizontal floating layout */
-        flex justify-center items-center h-16 px-6
+        flex justify-center items-center h-16 px-2 space-x-4
         /* Desktop: Vertical sidebar layout */
         sm:h-auto sm:w-14 sm:flex-col sm:mt-14 sm:space-y-3 sm:space-x-0 sm:px-0
-        space-x-4
       "
       >
         <NavButton
@@ -118,7 +117,7 @@ export default function OrganiserNavbar() {
                       className={`
                         flex justify-center items-center
                         /* Mobile: Enhanced floating button design */
-                        h-12 w-12 rounded-xl
+                        h-12 w-12 rounded-full
                         transition-all duration-200 ease-out
                         ${
                           currPage.startsWith("/organiser/event")
@@ -126,7 +125,7 @@ export default function OrganiserNavbar() {
                             : "hover:bg-black/5 active:bg-black/10 active:scale-95"
                         }
                         /* Desktop: Traditional design */
-                        sm:h-10 sm:w-10 sm:rounded-md sm:shadow-none
+                        sm:h-10 sm:w-10 sm:rounded-full sm:shadow-none
                         ${
                           currPage.startsWith("/organiser/event")
                             ? "sm:bg-core-hover"
@@ -229,7 +228,7 @@ export default function OrganiserNavbar() {
           isActive={currPage.startsWith("/organiser/settings")}
           tooltipContent="Settings"
         >
-          <UserIcon className="w-6 stroke-1 stroke-core-text" />
+          <Cog6ToothIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
       </div>
     </nav>

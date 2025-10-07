@@ -74,7 +74,7 @@ export default function ProfilePic() {
     <div className="ml-auto flex items-center">
       {loggedIn && (
         <HighlightButton
-          text="Create event"
+          text="Create Event"
           onClick={() => {
             router.push("/event/create");
           }}

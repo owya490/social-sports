@@ -1,12 +1,10 @@
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import UnderConstruction from "@/components/UnderConstruction";
 
 const MetricsPage = () => {
   return (
     <div>
-      <div className="sm:ml-14 sm:mt-14">
+      <div className="">
         <div className="max-w-5xl lg:mx-auto">
-          <OrganiserNavbar />
           <UnderConstruction />
         </div>
       </div>
