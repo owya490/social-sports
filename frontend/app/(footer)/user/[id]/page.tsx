@@ -7,36 +7,62 @@ import Loading from "@/components/loading/Loading";
 import { EventData } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { getEventById } from "@/services/src/events/eventsService";
-import { getPublicUserById } from "@/services/src/users/usersService";
+import { UserNotFoundError } from "@/services/src/users/userErrors";
+import { getPublicUserById, getUsernameMapping } from "@/services/src/users/usersService";
 import { EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Logger } from "@/observability/logger";
+import { getErrorUrl } from "@/services/src/urlUtils";
 
 export default function UserProfilePage({ params }: any) {
   const userId: UserId = params.id;
+  const router = useRouter();
+  const logger = new Logger("UserProfilePageLogger");
   const [loading, setLoading] = useState(true);
   const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyPublicUserData);
   const [upcomingOrganiserEvents, setUpcomingOrganiserEvents] = useState<EventData[]>([]);
   useEffect(() => {
-    getPublicUserById(userId, true).then((user) => {
-      setPublicUserProfile(user);
+    const fetchEvents = async (user: PublicUserData) => {
+      const eventPromises = (user.publicUpcomingOrganiserEvents || []).map(
+        (eventId) => getEventById(eventId) // Get the event by its ID
+      );
 
-      const fetchEvents = async () => {
-        const eventPromises = (user.publicUpcomingOrganiserEvents || []).map(
-          (eventId) => getEventById(eventId) // Get the event by its ID
-        );
+      // Wait for all promises to resolve
+      const events = await Promise.all(eventPromises);
 
-        // Wait for all promises to resolve
-        const events = await Promise.all(eventPromises);
+      // Update the state with the fetched events
+      setUpcomingOrganiserEvents(events);
+      setLoading(false);
+    };
 
-        // Update the state with the fetched events
-        setUpcomingOrganiserEvents(events);
-        setLoading(false);
-      };
-
-      fetchEvents();
-    });
+    const fetchUserProfile = async () => {
+      try {
+        const userIdMapFromUsername = await getUsernameMapping(userId);
+        const user = await getPublicUserById(userIdMapFromUsername.userId);
+        setPublicUserProfile(user);
+        await fetchEvents(user);
+      } catch (error) {
+        if (error instanceof UserNotFoundError) {
+          try {
+            const userById = await getPublicUserById(userId, true);
+            setPublicUserProfile(userById);
+            await fetchEvents(userById);
+            return;
+          } catch (error) {
+            logger.error(`Error fetching user profile: ${error}`);
+            if (error instanceof UserNotFoundError) {
+              router.push("/not-found");
+              return;
+            }
+          }
+        }
+        router.push(getErrorUrl(error));
+      }
+    };
+    fetchUserProfile();
   }, []);
 
   const scrollLeft = () => {
@@ -70,7 +96,7 @@ export default function UserProfilePage({ params }: any) {
                   alt="DP"
                   width={0}
                   height={0}
-                  className="object-cover h-20 w-20 rounded-full overflow-hidden border-black border"
+                  className="object-cover h-20 w-20 rounded-full overflow-hidden border-black border flex-shrink-0"
                 />
                 <div>
                   <h2 className="text-2xl font-bold flex items-center">
@@ -96,7 +122,7 @@ export default function UserProfilePage({ params }: any) {
                 <span className="flex items-center gap-4">
                   <PhoneIcon className="w-4 h-4" />
                   <p className="text-xs font-light">
-                    {publicUserProfile.publicContactInformation?.email || "Not provided"}
+                    {publicUserProfile.publicContactInformation?.mobile || "Not provided"}
                   </p>
                 </span>
               </div>
@@ -138,6 +164,7 @@ export default function UserProfilePage({ params }: any) {
                         location={event.location}
                         price={event.price}
                         vacancy={event.vacancy}
+                        loading={loading}
                       />
                     </div>
                   );

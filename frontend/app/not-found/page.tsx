@@ -23,7 +23,7 @@ export default function NotFound() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link href="/dashboard">
+          <Link href="/">
             <HighlightButton text="Go to Dashboard" className="flex items-center gap-2">
               <HomeIcon className="h-5 w-5" />
             </HighlightButton>

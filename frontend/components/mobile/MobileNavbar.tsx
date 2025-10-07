@@ -32,7 +32,7 @@ export default function MobileNavbar() {
         role="navigation"
         aria-label="Mobile navigation"
       >
-        <Link href="/dashboard" aria-label="Go to dashboard" className="flex-shrink-0">
+        <Link href="/" aria-label="Go to dashboard" className="flex-shrink-0">
           <Image src={Logo} alt="SPORTSHUB - Find and book social sports events" className="w-10 h-10" />
         </Link>
 

@@ -4,7 +4,7 @@ import LogoImage from "./../../public/icons/Icon_black_square.png";
 
 export default function Logo() {
   return (
-    <Link href="/dashboard" className="flex items-center">
+    <Link href="/" className="flex items-center">
       <Image
         priority={true}
         src={LogoImage}

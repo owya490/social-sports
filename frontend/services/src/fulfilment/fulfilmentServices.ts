@@ -45,12 +45,12 @@ const fulfilmentSessionEnabledEventIdList: string[] = [
 ];
 
 export const evaluateFulfilmentSessionEnabled = (userId: string, eventId: EventId) => {
-  if (userId && fulfilmentSessionEnabledUserIdList.includes(userId)) {
-    return true;
-  }
-  if (eventId && fulfilmentSessionEnabledEventIdList.includes(eventId)) {
-    return true;
-  }
+  // if (userId && fulfilmentSessionEnabledUserIdList.includes(userId)) {
+  //   return true;
+  // }
+  // if (eventId && fulfilmentSessionEnabledEventIdList.includes(eventId)) {
+  //   return true;
+  // }
   return FULFILMENT_SESSION_ENABLED;
 };
 

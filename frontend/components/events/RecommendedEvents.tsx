@@ -41,18 +41,21 @@ const filterEventsBySport = (a: EventData, eventData: EventData | undefined) => 
 
 export default function RecommendedEvents(props: RecommendedEventsProps) {
   const { eventData } = props;
+  const [loading, setLoading] = useState(true);
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
-    getAllEvents().then((data) => {
-      data = data
-        .filter((a) => {
-          return filterEventsBySport(a, eventData);
-        })
-        .sort((a, b) => {
-          return sortByProximityFromHere(a, b, eventData);
-        });
-      setRecommendedEvents(data.slice(0, NUMBER_OF_RECOMMENDED_EVENTS));
-    });
+    const getRecommendedEvents = async () => {
+      const data = await getAllEvents();
+      const filteredData = data.filter((a) => {
+        return filterEventsBySport(a, eventData);
+      });
+      const sortedData = filteredData.sort((a, b) => {
+        return sortByProximityFromHere(a, b, eventData);
+      });
+      setRecommendedEvents(sortedData.slice(0, NUMBER_OF_RECOMMENDED_EVENTS));
+      setLoading(false);
+    };
+    getRecommendedEvents();
   }, []);
 
   const scrollLeft = () => {
@@ -79,7 +82,7 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
             <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
             <div className="flex my-5">
               <h5 className="font-bold text-lg">Similar events nearby</h5>
-              <Link href="/dashboard" className="text-sm font-light ml-auto cursor-pointer hover:underline">
+              <Link href="/" className="text-sm font-light ml-auto cursor-pointer hover:underline">
                 See all
               </Link>
             </div>
@@ -106,6 +109,7 @@ export default function RecommendedEvents(props: RecommendedEventsProps) {
                         location={event.location}
                         price={event.price}
                         vacancy={event.vacancy}
+                        loading={loading}
                       />
                     </div>
                   );

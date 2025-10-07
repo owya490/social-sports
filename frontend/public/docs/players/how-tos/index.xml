@@ -1,5 +1,5 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – How Tos</title><link>https://sportshub.net.au/docs/players/how-tos/</link><description>Recent content in How Tos on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://sportshub.net.au/docs/players/how-tos/index.xml" rel="self" type="application/rss+xml"/><item><title>Event Searching</title><link>https://sportshub.net.au/docs/players/how-tos/event-searching/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/players/how-tos/event-searching/</guid><description>
-&lt;p>&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/search-bar.png" alt="search-bar" loading="lazy" />&lt;/p>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – How Tos</title><link>https://www.sportshub.net.au/docs/players/how-tos/</link><description>Recent content in How Tos on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://www.sportshub.net.au/docs/players/how-tos/index.xml" rel="self" type="application/rss+xml"/><item><title>Event Searching</title><link>https://www.sportshub.net.au/docs/players/how-tos/event-searching/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/players/how-tos/event-searching/</guid><description>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/players/how-tos/search-bar.png" alt="search-bar" loading="lazy" />&lt;/p>
 &lt;h2>How to Search for Events&lt;span class="hx:absolute hx:-mt-20" id="how-to-search-for-events">&lt;/span>
 &lt;a href="#how-to-search-for-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Find the perfect sports events near you with SPORTSHUB&amp;rsquo;s powerful search and filtering tools.&lt;/p>
 &lt;h3>Quick Search&lt;span class="hx:absolute hx:-mt-20" id="quick-search">&lt;/span>
@@ -64,7 +64,7 @@
 &lt;h3>Mobile-Friendly&lt;span class="hx:absolute hx:-mt-20" id="mobile-friendly">&lt;/span>
 &lt;a href="#mobile-friendly" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Search works perfectly on your phone - find and book events on the go!&lt;/p>
 &lt;hr>
-&lt;p>&lt;strong>Start exploring&lt;/strong>: &lt;a href="https://www.sportshub.net.au/dashboard" target="_blank" rel="noopener">Find events near you →&lt;/a>&lt;/p></description></item><item><title>Book an Event</title><link>https://sportshub.net.au/docs/players/how-tos/book-an-event/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/players/how-tos/book-an-event/</guid><description>
+&lt;p>&lt;strong>Start exploring&lt;/strong>: &lt;a href="https://www.sportshub.net.au/dashboard" target="_blank" rel="noopener">Find events near you →&lt;/a>&lt;/p></description></item><item><title>Book an Event</title><link>https://www.sportshub.net.au/docs/players/how-tos/book-an-event/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/players/how-tos/book-an-event/</guid><description>
 &lt;h2>How to Book an Event&lt;span class="hx:absolute hx:-mt-20" id="how-to-book-an-event">&lt;/span>
 &lt;a href="#how-to-book-an-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Booking sports events on SPORTSHUB is quick and secure with our integrated Stripe checkout.&lt;/p>
 &lt;h3>Step-by-Step Booking&lt;span class="hx:absolute hx:-mt-20" id="step-by-step-booking">&lt;/span>
@@ -85,7 +85,7 @@
 &lt;/li>
 &lt;li>
 &lt;p>&lt;strong>Complete Payment Workflow&lt;/strong>
-&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/book-now-button.png" alt="book-now-button" loading="lazy" />&lt;/p>
+&lt;img src="https://www.sportshub.net.au/images/docs/players/how-tos/book-now-button.png" alt="book-now-button" loading="lazy" />&lt;/p>
 &lt;ul>
 &lt;li>Click &lt;strong>&amp;ldquo;Book Now&amp;rdquo;&lt;/strong> to proceed to secure checkout&lt;/li>
 &lt;li>Fill out any Forms needed by the organiser&lt;/li>
@@ -98,7 +98,7 @@
 &lt;/li>
 &lt;li>Apply any promotional codes if available&lt;/li>
 &lt;/ul>
-&lt;p>&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/stripe-payment-page.png" alt="stripe-payment-page" loading="lazy" />&lt;/p>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/players/how-tos/stripe-payment-page.png" alt="stripe-payment-page" loading="lazy" />&lt;/p>
 &lt;/li>
 &lt;li>
 &lt;p>&lt;strong>Confirmation&lt;/strong>&lt;/p>
@@ -112,7 +112,7 @@
 &lt;/ul>
 &lt;/li>
 &lt;/ol>
-&lt;p>&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/booking-confirmation-email.png" alt="booking-confirmation-email" loading="lazy" />&lt;/p>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/players/how-tos/booking-confirmation-email.png" alt="booking-confirmation-email" loading="lazy" />&lt;/p>
 &lt;h3>Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes">&lt;/span>
 &lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
 &lt;li>&lt;strong>Registration Deadlines&lt;/strong>: Pay attention to registration closing times&lt;/li>
@@ -133,7 +133,7 @@
 &lt;li>Contact the organiser if you have questions about the event&lt;/li>
 &lt;/ul>
 &lt;hr>
-&lt;p>&lt;strong>Need help?&lt;/strong> &lt;a href="https://sportshub.net.au/contact" >Contact support&lt;/a> or reach out to the event organiser directly.&lt;/p></description></item><item><title>Contact Organiser</title><link>https://sportshub.net.au/docs/players/how-tos/contact-organiser/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/players/how-tos/contact-organiser/</guid><description>
+&lt;p>&lt;strong>Need help?&lt;/strong> &lt;a href="https://www.sportshub.net.au/contact" >Contact support&lt;/a> or reach out to the event organiser directly.&lt;/p></description></item><item><title>Contact Organiser</title><link>https://www.sportshub.net.au/docs/players/how-tos/contact-organiser/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/players/how-tos/contact-organiser/</guid><description>
 &lt;h2>How to Contact an Event Organizer&lt;span class="hx:absolute hx:-mt-20" id="how-to-contact-an-event-organizer">&lt;/span>
 &lt;a href="#how-to-contact-an-event-organizer" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Need to ask questions about an event? Here are two simple ways to get in touch with organizers.&lt;/p>
 &lt;h3>Contact Methods&lt;span class="hx:absolute hx:-mt-20" id="contact-methods">&lt;/span>
@@ -143,7 +143,7 @@
 &lt;li>This will take you to the organizer&amp;rsquo;s preferred contact method (WhatsApp, website, etc.)&lt;/li>
 &lt;/ul>
 &lt;p>&lt;strong>2. Organizer Profile&lt;/strong>
-&lt;img src="https://sportshub.net.au/images/docs/players/how-tos/contact-info.png" alt="contact-info" loading="lazy" />&lt;/p>
+&lt;img src="https://www.sportshub.net.au/images/docs/players/how-tos/contact-info.png" alt="contact-info" loading="lazy" />&lt;/p>
 &lt;ul>
 &lt;li>Go to the organizer&amp;rsquo;s profile page&lt;/li>
 &lt;li>Find their email address and phone number&lt;/li>
@@ -175,4 +175,4 @@
 &lt;li>&lt;strong>Contact Early&lt;/strong>: Don&amp;rsquo;t wait until the last minute for important questions&lt;/li>
 &lt;/ul>
 &lt;hr>
-&lt;p>&lt;strong>Platform issues?&lt;/strong> &lt;a href="https://sportshub.net.au/contact" >Contact SPORTSHUB support&lt;/a> | &lt;strong>Event questions?&lt;/strong> Contact the organizer directly&lt;/p></description></item></channel></rss>
+&lt;p>&lt;strong>Platform issues?&lt;/strong> &lt;a href="https://www.sportshub.net.au/contact" >Contact SPORTSHUB support&lt;/a> | &lt;strong>Event questions?&lt;/strong> Contact the organizer directly&lt;/p></description></item></channel></rss>

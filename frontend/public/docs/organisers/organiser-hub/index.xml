@@ -1,4 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Organiser Hub</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/</link><description>Recent content in Organiser Hub on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://sportshub.net.au/docs/organisers/organiser-hub/index.xml" rel="self" type="application/rss+xml"/><item><title>Manage Events</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/manage-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/manage-events/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Organiser Hub</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/</link><description>Recent content in Organiser Hub on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://www.sportshub.net.au/docs/organisers/organiser-hub/index.xml" rel="self" type="application/rss+xml"/><item><title>Manage Events</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-events/</guid><description>
 &lt;p>The Organiser Hub provides comprehensive event management tools to help you efficiently oversee all your sporting events from one central location.&lt;/p>
 &lt;h2>Event Dashboard&lt;span class="hx:absolute hx:-mt-20" id="event-dashboard">&lt;/span>
 &lt;a href="#event-dashboard" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The Event Dashboard is your main view for accessing all your events. Here you can:&lt;/p>
@@ -7,7 +7,7 @@
 &lt;li>&lt;strong>Filter by Date Range&lt;/strong>: Narrow down events to specific time periods using the date filter&lt;/li>
 &lt;li>&lt;strong>Apply Custom Filters&lt;/strong>: Use additional filters to find specific events quickly&lt;/li>
 &lt;li>&lt;strong>Monitor Status&lt;/strong>: Check real-time status updates for each event
-&lt;img src="https://sportshub.net.au/images/docs/organisers/organiser-hub/event-dashboard.jpg" alt="event-dashboard" loading="lazy" />&lt;/li>
+&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/event-dashboard.jpg" alt="event-dashboard" loading="lazy" />&lt;/li>
 &lt;/ul>
 &lt;h3>Accessing Your Events&lt;span class="hx:absolute hx:-mt-20" id="accessing-your-events">&lt;/span>
 &lt;a href="#accessing-your-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ol>
@@ -23,7 +23,7 @@
 &lt;h2>Event Management&lt;span class="hx:absolute hx:-mt-20" id="event-management">&lt;/span>
 &lt;a href="#event-management" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Once you select an event from the dashboard, you can:&lt;/p>
 &lt;h3>Edit Event Details&lt;span class="hx:absolute hx:-mt-20" id="edit-event-details">&lt;/span>
-&lt;a href="#edit-event-details" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/organiser-hub/event-details-edit.png" alt="event-details-edit" loading="lazy" />&lt;/p>
+&lt;a href="#edit-event-details" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/event-details-edit.png" alt="event-details-edit" loading="lazy" />&lt;/p>
 &lt;ul>
 &lt;li>Update event title, description, and information&lt;/li>
 &lt;li>Modify event dates and times&lt;/li>
@@ -44,8 +44,8 @@
 &lt;li>&lt;strong>Regular Updates&lt;/strong>: Keep event details current, especially for location or timing changes&lt;/li>
 &lt;li>&lt;strong>Use Filters&lt;/strong>: Leverage dashboard filters to quickly find specific events&lt;/li>
 &lt;li>&lt;strong>Monitor Participation&lt;/strong>: Check registration numbers regularly to track event success&lt;/li>
-&lt;/ul></description></item><item><title>Manage Recurring Events</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</guid><description>
-&lt;p>&lt;img src="https://sportshub.net.au/images/docs/organisers/organiser-hub/recurring-event-edit.png" alt="recurring-event-edit" loading="lazy" />
+&lt;/ul></description></item><item><title>Manage Recurring Events</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</guid><description>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/recurring-event-edit.png" alt="recurring-event-edit" loading="lazy" />
 Recurring events allow you to automatically generate multiple instances of the same event at regular intervals. This is perfect for regular training sessions, weekly leagues, or monthly tournaments.&lt;/p>
 &lt;h2>Managing Recurrence&lt;span class="hx:absolute hx:-mt-20" id="managing-recurrence">&lt;/span>
 &lt;a href="#managing-recurrence" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Recurrence settings:&lt;/p>
@@ -112,7 +112,7 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;li>Modify the recurrence configuration&lt;/li>
 &lt;li>Save changes - this will apply to future occurrences only&lt;/li>
 &lt;li>Existing created events will retain their individual settings&lt;/li>
-&lt;/ol></description></item><item><title>SPORTSHUB Forms</title><link>https://sportshub.net.au/docs/organisers/organiser-hub/forms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/organiser-hub/forms/</guid><description>
+&lt;/ol></description></item><item><title>SPORTSHUB Forms</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/</guid><description>
 &lt;p>SPORTSHUB Forms revolutionize how you collect player information and payments for your events. Say goodbye to the hassle of juggling multiple platforms - no more Google Forms for data collection and separate bank transfers for payments. With SPORTSHUB Forms, you can seamlessly collect all the information you need and process payments in one integrated platform.&lt;/p>
 &lt;h2>Why Use SPORTSHUB Forms?&lt;span class="hx:absolute hx:-mt-20" id="why-use-sportshub-forms">&lt;/span>
 &lt;a href="#why-use-sportshub-forms" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>All-in-One Solution&lt;span class="hx:absolute hx:-mt-20" id="all-in-one-solution">&lt;/span>

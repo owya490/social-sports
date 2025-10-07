@@ -152,7 +152,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   organiser_stripe_account_id = stripe_account
 
   # 4a. check if the price exists for this event
-  if (price == None or not isinstance(price, int) or price < 1): # we don't want events to be less than stripe fees
+  if (price == None or not isinstance(price, int) or (price < 1 and price != 0)): # we don't want events to be less than stripe fees
     logger.error(f"Provided event {event_ref.path} does not have a valid price: {price}. Returning status=500")
     return json.dumps({"url": ERROR_URL})
 
@@ -163,7 +163,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   # 6. check if stripe fee is passed to customer, if so, create shipping object with an additional respective fees
   shipping_options: Optional[List[Dict[str, Any]]] = None
   stripe_fee_to_customer = event.get("stripeFeeToCustomer")
-  if stripe_fee_to_customer is True:
+  if stripe_fee_to_customer is True and price != 0:
     stripe_surcharge_fee = calculate_stripe_fee(price * quantity) # We need to overall order price for surcharge. not just singular ticket price
     logger.info(f"Application fee calculated to be {stripe_surcharge_fee} for event {event_id} with price {price} with quantity {quantity}.")
     shipping_options = [{

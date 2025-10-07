@@ -9,6 +9,7 @@ import com.functions.fulfilment.models.requests.GetNextFulfilmentEntityRequest;
 import com.functions.fulfilment.models.requests.GetPrevFulfilmentEntityRequest;
 import com.functions.fulfilment.models.requests.InitCheckoutFulfilmentSessionRequest;
 import com.functions.fulfilment.models.requests.UpdateFulfilmentEntityWithFormResponseIdRequest;
+import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -30,7 +31,8 @@ public enum EndpointType {
     GET_PREV_FULFILMENT_ENTITY(GetPrevFulfilmentEntityRequest.class, GetPrevFulfilmentEntityResponse.class),
     GET_NEXT_FULFILMENT_ENTITY(GetNextFulfilmentEntityRequest.class, GetNextFulfilmentEntityResponse.class),
     GET_FULFILMENT_SESSION_INFO(GetFulfilmentSessionInfoRequest.class, GetFulfilmentSessionInfoResponse.class),
-    GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class);
+    GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class),
+    COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;

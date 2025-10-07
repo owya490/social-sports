@@ -7,22 +7,19 @@ import ChevronLeftButton from "../elements/ChevronLeftButton";
 import ChevronRightButton from "../elements/ChevronRightButton";
 import EventCard from "../events/EventCard";
 
-interface PopularEventsProps {
-  eventData?: EventData;
-}
-
-export default function PopularEvents(_props: PopularEventsProps) {
+export default function PopularEvents() {
+  const [loading, setLoading] = useState(true);
   const [recommendedEvents, setRecommendedEvents] = useState<EventData[]>([]);
   useEffect(() => {
-    const newRecommendedEvents: EventData[] = [];
-    getAllEvents().then((data) => {
-      for (let i = 0; i < 5; i++) {
-        if (data[i] !== undefined) {
-          newRecommendedEvents.push(data[i]);
-        }
-      }
-      setRecommendedEvents(newRecommendedEvents);
-    });
+    const getRecommendedEvents = async () => {
+      const data = await getAllEvents();
+      const sortedData = data.sort((a, b) => {
+        return b.accessCount - a.accessCount;
+      });
+      setRecommendedEvents(sortedData.slice(0, 5));
+      setLoading(false);
+    };
+    getRecommendedEvents();
   }, []);
 
   const scrollLeft = () => {
@@ -49,7 +46,7 @@ export default function PopularEvents(_props: PopularEventsProps) {
             <div className="w-full bg-gray-300 h-[1px] mt-10"></div>
             <div className="flex my-5">
               <h5 className="font-bold text-lg">Popular events nearby</h5>
-              <Link href="/dashboard" className="text-sm font-light ml-auto cursor-pointer hover:underline">
+              <Link href="/" className="text-sm font-light ml-auto cursor-pointer hover:underline">
                 See all
               </Link>
             </div>
@@ -76,6 +73,7 @@ export default function PopularEvents(_props: PopularEventsProps) {
                         location={event.location}
                         price={event.price}
                         vacancy={event.vacancy}
+                        loading={loading}
                       />
                     </div>
                   );

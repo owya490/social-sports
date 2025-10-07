@@ -60,7 +60,7 @@ const FulfilmentSessionEntityPage = ({
         setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
       } catch (error) {
         if (error instanceof NotFoundError) {
-          router.push("/event/404");
+          router.push("/not-found");
           return;
         }
         fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment entity info ${error}`);
@@ -76,7 +76,7 @@ const FulfilmentSessionEntityPage = ({
         fulfilmentSessionEntityPageLogger.info(`fulfilmentSessionInfo: ${JSON.stringify(fulfilmentSessionInfo)}`);
       } catch (error) {
         if (error instanceof NotFoundError) {
-          router.push("/event/404");
+          router.push("/not-found");
           return;
         }
         fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment session info ${error}`);
@@ -116,7 +116,7 @@ const FulfilmentSessionEntityPage = ({
         setGetFulfilmentEntityInfoResponse(refreshed);
       } catch (refreshError) {
         if (refreshError instanceof NotFoundError) {
-          router.push("/event/404");
+          router.push("/not-found");
           return;
         }
         fulfilmentSessionEntityPageLogger.error(`Error refreshing fulfilment entity info: ${refreshError}`);
@@ -160,7 +160,7 @@ const FulfilmentSessionEntityPage = ({
         setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
       } catch (refreshError) {
         if (refreshError instanceof NotFoundError) {
-          router.push("/event/404");
+          router.push("/not-found");
           return;
         }
         fulfilmentSessionEntityPageLogger.error(`Error refreshing fulfilment entity info: ${refreshError}`);
@@ -318,7 +318,7 @@ const FulfilmentSessionEntityPage = ({
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <Link href="/dashboard">
+                <Link href="/">
                   <HighlightButton text="Go to Dashboard" className="flex items-center gap-2">
                     <HomeIcon className="h-5 w-5" />
                   </HighlightButton>
@@ -359,7 +359,7 @@ function EndFulfilmentHandler({
           logger.error(
             `End Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}`
           );
-          router.push("/dashboard");
+          router.push("/");
         }
       } catch (error) {
         if (!cancelled) {
