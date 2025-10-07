@@ -33,6 +33,7 @@
 
 :root {
   --navbar-height: 56px; /* Match h-14 (3.5rem = 56px) */
+  --footer-height: 32px; /* Match h-8 (2rem = 32px) */
 }
 
 html {

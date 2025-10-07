@@ -6,7 +6,7 @@ import SearchBar from "./SearchBar";
 
 export default function Navbar() {
   return (
-    <header className="bg-white fixed top-0 w-full z-50 box-border border-b-[1px] border-core-outline h-14">
+    <header className="bg-white fixed top-0 w-full z-50 box-border border-b-[1px] border-core-outline h-[var(--navbar-height)]">
       <nav
         className="flex items-center justify-between h-full px-5 lg:px-8 xl:px-12 max-w-full"
         role="navigation"

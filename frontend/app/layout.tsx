@@ -129,7 +129,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="hidden md:block">
               <Navbar />
             </div>
-            <main id="main-content" className="min-h-screen pt-14">
+            <main id="main-content" className="min-h-screen pt-[var(--navbar-height)]">
               {children}
             </main>
           </body>

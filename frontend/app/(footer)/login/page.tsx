@@ -47,7 +47,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex px-6 h-[calc(100vh-3.5rem-2rem)] flex-1 flex-col pt-20 sm:pt-40">
+    <div className="flex px-6 min-h-[calc(100vh-var(--navbar-height)-var(--footer-height))] flex-1 flex-col pt-8 sm:pt-40">
       <Alert
         open={alertStatus}
         onClose={handleAlertClose}

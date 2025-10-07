@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }}
       />
 
-      <div className="pb-8">{children}</div>
+      <div className="pb-[var(--footer-height)]">{children}</div>
 
       <Footer />
     </>

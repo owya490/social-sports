@@ -28,7 +28,7 @@ export default function MobileNavbar() {
   return (
     <header className="bg-white fixed top-0 w-full z-50">
       <nav
-        className="flex items-center justify-between h-14 px-4 max-w-full"
+        className="flex items-center justify-between h-[var(--navbar-height)] px-4 max-w-full"
         role="navigation"
         aria-label="Mobile navigation"
       >

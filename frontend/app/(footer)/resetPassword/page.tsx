@@ -33,7 +33,7 @@ export default function ResetPassword() {
     });
   };
   return (
-    <div className="flex px-6 h-[calc(100vh-3.5rem-2rem)] flex-1 flex-col pt-16 sm:pt-40">
+    <div className="flex px-6 min-h-[calc(100vh-var(--navbar-height)-var(--footer-height))] flex-1 flex-col pt-16 sm:pt-40">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <h1 className="text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
           Reset your password
