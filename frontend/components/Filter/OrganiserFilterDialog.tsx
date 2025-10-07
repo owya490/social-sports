@@ -39,7 +39,6 @@ export const DAY_END_TIME_STRING = " 23:59:59";
 export const EMPTY_LOCATION_STRING = "";
 
 interface OrganiserFilterDialogProps {
-  eventDataList: EventData[];
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
 

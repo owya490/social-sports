@@ -192,7 +192,6 @@ export default function OrganiserDashboard() {
       <div className="flex justify-center">
         <div className="hidden lg:block mr-4">
           <OrganiserFilterDialog
-            eventDataList={eventDataList}
             allEventsDataList={allEventsDataList}
             setEventDataList={setEventDataList}
             sortByCategoryValue={sortByCategoryValue}
