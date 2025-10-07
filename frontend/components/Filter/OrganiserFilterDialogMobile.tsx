@@ -31,7 +31,6 @@ export enum SortByCategory {
 }
 
 interface OrganiserFilterDialogMobileProps {
-  eventDataList: EventData[];
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
 

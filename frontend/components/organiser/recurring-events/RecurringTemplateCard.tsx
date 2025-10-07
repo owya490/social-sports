@@ -76,7 +76,7 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
                 <div className="flex items-center">
                   <Switch
                     color="teal"
-                    label={`Recurrence is ${props.recurrenceEnabled ? "" : "Not"} Enabled`}
+                    label={`Recurrence is ${props.recurrenceEnabled ? "Enabled" : "Not Enabled"}`}
                     size="sm"
                     className="my-4"
                     disabled={props.disabled}

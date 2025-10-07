@@ -164,7 +164,6 @@ export default function OrganiserDashboard() {
         <div className="text-3xl md:text-4xl lg:text-5xl my-6 md:ml-4 lg:ml-0">Event Dashboard</div>
         <div className="lg:hidden">
           <OrganiserFilterDialogMobile
-            eventDataList={eventDataList}
             allEventsDataList={allEventsDataList}
             setEventDataList={setEventDataList}
             sortByCategoryValue={sortByCategoryValue}

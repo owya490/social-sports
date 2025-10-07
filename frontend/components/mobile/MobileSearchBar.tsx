@@ -11,7 +11,7 @@ export default function MobileSearchBar(props: MobileSearchBarProps) {
       onClick={props.openSearchInput}
     >
       <h2 className="flex-1 text-gray-500 text-sm truncate">Search events</h2>
-      <button className="w-7 h-7 rounded-full border border-black bg-black mr-1 flex-shrink-0">
+      <button type="button" className="w-7 h-7 rounded-full border border-black bg-black mr-1 flex-shrink-0">
         <SearchIcon />
       </button>
     </div>
