@@ -1,4 +1,6 @@
 import { handleSignOut } from "@/services/src/auth/authService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowLeftStartOnRectangleIcon,
@@ -16,8 +18,6 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
 import { useUser } from "../utility/UserContext";
-import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
-import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 
 export default function ProfilePic() {
   const [loading, setLoading] = useState(true);
@@ -29,7 +29,6 @@ export default function ProfilePic() {
   useEffect(() => {
     if (!userLoading) {
       if (user.userId !== "") {
-        console.log(user.userId);
         setLoggedIn(true);
       } else {
         setLoggedIn(false);
@@ -38,13 +37,20 @@ export default function ProfilePic() {
     }
   }, [userLoading, user]);
 
-  const handleLogOut = () => {
-    handleSignOut(setUser);
-    // clearing all caches and relaoding page as we have magical bug where users are re-signed in...
-    bustEventsLocalStorageCache()
-    bustUserLocalStorageCache()
-    location.reload();
-    router.push("/");
+  const handleLogOut = async () => {
+    try {
+      await handleSignOut(setUser);
+      // clearing all caches to prevent stale data
+      bustEventsLocalStorageCache();
+      bustUserLocalStorageCache();
+      // Navigate to home and trigger a fresh state
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Fallback to reload only if logout fails
+      location.reload();
+    }
   };
 
   //TODO: Refactor !loggedin as hard to read
@@ -68,7 +74,7 @@ export default function ProfilePic() {
     <div className="ml-auto flex items-center">
       {loggedIn && (
         <HighlightButton
-          text="Create event"
+          text="Create Event"
           onClick={() => {
             router.push("/event/create");
           }}

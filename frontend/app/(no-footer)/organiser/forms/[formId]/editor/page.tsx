@@ -9,9 +9,9 @@ const FormEditorPage = () => {
   const formId = (typeof params?.formId === "string" ? params.formId : params.formId[0]) as FormId;
 
   return (
-    <div>
+    <>
       <FormEditor formId={formId} />
-    </div>
+    </>
   );
 };
 

@@ -14,7 +14,6 @@ export default function SearchBar() {
   const router = useRouter();
   const [searchTypeSelected, setSearchTypeSelected] = useState<SearchType>(SearchType.EVENT);
 
-
   useEffect(() => {
     // Function to update state based on URL query parameters
     const updateStateFromQuery = () => {
@@ -51,16 +50,13 @@ export default function SearchBar() {
   };
   const handleKeyPress = (e: { key: string }) => {
     if (e.key === "Enter") {
-      var searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(
-        location
-      )}`;
+      var searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(location)}`;
       if (searchTypeSelected == SearchType.USER) {
         searchUrl = `/?user=${encodeURIComponent(searchParameter)}`;
       }
       router.push(searchUrl);
     }
   };
-
 
   const [isFocused, setIsFocused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -110,7 +106,11 @@ export default function SearchBar() {
         // className={`h-9 w-64 border-0 focus:ring-0 font-thin ${isFocused ? "" : `${isHovered ? "bg-core-hover" : ""}`}`}
         className={`h-9 w-64 border-0 focus:ring-0 font-thin bg-transparent`}
         type="text"
-        placeholder={`Search for ${SearchType[searchTypeSelected].charAt(0).toUpperCase() + SearchType[searchTypeSelected].toString().toLowerCase().slice(1)}s`}
+        placeholder={`Search for ${
+          SearchType[searchTypeSelected].charAt(0).toUpperCase() +
+          SearchType[searchTypeSelected].toString().toLowerCase().slice(1)
+        }s`}
+        aria-label="Search for sports events"
         value={searchParameter}
         onChange={(e) => setSearchParameter(e.target.value)}
         onKeyDown={handleKeyPress}
@@ -146,6 +146,7 @@ export default function SearchBar() {
         className={`w-fit rounded-full border border-black bg-black transition-all duration-[400ms] text-white flex ${
           isFocused ? "h-8" : "h-7"
         }`}
+        aria-label="Search events"
       >
         <div className={`font-thin text-white overflow-hidden transition-all ${isFocused ? "w-16" : "w-0"}`}>
           <p className="pt-[2.5px] pl-2">Search</p>

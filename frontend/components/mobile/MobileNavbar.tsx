@@ -13,27 +13,38 @@ export default function MobileNavbar() {
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
   useEffect(() => {
-    getAllTags().then((tags) => {
-      setTags(tags);
-    });
+    getAllTags()
+      .then((tags) => {
+        setTags(tags);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch tags:", error);
+        setTags([]); // Set empty array as fallback
+      });
   }, []);
   const handleSearchExpanded = () => {
     setSearchExpanded(!searchExpanded);
   };
   return (
-    <div className="bg-white fixed top-0 w-screen z-50">
-      <div className="flex items-center py-2 px-4">
-        <Link href="/">
-          <Image src={Logo} alt="Logo" className="w-10 h-10 mr-4" />
+    <header className="bg-white fixed top-0 w-full z-50">
+      <nav
+        className="flex items-center justify-between h-[var(--navbar-height)] px-4 max-w-full"
+        role="navigation"
+        aria-label="Mobile navigation"
+      >
+        <Link href="/" aria-label="Go to dashboard" className="flex-shrink-0">
+          <Image src={Logo} alt="SPORTSHUB - Find and book social sports events" className="w-10 h-10" />
         </Link>
 
-        <div className="w-[50%]">
+        <div className="flex-1 min-w-0 mx-4">
           <MobileSearchBar openSearchInput={handleSearchExpanded} />
           <MobileSearchInput searchExpanded={searchExpanded} setSearchExpanded={handleSearchExpanded} tags={tags} />
         </div>
-        <ProfilePic />
-      </div>
+        <div className="flex-shrink-0">
+          <ProfilePic />
+        </div>
+      </nav>
       <div className="h-[1px] bg-core-outline"></div>
-    </div>
+    </header>
   );
 }

@@ -1,3 +1,4 @@
+import AccessibilitySkipNavigation from "@/components/accessibility/SkipNavigation";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
 import UserContext from "@/components/utility/UserContext";
@@ -50,6 +51,15 @@ const montserrat = Montserrat({ subsets: ["latin"] });
 // })
 
 // const inter = Inter({ subsets: ["latin"] }); old font, just replace aileron with inter to swap back
+export const metadata: Metadata = {
+  title: "SPORTSHUB | Find your next social sport session!",
+  description:
+    "SPORTSHUB is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!",
+  appleWebApp: {
+    title: "SPORTSHUB",
+  },
+  // Icon is done via icon0.svg and icon1.png. The svg has @media (prefers-color-scheme: dark) hence differentiating dark and light modes.
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -112,13 +122,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <GrafanaFaro>
         <UserContext>
           <body className={`${inter.className}`}>
-            <div className="hidden md:block">
-              <Navbar />
-            </div>
+            <AccessibilitySkipNavigation />
             <div className="md:hidden">
               <MobileNavbar />
             </div>
-            <div className="min-h-screen">{children}</div>
+            <div className="hidden md:block">
+              <Navbar />
+            </div>
+            <main id="main-content" className="min-h-screen pt-[var(--navbar-height)]">
+              {children}
+            </main>
           </body>
         </UserContext>
       </GrafanaFaro>
@@ -127,13 +140,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-export const metadata: Metadata = {
-  title: "SPORTSHUB | Find your next social sport session!",
-  description:
-    "SPORTSHUB is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!",
-  appleWebApp: {
-    title: "SPORTSHUB",
-  },
-  // Icon is done via icon0.svg and icon1.png. The svg has @media (prefers-color-scheme: dark) hence differentiating dark and light modes.
-};
