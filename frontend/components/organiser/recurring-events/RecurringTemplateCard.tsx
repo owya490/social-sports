@@ -32,7 +32,7 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
   }
 
   return (
-    <Link href={`/organiser/recurring-events/${props.recurrenceTemplateId}`}>
+    <Link href={`/organiser/event/recurring-events/${props.recurrenceTemplateId}`}>
       <div className="bg-white rounded-lg text-left border-gray-300 border w-full hover:cursor-pointer">
         {props.loading ? (
           <div>
