@@ -2,7 +2,6 @@
 import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
 import Loading from "@/components/loading/Loading";
 import OrganiserCalendar from "@/components/users/profile/OrganiserCalendar";
-import UpcomingEventsCarousel from "@/components/users/profile/UpcomingEventsCarousel";
 import { EventData } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
@@ -68,7 +67,7 @@ export default function UserProfilePage({ params }: any) {
   return loading ? (
     <Loading />
   ) : (
-    <div className="mt-16 w-full flex justify-center mb-8">
+    <div className="mt-16 w-full flex justify-center pb-24">
       <div className="screen-width-primary">
         <div className="md:flex gap-16">
           <div id="col-1" className="pt-8 min-w-80">
@@ -130,16 +129,7 @@ export default function UserProfilePage({ params }: any) {
             <div className="h-[1px] bg-core-outline my-4"></div>
           </div>
         </div>
-        <div className="md:hidden">
-          <UpcomingEventsCarousel organiser={publicUserProfile} events={upcomingOrganiserEvents} loading={loading} />
-        </div>
-        {/* Calendar View Section */}
         <OrganiserCalendar organiser={publicUserProfile} events={upcomingOrganiserEvents} />
-
-        {/* Upcoming Events Carousel */}
-        <div className="hidden md:block">
-          <UpcomingEventsCarousel organiser={publicUserProfile} events={upcomingOrganiserEvents} loading={loading} />
-        </div>
       </div>
     </div>
   );
