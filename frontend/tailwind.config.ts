@@ -15,9 +15,6 @@ const config: Config = {
   // },
   theme: {
     extend: {
-      fontFamily: {
-        robotocondensed: ["var(--font-roboto-condensed)"],
-      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
