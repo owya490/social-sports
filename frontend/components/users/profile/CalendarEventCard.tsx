@@ -93,7 +93,13 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
 
         {/* Ticket Selection and Book Now */}
         {event.paymentsActive ? (
-          <div className="mt-4">{renderTicketBooking()}</div>
+          event.vacancy === 0 ? (
+            <div className="mt-4">
+              <p className="text-xs text-gray-500">Event currently sold out. Please check back later.</p>
+            </div>
+          ) : (
+            <div className="mt-4">{renderTicketBooking()}</div>
+          )
         ) : (
           <div className="flex justify-end">
             <ContactEventButton
@@ -148,7 +154,13 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
 
           {/* Row 3: Ticket Selection and Book Now */}
           {event.paymentsActive ? (
-            renderTicketBooking()
+            event.vacancy === 0 ? (
+              <div className="mt-4">
+                <p className="text-xs text-gray-500">Event currently sold out. Please check back later.</p>
+              </div>
+            ) : (
+              <div className="mt-4">{renderTicketBooking()}</div>
+            )
           ) : (
             <div className="flex justify-end">
               <ContactEventButton
