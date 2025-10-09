@@ -22,11 +22,11 @@ public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
 
     public static List<String> createEventsFromRecurrenceTemplates(LocalDate today) throws Exception {
-        return createEventsFromRecurrenceTemplates(today, null, null, false);
+        return createEventsFromRecurrenceTemplates(today, null, false);
     }
 
-    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, RecurrenceTemplate targetRecurrenceTemplate, boolean createEventWorkflow) throws Exception {
-        logger.info("Creating events from recurrence templates. today: {}, targetRecurrenceTemplateId: {}, targetRecurrenceTemplate: {}, createEventWorkflow: {}", today, targetRecurrenceTemplateId, targetRecurrenceTemplate, createEventWorkflow);
+    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, boolean createEventWorkflow) throws Exception {
+        logger.info("Creating events from recurrence templates. today: {}, targetRecurrenceTemplateId: {}, targetRecurrenceTemplate: {}, createEventWorkflow: {}", today, targetRecurrenceTemplateId, createEventWorkflow);
         Set<String> activeRecurrenceTemplateIds;
         if (targetRecurrenceTemplateId == null) {
             activeRecurrenceTemplateIds = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplateIds();
@@ -45,9 +45,9 @@ public class RecurringEventsCronService {
             FirebaseService.createFirestoreTransaction(transaction -> {
                 Optional<RecurrenceTemplate> maybeRecurrenceTemplate = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId, transaction);
                 if (maybeRecurrenceTemplate.isEmpty()) {
-                    throw new Exception(
-                            "Could not turn recurringEventSnapshot object into RecurringEvent pojo using toObject: "
-                                    + recurrenceTemplateId);
+                    logger.warn("Recurrence template not found for id: {} during transaction. Skipping processing of this recurring event to avoid TOCTOU failures.",
+                            recurrenceTemplateId);
+                    return true; // Continue processing other templates in the batch
                 }
 
                 RecurrenceTemplate recurrenceTemplate = maybeRecurrenceTemplate.get();
