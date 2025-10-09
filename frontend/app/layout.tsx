@@ -6,51 +6,24 @@ import GrafanaFaro from "@/observability/GrafanaFaro";
 import { Environment, getEnvironment } from "@/utilities/environment";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
-import { Inter, Montserrat } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
-/* eslint-disable */
-const aileron = localFont({
+const satoshi = localFont({
   src: [
     {
-      path: "../public/fonts/Aileron-Regular.otf",
-      weight: "400",
+      path: "../public/fonts/santoshi/TTF/Satoshi-Variable.ttf",
+      weight: "300 900",
       style: "normal",
     },
     {
-      path: "../public/fonts/Aileron-Italic.otf",
-      weight: "400",
-      style: "italic",
-    },
-    {
-      path: "../public/fonts/Aileron-Bold.otf",
-      weight: "700",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/Aileron-BoldItalic.otf",
-      weight: "700",
+      path: "../public/fonts/santoshi/TTF/Satoshi-VariableItalic.ttf",
+      weight: "300 900",
       style: "italic",
     },
   ],
+  variable: "--font-satoshi",
 });
-/* eslint-enable */
-
-export const inter = Inter({ subsets: ["latin"] });
-
-// eslint-disable-next-line
-const montserrat = Montserrat({ subsets: ["latin"] });
-
-// const montserrat = localFont({
-//   src: [
-//     {
-//       path:""
-//     }
-//   ]
-// })
-
-// const inter = Inter({ subsets: ["latin"] }); old font, just replace aileron with inter to swap back
 export const metadata: Metadata = {
   title: "SPORTSHUB | Find your next social sport session!",
   description:
@@ -121,7 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <GrafanaFaro>
         <UserContext>
-          <body className={`${inter.className}`}>
+          <body className={`${satoshi.className}`}>
             <AccessibilitySkipNavigation />
             <div className="md:hidden">
               <MobileNavbar />
