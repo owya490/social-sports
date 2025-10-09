@@ -12,12 +12,12 @@ import "./globals.css";
 const satoshi = localFont({
   src: [
     {
-      path: "../public/fonts/santoshi/TTF/Satoshi-Variable.ttf",
+      path: "../public/fonts/satoshi/TTF/Satoshi-Variable.ttf",
       weight: "300 900",
       style: "normal",
     },
     {
-      path: "../public/fonts/santoshi/TTF/Satoshi-VariableItalic.ttf",
+      path: "../public/fonts/satoshi/TTF/Satoshi-VariableItalic.ttf",
       weight: "300 900",
       style: "italic",
     },
