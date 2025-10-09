@@ -1,27 +1,24 @@
 "use client";
 import CalendarEventCard from "@/components/users/profile/CalendarEventCard";
+import { ScreenSize, useScreenSize } from "@/components/utility/ScreenSize";
 import { EventData } from "@/interfaces/EventTypes";
-import { PublicUserData } from "@/interfaces/UserTypes";
 import { isSameDay, startOfDay } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 
 interface OrganiserCalendarProps {
-  organiser: PublicUserData;
   events: EventData[];
 }
 
-export default function OrganiserCalendar({ organiser, events }: OrganiserCalendarProps) {
+export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
+  const { isAtOrBelow } = useScreenSize();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [month, setMonth] = useState<Date>(new Date());
   const [showEventsList, setShowEventsList] = useState(false);
 
   // Initialize on mount
   useEffect(() => {
-    // Check if on mobile (screen width < 768px which is md breakpoint)
-    const isMobile = window.innerWidth < 768;
-
     if (events.length > 0) {
       const today = startOfDay(new Date());
 
@@ -36,8 +33,8 @@ export default function OrganiserCalendar({ organiser, events }: OrganiserCalend
         upcomingEvents.sort((a, b) => a.startDate.toMillis() - b.startDate.toMillis());
         const closestEventDate = startOfDay(upcomingEvents[0].startDate.toDate());
 
-        if (isMobile) {
-          // On mobile: navigate to first event month but don't select date
+        if (isAtOrBelow(ScreenSize.MD)) {
+          // On mobile/tablet: navigate to first event month but don't select date
           setMonth(closestEventDate);
         } else {
           // On desktop: select the date and navigate to its month
@@ -68,9 +65,8 @@ export default function OrganiserCalendar({ organiser, events }: OrganiserCalend
     if (date) {
       setMonth(date);
     }
-    // Check if on mobile (screen width < 768px which is md breakpoint)
-    const isMobile = window.innerWidth < 768;
-    if (isMobile && date) {
+    // Show events list on mobile/tablet when a date is selected
+    if (isAtOrBelow(ScreenSize.MD) && date) {
       setShowEventsList(true);
     }
   };

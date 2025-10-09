@@ -11,15 +11,13 @@ interface ContactEventButtonProps {
 
 export default function ContactEventButton({ eventLink, fallbackLink, className = "" }: ContactEventButtonProps) {
   const [openModal, setOpenModal] = useState(false);
+  const linkToUse = eventLink || fallbackLink;
 
   const handleContactClick = () => {
-    const linkToUse = eventLink || fallbackLink;
     if (linkToUse) {
       setOpenModal(true);
     }
   };
-
-  const linkToUse = eventLink || fallbackLink;
 
   return (
     <>

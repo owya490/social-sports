@@ -28,7 +28,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
   };
 
   const renderTicketBooking = () => (
-    <div className="flex items-start gap-3 items-center">
+    <div className="flex gap-3 items-center">
       <div className="flex-shrink-0 md:min-w-64">
         <Select value={ticketCount.toString()} onChange={handleTicketCountChange} label="Tickets" disabled={loading}>
           {Array.from({ length: Math.min(event.vacancy, MAX_TICKETS_PER_ORDER) }, (_, i) => i + 1).map((num) => (
@@ -61,7 +61,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
         </h4>
 
         {/* Image and Metadata in line */}
-        <div className="flex gap-4 mb-4">
+        <div className="flex gap-4">
           {/* Event Thumbnail */}
           <div className="flex-shrink-0">
             <Image
@@ -93,7 +93,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
 
         {/* Ticket Selection and Book Now */}
         {event.paymentsActive ? (
-          renderTicketBooking()
+          <div className="mt-4">{renderTicketBooking()}</div>
         ) : (
           <div className="flex justify-end">
             <ContactEventButton
@@ -120,21 +120,22 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
 
         {/* Right side - 3 rows */}
         <div className="flex-1 flex flex-col gap-3">
-          {/* Row 1: Title */}
-          <Link
-            href={`/event/${event.eventId}`}
-            className="font-bold text-lg mb-3 hover:underline overflow-x-hidden focus:outline-none focus-visible:underline"
-          >
-            {event.name}
-          </Link>
-
-          {/* Row 2: Metadata */}
-          <div className="space-y-2 overflow-x-hidden">
+          <div>
             <div className="flex items-center">
               <p className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(event.startDate)}</p>
               <p className="font-light text-gray-500 text-xs ml-auto">${displayPrice(event.price)}</p>
             </div>
+            {/* Row 1: Title */}
+            <Link
+              href={`/event/${event.eventId}`}
+              className="font-bold text-lg hover:underline overflow-x-hidden focus:outline-none focus-visible:underline"
+            >
+              {event.name}
+            </Link>
+          </div>
 
+          {/* Row 2: Metadata */}
+          <div className="space-y-2 overflow-x-hidden mb-3">
             <div className="flex items-center">
               <MapPinIcon className="w-4 shrink-0" />
               <p className="ml-1 font-light text-xs whitespace-nowrap overflow-hidden">{event.location}</p>

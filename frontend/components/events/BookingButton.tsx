@@ -51,7 +51,7 @@ export default function BookingButton({ eventId, ticketCount, setLoading, classN
   };
 
   return (
-    <button className={className} onClick={handleBookNow} disabled={internalLoading}>
+    <button type="button" className={className} onClick={handleBookNow} disabled={internalLoading}>
       {internalLoading ? "Booking..." : "Book Now"}
     </button>
   );
