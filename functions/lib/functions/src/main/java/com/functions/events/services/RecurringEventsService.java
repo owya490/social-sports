@@ -45,7 +45,7 @@ public class RecurringEventsService {
             privateUserData.setRecurrenceTemplates(recurrenceTemplates);
             Users.updatePrivateUserData(newEventData.getOrganiserId(), privateUserData);
             // Create the first event iteration
-            String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId, recurrenceTemplate, true).stream().findFirst().orElseThrow(() -> new Exception(""));
+            String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId, true).stream().findFirst().orElseThrow(() -> new Exception(""));
             logger.info("Successfully created new Recurrence Template {}", recurrenceTemplateId);
             return Optional.of(Map.entry(recurrenceTemplateId, eventId));
         } catch (Exception e) {
