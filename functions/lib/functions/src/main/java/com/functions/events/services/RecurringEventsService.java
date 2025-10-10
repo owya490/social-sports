@@ -45,7 +45,7 @@ public class RecurringEventsService {
             privateUserData.setRecurrenceTemplates(recurrenceTemplates);
             Users.updatePrivateUserData(newEventData.getOrganiserId(), privateUserData);
             // Create the first event iteration
-            String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId, recurrenceTemplate, true).stream().findFirst().orElseThrow(() -> new Exception(""));
+            String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId, true).stream().findFirst().orElseThrow(() -> new Exception("Failed to create initial event for recurrence template: " + recurrenceTemplateId));
             logger.info("Successfully created new Recurrence Template {}", recurrenceTemplateId);
             return Optional.of(Map.entry(recurrenceTemplateId, eventId));
         } catch (Exception e) {
@@ -87,13 +87,15 @@ public class RecurringEventsService {
 
             // Check is recurrence is being reactivated
             boolean isRecurrenceActive = recurrenceTemplate.getEventData().getIsActive();
-            if (isRecurrenceActive == false) {
+            if (!isRecurrenceActive) {
                 List<Timestamp> allRecurrences = recurrenceTemplate.getRecurrenceData().getAllRecurrences();
-                Timestamp lastRecurrence = allRecurrences.get(allRecurrences.size() - 1);
-                // If the lastRecurrence is in the future, we have re-enabled the Recurring Events
-                if (lastRecurrence.getSeconds() > Timestamp.now().getSeconds()) {
-                    RecurrenceTemplateRepository.moveRecurrenceTemplateToActive(recurrenceTemplateId, recurrenceTemplate);
-                    logger.info("Successfully moved Recurrence Template {} to active", recurrenceTemplateId);
+                if (!allRecurrences.isEmpty()) {
+                    Timestamp lastRecurrence = allRecurrences.get(allRecurrences.size() - 1);
+                    // If the lastRecurrence is in the future, we have re-enabled the Recurring Events
+                    if (lastRecurrence.getSeconds() > Timestamp.now().getSeconds()) {
+                        RecurrenceTemplateRepository.moveRecurrenceTemplateToActive(recurrenceTemplateId, recurrenceTemplate);
+                        logger.info("Successfully moved Recurrence Template {} to active", recurrenceTemplateId);
+                    }
                 }
             }
 
