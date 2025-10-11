@@ -4,6 +4,7 @@ import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUs
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowLeftStartOnRectangleIcon,
+  DocumentTextIcon,
   LifebuoyIcon,
   LightBulbIcon,
   PencilSquareIcon,
@@ -159,6 +160,19 @@ export default function ProfilePic() {
                       >
                         <PencilSquareIcon className="h-5 mr-2" />
                         Create event
+                      </Link>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <Link
+                        href="/docs"
+                        className={`${
+                          active ? "text-core-text bg-core-hover" : "text-core-text"
+                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                      >
+                        <DocumentTextIcon className="h-5 mr-2" />
+                        Documentation
                       </Link>
                     )}
                   </Menu.Item>

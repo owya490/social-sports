@@ -109,7 +109,7 @@ export default function CreateEvent() {
     fetchUserImages();
   }, [user]);
 
-  const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
+  const { step, currentStep, isFirstStep, isLastStep, back, next, goTo } = useMultistepForm([
     <BasicInformation
       key="basic-form"
       {...data}
@@ -142,12 +142,13 @@ export default function CreateEvent() {
     });
   }
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
-
+  function validateForm(): boolean {
     let formHasError = false;
     let errorMessage = "";
-
+    const form = document.querySelector("form") as HTMLFormElement;
+    if (!form.reportValidity()) {
+      return false;
+    }
     if (isFirstStep) {
       if (data.location === "") {
         formHasError = true;
@@ -160,11 +161,23 @@ export default function CreateEvent() {
       setAlertMessage(errorMessage);
       setHasAlert(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
+      return false;
+    }
+    return true;
+  }
+
+  function submit(e: FormEvent, stepIndex?: number) {
+    e.preventDefault();
+    if (!validateForm()) {
       return;
     }
 
     if (!isLastStep) {
-      next();
+      if (stepIndex !== undefined) {
+        goTo(stepIndex);
+      } else {
+        next();
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -270,6 +283,14 @@ export default function CreateEvent() {
     setHasAlert(false);
     setAlertMessage("");
   };
+
+  const handleStepClick = (stepIndex: number) => {
+    if (validateForm()) {
+      goTo(stepIndex);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return loading ? (
     <Loading />
   ) : (
@@ -277,10 +298,10 @@ export default function CreateEvent() {
       {!showForm ? (
         <div className="h-screen w-full flex justify-center items-center">Please Login/ Register to Access</div>
       ) : (
-        <div className="screen-width-primary pt-10 sm:pt-16">
+        <div className="screen-width-primary pt-10 sm:pt-16 pb-10">
           <form onSubmit={submit}>
             <div className="px-6 lg:px-12">
-              <CreateEventStepper activeStep={currentStep} />
+              <CreateEventStepper activeStep={currentStep} onStepClick={handleStepClick} />
             </div>
             <div className="absolute top-2 right-2">{/* {currentStep + 1} / {steps.length} */}</div>
             {step}
