@@ -109,7 +109,7 @@ export default function CreateEvent() {
     fetchUserImages();
   }, [user]);
 
-  const { step, currentStep, isFirstStep, isLastStep, back, next } = useMultistepForm([
+  const { step, currentStep, isFirstStep, isLastStep, back, next, goTo } = useMultistepForm([
     <BasicInformation
       key="basic-form"
       {...data}
@@ -142,12 +142,16 @@ export default function CreateEvent() {
     });
   }
 
-  function submit(e: FormEvent) {
+  function submit(e: FormEvent, stepIndex?: number) {
     e.preventDefault();
 
     let formHasError = false;
     let errorMessage = "";
 
+    const form = e.currentTarget as HTMLFormElement;
+    if (!form.reportValidity()) {
+      return;
+    }
     if (isFirstStep) {
       if (data.location === "") {
         formHasError = true;
@@ -164,7 +168,11 @@ export default function CreateEvent() {
     }
 
     if (!isLastStep) {
-      next();
+      if (stepIndex !== undefined) {
+        goTo(stepIndex);
+      } else {
+        next();
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -270,6 +278,15 @@ export default function CreateEvent() {
     setHasAlert(false);
     setAlertMessage("");
   };
+
+  const handleStepClick = (stepIndex: number) => {
+    const form = document.querySelector("form") as HTMLFormElement;
+    if (form && form.reportValidity()) {
+      goTo(stepIndex);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return loading ? (
     <Loading />
   ) : (
@@ -280,7 +297,7 @@ export default function CreateEvent() {
         <div className="screen-width-primary pt-10 sm:pt-16">
           <form onSubmit={submit}>
             <div className="px-6 lg:px-12">
-              <CreateEventStepper activeStep={currentStep} />
+              <CreateEventStepper activeStep={currentStep} onStepClick={handleStepClick} />
             </div>
             <div className="absolute top-2 right-2">{/* {currentStep + 1} / {steps.length} */}</div>
             {step}

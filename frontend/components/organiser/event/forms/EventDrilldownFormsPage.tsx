@@ -56,20 +56,22 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   };
 
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
-    if (!selectedFormId) {
-      setFormId(null);
-      setFormTitle(null);
-      return;
-    }
-
     try {
       setAttachingForm(true);
       setError(null);
 
-      // Update the event with the selected formId
+      // Update the event with the selected formId (or null to detach)
       await updateEventById(eventId, { formId: selectedFormId });
 
-      // Update local state and refetch responses
+      if (!selectedFormId) {
+        // Detach form: clear local state
+        setFormId(null);
+        setFormTitle(null);
+        setFormResponses([]);
+        return;
+      }
+
+      // Attach form: update local state and fetch responses
       setFormId(selectedFormId);
 
       // Fetch form details to get the title
@@ -80,8 +82,8 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
       const formResponse = await getFormResponsesForEvent(selectedFormId, eventId);
       setFormResponses(formResponse);
     } catch (err) {
-      logger.error(`Failed to attach form to event: ${err}`);
-      setError("Failed to attach form to event");
+      logger.error(`Failed to ${selectedFormId ? "attach" : "detach"} form: ${err}`);
+      setError(`Failed to ${selectedFormId ? "attach" : "detach"} form`);
     } finally {
       setAttachingForm(false);
     }
@@ -158,6 +160,11 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
         <div className="bg-core-hover rounded-lg p-6 mb-6">
           <p className="text-sm text-core-text">No responses submitted</p>
         </div>
+        {attachingForm ? (
+          <div className="text-sm text-gray-600">Attaching form to event...</div>
+        ) : (
+          <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
+        )}
       </div>
     );
 
