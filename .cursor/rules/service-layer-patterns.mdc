@@ -1,0 +1,166 @@
+---
+globs: *.ts,*.tsx
+---
+
+# Service Layer & API Communication Patterns
+
+## Service Organization
+
+### Directory Structure
+
+Services are organized in `/frontend/services/src/` by domain:
+
+- `auth/` - Authentication and user management
+- `events/` - Event-related operations
+- `forms/` - Form handling and responses
+- `fulfilment/` - Payment and booking fulfilment
+- `images/` - Image upload and processing
+- `maps/` - Google Maps integration
+- `stripe/` - Payment processing
+- `users/` - User profile management
+
+### Service File Patterns
+
+Each domain follows consistent patterns:
+
+```
+domain/
+├── domainService.ts          # Main service functions
+├── domainConstants.ts        # Constants and configuration
+├── domainUtils/              # Utility functions
+│   ├── createDomainUtils.ts
+│   ├── getDomainUtils.ts
+│   └── commonDomainUtils.ts
+└── domainErrors.ts           # Domain-specific errors
+```
+
+## Firebase Functions Integration
+
+### Function Constants
+
+Define all Firebase function names as constants:
+
+```typescript
+// In firebaseFunctionsService.ts
+export const FIREBASE_FUNCTIONS_CREATE_EVENT = "create_event";
+export const FIREBASE_FUNCTIONS_CREATE_RECURRENCE_TEMPLATE = "create_recurrence_template";
+
+export function getFirebaseFunctionByName(name: string): HttpsCallable {
+  const functions = getFunctions(app, "australia-southeast1");
+  return httpsCallable(functions, name);
+}
+```
+
+### Function Calling Pattern
+
+```typescript
+import { getFirebaseFunctionByName, FIREBASE_FUNCTIONS_CREATE_EVENT } from "../firebaseFunctionsService";
+
+export async function createEvent(eventData: NewEventData): Promise<EventData> {
+  const createEventFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_EVENT);
+
+  try {
+    const result = await createEventFunction(eventData);
+    return result.data as EventData;
+  } catch (error) {
+    // Handle error appropriately
+    throw new Error(`Failed to create event: ${error}`);
+  }
+}
+```
+
+## Service Function Patterns
+
+### 1. CRUD Operations
+
+Follow consistent naming and structure:
+
+```typescript
+// Create operations
+export async function createEvent(eventData: NewEventData): Promise<EventData>;
+
+// Read operations
+export async function getEventById(eventId: EventId): Promise<EventData>;
+export async function getEventsByFilters(filters: EventFilters): Promise<EventData[]>;
+
+// Update operations
+export async function updateEvent(eventId: EventId, updates: Partial<EventData>): Promise<void>;
+
+// Delete operations
+export async function deleteEvent(eventId: EventId): Promise<void>;
+```
+
+### 2. Data Transformation
+
+Use utility functions for data transformation:
+
+```typescript
+// In domainUtils/
+export function transformEventData(rawData: any): EventData {
+  return {
+    eventId: rawData.eventId,
+    name: rawData.name,
+    // ... transform other fields
+  };
+}
+```
+
+### 3. Caching Strategies
+
+Implement localStorage caching for frequently accessed data:
+
+```typescript
+export function bustEventsLocalStorageCache(): void {
+  localStorage.removeItem("events_cache");
+}
+
+export function getCachedEvents(): EventData[] | null {
+  const cached = localStorage.getItem("events_cache");
+  return cached ? JSON.parse(cached) : null;
+}
+```
+
+## Error Handling in Services
+
+See `.cursor/rules/error-handling-patterns.mdc` for comprehensive error handling patterns.
+
+## Authentication Integration
+
+See `.cursor/rules/security-authentication.mdc` for comprehensive authentication patterns.
+
+## Service Constants
+
+### Configuration Constants
+
+```typescript
+// In domainConstants.ts
+export const EVENTS_COLLECTION = "events";
+export const USERS_COLLECTION = "users";
+export const MAX_EVENTS_PER_PAGE = 20;
+export const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+```
+
+## Service Testing Patterns
+
+See `.cursor/rules/testing-quality.mdc` for comprehensive testing patterns and mocking strategies.
+
+## Best Practices
+
+### 1. Service Function Guidelines
+
+- Always use TypeScript interfaces for parameters and return types
+- Implement proper error handling with custom error classes
+- Use consistent naming conventions (CRUD operations)
+- Cache frequently accessed data appropriately
+- Log important operations for debugging
+
+### 2. Performance Considerations
+
+- Use localStorage caching for static data
+- Implement pagination for large datasets
+- Debounce search and filter operations
+- Use batch operations when possible
+
+### 3. Security
+
+See `.cursor/rules/security-authentication.mdc` for comprehensive security guidelines.

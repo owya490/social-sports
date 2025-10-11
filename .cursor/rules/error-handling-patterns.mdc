@@ -1,0 +1,341 @@
+---
+globs: *.ts,*.tsx,*.py,*.java
+---
+
+# Error Handling & Exception Management
+
+## Frontend Error Handling
+
+### Custom Error Classes
+
+Define domain-specific error classes in `/frontend/interfaces/exceptions/` and `/frontend/services/src/*/domainErrors.ts`:
+
+```typescript
+// interfaces/exceptions/NotFoundError.ts
+export class NotFoundError extends Error {
+  constructor(resource: string, id: string) {
+    super(`${resource} with ID ${id} not found`);
+    this.name = "NotFoundError";
+  }
+}
+
+// services/src/users/userErrors.ts
+export class UserNotFoundError extends Error {
+  constructor(userId: string) {
+    super(`User with ID ${userId} not found`);
+    this.name = "UserNotFoundError";
+  }
+}
+
+export class UserValidationError extends Error {
+  constructor(message: string) {
+    super(`User validation failed: ${message}`);
+    this.name = "UserValidationError";
+  }
+}
+```
+
+### Component Error Boundaries
+
+Implement error boundaries for component trees:
+
+```typescript
+import React from "react";
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, ErrorBoundaryState> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Error caught by boundary:", error, errorInfo);
+    // Log to monitoring service
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 text-center">
+          <h2>Something went wrong</h2>
+          <button onClick={() => this.setState({ hasError: false })}>Try again</button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+### Service Layer Error Handling
+
+```typescript
+export async function getUserById(userId: UserId): Promise<UserData> {
+  try {
+    const docRef = doc(db, "users", userId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      throw new UserNotFoundError(userId);
+    }
+
+    return docSnap.data() as UserData;
+  } catch (error) {
+    // Re-throw known errors
+    if (error instanceof UserNotFoundError) {
+      throw error;
+    }
+
+    // Wrap unknown errors
+    throw new Error(`Failed to fetch user: ${error}`);
+  }
+}
+```
+
+### Async Error Handling in Components
+
+```typescript
+export default function EventCard({ eventId }: { eventId: EventId }) {
+  const [event, setEvent] = useState<EventData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchEvent() {
+      try {
+        setLoading(true);
+        setError(null);
+        const eventData = await getEventById(eventId);
+        setEvent(eventData);
+      } catch (error) {
+        if (error instanceof EventNotFoundError) {
+          setError("Event not found");
+        } else {
+          setError("Failed to load event");
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchEvent();
+  }, [eventId]);
+
+  if (loading) return <LoadingSkeleton />;
+  if (error) return <ErrorMessage message={error} />;
+  if (!event) return null;
+
+  return <EventCardContent event={event} />;
+}
+```
+
+## Backend Error Handling
+
+### Java Exception Patterns
+
+```java
+// In exceptions/ package
+public class EventNotFoundException extends RuntimeException {
+    public EventNotFoundException(String eventId) {
+        super("Event with ID " + eventId + " not found");
+    }
+}
+
+public class ValidationException extends RuntimeException {
+    public ValidationException(String message) {
+        super("Validation failed: " + message);
+    }
+}
+
+// In service classes
+public EventData getEventById(String eventId) {
+    try {
+        DocumentSnapshot doc = firestore.collection("events")
+            .document(eventId)
+            .get()
+            .get();
+
+        if (!doc.exists()) {
+            throw new EventNotFoundException(eventId);
+        }
+
+        return doc.toObject(EventData.class);
+    } catch (InterruptedException | ExecutionException e) {
+        logger.error("Failed to fetch event", e);
+        throw new RuntimeException("Database error occurred", e);
+    }
+}
+```
+
+### Python Exception Patterns
+
+```python
+# In lib/ directory
+class EventNotFoundError(Exception):
+    def __init__(self, event_id: str):
+        self.event_id = event_id
+        super().__init__(f"Event with ID {event_id} not found")
+
+class ValidationError(Exception):
+    def __init__(self, message: str):
+        super().__init__(f"Validation failed: {message}")
+
+# In function implementations
+def get_event(event_id: str):
+    try:
+        doc_ref = db.collection('events').document(event_id)
+        doc = doc_ref.get()
+
+        if not doc.exists:
+            raise EventNotFoundError(event_id)
+
+        return doc.to_dict()
+    except FirestoreError as e:
+        logging.error(f"Firestore error: {e}")
+        raise Exception("Database error occurred")
+```
+
+## Error Logging & Monitoring
+
+Use the existing observability setup with Grafana Faro (frontend) and Google Cloud Logging (backend) as documented in `.cursor/rules/project-structure.mdc`.
+
+## Error Response Patterns
+
+### API Error Responses
+
+```typescript
+// Frontend error handling for API calls
+export interface ErrorResponse {
+  error: string;
+  code?: string;
+  details?: Record<string, any>;
+}
+
+export async function apiCall<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      const errorResponse: ErrorResponse = {
+        error: error.message,
+        code: error.code,
+        details: { firebaseError: true },
+      };
+      throw new Error(JSON.stringify(errorResponse));
+    }
+    throw error;
+  }
+}
+```
+
+### User-Friendly Error Messages
+
+```typescript
+export function getUserFriendlyErrorMessage(error: Error): string {
+  if (error.message.includes("auth/user-not-found")) {
+    return "User account not found";
+  }
+  if (error.message.includes("auth/wrong-password")) {
+    return "Incorrect password";
+  }
+  if (error.message.includes("auth/email-already-in-use")) {
+    return "Email address is already registered";
+  }
+  if (error.message.includes("network")) {
+    return "Network error. Please check your connection";
+  }
+  return "An unexpected error occurred. Please try again";
+}
+```
+
+## Error Recovery Strategies
+
+### Retry Logic
+
+```typescript
+export async function retryOperation<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> {
+  let lastError: Error;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+
+      if (attempt === maxRetries) {
+        throw lastError;
+      }
+
+      // Exponential backoff
+      await new Promise((resolve) => setTimeout(resolve, delay * attempt));
+    }
+  }
+
+  throw lastError!;
+}
+```
+
+### Fallback Strategies
+
+```typescript
+export async function getEventWithFallback(eventId: EventId): Promise<EventData> {
+  try {
+    // Try primary data source
+    return await getEventById(eventId);
+  } catch (error) {
+    if (error instanceof EventNotFoundError) {
+      // Try cached data
+      const cachedEvent = getCachedEvent(eventId);
+      if (cachedEvent) {
+        return cachedEvent;
+      }
+    }
+
+    // Return default/empty event data
+    return EmptyEventData;
+  }
+}
+```
+
+## Best Practices
+
+### 1. Error Classification
+
+- **User Errors**: Validation failures, authentication issues
+- **System Errors**: Database failures, network issues
+- **Business Logic Errors**: Domain-specific rule violations
+
+### 2. Error Propagation
+
+- Don't swallow errors silently
+- Provide meaningful error messages to users
+- Log detailed errors for debugging
+- Use appropriate error boundaries
+
+### 3. Error Recovery
+
+- Implement retry logic for transient failures
+- Provide fallback data when possible
+- Gracefully degrade functionality
+- Allow users to retry operations
+
+### 4. Security Considerations
+
+- Don't expose sensitive information in error messages
+- Log security-related errors appropriately
+- Validate all inputs to prevent errors
+- Handle authentication errors gracefully

@@ -1,0 +1,168 @@
+---
+alwaysApply: true
+---
+
+# Development Workflow & Best Practices
+
+## Development Environment Setup
+
+See `.cursor/rules/project-structure.mdc` for detailed architecture information.
+
+### Prerequisites
+
+- Node.js 18+ for frontend development
+- Python 3.x for Firebase Functions
+- Java 16+ for microservices
+- Firebase CLI for deployment
+- Git for version control
+
+### Local Development
+
+1. **Frontend**: `cd frontend && npm run dev`
+2. **Backend**: our 'backend' consists of lambda serverless functions deployed on Firebase (python) and Google cloud (java)
+3. **Testing**: `cd frontend && npm test` (frontend) `cd functions/lib/functions && mvn test` (java)
+4. **Deploy to dev**: Python: `cd functions && ./deployFunctionToFirebase.sh dev <function_name>`, Java: `cd functions/lib/functions && ./deployFunctionsToGCloud.sh dev <function_name>`
+
+## Git Workflow
+
+### Branch Strategy
+
+- `master` - Production branch
+- `<jira-issue-code>/*` - Feature branches
+- `hotfix/*` - Hotfix branches
+
+### Commit Guidelines
+
+- Use conventional commit format
+- Include clear, descriptive messages
+- Reference issues/tickets when applicable
+- Keep commits focused and atomic
+
+### Pull Request Process
+
+1. Create feature branch from `master`
+2. Implement changes with tests
+3. Run linting and tests locally
+4. If editing python/java cloud functions, deploy to dev environment and test functionality works
+5. Create PR with clear description
+6. Code review and approval
+7. Merge to `master`
+
+## Code Quality Standards
+
+### 1. Code Style Standards
+
+- Follow ESLint configuration
+- Use Prettier for consistent formatting
+- Write self-documenting code
+- Only add comments for complex logic or for explaining WHY we do things, not WHAT
+- Ensure to have `www` in every URL
+
+### 2. TypeScript & Testing
+
+See `.cursor/rules/typescript-conventions.mdc` and `.cursor/rules/testing-quality.mdc`
+
+## Development Tools
+
+### 1. IDE Configuration
+
+- Configure TypeScript path mapping
+- Set up ESLint and Prettier
+- Enable format on save
+
+### 2. Debugging
+
+- Use browser dev tools for frontend
+- Implement proper logging
+
+## Security Best Practices
+
+### 1. Code Security
+
+- Validate all user inputs
+- Use parameterized queries
+- Implement proper authentication
+- Follow OWASP guidelines
+
+### 2. Dependency Management
+
+- Keep dependencies updated
+- Scan for vulnerabilities
+- Use lock files
+- Review dependency changes
+
+### 3. Environment Security
+
+- Use environment variables for secrets
+- Implement proper access controls
+- Use HTTPS everywhere
+- Regular security audits
+
+## Performance Optimization
+
+### 1. Frontend Performance
+
+- Optimize bundle size
+- Implement code splitting
+- Use lazy loading
+- Optimize images
+
+### 2. Backend Performance
+
+- Optimize database queries
+- Implement caching
+- Use connection pooling
+- Monitor function execution times
+
+### 3. Monitoring
+
+- Set up error tracking
+- Monitor performance metrics
+- Track user analytics
+- Implement alerting
+
+## Documentation Standards
+
+### 1. Code Documentation
+
+- Document complex functions
+- Explain business logic
+- Provide usage examples
+- Keep documentation updated
+
+### 2. API Documentation
+
+- Document all endpoints
+- Provide request/response examples
+- Include error codes
+- Keep API docs current
+
+### 3. Architecture Documentation
+
+- Document system design
+- Explain data flow
+- Provide deployment guides
+- Keep diagrams updated
+
+## Collaboration Guidelines
+
+### 1. Code Reviews
+
+- Review for functionality and quality
+- Check for security issues
+- Ensure proper testing
+- Provide constructive feedback
+
+### 2. Communication
+
+- Use clear, concise language
+- Provide context for changes
+- Ask questions when unclear
+- Share knowledge and learnings
+
+### 3. Knowledge Sharing
+
+- Document decisions and rationale
+- Share best practices
+- Conduct code walkthroughs
+- Maintain team documentation

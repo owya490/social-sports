@@ -1,0 +1,411 @@
+---
+globs: *.ts,*.tsx,*.py,*.java
+---
+
+# Performance Optimization Guidelines
+
+## Frontend Performance
+
+### React Component Optimization
+
+#### Memoization Patterns
+
+```typescript
+import React, { memo, useMemo, useCallback } from "react";
+
+// Component memoization for expensive renders
+const EventCard = memo(function EventCard({ event, onBook }: EventCardProps) {
+  const formattedDate = useMemo(() => formatDate(event.startTime), [event.startTime]);
+
+  const handleBook = useCallback(() => {
+    onBook(event.eventId);
+  }, [event.eventId, onBook]);
+
+  return (
+    <div className="event-card">
+      <h3>{event.name}</h3>
+      <p>{formattedDate}</p>
+      <button onClick={handleBook}>Book Now</button>
+    </div>
+  );
+});
+
+// List optimization with proper keys
+const EventList = memo(function EventList({ events }: { events: EventData[] }) {
+  return (
+    <div>
+      {events.map((event) => (
+        <EventCard
+          key={event.eventId} // Use stable, unique keys
+          event={event}
+          onBook={handleBook}
+        />
+      ))}
+    </div>
+  );
+});
+```
+
+#### Lazy Loading & Code Splitting
+
+```typescript
+import { lazy, Suspense } from "react";
+import LoadingSkeleton from "@/components/loading/LoadingSkeleton";
+
+// Lazy load heavy components
+const EventDetailsModal = lazy(() => import("./EventDetailsModal"));
+const OrganiserDashboard = lazy(() => import("./OrganiserDashboard"));
+
+// Route-based code splitting
+const EventPage = lazy(() => import("@/app/(footer)/event/[id]/page"));
+const OrganiserPage = lazy(() => import("@/app/(no-footer)/organiser/dashboard/page"));
+
+// Usage with Suspense
+export default function App() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <Router>
+        <Routes>
+          <Route path="/event/:id" element={<EventPage />} />
+          <Route path="/organiser" element={<OrganiserPage />} />
+        </Routes>
+      </Router>
+    </Suspense>
+  );
+}
+```
+
+### Image Optimization
+
+```typescript
+import Image from "next/image";
+
+// Optimized image component
+export function EventImage({ src, alt, priority = false }: ImageProps) {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={400}
+      height={300}
+      priority={priority} // For above-the-fold images
+      placeholder="blur"
+      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+      className="rounded-lg object-cover"
+    />
+  );
+}
+
+// Image preloading for critical images
+useEffect(() => {
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "image";
+  link.href = "/hero-image.jpg";
+  document.head.appendChild(link);
+}, []);
+```
+
+### State Management Optimization
+
+```typescript
+// Avoid unnecessary re-renders with proper state structure
+const [events, setEvents] = useState<EventData[]>([]);
+const [filters, setFilters] = useState<EventFilters>({});
+
+// Batch state updates
+const handleMultipleUpdates = useCallback(() => {
+  setEvents((prevEvents) => [...prevEvents, newEvent]);
+  setFilters((prevFilters) => ({ ...prevFilters, category: "sports" }));
+}, [newEvent]);
+
+// Use refs for values that don't need to trigger re-renders
+const searchInputRef = useRef<HTMLInputElement>(null);
+const timeoutRef = useRef<NodeJS.Timeout>();
+
+// Debounced search
+const handleSearch = useCallback((query: string) => {
+  clearTimeout(timeoutRef.current);
+  timeoutRef.current = setTimeout(() => {
+    performSearch(query);
+  }, 300);
+}, []);
+```
+
+## Data Fetching Optimization
+
+### Caching Strategies
+
+See `.cursor/rules/service-layer-patterns.mdc` for detailed caching implementation patterns.
+
+### Pagination & Virtual Scrolling
+
+```typescript
+// Virtual scrolling for large lists
+import { FixedSizeList as List } from "react-window";
+
+const VirtualizedEventList = ({ events }: { events: EventData[] }) => {
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => (
+    <div style={style}>
+      <EventCard event={events[index]} />
+    </div>
+  );
+
+  return (
+    <List height={600} itemCount={events.length} itemSize={120} width="100%">
+      {Row}
+    </List>
+  );
+};
+
+// Pagination with loading states
+export function usePaginatedEvents(pageSize: number = 20) {
+  const [events, setEvents] = useState<EventData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+
+  const loadMore = useCallback(async () => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+    try {
+      const newEvents = await fetchEvents(page, pageSize);
+      setEvents((prev) => [...prev, ...newEvents]);
+      setHasMore(newEvents.length === pageSize);
+      setPage((prev) => prev + 1);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, pageSize, loading, hasMore]);
+
+  return { events, loading, hasMore, loadMore };
+}
+```
+
+## Backend Performance
+
+### Java Performance Patterns
+
+```java
+// Efficient data processing
+public class EventService {
+    private final Firestore firestore;
+
+    // Batch operations for better performance
+    public void batchUpdateEvents(List<EventData> events) {
+        WriteBatch batch = firestore.batch();
+
+        for (EventData event : events) {
+            DocumentReference docRef = firestore.collection("events")
+                .document(event.getEventId());
+            batch.update(docRef, "lastModified", Timestamp.now());
+        }
+
+        batch.commit();
+    }
+
+    // Streaming for large datasets
+    public Stream<EventData> getEventsStream(Query query) {
+        return query.stream()
+            .map(doc -> doc.toObject(EventData.class));
+    }
+
+    // Connection pooling
+    @Singleton
+    public Firestore getFirestore() {
+        return FirestoreOptions.newBuilder()
+            .setProjectId(projectId)
+            .setCredentials(credentials)
+            .build()
+            .getService();
+    }
+}
+```
+
+### Python Performance Patterns
+
+```python
+# Async operations for better concurrency
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+async def process_events_batch(event_ids: List[str]) -> List[EventData]:
+    """Process multiple events concurrently"""
+
+    async def fetch_single_event(event_id: str) -> EventData:
+        doc = await firestore.collection('events').document(event_id).get()
+        return doc.to_dict()
+
+    # Process up to 10 events concurrently
+    semaphore = asyncio.Semaphore(10)
+
+    async def limited_fetch(event_id: str):
+        async with semaphore:
+            return await fetch_single_event(event_id)
+
+    tasks = [limited_fetch(event_id) for event_id in event_ids]
+    return await asyncio.gather(*tasks)
+
+# Caching with TTL
+from functools import lru_cache
+import time
+
+@lru_cache(maxsize=1000)
+def get_cached_event(event_id: str, cache_timestamp: float) -> EventData:
+    """Cache events with timestamp-based invalidation"""
+    doc = firestore.collection('events').document(event_id).get()
+    return doc.to_dict()
+
+def get_event_with_cache(event_id: str) -> EventData:
+    """Get event with cache invalidation"""
+    current_time = time.time()
+    cache_key = (event_id, current_time // 300)  # 5-minute cache
+    return get_cached_event(cache_key[0], cache_key[1])
+```
+
+## Database Optimization
+
+### Firestore Query Optimization
+
+```typescript
+// Efficient queries with proper indexing
+export async function getEventsByFilters(filters: EventFilters): Promise<EventData[]> {
+  let query: Query = collection(db, "events");
+
+  // Apply filters in order of selectivity
+  if (filters.category) {
+    query = query.where("category", "==", filters.category);
+  }
+
+  if (filters.location) {
+    query = query.where("location", "==", filters.location);
+  }
+
+  if (filters.startDate) {
+    query = query.where("startDate", ">=", filters.startDate);
+  }
+
+  // Limit results and use pagination
+  query = query.limit(20);
+
+  const snapshot = await getDocs(query);
+  return snapshot.docs.map((doc) => doc.data() as EventData);
+}
+
+// Compound queries with proper indexes
+export async function getEventsByLocationAndDate(
+  location: string,
+  startDate: Timestamp,
+  endDate: Timestamp
+): Promise<EventData[]> {
+  const query = query(
+    collection(db, "events"),
+    where("location", "==", location),
+    where("startDate", ">=", startDate),
+    where("startDate", "<=", endDate),
+    orderBy("startDate"),
+    limit(50)
+  );
+
+  const snapshot = await getDocs(query);
+  return snapshot.docs.map((doc) => doc.data() as EventData);
+}
+```
+
+## Monitoring & Profiling
+
+### Performance Monitoring
+
+```typescript
+// Frontend performance monitoring
+import { Logger } from "@/observability/logger";
+
+const logger = new Logger("performance");
+
+export function measurePerformance<T>(name: string, operation: () => Promise<T>): Promise<T> {
+  const start = performance.now();
+
+  return operation()
+    .then((result) => {
+      const duration = performance.now() - start;
+      logger.info("Performance measurement", {
+        operation: name,
+        duration: `${duration.toFixed(2)}ms`,
+      });
+      return result;
+    })
+    .catch((error) => {
+      const duration = performance.now() - start;
+      logger.error("Performance measurement failed", {
+        operation: name,
+        duration: `${duration.toFixed(2)}ms`,
+        error: error.message,
+      });
+      throw error;
+    });
+}
+
+// Usage
+const events = await measurePerformance("fetchEvents", () => fetchEvents(filters));
+```
+
+### Bundle Size Optimization
+
+```typescript
+// Dynamic imports for heavy libraries
+const loadChartLibrary = () => import("chart.js");
+
+export async function createChart(data: ChartData) {
+  const Chart = await loadChartLibrary();
+  return new Chart.Chart(ctx, config);
+}
+
+// Tree shaking optimization
+import { format } from "date-fns"; // Only import what you need
+// Instead of: import * as dateFns from 'date-fns';
+```
+
+## Best Practices
+
+### 1. Component Performance
+
+- Use `React.memo` for expensive components
+- Implement proper key props for lists
+- Avoid inline object/function creation in render
+- Use `useCallback` and `useMemo` judiciously
+
+### 2. Data Fetching
+
+- Implement proper caching strategies
+- Use pagination for large datasets
+- Debounce search and filter operations
+- Preload critical data
+
+### 3. Image Optimization
+
+- Use Next.js Image component
+- Implement lazy loading
+- Provide appropriate image sizes
+- Use modern formats (WebP, AVIF)
+
+### 4. Bundle Optimization
+
+- Code split at route level
+- Lazy load heavy components
+- Tree shake unused code
+- Monitor bundle size
+
+### 5. Database Performance
+
+- Design proper Firestore indexes
+- Use compound queries efficiently
+- Implement pagination
+- Cache frequently accessed data
+
+### 6. Monitoring
+
+- Measure critical user journeys
+- Monitor Core Web Vitals
+- Track bundle size over time
+- Set up performance budgets

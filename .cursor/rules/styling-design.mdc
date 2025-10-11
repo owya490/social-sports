@@ -1,0 +1,271 @@
+---
+globs: *.css,*.tsx,*.jsx
+---
+
+# Styling & Design System Guidelines
+
+## Design System Overview
+
+### Color Palette
+
+The SPORTSHUB design system uses a carefully curated color palette defined in [tailwind.config.ts](mdc:frontend/tailwind.config.ts):
+
+#### Core Colors
+
+```typescript
+core: {
+  outline: "#DDDDDD",    // Borders and dividers
+  text: "#222222",       // Primary text color
+  hover: "#F7F7F7"       // Hover states
+}
+```
+
+#### Organizer Colors
+
+```typescript
+organiser: {
+  "light-gray": "#F8F8F8",           // Light backgrounds
+  "darker-light-gray": "#E8E8E8",    // Subtle backgrounds
+  "dark-gray-text": "#404040",       // Secondary text
+  "title-gray-text": "#969696"       // Muted text
+}
+```
+
+#### Highlight Colors
+
+```typescript
+highlight: {
+  yellow: "#F2B705",     // Primary accent
+  red: "#FF0000",        // Error states
+  black: "#000000"       // High contrast
+}
+```
+
+## Tailwind CSS Usage
+
+### 1. Utility-First Approach
+
+- Use Tailwind utility classes for all styling
+- Avoid custom CSS when possible
+- Leverage Tailwind's responsive design system
+- Use consistent spacing and sizing scales
+
+### 2. Responsive Design
+
+```typescript
+// Mobile-first responsive design
+<div className="
+  text-sm           // Base (mobile)
+  md:text-base      // Medium screens and up
+  lg:text-lg        // Large screens and up
+  xl:text-xl        // Extra large screens
+">
+```
+
+### 3. Custom Utilities
+
+- Use custom shadow: `shadow-searchbar` for search components
+- Extend theme in [tailwind.config.ts](mdc:frontend/tailwind.config.ts)
+- Create reusable component classes when needed
+
+## Component Styling Patterns
+
+### 1. Card Components
+
+```typescript
+<div className="
+  bg-white                    // Background
+  rounded-lg                  // Border radius
+  shadow-md                   // Shadow
+  hover:shadow-lg             // Hover state
+  transition-all duration-300 // Smooth transitions
+  p-4                        // Padding
+">
+```
+
+### 2. Button Components
+
+```typescript
+<button className="
+  bg-highlight-yellow         // Primary button color
+  text-white                  // Text color
+  px-4 py-2                  // Padding
+  rounded-md                  // Border radius
+  hover:bg-yellow-600         // Hover state
+  transition-colors duration-200
+  disabled:opacity-50         // Disabled state
+  disabled:cursor-not-allowed
+">
+```
+
+### 3. Form Elements
+
+```typescript
+<input
+  className="
+  w-full                     // Full width
+  px-3 py-2                  // Padding
+  border border-core-outline // Border
+  rounded-md                 // Border radius
+  focus:outline-none         // Remove default focus
+  focus:ring-2               // Custom focus ring
+  focus:ring-highlight-yellow
+  focus:border-transparent   // Hide border on focus
+"
+/>
+```
+
+## Layout and Spacing
+
+### 1. Consistent Spacing
+
+- Use Tailwind's spacing scale: `p-1`, `p-2`, `p-4`, `p-6`, `p-8`
+- Maintain consistent margins: `m-2`, `m-4`, `m-6`
+- Use gap utilities for flexbox/grid: `gap-2`, `gap-4`
+
+### 2. Grid and Flexbox
+
+```typescript
+// Grid layout
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+// Flexbox layout
+<div className="flex items-center justify-between">
+```
+
+### 3. Container Patterns
+
+```typescript
+// Page container
+<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+// Card container
+<div className="bg-white rounded-lg shadow-md p-6">
+```
+
+## Typography
+
+### 1. Text Hierarchy
+
+```typescript
+// Headings
+<h1 className="text-3xl font-bold text-core-text">
+<h2 className="text-2xl font-semibold text-core-text">
+<h3 className="text-xl font-medium text-core-text">
+
+// Body text
+<p className="text-base text-core-text">
+<p className="text-sm text-organiser-title-gray-text">
+```
+
+### 2. Text Utilities
+
+- Use `font-light`, `font-normal`, `font-medium`, `font-semibold`, `font-bold`
+- Use `text-left`, `text-center`, `text-right` for alignment
+- Use `whitespace-nowrap`, `overflow-hidden`, `text-ellipsis` for text truncation
+
+## Interactive States
+
+### 1. Hover States
+
+```typescript
+<div className="
+  hover:bg-core-hover
+  hover:scale-105
+  transition-all duration-300
+  cursor-pointer
+">
+```
+
+### 2. Focus States
+
+```typescript
+<button className="
+  focus:outline-none
+  focus:ring-2
+  focus:ring-highlight-yellow
+  focus:ring-offset-2
+">
+```
+
+### 3. Active States
+
+```typescript
+<button className="
+  active:scale-95
+  active:bg-yellow-600
+  transition-transform duration-100
+">
+```
+
+## Loading and Animation States
+
+### 1. Loading Skeletons
+
+- Use components from `loading/` directory
+- Implement consistent loading patterns
+- Use `animate-pulse` for skeleton effects
+
+### 2. Transitions
+
+```typescript
+// Smooth transitions
+<div className="transition-all duration-300">
+
+// Staggered animations
+<div className="animate-fade-in delay-100">
+```
+
+### 3. Loading States
+
+```typescript
+{
+  loading ? <LoadingSkeleton /> : <ActualContent />;
+}
+```
+
+## Mobile-First Design
+
+### 1. Responsive Breakpoints
+
+- `xs`: 100px (custom)
+- `sm`: 640px
+- `md`: 768px
+- `lg`: 1024px
+- `xl`: 1280px
+- `2xl`: 1536px
+- `3xl`: 2200px (custom)
+
+### 2. Mobile Optimizations
+
+- Touch-friendly button sizes (min 44px)
+- Readable text sizes (min 16px)
+- Adequate spacing for touch targets
+- Optimized images for mobile
+
+## Accessibility in Styling
+
+### 1. Color Contrast
+
+- Ensure sufficient contrast ratios
+- Use semantic colors for states
+- Provide alternative indicators beyond color
+
+### 2. Focus Indicators
+
+- Always provide visible focus states
+- Use consistent focus ring styling
+- Ensure keyboard navigation works
+
+### 3. Responsive Text
+
+- Use relative units for text sizing
+- Ensure text remains readable at all sizes
+- Test with browser zoom levels
+
+## Performance Considerations
+
+- Use Tailwind's purging to remove unused styles
+- Use Next.js Image component with lazy loading
+- Use `transform` and `opacity` for animations (avoid layout properties)
+- Minimize custom CSS and use efficient selectors
