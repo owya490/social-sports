@@ -88,7 +88,7 @@ export default function SuggestionForm() {
             required
           />
         </div>
-        <button type="submit" className="w-full bg-[#30ADFF] py-2 text-white text-xl rounded-lg" disabled={isLoading}>
+        <button type="submit" className="w-full py-2 bg-black text-white text-xl rounded-lg" disabled={isLoading}>
           {isLoading ? "Sending..." : "Submit"}
         </button>
       </form>

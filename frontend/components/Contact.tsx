@@ -1,8 +1,8 @@
 const ContactUs = () => {
   return (
-    <div className="w-screen h-screen flex items-center justify-center md:pt-0 pt-12 md:pb-0 pb-6">
+    <div className="w-screen flex items-center justify-center md:pt-0 pt-6 md:pb-0 pb-6">
       <div className="space-y-6">
-        <h1 className="text-4xl font-bold md:mt-0 mt-32">Get in touch</h1>
+        <h1 className="text-4xl font-bold md:mt-0">Get in touch</h1>
         <p className="pt-4 pb-8">Fill in the form to start a conversation</p>
         <div className="flex items-center">
           <svg
@@ -14,7 +14,7 @@ const ContactUs = () => {
             <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
             <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
           </svg>
-          <span>compassdigitalmail@gmail.com</span>
+          <span>info@sportshub.net.au</span>
         </div>
 
         <div className="flex items-center">

@@ -67,7 +67,7 @@ export default function UserProfilePage({ params }: any) {
   return loading ? (
     <Loading />
   ) : (
-    <div className="mt-16 w-full flex justify-center pb-24">
+    <div className="md:mt-6 w-full flex justify-center pb-24">
       <div className="screen-width-primary">
         <div className="md:flex gap-16">
           <div id="col-1" className="pt-8 min-w-80">
@@ -114,7 +114,7 @@ export default function UserProfilePage({ params }: any) {
           <div id="col-2" className="pt-8">
             <h1 className="hidden md:block text-3xl font-bold">{`About ${publicUserProfile.firstName} ${publicUserProfile.surname}`}</h1>
             <div className="md:pt-8 pb-6">
-              <div className={`font-light ${isBioExpanded ? "" : "line-clamp-4 md:line-clamp-5"}`}>
+              <div className={`font-light ${isBioExpanded ? "" : "line-clamp-4"}`}>
                 <RichTextEditorContent description={publicUserProfile.bio || "No bio provided."} />
               </div>
               {publicUserProfile.bio && publicUserProfile.bio.length > 100 && (
