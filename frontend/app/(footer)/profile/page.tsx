@@ -55,9 +55,9 @@ const Profile = () => {
   ) : (
     <div className="w-screen flex justify-center mb-10 px-1">
       <div className="screen-width-primary">
-        <div className="mt-16 mb-10 block lg:flex lg:space-x-10">
+        <div className="mt-6 mb-10 block lg:flex lg:space-x-10">
           <div className="basis-2/5 space-y-6">
-            <div className="flex mt-8 mb-4 font-bold text-2xl">
+            <div className="flex mb-4 font-bold text-2xl">
               {user.firstName}&apos;s Profile
               {user.isVerifiedOrganiser && (
                 <div>
