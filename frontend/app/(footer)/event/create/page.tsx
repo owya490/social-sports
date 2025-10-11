@@ -294,7 +294,7 @@ export default function CreateEvent() {
       {!showForm ? (
         <div className="h-screen w-full flex justify-center items-center">Please Login/ Register to Access</div>
       ) : (
-        <div className="screen-width-primary pt-10 sm:pt-16">
+        <div className="screen-width-primary pt-10 sm:pt-16 pb-10">
           <form onSubmit={submit}>
             <div className="px-6 lg:px-12">
               <CreateEventStepper activeStep={currentStep} onStepClick={handleStepClick} />
