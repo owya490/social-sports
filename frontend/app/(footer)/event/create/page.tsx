@@ -142,15 +142,12 @@ export default function CreateEvent() {
     });
   }
 
-  function submit(e: FormEvent, stepIndex?: number) {
-    e.preventDefault();
-
+  function validateForm(): boolean {
     let formHasError = false;
     let errorMessage = "";
-
-    const form = e.currentTarget as HTMLFormElement;
+    const form = document.querySelector("form") as HTMLFormElement;
     if (!form.reportValidity()) {
-      return;
+      return false;
     }
     if (isFirstStep) {
       if (data.location === "") {
@@ -164,6 +161,14 @@ export default function CreateEvent() {
       setAlertMessage(errorMessage);
       setHasAlert(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
+      return false;
+    }
+    return true;
+  }
+
+  function submit(e: FormEvent, stepIndex?: number) {
+    e.preventDefault();
+    if (!validateForm()) {
       return;
     }
 
@@ -280,8 +285,7 @@ export default function CreateEvent() {
   };
 
   const handleStepClick = (stepIndex: number) => {
-    const form = document.querySelector("form") as HTMLFormElement;
-    if (form && form.reportValidity()) {
+    if (validateForm()) {
       goTo(stepIndex);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
