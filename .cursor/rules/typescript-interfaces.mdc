@@ -1,0 +1,100 @@
+---
+globs: *.ts,*.tsx
+---
+
+# TypeScript & Interface Guidelines
+
+## Interface Organization
+
+### File Structure
+
+All TypeScript interfaces are organized in `/frontend/interfaces/` with the following structure:
+
+- [EventTypes.ts](mdc:frontend/interfaces/EventTypes.ts) - Event-related types and interfaces
+- [UserTypes.ts](mdc:frontend/interfaces/UserTypes.ts) - User and authentication types
+- [StripeTypes.ts](mdc:frontend/interfaces/StripeTypes.ts) - Payment and Stripe-related types
+- [FormTypes.ts](mdc:frontend/interfaces/FormTypes.ts) - Form and validation types
+- [ImageTypes.ts](mdc:frontend/interfaces/ImageTypes.ts) - Image handling types
+- [FunctionsTypes.ts](mdc:frontend/interfaces/FunctionsTypes.ts) - Backend function types
+- [index.ts](mdc:frontend/interfaces/index.ts) - Re-exports and shared utilities
+
+## Type Definition Patterns
+
+### 1. Branded Types
+
+Use branded types for domain-specific strings to prevent type confusion:
+
+```typescript
+export type UserId = string;
+export type EventId = string;
+export type FormId = string;
+```
+
+### 2. Interface Hierarchy
+
+Follow this pattern for data interfaces:
+
+- `AbstractEventData` - Base interface with common properties
+- `NewEventData` - For creating new entities
+- `EventData` - Complete entity with all relationships
+- `EventDataWithoutOrganiser` - Variant without nested objects
+
+### 3. Empty Object Patterns
+
+Always provide empty/default objects for interfaces:
+
+```typescript
+export const EmptyEventData: EventData = {
+  eventId: "",
+  organiser: EmptyPublicUserData,
+  // ... all required fields with sensible defaults
+};
+```
+
+### 4. Firebase Integration
+
+- Use `Timestamp` from `firebase/firestore` for dates
+- Handle Firestore document IDs as strings
+- Use `Record<string, T>` for dynamic object properties
+
+## Interface Guidelines
+
+### Naming Conventions
+
+- Interfaces: `PascalCase` (e.g., `EventData`, `PublicUserData`)
+- Types: `PascalCase` (e.g., `EventId`, `UserId`)
+- Constants: `PascalCase` with descriptive names (e.g., `EmptyEventData`)
+- Enums: `PascalCase` (e.g., `SearchType`)
+
+### Required vs Optional Properties
+
+- Use `?` for truly optional properties
+- Provide default values in empty objects
+- Use union types with `| null` for nullable fields
+
+### Interface Composition
+
+- Extend base interfaces when appropriate
+- Use intersection types (`&`) for combining interfaces
+- Keep interfaces focused and cohesive
+
+### Documentation
+
+- Add JSDoc comments for complex interfaces
+- Document the purpose of branded types
+- Explain business logic in interface comments
+
+## Import/Export Patterns
+
+- Use named exports for all interfaces
+- Re-export commonly used types from [index.ts](mdc:frontend/interfaces/index.ts)
+- Group related imports together
+- Use absolute imports with `@/` prefix
+
+## Type Safety Best Practices
+
+- Always use strict TypeScript configuration
+- Prefer interfaces over type aliases for object shapes
+- Use const assertions for immutable data
+- Leverage TypeScript's utility types when appropriate
+- Avoid `any` - use `unknown` or proper typing instead

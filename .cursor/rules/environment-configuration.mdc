@@ -1,0 +1,416 @@
+---
+globs: *.ts,*.tsx,*.py,*.java,*.env*,*.json,*.yaml,*.yml
+---
+
+# Environment & Configuration Management
+
+## Environment Variables
+
+### Frontend Environment Configuration
+
+```typescript
+// utilities/environment.ts
+import process from "process";
+
+export enum Environment {
+  DEVELOPMENT = "DEVELOPMENT",
+  PREVIEW = "PREVIEW",
+  PRODUCTION = "PRODUCTION",
+}
+
+export function getEnvironment(): Environment {
+  switch (process.env.ENVIRONMENT) {
+    case "DEVELOPMENT":
+      return Environment.DEVELOPMENT;
+    case "PREVIEW":
+      return Environment.PREVIEW;
+    case "PRODUCTION":
+      return Environment.PRODUCTION;
+    default:
+      return Environment.DEVELOPMENT;
+  }
+}
+
+// Environment-specific configuration
+export function getEnvironmentConfig() {
+  const env = getEnvironment();
+
+  return {
+    environment: env,
+    isDevelopment: env === Environment.DEVELOPMENT,
+    isProduction: env === Environment.PRODUCTION,
+    apiUrl: getApiUrl(env),
+    debugMode: env !== Environment.PRODUCTION,
+  };
+}
+
+function getApiUrl(env: Environment): string {
+  switch (env) {
+    case Environment.DEVELOPMENT:
+      return "https://dev-api.sportshub.net.au";
+    case Environment.PREVIEW:
+      return "https://preview-api.sportshub.net.au";
+    case Environment.PRODUCTION:
+      return "https://api.sportshub.net.au";
+    default:
+      return "https://dev-api.sportshub.net.au";
+  }
+}
+```
+
+### Next.js Environment Variables
+
+See project's actual `next.config.js` for current environment variable configuration.
+
+### Environment Variable Validation
+
+```typescript
+// utilities/config.ts
+interface Config {
+  firebase: {
+    apiKey: string;
+    authDomain: string;
+    projectId: string;
+    storageBucket: string;
+    messagingSenderId: string;
+    appId: string;
+    measurementId: string;
+  };
+  googleMaps: {
+    apiKey: string;
+  };
+  emailJS: {
+    serviceId: string;
+    templateId: string;
+    userId: string;
+  };
+}
+
+function validateConfig(): Config {
+  const requiredEnvVars = [
+    "FIREBASE_API_KEY",
+    "FIREBASE_AUTH_DOMAIN",
+    "FIREBASE_PROJECT_ID",
+    "FIREBASE_STORAGE_BUCKET",
+    "GOOGLE_MAPS_API_KEY",
+  ];
+
+  for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+      throw new Error(`Missing required environment variable: ${envVar}`);
+    }
+  }
+
+  return {
+    firebase: {
+      apiKey: process.env.FIREBASE_API_KEY!,
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN!,
+      projectId: process.env.FIREBASE_PROJECT_ID!,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET!,
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID!,
+      appId: process.env.FIREBASE_APP_ID!,
+      measurementId: process.env.FIREBASE_MEASUREMENT_ID!,
+    },
+    googleMaps: {
+      apiKey: process.env.GOOGLE_MAPS_API_KEY!,
+    },
+    emailJS: {
+      serviceId: process.env.REACT_APP_EMAILJS_SERVICE_ID!,
+      templateId: process.env.REACT_APP_EMAILJS_TEMPLATE_ID!,
+      userId: process.env.REACT_APP_EMAILJS_USER_ID!,
+    },
+  };
+}
+
+export const config = validateConfig();
+```
+
+## Backend Configuration
+
+### Java Configuration Management
+
+```java
+// utils/environment/EnvironmentConfig.java
+public class EnvironmentConfig {
+    private static final String ENVIRONMENT = System.getenv("ENVIRONMENT");
+
+    public static boolean isDevelopment() {
+        return "DEVELOPMENT".equals(ENVIRONMENT);
+    }
+
+    public static boolean isProduction() {
+        return "PRODUCTION".equals(ENVIRONMENT);
+    }
+
+    public static String getFirebaseProjectId() {
+        return isProduction()
+            ? System.getenv("FIREBASE_PROD_PROJECT_ID")
+            : System.getenv("FIREBASE_DEV_PROJECT_ID");
+    }
+
+    public static String getApiUrl() {
+        return isProduction()
+            ? "https://api.sportshub.net.au"
+            : "https://dev-api.sportshub.net.au";
+    }
+
+    public static void validateEnvironment() {
+        String[] requiredVars = {
+            "ENVIRONMENT",
+            "FIREBASE_PROJECT_ID"
+        };
+
+        for (String var : requiredVars) {
+            if (System.getenv(var) == null) {
+                throw new IllegalStateException("Missing required environment variable: " + var);
+            }
+        }
+    }
+}
+```
+
+### Python Configuration Management
+
+```python
+# lib/config.py
+import os
+from typing import Dict, Any
+
+class Config:
+    """Configuration management for different environments"""
+
+    def __init__(self):
+        self.environment = os.getenv('ENVIRONMENT', 'DEVELOPMENT')
+        self._validate_environment()
+
+    def _validate_environment(self):
+        """Validate required environment variables"""
+        required_vars = [
+            'ENVIRONMENT',
+            'FIREBASE_PROJECT_ID'
+        ]
+
+        for var in required_vars:
+            if not os.getenv(var):
+                raise ValueError(f"Missing required environment variable: {var}")
+
+    @property
+    def is_development(self) -> bool:
+        return self.environment == 'DEVELOPMENT'
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment == 'PRODUCTION'
+
+    @property
+    def firebase_project_id(self) -> str:
+        if self.is_production:
+            return os.getenv('FIREBASE_PROD_PROJECT_ID')
+        return os.getenv('FIREBASE_DEV_PROJECT_ID')
+
+    @property
+    def api_url(self) -> str:
+        if self.is_production:
+            return 'https://api.sportshub.net.au'
+        return 'https://dev-api.sportshub.net.au'
+
+    def get_firebase_config(self) -> Dict[str, Any]:
+        """Get Firebase configuration based on environment"""
+        return {
+            'projectId': self.firebase_project_id,
+            'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET'),
+            'messagingSenderId': os.getenv('FIREBASE_MESSAGING_SENDER_ID'),
+        }
+
+# Global config instance
+config = Config()
+```
+
+## Firebase Configuration
+
+See project's actual `services/src/firebase.ts` for current Firebase configuration patterns.
+
+## Deployment Configuration
+
+### Environment-Specific Builds
+
+```json
+// package.json scripts
+{
+  "scripts": {
+    "dev": "ENVIRONMENT=DEVELOPMENT next dev",
+    "build:dev": "ENVIRONMENT=DEVELOPMENT next build",
+    "build:prod": "ENVIRONMENT=PRODUCTION next build",
+    "start:dev": "ENVIRONMENT=DEVELOPMENT next start",
+    "start:prod": "ENVIRONMENT=PRODUCTION next start"
+  }
+}
+```
+
+### Vercel Environment Configuration
+
+```json
+// vercel.json
+{
+  "env": {
+    "ENVIRONMENT": "@environment",
+    "FIREBASE_PROD_API_KEY": "@firebase-prod-api-key",
+    "FIREBASE_PROD_AUTH_DOMAIN": "@firebase-prod-auth-domain",
+    "FIREBASE_PROD_PROJECT_ID": "@firebase-prod-project-id",
+    "GOOGLE_MAPS_PROD_API_KEY": "@google-maps-prod-api-key"
+  },
+  "build": {
+    "env": {
+      "ENVIRONMENT": "@environment"
+    }
+  }
+}
+```
+
+### Firebase Functions Environment
+
+```javascript
+// functions/.env.example
+ENVIRONMENT = DEVELOPMENT;
+FIREBASE_DEV_PROJECT_ID = your - dev - project - id;
+FIREBASE_PROD_PROJECT_ID = your - prod - project - id;
+STRIPE_SECRET_KEY = your - stripe - secret - key;
+SENDGRID_API_KEY = your - sendgrid - api - key;
+```
+
+## Configuration Validation
+
+### Runtime Configuration Check
+
+```typescript
+// utilities/configValidator.ts
+export function validateRuntimeConfig(): void {
+  const env = getEnvironment();
+  const config = getEnvironmentConfig();
+
+  console.log(`Running in ${env} environment`);
+
+  if (env === Environment.PRODUCTION) {
+    // Production-specific validations
+    if (!process.env.FIREBASE_PROD_API_KEY) {
+      throw new Error("Production Firebase API key not configured");
+    }
+
+    if (config.debugMode) {
+      console.warn("Debug mode enabled in production!");
+    }
+  }
+
+  // Common validations
+  if (!process.env.GOOGLE_MAPS_API_KEY) {
+    console.warn("Google Maps API key not configured");
+  }
+}
+
+// Call on app initialization
+validateRuntimeConfig();
+```
+
+## Environment-Specific Features
+
+### Feature Flags
+
+```typescript
+// utilities/featureFlags.ts
+export interface FeatureFlags {
+  enableAnalytics: boolean;
+  enableDebugMode: boolean;
+  enableExperimentalFeatures: boolean;
+  enableBetaFeatures: boolean;
+}
+
+export function getFeatureFlags(): FeatureFlags {
+  const env = getEnvironment();
+
+  return {
+    enableAnalytics: env === Environment.PRODUCTION,
+    enableDebugMode: env !== Environment.PRODUCTION,
+    enableExperimentalFeatures: env === Environment.DEVELOPMENT,
+    enableBetaFeatures: env !== Environment.PRODUCTION,
+  };
+}
+
+// Usage in components
+export function AnalyticsWrapper({ children }: { children: React.ReactNode }) {
+  const { enableAnalytics } = getFeatureFlags();
+
+  if (!enableAnalytics) {
+    return <>{children}</>;
+  }
+
+  return <GoogleAnalytics gaId="GA_MEASUREMENT_ID">{children}</GoogleAnalytics>;
+}
+```
+
+### Environment-Specific Logging
+
+```typescript
+// observability/logger.ts
+import { getEnvironment } from "@/utilities/environment";
+
+export class Logger {
+  private name: string;
+  private enableDebug: boolean;
+
+  constructor(name: string) {
+    this.name = name;
+    this.enableDebug = getEnvironment() !== Environment.PRODUCTION;
+  }
+
+  info(message: string, data?: any): void {
+    if (this.enableDebug) {
+      console.log(`[${this.name}] ${message}`, data);
+    }
+  }
+
+  error(message: string, data?: any): void {
+    console.error(`[${this.name}] ${message}`, data);
+  }
+
+  warn(message: string, data?: any): void {
+    console.warn(`[${this.name}] ${message}`, data);
+  }
+}
+```
+
+## Best Practices
+
+### 1. Environment Variable Management
+
+- Use environment-specific prefixes (DEV*, PROD*)
+- Validate required variables at startup
+- Never commit sensitive values to version control
+- Use different Firebase projects for different environments
+
+### 2. Configuration Organization
+
+- Centralize configuration in dedicated files
+- Use TypeScript interfaces for type safety
+- Implement configuration validation
+- Provide sensible defaults where appropriate
+
+### 3. Security
+
+- Never expose sensitive keys in client-side code
+- Use server-side environment variables for secrets
+- Implement proper key rotation strategies
+- Monitor for exposed credentials
+
+### 4. Deployment
+
+- Use CI/CD environment-specific configurations
+- Implement proper secret management
+- Test configurations in staging environments
+- Document environment setup procedures
+
+### 5. Monitoring
+
+- Log configuration changes
+- Monitor for missing environment variables
+- Track environment-specific errors
+- Implement configuration health checks
