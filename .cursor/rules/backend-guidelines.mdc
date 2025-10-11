@@ -12,7 +12,7 @@ globs: *.py,*.java
 - **Secondary**: Python 3.x with Firebase Functions - we want to move away from python functions and have the backend written primarily in Java.
 - **Database**: Firestore (NoSQL)
 - **Payments**: Stripe API integration
-- **Email**: SendGrid for notifications
+- **Email**: Loops for notifications (migrating from deprecated SendGrid)
 - **Logging**: Google Cloud Logging
 - **Alerts**: Google Cloud Alerting
 
@@ -127,12 +127,15 @@ See `.cursor/rules/security-authentication.mdc` for comprehensive authentication
 
 ## Email System
 
-### SendGrid Integration
+### Loops Integration
 
+- Use Loops for all new email implementations
 - Use templates for consistent email formatting
 - Implement proper error handling for email failures
 - Track email delivery status
 - Handle unsubscribe requests properly
+
+**Note**: SendGrid is deprecated. All new email functionality should use Loops. Existing SendGrid code in `lib/sendgrid/` and `lib/emails/` should be migrated to Loops as opportunities arise.
 
 ### Email Types
 
