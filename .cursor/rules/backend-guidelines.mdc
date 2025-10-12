@@ -8,7 +8,7 @@ globs: *.py,*.java
 
 ### Technology Stack
 
-- **Primary**: Java microservices in `lib/functions/`
+- **Primary**: Java 17 LTS microservices in `lib/functions/`
 - **Secondary**: Python 3.x with Firebase Functions - we want to move away from python functions and have the backend written primarily in Java.
 - **Database**: Firestore (NoSQL)
 - **Payments**: Stripe API integration
@@ -56,7 +56,7 @@ See `.cursor/rules/project-structure.mdc` for complete architecture overview.
 
 - When the outcome of an operation is not known (e.g., database call) we prefer to be explicit with failures rather
   than returning an Optional<T>.
-- Only use Optional<T> the value is truly semantically Optional<T>.
+- Only use Optional<T> when the value is truly semantically optional.
 
 #### 5. Error handling
 
@@ -84,7 +84,7 @@ See existing examples in the codebase
 
 #### 2. Error Handling
 
-- Always wrap functions in try-catch blocks
+- Always wrap functions in try-except blocks
 - Use structured logging with Google Cloud Logging
 - Return consistent error response format
 - Log errors with appropriate severity levels

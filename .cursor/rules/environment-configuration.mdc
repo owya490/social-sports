@@ -204,9 +204,11 @@ class Config:
 
     @property
     def firebase_project_id(self) -> str:
-        if self.is_production:
-            return os.getenv('FIREBASE_PROD_PROJECT_ID')
-        return os.getenv('FIREBASE_DEV_PROJECT_ID')
+        var = 'FIREBASE_PROD_PROJECT_ID' if self.is_production else 'FIREBASE_DEV_PROJECT_ID'
+        value = os.getenv(var)
+        if not value:
+            raise ValueError(f"Missing required environment variable: {var}")
+        return value
 
     @property
     def api_url(self) -> str:
@@ -271,11 +273,11 @@ See project's actual `services/src/firebase.ts` for current Firebase configurati
 
 ```javascript
 // functions/.env.example
-ENVIRONMENT = DEVELOPMENT;
-FIREBASE_DEV_PROJECT_ID = your - dev - project - id;
-FIREBASE_PROD_PROJECT_ID = your - prod - project - id;
-STRIPE_SECRET_KEY = your - stripe - secret - key;
-SENDGRID_API_KEY = your - sendgrid - api - key;
+ENVIRONMENT=DEVELOPMENT;
+FIREBASE_DEV_PROJECT_ID=your-dev-project-id;
+FIREBASE_PROD_PROJECT_ID=your-prod-project-id;
+STRIPE_SECRET_KEY=your-stripe-secret-key;
+SENDGRID_API_KEY=your-sendgrid-api-key;
 ```
 
 ## Configuration Validation
@@ -351,7 +353,7 @@ export function AnalyticsWrapper({ children }: { children: React.ReactNode }) {
 
 ```typescript
 // observability/logger.ts
-import { getEnvironment } from "@/utilities/environment";
+import { getEnvironment, Environment } from "@/utilities/environment";
 
 export class Logger {
   private name: string;

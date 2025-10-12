@@ -12,14 +12,14 @@ See `.cursor/rules/project-structure.mdc` for detailed architecture information.
 
 - Node.js 18+ for frontend development
 - Python 3.x for Firebase Functions
-- Java 16+ for microservices
+- Java 17 LTS for microservices
 - Firebase CLI for deployment
 - Git for version control
 
 ### Local Development
 
 1. **Frontend**: `cd frontend && npm run dev`
-2. **Backend**: our 'backend' consists of lambda serverless functions deployed on Firebase (python) and Google cloud (java)
+2. **Backend**: our backend uses serverless Cloud Functions: Firebase/GCP (Python) and Google Cloud Functions (Java)
 3. **Testing**: `cd frontend && npm test` (frontend) `cd functions/lib/functions && mvn test` (java)
 4. **Deploy to dev**: Python: `cd functions && ./deployFunctionToFirebase.sh dev <function_name>`, Java: `cd functions/lib/functions && ./deployFunctionsToGCloud.sh dev <function_name>`
 
