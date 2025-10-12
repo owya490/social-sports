@@ -20,3 +20,12 @@ functions/venv/pyvenv.cfg
 # Ignore Next.js auto-generated TypeScript definitions
 next-env.d.ts
 .DS_Store
+
+# Ignore scraper deployment scripts (use GitHub Actions instead)
+functions/lib/scraping/deploy.sh
+functions/lib/scraping/call_scraper.sh
+functions/lib/scraping/DEPLOY_TO_DEV.md
+functions/lib/scraping/DEPLOY_WITHOUT_FIREBASE_CLI.md
+functions/lib/scraping/COMMIT_CHECKLIST.md
+functions/lib/scraping/html.txt
+functions/lib/scraping/event_html.txt

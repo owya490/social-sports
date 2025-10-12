@@ -59,14 +59,15 @@ jobs:
           source venv/bin/activate
           firebase use --add socialsports-44162
 
-      - name: Deploy meetup scraper function to dev
+      - name: Deploy meetup scraper functions to dev
         working-directory: functions
         run: |
           source venv/bin/activate
-          firebase deploy --only functions:scrape_meetup_events --force
+          firebase deploy --only functions:scrape_meetup_events,functions:scrape_meetup_group_events --force
 
       - name: Output deployment info
         run: |
           echo "✅ Meetup scraper deployed to dev environment"
-          echo "🔗 Function URL: https://australia-southeast1-socialsports-44162.cloudfunctions.net/scrape_meetup_events"
-          echo "📖 Usage: Add query parameters 'url' and 'max' to customize scraping"
+          echo "🔗 Old Function: https://australia-southeast1-socialsports-44162.cloudfunctions.net/scrape_meetup_events"
+          echo "🔗 New Group Scraper: https://australia-southeast1-socialsports-44162.cloudfunctions.net/scrape_meetup_group_events"
+          echo "📖 Usage: ?group_url=https://www.meetup.com/GROUP_NAME&create_events=true"

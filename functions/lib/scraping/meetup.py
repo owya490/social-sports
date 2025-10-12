@@ -420,6 +420,10 @@ def _convert_meetup_event_to_sportshub(meetup_event: Dict, logger: Logger) -> Di
         # Extract sport from description/name (default to volleyball for meetup scraper)
         sport = "Volleyball"  # Default for this scraper
         
+        # Calculate capacity and vacancy from scraped data if available
+        capacity = meetup_event.get("capacity", 20)  # Use scraped capacity or default to 20
+        vacancy = meetup_event.get("vacancy", capacity)  # Use scraped vacancy or default to capacity
+        
         # Create SportHub event structure
         sportshub_event = {
             # Required fields
@@ -427,8 +431,8 @@ def _convert_meetup_event_to_sportshub(meetup_event: Dict, logger: Logger) -> Di
             "endDate": end_timestamp,
             "location": meetup_event.get("Location", ""),
             "locationLatLng": {"lat": -33.8688, "lng": 151.2093},  # Default Sydney coordinates
-            "capacity": 20,  # Default capacity
-            "vacancy": 20,   # Default vacancy (same as capacity initially)
+            "capacity": capacity,
+            "vacancy": vacancy,
             "price": meetup_event.get("price", 0),
             "organiserId": SCRAPER_ORGANISER_ID,
             "registrationDeadline": reg_deadline_timestamp,
@@ -607,6 +611,249 @@ def scrape_meetup_events(req: https_fn.Request) -> https_fn.Response:
         )
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
+        return https_fn.Response(
+            json.dumps({"error": "unexpected_error", "message": str(e)}),
+            headers={"Content-Type": "application/json"},
+            status=500,
+        )
+
+
+def _parse_group_events_page(html: str, base_url: str) -> List[Dict]:
+    """Parse events from a Meetup group's events page"""
+    soup = BeautifulSoup(html, "html.parser")
+    
+    # Find all event links on the group events page
+    # Group event links follow pattern: /group-name/events/event-id/
+    anchors = soup.find_all("a", href=EVENT_HREF_REGEX)
+    
+    seen_urls: Set[str] = set()
+    events: List[Dict] = []
+    
+    for a in anchors:
+        href = a.get("href", "")
+        if not href:
+            continue
+        
+        # Normalize URL
+        url = href if href.startswith("http") else f"https://www.meetup.com{href}"
+        
+        # Skip if already seen
+        if url in seen_urls:
+            continue
+        
+        # Try to identify container for context
+        container = a
+        for _ in range(5):  # Go up a bit more for group pages
+            if container.parent:
+                container = container.parent
+            else:
+                break
+        
+        container_text = _extract_container_text(container)
+        
+        # Extract title
+        title = (a.get_text(strip=True) or "").strip()
+        if not title:
+            title = container_text.split(" by ")[:1][0]
+            if len(title) > 140:
+                title = title[:140].rstrip() + "…"
+        
+        # Extract price
+        price_match = PRICE_REGEX.search(container_text)
+        price_text = price_match.group(0) if price_match else "Free or Unknown"
+        
+        # Extract date/time
+        date_text = ""
+        if " • " in container_text:
+            chunks = [c.strip() for c in container_text.split(" • ") if c.strip()]
+            if len(chunks) >= 2:
+                date_text = chunks[1]
+        if not date_text:
+            m = re.search(
+                r"((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun|Every)[^|]{0,80}?(?:AM|PM|AEST|AEDT))",
+                container_text,
+                re.IGNORECASE,
+            )
+            if m:
+                date_text = m.group(1)
+        
+        # Extract attendee count
+        attendee_match = re.search(r"(\d+)\s+attendees?", container_text, re.IGNORECASE)
+        attendee_count = int(attendee_match.group(1)) if attendee_match else 0
+        
+        # Extract seats left
+        seats_match = re.search(r"(\d+)\s+seats?\s+left", container_text, re.IGNORECASE)
+        seats_left = int(seats_match.group(1)) if seats_match else None
+        
+        events.append(
+            {
+                "title": title,
+                "url": url,
+                "price_text": price_text,
+                "date_text": date_text,
+                "attendee_count": attendee_count,
+                "seats_left": seats_left,
+                "source": "meetup_group",
+                "source_url": base_url,
+            }
+        )
+        
+        seen_urls.add(url)
+    
+    return events
+
+
+@https_fn.on_request(
+    cors=options.CorsOptions(
+        cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["get", "post"]
+    ),
+    region="australia-southeast1",
+)
+def scrape_meetup_group_events(req: https_fn.Request) -> https_fn.Response:
+    """HTTP endpoint to scrape all upcoming events from a specific Meetup group.
+    
+    Query params:
+      - group_url: Required. The Meetup group URL (e.g., https://www.meetup.com/pennopickleballers).
+      - max: Optional int. Limit number of events to scrape (default: no limit, scrape all).
+      - create_events: Optional bool. If 'true', converts scraped events to SportHub format 
+        and stores them in the 'scraped_events' collection (default: false).
+    
+    Returns:
+      JSON response with scraped events and optionally created SportHub events.
+    """
+    uid = str(uuid.uuid4())
+    logger = Logger(f"meetup_group_scraper_{uid}")
+    logger.add_tag("uuid", uid)
+    
+    try:
+        # Get parameters from request
+        group_url = req.args.get('group_url')
+        if not group_url:
+            return https_fn.Response(
+                json.dumps({"error": "missing_parameter", "message": "group_url parameter is required"}),
+                headers={"Content-Type": "application/json"},
+                status=400,
+            )
+        
+        # Normalize group URL - remove trailing slash and ensure it doesn't have /events/
+        group_url = group_url.rstrip('/')
+        if group_url.endswith('/events'):
+            group_url = group_url[:-7]  # Remove /events
+        
+        # Construct events page URL
+        events_page_url = f"{group_url}/events/"
+        
+        max_items = req.args.get('max')
+        max_items = int(max_items) if max_items else None
+        create_events = req.args.get('create_events', 'false').lower() == 'true'
+        
+        logger.info(f"Scraping events from group: {events_page_url}")
+        
+        # Fetch the group's events page
+        html = _fetch_html(events_page_url, logger)
+        
+        # Parse events from the group page
+        listing = _parse_group_events_page(html, events_page_url)
+        logger.info(f"Found {len(listing)} events on group page")
+        
+        # Limit events if max specified
+        events_to_scrape = listing[:max_items] if max_items else listing
+        
+        # Navigate to each event and extract details
+        details: List[Dict] = []
+        for idx, item in enumerate(events_to_scrape):
+            # Rate limiting - don't spam Meetup
+            if idx > 0:  # Skip sleep for first event
+                sleep(5)
+            
+            event_url = item.get("url")
+            if not event_url:
+                continue
+            
+            try:
+                logger.info(f"Scraping event {idx + 1}/{len(events_to_scrape)}: {event_url}")
+                event_html = _fetch_html(event_url, logger)
+                detail = _parse_event_detail(event_html, event_url, logger)
+                
+                # If listing had a detectable price and detail did not, use listing price
+                if detail.get("price", 0) == 0 and item.get("price_text"):
+                    fallback_price = _safe_int_from_price(item.get("price_text"))
+                    if fallback_price is not None:
+                        detail["price"] = fallback_price
+                
+                # Add attendee info from listing if available
+                if item.get("attendee_count"):
+                    detail["attendee_count"] = item["attendee_count"]
+                if item.get("seats_left") is not None:
+                    detail["seats_left"] = item["seats_left"]
+                
+                details.append(detail)
+                
+            except Exception as e:
+                logger.warning(f"Failed to scrape detail for {event_url}: {e}")
+                continue
+        
+        # Optional: Convert and store events as SportHub events
+        stored_event_ids = []
+        if create_events and details:
+            try:
+                logger.info(f"Converting {len(details)} events to SportHub format...")
+                sportshub_events = []
+                for event_detail in details:
+                    # Update capacity based on attendee info if available
+                    if event_detail.get("attendee_count") and event_detail.get("seats_left"):
+                        total_capacity = event_detail["attendee_count"] + event_detail["seats_left"]
+                        event_detail["capacity"] = total_capacity
+                        event_detail["vacancy"] = event_detail["seats_left"]
+                    
+                    sportshub_event = _convert_meetup_event_to_sportshub(event_detail, logger)
+                    
+                    # Override capacity and vacancy if we calculated them
+                    if event_detail.get("capacity"):
+                        sportshub_event["capacity"] = event_detail["capacity"]
+                    if event_detail.get("vacancy"):
+                        sportshub_event["vacancy"] = event_detail["vacancy"]
+                    
+                    sportshub_events.append(sportshub_event)
+                
+                logger.info(f"Storing {len(sportshub_events)} events in scraped_events collection...")
+                stored_event_ids = _store_scraped_events(sportshub_events, logger)
+                logger.info(f"Successfully created {len(stored_event_ids)} SportHub events")
+                
+            except Exception as e:
+                logger.error(f"Failed to create SportHub events: {e}")
+                # Don't fail the whole request, just log the error
+        
+        payload = {
+            "group_url": group_url,
+            "events_page_url": events_page_url,
+            "total_events_found": len(listing),
+            "events_scraped": len(details),
+            "events": details,
+            "created_events": len(stored_event_ids) if create_events else 0,
+            "created_event_ids": stored_event_ids if create_events else [],
+            "create_events_enabled": create_events
+        }
+        
+        # Pretty print for debugging
+        print(json.dumps(payload, indent=4))
+        return https_fn.Response(
+            json.dumps(payload),
+            headers={"Content-Type": "application/json"},
+            status=200,
+        )
+    
+    except requests.HTTPError as e:
+        logger.error(f"HTTP error while scraping group: {e}")
+        return https_fn.Response(
+            json.dumps({"error": "http_error", "message": str(e)}),
+            headers={"Content-Type": "application/json"},
+            status=502,
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
         return https_fn.Response(
             json.dumps({"error": "unexpected_error", "message": str(e)}),
             headers={"Content-Type": "application/json"},
