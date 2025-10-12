@@ -49,30 +49,45 @@ const EventList = memo(function EventList({ events }: { events: EventData[] }) {
 #### Lazy Loading & Code Splitting
 
 ```typescript
-import { lazy, Suspense } from "react";
+"use client";
+
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import LoadingSkeleton from "@/components/loading/LoadingSkeleton";
 
-// Lazy load heavy components
-const EventDetailsModal = lazy(() => import("./EventDetailsModal"));
-const OrganiserDashboard = lazy(() => import("./OrganiserDashboard"));
+// Lazy load heavy components with dynamic()
+const EventDetailsModal = dynamic(() => import("./EventDetailsModal"), {
+  loading: () => <LoadingSkeleton />,
+  ssr: false, // Disable SSR for client-only components
+});
 
-// Route-based code splitting
-const EventPage = lazy(() => import("@/app/(footer)/event/[id]/page"));
-const OrganiserPage = lazy(() => import("@/app/(no-footer)/organiser/dashboard/page"));
+const OrganiserDashboard = dynamic(() => import("./OrganiserDashboard"), {
+  loading: () => <LoadingSkeleton />,
+  ssr: true, // Enable SSR for SEO-critical components
+});
 
-// Usage with Suspense
-export default function App() {
+const MapView = dynamic(() => import("./MapView"), {
+  loading: () => <LoadingSkeleton />,
+  ssr: false, // Maps typically require client-side only
+});
+
+// Usage in component
+export default function EventPage() {
+  const [showModal, setShowModal] = useState(false);
+
   return (
-    <Suspense fallback={<LoadingSkeleton />}>
-      <Router>
-        <Routes>
-          <Route path="/event/:id" element={<EventPage />} />
-          <Route path="/organiser" element={<OrganiserPage />} />
-        </Routes>
-      </Router>
-    </Suspense>
+    <div>
+      <button onClick={() => setShowModal(true)}>View Details</button>
+      {showModal && <EventDetailsModal />}
+    </div>
   );
 }
+
+// Route-based code splitting happens automatically with Next.js App Router
+// Pages are defined in the file system:
+// - app/(footer)/event/[id]/page.tsx
+// - app/(no-footer)/organiser/dashboard/page.tsx
+// Next.js automatically code-splits each page
 ```
 
 ### Image Optimization
@@ -96,14 +111,33 @@ export function EventImage({ src, alt, priority = false }: ImageProps) {
   );
 }
 
-// Image preloading for critical images
-useEffect(() => {
-  const link = document.createElement("link");
-  link.rel = "preload";
-  link.as = "image";
-  link.href = "/hero-image.jpg";
-  document.head.appendChild(link);
-}, []);
+// Custom hook for preloading critical images
+function usePreloadHeroImage(imageUrl: string) {
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = imageUrl;
+    document.head.appendChild(link);
+
+    // Cleanup on unmount
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [imageUrl]);
+}
+
+// Usage in component
+export default function HomePage() {
+  usePreloadHeroImage("/hero-image.jpg");
+
+  return (
+    <div>
+      <Image src="/hero-image.jpg" alt="Hero" width={1200} height={600} priority />
+      {/* rest of component */}
+    </div>
+  );
+}
 ```
 
 ### State Management Optimization
@@ -121,11 +155,11 @@ const handleMultipleUpdates = useCallback(() => {
 
 // Use refs for values that don't need to trigger re-renders
 const searchInputRef = useRef<HTMLInputElement>(null);
-const timeoutRef = useRef<NodeJS.Timeout>();
+const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 // Debounced search
 const handleSearch = useCallback((query: string) => {
-  clearTimeout(timeoutRef.current);
+  if (timeoutRef.current) clearTimeout(timeoutRef.current);
   timeoutRef.current = setTimeout(() => {
     performSearch(query);
   }, 300);
@@ -202,13 +236,18 @@ public class EventService {
             batch.update(docRef, "lastModified", Timestamp.now());
         }
 
-        batch.commit();
+        batch.commit().get(); // consider handling exceptions and timeouts
     }
 
     // Streaming for large datasets
     public Stream<EventData> getEventsStream(Query query) {
-        return query.stream()
-            .map(doc -> doc.toObject(EventData.class));
+        try {
+            QuerySnapshot snapshot = query.get().get();
+            return snapshot.getDocuments().stream()
+                .map(doc -> doc.toObject(EventData.class));
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Failed to fetch events", e);
+        }
     }
 
     // Connection pooling
@@ -233,8 +272,8 @@ from concurrent.futures import ThreadPoolExecutor
 async def process_events_batch(event_ids: List[str]) -> List[EventData]:
     """Process multiple events concurrently"""
 
-    async def fetch_single_event(event_id: str) -> EventData:
-        doc = await firestore.collection('events').document(event_id).get()
+    def fetch_single_event_sync(event_id: str) -> EventData:
+        doc = firestore.collection('events').document(event_id).get()
         return doc.to_dict()
 
     # Process up to 10 events concurrently
@@ -269,27 +308,31 @@ def get_event_with_cache(event_id: str) -> EventData:
 ### Firestore Query Optimization
 
 ```typescript
+import { collection, query, where, limit, orderBy, getDocs, Query, Timestamp } from 'firebase/firestore';
+
 // Efficient queries with proper indexing
 export async function getEventsByFilters(filters: EventFilters): Promise<EventData[]> {
-  let query: Query = collection(db, "events");
+  const constraints = [];
 
   // Apply filters in order of selectivity
   if (filters.category) {
-    query = query.where("category", "==", filters.category);
+    constraints.push(where("category", "==", filters.category));
   }
 
   if (filters.location) {
-    query = query.where("location", "==", filters.location);
+    constraints.push(where("location", "==", filters.location));
   }
 
   if (filters.startDate) {
-    query = query.where("startDate", ">=", filters.startDate);
+    constraints.push(where("startDate", ">=", filters.startDate));
   }
 
   // Limit results and use pagination
-  query = query.limit(20);
+  constraints.push(limit(20));
 
-  const snapshot = await getDocs(query);
+  const q = query(collection(db, "events"), ...constraints);
+
+  const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => doc.data() as EventData);
 }
 
@@ -299,7 +342,7 @@ export async function getEventsByLocationAndDate(
   startDate: Timestamp,
   endDate: Timestamp
 ): Promise<EventData[]> {
-  const query = query(
+  const q = query(
     collection(db, "events"),
     where("location", "==", location),
     where("startDate", ">=", startDate),
@@ -308,7 +351,7 @@ export async function getEventsByLocationAndDate(
     limit(50)
   );
 
-  const snapshot = await getDocs(query);
+  const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => doc.data() as EventData);
 }
 ```
@@ -357,8 +400,8 @@ const events = await measurePerformance("fetchEvents", () => fetchEvents(filters
 const loadChartLibrary = () => import("chart.js");
 
 export async function createChart(data: ChartData) {
-  const Chart = await loadChartLibrary();
-  return new Chart.Chart(ctx, config);
+  const { Chart } = await loadChartLibrary();
+  return new Chart(ctx, config);
 }
 
 // Tree shaking optimization

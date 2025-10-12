@@ -88,12 +88,14 @@ highlight: {
 ```typescript
 <button className="
   bg-highlight-yellow         // Primary button color
-  text-white                  // Text color
+  text-gray-900               // Dark text for WCAG AA contrast
   px-4 py-2                  // Padding
   rounded-md                  // Border radius
   hover:bg-yellow-600         // Hover state
+  hover:text-gray-900         // Maintain dark text on hover
   transition-colors duration-200
-  disabled:opacity-50         // Disabled state
+  disabled:bg-yellow-300      // Lighter background when disabled
+  disabled:text-gray-600      // Muted text when disabled
   disabled:cursor-not-allowed
 ">
 ```

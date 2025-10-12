@@ -111,12 +111,26 @@ Implement localStorage caching for frequently accessed data:
 
 ```typescript
 export function bustEventsLocalStorageCache(): void {
+  // Guard against SSR and non-browser environments
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    return;
+  }
   localStorage.removeItem("events_cache");
 }
 
 export function getCachedEvents(): EventData[] | null {
-  const cached = localStorage.getItem("events_cache");
-  return cached ? JSON.parse(cached) : null;
+  // Guard against SSR and non-browser environments
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    return null;
+  }
+  
+  try {
+    const cached = localStorage.getItem("events_cache");
+    return cached ? JSON.parse(cached) : null;
+  } catch (error) {
+    console.error("Failed to parse cached events:", error);
+    return null;
+  }
 }
 ```
 

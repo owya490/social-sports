@@ -21,6 +21,38 @@ Components are organized by feature in `/frontend/components/`:
 - `elements/` - Basic UI elements
 - `utility/` - Utility and helper components
 
+## Server vs Client Components (Next.js)
+
+### Default to Server Components
+
+By default, all components should be **Server Components** unless they require client-side interactivity. Server Components provide better performance, smaller bundle sizes, and improved security by keeping sensitive logic on the server.
+
+### When to Add "use client"
+
+Only add the `"use client"` directive when your component requires:
+
+**✅ Add "use client" when:**
+- Using React state (`useState`, `useReducer`)
+- Using lifecycle effects (`useEffect`, `useLayoutEffect`)
+- Using browser APIs (window, document, localStorage, etc.)
+- Adding event handlers that depend on client APIs (onClick with state updates)
+- Using third-party libraries that depend on client-side features
+- Accessing browser-only globals (navigator, geolocation, etc.)
+
+**❌ Keep as Server Component when:**
+- Fetching data from APIs or databases
+- Rendering static content
+- Using server-side utilities
+- No interactive state or effects needed
+
+### Minimize Client Components
+
+To maximize performance and security:
+- Keep client components as small as possible
+- Push `"use client"` boundary down to the smallest interactive component
+- Wrap only the interactive parts in client components
+- Pass server-fetched data to client components via props
+
 ## Component Patterns
 
 ### 1. Component Structure

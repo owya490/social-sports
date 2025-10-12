@@ -25,9 +25,11 @@ All TypeScript interfaces are organized in `/frontend/interfaces/` with the foll
 Use branded types for domain-specific strings to prevent type confusion:
 
 ```typescript
-export type UserId = string;
-export type EventId = string;
-export type FormId = string;
+import { Branded } from '@/interfaces/index'
+
+export type UserId = Branded<string, "UserId">;
+export type EventId = Branded<string, "EventId">;
+export type FormId = Branded<string, "FormId">;
 ```
 
 ### 2. Interface Hierarchy

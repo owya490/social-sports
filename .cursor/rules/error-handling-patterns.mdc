@@ -33,6 +33,19 @@ export class UserValidationError extends Error {
     this.name = "UserValidationError";
   }
 }
+
+// Generic AppError for wrapping third-party errors with metadata
+export class AppError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public details?: Record<string, any>,
+    options?: ErrorOptions
+  ) {
+    super(message, options);
+    this.name = "AppError";
+  }
+}
 ```
 
 ### Component Error Boundaries
@@ -96,8 +109,13 @@ export async function getUserById(userId: UserId): Promise<UserData> {
       throw error;
     }
 
-    // Wrap unknown errors
-    throw new Error(`Failed to fetch user: ${error}`);
+    // Wrap unknown errors with proper error chaining
+    if (error instanceof FirebaseError) {
+      throw new AppError(error.message, error.code, {
+        firebaseError: true
+      }, { cause: error });
+    }
+    throw new Error("Failed to fetch user", { cause: error });
   }
 }
 ```
@@ -226,14 +244,11 @@ export async function apiCall<T>(operation: () => Promise<T>): Promise<T> {
     return await operation();
   } catch (error) {
     if (error instanceof FirebaseError) {
-      const errorResponse: ErrorResponse = {
-        error: error.message,
-        code: error.code,
-        details: { firebaseError: true },
-      };
-      throw new Error(JSON.stringify(errorResponse));
+      throw new AppError(error.message, error.code, {
+        firebaseError: true
+      }, { cause: error });
     }
-    throw error;
+    throw new Error("API call failed", { cause: error });
   }
 }
 ```
@@ -266,7 +281,7 @@ export function getUserFriendlyErrorMessage(error: Error): string {
 export async function retryOperation<T>(
   operation: () => Promise<T>,
   maxRetries: number = 3,
-  delay: number = 1000
+  baseDelayMs: number = 1000
 ): Promise<T> {
   let lastError: Error;
 
@@ -280,8 +295,9 @@ export async function retryOperation<T>(
         throw lastError;
       }
 
-      // Exponential backoff
-      await new Promise((resolve) => setTimeout(resolve, delay * attempt));
+      // Exponential backoff with jitter
+      const delayMs = baseDelayMs * 2 ** (attempt - 1) + Math.random() * 100;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 

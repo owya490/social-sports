@@ -7,8 +7,8 @@ globs: *.ts,*.tsx
 - Use strict TypeScript configuration
 - Provide explicit types for all functions
 - Follow similar naming patterns to those already existing in the codebase
-- Prefer types for object shapes
-- Avoid `any` and `unkown` types
+- Use types where possible and only use interfaces if the use case suits it
+- Avoid `any` and `unknown` types
 - Implement proper error handling
 
 ## File Organization
@@ -42,7 +42,7 @@ globs: *.ts,*.tsx
 - **Variables**: camelCase (`let currentSport = "Volleyball"`)
 - **Functions**: camelCase (`function setDateRange()`)
 - **Constants**: CAPITAL_LETTERS_WITH_UNDERSCORES (`const MAX_PRICE = 100`)
-- **Enums**: PascalCase + CAPITAL_LETTERS_WITH_UNDERSCORES
+- **Enums**: Enum name in PascalCase; members in CAPITAL_LETTERS_WITH_UNDERSCORES
 - **Interfaces**: PascalCase + "Props" (`EventCardProps`)
 
 ## Props Conventions

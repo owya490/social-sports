@@ -6,11 +6,31 @@ globs: *.ts,*.tsx,*.py,*.java,*.env*,*.json,*.yaml,*.yml
 
 ## Environment Variables
 
-### Frontend Environment Configuration
+### Quick Reference
+
+| Variable Type | Prefix | Accessible From | Example |
+|--------------|--------|----------------|---------|
+| **Client Variables** | `NEXT_PUBLIC_*` | Browser, Server Components, API Routes | `NEXT_PUBLIC_FIREBASE_API_KEY` |
+| **Server Variables** | None | Server Components, API Routes, Build Time | `STRIPE_SECRET_KEY` |
+| **Secrets** | **NEVER** `NEXT_PUBLIC_*` | Server-only | `SENDGRID_API_KEY` |
+
+**⚠️ Critical Security Rule**: Never use `NEXT_PUBLIC_` prefix for secrets or API keys that should remain private!
+
+### Next.js Environment Variable Patterns
+
+**IMPORTANT**: In Next.js, environment variables behave differently depending on where they're used:
+
+- **Client-side**: Must be prefixed with `NEXT_PUBLIC_` to be bundled and accessible in the browser
+- **Server-side**: Can use any name (no prefix required), only available during SSR, API routes, and build time
+- **Security**: Client variables are embedded in JavaScript bundles and visible to anyone
+
+### Frontend Environment Configuration (Client-Side)
+
+For code that runs in the browser (React components, client hooks), use `NEXT_PUBLIC_` prefix:
 
 ```typescript
 // utilities/environment.ts
-import process from "process";
+// This code runs in the browser, so it must use NEXT_PUBLIC_ prefixed variables
 
 export enum Environment {
   DEVELOPMENT = "DEVELOPMENT",
@@ -19,7 +39,8 @@ export enum Environment {
 }
 
 export function getEnvironment(): Environment {
-  switch (process.env.ENVIRONMENT) {
+  // Use NEXT_PUBLIC_ prefix for client-accessible variables
+  switch (process.env.NEXT_PUBLIC_ENVIRONMENT) {
     case "DEVELOPMENT":
       return Environment.DEVELOPMENT;
     case "PREVIEW":
@@ -58,14 +79,144 @@ function getApiUrl(env: Environment): string {
 }
 ```
 
+### Server-Side Environment Configuration
+
+For server-only code (API routes, Server Components, build scripts), you can use non-prefixed variables:
+
+```typescript
+// lib/serverConfig.ts
+// This code ONLY runs on the server (API routes, Server Components, etc.)
+// DO NOT import this in client components!
+
+export function getServerEnvironment(): string {
+  // No NEXT_PUBLIC_ prefix needed for server-only code
+  return process.env.ENVIRONMENT || "DEVELOPMENT";
+}
+
+export function getServerSecrets() {
+  return {
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY!, // Server-only secret
+    sendgridApiKey: process.env.SENDGRID_API_KEY!, // Server-only secret
+    // Never expose these to the client!
+  };
+}
+```
+
 ### Next.js Environment Variables
 
 See project's actual `next.config.js` for current environment variable configuration.
 
-### Environment Variable Validation
+**Note**: The `next.config.js` can expose server-side variables to the client by adding them to `env` config, but prefer using `NEXT_PUBLIC_` prefix for clarity.
+
+### Common Patterns & Examples
+
+#### ✅ Correct: Client-Side Component
+
+```typescript
+// components/EventMap.tsx
+"use client";
+
+import { GoogleMap } from "@react-google-maps/api";
+
+export default function EventMap() {
+  // ✅ CORRECT: Uses NEXT_PUBLIC_ prefix for client-side access
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  
+  return <GoogleMap apiKey={apiKey} />;
+}
+```
+
+#### ✅ Correct: Server Component
+
+```typescript
+// app/events/page.tsx
+// Server Component (no "use client" directive)
+
+async function getEvents() {
+  // ✅ CORRECT: Server Component can access both client and server variables
+  const env = process.env.ENVIRONMENT; // Server-only variable
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL; // Also works
+  
+  // Fetch data server-side
+  return fetchEvents();
+}
+
+export default async function EventsPage() {
+  const events = await getEvents();
+  return <div>{/* render events */}</div>;
+}
+```
+
+#### ✅ Correct: API Route
+
+```typescript
+// app/api/payment/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(request: NextRequest) {
+  // ✅ CORRECT: API routes run server-side, can access server-only variables
+  const stripeKey = process.env.STRIPE_SECRET_KEY; // No NEXT_PUBLIC_ prefix
+  
+  // Process payment with secret key
+  return NextResponse.json({ success: true });
+}
+```
+
+#### ❌ Incorrect: Client Component Accessing Server Variable
+
+```typescript
+// components/Payment.tsx
+"use client";
+
+export default function Payment() {
+  // ❌ WRONG: This will be undefined in the browser!
+  const stripeKey = process.env.STRIPE_SECRET_KEY; // Missing NEXT_PUBLIC_ prefix
+  
+  // This exposes secrets to the browser! ❌ SECURITY RISK!
+  const exposedSecret = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
+  
+  return <div>Payment form</div>;
+}
+```
+
+#### ✅ Correct: Mixed Server/Client Pattern
+
+```typescript
+// app/events/[id]/page.tsx
+// Server Component
+
+async function getEventData(eventId: string) {
+  // ✅ Server-side: Can use server-only variables
+  const adminKey = process.env.FIREBASE_ADMIN_KEY;
+  return fetchEventWithAdmin(eventId, adminKey);
+}
+
+export default async function EventPage({ params }: { params: { id: string } }) {
+  const event = await getEventData(params.id);
+  
+  return (
+    <div>
+      <h1>{event.name}</h1>
+      {/* Pass only safe data to client component */}
+      <EventMap 
+        lat={event.latitude} 
+        lng={event.longitude}
+        // Client component will use NEXT_PUBLIC_GOOGLE_MAPS_API_KEY internally
+      />
+    </div>
+  );
+}
+```
+
+### Environment Variable Validation (Client-Side)
+
+For client-side configuration that needs to be validated:
 
 ```typescript
 // utilities/config.ts
+// This runs in the browser, so use NEXT_PUBLIC_ prefixed variables
+
 interface Config {
   firebase: {
     apiKey: string;
@@ -87,37 +238,49 @@ interface Config {
 }
 
 function validateConfig(): Config {
+  // Use NEXT_PUBLIC_ prefix for all client-accessible variables
   const requiredEnvVars = [
-    "FIREBASE_API_KEY",
-    "FIREBASE_AUTH_DOMAIN",
-    "FIREBASE_PROJECT_ID",
-    "FIREBASE_STORAGE_BUCKET",
-    "GOOGLE_MAPS_API_KEY",
+    "NEXT_PUBLIC_FIREBASE_API_KEY",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
+    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+    "NEXT_PUBLIC_FIREBASE_APP_ID",
+    "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID",
+    "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
+    "NEXT_PUBLIC_EMAILJS_SERVICE_ID",
+    "NEXT_PUBLIC_EMAILJS_TEMPLATE_ID",
+    "NEXT_PUBLIC_EMAILJS_USER_ID",
   ];
 
-  for (const envVar of requiredEnvVars) {
-    if (!process.env[envVar]) {
-      throw new Error(`Missing required environment variable: ${envVar}`);
-    }
+  // Collect all missing variables before throwing
+  const missingVars = requiredEnvVars.filter(
+    (envVar) => !process.env[envVar]
+  );
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required environment variable(s): ${missingVars.join(", ")}`
+    );
   }
 
   return {
     firebase: {
-      apiKey: process.env.FIREBASE_API_KEY!,
-      authDomain: process.env.FIREBASE_AUTH_DOMAIN!,
-      projectId: process.env.FIREBASE_PROJECT_ID!,
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET!,
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID!,
-      appId: process.env.FIREBASE_APP_ID!,
-      measurementId: process.env.FIREBASE_MEASUREMENT_ID!,
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
+      measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID!,
     },
     googleMaps: {
-      apiKey: process.env.GOOGLE_MAPS_API_KEY!,
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
     },
     emailJS: {
-      serviceId: process.env.REACT_APP_EMAILJS_SERVICE_ID!,
-      templateId: process.env.REACT_APP_EMAILJS_TEMPLATE_ID!,
-      userId: process.env.REACT_APP_EMAILJS_USER_ID!,
+      serviceId: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
+      templateId: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
+      userId: process.env.NEXT_PUBLIC_EMAILJS_USER_ID!,
     },
   };
 }
@@ -240,34 +403,52 @@ See project's actual `services/src/firebase.ts` for current Firebase configurati
 // package.json scripts
 {
   "scripts": {
-    "dev": "ENVIRONMENT=DEVELOPMENT next dev",
-    "build:dev": "ENVIRONMENT=DEVELOPMENT next build",
-    "build:prod": "ENVIRONMENT=PRODUCTION next build",
-    "start:dev": "ENVIRONMENT=DEVELOPMENT next start",
-    "start:prod": "ENVIRONMENT=PRODUCTION next start"
+    // For client-side environment detection, use NEXT_PUBLIC_ prefix
+    "dev": "NEXT_PUBLIC_ENVIRONMENT=DEVELOPMENT next dev",
+    "build:dev": "NEXT_PUBLIC_ENVIRONMENT=DEVELOPMENT next build",
+    "build:prod": "NEXT_PUBLIC_ENVIRONMENT=PRODUCTION next build",
+    "start:dev": "NEXT_PUBLIC_ENVIRONMENT=DEVELOPMENT next start",
+    "start:prod": "NEXT_PUBLIC_ENVIRONMENT=PRODUCTION next start",
+    
+    // Server-side variables (no prefix) can be set alongside client variables
+    "build:prod:full": "NEXT_PUBLIC_ENVIRONMENT=PRODUCTION STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY next build"
   }
 }
 ```
 
+**Note**: In production, Vercel automatically injects environment variables from the dashboard, so you don't need to set them in scripts.
+
 ### Vercel Environment Configuration
+
+Configure environment variables in Vercel dashboard or `vercel.json`:
 
 ```json
 // vercel.json
 {
   "env": {
-    "ENVIRONMENT": "@environment",
-    "FIREBASE_PROD_API_KEY": "@firebase-prod-api-key",
-    "FIREBASE_PROD_AUTH_DOMAIN": "@firebase-prod-auth-domain",
-    "FIREBASE_PROD_PROJECT_ID": "@firebase-prod-project-id",
-    "GOOGLE_MAPS_PROD_API_KEY": "@google-maps-prod-api-key"
+    // Client-side variables (available in browser)
+    "NEXT_PUBLIC_ENVIRONMENT": "@environment",
+    "NEXT_PUBLIC_FIREBASE_API_KEY": "@firebase-api-key",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "@firebase-auth-domain",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "@firebase-project-id",
+    "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": "@google-maps-api-key",
+    
+    // Server-side variables (NOT exposed to browser)
+    "STRIPE_SECRET_KEY": "@stripe-secret-key",
+    "SENDGRID_API_KEY": "@sendgrid-api-key",
+    "FIREBASE_ADMIN_PROJECT_ID": "@firebase-admin-project-id"
   },
   "build": {
     "env": {
-      "ENVIRONMENT": "@environment"
+      "NEXT_PUBLIC_ENVIRONMENT": "@environment"
     }
   }
 }
 ```
+
+**Important**: In Vercel dashboard, set environment variables with the same naming convention:
+- Client variables: `NEXT_PUBLIC_*`
+- Server variables: No prefix required
 
 ### Firebase Functions Environment
 
@@ -282,10 +463,14 @@ SENDGRID_API_KEY=your-sendgrid-api-key;
 
 ## Configuration Validation
 
-### Runtime Configuration Check
+### Runtime Configuration Check (Client-Side)
+
+For client-side runtime validation:
 
 ```typescript
 // utilities/configValidator.ts
+// This runs in the browser, so use NEXT_PUBLIC_ prefixed variables
+
 export function validateRuntimeConfig(): void {
   const env = getEnvironment();
   const config = getEnvironmentConfig();
@@ -294,7 +479,7 @@ export function validateRuntimeConfig(): void {
 
   if (env === Environment.PRODUCTION) {
     // Production-specific validations
-    if (!process.env.FIREBASE_PROD_API_KEY) {
+    if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
       throw new Error("Production Firebase API key not configured");
     }
 
@@ -304,13 +489,42 @@ export function validateRuntimeConfig(): void {
   }
 
   // Common validations
-  if (!process.env.GOOGLE_MAPS_API_KEY) {
+  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
     console.warn("Google Maps API key not configured");
   }
 }
 
-// Call on app initialization
-validateRuntimeConfig();
+// Call on app initialization (client-side only)
+if (typeof window !== "undefined") {
+  validateRuntimeConfig();
+}
+```
+
+### Runtime Configuration Check (Server-Side)
+
+For server-side runtime validation (API routes, Server Components):
+
+```typescript
+// lib/serverConfigValidator.ts
+// This runs ONLY on the server
+
+export function validateServerConfig(): void {
+  const requiredServerVars = [
+    "STRIPE_SECRET_KEY",
+    "SENDGRID_API_KEY",
+    "FIREBASE_ADMIN_PROJECT_ID",
+  ];
+
+  const missingVars = requiredServerVars.filter(
+    (envVar) => !process.env[envVar]
+  );
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `Missing required server environment variable(s): ${missingVars.join(", ")}`
+    );
+  }
+}
 ```
 
 ## Environment-Specific Features
@@ -384,35 +598,54 @@ export class Logger {
 
 ### 1. Environment Variable Management
 
-- Use environment-specific prefixes (DEV*, PROD*)
-- Validate required variables at startup
+- **Use NEXT_PUBLIC_ prefix** for all client-accessible variables in Next.js
+- **Never use NEXT_PUBLIC_** for secrets (API keys, database credentials, etc.)
+- Use environment-specific prefixes (DEV*, PROD*) for server-side variables
+- Validate required variables at startup (both client and server)
 - Never commit sensitive values to version control
 - Use different Firebase projects for different environments
+- Document which variables are client vs server-side in README
 
-### 2. Configuration Organization
+### 2. Next.js-Specific Guidelines
 
-- Centralize configuration in dedicated files
+- **Client-side code**: Always use `NEXT_PUBLIC_` prefix for variables that need to be bundled
+- **Server-side code**: Use non-prefixed variables for API routes, Server Components, and build scripts
+- **Security**: Never prefix secrets with `NEXT_PUBLIC_` as they will be exposed to the browser
+- **Validation**: Validate client and server variables separately with appropriate checks
+- **Documentation**: Comment code to indicate whether it runs client-side or server-side
+
+### 3. Configuration Organization
+
+- Centralize client configuration in `utilities/` directory
+- Centralize server configuration in `lib/` or API route files
 - Use TypeScript interfaces for type safety
-- Implement configuration validation
+- Implement separate validation for client and server configs
 - Provide sensible defaults where appropriate
+- Add runtime checks to prevent client-side access of server variables
 
-### 3. Security
+### 4. Security
 
-- Never expose sensitive keys in client-side code
-- Use server-side environment variables for secrets
+- **Critical**: Never expose sensitive keys with `NEXT_PUBLIC_` prefix
+- Use server-side environment variables for all secrets (Stripe, SendGrid, etc.)
+- Only expose non-sensitive configuration to the client (Firebase public config, Maps API key)
 - Implement proper key rotation strategies
-- Monitor for exposed credentials
+- Monitor for exposed credentials in client bundles
+- Use separate API keys for client vs server when possible
 
-### 4. Deployment
+### 5. Deployment
 
 - Use CI/CD environment-specific configurations
-- Implement proper secret management
+- Set `NEXT_PUBLIC_*` variables in Vercel dashboard for each environment
+- Set server-only variables without prefix in Vercel dashboard
+- Implement proper secret management (use Vercel secrets, not plain text)
 - Test configurations in staging environments
 - Document environment setup procedures
+- Verify client bundle doesn't contain server secrets
 
-### 5. Monitoring
+### 6. Monitoring
 
-- Log configuration changes
-- Monitor for missing environment variables
+- Log configuration changes (server-side only)
+- Monitor for missing environment variables on both client and server
 - Track environment-specific errors
 - Implement configuration health checks
+- Alert on misconfigured environments (e.g., NEXT_PUBLIC_ used for secrets)
