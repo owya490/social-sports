@@ -3,6 +3,7 @@ package com.functions.users.models;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.functions.users.models.AbstractUserData.ContactInformation;
 
 import lombok.Data;
@@ -13,6 +14,7 @@ import lombok.Data;
  * REMEBER TO UPDATE UsersUtils.java
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PublicUserData {
 	private String firstName;
 	private String surname;

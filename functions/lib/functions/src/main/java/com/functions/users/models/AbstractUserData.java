@@ -1,12 +1,14 @@
 package com.functions.users.models;
 
-import lombok.Data;
-
-import java.lang.Boolean;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import lombok.Data;
+
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractUserData {
 	/** 
 	 * Public User Data fields
@@ -37,17 +39,18 @@ public abstract class AbstractUserData {
 	private Boolean stripeAccountActive;
 	private List<String> organiserEvents = new ArrayList<>();
 	private List<String> recurrenceTemplates = new ArrayList<>();
-	private List<String> publicOrganiserEvents = new ArrayList<>();
 	private Boolean sendOrganiserTicketEmails = false;
 	private List<String> forms = new ArrayList<>();
 
 	@Data
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class ContactInformation {
 		private String mobile;
 		private String email;
 	}
 
 	@Data
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class ActiveBooking {
 		private String eventId;
 	}

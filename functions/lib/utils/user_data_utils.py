@@ -49,21 +49,6 @@ def update_public_documents():
         })
         print(f"Updated public document: {doc.id}")
 
-# Function to update documents in /Users/Active/Private
-def update_private_documents():
-    # Reference to the collection
-    private_ref = db.collection('Users').document('Active').collection('Private')
-    # Get all documents in the collection
-    private_docs = private_ref.stream()
-    for doc in private_docs:
-
-
-        # Get the document data
-        private_ref.document(doc.id).update({
-            'publicOrganiserEvents': [],
-        })
-        print(f"Updated private document: {doc.id}")
-
 # Function to add usernames and userId to the /Usernames collection
 def add_usernames_to_collection():
     # Reference to the /Users/Active/Public collection
@@ -96,7 +81,6 @@ def split_public_private_events(req: https_fn.CallableRequest):
   logger = Logger(f"firebase_split_public_private_events_logger_{uid}")
   logger.add_tag("uuid", uid)
   update_public_documents()
-  update_private_documents()
   return https_fn.Response(f"Updated All.")
  
 @https_fn.on_request(cors=options.CorsOptions(cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["get", "post"]), region="australia-southeast1")
