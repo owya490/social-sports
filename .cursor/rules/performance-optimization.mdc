@@ -262,47 +262,6 @@ public class EventService {
 }
 ```
 
-### Python Performance Patterns
-
-```python
-# Async operations for better concurrency
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-
-async def process_events_batch(event_ids: List[str]) -> List[EventData]:
-    """Process multiple events concurrently"""
-
-    def fetch_single_event_sync(event_id: str) -> EventData:
-        doc = firestore.collection('events').document(event_id).get()
-        return doc.to_dict()
-
-    # Process up to 10 events concurrently
-    semaphore = asyncio.Semaphore(10)
-
-    async def limited_fetch(event_id: str):
-        async with semaphore:
-            return await fetch_single_event(event_id)
-
-    tasks = [limited_fetch(event_id) for event_id in event_ids]
-    return await asyncio.gather(*tasks)
-
-# Caching with TTL
-from functools import lru_cache
-import time
-
-@lru_cache(maxsize=1000)
-def get_cached_event(event_id: str, cache_timestamp: float) -> EventData:
-    """Cache events with timestamp-based invalidation"""
-    doc = firestore.collection('events').document(event_id).get()
-    return doc.to_dict()
-
-def get_event_with_cache(event_id: str) -> EventData:
-    """Get event with cache invalidation"""
-    current_time = time.time()
-    cache_key = (event_id, current_time // 300)  # 5-minute cache
-    return get_cached_event(cache_key[0], cache_key[1])
-```
-
 ## Database Optimization
 
 ### Firestore Query Optimization
