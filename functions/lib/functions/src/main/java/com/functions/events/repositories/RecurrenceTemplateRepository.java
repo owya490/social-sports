@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,8 +64,7 @@ public class RecurrenceTemplateRepository {
             if (maybeSnapshot.exists()) {
                 return Optional.ofNullable(maybeSnapshot.toObject(RecurrenceTemplate.class));
             }
-        }
-        catch (InterruptedException | ExecutionException ignored) {
+        } catch (InterruptedException | ExecutionException ignored) {
             // No op, no retries for now
         }
         return Optional.empty();
@@ -114,7 +114,7 @@ public class RecurrenceTemplateRepository {
 
     public static String moveRecurrenceTemplateToActive(String recurrenceTemplateId, RecurrenceTemplate recurrenceTemplate) throws ExecutionException, InterruptedException {
         boolean isRecurrencePrivate = recurrenceTemplate.getEventData().getIsPrivate();
-        
+
         // 1. Update the recurrence template back to active
         recurrenceTemplate.getEventData().setIsActive(true);
         // 2. Recreate the recurrence template in the active folder with the same ID
@@ -136,9 +136,9 @@ public class RecurrenceTemplateRepository {
 
         try {
             return Stream.concat(
-                    activePrivateRecurrenceTemplateRef.get().get().getDocuments().stream(),
-                    activePublicRecurrenceTemplateRef.get().get().getDocuments().stream()
-            ).map(snapshot -> Map.entry(snapshot.getId(), snapshot.toObject(RecurrenceTemplate.class)))
+                            activePrivateRecurrenceTemplateRef.get().get().getDocuments().stream(),
+                            activePublicRecurrenceTemplateRef.get().get().getDocuments().stream()
+                    ).map(snapshot -> Map.entry(snapshot.getId(), snapshot.toObject(RecurrenceTemplate.class)))
                     .collect(Collectors.toMap(
                             Map.Entry::getKey,
                             Map.Entry::getValue
@@ -149,6 +149,36 @@ public class RecurrenceTemplateRepository {
         }
         return Map.of();
     }
+
+    public static Set<String> getAllActiveRecurrenceTemplateIds() {
+        Firestore db = FirebaseService.getFirestore();
+
+        final CollectionReference activePrivateRecurrenceTemplateRef = db.collection(RECURRING_EVENTS)
+                .document(ACTIVE).collection(PRIVATE);
+        final CollectionReference activePublicRecurrenceTemplateRef = db.collection(RECURRING_EVENTS)
+                .document(ACTIVE).collection(PUBLIC);
+
+        try {
+            Set<String> privateTemplateIds = new java.util.HashSet<>();
+            for (DocumentReference docRef : activePrivateRecurrenceTemplateRef.listDocuments()) {
+                privateTemplateIds.add(docRef.getId());
+            }
+
+            Set<String> publicTemplateIds = new java.util.HashSet<>();
+            for (DocumentReference docRef : activePublicRecurrenceTemplateRef.listDocuments()) {
+                publicTemplateIds.add(docRef.getId());
+            }
+
+            Set<String> allTemplateIds = new java.util.HashSet<>(privateTemplateIds);
+            allTemplateIds.addAll(publicTemplateIds);
+
+            return allTemplateIds;
+        } catch (Exception e) {
+            logger.error("Unable to get all active recurrence template IDs", e);
+        }
+        return Set.of();
+    }
+
 
     private static DocumentReference getRecurrenceTemplateDocRef(boolean isActive, boolean isPrivate) {
         Firestore db = FirebaseService.getFirestore();

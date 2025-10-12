@@ -1,10 +1,13 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
-import { FormId, FormResponse, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { FormSelector } from "@/components/events/create/forms/FormSelector";
+import { useUser } from "@/components/utility/UserContext";
+import { EventData } from "@/interfaces/EventTypes";
+import { FormId, FormResponse, FormSection, FormSectionType, FormTitle, SectionId } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
-import { db } from "@/services/src/firebase";
-import { getFormResponsesForEvent } from "@/services/src/forms/formsServices";
+import { getEventById, updateEventById } from "@/services/src/events/eventsService";
+import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
@@ -32,12 +35,15 @@ const formatTimestamp = (ts: Timestamp | null): string => {
 
 const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   const logger = new Logger("EventDrilldownFormsPageLogger");
+  const { user } = useUser();
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [headersExpanded, setHeadersExpanded] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const [formId, setFormId] = useState<string | null>(null);
+  const [formId, setFormId] = useState<FormId | null>(null);
+  const [formTitle, setFormTitle] = useState<FormTitle | null>(null);
+  const [attachingForm, setAttachingForm] = useState(false);
 
   const toggleRowExpansion = (rowIndex: number) => {
     const newExpandedRows = new Set(expandedRows);
@@ -49,37 +55,66 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
     setExpandedRows(newExpandedRows);
   };
 
+  const handleFormAttachment = async (selectedFormId: FormId | null) => {
+    try {
+      setAttachingForm(true);
+      setError(null);
+
+      // Update the event with the selected formId (or null to detach)
+      await updateEventById(eventId, { formId: selectedFormId });
+
+      if (!selectedFormId) {
+        // Detach form: clear local state
+        setFormId(null);
+        setFormTitle(null);
+        setFormResponses([]);
+        return;
+      }
+
+      // Attach form: update local state and fetch responses
+      setFormId(selectedFormId);
+
+      // Fetch form details to get the title
+      const form = await getForm(selectedFormId);
+      setFormTitle(form.title);
+
+      // Fetch responses for the newly attached form
+      const formResponse = await getFormResponsesForEvent(selectedFormId, eventId);
+      setFormResponses(formResponse);
+    } catch (err) {
+      logger.error(`Failed to ${selectedFormId ? "attach" : "detach"} form: ${err}`);
+      setError(`Failed to ${selectedFormId ? "attach" : "detach"} form`);
+    } finally {
+      setAttachingForm(false);
+    }
+  };
+
   useEffect(() => {
     const fetchResponses = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const statuses = ["Active", "InActive"];
-        const visibilities = ["Public", "Private"];
-        let formId: string | null = null;
+        let formId: FormId | null = null;
 
-        for (const status of statuses) {
-          for (const visibility of visibilities) {
-            const eventDocRef = doc(db, "Events", status, visibility, eventId);
-            const eventDocSnap = await getDoc(eventDocRef);
-            if (eventDocSnap.exists()) {
-              const data = eventDocSnap.data();
-              if (data?.formId) {
-                formId = data.formId;
-                setFormId(formId);
-                break;
-              }
-            }
-          }
-          if (formId) break;
+        const eventData: EventData = await getEventById(eventId);
+        if (eventData.formId) {
+          formId = eventData.formId as FormId;
+          setFormId(eventData.formId);
+          setLoading(false);
         }
 
         if (!formId) {
-          setError("No formId found for this event");
+          // No formId found - this is okay, we'll show the FormSelector
+          setFormId(null);
+          setFormTitle(null);
           setLoading(false);
           return;
         }
+
+        // Fetch form details to get the title
+        const form = await getForm(formId);
+        setFormTitle(form.title);
 
         const formResponse = await getFormResponsesForEvent(formId as FormId, eventId);
         setFormResponses(formResponse);
@@ -96,7 +131,42 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
 
   if (loading) return <div>Loading form responses...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
-  if (formResponses.length === 0) return <div>No responses submitted</div>;
+
+  // If no form is attached to the event, show the FormSelector
+  if (!formId) {
+    return (
+      <div className="w-full md:w-[calc(100%-18rem)] my-2 p-2">
+        <h1 className="text-2xl font-extrabold mb-6">Form Responses</h1>
+        <div className="bg-core-hover rounded-lg p-6 mb-6">
+          <p className="text-sm text-core-text">
+            No registration form is currently attached to this event. Select a form below to start collecting
+            participant registrations.
+          </p>
+        </div>
+        {attachingForm ? (
+          <div className="text-sm text-gray-600">Attaching form to event...</div>
+        ) : (
+          <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
+        )}
+      </div>
+    );
+  }
+
+  if (formResponses.length === 0)
+    return (
+      <div className="w-full md:w-[calc(100%-18rem)] my-2 p-2">
+        <h1 className="text-2xl font-extrabold mb-2">Form Responses</h1>
+        {formTitle && <p className="text-sm text-gray-400 mb-6 line-clamp-1">Form: {formTitle}</p>}
+        <div className="bg-core-hover rounded-lg p-6 mb-6">
+          <p className="text-sm text-core-text">No responses submitted</p>
+        </div>
+        {attachingForm ? (
+          <div className="text-sm text-gray-600">Attaching form to event...</div>
+        ) : (
+          <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
+        )}
+      </div>
+    );
 
   // Collect all unique question identifiers across all responses
   const allQuestionIdentifiers = new Set<string>();
@@ -178,7 +248,10 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   return (
     <div className="w-full md:w-[calc(100%-18rem)] my-2">
       <div className="flex items-center justify-between mb-4 px-1 md:px-0">
-        <h1 className="text-2xl font-extrabold">Form Responses</h1>
+        <div>
+          <h1 className="text-2xl font-extrabold mb-1">Form Responses</h1>
+          {formTitle && <p className="text-sm text-gray-400 line-clamp-1">Form: {formTitle}</p>}
+        </div>
         <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
       </div>
 

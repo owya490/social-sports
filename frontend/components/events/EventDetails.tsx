@@ -2,10 +2,10 @@ import EventDescription from "@/components/events/EventDescription";
 import EventImage from "@/components/events/EventImage";
 import { EventData } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
+import { URL } from "@/interfaces/Types";
 import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
-import { URL } from "@/interfaces/Types";
 
 interface EventDetailsProps {
   eventData: EventData;
@@ -20,7 +20,7 @@ export function EventDetails(props: EventDetailsProps) {
 
   return (
     <div className="flex justify-center w-full">
-      <div className="pb-10 w-full md:screen-width-primary">
+      <div className="w-full md:screen-width-primary">
         <div className="sm:rounded-xl overflow-hidden">
           <EventImage imageSrc={eventData.image as URL} />
         </div>

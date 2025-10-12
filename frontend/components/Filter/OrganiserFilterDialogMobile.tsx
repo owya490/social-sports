@@ -31,7 +31,6 @@ export enum SortByCategory {
 }
 
 interface OrganiserFilterDialogMobileProps {
-  eventDataList: EventData[];
   allEventsDataList: EventData[];
   setEventDataList: React.Dispatch<React.SetStateAction<any>>;
 
@@ -192,7 +191,7 @@ export default function OrganiserFilterDialogMobile({
       </InvertedHighlightButton>
 
       <Transition appear show={isFilterModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closeModal}>
+        <Dialog as="div" className="relative z-50" onClose={closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"

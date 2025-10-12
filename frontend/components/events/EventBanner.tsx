@@ -18,7 +18,7 @@ export default function EventBanner(props: EventBannerProps) {
     <div className="bg-white w-100% px-2 md:px-10 pt-0 flex md:justify-center">
       <div className="screen-width-primary px-0 md:px-3">
         <div className="flex items-center">
-          <div className="mt-8 w-full">
+          <div className="mt-6 w-full">
             <p className="font-bold text-xs block md:hidden">{timestampToEventCardDateString(props.startDate)}</p>
             <h1 className="text-3xl md:text-4xl text-core-text">{props.name}</h1>
 

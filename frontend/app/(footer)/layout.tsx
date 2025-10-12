@@ -9,8 +9,6 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {children}
-
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -24,6 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }),
         }}
       />
+
+      <div className="pb-[var(--footer-height)]">{children}</div>
 
       <Footer />
     </>

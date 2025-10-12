@@ -39,7 +39,7 @@ export const ImageSection = ({
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-core-text mb-4">{title || config.title}</h2>
+      <h2 className="text-xl font-semibold text-core-text mb-1">{title || config.title}</h2>
       <p className="text-sm text-gray-600 mb-4">{description || config.description}</p>
 
       <div className={`grid ${gridCols} gap-4`}>

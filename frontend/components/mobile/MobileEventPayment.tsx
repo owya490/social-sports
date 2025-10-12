@@ -1,24 +1,15 @@
 "use client";
 
-import { Logger } from "@/observability/logger";
 import { timestampToDateString } from "@/services/src/datetimeUtils";
-import {
-  evaluateFulfilmentSessionEnabled,
-  getNextFulfilmentEntityUrl,
-  initFulfilmentSession,
-} from "@/services/src/fulfilment/fulfilmentServices";
-import { getStripeCheckoutUrlFromEventId } from "@/services/src/stripe/stripeService";
 import { displayPrice } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
-import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, Option, Select } from "@material-tailwind/react";
+import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { InvertedHighlightButton } from "../elements/HighlightButton";
+import BookingButton from "../events/BookingButton";
+import ContactEventButton from "../events/ContactEventButton";
 import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
 import { DifferentDayEventDateTime, SameDayEventDateTime } from "../events/EventPayment";
-
-const MobileEventPaymentLogger = new Logger("MobileEventPaymentLogger");
 
 interface MobileEventPaymentProps {
   location: string;
@@ -37,9 +28,8 @@ interface MobileEventPaymentProps {
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
-  const router = useRouter();
   const [attendeeCount, setAttendeeCount] = useState(1);
-  const [openModal, setOpenModal] = useState(false);
+  const { startDate, endDate, registrationEndDate, paused } = props;
 
   const handleAttendeeCount = (value?: string) => {
     if (value) {
@@ -47,15 +37,6 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
     }
   };
 
-  const handleContactClick = () => {
-    if (props.eventLink) {
-      setOpenModal(true);
-    } else {
-      console.warn("No event link provided!");
-    }
-  };
-
-  const { startDate, endDate, registrationEndDate, paused } = props;
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
 
@@ -130,99 +111,21 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                       );
                     })}
                 </Select>
-                <button
-                  className="font-semibold rounded-2xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline w-full py-3 transition-all duration-300 mb-2"
-                  style={{
-                    textAlign: "center",
-                    position: "relative",
-                  }}
-                  onClick={async () => {
-                    props.setLoading(true);
-                    window.scrollTo(0, 0);
-
-                    // We'll put this behind a flag for now just in case we need to quickly disable this.
-                    if (evaluateFulfilmentSessionEnabled(props.organiserId, props.eventId)) {
-                      try {
-                        const { fulfilmentSessionId } = await initFulfilmentSession({
-                          type: "checkout",
-                          eventId: props.eventId,
-                          numTickets: attendeeCount,
-                        });
-
-                        if (!fulfilmentSessionId) {
-                          MobileEventPaymentLogger.error(
-                            `initFulfilmentSession: Failed to initialize fulfilment session for eventId: ${props.eventId}`
-                          );
-                          router.push("/error");
-                          return;
-                        }
-
-                        const nextEntityUrl = await getNextFulfilmentEntityUrl(fulfilmentSessionId);
-                        if (nextEntityUrl === undefined) {
-                          MobileEventPaymentLogger.error(
-                            `getNextFulfilmentEntityUrl: No url response received for fulfilmentSessionId: ${fulfilmentSessionId}`
-                          );
-                          router.push("/error");
-                          return;
-                        }
-
-                        router.push(nextEntityUrl);
-                        // props.setLoading(false);
-                        return;
-
-                        // TODO: implement proper way of deleting fulfilment sessions: https://owenyang.atlassian.net/browse/SPORTSHUB-365
-                      } catch {
-                        // Clean up fulfilment session if it fails, we can do this through a CRON later down the line
-
-                        router.push("/error");
-                      }
-                    } else {
-                      const stripeCheckoutLink = await getStripeCheckoutUrlFromEventId(
-                        props.eventId,
-                        props.isPrivate,
-                        attendeeCount
-                      );
-
-                      router.push(stripeCheckoutLink);
-                    }
-                  }}
-                >
-                  Book Now
-                </button>
+                <BookingButton
+                  eventId={props.eventId}
+                  ticketCount={attendeeCount}
+                  setLoading={props.setLoading}
+                  className="font-semibold rounded-xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline w-full py-3 transition-all duration-300 mb-2"
+                />
               </div>
             )}
           </div>
         ) : (
-          <>
-            <InvertedHighlightButton
-              onClick={handleContactClick}
-              className="text-lg rounded-2xl border border-black w-full py-3"
-            >
-              Contact Now
-            </InvertedHighlightButton>
-            <Dialog open={openModal} handler={setOpenModal}>
-              <DialogHeader className="mx-2 text-lg font-medium leading-6">Contact Event Organizer</DialogHeader>
-              <DialogBody>
-                <p className="mx-2 text-base font-medium text-black">You are going to be redirected to:</p>
-                <p className="mx-2 text-base font-medium text-blue-900">{props.eventLink}</p>
-              </DialogBody>
-              <DialogFooter className="flex justify-between">
-                <Button className="mx-2 bg-gray-200" variant="text" color="black" onClick={() => setOpenModal(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  className="ml-2"
-                  variant="filled"
-                  color="black"
-                  onClick={() => {
-                    window.location.href = props.eventLink;
-                  }}
-                >
-                  Proceed
-                </Button>
-              </DialogFooter>
-            </Dialog>
-          </>
+          <ContactEventButton
+            eventLink={props.eventLink}
+            fallbackLink={`/user/${props.organiserId}`}
+            className="text-lg rounded-2xl border border-black w-full py-3"
+          />
         )}
       </div>
     </div>
