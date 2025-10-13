@@ -264,7 +264,7 @@ export default function Dashboard() {
         title={getDynamicTitle()}
         description={getDynamicDescription()}
         url={getDynamicUrl()}
-        image="https://www.sportshub.net.au/images/logo.png"
+        image="https://sportshub.net.au/images/logo.png"
       />
       <EventStructuredData/>
       <div>
