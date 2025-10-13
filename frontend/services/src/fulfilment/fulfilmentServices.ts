@@ -24,7 +24,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import { getDeleteFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = false;
+export const FULFILMENT_SESSION_ENABLED = true;
 
 const fulfilmentSessionEnabledUserIdList = [
   // "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
@@ -45,12 +45,12 @@ const fulfilmentSessionEnabledEventIdList: string[] = [
 ];
 
 export const evaluateFulfilmentSessionEnabled = (userId: string, eventId: EventId) => {
-  if (userId && fulfilmentSessionEnabledUserIdList.includes(userId)) {
-    return true;
-  }
-  if (eventId && fulfilmentSessionEnabledEventIdList.includes(eventId)) {
-    return true;
-  }
+  // if (userId && fulfilmentSessionEnabledUserIdList.includes(userId)) {
+  //   return true;
+  // }
+  // if (eventId && fulfilmentSessionEnabledEventIdList.includes(eventId)) {
+  //   return true;
+  // }
   return FULFILMENT_SESSION_ENABLED;
 };
 

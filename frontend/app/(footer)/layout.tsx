@@ -2,14 +2,13 @@ import Footer from "@/components/Footer";
 
 export const metadata = {
   title: "SPORTSHUB | Find your next social sport session!",
-  description: "Sportshub helps you find and book local sports events.",
+  description:
+    "SPORTSHUB is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {children}
-
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -23,6 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }),
         }}
       />
+
+      <div className="pb-[var(--footer-height)]">{children}</div>
 
       <Footer />
     </>

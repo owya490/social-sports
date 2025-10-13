@@ -1,64 +1,73 @@
 "use client";
 import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
-import ChevronLeftButton from "@/components/elements/ChevronLeftButton";
-import ChevronRightButton from "@/components/elements/ChevronRightButton";
-import EventCard from "@/components/events/EventCard";
 import Loading from "@/components/loading/Loading";
+import OrganiserCalendar from "@/components/users/profile/OrganiserCalendar";
 import { EventData } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { getEventById } from "@/services/src/events/eventsService";
-import { getPublicUserById } from "@/services/src/users/usersService";
+import { getErrorUrl } from "@/services/src/urlUtils";
+import { UserNotFoundError } from "@/services/src/users/userErrors";
+import { getPublicUserById, getUsernameMapping } from "@/services/src/users/usersService";
 import { EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function UserProfilePage({ params }: any) {
   const userId: UserId = params.id;
+  const router = useRouter();
+  const logger = new Logger("UserProfilePageLogger");
   const [loading, setLoading] = useState(true);
   const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyPublicUserData);
   const [upcomingOrganiserEvents, setUpcomingOrganiserEvents] = useState<EventData[]>([]);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
   useEffect(() => {
-    getPublicUserById(userId, true).then((user) => {
-      setPublicUserProfile(user);
+    const fetchEvents = async (user: PublicUserData) => {
+      const eventPromises = (user.publicUpcomingOrganiserEvents || []).map(
+        (eventId) => getEventById(eventId) // Get the event by its ID
+      );
 
-      const fetchEvents = async () => {
-        const eventPromises = (user.publicUpcomingOrganiserEvents || []).map(
-          (eventId) => getEventById(eventId) // Get the event by its ID
-        );
+      // Wait for all promises to resolve
+      const events = await Promise.all(eventPromises);
 
-        // Wait for all promises to resolve
-        const events = await Promise.all(eventPromises);
+      // Update the state with the fetched events
+      setUpcomingOrganiserEvents(events);
+      setLoading(false);
+    };
 
-        // Update the state with the fetched events
-        setUpcomingOrganiserEvents(events);
-        setLoading(false);
-      };
-
-      fetchEvents();
-    });
+    const fetchUserProfile = async () => {
+      try {
+        const userIdMapFromUsername = await getUsernameMapping(userId);
+        const user = await getPublicUserById(userIdMapFromUsername.userId);
+        setPublicUserProfile(user);
+        await fetchEvents(user);
+      } catch (error) {
+        if (error instanceof UserNotFoundError) {
+          try {
+            const userById = await getPublicUserById(userId, true);
+            setPublicUserProfile(userById);
+            await fetchEvents(userById);
+            return;
+          } catch (error) {
+            logger.error(`Error fetching user profile: ${error}`);
+            if (error instanceof UserNotFoundError) {
+              router.push("/not-found");
+              return;
+            }
+          }
+        }
+        router.push(getErrorUrl(error));
+      }
+    };
+    fetchUserProfile();
   }, []);
-
-  const scrollLeft = () => {
-    document.getElementById("recommended-event-overflow")?.scrollBy({
-      top: 0,
-      left: -50,
-      behavior: "smooth",
-    });
-  };
-
-  const scrollRight = () => {
-    document.getElementById("recommended-event-overflow")?.scrollBy({
-      top: 0,
-      left: 50,
-      behavior: "smooth",
-    });
-  };
 
   return loading ? (
     <Loading />
   ) : (
-    <div className="mt-16 w-full flex justify-center mb-8">
+    <div className="md:mt-6 w-full flex justify-center pb-24">
       <div className="screen-width-primary">
         <div className="md:flex gap-16">
           <div id="col-1" className="pt-8 min-w-80">
@@ -70,7 +79,7 @@ export default function UserProfilePage({ params }: any) {
                   alt="DP"
                   width={0}
                   height={0}
-                  className="object-cover h-20 w-20 rounded-full overflow-hidden border-black border"
+                  className="object-cover h-20 w-20 rounded-full overflow-hidden border-black border flex-shrink-0"
                 />
                 <div>
                   <h2 className="text-2xl font-bold flex items-center">
@@ -96,7 +105,7 @@ export default function UserProfilePage({ params }: any) {
                 <span className="flex items-center gap-4">
                   <PhoneIcon className="w-4 h-4" />
                   <p className="text-xs font-light">
-                    {publicUserProfile.publicContactInformation?.email || "Not provided"}
+                    {publicUserProfile.publicContactInformation?.mobile || "Not provided"}
                   </p>
                 </span>
               </div>
@@ -104,54 +113,23 @@ export default function UserProfilePage({ params }: any) {
           </div>
           <div id="col-2" className="pt-8">
             <h1 className="hidden md:block text-3xl font-bold">{`About ${publicUserProfile.firstName} ${publicUserProfile.surname}`}</h1>
-            <p className="md:pt-8 pb-6 font-light">
-              <RichTextEditorContent description={publicUserProfile.bio || "No bio provided."} />
-            </p>
+            <div className="md:pt-8 pb-6">
+              <div className={`font-light ${isBioExpanded ? "" : "line-clamp-4"}`}>
+                <RichTextEditorContent description={publicUserProfile.bio || "No bio provided."} />
+              </div>
+              {publicUserProfile.bio && publicUserProfile.bio.length > 100 && (
+                <button
+                  onClick={() => setIsBioExpanded(!isBioExpanded)}
+                  className="text-sm text-core-text hover:underline mt-2 font-medium"
+                >
+                  {isBioExpanded ? "Read Less" : "Read More"}
+                </button>
+              )}
+            </div>
             <div className="h-[1px] bg-core-outline my-4"></div>
           </div>
         </div>
-        <div className="block">
-          <div className="w-full flex justify-center">
-            <div className="flex my-5 w-full">
-              <h5 className="font-bold text-lg">{`Upcoming Events by ${publicUserProfile.firstName} ${publicUserProfile.surname}`}</h5>
-            </div>
-          </div>
-        </div>
-        {upcomingOrganiserEvents.length !== 0 ? (
-          <div className="flex items-center">
-            <div className="hidden sm:block pr-2">
-              <ChevronLeftButton handleClick={scrollLeft} />
-            </div>
-
-            <div id="recommended-event-overflow" className="flex overflow-x-auto pb-4 snap-x snap-mandatory">
-              <div className="flex space-x-2 xl:space-x-8">
-                {upcomingOrganiserEvents.map((event, i) => {
-                  return (
-                    <div key={`recommended-event-${i}`} className="snap-start w-[300px] min-h-[250px]">
-                      <EventCard
-                        eventId={event.eventId}
-                        image={event.image}
-                        thumbnail={event.thumbnail}
-                        name={event.name}
-                        organiser={event.organiser}
-                        startTime={event.startDate}
-                        location={event.location}
-                        price={event.price}
-                        vacancy={event.vacancy}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="hidden sm:block pl-2">
-              <ChevronRightButton handleClick={scrollRight} />
-            </div>
-          </div>
-        ) : (
-          <p className="font-thin">No upcoming events by this organiser.</p>
-        )}
+        <OrganiserCalendar events={upcomingOrganiserEvents} />
       </div>
     </div>
   );

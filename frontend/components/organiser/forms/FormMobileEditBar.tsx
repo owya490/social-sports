@@ -23,7 +23,7 @@ const FormMobileEditBar = ({
   isSubmitting,
 }: FormMobileEditBarProps) => {
   return (
-    <div className="md:hidden fixed bottom-4 left-4 right-4 z-40">
+    <div className="sm:hidden fixed top-16 left-4 right-4 z-40">
       <div className="bg-white rounded-lg border border-gray-200 shadow-lg flex justify-center items-center gap-4 py-3">
         <FormNavButton onClick={onAddTextSection} tooltipContent="Add Text Question">
           <DocumentTextIcon className="w-5 h-5 stroke-1 text-black" />

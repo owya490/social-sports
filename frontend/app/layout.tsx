@@ -1,53 +1,38 @@
+import AccessibilitySkipNavigation from "@/components/accessibility/SkipNavigation";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
 import UserContext from "@/components/utility/UserContext";
 import GrafanaFaro from "@/observability/GrafanaFaro";
+import { Environment, getEnvironment } from "@/utilities/environment";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
-import { Inter, Montserrat } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
-/* eslint-disable */
-const aileron = localFont({
+const satoshi = localFont({
   src: [
     {
-      path: "../public/fonts/Aileron-Regular.otf",
-      weight: "400",
+      path: "../public/fonts/satoshi/TTF/Satoshi-Variable.ttf",
+      weight: "300 900",
       style: "normal",
     },
     {
-      path: "../public/fonts/Aileron-Italic.otf",
-      weight: "400",
-      style: "italic",
-    },
-    {
-      path: "../public/fonts/Aileron-Bold.otf",
-      weight: "700",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/Aileron-BoldItalic.otf",
-      weight: "700",
+      path: "../public/fonts/satoshi/TTF/Satoshi-VariableItalic.ttf",
+      weight: "300 900",
       style: "italic",
     },
   ],
+  variable: "--font-satoshi",
 });
-/* eslint-enable */
-
-export const inter = Inter({ subsets: ["latin"] });
-
-// eslint-disable-next-line
-const montserrat = Montserrat({ subsets: ["latin"] });
-
-// const montserrat = localFont({
-//   src: [
-//     {
-//       path:""
-//     }
-//   ]
-// })
-
-// const inter = Inter({ subsets: ["latin"] }); old font, just replace aileron with inter to swap back
+export const metadata: Metadata = {
+  title: "SPORTSHUB | Find your next social sport session!",
+  description:
+    "SPORTSHUB is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!",
+  appleWebApp: {
+    title: "SPORTSHUB",
+  },
+  // Icon is done via icon0.svg and icon1.png. The svg has @media (prefers-color-scheme: dark) hence differentiating dark and light modes.
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -60,12 +45,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "WebSite",
-              url: "https://sportshub.net.au",
+              url: "https://www.sportshub.net.au",
               potentialAction: {
                 "@type": "SearchAction",
                 target: {
                   "@type": "EntryPoint",
-                  urlTemplate: "https://sportshub.net.au/dashboard?search={search_term_string}",
+                  urlTemplate: "https://www.sportshub.net.au/dashboard?search={search_term_string}",
                 },
                 "query-input": "required name=search_term_string",
               },
@@ -78,28 +63,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     position: 1,
                     name: "Platform Overview",
                     description: "Learn about Australia's leading social sports platform",
-                    url: "https://sportshub.net.au/landing",
+                    url: "https://www.sportshub.net.au/landing",
                   },
                   {
                     "@type": "SiteNavigationElement",
                     position: 2,
                     name: "Login",
                     description: "Access your sports account",
-                    url: "https://sportshub.net.au/login",
+                    url: "https://www.sportshub.net.au/login",
                   },
                   {
                     "@type": "SiteNavigationElement",
                     position: 3,
                     name: "Blogs",
                     description: "Sports tips, updates and community stories",
-                    url: "https://sportshub.net.au/blogs",
+                    url: "https://www.sportshub.net.au/blogs",
                   },
                   {
                     "@type": "SiteNavigationElement",
                     position: 4,
                     name: "Documentation",
                     description: "Documentation and support guides",
-                    url: "https://sportshub.net.au/docs",
+                    url: "https://www.sportshub.net.au/docs",
                   },
                 ],
               },
@@ -109,37 +94,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <GrafanaFaro>
         <UserContext>
-          <body className={`${inter.className}`}>
-            <div className="hidden md:block">
-              <Navbar />
-            </div>
+          <body className={`${satoshi.className}`}>
+            <AccessibilitySkipNavigation />
             <div className="md:hidden">
               <MobileNavbar />
             </div>
-            <div className="min-h-screen">{children}</div>
+            <div className="hidden md:block">
+              <Navbar />
+            </div>
+            <main id="main-content" className="min-h-screen pt-[var(--navbar-height)]">
+              {children}
+            </main>
           </body>
         </UserContext>
       </GrafanaFaro>
+      {/* Google Analytics only in production */}
+      {getEnvironment() === Environment.PRODUCTION && <GoogleAnalytics gaId="G-MQB86E2KJM" />}
     </html>
   );
 }
-
-export const metadata: Metadata = {
-  title: "SPORTSHUB | Find your next social sport session!",
-  description:
-    "SPORTSHUB is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!",
-  icons: {
-    icon: [
-      {
-        media: "(prefers-color-scheme: light)",
-        url: "/images/icon-light.png",
-        href: "/images/icon-light.png",
-      },
-      {
-        media: "(prefers-color-scheme: dark)",
-        url: "/images/icon-dark.png",
-        href: "/images/icon-dark.png",
-      },
-    ],
-  },
-};

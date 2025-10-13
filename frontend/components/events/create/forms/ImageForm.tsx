@@ -36,28 +36,34 @@ export function ImageForm({
     return true;
   };
 
-  // Compress image before upload
+  // Compress image before upload only if it's 2MB or larger
   const handleImageUpload = async (imageFile: File, updateFieldName: "thumbnail" | "image") => {
     const imageType = updateFieldName === "thumbnail" ? ImageType.THUMBNAIL : ImageType.IMAGE;
     if (!validateImage(imageFile, imageType)) {
       return;
     }
-    const options = {
-      maxSizeMB: 2, // Maximum size of the image after compression
-      useWebWorker: true,
-    };
 
     try {
-      const compressedFile = await imageCompression(imageFile, options);
+      let fileToUpload = imageFile;
+      const fileSizeInMB = imageFile.size / (1024 * 1024);
+
+      // Only compress if file is 2MB or larger
+      if (fileSizeInMB >= 2) {
+        const options = {
+          maxSizeMB: 2, // Maximum size of the image after compression
+          useWebWorker: true,
+        };
+        fileToUpload = await imageCompression(imageFile, options);
+      }
 
       if (updateFieldName === "thumbnail") {
-        const downloadUrl = await uploadEventThumbnail(user.userId, compressedFile);
+        const downloadUrl = await uploadEventThumbnail(user.userId, fileToUpload);
         setThumbnailUrls([downloadUrl, ...eventThumbnailsUrls]);
         updateField({
           thumbnail: downloadUrl,
         });
       } else if (updateFieldName === "image") {
-        const downloadUrl = await uploadEventImage(user.userId, compressedFile);
+        const downloadUrl = await uploadEventImage(user.userId, fileToUpload);
         setImageUrls([downloadUrl, ...eventImageUrls]);
         updateField({
           image: downloadUrl,

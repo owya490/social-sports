@@ -1,7 +1,6 @@
 "use client";
 import { ImageGallery } from "@/components/gallery/ImageGallery";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 
 const GalleryPage = () => {
@@ -16,21 +15,18 @@ const GalleryPage = () => {
   }
 
   return (
-    <div className="sm:ml-16 my-20">
+    <>
       <div className="max-w-5xl lg:mx-auto">
-        <OrganiserNavbar currPage="Gallery" />
-        <div className="px-4 md:px-0 mt-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-core-text mb-2">Image Gallery</h1>
-            <p className="text-gray-600">
-              Manage your event images and thumbnails. Upload new images with automatic cropping to the correct aspect
-              ratios.
-            </p>
-          </div>
+        <div className="px-4 md:px-0 mt-6">
+          <h1 className="text-3xl font-bold text-core-text mb-2">Image Gallery</h1>
+          <p className="text-gray-600 mb-4">
+            Manage your event images and thumbnails. Upload new images with automatic cropping to the correct aspect
+            ratios.
+          </p>
           <ImageGallery user={user} />
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

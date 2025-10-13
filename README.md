@@ -3,7 +3,7 @@
 > **Simplifying Sports Booking** - A modern platform for finding, booking, and hosting social sports events.
 
 [![Website](https://img.shields.io/badge/Website-sportshub.net.au-blue?style=flat-square)](https://www.sportshub.net.au)
-[![Blog](https://img.shields.io/badge/Blog-SPORTSHUB%20Blogs-green?style=flat-square)](https://sportshub.net.au/blogs)
+[![Blog](https://img.shields.io/badge/Blog-SPORTSHUB%20Blogs-green?style=flat-square)](https://www.sportshub.net.au/blogs)
 
 ---
 
@@ -149,7 +149,7 @@ We believe in **building in the open** and sharing what we learn. Our platform i
 ## 📞 Get in Touch
 
 - **Website**: [sportshub.net.au](https://www.sportshub.net.au)
-- **Blog**: [sportshub.net.au/blogs](https://sportshub.net.au/blogs)
+- **Blog**: [sportshub.net.au/blogs](https://www,sportshub.net.au/blogs)
 - **Email**: [Contact us](https://www.sportshub.net.au/contact)
 
 ---

@@ -38,7 +38,7 @@ import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulf
 import { getLocationCoordinates, initializeAutocomplete, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
 export const EventDetailsEdit = ({

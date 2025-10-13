@@ -1,60 +1,57 @@
 package com.functions.events.services;
 
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
 
 public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
 
     public static List<String> createEventsFromRecurrenceTemplates(LocalDate today) throws Exception {
-        return createEventsFromRecurrenceTemplates(today, null, null, false);
+        return createEventsFromRecurrenceTemplates(today, null, false);
     }
 
-    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, RecurrenceTemplate targetRecurrenceTemplate, boolean createEventWorkflow) throws Exception {
-        logger.info("Creating events from recurrence templates. today: {}, targetRecurrenceTemplateId: {}, targetRecurrenceTemplate: {}, createEventWorkflow: {}", today, targetRecurrenceTemplateId, targetRecurrenceTemplate, createEventWorkflow);
-        Map<String, RecurrenceTemplate> activeRecurrenceTemplates;
+    public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, boolean createEventWorkflow) throws Exception {
+        logger.info("Creating events from recurrence templates. today: {}, targetRecurrenceTemplateId: {}, targetRecurrenceTemplate: {}, createEventWorkflow: {}", today, targetRecurrenceTemplateId, createEventWorkflow);
+        Set<String> activeRecurrenceTemplateIds;
         if (targetRecurrenceTemplateId == null) {
-            activeRecurrenceTemplates = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplates();
+            activeRecurrenceTemplateIds = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplateIds();
         } else {
-            activeRecurrenceTemplates = Map.of(targetRecurrenceTemplateId, targetRecurrenceTemplate);
+            activeRecurrenceTemplateIds = Set.of(targetRecurrenceTemplateId);
         }
 
-        logger.info("All Active Recurrence Templates {}", activeRecurrenceTemplates);
-        List<String> moveToInactiveRecurringEvents = new ArrayList<String>();
+        logger.info("All Active Recurrence Template Ids {}", activeRecurrenceTemplateIds);
+        List<String> moveToInactiveRecurringEvents = new ArrayList<>();
 
-        List<String> createdEventIds = new ArrayList<String>();
+        List<String> createdEventIds = new ArrayList<>();
 
-        for (Map.Entry<String, RecurrenceTemplate> recurrenceTemplateAndId : activeRecurrenceTemplates.entrySet()) {
-            String recurrenceTemplateId = recurrenceTemplateAndId.getKey();
-            RecurrenceTemplate recurrenceTemplate = recurrenceTemplateAndId.getValue();
+        for (String recurrenceTemplateId : activeRecurrenceTemplateIds) {
 
             // Create new transaction
-            RecurrenceTemplateRepository.createFirestoreTransaction(transaction -> {
-                if (recurrenceTemplate == null) {
-                    throw new Exception(
-                            "Could not turn recurringEventSnapshot object into RecurringEvent pojo using toObject: "
-                                    + recurrenceTemplateId);
+            FirebaseService.createFirestoreTransaction(transaction -> {
+                Optional<RecurrenceTemplate> maybeRecurrenceTemplate = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId, transaction);
+                if (maybeRecurrenceTemplate.isEmpty()) {
+                    logger.warn("Recurrence template not found for id: {} during transaction. Skipping processing of this recurring event to avoid TOCTOU failures.",
+                            recurrenceTemplateId);
+                    return true; // Continue processing other templates in the batch
                 }
+
+                RecurrenceTemplate recurrenceTemplate = maybeRecurrenceTemplate.get();
+                logger.debug("Creating recurring event from recurrence template data: {}", recurrenceTemplate);
                 NewEventData newEventData = recurrenceTemplate.getEventData();
                 RecurrenceData recurrenceData = recurrenceTemplate.getRecurrenceData();
                 Map<String, String> pastRecurrences = new HashMap<>(recurrenceData.getPastRecurrences());
@@ -119,7 +116,7 @@ public class RecurringEventsCronService {
 
         for (
                 String recurringEventId : moveToInactiveRecurringEvents) {
-            RecurrenceTemplateRepository.createFirestoreTransaction(transaction -> {
+            FirebaseService.createFirestoreTransaction(transaction -> {
                 moveRecurringEventToInactive(recurringEventId, transaction);
                 return null;
             });

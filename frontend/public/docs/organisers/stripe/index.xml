@@ -1,129 +1,129 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Stripe</title><link>https://sportshub.net.au/docs/organisers/stripe/</link><description>Recent content in Stripe on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://sportshub.net.au/docs/organisers/stripe/index.xml" rel="self" type="application/rss+xml"/><item><title>Stripe Setup</title><link>https://sportshub.net.au/docs/organisers/stripe/stripe-setup/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/stripe/stripe-setup/</guid><description>
-&lt;h2&gt;Prerequisites&lt;span class="hx:absolute hx:-mt-20" id="prerequisites"&gt;&lt;/span&gt;
-&lt;a href="#prerequisites" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Before setting up your Stripe account, ensure you have the following documents and information ready:&lt;/p&gt;
-&lt;h3&gt;Required Documents&lt;span class="hx:absolute hx:-mt-20" id="required-documents"&gt;&lt;/span&gt;
-&lt;a href="#required-documents" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Government-issued ID&lt;/strong&gt; (driver&amp;rsquo;s license, passport, or national ID card)&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Business details &amp;amp; documents&lt;/strong&gt; (if applicable - ABN, business name, business address)&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Bank account details&lt;/strong&gt; for payouts (BSB and account number)&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Required Information&lt;span class="hx:absolute hx:-mt-20" id="required-information"&gt;&lt;/span&gt;
-&lt;a href="#required-information" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;Your full legal name and date of birth&lt;/li&gt;
-&lt;li&gt;Complete business address (if running a business)&lt;/li&gt;
-&lt;li&gt;Phone number and email address&lt;/li&gt;
-&lt;li&gt;Business description and website (if applicable)&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;Step-by-Step Setup Guide&lt;span class="hx:absolute hx:-mt-20" id="step-by-step-setup-guide"&gt;&lt;/span&gt;
-&lt;a href="#step-by-step-setup-guide" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;1. Navigate to Personal Settings&lt;span class="hx:absolute hx:-mt-20" id="1-navigate-to-personal-settings"&gt;&lt;/span&gt;
-&lt;a href="#1-navigate-to-personal-settings" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/organiser-hub-personal-settings.png" alt="organiser-hub-personal-settings" loading="lazy" /&gt;&lt;/p&gt;
-&lt;p&gt;Visit your &lt;strong&gt;Organiser Hub&lt;/strong&gt; and navigate to the &lt;strong&gt;Personal Settings&lt;/strong&gt; tab. You should see a &lt;strong&gt;&amp;ldquo;Register for Stripe&amp;rdquo;&lt;/strong&gt; card displayed. Click the &lt;strong&gt;Register&lt;/strong&gt; button to begin the setup process.&lt;/p&gt;
-&lt;h3&gt;2. Stripe Account Access&lt;span class="hx:absolute hx:-mt-20" id="2-stripe-account-access"&gt;&lt;/span&gt;
-&lt;a href="#2-stripe-account-access" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-login-register.png" alt="stripe-login-register" loading="lazy" /&gt;&lt;/p&gt;
-&lt;p&gt;Once redirected to the Stripe page, you have two options:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Existing Stripe users&lt;/strong&gt;: Log in with your existing Stripe account credentials&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;New users&lt;/strong&gt;: Create a new Stripe account by clicking &amp;ldquo;Sign up&amp;rdquo;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;3. Complete Stripe Account Creation&lt;span class="hx:absolute hx:-mt-20" id="3-complete-stripe-account-creation"&gt;&lt;/span&gt;
-&lt;a href="#3-complete-stripe-account-creation" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Follow Stripe&amp;rsquo;s guided setup process:&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Business Information&lt;/strong&gt; (if applicable)
-&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-business-info.jpg" alt="stripe-business-info" loading="lazy" /&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Describe your business type&lt;/li&gt;
-&lt;li&gt;Enter your ABN or business registration details&lt;/li&gt;
-&lt;li&gt;Provide your business address and other information&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;Personal Information&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-personal-info.jpg" alt="stripe-business-info" loading="lazy" /&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Enter your full legal name and date of birth&lt;/li&gt;
-&lt;li&gt;Provide contact information&lt;/li&gt;
-&lt;/ul&gt;
-&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-blue-200 hx:bg-blue-100 hx:text-blue-900 hx:dark:border-blue-200/30 hx:dark:bg-blue-900/30 hx:dark:text-blue-200"&gt;
-&lt;p class="hx:flex hx:items-center hx:font-medium"&gt;&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/&gt;&lt;/svg&gt;Note&lt;/p&gt;
-&lt;div class="hx:w-full hx:min-w-0 hx:leading-7"&gt;
-&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0"&gt;&lt;p&gt;You will be required to Upload a photo of your government-issued ID to enable payouts after registering with Stripe. This is for legal requirements.&lt;/p&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;&lt;strong&gt;Banking Information &amp;amp; Public Details&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-bank-info.jpg" alt="stripe-bank-details" loading="lazy" /&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Add your Australian bank account details (BSB and account number)&lt;/li&gt;
-&lt;li&gt;Set your payout schedule preference&lt;/li&gt;
-&lt;li&gt;Add public details for customer facing features&lt;/li&gt;
-&lt;/ul&gt;
-&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-green-200 hx:bg-green-100 hx:text-green-900 hx:dark:border-green-200/30 hx:dark:bg-green-900/30 hx:dark:text-green-200"&gt;
-&lt;p class="hx:flex hx:items-center hx:font-medium"&gt;&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/&gt;&lt;/svg&gt;Tip&lt;/p&gt;
-&lt;div class="hx:w-full hx:min-w-0 hx:leading-7"&gt;
-&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0"&gt;&lt;p&gt;Stripe will ask you to opt into Climate Contributions and Stripe Tax. Feel free to decline and opt out by pressing &amp;ldquo;No Thanks&amp;rdquo; and &amp;ldquo;Not right now&amp;rdquo; respectively.&lt;/p&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;h3&gt;4. Verify Integration in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="4-verify-integration-in-sportshub"&gt;&lt;/span&gt;
-&lt;a href="#4-verify-integration-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/stripe-integration-success.png" alt="stripe-integration-success" loading="lazy" /&gt;&lt;/p&gt;
-&lt;p&gt;Once you return to your SPORTSHUB &lt;em&gt;Organiser Hub Personal Settings&lt;/em&gt; tab, &lt;strong&gt;please hit the Register for Stripe button again.&lt;/strong&gt; This helps our system update to ensure your account is synced between parties.&lt;/p&gt;
-&lt;p&gt;Finally, to verify integration success, check for:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Your &lt;strong&gt;Stripe Account ID&lt;/strong&gt; is now displayed&lt;/li&gt;
-&lt;li&gt;The &lt;strong&gt;&amp;ldquo;Register for Stripe&amp;rdquo;&lt;/strong&gt; card has disappeared&lt;/li&gt;
-&lt;/ul&gt;
-&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-amber-200 hx:bg-amber-100 hx:text-amber-900 hx:dark:border-amber-200/30 hx:dark:bg-amber-900/30 hx:dark:text-amber-200"&gt;
-&lt;p class="hx:flex hx:items-center hx:font-medium"&gt;&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/&gt;&lt;/svg&gt;Warning&lt;/p&gt;
-&lt;div class="hx:w-full hx:min-w-0 hx:leading-7"&gt;
-&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0"&gt;&lt;p&gt;If your Stripe integration doesn&amp;rsquo;t appear immediately, wait a few minutes, click the register button again/ refresh the page. The connection process can take a moment to sync between systems.&lt;/p&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;h3&gt;5. Test Paid Event Creation&lt;span class="hx:absolute hx:-mt-20" id="5-test-paid-event-creation"&gt;&lt;/span&gt;
-&lt;a href="#5-test-paid-event-creation" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/create-paid-event-test.png" alt="create-paid-event-test" loading="lazy" /&gt;&lt;/p&gt;
-&lt;p&gt;Navigate to &lt;strong&gt;Create Event&lt;/strong&gt; and verify that you can now:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Set event pricing in the event details&lt;/li&gt;
-&lt;li&gt;Access enabling paid events via event creation settings&lt;/li&gt;
-&lt;li&gt;Create paid events successfully&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Your Stripe integration is now complete! You can start creating paid events and collecting secure payments from your participants.&lt;/p&gt;
-&lt;h2&gt;Need Help?&lt;span class="hx:absolute hx:-mt-20" id="need-help"&gt;&lt;/span&gt;
-&lt;a href="#need-help" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;If you encounter any issues during setup, contact &lt;a href="https://www.sportshub.net.au/contact" target="_blank" rel="noopener"&gt;SPORTSHUB Support&lt;/a&gt; for assistance with your Stripe integration.&lt;/p&gt;</description></item><item><title>Coupon Codes</title><link>https://sportshub.net.au/docs/organisers/stripe/coupon-codes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/docs/organisers/stripe/coupon-codes/</guid><description>
-&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/coupon-codes.jpg" alt="coupon-codes" loading="lazy" /&gt;&lt;/p&gt;
-&lt;p&gt;Coupon codes allow you to offer discounts to your event participants. Follow these steps to create and manage coupons in Stripe.&lt;/p&gt;
-&lt;h2&gt;Creating a Coupon in Stripe&lt;span class="hx:absolute hx:-mt-20" id="creating-a-coupon-in-stripe"&gt;&lt;/span&gt;
-&lt;a href="#creating-a-coupon-in-stripe" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ol&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Navigate to Stripe Dashboard&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Go to &lt;a href="https://dashboard.stripe.com/coupons/create" target="_blank" rel="noopener"&gt;Stripe Coupons&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;Alternatively, search for &amp;ldquo;coupons&amp;rdquo; in the Stripe dashboard search bar&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Configure Your Coupon&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Discount Type&lt;/strong&gt;: Choose between:
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Percentage off&lt;/strong&gt;: e.g., 20% off&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Fixed amount off&lt;/strong&gt;: e.g., $10 off&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Coupon Code&lt;/strong&gt;: Create a customer-facing code (e.g., &amp;ldquo;EARLY20&amp;rdquo;, &amp;ldquo;WELCOME10&amp;rdquo;)&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Expiry Date&lt;/strong&gt;: Set when the coupon expires&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Usage Limits&lt;/strong&gt;: Control how many times the coupon can be used&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h2&gt;Enabling Coupons in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="enabling-coupons-in-sportshub"&gt;&lt;/span&gt;
-&lt;a href="#enabling-coupons-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;img src="https://sportshub.net.au/images/docs/organisers/stripe/promotional-codes-enabled.png" alt="promotional-codes-enabled" loading="lazy" /&gt;&lt;/p&gt;
-&lt;p&gt;To use your Stripe coupons for SPORTSHUB events:&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;&lt;strong&gt;During Event Creation&lt;/strong&gt;: Enable &amp;ldquo;Promotional Codes&amp;rdquo; in the event creation form&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Existing Events&lt;/strong&gt;: Go to Event Settings and enable promotional codes&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h2&gt;Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes"&gt;&lt;/span&gt;
-&lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Cross-Event Usage&lt;/strong&gt;: Coupons work across all your events, not just specific ones&lt;/li&gt;
-&lt;/ul&gt;
-&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-amber-200 hx:bg-amber-100 hx:text-amber-900 hx:dark:border-amber-200/30 hx:dark:bg-amber-900/30 hx:dark:text-amber-200"&gt;
-&lt;p class="hx:flex hx:items-center hx:font-medium"&gt;&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/&gt;&lt;/svg&gt;&amp;gt; &lt;strong&gt;100% Discount Bug&lt;/strong&gt;: If you pass application fees to customers, you cannot offer 100% discounts as Stripe doesn&amp;rsquo;t allow this configuration.&lt;/p&gt;
-&lt;div class="hx:w-full hx:min-w-0 hx:leading-7"&gt;
-&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0"&gt;&lt;/div&gt;
-&lt;/div&gt;
-&lt;/div&gt;</description></item></channel></rss>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Stripe</title><link>https://www.sportshub.net.au/docs/organisers/stripe/</link><description>Recent content in Stripe on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://www.sportshub.net.au/docs/organisers/stripe/index.xml" rel="self" type="application/rss+xml"/><item><title>Stripe Setup</title><link>https://www.sportshub.net.au/docs/organisers/stripe/stripe-setup/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/stripe/stripe-setup/</guid><description>
+&lt;h2>Prerequisites&lt;span class="hx:absolute hx:-mt-20" id="prerequisites">&lt;/span>
+&lt;a href="#prerequisites" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Before setting up your Stripe account, ensure you have the following documents and information ready:&lt;/p>
+&lt;h3>Required Documents&lt;span class="hx:absolute hx:-mt-20" id="required-documents">&lt;/span>
+&lt;a href="#required-documents" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Government-issued ID&lt;/strong> (driver&amp;rsquo;s license, passport, or national ID card)&lt;/li>
+&lt;li>&lt;strong>Business details &amp;amp; documents&lt;/strong> (if applicable - ABN, business name, business address)&lt;/li>
+&lt;li>&lt;strong>Bank account details&lt;/strong> for payouts (BSB and account number)&lt;/li>
+&lt;/ul>
+&lt;h3>Required Information&lt;span class="hx:absolute hx:-mt-20" id="required-information">&lt;/span>
+&lt;a href="#required-information" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>Your full legal name and date of birth&lt;/li>
+&lt;li>Complete business address (if running a business)&lt;/li>
+&lt;li>Phone number and email address&lt;/li>
+&lt;li>Business description and website (if applicable)&lt;/li>
+&lt;/ul>
+&lt;h2>Step-by-Step Setup Guide&lt;span class="hx:absolute hx:-mt-20" id="step-by-step-setup-guide">&lt;/span>
+&lt;a href="#step-by-step-setup-guide" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>1. Navigate to Personal Settings&lt;span class="hx:absolute hx:-mt-20" id="1-navigate-to-personal-settings">&lt;/span>
+&lt;a href="#1-navigate-to-personal-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/organiser-hub-personal-settings.png" alt="organiser-hub-personal-settings" loading="lazy" />&lt;/p>
+&lt;p>Visit your &lt;strong>Organiser Hub&lt;/strong> and navigate to the &lt;strong>Personal Settings&lt;/strong> tab. You should see a &lt;strong>&amp;ldquo;Register for Stripe&amp;rdquo;&lt;/strong> card displayed. Click the &lt;strong>Register&lt;/strong> button to begin the setup process.&lt;/p>
+&lt;h3>2. Stripe Account Access&lt;span class="hx:absolute hx:-mt-20" id="2-stripe-account-access">&lt;/span>
+&lt;a href="#2-stripe-account-access" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/stripe-login-register.png" alt="stripe-login-register" loading="lazy" />&lt;/p>
+&lt;p>Once redirected to the Stripe page, you have two options:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Existing Stripe users&lt;/strong>: Log in with your existing Stripe account credentials&lt;/li>
+&lt;li>&lt;strong>New users&lt;/strong>: Create a new Stripe account by clicking &amp;ldquo;Sign up&amp;rdquo;&lt;/li>
+&lt;/ul>
+&lt;h3>3. Complete Stripe Account Creation&lt;span class="hx:absolute hx:-mt-20" id="3-complete-stripe-account-creation">&lt;/span>
+&lt;a href="#3-complete-stripe-account-creation" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Follow Stripe&amp;rsquo;s guided setup process:&lt;/p>
+&lt;p>&lt;strong>Business Information&lt;/strong> (if applicable)
+&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/stripe-business-info.jpg" alt="stripe-business-info" loading="lazy" />&lt;/p>
+&lt;ul>
+&lt;li>Describe your business type&lt;/li>
+&lt;li>Enter your ABN or business registration details&lt;/li>
+&lt;li>Provide your business address and other information&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Personal Information&lt;/strong>&lt;/p>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/stripe-personal-info.jpg" alt="stripe-business-info" loading="lazy" />&lt;/p>
+&lt;ul>
+&lt;li>Enter your full legal name and date of birth&lt;/li>
+&lt;li>Provide contact information&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-blue-200 hx:bg-blue-100 hx:text-blue-900 hx:dark:border-blue-200/30 hx:dark:bg-blue-900/30 hx:dark:text-blue-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>&lt;/svg>Note&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>You will be required to Upload a photo of your government-issued ID to enable payouts after registering with Stripe. This is for legal requirements.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;p>&lt;strong>Banking Information &amp;amp; Public Details&lt;/strong>&lt;/p>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/stripe-bank-info.jpg" alt="stripe-bank-details" loading="lazy" />&lt;/p>
+&lt;ul>
+&lt;li>Add your Australian bank account details (BSB and account number)&lt;/li>
+&lt;li>Set your payout schedule preference&lt;/li>
+&lt;li>Add public details for customer facing features&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-green-200 hx:bg-green-100 hx:text-green-900 hx:dark:border-green-200/30 hx:dark:bg-green-900/30 hx:dark:text-green-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>&lt;/svg>Tip&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Stripe will ask you to opt into Climate Contributions and Stripe Tax. Feel free to decline and opt out by pressing &amp;ldquo;No Thanks&amp;rdquo; and &amp;ldquo;Not right now&amp;rdquo; respectively.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;h3>4. Verify Integration in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="4-verify-integration-in-sportshub">&lt;/span>
+&lt;a href="#4-verify-integration-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/stripe-integration-success.png" alt="stripe-integration-success" loading="lazy" />&lt;/p>
+&lt;p>Once you return to your SPORTSHUB &lt;em>Organiser Hub Personal Settings&lt;/em> tab, &lt;strong>please hit the Register for Stripe button again.&lt;/strong> This helps our system update to ensure your account is synced between parties.&lt;/p>
+&lt;p>Finally, to verify integration success, check for:&lt;/p>
+&lt;ul>
+&lt;li>Your &lt;strong>Stripe Account ID&lt;/strong> is now displayed&lt;/li>
+&lt;li>The &lt;strong>&amp;ldquo;Register for Stripe&amp;rdquo;&lt;/strong> card has disappeared&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-amber-200 hx:bg-amber-100 hx:text-amber-900 hx:dark:border-amber-200/30 hx:dark:bg-amber-900/30 hx:dark:text-amber-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>&lt;/svg>Warning&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>If your Stripe integration doesn&amp;rsquo;t appear immediately, wait a few minutes, click the register button again/ refresh the page. The connection process can take a moment to sync between systems.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;h3>5. Test Paid Event Creation&lt;span class="hx:absolute hx:-mt-20" id="5-test-paid-event-creation">&lt;/span>
+&lt;a href="#5-test-paid-event-creation" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/create-paid-event-test.png" alt="create-paid-event-test" loading="lazy" />&lt;/p>
+&lt;p>Navigate to &lt;strong>Create Event&lt;/strong> and verify that you can now:&lt;/p>
+&lt;ul>
+&lt;li>Set event pricing in the event details&lt;/li>
+&lt;li>Access enabling paid events via event creation settings&lt;/li>
+&lt;li>Create paid events successfully&lt;/li>
+&lt;/ul>
+&lt;p>Your Stripe integration is now complete! You can start creating paid events and collecting secure payments from your participants.&lt;/p>
+&lt;h2>Need Help?&lt;span class="hx:absolute hx:-mt-20" id="need-help">&lt;/span>
+&lt;a href="#need-help" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>If you encounter any issues during setup, contact &lt;a href="https://www.sportshub.net.au/contact" target="_blank" rel="noopener">SPORTSHUB Support&lt;/a> for assistance with your Stripe integration.&lt;/p></description></item><item><title>Coupon Codes</title><link>https://www.sportshub.net.au/docs/organisers/stripe/coupon-codes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/stripe/coupon-codes/</guid><description>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/coupon-codes.jpg" alt="coupon-codes" loading="lazy" />&lt;/p>
+&lt;p>Coupon codes allow you to offer discounts to your event participants. Follow these steps to create and manage coupons in Stripe.&lt;/p>
+&lt;h2>Creating a Coupon in Stripe&lt;span class="hx:absolute hx:-mt-20" id="creating-a-coupon-in-stripe">&lt;/span>
+&lt;a href="#creating-a-coupon-in-stripe" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>Navigate to Stripe Dashboard&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Go to &lt;a href="https://dashboard.stripe.com/coupons/create" target="_blank" rel="noopener">Stripe Coupons&lt;/a>&lt;/li>
+&lt;li>Alternatively, search for &amp;ldquo;coupons&amp;rdquo; in the Stripe dashboard search bar&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Configure Your Coupon&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Discount Type&lt;/strong>: Choose between:
+&lt;ul>
+&lt;li>&lt;strong>Percentage off&lt;/strong>: e.g., 20% off&lt;/li>
+&lt;li>&lt;strong>Fixed amount off&lt;/strong>: e.g., $10 off&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Coupon Code&lt;/strong>: Create a customer-facing code (e.g., &amp;ldquo;EARLY20&amp;rdquo;, &amp;ldquo;WELCOME10&amp;rdquo;)&lt;/li>
+&lt;li>&lt;strong>Expiry Date&lt;/strong>: Set when the coupon expires&lt;/li>
+&lt;li>&lt;strong>Usage Limits&lt;/strong>: Control how many times the coupon can be used&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h2>Enabling Coupons in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="enabling-coupons-in-sportshub">&lt;/span>
+&lt;a href="#enabling-coupons-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/promotional-codes-enabled.png" alt="promotional-codes-enabled" loading="lazy" />&lt;/p>
+&lt;p>To use your Stripe coupons for SPORTSHUB events:&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>During Event Creation&lt;/strong>: Enable &amp;ldquo;Promotional Codes&amp;rdquo; in the event creation form&lt;/li>
+&lt;li>&lt;strong>Existing Events&lt;/strong>: Go to Event Settings and enable promotional codes&lt;/li>
+&lt;/ol>
+&lt;h2>Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes">&lt;/span>
+&lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>Cross-Event Usage&lt;/strong>: Coupons work across all your events, not just specific ones&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-amber-200 hx:bg-amber-100 hx:text-amber-900 hx:dark:border-amber-200/30 hx:dark:bg-amber-900/30 hx:dark:text-amber-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>&lt;/svg>&amp;gt; &lt;strong>100% Discount Bug&lt;/strong>: If you pass application fees to customers, you cannot offer 100% discounts as Stripe doesn&amp;rsquo;t allow this configuration.&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;/div>
+&lt;/div>
+&lt;/div></description></item></channel></rss>

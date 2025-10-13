@@ -21,7 +21,7 @@ export default function Success({ params }: any) {
   ) : (
     <div className="h-screen w-full flex justify-center items-center">
       <div className="text-center">
-        <h2 className="text-2xl">Thank you for booking with SportsHub!</h2>
+        <h2 className="text-2xl">Thank you for booking with SPORTSHUB!</h2>
         <p className="font-light">
           You have successfully booked {event.name} organised by {event.organiser.firstName}.
         </p>
