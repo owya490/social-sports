@@ -147,10 +147,7 @@ jobs:
             --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
             --memory 512 \
-            --concurrency 80 \
-            --min-instances 1 \
-            --max-instances 5 \
-            --cpu 1
+            ${{ matrix.env == 'prod' && '--concurrency 80 --min-instances 1 --max-instances 5 --cpu 1' || '' }}
 
       - name: Deploy Cloud Scheduler jobs
         continue-on-error: true
