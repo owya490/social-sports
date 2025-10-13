@@ -23,7 +23,6 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import SEO from "@/components/SEO/SEO";
 import { EventStructuredData } from "@/components/SEO/StructuredData";
 
-
 export default function Dashboard() {
   const logger = new Logger("DashboardLogger");
   const [loading, setLoading] = useState<boolean>(true);
@@ -65,7 +64,7 @@ export default function Dashboard() {
   // Dynamic SEO functions
   const getDynamicTitle = () => {
     const { event, location } = getQueryParams();
-    
+
     if (event && location) {
       return `${event.charAt(0).toUpperCase() + event.slice(1)} Events in ${location}`;
     } else if (event) {
@@ -77,7 +76,7 @@ export default function Dashboard() {
 
   const getDynamicDescription = () => {
     const { event, location } = getQueryParams();
-    
+
     if (event && location) {
       return `Discover ${event} events in ${location}. Join local sports activities, tournaments and casual games. Connect with athletes in your area.`;
     } else if (event) {
@@ -92,15 +91,15 @@ export default function Dashboard() {
   const getDynamicUrl = () => {
     const { event, location } = getQueryParams();
     let url = "https://sportshub.net.au/";
-    
+
     const params = new URLSearchParams();
-    if (event) params.set('event', event);
-    if (location) params.set('location', location);
-    
+    if (event) params.set("event", event);
+    if (location) params.set("location", location);
+
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-    
+
     return url;
   };
 
@@ -261,7 +260,7 @@ export default function Dashboard() {
   return (
     <>
       {/* Replace all the static Head content with dynamic SEO */}
-      <SEO 
+      <SEO
         title={getDynamicTitle()}
         description={getDynamicDescription()}
         url={getDynamicUrl()}
@@ -329,19 +328,22 @@ export default function Dashboard() {
                   .sort((a, b) => b.accessCount - a.accessCount)
                   .map((event, eventIdx) => {
                     return (
-                      <EventCard
-                        eventId={event.eventId}
-                        image={event.image}
-                        thumbnail={event.thumbnail}
-                        name={event.name}
-                        organiser={event.organiser}
-                        startTime={event.startDate}
-                        location={event.location}
-                        price={event.price}
-                        vacancy={event.vacancy}
-                        loading={loading}
-                        key={eventIdx}
-                      />
+                      <>
+                        <EventStructuredData event={event} />
+                        <EventCard
+                          eventId={event.eventId}
+                          image={event.image}
+                          thumbnail={event.thumbnail}
+                          name={event.name}
+                          organiser={event.organiser}
+                          startTime={event.startDate}
+                          location={event.location}
+                          price={event.price}
+                          vacancy={event.vacancy}
+                          loading={loading}
+                          key={eventIdx}
+                        />
+                      </>
                     );
                   })}
           </div>
