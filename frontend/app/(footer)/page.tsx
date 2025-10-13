@@ -90,7 +90,7 @@ export default function Dashboard() {
 
   const getDynamicUrl = () => {
     const { event, location } = getQueryParams();
-    let url = "https://sportshub.net.au/";
+    let url = "https://www.sportshub.net.au/";
 
     const params = new URLSearchParams();
     if (event) params.set("event", event);
