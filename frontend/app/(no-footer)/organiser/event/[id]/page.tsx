@@ -22,6 +22,8 @@ import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import SEO from "@/components/SEO/SEO";
+import { EventStructuredData } from "@/components/SEO/StructuredData";
 
 interface EventPageProps {
   params: {
@@ -58,8 +60,24 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const router = useRouter();
-
   const { user } = useUser();
+
+  const getEventSEO = () => {
+  if (!_eventData || loading) return null;
+  
+  const startDateStr = eventStartDate ? eventStartDate.toDate().toLocaleDateString('en-AU', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }) : '';
+  
+  return {
+    title: `${eventName} - ${eventSport} Event in ${eventLocation} | SPORTSHUB`,
+    description: `Join ${eventName} in ${eventLocation} on ${startDateStr}. ${eventDescription?.substring(0, 120)}... Organized by ${eventOrganiser}. $${eventPrice} per person.`,
+    url: `https://www.sportshub.net.au/organiser/event/${eventId}`,
+    image: eventImage || eventThumbnail || 'default-event.png',
+  };
+};
 
   const eventId: EventId = params.id;
   useEffect(() => {
@@ -125,6 +143,20 @@ export default function EventPage({ params }: EventPageProps) {
 
   return (
     <>
+    {/* ADD DYNAMIC SEO - Only when data is loaded */}
+    {!loading && _eventData && getEventSEO() && (
+      <>
+        <SEO 
+          title={getEventSEO()!.title}
+          description={getEventSEO()!.description}
+          url={getEventSEO()!.url}
+          image={getEventSEO()!.image}
+        />
+        
+        {/* ADD EVENT STRUCTURED DATA */}
+        <EventStructuredData event={_eventData} />
+      </>
+    )}
       <EventDrilldownBanner
         name={eventName}
         startDate={eventStartDate}
