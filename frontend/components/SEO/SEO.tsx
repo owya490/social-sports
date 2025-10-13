@@ -8,7 +8,7 @@ interface SEOProps {
 }
 
 export default function SEO({ title, description, image, url }: SEOProps) {
-  const siteTitle = "SportsHub - Social Sports Events";
+  const siteTitle = "SPORTSHUB - Social Sports Events";
   const fullTitle = `${title} | ${siteTitle}`;
   const defaultImage = "https://www.sportshub.net.au/images/sportshub-og-image.jpg";
   const baseUrl = "https://www.sportshub.net.au";

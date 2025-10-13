@@ -185,7 +185,7 @@ export default function Dashboard() {
         title={getDynamicTitle()}
         description={getDynamicDescription()}
         url={getDynamicUrl()}
-        image="https://sportshub.net.au/images/logo.png"
+        image="https://www.sportshub.net.au/images/logo.png"
       />
       <WebsiteStructuredData/>
       <div>
