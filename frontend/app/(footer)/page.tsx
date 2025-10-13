@@ -21,7 +21,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 import SEO from "@/components/SEO/SEO";
-import { WebsiteStructuredData } from "@/components/SEO/StructuredData";
+import { EventStructuredData } from "@/components/SEO/StructuredData";
 
 
 export default function Dashboard() {
@@ -267,7 +267,7 @@ export default function Dashboard() {
         url={getDynamicUrl()}
         image="https://www.sportshub.net.au/images/logo.png"
       />
-      <WebsiteStructuredData/>
+      <EventStructuredData/>
       <div>
         <div className="flex justify-center">
           <FilterBanner
