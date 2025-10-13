@@ -70,12 +70,14 @@ export default function EventPage({ params }: EventPageProps) {
     month: 'long',
     day: 'numeric'
   }) : '';
+
+  const organiserName = eventOrganiser ? `${eventOrganiser.firstName ?? ""} ${eventOrganiser.surname ?? ""}`.trim() || "SportsHub" : "SportsHub";
   
   return {
     title: `${eventName} - ${eventSport} Event in ${eventLocation} | SPORTSHUB`,
-    description: `Join ${eventName} in ${eventLocation} on ${startDateStr}. ${eventDescription?.substring(0, 120)}... Organized by ${eventOrganiser}. $${eventPrice} per person.`,
+    description: `Join ${eventName} in ${eventLocation} on ${startDateStr}. ${eventDescription?.substring(0, 120)}... Organized by ${organiserName}. $${eventPrice} per person.`,
     url: `https://www.sportshub.net.au/organiser/event/${eventId}`,
-    image: eventImage || eventThumbnail || 'default-event.png',
+    image: eventImage || eventThumbnail || 'https://www.sportshub.net.au/images/default-event.png',
   };
 };
 

@@ -9,10 +9,10 @@ export const metadata: Metadata = {
     title: "SPORTSHUB | Organizer Dashboard",
     description: "Manage your sports events, view participants, and organize tournaments with SPORTSHUB's organizer tools.",
     type: "website",
-    url: "https://sportshub.net.au",
+    url: "https://www.sportshub.net.au",
     images: [
       {
-        url: "https://sportshub.net.au/images/logo.png",
+        url: "https://www.sportshub.net.au/images/logo.png",
         width: 1200,
         height: 630,
         alt: "SPORTSHUB Logo"
