@@ -10,7 +10,7 @@ function toJsonLd(data: unknown) {
     .replace(/\u2029/g, "\\u2029");
 }
 
-export function EventStructuredData({ event }: { event: any }) {
+export function EventStructuredData({ event }: { event?: any }) {
   if (!event) return null;
 
   const getISODate = (dateField: any) => {
@@ -20,7 +20,7 @@ export function EventStructuredData({ event }: { event: any }) {
       if (dateField instanceof Date) return dateField.toISOString();
       return new Date(dateField).toISOString();
     } catch (error) {
-      console.warn('Date conversion error:', error);
+      console.warn("Date conversion error:", error);
       return undefined;
     }
   };
@@ -33,25 +33,24 @@ export function EventStructuredData({ event }: { event: any }) {
     startDate: getISODate(event.startDate || event.eventStartDate),
     location: {
       "@type": "Place",
-      name: event.location || event.venue || event.eventLocation || "TBD"
+      name: event.location || event.venue || event.eventLocation || "TBD",
     },
     organizer: {
-      "@type": "Person", 
-      name: typeof event.organiser === 'string' 
-        ? event.organiser 
-        : `${event.organiser?.firstName || ''} ${event.organiser?.lastName || ''}`.trim() || "Event Organizer"
+      "@type": "Person",
+      name:
+        typeof event.organiser === "string"
+          ? event.organiser
+          : `${event.organiser?.firstName || ""} ${event.organiser?.lastName || ""}`.trim() || "Event Organizer",
     },
     offers: {
       "@type": "Offer",
       price: String(event.price || event.eventPrice || 0),
       priceCurrency: "AUD",
-      availability: (event.vacancy || event.availableSpots || 0) > 0 
-        ? "https://schema.org/InStock" 
-        : "https://schema.org/SoldOut"
+      availability: (event.vacancy || event.availableSpots || 0) > 0 ? "Available" : "Sold Out",
     },
     sport: event.sport || event.eventSport || "Sports",
     url: `https://sportshub.net.au/organiser/event/${event.eventId || event.id}`,
-    image: event.image || event.thumbnail || event.eventImage || "/default-event.png"
+    image: event.image || event.thumbnail || event.eventImage || "/default-event.png",
   };
 
   return (
