@@ -39,15 +39,15 @@ export default function EventBanner(props: EventBannerProps) {
                   height={32}
                   className="rounded-full w-8 h-8 object-cover"
                 />
-                <div className="flex items-center group-hover:bg-core-hover ml-1 px-1.5 py-1 rounded-full">
+                <div className="flex items-center group-hover:bg-core-hover ml-1 px-2 py-1 rounded-full mr-1">
                   <Link
                     href={`/user/${props.organiser.userId}`}
-                    className="text-sm text-gray-700  font-medium transition-colors mr-1.5"
+                    className="text-sm text-gray-700  font-medium transition-colors"
                   >
                     {`${props.organiser.firstName} ${props.organiser.surname}`}
                   </Link>
                   {props.organiser.isVerifiedOrganiser && (
-                    <div className="relative group/badge">
+                    <div className="relative group/badge ml-1">
                       <CheckBadgeIcon className="w-5 h-5 text-yellow-700" />
                       <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 hidden group-hover/badge:block bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md whitespace-nowrap z-10 shadow-lg">
                         Verified Organiser

@@ -20,7 +20,7 @@ export function EventDetails(props: EventDetailsProps) {
     <div className="flex justify-center w-full px-2 md:px-0">
       <div className="w-full md:screen-width-primary">
         <div className="lg:flex w-full gap-16">
-          <div className="lg:hidden mb-4">
+          <div className="lg:hidden">
             <MobileEventPayment
               startDate={eventData.startDate}
               endDate={eventData.endDate}
