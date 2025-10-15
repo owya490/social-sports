@@ -12,12 +12,23 @@ import {
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { PrivateUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  Timestamp,
+  updateDoc,
+  WriteBatch,
+  writeBatch,
+} from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getPrivateUserById } from "../users/usersService";
-import { FormPaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
+import { FormPaths, FormResponsePaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
 
@@ -210,6 +221,34 @@ export async function saveTempFormResponse(formResponse: FormResponse): Promise<
 }
 
 /**
+ * Creates a form response directly in the Submitted collection.
+ * Used by organisers to manually submit form responses.
+ */
+export async function createSubmittedFormResponse(formResponse: FormResponse): Promise<FormResponseId> {
+  const { formId, eventId } = formResponse;
+  formsServiceLogger.info(`createSubmittedFormResponse: formId=${formId}, eventId=${eventId}`);
+
+  try {
+    const docRef = doc(collection(db, FormResponsePaths.Submitted, formId, eventId));
+    await setDoc(docRef, {
+      ...formResponse,
+      formResponseId: docRef.id as FormResponseId,
+      submissionTime: Timestamp.now(),
+    });
+
+    formsServiceLogger.info(
+      `createSubmittedFormResponse: Successfully created submitted form response with formResponseId: ${docRef.id}`
+    );
+    return docRef.id as FormResponseId;
+  } catch (error) {
+    formsServiceLogger.error(
+      `createSubmittedFormResponse: Failed to create submitted form response with formResponse: ${formResponse}, error: ${error}`
+    );
+    throw error;
+  }
+}
+
+/**
  * Form response MUST have all required section answers completed.
  */
 export async function updateTempFormResponse(
@@ -297,6 +336,29 @@ export async function updateFormResponse(
   } catch (error) {
     formsServiceLogger.error(
       `updateFormResponse: Error editing form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}, updated form response: ${formResponse}, error: ${error}`
+    );
+    throw error;
+  }
+}
+
+export async function deleteFormResponse(formId: FormId, eventId: EventId, responseId: FormResponseId): Promise<void> {
+  formsServiceLogger.info(`deleteFormResponse: formId=${formId}, eventId=${eventId}, responseId=${responseId}`);
+  try {
+    const docRef = await findFormResponseDocRef(formId, eventId, responseId);
+
+    const responseDocSnapshot = await getDoc(docRef);
+    if (!responseDocSnapshot.exists()) {
+      formsServiceLogger.error(`deleteFormResponse: formResponseId ${responseId} not found`);
+      throw new Error(
+        `deleteFormResponse: Could not find form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}`
+      );
+    }
+
+    await deleteDoc(docRef);
+    formsServiceLogger.info(`deleteFormResponse: Successfully deleted form response with responseId: ${responseId}`);
+  } catch (error) {
+    formsServiceLogger.error(
+      `deleteFormResponse: Error deleting form response with formId: ${formId}, eventId: ${eventId}, responseId: ${responseId}, error: ${error}`
     );
     throw error;
   }

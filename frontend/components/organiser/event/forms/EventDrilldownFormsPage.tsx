@@ -1,15 +1,25 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
+import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData } from "@/interfaces/EventTypes";
-import { FormId, FormResponse, FormSection, FormSectionType, FormTitle, SectionId } from "@/interfaces/FormTypes";
+import {
+  FormId,
+  FormResponse,
+  FormResponseId,
+  FormSection,
+  FormSectionType,
+  FormTitle,
+  SectionId,
+} from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
-import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import { deleteFormResponse, getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
+import { ChevronDownIcon, ChevronUpIcon, EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
 
 interface EventDrilldownFormsPageProps {
   eventId: string;
@@ -35,6 +45,7 @@ const formatTimestamp = (ts: Timestamp | null): string => {
 
 const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   const logger = new Logger("EventDrilldownFormsPageLogger");
+  const router = useRouter();
   const { user } = useUser();
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +55,8 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   const [formId, setFormId] = useState<FormId | null>(null);
   const [formTitle, setFormTitle] = useState<FormTitle | null>(null);
   const [attachingForm, setAttachingForm] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<FormResponseId | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const toggleRowExpansion = (rowIndex: number) => {
     const newExpandedRows = new Set(expandedRows);
@@ -54,6 +67,35 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
     }
     setExpandedRows(newExpandedRows);
   };
+
+  const handleDeleteResponse = async (responseId: FormResponseId) => {
+    if (!formId) return;
+
+    if (!confirm("Are you sure you want to delete this form response? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await deleteFormResponse(formId, eventId, responseId);
+      setFormResponses((prev) => prev.filter((r) => r.formResponseId !== responseId));
+      setOpenMenuId(null);
+    } catch (err) {
+      logger.error(`Failed to delete form response: ${err}`);
+      setError("Failed to delete form response");
+    }
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
@@ -208,8 +250,8 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
     return questionMapping;
   };
 
-  // Calculate minimum table width: 30px (index) + 150px per question + 400px (submission time) + 30px (expand button)
-  const minTableWidth = 30 + sortedQuestions.length * 150 + 400 + 30;
+  // Calculate minimum table width: 30px (index) + 150px per question + 400px (submission time) + 60px (expand/menu buttons)
+  const minTableWidth = 30 + sortedQuestions.length * 150 + 400 + 60;
 
   const csvHeaders = [
     { label: "#", key: "index" },
@@ -252,7 +294,15 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
           <h1 className="text-2xl font-extrabold mb-1">Form Responses</h1>
           {formTitle && <p className="text-sm text-gray-400 line-clamp-1">Form: {formTitle}</p>}
         </div>
-        <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
+        <div className="flex gap-2">
+          <InvertedHighlightButton
+            onClick={() => router.push(`/organiser/forms/${formId}/${eventId}/manual-submit`)}
+            className="border-1 px-3 bg-white"
+          >
+            <span className="text-sm">+ Add Response</span>
+          </InvertedHighlightButton>
+          <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
+        </div>
       </div>
 
       {/* Table with fixed layout and scroll support */}
@@ -275,7 +325,7 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
                 </div>
               ))}
               <div className="table-cell px-3 py-2 border-r border-core-outline w-[400px]">Submission Time</div>
-              <div className="table-cell px-2 align-middle w-[30px] sticky right-0 bg-core-hover z-10">
+              <div className="table-cell px-2 align-middle w-[60px] sticky right-0 bg-core-hover z-10">
                 <button
                   onClick={() => setHeadersExpanded(!headersExpanded)}
                   className="flex items-center justify-center w-6 h-6 hover:bg-gray-200 rounded transition-colors"
@@ -331,17 +381,39 @@ const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
                       {formatTimestamp(response.submissionTime)}
                     </Link>
                   </div>
-                  <div className="table-cell px-3 py-2 w-[30px] align-top sticky right-0 bg-white border-l border-core-outline">
-                    <button
-                      onClick={() => toggleRowExpansion(idx)}
-                      className="flex items-center justify-center w-4 h-4 hover:bg-gray-200 rounded transition-colors"
-                    >
-                      {expandedRows.has(idx) ? (
-                        <ChevronUpIcon className="w-4 h-4" />
-                      ) : (
-                        <ChevronDownIcon className="w-4 h-4" />
-                      )}
-                    </button>
+                  <div className="table-cell px-2 py-2 w-[60px] align-top sticky right-0 bg-white border-l border-core-outline">
+                    <div className="flex gap-1 items-center">
+                      <button
+                        onClick={() => toggleRowExpansion(idx)}
+                        className="flex items-center justify-center w-4 h-4 hover:bg-gray-200 rounded transition-colors"
+                      >
+                        {expandedRows.has(idx) ? (
+                          <ChevronUpIcon className="w-4 h-4" />
+                        ) : (
+                          <ChevronDownIcon className="w-4 h-4" />
+                        )}
+                      </button>
+                      <div className="relative" ref={openMenuId === response.formResponseId ? menuRef : null}>
+                        <button
+                          onClick={() =>
+                            setOpenMenuId(openMenuId === response.formResponseId ? null : response.formResponseId)
+                          }
+                          className="flex items-center justify-center w-4 h-4 hover:bg-gray-200 rounded transition-colors"
+                        >
+                          <EllipsisVerticalIcon className="w-4 h-4" />
+                        </button>
+                        {openMenuId === response.formResponseId && (
+                          <div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-30">
+                            <button
+                              onClick={() => handleDeleteResponse(response.formResponseId)}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100 rounded-lg"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
