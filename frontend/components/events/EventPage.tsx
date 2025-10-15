@@ -59,6 +59,7 @@ export default function EventPage({ params }: any) {
           <div className="w-full md:screen-width-primary">
             <div className="px-4 py-4 md:px-0 md:py-6">
               <div className="rounded-xl md:rounded-2xl overflow-hidden shadow-sm md:mx-12">
+                {/* <EventImage imageSrc={eventData.image as URL} /> */}
                 <EventImage imageSrc={eventData.image as URL} />
               </div>
             </div>

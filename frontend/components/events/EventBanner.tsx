@@ -16,7 +16,7 @@ interface EventBannerProps {
 
 export default function EventBanner(props: EventBannerProps) {
   return (
-    <div className="bg-white w-100% px-4 md:px-10 pt-4 md:pt-4 flex md:justify-center">
+    <div className="bg-white w-full px-4 md:px-10 pt-4 md:pt-4 flex md:justify-center">
       <div className="screen-width-primary px-0 md:px-3">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
@@ -27,11 +27,13 @@ export default function EventBanner(props: EventBannerProps) {
             </div>
 
             {/* Event Title */}
-            <h1 className="text-2xl md:text-4xl font-bold text-core-text mb-3 leading-tight">{props.name}</h1>
+            <h1 className="text-2xl md:text-4xl font-bold text-core-text mb-3 leading-tight line-clamp-2">
+              {props.name}
+            </h1>
 
             {/* Organiser Info */}
-            <div className="flex flex-wrap items-center group">
-              <div className="flex items-center group mr-3 md:mr-3">
+            <div className="flex items-center">
+              <div className="flex items-center group mr-3 md:mr-3 max-w-64 md:max-w-96">
                 <Image
                   src={props.organiser.profilePicture}
                   alt="Organiser"
@@ -42,7 +44,7 @@ export default function EventBanner(props: EventBannerProps) {
                 <div className="flex items-center group-hover:bg-core-hover ml-1 px-2 py-1 rounded-full mr-1">
                   <Link
                     href={`/user/${props.organiser.userId}`}
-                    className="text-sm text-gray-700  font-medium transition-colors"
+                    className="text-sm text-gray-700 text-nowrap max-w-48 md:max-w-96 overflow-hidden font-medium transition-colors"
                   >
                     {`${props.organiser.firstName} ${props.organiser.surname}`}
                   </Link>
