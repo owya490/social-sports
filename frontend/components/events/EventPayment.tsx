@@ -140,7 +140,7 @@ export default function EventPayment(props: EventPaymentProps) {
             <ContactEventButton
               eventLink={props.eventLink}
               fallbackLink={`/user/${props.organiserId}`}
-              className="w-full py-3.5 px-6 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 transition-colors duration-200"
+              className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-core-text hover:text-white border-[1px] border-core-text transition-colors duration-200"
             />
           )}
         </div>

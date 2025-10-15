@@ -44,7 +44,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
 
   return (
-    <div className="p-4">
+    <div className="py-4 px-2">
       {/* Date and Time Section */}
       <div className="mb-3">
         <div className="flex gap-2.5 text-gray-700 items-center">
