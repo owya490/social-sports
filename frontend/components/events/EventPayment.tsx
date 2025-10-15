@@ -127,7 +127,7 @@ export default function EventPayment(props: EventPaymentProps) {
                     eventId={props.eventId}
                     ticketCount={attendeeCount}
                     setLoading={props.setLoading}
-                    className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white hover:border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
+                    className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
                   <p className="text-xs text-gray-600 mt-3 text-center">
                     Registration closes {timestampToTimeOfDay(registrationEndDate)},{" "}
