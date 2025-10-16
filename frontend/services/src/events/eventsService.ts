@@ -486,6 +486,9 @@ export async function setAttendeeTickets(
   attendeeName: Name,
   eventId: EventId
 ) {
+  if (numTickets < 0) {
+    throw new Error("Number of tickets cannot be less than 0!");
+  }
   try {
     // validatePurchaserDetails(purchaser);
     // TODO: need to fix validatPurchaserDetails because purchaser details is currently hardcoded with 0 tickets and this fails one of the validatePurchaserDetails checks.
