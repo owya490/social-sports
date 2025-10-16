@@ -27,7 +27,7 @@ export default function EventBanner(props: EventBannerProps) {
             </div>
 
             {/* Event Title */}
-            <h1 className="text-2xl md:text-4xl font-bold text-core-text mb-3 leading-tight line-clamp-2">
+            <h1 className="text-2xl md:text-4xl font-bold text-core-text pb-3 leading-tight line-clamp-2">
               {props.name}
             </h1>
 
