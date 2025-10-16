@@ -501,9 +501,13 @@ export async function setAttendeeTickets(
       ).data() as EventDataWithoutOrganiser;
 
       const eventCapacity = eventDataWithoutOrganiser.capacity;
-
+      // Get the original ticket count of the attendee (primitive so no need to worry about reference issues)
+      const originalTicketCount = eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount;
       // Update attendee ticket count
       eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount = numTickets;
+
+      const deltaTicketCount = numTickets - originalTicketCount;
+
       eventMetadata = recalculateEventsMetadataTotalTicketCounts(eventMetadata);
 
       const newEventTotalTicketCount = eventMetadata.completeTicketCount;
@@ -518,7 +522,7 @@ export async function setAttendeeTickets(
       }
 
       // Update the vacancy in eventData
-      eventDataWithoutOrganiser.vacancy = eventCapacity - newEventTotalTicketCount;
+      eventDataWithoutOrganiser.vacancy = eventDataWithoutOrganiser.vacancy - deltaTicketCount;
       transaction.update(eventMetadataDocRef, eventMetadata as Partial<EventMetadata>);
       transaction.update(
         eventDataWithoutOrganiserDocRef,
