@@ -1,0 +1,59 @@
+# SPORTSHUB Frontend
+
+Next.js 14 App Router · TypeScript · Tailwind CSS · Firebase · React Hook Form
+
+## Code Style
+
+- TypeScript strict mode: define all types explicitly, never use `any`
+- Prefer types over interfaces, but use interfaces when it makes sense/is necessary; export from `/interfaces/` directory
+- Use path aliases: `@/` for root, `@components/*`, `@svgs/*`
+- Naming: PascalCase for components/types, camelCase for functions/variables, UPPER_SNAKE_CASE for constants
+
+## Architecture
+
+- **Services**: All Firebase operations in `/services/src/[feature]/featureService.ts`
+- **Types**: Define interfaces in `/interfaces/FeatureTypes.ts`
+- **Components**: Organize by feature in `/components/[feature]/`
+- **Pages**: Use route groups `(footer)` or `(no-footer)` in `/app/`
+- Use custom `Logger` for operational logging (not console.log)
+
+## React Patterns
+
+- Add `"use client"` directive when using hooks, state, or browser APIs; server components by default
+- Use `UserContext` for auth state; avoid prop drilling
+- Always handle loading states (skeleton components in `/components/loading/`) and error states
+- Use react-hook-form for all forms with validation
+
+## Key Conventions
+
+- Prices: store in cents (integer), format with `displayPrice` utility
+- Users: `PublicUserData` for display, `UserData` for authenticated user
+- Events: `EventData` with organiser, `EventDataWithoutOrganiser` for lightweight ops
+- Cache: bust local storage caches on sign out and mutations
+- Errors: catch `FirebaseError` specifically, log with context before throwing
+
+## Styling & Design
+
+SPORTSHUB follows a minimalistic, monochrome aesthetic inspired by [Airbnb](https://www.airbnb.com.au/) and [Humanitix](https://humanitix.com/au). The core philosophy: **let user content pop**. Our design provides a clean, neutral canvas where user-uploaded images and event content become the visual focal points. Think of SPORTSHUB's interface as a gallery frame—understated and refined, directing attention to the artwork (user content) rather than itself.
+
+**Design Principles**:
+
+- **Simplicity**: Favor whitespace and breathing room over dense layouts; every element should earn its place
+- **Monochrome palette**: Use grays, blacks, and whites as the foundation; let user images provide the color
+- **Rounded corners**: Apply consistent border radius throughout
+- **Flat hierarchy**: Minimize shadows, overlays, and layering; avoid components that appear to float above each other
+- **Icon-driven**: Use icons for UI affordances; reserve images exclusively for user content
+- **Generous spacing**: Create visual rhythm with consistent, ample spacing between elements
+- **UX first**: Prioritize intuitive navigation and effortless interaction; beauty should enhance usability, never hinder it
+
+**Technical**:
+
+- Use Tailwind utilities only; no custom CSS
+- Color palette defined in `tailwind.config.ts`: `core` (text, outline, hover), `organiser`, `highlight`
+- Mobile-first responsive design with thoughtful breakpoints; generally, mobile breakpoint is `md`
+- Semantic HTML with full accessibility (ARIA labels, alt text, keyboard navigation, focus states)
+
+## Quality Standards
+
+- Single responsibility: keep components focused, concise and clean
+- Async operations: handle with try-catch, provide user feedback
