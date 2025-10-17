@@ -105,9 +105,13 @@ export default function OrganiserChecklist() {
                 Good job you have finished setting up ✅ <br></br>
                 Go out there and make more events
               </h1>
-              <p className="text-[#BABABA] text-end hover:underline hover:cursor-pointer" onClick={resetChecklist}>
+              <button
+                type="button"
+                className="text-[#BABABA] text-end hover:underline hover:cursor-pointer bg-transparent border-0 p-0 w-full font-inherit"
+                onClick={resetChecklist}
+              >
                 Reset
-              </p>
+              </button>
             </>
           )}
         </>

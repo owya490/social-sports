@@ -7,6 +7,7 @@ import { Environment, getEnvironment } from "@/utilities/environment";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import "react-loading-skeleton/dist/skeleton.css";
 import "./globals.css";
 
 const satoshi = localFont({

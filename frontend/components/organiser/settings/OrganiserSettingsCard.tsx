@@ -2,8 +2,11 @@
 
 import { LabelledSwitch } from "@/components/elements/LabelledSwitch";
 import { useUser } from "@/components/utility/UserContext";
+import { Logger } from "@/observability/logger";
 import { updateUser } from "@/services/src/users/usersService";
 import { useState } from "react";
+
+const logger = new Logger("OrganiserSettingsCard");
 
 const OrganiserSettingsCard = () => {
   const { user, setUser } = useUser();
@@ -19,14 +22,17 @@ const OrganiserSettingsCard = () => {
 
     try {
       // Optimistic update
-      setUser({ ...user, sendOrganiserTicketEmails: newValue });
+      setUser((prevUser) => ({ ...prevUser, sendOrganiserTicketEmails: newValue }));
 
       // API call
       await updateUser(user.userId, { sendOrganiserTicketEmails: newValue });
     } catch (error) {
       // Rollback on error
-      setUser({ ...user, sendOrganiserTicketEmails: previousValue });
-      console.error("Failed to update email preference:", error);
+      setUser((prevUser) => ({ ...prevUser, sendOrganiserTicketEmails: previousValue }));
+      logger.error("Failed to update email preference", {
+        userId: user.userId,
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setIsUpdating(false);
     }

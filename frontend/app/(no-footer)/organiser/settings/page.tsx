@@ -4,6 +4,7 @@ import LoadingOrganiser from "@/components/loading/LoadingOrganiser";
 import OrganiserSettingsCard from "@/components/organiser/settings/OrganiserSettingsCard";
 import OrganiserSettingsStripeCard from "@/components/organiser/settings/OrganiserSettingsStripeCard";
 import { useUser } from "@/components/utility/UserContext";
+import { Logger } from "@/observability/logger";
 import { getStripeAccId } from "@/services/src/stripe/stripeService";
 import { useEffect, useState } from "react";
 
@@ -12,20 +13,27 @@ const Settings = () => {
   const [stripeSetupLoading, setStripeSetupLoading] = useState<boolean>(false);
   const [stripeId, setStripeId] = useState<string>("");
   const [stripeLoading, setStripeLoading] = useState<boolean>(true);
+  const stripeSetupLogger = new Logger("stripeSetupLogger");
 
   useEffect(() => {
     const fetchStripeId = async () => {
-      if (userLoading || user.userId === "") {
+      if (userLoading || !user?.userId) {
         return;
       }
       setStripeLoading(true);
-      const response = await getStripeAccId(user.userId);
-      if (!response) {
+      try {
+        const response = await getStripeAccId(user.userId);
+        if (!response) {
+          setStripeId("");
+        } else {
+          setStripeId(response);
+        }
+      } catch (error) {
+        stripeSetupLogger.error(`Error fetching Stripe account ID: ${error}`);
         setStripeId("");
-      } else {
-        setStripeId(response);
+      } finally {
+        setStripeLoading(false);
       }
-      setStripeLoading(false);
     };
     fetchStripeId();
   }, [user, userLoading]);

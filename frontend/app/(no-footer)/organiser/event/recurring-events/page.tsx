@@ -71,12 +71,8 @@ export default function RecurringEventDashboard() {
             })}
           </div>
         ) : recurrenceTemplateList.length === 0 ? (
-          <div className="flex justify-center">
-            <div>
-              <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                No recurring events found, create or edit an event to get started.
-              </div>
-            </div>
+          <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
+            No recurring events found, create or edit an event to get started.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto lg:h-[80vh] w-full">

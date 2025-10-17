@@ -25,6 +25,7 @@ const OrganiserSettingsStripeCard = (props: { stripeId: string; stripeLoading: b
             href="https://dashboard.stripe.com/login"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Open Stripe Dashboard"
             className="flex items-center gap-2 text-sm font-semibold text-highlight-yellow hover:underline transition-all"
           >
             <span className="hidden sm:inline">Open Dashboard</span>
