@@ -2,41 +2,20 @@ import Skeleton from "react-loading-skeleton";
 
 export default function LoadingSkeletonFormGalleryCard() {
   return (
-    <div className="w-full px-2">
-      <Skeleton
-        height={320}
-        wrapper={({ children }) => {
-          return <div className="h-[22rem] flex items-center w-full">{children}</div>;
-        }}
-      />
-      <Skeleton
-        height={6}
-        width={190}
-        wrapper={({ children }) => {
-          return <div className="h-3 flex items-center">{children}</div>;
-        }}
-      />
-      <Skeleton
-        height={20}
-        width={240}
-        wrapper={({ children }) => {
-          return <div className="h-8 flex items-center">{children}</div>;
-        }}
-      />
-      <Skeleton
-        height={6}
-        width={160}
-        wrapper={({ children }) => {
-          return <div className="h-5 flex items-center ml-2 mt-3">{children}</div>;
-        }}
-      />
-      <Skeleton
-        height={6}
-        width={160}
-        wrapper={({ children }) => {
-          return <div className="h-5 flex items-center ml-2">{children}</div>;
-        }}
-      />
+    <div className="w-full h-80 sm:max-w-64 border border-core-outline rounded-lg overflow-hidden">
+      {/* Form Preview Section - matches the h-64 preview area */}
+      <div className="h-64 bg-gray-50 p-4">
+        <Skeleton height={32} width="80%" className="mb-4" />
+        <Skeleton height={40} className="mb-3" />
+        <Skeleton height={40} className="mb-3" />
+        <Skeleton height={40} className="mb-3" />
+      </div>
+
+      {/* Metadata Section - matches the h-20 bottom section */}
+      <div className="h-20 bg-white border-t border-core-outline p-2">
+        <Skeleton height={18} width="50%" />
+        <Skeleton height={10} width="70%" />
+      </div>
     </div>
   );
 }

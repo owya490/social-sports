@@ -314,7 +314,7 @@ export function BasicInformation({
           </div>
         </div>
         <div>
-          <label className="text-black text-lg font-semibold">What Sport is it?</label>
+          <label className="text-black text-lg font-semibold">What sport is it?</label>
           <div className="mt-4">
             <Select
               label="Select Sport"
@@ -392,9 +392,10 @@ export function BasicInformation({
             </div>
           </div>
           <div>
-            <label className="text-black text-lg font-semibold">Is your event Private?</label>
+            <label className="text-black text-lg font-semibold">Is your event private?</label>
             <p className="text-sm mb-5 mt-2">
-              Private Events will not be shown on the public dashboard and will be invite only
+              Private Events will not be shown on the public dashboard and can be accessed by a link. It is not possible
+              to change this after the event is created.
             </p>
             <div className="mt-4">
               <Select
@@ -462,7 +463,7 @@ export function BasicInformation({
           </>
         )}
         {!paymentsActive && (
-          <div className="mt-5">
+          <div>
             <label className="text-black text-lg font-semibold">What’s the link to your event?</label>
             <p className="text-sm mb-5 mt-2">
               Paste your event&apos;s link here. Your link will redirect consumers to your event&apos;s page!
@@ -479,84 +480,87 @@ export function BasicInformation({
             {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           </div>
         )}
-        <div
-          className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1"
-          onClick={() => {
-            setIsAdditionalSettingsOpen(!isAdditionalSettingsOpen);
-          }}
-        >
-          <h2>Additional Settings</h2>
-          {isAdditionalSettingsOpen ? (
-            <ChevronUpIcon className="w-7 h-7 ml-auto" />
-          ) : (
-            <ChevronDownIcon className="w-7 h-7 ml-auto" />
+        <div className="w-full space-y-4">
+          <button
+            type="button"
+            className="text-black text-lg font-semibold flex hover:bg-gray-200 rounded-lg py-1 w-full"
+            onClick={() => {
+              setIsAdditionalSettingsOpen(!isAdditionalSettingsOpen);
+            }}
+          >
+            <h2>Additional Settings</h2>
+            {isAdditionalSettingsOpen ? (
+              <ChevronUpIcon className="w-7 h-7 ml-auto" />
+            ) : (
+              <ChevronDownIcon className="w-7 h-7 ml-auto" />
+            )}
+          </button>
+          {isAdditionalSettingsOpen && (
+            <>
+              <div>
+                <RecurringEventsForm
+                  startDate={startDate}
+                  newRecurrenceData={newRecurrenceData}
+                  setRecurrenceData={(data: NewRecurrenceFormData) => {
+                    updateField({ newRecurrenceData: data });
+                  }}
+                />
+              </div>
+              {user.stripeAccountActive && (
+                <>
+                  <div>
+                    <label className="text-black text-lg font-semibold">
+                      Do you want to pass Application Fees onto the Customer?
+                    </label>
+                    <p className="text-sm mb-5 mt-2">
+                      Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
+                      charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
+                    </p>
+                    <div className="mt-4">
+                      <Select
+                        size="md"
+                        label="Stripe Fee to Customer"
+                        value={stripeFeeToCustomer ? "Yes" : "No"}
+                        onChange={(e) => {
+                          const value = e || "Yes";
+                          handleStripeFeesToCustomerChange(value);
+                        }}
+                      >
+                        <Option value="Yes">Yes</Option>
+                        <Option value="No">No</Option>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-black text-lg font-semibold">
+                      Do you want to allow Promotional Codes for this Event?
+                    </label>
+                    <p className="text-sm mb-5 mt-2">
+                      Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for
+                      discounts at the time of checkout. To create a promotional code for your account, please visit
+                      your stripe dashboard.
+                    </p>
+                    <div className="mt-4">
+                      <Select
+                        size="md"
+                        label="Promotional Codes Enabled"
+                        value={promotionalCodesEnabled ? "Yes" : "No"}
+                        onChange={(e) => {
+                          const value = e || "Yes";
+                          handlePromotionalCodesEnabledChange(value);
+                        }}
+                      >
+                        <Option value="Yes">Yes</Option>
+                        <Option value="No">No</Option>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
           )}
         </div>
-        {isAdditionalSettingsOpen && (
-          <div>
-            <div className="mb-12">
-              <RecurringEventsForm
-                startDate={startDate}
-                newRecurrenceData={newRecurrenceData}
-                setRecurrenceData={(data: NewRecurrenceFormData) => {
-                  updateField({ newRecurrenceData: data });
-                }}
-              />
-            </div>
-            {user.stripeAccountActive && (
-              <>
-                <div className="mb-12">
-                  <label className="text-black text-lg font-semibold">
-                    Do you want to pass Application Fees onto the Customer?
-                  </label>
-                  <p className="text-sm mb-5 mt-2">
-                    Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
-                    charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
-                  </p>
-                  <div className="mt-4">
-                    <Select
-                      size="md"
-                      label="Stripe Fee to Customer"
-                      value={stripeFeeToCustomer ? "Yes" : "No"}
-                      onChange={(e) => {
-                        const value = e || "Yes";
-                        handleStripeFeesToCustomerChange(value);
-                      }}
-                    >
-                      <Option value="Yes">Yes</Option>
-                      <Option value="No">No</Option>
-                    </Select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-black text-lg font-semibold">
-                    Do you want to allow Promotional Codes for this Event?
-                  </label>
-                  <p className="text-sm mb-5 mt-2">
-                    Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for discounts
-                    at the time of checkout. To create a promotional code for your account, please visit your stripe
-                    dashboard.
-                  </p>
-                  <div className="mt-4">
-                    <Select
-                      size="md"
-                      label="Promotional Codes Enabled"
-                      value={promotionalCodesEnabled ? "Yes" : "No"}
-                      onChange={(e) => {
-                        const value = e || "Yes";
-                        handlePromotionalCodesEnabledChange(value);
-                      }}
-                    >
-                      <Option value="Yes">Yes</Option>
-                      <Option value="No">No</Option>
-                    </Select>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
       </div>
     </FormWrapper>
   );

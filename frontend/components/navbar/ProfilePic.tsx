@@ -159,7 +159,7 @@ export default function ProfilePic() {
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <PencilSquareIcon className="h-5 mr-2" />
-                        Create event
+                        Create Event
                       </Link>
                     )}
                   </Menu.Item>

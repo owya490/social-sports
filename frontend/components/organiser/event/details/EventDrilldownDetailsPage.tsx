@@ -1,10 +1,10 @@
-import Image from "next/image";
+import { FormId } from "@/interfaces/FormTypes";
 import { Timestamp } from "firebase/firestore";
+import Image from "next/image";
 import Skeleton from "react-loading-skeleton";
 import { EventDescriptionEdit } from "./EventDescriptionEdit";
 import { EventDetailsEdit } from "./EventDetailsEdit";
 import { EventNameEdit } from "./EventNameEdit";
-import { FormId } from "@/interfaces/FormTypes";
 
 interface EventDrilldownDetailsPageProps {
   loading: boolean;
@@ -25,7 +25,7 @@ interface EventDrilldownDetailsPageProps {
   updateData: (id: string, data: any) => any;
   isRecurrenceTemplate: boolean;
   eventFormId: FormId | null;
-  }
+}
 
 const EventDrilldownDetailsPage = ({
   loading,
@@ -51,12 +51,7 @@ const EventDrilldownDetailsPage = ({
     <div className="flex flex-col space-y-4 mb-6">
       <div>
         {loading ? (
-          <Skeleton
-            style={{
-              height: 450,
-              borderRadius: 30,
-            }}
-          />
+          <Skeleton className="h-full w-full aspect-[16/9] object-cover sm:rounded-3xl" />
         ) : (
           <Image
             src={eventImage}
