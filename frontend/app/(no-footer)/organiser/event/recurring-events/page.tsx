@@ -3,13 +3,11 @@ import RecurringTemplateCard from "@/components/organiser/recurring-events/Recur
 import { useUser } from "@/components/utility/UserContext";
 import { EMPTY_RECURRENCE_TEMPLATE, Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { Logger } from "@/observability/logger";
-import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import {
   calculateRecurrenceEnded,
   getOrganiserRecurrenceTemplates,
 } from "@/services/src/recurringEvents/recurringEventsService";
 import { Timestamp } from "firebase/firestore";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -75,15 +73,8 @@ export default function RecurringEventDashboard() {
         ) : recurrenceTemplateList.length === 0 ? (
           <div className="flex justify-center">
             <div>
-              <Image
-                src={noSearchResultLineDrawing}
-                alt="noSearchResultLineDrawing"
-                width={500}
-                height={300}
-                className="opacity-60"
-              />
               <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                Sorry, we couldn&apos;t find any results
+                No recurring events found, create or edit an event to get started.
               </div>
             </div>
           </div>
