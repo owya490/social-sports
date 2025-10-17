@@ -46,76 +46,70 @@ export default function EventPayment(props: EventPaymentProps) {
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
 
   return (
-    <div className="md:border border-1 border-gray-300 rounded-[20px] shadow-[0_5px_30px_-15px_rgba(0,0,0,0.3)] bg-white">
-      <div className="mx-6">
-        <p className="font-semibold xs:text-2xl lg:text-3xl 2xl:text-3xl mb-5 mt-6 text-center"></p>
-        <div className="flex justify-start">
-          <div className="w-full">
-            <div className="mb-6">
-              {timestampToDateString(startDate) === timestampToDateString(endDate) ? (
-                <SameDayEventDateTime startDate={startDate} endDate={endDate} />
-              ) : (
-                <DifferentDayEventDateTime startDate={startDate} endDate={endDate} />
-              )}
-            </div>
-            <div className="mb-6">
-              <h2 className=" font-semibold">Location</h2>
-              <div className="flex">
-                <MapPinIcon className="w-4 h-4 mr-2 lg:mt-1 shrink-0" />
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(props.location)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-md font-light mr-[5%]"
-                >
-                  {props.location}
-                </a>
-              </div>
-            </div>
+    <div className="md:border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
+      <div className="p-6">
+        {/* Date and Time Section */}
+        <div className="mb-6">
+          {timestampToDateString(startDate) === timestampToDateString(endDate) ? (
+            <SameDayEventDateTime startDate={startDate} endDate={endDate} />
+          ) : (
+            <DifferentDayEventDateTime startDate={startDate} endDate={endDate} />
+          )}
+        </div>
 
-            <div className="mb-6">
-              <h2 className=" font-semibold">Price</h2>
-              <div className="flex items-center font-light">
-                <CurrencyDollarIcon className="w-5 h-5 mr-2 shrink-0" />
-                <p className="text-md mr-[5%] font-light">${displayPrice(props.price)} AUD</p>
-              </div>
-            </div>
+        {/* Location Section */}
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-core-text mb-2">Location</h3>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(props.location)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-start gap-2 text-sm text-gray-700 hover:text-gray-900 transition-colors group"
+          >
+            <MapPinIcon className="w-4 h-4 mt-0.5 shrink-0 text-gray-500 group-hover:text-gray-700" />
+            <span className="underline">{props.location}</span>
+          </a>
+        </div>
+
+        {/* Price Section */}
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-core-text mb-2">Price</h3>
+          <div className="flex items-center gap-2 text-gray-700">
+            <CurrencyDollarIcon className="w-4 h-4 text-gray-500" />
+            <p className="text-sm font-medium">${displayPrice(props.price)} AUD</p>
           </div>
         </div>
-        <hr className="px-2 h-0.5 mx-auto bg-core-outline border-0 rounded dark:bg-gray-400 mb-6"></hr>
-        <div className="relative flex justify-center mb-6 w-full">
+
+        <div className="border-t border-gray-200 my-6"></div>
+
+        {/* Booking Section */}
+        <div className="w-full">
           {eventRegistrationClosed ? (
-            <div>
-              <h2 className="font-semibold">Event registration has closed.</h2>
-              <p className="text-xs font-light">Please check with the organiser for more details.</p>
+            <div className="text-center py-4">
+              <h3 className="font-semibold text-core-text mb-1">Registration Closed</h3>
+              <p className="text-sm text-gray-600">Please check with the organiser for more details.</p>
             </div>
           ) : eventInPast ? (
-            <div>
-              <h2 className="font-semibold">Event has already finished.</h2>
-              <p className="text-xs font-light">Please check with the organiser for future events.</p>
+            <div className="text-center py-4">
+              <h3 className="font-semibold text-core-text mb-1">Event Finished</h3>
+              <p className="text-sm text-gray-600">Please check with the organiser for future events.</p>
             </div>
           ) : props.isPaymentsActive ? (
             <div className="w-full">
               {props.vacancy === 0 ? (
-                <div>
-                  <h2 className="font-semibold">Event currently sold out.</h2>
-                  <p>Please check back later.</p>
+                <div className="text-center py-4">
+                  <h3 className="font-semibold text-core-text mb-1">Sold Out</h3>
+                  <p className="text-sm text-gray-600">Please check back later.</p>
                 </div>
               ) : (
                 <>
-                  <div className="!text-black !border-black mb-6">
+                  <div className="mb-4 !text-black">
                     <Select
-                      className="border-black border-t-transparent text-black"
-                      label="Select Ticket Amount"
+                      className="text-black"
+                      label="Number of tickets"
                       size="lg"
                       value={`${attendeeCount}`}
                       onChange={handleAttendeeCount}
-                      labelProps={{
-                        className: "text-black before:border-black after:border-black",
-                      }}
-                      menuProps={{
-                        className: "text-black",
-                      }}
                     >
                       {Array(Math.min(props.vacancy, MAX_TICKETS_PER_ORDER))
                         .fill(0)
@@ -133,11 +127,12 @@ export default function EventPayment(props: EventPaymentProps) {
                     eventId={props.eventId}
                     ticketCount={attendeeCount}
                     setLoading={props.setLoading}
-                    className="font-semibold rounded-xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline w-full py-3 transition-all duration-300 mb-2"
+                    className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
-                  <p className=" font-light text-[0.75rem]">{`Registrations close: ${timestampToTimeOfDay(
-                    registrationEndDate
-                  )} ${timestampToDateString(registrationEndDate)}`}</p>
+                  <p className="text-xs text-gray-600 mt-3 text-center">
+                    Registration closes {timestampToTimeOfDay(registrationEndDate)},{" "}
+                    {timestampToDateString(registrationEndDate)}
+                  </p>
                 </>
               )}
             </div>
@@ -145,7 +140,7 @@ export default function EventPayment(props: EventPaymentProps) {
             <ContactEventButton
               eventLink={props.eventLink}
               fallbackLink={`/user/${props.organiserId}`}
-              className="text-lg rounded-2xl border border-black w-full py-3"
+              className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white hover:text-core-text border-[1px] border-core-text transition-colors duration-200"
             />
           )}
         </div>
@@ -158,22 +153,24 @@ export const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timest
   const { hours, minutes } = duration(startDate, endDate);
   return (
     <>
-      <h2 className=" font-semibold">Date and Time</h2>
-      <div className="flex items-center">
-        <CalendarDaysIcon className="w-5 mr-2 shrink-0" />
-        <p className="text-md mr-[5%] font-light">{timestampToDateString(startDate)}</p>
-      </div>
-      <div className="flex items-center">
-        <ClockIcon className="w-5 mr-2 shrink-0" />
-        <p className="text-md mr-[5%] font-light">
-          {timestampToTimeOfDay(startDate)} - {timestampToTimeOfDay(endDate)}
-        </p>
-      </div>
-      <div className="flex items-center">
-        <PlayCircleIcon className="w-5 mr-2 shrink-0" />
-        <p className="text-md mr-[5%] font-light">
-          {hours} hrs {minutes} mins
-        </p>
+      <h3 className="text-sm font-semibold text-core-text mb-2">Date & Time</h3>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <CalendarDaysIcon className="w-4 h-4 text-gray-500 shrink-0" />
+          <p className="text-sm text-gray-700">{timestampToDateString(startDate)}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ClockIcon className="w-4 h-4 text-gray-500 shrink-0" />
+          <p className="text-sm text-gray-700">
+            {timestampToTimeOfDay(startDate)} - {timestampToTimeOfDay(endDate)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <PlayCircleIcon className="w-4 h-4 text-gray-500 shrink-0" />
+          <p className="text-sm text-gray-700">
+            {hours} hrs {minutes} mins
+          </p>
+        </div>
       </div>
     </>
   );
@@ -182,23 +179,31 @@ export const SameDayEventDateTime = ({ startDate, endDate }: { startDate: Timest
 export const DifferentDayEventDateTime = ({ startDate, endDate }: { startDate: Timestamp; endDate: Timestamp }) => {
   return (
     <>
-      <h2 className=" font-semibold">Start Date</h2>
-      <div className="flex items-center">
-        <CalendarDaysIcon className="w-5 mr-2 shrink-0" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(startDate)}`}</p>
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-core-text mb-2">Start Date</h3>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <CalendarDaysIcon className="w-4 h-4 text-gray-500 shrink-0" />
+            <p className="text-sm text-gray-700">{timestampToDateString(startDate)}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <ClockIcon className="w-4 h-4 text-gray-500 shrink-0" />
+            <p className="text-sm text-gray-700">{timestampToTimeOfDay(startDate)}</p>
+          </div>
+        </div>
       </div>
-      <div className="flex items-center">
-        <ClockIcon className="w-5 mr-2 shrink-0" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(startDate)}`}</p>
-      </div>
-      <h2 className=" font-semibold">End Date</h2>
-      <div className="flex items-center">
-        <CalendarDaysIcon className="w-5 mr-2 shrink-0" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToDateString(endDate)}`}</p>
-      </div>
-      <div className="flex items-center">
-        <ClockIcon className="w-5 mr-2 shrink-0" />
-        <p className="text-md mr-[5%] font-light">{`${timestampToTimeOfDay(endDate)}`}</p>
+      <div>
+        <h3 className="text-sm font-semibold text-core-text mb-2">End Date</h3>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <CalendarDaysIcon className="w-4 h-4 text-gray-500 shrink-0" />
+            <p className="text-sm text-gray-700">{timestampToDateString(endDate)}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <ClockIcon className="w-4 h-4 text-gray-500 shrink-0" />
+            <p className="text-sm text-gray-700">{timestampToTimeOfDay(endDate)}</p>
+          </div>
+        </div>
       </div>
     </>
   );
