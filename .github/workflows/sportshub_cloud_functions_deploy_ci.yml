@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - master
+      - brian2w/parallelise-java-deploy-jobs
 
 jobs:
   deploy-java-cloud-run-functions:
@@ -18,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: [dev]
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -58,96 +59,154 @@ jobs:
           echo "DEPLOYMENT_ENV=\"${{ matrix.env == 'prod' && 'prod' || 'dev' }}\"" >> .env
           echo "PROJECT_NAME=\"${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}\"" >> .env
 
-      # Deploy Java Cloud Run functions
-      - name: Deploy updateRecurrenceTemplate
+      # Deploy Java Cloud Run functions in parallel
+      # All functions deploy simultaneously (using & to run commands in the background in a non-blocking way) to reduce deployment time from ~28min to ~5min
+      - name: Deploy all Java Cloud Run functions in parallel
         working-directory: functions/lib/functions
         run: |
-          gcloud functions deploy updateRecurrenceTemplate \
+          # Set variables for reuse
+          PROJECT_ID="${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}"
+
+          # Array to track process IDs of background deployments
+          PIDS=()
+
+          # Deploy updateRecurrenceTemplate in background
+          echo "Starting deployment of updateRecurrenceTemplate..."
+          (gcloud functions deploy updateRecurrenceTemplate \
             --entry-point com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
             --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --quiet 2>&1 | sed 's/^/[updateRecurrenceTemplate] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
 
-      - name: Deploy createRecurrenceTemplate
-        working-directory: functions/lib/functions
-        run: |
-          gcloud functions deploy createRecurrenceTemplate \
+          # Deploy createRecurrenceTemplate in background
+          echo "Starting deployment of createRecurrenceTemplate..."
+          (gcloud functions deploy createRecurrenceTemplate \
             --entry-point com.functions.events.controllers.CreateRecurrenceTemplateEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
             --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --quiet 2>&1 | sed 's/^/[createRecurrenceTemplate] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
 
-      - name: Deploy recurringEventsCron
-        working-directory: functions/lib/functions
-        run: |
-          gcloud functions deploy recurringEventsCron \
+          # Deploy recurringEventsCron in background
+          echo "Starting deployment of recurringEventsCron..."
+          (gcloud functions deploy recurringEventsCron \
             --entry-point com.functions.events.controllers.RecurringEventsCronEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
             --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --memory 512
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --memory 512 \
+            --quiet 2>&1 | sed 's/^/[recurringEventsCron] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
 
-      - name: Deploy cleanupOldFulfilmentSessionsCron
-        working-directory: functions/lib/functions
-        run: |
-          gcloud functions deploy cleanupOldFulfilmentSessionsCron \
+          # Deploy cleanupOldFulfilmentSessionsCron in background
+          echo "Starting deployment of cleanupOldFulfilmentSessionsCron..."
+          (gcloud functions deploy cleanupOldFulfilmentSessionsCron \
             --entry-point com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
             --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --memory 512
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --memory 512 \
+            --quiet 2>&1 | sed 's/^/[cleanupOldFulfilmentSessionsCron] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
 
-      - name: Deploy deleteFulfilmentSession
-        working-directory: functions/lib/functions
-        run: |
-          gcloud functions deploy deleteFulfilmentSession \
+          # Deploy deleteFulfilmentSession in background
+          echo "Starting deployment of deleteFulfilmentSession..."
+          (gcloud functions deploy deleteFulfilmentSession \
             --entry-point com.functions.fulfilment.controllers.DeleteFulfilmentSessionEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
             --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --memory 512
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --memory 512 \
+            --quiet 2>&1 | sed 's/^/[deleteFulfilmentSession] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
 
-      - name: Deploy completeFulfilmentSession
-        working-directory: functions/lib/functions
-        run: |
-          gcloud functions deploy completeFulfilmentSession \
+          # Deploy completeFulfilmentSession in background
+          echo "Starting deployment of completeFulfilmentSession..."
+          (gcloud functions deploy completeFulfilmentSession \
             --entry-point com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint \
             --runtime java17 \
             --trigger-http \
             --allow-unauthenticated \
             --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --memory 512
-
-      - name: Deploy globalAppController
-        working-directory: functions/lib/functions
-        run: |
-          gcloud functions deploy globalAppController \
-            --entry-point com.functions.global.controllers.GlobalAppController \
-            --runtime java17 \
-            --trigger-http \
-            --allow-unauthenticated \
-            --region australia-southeast1 \
-            --project ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
-            --set-env-vars PROJECT_NAME=${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} \
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
             --memory 512 \
-            ${{ matrix.env == 'prod' && '--concurrency 80 --min-instances 1 --max-instances 5 --cpu 1' || '' }}
+            --quiet 2>&1 | sed 's/^/[completeFulfilmentSession] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
+          # Deploy globalAppController in background (with conditional prod flags)
+          echo "Starting deployment of globalAppController..."
+          if [ "${{ matrix.env }}" == "prod" ]; then
+            (gcloud functions deploy globalAppController \
+              --entry-point com.functions.global.controllers.GlobalAppController \
+              --runtime java17 \
+              --trigger-http \
+              --allow-unauthenticated \
+              --region australia-southeast1 \
+              --project $PROJECT_ID \
+              --set-env-vars PROJECT_NAME=$PROJECT_ID \
+              --memory 512 \
+              --concurrency 80 \
+              --min-instances 1 \
+              --max-instances 5 \
+              --cpu 1 \
+              --quiet 2>&1 | sed 's/^/[globalAppController] /') &
+          else
+            (gcloud functions deploy globalAppController \
+              --entry-point com.functions.global.controllers.GlobalAppController \
+              --runtime java17 \
+              --trigger-http \
+              --allow-unauthenticated \
+              --region australia-southeast1 \
+              --project $PROJECT_ID \
+              --set-env-vars PROJECT_NAME=$PROJECT_ID \
+              --memory 512 \
+              --quiet 2>&1 | sed 's/^/[globalAppController] /') &
+          fi
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
+          # Wait for all background processes to complete and check their exit codes
+          echo ""
+          echo "Waiting for all deployments to complete..."
+          FAILED=0
+          for i in "${!PIDS[@]}"; do
+            PID=${PIDS[$i]}  # Extract each PID from array
+            if wait $PID; then  # Wait blocks until process $PID finishes; returns its exit code
+              echo "✓ Deployment $((i+1)) completed successfully (PID: $PID)"
+            else
+              EXIT_CODE=$?
+              echo "✗ Deployment $((i+1)) failed with exit code $EXIT_CODE (PID: $PID)"
+              FAILED=1
+            fi
+          done
+
+          # Exit with error if any deployment failed
+          if [ $FAILED -eq 1 ]; then
+            echo ""
+            echo "❌ One or more function deployments failed"
+            exit 1
+          else
+            echo ""
+            echo "✅ All function deployments completed successfully"
+          fi
 
       - name: Deploy Cloud Scheduler jobs
         continue-on-error: true
@@ -166,7 +225,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        env: [dev]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
