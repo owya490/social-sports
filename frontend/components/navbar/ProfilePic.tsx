@@ -15,7 +15,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
 import { HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 import LoadingSkeletonSmall from "../loading/LoadingSkeletonSmall";
 import { useUser } from "../utility/UserContext";
@@ -159,7 +158,7 @@ export default function ProfilePic() {
                         } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                       >
                         <PencilSquareIcon className="h-5 mr-2" />
-                        Create event
+                        Create Event
                       </Link>
                     )}
                   </Menu.Item>
