@@ -188,10 +188,11 @@ jobs:
           FAILED=0
           for i in "${!PIDS[@]}"; do
             PID=${PIDS[$i]}  # Extract each PID from array
-            if wait $PID; then  # Wait blocks until process $PID finishes; returns its exit code
+            wait $PID # Wait blocks until process $PID finishes; returns its exit code
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 0 ]; then
               echo "✓ Deployment $((i+1)) completed successfully (PID: $PID)"
             else
-              EXIT_CODE=$?
               echo "✗ Deployment $((i+1)) failed with exit code $EXIT_CODE (PID: $PID)"
               FAILED=1
             fi
