@@ -23,21 +23,21 @@ export default function StripeSetup(props: {
 
       <div className="grid sm:grid-cols-3 gap-4 mb-6">
         <div className="flex items-start gap-3">
-          <CreditCardIcon className="w-6 h-6 text-highlight-yellow shrink-0 mt-1" />
+          <CreditCardIcon aria-hidden="true" className="w-6 h-6 text-highlight-yellow shrink-0 mt-1" />
           <div>
             <h3 className="font-semibold text-sm">Accept Payments</h3>
             <p className="text-xs text-gray-600">Take bookings with instant payment processing</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <ShieldCheckIcon className="w-6 h-6 text-highlight-yellow shrink-0 mt-1" />
+          <ShieldCheckIcon aria-hidden="true" className="w-6 h-6 text-highlight-yellow shrink-0 mt-1" />
           <div>
             <h3 className="font-semibold text-sm">Secure & Trusted</h3>
             <p className="text-xs text-gray-600">Bank-level security for all transactions</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <BoltIcon className="w-6 h-6 text-highlight-yellow shrink-0 mt-1" />
+          <BoltIcon aria-hidden="true" className="w-6 h-6 text-highlight-yellow shrink-0 mt-1" />
           <div>
             <h3 className="font-semibold text-sm">Quick Setup</h3>
             <p className="text-xs text-gray-600">Get started in just a few minutes</p>
