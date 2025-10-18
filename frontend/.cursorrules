@@ -49,3 +49,4 @@ SPORTSHUB follows a minimalistic, monochrome aesthetic inspired by [Airbnb](http
 
 - Single responsibility: keep components focused, concise and clean
 - Async operations: handle with try-catch, provide user feedback
+- Logging: ensure there are sufficient, concise (but not an overly large amount) logs at the appropriate level to allow for ease of debugging
