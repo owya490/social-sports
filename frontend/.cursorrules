@@ -24,14 +24,6 @@ Next.js 14 App Router · TypeScript · Tailwind CSS · Firebase
 - Always handle loading states (skeleton components in `/components/loading/`) and error states
 - Use react-hook-form for all forms with validation
 
-## Key Conventions
-
-- Prices: store in cents (integer), format with `displayPrice` utility
-- Users: `PublicUserData` for display, `UserData` for authenticated user
-- Events: `EventData` with organiser, `EventDataWithoutOrganiser` for lightweight ops
-- Cache: bust local storage caches on sign out and mutations
-- Errors: catch `FirebaseError` specifically, log with context before throwing
-
 ## Styling & Design
 
 SPORTSHUB follows a minimalistic, monochrome aesthetic inspired by [Airbnb](https://www.airbnb.com.au/) and [Humanitix](https://humanitix.com/au). The core philosophy: **let user content pop**. Our design provides a clean, neutral canvas where user-uploaded images and event content become the visual focal points. Think of SPORTSHUB's interface as a gallery frame—understated and refined, directing attention to the artwork (user content) rather than itself.
