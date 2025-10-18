@@ -61,7 +61,7 @@ export default function StripeSetup(props: {
           router.push(link);
         }}
       >
-        {userLoading ? <div>Loading...</div> : "Connect Stripe Account"}
+        {userLoading ? "Loading..." : "Connect Stripe Account"}
       </HighlightButton>
     </div>
   );
