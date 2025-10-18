@@ -47,6 +47,7 @@ def get_purchasers(logger: Logger, event_id: str) -> list[Purchaser]:
 
     except Exception as e:
         logger.error(f"Error getting event details. eventId={event_id} error={e}")
+        return []
 
 
 def get_active_events_starting_tomorrow(
@@ -62,21 +63,42 @@ def get_active_events_starting_tomorrow(
     for event in events:
         event_id = event.id
         event_dict = event.to_dict()
-        event_start_date: Timestamp = event_dict.get("startDate").timestamp_pb()
+
+        # Guard rails: check if startDate exists
+        start_date_field = event_dict.get("startDate")
+        if not start_date_field:
+            logger.warning(f"Event {event_id} is missing startDate, skipping")
+            continue
+
+        try:
+            event_start_date: Timestamp = start_date_field.timestamp_pb()
+        except Exception as e:
+            logger.error(f"Failed to get timestamp for event {event_id}: {e}")
+            continue
 
         if event_start_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() == tomorrow:
-            start_date: Timestamp = event_dict.get("startDate").timestamp_pb()
-            end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
-            start_date_string = (
-                start_date.ToDatetime()
-                .astimezone(SYDNEY_TIMEZONE)
-                .strftime("%m/%d/%Y, %H:%M")
-            )
-            end_date_string = (
-                end_date.ToDatetime()
-                .astimezone(SYDNEY_TIMEZONE)
-                .strftime("%m/%d/%Y, %H:%M")
-            )
+            # Guard rails: check if endDate exists
+            end_date_field = event_dict.get("endDate")
+            if not end_date_field:
+                logger.warning(f"Event {event_id} is missing endDate, skipping")
+                continue
+
+            try:
+                start_date: Timestamp = start_date_field.timestamp_pb()
+                end_date: Timestamp = end_date_field.timestamp_pb()
+                start_date_string = (
+                    start_date.ToDatetime()
+                    .astimezone(SYDNEY_TIMEZONE)
+                    .strftime("%m/%d/%Y, %H:%M")
+                )
+                end_date_string = (
+                    end_date.ToDatetime()
+                    .astimezone(SYDNEY_TIMEZONE)
+                    .strftime("%m/%d/%Y, %H:%M")
+                )
+            except Exception as e:
+                logger.error(f"Failed to format dates for event {event_id}: {e}")
+                continue
 
             logger.info(f"{event_id} is starting tomorrow")
             all_events_starting_tomorrow.append(
