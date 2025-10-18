@@ -59,7 +59,7 @@ jobs:
           echo "PROJECT_NAME=\"${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}\"" >> .env
 
       # Deploy Java Cloud Run functions in parallel
-      # All functions deploy simultaneously (using & to run commands in the background in a non-blocking way) to reduce deployment time from ~28min to ~5min
+      # All functions deploy simultaneously using & to run commands in the background in a non-blocking way
       - name: Deploy all Java Cloud Run functions in parallel
         working-directory: functions/lib/functions
         run: |
