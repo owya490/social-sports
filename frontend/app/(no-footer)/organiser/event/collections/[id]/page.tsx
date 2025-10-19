@@ -1,7 +1,7 @@
 "use client";
 
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
-import { EventCollection } from "@/interfaces/EventCollectionTypes";
+import { EMPTY_EVENT_COLLECTION, EventCollection } from "@/interfaces/EventCollectionTypes";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
@@ -19,19 +19,11 @@ interface CollectionPageProps {
   };
 }
 
-interface CollectionConfig {
-  id: string;
-  name: string;
-  description: string;
-  isDefault: boolean;
-  isPrivate: boolean;
-}
-
 export default function CollectionPage({ params }: CollectionPageProps) {
   const collectionId = params.id;
   const [loading, setLoading] = useState(true);
   const [eventDataList, setEventDataList] = useState<EventData[]>([]);
-  const [collection, setCollection] = useState<EventCollection>();
+  const [collection, setCollection] = useState<EventCollection>(EMPTY_EVENT_COLLECTION);
   const [copied, setCopied] = useState(false);
 
   const logger = new Logger("CollectionPage");
