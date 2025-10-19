@@ -21,6 +21,10 @@ export interface PublicUserData {
   bio: string;
 }
 
+export interface ProtectedUserData {
+  
+}
+
 export interface PrivateUserData {
   userId: string;
   age: string;

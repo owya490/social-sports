@@ -108,6 +108,10 @@ export async function getPublicUserById(
   }
 }
 
+export async function getProtectedUserById(userId: UserId): Promise<PublicUserData> {
+  
+}
+
 export async function getPrivateUserById(userId: UserId): Promise<PrivateUserData> {
   userServiceLogger.info(`Fetching private user by ID:, ${userId}`);
   if (userId === undefined || userId === null) {
