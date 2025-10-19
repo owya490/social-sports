@@ -1,7 +1,9 @@
 "use client";
 import CalendarEventCard from "@/components/users/profile/CalendarEventCard";
+import ShareCalendarModal from "@/components/users/profile/ShareCalendarModal";
 import { ScreenSize, useScreenSize } from "@/components/utility/ScreenSize";
 import { EventData } from "@/interfaces/EventTypes";
+import { ArrowUpOnSquareIcon } from "@heroicons/react/24/outline";
 import { isSameDay, startOfDay } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { DayPicker } from "react-day-picker";
@@ -9,13 +11,15 @@ import "react-day-picker/dist/style.css";
 
 interface OrganiserCalendarProps {
   events: EventData[];
+  username: string;
 }
 
-export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
+export default function OrganiserCalendar({ events, username }: OrganiserCalendarProps) {
   const { isAtOrBelow } = useScreenSize();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [month, setMonth] = useState<Date>(new Date());
   const [showEventsList, setShowEventsList] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Initialize on mount
   useEffect(() => {
@@ -77,7 +81,7 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
   };
 
   return (
-    <div className="pt-8">
+    <div className="md:pt-8">
       <div className="md:flex gap-4 max-h-[430px]">
         {/* Mobile: Sliding View */}
         <div className="md:hidden w-full overflow-hidden">
@@ -92,6 +96,14 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
           >
             {/* Calendar View */}
             <div className="w-1/2 flex-shrink-0">
+              <button
+                type="button"
+                className="flex w-fit ml-auto py-1.5 px-2.5 gap-2 items-center cursor-pointer my-1 hover:bg-core-hover rounded-full"
+                onClick={() => setIsShareModalOpen(true)}
+              >
+                Share
+                <ArrowUpOnSquareIcon className="w-5 h-5 " />
+              </button>
               <div className="flex justify-center">
                 <DayPicker
                   mode="single"
@@ -134,15 +146,17 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
                 <span>←</span> Back to Calendar
               </button>
               <div className="min-h-[300px]">
-                <h3 className="text-xl font-semibold mb-4">
-                  {selectedDate
-                    ? `Events on ${selectedDate.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                      })}`
-                    : "Select a date"}
-                </h3>
+                <div className="flex items-center mb-4">
+                  <h3 className="text-xl font-semibold">
+                    {selectedDate
+                      ? `Events on ${selectedDate.toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                        })}`
+                      : "Select a date"}
+                  </h3>
+                </div>
 
                 {eventsForSelectedDate.length === 0 ? (
                   <div className="text-center py-12">
@@ -205,15 +219,25 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
               </div>
             ) : (
               <div className="min-h-[300px]">
-                <h3 className="text-xl font-semibold mb-4">
-                  {selectedDate
-                    ? `Events on ${selectedDate.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        month: "long",
-                        day: "numeric",
-                      })}`
-                    : "Select a date"}
-                </h3>
+                <div className="flex items-center mb-4">
+                  <h3 className="text-xl font-semibold">
+                    {selectedDate
+                      ? `Events on ${selectedDate.toLocaleDateString("en-US", {
+                          weekday: "long",
+                          month: "long",
+                          day: "numeric",
+                        })}`
+                      : "Select a date"}
+                  </h3>
+                  <button
+                    type="button"
+                    className="flex w-fit ml-auto py-1.5 px-2.5 gap-2 items-center cursor-pointer my-1 hover:bg-core-hover rounded-full"
+                    onClick={() => setIsShareModalOpen(true)}
+                  >
+                    Share
+                    <ArrowUpOnSquareIcon className="w-5 cursor-pointer ml-auto" />
+                  </button>
+                </div>
 
                 {eventsForSelectedDate.length === 0 ? (
                   <div className="text-center py-12">
@@ -231,6 +255,9 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
           </div>
         </div>
       </div>
+
+      {/* Share Calendar Modal */}
+      <ShareCalendarModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} username={username} />
     </div>
   );
 }

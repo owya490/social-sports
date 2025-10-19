@@ -129,7 +129,7 @@ export default function UserProfilePage({ params }: any) {
             <div className="h-[1px] bg-core-outline my-4"></div>
           </div>
         </div>
-        <OrganiserCalendar events={upcomingOrganiserEvents} />
+        <OrganiserCalendar events={upcomingOrganiserEvents} username={publicUserProfile.username} />
       </div>
     </div>
   );
