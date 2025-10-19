@@ -93,10 +93,10 @@ export async function getPublicUserById(
       userData.profilePicture = DEFAULT_USER_PROFILE_PICTURE;
     }
 
+    const userDataWithDefaults = { ...EmptyPublicUserData, ...userData };
     // set local storage with data
-    if (client) setUsersDataIntoLocalStorage(userId, userData);
-
-    return { ...EmptyPublicUserData, ...userData };
+    if (client) setUsersDataIntoLocalStorage(userId, userDataWithDefaults);
+    return userDataWithDefaults;
   } catch (error) {
     if (error instanceof UserNotFoundError) {
       userServiceLogger.error(`User ID=${userId} did not exist when expected by reference: ${error}`);
@@ -240,7 +240,6 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
     const publicDataToUpdate = extractPublicUserData(newData);
     const privateDataToUpdate = extractPrivateUserData(newData);
 
-    console.log("publicDataToUpdate", publicDataToUpdate);
     // Update public & private user data
     if (transaction) {
       transaction.update(publicUserDocRef, publicDataToUpdate);

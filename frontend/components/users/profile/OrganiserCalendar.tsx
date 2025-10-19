@@ -50,6 +50,20 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
     return events.map((event) => startOfDay(event.startDate.toDate()));
   }, [events]);
 
+  // Calculate the date range for navigation limits
+  const { startMonth, endMonth } = useMemo(() => {
+    if (eventDates.length === 0) {
+      return { startMonth: undefined, endMonth: undefined };
+    }
+
+    // Sort dates to find earliest and latest
+    const sortedDates = [...eventDates].sort((a, b) => a.getTime() - b.getTime());
+    return {
+      startMonth: sortedDates[0], // Earliest event date
+      endMonth: sortedDates[sortedDates.length - 1], // Latest event date
+    };
+  }, [eventDates]);
+
   // Get events for the selected date
   const eventsForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
@@ -99,6 +113,8 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
                   onSelect={handleDateSelect}
                   month={month}
                   onMonthChange={setMonth}
+                  startMonth={startMonth}
+                  endMonth={endMonth}
                   disabled={(date) => {
                     if (events.length === 0) return true;
                     const dateStart = startOfDay(date);
@@ -171,6 +187,8 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
                 onSelect={handleDateSelect}
                 month={month}
                 onMonthChange={setMonth}
+                startMonth={startMonth}
+                endMonth={endMonth}
                 disabled={(date) => {
                   if (events.length === 0) return true;
                   const dateStart = startOfDay(date);

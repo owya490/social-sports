@@ -11,6 +11,7 @@ import {
   HomeIcon,
   LinkIcon,
   PencilSquareIcon,
+  RectangleStackIcon,
   StarIcon,
 } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
@@ -197,6 +198,19 @@ export default function OrganiserNavbar() {
                           >
                             <LinkIcon className="w-6 stroke-1 mr-2" />
                             Custom Event Links
+                          </Link>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <Link
+                            href="/organiser/event/collections"
+                            className={`${
+                              active ? "text-core-text bg-core-hover" : "text-core-text"
+                            } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                          >
+                            <RectangleStackIcon className="w-6 stroke-1 mr-2" />
+                            Event Collections
                           </Link>
                         )}
                       </Menu.Item>
