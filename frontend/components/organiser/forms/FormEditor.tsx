@@ -21,15 +21,13 @@ import {
 } from "@/interfaces/FormTypes";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
 import { sleep } from "@/utilities/sleepUtil";
-import { ArrowDownIcon, ArrowUpIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import { ArrowDownIcon, ArrowUpIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReactSortable } from "react-sortablejs";
 import { v4 as uuidv4 } from "uuid";
 import EmptyInfoSection from "./EmptyInfoSection";
-import FormBackButton from "./FormBackButton";
-import FormDesktopEditBar from "./FormDesktopEditBar";
-import FormMobileEditBar from "./FormMobileEditBar";
+import FormEditBar from "./FormEditBar";
 export interface FormEditorParams {
   formId: FormId;
 }
@@ -330,11 +328,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100 p-8 justify-center pt-20">
-      {/* Sticky Back Button */}
-      <div className="fixed top-[78px] left-4 sm:left-[88px] z-50">
-        <FormBackButton onClick={handleBackClick} />
-      </div>
+    <div className="flex min-h-screen bg-gray-100 p-8 justify-center pt-20 -mb-28 pb-28 sm:mb-0 sm:pb-0">
       {/* Back Button Warning Dialog */}
       {showBackWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -375,32 +369,8 @@ const FormEditor = ({ formId }: FormEditorParams) => {
           <p className="text-sm text-gray-700 dark:text-gray-300">{saveError}</p>
         </div>
       </Modal>
-      {/* Mobile Top Navbar */}
-      <FormMobileEditBar
-        onAddTextSection={() => {
-          addSection({
-            type: FormSectionType.TEXT,
-            question: "",
-            imageUrl: null,
-            required: true,
-          });
-        }}
-        onAddDropdownSection={() =>
-          addSection({
-            type: FormSectionType.DROPDOWN_SELECT,
-            question: "",
-            options: [""],
-            imageUrl: null,
-            required: true,
-          })
-        }
-        onAddImageSection={() => setShowImageSelectionDialog(true)}
-        onSaveForm={handleSubmitClick}
-        isFormModified={isFormModified}
-        isSubmitting={isSubmitting}
-      />
-      {/* Desktop Left Navbar */}
-      <FormDesktopEditBar
+      {/* Unified Edit Bar with Back Button */}
+      <FormEditBar
         onAddTextSection={() =>
           addSection({
             type: FormSectionType.TEXT,
@@ -420,12 +390,13 @@ const FormEditor = ({ formId }: FormEditorParams) => {
         }
         onAddImageSection={() => setShowImageSelectionDialog(true)}
         onSaveForm={handleSubmitClick}
+        onBackClick={handleBackClick}
         isFormModified={isFormModified}
         isSubmitting={isSubmitting}
       />
       {/* Main Form Area */}
       <div className="flex-1 w-full flex justify-center">
-        <div className="flex-1 flex flex-col gap-5 max-w-3xl relative pb-24 pt-4 md:ml-0 md:pb-20 md:pt-0">
+        <div className="flex-1 flex flex-col gap-5 max-w-3xl relative pt-4 md:ml-0 md:pb-20 md:pt-0">
           {/* Form Title Card */}
           <HeaderSectionBuilder
             formTitle={form.title}
@@ -469,7 +440,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
                   className="drag-handle cursor-grab active:cursor-grabbing hover:bg-gray-100 transition-colors items-center justify-center h-8 bg-gray-50 rounded-t-lg border-b border-gray-200 hidden md:flex"
                   style={{ touchAction: "none" }}
                 >
-                  <EllipsisHorizontalIcon className="w-5 h-5 text-gray-400" />
+                  <ChevronUpDownIcon className="w-5 h-5 text-gray-400" />
                 </div>
                 {/* Section Content */}
                 <div className="p-6">{item.section && renderSection(item.section, item.id)}</div>

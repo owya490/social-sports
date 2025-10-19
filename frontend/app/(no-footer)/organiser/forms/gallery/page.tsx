@@ -66,6 +66,12 @@ const FormsGallery = () => {
             );
           })}
         </div>
+        {forms.length === 0 && (
+          <div className="text-center text-gray-500 py-12 md:text-lg">
+            <p>No forms yet</p>
+            <p>Create a form to get started</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -71,8 +71,9 @@ export default function RecurringEventDashboard() {
             })}
           </div>
         ) : recurrenceTemplateList.length === 0 ? (
-          <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-            No recurring events found, create or edit an event to get started.
+          <div className="text-center text-gray-500 py-12 md:text-lg">
+            <p>No recurring events found</p>
+            <p>Create or edit an event to get started</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto lg:h-[80vh] w-full">

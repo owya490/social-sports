@@ -7,7 +7,7 @@ interface ResponsiveTooltipProps {
 }
 
 interface FormNavButtonProps {
-  onClick: () => void;
+  onClick: ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void) | (() => void);
   tooltipContent: string;
   children: ReactNode;
   disabled?: boolean;

@@ -59,7 +59,7 @@ export default function Dashboard() {
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/event/create">
                     <div className="h-full flex justify-center items-center">
-                      <p>Create an event</p>
+                      <p>Create event</p>
                     </div>
                   </Link>
                 </div>
@@ -67,7 +67,7 @@ export default function Dashboard() {
                   <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray  rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                     <Link href={`/organiser/forms/create-form/editor`}>
                       <div className="h-full flex justify-center items-center">
-                        <p>Create a form</p>
+                        <p>Create form</p>
                       </div>
                     </Link>
                   </div>
@@ -75,14 +75,14 @@ export default function Dashboard() {
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/organiser/event/dashboard">
                     <div className="h-full flex justify-center items-center">
-                      <p>View your events</p>
+                      <p>View events</p>
                     </div>
                   </Link>
                 </div>
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/profile">
                     <div className="h-full flex justify-center items-center">
-                      <p>Edit your profile</p>
+                      <p>Edit profile</p>
                     </div>
                   </Link>
                 </div>
