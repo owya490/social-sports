@@ -7,6 +7,7 @@ import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getEventCollectionById } from "@/services/src/eventCollections/collectionsService";
 import { getEventById } from "@/services/src/events/eventsService";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { ArrowLeftIcon, LinkIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
@@ -67,15 +68,11 @@ export default function CollectionPage({ params }: CollectionPageProps) {
   }, []);
 
   const handleCopyLink = () => {
-    const collectionUrl = `${window.location.origin}/collections/${params.id}`;
+    const collectionUrl = `${getUrlWithCurrentHostname(`/event-collection/${collectionId}`)}`;
     navigator.clipboard.writeText(collectionUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  if (!collection) {
-    return null;
-  }
 
   return (
     <div className="px-4 pb-10 mt-4">
@@ -116,7 +113,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">Collection Link</label>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <div className="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs md:text-sm text-gray-600 font-mono overflow-x-auto whitespace-nowrap">
-                  {`${typeof window !== "undefined" ? window.location.origin : ""}/collections/${params.id}`}
+                  {`${getUrlWithCurrentHostname(`/event-collection/${collectionId}`)}`}
                 </div>
                 <button
                   onClick={handleCopyLink}
