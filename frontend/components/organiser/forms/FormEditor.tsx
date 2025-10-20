@@ -21,15 +21,13 @@ import {
 } from "@/interfaces/FormTypes";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
 import { sleep } from "@/utilities/sleepUtil";
-import { ArrowDownIcon, ArrowUpIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import { ArrowDownIcon, ArrowUpIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReactSortable } from "react-sortablejs";
 import { v4 as uuidv4 } from "uuid";
 import EmptyInfoSection from "./EmptyInfoSection";
-import FormBackButton from "./FormBackButton";
-import FormDesktopEditBar from "./FormDesktopEditBar";
-import FormMobileEditBar from "./FormMobileEditBar";
+import FormEditBar from "./FormEditBar";
 export interface FormEditorParams {
   formId: FormId;
 }
@@ -330,11 +328,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100 p-8 justify-center pt-20">
-      {/* Sticky Back Button */}
-      <div className="fixed top-[78px] left-4 sm:left-[88px] z-50">
-        <FormBackButton onClick={handleBackClick} />
-      </div>
+    <>
       {/* Back Button Warning Dialog */}
       {showBackWarning && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -358,7 +352,6 @@ const FormEditor = ({ formId }: FormEditorParams) => {
           </div>
         </div>
       )}
-
       {/* Save Error Dialog */}
       <Modal
         isOpen={!!saveError && !isModalClosing}
@@ -375,117 +368,94 @@ const FormEditor = ({ formId }: FormEditorParams) => {
           <p className="text-sm text-gray-700 dark:text-gray-300">{saveError}</p>
         </div>
       </Modal>
-      {/* Mobile Top Navbar */}
-      <FormMobileEditBar
-        onAddTextSection={() => {
-          addSection({
-            type: FormSectionType.TEXT,
-            question: "",
-            imageUrl: null,
-            required: true,
-          });
-        }}
-        onAddDropdownSection={() =>
-          addSection({
-            type: FormSectionType.DROPDOWN_SELECT,
-            question: "",
-            options: [""],
-            imageUrl: null,
-            required: true,
-          })
-        }
-        onAddImageSection={() => setShowImageSelectionDialog(true)}
-        onSaveForm={handleSubmitClick}
-        isFormModified={isFormModified}
-        isSubmitting={isSubmitting}
-      />
-      {/* Desktop Left Navbar */}
-      <FormDesktopEditBar
-        onAddTextSection={() =>
-          addSection({
-            type: FormSectionType.TEXT,
-            question: "",
-            imageUrl: null,
-            required: true,
-          })
-        }
-        onAddDropdownSection={() =>
-          addSection({
-            type: FormSectionType.DROPDOWN_SELECT,
-            question: "",
-            options: [""],
-            imageUrl: null,
-            required: true,
-          })
-        }
-        onAddImageSection={() => setShowImageSelectionDialog(true)}
-        onSaveForm={handleSubmitClick}
-        isFormModified={isFormModified}
-        isSubmitting={isSubmitting}
-      />
-      {/* Main Form Area */}
-      <div className="flex-1 w-full flex justify-center">
-        <div className="flex-1 flex flex-col gap-5 max-w-3xl relative pb-24 pt-4 md:ml-0 md:pb-20 md:pt-0">
-          {/* Form Title Card */}
-          <HeaderSectionBuilder
-            formTitle={form.title}
-            formDescription={form.description}
-            updateFormTitle={updateFormTitle}
-            updateFormDescription={updateFormDescription}
+      <div className="flex min-h-screen bg-gray-100 p-8 justify-center pt-20 -mb-28 pb-28 sm:mb-0 sm:pb-0 sm:pt-10 md:pt-20">
+        <div className="flex-1 w-full flex justify-center">
+          <FormEditBar
+            onAddTextSection={() =>
+              addSection({
+                type: FormSectionType.TEXT,
+                question: "",
+                imageUrl: null,
+                required: true,
+              })
+            }
+            onAddDropdownSection={() =>
+              addSection({
+                type: FormSectionType.DROPDOWN_SELECT,
+                question: "",
+                options: [""],
+                imageUrl: null,
+                required: true,
+              })
+            }
+            onAddImageSection={() => setShowImageSelectionDialog(true)}
+            onSaveForm={handleSubmitClick}
+            onBackClick={handleBackClick}
+            isFormModified={isFormModified}
+            isSubmitting={isSubmitting}
           />
+          <div className="flex-1 flex flex-col gap-5 max-w-3xl relative sm:ml-4 sm:pb-20">
+            {/* Form Title Card */}
+            <HeaderSectionBuilder
+              formTitle={form.title}
+              formDescription={form.description}
+              updateFormTitle={updateFormTitle}
+              updateFormDescription={updateFormDescription}
+            />
 
-          <EmptyInfoSection formSectionsOrder={form.sectionsOrder} />
+            <EmptyInfoSection formSectionsOrder={form.sectionsOrder} />
 
-          {/* Questions Container */}
-          <ReactSortable
-            list={sortableItems}
-            setList={handleSort}
-            handle=".drag-handle"
-            className="flex flex-col gap-6"
-            animation={200}
-            delay={2}
-          >
-            {sortableItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                {/* Mobile Up/Down Arrows */}
-                <div className="md:hidden flex justify-center items-center gap-2 py-2 bg-gray-50 border-b border-gray-200">
-                  <button
-                    onClick={() => moveSectionUp(item.id)}
-                    disabled={form.sectionsOrder.indexOf(item.id) === 0}
-                    className="p-1 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            {/* Questions Container */}
+            <ReactSortable
+              list={sortableItems}
+              setList={handleSort}
+              handle=".drag-handle"
+              className="flex flex-col gap-6"
+              animation={200}
+              delay={2}
+            >
+              {sortableItems.map((item) => (
+                <div key={item.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                  {/* Mobile Up/Down Arrows */}
+                  <div className="md:hidden flex justify-center items-center gap-2 py-2 bg-gray-50 border-b border-gray-200">
+                    <button
+                      onClick={() => moveSectionUp(item.id)}
+                      disabled={form.sectionsOrder.indexOf(item.id) === 0}
+                      className="p-1 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ArrowUpIcon className="w-4 h-4 text-gray-600" />
+                    </button>
+                    <button
+                      onClick={() => moveSectionDown(item.id)}
+                      disabled={form.sectionsOrder.indexOf(item.id) === form.sectionsOrder.length - 1}
+                      className="p-1 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ArrowDownIcon className="w-4 h-4 text-gray-600" />
+                    </button>
+                  </div>
+                  {/* Smaller Section Header with Centered Drag Handle */}
+                  <div
+                    className="drag-handle cursor-grab active:cursor-grabbing hover:bg-gray-100 transition-colors items-center justify-center h-8 bg-gray-50 rounded-t-lg border-b border-gray-200 hidden md:flex"
+                    style={{ touchAction: "none" }}
                   >
-                    <ArrowUpIcon className="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    onClick={() => moveSectionDown(item.id)}
-                    disabled={form.sectionsOrder.indexOf(item.id) === form.sectionsOrder.length - 1}
-                    className="p-1 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ArrowDownIcon className="w-4 h-4 text-gray-600" />
-                  </button>
+                    <ChevronUpDownIcon className="w-5 h-5 text-gray-400" />
+                  </div>
+                  {/* Section Content */}
+                  <div className="p-6">{item.section && renderSection(item.section, item.id)}</div>
                 </div>
-                {/* Smaller Section Header with Centered Drag Handle */}
-                <div
-                  className="drag-handle cursor-grab active:cursor-grabbing hover:bg-gray-100 transition-colors items-center justify-center h-8 bg-gray-50 rounded-t-lg border-b border-gray-200 hidden md:flex"
-                  style={{ touchAction: "none" }}
-                >
-                  <EllipsisHorizontalIcon className="w-5 h-5 text-gray-400" />
-                </div>
-                {/* Section Content */}
-                <div className="p-6">{item.section && renderSection(item.section, item.id)}</div>
-              </div>
-            ))}
-          </ReactSortable>
+              ))}
+            </ReactSortable>
+          </div>
         </div>
-      </div>
 
-      {/* Image Selection Dialog */}
-      <ImageSelectionDialog
-        isOpen={showImageSelectionDialog}
-        onClose={() => setShowImageSelectionDialog(false)}
-        onImageSelected={handleImageSelectionComplete}
-      />
-    </div>
+        {/* Image Selection Dialog */}
+        <ImageSelectionDialog
+          isOpen={showImageSelectionDialog}
+          onClose={() => setShowImageSelectionDialog(false)}
+          onImageSelected={handleImageSelectionComplete}
+        />
+      </div>
+    </>
   );
 };
 

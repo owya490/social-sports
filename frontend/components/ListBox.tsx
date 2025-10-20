@@ -23,7 +23,7 @@ export default function ListBox(props: ListBoxProps) {
     <div className="rounded-3xl w-full">
       <Listbox value={selected} onChange={setSelected}>
         <div className="relative">
-          <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm border">
+          <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm border border-gray-500">
             <span className={`block truncate text-${props.textSize ? props.textSize : "lg"}`}>{selected.name}</span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-tops pr-2">
               <ChevronUpDownIcon className="h-7 w-7 text-gray-400 mt-1 lg:mt-2" aria-hidden="true" />

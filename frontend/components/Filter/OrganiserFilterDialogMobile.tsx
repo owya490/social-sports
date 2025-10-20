@@ -5,7 +5,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Fragment, useMemo, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
-import { InvertedHighlightButton } from "../elements/HighlightButton";
+import { BlackHighlightButton, HighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 import ListBox from "../ListBox";
 import {
   DATE_ASCENDING_SORTBY_STRING,
@@ -220,7 +220,7 @@ export default function OrganiserFilterDialogMobile({
                     as="h3"
                     className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[1px] border-gray-500 w-full text-center flex justify-center items-center"
                   >
-                    Filter Events
+                    Filter
                     <button className="absolute right-8" onClick={closeModal}>
                       <XMarkIcon className="h-5 w-5" />
                     </button>
@@ -316,16 +316,12 @@ export default function OrganiserFilterDialogMobile({
                     </div>
                   </div>
                   <div className="mt-3 w-full flex items-center">
-                    <button className="hover:underline cursor-pointer" onClick={handleClearAll}>
-                      Clear all
-                    </button>
-                    <button
-                      type="button"
-                      className="ml-auto inline-flex justify-center rounded-md bg-highlight-yellow  px-4 py-2 font-semibold text-white border-2 border-highlight-yellow hover:bg-white hover:text-highlight-yellow focus-visible:ring-offset-2 transition-colors duration-300 transform"
-                      onClick={applyFilters}
-                    >
-                      Apply Filters!
-                    </button>
+                    <HighlightButton className="hover:underline cursor-pointer" onClick={handleClearAll}>
+                      Reset Filters
+                    </HighlightButton>
+                    <BlackHighlightButton type="button" className="ml-auto " onClick={applyFilters}>
+                      Apply Filters
+                    </BlackHighlightButton>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>

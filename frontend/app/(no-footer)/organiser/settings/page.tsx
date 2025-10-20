@@ -41,21 +41,19 @@ const Settings = () => {
   return stripeSetupLoading ? (
     <LoadingOrganiser />
   ) : (
-    <div className="min-h-screen">
-      <div className="pt-2 md:py-16 px-4 md:px-8 lg:px-12">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl md:text-5xl font-bold mt-2 sm:mt-0">Settings</h1>
-          <h2 className="pt-2 sm:pt-4 text-lg md:text-2xl font-semibold text-[#BABABA]">
-            Manage your organiser account preferences
-          </h2>
+    <div className="pt-2 md:py-16 px-4 md:px-8 lg:px-12">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl md:text-5xl font-bold mt-2 sm:mt-0">Settings</h1>
+        <h2 className="pt-2 sm:pt-4 text-lg md:text-2xl font-semibold text-[#BABABA]">
+          Manage your organiser account preferences
+        </h2>
 
-          <div className="mt-8 space-y-6">
-            <OrganiserSettingsCard />
-            <OrganiserSettingsStripeCard stripeId={stripeId} stripeLoading={stripeLoading} />
-            {!stripeLoading && !stripeId && (
-              <StripeSetup userId={user.userId} setLoading={setStripeSetupLoading} userLoading={userLoading} />
-            )}
-          </div>
+        <div className="mt-8 space-y-6">
+          <OrganiserSettingsCard />
+          <OrganiserSettingsStripeCard stripeId={stripeId} stripeLoading={stripeLoading} />
+          {!stripeLoading && !stripeId && (
+            <StripeSetup userId={user.userId} setLoading={setStripeSetupLoading} userLoading={userLoading} />
+          )}
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
 import Datepicker from "react-tailwindcss-datepicker";
 import ListBox from "../ListBox";
+import { BlackHighlightButton, InvertedHighlightButton } from "../elements/HighlightButton";
 
 export enum SortByCategory {
   HOT,
@@ -200,7 +201,7 @@ export default function OrganiserFilterDialog({
   return (
     <div className="max-h-screen">
       <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg">
-        <h2 className="text-lg text-center font-semibold mb-4">Filter Events</h2>
+        <h2 className="text-lg text-center font-semibold mb-4">Filter</h2>
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
             Sort By
@@ -390,19 +391,12 @@ export default function OrganiserFilterDialog({
           {showDateRange && <div className="flex justify-start items-center z-50">{DatepickerComponent}</div>}
         </div>
         <div className="mt-5 w-full flex items-center">
-          <button
-            className="hover:underline cursor-pointer rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-            onClick={handleClearAll}
-          >
-            Clear all
-          </button>
-          <button
-            type="button"
-            className="ml-auto inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-            onClick={applyFilters}
-          >
-            Apply Filters!
-          </button>
+          <InvertedHighlightButton onClick={handleClearAll} className="hover:bg-gray-300">
+            Reset Filters
+          </InvertedHighlightButton>
+          <BlackHighlightButton onClick={applyFilters} className="ml-auto hover:bg-gray-300">
+            Apply Filters
+          </BlackHighlightButton>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { CustomEventLink, CustomEventLinkType, EMPTY_CUSTOM_EVENT_LINK } from "@/interfaces/CustomLinkTypes";
 import { EventData } from "@/interfaces/EventTypes";
 import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
@@ -8,7 +9,7 @@ import {
 } from "@/services/src/events/customEventLinks/customEventLinksService";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { DocumentDuplicateIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Button, Chip, IconButton, Input, Option, Select, Tooltip, Typography } from "@material-tailwind/react";
+import { Chip, IconButton, Input, Option, Select, Tooltip, Typography } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -202,9 +203,9 @@ export default function CustomEventLinksTable({
             </span>
           </Typography>
         </div>
-        <Button className="flex items-center gap-3 shrink-0" size="sm" onClick={handleAddLink}>
+        <BlackHighlightButton className="" onClick={handleAddLink}>
           + Add Link
-        </Button>
+        </BlackHighlightButton>
       </div>
       <div className="overflow-x-scroll rounded-lg min-h-[70vh] scroll">
         <table className="w-full min-w-max text-left">
