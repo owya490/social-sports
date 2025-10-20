@@ -317,10 +317,10 @@ export default function OrganiserFilterDialogMobile({
                   </div>
                   <div className="mt-3 w-full flex items-center">
                     <HighlightButton className="hover:underline cursor-pointer" onClick={handleClearAll}>
-                      Reset filters
+                      Reset Filters
                     </HighlightButton>
                     <BlackHighlightButton type="button" className="ml-auto " onClick={applyFilters}>
-                      Apply filters
+                      Apply Filters
                     </BlackHighlightButton>
                   </div>
                 </Dialog.Panel>

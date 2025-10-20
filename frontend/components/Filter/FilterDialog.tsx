@@ -321,14 +321,14 @@ export default function FilterDialog({
 
                   <div className="mt-3 w-full flex items-center">
                     <button className="hover:underline cursor-pointer" onClick={handleClearAll}>
-                      Clear all
+                      Clear Filters
                     </button>
                     <button
                       type="button"
                       className="ml-auto inline-flex justify-center rounded-md bg-highlight-yellow  px-4 py-2 font-semibold text-white border-2 border-highlight-yellow hover:bg-white hover:text-highlight-yellow focus-visible:ring-offset-2 transition-colors duration-300 transform"
                       onClick={applyFilters}
                     >
-                      Apply Filters!
+                      Apply Filters
                     </button>
                   </div>
                 </Dialog.Panel>

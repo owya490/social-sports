@@ -7,8 +7,8 @@ import Image from "next/image";
 import { Fragment, useEffect, useState } from "react";
 import email_icons from "../../public/images/email.png";
 import fb_icons from "../../public/images/fbfb.jpeg";
-import insta_logo from "../../public/images/insta_logo.png";
 import share_arrow from "../../public/images/share_arrow.png";
+import { BlackHighlightButton } from "../elements/HighlightButton";
 
 interface ShareModalProps {
   eventId: EventId;
@@ -17,6 +17,7 @@ interface ShareModalProps {
 const ShareModal = ({ eventId }: ShareModalProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [eventURL, setEventURL] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setEventURL(getUrlWithCurrentHostname(`/event/${eventId}`));
@@ -32,11 +33,6 @@ const ShareModal = ({ eventId }: ShareModalProps) => {
     toggleModal();
   };
 
-  const handleInstagramShare = () => {
-    alert("To share on Instagram, open the Instagram app and share the page manually.");
-    toggleModal();
-  };
-
   const handleEmailShare = () => {
     const subject = "Check out this event!";
     const body = `I found this interesting event here: 
@@ -48,7 +44,10 @@ ${eventURL}`;
   const copyURL = async () => {
     try {
       await navigator.clipboard.writeText(eventURL);
-      alert("URL copied to clipboard");
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
     } catch (err) {
       console.error("Failed to copy URL to clipboard:", err);
     }
@@ -108,25 +107,33 @@ ${eventURL}`;
                       </svg>
                     </button>
                   </div>
-                  <div className="mt-2">
-                    <ul className="flex list-none p-0 my-3 space-x-8">
-                      <li className="cursor-pointer" onClick={handleFacebookShare} title="Share on Facebook">
-                        <Image src={fb_icons} alt="Share via Facebook" className="h-11 w-11" />
-                      </li>
-                      <li className="cursor-pointer" onClick={handleInstagramShare} title="Share on Instagram">
-                        <Image src={insta_logo} alt="Share via Instagram" className="h-11 w-11" />
-                      </li>
-                      <li className="cursor-pointer" onClick={handleEmailShare} title="Share via Email">
-                        <Image src={email_icons} alt="Share via Email" className="h-11 w-11" />
-                      </li>
-                    </ul>
-                    <p id="url" onClick={highlightURL} className="mb-4 cursor-pointer">
-                      {eventURL}
-                    </p>
-                    <button className="bg-blue-200 px-2 py-1 rounded" onClick={copyURL}>
-                      Copy
-                    </button>
+                  <div className="mt-2 flex items-center justify-center gap-4">
+                    <div className="cursor-pointer" onClick={handleFacebookShare} title="Share on Facebook">
+                      <Image src={fb_icons} alt="Share via Facebook" className="h-11 w-11" />
+                    </div>
+                    <div className="cursor-pointer" onClick={handleEmailShare} title="Share via Email">
+                      <Image src={email_icons} alt="Share via Email" className="h-11 w-11" />
+                    </div>
                   </div>
+                  <p
+                    id="url"
+                    onClick={highlightURL}
+                    className="mt-4 cursor-pointer hover:bg-gray-50 p-2 rounded break-all"
+                  >
+                    {eventURL}
+                  </p>
+                  <BlackHighlightButton className={`w-full mt-2`} onClick={copyURL} disabled={copied}>
+                    {copied ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Copied!
+                      </span>
+                    ) : (
+                      "Copy"
+                    )}
+                  </BlackHighlightButton>
                 </div>
               </TransitionChild>
             </div>

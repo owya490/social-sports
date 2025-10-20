@@ -27,14 +27,14 @@ const FormEditBar = ({
   return (
     <>
       {/* Mobile Edit Bar */}
-      <div className="sm:hidden fixed top-16 z-40 w-full flex justify-between px-8">
+      <div className="sm:hidden fixed top-16 z-40 w-full flex justify-between px-6">
         {/* Back Button */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-md flex justify-center items-center p-2">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-md flex justify-center items-center">
           <FormNavButton onClick={onBackClick} tooltipContent="Go back">
             <ArrowLeftIcon className="w-5 h-5 stroke-1 text-black" />
           </FormNavButton>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 shadow-md flex justify-center items-center gap-4 p-2">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-md flex justify-center items-center gap-2">
           <FormNavButton onClick={onAddTextSection} tooltipContent="Add Text Question">
             <DocumentTextIcon className="w-5 h-5 stroke-1 text-black" />
           </FormNavButton>
@@ -47,7 +47,7 @@ const FormEditBar = ({
             <PhotoIcon className="w-5 h-5 stroke-1 text-black" />
           </FormNavButton>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 shadow-md flex justify-center items-center p-2">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-md flex justify-center items-center">
           {isSubmitting ? (
             <Spinner className="w-10 h-5" />
           ) : (
@@ -63,13 +63,13 @@ const FormEditBar = ({
       </div>
 
       {/* Desktop Edit Bar */}
-      <div className="hidden sm:flex sticky top-36 w-fit flex-col gap-4 items-center h-fit z-40">
-        <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
+      <div className="hidden sm:flex sticky top-36 flex-col gap-4 items-center z-40">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-md">
           <FormNavButton onClick={onBackClick} tooltipContent="Back">
             <ArrowLeftIcon className="w-5 h-5 stroke-1 text-black" />
           </FormNavButton>
         </div>
-        <div className="flex flex-col space-y-3 bg-white rounded-lg border border-gray-200 shadow-md p-4">
+        <div className="flex flex-col space-y-3 bg-white rounded-lg border border-gray-200 shadow-md">
           <FormNavButton onClick={onAddTextSection} tooltipContent="Add Text Question">
             <DocumentTextIcon className="w-6 h-6 stroke-1 text-black" />
           </FormNavButton>
@@ -82,7 +82,7 @@ const FormEditBar = ({
             <PhotoIcon className="w-6 h-6 stroke-1 text-black" />
           </FormNavButton>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 shadow-md p-4">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-md">
           {isSubmitting ? (
             <Spinner className="w-10 h-6" />
           ) : (

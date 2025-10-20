@@ -35,7 +35,7 @@ const FormNavButton = ({ onClick, tooltipContent, disabled, children }: FormNavB
     <ResponsiveTooltip content={tooltipContent}>
       <button
         onClick={onClick}
-        className={`flex items-center justify-center h-10 w-10 rounded-md hover:bg-core-hover transition ease-in-out ${
+        className={`flex items-center justify-center sm:h-16 sm:w-16 h-14 w-14 rounded-md hover:bg-core-hover transition ease-in-out ${
           disabled ? "opacity-25 cursor-not-allowed" : ""
         }`}
         disabled={disabled}

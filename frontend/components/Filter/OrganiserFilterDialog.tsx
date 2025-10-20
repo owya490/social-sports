@@ -392,10 +392,10 @@ export default function OrganiserFilterDialog({
         </div>
         <div className="mt-5 w-full flex items-center">
           <InvertedHighlightButton onClick={handleClearAll} className="hover:bg-gray-300">
-            Reset filters
+            Reset Filters
           </InvertedHighlightButton>
           <BlackHighlightButton onClick={applyFilters} className="ml-auto hover:bg-gray-300">
-            Apply filters
+            Apply Filters
           </BlackHighlightButton>
         </div>
       </div>

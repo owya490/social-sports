@@ -70,56 +70,52 @@ const DeleteEventModal = ({
                     </button>
                   </div>
                   <div className=" text-sm font-bold px-2">Date: {timestampToEventCardDateString(eventStartDate)}</div>
-                  <div className="bg-organiser-light-gray rounded px-2 py-2 ">
-                    {hasPurchasers && (
+
+                  {hasPurchasers && (
+                    <div className="bg-organiser-light-gray rounded px-2 py-2">
+                      <div className="font-bold mb-2">Attendees:</div>
+                      <div className="grid grid-cols-7 gap-2 text-organiser-title-gray-text font-bold text-xs md:text-base">
+                        <div className="col-span-1 pl-1 truncate">Tickets</div>
+                        <div className="col-span-1 truncate">Name</div>
+                        <div className="col-span-5 truncate">Email</div>
+                      </div>
+                      <div className="inline-block w-full h-0.5 my-0 md:my-2 self-stretch bg-organiser-title-gray-text"></div>
                       <div>
-                        <div className="font-bold mb-2">Attendees:</div>
-                        <div className="grid grid-cols-7 gap-2 text-organiser-title-gray-text font-bold text-xs md:text-base">
-                          <div className="col-span-1 pl-1 truncate">Tickets</div>
-                          <div className="col-span-1 truncate">Name</div>
-                          <div className="col-span-5 truncate">Email</div>
+                        <div className="text-sm">
+                          {eventMetadata.purchaserMap &&
+                            Object.values(eventMetadata.purchaserMap)
+                              .sort((purchaser1, purchaser2) => {
+                                return purchaser1.email.localeCompare(purchaser2.email);
+                              })
+                              .map((purchaserObj) =>
+                                Object.entries(purchaserObj.attendees)
+                                  .sort(
+                                    ([attendeeName1, _attendeeDetailsObj1], [attendeeName2, _attendeeDetailsObj2]) => {
+                                      return attendeeName1.localeCompare(attendeeName2);
+                                    }
+                                  )
+                                  .map(([attendeeName, attendeeDetailsObj], index) => {
+                                    if (attendeeDetailsObj.ticketCount > 0) {
+                                      return (
+                                        <DeleteEventAttendeeCard
+                                          key={`${purchaserObj.email}-${attendeeName}-${index}`}
+                                          attendeeName={attendeeName}
+                                          purchaser={purchaserObj}
+                                        />
+                                      );
+                                    }
+                                    return null;
+                                  })
+                              )}
                         </div>
-                        <div className="inline-block w-full h-0.5 my-0 md:my-2 self-stretch bg-organiser-title-gray-text"></div>
-                        <div>
-                          <div className="text-sm">
-                            {eventMetadata.purchaserMap &&
-                              Object.values(eventMetadata.purchaserMap)
-                                .sort((purchaser1, purchaser2) => {
-                                  return purchaser1.email.localeCompare(purchaser2.email);
-                                })
-                                .map((purchaserObj) =>
-                                  Object.entries(purchaserObj.attendees)
-                                    .sort(
-                                      (
-                                        [attendeeName1, _attendeeDetailsObj1],
-                                        [attendeeName2, _attendeeDetailsObj2]
-                                      ) => {
-                                        return attendeeName1.localeCompare(attendeeName2);
-                                      }
-                                    )
-                                    .map(([attendeeName, attendeeDetailsObj], index) => {
-                                      if (attendeeDetailsObj.ticketCount > 0) {
-                                        return (
-                                          <DeleteEventAttendeeCard
-                                            key={`${purchaserObj.email}-${attendeeName}-${index}`}
-                                            attendeeName={attendeeName}
-                                            purchaser={purchaserObj}
-                                          />
-                                        );
-                                      }
-                                      return null;
-                                    })
-                                )}
-                          </div>
-                          <div className="mt-4">
-                            An email will be sent to each attendee notifying them. Please handle refunds immediately.
-                          </div>
+                        <div className="mt-4">
+                          An email will be sent to each attendee notifying them. Please handle refunds immediately.
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  <div className="mt-2 px-2 flex justify-between">
+                  <div className="mt-2 flex justify-end">
                     <RedHighlightButton
                       text="Delete Event"
                       onClick={() => {
