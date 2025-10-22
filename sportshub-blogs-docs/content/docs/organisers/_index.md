@@ -42,10 +42,10 @@ Stop wasting time on admin work. Start focusing on what you love - creating amaz
 
 ### Get Started in 3 Simple Steps:
 
-1. **[Sign Up and Register](signing-up/)** - Takes less than 5 minutes
-2. **[Set Up Payments](stripe/)** - Connect Stripe and start getting paid
-3. **[Create Your First Event](events/)** - Customise, publish and start receiving registrations.
+1. **[Sign Up and Register](organisers/signing-up/)** - Takes less than 5 minutes
+2. **[Set Up Payments](organisers/stripe/)** - Connect Stripe and start getting paid
+3. **[Create Your First Event](organisers/events/)** - Customise, publish and start receiving registrations.
 
 ---
 
-**Questions?** Check our guides below or [contact our team](/contact) - we're here to help you succeed.
+**Questions?** Check our guides below or [contact our team](contact-us/) - we're here to help you succeed.
