@@ -99,4 +99,4 @@ Your Stripe integration is now complete! You can start creating paid events and 
 
 ## Need Help?
 
-If you encounter any issues during setup, contact [SPORTSHUB Support](https://www.sportshub.net.au/contact) for assistance with your Stripe integration.
+If you encounter any issues during setup, contact [SPORTSHUB Support](/docs/contact-us) for assistance with your Stripe integration.

@@ -17,7 +17,7 @@ Custom links are particularly valuable for:
 
 ## Creating Custom Links
 
-Navigate to the **Custom Links** section in your [Organiser Hub](/organiser/event/custom-links) under the Events menu to set up your custom links.
+Navigate to the **Custom Links** section in your [Organiser Hub](https://www.sportshub.net.au/organiser/event/custom-links) under the Events menu to set up your custom links.
 ![custom-links](/images/docs/organisers/events/custom-links.png)
 
 ## Setting Up Your Custom Link
