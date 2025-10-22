@@ -9,10 +9,10 @@ weight: 1
 
 ## 🔗 Quick links
 
-- 🚀 [Getting Started](getting-started)
-- 👟 [For Players](players/)
-- 🎯 [For Organisers](organisers/)
-- ☎️ [Contact Us](contact-us/)
+- 🚀 [Getting Started](docs/getting-started)
+- 👟 [For Players](docs/players/)
+- 🎯 [For Organisers](docs/organisers/)
+- ☎️ [Contact Us](docs/contact-us/)
 
 ## ✨ What you can expect
 
@@ -23,5 +23,5 @@ weight: 1
 Visit our website at [sportshub.net.au](https://www.sportshub.net.au/dashboard) or head to Getting started for more information:
 
 {{< cards >}}
-{{< card link="getting-started" title="Getting Started" icon="document-text" subtitle="Quick overview for players and organisers" >}}
+{{< card link="docs/getting-started" title="Getting Started" icon="document-text" subtitle="Quick overview for players and organisers" >}}
 {{< /cards >}}
