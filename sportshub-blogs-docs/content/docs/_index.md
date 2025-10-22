@@ -9,10 +9,10 @@ weight: 1
 
 ## 🔗 Quick links
 
-- 🚀 [Getting Started](getting-started)
-- 👟 [For Players](players/)
-- 🎯 [For Organisers](organisers/)
-- ☎️ [Contact Us](contact-us/)
+- 🚀 [Getting Started](/docs/getting-started)
+- 👟 [For Players](/docs/players/)
+- 🎯 [For Organisers](/docs/organisers/)
+- ☎️ [Contact Us](docs/contact-us/)
 
 ## ✨ What you can expect
 

@@ -69,6 +69,6 @@ Once logged in, you can customize your profile via profile settings.
 - **Email not received?** Check spam/junk folders and wait a few minutes
 - **Login issues?** Verify your email and password are correct
 - **Profile problems?** Try the browser troubleshooting steps above
-- **Still stuck?** [Contact our support team](/contact)
+- **Still stuck?** [Contact our support team](/docs/contact-us)
 
 Ready to join the SPORTSHUB community? **[Sign up now →](https://www.sportshub.net.au/register)**
