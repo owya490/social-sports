@@ -42,28 +42,11 @@ html {
 
 /* Prevent mobile zoom on input focus by ensuring minimum 16px font size */
 @media screen and (max-width: 768px) {
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="tel"],
-  input[type="url"],
-  input[type="search"],
-  input[type="date"],
-  input[type="time"],
-  input[type="datetime-local"],
-  select,
-  textarea,
-  [contenteditable="true"],
-  [contenteditable] {
-    font-size: 16px !important;
-  }
-
-  /* Also target Material Tailwind and Mantine input elements */
-  .mantine-RichTextEditor-content,
-  .mantine-Input-input,
-  input,
-  select {
-    font-size: 16px !important;
+  @layer base {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
   }
 }
