@@ -6,7 +6,8 @@ import { Dialog, Transition } from "@headlessui/react";
 import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Slider } from "@material-tailwind/react";
 import { Fragment } from "react";
-import Datepicker from "react-tailwindcss-datepicker";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 import ListBox from "../../components/ListBox";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 
@@ -30,8 +31,10 @@ export const DAY_START_TIME_STRING = " 00:00:00";
 export const DAY_END_TIME_STRING = " 23:59:59";
 export const DEFAULT_MAX_PRICE = 100;
 export const DEFAULT_MAX_PROXIMITY = 50;
-export const DEFAULT_START_DATE = null;
-export const DEFAULT_END_DATE = null;
+export const DEFAULT_DATE_RANGE = {
+  from: undefined as Date | undefined,
+  to: undefined as Date | undefined,
+};
 export const PROXIMITY_SLIDER_MAX_VALUE = 100;
 export const PRICE_SLIDER_MAX_VALUE = 100;
 
@@ -53,23 +56,23 @@ interface FilterDialogProps {
   appliedMaxProximitySliderValue: number;
   setAppliedMaxProximitySliderValue: React.Dispatch<React.SetStateAction<number>>;
   dateRange: {
-    startDate: string | null;
-    endDate: string | null;
+    from: Date | undefined;
+    to: Date | undefined;
   };
   setDateRange: React.Dispatch<
     React.SetStateAction<{
-      startDate: string | null;
-      endDate: string | null;
+      from: Date | undefined;
+      to: Date | undefined;
     }>
   >;
   appliedDateRange: {
-    startDate: string | null;
-    endDate: string | null;
+    from: Date | undefined;
+    to: Date | undefined;
   };
   setAppliedDateRange: React.Dispatch<
     React.SetStateAction<{
-      startDate: string | null;
-      endDate: string | null;
+      from: Date | undefined;
+      to: Date | undefined;
     }>
   >;
   srcLocation: string;
@@ -110,20 +113,10 @@ export default function FilterDialog({
   closeModal,
 }: FilterDialogProps) {
   const handleDateRangeChange = (dateRange: any) => {
-    if (dateRange.startDate && dateRange.endDate) {
-      let timestampDateRange = {
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate,
-      };
-
-      setDateRange(timestampDateRange);
+    if (dateRange) {
+      setDateRange(dateRange);
     } else {
-      let timestampDateRange = {
-        startDate: DEFAULT_START_DATE,
-        endDate: DEFAULT_END_DATE,
-      };
-
-      setDateRange(timestampDateRange);
+      setDateRange(DEFAULT_DATE_RANGE);
     }
   };
 
@@ -139,14 +132,8 @@ export default function FilterDialog({
     setMaxPriceSliderValue(DEFAULT_MAX_PRICE);
     setAppliedMaxPriceSliderValue(DEFAULT_MAX_PRICE);
 
-    setDateRange({
-      startDate: DEFAULT_START_DATE,
-      endDate: DEFAULT_END_DATE,
-    });
-    setAppliedDateRange({
-      startDate: DEFAULT_START_DATE,
-      endDate: DEFAULT_END_DATE,
-    });
+    setDateRange(DEFAULT_DATE_RANGE);
+    setAppliedDateRange(DEFAULT_DATE_RANGE);
 
     setMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
     setAppliedMaxProximitySliderValue(DEFAULT_MAX_PROXIMITY);
@@ -169,7 +156,7 @@ export default function FilterDialog({
       </InvertedHighlightButton>
 
       <Transition appear show={isFilterModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closeModal}>
+        <Dialog as="div" className="relative z-[60]" onClose={closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -179,11 +166,11 @@ export default function FilterDialog({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/25" />
+            <div className="fixed inset-0 bg-black/25 z-[60]" />
           </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="fixed inset-0 overflow-y-auto z-[60]">
+            <div className="flex min-h-full items-center justify-center p-2 text-center">
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -193,7 +180,7 @@ export default function FilterDialog({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform rounded-2xl p-6 bg-white text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-lg mx-4 md:mx-0 transform rounded-2xl p-6 md:p-6 bg-white text-left align-middle shadow-xl transition-all z-[60]">
                   <Dialog.Title
                     as="h3"
                     className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[1px] border-gray-500 w-full text-center flex justify-center items-center"
@@ -252,7 +239,7 @@ export default function FilterDialog({
                         </p>
 
                         <Slider
-                          color="amber"
+                          color="gray"
                           className="h-1 z-0"
                           step={1}
                           min={0}
@@ -269,17 +256,33 @@ export default function FilterDialog({
                         <p className={"text-lg font-bold"}>Date Range</p>
                       </div>
 
-                      <Datepicker
-                        value={{
-                          startDate: dateRange && dateRange.startDate ? new Date(dateRange.startDate) : new Date(),
-                          endDate: dateRange && dateRange.endDate ? new Date(dateRange.endDate) : new Date(),
-                        }}
-                        minDate={new Date()}
-                        separator="to"
-                        displayFormat={"DD/MM/YYYY"}
-                        onChange={handleDateRangeChange}
-                        inputClassName="border-1 border border-black p-2 rounded-lg w-full mt-2 z-10"
-                      />
+                      <div className="flex justify-center w-full">
+                        <DayPicker
+                          mode="range"
+                          selected={dateRange}
+                          onSelect={handleDateRangeChange}
+                          disabled={(date) => date < new Date()}
+                          classNames={{
+                            selected: `bg-black text-white rounded-full`,
+                            range_start: `bg-black text-white rounded-full`,
+                            range_end: `bg-black text-white rounded-full`,
+                            range_middle: `bg-gray-200 text-black rounded-full`,
+                            today: `text-black font-bold`,
+                            chevron: `text-black`,
+                            disabled: `text-gray-400 cursor-not-allowed`,
+                          }}
+                          className="mt-2 scale-90"
+                          styles={{
+                            root: { fontSize: "0.875rem" },
+                          }}
+                        />
+                      </div>
+                      {dateRange?.from && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          Selected: {dateRange.from.toLocaleDateString()}
+                          {dateRange.to && ` - ${dateRange.to.toLocaleDateString()}`}
+                        </p>
+                      )}
                     </div>
                     <div className="border-b-[1px] border-gray-300 pb-5">
                       <div className="flex items-center">
@@ -297,7 +300,7 @@ export default function FilterDialog({
                             : maxProximitySliderValue + "km"}
                         </p>
                         <Slider
-                          color="amber"
+                          color="gray"
                           className="h-1 z-0"
                           step={1}
                           min={0}
@@ -325,7 +328,7 @@ export default function FilterDialog({
                     </button>
                     <button
                       type="button"
-                      className="ml-auto inline-flex justify-center rounded-md bg-highlight-yellow  px-4 py-2 font-semibold text-white border-2 border-highlight-yellow hover:bg-white hover:text-highlight-yellow focus-visible:ring-offset-2 transition-colors duration-300 transform"
+                      className="ml-auto inline-flex justify-center rounded-md bg-black px-4 py-2 font-semibold text-white border-[1px] border-black hover:bg-white hover:text-black focus-visible:ring-offset-2 transition-colors duration-300 transform"
                       onClick={applyFilters}
                     >
                       Apply Filters!

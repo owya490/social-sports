@@ -1,13 +1,12 @@
 "use client";
 import OrganiserFilterDialog, {
-  DEFAULT_END_DATE,
+  DEFAULT_DATE_RANGE,
   DEFAULT_EVENT_STATUS,
   DEFAULT_EVENT_TYPE,
   DEFAULT_MAX_PRICE,
   DEFAULT_MIN_PRICE,
   DEFAULT_SEARCH,
   DEFAULT_SORT_BY_CATEGORY,
-  DEFAULT_START_DATE,
   SortByCategory,
 } from "@/components/Filter/OrganiserFilterDialog";
 import OrganiserFilterDialogMobile from "@/components/Filter/OrganiserFilterDialogMobile";
@@ -42,19 +41,13 @@ export default function OrganiserDashboard() {
   const [minPriceValue, setMinPriceValue] = useState<number | null>(DEFAULT_MIN_PRICE);
   const [maxPriceValue, setMaxPriceValue] = useState<number | null>(DEFAULT_MAX_PRICE);
   const [dateRange, setDateRange] = useState<{
-    startDate: string;
-    endDate: string;
-  }>({
-    startDate: DEFAULT_START_DATE,
-    endDate: DEFAULT_END_DATE,
-  });
+    from: Date | undefined;
+    to: Date | undefined;
+  }>(DEFAULT_DATE_RANGE);
   const [appliedDateRange, setAppliedDateRange] = useState<{
-    startDate: string;
-    endDate: string;
-  }>({
-    startDate: DEFAULT_START_DATE,
-    endDate: DEFAULT_END_DATE,
-  });
+    from: Date | undefined;
+    to: Date | undefined;
+  }>(DEFAULT_DATE_RANGE);
 
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
@@ -114,9 +107,9 @@ export default function OrganiserDashboard() {
     }
 
     // Filter by DATERANGE
-    if (dateRange.startDate && dateRange.endDate) {
-      const startDateObj = setDateToStartOfDay(new Date(dateRange.startDate));
-      const endDateObj = setDateToEndOfDay(new Date(dateRange.endDate));
+    if (dateRange.from && dateRange.to) {
+      const startDateObj = setDateToStartOfDay(dateRange.from);
+      const endDateObj = setDateToEndOfDay(dateRange.to);
       let newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
         Timestamp.fromDate(startDateObj),

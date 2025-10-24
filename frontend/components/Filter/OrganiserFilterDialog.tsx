@@ -2,8 +2,9 @@
 
 import { EventData } from "@/interfaces/EventTypes";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import { useMemo, useState } from "react";
-import Datepicker from "react-tailwindcss-datepicker";
+import { useState } from "react";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 import ListBox from "../ListBox";
 
 export enum SortByCategory {
@@ -28,11 +29,9 @@ export const DEFAULT_EVENT_STATUS = "";
 export const DEFAULT_EVENT_TYPE = "";
 export const DEFAULT_MIN_PRICE = null;
 export const DEFAULT_MAX_PRICE = null;
-export const DEFAULT_START_DATE = "";
-export const DEFAULT_END_DATE = "";
-export const defaultDateRange = {
-  startDate: DEFAULT_START_DATE,
-  endDate: DEFAULT_END_DATE,
+export const DEFAULT_DATE_RANGE = {
+  from: undefined as Date | undefined,
+  to: undefined as Date | undefined,
 };
 export const DAY_START_TIME_STRING = " 00:00:00";
 export const DAY_END_TIME_STRING = " 23:59:59";
@@ -61,13 +60,13 @@ interface OrganiserFilterDialogProps {
   setMaxPriceValue: React.Dispatch<React.SetStateAction<number | null>>;
 
   dateRange: {
-    startDate: string;
-    endDate: string;
+    from: Date | undefined;
+    to: Date | undefined;
   };
   setDateRange: React.Dispatch<
     React.SetStateAction<{
-      startDate: string;
-      endDate: string;
+      from: Date | undefined;
+      to: Date | undefined;
     }>
   >;
   applyFilters: () => void;
@@ -125,45 +124,12 @@ export default function OrganiserFilterDialog({
   };
 
   const handleDateRangeChange = (dateRange: any) => {
-    if (dateRange.startDate && dateRange.endDate) {
-      let timestampDateRange = {
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate,
-      };
-
-      setDateRange(timestampDateRange);
+    if (dateRange) {
+      setDateRange(dateRange);
     } else {
-      let timestampDateRange = {
-        startDate: DEFAULT_START_DATE,
-        endDate: DEFAULT_END_DATE,
-      };
-
-      setDateRange(timestampDateRange);
+      setDateRange(DEFAULT_DATE_RANGE);
     }
   };
-
-  const [datepickerKey, setDatepickerKey] = useState(0);
-
-  const updateDatepickerKey = () => {
-    setDatepickerKey((prevKey) => prevKey + 1);
-  };
-
-  const DatepickerComponent = useMemo(
-    () => (
-      <Datepicker
-        key={datepickerKey}
-        value={{
-          startDate: dateRange && dateRange.startDate ? new Date(dateRange.startDate) : new Date(),
-          endDate: dateRange && dateRange.endDate ? new Date(dateRange.endDate) : new Date(),
-        }}
-        separator="to"
-        displayFormat={"DD/MM/YYYY"}
-        onChange={handleDateRangeChange}
-        inputClassName="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
-      />
-    ),
-    [datepickerKey, dateRange]
-  );
 
   const toggleStatusCheckboxValue = (value: string) => {
     if (eventStatusValue === value) {
@@ -189,23 +155,19 @@ export default function OrganiserFilterDialog({
     setEventTypeValue(DEFAULT_EVENT_TYPE);
     setMinPriceValue(DEFAULT_MIN_PRICE);
     setMaxPriceValue(DEFAULT_MAX_PRICE);
-    setDateRange({
-      startDate: DEFAULT_START_DATE,
-      endDate: DEFAULT_END_DATE,
-    });
-    updateDatepickerKey();
+    setDateRange(DEFAULT_DATE_RANGE);
     setEventDataList([...allEventsDataList]);
   }
 
   return (
     <div className="max-h-screen">
-      <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg">
-        <h2 className="text-lg text-center font-semibold mb-4">Filter Events</h2>
-        <div className="mb-4">
-          <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
+      <div className="p-3 bg-gray-100 border border-gray-300 rounded-lg">
+        <h2 className="text-base text-center font-semibold mb-3">Filter Events</h2>
+        <div className="mb-3">
+          <label className="text-xs font-medium text-gray-700 mb-1 flex items-center">
             Sort By
             <span className="cursor-pointer ml-auto" onClick={toggleShowSortBy}>
-              {showSortBy ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
+              {showSortBy ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
             </span>
           </label>
           {showSortBy && (
@@ -241,23 +203,24 @@ export default function OrganiserFilterDialog({
                 },
               ]}
               sortByCategory={sortByCategoryValue}
+              textSize="sm"
             />
           )}
         </div>
-        <div className="mb-4">
-          <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
+        <div className="mb-3">
+          <label className="text-xs font-medium text-gray-700 mb-1 flex items-center">
             Search
             <span className="cursor-pointer ml-auto" onClick={toggleShowSearch}>
-              {showSearch ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
+              {showSearch ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
             </span>
           </label>
           {showSearch && (
-            <div className="mb-4">
+            <div className="mb-2">
               <input
                 type="text"
                 id="search"
                 name="search"
-                className="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+                className="w-full p-1.5 text-sm border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
                 placeholder="Search for anything"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
@@ -265,112 +228,106 @@ export default function OrganiserFilterDialog({
             </div>
           )}
         </div>
-        <div className="mb-4">
-          <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-            Event Status
+        <div className="mb-3">
+          <label className="text-xs font-medium text-gray-700 mb-1 flex items-center">
+            Event Status & Type
             <span className="cursor-pointer ml-auto" onClick={toggleShowEventStatus}>
-              {showEventStatus ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
+              {showEventStatus ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
             </span>
           </label>
           {showEventStatus && (
-            <div>
-              <div className="mb-2">
-                <label className="inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    name="Past"
-                    value="Past"
-                    className="mr-2"
-                    checked={eventStatusValue.includes("past")}
-                    onChange={() => toggleStatusCheckboxValue("past")}
-                  />
-                  Past
-                </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] font-semibold text-gray-600 mb-1">Status</p>
+                <div className="mb-1.5">
+                  <label className="inline-flex items-center text-sm">
+                    <input
+                      type="checkbox"
+                      name="Past"
+                      value="Past"
+                      className="mr-1.5 scale-90"
+                      checked={eventStatusValue.includes("past")}
+                      onChange={() => toggleStatusCheckboxValue("past")}
+                    />
+                    Past
+                  </label>
+                </div>
+                <div className="mb-1.5">
+                  <label className="inline-flex items-center text-sm">
+                    <input
+                      type="checkbox"
+                      name="Future"
+                      value="Future"
+                      className="mr-1.5 scale-90"
+                      checked={eventStatusValue.includes("future")}
+                      onChange={() => toggleStatusCheckboxValue("future")}
+                    />
+                    Future
+                  </label>
+                </div>
               </div>
-              <div className="mb-2">
-                <label className="inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    name="Future"
-                    value="Future"
-                    className="mr-2"
-                    checked={eventStatusValue.includes("future")}
-                    onChange={() => toggleStatusCheckboxValue("future")}
-                  />
-                  Future
-                </label>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="mb-4">
-          <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-            Event Type
-            <span className="cursor-pointer ml-auto" onClick={toggleShowEventType}>
-              {showEventType ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
-            </span>
-          </label>
-          {showEventType && (
-            <div>
-              <div className="mb-2">
-                <label className="inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    name="Public"
-                    value="Public"
-                    className="mr-2"
-                    checked={eventTypeValue.includes("public")}
-                    onChange={() => toggleTypeCheckboxValue("public")}
-                  />
-                  Public
-                </label>
-              </div>
-              <div className="mb-2">
-                <label className="inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    name="Private"
-                    value="Private"
-                    className="mr-2"
-                    checked={eventTypeValue.includes("private")}
-                    onChange={() => toggleTypeCheckboxValue("private")}
-                  />
-                  Private
-                </label>
+              <div>
+                <p className="text-[10px] font-semibold text-gray-600 mb-1">Type</p>
+                <div className="mb-1.5">
+                  <label className="inline-flex items-center text-sm">
+                    <input
+                      type="checkbox"
+                      name="Public"
+                      value="Public"
+                      className="mr-1.5 scale-90"
+                      checked={eventTypeValue.includes("public")}
+                      onChange={() => toggleTypeCheckboxValue("public")}
+                    />
+                    Public
+                  </label>
+                </div>
+                <div className="mb-1.5">
+                  <label className="inline-flex items-center text-sm">
+                    <input
+                      type="checkbox"
+                      name="Private"
+                      value="Private"
+                      className="mr-1.5 scale-90"
+                      checked={eventTypeValue.includes("private")}
+                      onChange={() => toggleTypeCheckboxValue("private")}
+                    />
+                    Private
+                  </label>
+                </div>
               </div>
             </div>
           )}
         </div>
-        <div className="mb-4">
-          <label className="text-sm font-medium text-gray-700 mb-1 flex items-center">
+        <div className="mb-3">
+          <label className="text-xs font-medium text-gray-700 mb-1 flex items-center">
             Price Range
             <span className="cursor-pointer ml-auto" onClick={toggleShowPriceRange}>
-              {showPriceRange ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
+              {showPriceRange ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
             </span>
           </label>
           {showPriceRange && (
             <div className="flex justify-center items-center">
-              <span className="text-gray-700 mr-2">$</span>
+              <span className="text-gray-700 text-sm mr-1.5">$</span>
               <input
                 type="text"
                 id="minPrice"
                 name="minPrice"
                 placeholder="Min"
-                className="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+                className="w-full p-1.5 text-sm border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
                 value={minPriceValue !== null ? minPriceValue.toString() : ""}
                 onChange={(e) => {
                   const newValue = parseFloat(e.target.value);
                   setMinPriceValue(isNaN(newValue) ? null : newValue);
                 }}
               />
-              <span className="text-gray-700 mx-2">to</span>
-              <span className="text-gray-700 mr-2">$</span>
+              <span className="text-gray-700 text-sm mx-1.5">to</span>
+              <span className="text-gray-700 text-sm mr-1.5">$</span>
               <input
                 type="text"
                 id="maxPrice"
                 name="maxPrice"
                 placeholder="Max"
-                className="w-full p-2 border rounded-xl focus:outline-none focus:ring focus:border-blue-300"
+                className="w-full p-1.5 text-sm border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
                 value={maxPriceValue !== null ? maxPriceValue.toString() : ""}
                 onChange={(e) => {
                   const newValue = parseFloat(e.target.value);
@@ -380,25 +337,53 @@ export default function OrganiserFilterDialog({
             </div>
           )}
         </div>
-        <div className="mb-4">
-          <label className="text-sm font-medium text-gray-700 mb-1 flex items-center min-w-[325px]">
+        <div className="mb-3">
+          <label className="text-xs font-medium text-gray-700 mb-1 flex items-center">
             Date Range
             <span className="cursor-pointer ml-auto" onClick={toggleShowDateRange}>
-              {showDateRange ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
+              {showDateRange ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
             </span>
           </label>
-          {showDateRange && <div className="flex justify-start items-center z-50">{DatepickerComponent}</div>}
+          {showDateRange && (
+            <div className="flex justify-center w-full max-h-[260px] overflow-hidden">
+              <DayPicker
+                mode="range"
+                selected={dateRange}
+                onSelect={handleDateRangeChange}
+                disabled={(date) => date < new Date()}
+                classNames={{
+                  selected: `bg-black text-white rounded-full`,
+                  range_start: `bg-black text-white rounded-full`,
+                  range_end: `bg-black text-white rounded-full`,
+                  range_middle: `bg-gray-200 text-black rounded-full`,
+                  today: `text-black font-bold`,
+                  chevron: `text-black`,
+                  disabled: `text-gray-400 cursor-not-allowed`,
+                }}
+                className="mt-1 scale-[75%] origin-top"
+                styles={{
+                  root: { fontSize: "0.875rem" },
+                }}
+              />
+            </div>
+          )}
+          {dateRange?.from && (
+            <p className="text-xs text-gray-600 mt-1 text-center">
+              {dateRange.from.toLocaleDateString()}
+              {dateRange.to && ` - ${dateRange.to.toLocaleDateString()}`}
+            </p>
+          )}
         </div>
-        <div className="mt-5 w-full flex items-center">
+        <div className="mt-4 w-full flex items-center">
           <button
-            className="hover:underline cursor-pointer rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="hover:underline cursor-pointer rounded-md bg-core-hover text-core-text px-4 py-2 text-sm font-medium border-[1px] border-core-text transition-all duration-300 transform"
             onClick={handleClearAll}
           >
             Clear all
           </button>
           <button
             type="button"
-            className="ml-auto inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="ml-auto inline-flex justify-center rounded-md bg-black text-white px-4 py-2 text-sm font-medium hover:bg-white hover:text-black border-[1px] border-black transition-all duration-300 transform"
             onClick={applyFilters}
           >
             Apply Filters!
