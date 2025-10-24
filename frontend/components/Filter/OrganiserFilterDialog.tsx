@@ -93,8 +93,7 @@ export default function OrganiserFilterDialog({
 }: OrganiserFilterDialogProps) {
   const [showSortBy, setShowSortBy] = useState(true);
   const [showSearch, setShowSearch] = useState(true);
-  const [showEventStatus, setShowEventStatus] = useState(true);
-  const [showEventType, setShowEventType] = useState(true);
+  const [showEventStatusAndType, setShowEventStatusAndType] = useState(true);
   const [showPriceRange, setShowPriceRange] = useState(true);
   const [showDateRange, setShowDateRange] = useState(true);
 
@@ -104,11 +103,8 @@ export default function OrganiserFilterDialog({
   const toggleShowSearch = () => {
     setShowSearch(!showSearch);
   };
-  const toggleShowEventStatus = () => {
-    setShowEventStatus(!showEventStatus);
-  };
-  const toggleShowEventType = () => {
-    setShowEventType(!showEventType);
+  const toggleShowEventStatusAndType = () => {
+    setShowEventStatusAndType(!showEventStatusAndType);
   };
   const toggleShowPriceRange = () => {
     setShowPriceRange(!showPriceRange);
@@ -231,11 +227,11 @@ export default function OrganiserFilterDialog({
         <div className="mb-3">
           <label className="text-xs font-medium text-gray-700 mb-1 flex items-center">
             Event Status & Type
-            <span className="cursor-pointer ml-auto" onClick={toggleShowEventStatus}>
-              {showEventStatus ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+            <span className="cursor-pointer ml-auto" onClick={toggleShowEventStatusAndType}>
+              {showEventStatusAndType ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
             </span>
           </label>
-          {showEventStatus && (
+          {showEventStatusAndType && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-[10px] font-semibold text-gray-600 mb-1">Status</p>
