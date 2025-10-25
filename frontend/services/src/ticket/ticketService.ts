@@ -1,9 +1,8 @@
 import { TicketTypeData } from "@/interfaces/TicketTypeTypes";
-import { doc, setDoc, collection, getDocs, updateDoc, increment } from "firebase/firestore";
+import { collection, doc, getDocs, increment, setDoc, updateDoc } from "firebase/firestore";
 import { eventServiceLogger } from "../events/eventsService";
 import { findEventDoc } from "../events/eventsUtils/getEventsUtils";
 
-// Internal function for adding default ticket types only
 async function addTicketTypeToEvent(eventId: string, ticketType: TicketTypeData): Promise<void> {
   try {
     const eventDocSnapshot = await findEventDoc(eventId);
@@ -24,14 +23,14 @@ export async function getTicketTypesForEvent(eventId: string): Promise<TicketTyp
     const eventDocSnapshot = await findEventDoc(eventId);
     const eventDocRef = eventDocSnapshot.ref;
     const ticketTypesCollection = collection(eventDocRef, "TicketTypes");
-    
+
     const ticketTypesSnapshot = await getDocs(ticketTypesCollection);
     const ticketTypes: TicketTypeData[] = [];
-    
+
     ticketTypesSnapshot.forEach((doc) => {
       ticketTypes.push(doc.data() as TicketTypeData);
     });
-    
+
     return ticketTypes;
   } catch (error) {
     eventServiceLogger.error(`Failed to get ticket types for event ${eventId}: ${error}`);
@@ -39,20 +38,24 @@ export async function getTicketTypesForEvent(eventId: string): Promise<TicketTyp
   }
 }
 
-export async function updateTicketTypeSoldQuantity(eventId: string, ticketTypeId: string, quantityChange: number): Promise<void> {
+export async function updateTicketTypeSoldQuantity(
+  eventId: string,
+  ticketTypeId: string,
+  quantityChange: number
+): Promise<void> {
   try {
     const eventDocSnapshot = await findEventDoc(eventId);
     const eventDocRef = eventDocSnapshot.ref;
     const ticketTypeDocRef = doc(eventDocRef, "TicketTypes", ticketTypeId);
 
     await updateDoc(ticketTypeDocRef, {
-      soldQuantity: increment(quantityChange)
+      soldQuantity: increment(quantityChange),
     });
 
     // Only sync event vacancy for General tickets
     if (ticketTypeId === "General") {
       await updateDoc(eventDocRef, {
-        vacancy: increment(-quantityChange)
+        vacancy: increment(-quantityChange),
       });
       eventServiceLogger.info(`Updated General ticket sold quantity by ${quantityChange} and synced event vacancy`);
     } else {
@@ -73,15 +76,15 @@ export async function useAdminTickets(eventId: string, quantity: number): Promis
 
     // Admin tickets consume General availability but don't count as General sales
     await updateDoc(adminTicketDocRef, {
-      soldQuantity: increment(quantity)
+      soldQuantity: increment(quantity),
     });
 
     await updateDoc(generalTicketDocRef, {
-      availableQuantity: increment(-quantity)
+      availableQuantity: increment(-quantity),
     });
 
     await updateDoc(eventDocRef, {
-      vacancy: increment(-quantity)
+      vacancy: increment(-quantity),
     });
 
     eventServiceLogger.info(`Used ${quantity} Admin tickets, reduced General availability and event vacancy`);
@@ -92,6 +95,7 @@ export async function useAdminTickets(eventId: string, quantity: number): Promis
 }
 
 export async function addDefaultTicketTypes(eventId: string, capacity: number, price: number) {
+  // TODO: let's abstract these out as constants to the types file
   const DEFAULT_TICKET_TYPES = [
     {
       id: "Admin",

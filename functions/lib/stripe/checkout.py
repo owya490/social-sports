@@ -114,6 +114,8 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
     logger.error(f"No ticket types found for event {event_ref.path}. Returning status=500")
     return json.dumps({"url": ERROR_URL})
   
+  # TODO: again, this workflow is hardcoded to general tickets at the moment. We should probably
+  # generalise it.
   # Check only General ticket availability for public checkout (not Admin tickets)
   general_ticket = get_general_ticket_type(ticket_types)
   if not general_ticket or general_ticket.remaining_quantity < quantity:

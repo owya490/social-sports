@@ -32,7 +32,7 @@ import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
-import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../firebaseFunctionsService";
+import { addDefaultTicketTypes } from "../ticket/ticketService";
 import { getFullUserById, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { recalculateEventsMetadataTotalTicketCounts } from "./eventsMetadata/eventsMetadataUtils/commonEventsMetadataUtils";
@@ -46,7 +46,6 @@ import {
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
 import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
-import { addDefaultTicketTypes } from "../ticket/ticketService";
 import {
   bustEventsLocalStorageCache,
   findEventDoc,
@@ -117,31 +116,6 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     eventServiceLogger.error(`createEvent ${error}`);
     throw error;
   }
-}
-
-export async function createEventV2(data: NewEventData) {
-  if (!rateLimitCreateEvents()) {
-    console.log("Rate Limited!!!");
-    throw "Rate Limited";
-  }
-  eventServiceLogger.info("createEventV2");
-  const content = {
-    eventData: data,
-  };
-  const createEventFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_EVENT);
-  return createEventFunction(content).then(async (result) => {
-    const resultData = JSON.parse(result.data as string) as CreateEventResponse;
-    
-    // Add default ticket types after event creation
-    try {
-      await addDefaultTicketTypes(resultData.eventId, data.capacity, data.price);
-    } catch (ticketError) {
-      // Don't fail the event creation if ticket types fail
-      eventServiceLogger.error(`Failed to create default ticket types for event ${resultData.eventId}: ${ticketError}`);
-    }
-    
-    return resultData.eventId;
-  });
 }
 
 export async function createEventMetadata(batch: WriteBatch, eventId: EventId, data: NewEventData) {
@@ -450,14 +424,16 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId): P
       // GET OPERATION: First check whether there is enough total capacity
       const eventDocRef = await findEventDocRef(eventId);
       const eventDataWithoutOrganiser = (await transaction.get(eventDocRef)).data() as EventDataWithoutOrganiser;
-      
+
       const eventMetadataDocRef = findEventMetadataDocRefByEventId(eventId);
       let eventMetadata = (await transaction.get(eventMetadataDocRef)).data() as EventMetadata;
-      
+
       // Check if there's enough General ticket availability for Admin ticket usage
       // Admin tickets consume General availability but don't count as sales
       if (eventDataWithoutOrganiser.vacancy < attendeeInfo.ticketCount) {
-        throw new Error(`Not enough General ticket availability for Admin tickets! Available: ${eventDataWithoutOrganiser.vacancy}, Requested: ${attendeeInfo.ticketCount}`);
+        throw new Error(
+          `Not enough General ticket availability for Admin tickets! Available: ${eventDataWithoutOrganiser.vacancy}, Requested: ${attendeeInfo.ticketCount}`
+        );
       }
 
       // Check if email has is already in the purchaserMap
@@ -491,15 +467,15 @@ export async function addEventAttendee(attendee: Purchaser, eventId: EventId): P
       // But consume General ticket availability to reduce public spots
       const adminTicketDocRef = doc(eventDocRef, "TicketTypes", "Admin");
       const generalTicketDocRef = doc(eventDocRef, "TicketTypes", "General");
-      
+
       transaction.update(adminTicketDocRef, {
-        soldQuantity: increment(attendeeInfo.ticketCount)
+        soldQuantity: increment(attendeeInfo.ticketCount),
       });
-      
+
       transaction.update(generalTicketDocRef, {
-        availableQuantity: increment(-attendeeInfo.ticketCount)
+        availableQuantity: increment(-attendeeInfo.ticketCount),
       });
-      
+
       // Reduce event vacancy since Admin tickets consume public spots
       eventDataWithoutOrganiser.vacancy -= attendeeInfo.ticketCount;
 

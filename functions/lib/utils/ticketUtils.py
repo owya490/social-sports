@@ -26,6 +26,8 @@ class TicketType:
             "soldQuantity": self.sold_quantity
         }
 
+# TODO: seems like this function is hard coded to only get 2 types of ticket types at the moment.
+# We should probably generalise it to be able to get all the available ticket types from an event.
 def get_ticket_types_for_event(transaction: Transaction, event_ref, logger: logging.Logger) -> List[TicketType]:
     """Get all ticket types for a given event"""
     try:
@@ -86,6 +88,7 @@ def get_general_ticket_type(ticket_types: List[TicketType]) -> Optional[TicketTy
     
     return min(available_tickets, key=lambda tt: tt.price)
 
+# TODO: this workflow only handles General ticket types. We should probably generalise it to be able to handle all ticket types.
 def update_ticket_type_sold_quantity(transaction: Transaction, event_ref, ticket_type_id: str, quantity_change: int, logger: logging.Logger):
     """Update the sold quantity for a specific ticket type and sync event-level vacancy"""
     try:
