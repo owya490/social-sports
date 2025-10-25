@@ -3,18 +3,20 @@ package com.functions.global.models;
 import com.functions.events.models.NewEventData;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
 import com.functions.forms.models.responses.SaveTempFormResponseResponse;
+import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
 import com.functions.fulfilment.models.requests.GetFulfilmentEntityInfoRequest;
 import com.functions.fulfilment.models.requests.GetFulfilmentSessionInfoRequest;
 import com.functions.fulfilment.models.requests.GetNextFulfilmentEntityRequest;
 import com.functions.fulfilment.models.requests.GetPrevFulfilmentEntityRequest;
 import com.functions.fulfilment.models.requests.InitCheckoutFulfilmentSessionRequest;
 import com.functions.fulfilment.models.requests.UpdateFulfilmentEntityWithFormResponseIdRequest;
-import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
+import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
+import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 
 import lombok.Getter;
 
@@ -32,7 +34,8 @@ public enum EndpointType {
     GET_NEXT_FULFILMENT_ENTITY(GetNextFulfilmentEntityRequest.class, GetNextFulfilmentEntityResponse.class),
     GET_FULFILMENT_SESSION_INFO(GetFulfilmentSessionInfoRequest.class, GetFulfilmentSessionInfoResponse.class),
     GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class),
-    COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class);
+    COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class),
+    CREATE_STRIPE_CHECKOUT_SESSION(CreateStripeCheckoutSessionRequest.class, CreateStripeCheckoutSessionResponse.class);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;
