@@ -16,6 +16,10 @@ export const FORM_IMAGE_PATH = "/formImages";
 
 export const imageServiceLogger = new Logger("imageServiceLogger");
 
+interface ImageMetadata {
+  url: string;
+  timeCreated: number;
+}
 /**
  * Helper function to fetch image URLs from a storage reference and sort by most recent
  */
@@ -25,7 +29,7 @@ async function fetchAndSortImageUrls(storageRef: StorageReference): Promise<stri
 
     // Fetch metadata and URLs for each item
     const itemsWithMetadata = await Promise.all(
-      res.items.map(async (itemRef) => {
+      res.items.map(async (itemRef): Promise<ImageMetadata | null> => {
         try {
           const metadata = await getMetadata(itemRef);
           const url = await getDownloadURL(itemRef);
@@ -41,8 +45,10 @@ async function fetchAndSortImageUrls(storageRef: StorageReference): Promise<stri
     );
 
     // Sort by most recent first
-    const filteredItemsWithMetadata = itemsWithMetadata.filter((item) => item !== null);
-    filteredItemsWithMetadata.sort((a, b) => b.timeCreated - a.timeCreated);
+    const filteredItemsWithMetadata: ImageMetadata[] = itemsWithMetadata.filter(
+      (item): item is ImageMetadata => item !== null
+    );
+    filteredItemsWithMetadata.sort((a: ImageMetadata, b: ImageMetadata) => b.timeCreated - a.timeCreated);
 
     return filteredItemsWithMetadata.map((item) => item.url);
   } catch (error) {

@@ -177,7 +177,7 @@ export default function OrganiserDashboard() {
           />
         </div>
       </div>
-      <div className="flex justify-center">
+      <div className="flex justify-center pb-10">
         <div className="hidden lg:block mr-4">
           <OrganiserFilterDialog
             allEventsDataList={allEventsDataList}
@@ -200,7 +200,7 @@ export default function OrganiserDashboard() {
           />
         </div>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto lg:h-[80vh] w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto h-full w-full">
             {loadingEventDataList.map((event, eventIdx) => {
               return (
                 <div className="w-full" key={eventIdx}>
@@ -235,7 +235,7 @@ export default function OrganiserDashboard() {
             </div>
           </div>
         ) : (
-          <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto lg:h-[80vh]">
+          <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto h-full">
             {filterEventsBySortBy(eventDataList, appliedSortByCategoryValue).map((event, eventIdx) => {
               return (
                 <div className="w-full" key={eventIdx}>

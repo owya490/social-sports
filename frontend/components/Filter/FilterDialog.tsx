@@ -10,6 +10,7 @@ import { DateRange, DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import ListBox from "../../components/ListBox";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
+import { startOfDay } from "date-fns";
 
 export enum SortByCategory {
   HOT,
@@ -246,7 +247,7 @@ export default function FilterDialog({
                           mode="range"
                           selected={dateRange}
                           onSelect={handleDateRangeChange}
-                          disabled={(date) => date < new Date()}
+                          disabled={(date) => date < startOfDay(new Date())}
                           classNames={{
                             selected: `bg-black text-white rounded-full`,
                             range_start: `bg-black text-white rounded-full`,

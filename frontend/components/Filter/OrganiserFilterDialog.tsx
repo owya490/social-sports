@@ -338,7 +338,6 @@ export default function OrganiserFilterDialog({
                 mode="range"
                 selected={dateRange}
                 onSelect={handleDateRangeChange}
-                disabled={(date) => date < new Date()}
                 classNames={{
                   selected: `bg-black text-white rounded-full`,
                   range_start: `bg-black text-white rounded-full`,
