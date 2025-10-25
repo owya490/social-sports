@@ -15,8 +15,6 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
-import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
-import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 
 import lombok.Getter;
 
@@ -34,8 +32,7 @@ public enum EndpointType {
     GET_NEXT_FULFILMENT_ENTITY(GetNextFulfilmentEntityRequest.class, GetNextFulfilmentEntityResponse.class),
     GET_FULFILMENT_SESSION_INFO(GetFulfilmentSessionInfoRequest.class, GetFulfilmentSessionInfoResponse.class),
     GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class),
-    COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class),
-    CREATE_STRIPE_CHECKOUT_SESSION(CreateStripeCheckoutSessionRequest.class, CreateStripeCheckoutSessionResponse.class);
+    COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;
