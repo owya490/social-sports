@@ -4,8 +4,15 @@ import LogoImage from "./../../public/icons/Icon_black_square.png";
 
 export default function Logo() {
   return (
-    <Link href="/dashboard" className="flex items-center">
-      <Image priority={true} src={LogoImage} alt="Logo" width={0} height={0} className="w-12" />
+    <Link href="/" className="flex items-center">
+      <Image
+        priority={true}
+        src={LogoImage}
+        alt="SPORTSHUB - Find and book social sports events"
+        width={0}
+        height={0}
+        className="w-12"
+      />
     </Link>
   );
 }

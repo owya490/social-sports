@@ -4,58 +4,68 @@ import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { UserData } from "@/interfaces/UserTypes";
 import { updateEventById } from "@/services/src/events/eventsService";
-import {
-  AllImageData,
-  getUsersEventImagesUrls,
-  getUsersEventThumbnailsUrls,
-  uploadAndGetImageAndThumbnailUrls,
-} from "@/services/src/imageService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
+import { sleep } from "@/utilities/sleepUtil";
+import { Spinner } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 
 interface EventDrilldownImagesPageProps {
   user: UserData;
   eventId: string;
-  sport: string;
-  eventImagePreviewUrl: string;
-  eventThumbnailPreviewUrl: string;
+  eventImage: string;
+  eventThumbnail: string;
 }
 
 export const EventDrilldownImagesPage = ({
   user,
   eventId,
-  sport,
-  eventImagePreviewUrl,
-  eventThumbnailPreviewUrl,
+  eventImage,
+  eventThumbnail,
 }: EventDrilldownImagesPageProps) => {
   const [loading, setLoading] = useState<boolean>(true);
+  const [submitLoading, setSubmitLoading] = useState<boolean>(false);
 
   const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
   const [eventThumbnailUrls, setEventThumbnailUrls] = useState<string[]>([]);
 
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
-  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string>("");
-
-  const [allImageData, setAllImageData] = useState<AllImageData>({ image: "", thumbnail: "" });
+  const [allImageData, setAllImageData] = useState<AllImageData>({ image: undefined, thumbnail: undefined });
 
   useEffect(() => {
     const fetchUserImages = async () => {
-      setEventThumbnailUrls(await getUsersEventThumbnailsUrls(user.userId));
-      setEventImageUrls(await getUsersEventImagesUrls(user.userId));
+      const userEventThumbnailsUrls = await getUsersEventThumbnailsUrls(user.userId);
+      const userEventImageUrls = await getUsersEventImagesUrls(user.userId);
+      if (eventThumbnail) {
+        setEventThumbnailUrls([eventThumbnail, ...userEventThumbnailsUrls.filter((url) => url !== eventThumbnail)]);
+      } else {
+        setEventThumbnailUrls(userEventThumbnailsUrls);
+      }
+      if (eventImage) {
+        setEventImageUrls([eventImage, ...userEventImageUrls.filter((url) => url !== eventImage)]);
+      } else {
+        setEventImageUrls(userEventImageUrls);
+      }
+      setAllImageData({
+        image: eventImage ? eventImage : undefined,
+        thumbnail: eventThumbnail ? eventThumbnail : undefined,
+      });
       setLoading(false);
     };
     fetchUserImages();
-    setImagePreviewUrl(eventImagePreviewUrl);
-    setThumbnailPreviewUrl(eventThumbnailPreviewUrl);
-    setAllImageData({
-      image: eventImagePreviewUrl,
-      thumbnail: eventThumbnailPreviewUrl,
-    });
   }, []);
 
   const submit = async () => {
-    const [imageUrl, thumbnailUrl] = await uploadAndGetImageAndThumbnailUrls(user.userId, { ...allImageData, sport });
+    setSubmitLoading(true);
 
-    updateEventById(eventId, { image: imageUrl, thumbnail: thumbnailUrl });
+    try {
+      await updateEventById(eventId, { image: allImageData.image, thumbnail: allImageData.thumbnail });
+      bustEventsLocalStorageCache();
+    } catch (error) {
+      console.error("Error updating event:", error);
+    }
+
+    await sleep(2000);
+    setSubmitLoading(false);
   };
 
   return (
@@ -68,8 +78,9 @@ export const EventDrilldownImagesPage = ({
         <>
           <ImageForm
             {...allImageData}
-            imagePreviewUrl={imagePreviewUrl}
-            setImagePreviewUrl={setImagePreviewUrl}
+            user={user}
+            setImageUrls={setEventImageUrls}
+            setThumbnailUrls={setEventThumbnailUrls}
             updateField={(fields: Partial<AllImageData>) => {
               setAllImageData((prev) => {
                 return { ...prev, ...fields };
@@ -77,10 +88,12 @@ export const EventDrilldownImagesPage = ({
             }}
             eventThumbnailsUrls={eventThumbnailUrls}
             eventImageUrls={eventImageUrls}
-            thumbnailPreviewUrl={thumbnailPreviewUrl}
-            setThumbnailPreviewUrl={setThumbnailPreviewUrl}
           />
-          <InvertedHighlightButton text={"Update"} onClick={submit} />
+          {submitLoading ? (
+            <Spinner className="ml-2 w-5" />
+          ) : (
+            <InvertedHighlightButton text={"Update"} onClick={submit} />
+          )}
         </>
       )}
     </div>

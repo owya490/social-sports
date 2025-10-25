@@ -18,4 +18,6 @@ function isLocalHost(hostname: string) {
   return hostname.includes("localhost");
 }
 
-
+export function getErrorUrl(error: any) {
+  return `/error?message=${encodeURIComponent(error as string)}`;
+}

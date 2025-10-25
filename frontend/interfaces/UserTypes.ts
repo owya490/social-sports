@@ -19,7 +19,6 @@ export interface PublicUserData {
   };
   publicUpcomingOrganiserEvents: EventId[];
   bio: string;
-  forms?: [FormId];
 }
 
 export interface PrivateUserData {
@@ -36,8 +35,8 @@ export interface PrivateUserData {
   stripeAccount: string | null;
   stripeAccountActive: boolean | null;
   organiserEvents: string[];
-  publicOrganiserEvents: string[];
   recurrenceTemplates: string[];
+  forms: FormId[];
   sendOrganiserTicketEmails: boolean;
 }
 
@@ -80,10 +79,10 @@ export const EmptyPrivateUserData: PrivateUserData = {
   location: "",
   activeBookings: [],
   organiserEvents: [],
-  publicOrganiserEvents: [],
   recurrenceTemplates: [],
   stripeAccount: null,
   stripeAccountActive: null,
+  forms: [],
   sendOrganiserTicketEmails: false,
 };
 

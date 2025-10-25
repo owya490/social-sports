@@ -20,7 +20,6 @@ public class UsersUtils {
 		publicUserData.setPublicContactInformation(data.getPublicContactInformation());
 		publicUserData.setPublicUpcomingOrganiserEvents(data.getPublicUpcomingOrganiserEvents());
 		publicUserData.setUsername(data.getUsername());
-		publicUserData.setForms(data.getForms());
 
 		return publicUserData;
 	}
@@ -40,7 +39,8 @@ public class UsersUtils {
 		privateUserData.setStripeAccountActive(privateUserData.getStripeAccountActive());
 		privateUserData.setOrganiserEvents(privateUserData.getOrganiserEvents());
 		privateUserData.setRecurrenceTemplates(data.getRecurrenceTemplates());
-		privateUserData.setPublicOrganiserEvents(data.getPublicOrganiserEvents());
+		privateUserData.setSendOrganiserTicketEmails(data.getSendOrganiserTicketEmails());
+		privateUserData.setForms(data.getForms());
 
 		return privateUserData;
 	}

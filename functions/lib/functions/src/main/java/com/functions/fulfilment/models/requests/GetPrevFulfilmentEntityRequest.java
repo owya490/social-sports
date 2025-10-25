@@ -1,6 +1,8 @@
 package com.functions.fulfilment.models.requests;
 
+import javax.annotation.Nullable;
+
 public record GetPrevFulfilmentEntityRequest(
         String fulfilmentSessionId,
-        String currentFulfilmentEntityId) {
+        @Nullable String currentFulfilmentEntityId) {
 }

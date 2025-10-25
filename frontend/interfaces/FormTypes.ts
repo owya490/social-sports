@@ -1,16 +1,22 @@
+import { Timestamp } from "firebase/firestore";
+import { EventId } from "./EventTypes";
 import { UserId } from "./UserTypes";
 import { Branded } from "./index";
 
 export interface Form {
+  formId: FormId;
   title: FormTitle;
+  description: FormDescription;
   userId: UserId;
   formActive: boolean;
   sectionsOrder: SectionId[]; // keeps track of ordering for editing forms
   sectionsMap: Record<SectionId, FormSection>;
+  lastUpdated: Timestamp | null;
 }
 
 export type FormId = Branded<string, "FormId">;
 export type FormTitle = Branded<string, "FormTitle">;
+export type FormDescription = Branded<string, "FormDescription">;
 export type SectionId = Branded<string, "SectionId">;
 export type FormResponseId = Branded<string, "FormResponseId">;
 
@@ -19,7 +25,8 @@ export type FormSection =
   | MultipleChoiceSection
   | DropdownSelectSection
   | FileUploadSection
-  | DateTimeSection;
+  | DateTimeSection
+  | ImageSection;
 
 export enum FormSectionType {
   TEXT = "TEXT",
@@ -28,6 +35,7 @@ export enum FormSectionType {
   BINARY_CHOICE = "BINARY_CHOICE",
   FILE_UPLOAD = "FILE_UPLOAD",
   DATE_TIME = "DATE_TIME",
+  IMAGE = "IMAGE",
 }
 
 interface AbstractSection {
@@ -64,10 +72,52 @@ export interface DateTimeSection extends AbstractSection {
   timestamp?: string; // uct time
 }
 
+export interface ImageSection extends AbstractSection {
+  type: FormSectionType.IMAGE;
+  imageUrl: string;
+}
+
 /** Contains the answers of the form from the responder */
 export interface FormResponse {
   formId: FormId;
+  eventId: EventId;
+  formResponseId: FormResponseId;
+  responseSectionsOrder: SectionId[];
   responseMap: Record<SectionId, FormSection>;
   /** timestamp in uct; is null when stored as temp form submission */
-  submissionTime?: number;
+  submissionTime: Timestamp | null;
 }
+
+export const EmptyForm: Form = {
+  formId: "" as FormId,
+  title: "" as FormTitle,
+  description: "" as FormDescription,
+  userId: "" as UserId,
+  formActive: true,
+  sectionsOrder: [],
+  sectionsMap: {},
+  lastUpdated: null,
+};
+
+export const EmptyFormResponse: FormResponse = {
+  formId: "" as FormId,
+  eventId: "" as EventId,
+  formResponseId: "" as FormResponseId,
+  responseSectionsOrder: [],
+  responseMap: {},
+  submissionTime: null,
+};
+
+/**
+ * Payload we send to java saveTempFormResponse function
+ */
+export type SaveTempFormResponseRequest = {
+  formResponse: FormResponse;
+};
+
+/**
+ * Payload we receive from java saveTempFormResponse function
+ */
+export type SaveTempFormResponseResponse = {
+  formResponseId: FormResponseId;
+};

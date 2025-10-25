@@ -35,7 +35,7 @@ export default function FilterIcon(props: FilterIconProps) {
             src={props.image}
             width={0}
             height={0}
-            alt="volleyballImage"
+            alt="filterIcon"
             className={`${props.style} ${
               props.selectedSport === ""
                 ? "opacity-100"

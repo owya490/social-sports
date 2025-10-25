@@ -3,7 +3,7 @@
 > **Simplifying Sports Booking** - A modern platform for finding, booking, and hosting social sports events.
 
 [![Website](https://img.shields.io/badge/Website-sportshub.net.au-blue?style=flat-square)](https://www.sportshub.net.au)
-[![Blog](https://img.shields.io/badge/Blog-SPORTSHUB%20Blogs-green?style=flat-square)](https://sportshub.net.au/blogs)
+[![Blog](https://img.shields.io/badge/Blog-SPORTSHUB%20Blogs-green?style=flat-square)](https://www.sportshub.net.au/blogs)
 
 ---
 
@@ -19,7 +19,7 @@ At SPORTSHUB, we're not just building a platform — we're building something we
 
 ### For Players 🏃‍♂️
 
-- **Discover Events**: Find local sports events across multiple sports (volleyball, badminton, basketball, soccer, tennis, table tennis, oztag, baseball)
+- **Discover Events**: Find local sports events across multiple sports (volleyball, badminton, pickle ball, cricket, basketball, soccer, tennis, oztag, baseball)
 - **Easy Booking**: One-click booking with integrated Stripe payments
 - **Real-time Updates**: Live availability and event status
 
@@ -59,6 +59,7 @@ At SPORTSHUB, we're not just building a platform — we're building something we
 - **GitHub Actions** - CI/CD pipeline
 - **Hugo** - Blog platform
 - **Jest** - Testing framework
+- **Sportshub CLI** - In-house CLI tool
 
 ---
 
@@ -111,6 +112,10 @@ SPORTSHUB Platform
 │   ├── Email Notifications
 │   ├── Event Management
 │   └── Analytics
+├── CLI Tool (Node.js)
+│   ├── Lead Management
+│   ├── Jira Integration
+│   └── Workflow Automation
 └── Infrastructure
     ├── Firebase Hosting
     ├── Firestore Database
@@ -144,7 +149,7 @@ We believe in **building in the open** and sharing what we learn. Our platform i
 ## 📞 Get in Touch
 
 - **Website**: [sportshub.net.au](https://www.sportshub.net.au)
-- **Blog**: [sportshub.net.au/blogs](https://sportshub.net.au/blogs)
+- **Blog**: [sportshub.net.au/blogs](https://www,sportshub.net.au/blogs)
 - **Email**: [Contact us](https://www.sportshub.net.au/contact)
 
 ---

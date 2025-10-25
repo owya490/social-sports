@@ -1,4 +1,4 @@
-baseURL: https://sportshub.net.au/
+baseURL: https://www.sportshub.net.au/
 languageCode: en-us
 title: SPORTSHUB
 theme: hextra
@@ -6,7 +6,7 @@ params:
   theme:
     default: light
     displayToggle: false
-  
+
   navbar:
     displayTitle: true
     displayLogo: true
@@ -15,7 +15,7 @@ params:
       alt: SPORTSHUB
       link: /blogs
       width: 40
-  
+
   footer:
     enable: true
     displayCopyright: true
@@ -25,7 +25,7 @@ params:
   # Display the last modification date
   displayUpdatedDate: true
   dateFormat: "January 2, 2006"
-  
+
   blog:
     list:
       displayTags: true
@@ -38,7 +38,7 @@ params:
 
   toc:
     displayTags: true
-  
+
   search:
     enable: true
     type: flexsearch
@@ -49,3 +49,36 @@ params:
       # full | forward | reverse | strict
       # https://github.com/nextapps-de/flexsearch/#tokenizer-prefix-search
       tokenize: forward
+menu:
+  main:
+    - identifier: documentation
+      name: Documentation
+      pageRef: /docs
+      weight: 1
+    - identifier: blogs
+      name: Blogs
+      pageRef: /blogs
+      weight: 3
+    - name: Search
+      weight: 6
+      params:
+        type: search
+    - name: GitHub
+      weight: 7
+      url: "https://www.sportshub.net.au/"
+      params:
+        icon: sparkles
+  sidebar:
+    - identifier: more
+      name: More
+      params:
+        type: separator
+      weight: 1
+    - identifier: sportshubDashboard
+      name: "SPORTSHUB Dashboard ↗"
+      url: "https://www.sportshub.net.au/"
+      weight: 2
+    - identifier: sportshubBlogs
+      name: "SPORTSHUB Blogs ↗"
+      url: "https://www.sportshub.net.au/blogs"
+      weight: 3

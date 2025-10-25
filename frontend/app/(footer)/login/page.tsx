@@ -29,7 +29,7 @@ export default function Login() {
         const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
         if (userCreated !== null) {
           setUser(await getFullUserById(userCreated));
-          router.push("/dashboard?login=success"); // Redirect only if user creation is successful
+          router.push("/?login=success"); // Redirect only if user creation is successful
         } else {
           throw new Error("Could not find user");
         }
@@ -47,7 +47,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex p-6 min-h-[100vh] flex-1 flex-col mt-20 sm:mt-40">
+    <div className="flex px-6 min-h-[calc(100vh-var(--navbar-height)-var(--footer-height))] flex-1 flex-col pt-8 sm:pt-40">
       <Alert
         open={alertStatus}
         onClose={handleAlertClose}

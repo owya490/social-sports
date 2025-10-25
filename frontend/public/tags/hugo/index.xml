@@ -1,41 +1,41 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – HUGO</title><link>https://sportshub.net.au/tags/hugo/</link><description>Recent content in HUGO on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Fri, 04 Jul 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://sportshub.net.au/tags/hugo/index.xml" rel="self" type="application/rss+xml"/><item><title>Introducing SPORTSHUB Blogs</title><link>https://sportshub.net.au/blogs/introducing-sportshub-blogs/</link><pubDate>Fri, 04 Jul 2025 00:00:00 +0000</pubDate><guid>https://sportshub.net.au/blogs/introducing-sportshub-blogs/</guid><description>
-&lt;p>&lt;img src="https://www.blogtyrant.com/wp-content/uploads/2022/04/how-to-start-a-sports-blog.png" alt="SPORT BLOG" loading="lazy" />&lt;/p>
-&lt;h1>Welcome to the brand new &lt;strong>SPORTSHUB Blogs&lt;/strong>! 🎉&lt;/h1>&lt;p>We&amp;rsquo;re super excited to launch this space where we&amp;rsquo;ll be sharing all the latest and greatest from the SPORTSHUB team.&lt;/p>
-&lt;p>Expect a mix of &lt;strong>feature release announcements&lt;/strong>, deep dives into our &lt;strong>engineering adventures&lt;/strong>, and maybe even a few behind-the-scenes stories (with memes, if we&amp;rsquo;re feeling brave).&lt;/p>
-&lt;h2>Why a Blog?&lt;span class="hx:absolute hx:-mt-20" id="why-a-blog">&lt;/span>
-&lt;a href="#why-a-blog" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>We believe in building in the open and sharing what we learn. Whether it&amp;rsquo;s a shiny new feature, a tricky bug we squashed, or a cool hack that made our lives easier, we want you to be part of the journey. Plus, who doesn&amp;rsquo;t love a good blog post with some code snippets and GIFs?&lt;/p>
-&lt;h2>Built on HUGO: Fast, Flexible, and Fun&lt;span class="hx:absolute hx:-mt-20" id="built-on-hugo-fast-flexible-and-fun">&lt;/span>
-&lt;a href="#built-on-hugo-fast-flexible-and-fun" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Our blog is powered by &lt;a href="https://gohugo.io/" target="_blank" rel="noopener">HUGO&lt;/a>, the industry standard and &lt;strong>fastest static site generator&lt;/strong> out there. Seriously, it&amp;rsquo;s &lt;em>blazing&lt;/em> fast—Hugo can build thousands of pages in seconds. Some fun facts:&lt;/p>
-&lt;ul>
-&lt;li>🚀 &lt;strong>Speed Demon:&lt;/strong> Hugo is written in Go and can generate sites in milliseconds.&lt;/li>
-&lt;li>🏆 &lt;strong>Industry Standard:&lt;/strong> Used by companies like DigitalOcean, Cloudflare, and many more.&lt;/li>
-&lt;li>🛠️ &lt;strong>Markdown Magic:&lt;/strong> Write in Markdown, publish in style.&lt;/li>
-&lt;/ul>
-&lt;p>Want to geek out more? Check out &lt;a href="https://gohugo.io/about/" target="_blank" rel="noopener">Hugo&amp;rsquo;s official site&lt;/a>.&lt;/p>
-&lt;p>We opted with a this pre-built framework route as we want to keep our blog maintenance overhead to a minimum. Seeing we are only a team of 6 engineers, we want to prioritize our time developing features on SPORTSHUB, rather than building our blog site from scratch and having to cop maintenance overhead of a custom solution.&lt;/p>
-&lt;h3>The Architecture: Simple, Robust, Scalable&lt;span class="hx:absolute hx:-mt-20" id="the-architecture-simple-robust-scalable">&lt;/span>
-&lt;a href="#the-architecture-simple-robust-scalable" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Here&amp;rsquo;s a peek under the hood:&lt;/p>
-&lt;ul>
-&lt;li>&lt;strong>Content:&lt;/strong> All our posts (like this one!) are written in Markdown and live in our GitHub repo.&lt;/li>
-&lt;li>&lt;strong>Build:&lt;/strong> Hugo takes care of turning Markdown into beautiful, static HTML.&lt;/li>
-&lt;li>&lt;strong>Deploy:&lt;/strong> We push to GitHub, and our CI/CD pipeline takes care of the rest—no manual deploys, no fuss.&lt;/li>
-&lt;li>&lt;strong>Fast Delivery:&lt;/strong> Static sites mean lightning-fast load times and rock-solid reliability.&lt;/li>
-&lt;/ul>
-&lt;p>&lt;img src="https://gohugo.io/images/hugo-logo-wide.svg" alt="Hugo Logo" loading="lazy" />&lt;/p>
-&lt;p> &lt;/p>
-&lt;h2>Meet Hextra: Our Theme of Choice&lt;span class="hx:absolute hx:-mt-20" id="meet-hextra-our-theme-of-choice">&lt;/span>
-&lt;a href="#meet-hextra-our-theme-of-choice" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>We wanted our blog to look as good as it reads, so we picked the &lt;a href="https://github.com/imfing/hextra" target="_blank" rel="noopener">Hextra theme&lt;/a> for Hugo. It&amp;rsquo;s modern, clean, and super customizable. Plus, it comes with all the bells and whistles:&lt;/p>
-&lt;ul>
-&lt;li>🌈 Beautiful design out of the box&lt;/li>
-&lt;li>📱 Fully responsive (read us on your phone, tablet, or fridge)&lt;/li>
-&lt;li>🧩 Easy to extend and tweak&lt;/li>
-&lt;/ul>
-&lt;h2>What&amp;rsquo;s Next?&lt;span class="hx:absolute hx:-mt-20" id="whats-next">&lt;/span>
-&lt;a href="#whats-next" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
-&lt;li>&lt;strong>Feature Announcements:&lt;/strong> Stay tuned for updates on new releases and improvements.&lt;/li>
-&lt;li>&lt;strong>Engineering Blogs:&lt;/strong> Deep dives, architecture decisions, and lessons learned.&lt;/li>
-&lt;li>&lt;strong>Community Spotlights:&lt;/strong> We love our users—maybe you&amp;rsquo;ll see your story here!&lt;/li>
-&lt;/ul>
-&lt;p>Thanks for stopping by! If you have ideas, feedback, or just want to say hi, &lt;a href="https://www.sportshub.net.au/" target="_blank" rel="noopener">reach out to us&lt;/a> or drop a comment below. Happy reading!&lt;/p>
-&lt;hr>
-&lt;p>&lt;em>Built with&lt;/em> ❤️  &lt;em>by the &lt;a href="https://www.sportshub.net.au/" target="_blank" rel="noopener">SPORTSHUB&lt;/a> team, powered by &lt;a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo&lt;/a> and &lt;a href="https://github.com/imfing/hextra" target="_blank" rel="noopener">Hextra&lt;/a>.&lt;/em>&lt;/p></description></item></channel></rss>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – HUGO</title><link>https://www.sportshub.net.au/tags/hugo/</link><description>Recent content in HUGO on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Fri, 04 Jul 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://www.sportshub.net.au/tags/hugo/index.xml" rel="self" type="application/rss+xml"/><item><title>Introducing SPORTSHUB Blogs</title><link>https://www.sportshub.net.au/blogs/introducing-sportshub-blogs/</link><pubDate>Fri, 04 Jul 2025 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/blogs/introducing-sportshub-blogs/</guid><description>
+&lt;p&gt;&lt;img src="https://www.blogtyrant.com/wp-content/uploads/2022/04/how-to-start-a-sports-blog.png" alt="SPORT BLOG" loading="lazy" /&gt;&lt;/p&gt;
+&lt;h1&gt;Welcome to the brand new &lt;strong&gt;SPORTSHUB Blogs&lt;/strong&gt;! 🎉&lt;/h1&gt;&lt;p&gt;We&amp;rsquo;re super excited to launch this space where we&amp;rsquo;ll be sharing all the latest and greatest from the SPORTSHUB team.&lt;/p&gt;
+&lt;p&gt;Expect a mix of &lt;strong&gt;feature release announcements&lt;/strong&gt;, deep dives into our &lt;strong&gt;engineering adventures&lt;/strong&gt;, and maybe even a few behind-the-scenes stories (with memes, if we&amp;rsquo;re feeling brave).&lt;/p&gt;
+&lt;h2&gt;Why a Blog?&lt;span class="hx:absolute hx:-mt-20" id="why-a-blog"&gt;&lt;/span&gt;
+&lt;a href="#why-a-blog" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;We believe in building in the open and sharing what we learn. Whether it&amp;rsquo;s a shiny new feature, a tricky bug we squashed, or a cool hack that made our lives easier, we want you to be part of the journey. Plus, who doesn&amp;rsquo;t love a good blog post with some code snippets and GIFs?&lt;/p&gt;
+&lt;h2&gt;Built on HUGO: Fast, Flexible, and Fun&lt;span class="hx:absolute hx:-mt-20" id="built-on-hugo-fast-flexible-and-fun"&gt;&lt;/span&gt;
+&lt;a href="#built-on-hugo-fast-flexible-and-fun" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Our blog is powered by &lt;a href="https://gohugo.io/" target="_blank" rel="noopener"&gt;HUGO&lt;/a&gt;, the industry standard and &lt;strong&gt;fastest static site generator&lt;/strong&gt; out there. Seriously, it&amp;rsquo;s &lt;em&gt;blazing&lt;/em&gt; fast—Hugo can build thousands of pages in seconds. Some fun facts:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;🚀 &lt;strong&gt;Speed Demon:&lt;/strong&gt; Hugo is written in Go and can generate sites in milliseconds.&lt;/li&gt;
+&lt;li&gt;🏆 &lt;strong&gt;Industry Standard:&lt;/strong&gt; Used by companies like DigitalOcean, Cloudflare, and many more.&lt;/li&gt;
+&lt;li&gt;🛠️ &lt;strong&gt;Markdown Magic:&lt;/strong&gt; Write in Markdown, publish in style.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Want to geek out more? Check out &lt;a href="https://gohugo.io/about/" target="_blank" rel="noopener"&gt;Hugo&amp;rsquo;s official site&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;We opted with a this pre-built framework route as we want to keep our blog maintenance overhead to a minimum. Seeing we are only a team of 6 engineers, we want to prioritize our time developing features on SPORTSHUB, rather than building our blog site from scratch and having to cop maintenance overhead of a custom solution.&lt;/p&gt;
+&lt;h3&gt;The Architecture: Simple, Robust, Scalable&lt;span class="hx:absolute hx:-mt-20" id="the-architecture-simple-robust-scalable"&gt;&lt;/span&gt;
+&lt;a href="#the-architecture-simple-robust-scalable" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Here&amp;rsquo;s a peek under the hood:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Content:&lt;/strong&gt; All our posts (like this one!) are written in Markdown and live in our GitHub repo.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Build:&lt;/strong&gt; Hugo takes care of turning Markdown into beautiful, static HTML.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Deploy:&lt;/strong&gt; We push to GitHub, and our CI/CD pipeline takes care of the rest—no manual deploys, no fuss.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Fast Delivery:&lt;/strong&gt; Static sites mean lightning-fast load times and rock-solid reliability.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src="https://gohugo.io/images/hugo-logo-wide.svg" alt="Hugo Logo" loading="lazy" /&gt;&lt;/p&gt;
+&lt;p&gt; &lt;/p&gt;
+&lt;h2&gt;Meet Hextra: Our Theme of Choice&lt;span class="hx:absolute hx:-mt-20" id="meet-hextra-our-theme-of-choice"&gt;&lt;/span&gt;
+&lt;a href="#meet-hextra-our-theme-of-choice" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;We wanted our blog to look as good as it reads, so we picked the &lt;a href="https://github.com/imfing/hextra" target="_blank" rel="noopener"&gt;Hextra theme&lt;/a&gt; for Hugo. It&amp;rsquo;s modern, clean, and super customizable. Plus, it comes with all the bells and whistles:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;🌈 Beautiful design out of the box&lt;/li&gt;
+&lt;li&gt;📱 Fully responsive (read us on your phone, tablet, or fridge)&lt;/li&gt;
+&lt;li&gt;🧩 Easy to extend and tweak&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;What&amp;rsquo;s Next?&lt;span class="hx:absolute hx:-mt-20" id="whats-next"&gt;&lt;/span&gt;
+&lt;a href="#whats-next" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Feature Announcements:&lt;/strong&gt; Stay tuned for updates on new releases and improvements.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Engineering Blogs:&lt;/strong&gt; Deep dives, architecture decisions, and lessons learned.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Community Spotlights:&lt;/strong&gt; We love our users—maybe you&amp;rsquo;ll see your story here!&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Thanks for stopping by! If you have ideas, feedback, or just want to say hi, &lt;a href="https://www.sportshub.net.au/" target="_blank" rel="noopener"&gt;reach out to us&lt;/a&gt; or drop a comment below. Happy reading!&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;em&gt;Built with&lt;/em&gt; ❤️  &lt;em&gt;by the &lt;a href="https://www.sportshub.net.au/" target="_blank" rel="noopener"&gt;SPORTSHUB&lt;/a&gt; team, powered by &lt;a href="https://gohugo.io/" target="_blank" rel="noopener"&gt;Hugo&lt;/a&gt; and &lt;a href="https://github.com/imfing/hextra" target="_blank" rel="noopener"&gt;Hextra&lt;/a&gt;.&lt;/em&gt;&lt;/p&gt;</description></item></channel></rss>

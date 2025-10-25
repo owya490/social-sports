@@ -1,6 +1,5 @@
 "use client";
 import LoadingSkeletonOrganiserName from "@/components/loading/LoadingSkeletonOrganiserName";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { OrganiserAnnouncementBanner } from "@/components/organiser/dashboard/OrganiserAnnouncementBanner";
 import OrganiserChecklist from "@/components/organiser/dashboard/OrganiserChecklist";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
@@ -8,6 +7,7 @@ import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
+import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -42,8 +42,7 @@ export default function Dashboard() {
   }, [user]);
 
   return (
-    <div className="pt-[3.5rem] pb-20 sm:pb-4 sm:pl-14 lg:max-h-screen">
-      <OrganiserNavbar currPage="Dashboard" />
+    <div className="lg:max-h-screen">
       <OrganiserAnnouncementBanner />
       <div className="pt-2 md:py-16 md:flex md:justify-center px-4 md:px-0">
         <div>
@@ -54,13 +53,29 @@ export default function Dashboard() {
             <h1 className="pt-2 sm:pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
           )}
           <div className="lg:flex w-full mt-8 lg:max-h-[60vh]">
-            <div className="grow lg:mr-8 md:flex flex-col md:w-[40rem]">
+            <div className="grow lg:mr-8 md:flex flex-col lg:w-[40rem] md:min-h-[60vh]">
               <OrganiserChecklist />
-              <div className="hidden md:flex mt-8 grow min-h-[10vh] mb-10 md:mb-0">
-                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray mr-8 rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+              <div className="hidden md:grid grid-cols-2 gap-4 mt-8 grow min-h-[10vh] mb-10 md:mb-0">
+                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/event/create">
                     <div className="h-full flex justify-center items-center">
                       <p>Create an event</p>
+                    </div>
+                  </Link>
+                </div>
+                {evaluateFulfilmentSessionEnabled(user.userId, "") && (
+                  <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray  rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                    <Link href={`/organiser/forms/create-form/editor`}>
+                      <div className="h-full flex justify-center items-center">
+                        <p>Create a form</p>
+                      </div>
+                    </Link>
+                  </div>
+                )}
+                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                  <Link href="/organiser/event/dashboard">
+                    <div className="h-full flex justify-center items-center">
+                      <p>View your events</p>
                     </div>
                   </Link>
                 </div>

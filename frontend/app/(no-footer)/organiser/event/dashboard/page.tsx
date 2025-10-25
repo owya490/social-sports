@@ -1,7 +1,5 @@
 "use client";
 import OrganiserFilterDialog, {
-  DAY_END_TIME_STRING,
-  DAY_START_TIME_STRING,
   DEFAULT_END_DATE,
   DEFAULT_EVENT_STATUS,
   DEFAULT_EVENT_TYPE,
@@ -14,11 +12,11 @@ import OrganiserFilterDialog, {
 } from "@/components/Filter/OrganiserFilterDialog";
 import OrganiserFilterDialogMobile from "@/components/Filter/OrganiserFilterDialogMobile";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
+import { setDateToEndOfDay, setDateToStartOfDay } from "@/services/src/datetimeUtils";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
 import {
   filterEventsByDate,
@@ -58,6 +56,30 @@ export default function OrganiserDashboard() {
     endDate: DEFAULT_END_DATE,
   });
 
+  const { user } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
+  const loadingEventDataList: EventData[] = [
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+  ];
+  const [eventDataList, setEventDataList] = useState<EventData[]>([
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+    EmptyEventData,
+  ]);
+
   const logger = new Logger("OrganiserDashboard");
 
   function applyFilters() {
@@ -93,46 +115,24 @@ export default function OrganiserDashboard() {
 
     // Filter by DATERANGE
     if (dateRange.startDate && dateRange.endDate) {
+      const startDateObj = setDateToStartOfDay(new Date(dateRange.startDate));
+      const endDateObj = setDateToEndOfDay(new Date(dateRange.endDate));
       let newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
-        Timestamp.fromDate(new Date(dateRange.startDate + DAY_START_TIME_STRING)),
-        Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
+        Timestamp.fromDate(startDateObj),
+        Timestamp.fromDate(endDateObj)
       );
       filteredEventDataList = newEventDataList;
       setAppliedDateRange(dateRange);
     }
 
-    // Filter by SORT BY
+    // Filter by SORT BY is done in useEffect below
+    setAppliedSortByCategoryValue(sortByCategoryValue);
     let newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
     filteredEventDataList = newEventDataList;
-    setAppliedSortByCategoryValue(sortByCategoryValue);
     setEventDataList([...filteredEventDataList]);
     closeModal();
   }
-
-  const { user } = useUser();
-  const [loading, setLoading] = useState(true);
-  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const loadingEventDataList: EventData[] = [
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ];
-  const [eventDataList, setEventDataList] = useState<EventData[]>([
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ]);
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
@@ -159,131 +159,114 @@ export default function OrganiserDashboard() {
   }
 
   return (
-    <div className="w-screen pt-14 lg:pt-16 lg:pb-10 md:pl-7 h-fit max-h-screen overflow-y-auto">
-      <OrganiserNavbar currPage={"EventDashboard"} />
-      <div className="flex justify-center">
-        <div className="flex flex-col items-center md:items-start">
-          <div className="flex flex-row items-center justify-center">
-            <div className="text-4xl md:text-5xl lg:text-6xl my-6 md:ml-4 lg:ml-0">Event Dashboard</div>
-            <div className="lg:hidden ml-4">
-              <OrganiserFilterDialogMobile
-                eventDataList={eventDataList}
-                allEventsDataList={allEventsDataList}
-                setEventDataList={setEventDataList}
-                sortByCategoryValue={sortByCategoryValue}
-                setSortByCategoryValue={setSortByCategoryValue}
-                appliedSortByCategoryValue={appliedSortByCategoryValue}
-                setAppliedSortByCategoryValue={setAppliedSortByCategoryValue}
-                searchValue={searchValue}
-                setSearchValue={setSearchValue}
-                appliedSearchValue={appliedSearchValue}
-                setAppliedSearchValue={setAppliedSearchValue}
-                eventTypeValue={eventTypeValue}
-                setEventTypeValue={setEventTypeValue}
-                appliedEventTypeValue={appliedEventTypeValue}
-                setAppliedEventTypeValue={setAppliedEventTypeValue}
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                appliedDateRange={appliedDateRange}
-                setAppliedDateRange={setAppliedDateRange}
-                applyFilters={applyFilters}
-                isFilterModalOpen={isFilterModalOpen}
-                setIsFilterModalOpen={setIsFilterModalOpen}
-                closeModal={closeModal}
-              />
-            </div>
-          </div>
-          <div className="flex flex-row h-full w-full">
-            <div className="hidden lg:block">
-              <OrganiserFilterDialog
-                eventDataList={eventDataList}
-                allEventsDataList={allEventsDataList}
-                setEventDataList={setEventDataList}
-                sortByCategoryValue={sortByCategoryValue}
-                setSortByCategoryValue={setSortByCategoryValue}
-                searchValue={searchValue}
-                setSearchValue={setSearchValue}
-                eventStatusValue={eventStatusValue}
-                setEventStatusValue={setEventStatusValue}
-                eventTypeValue={eventTypeValue}
-                setEventTypeValue={setEventTypeValue}
-                minPriceValue={minPriceValue}
-                setMinPriceValue={setMinPriceValue}
-                maxPriceValue={maxPriceValue}
-                setMaxPriceValue={setMaxPriceValue}
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                applyFilters={applyFilters}
-              />
-            </div>
-            {loading ? (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-8 justify-items-center overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-[80vh]">
-                {loadingEventDataList.map((event, eventIdx) => {
-                  return (
-                    <div className="w-full" key={eventIdx}>
-                      <OrganiserEventCard
-                        eventId={event.eventId}
-                        image={event.image}
-                        name={event.name}
-                        organiser={event.organiser}
-                        startTime={event.startDate}
-                        location={event.location}
-                        price={event.price}
-                        vacancy={event.vacancy}
-                        loading={true}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            ) : eventDataList.length === 0 ? (
-              <div className="flex justify-center">
-                <div>
-                  <Image
-                    src={noSearchResultLineDrawing}
-                    alt="noSearchResultLineDrawing"
-                    width={500}
-                    height={300}
-                    className="opacity-60"
-                  />
-                  <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                    Sorry, we couldn&apos;t find any results
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-6 justify-items-center lg:max-h-screen overflow-y-auto px-4 min-w-[300px] lg:min-w-[640px] 2xl:min-w-[1032px] 3xl:min-w-[1372px] h-[68vh] lg:h-auto">
-                {eventDataList
-                  .sort((event1, event2) => {
-                    if (event1.accessCount > event2.accessCount) {
-                      return 1;
-                    }
-                    if (event2.accessCount < event2.accessCount) {
-                      return -1;
-                    }
-                    return 0;
-                  })
-                  .map((event, eventIdx) => {
-                    return (
-                      <div className="w-full" key={eventIdx}>
-                        <OrganiserEventCard
-                          eventId={event.eventId}
-                          image={event.image}
-                          name={event.name}
-                          organiser={event.organiser}
-                          startTime={event.startDate}
-                          location={event.location}
-                          price={event.price}
-                          vacancy={event.vacancy}
-                          loading={loading}
-                        />
-                      </div>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
+    <div className="px-4">
+      <div className="flex flex-row justify-between items-center">
+        <div className="text-3xl md:text-4xl lg:text-5xl my-6 md:ml-4 lg:ml-0">Event Dashboard</div>
+        <div className="lg:hidden">
+          <OrganiserFilterDialogMobile
+            allEventsDataList={allEventsDataList}
+            setEventDataList={setEventDataList}
+            sortByCategoryValue={sortByCategoryValue}
+            setSortByCategoryValue={setSortByCategoryValue}
+            appliedSortByCategoryValue={appliedSortByCategoryValue}
+            setAppliedSortByCategoryValue={setAppliedSortByCategoryValue}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+            appliedSearchValue={appliedSearchValue}
+            setAppliedSearchValue={setAppliedSearchValue}
+            eventTypeValue={eventTypeValue}
+            setEventTypeValue={setEventTypeValue}
+            appliedEventTypeValue={appliedEventTypeValue}
+            setAppliedEventTypeValue={setAppliedEventTypeValue}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            appliedDateRange={appliedDateRange}
+            setAppliedDateRange={setAppliedDateRange}
+            applyFilters={applyFilters}
+            isFilterModalOpen={isFilterModalOpen}
+            setIsFilterModalOpen={setIsFilterModalOpen}
+            closeModal={closeModal}
+          />
         </div>
+      </div>
+      <div className="flex justify-center">
+        <div className="hidden lg:block mr-4">
+          <OrganiserFilterDialog
+            allEventsDataList={allEventsDataList}
+            setEventDataList={setEventDataList}
+            sortByCategoryValue={sortByCategoryValue}
+            setSortByCategoryValue={setSortByCategoryValue}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+            eventStatusValue={eventStatusValue}
+            setEventStatusValue={setEventStatusValue}
+            eventTypeValue={eventTypeValue}
+            setEventTypeValue={setEventTypeValue}
+            minPriceValue={minPriceValue}
+            setMinPriceValue={setMinPriceValue}
+            maxPriceValue={maxPriceValue}
+            setMaxPriceValue={setMaxPriceValue}
+            dateRange={dateRange}
+            setDateRange={setDateRange}
+            applyFilters={applyFilters}
+          />
+        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto lg:h-[80vh] w-full">
+            {loadingEventDataList.map((event, eventIdx) => {
+              return (
+                <div className="w-full" key={eventIdx}>
+                  <OrganiserEventCard
+                    eventId={event.eventId}
+                    image={event.image}
+                    name={event.name}
+                    organiser={event.organiser}
+                    startTime={event.startDate}
+                    location={event.location}
+                    price={event.price}
+                    vacancy={event.vacancy}
+                    loading={true}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : eventDataList.length === 0 ? (
+          <div className="flex justify-center">
+            <div>
+              <Image
+                src={noSearchResultLineDrawing}
+                alt="noSearchResultLineDrawing"
+                width={500}
+                height={300}
+                className="opacity-60"
+              />
+              <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
+                Sorry, we couldn&apos;t find any results
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto lg:h-[80vh]">
+            {filterEventsBySortBy(eventDataList, appliedSortByCategoryValue).map((event, eventIdx) => {
+              return (
+                <div className="w-full" key={eventIdx}>
+                  <OrganiserEventCard
+                    eventId={event.eventId}
+                    image={event.image}
+                    name={event.name}
+                    organiser={event.organiser}
+                    startTime={event.startDate}
+                    location={event.location}
+                    price={event.price}
+                    vacancy={event.vacancy}
+                    loading={loading}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

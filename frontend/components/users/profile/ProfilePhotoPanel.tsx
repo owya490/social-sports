@@ -1,7 +1,7 @@
 "use client";
 import { UserData } from "@/interfaces/UserTypes";
 import Upload from "@/public/images/upload.png";
-import { uploadProfilePhoto } from "@/services/src/imageService";
+import { uploadProfilePhoto } from "@/services/src/images/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import imageCompression from "browser-image-compression";
 import { deleteObject, getMetadata, getStorage, ref } from "firebase/storage";
@@ -29,15 +29,22 @@ export const ProfilePhotoPanel = ({ user, setUser }: ProfilePhotoPanelProps) => 
 
   // Validate image type
   const validateImage = (file: File) => {
-    const validTypes = ["image/jpeg", "image/png", "image/gif"];
+    const validTypes = ["image/jpeg", "image/png"];
     if (!validTypes.includes(file.type)) {
       return false;
     }
     return true;
   };
 
-  // Compress image before upload
+  // Compress image before upload only if it's over 1MB
   const handleImageUpload = async (imageFile: File) => {
+    const fileSizeInMB = imageFile.size / (1024 * 1024);
+
+    // Skip compression if file is under 1MB
+    if (fileSizeInMB < 1) {
+      return imageFile;
+    }
+
     const options = {
       maxSizeMB: 2, // Maximum size of the image after compression
       useWebWorker: true,

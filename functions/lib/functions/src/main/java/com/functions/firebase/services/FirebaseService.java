@@ -1,11 +1,19 @@
 package com.functions.firebase.services;
 
-import static com.functions.utils.JavaUtils.objectMapper;
-
-import java.io.FileInputStream;
-import java.util.List;
-import java.util.Optional;
-
+import com.functions.firebase.models.requests.CallFirebaseFunctionRequest;
+import com.functions.firebase.models.responses.CallFirebaseFunctionResponse;
+import com.functions.global.handlers.Global;
+import com.google.api.core.ApiFuture;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Transaction;
+import com.google.cloud.logging.Logging;
+import com.google.cloud.logging.LoggingOptions;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.cloud.FirestoreClient;
+import com.posthog.java.PostHog;
+import lombok.Getter;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -15,19 +23,11 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.firebase.models.requests.CallFirebaseFunctionRequest;
-import com.functions.firebase.models.responses.CallFirebaseFunctionResponse;
-import com.functions.global.services.Global;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.logging.Logging;
-import com.google.cloud.logging.LoggingOptions;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.cloud.FirestoreClient;
-import com.posthog.java.PostHog;
+import java.io.FileInputStream;
+import java.util.List;
+import java.util.Optional;
 
-import lombok.Getter;
+import static com.functions.utils.JavaUtils.objectMapper;
 
 public class FirebaseService {
 
@@ -44,9 +44,13 @@ public class FirebaseService {
                 "Events/Active/Public",
                 "Events/Active/Private",
                 "Events/InActive/Public",
-                "Events/InActive/Private"
-        );
+                "Events/InActive/Private");
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
+        public static final String TEMP_FORM_RESPONSE_PATH = "Forms/FormResponses/Temp";
+        public static final String SUBMITTED_FORM_RESPONSE_PATH = "Forms/FormResponses/Submitted";
+        public static final List<String> FORM_RESPONSE_PATHS = List.of(
+                SUBMITTED_FORM_RESPONSE_PATH,
+                TEMP_FORM_RESPONSE_PATH);
     }
 
     public static final String REGION = "australia-southeast1";
@@ -116,7 +120,8 @@ public class FirebaseService {
 
     public static Optional<CallFirebaseFunctionResponse> callFirebaseFunction(String functionName, Object requestData) {
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION, System.getenv("PROJECT_NAME"), functionName);
+            String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION,
+                    System.getenv("PROJECT_NAME"), functionName);
 
             HttpPost post = new HttpPost(functionUrl);
             post.setHeader("Content-Type", "application/json");
@@ -138,6 +143,20 @@ public class FirebaseService {
         } catch (Exception e) {
             logger.error("Error calling Firebase function {}: {}", functionName, e.getMessage(), e);
             return Optional.empty();
+        }
+    }
+
+    public static <T> T createFirestoreTransaction(Transaction.Function<T> consumer) {
+        Firestore db = FirebaseService.getFirestore();
+        ApiFuture<T> futureTransaction = db.runTransaction(consumer);
+        try {
+            // Wait for the transaction to complete
+            T result = futureTransaction.get();
+            logger.info("Transaction completed with result: " + result);
+            return result;
+        } catch (Exception e) {
+            logger.error("Transaction failed: " + e.getMessage());
+            throw new RuntimeException("Firestore transaction failed", e);
         }
     }
 }

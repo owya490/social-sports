@@ -43,6 +43,7 @@ interface AbstractEventData {
   paused: boolean; // should default to false
   eventLink: string;
   formId: FormId | null;
+  hideVacancy: boolean; // should default to false
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -93,6 +94,7 @@ export const EmptyEventData: EventData = {
   paused: false,
   eventLink: "",
   formId: null,
+  hideVacancy: false,
 };
 
 export interface EventMetadata {
@@ -126,3 +128,8 @@ export interface Attendee {
 
 export type Name = string;
 type EmailHash = string;
+
+export enum SearchType {
+  EVENT,
+  USER,
+}

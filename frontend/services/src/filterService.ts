@@ -3,7 +3,7 @@ import { QueryFieldFilterConstraint, Timestamp, collection, getDocs, limit, quer
 import geofire from "geofire-common";
 import { SortByCategory } from "../../components/Filter/FilterDialog";
 import { db } from "./firebase";
-import { getDistanceBetweenTwoCoords } from "./locationUtils";
+import { getDistanceBetweenTwoCoords } from "./maps/mapsService";
 
 interface ProximityInfo {
   center: geofire.Geopoint;
@@ -107,6 +107,7 @@ export function filterEventsByPrice(
 export function filterEventsByDate(eventDataList: EventData[], startDate: Timestamp, endDate: Timestamp): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
   eventDataListDeepClone = eventDataListDeepClone.filter(
+    // we only want to compare the start date of the event. (Do not change the latter half to endDate)
     (event) => event.startDate.toMillis() >= startDate.toMillis() && event.startDate.toMillis() <= endDate.toMillis()
   );
   return eventDataListDeepClone;

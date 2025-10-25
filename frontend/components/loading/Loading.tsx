@@ -5,7 +5,7 @@ interface LoadingProps {
 
 export default function Loading({ inline }: LoadingProps) {
   return (
-    <div className={inline ? "" : `h-screen w-screen flex justify-center items-center`}>
+    <div className={inline ? "" : `h-[calc(100vh-var(--navbar-height))] w-screen flex justify-center items-center`}>
       <LoadingSpinner />
     </div>
   );

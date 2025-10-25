@@ -1,12 +1,37 @@
-import { PrivateUserData, PublicUserData, UserData, UserId, UsernameMap } from "@/interfaces/UserTypes";
+import {
+  EmptyPrivateUserData,
+  EmptyPublicUserData,
+  EmptyUserData,
+  PrivateUserData,
+  PublicUserData,
+  UserData,
+  UserId,
+  UsernameMap,
+} from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
-import { deleteDoc, doc, getDoc, runTransaction, setDoc, Transaction, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  runTransaction,
+  setDoc,
+  Transaction,
+  updateDoc,
+} from "firebase/firestore";
+import { tokenizeText } from "../events/eventsUtils/commonEventsUtils";
 import { db } from "../firebase";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
-import { DEFAULT_USER_PROFILE_PICTURE } from "./usersConstants";
+import { DEFAULT_USER_PROFILE_PICTURE, USERS_REFRESH_MILLIS, UsersLocalStorageKeys } from "./usersConstants";
 import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
-import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
+import {
+  fetchUsersByTokenMatch,
+  getAllUsersDataFromLocalStorage,
+  setUsersDataIntoLocalStorage,
+  tryGetActivePublicUserDataFromLocalStorage,
+} from "./usersUtils/getUsersUtils";
 import { generateUsername } from "./usersUtils/usernameUtils";
 
 export const userServiceLogger = new Logger("userServiceLogger");
@@ -71,7 +96,7 @@ export async function getPublicUserById(
     // set local storage with data
     if (client) setUsersDataIntoLocalStorage(userId, userData);
 
-    return userData;
+    return { ...EmptyPublicUserData, ...userData };
   } catch (error) {
     if (error instanceof UserNotFoundError) {
       userServiceLogger.error(`User ID=${userId} did not exist when expected by reference: ${error}`);
@@ -96,7 +121,7 @@ export async function getPrivateUserById(userId: UserId): Promise<PrivateUserDat
     }
     const userData = userDoc.data() as PrivateUserData;
     userData.userId = userId;
-    return userData;
+    return { ...EmptyPrivateUserData, ...userData };
   } catch (error) {
     if (error instanceof UserNotFoundError) {
       userServiceLogger.error(`User ID=${userId} did not exist when expected by reference: ${error}`);
@@ -126,7 +151,7 @@ export async function getFullUserById(userId: UserId): Promise<UserData> {
     const privateUserData = privateDoc.data() as PrivateUserData;
 
     // Merge public and private data into one JSON object
-    const fullUserData = { ...publicUserData, ...privateUserData, userId };
+    const fullUserData = { ...EmptyUserData, ...publicUserData, ...privateUserData, userId };
     return fullUserData;
   } catch (error) {
     if (error instanceof UserNotFoundError) {
@@ -136,6 +161,43 @@ export async function getFullUserById(userId: UserId): Promise<UserData> {
       userServiceLogger.error(`Error fetching public user by ID=${userId}: ${error}`);
       throw new UsersServiceError(userId);
     }
+  }
+}
+
+export async function getAllPublicUsers(isActive?: boolean): Promise<PublicUserData[]> {
+  userServiceLogger.info(`getAllPublicUsers`);
+  try {
+    // If isActive is present, keep its value, otherwise default to true
+    isActive = isActive === undefined ? true : isActive;
+
+    // if its in local storage and we have not exceeded the refresh time limit since the last time we fetched all users, return all our local storage
+    if (
+      localStorage.getItem(UsersLocalStorageKeys.UsersData) !== null &&
+      localStorage.getItem(UsersLocalStorageKeys.LastFetchedAllUserData) !== null
+    ) {
+      const lastFetchedDate = new Date(parseInt(localStorage.getItem(UsersLocalStorageKeys.LastFetchedAllUserData)!));
+      if (new Date().valueOf() - lastFetchedDate.valueOf() < USERS_REFRESH_MILLIS) {
+        return getAllUsersDataFromLocalStorage();
+      }
+    }
+    // otherwise, get it all again and set the new timer to the current time
+    // Only gets public user data, as we do not want a get all private user data function... thats a data leak waiting to happen lol
+    const publicUserCollectionRef = collection(db, "Users", isActive ? "Active" : "InActive", "Public");
+    const publicUsersSnapshot = await getDocs(publicUserCollectionRef);
+    const publicUsersData: PublicUserData[] = [];
+
+    publicUsersSnapshot.forEach((doc) => {
+      const publicUserData = doc.data() as PublicUserData;
+      publicUserData.userId = doc.id;
+      // also set it in local storage
+      setUsersDataIntoLocalStorage(doc.id, publicUserData);
+      publicUsersData.push(publicUserData);
+    });
+    localStorage.setItem(UsersLocalStorageKeys.LastFetchedAllUserData, new Date().valueOf().toString());
+    return publicUsersData;
+  } catch (error) {
+    userServiceLogger.error(`getAllPublicUsers ${error}`);
+    throw error;
   }
 }
 
@@ -178,6 +240,7 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
     const publicDataToUpdate = extractPublicUserData(newData);
     const privateDataToUpdate = extractPrivateUserData(newData);
 
+    console.log("publicDataToUpdate", publicDataToUpdate);
     // Update public & private user data
     if (transaction) {
       transaction.update(publicUserDocRef, publicDataToUpdate);
@@ -218,6 +281,23 @@ export async function getFullUserByIdForUserContextWithRetries(userId: string): 
   }
   userServiceLogger.error(`This is bad, we shouldn't have reached as it means all 3 retries failed. id=${userId}`);
   throw new UsersServiceError(userId, "Reached maximum retries, throwing error gracefully");
+}
+
+export async function searchUserByKeyword(userKeyword: string): Promise<PublicUserData[]> {
+  userServiceLogger.info(`searchUserByKeyword ${userKeyword}`);
+  try {
+    if (!userKeyword) {
+      throw new Error("UserKeyword is empty");
+    }
+
+    const publicUserCollectionRef = collection(db, "Users", "Active", "Public");
+    const searchKeywords = tokenizeText(userKeyword);
+    const users: PublicUserData[] = await fetchUsersByTokenMatch(publicUserCollectionRef, searchKeywords);
+    return users;
+  } catch (error) {
+    userServiceLogger.error(`searchEventsByKeyword ${error}`);
+    throw error;
+  }
 }
 
 export async function getUsernameMapping(

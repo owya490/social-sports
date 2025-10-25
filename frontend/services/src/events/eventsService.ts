@@ -95,7 +95,6 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
         user.publicUpcomingOrganiserEvents.push(docRef.id);
       }
     }
-    eventServiceLogger.info(`create event user: ${JSON.stringify(user, null, 2)}`);
     await updateUser(data.organiserId, user);
 
     // We want to bust all our caches when we create a new event.
@@ -178,11 +177,11 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
     eventServiceLogger.info(`searchEventsByKeyword success`);
     return eventsData;
   } catch (error) {
-    console.error("Error searching events:", error);
     eventServiceLogger.error(`searchEventsByKeyword ${error}`);
     throw error;
   }
 }
+
 export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   eventServiceLogger.info(`getAllEvents`);
   try {
@@ -208,7 +207,6 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
       return await getAllEventsFromCollectionRef(eventRef);
     }
   } catch (error) {
-    console.error("Error getting all events:", error);
     eventServiceLogger.error(`Error getting all events ${error}`);
     throw error;
   }
@@ -234,9 +232,9 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
       );
     }
     await Promise.all(promisesList).then((results: (EventData | null)[]) => {
-      const filteredResults = results.filter((result) => result != null);
-      for (const event of results) {
-        eventDataList.push(event!);
+      const filteredResults = results.filter((result): result is EventData => result !== null);
+      for (const event of filteredResults) {
+        eventDataList.push(event);
       }
     });
 
@@ -261,10 +259,10 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
 
     await updateDoc(eventDocRef, updatedData);
 
-    console.log(`Event with Id '${eventId}' updated successfully.`);
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
     eventServiceLogger.error(`updateEventById ${error}`);
+    throw error;
   }
 }
 
@@ -371,12 +369,10 @@ export async function incrementEventAccessCountById(
 ) {
   try {
     eventServiceLogger.info(`Incrementing ${eventId} by ${count}`);
-    console.log(`${eventId}, ${isActive}, ${isPrivate}`);
     await updateDoc(createEventDocRef(eventId, isActive, isPrivate), {
       accessCount: increment(count),
     });
   } catch (error) {
-    console.error("Error incrementing event access count:", error);
     eventServiceLogger.error(`incrementEventAccessCountById ${error}`);
     // You can handle the error here, such as logging it or throwing it further.
     throw error;
@@ -501,6 +497,9 @@ export async function setAttendeeTickets(
   attendeeName: Name,
   eventId: EventId
 ) {
+  if (numTickets < 0) {
+    throw new Error("Number of tickets cannot be less than 0!");
+  }
   try {
     // validatePurchaserDetails(purchaser);
     // TODO: need to fix validatPurchaserDetails because purchaser details is currently hardcoded with 0 tickets and this fails one of the validatePurchaserDetails checks.
@@ -516,9 +515,13 @@ export async function setAttendeeTickets(
       ).data() as EventDataWithoutOrganiser;
 
       const eventCapacity = eventDataWithoutOrganiser.capacity;
-
+      // Get the original ticket count of the attendee (primitive so no need to worry about reference issues)
+      const originalTicketCount = eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount;
       // Update attendee ticket count
       eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount = numTickets;
+
+      const deltaTicketCount = numTickets - originalTicketCount;
+
       eventMetadata = recalculateEventsMetadataTotalTicketCounts(eventMetadata);
 
       const newEventTotalTicketCount = eventMetadata.completeTicketCount;
@@ -533,7 +536,7 @@ export async function setAttendeeTickets(
       }
 
       // Update the vacancy in eventData
-      eventDataWithoutOrganiser.vacancy = eventCapacity - newEventTotalTicketCount;
+      eventDataWithoutOrganiser.vacancy = eventDataWithoutOrganiser.vacancy - deltaTicketCount;
       transaction.update(eventMetadataDocRef, eventMetadata as Partial<EventMetadata>);
       transaction.update(
         eventDataWithoutOrganiserDocRef,

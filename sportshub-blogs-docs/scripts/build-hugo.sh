@@ -68,7 +68,7 @@ fi
 echo "📋 Copying Hugo static files to Vercel public directory..."
 
 # Copy directories: blogs, css, js, tags
-for dir in "blogs" "css" "js" "tags" ; do
+for dir in "blogs" "docs" "css" "js" "tags"; do
     if [ -d "$HUGO_PUBLIC_DIR/$dir" ]; then
         echo "📁 Copying $dir directory..."
         cp -r "$HUGO_PUBLIC_DIR/$dir" "$VERCEL_PUBLIC_DIR/"
@@ -78,11 +78,21 @@ for dir in "blogs" "css" "js" "tags" ; do
     fi
 done
 
-# Copy top-level files (excluding directories we already copied)
+# Copy top-level files (excluding directories we already copied and sitemap.xml)
 echo "📄 Copying top-level files..."
 for file in "$HUGO_PUBLIC_DIR"/*; do
     if [ -f "$file" ]; then
         filename=$(basename "$file")
+        # Skip sitemap.xml and webmanifest files to avoid merge conflicts
+        if [[ "$filename" = "sitemap.xml" || "$filename" =~ ^(.*\.webmanifest|site\.webmanifest)$ ]]; then
+            echo "⏭️  Skipping $filename to avoid merge conflicts..."
+            continue
+        fi
+        # Skip favicon and icon files (handled by Next.js in frontend/app)
+        if [[ "$filename" =~ ^(favicon\.ico|favicon-16x16\.png|favicon-32x32\.png|apple-touch-icon\.png|android-chrome-.*\.png)$ ]]; then
+            echo "⏭️  Skipping $filename (using Next.js icons)..."
+            continue
+        fi
         echo "📄 Copying $filename..."
         cp "$file" "$VERCEL_PUBLIC_DIR/"
         echo "✅ Copied $filename"
@@ -117,10 +127,10 @@ fi
 
 echo "🎉 Hugo integration completed successfully!"
 echo "📊 Summary of copied items:"
-echo "   - Directories: blogs, css, js, tags, categories"
+echo "   - Directories: blogs, css, js, tags, docs"
 echo "   - Top-level files: HTML, XML, favicons, etc."
 echo "   - Images: merged with existing public/images"
-echo "   - Search files: en.search.js, en.search-data.json, index.xml, sitemap.xml"
+# echo "   - Search files: en.search.js, en.search-data.json, index.xml, sitemap.xml"
 
 # Optional: List what was copied
 echo ""

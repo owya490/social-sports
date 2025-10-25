@@ -1,17 +1,5 @@
 package com.functions.events.services;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.NewRecurrenceData;
 import com.functions.events.models.RecurrenceData;
@@ -22,6 +10,17 @@ import com.functions.users.services.Users;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class RecurringEventsService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsService.class);
@@ -45,7 +44,7 @@ public class RecurringEventsService {
             privateUserData.setRecurrenceTemplates(recurrenceTemplates);
             Users.updatePrivateUserData(newEventData.getOrganiserId(), privateUserData);
             // Create the first event iteration
-            String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId, recurrenceTemplate, true).stream().findFirst().orElseThrow(() -> new Exception(""));
+            String eventId = RecurringEventsCronService.createEventsFromRecurrenceTemplates(LocalDate.now(), recurrenceTemplateId, true).stream().findFirst().orElseThrow(() -> new Exception("Failed to create initial event for recurrence template: " + recurrenceTemplateId));
             logger.info("Successfully created new Recurrence Template {}", recurrenceTemplateId);
             return Optional.of(Map.entry(recurrenceTemplateId, eventId));
         } catch (Exception e) {
@@ -87,13 +86,15 @@ public class RecurringEventsService {
 
             // Check is recurrence is being reactivated
             boolean isRecurrenceActive = recurrenceTemplate.getEventData().getIsActive();
-            if (isRecurrenceActive == false) {
+            if (!isRecurrenceActive) {
                 List<Timestamp> allRecurrences = recurrenceTemplate.getRecurrenceData().getAllRecurrences();
-                Timestamp lastRecurrence = allRecurrences.get(allRecurrences.size() - 1);
-                // If the lastRecurrence is in the future, we have re-enabled the Recurring Events
-                if (lastRecurrence.getSeconds() > Timestamp.now().getSeconds()) {
-                    RecurrenceTemplateRepository.moveRecurrenceTemplateToActive(recurrenceTemplateId, recurrenceTemplate);
-                    logger.info("Successfully moved Recurrence Template {} to active", recurrenceTemplateId);
+                if (!allRecurrences.isEmpty()) {
+                    Timestamp lastRecurrence = allRecurrences.get(allRecurrences.size() - 1);
+                    // If the lastRecurrence is in the future, we have re-enabled the Recurring Events
+                    if (lastRecurrence.getSeconds() > Timestamp.now().getSeconds()) {
+                        RecurrenceTemplateRepository.moveRecurrenceTemplateToActive(recurrenceTemplateId, recurrenceTemplate);
+                        logger.info("Successfully moved Recurrence Template {} to active", recurrenceTemplateId);
+                    }
                 }
             }
 

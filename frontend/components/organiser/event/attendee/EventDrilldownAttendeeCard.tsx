@@ -1,14 +1,12 @@
 import { EventId, EventMetadata, Purchaser } from "@/interfaces/EventTypes";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import { EllipsisVerticalIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
 import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
 import { EditAttendeeTicketsDialog } from "./EditAttendeeTicketsDialog";
 import RemoveAttendeeDialog from "./RemoveAttendeeDialog";
-
+import { UserCircleIcon } from "@heroicons/react/20/solid";
 interface EventDrilldownAttendeeCardProps {
   attendeeName: string;
-  image: string;
   purchaser: Purchaser;
   eventId: EventId;
   setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
@@ -17,7 +15,6 @@ interface EventDrilldownAttendeeCardProps {
 
 const EventDrilldownAttendeeCard = ({
   attendeeName,
-  image,
   purchaser,
   eventId,
   setEventMetadata,
@@ -41,7 +38,7 @@ const EventDrilldownAttendeeCard = ({
     <div className="grid grid-flow-col justify-stretch py-2 grid-cols-7 items-center text-xs md:text-base">
       <div className="col-span-1 w-14 text-center">{tickets}</div>
       <div className="flex flex-row items-center col-span-2">
-        <Image src={image} alt="" width={100} height={100} className="w-10 rounded-full hidden lg:block" />
+        <UserCircleIcon className="w-10 rounded-full hidden lg:block mr-2"/>
         <div className="">{attendeeName}</div>
       </div>
       <div className="col-span-2 break-all mr-2 xl:col-span-3">{email}</div>

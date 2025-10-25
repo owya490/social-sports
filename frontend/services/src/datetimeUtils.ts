@@ -137,3 +137,78 @@ export function durationInDaysCeil(startDate: Timestamp, endDate: Timestamp): nu
   const { hours } = duration(startDate, endDate);
   return Math.ceil(hours / 24);
 }
+
+export function setDateToStartOfDay(date: Date): Date {
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+export function setDateToEndOfDay(date: Date): Date {
+  date.setHours(23, 59, 59, 999);
+  return date;
+}
+
+// Helper functions for mobile date/time formatting
+export function formatMobileSameDayDateTime(startDate: Timestamp, endDate: Timestamp): string {
+  const date = startDate.toDate();
+  const endDateObj = endDate.toDate();
+
+  // Day name: Fri
+  const dayName = date.toLocaleDateString("en-AU", { weekday: "short" });
+
+  // Date: 9 Jan 2026
+  const day = date.getDate();
+  const month = date.toLocaleDateString("en-AU", { month: "short" });
+  const year = date.getFullYear();
+
+  // Start time: 4pm
+  const startHours = date.getHours();
+  const startMinutes = date.getMinutes();
+  const startTime = formatMobileTime(startHours, startMinutes);
+
+  // End time: 10pm
+  const endHours = endDateObj.getHours();
+  const endMinutes = endDateObj.getMinutes();
+  const endTime = formatMobileTime(endHours, endMinutes);
+
+  // Timezone
+  const timezone = date.toLocaleDateString("en-AU", { timeZoneName: "short" }).split(", ")[1] || "AEDT";
+
+  return `${dayName}, ${day} ${month} ${year}, ${startTime} - ${endTime} ${timezone}`;
+}
+
+export function formatMobileDifferentDayDateTime(startDate: Timestamp, endDate: Timestamp): string {
+  const startDateObj = startDate.toDate();
+  const endDateObj = endDate.toDate();
+
+  // Start date: Fri, 9 Jan 2026, 4pm
+  const startDayName = startDateObj.toLocaleDateString("en-AU", { weekday: "short" });
+  const startDay = startDateObj.getDate();
+  const startMonth = startDateObj.toLocaleDateString("en-AU", { month: "short" });
+  const startYear = startDateObj.getFullYear();
+  const startHours = startDateObj.getHours();
+  const startMinutes = startDateObj.getMinutes();
+  const startTime = formatMobileTime(startHours, startMinutes);
+
+  // End date: Sat, 10 Jan 2026, 10pm
+  const endDayName = endDateObj.toLocaleDateString("en-AU", { weekday: "short" });
+  const endDay = endDateObj.getDate();
+  const endMonth = endDateObj.toLocaleDateString("en-AU", { month: "short" });
+  const endYear = endDateObj.getFullYear();
+  const endHours = endDateObj.getHours();
+  const endMinutes = endDateObj.getMinutes();
+  const endTime = formatMobileTime(endHours, endMinutes);
+
+  return `${startDayName}, ${startDay} ${startMonth} ${startYear}, ${startTime} - ${endDayName}, ${endDay} ${endMonth} ${endYear}, ${endTime}`;
+}
+
+export function formatMobileTime(hours: number, minutes: number): string {
+  const period = hours >= 12 ? "pm" : "am";
+  const displayHours = hours % 12 || 12;
+
+  // Only show minutes if not on the hour
+  if (minutes === 0) {
+    return `${displayHours}${period}`;
+  }
+  return `${displayHours}:${minutes.toString().padStart(2, "0")}${period}`;
+}

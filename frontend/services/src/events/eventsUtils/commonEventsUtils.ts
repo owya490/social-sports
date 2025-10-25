@@ -154,8 +154,8 @@ export function stripHtmlTags(html: string): string {
 
 export function generateEventPageMetadata(event: EventData) {
   return {
-    title: `SportsHub | Book your next sports session`,
-    description: `SportsHub is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!`,
+    title: `SPORTSHUB | Book your next sports session`,
+    description: `SPORTSHUB is a modern, not for profit platform for you to find, book and host your next social sports session. We make it easy for players to search for and book their sport session of choice and for organisers to seamlessly host their next session, with integrated booking and management systems. Try it out free today!`,
     openGraph: {
       title: `${event.name}`,
       description: `${stripHtmlTags(event.description)}`,
