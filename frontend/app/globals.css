@@ -39,3 +39,14 @@
 html {
   scroll-padding-top: var(--navbar-height);
 }
+
+/* Prevent mobile zoom on input focus by ensuring minimum 16px font size */
+@media screen and (max-width: 768px) {
+  @layer base {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+}
