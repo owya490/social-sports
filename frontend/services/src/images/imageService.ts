@@ -26,19 +26,25 @@ async function fetchAndSortImageUrls(storageRef: StorageReference): Promise<stri
     // Fetch metadata and URLs for each item
     const itemsWithMetadata = await Promise.all(
       res.items.map(async (itemRef) => {
-        const metadata = await getMetadata(itemRef);
-        const url = await getDownloadURL(itemRef);
-        return {
-          url,
-          timeCreated: new Date(metadata.timeCreated).getTime(),
-        };
+        try {
+          const metadata = await getMetadata(itemRef);
+          const url = await getDownloadURL(itemRef);
+          return {
+            url,
+            timeCreated: new Date(metadata.timeCreated).getTime(),
+          };
+        } catch (error) {
+          imageServiceLogger.error(`Error fetching metadata for image ${itemRef.fullPath} ${error}`);
+          return null;
+        }
       })
     );
 
     // Sort by most recent first
-    itemsWithMetadata.sort((a, b) => b.timeCreated - a.timeCreated);
+    const filteredItemsWithMetadata = itemsWithMetadata.filter((item) => item !== null);
+    filteredItemsWithMetadata.sort((a, b) => b.timeCreated - a.timeCreated);
 
-    return itemsWithMetadata.map((item) => item.url);
+    return filteredItemsWithMetadata.map((item) => item.url);
   } catch (error) {
     imageServiceLogger.error(`Error fetching images ${error}`);
     return [];

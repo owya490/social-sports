@@ -4,7 +4,7 @@ import { EventData } from "@/interfaces/EventTypes";
 import { Dialog, Transition } from "@headlessui/react";
 import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Fragment, useState } from "react";
-import { DayPicker } from "react-day-picker";
+import { DateRange, DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 import ListBox from "../ListBox";
@@ -49,26 +49,10 @@ interface OrganiserFilterDialogMobileProps {
   appliedEventTypeValue: string;
   setAppliedEventTypeValue: React.Dispatch<React.SetStateAction<string>>;
 
-  dateRange: {
-    from: Date | undefined;
-    to: Date | undefined;
-  };
-  setDateRange: React.Dispatch<
-    React.SetStateAction<{
-      from: Date | undefined;
-      to: Date | undefined;
-    }>
-  >;
-  appliedDateRange: {
-    from: Date | undefined;
-    to: Date | undefined;
-  };
-  setAppliedDateRange: React.Dispatch<
-    React.SetStateAction<{
-      from: Date | undefined;
-      to: Date | undefined;
-    }>
-  >;
+  dateRange: DateRange;
+  setDateRange: (dateRange: DateRange) => void;
+  appliedDateRange: DateRange;
+  setAppliedDateRange: (dateRange: DateRange) => void;
 
   applyFilters: () => void;
   isFilterModalOpen: boolean;
@@ -106,7 +90,7 @@ export default function OrganiserFilterDialogMobile({
     setSortByKey((prevKey) => prevKey + 1);
   };
 
-  const handleDateRangeChange = (dateRange: any) => {
+  const handleDateRangeChange = (dateRange: DateRange | undefined) => {
     if (dateRange) {
       setDateRange(dateRange);
     } else {

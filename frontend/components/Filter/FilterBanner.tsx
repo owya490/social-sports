@@ -25,6 +25,7 @@ import FilterDialog, {
   SortByCategory,
 } from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
+import { DateRange } from "react-day-picker";
 
 interface FilterBannerProps {
   eventDataList: EventData[];
@@ -54,14 +55,8 @@ export default function FilterBanner({
   const [appliedMaxPriceSliderValue, setAppliedMaxPriceSliderValue] = useState<number>(DEFAULT_MAX_PRICE);
   const [maxProximitySliderValue, setMaxProximitySliderValue] = useState<number>(DEFAULT_MAX_PROXIMITY); // max proximity in kms.
   const [appliedMaxProximitySliderValue, setAppliedMaxProximitySliderValue] = useState<number>(DEFAULT_MAX_PROXIMITY);
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>(DEFAULT_DATE_RANGE);
-  const [appliedDateRange, setAppliedDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>(DEFAULT_DATE_RANGE);
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   function closeModal() {
     setIsFilterModalOpen(false);

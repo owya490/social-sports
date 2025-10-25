@@ -3,7 +3,7 @@
 import { EventData } from "@/interfaces/EventTypes";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
-import { DayPicker } from "react-day-picker";
+import { DateRange, DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import ListBox from "../ListBox";
 
@@ -59,16 +59,8 @@ interface OrganiserFilterDialogProps {
   maxPriceValue: number | null;
   setMaxPriceValue: React.Dispatch<React.SetStateAction<number | null>>;
 
-  dateRange: {
-    from: Date | undefined;
-    to: Date | undefined;
-  };
-  setDateRange: React.Dispatch<
-    React.SetStateAction<{
-      from: Date | undefined;
-      to: Date | undefined;
-    }>
-  >;
+  dateRange: DateRange;
+  setDateRange: (dateRange: DateRange) => void;
   applyFilters: () => void;
 }
 
@@ -119,7 +111,7 @@ export default function OrganiserFilterDialog({
     setSortByKey((prevKey) => prevKey + 1);
   };
 
-  const handleDateRangeChange = (dateRange: any) => {
+  const handleDateRangeChange = (dateRange: DateRange | undefined) => {
     if (dateRange) {
       setDateRange(dateRange);
     } else {

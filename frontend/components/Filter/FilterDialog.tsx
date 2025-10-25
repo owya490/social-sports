@@ -6,7 +6,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { AdjustmentsHorizontalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Slider } from "@material-tailwind/react";
 import { Fragment } from "react";
-import { DayPicker } from "react-day-picker";
+import { DateRange, DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import ListBox from "../../components/ListBox";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
@@ -55,26 +55,10 @@ interface FilterDialogProps {
   setMaxProximitySliderValue: React.Dispatch<React.SetStateAction<number>>;
   appliedMaxProximitySliderValue: number;
   setAppliedMaxProximitySliderValue: React.Dispatch<React.SetStateAction<number>>;
-  dateRange: {
-    from: Date | undefined;
-    to: Date | undefined;
-  };
-  setDateRange: React.Dispatch<
-    React.SetStateAction<{
-      from: Date | undefined;
-      to: Date | undefined;
-    }>
-  >;
-  appliedDateRange: {
-    from: Date | undefined;
-    to: Date | undefined;
-  };
-  setAppliedDateRange: React.Dispatch<
-    React.SetStateAction<{
-      from: Date | undefined;
-      to: Date | undefined;
-    }>
-  >;
+  dateRange: DateRange;
+  setDateRange: (dateRange: DateRange) => void;
+  appliedDateRange: DateRange;
+  setAppliedDateRange: (dateRange: DateRange) => void;
   srcLocation: string;
   setSrcLocation: React.Dispatch<React.SetStateAction<string>>;
   selectedSport: string;
@@ -112,7 +96,7 @@ export default function FilterDialog({
   setIsFilterModalOpen,
   closeModal,
 }: FilterDialogProps) {
-  const handleDateRangeChange = (dateRange: any) => {
+  const handleDateRangeChange = (dateRange: DateRange | undefined) => {
     if (dateRange) {
       setDateRange(dateRange);
     } else {
@@ -180,20 +164,20 @@ export default function FilterDialog({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-lg mx-4 md:mx-0 transform rounded-2xl p-6 md:p-6 bg-white text-left align-middle shadow-xl transition-all z-[60]">
+                <Dialog.Panel className="w-full max-w-lg mx-4 md:mx-0 transform rounded-2xl p-4 md:p-5 bg-white text-left align-middle shadow-xl transition-all z-[60]">
                   <Dialog.Title
                     as="h3"
-                    className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[1px] border-gray-500 w-full text-center flex justify-center items-center"
+                    className="text-base font-semibold leading-6 text-gray-900 pb-2 border-b-[1px] border-gray-500 w-full text-center flex justify-center items-center"
                   >
                     Filters
-                    <button className="absolute right-8" onClick={closeModal}>
+                    <button className="absolute right-6" onClick={closeModal}>
                       <XMarkIcon className="h-5 w-5" />
                     </button>
                   </Dialog.Title>
-                  <div className="mt-5 space-y-5">
-                    <div className="border-b-[1px] border-gray-300 pb-5">
-                      <h4 className="text-lg font-bold">Sort By</h4>
-                      <div className="mt-2">
+                  <div className="mt-3 space-y-3">
+                    <div className="border-b-[1px] border-gray-300 pb-3">
+                      <h4 className="text-xs font-medium text-gray-700">Sort By</h4>
+                      <div className="mt-1">
                         <ListBox
                           onChangeHandler={function (e: any): void {
                             //   throw new Error("Function not implemented.");
@@ -226,15 +210,16 @@ export default function FilterDialog({
                             },
                           ]}
                           sortByCategory={sortByCategoryValue}
+                          textSize="sm"
                         />
                       </div>
                     </div>
-                    <div className="border-b-[1px] border-gray-300 pb-5">
+                    <div className="border-b-[1px] border-gray-300 pb-3">
                       <div className="flex items-center">
-                        <p className={"text-lg font-bold"}>Max Price</p>
+                        <p className={"text-xs font-medium text-gray-700"}>Max Price</p>
                       </div>
-                      <div className="w-full mt-3 flex items-center">
-                        <p className={"mr-2"}>
+                      <div className="w-full mt-2 flex items-center">
+                        <p className={"mr-2 text-sm"}>
                           {maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE ? "$ANY" : "$" + maxPriceSliderValue}
                         </p>
 
@@ -251,9 +236,9 @@ export default function FilterDialog({
                         />
                       </div>
                     </div>
-                    <div className="border-b-[1px] border-gray-300 pb-5">
+                    <div className="border-b-[1px] border-gray-300 pb-3">
                       <div className="flex items-center">
-                        <p className={"text-lg font-bold"}>Date Range</p>
+                        <p className={"text-xs font-medium text-gray-700"}>Date Range</p>
                       </div>
 
                       <div className="flex justify-center w-full">
@@ -271,30 +256,30 @@ export default function FilterDialog({
                             chevron: `text-black`,
                             disabled: `text-gray-400 cursor-not-allowed`,
                           }}
-                          className="mt-2 scale-90"
+                          className="mt-1 scale-90"
                           styles={{
                             root: { fontSize: "0.875rem" },
                           }}
                         />
                       </div>
                       {dateRange?.from && (
-                        <p className="text-sm text-gray-600 mt-2">
+                        <p className="text-xs text-gray-600 mt-1">
                           Selected: {dateRange.from.toLocaleDateString()}
                           {dateRange.to && ` - ${dateRange.to.toLocaleDateString()}`}
                         </p>
                       )}
                     </div>
-                    <div className="border-b-[1px] border-gray-300 pb-5">
+                    <div className="border-b-[1px] border-gray-300 pb-3">
                       <div className="flex items-center">
-                        <p className="text-lg">
-                          <span className="font-bold">Max Proximity</span>
-                          <span className="italic">
+                        <p className="text-xs">
+                          <span className="font-medium text-gray-700">Max Proximity</span>
+                          <span className="italic text-gray-600">
                             {srcLocation === "" ? " - No location specified" : " to " + srcLocation}
                           </span>
                         </p>
                       </div>
-                      <div className="w-full mt-3 mb-5 flex items-center">
-                        <p className="mr-2 whitespace-nowrap">
+                      <div className="w-full mt-2 flex items-center">
+                        <p className="mr-2 whitespace-nowrap text-sm">
                           {maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE
                             ? "ANY km"
                             : maxProximitySliderValue + "km"}
@@ -323,12 +308,15 @@ export default function FilterDialog({
                   </div>
 
                   <div className="mt-3 w-full flex items-center">
-                    <button className="hover:underline cursor-pointer" onClick={handleClearAll}>
+                    <button
+                      className="hover:underline cursor-pointer rounded-md bg-core-hover text-core-text px-4 py-2 text-sm font-medium border-[1px] border-core-text transition-all duration-300 transform"
+                      onClick={handleClearAll}
+                    >
                       Clear all
                     </button>
                     <button
                       type="button"
-                      className="ml-auto inline-flex justify-center rounded-md bg-black px-4 py-2 font-semibold text-white border-[1px] border-black hover:bg-white hover:text-black focus-visible:ring-offset-2 transition-colors duration-300 transform"
+                      className="ml-auto inline-flex justify-center rounded-md bg-black text-white px-4 py-2 text-sm font-medium hover:bg-white hover:text-black border-[1px] border-black transition-all duration-300 transform"
                       onClick={applyFilters}
                     >
                       Apply Filters!

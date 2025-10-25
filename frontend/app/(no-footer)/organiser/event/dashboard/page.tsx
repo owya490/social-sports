@@ -28,6 +28,7 @@ import {
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { useEffect, useLayoutEffect, useState } from "react";
+import { DateRange } from "react-day-picker";
 
 export default function OrganiserDashboard() {
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
@@ -40,14 +41,8 @@ export default function OrganiserDashboard() {
   const [appliedEventTypeValue, setAppliedEventTypeValue] = useState<string>(DEFAULT_EVENT_TYPE);
   const [minPriceValue, setMinPriceValue] = useState<number | null>(DEFAULT_MIN_PRICE);
   const [maxPriceValue, setMaxPriceValue] = useState<number | null>(DEFAULT_MAX_PRICE);
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>(DEFAULT_DATE_RANGE);
-  const [appliedDateRange, setAppliedDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>(DEFAULT_DATE_RANGE);
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
 
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
