@@ -50,4 +50,4 @@ Need to ask questions about an event? Here are two simple ways to get in touch w
 
 ---
 
-**Platform issues?** [Contact SPORTSHUB support](/contact) | **Event questions?** Contact the organizer directly
+**Platform issues?** [Contact SPORTSHUB support](/docs/contact-us) | **Event questions?** Contact the organizer directly

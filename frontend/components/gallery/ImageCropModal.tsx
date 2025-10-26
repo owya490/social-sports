@@ -16,12 +16,12 @@ interface ImageCropModalProps {
   cropType: ImageType;
 }
 
-function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number) {
+function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number, isMobile: boolean = false) {
   return centerCrop(
     makeAspectCrop(
       {
         unit: "%",
-        width: 90,
+        width: isMobile ? 80 : 90, // Smaller initial crop on mobile
       },
       aspect,
       mediaWidth,
@@ -41,11 +41,22 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
   const [hasValidCrop, setHasValidCrop] = useState(false);
   const [orientation, setOrientation] = useState<ImageOrientation>(ImageOrientation.LANDSCAPE); // For form images
   const [currentAspectRatio, setCurrentAspectRatio] = useState(ImageConfig[cropType].defaultAspectRatio);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const { width, height } = e.currentTarget;
-      const initialCrop = centerAspectCrop(width, height, currentAspectRatio);
+      const initialCrop = centerAspectCrop(width, height, currentAspectRatio, isMobile);
       setCrop(initialCrop);
       // Immediately set a completed crop so the user can't proceed without a crop
       setCompletedCrop({
@@ -57,7 +68,7 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
       });
       setHasValidCrop(true);
     },
-    [currentAspectRatio]
+    [currentAspectRatio, isMobile]
   );
 
   // Initialize aspect ratio based on crop type
@@ -152,7 +163,7 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
       const newAspectRatio = orientationConfig?.aspectRatio || config.defaultAspectRatio;
 
       const { width, height } = imgRef.current;
-      const newCrop = centerAspectCrop(width, height, newAspectRatio);
+      const newCrop = centerAspectCrop(width, height, newAspectRatio, isMobile);
 
       setCrop(newCrop);
       setCompletedCrop({
@@ -188,10 +199,10 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h2 className="text-xl font-semibold text-core-text">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg p-3 sm:p-6 max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center mb-2 sm:mb-4 flex-shrink-0">
+          <h2 className="text-lg sm:text-xl font-semibold text-core-text">
             Crop{" "}
             {(() => {
               const config = ImageConfig[cropType];
@@ -212,10 +223,10 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
         </div>
 
         {imageSrc && (
-          <div className="mb-4 flex-1 min-h-0">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 h-full flex flex-col">
-              <div className="mb-3 flex-shrink-0 flex justify-between items-center">
-                <p className="text-sm text-gray-600">
+          <div className="mb-2 sm:mb-4 flex-1 min-h-0">
+            <div className="bg-gray-50 p-2 sm:p-4 rounded-lg border border-gray-200 h-full flex flex-col">
+              <div className="mb-2 sm:mb-3 flex-shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <p className="text-xs sm:text-sm text-gray-600">
                   Drag the corners to adjust the crop area. The aspect ratio is locked to{" "}
                   {(() => {
                     return ImageConfig[cropType].orientationConfigs[orientation]?.aspectText;
@@ -225,7 +236,7 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
                 {switchableOrientations(cropType) && (
                   <button
                     onClick={toggleOrientation}
-                    className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
+                    className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors whitespace-nowrap"
                     disabled={isProcessing}
                   >
                     <ArrowPathIcon className="w-4 h-4" />
@@ -244,17 +255,24 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
                     setHasValidCrop(pixelCrop.width > 0 && pixelCrop.height > 0);
                   }}
                   aspect={currentAspectRatio}
+                  locked={false}
                   minWidth={(() => {
                     const config = ImageConfig[cropType];
-                    return config.orientationConfigs[orientation]?.minCropWidth || 200;
+                    const baseMinWidth = config.orientationConfigs[orientation]?.minCropWidth || 200;
+                    // Use smaller min dimensions on mobile (40% of desktop values, min 100px)
+                    return isMobile ? Math.max(100, baseMinWidth * 0.4) : baseMinWidth;
                   })()}
                   minHeight={(() => {
                     const config = ImageConfig[cropType];
-                    return config.orientationConfigs[orientation]?.minCropHeight || 200;
+                    const baseMinHeight = config.orientationConfigs[orientation]?.minCropHeight || 200;
+                    // Use smaller min dimensions on mobile (40% of desktop values, min 100px)
+                    return isMobile ? Math.max(100, baseMinHeight * 0.4) : baseMinHeight;
                   })()}
                   keepSelection={true}
                   ruleOfThirds={true}
+                  circularCrop={false}
                   className="max-h-full"
+                  style={{ touchAction: "none" }}
                 >
                   <img
                     ref={imgRef}
@@ -262,7 +280,11 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
                     src={imageSrc}
                     onLoad={onImageLoad}
                     className="max-w-full max-h-full object-contain"
-                    style={{ userSelect: "none", maxHeight: "calc(90vh - 240px)" }}
+                    style={{
+                      userSelect: "none",
+                      maxHeight: isMobile ? "calc(95vh - 200px)" : "calc(90vh - 240px)",
+                      touchAction: "none", // Prevent default touch behaviors
+                    }}
                     draggable={false}
                   />
                 </ReactCrop>
@@ -271,10 +293,10 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
           </div>
         )}
 
-        <div className="flex justify-end space-x-4 flex-shrink-0">
+        <div className="flex justify-end space-x-2 sm:space-x-4 flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="px-3 sm:px-4 py-2 text-sm sm:text-base text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
             disabled={isProcessing}
           >
             Cancel

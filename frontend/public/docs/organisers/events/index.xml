@@ -1,187 +1,187 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Events in SPORTSHUB</title><link>https://www.sportshub.net.au/docs/organisers/events/</link><description>Recent content in Events in SPORTSHUB on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://www.sportshub.net.au/docs/organisers/events/index.xml" rel="self" type="application/rss+xml"/><item><title>Create Event</title><link>https://www.sportshub.net.au/docs/organisers/events/create-event/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/create-event/</guid><description>
-&lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
-&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This guide walks you through creating an event on SPORTSHUB. Whether you&amp;rsquo;re organizing a casual pickup game or a competitive tournament, the event creation process is designed to be intuitive while giving you full control over all the details that matter to your participants.&lt;/p>
-&lt;p>Creating an event allows you to:&lt;/p>
-&lt;ul>
-&lt;li>Set up public events that appear on the main dashboard for anyone to join&lt;/li>
-&lt;li>Create private events accessible only via direct link&lt;/li>
-&lt;li>Configure payment options for paid events&lt;/li>
-&lt;li>Add rich descriptions with images and detailed information&lt;/li>
-&lt;li>Manage participant and event logistics&lt;/li>
-&lt;/ul>
-&lt;h2>Step-by-Step Event Creation&lt;span class="hx:absolute hx:-mt-20" id="step-by-step-event-creation">&lt;/span>
-&lt;a href="#step-by-step-event-creation" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>1. Navigate to Create Event&lt;span class="hx:absolute hx:-mt-20" id="1-navigate-to-create-event">&lt;/span>
-&lt;a href="#1-navigate-to-create-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/create-event-button.png" alt="create-event-button" loading="lazy" />
-Click the &lt;strong>&amp;ldquo;Create Event&amp;rdquo;&lt;/strong> button located in the top right corner of any page. This will take you to the event creation form where you can configure all aspects of your event.&lt;/p>
-&lt;h3>2. Fill Out Basic Event Information&lt;span class="hx:absolute hx:-mt-20" id="2-fill-out-basic-event-information">&lt;/span>
-&lt;a href="#2-fill-out-basic-event-information" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/create-event-details.png" alt="create-event-details" loading="lazy" />
-Complete the essential event details including:&lt;/p>
-&lt;ul>
-&lt;li>Event title and sport type&lt;/li>
-&lt;li>Date, time, and duration&lt;/li>
-&lt;li>Location and venue details&lt;/li>
-&lt;li>Participant limits and pricing&lt;/li>
-&lt;li>Privacy settings (public/private)&lt;/li>
-&lt;/ul>
-&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-green-200 hx:bg-green-100 hx:text-green-900 hx:dark:border-green-200/30 hx:dark:bg-green-900/30 hx:dark:text-green-200">
-&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>&lt;/svg>Tip&lt;/p>
-&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
-&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>To create paid events, you&amp;rsquo;ll need to have Stripe connected to your account. You can choose to absorb Stripe processing fees yourself or pass them on to participants by adjusting the settings in the Additional Settings during event creation.&lt;/p>&lt;/div>
-&lt;/div>
-&lt;/div>
-&lt;h3>3. Upload Event Images&lt;span class="hx:absolute hx:-mt-20" id="3-upload-event-images">&lt;/span>
-&lt;a href="#3-upload-event-images" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/create-event-images.jpg" alt="create-event-images" loading="lazy" />&lt;/p>
-&lt;p>Add visual appeal to your event by uploading:&lt;/p>
-&lt;ul>
-&lt;li>&lt;strong>Thumbnail image&lt;/strong>: A smaller image that appears in event listings and cards. This will need to be in a square aspect ratio.&lt;/li>
-&lt;li>&lt;strong>Event banner image&lt;/strong>: A larger hero image displayed on the event detail page. This will need to be in 16:9 aspect ratio.&lt;/li>
-&lt;/ul>
-&lt;p>High-quality images help attract more participants and give your event a professional appearance.&lt;/p>
-&lt;h3>4. Write a Meaningful Description&lt;span class="hx:absolute hx:-mt-20" id="4-write-a-meaningful-description">&lt;/span>
-&lt;a href="#4-write-a-meaningful-description" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Use the rich text editor to create a compelling event description that may include:&lt;/p>
-&lt;ul>
-&lt;li>What participants can expect&lt;/li>
-&lt;li>Skill level requirements&lt;/li>
-&lt;li>What to bring or wear&lt;/li>
-&lt;li>Any special instructions or rules&lt;/li>
-&lt;li>Contact information for questions&lt;/li>
-&lt;/ul>
-&lt;p>A well-written description helps set proper expectations and reduces participant questions.&lt;/p>
-&lt;h2>After Creating Your Event&lt;span class="hx:absolute hx:-mt-20" id="after-creating-your-event">&lt;/span>
-&lt;a href="#after-creating-your-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Once your event is created, you will receive an email confirmation and can:&lt;/p>
-&lt;h3>Find Your Event&lt;span class="hx:absolute hx:-mt-20" id="find-your-event">&lt;/span>
-&lt;a href="#find-your-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
-&lt;li>&lt;strong>Public events&lt;/strong>: Appear on the main dashboard where anyone can discover and join them&lt;/li>
-&lt;li>&lt;strong>Private events&lt;/strong>: Only accessible via the direct link you can share with intended participants&lt;/li>
-&lt;/ul>
-&lt;h3>Manage Your Event&lt;span class="hx:absolute hx:-mt-20" id="manage-your-event">&lt;/span>
-&lt;a href="#manage-your-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Access comprehensive event management tools through the &lt;a href="https://www.sportshub.net.au/docs/organisers/organiser-hub/" >Organiser Hub&lt;/a>, where you can:&lt;/p>
-&lt;ul>
-&lt;li>Monitor registrations and participant details&lt;/li>
-&lt;li>Update event information&lt;/li>
-&lt;li>Manage and manually add/ remove Participants&lt;/li>
-&lt;li>Alter event settings and pause bookings.&lt;/li>
-&lt;/ul>
-&lt;p>Your newly created event will be immediately available for participants to join, and you&amp;rsquo;ll receive notifications as people register.&lt;/p></description></item><item><title>Recurring Events</title><link>https://www.sportshub.net.au/docs/organisers/events/recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/recurring-events/</guid><description>
-&lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
-&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Recurring events are perfect for &amp;ldquo;set and forget&amp;rdquo; activities that happen on a regular schedule. Whether you&amp;rsquo;re running weekly training sessions, monthly tournaments, or fortnightly social games, this feature automatically creates events at your chosen intervals, saving you time and ensuring consistency for your participants.&lt;/p>
-&lt;p>This feature is ideal for:&lt;/p>
-&lt;ul>
-&lt;li>Regular training sessions or classes&lt;/li>
-&lt;li>Weekly social games&lt;/li>
-&lt;li>Any event that follows a predictable schedule&lt;/li>
-&lt;/ul>
-&lt;h2>Setting Up Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="setting-up-recurring-events">&lt;/span>
-&lt;a href="#setting-up-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Enable recurring events during event creation by accessing the &lt;strong>Additional Settings&lt;/strong> section and configuring the recurrence parameters.&lt;/p>
-&lt;h2>Recurrence Parameters&lt;span class="hx:absolute hx:-mt-20" id="recurrence-parameters">&lt;/span>
-&lt;a href="#recurrence-parameters" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/recurring-event-parameters.png" alt="recurring-event-parameters" loading="lazy" />&lt;/p>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>Parameter&lt;/th>
-&lt;th>Description&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>&lt;strong>Enable Recurrence&lt;/strong>&lt;/td>
-&lt;td>Toggle to activate the recurring event feature for this event&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>&lt;strong>Recurrence Frequency&lt;/strong>&lt;/td>
-&lt;td>Choose how often events repeat: Weekly, Fortnightly, or Monthly&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>&lt;strong>Number of Recurrences&lt;/strong>&lt;/td>
-&lt;td>Set the total number of events to create (&lt;strong>not including&lt;/strong> the initial event)&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>&lt;strong>Create Days Prior&lt;/strong>&lt;/td>
-&lt;td>Specify how many days before each event date the event page should be created and become available for bookings&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;h2>Preview Your Recurring Schedule&lt;span class="hx:absolute hx:-mt-20" id="preview-your-recurring-schedule">&lt;/span>
-&lt;a href="#preview-your-recurring-schedule" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/recurring-event-schedule.png" alt="recurring-event-schedule" loading="lazy" />&lt;/p>
-&lt;p>During event creation, you&amp;rsquo;ll see a table showing all future recurrence dates based on your settings. This preview helps you verify the schedule is correct before creating the events.&lt;/p>
-&lt;h2>How Recurring Events Work&lt;span class="hx:absolute hx:-mt-20" id="how-recurring-events-work">&lt;/span>
-&lt;a href="#how-recurring-events-work" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
-&lt;li>&lt;strong>First Event&lt;/strong>: Created immediately upon submission and is available for booking right away&lt;/li>
-&lt;li>&lt;strong>Future Events&lt;/strong>: Created automatically according to your &amp;ldquo;Create Days Prior&amp;rdquo; setting&lt;/li>
-&lt;li>&lt;strong>Consistent Details&lt;/strong>: Each recurring event uses the same title, description, images, and settings as your original event&lt;/li>
-&lt;/ul>
-&lt;h2>Managing Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="managing-recurring-events">&lt;/span>
-&lt;a href="#managing-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>After creation, you can view and manage your recurring event template through the &lt;a href="https://www.sportshub.net.au/docs/organisers/organiser-hub/" >Organiser Hub&lt;/a>. This allows you to:&lt;/p>
-&lt;ul>
-&lt;li>Reference all events in the series&lt;/li>
-&lt;li>Make changes to future events if needed&lt;/li>
-&lt;li>Manage the overall recurring schedule&lt;/li>
-&lt;/ul>
-&lt;p>Recurring events provide a powerful way to maintain regular activities with minimal ongoing effort, ensuring your community always knows when and where to find your events.&lt;/p></description></item><item><title>Custom Links</title><link>https://www.sportshub.net.au/docs/organisers/events/custom-links/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/custom-links/</guid><description>
-&lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
-&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Custom links allow you to create memorable, branded URLs for your events that are much easier to share and remember than the default event ID links. Instead of sharing a long, complex URL, you can create something simple like &lt;code>https://www.sportshub.net.au/event/&amp;lt;username&amp;gt;/weekly-tennis&lt;/code> that participants can easily type and remember.&lt;/p>
-&lt;p>Custom links are particularly valuable for:&lt;/p>
-&lt;ul>
-&lt;li>Regular events that you promote frequently&lt;/li>
-&lt;li>Social media sharing and marketing&lt;/li>
-&lt;li>Recurring events that automatically update to the latest occurrence&lt;/li>
-&lt;/ul>
-&lt;h2>Creating Custom Links&lt;span class="hx:absolute hx:-mt-20" id="creating-custom-links">&lt;/span>
-&lt;a href="#creating-custom-links" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Navigate to the &lt;strong>Custom Links&lt;/strong> section in your &lt;a href="https://www.sportshub.net.au/organiser/event/custom-links" >Organiser Hub&lt;/a> under the Events menu to set up your custom links.
-&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/custom-links.png" alt="custom-links" loading="lazy" />&lt;/p>
-&lt;h2>Setting Up Your Custom Link&lt;span class="hx:absolute hx:-mt-20" id="setting-up-your-custom-link">&lt;/span>
-&lt;a href="#setting-up-your-custom-link" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>Custom Link Name&lt;span class="hx:absolute hx:-mt-20" id="custom-link-name">&lt;/span>
-&lt;a href="#custom-link-name" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Choose a descriptive name for internal reference - this helps you identify the purpose of each custom link in your dashboard.&lt;/p>
-&lt;h3>Custom Link URL&lt;span class="hx:absolute hx:-mt-20" id="custom-link-url">&lt;/span>
-&lt;a href="#custom-link-url" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Create your custom URL following these simple rules:&lt;/p>
-&lt;ul>
-&lt;li>Must be between 3 and 30 characters long&lt;/li>
-&lt;li>Use only lowercase letters, numbers, and hyphens&lt;/li>
-&lt;li>No spaces or special characters allowed&lt;/li>
-&lt;li>Must be unique across the your custom links&lt;/li>
-&lt;/ul>
-&lt;p>&lt;strong>Good examples:&lt;/strong> &lt;code>weekly-tennis&lt;/code>, &lt;code>friday-soccer&lt;/code>, &lt;code>badminton-club&lt;/code>&lt;/p>
-&lt;p>&lt;strong>Avoid:&lt;/strong> &lt;code>Weekly Tennis&lt;/code> (spaces), &lt;code>TENNIS&lt;/code> (uppercase), &lt;code>tennis@club&lt;/code> (special characters)&lt;/p>
-&lt;h3>Link Type Selection&lt;span class="hx:absolute hx:-mt-20" id="link-type-selection">&lt;/span>
-&lt;a href="#link-type-selection" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Choose between two link types:&lt;/p>
-&lt;table>
-&lt;thead>
-&lt;tr>
-&lt;th>Link Type&lt;/th>
-&lt;th>Description&lt;/th>
-&lt;th>Best For&lt;/th>
-&lt;/tr>
-&lt;/thead>
-&lt;tbody>
-&lt;tr>
-&lt;td>&lt;strong>Event Reference&lt;/strong>&lt;/td>
-&lt;td>Points to a specific single event&lt;/td>
-&lt;td>One-off events, special tournaments, unique occasions&lt;/td>
-&lt;/tr>
-&lt;tr>
-&lt;td>&lt;strong>Recurring Event Reference&lt;/strong>&lt;/td>
-&lt;td>Points to a recurring event template&lt;/td>
-&lt;td>Regular weekly/monthly activities, ongoing classes&lt;/td>
-&lt;/tr>
-&lt;/tbody>
-&lt;/table>
-&lt;h3>Event Selection&lt;span class="hx:absolute hx:-mt-20" id="event-selection">&lt;/span>
-&lt;a href="#event-selection" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>After choosing your link type, select from:&lt;/p>
-&lt;ul>
-&lt;li>&lt;strong>Upcoming events&lt;/strong> (for event references)&lt;/li>
-&lt;li>&lt;strong>Active recurring templates&lt;/strong> (for recurring event references)&lt;/li>
-&lt;/ul>
-&lt;h2>Benefits of Custom Links&lt;span class="hx:absolute hx:-mt-20" id="benefits-of-custom-links">&lt;/span>
-&lt;a href="#benefits-of-custom-links" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>Automatic Updates&lt;span class="hx:absolute hx:-mt-20" id="automatic-updates">&lt;/span>
-&lt;a href="#automatic-updates" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>For recurring events, your custom link automatically redirects to the next upcoming event in the series. This means you can share the same link everywhere without constantly updating it.&lt;/p>
-&lt;h3>Professional Appearance&lt;span class="hx:absolute hx:-mt-20" id="professional-appearance">&lt;/span>
-&lt;a href="#professional-appearance" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Your final URL will look like: &lt;code>https://www.sportshub.net.au/event/username/custom-link&lt;/code>&lt;/p>
-&lt;p>This creates a clean, professional appearance that builds trust and is easy to share across all your marketing channels.&lt;/p>
-&lt;h3>Easy Sharing&lt;span class="hx:absolute hx:-mt-20" id="easy-sharing">&lt;/span>
-&lt;a href="#easy-sharing" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Custom links are perfect for:&lt;/p>
-&lt;ul>
-&lt;li>Social media posts and bios where a consistent link prevents continuous updating&lt;/li>
-&lt;li>A recognisable link that allows your audience to quickly identify which event is which&lt;/li>
-&lt;li>A repeating social sport session where users can bookmark one link and access the new event weekly&lt;/li>
-&lt;/ul>
-&lt;p>Custom links transform complex event URLs into memorable, brandable web addresses that make promoting your events significantly easier.&lt;/p></description></item></channel></rss>
+&lt;h2&gt;Overview&lt;span class="hx:absolute hx:-mt-20" id="overview"&gt;&lt;/span&gt;
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;This guide walks you through creating an event on SPORTSHUB. Whether you&amp;rsquo;re organizing a casual pickup game or a competitive tournament, the event creation process is designed to be intuitive while giving you full control over all the details that matter to your participants.&lt;/p&gt;
+&lt;p&gt;Creating an event allows you to:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Set up public events that appear on the main dashboard for anyone to join&lt;/li&gt;
+&lt;li&gt;Create private events accessible only via direct link&lt;/li&gt;
+&lt;li&gt;Configure payment options for paid events&lt;/li&gt;
+&lt;li&gt;Add rich descriptions with images and detailed information&lt;/li&gt;
+&lt;li&gt;Manage participant and event logistics&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Step-by-Step Event Creation&lt;span class="hx:absolute hx:-mt-20" id="step-by-step-event-creation"&gt;&lt;/span&gt;
+&lt;a href="#step-by-step-event-creation" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;1. Navigate to Create Event&lt;span class="hx:absolute hx:-mt-20" id="1-navigate-to-create-event"&gt;&lt;/span&gt;
+&lt;a href="#1-navigate-to-create-event" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/create-event-button.png" alt="create-event-button" loading="lazy" /&gt;
+Click the &lt;strong&gt;&amp;ldquo;Create Event&amp;rdquo;&lt;/strong&gt; button located in the top right corner of any page. This will take you to the event creation form where you can configure all aspects of your event.&lt;/p&gt;
+&lt;h3&gt;2. Fill Out Basic Event Information&lt;span class="hx:absolute hx:-mt-20" id="2-fill-out-basic-event-information"&gt;&lt;/span&gt;
+&lt;a href="#2-fill-out-basic-event-information" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/create-event-details.png" alt="create-event-details" loading="lazy" /&gt;
+Complete the essential event details including:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Event title and sport type&lt;/li&gt;
+&lt;li&gt;Date, time, and duration&lt;/li&gt;
+&lt;li&gt;Location and venue details&lt;/li&gt;
+&lt;li&gt;Participant limits and pricing&lt;/li&gt;
+&lt;li&gt;Privacy settings (public/private)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-green-200 hx:bg-green-100 hx:text-green-900 hx:dark:border-green-200/30 hx:dark:bg-green-900/30 hx:dark:text-green-200"&gt;
+&lt;p class="hx:flex hx:items-center hx:font-medium"&gt;&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"&gt;&lt;path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/&gt;&lt;/svg&gt;Tip&lt;/p&gt;
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7"&gt;
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0"&gt;&lt;p&gt;To create paid events, you&amp;rsquo;ll need to have Stripe connected to your account. You can choose to absorb Stripe processing fees yourself or pass them on to participants by adjusting the settings in the Additional Settings during event creation.&lt;/p&gt;&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h3&gt;3. Upload Event Images&lt;span class="hx:absolute hx:-mt-20" id="3-upload-event-images"&gt;&lt;/span&gt;
+&lt;a href="#3-upload-event-images" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/create-event-images.jpg" alt="create-event-images" loading="lazy" /&gt;&lt;/p&gt;
+&lt;p&gt;Add visual appeal to your event by uploading:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Thumbnail image&lt;/strong&gt;: A smaller image that appears in event listings and cards. This will need to be in a square aspect ratio.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Event banner image&lt;/strong&gt;: A larger hero image displayed on the event detail page. This will need to be in 16:9 aspect ratio.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;High-quality images help attract more participants and give your event a professional appearance.&lt;/p&gt;
+&lt;h3&gt;4. Write a Meaningful Description&lt;span class="hx:absolute hx:-mt-20" id="4-write-a-meaningful-description"&gt;&lt;/span&gt;
+&lt;a href="#4-write-a-meaningful-description" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Use the rich text editor to create a compelling event description that may include:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;What participants can expect&lt;/li&gt;
+&lt;li&gt;Skill level requirements&lt;/li&gt;
+&lt;li&gt;What to bring or wear&lt;/li&gt;
+&lt;li&gt;Any special instructions or rules&lt;/li&gt;
+&lt;li&gt;Contact information for questions&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;A well-written description helps set proper expectations and reduces participant questions.&lt;/p&gt;
+&lt;h2&gt;After Creating Your Event&lt;span class="hx:absolute hx:-mt-20" id="after-creating-your-event"&gt;&lt;/span&gt;
+&lt;a href="#after-creating-your-event" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Once your event is created, you will receive an email confirmation and can:&lt;/p&gt;
+&lt;h3&gt;Find Your Event&lt;span class="hx:absolute hx:-mt-20" id="find-your-event"&gt;&lt;/span&gt;
+&lt;a href="#find-your-event" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Public events&lt;/strong&gt;: Appear on the main dashboard where anyone can discover and join them&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Private events&lt;/strong&gt;: Only accessible via the direct link you can share with intended participants&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Manage Your Event&lt;span class="hx:absolute hx:-mt-20" id="manage-your-event"&gt;&lt;/span&gt;
+&lt;a href="#manage-your-event" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Access comprehensive event management tools through the &lt;a href="https://www.sportshub.net.au/docs/organisers/organiser-hub/" &gt;Organiser Hub&lt;/a&gt;, where you can:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Monitor registrations and participant details&lt;/li&gt;
+&lt;li&gt;Update event information&lt;/li&gt;
+&lt;li&gt;Manage and manually add/ remove Participants&lt;/li&gt;
+&lt;li&gt;Alter event settings and pause bookings.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Your newly created event will be immediately available for participants to join, and you&amp;rsquo;ll receive notifications as people register.&lt;/p&gt;</description></item><item><title>Recurring Events</title><link>https://www.sportshub.net.au/docs/organisers/events/recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/recurring-events/</guid><description>
+&lt;h2&gt;Overview&lt;span class="hx:absolute hx:-mt-20" id="overview"&gt;&lt;/span&gt;
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Recurring events are perfect for &amp;ldquo;set and forget&amp;rdquo; activities that happen on a regular schedule. Whether you&amp;rsquo;re running weekly training sessions, monthly tournaments, or fortnightly social games, this feature automatically creates events at your chosen intervals, saving you time and ensuring consistency for your participants.&lt;/p&gt;
+&lt;p&gt;This feature is ideal for:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Regular training sessions or classes&lt;/li&gt;
+&lt;li&gt;Weekly social games&lt;/li&gt;
+&lt;li&gt;Any event that follows a predictable schedule&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Setting Up Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="setting-up-recurring-events"&gt;&lt;/span&gt;
+&lt;a href="#setting-up-recurring-events" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Enable recurring events during event creation by accessing the &lt;strong&gt;Additional Settings&lt;/strong&gt; section and configuring the recurrence parameters.&lt;/p&gt;
+&lt;h2&gt;Recurrence Parameters&lt;span class="hx:absolute hx:-mt-20" id="recurrence-parameters"&gt;&lt;/span&gt;
+&lt;a href="#recurrence-parameters" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/recurring-event-parameters.png" alt="recurring-event-parameters" loading="lazy" /&gt;&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Parameter&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Enable Recurrence&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;Toggle to activate the recurring event feature for this event&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Recurrence Frequency&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;Choose how often events repeat: Weekly, Fortnightly, or Monthly&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Number of Recurrences&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;Set the total number of events to create (&lt;strong&gt;not including&lt;/strong&gt; the initial event)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Create Days Prior&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;Specify how many days before each event date the event page should be created and become available for bookings&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2&gt;Preview Your Recurring Schedule&lt;span class="hx:absolute hx:-mt-20" id="preview-your-recurring-schedule"&gt;&lt;/span&gt;
+&lt;a href="#preview-your-recurring-schedule" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/recurring-event-schedule.png" alt="recurring-event-schedule" loading="lazy" /&gt;&lt;/p&gt;
+&lt;p&gt;During event creation, you&amp;rsquo;ll see a table showing all future recurrence dates based on your settings. This preview helps you verify the schedule is correct before creating the events.&lt;/p&gt;
+&lt;h2&gt;How Recurring Events Work&lt;span class="hx:absolute hx:-mt-20" id="how-recurring-events-work"&gt;&lt;/span&gt;
+&lt;a href="#how-recurring-events-work" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;First Event&lt;/strong&gt;: Created immediately upon submission and is available for booking right away&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Future Events&lt;/strong&gt;: Created automatically according to your &amp;ldquo;Create Days Prior&amp;rdquo; setting&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Consistent Details&lt;/strong&gt;: Each recurring event uses the same title, description, images, and settings as your original event&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Managing Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="managing-recurring-events"&gt;&lt;/span&gt;
+&lt;a href="#managing-recurring-events" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;After creation, you can view and manage your recurring event template through the &lt;a href="https://www.sportshub.net.au/docs/organisers/organiser-hub/" &gt;Organiser Hub&lt;/a&gt;. This allows you to:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Reference all events in the series&lt;/li&gt;
+&lt;li&gt;Make changes to future events if needed&lt;/li&gt;
+&lt;li&gt;Manage the overall recurring schedule&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Recurring events provide a powerful way to maintain regular activities with minimal ongoing effort, ensuring your community always knows when and where to find your events.&lt;/p&gt;</description></item><item><title>Custom Links</title><link>https://www.sportshub.net.au/docs/organisers/events/custom-links/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/custom-links/</guid><description>
+&lt;h2&gt;Overview&lt;span class="hx:absolute hx:-mt-20" id="overview"&gt;&lt;/span&gt;
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Custom links allow you to create memorable, branded URLs for your events that are much easier to share and remember than the default event ID links. Instead of sharing a long, complex URL, you can create something simple like &lt;code&gt;https://www.sportshub.net.au/event/&amp;lt;username&amp;gt;/weekly-tennis&lt;/code&gt; that participants can easily type and remember.&lt;/p&gt;
+&lt;p&gt;Custom links are particularly valuable for:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Regular events that you promote frequently&lt;/li&gt;
+&lt;li&gt;Social media sharing and marketing&lt;/li&gt;
+&lt;li&gt;Recurring events that automatically update to the latest occurrence&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Creating Custom Links&lt;span class="hx:absolute hx:-mt-20" id="creating-custom-links"&gt;&lt;/span&gt;
+&lt;a href="#creating-custom-links" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Navigate to the &lt;strong&gt;Custom Links&lt;/strong&gt; section in your &lt;a href="https://www.sportshub.net.au/organiser/event/custom-links" target="_blank" rel="noopener"&gt;Organiser Hub&lt;/a&gt; under the Events menu to set up your custom links.
+&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/custom-links.png" alt="custom-links" loading="lazy" /&gt;&lt;/p&gt;
+&lt;h2&gt;Setting Up Your Custom Link&lt;span class="hx:absolute hx:-mt-20" id="setting-up-your-custom-link"&gt;&lt;/span&gt;
+&lt;a href="#setting-up-your-custom-link" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Custom Link Name&lt;span class="hx:absolute hx:-mt-20" id="custom-link-name"&gt;&lt;/span&gt;
+&lt;a href="#custom-link-name" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Choose a descriptive name for internal reference - this helps you identify the purpose of each custom link in your dashboard.&lt;/p&gt;
+&lt;h3&gt;Custom Link URL&lt;span class="hx:absolute hx:-mt-20" id="custom-link-url"&gt;&lt;/span&gt;
+&lt;a href="#custom-link-url" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Create your custom URL following these simple rules:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Must be between 3 and 30 characters long&lt;/li&gt;
+&lt;li&gt;Use only lowercase letters, numbers, and hyphens&lt;/li&gt;
+&lt;li&gt;No spaces or special characters allowed&lt;/li&gt;
+&lt;li&gt;Must be unique across the your custom links&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Good examples:&lt;/strong&gt; &lt;code&gt;weekly-tennis&lt;/code&gt;, &lt;code&gt;friday-soccer&lt;/code&gt;, &lt;code&gt;badminton-club&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Avoid:&lt;/strong&gt; &lt;code&gt;Weekly Tennis&lt;/code&gt; (spaces), &lt;code&gt;TENNIS&lt;/code&gt; (uppercase), &lt;code&gt;tennis@club&lt;/code&gt; (special characters)&lt;/p&gt;
+&lt;h3&gt;Link Type Selection&lt;span class="hx:absolute hx:-mt-20" id="link-type-selection"&gt;&lt;/span&gt;
+&lt;a href="#link-type-selection" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Choose between two link types:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Link Type&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;th&gt;Best For&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Event Reference&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;Points to a specific single event&lt;/td&gt;
+&lt;td&gt;One-off events, special tournaments, unique occasions&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Recurring Event Reference&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;Points to a recurring event template&lt;/td&gt;
+&lt;td&gt;Regular weekly/monthly activities, ongoing classes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3&gt;Event Selection&lt;span class="hx:absolute hx:-mt-20" id="event-selection"&gt;&lt;/span&gt;
+&lt;a href="#event-selection" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;After choosing your link type, select from:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Upcoming events&lt;/strong&gt; (for event references)&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Active recurring templates&lt;/strong&gt; (for recurring event references)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Benefits of Custom Links&lt;span class="hx:absolute hx:-mt-20" id="benefits-of-custom-links"&gt;&lt;/span&gt;
+&lt;a href="#benefits-of-custom-links" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Automatic Updates&lt;span class="hx:absolute hx:-mt-20" id="automatic-updates"&gt;&lt;/span&gt;
+&lt;a href="#automatic-updates" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;For recurring events, your custom link automatically redirects to the next upcoming event in the series. This means you can share the same link everywhere without constantly updating it.&lt;/p&gt;
+&lt;h3&gt;Professional Appearance&lt;span class="hx:absolute hx:-mt-20" id="professional-appearance"&gt;&lt;/span&gt;
+&lt;a href="#professional-appearance" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Your final URL will look like: &lt;code&gt;https://www.sportshub.net.au/event/username/custom-link&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;This creates a clean, professional appearance that builds trust and is easy to share across all your marketing channels.&lt;/p&gt;
+&lt;h3&gt;Easy Sharing&lt;span class="hx:absolute hx:-mt-20" id="easy-sharing"&gt;&lt;/span&gt;
+&lt;a href="#easy-sharing" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Custom links are perfect for:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Social media posts and bios where a consistent link prevents continuous updating&lt;/li&gt;
+&lt;li&gt;A recognisable link that allows your audience to quickly identify which event is which&lt;/li&gt;
+&lt;li&gt;A repeating social sport session where users can bookmark one link and access the new event weekly&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Custom links transform complex event URLs into memorable, brandable web addresses that make promoting your events significantly easier.&lt;/p&gt;</description></item></channel></rss>

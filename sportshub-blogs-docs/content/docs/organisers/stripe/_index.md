@@ -37,7 +37,7 @@ To create paid events on SPORTSHUB, you'll need to complete Stripe onboarding. T
 
 **Next Steps:**
 
-- Review our [Stripe Setup Guide](/docs/organisers/organiser-hub/stripe-setup) for detailed onboarding instructions
-- Contact [SPORTSHUB Support](/contact) if you have questions about the setup process
+- Review our [Stripe Setup Guide](/docs/organisers/stripe/stripe-setup) for detailed onboarding instructions
+- Contact [SPORTSHUB Support](/docs/contact-us) if you have questions about the setup process
 
 Once connected, you can immediately start creating paid events and collecting secure payments from your participants.
