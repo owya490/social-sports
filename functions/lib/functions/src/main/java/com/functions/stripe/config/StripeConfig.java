@@ -14,7 +14,7 @@ public class StripeConfig {
     private static final Logger logger = LoggerFactory.getLogger(StripeConfig.class);
 
     // Feature flag for easily gating Java implementation of Python Stripe functionality.
-    public static final Boolean JAVA_STRIPE_ENABLED = true;
+    public static final boolean JAVA_STRIPE_ENABLED = true;
 
     public static final String ERROR_URL = "/error";
     public static final String CURRENCY = "aud";
@@ -51,11 +51,19 @@ public class StripeConfig {
     }
 
     /**
-     * Ensures Stripe is initialized by accessing this class.
+     * Ensures the StripeConfig class is loaded, triggering static initialization if not already done.
+     * <p>
+     * This method attempts to force class loading, which will execute the static initialization block
+     * that sets up the Stripe API key. If the class is already loaded, this is a no-op.
+     * </p>
+     * <p>
+     * Note: The actual initialization happens in the static block and is logged there.
+     * This method exists primarily as an explicit way to trigger class loading.
+     * </p>
      */
-    public static void initialize() {
-        // Static block will execute when class is loaded
-        logger.debug("StripeConfig initialized");
+    public static void ensureClassLoaded() {
+        // Static initialization block will have already executed by the time this method is called.
+        // This method serves only to trigger class loading if not already loaded.
     }
 }
 

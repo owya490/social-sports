@@ -1,14 +1,13 @@
 package com.functions.stripe.services;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
@@ -40,7 +39,7 @@ public class CheckoutService {
     public static CreateStripeCheckoutSessionResponse createStripeCheckoutSession(
             CreateStripeCheckoutSessionRequest request) {
         try {
-            StripeConfig.initialize();
+            StripeConfig.ensureClassLoaded();
 
             request.validate();
 
@@ -78,12 +77,12 @@ public class CheckoutService {
             Transaction transaction, CreateStripeCheckoutSessionRequest request) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
-        String privacyPath = request.isPrivate() ? "Private" : "Public";
+        String privacyPath = request.isPrivate() ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
         
         // PHASE 1: PERFORM ALL READS FIRST
 
         // Read 1: Get event document
-        DocumentReference eventRef = db.collection("Events/Active/" + privacyPath)
+        DocumentReference eventRef = db.collection(CollectionPaths.EVENTS + "/" + CollectionPaths.ACTIVE + "/" + privacyPath)
                 .document(request.eventId());
         DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
 
@@ -196,7 +195,7 @@ public class CheckoutService {
 
         // Check price
         Integer price = event.getPrice();
-        if (price == null || (price < 1 && price != 0)) { // we don't want events to be less than stripe fees
+        if (price == null || (price < 100 && price != 0)) { // we don't want events to be less than stripe fees
             logger.error("Event {} does not have a valid price: {}", request.eventId(), price);
             throw new RuntimeException("Event " + request.eventId() + " does not have a valid price: " + price);
         }
@@ -206,7 +205,7 @@ public class CheckoutService {
         // Write 1: Update vacancy (secure tickets)
         int newVacancy = vacancy - request.quantity();
         transaction.update(eventRef, "vacancy", newVacancy);
-        logger.info("Securing {} tickets for event {} at ${}. Remaining tickets: {}",
+        logger.info("Securing {} tickets for event {} at {} cents. Remaining tickets: {}",
                 request.quantity(), request.eventId(), price, newVacancy);
 
         // Write 2: Activate Stripe account if needed
@@ -217,9 +216,18 @@ public class CheckoutService {
 
         // PHASE 3: CREATE STRIPE CHECKOUT SESSION (after transaction reads/writes)
         
+        // Compute a stable client reference ID for Stripe deduplication and tracing
+        String clientReferenceId = request.fulfilmentSessionId();
+        if (clientReferenceId == null || clientReferenceId.isEmpty()) {
+            // Fallback to a composed key if fulfilmentSessionId is not available
+            clientReferenceId = request.eventId() + ":" + System.currentTimeMillis();
+            logger.info("Generated fallback client_reference_id: {}", clientReferenceId);
+        }
+        
         // Build Stripe checkout session parameters
         SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
+                .setClientReferenceId(clientReferenceId)
                 .addLineItem(SessionCreateParams.LineItem.builder()
                         .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                                 .setCurrency(StripeConfig.CURRENCY)
@@ -289,9 +297,6 @@ public class CheckoutService {
         SessionCreateParams params = paramsBuilder.build();
         
         try {
-            Map<String, Object> requestOptions = new HashMap<>();
-            requestOptions.put("stripe_account", stripeAccountId);
-            
             Session session = Session.create(params, 
                     com.stripe.net.RequestOptions.builder()
                             .setStripeAccount(stripeAccountId)
