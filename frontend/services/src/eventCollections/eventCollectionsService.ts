@@ -5,9 +5,10 @@ import {
   PRIVATE_EVENT_COLLECTION_PATH,
   PUBLIC_EVENT_COLLECTION_PATH,
 } from "@/interfaces/EventCollectionTypes";
+import { EventId } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { doc, getDoc } from "firebase/firestore";
+import { arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { getPrivateUserById, getPublicUserById } from "../users/usersService";
 
@@ -89,5 +90,123 @@ export async function getEventCollectionById(collectionId: EventCollectionId): P
 export class EventCollectionNotFoundError extends Error {
   constructor(collectionId: EventCollectionId) {
     super(`Event collection not found with id: ${collectionId}`);
+  }
+}
+
+export async function createEventCollection(
+  userId: UserId,
+  name: string,
+  description: string,
+  isPrivate: boolean,
+  image: string = ""
+): Promise<EventCollectionId> {
+  try {
+    const collectionPath = isPrivate ? PRIVATE_EVENT_COLLECTION_PATH : PUBLIC_EVENT_COLLECTION_PATH;
+    const collectionRef = doc(collection(db, collectionPath));
+    const collectionId = collectionRef.id;
+
+    const newCollection: EventCollection = {
+      eventCollectionId: collectionId,
+      name,
+      description,
+      eventIds: [],
+      recurringEventTemplateIds: [],
+      isPrivate,
+      organiserId: userId,
+      image,
+    };
+
+    await setDoc(collectionRef, newCollection);
+
+    // Update user's collection list
+    const userPath = isPrivate ? "Users/Active/Private" : "Users/Active/Public";
+    const userRef = doc(db, userPath, userId);
+    const collectionField = isPrivate ? "privateEventCollections" : "publicEventCollections";
+    await updateDoc(userRef, {
+      [collectionField]: arrayUnion(collectionId),
+    });
+
+    eventCollectionsServiceLogger.info(`Created event collection: ${collectionId}`);
+    return collectionId;
+  } catch (error) {
+    eventCollectionsServiceLogger.error(`Error creating event collection: ${error}`);
+    throw error;
+  }
+}
+
+export async function updateEventCollection(
+  collectionId: EventCollectionId,
+  isPrivate: boolean,
+  updates: Partial<EventCollection>
+): Promise<void> {
+  try {
+    const collectionPath = isPrivate ? PRIVATE_EVENT_COLLECTION_PATH : PUBLIC_EVENT_COLLECTION_PATH;
+    const collectionRef = doc(db, collectionPath, collectionId);
+    await updateDoc(collectionRef, updates);
+    eventCollectionsServiceLogger.info(`Updated event collection: ${collectionId}`);
+  } catch (error) {
+    eventCollectionsServiceLogger.error(`Error updating event collection ${collectionId}: ${error}`);
+    throw error;
+  }
+}
+
+export async function deleteEventCollection(
+  collectionId: EventCollectionId,
+  userId: UserId,
+  isPrivate: boolean
+): Promise<void> {
+  try {
+    const collectionPath = isPrivate ? PRIVATE_EVENT_COLLECTION_PATH : PUBLIC_EVENT_COLLECTION_PATH;
+    const collectionRef = doc(db, collectionPath, collectionId);
+    await deleteDoc(collectionRef);
+
+    // Remove from user's collection list
+    const userPath = isPrivate ? "Users/Active/Private" : "Users/Active/Public";
+    const userRef = doc(db, userPath, userId);
+    const collectionField = isPrivate ? "privateEventCollections" : "publicEventCollections";
+    await updateDoc(userRef, {
+      [collectionField]: arrayRemove(collectionId),
+    });
+
+    eventCollectionsServiceLogger.info(`Deleted event collection: ${collectionId}`);
+  } catch (error) {
+    eventCollectionsServiceLogger.error(`Error deleting event collection ${collectionId}: ${error}`);
+    throw error;
+  }
+}
+
+export async function addEventToCollection(
+  collectionId: EventCollectionId,
+  eventId: EventId,
+  isPrivate: boolean
+): Promise<void> {
+  try {
+    const collectionPath = isPrivate ? PRIVATE_EVENT_COLLECTION_PATH : PUBLIC_EVENT_COLLECTION_PATH;
+    const collectionRef = doc(db, collectionPath, collectionId);
+    await updateDoc(collectionRef, {
+      eventIds: arrayUnion(eventId),
+    });
+    eventCollectionsServiceLogger.info(`Added event ${eventId} to collection ${collectionId}`);
+  } catch (error) {
+    eventCollectionsServiceLogger.error(`Error adding event to collection: ${error}`);
+    throw error;
+  }
+}
+
+export async function removeEventFromCollection(
+  collectionId: EventCollectionId,
+  eventId: EventId,
+  isPrivate: boolean
+): Promise<void> {
+  try {
+    const collectionPath = isPrivate ? PRIVATE_EVENT_COLLECTION_PATH : PUBLIC_EVENT_COLLECTION_PATH;
+    const collectionRef = doc(db, collectionPath, collectionId);
+    await updateDoc(collectionRef, {
+      eventIds: arrayRemove(eventId),
+    });
+    eventCollectionsServiceLogger.info(`Removed event ${eventId} from collection ${collectionId}`);
+  } catch (error) {
+    eventCollectionsServiceLogger.error(`Error removing event from collection: ${error}`);
+    throw error;
   }
 }
