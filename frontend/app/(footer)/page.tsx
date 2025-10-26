@@ -1,12 +1,15 @@
 "use client";
 import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
+import ScrapedEventCard from "@/components/events/ScrapedEventCard";
 import { UserCard } from "@/components/users/UserCard";
 import { EmptyEventData, EventData, SearchType } from "@/interfaces/EventTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
+import { ScrapedEventData } from "@/interfaces/ScrapedEventTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
+import { getScrapedEvents } from "@/services/src/scrapedEvents/scrapedEventsService";
 import { getErrorUrl } from "@/services/src/urlUtils";
 import {
   getAllPublicUsers,
@@ -16,6 +19,7 @@ import {
 } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
+import { Timestamp } from "firebase/firestore";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -44,7 +48,8 @@ export default function Dashboard() {
   const [endLoading, setEndLoading] = useState<boolean | undefined>(undefined);
   const [publicUserDataList, setPublicUserDataList] = useState<PublicUserData[]>([]);
   const [searchType, setSearchType] = useState<SearchType>(SearchType.EVENT);
-
+  const [scrapedEvents, setScrapedEvents] = useState<ScrapedEventData[]>([]);
+  console.log(scrapedEvents, "scrapedEvents");
   const getQueryParams = () => {
     // if (typeof window === "undefined") {
     if (window === undefined) {
@@ -111,6 +116,14 @@ export default function Dashboard() {
           setSearchDataList(events);
           setAllEventsDataList(events);
           setPublicUserDataList([]);
+
+          // Fetch scraped events
+          try {
+            const scraped = await getScrapedEvents();
+            setScrapedEvents(scraped);
+          } catch (error) {
+            logger.error(`Error fetching scraped events: ${error}`);
+          }
         } else {
           try {
             const events = await searchEventsByKeyword(event, location);
@@ -337,10 +350,11 @@ export default function Dashboard() {
                       />
                     );
                   })
-              : eventDataList
-                  .sort((a, b) => b.accessCount - a.accessCount)
-                  .map((event, eventIdx) => {
-                    return (
+              : [
+                  // Regular events
+                  ...eventDataList
+                    .sort((a, b) => b.accessCount - a.accessCount)
+                    .map((event, eventIdx) => (
                       <EventCard
                         eventId={event.eventId}
                         image={event.image}
@@ -352,10 +366,37 @@ export default function Dashboard() {
                         price={event.price}
                         vacancy={event.vacancy}
                         loading={loading}
-                        key={eventIdx}
+                        key={`event-${eventIdx}`}
                       />
-                    );
-                  })}
+                    )),
+                  // Scraped events (unimported)
+                  ...scrapedEvents
+                    .filter((scrapedEvent) => {
+                      // Only show events with required data
+                      return (
+                        scrapedEvent.name && scrapedEvent.startDate && scrapedEvent.location && scrapedEvent.sourceUrl
+                      );
+                    })
+                    .map((scrapedEvent, scrapedIdx) => (
+                      <ScrapedEventCard
+                        sourceUrl={scrapedEvent.sourceUrl}
+                        image={scrapedEvent.image || ""}
+                        thumbnail={scrapedEvent.thumbnail || ""}
+                        name={scrapedEvent.name}
+                        sourceOrganiser={scrapedEvent.sourceOrganiser || ""}
+                        startTime={
+                          typeof scrapedEvent.startDate === "string"
+                            ? Timestamp.fromDate(new Date(scrapedEvent.startDate))
+                            : scrapedEvent.startDate
+                        }
+                        location={scrapedEvent.location}
+                        price={scrapedEvent.price || 0}
+                        vacancy={(scrapedEvent.capacity || 0) - (scrapedEvent.currentAttendees || 0)}
+                        loading={loading}
+                        key={`scraped-${scrapedIdx}`}
+                      />
+                    )),
+                ]}
           </div>
         </div>
       </div>
