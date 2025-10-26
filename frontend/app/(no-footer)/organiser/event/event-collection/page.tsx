@@ -1,26 +1,28 @@
 "use client";
 
-import CollectionCard from "@/components/organiser/collections/CollectionCard";
+import CollectionCard from "@/components/organiser/event-collection/EventCollectionCard";
 import { useUser } from "@/components/utility/UserContext";
 import { EMPTY_EVENT_COLLECTION, EventCollection } from "@/interfaces/EventCollectionTypes";
+import { EmptyPublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { getOrganiserCollections } from "@/services/src/eventCollections/eventCollectionsService";
 import { useEffect, useState } from "react";
 
-export default function CollectionsPage() {
+export default function EventCollectionsPage() {
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [collections, setCollections] = useState<EventCollection[]>([]);
 
-  const logger = new Logger("CollectionsPage");
+  const logger = new Logger("EventCollectionsPage");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setCollections(await getOrganiserCollections(user.userId));
+        const collectionsData = await getOrganiserCollections(user.userId);
+        setCollections(collectionsData);
         setLoading(false);
       } catch (error) {
-        logger.error(`Failed to get organiser events for collections: ${error}`);
+        logger.error(`Failed to get organiser events for event collections: ${error}`);
         setLoading(false);
       }
     };
@@ -44,16 +46,21 @@ export default function CollectionsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
             {loading ? (
               <>
-                <CollectionCard collection={EMPTY_EVENT_COLLECTION} loading={true} />
-                <CollectionCard collection={EMPTY_EVENT_COLLECTION} loading={true} />
-                <CollectionCard collection={EMPTY_EVENT_COLLECTION} loading={true} />
-                <CollectionCard collection={EMPTY_EVENT_COLLECTION} loading={true} />
-                <CollectionCard collection={EMPTY_EVENT_COLLECTION} loading={true} />
-                <CollectionCard collection={EMPTY_EVENT_COLLECTION} loading={true} />
+                <CollectionCard collection={EMPTY_EVENT_COLLECTION} organiser={EmptyPublicUserData} loading={true} />
+                <CollectionCard collection={EMPTY_EVENT_COLLECTION} organiser={EmptyPublicUserData} loading={true} />
+                <CollectionCard collection={EMPTY_EVENT_COLLECTION} organiser={EmptyPublicUserData} loading={true} />
+                <CollectionCard collection={EMPTY_EVENT_COLLECTION} organiser={EmptyPublicUserData} loading={true} />
+                <CollectionCard collection={EMPTY_EVENT_COLLECTION} organiser={EmptyPublicUserData} loading={true} />
+                <CollectionCard collection={EMPTY_EVENT_COLLECTION} organiser={EmptyPublicUserData} loading={true} />
               </>
             ) : (
               collections.map((collection) => (
-                <CollectionCard key={collection.eventCollectionId} collection={collection} loading={false} />
+                <CollectionCard
+                  key={collection.eventCollectionId}
+                  collection={collection}
+                  organiser={user}
+                  loading={false}
+                />
               ))
             )}
           </div>

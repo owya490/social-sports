@@ -1,5 +1,5 @@
-import { Timestamp } from "firebase/firestore";
 import { EventId } from "./EventTypes";
+import { RecurrenceTemplateId } from "./RecurringEventTypes";
 import { UserId } from "./UserTypes";
 
 export interface EventCollection {
@@ -7,9 +7,10 @@ export interface EventCollection {
   name: string;
   description: string;
   eventIds: EventId[];
+  recurringEventTemplateIds: RecurrenceTemplateId[];
   isPrivate: boolean;
-  isDefault: boolean;
   organiserId: UserId;
+  image: string;
 }
 
 export type EventCollectionId = string;
@@ -19,9 +20,10 @@ export const EMPTY_EVENT_COLLECTION: EventCollection = {
   name: "",
   description: "",
   eventIds: [],
+  recurringEventTemplateIds: [],
   isPrivate: true,
-  isDefault: false,
   organiserId: "",
+  image: "",
 };
 
 export const PUBLIC_EVENT_COLLECTION_PATH = "EventCollections/Active/Public";

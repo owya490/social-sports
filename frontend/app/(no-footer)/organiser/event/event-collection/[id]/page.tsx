@@ -72,7 +72,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
         {/* Header */}
         <div className="mb-6">
           <Link
-            href="/organiser/event/collections"
+            href="/organiser/event/event-collection"
             className="inline-flex items-center text-gray-600 hover:text-core-text mb-4"
           >
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
@@ -88,11 +88,6 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                     <span className="flex items-center text-xs px-3 py-1.5 bg-gray-100 text-gray-600 rounded-full whitespace-nowrap">
                       <LockClosedIcon className="w-3 h-3 mr-1" />
                       Private
-                    </span>
-                  )}
-                  {collection.isDefault && (
-                    <span className="text-xs px-3 py-1.5 bg-black text-white rounded-full whitespace-nowrap">
-                      Default
                     </span>
                   )}
                 </div>
