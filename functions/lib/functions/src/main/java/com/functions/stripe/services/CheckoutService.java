@@ -160,7 +160,7 @@ public class CheckoutService {
         Boolean stripeAccountActive = organiser.getStripeAccountActive();
         boolean needsActivation = false;
         
-        if (stripeAccountActive == null || !stripeAccountActive) {
+        if (stripeAccountActive != null && stripeAccountActive == false) {
             // Double check with Stripe API if account is actually active
             try {
                 Account account = Account.retrieve(stripeAccountId);
