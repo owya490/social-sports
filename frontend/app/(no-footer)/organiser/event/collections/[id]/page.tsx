@@ -5,7 +5,7 @@ import { EMPTY_EVENT_COLLECTION, EventCollection } from "@/interfaces/EventColle
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
-import { getEventCollectionById } from "@/services/src/eventCollections/collectionsService";
+import { getEventCollectionById } from "@/services/src/eventCollections/eventCollectionsService";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { ArrowLeftIcon, LinkIcon, LockClosedIcon } from "@heroicons/react/24/outline";

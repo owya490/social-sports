@@ -8,7 +8,7 @@ import { EMPTY_EVENT_COLLECTION, EventCollection } from "@/interfaces/EventColle
 import { EventData } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { getEventCollectionById } from "@/services/src/eventCollections/collectionsService";
+import { getEventCollectionById } from "@/services/src/eventCollections/eventCollectionsService";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getErrorUrl } from "@/services/src/urlUtils";
 import { getPublicUserById } from "@/services/src/users/usersService";

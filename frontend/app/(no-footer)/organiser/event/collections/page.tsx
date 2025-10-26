@@ -4,7 +4,7 @@ import CollectionCard from "@/components/organiser/collections/CollectionCard";
 import { useUser } from "@/components/utility/UserContext";
 import { EMPTY_EVENT_COLLECTION, EventCollection } from "@/interfaces/EventCollectionTypes";
 import { Logger } from "@/observability/logger";
-import { getOrganiserCollections } from "@/services/src/eventCollections/collectionsService";
+import { getOrganiserCollections } from "@/services/src/eventCollections/eventCollectionsService";
 import { useEffect, useState } from "react";
 
 export default function CollectionsPage() {

@@ -1,12 +1,17 @@
-import { EMPTY_EVENT_COLLECTION, EventCollection, EventCollectionId, PRIVATE_EVENT_COLLECTION_PATH, PUBLIC_EVENT_COLLECTION_PATH } from "@/interfaces/EventCollectionTypes";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import {
+  EMPTY_EVENT_COLLECTION,
+  EventCollection,
+  EventCollectionId,
+  PRIVATE_EVENT_COLLECTION_PATH,
+  PUBLIC_EVENT_COLLECTION_PATH,
+} from "@/interfaces/EventCollectionTypes";
 import { UserId } from "@/interfaces/UserTypes";
-import { getFullUserById, getPrivateUserById, getPublicUserById } from "../users/usersService";
 import { Logger } from "@/observability/logger";
-import { EventData } from "@/interfaces/EventTypes";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { getPrivateUserById, getPublicUserById } from "../users/usersService";
 
-const collectionsServiceLogger = new Logger("collectionsService");
+const eventCollectionsServiceLogger = new Logger("eventCollectionsService");
 
 export async function getOrganiserPublicEventCollections(userId: UserId): Promise<EventCollection[]> {
   try {
@@ -18,7 +23,9 @@ export async function getOrganiserPublicEventCollections(userId: UserId): Promis
     }
     return collections;
   } catch (error) {
-    collectionsServiceLogger.error(`Error getting organiser public event collections for userId: ${userId}: ${error}`);
+    eventCollectionsServiceLogger.error(
+      `Error getting organiser public event collections for userId: ${userId}: ${error}`
+    );
     throw error;
   }
 }
@@ -33,7 +40,9 @@ export async function getOrganiserPrivateEventCollections(userId: UserId): Promi
     }
     return collections;
   } catch (error) {
-    collectionsServiceLogger.error(`Error getting organiser private event collections for userId: ${userId}: ${error}`);
+    eventCollectionsServiceLogger.error(
+      `Error getting organiser private event collections for userId: ${userId}: ${error}`
+    );
     throw error;
   }
 }
@@ -44,7 +53,7 @@ export async function getOrganiserCollections(userId: UserId): Promise<EventColl
     const privateCollections = await getOrganiserPrivateEventCollections(userId);
     return [...publicCollections, ...privateCollections];
   } catch (error) {
-    collectionsServiceLogger.error(`Error getting organiser collections for userId: ${userId}: ${error}`);
+    eventCollectionsServiceLogger.error(`Error getting organiser collections for userId: ${userId}: ${error}`);
     throw error;
   }
 }
@@ -62,12 +71,16 @@ export async function getEventCollectionById(collectionId: EventCollectionId): P
       const privateCollectionRef = doc(db, PRIVATE_EVENT_COLLECTION_PATH, collectionId);
       const privateCollection = await getDoc(privateCollectionRef);
       if (!privateCollection.exists()) {
-        collectionsServiceLogger.error(`Event collection not found with id: ${collectionId}`);
+        eventCollectionsServiceLogger.error(`Event collection not found with id: ${collectionId}`);
         throw new EventCollectionNotFoundError(collectionId);
       }
-      return { ...EMPTY_EVENT_COLLECTION, ...(privateCollection.data() as EventCollection), eventCollectionId: collectionId };
+      return {
+        ...EMPTY_EVENT_COLLECTION,
+        ...(privateCollection.data() as EventCollection),
+        eventCollectionId: collectionId,
+      };
     } else {
-      collectionsServiceLogger.error(`Error getting event collection by id: ${collectionId}: ${error}`);
+      eventCollectionsServiceLogger.error(`Error getting event collection by id: ${collectionId}: ${error}`);
       throw error;
     }
   }
