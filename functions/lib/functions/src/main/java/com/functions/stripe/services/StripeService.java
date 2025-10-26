@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.config.StripeConfig;
+import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 import com.functions.utils.JavaUtils;
@@ -67,15 +68,29 @@ public class StripeService {
             );
 
             if (StripeConfig.JAVA_STRIPE_ENABLED) {
-                CreateStripeCheckoutSessionResponse response = CheckoutService.createStripeCheckoutSession(request);
+                try {
+                    CreateStripeCheckoutSessionResponse response = CheckoutService.createStripeCheckoutSession(request);
 
-                if (response == null || response.url() == null) {
-                    logger.error("Received null or invalid response from CheckoutService for event ID: {}", eventId);
-                    throw new RuntimeException("Failed to get Stripe checkout URL - null response");
+                    if (response == null || response.url() == null) {
+                        logger.error("Received null or invalid response from CheckoutService for event ID: {}", eventId);
+                        throw new RuntimeException("Failed to get Stripe checkout URL - null response");
+                    }
+
+                    logger.info("Successfully retrieved Stripe checkout URL for event ID: {}", eventId);
+
+                    return response.url();
+                } catch (CheckoutDateTimeException e) {
+                    // We don't need to log error and alert for this error because this
+                    // time based error is out of our direct control.
+                    // We should just reject silently and prevent the entire checkout transaction
+                    // from going ahead.
+                    logger.warn("Cannot checkout for event {}: time based error: {}", eventId, e);
+                    return UrlUtils.getUrlWithCurrentEnvironment(StripeConfig.ERROR_URL).orElse("https://www.sportshub.net.au/error");
                 }
-
-                logger.info("Successfully retrieved Stripe checkout URL for event ID: {}", eventId);
-                return response.url();
+                catch (Exception e) {
+                    logger.error("Failed to create Stripe checkout session for event ID {}: {}", eventId, e.getMessage());
+                    throw new RuntimeException("Failed to create Stripe checkout session", e);
+                }
             }
 
             return FirebaseService.callFirebaseFunction(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID, request)

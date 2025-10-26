@@ -9,12 +9,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record CreateStripeCheckoutSessionResponse(
         @JsonProperty("url") String url
 ) {
-    public static CreateStripeCheckoutSessionResponse success(String checkoutUrl) {
-        return new CreateStripeCheckoutSessionResponse(checkoutUrl);
-    }
-
-    public static CreateStripeCheckoutSessionResponse error(String errorUrl) {
-        return new CreateStripeCheckoutSessionResponse(errorUrl);
-    }
 }
 

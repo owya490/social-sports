@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.EventData;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.config.StripeConfig;
+import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 import com.functions.users.models.PrivateUserData;
@@ -51,6 +52,10 @@ public class CheckoutService {
                 try {
                     return createCheckoutSessionInTransaction(transaction, request);
                 } catch (Exception e) {
+                    if (e instanceof CheckoutDateTimeException) {
+                        throw e;
+                    }
+
                     logger.error("Error in checkout transaction for event {}: {}", 
                             request.eventId(), e.getMessage(), e);
                     throw new RuntimeException("Checkout transaction failed", e);
@@ -61,7 +66,7 @@ public class CheckoutService {
         } catch (Exception e) {
             logger.error("Failed to create checkout session for event {}: {}", 
                     request.eventId(), e.getMessage(), e);
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Failed to create checkout session", e);
         }
     }
 
@@ -84,13 +89,13 @@ public class CheckoutService {
 
         if (!eventSnapshot.exists()) {
             logger.error("Event {} does not exist in path {}", request.eventId(), eventRef.getPath());
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Event does not exist in path " + eventRef.getPath());
         }
 
         EventData event = eventSnapshot.toObject(EventData.class);
         if (event == null) {
             logger.error("Event {} data is null", request.eventId());
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Event data is null for event ID: " + request.eventId());
         }
 
         logger.info("Event info retrieved for {}", request.eventId());
@@ -102,7 +107,7 @@ public class CheckoutService {
 
         if (endDate == null || registrationDeadline == null) {
             logger.error("Event {} is missing required date fields", request.eventId());
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Event is missing required date fields for event ID: " + request.eventId());
         }
 
         Instant now = Instant.now();
@@ -114,21 +119,21 @@ public class CheckoutService {
             logger.warn("Cannot checkout for event {}: concluded={}, past registration={}, paused={}",
                     request.eventId(), now.isAfter(eventEndInstant), 
                     now.isAfter(registrationEndInstant), paused);
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new CheckoutDateTimeException("Cannot checkout for event " + request.eventId() + ": concluded=" + now.isAfter(eventEndInstant) + ", past registration=" + now.isAfter(registrationEndInstant) + ", paused=" + paused);
         }
 
         // Check payments are active
         Boolean paymentsActive = event.getPaymentsActive();
         if (paymentsActive == null || !paymentsActive) {
             logger.error("Event {} does not have payments enabled", request.eventId());
-            return CreateStripeCheckoutSessionResponse.error(request.cancelUrl());
+            throw new RuntimeException("Event " + request.eventId() + " does not have payments enabled");
         }
 
         // Read 2: Get organiser document
         String organiserId = event.getOrganiserId();
         if (organiserId == null || organiserId.isEmpty()) {
             logger.error("Event {} is missing organiserId", request.eventId());
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Event " + request.eventId() + " is missing organiserId");
         }
 
         DocumentReference organiserRef = db.collection("Users/Active/Private").document(organiserId);
@@ -136,20 +141,20 @@ public class CheckoutService {
 
         if (!organiserSnapshot.exists()) {
             logger.error("Organiser {} does not exist", organiserId);
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Organiser " + organiserId + " does not exist");
         }
 
         PrivateUserData organiser = organiserSnapshot.toObject(PrivateUserData.class);
         if (organiser == null) {
             logger.error("Organiser {} data is null", organiserId);
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Organiser " + organiserId + " data is null");
         }
 
         // Check organiser has Stripe account
         String stripeAccountId = organiser.getStripeAccount();
         if (stripeAccountId == null || stripeAccountId.isEmpty()) {
             logger.error("Organiser {} does not have a Stripe account", organiserId);
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Organiser " + organiserId + " does not have a Stripe account");
         }
 
         // Check if Stripe account is active
@@ -167,12 +172,12 @@ public class CheckoutService {
                 } else {
                     logger.error("Organiser {} Stripe account not active: chargesEnabled={}, detailsSubmitted={}",
                             organiserId, account.getChargesEnabled(), account.getDetailsSubmitted());
-                    return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+                    throw new RuntimeException("Organiser " + organiserId + " Stripe account not active: chargesEnabled=" + account.getChargesEnabled() + ", detailsSubmitted=" + account.getDetailsSubmitted());
                 }
             } catch (StripeException e) {
                 logger.error("Failed to retrieve Stripe account {} for organiser {}: {}",
                         stripeAccountId, organiserId, e.getMessage(), e);
-                return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+                throw new RuntimeException("Failed to retrieve Stripe account " + stripeAccountId + " for organiser " + organiserId + ": " + e.getMessage(), e);
             }
         }
 
@@ -180,20 +185,20 @@ public class CheckoutService {
         Integer vacancy = event.getVacancy();
         if (vacancy == null) {
             logger.error("Event {} is missing vacancy field. Returning status=500", request.eventId());
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Event " + request.eventId() + " is missing vacancy field");
         }
 
         if (vacancy < request.quantity()) {
             logger.warn("Event {} does not have enough tickets: requested={}, available={}",
                     request.eventId(), request.quantity(), vacancy);
-            return CreateStripeCheckoutSessionResponse.error(request.cancelUrl());
+            throw new RuntimeException("Event " + request.eventId() + " does not have enough tickets: requested=" + request.quantity() + ", available=" + vacancy);
         }
 
         // Check price
         Integer price = event.getPrice();
         if (price == null || (price < 1 && price != 0)) { // we don't want events to be less than stripe fees
             logger.error("Event {} does not have a valid price: {}", request.eventId(), price);
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Event " + request.eventId() + " does not have a valid price: " + price);
         }
 
         // PHASE 2: PERFORM ALL WRITES
@@ -296,11 +301,11 @@ public class CheckoutService {
                     session.getId(), request.eventId(), organiserId, stripeAccountId, 
                     request.quantity(), price);
 
-            return CreateStripeCheckoutSessionResponse.success(session.getUrl());
+            return new CreateStripeCheckoutSessionResponse(session.getUrl());
         } catch (StripeException e) {
             logger.error("Failed to create Stripe checkout session for event {}: {}",
                     request.eventId(), e.getMessage(), e);
-            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+            throw new RuntimeException("Failed to create Stripe checkout session for event " + request.eventId() + ": " + e.getMessage(), e);
         }
     }
 }

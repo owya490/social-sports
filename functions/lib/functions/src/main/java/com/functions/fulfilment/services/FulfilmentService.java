@@ -1,12 +1,32 @@
 package com.functions.fulfilment.services;
 
+import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
-import com.functions.fulfilment.models.*;
+import com.functions.fulfilment.models.CheckoutFulfilmentSession;
+import com.functions.fulfilment.models.EndFulfilmentEntity;
+import com.functions.fulfilment.models.FormsFulfilmentEntity;
+import com.functions.fulfilment.models.FulfilmentEntity;
+import com.functions.fulfilment.models.FulfilmentEntityType;
+import com.functions.fulfilment.models.FulfilmentSession;
+import com.functions.fulfilment.models.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -16,14 +36,6 @@ import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
@@ -168,9 +180,6 @@ public class FulfilmentService {
             String entityId = entityIds.get(i);
 
             if (entity.getType() == FulfilmentEntityType.STRIPE) {
-                // For STRIPE entity, set success URL to point to next entity
-                String nextEntityId = (i + 1 < entityIds.size()) ? entityIds.get(i + 1) : null;
-
                 String prevEntityId = (i - 1 >= 0) ? entityIds.get(i - 1) : null;
                 String cancelUrl = prevEntityId != null
                         ? UrlUtils
