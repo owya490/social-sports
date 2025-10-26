@@ -135,7 +135,7 @@ public class CheckoutService {
             throw new RuntimeException("Event " + request.eventId() + " is missing organiserId");
         }
 
-        DocumentReference organiserRef = db.collection("Users/Active/Private").document(organiserId);
+        DocumentReference organiserRef = db.collection(CollectionPaths.USERS + "/" + CollectionPaths.ACTIVE + "/" + CollectionPaths.PRIVATE).document(organiserId);
         DocumentSnapshot organiserSnapshot = transaction.get(organiserRef).get();
 
         if (!organiserSnapshot.exists()) {
@@ -302,7 +302,7 @@ public class CheckoutService {
                             .setStripeAccount(stripeAccountId)
                             .build());
 
-            logger.info("Created checkout session {} for event {}, linked to organiser {} and Stripe account {}. Secured {} tickets at ${}",
+            logger.info("Created checkout session {} for event {}, linked to organiser {} and Stripe account {}. Secured {} tickets at {} cents",
                     session.getId(), request.eventId(), organiserId, stripeAccountId, 
                     request.quantity(), price);
 

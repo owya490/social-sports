@@ -29,7 +29,7 @@ public class StripeConfig {
             String stripeApiKey = Global.getEnv("STRIPE_API_KEY");
             if (stripeApiKey == null || stripeApiKey.isEmpty()) {
                 logger.error("STRIPE_API_KEY environment variable is not set");
-                throw new RuntimeException("STRIPE_API_KEY environment variable is not set");
+                throw new IllegalStateException("STRIPE_API_KEY environment variable is not set");
             }
             Stripe.apiKey = stripeApiKey;
             logger.info("Stripe API key initialized successfully");
