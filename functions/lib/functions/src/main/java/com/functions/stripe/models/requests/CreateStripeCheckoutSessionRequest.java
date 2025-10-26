@@ -27,7 +27,7 @@ public record CreateStripeCheckoutSessionRequest(
             throw new IllegalArgumentException("Event ID must be provided as a non-empty string.");
         }
         if (isPrivate == null) {
-            throw new IllegalArgumentException("Is Private must be provided as a boolean.");
+            throw new IllegalArgumentException("Is Private must be provided as a boolean but was null.");
         }
         if (quantity == null || quantity <= 0) {
             throw new IllegalArgumentException("Quantity must be provided as a positive integer.");
@@ -39,7 +39,7 @@ public record CreateStripeCheckoutSessionRequest(
             throw new IllegalArgumentException("Success URL must be provided as a non-empty string.");
         }
         if (completeFulfilmentSession == null) {
-            throw new IllegalArgumentException("Complete Fulfilment Session must be provided as a boolean.");
+            throw new IllegalArgumentException("Complete Fulfilment Session must be provided as a boolean but was null.");
         }
     }
 }

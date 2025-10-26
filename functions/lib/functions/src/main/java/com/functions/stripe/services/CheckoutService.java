@@ -39,16 +39,14 @@ public class CheckoutService {
     public static CreateStripeCheckoutSessionResponse createStripeCheckoutSession(
             CreateStripeCheckoutSessionRequest request) {
         try {
-            // Initialize Stripe configuration
             StripeConfig.initialize();
 
-            // Validate request
             request.validate();
 
             logger.info("Creating stripe checkout session for event {} for {} tickets.",
                     request.eventId(), request.quantity());
 
-            // Run the entire checkout process in a Firestore transaction
+            // Run the entire checkout process in a Firestore transaction to ensure atomicity of updates.
             CreateStripeCheckoutSessionResponse response = FirebaseService.createFirestoreTransaction(transaction -> {
                 try {
                     return createCheckoutSessionInTransaction(transaction, request);
@@ -75,12 +73,12 @@ public class CheckoutService {
             Transaction transaction, CreateStripeCheckoutSessionRequest request) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
-        String privatePath = request.isPrivate() ? "Private" : "Public";
+        String privacyPath = request.isPrivate() ? "Private" : "Public";
         
         // PHASE 1: PERFORM ALL READS FIRST
 
         // Read 1: Get event document
-        DocumentReference eventRef = db.collection("Events/Active/" + privatePath)
+        DocumentReference eventRef = db.collection("Events/Active/" + privacyPath)
                 .document(request.eventId());
         DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
 
@@ -180,7 +178,12 @@ public class CheckoutService {
 
         // Check vacancy
         Integer vacancy = event.getVacancy();
-        if (vacancy == null || vacancy < request.quantity()) {
+        if (vacancy == null) {
+            logger.error("Event {} is missing vacancy field. Returning status=500", request.eventId());
+            return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
+        }
+
+        if (vacancy < request.quantity()) {
             logger.warn("Event {} does not have enough tickets: requested={}, available={}",
                     request.eventId(), request.quantity(), vacancy);
             return CreateStripeCheckoutSessionResponse.error(request.cancelUrl());
@@ -188,7 +191,7 @@ public class CheckoutService {
 
         // Check price
         Integer price = event.getPrice();
-        if (price == null || (price < 1 && price != 0)) {
+        if (price == null || (price < 1 && price != 0)) { // we don't want events to be less than stripe fees
             logger.error("Event {} does not have a valid price: {}", request.eventId(), price);
             return CreateStripeCheckoutSessionResponse.error(StripeConfig.ERROR_URL);
         }
