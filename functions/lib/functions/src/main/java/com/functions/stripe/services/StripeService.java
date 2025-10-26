@@ -87,7 +87,7 @@ public class StripeService {
                     // We should just reject silently and prevent the entire checkout transaction
                     // from going ahead.
                     logger.warn("Cannot checkout for event {}: time based error: {}", eventId, e);
-                    return UrlUtils.getUrlWithCurrentEnvironment(StripeConfig.ERROR_URL).orElse("https://www.sportshub.net.au/error");
+                    throw e;
                 }
                 catch (Exception e) {
                     logger.error("Failed to create Stripe checkout session for event ID {}: {}", eventId, e.getMessage());

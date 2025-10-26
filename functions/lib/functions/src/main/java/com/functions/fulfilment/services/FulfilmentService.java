@@ -32,6 +32,7 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
+import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
@@ -126,7 +127,12 @@ public class FulfilmentService {
                 logger.info("Created fulfilment session for event ID: {}, session ID: {}", eventId, sessionId);
                 return sessionId;
             });
-        } catch (Exception e) {
+        } catch (CheckoutDateTimeException e) {
+            // Don't log error and alert for error that is outside of our direct control
+            // because this is a time based error.
+            logger.warn("Cannot checkout for event {}: time based error: {}", eventId, e);
+        }
+        catch (Exception e) {
             logger.error("Failed to init checkout fulfilment session: {}", eventId, e);
         }
         return Optional.empty();
