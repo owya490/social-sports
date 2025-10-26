@@ -49,7 +49,9 @@ public class StripeService {
                     UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
                             .orElse(UrlUtils.SPORTSHUB_URL));
             
-            String newCancelUrl = cancelUrl.orElse(UrlUtils.SPORTSHUB_URL);
+            String newCancelUrl = cancelUrl.orElse(
+                    UrlUtils.getUrlWithCurrentEnvironment("/")
+                            .orElse(UrlUtils.SPORTSHUB_URL));
 
             logger.info(
                     "Getting Stripe checkout URL for event ID: {}, isPrivate: {}, numTickets: {}, " +
