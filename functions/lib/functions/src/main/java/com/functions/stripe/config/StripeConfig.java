@@ -13,6 +13,9 @@ import com.stripe.Stripe;
 public class StripeConfig {
     private static final Logger logger = LoggerFactory.getLogger(StripeConfig.class);
 
+    // Feature flag for easily gating Java implementation of Python Stripe functionality.
+    public static final Boolean JAVA_STRIPE_ENABLED = false;
+
     public static final String ERROR_URL = "/error";
     public static final String CURRENCY = "aud";
     public static final int CHECKOUT_SESSION_EXPIRY_SECONDS = 1800; // 30 minutes
