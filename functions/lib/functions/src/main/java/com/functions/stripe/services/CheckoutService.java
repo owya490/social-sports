@@ -217,18 +217,9 @@ public class CheckoutService {
 
         // PHASE 3: CREATE STRIPE CHECKOUT SESSION (after transaction reads/writes)
         
-        // Compute a stable client reference ID for Stripe deduplication and tracing
-        String clientReferenceId = request.fulfilmentSessionId();
-        if (clientReferenceId == null || clientReferenceId.isEmpty()) {
-            // Fallback to a composed key if fulfilmentSessionId is not available
-            clientReferenceId = request.eventId() + ":" + System.currentTimeMillis();
-            logger.info("Generated fallback client_reference_id: {}", clientReferenceId);
-        }
-        
         // Build Stripe checkout session parameters
         SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setClientReferenceId(clientReferenceId)
                 .addLineItem(SessionCreateParams.LineItem.builder()
                         .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                                 .setCurrency(StripeConfig.CURRENCY)
