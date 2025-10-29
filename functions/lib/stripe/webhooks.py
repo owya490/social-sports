@@ -503,7 +503,7 @@ def fulfilment_workflow_on_expired_session(
 
 @https_fn.on_request(
     cors=options.CorsOptions(
-        cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["get", "post"]
+        cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post", "get"]
     ),
     region="australia-southeast1",
 )
@@ -516,7 +516,7 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
     # Handle GET requests (health checks from GCP/Firebase) - log warning and return early
     if req.method == "GET":
         logger.warning(
-            f"Received GET request to webhook endpoint. Returning 200 without processing."
+            "Received GET request to webhook endpoint. Returning 200 without processing."
         )
         return https_fn.Response(status=200)
 
