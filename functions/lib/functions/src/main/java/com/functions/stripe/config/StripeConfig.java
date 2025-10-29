@@ -24,18 +24,39 @@ public class StripeConfig {
     private static final int STRIPE_FIXED_FEE_CENTS = 30;
     private static final double STRIPE_PERCENTAGE_FEE = 0.017; // 1.7%
 
-    static {
-        try {
-            String stripeApiKey = Global.getEnv("STRIPE_API_KEY");
-            if (stripeApiKey == null || stripeApiKey.isEmpty()) {
-                logger.error("STRIPE_API_KEY environment variable is not set");
-                throw new IllegalStateException("STRIPE_API_KEY environment variable is not set");
+    private static volatile boolean initialized = false;
+    private static final Object initLock = new Object();
+
+    /**
+     * Explicitly initializes Stripe configuration with the API key.
+     * This method is thread-safe and idempotent - calling it multiple times has no additional effect.
+     * 
+     * @throws IllegalStateException if STRIPE_API_KEY environment variable is not set
+     * @throws RuntimeException if initialization fails
+     */
+    public static void initialize() {
+        if (initialized) {
+            return;
+        }
+
+        synchronized (initLock) {
+            if (initialized) {
+                return;
             }
-            Stripe.apiKey = stripeApiKey;
-            logger.info("Stripe API key initialized successfully");
-        } catch (Exception e) {
-            logger.error("Failed to initialize Stripe configuration", e);
-            throw new RuntimeException("Failed to initialize Stripe configuration", e);
+
+            try {
+                String stripeApiKey = Global.getEnv("STRIPE_API_KEY");
+                if (stripeApiKey == null || stripeApiKey.isEmpty()) {
+                    logger.error("STRIPE_API_KEY environment variable is not set");
+                    throw new IllegalStateException("STRIPE_API_KEY environment variable is not set");
+                }
+                Stripe.apiKey = stripeApiKey;
+                initialized = true;
+                logger.info("Stripe API key initialized successfully");
+            } catch (Exception e) {
+                logger.error("Failed to initialize Stripe configuration", e);
+                throw new RuntimeException("Failed to initialize Stripe configuration", e);
+            }
         }
     }
 
@@ -48,22 +69,6 @@ public class StripeConfig {
      */
     public static int calculateStripeFee(int priceInCents) {
         return (int) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * STRIPE_PERCENTAGE_FEE));
-    }
-
-    /**
-     * Ensures the StripeConfig class is loaded, triggering static initialization if not already done.
-     * <p>
-     * This method attempts to force class loading, which will execute the static initialization block
-     * that sets up the Stripe API key. If the class is already loaded, this is a no-op.
-     * </p>
-     * <p>
-     * Note: The actual initialization happens in the static block and is logged there.
-     * This method exists primarily as an explicit way to trigger class loading.
-     * </p>
-     */
-    public static void ensureClassLoaded() {
-        // Static initialization block will have already executed by the time this method is called.
-        // This method serves only to trigger class loading if not already loaded.
     }
 }
 

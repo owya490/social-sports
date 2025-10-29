@@ -39,7 +39,8 @@ public class CheckoutService {
     public static CreateStripeCheckoutSessionResponse createStripeCheckoutSession(
             CreateStripeCheckoutSessionRequest request) {
         try {
-            StripeConfig.ensureClassLoaded();
+            // Explicitly initialize Stripe configuration if not already done
+            StripeConfig.initialize();
 
             request.validate();
 
