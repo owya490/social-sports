@@ -291,7 +291,8 @@ export async function searchUserByKeyword(userKeyword: string): Promise<PublicUs
     }
 
     const publicUserCollectionRef = collection(db, "Users", "Active", "Public");
-    const searchKeywords = tokenizeText(userKeyword);
+    // only search by the first 8 tokens to avoid performance issues
+    const searchKeywords = tokenizeText(userKeyword).slice(0, 8);
     const users: PublicUserData[] = await fetchUsersByTokenMatch(publicUserCollectionRef, searchKeywords);
     return users;
   } catch (error) {

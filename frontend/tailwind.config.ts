@@ -30,7 +30,7 @@ const config: Config = {
     colors: {
       core: {
         outline: "#DDDDDD",
-        text: "#222222",
+        text: "#000000",
         hover: "#F7F7F7",
       },
       organiser: {

@@ -26,7 +26,7 @@ export default function ContactEventButton({ eventLink, fallbackLink, className 
         <DialogHeader className="mx-2 text-lg font-medium leading-6">Contact Event Organizer</DialogHeader>
         <DialogBody>
           <p className="mx-2 text-base font-medium text-black">You are going to be redirected to:</p>
-          <p className="mx-2 text-base font-medium text-blue-900">{linkToUse}</p>
+          <p className="mx-2 text-base font-medium text-blue-900 text-wrap break-all">{linkToUse}</p>
         </DialogBody>
         <DialogFooter className="flex justify-between">
           <Button className="mx-2 bg-gray-200" variant="text" color="black" onClick={() => setOpenModal(false)}>
