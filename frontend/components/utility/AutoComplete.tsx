@@ -1,4 +1,5 @@
-import { initializeAutocomplete, loadGoogleMapsScript, getLocationCoordinates } from "@/services/src/maps/mapsService";
+import { getLocationCoordinates, initializeAutocomplete, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
+import { Input } from "@material-tailwind/react";
 import React, { useEffect, useRef, useState } from "react";
 import { BasicData } from "../events/create/forms/BasicForm";
 
@@ -16,7 +17,6 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({
   setLocationError,
 }) => {
   const [address, setAddress] = useState<string>(location);
-  const [selectionMade, setSelectionMade] = useState<boolean>(false); // To track if a selection is made
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -34,7 +34,6 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
       if (place.name && place.formatted_address) {
-        setSelectionMade(true);
         const full_address = `${place.name}, ${place.formatted_address}`;
         setAddress(full_address);
         updateField({ location: full_address });
@@ -52,8 +51,8 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({
     }
   };
 
-  const handleInputBlur = () => {
-    if (!selectionMade) {
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.value.trim() === "") {
       setAddress("");
       updateField({ location: "" });
       setHasError(true);
@@ -66,17 +65,19 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({
 
   return (
     <div>
-      <input
-        ref={inputRef}
+      <Input
+        inputRef={inputRef}
+        label="Location"
+        crossOrigin={undefined}
         type="text"
         onChange={(e) => {
           setAddress(e.target.value);
-          setSelectionMade(false);
         }}
         value={address}
-        onBlur={handleInputBlur}
+        onBlur={(e) => handleInputBlur(e)}
         placeholder="Enter a location"
-        style={{ width: "100%", padding: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
+        className="rounded-md focus:ring-0"
+        size="lg"
         required
       />
     </div>
