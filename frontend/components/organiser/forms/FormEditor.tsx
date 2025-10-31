@@ -19,7 +19,9 @@ import {
   ImageSection,
   SectionId,
 } from "@/interfaces/FormTypes";
+import { ImageType } from "@/interfaces/ImageTypes";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
+import { getUsersFormImagesUrls, uploadFormImage } from "@/services/src/images/imageService";
 import { sleep } from "@/utilities/sleepUtil";
 import { ArrowDownIcon, ArrowUpIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
@@ -484,6 +486,16 @@ const FormEditor = ({ formId }: FormEditorParams) => {
         isOpen={showImageSelectionDialog}
         onClose={() => setShowImageSelectionDialog(false)}
         onImageSelected={handleImageSelectionComplete}
+        imageType={ImageType.FORM}
+        imageUrls={[]}
+        onLoadImages={async () => {
+          return await getUsersFormImagesUrls(user.userId);
+        }}
+        onUploadImage={async (file: File) => {
+          return await uploadFormImage(user.userId, file);
+        }}
+        title="Add Image Section"
+        buttonText="Add Image Section"
       />
     </div>
   );

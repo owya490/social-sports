@@ -93,10 +93,10 @@ export async function getPublicUserById(
       userData.profilePicture = DEFAULT_USER_PROFILE_PICTURE;
     }
 
+    const userDataWithDefaults = { ...EmptyPublicUserData, ...userData };
     // set local storage with data
-    if (client) setUsersDataIntoLocalStorage(userId, userData);
-
-    return { ...EmptyPublicUserData, ...userData };
+    if (client) setUsersDataIntoLocalStorage(userId, userDataWithDefaults);
+    return userDataWithDefaults;
   } catch (error) {
     if (error instanceof UserNotFoundError) {
       userServiceLogger.error(`User ID=${userId} did not exist when expected by reference: ${error}`);
@@ -108,15 +108,21 @@ export async function getPublicUserById(
   }
 }
 
-export async function getPrivateUserById(userId: UserId): Promise<PrivateUserData> {
+export async function getPrivateUserById(userId: UserId, transaction?: Transaction): Promise<PrivateUserData> {
   userServiceLogger.info(`Fetching private user by ID:, ${userId}`);
   if (userId === undefined || userId === null) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
   try {
-    const userDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
-    if (!userDoc.exists()) {
+    const userDocRef = doc(db, "Users", "Active", "Private", userId);
+    var userDoc;
+    if (transaction) {
+      userDoc = await transaction.get(userDocRef);
+    } else {
+      userDoc = await getDoc(userDocRef);
+    }
+    if (!userDoc.exists() || userDoc === undefined) {
       throw new UserNotFoundError(userId);
     }
     const userData = userDoc.data() as PrivateUserData;
@@ -133,17 +139,29 @@ export async function getPrivateUserById(userId: UserId): Promise<PrivateUserDat
   }
 }
 
-export async function getFullUserById(userId: UserId): Promise<UserData> {
+export async function getFullUserById(userId: UserId, transaction?: Transaction): Promise<UserData> {
   userServiceLogger.info(`Fetching Full user by ID: ${userId}`);
   if (userId === undefined) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
   try {
-    const publicDoc = await getDoc(doc(db, "Users", "Active", "Public", userId));
-    const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
+    const publicDocRef = doc(db, "Users", "Active", "Public", userId);
+    var publicDoc;
+    if (transaction) {
+      publicDoc = await transaction.get(publicDocRef);
+    } else {
+      publicDoc = await getDoc(publicDocRef);
+    }
+    const privateDocRef = doc(db, "Users", "Active", "Private", userId);
+    var privateDoc;
+    if (transaction) {
+      privateDoc = await transaction.get(privateDocRef);
+    } else {
+      privateDoc = await getDoc(privateDocRef);
+    }
 
-    if (!publicDoc.exists() && !privateDoc.exists()) {
+    if (!publicDoc.exists() || publicDoc === undefined || !privateDoc.exists() || privateDoc === undefined) {
       throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
     }
 
@@ -240,7 +258,6 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
     const publicDataToUpdate = extractPublicUserData(newData);
     const privateDataToUpdate = extractPrivateUserData(newData);
 
-    console.log("publicDataToUpdate", publicDataToUpdate);
     // Update public & private user data
     if (transaction) {
       transaction.update(publicUserDocRef, publicDataToUpdate);
