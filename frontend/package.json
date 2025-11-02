@@ -64,7 +64,6 @@
     "react-image-crop": "^11.0.10",
     "react-loading-skeleton": "^3.4.0",
     "react-sortablejs": "^6.1.4",
-    "react-tailwindcss-datepicker": "^1.6.6",
     "sortablejs": "^1.15.6",
     "uuid": "^10.0.0"
   },

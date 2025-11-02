@@ -1,13 +1,12 @@
 "use client";
 import OrganiserFilterDialog, {
-  DEFAULT_END_DATE,
+  DEFAULT_DATE_RANGE,
   DEFAULT_EVENT_STATUS,
   DEFAULT_EVENT_TYPE,
   DEFAULT_MAX_PRICE,
   DEFAULT_MIN_PRICE,
   DEFAULT_SEARCH,
   DEFAULT_SORT_BY_CATEGORY,
-  DEFAULT_START_DATE,
   SortByCategory,
 } from "@/components/Filter/OrganiserFilterDialog";
 import OrganiserFilterDialogMobile from "@/components/Filter/OrganiserFilterDialogMobile";
@@ -29,6 +28,7 @@ import {
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { useEffect, useLayoutEffect, useState } from "react";
+import { DateRange } from "react-day-picker";
 
 export default function OrganiserDashboard() {
   const [sortByCategoryValue, setSortByCategoryValue] = useState<SortByCategory>(DEFAULT_SORT_BY_CATEGORY);
@@ -41,20 +41,8 @@ export default function OrganiserDashboard() {
   const [appliedEventTypeValue, setAppliedEventTypeValue] = useState<string>(DEFAULT_EVENT_TYPE);
   const [minPriceValue, setMinPriceValue] = useState<number | null>(DEFAULT_MIN_PRICE);
   const [maxPriceValue, setMaxPriceValue] = useState<number | null>(DEFAULT_MAX_PRICE);
-  const [dateRange, setDateRange] = useState<{
-    startDate: string;
-    endDate: string;
-  }>({
-    startDate: DEFAULT_START_DATE,
-    endDate: DEFAULT_END_DATE,
-  });
-  const [appliedDateRange, setAppliedDateRange] = useState<{
-    startDate: string;
-    endDate: string;
-  }>({
-    startDate: DEFAULT_START_DATE,
-    endDate: DEFAULT_END_DATE,
-  });
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
 
   const { user } = useUser();
   const [loading, setLoading] = useState(true);
@@ -114,9 +102,9 @@ export default function OrganiserDashboard() {
     }
 
     // Filter by DATERANGE
-    if (dateRange.startDate && dateRange.endDate) {
-      const startDateObj = setDateToStartOfDay(new Date(dateRange.startDate));
-      const endDateObj = setDateToEndOfDay(new Date(dateRange.endDate));
+    if (dateRange.from && dateRange.to) {
+      const startDateObj = setDateToStartOfDay(dateRange.from);
+      const endDateObj = setDateToEndOfDay(dateRange.to);
       let newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
         Timestamp.fromDate(startDateObj),
@@ -189,7 +177,7 @@ export default function OrganiserDashboard() {
           />
         </div>
       </div>
-      <div className="flex justify-center">
+      <div className="flex justify-center pb-10">
         <div className="hidden lg:block mr-4">
           <OrganiserFilterDialog
             allEventsDataList={allEventsDataList}
@@ -212,7 +200,7 @@ export default function OrganiserDashboard() {
           />
         </div>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto lg:h-[80vh] w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto h-full w-full">
             {loadingEventDataList.map((event, eventIdx) => {
               return (
                 <div className="w-full" key={eventIdx}>
@@ -247,7 +235,7 @@ export default function OrganiserDashboard() {
             </div>
           </div>
         ) : (
-          <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto lg:h-[80vh]">
+          <div className="z-5 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 justify-items-center lg:max-h-screen lg:overflow-y-auto h-full">
             {filterEventsBySortBy(eventDataList, appliedSortByCategoryValue).map((event, eventIdx) => {
               return (
                 <div className="w-full" key={eventIdx}>

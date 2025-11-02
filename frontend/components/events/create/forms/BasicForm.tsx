@@ -52,7 +52,8 @@ type BasicInformationProps = BasicData & {
   setLocationError: (value: string) => void;
 };
 
-export function BasicInformation({
+export function 
+BasicInformation({
   name,
   location,
   startDate,
@@ -247,6 +248,7 @@ export function BasicInformation({
             onChange={(e) => updateField({ name: e.target.value })}
             className="rounded-md focus:ring-0"
             size="lg"
+            maxLength={100}
           />
         </div>
         <div>

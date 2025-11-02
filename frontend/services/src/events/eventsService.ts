@@ -177,7 +177,8 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
     }
 
     const eventCollectionRef = collection(db, CollectionPaths.Events, EventStatus.Active, EventPrivacy.Public);
-    const searchKeywords = tokenizeText(nameKeyword);
+    // only search by the first 8 tokens to avoid performance issues
+    const searchKeywords = tokenizeText(nameKeyword).slice(0, 8);
     const eventTokenMatchCount: Map<string, number> = await fetchEventTokenMatches(eventCollectionRef, searchKeywords);
 
     const eventsData = await processEventData(eventCollectionRef, eventTokenMatchCount);
