@@ -1,5 +1,8 @@
 package com.functions.global.controllers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
 import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
 import com.functions.global.handlers.HandlerRegistry;
@@ -7,12 +10,12 @@ import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
+import com.functions.stripe.config.StripeConfig;
+import com.functions.stripe.handlers.StripeWebhookHandler;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Unified endpoint that routes requests to specific handlers based on the endpoint type.
@@ -29,6 +32,12 @@ public class GlobalAppController implements HttpFunction {
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(204); // No Content
+            return;
+        }
+
+        if (StripeConfig.JAVA_STRIPE_WEBHOOK_ENABLED && request.getFirstHeader("Stripe-Signature").isPresent()) {
+            logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
+            StripeWebhookHandler.handleWebhook(request, response);
             return;
         }
 
@@ -102,8 +111,8 @@ public class GlobalAppController implements HttpFunction {
 
     private void setResponseHeaders(HttpResponse response) {
         response.appendHeader("Access-Control-Allow-Origin", "*");
-        response.appendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        response.appendHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Stripe-Signature");
         response.appendHeader("Access-Control-Max-Age", "3600"); // Cache preflight for 1 hour
         response.appendHeader("Content-Type", "application/json; charset=UTF-8");
     }

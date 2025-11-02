@@ -9,7 +9,7 @@ import lombok.Data;
 public class EventMetadata {
 	private Map<String, Purchaser> purchaserMap;
 	private Integer completeTicketCount;
-	private List<String> completedStripeCheckoutSession;
+	private List<String> completedStripeCheckoutSessionIds;
 	private String organiserId;
 	private List<String> orderIds;
 }
