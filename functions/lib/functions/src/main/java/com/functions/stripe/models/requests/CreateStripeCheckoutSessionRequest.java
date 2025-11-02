@@ -2,7 +2,7 @@ package com.functions.stripe.models.requests;
 
 import java.net.URI;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -16,8 +16,8 @@ public record CreateStripeCheckoutSessionRequest(
         @JsonProperty("cancelUrl") String cancelUrl,
         @JsonProperty("successUrl") String successUrl,
         @JsonProperty("completeFulfilmentSession") Boolean completeFulfilmentSession,
-        @JsonProperty("fulfilmentSessionId") @Nullable String fulfilmentSessionId,
-        @JsonProperty("endFulfilmentEntityId") @Nullable String endFulfilmentEntityId
+        @JsonProperty("fulfilmentSessionId") @Nonnull String fulfilmentSessionId,
+        @JsonProperty("endFulfilmentEntityId") @Nonnull String endFulfilmentEntityId
 ) {
     /**
      * Validates that all required fields are present and have valid values.

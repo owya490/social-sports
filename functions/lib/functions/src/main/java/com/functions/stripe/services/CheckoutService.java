@@ -292,6 +292,7 @@ public class CheckoutService {
             Session session = Session.create(params, 
                     com.stripe.net.RequestOptions.builder()
                             .setStripeAccount(stripeAccountId)
+                            .setIdempotencyKey(generateIdempotencyKey(request))
                             .build());
 
             logger.info("Created checkout session {} for event {}, linked to organiser {} and Stripe account {}. Secured {} tickets at {} cents",
@@ -304,6 +305,18 @@ public class CheckoutService {
                     request.eventId(), e.getMessage(), e);
             throw new RuntimeException("Failed to create Stripe checkout session for event " + request.eventId() + ": " + e.getMessage(), e);
         }
+    }
+
+    private static String generateIdempotencyKey(CreateStripeCheckoutSessionRequest request) {
+        if (request.endFulfilmentEntityId() == null || request.fulfilmentSessionId() == null) {
+            throw new RuntimeException("End fulfilment entity ID and fulfilment session ID are required");
+        }
+
+        return String.format("idempotency_key_%s_%s_%s", 
+            request.eventId(),
+            request.endFulfilmentEntityId(),
+            request.fulfilmentSessionId()
+        );
     }
 }
 
