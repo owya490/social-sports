@@ -1,364 +1,82 @@
-"use client";
-import FilterBanner from "@/components/Filter/FilterBanner";
-import EventCard from "@/components/events/EventCard";
-import { UserCard } from "@/components/users/UserCard";
-import { EmptyEventData, EventData, SearchType } from "@/interfaces/EventTypes";
-import { PublicUserData } from "@/interfaces/UserTypes";
-import { Logger } from "@/observability/logger";
-import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
-import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
-import { getErrorUrl } from "@/services/src/urlUtils";
-import {
-  getAllPublicUsers,
-  getPublicUserById,
-  getUsernameMapping,
-  searchUserByKeyword,
-} from "@/services/src/users/usersService";
-import { sleep } from "@/utilities/sleepUtil";
-import { Alert } from "@material-tailwind/react";
-import Head from "next/head";
-import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useLayoutEffect, useState } from "react";
+import type { Metadata, Viewport } from "next";
+import Dashboard from "./dashboard";
 
-export default function Dashboard() {
-  const logger = new Logger("DashboardLogger");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
-  const [eventDataList, setEventDataList] = useState<EventData[]>([
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-    EmptyEventData,
-  ]);
-  const [searchDataList, setSearchDataList] = useState<EventData[]>([]);
-  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [_srcLocation, setSrcLocation] = useState<string>("");
-  const [triggerFilterApply, setTriggerFilterApply] = useState<boolean | undefined>(undefined);
-  const [endLoading, setEndLoading] = useState<boolean | undefined>(undefined);
-  const [publicUserDataList, setPublicUserDataList] = useState<PublicUserData[]>([]);
-  const [searchType, setSearchType] = useState<SearchType>(SearchType.EVENT);
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
-  const getQueryParams = () => {
-    // if (typeof window === "undefined") {
-    if (window === undefined) {
-      // Return some default or empty values when not in a browser environment
-      return { event: null, location: null, user: null };
-    }
-    const searchParams = new URLSearchParams(window.location.search);
-    return {
-      event: searchParams.get("event"),
-      location: searchParams.get("location"),
-      user: searchParams.get("user"),
-    };
-  };
+export const metadata: Metadata = {
+  metadataBase: new URL("https://www.sportshub.net.au"),
+  title: "SPORTSHUB | Find your next social sport session!",
+  description:
+    "Discover and book local sports events on SPORTSHUB. Find volleyball, badminton, pickleball and more recreational sports activities near you.",
 
-  useLayoutEffect(() => {
-    window.scrollTo(0, 0);
-  });
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 
-  function determineSearchType(
-    eventParameter: string | null,
-    locationParameter: string | null,
-    userParameter: string | null
-  ): SearchType {
-    var type = SearchType.EVENT;
-    if (eventParameter !== null) {
-      type = SearchType.EVENT;
-    } else if (userParameter !== null) {
-      type = SearchType.USER;
-    } else {
-      type = SearchType.EVENT;
-    }
-    setSearchType(type);
-    return type;
-  }
+  icons: {
+    icon: [
+      { url: "/images/BlackLogo-Invert.svg", type: "image/svg+xml" },
+      { url: "/images/BlackLogo.svg", type: "image/svg+xml", media: "(prefers-color-scheme: light)" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "512x512" },
+      { url: "/apple-touch-icon-dark.png", sizes: "512x512", media: "(prefers-color-scheme: light)" },
+    ],
+  },
 
-  useEffect(() => {
-    const fetchSearch = async () => {
-      setLoading(true);
-      const { event, location, user } = getQueryParams();
-      const type = determineSearchType(event, location, user);
-      switch (type) {
-        case SearchType.EVENT:
-          await fetchEvents(event || "", location || "");
-          return;
-        case SearchType.USER:
-          await fetchUsers(user || "");
-          return;
-        default:
-          await fetchEvents(event || "", location || "");
-          return;
-      }
-    };
+  openGraph: {
+    title: "SPORTSHUB | Find your next social sport session!",
+    description:
+      "Discover and book local sports events on SPORTSHUB. Find volleyball, badminton, pickleball and more recreational sports activities near you.",
+    url: "https://www.sportshub.net.au",
+    siteName: "SPORTSHUB",
+    images: [
+      {
+        url: "https://www.sportshub.net.au/images/logo.png",
+        width: 300,
+        height: 243,
+        alt: "SPORTSHUB Logo",
+      },
+    ],
+    type: "website",
+  },
 
-    const fetchEvents = async (event: string, location: string) => {
-      await sleep(500);
-      if (event === "UNDEFINED") {
-        return false;
-      }
+  twitter: {
+    card: "summary_large_image",
+    title: "SPORTSHUB | Find your next social sport session!",
+    description:
+      "Discover and book local sports events on SPORTSHUB. Find volleyball, badminton, pickleball and more recreational sports activities near you.",
+    images: ["https://www.sportshub.net.au/images/logo.png"],
+  },
 
-      if (typeof event === "string" && typeof location === "string") {
-        if (event.trim() === "") {
-          const events = await getAllEvents();
-          setEventDataList(events);
-          setSearchDataList(events);
-          setAllEventsDataList(events);
-          setPublicUserDataList([]);
-        } else {
-          try {
-            const events = await searchEventsByKeyword(event, location);
-            let tempEventDataList: EventData[] = [];
-            for (const singleEvent of events) {
-              const eventData = await getEventById(singleEvent.eventId);
-              tempEventDataList.push(eventData);
-            }
-            setEventDataList(tempEventDataList);
-            setSearchDataList(tempEventDataList);
-            setPublicUserDataList([]);
-          } catch (error) {
-            logger.error(`Error: ${error}`);
-            router.push(getErrorUrl(error));
-          }
-        }
-      }
-      setSrcLocation(location);
-      if (location.trim() !== "") {
-        if (triggerFilterApply === undefined) {
-          setTriggerFilterApply(false);
-        } else {
-          setTriggerFilterApply(!triggerFilterApply);
-        }
-      } else {
-        setLoading(false);
-      }
-    };
+  alternates: {
+    canonical: "https://www.sportshub.net.au",
+  },
 
-    const fetchUsers = async (user: string) => {
-      try {
-        if (typeof user === "string") {
-          // if the search is empty, get everyone and display
-          if (user.trim() === "") {
-            const users = await getAllPublicUsers();
-            setPublicUserDataList(users);
-          } else {
-            // the search is not empty
-            // 1. try search the user up by username and if so add it to the first element of the list
-            var users: PublicUserData[] = [];
-            try {
-              const { userId } = await getUsernameMapping(user);
-              users.push(await getPublicUserById(userId));
-            } catch {
-              // no-op - this is fine, just search normally
-            }
-            // 2. if it doesn't exist, try do token search and dedupe the list by userId
-            const dedupedUsers = (await searchUserByKeyword(user)).filter(
-              (user) => !users.some((u) => u.userId === user.userId)
-            );
-            users = [...users, ...dedupedUsers];
-            setPublicUserDataList(users);
-          }
-        }
-      } catch (error) {
-        logger.error(`Error: ${error}`);
-        router.push(getErrorUrl(error));
-      }
-      setEventDataList([]);
-      setLoading(false);
-    };
-    setLoading(true);
-    fetchSearch();
-  }, [searchParams]);
+  keywords: [
+    "sportshub",
+    "sports events",
+    "volleyball",
+    "badminton",
+    "pickleball",
+    "find sports near me",
+    "book sports",
+    "sports events sydney",
+    "volleyball sydney",
+    "badminton sydney",
+    "pickleball sydney",
+    "social sports",
+    "social sports sydney",
+  ],
 
-  // useEffect listener for when filtering finishes
-  useEffect(() => {
-    const finishLoading = async () => {
-      if (endLoading !== undefined) {
-        // Something wrong with endLoading in the filter stuff
-        await sleep(500);
-        setLoading(false);
-      }
-    };
-    finishLoading();
-  }, [endLoading]);
+  applicationName: "SPORTSHUB",
+};
 
-  useEffect(() => {
-    const login = searchParams?.get("login");
-    if (login === "success") {
-      setShowLoginSuccess(true);
-
-      router.replace("/");
-    }
-  }, [router]);
-
-  useEffect(() => {
-    let timer: number | undefined;
-
-    if (showLoginSuccess) {
-      timer = window.setTimeout(() => {
-        setShowLoginSuccess(false);
-      }, 3000);
-    }
-
-    return () => {
-      if (timer) {
-        clearTimeout(timer);
-      }
-    };
-  }, [showLoginSuccess]);
-
-  return (
-    <>
-      <Head>
-        {/* SEO Meta Tags for Dashboard/Homepage */}
-        <title>SPORTSHUB | Find Sports Events Near You</title>
-        <meta
-          name="description"
-          content="Discover and book local sports events on SPORTSHUB. Find basketball, volleyball, soccer, tennis and more recreational sports activities in your area."
-        />
-        <meta
-          name="keywords"
-          content="sportshub, local sports events, book sports, recreational sports, australia sports, find sports near me, sports activities"
-        />
-
-        {/* Open Graph Tags for Social Sharing */}
-        <meta property="og:title" content="SPORTSHUB Dashboard - Find Sports Events Near You" />
-        <meta
-          property="og:description"
-          content="Discover and book local sports events. Basketball, volleyball, soccer, tennis and more!"
-        />
-        <meta property="og:url" content="https://www.sportshub.net.au/" />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://www.sportshub.net.au/images/logo.png" />
-
-        {/* Twitter Card Tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="SPORTSHUB Dashboard - Find Sports Events Near You" />
-        <meta
-          name="twitter:description"
-          content="Discover and book local sports events. Basketball, volleyball, soccer, tennis and more!"
-        />
-        <meta name="twitter:image" content="https://www.sportshub.net.au/images/logo.png" />
-
-        {/* Additional SEO Tags */}
-        <meta name="robots" content="index, follow" />
-        <meta name="author" content="SPORTSHUB" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="canonical" href="https://www.sportshub.net.au/" />
-
-        {/* Local Business Schema for Australian Sports Platform */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            name: "SPORTSHUB Dashboard",
-            description: "Find and book local sports events in Australia",
-            url: "https://www.sportshub.net.au/",
-            mainEntity: {
-              "@type": "SearchResultsPage",
-              name: "Sports Events Search",
-              description: "Search and discover local sports activities and events",
-            },
-            breadcrumb: {
-              "@type": "BreadcrumbList",
-              itemListElement: [
-                {
-                  "@type": "ListItem",
-                  position: 1,
-                  name: "Home",
-                  item: "https://www.sportshub.net.au/",
-                },
-              ],
-            },
-          })}
-        </script>
-      </Head>
-
-      <div>
-        <div className="flex justify-center">
-          <FilterBanner
-            eventDataList={searchDataList}
-            allEventsDataList={allEventsDataList}
-            setEventDataList={setEventDataList}
-            // srcLocation={srcLocation} // DISABLED LOCATION SEARCH FOR NOW
-            srcLocation={""}
-            setSrcLocation={setSrcLocation}
-            triggerFilterApply={triggerFilterApply}
-            endLoading={endLoading}
-            setEndLoading={setEndLoading}
-          />
-        </div>
-        <div className="absolute ml-auto mr-auto left-0 right-0 top-32 w-fit z-50">
-          <Alert open={showLoginSuccess} color="green">
-            Successfully logged in!
-          </Alert>
-        </div>
-        <div className="flex flex-col items-center w-full min-h-[60vh] mt-4 px-3 sm:px-20 lg:px-3 pb-10">
-          {loading === false &&
-            ((searchType === SearchType.EVENT && eventDataList.length === 0) ||
-              (searchType === SearchType.USER && publicUserDataList.length === 0)) && (
-              <div className="flex flex-col justify-center items-center w-full">
-                <div>
-                  <Image
-                    src={noSearchResultLineDrawing}
-                    alt="noSearchResultLineDrawing"
-                    width={500}
-                    height={300}
-                    className="opacity-60"
-                  />
-                  <div className="text-gray-600 font-medium text-lg sm:text-2xl text-center">
-                    Sorry, we couldn&apos;t find any results
-                  </div>
-                </div>
-              </div>
-            )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-6 gap-4 lg:gap-8 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
-            {searchType === SearchType.USER
-              ? publicUserDataList
-                  .filter((user) => user.isSearchable)
-                  .map((user, userIdx) => {
-                    return (
-                      <UserCard
-                        key={userIdx}
-                        userId={user.userId}
-                        firstName={user.firstName}
-                        surname={user.surname}
-                        username={user.username}
-                        email={user.publicContactInformation.email}
-                        image={user.profilePicture}
-                        description={user.bio}
-                        loading={loading}
-                      />
-                    );
-                  })
-              : eventDataList
-                  .sort((a, b) => b.accessCount - a.accessCount)
-                  .map((event, eventIdx) => {
-                    return (
-                      <EventCard
-                        eventId={event.eventId}
-                        image={event.image}
-                        thumbnail={event.thumbnail}
-                        name={event.name}
-                        organiser={event.organiser}
-                        startTime={event.startDate}
-                        location={event.location}
-                        price={event.price}
-                        vacancy={event.vacancy}
-                        loading={loading}
-                        key={eventIdx}
-                      />
-                    );
-                  })}
-          </div>
-        </div>
-      </div>
-    </>
-  );
+export default function Page() {
+  return <Dashboard />;
 }
