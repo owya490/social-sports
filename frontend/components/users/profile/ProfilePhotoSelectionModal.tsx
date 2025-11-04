@@ -10,6 +10,7 @@ import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import imageCompression from "browser-image-compression";
 import { useEffect, useState } from "react";
+import { Logger } from "@/observability/logger";
 
 interface ProfilePhotoSelectionModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface ProfilePhotoSelectionModalProps {
 }
 
 export const ProfilePhotoSelectionModal = ({ isOpen, onClose, user, setUser }: ProfilePhotoSelectionModalProps) => {
+  const logger = new Logger("ProfilePhotoSelectionModalLogger");
   const [profilePhotoUrls, setProfilePhotoUrls] = useState<string[]>([]);
   const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +36,7 @@ export const ProfilePhotoSelectionModal = ({ isOpen, onClose, user, setUser }: P
           setSelectedPhotoUrl(user.profilePicture || "");
         })
         .catch((error) => {
-          console.error("Error fetching profile photos:", error);
+          logger.error("Error fetching profile photos:", error);
           setErrorMessage("Failed to load profile photos");
         })
         .finally(() => {
@@ -70,7 +72,7 @@ export const ProfilePhotoSelectionModal = ({ isOpen, onClose, user, setUser }: P
       setSelectedPhotoUrl(downloadUrl);
       setErrorMessage(null);
     } catch (error) {
-      console.error("Error during image upload:", error);
+      logger.error("Error during image upload:", error);
       setErrorMessage("Failed to upload image. Please try again.");
     } finally {
       setIsUploading(false);
@@ -99,7 +101,7 @@ export const ProfilePhotoSelectionModal = ({ isOpen, onClose, user, setUser }: P
       bustUserLocalStorageCache();
       handleClose();
     } catch (error) {
-      console.error("Error updating profile picture:", error);
+      logger.error("Error updating profile picture:", error);
       setErrorMessage("Failed to update profile picture. Please try again.");
     } finally {
       setIsUploading(false);
@@ -124,7 +126,7 @@ export const ProfilePhotoSelectionModal = ({ isOpen, onClose, user, setUser }: P
           <DialogPanel className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-white rounded-lg shadow-xl">
             <div className="flex items-center justify-between p-6 border-b border-core-outline">
               <h2 className="text-2xl font-semibold text-core-text">Change Profile Picture</h2>
-              <button onClick={handleClose} className="text-gray-400 hover:text-gray-600" disabled={isUploading}>
+              <button type="button" onClick={handleClose} className="text-gray-400 hover:text-gray-600" disabled={isUploading}>
                 <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
@@ -155,6 +157,7 @@ export const ProfilePhotoSelectionModal = ({ isOpen, onClose, user, setUser }: P
             {!isLoading && (
               <div className="flex justify-end gap-3 p-6 border-t border-core-outline bg-white">
                 <button
+                  type="button"
                   onClick={handleClose}
                   className="px-5 py-2.5 text-sm font-medium border border-core-outline rounded-md hover:bg-core-hover"
                   disabled={isUploading}
@@ -162,6 +165,7 @@ export const ProfilePhotoSelectionModal = ({ isOpen, onClose, user, setUser }: P
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={handleConfirm}
                   className="px-5 py-2.5 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800 disabled:opacity-50"
                   disabled={!selectedPhotoUrl || isUploading}
