@@ -13,6 +13,7 @@ export interface AllImageData {
 export const EVENT_THUMBNAIL_PATH = "/eventThumbnails";
 export const EVENT_IMAGE_PATH = "/eventImages";
 export const FORM_IMAGE_PATH = "/formImages";
+export const PROFILE_PICTURE_PATH = "/profilepicture";
 
 export const imageServiceLogger = new Logger("imageServiceLogger");
 
@@ -69,6 +70,11 @@ export async function getUsersEventImagesUrls(userID: string): Promise<string[]>
 
 export async function getUsersFormImagesUrls(userId: UserId): Promise<string[]> {
   const userRef = ref(storage, "users/" + userId + FORM_IMAGE_PATH);
+  return await fetchAndSortImageUrls(userRef);
+}
+
+export async function getUsersProfilePhotosUrls(userId: UserId): Promise<string[]> {
+  const userRef = ref(storage, "users/" + userId + PROFILE_PICTURE_PATH);
   return await fetchAndSortImageUrls(userRef);
 }
 
@@ -133,7 +139,7 @@ export async function getEventImageUrls(eventID: string): Promise<string[]> {
 }
 
 export async function uploadProfilePhoto(userID: string, file: File): Promise<string> {
-  const imagePath = `users/${userID}/profilepicture${generateImageId()}`;
+  const imagePath = `users/${userID}${PROFILE_PICTURE_PATH}/${generateImageId()}`;
   const imageRef = ref(storage, imagePath);
   const url = await uploadImage(imageRef, file);
 
