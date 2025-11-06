@@ -76,7 +76,6 @@ export const metadata: Metadata = {
     "social sports",
     "social sports sydney",
     "local sports events",
-    "book sports",
     "recreational sports",
     "australia sports",
     "sports activities"

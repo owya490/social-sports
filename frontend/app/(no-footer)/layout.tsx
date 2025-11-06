@@ -1,5 +1,5 @@
-import React from "react";
 import type { Metadata, Viewport } from "next";
+import React from "react";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -9,8 +9,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.sportshub.net.au"),
   title: "SPORTSHUB | Find your next social sport session!",
-  description:
-    "SPORTSHUB helps you organise local sports events. Build your community and watch it grow.",
+  description: "SPORTSHUB helps you organise local sports events. Build your community and watch it grow.",
 
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
@@ -29,6 +28,9 @@ export const metadata: Metadata = {
     ],
   },
 
+  robots: "index, follow",
+  authors: [{ name: "SPORTSHUB" }],
+  
   openGraph: {
     title: "SPORTSHUB | Find your next social sport session!",
     description:
@@ -72,17 +74,20 @@ export const metadata: Metadata = {
     "pickleball sydney",
     "social sports",
     "social sports sydney",
+    "local sports events",
+    "recreational sports",
+    "australia sports",
+    "sports activities",
   ],
 
   applicationName: "SPORTSHUB",
 };
 
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -91,11 +96,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             "@type": "Organization",
             name: "SPORTSHUB",
             url: "https://www.sportshub.net.au",
-            logo: "https://www.sportshub.net.au/images/logo.png", 
-            sameAs: [
-              "https://www.instagram.com/sportshub.net.au/",
-              "https://www.linkedin.com/company/sportshub-au",
-            ],
+            logo: "https://www.sportshub.net.au/images/logo.png",
+            sameAs: ["https://www.instagram.com/sportshub.net.au/", "https://www.linkedin.com/company/sportshub-au"],
           }),
         }}
       />
