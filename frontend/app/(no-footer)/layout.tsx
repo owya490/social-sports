@@ -56,10 +56,6 @@ export const metadata: Metadata = {
     images: ["https://www.sportshub.net.au/images/logo.png"],
   },
 
-  alternates: {
-    canonical: "https://www.sportshub.net.au",
-  },
-
   keywords: [
     "sportshub",
     "sports events",
