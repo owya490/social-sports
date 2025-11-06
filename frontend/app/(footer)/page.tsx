@@ -16,7 +16,6 @@ import {
 } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
-import Head from "next/head";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
