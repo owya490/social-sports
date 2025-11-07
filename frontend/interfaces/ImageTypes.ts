@@ -34,6 +34,9 @@ interface TypeConfig {
   supportedTypes: string[];
 }
 
+export const DEFAULT_EVENT_IMAGE_URL =
+  "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
+
 export const ImageConfig: Record<ImageType, TypeConfig> = {
   [ImageType.THUMBNAIL]: {
     allowedOrientations: [ImageOrientation.LANDSCAPE], // Only landscape for thumbnails
