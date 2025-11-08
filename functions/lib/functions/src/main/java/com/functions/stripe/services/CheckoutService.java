@@ -6,14 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
-import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 import com.functions.users.models.PrivateUserData;
-import com.google.cloud.Timestamp;
+import com.functions.users.utils.UsersUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
@@ -30,6 +30,36 @@ public class CheckoutService {
     private static final Logger logger = LoggerFactory.getLogger(CheckoutService.class);
 
     /**
+     * Data transfer object holding transaction results needed for Stripe session creation.
+     */
+    private static class CheckoutTransactionResult {
+        final String eventId;
+        final String eventName;
+        final Integer price;
+        final Boolean stripeFeeToCustomer;
+        final Boolean promotionalCodesEnabled;
+        final String stripeAccountId;
+        final String organiserId;
+        final Integer quantity;
+        final String reservationId; // For idempotency
+
+        CheckoutTransactionResult(String eventId, String eventName, Integer price, 
+                                 Boolean stripeFeeToCustomer, Boolean promotionalCodesEnabled,
+                                 String stripeAccountId, String organiserId, Integer quantity,
+                                 String reservationId) {
+            this.eventId = eventId;
+            this.eventName = eventName;
+            this.price = price;
+            this.stripeFeeToCustomer = stripeFeeToCustomer;
+            this.promotionalCodesEnabled = promotionalCodesEnabled;
+            this.stripeAccountId = stripeAccountId;
+            this.organiserId = organiserId;
+            this.quantity = quantity;
+            this.reservationId = reservationId;
+        }
+    }
+
+    /**
      * Creates a Stripe checkout session for an event within a Firestore transaction.
      * This ensures atomic updates to event vacancy and Stripe account status.
      *
@@ -39,181 +69,159 @@ public class CheckoutService {
     public static CreateStripeCheckoutSessionResponse createStripeCheckoutSession(
             CreateStripeCheckoutSessionRequest request) {
         try {
-            // Explicitly initialize Stripe configuration if not already done
             StripeConfig.initialize();
+            logger.info("Creating checkout session for event {} ({} tickets)", request.eventId(), request.quantity());
 
-            logger.info("Creating stripe checkout session for event {} for {} tickets.",
-                    request.eventId(), request.quantity());
+            // Validate Stripe account OUTSIDE transaction to avoid non-idempotent retries
+            String organiserId = EventsUtils.fetchOrganiserIdForEvent(request.eventId(), request.isPrivate());
+            String stripeAccountId = validateAndGetStripeAccount(organiserId);
 
-            // Run the entire checkout process in a Firestore transaction to ensure atomicity of updates.
-            CreateStripeCheckoutSessionResponse response = FirebaseService.createFirestoreTransaction(transaction -> {
+            // Execute transaction: validate event, reserve tickets, activate account if needed
+            CheckoutTransactionResult txResult = FirebaseService.createFirestoreTransaction(transaction -> {
                 try {
-                    return createCheckoutSessionInTransaction(transaction, request);
+                    return executeCheckoutTransaction(transaction, request, organiserId, stripeAccountId);
+                } catch (CheckoutDateTimeException e) {
+                    throw e; // Rethrow business exceptions
                 } catch (Exception e) {
-                    if (e instanceof CheckoutDateTimeException) {
-                        throw e;
-                    }
-
-                    logger.error("Error in checkout transaction for event {}: {}", 
-                            request.eventId(), e.getMessage(), e);
-                    throw new RuntimeException("Checkout transaction failed", e);
+                    logger.error("Checkout transaction failed for event {}: {}", request.eventId(), e.getMessage(), e);
+                    throw new RuntimeException("Checkout transaction failed: " + e.getMessage(), e);
                 }
             });
 
-            return response;
+            // Create Stripe session OUTSIDE transaction with idempotent key
+            logger.info("Transaction committed for event {}. Creating Stripe session...", request.eventId());
+            String checkoutUrl = createStripeCheckoutSession(txResult, request);
+            
+            logger.info("Checkout session created for event {}, organiser {}, account {}", 
+                    request.eventId(), txResult.organiserId, txResult.stripeAccountId);
+            
+            return new CreateStripeCheckoutSessionResponse(checkoutUrl);
+            
+        } catch (StripeException e) {
+            logger.error("Stripe session creation failed for event {}: {}", request.eventId(), e.getMessage(), e);
+            throw new RuntimeException("Stripe session creation failed: " + e.getMessage(), e);
         } catch (Exception e) {
-            logger.error("Failed to create checkout session for event {}: {}", 
-                    request.eventId(), e.getMessage(), e);
-            throw new RuntimeException("Failed to create checkout session", e);
+            logger.error("Checkout failed for event {}: {}", request.eventId(), e.getMessage(), e);
+            throw new RuntimeException("Checkout failed: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Creates a checkout session within a Firestore transaction.
+     * Executes the checkout transaction: validates event, reserves tickets, activates Stripe account if needed.
      * All reads must happen before writes to comply with Firestore transaction rules.
+     * NO external I/O - only Firestore operations.
+     * 
+     * @param organiserId Pre-fetched organiser ID
+     * @param stripeAccountId Pre-validated Stripe account ID
+     * @return Transaction result containing data needed for Stripe session creation
      */
-    private static CreateStripeCheckoutSessionResponse createCheckoutSessionInTransaction(
-            Transaction transaction, CreateStripeCheckoutSessionRequest request) throws Exception {
+    private static CheckoutTransactionResult executeCheckoutTransaction(
+            Transaction transaction, CreateStripeCheckoutSessionRequest request, 
+            String organiserId, String stripeAccountId) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
-        String privacyPath = request.isPrivate() ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
         
-        // PHASE 1: PERFORM ALL READS FIRST
-
-        // Read 1: Get event document
-        DocumentReference eventRef = db.collection(CollectionPaths.EVENTS + "/" + CollectionPaths.ACTIVE + "/" + privacyPath)
-                .document(request.eventId());
+        // PHASE 1: READ event and organiser
+        DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(), request.isPrivate());
         DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
 
         if (!eventSnapshot.exists()) {
-            logger.error("Event {} does not exist in path {}", request.eventId(), eventRef.getPath());
-            throw new RuntimeException("Event does not exist in path " + eventRef.getPath());
+            logger.error("Event " + request.eventId() + " does not exist");
+            throw new RuntimeException("Event " + request.eventId() + " does not exist");
         }
 
         EventData event = eventSnapshot.toObject(EventData.class);
         if (event == null) {
-            logger.error("Event {} data is null", request.eventId());
-            throw new RuntimeException("Event data is null for event ID: " + request.eventId());
+            logger.error("Event " + request.eventId() + " data is null");
+            throw new RuntimeException("Event " + request.eventId() + " data is null");
         }
 
-        logger.info("Event info retrieved for {}", request.eventId());
-
-        // Validate event is not paused, concluded, or past registration deadline
-        Boolean paused = event.getPaused() != null ? event.getPaused() : false;
-        Timestamp endDate = event.getEndDate();
-        Timestamp registrationDeadline = event.getRegistrationDeadline();
-
-        if (endDate == null || registrationDeadline == null) {
-            logger.error("Event {} is missing required date fields", request.eventId());
-            throw new RuntimeException("Event is missing required date fields for event ID: " + request.eventId());
-        }
-
-        Instant now = Instant.now();
-        Instant eventEndInstant = Instant.ofEpochSecond(endDate.getSeconds(), endDate.getNanos());
-        Instant registrationEndInstant = Instant.ofEpochSecond(
-                registrationDeadline.getSeconds(), registrationDeadline.getNanos());
-
-        if (now.isAfter(eventEndInstant) || now.isAfter(registrationEndInstant) || paused) {
-            logger.warn("Cannot checkout for event {}: concluded={}, past registration={}, paused={}",
-                    request.eventId(), now.isAfter(eventEndInstant), 
-                    now.isAfter(registrationEndInstant), paused);
-            throw new CheckoutDateTimeException("Cannot checkout for event " + request.eventId() + ": concluded=" + now.isAfter(eventEndInstant) + ", past registration=" + now.isAfter(registrationEndInstant) + ", paused=" + paused);
-        }
-
-        // Check payments are active
-        Boolean paymentsActive = event.getPaymentsActive();
-        if (paymentsActive == null || !paymentsActive) {
-            logger.error("Event {} does not have payments enabled", request.eventId());
+        // Validate event timing and status
+        EventsUtils.validateEventTiming(event, request.eventId());
+        
+        if (!Boolean.TRUE.equals(event.getPaymentsActive())) {
+            logger.error("Event " + request.eventId() + " does not have payments enabled");
             throw new RuntimeException("Event " + request.eventId() + " does not have payments enabled");
         }
 
-        // Read 2: Get organiser document
-        String organiserId = event.getOrganiserId();
-        if (organiserId == null || organiserId.isEmpty()) {
-            logger.error("Event {} is missing organiserId", request.eventId());
-            throw new RuntimeException("Event " + request.eventId() + " is missing organiserId");
+        // Verify event belongs to expected organiser
+        if (!organiserId.equals(event.getOrganiserId())) {
+            logger.error("Event " + request.eventId() + " organiser mismatch");
+            throw new RuntimeException("Event " + request.eventId() + " organiser mismatch");
         }
 
-        DocumentReference organiserRef = db.collection(CollectionPaths.USERS + "/" + CollectionPaths.ACTIVE + "/" + CollectionPaths.PRIVATE).document(organiserId);
+        // Read organiser to check if Stripe account needs activation
+        DocumentReference organiserRef = UsersUtils.getUserRef(db, organiserId);
         DocumentSnapshot organiserSnapshot = transaction.get(organiserRef).get();
 
         if (!organiserSnapshot.exists()) {
-            logger.error("Organiser {} does not exist", organiserId);
+            logger.error("Organiser " + organiserId + " does not exist");
             throw new RuntimeException("Organiser " + organiserId + " does not exist");
         }
 
         PrivateUserData organiser = organiserSnapshot.toObject(PrivateUserData.class);
         if (organiser == null) {
-            logger.error("Organiser {} data is null", organiserId);
+            logger.error("Organiser " + organiserId + " data is null");
             throw new RuntimeException("Organiser " + organiserId + " data is null");
         }
 
-        // Check organiser has Stripe account
-        String stripeAccountId = organiser.getStripeAccount();
-        if (stripeAccountId == null || stripeAccountId.isEmpty()) {
-            logger.error("Organiser {} does not have a Stripe account", organiserId);
-            throw new RuntimeException("Organiser " + organiserId + " does not have a Stripe account");
-        }
+        boolean needsActivation = Boolean.FALSE.equals(organiser.getStripeAccountActive());
 
-        // Check if Stripe account is active
-        Boolean stripeAccountActive = organiser.getStripeAccountActive();
-        boolean needsActivation = false;
-        
-        if (stripeAccountActive != null && stripeAccountActive == false) {
-            // Double check with Stripe API if account is actually active
-            try {
-                Account account = Account.retrieve(stripeAccountId);
-                if (account.getChargesEnabled() && account.getDetailsSubmitted()) {
-                    logger.info("Organiser {} has charges enabled and details submitted. Activating account.",
-                            organiserId);
-                    needsActivation = true;
-                } else {
-                    logger.error("Organiser {} Stripe account not active: chargesEnabled={}, detailsSubmitted={}",
-                            organiserId, account.getChargesEnabled(), account.getDetailsSubmitted());
-                    throw new RuntimeException("Organiser " + organiserId + " Stripe account not active: chargesEnabled=" + account.getChargesEnabled() + ", detailsSubmitted=" + account.getDetailsSubmitted());
-                }
-            } catch (StripeException e) {
-                logger.error("Failed to retrieve Stripe account {} for organiser {}: {}",
-                        stripeAccountId, organiserId, e.getMessage(), e);
-                throw new RuntimeException("Failed to retrieve Stripe account " + stripeAccountId + " for organiser " + organiserId + ": " + e.getMessage(), e);
-            }
-        }
-
-        // Check vacancy
+        // Validate vacancy and price
         Integer vacancy = event.getVacancy();
-        if (vacancy == null) {
-            logger.error("Event {} is missing vacancy field. Returning status=500", request.eventId());
-            throw new RuntimeException("Event " + request.eventId() + " is missing vacancy field");
-        }
-
-        if (vacancy < request.quantity()) {
-            logger.warn("Event {} does not have enough tickets: requested={}, available={}",
-                    request.eventId(), request.quantity(), vacancy);
-            throw new RuntimeException("Event " + request.eventId() + " does not have enough tickets: requested=" + request.quantity() + ", available=" + vacancy);
-        }
-
-        // Check price
         Integer price = event.getPrice();
-        if (price == null || (price < 100 && price != 0)) { // we don't want events to be less than stripe fees
-            logger.error("Event {} does not have a valid price: {}", request.eventId(), price);
-            throw new RuntimeException("Event " + request.eventId() + " does not have a valid price: " + price);
+        
+        if (vacancy == null) {
+            logger.error("Event " + request.eventId() + " missing vacancy field");
+            throw new RuntimeException("Event " + request.eventId() + " missing vacancy field");
+        }
+        if (vacancy < request.quantity()) {
+            logger.error("Event " + request.eventId() + " insufficient tickets: " + 
+                    vacancy + " available, " + request.quantity() + " requested");
+            throw new RuntimeException("Event " + request.eventId() + " insufficient tickets: " + 
+                    vacancy + " available, " + request.quantity() + " requested");
+        }
+        if (price == null || (price < 1 && price != 0)) {
+            logger.error("Event " + request.eventId() + " invalid price: " + price);
+            throw new RuntimeException("Event " + request.eventId() + " invalid price: " + price);
         }
 
-        // PHASE 2: PERFORM ALL WRITES
-
-        // Write 1: Update vacancy (secure tickets)
-        int newVacancy = vacancy - request.quantity();
-        transaction.update(eventRef, "vacancy", newVacancy);
-        logger.info("Securing {} tickets for event {} at {} cents. Remaining tickets: {}",
-                request.quantity(), request.eventId(), price, newVacancy);
-
-        // Write 2: Activate Stripe account if needed
+        // PHASE 2: WRITE - Reserve tickets and activate account
+        transaction.update(eventRef, "vacancy", vacancy - request.quantity());
+        
         if (needsActivation) {
             transaction.update(organiserRef, "stripeAccountActive", true);
             logger.info("Activated Stripe account for organiser {}", organiserId);
         }
 
-        // PHASE 3: CREATE STRIPE CHECKOUT SESSION (after transaction reads/writes)
+        logger.info("Reserved {} tickets for event {} at {} cents (vacancy: {} -> {})",
+                request.quantity(), request.eventId(), price, vacancy, vacancy - request.quantity());
+
+        return new CheckoutTransactionResult(
+                request.eventId(),
+                event.getName(),
+                price,
+                event.getStripeFeeToCustomer(),
+                event.getPromotionalCodesEnabled(),
+                stripeAccountId,
+                organiserId,
+                request.quantity(),
+                generateIdempotencyKey(request)
+        );
+    }
+
+    /**
+     * Creates a Stripe checkout session OUTSIDE the transaction.
+     * This method performs external I/O and should never be called inside a Firestore transaction.
+     * 
+     * @param txResult Transaction result containing event and payment data
+     * @param request Original checkout request
+     * @return Stripe checkout session URL
+     * @throws StripeException if Stripe API call fails
+     */
+    private static String createStripeCheckoutSession(
+            CheckoutTransactionResult txResult, 
+            CreateStripeCheckoutSessionRequest request) throws StripeException {
         
         // Build Stripe checkout session parameters
         SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
@@ -222,15 +230,15 @@ public class CheckoutService {
                         .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
                                 .setCurrency(StripeConfig.CURRENCY)
                                 .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                        .setName(event.getName() != null ? event.getName() : "")
-                                        .putMetadata("eventId", request.eventId())
+                                        .setName(txResult.eventName != null ? txResult.eventName : "")
+                                        .putMetadata("eventId", txResult.eventId)
                                         .putMetadata("isPrivate", request.isPrivate().toString())
                                         .build())
-                                .setUnitAmount((long) price)
+                                .setUnitAmount((long) txResult.price)
                                 .build())
-                        .setQuantity((long) request.quantity())
+                        .setQuantity((long) txResult.quantity)
                         .build())
-                .putMetadata("eventId", request.eventId())
+                .putMetadata("eventId", txResult.eventId)
                 .putMetadata("isPrivate", request.isPrivate().toString())
                 .putMetadata("completeFulfilmentSession", request.completeFulfilmentSession().toString())
                 .putMetadata("fulfilmentSessionId", 
@@ -258,12 +266,11 @@ public class CheckoutService {
                 .setExpiresAt(Instant.now().getEpochSecond() + StripeConfig.CHECKOUT_SESSION_EXPIRY_SECONDS);
 
         // Add Stripe fee if passed to customer
-        Boolean stripeFeeToCustomer = event.getStripeFeeToCustomer();
-        if (stripeFeeToCustomer != null && stripeFeeToCustomer && price != 0) {
-            int totalOrderPrice = price * request.quantity();
+        if (txResult.stripeFeeToCustomer != null && txResult.stripeFeeToCustomer && txResult.price != 0) {
+            int totalOrderPrice = txResult.price * txResult.quantity;
             int stripeFee = StripeConfig.calculateStripeFee(totalOrderPrice);
             logger.info("Stripe surcharge calculated: {} cents for event {} (price={}, quantity={})",
-                    stripeFee, request.eventId(), price, request.quantity());
+                    stripeFee, txResult.eventId, txResult.price, txResult.quantity);
 
             paramsBuilder.addShippingOption(SessionCreateParams.ShippingOption.builder()
                     .setShippingRateData(SessionCreateParams.ShippingOption.ShippingRateData.builder()
@@ -278,36 +285,77 @@ public class CheckoutService {
         }
 
         // Add promotional codes if enabled
-        Boolean promotionalCodesEnabled = event.getPromotionalCodesEnabled();
-        if (promotionalCodesEnabled != null && promotionalCodesEnabled) {
+        if (txResult.promotionalCodesEnabled != null && txResult.promotionalCodesEnabled) {
             paramsBuilder.setAllowPromotionCodes(true);
         }
 
-        // Create Stripe checkout session with connected account
+        // Create Stripe checkout session with connected account and idempotency key
         SessionCreateParams params = paramsBuilder.build();
         
+        Session session = Session.create(params, 
+                com.stripe.net.RequestOptions.builder()
+                        .setStripeAccount(txResult.stripeAccountId)
+                        .setIdempotencyKey(txResult.reservationId)
+                        .build());
+
+        logger.info("Created Stripe checkout session {} for event {}, reservation {}",
+                session.getId(), txResult.eventId, txResult.reservationId);
+
+        return session.getUrl();
+    }
+
+    /**
+     * Validates Stripe account OUTSIDE transaction. Performs Stripe API call if needed.
+     * Returns the active Stripe account ID or throws exception.
+     */
+    private static String validateAndGetStripeAccount(String organiserId) throws StripeException {
         try {
-            Session session = Session.create(params, 
-                    com.stripe.net.RequestOptions.builder()
-                            .setStripeAccount(stripeAccountId)
-                            .setIdempotencyKey(generateIdempotencyKey(request))
-                            .build());
+            Firestore db = FirebaseService.getFirestore();
+            DocumentSnapshot organiserSnapshot = UsersUtils.getUserRef(db, organiserId).get().get();
 
-            logger.info("Created checkout session {} for event {}, linked to organiser {} and Stripe account {}. Secured {} tickets at {} cents",
-                    session.getId(), request.eventId(), organiserId, stripeAccountId, 
-                    request.quantity(), price);
+            if (!organiserSnapshot.exists()) {
+                logger.error("Organiser " + organiserId + " does not exist");
+                throw new RuntimeException("Organiser " + organiserId + " does not exist");
+            }
 
-            return new CreateStripeCheckoutSessionResponse(session.getUrl());
+            PrivateUserData organiser = organiserSnapshot.toObject(PrivateUserData.class);
+            if (organiser == null) {
+                logger.error("Organiser " + organiserId + " data is null");
+                throw new RuntimeException("Organiser " + organiserId + " data is null");
+            }
+
+            String stripeAccountId = organiser.getStripeAccount();
+            if (stripeAccountId == null || stripeAccountId.isEmpty()) {
+                logger.error("Organiser " + organiserId + " has no Stripe account");
+                throw new RuntimeException("Organiser " + organiserId + " has no Stripe account");
+            }
+
+            // Only call Stripe API if account is marked inactive
+            if (Boolean.FALSE.equals(organiser.getStripeAccountActive())) {
+                Account account = Account.retrieve(stripeAccountId);
+                if (!account.getChargesEnabled() || !account.getDetailsSubmitted()) {
+                    logger.error("Stripe account " + stripeAccountId + " not ready: chargesEnabled=" + account.getChargesEnabled() + ", detailsSubmitted=" + account.getDetailsSubmitted());
+                    throw new RuntimeException("Stripe account " + stripeAccountId + 
+                            " not ready: chargesEnabled=" + account.getChargesEnabled() + 
+                            ", detailsSubmitted=" + account.getDetailsSubmitted());
+                }
+                logger.info("Stripe account {} is active, will update in transaction", stripeAccountId);
+            }
+
+            return stripeAccountId;
         } catch (StripeException e) {
-            logger.error("Failed to create Stripe checkout session for event {}: {}",
-                    request.eventId(), e.getMessage(), e);
-            throw new RuntimeException("Failed to create Stripe checkout session for event " + request.eventId() + ": " + e.getMessage(), e);
+            logger.error("Stripe validation failed for organiser {}: {}", organiserId, e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Organiser validation failed for {}: {}", organiserId, e.getMessage(), e);
+            throw new RuntimeException("Organiser validation failed: " + e.getMessage(), e);
         }
     }
 
     private static String generateIdempotencyKey(CreateStripeCheckoutSessionRequest request) {
         if (request.endFulfilmentEntityId() == null || request.fulfilmentSessionId() == null) {
-            throw new RuntimeException("End fulfilment entity ID and fulfilment session ID are required");
+            logger.error("End fulfilment entity ID and fulfilment session ID are required to generate idempotency key");
+            throw new RuntimeException("End fulfilment entity ID and fulfilment session ID are required to generate idempotency key");
         }
 
         return String.format("idempotency_key_%s_%s_%s", 

@@ -25,7 +25,8 @@ public record CreateStripeCheckoutSessionRequest(
      * @throws IllegalArgumentException if validation fails
      */
     public CreateStripeCheckoutSessionRequest {
-        validate(eventId, isPrivate, quantity, cancelUrl, successUrl, completeFulfilmentSession);
+        validate(eventId, isPrivate, quantity, cancelUrl, successUrl, completeFulfilmentSession,
+                 fulfilmentSessionId, endFulfilmentEntityId);
     }
 
     /**
@@ -34,7 +35,8 @@ public record CreateStripeCheckoutSessionRequest(
      * @throws IllegalArgumentException if validation fails
      */
     private static void validate(String eventId, Boolean isPrivate, Integer quantity, 
-                                  String cancelUrl, String successUrl, Boolean completeFulfilmentSession) {
+                                  String cancelUrl, String successUrl, Boolean completeFulfilmentSession,
+                                  String fulfilmentSessionId, String endFulfilmentEntityId) {
         if (eventId == null || eventId.isBlank()) {
             throw new IllegalArgumentException("Event ID must be provided as a non-empty string.");
         }
@@ -62,6 +64,12 @@ public record CreateStripeCheckoutSessionRequest(
         }
         if (completeFulfilmentSession == null) {
             throw new IllegalArgumentException("Complete Fulfilment Session must be provided as a boolean but was null.");
+        }
+        if (fulfilmentSessionId == null || fulfilmentSessionId.isBlank()) {
+            throw new IllegalArgumentException("Fulfilment Session ID must be provided as a non-empty string.");
+        }
+        if (endFulfilmentEntityId == null || endFulfilmentEntityId.isBlank()) {
+            throw new IllegalArgumentException("End Fulfilment Entity ID must be provided as a non-empty string.");
         }
     }
 }
