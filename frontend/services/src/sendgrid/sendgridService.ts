@@ -36,6 +36,7 @@ export async function sendEmailOnCreateEvent(eventId: string, visibility: string
 
 /*
 DEPRECATED DO NO USE 
+// TODO: remove this code
 */
 export async function sendEmailOnDeleteEvent(eventId: string) {
   const sendEmailFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_SEND_EMAIL_ON_DELETE_EVENT);
