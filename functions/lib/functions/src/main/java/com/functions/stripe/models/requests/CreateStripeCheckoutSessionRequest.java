@@ -15,7 +15,7 @@ public record CreateStripeCheckoutSessionRequest(
         @JsonProperty("quantity") Integer quantity,
         @JsonProperty("cancelUrl") String cancelUrl,
         @JsonProperty("successUrl") String successUrl,
-        @JsonProperty("completeFulfilmentSession") Boolean completeFulfilmentSession,
+        @JsonProperty("completeFulfilmentSession") @Nonnull Boolean completeFulfilmentSession,
         @JsonProperty("fulfilmentSessionId") @Nonnull String fulfilmentSessionId,
         @JsonProperty("endFulfilmentEntityId") @Nonnull String endFulfilmentEntityId
 ) {

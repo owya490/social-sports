@@ -104,7 +104,7 @@ public class EventsUtils {
      * Builds event document reference.
      */
     public static DocumentReference getEventRef(Firestore db, String eventId, Boolean isPrivate) {
-        String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
+        String privacyPath = Boolean.TRUE.equals(isPrivate) ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
         return db.collection(CollectionPaths.EVENTS + "/" + CollectionPaths.ACTIVE + "/" + privacyPath)
                 .document(eventId);
     }
