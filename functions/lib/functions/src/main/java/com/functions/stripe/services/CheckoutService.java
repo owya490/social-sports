@@ -41,12 +41,10 @@ public class CheckoutService {
         final String stripeAccountId;
         final String organiserId;
         final Integer quantity;
-        final String reservationId; // For idempotency
 
         EventValidationResult(String eventId, String eventName, Integer price, 
                              Boolean stripeFeeToCustomer, Boolean promotionalCodesEnabled,
-                             String stripeAccountId, String organiserId, Integer quantity,
-                             String reservationId) {
+                             String stripeAccountId, String organiserId, Integer quantity) {
             this.eventId = eventId;
             this.eventName = eventName;
             this.price = price;
@@ -55,7 +53,6 @@ public class CheckoutService {
             this.stripeAccountId = stripeAccountId;
             this.organiserId = organiserId;
             this.quantity = quantity;
-            this.reservationId = reservationId;
         }
     }
 
@@ -93,8 +90,7 @@ public class CheckoutService {
 
             // PHASE 2: Create Stripe session (external I/O, before any Firestore writes)
             String checkoutUrl = createStripeSession(validationResult, request);
-            logger.info("Stripe session created successfully for event {}, reservation {}", 
-                    request.eventId(), validationResult.reservationId);
+            logger.info("Stripe session created successfully for event {}", request.eventId());
 
             // PHASE 3: Commit Firestore transaction to reserve tickets (only if Stripe succeeded)
             FirebaseService.createFirestoreTransaction(transaction -> {
@@ -204,8 +200,7 @@ public class CheckoutService {
                         event.getPromotionalCodesEnabled(),
                         stripeAccountId,
                         organiserId,
-                        request.quantity(),
-                        generateIdempotencyKey(request)
+                        request.quantity()
                 );
             } catch (Exception e) {
                 logger.error("Failed to validate event for checkout {}: {}", request.eventId(), e.getMessage(), e);
@@ -386,17 +381,15 @@ public class CheckoutService {
             paramsBuilder.setAllowPromotionCodes(true);
         }
 
-        // Create Stripe checkout session with connected account and idempotency key
+        // Create Stripe checkout session with connected account
         SessionCreateParams params = paramsBuilder.build();
         
         Session session = Session.create(params, 
                 com.stripe.net.RequestOptions.builder()
                         .setStripeAccount(validationResult.stripeAccountId)
-                        .setIdempotencyKey(validationResult.reservationId)
                         .build());
 
-        logger.info("Created Stripe checkout session {} for event {}, reservation {}",
-                session.getId(), validationResult.eventId, validationResult.reservationId);
+        logger.info("Created Stripe checkout session {} for event {}", session.getId(), validationResult.eventId);
 
         return session.getUrl();
     }
@@ -447,18 +440,5 @@ public class CheckoutService {
             logger.error("Organiser validation failed for {}: {}", organiserId, e.getMessage(), e);
             throw new RuntimeException("Organiser validation failed: " + e.getMessage(), e);
         }
-    }
-
-    private static String generateIdempotencyKey(CreateStripeCheckoutSessionRequest request) {
-        if (request.endFulfilmentEntityId() == null || request.fulfilmentSessionId() == null) {
-            logger.error("End fulfilment entity ID and fulfilment session ID are required to generate idempotency key");
-            throw new RuntimeException("End fulfilment entity ID and fulfilment session ID are required to generate idempotency key");
-        }
-
-        return String.format("idempotency_key_%s_%s_%s", 
-            request.eventId(),
-            request.endFulfilmentEntityId(),
-            request.fulfilmentSessionId()
-        );
     }
 }
