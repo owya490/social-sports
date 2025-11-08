@@ -359,8 +359,8 @@ public class CheckoutService {
 
         // Add Stripe fee if passed to customer
         if (validationResult.stripeFeeToCustomer != null && validationResult.stripeFeeToCustomer && validationResult.price != 0) {
-            int totalOrderPrice = validationResult.price * validationResult.quantity;
-            int stripeFee = StripeConfig.calculateStripeFee(totalOrderPrice);
+            long totalOrderPrice = (long) validationResult.price * validationResult.quantity;
+            long stripeFee = StripeConfig.calculateStripeFee(totalOrderPrice);
             logger.info("Stripe surcharge calculated: {} cents for event {} (price={}, quantity={})",
                     stripeFee, validationResult.eventId, validationResult.price, validationResult.quantity);
 
@@ -368,7 +368,7 @@ public class CheckoutService {
                     .setShippingRateData(SessionCreateParams.ShippingOption.ShippingRateData.builder()
                             .setDisplayName("Stripe Card Surcharge Fees")
                             .setFixedAmount(SessionCreateParams.ShippingOption.ShippingRateData.FixedAmount.builder()
-                                    .setAmount((long) stripeFee)
+                                    .setAmount(stripeFee)
                                     .setCurrency(StripeConfig.CURRENCY)
                                     .build())
                             .setType(SessionCreateParams.ShippingOption.ShippingRateData.Type.FIXED_AMOUNT)

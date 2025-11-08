@@ -67,8 +67,8 @@ public class StripeConfig {
      * @param priceInCents The price in cents
      * @return The Stripe fee in cents
      */
-    public static int calculateStripeFee(int priceInCents) {
-        return (int) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * STRIPE_PERCENTAGE_FEE));
+    public static long calculateStripeFee(long priceInCents) {
+        return (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * STRIPE_PERCENTAGE_FEE));
     }
 }
 
