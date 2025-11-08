@@ -359,7 +359,7 @@ public class CheckoutService {
 
         // Add Stripe fee if passed to customer
         if (validationResult.stripeFeeToCustomer != null && validationResult.stripeFeeToCustomer && validationResult.price != 0) {
-            long totalOrderPrice = (long) validationResult.price * validationResult.quantity;
+            long totalOrderPrice = (long) validationResult.price * (long) validationResult.quantity;
             long stripeFee = StripeConfig.calculateStripeFee(totalOrderPrice);
             logger.info("Stripe surcharge calculated: {} cents for event {} (price={}, quantity={})",
                     stripeFee, validationResult.eventId, validationResult.price, validationResult.quantity);
