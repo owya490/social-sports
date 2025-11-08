@@ -111,7 +111,7 @@ public class GlobalAppController implements HttpFunction {
 
     private void setResponseHeaders(HttpResponse response) {
         response.appendHeader("Access-Control-Allow-Origin", "*");
-        response.appendHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+        response.appendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
         response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Stripe-Signature");
         response.appendHeader("Access-Control-Max-Age", "3600"); // Cache preflight for 1 hour
         response.appendHeader("Content-Type", "application/json; charset=UTF-8");

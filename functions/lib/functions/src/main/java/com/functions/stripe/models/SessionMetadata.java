@@ -1,6 +1,7 @@
 package com.functions.stripe.models;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
  * Represents metadata attached to a Stripe checkout session.
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SessionMetadata {
@@ -22,7 +24,7 @@ public class SessionMetadata {
      * 
      * @throws IllegalArgumentException if any required field is invalid
      */
-    public void validate() {
+    private void validate() {
         if (eventId == null || eventId.isEmpty()) {
             throw new IllegalArgumentException("Event Id must be provided as a string.");
         }
@@ -52,23 +54,27 @@ public class SessionMetadata {
             throw new IllegalArgumentException("Session metadata cannot be null");
         }
 
-        SessionMetadata sessionMetadata = new SessionMetadata();
-        sessionMetadata.setEventId(metadata.get("eventId"));
         
-        // Handle boolean conversion from String
         String isPrivateStr = metadata.get("isPrivate");
-        if (isPrivateStr != null) {
-            sessionMetadata.setIsPrivate(Boolean.parseBoolean(isPrivateStr));
+        if (isPrivateStr == null) {
+            throw new IllegalArgumentException("Is Private must be provided as a boolean.");
         }
+        Boolean isPrivate = Boolean.parseBoolean(isPrivateStr);
         
         String completeFulfilmentSessionStr = metadata.get("completeFulfilmentSession");
-        if (completeFulfilmentSessionStr != null) {
-            sessionMetadata.setCompleteFulfilmentSession(Boolean.parseBoolean(completeFulfilmentSessionStr));
+        if (completeFulfilmentSessionStr == null) {
+            throw new IllegalArgumentException("Complete Fulfilment Session must be provided as a boolean.");
         }
-        
-        sessionMetadata.setFulfilmentSessionId(metadata.get("fulfilmentSessionId"));
-        sessionMetadata.setEndFulfilmentEntityId(metadata.get("endFulfilmentEntityId"));
-        
+        Boolean completeFulfilmentSession = Boolean.parseBoolean(completeFulfilmentSessionStr);
+
+        SessionMetadata sessionMetadata = SessionMetadata.builder()
+            .eventId(metadata.get("eventId"))
+            .isPrivate(isPrivate)
+            .completeFulfilmentSession(completeFulfilmentSession)
+            .fulfilmentSessionId(metadata.get("fulfilmentSessionId"))
+            .endFulfilmentEntityId(metadata.get("endFulfilmentEntityId"))
+            .build();
+        sessionMetadata.validate();
         return sessionMetadata;
     }
 }

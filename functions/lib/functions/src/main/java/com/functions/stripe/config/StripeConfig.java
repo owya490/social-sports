@@ -26,14 +26,10 @@ public class StripeConfig {
     private static final double STRIPE_PERCENTAGE_FEE = 0.017; // 1.7%
 
     // Webhook configuration
-    public static final String STRIPE_WEBHOOK_ENDPOINT_SECRET;
+    public static final String STRIPE_WEBHOOK_ENDPOINT_SECRET = Global.getEnv("STRIPE_WEBHOOK_ENDPOINT_SECRET");
 
     private static volatile boolean initialized = false;
     private static final Object initLock = new Object();
-
-    static {
-        STRIPE_WEBHOOK_ENDPOINT_SECRET = Global.getEnv("STRIPE_WEBHOOK_ENDPOINT_SECRET");
-    }
 
     /**
      * Explicitly initializes Stripe configuration with the API key.

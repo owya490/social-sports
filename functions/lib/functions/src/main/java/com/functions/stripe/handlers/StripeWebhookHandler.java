@@ -31,7 +31,7 @@ public class StripeWebhookHandler {
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookHandler.class);
     
     private static final List<String> IGNORED_EVENT_IDS = Arrays.asList("evt_1SAvvn05pkiJLNbsHt1mHThW");
-    private static final String SPORTSHUB_URL = "sportshub";
+    private static final String SPORTSHUB_URL_DOMAIN = "sportshub";
     private static final int MAX_PAYLOAD_SIZE = 1024 * 1024; // 1MB max payload size
     
     /**
@@ -166,13 +166,14 @@ public class StripeWebhookHandler {
         
         // In production, only process events from SportsHub
         String projectName = Global.getEnv("PROJECT_NAME");
+        logger.info("[Webhook-{}] Project name: {}", uuid, projectName);
         boolean isProd = "socialsportsprod".equals(projectName);
         
         if (isProd) {
             String successUrl = session.getSuccessUrl() != null ? session.getSuccessUrl().toLowerCase() : "";
             String cancelUrl = session.getCancelUrl() != null ? session.getCancelUrl().toLowerCase() : "";
             
-            if (!successUrl.contains(SPORTSHUB_URL) && !cancelUrl.contains(SPORTSHUB_URL)) {
+            if (!successUrl.contains(SPORTSHUB_URL_DOMAIN) && !cancelUrl.contains(SPORTSHUB_URL_DOMAIN)) {
                 logger.info("[Webhook-{}] Ignoring event as it is not a SPORTSHUB event. eventId={}, " +
                            "successUrl={}, cancelUrl={}", uuid, event.getId(), successUrl, cancelUrl);
                 response.setStatusCode(200);
@@ -241,7 +242,6 @@ public class StripeWebhookHandler {
             SessionMetadata sessionMetadata;
             try {
                 sessionMetadata = SessionMetadata.fromStripeMetadata(fullSession.getMetadata());
-                sessionMetadata.validate();
                 logger.info("[Webhook-{}] Completed session_metadata for event id {} fulfilment session {}: {}",
                            uuid, sessionMetadata.getEventId(), sessionMetadata.getFulfilmentSessionId(), sessionMetadata);
             } catch (Exception e) {
@@ -396,7 +396,6 @@ public class StripeWebhookHandler {
             SessionMetadata sessionMetadata;
             try {
                 sessionMetadata = SessionMetadata.fromStripeMetadata(fullSession.getMetadata());
-                sessionMetadata.validate();
                 logger.info("[Webhook-{}] Expired session metadata for event id {} fulfilment session {}: {}",
                            uuid, sessionMetadata.getEventId(), sessionMetadata.getFulfilmentSessionId(), sessionMetadata);
             } catch (Exception e) {
