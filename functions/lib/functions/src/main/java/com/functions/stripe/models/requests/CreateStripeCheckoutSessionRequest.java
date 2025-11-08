@@ -20,11 +20,21 @@ public record CreateStripeCheckoutSessionRequest(
         @JsonProperty("endFulfilmentEntityId") @Nonnull String endFulfilmentEntityId
 ) {
     /**
+     * Compact constructor that validates all fields at creation time.
+     * 
+     * @throws IllegalArgumentException if validation fails
+     */
+    public CreateStripeCheckoutSessionRequest {
+        validate(eventId, isPrivate, quantity, cancelUrl, successUrl, completeFulfilmentSession);
+    }
+
+    /**
      * Validates that all required fields are present and have valid values.
      * 
      * @throws IllegalArgumentException if validation fails
      */
-    public void validate() {
+    private static void validate(String eventId, Boolean isPrivate, Integer quantity, 
+                                  String cancelUrl, String successUrl, Boolean completeFulfilmentSession) {
         if (eventId == null || eventId.isBlank()) {
             throw new IllegalArgumentException("Event ID must be provided as a non-empty string.");
         }
@@ -37,13 +47,17 @@ public record CreateStripeCheckoutSessionRequest(
         if (cancelUrl == null || cancelUrl.isBlank()) {
             throw new IllegalArgumentException("Cancel URL must be provided as a non-empty string.");
         }
-        try { URI.create(cancelUrl); } catch (Exception e) {
+        try { 
+            URI.create(cancelUrl); 
+        } catch (Exception e) {
             throw new IllegalArgumentException("Cancel URL must be a valid URI.", e);
         }
         if (successUrl == null || successUrl.isBlank()) {
             throw new IllegalArgumentException("Success URL must be provided as a non-empty string.");
         }
-        try { URI.create(successUrl); } catch (Exception e) {
+        try { 
+            URI.create(successUrl); 
+        } catch (Exception e) {
             throw new IllegalArgumentException("Success URL must be a valid URI.", e);
         }
         if (completeFulfilmentSession == null) {

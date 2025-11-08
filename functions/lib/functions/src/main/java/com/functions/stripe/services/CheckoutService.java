@@ -42,8 +42,6 @@ public class CheckoutService {
             // Explicitly initialize Stripe configuration if not already done
             StripeConfig.initialize();
 
-            request.validate();
-
             logger.info("Creating stripe checkout session for event {} for {} tickets.",
                     request.eventId(), request.quantity());
 
