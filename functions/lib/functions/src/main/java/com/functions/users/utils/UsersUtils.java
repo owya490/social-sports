@@ -52,7 +52,9 @@ public class UsersUtils {
 	 * Builds user document reference (private collection).
 	 */
 	public static DocumentReference getUserRef(Firestore db, String userId) {
-		return db.collection(CollectionPaths.USERS + "/" + CollectionPaths.ACTIVE + "/" + CollectionPaths.PRIVATE)
+		return db.collection(CollectionPaths.USERS)
+				.document(CollectionPaths.ACTIVE)
+				.collection(CollectionPaths.PRIVATE)
 				.document(userId);
 	}
 }

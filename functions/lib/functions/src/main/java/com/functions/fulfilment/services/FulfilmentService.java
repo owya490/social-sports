@@ -191,8 +191,8 @@ public class FulfilmentService {
                         ? UrlUtils
                         .getUrlWithCurrentEnvironment(String.format("/fulfilment/%s/%s",
                                 fulfilmentSessionId, prevEntityId))
-                        .orElse(UrlUtils.SPORTSHUB_URL)
-                        : UrlUtils.SPORTSHUB_URL;
+                        .orElse(UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId).orElse(UrlUtils.SPORTSHUB_URL))
+                        : UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId).orElse(UrlUtils.SPORTSHUB_URL);
 
                 String stripeCheckoutLink = StripeService.getStripeCheckoutFromEventId(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
