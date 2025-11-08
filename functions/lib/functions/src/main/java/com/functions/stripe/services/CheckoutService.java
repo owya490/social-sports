@@ -71,6 +71,7 @@ public class CheckoutService {
      *
      * This two-phase validation approach:
      * - Phase 1: Quickly rejects obviously invalid requests (wrong timing, no vacancy, etc.)
+     * - Phase 2: Creates Stripe session (external I/O)
      * - Phase 3: Re-validates transactionally to handle concurrent modifications
      *
      * @param request The checkout session request
