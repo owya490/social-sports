@@ -363,6 +363,7 @@ public class WebhookService {
                           FieldValue.arrayUnion(checkoutSessionId));
     }
     
+    // TODO: rather than recreating the function here, we should just call the underlying implementation directly
     /**
      * Completes a fulfilment session by calling the Java cloud function.
      * 
