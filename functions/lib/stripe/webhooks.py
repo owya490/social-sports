@@ -15,7 +15,7 @@ from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
-from lib.constants import IS_PROD, JAVA_CHECKOUT_ENABLED, db
+from lib.constants import IS_PROD, db
 from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
