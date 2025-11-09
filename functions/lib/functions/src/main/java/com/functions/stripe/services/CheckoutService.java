@@ -9,6 +9,7 @@ import com.functions.events.models.EventData;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.config.StripeConfig;
+import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 import com.functions.users.models.PrivateUserData;
@@ -57,6 +58,19 @@ public class CheckoutService {
     }
 
     /**
+     * Data transfer object holding Stripe session creation result.
+     */
+    private static class StripeSessionResult {
+        final String sessionId;
+        final String checkoutUrl;
+
+        StripeSessionResult(String sessionId, String checkoutUrl) {
+            this.sessionId = sessionId;
+            this.checkoutUrl = checkoutUrl;
+        }
+    }
+
+    /**
      * Creates a Stripe checkout session for an event.
      * Stripe session is created BEFORE committing Firestore updates to prevent 
      * stranded reservations if Stripe fails.
@@ -89,13 +103,14 @@ public class CheckoutService {
                     request.eventId(), validationResult.price, validationResult.quantity);
 
             // PHASE 2: Create Stripe session (external I/O, before any Firestore writes)
-            String checkoutUrl = createStripeSession(validationResult, request);
-            logger.info("Stripe session created successfully for event {}", request.eventId());
+            StripeSessionResult sessionResult = createStripeSession(validationResult, request);
+            logger.info("Stripe session {} created successfully for event {}", 
+                    sessionResult.sessionId, request.eventId());
 
             // PHASE 3: Commit Firestore transaction to reserve tickets (only if Stripe succeeded)
             FirebaseService.createFirestoreTransaction(transaction -> {
                 try {
-                    commitReservation(transaction, request);
+                    commitReservation(transaction, request, sessionResult.sessionId);
                     return null; // Transaction succeeded
                 } catch (Exception e) {
                     logger.error("Reservation commit failed for event {}: {}", request.eventId(), e.getMessage(), e);
@@ -106,7 +121,7 @@ public class CheckoutService {
             logger.info("Checkout complete for event {}, organiser {}, account {}", 
                     request.eventId(), validationResult.organiserId, validationResult.stripeAccountId);
             
-            return new CreateStripeCheckoutSessionResponse(checkoutUrl);
+            return new CreateStripeCheckoutSessionResponse(sessionResult.checkoutUrl);
             
         } catch (StripeException e) {
             logger.error("Stripe session creation failed for event {}: {}", request.eventId(), e.getMessage(), e);
@@ -183,9 +198,9 @@ public class CheckoutService {
                 }
                 
                 if (vacancy < request.quantity()) {
-                    logger.error("Event " + request.eventId() + " insufficient tickets: " + 
+                    logger.warn("Event " + request.eventId() + " insufficient tickets: " + 
                             vacancy + " available, " + request.quantity() + " requested");
-                    throw new RuntimeException("Event " + request.eventId() + " insufficient tickets: " + 
+                    throw new CheckoutVacancyException("Event " + request.eventId() + " insufficient tickets: " + 
                             vacancy + " available, " + request.quantity() + " requested");
                 }
 
@@ -216,10 +231,12 @@ public class CheckoutService {
      * 
      * @param transaction Firestore transaction
      * @param request Original checkout request
+     * @param stripeSessionId Stripe session ID to track successful reservations
      */
     private static void commitReservation(
             Transaction transaction,
-            CreateStripeCheckoutSessionRequest request) throws Exception {
+            CreateStripeCheckoutSessionRequest request,
+            String stripeSessionId) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
         
@@ -290,10 +307,17 @@ public class CheckoutService {
         
         boolean needsActivation = Boolean.FALSE.equals(organiser.getStripeAccountActive());
 
-        // PHASE 2: WRITE - Reserve tickets
+        // PHASE 2: WRITE - Reserve tickets and track session
         transaction.update(eventRef, "vacancy", vacancy - request.quantity());
         logger.info("Reserved {} tickets for event {} at {} cents (vacancy: {} -> {})",
                 request.quantity(), request.eventId(), price, vacancy, vacancy - request.quantity());
+        
+        // Track this session as successfully reserved (prevents vacancy overflow on expiry)
+        DocumentReference eventMetadataRef = db.collection("EventsMetadata").document(request.eventId());
+        transaction.update(eventMetadataRef, 
+                "reservedSessionIds", 
+                com.google.cloud.firestore.FieldValue.arrayUnion(stripeSessionId));
+        logger.info("Tracked reserved session {} for event {} in EventsMetadata", stripeSessionId, request.eventId());
         
         // Activate Stripe account if needed
         if (needsActivation) {
@@ -308,10 +332,10 @@ public class CheckoutService {
      * 
      * @param validationResult Event data for Stripe session creation
      * @param request Original checkout request
-     * @return Stripe checkout session URL
+     * @return Stripe session result containing session ID and checkout URL
      * @throws StripeException if Stripe API call fails
      */
-    private static String createStripeSession(
+    private static StripeSessionResult createStripeSession(
             EventValidationResult validationResult, 
             CreateStripeCheckoutSessionRequest request) throws StripeException {
         
@@ -391,7 +415,7 @@ public class CheckoutService {
 
         logger.info("Created Stripe checkout session {} for event {}", session.getId(), validationResult.eventId);
 
-        return session.getUrl();
+        return new StripeSessionResult(session.getId(), session.getUrl());
     }
 
     /**
