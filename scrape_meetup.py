@@ -1,6 +1,12 @@
 """
 Meetup.com Event Scraper
 Scrapes events from Meetup and uploads them directly to Firestore.
+
+Usage:
+    python scrape_meetup.py <meetup_group_url>
+    
+Example:
+    python scrape_meetup.py https://www.meetup.com/pennopickleballers/
 """
 
 import requests
@@ -8,7 +14,9 @@ from bs4 import BeautifulSoup
 import json
 import re
 import os
-from datetime import datetime, timedelta
+import sys
+import argparse
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
 import time
 import firebase_admin
@@ -93,16 +101,42 @@ class MeetupEventScraper:
                 event_data['description'] = all_text[:500]  # Fallback
             
             # location: string
-            location_elem = event_element.find(text=re.compile('.*Park|.*Hills|.*Ave|.*Avenue|.*Street|.*Road|.*Court|.*Lane', re.I))
-            if location_elem:
-                parent = location_elem.parent
-                event_data['location'] = parent.get_text(strip=True) if parent else location_elem.strip()
+            # Look for map-pin SVG and get the truncate span next to it
+            map_pin_svg = event_element.find('svg', class_=re.compile('.*map-pin.*', re.I))
+            if map_pin_svg:
+                # Look for truncate span in the same parent container
+                parent_div = map_pin_svg.find_parent(['div'])
+                if parent_div:
+                    location_span = parent_div.find('span', class_='truncate')
+                    if location_span:
+                        location_text = location_span.get_text(strip=True)
+                        if location_text and len(location_text) > 3:
+                            event_data['location'] = location_text
             
+            # Fallback: look for any span.truncate with location-like text
+            if not event_data.get('location'):
+                truncate_spans = event_element.find_all('span', class_='truncate')
+                for span in truncate_spans:
+                    text = span.get_text(strip=True)
+                    # Check if it looks like a location (contains location keywords)
+                    if re.search(r'Park|Hills|Ave|Avenue|Street|Road|Court|Lane|,\s*[A-Z]{2,3}$', text, re.I):
+                        event_data['location'] = text
+                        break
+            
+            # Fallback: look for text with location keywords
+            if not event_data.get('location'):
+                location_elem = event_element.find(text=re.compile('.*Park|.*Hills|.*Ave|.*Avenue|.*Street|.*Road|.*Court|.*Lane', re.I))
+                if location_elem:
+                    parent = location_elem.parent
+                    event_data['location'] = parent.get_text(strip=True) if parent else location_elem.strip()
+            
+            # Fallback: look for elements with location/venue class
             if not event_data.get('location'):
                 location_div = event_element.find(['div', 'span', 'p'], class_=re.compile('.*location.*|.*venue.*', re.I))
                 if location_div:
                     event_data['location'] = location_div.get_text(strip=True)
             
+            # Last resort default
             if not event_data.get('location'):
                 event_data['location'] = 'Location TBD'
             
@@ -113,19 +147,25 @@ class MeetupEventScraper:
             }
             
             # startDate & endDate: Only include if we can parse them reliably
+            # Assume all events are in Sydney timezone (AEDT/AEST)
             time_elem = event_element.find('time')
             
             if time_elem:
                 datetime_str = time_elem.get('datetime', '')
                 if datetime_str:
                     try:
-                        start_dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+                        # Remove timezone name in brackets (e.g., [Australia/Sydney])
+                        # Format: 2025-11-05T19:15:00+11:00[Australia/Sydney] -> 2025-11-05T19:15:00+11:00
+                        datetime_str = re.sub(r'\[.*?\]$', '', datetime_str).strip()
+                        # Parse as-is (keeping Sydney timezone offset)
+                        start_dt = datetime.fromisoformat(datetime_str)
                         event_data['startDate'] = start_dt.isoformat()
                         # Default end time: 2 hours later
                         end_dt = start_dt + timedelta(hours=2)
                         event_data['endDate'] = end_dt.isoformat()
-                    except:
+                    except Exception as e:
                         # If we can't parse the date, skip this event
+                        print(f"  Warning: Could not parse date '{datetime_str}': {e}")
                         return None
             
             # price: number (in cents)
@@ -180,25 +220,23 @@ class MeetupEventScraper:
                 event_data['image'] = ''
                 event_data['thumbnail'] = ''
             
-            # sourceUrl: string
+            # sourceUrl: string (REQUIRED - skip event if not found)
             link_elem = event_element.find('a', href=True)
             if link_elem:
                 event_data['sourceUrl'] = urljoin(self.base_url, link_elem['href'])
             else:
-                event_data['sourceUrl'] = ''
+                # sourceUrl is required - skip this event
+                return None
             
             # sourcePlatform: string
             event_data['sourcePlatform'] = 'meetup'
             
             # sourceOrganiser: string (extract from URL)
             # URL format: https://www.meetup.com/pennopickleballers/events/...
-            if event_data['sourceUrl']:
-                import re as re_module
-                organiser_match = re_module.search(r'meetup\.com/([^/]+)/', event_data['sourceUrl'])
-                if organiser_match:
-                    event_data['sourceOrganiser'] = organiser_match.group(1)
-                else:
-                    event_data['sourceOrganiser'] = ''
+            import re as re_module
+            organiser_match = re_module.search(r'meetup\.com/([^/]+)/', event_data['sourceUrl'])
+            if organiser_match:
+                event_data['sourceOrganiser'] = organiser_match.group(1)
             else:
                 event_data['sourceOrganiser'] = ''
             
@@ -225,11 +263,56 @@ class MeetupEventScraper:
                 organiser_match = re.search(r'meetup\.com/([^/]+)/', source_url)
                 source_organiser = organiser_match.group(1) if organiser_match else ''
                 
+                # Try to find date/time (assume Sydney timezone)
+                time_elem = parent.find('time')
+                if not time_elem:
+                    # Skip events without dates (required field)
+                    continue
+                
+                datetime_str = time_elem.get('datetime', '')
+                if not datetime_str:
+                    continue
+                
+                try:
+                    # Remove timezone name in brackets (e.g., [Australia/Sydney])
+                    datetime_str = re.sub(r'\[.*?\]$', '', datetime_str).strip()
+                    # Parse as-is (keeping Sydney timezone offset)
+                    start_dt = datetime.fromisoformat(datetime_str)
+                    start_date = start_dt.isoformat()
+                    end_date = (start_dt + timedelta(hours=2)).isoformat()
+                except Exception as e:
+                    # Skip if we can't parse the date
+                    print(f"  Warning: Could not parse date '{datetime_str}': {e}")
+                    continue
+                
+                # Try to find location near map-pin icon
+                location_text = 'Location TBD'
+                map_pin_svg = parent.find('svg', class_=re.compile('.*map-pin.*', re.I))
+                if map_pin_svg:
+                    parent_div = map_pin_svg.find_parent(['div'])
+                    if parent_div:
+                        location_span = parent_div.find('span', class_='truncate')
+                        if location_span:
+                            loc = location_span.get_text(strip=True)
+                            if loc and len(loc) > 3:
+                                location_text = loc
+                
+                # Fallback: look for any truncate span with location-like text
+                if location_text == 'Location TBD':
+                    truncate_spans = parent.find_all('span', class_='truncate')
+                    for span in truncate_spans:
+                        text = span.get_text(strip=True)
+                        if re.search(r'Park|Hills|Ave|Avenue|Street|Road|Court|Lane|,\s*[A-Z]{2,3}$', text, re.I):
+                            location_text = text
+                            break
+                
                 event_data = {
                     'name': link.get_text(strip=True),
                     'description': '',
-                    'location': 'Location TBD',
+                    'location': location_text,
                     'locationLatLng': {'lat': self.INVALID_LAT, 'lng': self.INVALID_LNG},
+                    'startDate': start_date,
+                    'endDate': end_date,
                     'price': 0,
                     'capacity': 50,
                     'currentAttendees': 0,
@@ -245,7 +328,7 @@ class MeetupEventScraper:
                 
                 text = parent.get_text(separator='\n', strip=True)
                 
-                # Try to extract some info
+                # Try to extract price info
                 price_match = re.search(r'A?\$\s*(\d+(?:\.\d{2})?)', text)
                 if price_match:
                     event_data['price'] = int(float(price_match.group(1)) * 100)
@@ -333,19 +416,41 @@ class MeetupEventScraper:
 
 def main():
     """Main function to run the scraper."""
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description='Scrape events from a Meetup group and upload to Firestore',
+        epilog='Example: python scrape_meetup.py https://www.meetup.com/pennopickleballers/'
+    )
+    parser.add_argument(
+        'meetup_url',
+        type=str,
+        help='The Meetup group URL to scrape (e.g., https://www.meetup.com/group-name/)'
+    )
+    parser.add_argument(
+        '--skip-upload',
+        action='store_true',
+        help='Skip uploading to Firestore (only scrape and display events)'
+    )
+    
+    args = parser.parse_args()
+    
+    # Validate URL
+    if not args.meetup_url.startswith('https://www.meetup.com/'):
+        print("❌ Error: URL must be a valid Meetup.com group URL")
+        print("   Example: https://www.meetup.com/pennopickleballers/")
+        sys.exit(1)
+    
     print("=" * 70)
     print("Meetup Event Scraper → Firestore Uploader")
     print("=" * 70)
-    
-    # Configuration - CHANGE THIS to your Meetup group URL
-    GROUP_URL = 'https://www.meetup.com/pennopickleballers/'
+    print(f"Target: {args.meetup_url}")
     
     # Initialize scraper
     scraper = MeetupEventScraper()
     
     # Step 1: Scrape events
     print("\n[1/2] Scraping events from Meetup...")
-    results = scraper.scrape_group_events(GROUP_URL)
+    results = scraper.scrape_group_events(args.meetup_url)
     
     if not results or not results['scraped_events']:
         print("\n✗ No events found or error occurred.")
@@ -358,8 +463,11 @@ def main():
         print(f"  {i}. {event.get('name', 'Untitled')} - ${event.get('price', 0)/100:.2f}")
     
     # Step 2: Upload to Firestore
-    print(f"\n[2/2] Uploading to Firestore...")
-    scraper.upload_to_firestore(results['scraped_events'])
+    if args.skip_upload:
+        print(f"\n⊘ Skipping Firestore upload (--skip-upload flag set)")
+    else:
+        print(f"\n[2/2] Uploading to Firestore...")
+        scraper.upload_to_firestore(results['scraped_events'])
     
     print(f"\n{'=' * 70}")
     print("✓ Complete!")

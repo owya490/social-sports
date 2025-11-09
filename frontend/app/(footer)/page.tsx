@@ -373,9 +373,20 @@ export default function Dashboard() {
                   ...scrapedEvents
                     .filter((scrapedEvent) => {
                       // Only show events with required data
-                      return (
-                        scrapedEvent.name && scrapedEvent.startDate && scrapedEvent.location && scrapedEvent.sourceUrl
-                      );
+                      const hasRequiredData = 
+                        scrapedEvent.name && scrapedEvent.startDate && scrapedEvent.location && scrapedEvent.sourceUrl;
+                      
+                      if (!hasRequiredData) {
+                        console.log('❌ Filtered out event - Missing data:', {
+                          name: scrapedEvent.name || 'MISSING',
+                          startDate: scrapedEvent.startDate || 'MISSING',
+                          location: scrapedEvent.location || 'MISSING',
+                          sourceUrl: scrapedEvent.sourceUrl || 'MISSING',
+                          fullEvent: scrapedEvent
+                        });
+                      }
+                      
+                      return hasRequiredData;
                     })
                     .map((scrapedEvent, scrapedIdx) => (
                       <ScrapedEventCard
