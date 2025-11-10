@@ -1,11 +1,13 @@
 "use client";
 import Loading from "@/components/loading/Loading";
 import { FieldTypes, RenderEditableField, RenderNonEditableField } from "@/components/users/profile/ProfileFields";
+import { EmailChangeModal } from "@/components/users/profile/EmailChangeModal";
 import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel";
 import { useUser } from "@/components/utility/UserContext";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
+import { Button } from "@material-tailwind/react";
 import { Switch } from "@mantine/core";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
@@ -29,6 +31,7 @@ const Profile = () => {
   const { user, setUser } = useUser();
   const [loading, setLoading] = useState(true);
   const [usernameWarning, setUsernameWarning] = useState(false);
+  const [emailChangeModalOpen, setEmailChangeModalOpen] = useState(false);
 
   useEffect(() => {
     if (user.userId !== "") {
@@ -195,7 +198,26 @@ const Profile = () => {
                   return true;
                 }}
               />
-              <RenderNonEditableField label="Private Email" value={user.contactInformation.email} />
+              <li className="flex flex-col md:flex-row justify-between w-full py-3 border-b border-gray-200">
+                <div className="flex-1">
+                  <strong className="text-xs md:text-md font-medium text-gray-700">Private Email</strong>
+                  <p className="text-sm text-gray-600 mt-1">{user.contactInformation.email}</p>
+                </div>
+                <div className="mt-2 md:mt-0 md:ml-4 flex items-center">
+                  <Button
+                    size="sm"
+                    color="blue"
+                    variant="outlined"
+                    onClick={() => setEmailChangeModalOpen(true)}
+                    className="text-xs"
+                    placeholder={undefined}
+                    onPointerEnterCapture={undefined}
+                    onPointerLeaveCapture={undefined}
+                  >
+                    Change Email
+                  </Button>
+                </div>
+              </li>
               <RenderEditableField
                 label="Private Phone Number"
                 value={user.contactInformation.mobile}
@@ -206,6 +228,14 @@ const Profile = () => {
                 }
               />
             </ul>
+
+            <EmailChangeModal
+              open={emailChangeModalOpen}
+              onClose={() => setEmailChangeModalOpen(false)}
+              userId={user.userId}
+              currentEmail={user.contactInformation.email}
+              setUser={setUser}
+            />
           </div>
         </div>
       </div>
