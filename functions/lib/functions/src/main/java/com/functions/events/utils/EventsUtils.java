@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
-import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.users.models.PrivateUserData;
@@ -17,7 +16,6 @@ import com.functions.users.models.PublicUserData;
 import com.functions.users.services.Users;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 
 public class EventsUtils {
@@ -53,17 +51,9 @@ public class EventsUtils {
     /**
      * Fetches organiser ID for an event.
      */
-    public static String fetchOrganiserIdForEvent(String eventId, Boolean isPrivate) {
+    public static String extractOrganiserIdForEvent(EventData event) {
+        String eventId = event.getEventId();
         try {
-            Firestore db = FirebaseService.getFirestore();
-            DocumentSnapshot eventSnapshot = getEventRef(db, eventId, isPrivate).get().get();
-
-            if (!eventSnapshot.exists()) {
-                logger.error("Event " + eventId + " does not exist");
-                throw new RuntimeException("Event " + eventId + " does not exist");
-            }
-
-            EventData event = eventSnapshot.toObject(EventData.class);
             if (event == null || event.getOrganiserId() == null || event.getOrganiserId().isEmpty()) {
                 logger.error("Event " + eventId + " missing organiserId");
                 throw new RuntimeException("Event " + eventId + " missing organiserId");
