@@ -1,11 +1,13 @@
 package com.functions.stripe.services;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.repositories.EventsRepository;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.config.StripeConfig;
@@ -13,6 +15,7 @@ import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 import com.functions.users.models.PrivateUserData;
+import com.functions.users.services.Users;
 import com.functions.users.utils.UsersUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -94,6 +97,40 @@ public class CheckoutService {
             StripeConfig.initialize();
             logger.info("Creating checkout session for event {} ({} tickets)", request.eventId(), request.quantity());
 
+            // SECTION A: Perform SPORTSHUB domain specific operations
+            FirebaseService.createFirestoreTransaction(transaction -> {
+                try {
+                    Firestore db = FirebaseService.getFirestore();
+
+                    // SECTION A PHASE 1: Fetch all relevant data to reserve tickets and create checkout
+                    Optional<EventData> maybeEventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction));
+                    if (maybeEventData.isEmpty()) {
+                        throw new RuntimeException("No event found for eventId: " + request.eventId());
+                    }
+                    EventData eventData = maybeEventData.get();
+
+                    String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);
+                    PrivateUserData privateUserData = Users.getPrivateUserDataById(organiserId);
+
+                    String stripeAccountId = validateAndGetStripeAccount(organiserId, privateUserData);
+                    EventValidationResult validationResult = validateEventForCheckout(eventData, request.quantity(), organiserId, stripeAccountId);
+
+                    logger.info("Validated event {} for checkout (price: {}, quantity: {})", 
+                    request.eventId(), validationResult.price, validationResult.quantity);
+
+                    commitReservation(transaction, request, sessionResult.sessionId);
+
+                    
+                    return null;
+
+                } catch (Exception e) {
+                    logger.error("Reservation commit failed for event {}: {}", request.eventId(), e.getMessage(), e);
+                    throw new RuntimeException("Reservation commit failed: " + e.getMessage(), e);
+                }
+            });
+
+
+
             // PHASE 1: Validate event and Stripe account (NO WRITES)
             String organiserId = EventsUtils.fetchOrganiserIdForEvent(request.eventId(), request.isPrivate());
             String stripeAccountId = validateAndGetStripeAccount(organiserId);
@@ -144,84 +181,64 @@ public class CheckoutService {
      * @return Event data needed for Stripe session creation
      */
     private static EventValidationResult validateEventForCheckout(
-            CreateStripeCheckoutSessionRequest request, 
+            EventData event, Integer quantity,
             String organiserId, String stripeAccountId) throws Exception {
         
-        // Use read-only transaction for consistent snapshot
-        return FirebaseService.createFirestoreTransaction(transaction -> {
-            try {
-                Firestore db = FirebaseService.getFirestore();
-                
-                // READ event data
-                DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(), request.isPrivate());
-                DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
-
-                if (!eventSnapshot.exists()) {
-                    logger.error("Event " + request.eventId() + " does not exist");
-                    throw new RuntimeException("Event " + request.eventId() + " does not exist");
-                }
-
-                EventData event = eventSnapshot.toObject(EventData.class);
-                if (event == null) {
-                    logger.error("Event " + request.eventId() + " data is null");
-                    throw new RuntimeException("Event " + request.eventId() + " data is null");
-                }
-
-                // Fail-fast validation to prevent unnecessary Stripe API calls
-                // (These will be re-validated in commitReservation for race condition safety)
-                
-                // Validate event timing and status
-                EventsUtils.validateEventTiming(event, request.eventId());
-                
-                if (!Boolean.TRUE.equals(event.getPaymentsActive())) {
-                    logger.error("Event " + request.eventId() + " does not have payments enabled");
-                    throw new RuntimeException("Event " + request.eventId() + " does not have payments enabled");
-                }
-
-                // Validate price
-                Integer price = event.getPrice();
-                if (price == null) {
-                    logger.error("Event " + request.eventId() + " missing price field");
-                    throw new RuntimeException("Event " + request.eventId() + " missing price field");
-                }
-                
-                if (price < 1 && price != 0) { // Allow for free events and ensure price is not less than Stripe surcharge fee
-                    logger.error("Event " + request.eventId() + " invalid price: " + price);
-                    throw new RuntimeException("Event " + request.eventId() + " invalid price: " + price);
-                }
-
-                // Validate vacancy
-                Integer vacancy = event.getVacancy();
-                if (vacancy == null) {
-                    logger.error("Event " + request.eventId() + " missing vacancy field");
-                    throw new RuntimeException("Event " + request.eventId() + " missing vacancy field");
-                }
-                
-                if (vacancy < request.quantity()) {
-                    logger.warn("Event " + request.eventId() + " insufficient tickets: " + 
-                            vacancy + " available, " + request.quantity() + " requested");
-                    throw new CheckoutVacancyException("Event " + request.eventId() + " insufficient tickets: " + 
-                            vacancy + " available, " + request.quantity() + " requested");
-                }
-
-                logger.info("Validated event {} for Stripe session: {} tickets at {} cents (vacancy: {})",
-                        request.eventId(), request.quantity(), price, vacancy);
-
-                return new EventValidationResult(
-                        request.eventId(),
-                        event.getName(),
-                        price,
-                        event.getStripeFeeToCustomer(),
-                        event.getPromotionalCodesEnabled(),
-                        stripeAccountId,
-                        organiserId,
-                        request.quantity()
-                );
-            } catch (Exception e) {
-                logger.error("Failed to validate event for checkout {}: {}", request.eventId(), e.getMessage(), e);
-                throw new RuntimeException("Failed to validate event for checkout: " + e.getMessage(), e);
+        String eventId = event.getEventId();
+        try {
+            // Fail-fast validation to prevent unnecessary Stripe API calls
+            // (These will be re-validated in commitReservation for race condition safety)
+            
+            // Validate event timing and status
+            EventsUtils.validateEventTiming(event, eventId);
+            
+            if (!Boolean.TRUE.equals(event.getPaymentsActive())) {
+                logger.error("Event " + eventId + " does not have payments enabled");
+                throw new RuntimeException("Event " + eventId + " does not have payments enabled");
             }
-        });
+
+            // Validate price
+            Integer price = event.getPrice();
+            if (price == null) {
+                logger.error("Event " + eventId + " missing price field");
+                throw new RuntimeException("Event " + eventId + " missing price field");
+            }
+            
+            if (price < 1 && price != 0) { // Allow for free events and ensure price is not less than Stripe surcharge fee
+                logger.error("Event " + eventId + " invalid price: " + price);
+                throw new RuntimeException("Event " + eventId + " invalid price: " + price);
+            }
+
+            // Validate vacancy
+            Integer vacancy = event.getVacancy();
+            if (vacancy == null) {
+                logger.error("Event " + eventId + " missing vacancy field");
+                throw new RuntimeException("Event " + eventId + " missing vacancy field");
+            }
+            
+            if (vacancy < quantity) {
+                logger.warn("Event " + eventId + " insufficient tickets: " + 
+                        vacancy + " available, " + eventId + " requested");
+                throw new CheckoutVacancyException("Event " + eventId + " insufficient tickets: " + 
+                        vacancy + " available, " + quantity + " requested");
+            }
+
+            logger.info("Validated event {} for Stripe session: {} tickets at {} cents (vacancy: {})", eventId, quantity, price, vacancy);
+
+            return new EventValidationResult(
+                    eventId,
+                    event.getName(),
+                    price,
+                    event.getStripeFeeToCustomer(),
+                    event.getPromotionalCodesEnabled(),
+                    stripeAccountId,
+                    organiserId,
+                    quantity
+            );
+        } catch (Exception e) {
+            logger.error("Failed to validate event for checkout {}: {}", eventId, e.getMessage(), e);
+            throw new RuntimeException("Failed to validate event for checkout: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -422,17 +439,8 @@ public class CheckoutService {
      * Validates Stripe account OUTSIDE transaction. Performs Stripe API call if needed.
      * Returns the active Stripe account ID or throws exception.
      */
-    private static String validateAndGetStripeAccount(String organiserId) throws StripeException {
+    private static String validateAndGetStripeAccount(String organiserId, PrivateUserData organiser) throws StripeException {
         try {
-            Firestore db = FirebaseService.getFirestore();
-            DocumentSnapshot organiserSnapshot = UsersUtils.getUserRef(db, organiserId).get().get();
-
-            if (!organiserSnapshot.exists()) {
-                logger.error("Organiser " + organiserId + " does not exist");
-                throw new RuntimeException("Organiser " + organiserId + " does not exist");
-            }
-
-            PrivateUserData organiser = organiserSnapshot.toObject(PrivateUserData.class);
             if (organiser == null) {
                 logger.error("Organiser " + organiserId + " data is null");
                 throw new RuntimeException("Organiser " + organiserId + " data is null");
