@@ -69,6 +69,7 @@ export const EventNameEdit = ({
                     setNewEditTitle(e.target.value);
                   }}
                   crossOrigin="false"
+                  maxLength={100}
                 />
                 <CheckIcon
                   className="absolute top-2 right-9 w-7 stroke-organiser-title-gray-text cursor-pointer"

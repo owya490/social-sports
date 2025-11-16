@@ -2,6 +2,7 @@ export enum ImageType {
   THUMBNAIL = "thumbnail",
   IMAGE = "image",
   FORM = "form",
+  PROFILE_PICTURE = "profile_picture",
 }
 
 export enum ImageOrientation {
@@ -107,6 +108,27 @@ export const ImageConfig: Record<ImageType, TypeConfig> = {
     title: "Select or Upload Form Image",
     description:
       "Choose an existing form image or upload a new one. This can be either landscape (5:4) or portrait (4:5) orientation.",
+    supportedTypes: ["image/jpeg", "image/png"],
+  },
+  [ImageType.PROFILE_PICTURE]: {
+    allowedOrientations: [ImageOrientation.LANDSCAPE], // Square profile pictures
+    orientationConfigs: {
+      [ImageOrientation.LANDSCAPE]: {
+        aspectText: "1:1 (Square)",
+        aspectRatio: 1,
+        minCropWidth: 200,
+        minCropHeight: 200,
+        displayWidth: "w-full",
+      },
+    },
+    defaultAspectRatio: 1,
+    aspectText: "1:1 (Square)",
+    displayName: "Profile Picture",
+    containerAspect: "aspect-square",
+    defaultImageWidth: 300,
+    defaultImageHeight: 300,
+    title: "Profile Pictures",
+    description: "Square aspect ratio (1:1) - Choose an existing profile picture or upload a new one",
     supportedTypes: ["image/jpeg", "image/png"],
   },
 };
