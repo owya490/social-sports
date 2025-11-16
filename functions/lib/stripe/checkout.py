@@ -133,32 +133,39 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
       logger.error(f"Provided event {event_ref.path} has an organiser {organiser_ref.path} who does not have a active stripe account. charges_enabled={account.charges_enabled} details_submitted={account.details_submitted} Returning status=500")
       return json.dumps({"url": ERROR_URL})
 
-  # 3. check again with database in transaction in the backend if quantity is still available
-  vacancy = event.get("vacancy")
-  if vacancy is None:
-    logger.error(f"Event {event_ref.path} is missing vacancy field. Returning status=500")
+  # 3. check ticket types availability and reserve tickets 
+  from lib.utils.ticketUtils import reserve_tickets, get_ticket_types_for_event, get_general_ticket_type
+  
+  ticket_types = get_ticket_types_for_event(transaction, event_ref, logger)
+  if not ticket_types:
+    logger.error(f"No ticket types found for event {event_ref.path}. Returning status=500")
     return json.dumps({"url": ERROR_URL})
-
-  if vacancy < quantity:
-    logger.warning(f"Provided event {event_ref.path} does not have enough tickets to fulfill this order. quantity_requested={quantity} vacancy={vacancy}")
+  
+  # TODO: again, this workflow is hardcoded to general tickets at the moment. We should probably
+  # generalise it.
+  # Check only General ticket availability for public checkout (not Admin tickets)
+  general_ticket = get_general_ticket_type(ticket_types)
+  if not general_ticket or general_ticket.remaining_quantity < quantity:
+    available_qty = general_ticket.remaining_quantity if general_ticket else 0
+    logger.warning(f"Provided event {event_ref.path} does not have enough General tickets to fulfill this order. quantity_requested={quantity} available={available_qty}")
     return json.dumps({"url": cancel_url})
   
-  # 4. obtain price and organiser stripe account id again from db
-  price = event.get("price")
-  if price is None:
-    logger.error(f"Event {event_ref.path} is missing price field. Returning status=500")
+  # 4. reserve tickets and get price from ticket type
+  reserved_ticket_type = reserve_tickets(transaction, event_ref, quantity, logger)
+  if not reserved_ticket_type:
+    logger.error(f"Failed to reserve tickets for event {event_ref.path}. Returning status=500")
     return json.dumps({"url": ERROR_URL})
-    
-  organiser_stripe_account_id = stripe_account
+  
+  price = reserved_ticket_type.price
+  organiser_stripe_account_id = organiser.get("stripeAccount")
 
-  # 4a. check if the price exists for this event
-  if (price == None or not isinstance(price, int) or (price < 1 and price != 0)): # we don't want events to be less than stripe fees
-    logger.error(f"Provided event {event_ref.path} does not have a valid price: {price}. Returning status=500")
+  # 4a. check if the price exists for this ticket type
+  if (price == None or not isinstance(price, int) or price < 1): # we don't want events to be less than stripe fees
+    logger.error(f"Provided event {event_ref.path} ticket type '{reserved_ticket_type.name}' does not have a valid price: {price}. Returning status=500")
     return json.dumps({"url": ERROR_URL})
 
-  # 5. set the tickets as sold and reduce vacancy (prevent race condition/ over selling, we will release tickets back after cancelled sale)
-  transaction.update(event_ref, {"vacancy": vacancy - quantity })
-  logger.info(f"Securing {quantity} tickets for event {event_ref.path} at ${price}. There are now {vacancy - quantity} tickets left.")
+  # 5. tickets are already reserved in reserve_tickets function
+  logger.info(f"Secured {quantity} tickets for event {event_ref.path} using ticket type '{reserved_ticket_type.name}' at ${price}.")
 
   # 6. check if stripe fee is passed to customer, if so, create shipping object with an additional respective fees
   shipping_options: Optional[List[Dict[str, Any]]] = None
