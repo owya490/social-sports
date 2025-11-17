@@ -7,7 +7,6 @@ import { useUser } from "@/components/utility/UserContext";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
-import { Button } from "@material-tailwind/react";
 import { Switch } from "@mantine/core";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
@@ -198,26 +197,21 @@ const Profile = () => {
                   return true;
                 }}
               />
-              <li className="flex flex-col md:flex-row justify-between w-full py-3 border-b border-gray-200">
-                <div className="flex-1">
-                  <strong className="text-xs md:text-md font-medium text-gray-700">Private Email</strong>
-                  <p className="text-sm text-gray-600 mt-1">{user.contactInformation.email}</p>
+              <div key="Private Email" className="mb-2">
+                <div className="flex justify-between w-full">
+                  <strong className="text-xs md:text-md font-medium text-gray-700">Private Email:</strong>
+                  <div>
+                    <button
+                      onClick={() => setEmailChangeModalOpen(true)}
+                      className="hover:bg-core-hover py-0.5 px-1.5 rounded-lg"
+                    >
+                      <strong className="text-xs md:text-md font-medium text-gray-700">
+                        {user.contactInformation.email}
+                      </strong>
+                    </button>
+                  </div>
                 </div>
-                <div className="mt-2 md:mt-0 md:ml-4 flex items-center">
-                  <Button
-                    size="sm"
-                    color="blue"
-                    variant="outlined"
-                    onClick={() => setEmailChangeModalOpen(true)}
-                    className="text-xs"
-                    placeholder={undefined}
-                    onPointerEnterCapture={undefined}
-                    onPointerLeaveCapture={undefined}
-                  >
-                    Change Email
-                  </Button>
-                </div>
-              </li>
+              </div>
               <RenderEditableField
                 label="Private Phone Number"
                 value={user.contactInformation.mobile}
