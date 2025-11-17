@@ -109,3 +109,6 @@ export interface IUsersDataLocalStorage {
 export interface UsernameMap {
   userId: UserId;
 }
+
+export const PUBLIC_USER_PATH = "Users/Active/Public";
+export const PRIVATE_USER_PATH = "Users/Active/Private";

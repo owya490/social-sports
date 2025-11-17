@@ -1,6 +1,10 @@
 "use client";
 
-import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
+import {
+  BlackHighlightButton,
+  InvertedHighlightButton,
+  RedHighlightButton,
+} from "@/components/elements/HighlightButton";
 import { ImageSelectionDialog } from "@/components/forms/sections/image-section/ImageSelectionDialog";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
 import { useUser } from "@/components/utility/UserContext";
@@ -14,6 +18,7 @@ import {
   getEventCollectionById,
   removeEventFromCollection,
   updateEventCollection,
+  updateEventCollectionAccessModifier,
 } from "@/services/src/eventCollections/eventCollectionsService";
 import { getEventById, getOrganiserEvents } from "@/services/src/events/eventsService";
 import { getUsersEventImagesUrls, uploadEventImage } from "@/services/src/images/imageService";
@@ -21,6 +26,7 @@ import { getErrorUrl, getUrlWithCurrentHostname } from "@/services/src/urlUtils"
 import {
   ArrowLeftIcon,
   CheckIcon,
+  GlobeAltIcon,
   LinkIcon,
   LockClosedIcon,
   PencilIcon,
@@ -55,6 +61,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [showAddEventsDialog, setShowAddEventsDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const [allOrganiserEvents, setAllOrganiserEvents] = useState<EventData[]>([]);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<EventId>>(new Set());
 
@@ -85,6 +92,9 @@ export default function CollectionPage({ params }: CollectionPageProps) {
           const event = await getEventById(eventId);
           events.push(event);
         }
+
+        // Sort events by start date (most recent first)
+        events.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
 
         setEventDataList(events);
         setLoading(false);
@@ -151,6 +161,8 @@ export default function CollectionPage({ params }: CollectionPageProps) {
   const handleOpenAddEventsDialog = async () => {
     try {
       const events = await getOrganiserEvents(user.userId);
+      // Sort events by start date (most recent first)
+      events.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
       setAllOrganiserEvents(events);
       setSelectedEventIds(new Set(collection.eventIds));
       setShowAddEventsDialog(true);
@@ -182,6 +194,10 @@ export default function CollectionPage({ params }: CollectionPageProps) {
         const event = await getEventById(eventId);
         events.push(event);
       }
+
+      // Sort events by start date (most recent first)
+      events.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
+
       setEventDataList(events);
       setCollection((prev) => ({ ...prev, eventIds: newEventIds }));
       setShowAddEventsDialog(false);
@@ -220,6 +236,18 @@ export default function CollectionPage({ params }: CollectionPageProps) {
     navigator.clipboard.writeText(collectionUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleToggleCollectionAccessModifier = async () => {
+    const newIsPrivate = !collection.isPrivate;
+    try {
+      await updateEventCollectionAccessModifier(collectionId, user.userId, newIsPrivate);
+      setCollection((prev) => ({ ...prev, isPrivate: newIsPrivate }));
+      setShowPrivacyDialog(false);
+    } catch (error) {
+      logger.error(`Failed to toggle collection access modifier: ${error}`);
+      router.push(getErrorUrl(error));
+    }
   };
 
   return (
@@ -286,12 +314,23 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                       </h1>
                     )}
                     <div className="flex items-center gap-2 ml-auto">
-                      {collection.isPrivate && (
-                        <span className="flex items-center text-xs px-3 py-1.5 bg-gray-100 text-gray-600 rounded-full whitespace-nowrap">
-                          <LockClosedIcon className="w-3 h-3 mr-1" />
-                          Private
-                        </span>
-                      )}
+                      <button
+                        onClick={() => setShowPrivacyDialog(true)}
+                        className="flex items-center text-xs px-3 py-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-full whitespace-nowrap transition-colors cursor-pointer"
+                        title={`Click to make ${collection.isPrivate ? "public" : "private"}`}
+                      >
+                        {collection.isPrivate ? (
+                          <>
+                            <LockClosedIcon className="w-3 h-3 mr-1" />
+                            Private
+                          </>
+                        ) : (
+                          <>
+                            <GlobeAltIcon className="w-3 h-3 mr-1" />
+                            Public
+                          </>
+                        )}
+                      </button>
                       <button
                         onClick={() => setShowDeleteDialog(true)}
                         className="p-2 bg-gray-100 hover:bg-red-600 text-gray-600 hover:text-white rounded-full transition-colors"
@@ -375,6 +414,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                     price={event.price}
                     vacancy={event.vacancy}
                     loading={true}
+                    openInNewTab={true}
                   />
                 </div>
               ))}
@@ -408,6 +448,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                       price={event.price}
                       vacancy={event.vacancy}
                       loading={false}
+                      openInNewTab={true}
                     />
                   </div>
                   <button
@@ -446,18 +487,39 @@ export default function CollectionPage({ params }: CollectionPageProps) {
               Are you sure you want to delete this collection? This action is irreversible and cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteDialog(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteCollection}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
+              <InvertedHighlightButton onClick={() => setShowDeleteDialog(false)} text="Cancel" />
+              <RedHighlightButton onClick={handleDeleteCollection} text="Delete" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Privacy Change Confirmation Dialog */}
+      {showPrivacyDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-core-text mb-4">
+              Make Collection {collection.isPrivate ? "Public" : "Private"}?
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {collection.isPrivate ? (
+                <>
+                  Making this collection <span className="font-semibold">public</span> will allow anyone to discover and
+                  view it on your profile page. Are you sure you want to proceed?
+                </>
+              ) : (
+                <>
+                  Making this collection <span className="font-semibold">private</span> will hide it from your profile
+                  page. Only people with the direct link will be able to access it. Are you sure you want to proceed?
+                </>
+              )}
+            </p>
+            <div className="flex justify-end gap-3">
+              <InvertedHighlightButton onClick={() => setShowPrivacyDialog(false)} text="Cancel" />
+              <BlackHighlightButton
+                onClick={handleToggleCollectionAccessModifier}
+                text={`Make ${collection.isPrivate ? "Public" : "Private"}`}
+              />
             </div>
           </div>
         </div>
@@ -524,18 +586,8 @@ export default function CollectionPage({ params }: CollectionPageProps) {
             </div>
 
             <div className="p-6 border-t border-gray-200 flex justify-end gap-3 sticky bottom-0 bg-white">
-              <button
-                onClick={() => setShowAddEventsDialog(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveEventSelection}
-                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-white hover:text-black border border-black transition-colors"
-              >
-                Save Selection
-              </button>
+              <InvertedHighlightButton onClick={() => setShowAddEventsDialog(false)} text="Cancel" />
+              <BlackHighlightButton onClick={handleSaveEventSelection} text="Save Selection" />
             </div>
           </div>
         </div>

@@ -38,7 +38,7 @@ export default function EventCollectionsPage() {
     if (user.userId !== "") {
       fetchData();
     }
-  }, [user, logger, router]);
+  }, [user]);
 
   const handleCreateCollection = async () => {
     setIsCreating(true);

@@ -19,6 +19,7 @@ export interface OrganiserEventCardProps {
   vacancy: number;
   loading?: boolean;
   disabled?: boolean;
+  openInNewTab?: boolean;
 }
 
 export default function OrganiserEventCard(props: OrganiserEventCardProps) {
@@ -26,6 +27,7 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
     props = {
       ...props,
       loading: false,
+      openInNewTab: false,
     };
   }
   if (props.disabled === undefined) {
@@ -35,18 +37,27 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
     };
   }
 
-  const MaybeDisabledLink = ({ children, disabled = false, url }: { children: React.ReactNode, disabled?: boolean, url: string }) => {
+  const MaybeDisabledLink = ({
+    children,
+    disabled = false,
+    url,
+  }: {
+    children: React.ReactNode;
+    disabled?: boolean;
+    url: string;
+  }) => {
     if (disabled) {
       return <div>{children}</div>;
     }
-    return <Link href={url}>{children}</Link>;
+    return (
+      <Link href={url} target={props.openInNewTab ? "_blank" : undefined}>
+        {children}
+      </Link>
+    );
   };
 
   return (
-    <MaybeDisabledLink
-      disabled={props.disabled}
-      url={`/organiser/event/${props.eventId}`}
-    >
+    <MaybeDisabledLink disabled={props.disabled} url={`/organiser/event/${props.eventId}`}>
       <div className="bg-white rounded-lg text-left border-gray-300 border w-full hover:cursor-pointer">
         {props.loading ? (
           <div>

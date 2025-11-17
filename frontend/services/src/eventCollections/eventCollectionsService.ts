@@ -3,10 +3,12 @@ import {
   EventCollection,
   EventCollectionId,
   PRIVATE_EVENT_COLLECTION_PATH,
+  PRIVATE_EVENT_COLLECTION_USER_FIELD,
   PUBLIC_EVENT_COLLECTION_PATH,
+  PUBLIC_EVENT_COLLECTION_USER_FIELD,
 } from "@/interfaces/EventCollectionTypes";
 import { EventId } from "@/interfaces/EventTypes";
-import { UserId } from "@/interfaces/UserTypes";
+import { PRIVATE_USER_PATH, PUBLIC_USER_PATH, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -16,7 +18,7 @@ const eventCollectionsServiceLogger = new Logger("eventCollectionsService");
 
 export async function getOrganiserPublicEventCollections(userId: UserId): Promise<EventCollection[]> {
   try {
-    const user = await getPublicUserById(userId);
+    const user = await getPublicUserById(userId, true, true);
     const collections: EventCollection[] = [];
     for (const collectionId of user.publicEventCollections) {
       const collection = await getEventCollectionById(collectionId);
@@ -119,9 +121,9 @@ export async function createEventCollection(
     await setDoc(collectionRef, newCollection);
 
     // Update user's collection list
-    const userPath = isPrivate ? "Users/Active/Private" : "Users/Active/Public";
+    const userPath = isPrivate ? PRIVATE_USER_PATH : PUBLIC_USER_PATH;
     const userRef = doc(db, userPath, userId);
-    const collectionField = isPrivate ? "privateEventCollections" : "publicEventCollections";
+    const collectionField = isPrivate ? PRIVATE_EVENT_COLLECTION_USER_FIELD : PUBLIC_EVENT_COLLECTION_USER_FIELD;
     await updateDoc(userRef, {
       [collectionField]: arrayUnion(collectionId),
     });
@@ -161,9 +163,9 @@ export async function deleteEventCollection(
     await deleteDoc(collectionRef);
 
     // Remove from user's collection list
-    const userPath = isPrivate ? "Users/Active/Private" : "Users/Active/Public";
+    const userPath = isPrivate ? PRIVATE_USER_PATH : PUBLIC_USER_PATH;
     const userRef = doc(db, userPath, userId);
-    const collectionField = isPrivate ? "privateEventCollections" : "publicEventCollections";
+    const collectionField = isPrivate ? PRIVATE_EVENT_COLLECTION_USER_FIELD : PUBLIC_EVENT_COLLECTION_USER_FIELD;
     await updateDoc(userRef, {
       [collectionField]: arrayRemove(collectionId),
     });
@@ -207,6 +209,55 @@ export async function removeEventFromCollection(
     eventCollectionsServiceLogger.info(`Removed event ${eventId} from collection ${collectionId}`);
   } catch (error) {
     eventCollectionsServiceLogger.error(`Error removing event from collection: ${error}`);
+    throw error;
+  }
+}
+
+export async function updateEventCollectionAccessModifier(
+  collectionId: EventCollectionId,
+  userId: UserId,
+  newIsPrivate: boolean
+): Promise<void> {
+  try {
+    // Get old collection
+    const oldCollection = await getEventCollectionById(collectionId);
+    const isPrivate = oldCollection.isPrivate;
+
+    if (isPrivate === newIsPrivate) {
+      eventCollectionsServiceLogger.info(
+        `Event collection access modifier already set to ${newIsPrivate}: ${collectionId}`
+      );
+      return;
+    }
+
+    // Copy old collection to new collection path
+    const newCollection = { ...oldCollection, isPrivate: newIsPrivate };
+    const newCollectionPath = newIsPrivate ? PRIVATE_EVENT_COLLECTION_PATH : PUBLIC_EVENT_COLLECTION_PATH;
+    const newCollectionRef = doc(db, newCollectionPath, collectionId);
+    await setDoc(newCollectionRef, newCollection);
+
+    // Add collection to new user's collection list
+    const newUserPath = newIsPrivate ? PRIVATE_USER_PATH : PUBLIC_USER_PATH;
+    const newUserRef = doc(db, newUserPath, userId);
+    const newCollectionField = newIsPrivate ? PRIVATE_EVENT_COLLECTION_USER_FIELD : PUBLIC_EVENT_COLLECTION_USER_FIELD;
+    await updateDoc(newUserRef, {
+      [newCollectionField]: arrayUnion(collectionId),
+    });
+
+    // Remove collection from old user's collection list
+    const oldUserPath = isPrivate ? PRIVATE_USER_PATH : PUBLIC_USER_PATH;
+    const oldUserRef = doc(db, oldUserPath, userId);
+    const oldCollectionField = isPrivate ? PRIVATE_EVENT_COLLECTION_USER_FIELD : PUBLIC_EVENT_COLLECTION_USER_FIELD;
+    await updateDoc(oldUserRef, {
+      [oldCollectionField]: arrayRemove(collectionId),
+    });
+
+    // Delete old collection
+    await deleteEventCollection(collectionId, userId, isPrivate);
+
+    eventCollectionsServiceLogger.info(`Updated event collection access modifier: ${collectionId}`);
+  } catch (error) {
+    eventCollectionsServiceLogger.error(`Error updating event collection access modifier: ${error}`);
     throw error;
   }
 }
