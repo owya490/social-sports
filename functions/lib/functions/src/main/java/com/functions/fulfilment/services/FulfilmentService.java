@@ -1,12 +1,32 @@
 package com.functions.fulfilment.services;
 
+import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
-import com.functions.fulfilment.models.*;
+import com.functions.fulfilment.models.CheckoutFulfilmentSession;
+import com.functions.fulfilment.models.EndFulfilmentEntity;
+import com.functions.fulfilment.models.FormsFulfilmentEntity;
+import com.functions.fulfilment.models.FulfilmentEntity;
+import com.functions.fulfilment.models.FulfilmentEntityType;
+import com.functions.fulfilment.models.FulfilmentSession;
+import com.functions.fulfilment.models.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -16,18 +36,11 @@ import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
-    private static final int CLEANUP_CUTOFF_MINUTES = 35;
+    // Cut off for old fulfilment sessions is 1 week (7 days) for data retention purposes
+    private static final int CLEANUP_CUTOFF_MINUTES = 60 * 24 * 7;
 
     /**
      * Cleanup fulfilment sessions older than the default cutoff minutes.
