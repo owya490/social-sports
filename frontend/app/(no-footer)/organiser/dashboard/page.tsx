@@ -45,14 +45,14 @@ export default function Dashboard() {
     <div className="lg:max-h-screen">
       <OrganiserAnnouncementBanner />
       <div className="pt-2 md:py-16 md:flex md:justify-center px-4 md:px-0">
-        <div>
+        <div className="max-w-6xl w-full md:px-4">
           <h1 className="text-5xl font-bold mt-2 sm:mt-0">Organiser Dashboard</h1>
           {loading ? (
             <LoadingSkeletonOrganiserName />
           ) : (
             <h1 className="pt-2 sm:pt-4 text-4xl font-semibold text-[#BABABA]">Welcome {user.firstName}</h1>
           )}
-          <div className="lg:flex w-full mt-8 lg:max-h-[60vh]">
+          <div className="lg:flex mt-8 w-full lg:max-h-[60vh]">
             <div className="grow lg:mr-8 md:flex flex-col lg:w-[40rem] md:min-h-[60vh]">
               <OrganiserChecklist />
               <div className="hidden md:grid grid-cols-2 gap-4 mt-8 grow min-h-[10vh] mb-10 md:mb-0">
@@ -88,7 +88,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="md:overflow-auto mt-6 lg:mt-0">
+            <div className="md:overflow-auto mt-6 lg:mt-0 lg:max-w-sm">
               <div className="bg-organiser-light-gray py-4 rounded-2xl lg:px-8">
                 <h1 className="text-2xl font-bold text-center w-full">Upcoming Events</h1>
               </div>
