@@ -52,6 +52,7 @@ import {
   getAllEventsFromCollectionRef,
   tryGetAllActivePublicEventsFromLocalStorage,
 } from "./eventsUtils/getEventsUtils";
+import { addDefaultTicketTypes } from "../ticket/ticketService";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
@@ -97,6 +98,8 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     }
     await updateUser(data.organiserId, user);
 
+    await addDefaultTicketTypes(docRef.id, data.capacity, data.price);
+    eventServiceLogger.info(`Successfully added default ticket type for event '${docRef.id}'`);
     // We want to bust all our caches when we create a new event.
     bustEventsLocalStorageCache();
     bustUserLocalStorageCache();
