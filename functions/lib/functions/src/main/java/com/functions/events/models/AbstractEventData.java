@@ -28,6 +28,9 @@ public abstract class AbstractEventData {
 	private LocationLatLng locationLatLng;
 	private Integer capacity;
 	private Integer vacancy;
+	/**
+	 * Price in cents
+	 */
 	private Integer price;
 	private String organiserId;
 	@JsonSerialize(using = JavaUtils.TimestampSerializer.class)
