@@ -16,7 +16,8 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import IS_PROD, db
-from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
+from lib.emails.purchase_event import (PurchaseEventRequest,
+                                       send_email_on_purchase_event)
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
@@ -89,7 +90,7 @@ def get_form_response_ids_from_fulfilment_session(
         )
 
         if not fulfilment_session_snapshot.exists:
-            logger.info(
+            logger.error(
                 f"Fulfilment session not found: {fulfilment_session_id}. Skipping form response IDs."
             )
             return []
@@ -250,7 +251,9 @@ def fulfill_completed_event_ticket_purchase(
         existing_form_responses = purchaser["attendees"][full_name].get(
             "formResponseIds", []
         )
-        all_form_responses = existing_form_responses + form_response_ids
+        all_form_responses = list(
+            dict.fromkeys(existing_form_responses + form_response_ids)
+        )
 
         attendee_data = {
             "phone": phone_number,

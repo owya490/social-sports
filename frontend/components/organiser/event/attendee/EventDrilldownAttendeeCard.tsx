@@ -1,3 +1,5 @@
+"use client";
+
 import { EventId, EventMetadata, Purchaser } from "@/interfaces/EventTypes";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import { UserCircleIcon } from "@heroicons/react/20/solid";

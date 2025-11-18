@@ -1,4 +1,4 @@
-import { EventMetadata } from "@/interfaces/EventTypes";
+import { EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { FormId, FormResponse, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
@@ -13,7 +13,7 @@ interface PurchaserInfo {
 interface FormResponsesTableProps {
   formResponses: FormResponse[];
   formId: FormId;
-  eventId: string;
+  eventId: EventId;
   eventMetadata: EventMetadata;
   showPurchaserColumn?: boolean;
 }

@@ -57,6 +57,11 @@ const ViewAttendeeFormResponsesDialog = ({
 
         // Filter responses for this specific attendee
         const attendeeData = purchaser.attendees[attendeeName];
+        if (!attendeeData) {
+          logger.warn(`No attendee data found for name "${attendeeName}" on purchaser ${purchaser.email}.`);
+          setFormResponses([]);
+          return;
+        }
         const attendeeFormResponseIds = attendeeData.formResponseIds || [];
 
         const filteredResponses = allResponses.filter((response) =>
