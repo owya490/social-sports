@@ -86,7 +86,8 @@ const FulfilmentEntityPage = ({
     if (remainingMs <= 0) {
       // Small delay to ensure the timer shows 00:00 before redirecting
       const timeoutId = setTimeout(async () => {
-        await deleteFulfilmentSession(fulfilmentSessionId);
+        // TODO: Deprecate and remove this function as we are cleaning up in CleanupOldFulfilmentSessionsCronEndpoint
+        // await deleteFulfilmentSession(fulfilmentSessionId);
         router.push("/timeout");
       }, 100);
 
