@@ -18,6 +18,7 @@ import { FormId } from "@/interfaces/FormTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
+import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -57,6 +58,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
+  const [totalNetSales, setTotalNetSales] = useState<number>(0);
   const router = useRouter();
 
   const { user } = useUser();
@@ -89,6 +91,15 @@ export default function EventPage({ params }: EventPageProps) {
         setEventFormId(event.formId);
         setEventHideVacancy(event.hideVacancy);
       })
+      .then(() => {
+        getEventsMetadataByEventId(eventId).then((eventMetadata) => {
+          setEventMetadata(eventMetadata);
+          calculateNetSales(eventMetadata).then((totalNetSales) => {
+            console.log("totalNetSales", totalNetSales);
+            setTotalNetSales(totalNetSales);
+          });
+        });
+      })
       .finally(async () => {
         await sleep(500);
         setLoading(false);
@@ -97,9 +108,6 @@ export default function EventPage({ params }: EventPageProps) {
         eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
         router.push("/error");
       });
-    getEventsMetadataByEventId(eventId).then((eventMetadata) => {
-      setEventMetadata(eventMetadata);
-    });
   }, []);
 
   useEffect(() => {
@@ -139,6 +147,7 @@ export default function EventPage({ params }: EventPageProps) {
           completeTicketCount={eventMetadata.completeTicketCount}
           eventCapacity={eventCapacity}
           eventPrice={eventPrice}
+          totalNetSales={totalNetSales}
         />
         <MobileEventDrilldownNavTabs
           navigationTabs={["Details", "Attendees", "Forms", "Images", "Settings"]}
@@ -190,7 +199,7 @@ export default function EventPage({ params }: EventPageProps) {
                 setEventMetadata={setEventMetadata}
               />
             )}
-            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata}/>}
+            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata} />}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}
