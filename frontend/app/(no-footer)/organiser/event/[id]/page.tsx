@@ -95,7 +95,6 @@ export default function EventPage({ params }: EventPageProps) {
         getEventsMetadataByEventId(eventId).then((eventMetadata) => {
           setEventMetadata(eventMetadata);
           calculateNetSales(eventMetadata).then((totalNetSales) => {
-            console.log("totalNetSales", totalNetSales);
             setTotalNetSales(totalNetSales);
           });
         });
