@@ -97,7 +97,8 @@ const Profile = () => {
               <div className="mt-4">
                 <button
                   onClick={() => setEmailChangeModalOpened(true)}
-                  className="px-4 py-2 text-sm font-medium text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-black px-3 py-1.5 text-white rounded-lg"
+                  type="button"
                 >
                   Change Email
                 </button>

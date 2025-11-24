@@ -296,7 +296,8 @@ export async function updateUserEmail(newEmail: string, currentPassword: string)
       newEmail: newEmail,
     });
   } catch (error) {
-    authServiceLogger.error("Error updating user email", { error });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    authServiceLogger.error("Error updating user email", { error: errorMessage });
 
     // Provide user-friendly error messages
     if (error instanceof FirebaseError) {
@@ -335,8 +336,8 @@ export async function syncEmailOnLogin(userId: string): Promise<void> {
       return;
     }
 
-    // Get current Firestore data
-    const userDocRef = doc(db, "Users", userId);
+    // Get current Firestore data from Private user document
+    const userDocRef = doc(db, "Users", "Active", "Private", userId);
     const userDoc = await getDoc(userDocRef);
 
     if (!userDoc.exists()) {
@@ -366,7 +367,8 @@ export async function syncEmailOnLogin(userId: string): Promise<void> {
     }
   } catch (error) {
     // Non-critical operation - log but don't throw
-    authServiceLogger.error("Error syncing email on login", { userId, error });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    authServiceLogger.error("Error syncing email on login", { userId, error: errorMessage });
   }
 }
 
