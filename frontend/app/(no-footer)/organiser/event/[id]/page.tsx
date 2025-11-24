@@ -94,9 +94,14 @@ export default function EventPage({ params }: EventPageProps) {
       .then(() => {
         getEventsMetadataByEventId(eventId).then((eventMetadata) => {
           setEventMetadata(eventMetadata);
-          calculateNetSales(eventMetadata).then((totalNetSales) => {
-            setTotalNetSales(totalNetSales);
-          });
+          try {
+            calculateNetSales(eventMetadata).then((totalNetSales) => {
+              setTotalNetSales(totalNetSales);
+            });
+          } catch (error) {
+            eventServiceLogger.error(`Error calculating net sales: ${error}`);
+            setTotalNetSales(eventMetadata.completeTicketCount * eventPrice);
+          }
         });
       })
       .finally(async () => {

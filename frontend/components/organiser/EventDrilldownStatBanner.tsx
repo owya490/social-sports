@@ -1,7 +1,4 @@
-import { EventMetadata } from "@/interfaces/EventTypes";
-import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { displayPrice } from "@/utilities/priceUtils";
-import React from "react";
 import Skeleton from "react-loading-skeleton";
 
 interface EventDrilldownStatBannerProps {
@@ -18,9 +15,8 @@ const EventDrilldownStatBanner = ({
   eventAccessCount,
   completeTicketCount,
   eventCapacity,
-  totalNetSales
+  totalNetSales,
 }: EventDrilldownStatBannerProps) => {
-
   return (
     <div className="hidden md:block">
       <div className="bg-organiser-light-gray p-10 m-0 rounded-3xl flex justify-between flex-row space-x-6 max-w-6xl xl:mx-auto">
@@ -35,7 +31,6 @@ const EventDrilldownStatBanner = ({
               />
             ) : (
               `$A${displayPrice(totalNetSales).toFixed(2)}`
-              // `$A${((completeTicketCount ?? 0) * displayPrice(eventPrice)).toFixed(2)}`
             )}
           </div>
         </div>
@@ -50,7 +45,7 @@ const EventDrilldownStatBanner = ({
                 }}
               />
             ) : (
-               `${completeTicketCount ?? 0}/${eventCapacity}`
+              `${completeTicketCount ?? 0}/${eventCapacity}`
             )}
           </div>
         </div>
