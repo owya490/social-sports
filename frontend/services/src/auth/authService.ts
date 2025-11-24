@@ -15,11 +15,11 @@ import {
   UserCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
 import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
-import { createUser, deleteUser, getPublicUserById } from "../users/usersService";
+import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 
 const authServiceLogger = new Logger("authServiceLogger");
@@ -336,17 +336,9 @@ export async function syncEmailOnLogin(userId: string): Promise<void> {
       return;
     }
 
-    // Get current Firestore data from Private user document
-    const userDocRef = doc(db, "Users", "Active", "Private", userId);
-    const userDoc = await getDoc(userDocRef);
-
-    if (!userDoc.exists()) {
-      authServiceLogger.warn("User document not found for email sync", { userId });
-      return;
-    }
-
-    const userData = userDoc.data();
-    const currentFirestoreEmail = userData?.contactInformation?.email;
+    // Get current user data using service layer
+    const privateUserData = await getPrivateUserById(userId);
+    const currentFirestoreEmail = privateUserData?.contactInformation?.email;
 
     // Sync if emails don't match
     if (currentFirestoreEmail !== user.email) {
@@ -356,8 +348,12 @@ export async function syncEmailOnLogin(userId: string): Promise<void> {
         firestoreEmail: currentFirestoreEmail,
       });
 
-      await updateDoc(userDocRef, {
-        "contactInformation.email": user.email,
+      // Update email using service layer
+      await updateUser(userId, {
+        contactInformation: {
+          ...privateUserData.contactInformation,
+          email: user.email,
+        },
       });
 
       // Clear local storage cache to force refresh
