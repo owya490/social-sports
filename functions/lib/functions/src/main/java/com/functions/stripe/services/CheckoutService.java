@@ -33,29 +33,7 @@ public class CheckoutService {
      * Data transfer object holding event data needed for Stripe session creation.
      * This is used only to pass data to the Stripe API, not for validation.
      */
-    private static class EventValidationResult {
-        final String eventId;
-        final String eventName;
-        final Integer price;
-        final Boolean stripeFeeToCustomer;
-        final Boolean promotionalCodesEnabled;
-        final String stripeAccountId;
-        final String organiserId;
-        final Integer quantity;
-
-        EventValidationResult(String eventId, String eventName, Integer price, 
-                             Boolean stripeFeeToCustomer, Boolean promotionalCodesEnabled,
-                             String stripeAccountId, String organiserId, Integer quantity) {
-            this.eventId = eventId;
-            this.eventName = eventName;
-            this.price = price;
-            this.stripeFeeToCustomer = stripeFeeToCustomer;
-            this.promotionalCodesEnabled = promotionalCodesEnabled;
-            this.stripeAccountId = stripeAccountId;
-            this.organiserId = organiserId;
-            this.quantity = quantity;
-        }
-    }
+    private static record EventValidationResult(String eventId, String eventName, Integer price, Boolean stripeFeeToCustomer, Boolean promotionalCodesEnabled, String stripeAccountId, String organiserId, Integer quantity) {}
 
     /**
      * Data transfer object holding Stripe session creation result.

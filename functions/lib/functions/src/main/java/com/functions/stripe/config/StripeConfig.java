@@ -24,7 +24,7 @@ public class StripeConfig {
     private static final int STRIPE_FIXED_FEE_CENTS = 30;
     private static final double STRIPE_PERCENTAGE_FEE = 0.017; // 1.7%
 
-    private static volatile boolean initialized = false;
+    private static boolean initialized = false;
 
     /**
      * Explicitly initializes Stripe configuration with the API key.
