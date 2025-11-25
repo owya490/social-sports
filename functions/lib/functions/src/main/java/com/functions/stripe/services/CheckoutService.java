@@ -38,15 +38,7 @@ public class CheckoutService {
     /**
      * Data transfer object holding Stripe session creation result.
      */
-    private static class StripeSessionResult {
-        final String sessionId;
-        final String checkoutUrl;
-
-        StripeSessionResult(String sessionId, String checkoutUrl) {
-            this.sessionId = sessionId;
-            this.checkoutUrl = checkoutUrl;
-        }
-    }
+    private static record StripeSessionResult(String sessionId, String checkoutUrl) {}
 
     /**
      * Creates a Stripe checkout session for an event.
@@ -86,7 +78,7 @@ public class CheckoutService {
                     sessionResult.sessionId, request.eventId());
 
             // PHASE 3: Commit Firestore transaction to reserve tickets (only if Stripe succeeded)
-            commitReservation(request, sessionResult.sessionId);
+            commitReservation(request);
             
             logger.info("Checkout complete for event {}, organiser {}, account {}", 
                     request.eventId(), validationResult.organiserId, validationResult.stripeAccountId);
@@ -192,12 +184,8 @@ public class CheckoutService {
      * based on current state. No dependency on prior reads.
      * 
      * @param request Original checkout request
-     * @param stripeSessionId Stripe session ID to track successful reservations
      */
-    private static void commitReservation(
-            CreateStripeCheckoutSessionRequest request,
-            String stripeSessionId) {
-        
+    private static void commitReservation(CreateStripeCheckoutSessionRequest request) {
         FirebaseService.createFirestoreTransaction(transaction -> {
             try {
                 Firestore db = FirebaseService.getFirestore();
@@ -353,6 +341,10 @@ public class CheckoutService {
      * @throws CheckoutVacancyException if insufficient tickets
      */
     private static void validateVacancy(String eventId, Integer vacancy, Integer quantity) throws CheckoutVacancyException {
+        if (quantity == null || quantity <= 0) {
+            logger.error("Event " + eventId + " invalid quantity: " + quantity);
+            throw new RuntimeException("Event " + eventId + " invalid quantity: " + quantity);
+        }
         if (vacancy == null) {
             logger.error("Event " + eventId + " missing vacancy field");
             throw new RuntimeException("Event " + eventId + " missing vacancy field");

@@ -28,7 +28,6 @@ public class StripeConfig {
 
     /**
      * Explicitly initializes Stripe configuration with the API key.
-     * This method is thread-safe and idempotent - calling it multiple times has no additional effect.
      * 
      * @throws IllegalStateException if STRIPE_API_KEY environment variable is not set
      * @throws RuntimeException if initialization fails
