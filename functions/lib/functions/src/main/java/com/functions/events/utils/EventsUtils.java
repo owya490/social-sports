@@ -79,10 +79,11 @@ public class EventsUtils {
     /**
      * Validates event timing: not paused, not concluded, registration still open.
      */
-    public static void validateEventTiming(EventData event, String eventId) {
+    public static void validateEventTiming(EventData event) {
         Boolean paused = event.getPaused() != null ? event.getPaused() : false;
         Timestamp endDate = event.getEndDate();
         Timestamp registrationDeadline = event.getRegistrationDeadline();
+        String eventId = event.getEventId();
 
         if (endDate == null || registrationDeadline == null) {
             logger.error("Event " + eventId + " missing date fields");

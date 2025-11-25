@@ -34,8 +34,11 @@ public class StripeConfig {
      */
     public static void initialize() {
         if (initialized) {
+            logger.info("Stripe configuration already initialized");
             return;
         }
+
+        logger.info("Initializing Stripe configuration");
 
         try {
             String stripeApiKey = Global.getEnv("STRIPE_API_KEY");

@@ -50,7 +50,7 @@ public class CheckoutService {
      * 2. Create Stripe checkout session (external I/O)
      * 3. Authoritative validation + commit (write transaction) - handles race conditions
      *
-     * This two-phase validation approach:
+     * This 3-phase validation approach:
      * - Phase 1: Quickly rejects obviously invalid requests (wrong timing, no vacancy, etc.)
      * - Phase 2: Creates Stripe session (external I/O)
      * - Phase 3: Re-validates transactionally to handle concurrent modifications
@@ -61,7 +61,6 @@ public class CheckoutService {
     public static CreateStripeCheckoutSessionResponse createStripeCheckoutSession(
             CreateStripeCheckoutSessionRequest request) {
         try {
-            StripeConfig.initialize();
             logger.info("Creating checkout session for event {} ({} tickets)", request.eventId(), request.quantity());
 
             // PHASE 1: Validate event and Stripe account (NO WRITES)
@@ -117,7 +116,7 @@ public class CheckoutService {
         }
 
         // Validate event timing and status
-        EventsUtils.validateEventTiming(event, request.eventId());
+        EventsUtils.validateEventTiming(event);
         
         if (!Boolean.TRUE.equals(event.getPaymentsActive())) {
             logger.error("Event " + request.eventId() + " does not have payments enabled");
