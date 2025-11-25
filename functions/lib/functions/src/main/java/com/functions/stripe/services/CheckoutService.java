@@ -108,15 +108,7 @@ public class CheckoutService {
                     sessionResult.sessionId, request.eventId());
 
             // PHASE 3: Commit Firestore transaction to reserve tickets (only if Stripe succeeded)
-            FirebaseService.createFirestoreTransaction(transaction -> {
-                try {
-                    commitReservation(transaction, request, sessionResult.sessionId);
-                    return null; // Transaction succeeded
-                } catch (Exception e) {
-                    logger.error("Reservation commit failed for event {}: {}", request.eventId(), e.getMessage(), e);
-                    throw new RuntimeException("Reservation commit failed: " + e.getMessage(), e);
-                }
-            });
+            commitReservation(request, sessionResult.sessionId);
             
             logger.info("Checkout complete for event {}, organiser {}, account {}", 
                     request.eventId(), validationResult.organiserId, validationResult.stripeAccountId);
@@ -133,114 +125,13 @@ public class CheckoutService {
     }
 
     /**
-     * Reads event data and performs fail-fast validation before creating Stripe session.
-     * Uses a transaction to ensure consistent snapshot of event data.
-     * 
-     * Purpose: Prevent unnecessary Stripe API calls for requests that will definitely fail.
-     * Note: commitReservation performs authoritative validation to handle race conditions.
-     * 
-     * @param organiserId Pre-fetched organiser ID
-     * @param stripeAccountId Pre-validated Stripe account ID
-     * @return Event data needed for Stripe session creation
+     * Reads and validates event data within a transaction.
+     * Common logic for both fail-fast validation and authoritative commitment.
      */
-    private static EventValidationResult validateEventForCheckout(
-            CreateStripeCheckoutSessionRequest request, 
-            String organiserId, String stripeAccountId) throws Exception {
-        
-        // Use read-only transaction for consistent snapshot
-        return FirebaseService.createFirestoreTransaction(transaction -> {
-            try {
-                Firestore db = FirebaseService.getFirestore();
-                
-                // READ event data
-                DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(), request.isPrivate());
-                DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
-
-                if (!eventSnapshot.exists()) {
-                    logger.error("Event " + request.eventId() + " does not exist");
-                    throw new RuntimeException("Event " + request.eventId() + " does not exist");
-                }
-
-                EventData event = eventSnapshot.toObject(EventData.class);
-                if (event == null) {
-                    logger.error("Event " + request.eventId() + " data is null");
-                    throw new RuntimeException("Event " + request.eventId() + " data is null");
-                }
-
-                // Fail-fast validation to prevent unnecessary Stripe API calls
-                // (These will be re-validated in commitReservation for race condition safety)
-                
-                // Validate event timing and status
-                EventsUtils.validateEventTiming(event, request.eventId());
-                
-                if (!Boolean.TRUE.equals(event.getPaymentsActive())) {
-                    logger.error("Event " + request.eventId() + " does not have payments enabled");
-                    throw new RuntimeException("Event " + request.eventId() + " does not have payments enabled");
-                }
-
-                // Validate price
-                Integer price = event.getPrice();
-                if (price == null) {
-                    logger.error("Event " + request.eventId() + " missing price field");
-                    throw new RuntimeException("Event " + request.eventId() + " missing price field");
-                }
-                
-                if (price < 1 && price != 0) { // Allow for free events and ensure price is not less than Stripe surcharge fee
-                    logger.error("Event " + request.eventId() + " invalid price: " + price);
-                    throw new RuntimeException("Event " + request.eventId() + " invalid price: " + price);
-                }
-
-                // Validate vacancy
-                Integer vacancy = event.getVacancy();
-                if (vacancy == null) {
-                    logger.error("Event " + request.eventId() + " missing vacancy field");
-                    throw new RuntimeException("Event " + request.eventId() + " missing vacancy field");
-                }
-                
-                if (vacancy < request.quantity()) {
-                    logger.warn("Event " + request.eventId() + " insufficient tickets: " + 
-                            vacancy + " available, " + request.quantity() + " requested");
-                    throw new CheckoutVacancyException("Event " + request.eventId() + " insufficient tickets: " + 
-                            vacancy + " available, " + request.quantity() + " requested");
-                }
-
-                logger.info("Validated event {} for Stripe session: {} tickets at {} cents (vacancy: {})",
-                        request.eventId(), request.quantity(), price, vacancy);
-
-                return new EventValidationResult(
-                        request.eventId(),
-                        event.getName(),
-                        price,
-                        event.getStripeFeeToCustomer(),
-                        event.getPromotionalCodesEnabled(),
-                        stripeAccountId,
-                        organiserId,
-                        request.quantity()
-                );
-            } catch (Exception e) {
-                logger.error("Failed to validate event for checkout {}: {}", request.eventId(), e.getMessage(), e);
-                throw new RuntimeException("Failed to validate event for checkout: " + e.getMessage(), e);
-            }
-        });
-    }
-
-    /**
-     * Commits the reservation in a Firestore transaction AFTER Stripe session is created.
-     * This is the AUTHORITATIVE validation - all checks happen here transactionally
-     * based on current state. No dependency on prior reads.
-     * 
-     * @param transaction Firestore transaction
-     * @param request Original checkout request
-     * @param stripeSessionId Stripe session ID to track successful reservations
-     */
-    private static void commitReservation(
-            Transaction transaction,
-            CreateStripeCheckoutSessionRequest request,
-            String stripeSessionId) throws Exception {
-        
+    private static EventData validateAndGetEvent(Transaction transaction, CreateStripeCheckoutSessionRequest request) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         
-        // PHASE 1: READ and VALIDATE event within transaction
+        // READ event data
         DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(), request.isPrivate());
         DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
 
@@ -265,17 +156,7 @@ public class CheckoutService {
 
         // Validate vacancy
         Integer vacancy = event.getVacancy();
-        if (vacancy == null) {
-            logger.error("Event " + request.eventId() + " missing vacancy field");
-            throw new RuntimeException("Event " + request.eventId() + " missing vacancy field");
-        }
-        
-        if (vacancy < request.quantity()) {
-            logger.error("Event " + request.eventId() + " insufficient tickets: " + 
-                    vacancy + " available, " + request.quantity() + " requested");
-            throw new RuntimeException("Event " + request.eventId() + " insufficient tickets: " + 
-                    vacancy + " available, " + request.quantity() + " requested");
-        }
+        validateVacancy(request.eventId(), vacancy, request.quantity());
 
         // Validate price
         Integer price = event.getPrice();
@@ -284,46 +165,113 @@ public class CheckoutService {
             throw new RuntimeException("Event " + request.eventId() + " invalid price: " + price);
         }
 
-        // Read organiser to check if Stripe account needs activation
-        String organiserId = event.getOrganiserId();
-        if (organiserId == null || organiserId.isEmpty()) {
-            logger.error("Event " + request.eventId() + " has no organiser ID");
-            throw new RuntimeException("Event " + request.eventId() + " has no organiser ID");
-        }
-        
-        DocumentReference organiserRef = UsersUtils.getUserRef(db, organiserId);
-        DocumentSnapshot organiserSnapshot = transaction.get(organiserRef).get();
-        
-        if (!organiserSnapshot.exists()) {
-            logger.error("Organiser " + organiserId + " does not exist");
-            throw new RuntimeException("Organiser " + organiserId + " does not exist");
-        }
-        
-        PrivateUserData organiser = organiserSnapshot.toObject(PrivateUserData.class);
-        if (organiser == null) {
-            logger.error("Organiser " + organiserId + " data is null");
-            throw new RuntimeException("Organiser " + organiserId + " data is null");
-        }
-        
-        boolean needsActivation = Boolean.FALSE.equals(organiser.getStripeAccountActive());
+        return event;
+    }
 
-        // PHASE 2: WRITE - Reserve tickets and track session
-        transaction.update(eventRef, "vacancy", vacancy - request.quantity());
-        logger.info("Reserved {} tickets for event {} at {} cents (vacancy: {} -> {})",
-                request.quantity(), request.eventId(), price, vacancy, vacancy - request.quantity());
+    /**
+     * Reads event data and performs fail-fast validation before creating Stripe session.
+     * Uses a transaction to ensure consistent snapshot of event data.
+     * 
+     * Purpose: Prevent unnecessary Stripe API calls for requests that will definitely fail.
+     * Note: commitReservation performs authoritative validation to handle race conditions.
+     * 
+     * @param organiserId Pre-fetched organiser ID
+     * @param stripeAccountId Pre-validated Stripe account ID
+     * @return Event data needed for Stripe session creation
+     */
+    private static EventValidationResult validateEventForCheckout(
+            CreateStripeCheckoutSessionRequest request, 
+            String organiserId, String stripeAccountId) throws Exception {
         
-        // Track this session as successfully reserved (prevents vacancy overflow on expiry)
-        DocumentReference eventMetadataRef = db.collection("EventsMetadata").document(request.eventId());
-        transaction.update(eventMetadataRef, 
-                "reservedSessionIds", 
-                com.google.cloud.firestore.FieldValue.arrayUnion(stripeSessionId));
-        logger.info("Tracked reserved session {} for event {} in EventsMetadata", stripeSessionId, request.eventId());
+        // Use read-only transaction for consistent snapshot
+        return FirebaseService.createFirestoreTransaction(transaction -> {
+            try {
+                EventData event = validateAndGetEvent(transaction, request);
+
+                logger.info("Validated event {} for Stripe session: {} tickets at {} cents (vacancy: {})",
+                        request.eventId(), request.quantity(), event.getPrice(), event.getVacancy());
+
+                return new EventValidationResult(
+                        request.eventId(),
+                        event.getName(),
+                        event.getPrice(),
+                        event.getStripeFeeToCustomer(),
+                        event.getPromotionalCodesEnabled(),
+                        stripeAccountId,
+                        organiserId,
+                        request.quantity()
+                );
+            } catch (Exception e) {
+                logger.error("Failed to validate event for checkout {}: {}", request.eventId(), e.getMessage(), e);
+                throw new RuntimeException("Failed to validate event for checkout: " + e.getMessage(), e);
+            }
+        });
+    }
+
+    /**
+     * Commits the reservation in a Firestore transaction AFTER Stripe session is created.
+     * This is the AUTHORITATIVE validation - all checks happen here transactionally
+     * based on current state. No dependency on prior reads.
+     * 
+     * @param request Original checkout request
+     * @param stripeSessionId Stripe session ID to track successful reservations
+     */
+    private static void commitReservation(
+            CreateStripeCheckoutSessionRequest request,
+            String stripeSessionId) {
         
-        // Activate Stripe account if needed
-        if (needsActivation) {
-            transaction.update(organiserRef, "stripeAccountActive", true);
-            logger.info("Activated Stripe account for organiser {}", organiserId);
-        }
+        FirebaseService.createFirestoreTransaction(transaction -> {
+            try {
+                Firestore db = FirebaseService.getFirestore();
+                
+                // PHASE 1: READ and VALIDATE event within transaction
+                EventData event = validateAndGetEvent(transaction, request);
+
+                // Restore local variables used in writes/logging
+                DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(), request.isPrivate());
+                Integer vacancy = event.getVacancy();
+                Integer price = event.getPrice();
+
+                // Read organiser to check if Stripe account needs activation
+                String organiserId = event.getOrganiserId();
+                if (organiserId == null || organiserId.isEmpty()) {
+                    logger.error("Event " + request.eventId() + " has no organiser ID");
+                    throw new RuntimeException("Event " + request.eventId() + " has no organiser ID");
+                }
+                
+                DocumentReference organiserRef = UsersUtils.getUserRef(db, organiserId);
+                DocumentSnapshot organiserSnapshot = transaction.get(organiserRef).get();
+                
+                if (!organiserSnapshot.exists()) {
+                    logger.error("Organiser " + organiserId + " does not exist");
+                    throw new RuntimeException("Organiser " + organiserId + " does not exist");
+                }
+                
+                PrivateUserData organiser = organiserSnapshot.toObject(PrivateUserData.class);
+                if (organiser == null) {
+                    logger.error("Organiser " + organiserId + " data is null");
+                    throw new RuntimeException("Organiser " + organiserId + " data is null");
+                }
+                
+                boolean needsActivation = Boolean.FALSE.equals(organiser.getStripeAccountActive());
+
+                // PHASE 2: WRITE - Reserve tickets and track session
+                transaction.update(eventRef, "vacancy", vacancy - request.quantity());
+                logger.info("Reserved {} tickets for event {} at {} cents (vacancy: {} -> {})",
+                        request.quantity(), request.eventId(), price, vacancy, vacancy - request.quantity());
+                
+                // Activate Stripe account if needed
+                if (needsActivation) {
+                    transaction.update(organiserRef, "stripeAccountActive", true);
+                    logger.info("Activated Stripe account for organiser {}", organiserId);
+                }
+                
+                return null;
+            } catch (Exception e) {
+                logger.error("Reservation commit failed for event {}: {}", request.eventId(), e.getMessage(), e);
+                throw new RuntimeException("Reservation commit failed: " + e.getMessage(), e);
+            }
+        });
     }
 
     /**
@@ -416,6 +364,28 @@ public class CheckoutService {
         logger.info("Created Stripe checkout session {} for event {}", session.getId(), validationResult.eventId);
 
         return new StripeSessionResult(session.getId(), session.getUrl());
+    }
+
+    /**
+     * Validates that there are enough tickets available for the request.
+     * 
+     * @param eventId The ID of the event
+     * @param vacancy The current vacancy count
+     * @param quantity The requested quantity
+     * @throws CheckoutVacancyException if insufficient tickets
+     */
+    private static void validateVacancy(String eventId, Integer vacancy, Integer quantity) throws CheckoutVacancyException {
+        if (vacancy == null) {
+            logger.error("Event " + eventId + " missing vacancy field");
+            throw new RuntimeException("Event " + eventId + " missing vacancy field");
+        }
+        
+        if (vacancy < quantity) {
+            logger.warn("Event " + eventId + " insufficient tickets: " + 
+                    vacancy + " available, " + quantity + " requested");
+            throw new CheckoutVacancyException("Event " + eventId + " insufficient tickets: " + 
+                    vacancy + " available, " + quantity + " requested");
+        }
     }
 
     /**

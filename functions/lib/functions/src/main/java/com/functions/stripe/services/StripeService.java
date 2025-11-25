@@ -25,8 +25,6 @@ public class StripeService {
 
     /**
      * Gets a Stripe checkout URL for the specified event.
-     * This method now calls the Java CheckoutService directly, enabling proper transaction support
-     * and eliminating network calls to Python functions.
      *
      * @param eventId The event ID to create a checkout for
      * @param isPrivate Whether the event is private

@@ -94,6 +94,9 @@ public class EventsUtils {
         Instant registrationEnd = Instant.ofEpochSecond(registrationDeadline.getSeconds(), registrationDeadline.getNanos());
 
         if (paused || now.isAfter(eventEnd) || now.isAfter(registrationEnd)) {
+            logger.warn("Event " + eventId + " not available: " +
+                    "paused=" + paused + ", concluded=" + now.isAfter(eventEnd) + 
+                    ", registrationClosed=" + now.isAfter(registrationEnd));
             throw new CheckoutDateTimeException("Event " + eventId + " not available: " +
                     "paused=" + paused + ", concluded=" + now.isAfter(eventEnd) + 
                     ", registrationClosed=" + now.isAfter(registrationEnd));

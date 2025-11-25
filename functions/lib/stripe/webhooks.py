@@ -22,8 +22,6 @@ from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
 
 
-JAVA_CHECKOUT_ENABLED = True
-
 @dataclass
 class SessionMetadata:
     eventId: str
@@ -303,16 +301,7 @@ def restock_tickets_after_expired_checkout(
     event_id: str,
     is_private: bool,
     line_items,
-    logger: Logger,
 ):
-    """
-    Restocks tickets after checkout session expiry.
-    
-    Behavior depends on JAVA_CHECKOUT_ENABLED flag:
-    - When False (Python checkout): Restors tickets if session has not yet been completed (legacy behavior)
-    - When True (Java checkout): Only restocks if session is in reservedSessionIds
-      to prevent vacancy overflow from stranded Stripe sessions
-    """
     private_path = "Private" if is_private else "Public"
     event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
     event_metadata_ref = db.collection(f"EventsMetadata").document(event_id)
@@ -321,52 +310,17 @@ def restock_tickets_after_expired_checkout(
         0
     ]  # we only offer one item type per checkout (can buy multiple quantities)
 
-    if JAVA_CHECKOUT_ENABLED:
-        # Java checkout flow: Only restock if tickets were actually reserved
-        event_metadata = event_metadata_ref.get(transaction=transaction)
-        if not event_metadata.exists:
-            logger.info(
-                f"[Java Checkout] No metadata found - tickets were never reserved. session={checkout_session_id}"
+    transaction.update(event_ref, {"vacancy": firestore.Increment(item.quantity)})
+
+    # Add current checkout session to the processed list
+    transaction.update(
+        event_metadata_ref,
+        {
+            "completedStripeCheckoutSessionIds": firestore.ArrayUnion(
+                [checkout_session_id]
             )
-            return
-
-        reserved_sessions = event_metadata.to_dict().get("reservedSessionIds", [])
-        if checkout_session_id not in reserved_sessions:
-            logger.info(
-                f"[Java Checkout] Session not in reserved list - tickets were never reserved (Phase 3 failed). session={checkout_session_id}"
-            )
-            return
-
-        logger.info(
-            f"[Java Checkout] Restocking {item.quantity} tickets for event {event_id}. session={checkout_session_id}"
-        )
-        transaction.update(event_ref, {"vacancy": firestore.Increment(item.quantity)})
-
-        # Add current checkout session to the processed list (original logic)
-        transaction.update(
-            event_metadata_ref,
-            {
-                "completedStripeCheckoutSessionIds": firestore.ArrayUnion(
-                    [checkout_session_id]
-                )
-            },
-        )
-    else:
-        # Python checkout flow: Unconditionally restock (original behavior)
-        logger.info(
-            f"[Python Checkout] Restocking {item.quantity} tickets for event {event_id}. session={checkout_session_id}"
-        )
-        transaction.update(event_ref, {"vacancy": firestore.Increment(item.quantity)})
-        
-        # Add current checkout session to the processed list (original logic)
-        transaction.update(
-            event_metadata_ref,
-            {
-                "completedStripeCheckoutSessionIds": firestore.ArrayUnion(
-                    [checkout_session_id]
-                )
-            },
-        )
+        },
+    )
 
 
 def complete_fulfilment_session_request(
@@ -528,43 +482,18 @@ def fulfilment_workflow_on_expired_session(
     is_private: bool,
     line_items,
 ):
-    if JAVA_CHECKOUT_ENABLED:
-        # Java checkout flow: Use separate expiredSessionIds for idempotency
-        event_metadata_ref = db.collection("EventsMetadata").document(event_id)
-        event_metadata = event_metadata_ref.get(transaction=transaction)
-        
-        # Check if this expiry webhook has already been processed (idempotency)
-        if event_metadata.exists:
-            expired_sessions = event_metadata.to_dict().get("expiredSessionIds", [])
-            if checkout_session_id in expired_sessions:
-                logger.info(
-                    f"[Java Checkout] Expired webhook already processed for session. Returning early. session={checkout_session_id}"
-                )
-                return https_fn.Response(status=200)
+    # Check if this checkout_session_id has already been processed.
+    if check_if_session_has_been_processed_already(
+        transaction, logger, checkout_session_id, event_id
+    ):
+        logger.info(
+            f"Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}"
+        )
+        return https_fn.Response(status=200)
 
-        # Restock tickets if they were actually reserved
-        restock_tickets_after_expired_checkout(
-            transaction, checkout_session_id, event_id, is_private, line_items, logger
-        )
-        
-        # Mark expiry webhook as processed (idempotency)
-        transaction.update(
-            event_metadata_ref,
-            {"expiredSessionIds": firestore.ArrayUnion([checkout_session_id])}
-        )
-    else:
-        # Python checkout flow: Use original logic with check_if_session_has_been_processed_already
-        if check_if_session_has_been_processed_already(
-            transaction, logger, checkout_session_id, event_id
-        ):
-            logger.info(
-                f"[Python Checkout] Current webhook event checkout session has been already processed. Returning early. session={checkout_session_id}"
-            )
-            return https_fn.Response(status=200)
-
-        restock_tickets_after_expired_checkout(
-            transaction, checkout_session_id, event_id, is_private, line_items, logger
-        )
+    restock_tickets_after_expired_checkout(
+        transaction, checkout_session_id, event_id, is_private, line_items
+    )
 
     logger.info(
         f"Successfully handled checkout.session.expired webhook event. session={checkout_session_id}"
