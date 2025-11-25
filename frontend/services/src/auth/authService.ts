@@ -3,20 +3,23 @@ import { Logger } from "@/observability/logger";
 import { FirebaseError } from "@firebase/util";
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   FacebookAuthProvider,
   GoogleAuthProvider,
+  reauthenticateWithCredential,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   UserCredential,
+  verifyBeforeUpdateEmail,
 } from "firebase/auth";
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
 import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
-import { createUser, deleteUser, getPublicUserById } from "../users/usersService";
+import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 
 const authServiceLogger = new Logger("authServiceLogger");
@@ -82,6 +85,10 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
 
       try {
         await getPublicUserById(userCredential.user.uid);
+
+        // Sync email from Firebase Auth to Firestore if needed
+        await syncEmailOnLogin(userCredential.user.uid);
+
         return userCredential.user.uid; // User exists, sign-in successful
       } catch (error: unknown) {
         if (error instanceof UserNotFoundError) {
@@ -251,6 +258,113 @@ export async function resetUserPassword(email: string): Promise<void> {
     // Handle errors
     authServiceLogger.error(`Error sending password reset email: ${error}`);
     throw error; // Rethrow the error for the caller to handle if needed
+  }
+}
+
+/**
+ * Updates user's email address after re-authentication
+ * Sends verification email to new address before updating
+ * @param newEmail - The new email address to update to
+ * @param currentPassword - Current password for re-authentication
+ * @throws Error with user-friendly message for various failure cases
+ */
+export async function updateUserEmail(newEmail: string, currentPassword: string): Promise<void> {
+  try {
+    const user = auth.currentUser;
+
+    if (!user || !user.email) {
+      throw new Error("No user is currently signed in");
+    }
+
+    // Check if new email is different from current
+    if (user.email === newEmail) {
+      throw new Error("New email must be different from your current email");
+    }
+
+    // Re-authenticate user with current password for security
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+
+    authServiceLogger.info("User re-authenticated successfully for email change", { userId: user.uid });
+
+    // Send verification email to new address
+    await verifyBeforeUpdateEmail(user, newEmail, actionCodeSettings);
+
+    authServiceLogger.info("Verification email sent for email change", {
+      userId: user.uid,
+      oldEmail: user.email,
+      newEmail: newEmail,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    authServiceLogger.error("Error updating user email", { error: errorMessage });
+
+    // Provide user-friendly error messages
+    if (error instanceof FirebaseError) {
+      switch (error.code) {
+        case "auth/invalid-credential":
+        case "auth/wrong-password":
+          throw new Error("Incorrect password. Please try again.");
+        case "auth/invalid-email":
+          throw new Error("Please enter a valid email address.");
+        case "auth/email-already-in-use":
+          throw new Error("This email is already in use by another account.");
+        case "auth/requires-recent-login":
+          throw new Error("For security reasons, please log out and log back in before changing your email.");
+        case "auth/too-many-requests":
+          throw new Error("Too many attempts. Please try again later.");
+        default:
+          throw new Error(error.message || "Failed to update email. Please try again.");
+      }
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Syncs Firebase Auth email with Firestore during login
+ * Called automatically after successful login to ensure consistency
+ * @param userId - The user ID to sync email for
+ */
+export async function syncEmailOnLogin(userId: string): Promise<void> {
+  try {
+    const user = auth.currentUser;
+
+    if (!user || !user.email) {
+      authServiceLogger.warn("Cannot sync email - no authenticated user", { userId });
+      return;
+    }
+
+    // Get current user data using service layer
+    const privateUserData = await getPrivateUserById(userId);
+    const currentFirestoreEmail = privateUserData?.contactInformation?.email;
+
+    // Sync if emails don't match
+    if (currentFirestoreEmail !== user.email) {
+      authServiceLogger.info("Email mismatch detected, syncing...", {
+        userId,
+        authEmail: user.email,
+        firestoreEmail: currentFirestoreEmail,
+      });
+
+      // Update email using service layer
+      await updateUser(userId, {
+        contactInformation: {
+          ...privateUserData.contactInformation,
+          email: user.email,
+        },
+      });
+
+      // Clear local storage cache to force refresh
+      bustUserLocalStorageCache();
+
+      authServiceLogger.info("Email synced successfully", { userId, newEmail: user.email });
+    }
+  } catch (error) {
+    // Non-critical operation - log but don't throw
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    authServiceLogger.error("Error syncing email on login", { userId, error: errorMessage });
   }
 }
 
