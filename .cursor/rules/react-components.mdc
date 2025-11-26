@@ -1,0 +1,188 @@
+---
+globs: *.tsx,*.jsx
+---
+
+# React Component Guidelines
+
+## Component Organization
+
+### Directory Structure
+
+Components are organized by feature in `/frontend/components/`:
+
+- `events/` - Event-related components
+- `users/` - User profile and authentication components
+- `forms/` - Form components and validation
+- `organiser/` - Organizer dashboard components
+- `landing/` - Landing page components
+- `home/` - Home page components
+- `loading/` - Loading states and skeletons
+- `mobile/` - Mobile-specific components
+- `elements/` - Basic UI elements
+- `utility/` - Utility and helper components
+
+## Server vs Client Components (Next.js)
+
+### Default to Server Components
+
+By default, all components should be **Server Components** unless they require client-side interactivity. Server Components provide better performance, smaller bundle sizes, and improved security by keeping sensitive logic on the server.
+
+### When to Add "use client"
+
+Only add the `"use client"` directive when your component requires:
+
+**✅ Add "use client" when:**
+- Using React state (`useState`, `useReducer`)
+- Using lifecycle effects (`useEffect`, `useLayoutEffect`)
+- Using browser APIs (window, document, localStorage, etc.)
+- Adding event handlers that depend on client APIs (onClick with state updates)
+- Using third-party libraries that depend on client-side features
+- Accessing browser-only globals (navigator, geolocation, etc.)
+
+**❌ Keep as Server Component when:**
+- Fetching data from APIs or databases
+- Rendering static content
+- Using server-side utilities
+- No interactive state or effects needed
+
+### Minimize Client Components
+
+To maximize performance and security:
+- Keep client components as small as possible
+- Push `"use client"` boundary down to the smallest interactive component
+- Wrap only the interactive parts in client components
+- Pass server-fetched data to client components via props
+
+## Component Patterns
+
+### 1. Component Structure
+
+Follow this consistent structure for all components:
+
+```typescript
+"use client"; // For client components
+import { ... } from "...";
+import { ... } from "@/interfaces/...";
+
+interface ComponentProps {
+  // Props with clear types
+}
+
+export default function ComponentName(props: ComponentProps) {
+  const { prop1, prop2 } = props;
+
+  // Hooks
+  const [state, setState] = useState();
+  useEffect(() => { ... }, []);
+
+  // Event handlers
+  const handleClick = () => { ... };
+
+  // Render logic
+  return (
+    <div className="...">
+      {/* Component content */}
+    </div>
+  );
+}
+```
+
+### 2. Props Interface
+
+- Always define explicit props interfaces
+- Use descriptive prop names
+- Provide default values where appropriate
+- Use `T | null` for some type `T` when a property has the possibility of being not defined. This is because Firestore
+  supports the `null` type (representing the absence of a value), while it does NOT support the `undefined` TypeScript
+  type, resulting in the field being completely omitted from the field, causing unexpected behaviour.
+
+### 3. State Management
+
+- Use `useState` for local component state
+- Use `useEffect` for side effects and data fetching
+- Prefer custom hooks for reusable state logic
+- Use `useCallback` and `useMemo` for performance optimization
+
+## Styling Guidelines
+
+### Tailwind CSS Usage
+
+- Use Tailwind utility classes for styling
+- Follow the custom color palette defined in [tailwind.config.ts](mdc:frontend/tailwind.config.ts)
+- Use responsive design classes (`sm:`, `md:`, `lg:`, `xl:`)
+- Leverage custom colors: `core-*`, `organiser-*`, `highlight-*`
+
+### Custom Color Palette
+
+See `.cursor/rules/styling-design.mdc` for the complete color palette definition.
+
+### Component Styling Patterns
+
+- Use consistent spacing with Tailwind's spacing scale
+- Implement hover states with `hover:` prefix
+- Use transitions for smooth interactions: `transition-all duration-300`
+- Apply consistent border radius: `rounded-lg` or `rounded-xl`
+- Use shadow utilities: `shadow-searchbar` for search components
+
+## Performance Best Practices
+
+### 1. Image Optimization
+
+- Use Next.js Image component for optimized images
+- Implement loading states for images
+- Use thumbnails for better performance
+- Preload critical images
+
+### 2. Loading States
+
+- Always provide loading states for async operations
+- Use skeleton components from `loading/` directory
+- Implement progressive loading for better UX
+
+### 3. Performance Optimization
+
+See `.cursor/rules/performance-optimization.mdc` for detailed React performance patterns.
+
+## Component Communication
+
+### 1. Props Passing
+
+- Pass only necessary props to child components
+- Use TypeScript interfaces for prop validation
+- Provide sensible defaults for optional props
+
+### 2. Event Handling
+
+- Use descriptive event handler names (`handleClick`, `onSubmit`)
+- Pass event handlers as props with `on` prefix
+- Use proper TypeScript event types
+
+### 3. State Lifting
+
+- Lift state up to the nearest common ancestor
+- Use callback props for child-to-parent communication
+- Consider context for deeply nested state sharing
+
+## Accessibility Guidelines
+
+### 1. Semantic HTML
+
+- Use proper HTML elements (`button`, `input`, `form`)
+- Provide meaningful alt text for images
+- Use ARIA labels where appropriate
+
+### 2. Keyboard Navigation
+
+- Ensure all interactive elements are keyboard accessible
+- Implement proper focus management
+- Use tabindex appropriately
+
+### 3. Screen Reader Support
+
+- Provide descriptive text for screen readers
+- Use proper heading hierarchy
+- Implement skip links for navigation
+
+## Testing Considerations
+
+See `.cursor/rules/testing-quality.mdc` for comprehensive testing guidelines.
