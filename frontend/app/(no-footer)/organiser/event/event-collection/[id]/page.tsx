@@ -389,6 +389,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                     )}
                     <div className="flex items-center gap-2 ml-auto">
                       <button
+                        type="button"
                         onClick={() => setShowPrivacyDialog(true)}
                         className="flex items-center text-xs px-3 py-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-full whitespace-nowrap transition-colors cursor-pointer"
                         title={`Click to make ${collection.isPrivate ? "public" : "private"}`}
@@ -406,6 +407,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                         )}
                       </button>
                       <button
+                        type="button"
                         onClick={() => setShowDeleteDialog(true)}
                         className="p-2 bg-gray-100 hover:bg-red-600 text-gray-600 hover:text-white rounded-full transition-colors"
                         title="Delete collection"
@@ -562,6 +564,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                       />
                     </div>
                     <button
+                      type="button"
                       onClick={() => handleRemoveEvent(event.eventId)}
                       className="absolute bottom-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg z-10 cursor-pointer transition-all duration-200 opacity-100 md:opacity-0 group-hover:opacity-100"
                       title="Remove from collection"

@@ -16,21 +16,22 @@ public class EventCollectionsRepository {
   private static final Logger logger = LoggerFactory.getLogger(EventCollectionsRepository.class);
   private static final Firestore db = FirebaseService.getFirestore();
 
-  public static void addEventIdToEventCollection(String collectionId, boolean isPrivate,String eventId) {
+  public static void addEventIdToEventCollection(String collectionId, boolean isPrivate,String eventId) throws Exception {
     try {
       logger.info("Adding event {} to event collection {}", eventId, collectionId);
       db.collection("EventCollections")
           .document("Active")
           .collection(isPrivate ? "Private" : "Public")
           .document(collectionId)
-          .update("eventIds", FieldValue.arrayUnion(eventId));    
+          .update("eventIds", FieldValue.arrayUnion(eventId))
+          .get();
     } catch (Exception e) {
       logger.error("Error adding event to event collection", e);
       throw e;
     }
   }
 
-  public static List<String> getEventCollectionIdsContainingRecurringTemplate(boolean isPrivate, String recurrenceTemplateId) {
+  public static List<String> getEventCollectionIdsContainingRecurringTemplate(boolean isPrivate, String recurrenceTemplateId) throws Exception {
     try {
       logger.info("Getting event collection ids containing recurring template {}", recurrenceTemplateId);
       return db.collection("EventCollections")

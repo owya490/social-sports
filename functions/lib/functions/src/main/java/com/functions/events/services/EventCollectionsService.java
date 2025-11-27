@@ -10,7 +10,7 @@ import com.functions.events.repositories.EventCollectionsRepository;
 public class EventCollectionsService {
   private static final Logger logger = LoggerFactory.getLogger(EventCollectionsService.class);
 
-  public static void addEventToEventCollectionsWithRecurrenceTemplate(String recurrenceTemplateId, String eventId) {
+  public static void addEventToEventCollectionsWithRecurrenceTemplate(String recurrenceTemplateId, String eventId) throws Exception {
     logger.info("Adding event {} to event collections with recurrence template {}", eventId, recurrenceTemplateId);
     List<String> publicEventCollectionIds = EventCollectionsRepository.getEventCollectionIdsContainingRecurringTemplate(false, recurrenceTemplateId);
     List<String> privateEventCollectionIds = EventCollectionsRepository.getEventCollectionIdsContainingRecurringTemplate(true, recurrenceTemplateId);

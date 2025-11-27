@@ -99,6 +99,7 @@ public class RecurringEventsCronService {
                             // Continue with event creation even if custom links update fails
                         }
 
+                        // Add event to event collections that contain the recurrence template
                         try {
                             EventCollectionsService.addEventToEventCollectionsWithRecurrenceTemplate(recurrenceTemplateId, newEventId);
                         } catch (Exception e) {
