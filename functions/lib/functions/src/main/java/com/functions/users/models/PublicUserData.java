@@ -26,4 +26,5 @@ public class PublicUserData {
 	private ContactInformation publicContactInformation;
 	private List<String> publicUpcomingOrganiserEvents = new ArrayList<>();
 	private String username;
+	private List<String> publicEventCollections = new ArrayList<>();
 }

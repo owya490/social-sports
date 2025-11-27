@@ -7,21 +7,28 @@ import {
 } from "@/components/elements/HighlightButton";
 import { ImageSelectionDialog } from "@/components/forms/sections/image-section/ImageSelectionDialog";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
+import RecurringTemplateCard from "@/components/organiser/recurring-events/RecurringTemplateCard";
 import { useUser } from "@/components/utility/UserContext";
 import { EMPTY_EVENT_COLLECTION, EventCollection } from "@/interfaces/EventCollectionTypes";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { ImageType } from "@/interfaces/ImageTypes";
+import { RecurrenceTemplate, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import {
   deleteEventCollection,
   getEventCollectionById,
   removeEventFromCollection,
+  removeRecurringTemplateFromCollection,
   updateEventCollection,
   updateEventCollectionAccessModifier,
 } from "@/services/src/eventCollections/eventCollectionsService";
 import { getEventById, getOrganiserEvents } from "@/services/src/events/eventsService";
 import { getUsersEventImagesUrls, uploadEventImage } from "@/services/src/images/imageService";
+import {
+  getOrganiserRecurrenceTemplates,
+  getRecurrenceTemplate,
+} from "@/services/src/recurringEvents/recurringEventsService";
 import { getErrorUrl, getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { executeResilientPromises } from "@/utilities/promiseUtils";
 import {
@@ -51,6 +58,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [eventDataList, setEventDataList] = useState<EventData[]>([]);
+  const [recurringTemplateDataList, setRecurringTemplateDataList] = useState<RecurrenceTemplate[]>([]);
   const [collection, setCollection] = useState<EventCollection>(EMPTY_EVENT_COLLECTION);
   const [copied, setCopied] = useState(false);
 
@@ -65,6 +73,9 @@ export default function CollectionPage({ params }: CollectionPageProps) {
   const [showPrivacyDialog, setShowPrivacyDialog] = useState(false);
   const [allOrganiserEvents, setAllOrganiserEvents] = useState<EventData[]>([]);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<EventId>>(new Set());
+  const [allOrganiserRecurringTemplates, setAllOrganiserRecurringTemplates] = useState<RecurrenceTemplate[]>([]);
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<RecurrenceTemplateId>>(new Set());
+  const [addContentTab, setAddContentTab] = useState<"events" | "recurring">("events");
 
   const [collectionLink, setCollectionLink] = useState("");
   useEffect(() => {
@@ -97,10 +108,22 @@ export default function CollectionPage({ params }: CollectionPageProps) {
         const eventPromises = collection.eventIds.map((eventId: EventId) => getEventById(eventId));
         const { successful: events } = await executeResilientPromises(eventPromises, collection.eventIds, logger);
 
+        // Fetch all recurring templates in the collection
+        const templatePromises = collection.recurringEventTemplateIds.map((templateId: RecurrenceTemplateId) =>
+          getRecurrenceTemplate(templateId)
+        );
+        const { successful: templates } = await executeResilientPromises(
+          templatePromises,
+          collection.recurringEventTemplateIds,
+          logger
+        );
+
         // Sort events by start date (most recent first)
         events.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
+        templates.sort((a, b) => b.eventData.startDate.toMillis() - a.eventData.startDate.toMillis());
 
         setEventDataList(events);
+        setRecurringTemplateDataList(templates);
         setLoading(false);
       } catch (error) {
         logger.error(`Failed to get events for collection: ${error}`);
@@ -164,14 +187,25 @@ export default function CollectionPage({ params }: CollectionPageProps) {
 
   const handleOpenAddEventsDialog = async () => {
     try {
-      const events = await getOrganiserEvents(user.userId);
-      // Sort events by start date (most recent first)
-      events.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
-      setAllOrganiserEvents(events);
+      // Always initialize both selection sets to preserve existing data
       setSelectedEventIds(new Set(collection.eventIds));
+      setSelectedTemplateIds(new Set(collection.recurringEventTemplateIds));
+
+      // Always load fresh data to ensure we have the latest events/templates
+      const [events, templates] = await Promise.all([
+        getOrganiserEvents(user.userId),
+        getOrganiserRecurrenceTemplates(user.userId),
+      ]);
+
+      // Sort by start date (most recent first)
+      events.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
+      templates.sort((a, b) => b.eventData.startDate.toMillis() - a.eventData.startDate.toMillis());
+
+      setAllOrganiserEvents(events);
+      setAllOrganiserRecurringTemplates(templates);
       setShowAddEventsDialog(true);
     } catch (error) {
-      logger.error(`Failed to load organiser events: ${error}`);
+      logger.error(`Failed to load organiser content: ${error}`);
     }
   };
 
@@ -187,20 +221,45 @@ export default function CollectionPage({ params }: CollectionPageProps) {
     });
   };
 
+  const handleToggleTemplateSelection = (templateId: RecurrenceTemplateId) => {
+    setSelectedTemplateIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(templateId)) {
+        newSet.delete(templateId);
+      } else {
+        newSet.add(templateId);
+      }
+      return newSet;
+    });
+  };
+
   const handleSaveEventSelection = async () => {
     try {
       const newEventIds = Array.from(selectedEventIds);
-      await updateEventCollection(collectionId, collection.isPrivate, { eventIds: newEventIds });
+      const newTemplateIds = Array.from(selectedTemplateIds);
 
-      // Refresh event data
-      const eventPromises = newEventIds.map((eventId: EventId) => getEventById(eventId));
-      const { successful: events } = await executeResilientPromises(eventPromises, newEventIds, logger);
+      await updateEventCollection(collectionId, collection.isPrivate, {
+        eventIds: newEventIds,
+        recurringEventTemplateIds: newTemplateIds,
+      });
 
-      // Sort events by start date (most recent first)
-      events.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
+      // Update local state with filtered data from already-loaded lists (no need to re-fetch)
+      const updatedEvents = allOrganiserEvents.filter((event) => selectedEventIds.has(event.eventId));
+      const updatedTemplates = allOrganiserRecurringTemplates.filter((template) =>
+        selectedTemplateIds.has(template.recurrenceTemplateId)
+      );
 
-      setEventDataList(events);
-      setCollection((prev) => ({ ...prev, eventIds: newEventIds }));
+      // Sort by start date (most recent first)
+      updatedEvents.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
+      updatedTemplates.sort((a, b) => b.eventData.startDate.toMillis() - a.eventData.startDate.toMillis());
+
+      setEventDataList(updatedEvents);
+      setRecurringTemplateDataList(updatedTemplates);
+      setCollection((prev) => ({
+        ...prev,
+        eventIds: newEventIds,
+        recurringEventTemplateIds: newTemplateIds,
+      }));
       setShowAddEventsDialog(false);
     } catch (error) {
       logger.error(`Failed to save event selection: ${error}`);
@@ -218,6 +277,20 @@ export default function CollectionPage({ params }: CollectionPageProps) {
       }));
     } catch (error) {
       logger.error(`Failed to remove event: ${error}`);
+      router.push(getErrorUrl(error));
+    }
+  };
+
+  const handleRemoveRecurringTemplate = async (templateId: RecurrenceTemplateId) => {
+    try {
+      await removeRecurringTemplateFromCollection(collectionId, templateId, collection.isPrivate);
+      setRecurringTemplateDataList((prev) => prev.filter((template) => template.recurrenceTemplateId !== templateId));
+      setCollection((prev) => ({
+        ...prev,
+        recurringEventTemplateIds: prev.recurringEventTemplateIds.filter((id) => id !== templateId),
+      }));
+    } catch (error) {
+      logger.error(`Failed to remove recurring event: ${error}`);
       router.push(getErrorUrl(error));
     }
   };
@@ -314,8 +387,9 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                         {collection.name}
                       </h1>
                     )}
-                    <div className="flex items-center gap-2 ml-auto">
+                    <div className={`flex items-center gap-2 ml-auto ${isEditingTitle ? "hidden md:flex" : ""}`}>
                       <button
+                        type="button"
                         onClick={() => setShowPrivacyDialog(true)}
                         className="flex items-center text-xs px-3 py-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-full whitespace-nowrap transition-colors cursor-pointer"
                         title={`Click to make ${collection.isPrivate ? "public" : "private"}`}
@@ -333,6 +407,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                         )}
                       </button>
                       <button
+                        type="button"
                         onClick={() => setShowDeleteDialog(true)}
                         className="p-2 bg-gray-100 hover:bg-red-600 text-gray-600 hover:text-white rounded-full transition-colors"
                         title="Delete collection"
@@ -392,16 +467,115 @@ export default function CollectionPage({ params }: CollectionPageProps) {
           </div>
         </div>
 
+        {/* Content Tabs */}
+        <div className="mb-6">
+          <div className="flex items-center gap-1 border-b border-gray-200">
+            <button
+              type="button"
+              onClick={() => setAddContentTab("events")}
+              className={`px-4 py-3 font-medium text-sm transition-colors ${
+                addContentTab === "events"
+                  ? "text-core-text border-b-2 border-black"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Events
+            </button>
+            <button
+              type="button"
+              onClick={() => setAddContentTab("recurring")}
+              className={`px-4 py-3 font-medium text-sm transition-colors ${
+                addContentTab === "recurring"
+                  ? "text-core-text border-b-2 border-black"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Recurring Events
+            </button>
+          </div>
+        </div>
+
         {/* Events Grid */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg md:text-xl font-bold text-core-text">
-              Events ({loading ? "..." : eventDataList.length})
+              {addContentTab === "events"
+                ? `Events (${loading ? "..." : eventDataList.length})`
+                : `Recurring Events (${collection.recurringEventTemplateIds.length})`}
             </h2>
-            <InvertedHighlightButton onClick={handleOpenAddEventsDialog} text="Add Events" />
+            <InvertedHighlightButton
+              onClick={handleOpenAddEventsDialog}
+              text={`Add ${addContentTab === "events" ? "Events" : "Recurring Events"}`}
+            />
           </div>
 
-          {loading ? (
+          {addContentTab === "events" ? (
+            loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {loadingEventDataList.map((event, eventIdx) => (
+                  <div className="w-full" key={eventIdx}>
+                    <OrganiserEventCard
+                      eventId={event.eventId}
+                      image={event.image}
+                      name={event.name}
+                      organiser={event.organiser}
+                      startTime={event.startDate}
+                      location={event.location}
+                      price={event.price}
+                      vacancy={event.vacancy}
+                      loading={true}
+                      openInNewTab={true}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : eventDataList.length === 0 ? (
+              <div className="flex justify-center py-12">
+                <div className="text-center">
+                  <Image
+                    src={noSearchResultLineDrawing}
+                    alt="No events found"
+                    width={400}
+                    height={240}
+                    className="opacity-60 mx-auto mb-6"
+                  />
+                  <div className="text-gray-600 font-medium text-lg sm:text-2xl">No events in this collection</div>
+                  <p className="text-gray-500 text-sm mt-2">
+                    Click &quot;Add Events&quot; to add events to this collection
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {eventDataList.map((event) => (
+                  <div key={event.eventId} className="relative w-full group">
+                    <div className="transition-all duration-200 group-hover:scale-[1.05]">
+                      <OrganiserEventCard
+                        eventId={event.eventId}
+                        image={event.image}
+                        name={event.name}
+                        organiser={event.organiser}
+                        startTime={event.startDate}
+                        location={event.location}
+                        price={event.price}
+                        vacancy={event.vacancy}
+                        loading={false}
+                        openInNewTab={true}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveEvent(event.eventId)}
+                      className="absolute bottom-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg z-10 cursor-pointer transition-all duration-200 opacity-100 md:opacity-0 group-hover:opacity-100"
+                      title="Remove from collection"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {loadingEventDataList.map((event, eventIdx) => (
                 <div className="w-full" key={eventIdx}>
@@ -420,42 +594,47 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                 </div>
               ))}
             </div>
-          ) : eventDataList.length === 0 ? (
+          ) : recurringTemplateDataList.length === 0 ? (
             <div className="flex justify-center py-12">
               <div className="text-center">
                 <Image
                   src={noSearchResultLineDrawing}
-                  alt="No events found"
+                  alt="No recurring events found"
                   width={400}
                   height={240}
                   className="opacity-60 mx-auto mb-6"
                 />
-                <div className="text-gray-600 font-medium text-lg sm:text-2xl">No events in this collection</div>
+                <div className="text-gray-600 font-medium text-lg sm:text-2xl">
+                  No recurring events in this collection
+                </div>
                 <p className="text-gray-500 text-sm mt-2">
-                  Click &quot;Add Events&quot; to add events to this collection
+                  Click &quot;Add Recurring Events&quot; to add recurring event templates to this collection
                 </p>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {eventDataList.map((event) => (
-                <div key={event.eventId} className="relative w-full group">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {recurringTemplateDataList.map((template) => (
+                <div key={template.recurrenceTemplateId} className="relative w-full group">
                   <div className="transition-all duration-200 group-hover:scale-[1.05]">
-                    <OrganiserEventCard
-                      eventId={event.eventId}
-                      image={event.image}
-                      name={event.name}
-                      organiser={event.organiser}
-                      startTime={event.startDate}
-                      location={event.location}
-                      price={event.price}
-                      vacancy={event.vacancy}
+                    <RecurringTemplateCard
+                      recurrenceTemplateId={template.recurrenceTemplateId}
+                      image={template.eventData.image}
+                      name={template.eventData.name}
+                      startTime={template.eventData.startDate}
+                      location={template.eventData.location}
+                      price={template.eventData.price}
+                      frequency={template.recurrenceData.frequency}
+                      recurrenceAmount={template.recurrenceData.recurrenceAmount}
+                      createDaysBefore={template.recurrenceData.createDaysBefore}
+                      recurrenceEnabled={template.recurrenceData.recurrenceEnabled}
+                      disabled={false}
                       loading={false}
                       openInNewTab={true}
                     />
                   </div>
                   <button
-                    onClick={() => handleRemoveEvent(event.eventId)}
+                    onClick={() => handleRemoveRecurringTemplate(template.recurrenceTemplateId)}
                     className="absolute bottom-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg z-10 cursor-pointer transition-all duration-200 opacity-100 md:opacity-0 group-hover:opacity-100"
                     title="Remove from collection"
                   >
@@ -534,9 +713,15 @@ export default function CollectionPage({ params }: CollectionPageProps) {
           <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div>
-                <h2 className="text-xl font-semibold text-core-text">Add Events to Collection</h2>
+                <h2 className="text-xl font-semibold text-core-text">
+                  {addContentTab === "events" ? "Add Events to Collection" : "Add Recurring Events to Collection"}
+                </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  {selectedEventIds.size} {selectedEventIds.size === 1 ? "event" : "events"} selected
+                  {addContentTab === "events"
+                    ? `${selectedEventIds.size} ${selectedEventIds.size === 1 ? "event" : "events"} selected`
+                    : `${selectedTemplateIds.size} ${
+                        selectedTemplateIds.size === 1 ? "template" : "templates"
+                      } selected`}
                 </p>
               </div>
               <button onClick={() => setShowAddEventsDialog(false)} className="p-2 hover:bg-gray-100 rounded-full">
@@ -545,40 +730,87 @@ export default function CollectionPage({ params }: CollectionPageProps) {
             </div>
 
             <div className="p-6">
-              {allOrganiserEvents.length === 0 ? (
+              {addContentTab === "events" ? (
+                allOrganiserEvents.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-600 text-lg">No events found</p>
+                    <p className="text-gray-500 text-sm mt-2">Create events first to add them to this collection</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {allOrganiserEvents.map((event) => {
+                      const isSelected = selectedEventIds.has(event.eventId);
+                      return (
+                        <div
+                          key={event.eventId}
+                          onClick={() => handleToggleEventSelection(event.eventId)}
+                          className={`cursor-pointer transition-all duration-200 rounded-lg ${
+                            isSelected ? "ring-2 ring-black shadow-lg" : "hover:shadow-md"
+                          }`}
+                        >
+                          <div className="relative">
+                            {isSelected && (
+                              <div className="absolute top-2 right-2 bg-black text-white rounded-full p-1 z-10">
+                                <CheckIcon className="w-4 h-4" />
+                              </div>
+                            )}
+                            <OrganiserEventCard
+                              eventId={event.eventId}
+                              image={event.image}
+                              name={event.name}
+                              organiser={event.organiser}
+                              startTime={event.startDate}
+                              location={event.location}
+                              price={event.price}
+                              vacancy={event.vacancy}
+                              loading={false}
+                              disabled={true}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              ) : allOrganiserRecurringTemplates.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-600 text-lg">No events found</p>
-                  <p className="text-gray-500 text-sm mt-2">Create events first to add them to this collection</p>
+                  <p className="text-gray-600 text-lg">No recurring event templates found</p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    Create recurring events first to add them to this collection
+                  </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {allOrganiserEvents.map((event) => {
-                    const isSelected = selectedEventIds.has(event.eventId);
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {allOrganiserRecurringTemplates.map((template) => {
+                    const isSelected = selectedTemplateIds.has(template.recurrenceTemplateId);
                     return (
                       <div
-                        key={event.eventId}
-                        onClick={() => handleToggleEventSelection(event.eventId)}
+                        key={template.recurrenceTemplateId}
+                        onClick={() => handleToggleTemplateSelection(template.recurrenceTemplateId)}
                         className={`cursor-pointer transition-all duration-200 rounded-lg ${
                           isSelected ? "ring-2 ring-black shadow-lg" : "hover:shadow-md"
                         }`}
                       >
                         <div className="relative">
                           {isSelected && (
-                            <div className="absolute top-2 right-2 bg-black text-white rounded-full p-1">
+                            <div className="absolute top-2 right-2 bg-black text-white rounded-full p-1 z-10">
                               <CheckIcon className="w-4 h-4" />
                             </div>
                           )}
-                          <OrganiserEventCard
-                            eventId={event.eventId}
-                            image={event.image}
-                            name={event.name}
-                            organiser={event.organiser}
-                            startTime={event.startDate}
-                            location={event.location}
-                            price={event.price}
-                            vacancy={event.vacancy}
-                            loading={false}
+                          <RecurringTemplateCard
+                            recurrenceTemplateId={template.recurrenceTemplateId}
+                            image={template.eventData.image}
+                            name={template.eventData.name}
+                            startTime={template.eventData.startDate}
+                            location={template.eventData.location}
+                            price={template.eventData.price}
+                            frequency={template.recurrenceData.frequency}
+                            recurrenceAmount={template.recurrenceData.recurrenceAmount}
+                            createDaysBefore={template.recurrenceData.createDaysBefore}
+                            recurrenceEnabled={template.recurrenceData.recurrenceEnabled}
                             disabled={true}
+                            loading={false}
+                            disableLink={true}
                           />
                         </div>
                       </div>

@@ -40,24 +40,30 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
   const MaybeDisabledLink = ({
     children,
     disabled = false,
+    openInNewTab = false,
     url,
   }: {
     children: React.ReactNode;
     disabled?: boolean;
+    openInNewTab?: boolean;
     url: string;
   }) => {
     if (disabled) {
       return <div>{children}</div>;
     }
     return (
-      <Link href={url} target={props.openInNewTab ? "_blank" : undefined}>
+      <Link href={url} target={openInNewTab ? "_blank" : undefined}>
         {children}
       </Link>
     );
   };
 
   return (
-    <MaybeDisabledLink disabled={props.disabled} url={`/organiser/event/${props.eventId}`}>
+    <MaybeDisabledLink
+      disabled={props.disabled}
+      openInNewTab={props.openInNewTab}
+      url={`/organiser/event/${props.eventId}`}
+    >
       <div className="bg-white rounded-lg text-left border-gray-300 border w-full hover:cursor-pointer">
         {props.loading ? (
           <div>
