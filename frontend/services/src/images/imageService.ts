@@ -1,4 +1,5 @@
 import { SportConfig, SPORTS_CONFIG } from "@/config/SportsConfig";
+import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { getDownloadURL, getMetadata, listAll, ref, StorageReference, uploadBytes } from "firebase/storage";
@@ -89,7 +90,7 @@ export function getThumbnailUrlsBySport(sport: string) {
 export function getImageAndThumbnailUrlsWithDefaults(formData: AllImageData & { sport: string }) {
   // If the image field is undefined, it will stay as this default image.
   var imageUrl =
-    "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
+    DEFAULT_EVENT_IMAGE_URL;
   // Otherwise if its a string, which means it is already uploaded, reuse the same imageUrl
   if (formData.image !== undefined && typeof formData.image === "string") {
     imageUrl = formData.image;

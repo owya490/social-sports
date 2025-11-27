@@ -13,6 +13,7 @@ type LoginUserContextType = {
   user: UserData;
   setUser: React.Dispatch<React.SetStateAction<UserData>>;
   auth: Auth;
+  refreshUser: () => Promise<void>;
 };
 
 export const LoginUserContext = createContext<LoginUserContextType>({
@@ -20,6 +21,7 @@ export const LoginUserContext = createContext<LoginUserContextType>({
   user: EmptyUserData,
   setUser: () => {},
   auth,
+  refreshUser: async () => {},
 });
 
 export default function UserContext({ children }: { children: any }) {
@@ -30,6 +32,16 @@ export default function UserContext({ children }: { children: any }) {
 
   const protectedRoutes = ["/organiser", "/profile", "/event/create"];
   const LoginRegisterRoutes = ["/register", "/login"];
+
+  const refreshUser = async () => {
+    try {
+      const userData = await getFullUserByIdForUserContextWithRetries(user.userId);
+      setUser(userData);
+    } catch {
+      router.push("/error");
+    }
+  };
+
   useEffect(() => {
     const unsubscriber = onAuthStateChanged(auth, async (userAuth) => {
       //need this because on user creation, if the user hasn't changed browsers since register
@@ -83,7 +95,11 @@ export default function UserContext({ children }: { children: any }) {
     checkAuthStatus();
   }, [user, pathname, userLoading]);
 
-  return <LoginUserContext.Provider value={{ userLoading, user, setUser, auth }}>{children}</LoginUserContext.Provider>;
+  return (
+    <LoginUserContext.Provider value={{ userLoading, user, setUser, auth, refreshUser }}>
+      {children}
+    </LoginUserContext.Provider>
+  );
 }
 
 export const useUser = () => useContext(LoginUserContext);
