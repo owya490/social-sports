@@ -99,7 +99,7 @@ export const ImageSelectionDialog = ({
       setSelectedImageUrl(downloadUrl);
       setErrorMessage(null);
     } catch (error) {
-      console.error("Error during image upload:", error);
+      logger.error(`Error during image upload: ${error}`);
       setErrorMessage("Failed to upload image. Please try again.");
     } finally {
       setIsUploading(false);
