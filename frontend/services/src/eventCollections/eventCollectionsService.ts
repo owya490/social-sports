@@ -10,6 +10,7 @@ import {
 import { EventId } from "@/interfaces/EventTypes";
 import { PRIVATE_USER_PATH, PUBLIC_USER_PATH, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { executeResilientPromises } from "@/utilities/promiseUtils";
 import { arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { getPrivateUserById, getPublicUserById } from "../users/usersService";
@@ -19,7 +20,12 @@ const eventCollectionsServiceLogger = new Logger("eventCollectionsService");
 async function fetchCollectionsForUser(collectionIds: EventCollectionId[]): Promise<EventCollection[]> {
   try {
     const collectionPromises = collectionIds.map((collectionId) => getEventCollectionById(collectionId));
-    return await Promise.all(collectionPromises);
+    const { successful } = await executeResilientPromises(
+      collectionPromises,
+      collectionIds,
+      eventCollectionsServiceLogger
+    );
+    return successful;
   } catch (error) {
     eventCollectionsServiceLogger.error(`Error fetching collections for collectionIds: ${collectionIds}: ${error}`);
     throw error;

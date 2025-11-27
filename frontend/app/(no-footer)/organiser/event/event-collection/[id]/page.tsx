@@ -23,6 +23,7 @@ import {
 import { getEventById, getOrganiserEvents } from "@/services/src/events/eventsService";
 import { getUsersEventImagesUrls, uploadEventImage } from "@/services/src/images/imageService";
 import { getErrorUrl, getUrlWithCurrentHostname } from "@/services/src/urlUtils";
+import { executeResilientPromises } from "@/utilities/promiseUtils";
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -65,6 +66,11 @@ export default function CollectionPage({ params }: CollectionPageProps) {
   const [allOrganiserEvents, setAllOrganiserEvents] = useState<EventData[]>([]);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<EventId>>(new Set());
 
+  const [collectionLink, setCollectionLink] = useState("");
+  useEffect(() => {
+    setCollectionLink(getUrlWithCurrentHostname(`/event-collection/${collectionId}`));
+  }, []);
+
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -87,11 +93,9 @@ export default function CollectionPage({ params }: CollectionPageProps) {
         setEditedTitle(collection.name);
         setEditedDescription(collection.description);
 
-        const events: EventData[] = [];
-        for (const eventId of collection.eventIds) {
-          const event = await getEventById(eventId);
-          events.push(event);
-        }
+        // Fetch all events in the collection
+        const eventPromises = collection.eventIds.map((eventId: EventId) => getEventById(eventId));
+        const { successful: events } = await executeResilientPromises(eventPromises, collection.eventIds, logger);
 
         // Sort events by start date (most recent first)
         events.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
@@ -189,11 +193,8 @@ export default function CollectionPage({ params }: CollectionPageProps) {
       await updateEventCollection(collectionId, collection.isPrivate, { eventIds: newEventIds });
 
       // Refresh event data
-      const events: EventData[] = [];
-      for (const eventId of newEventIds) {
-        const event = await getEventById(eventId);
-        events.push(event);
-      }
+      const eventPromises = newEventIds.map((eventId: EventId) => getEventById(eventId));
+      const { successful: events } = await executeResilientPromises(eventPromises, newEventIds, logger);
 
       // Sort events by start date (most recent first)
       events.sort((a, b) => b.startDate.toDate().getTime() - a.startDate.toDate().getTime());
@@ -232,7 +233,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
   };
 
   const handleCopyLink = () => {
-    const collectionUrl = `${getUrlWithCurrentHostname(`/event-collection/${collectionId}`)}`;
+    const collectionUrl = `${collectionLink}`;
     navigator.clipboard.writeText(collectionUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -374,7 +375,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">Collection Link</label>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <div className="flex-1 bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs md:text-sm text-gray-600 font-mono overflow-x-auto whitespace-nowrap">
-                  {`${getUrlWithCurrentHostname(`/event-collection/${collectionId}`)}`}
+                  {`${collectionLink}`}
                 </div>
                 <button
                   onClick={handleCopyLink}
@@ -430,7 +431,9 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                   className="opacity-60 mx-auto mb-6"
                 />
                 <div className="text-gray-600 font-medium text-lg sm:text-2xl">No events in this collection</div>
-                <p className="text-gray-500 text-sm mt-2">Click "Add Events" to add events to this collection</p>
+                <p className="text-gray-500 text-sm mt-2">
+                  Click &quot;Add Events&quot; to add events to this collection
+                </p>
               </div>
             </div>
           ) : (

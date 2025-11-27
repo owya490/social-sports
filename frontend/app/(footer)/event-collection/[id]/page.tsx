@@ -15,6 +15,7 @@ import {
 import { getEventById } from "@/services/src/events/eventsService";
 import { getErrorUrl } from "@/services/src/urlUtils";
 import { getPublicUserById } from "@/services/src/users/usersService";
+import { executeResilientPromises } from "@/utilities/promiseUtils";
 import { startOfDay } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -50,7 +51,11 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
 
         // Fetch all events in the collection
         const eventPromises = collectionData.eventIds.map((eventId: EventId) => getEventById(eventId));
-        const eventsData = await Promise.all(eventPromises);
+        const { successful: eventsData } = await executeResilientPromises(
+          eventPromises,
+          collectionData.eventIds,
+          logger
+        );
 
         // Filter out any events that might have been deleted and sort by start date
         const validEvents = eventsData.filter((event: EventData) => event.eventId);

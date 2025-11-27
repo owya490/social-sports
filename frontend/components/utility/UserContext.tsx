@@ -37,7 +37,7 @@ export default function UserContext({ children }: { children: any }) {
     try {
       const userData = await getFullUserByIdForUserContextWithRetries(user.userId);
       setUser(userData);
-    } catch (error) {
+    } catch {
       router.push("/error");
     }
   };
