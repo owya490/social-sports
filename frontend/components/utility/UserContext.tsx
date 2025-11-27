@@ -34,8 +34,12 @@ export default function UserContext({ children }: { children: any }) {
   const LoginRegisterRoutes = ["/register", "/login"];
 
   const refreshUser = async () => {
-    const userData = await getFullUserByIdForUserContextWithRetries(user.userId);
-    setUser(userData);
+    try {
+      const userData = await getFullUserByIdForUserContextWithRetries(user.userId);
+      setUser(userData);
+    } catch (error) {
+      router.push("/error");
+    }
   };
 
   useEffect(() => {

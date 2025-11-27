@@ -15,6 +15,8 @@ import { getErrorUrl } from "@/services/src/urlUtils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+const logger = new Logger("EventCollectionsPage");
+
 export default function EventCollectionsPage() {
   const { user } = useUser();
   const router = useRouter();
@@ -22,7 +24,6 @@ export default function EventCollectionsPage() {
   const [collections, setCollections] = useState<EventCollection[]>([]);
   const [isCreating, setIsCreating] = useState(false);
 
-  const logger = new Logger("EventCollectionsPage");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,6 +55,7 @@ export default function EventCollectionsPage() {
     } catch (error) {
       logger.error(`Failed to create collection: ${error}`);
       router.push(getErrorUrl(error));
+    } finally {
       setIsCreating(false);
     }
   };

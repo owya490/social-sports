@@ -16,15 +16,20 @@ import { getPrivateUserById, getPublicUserById } from "../users/usersService";
 
 const eventCollectionsServiceLogger = new Logger("eventCollectionsService");
 
+async function fetchCollectionsForUser(collectionIds: EventCollectionId[]): Promise<EventCollection[]> {
+  try {
+    const collectionPromises = collectionIds.map((collectionId) => getEventCollectionById(collectionId));
+    return await Promise.all(collectionPromises);
+  } catch (error) {
+    eventCollectionsServiceLogger.error(`Error fetching collections for collectionIds: ${collectionIds}: ${error}`);
+    throw error;
+  }
+}
+
 export async function getOrganiserPublicEventCollections(userId: UserId): Promise<EventCollection[]> {
   try {
     const user = await getPublicUserById(userId, true, true);
-    const collections: EventCollection[] = [];
-    for (const collectionId of user.publicEventCollections) {
-      const collection = await getEventCollectionById(collectionId);
-      collections.push(collection);
-    }
-    return collections;
+    return await fetchCollectionsForUser(user.publicEventCollections);
   } catch (error) {
     eventCollectionsServiceLogger.error(
       `Error getting organiser public event collections for userId: ${userId}: ${error}`
@@ -36,12 +41,7 @@ export async function getOrganiserPublicEventCollections(userId: UserId): Promis
 export async function getOrganiserPrivateEventCollections(userId: UserId): Promise<EventCollection[]> {
   try {
     const user = await getPrivateUserById(userId);
-    const collections: EventCollection[] = [];
-    for (const collectionId of user.privateEventCollections) {
-      const collection = await getEventCollectionById(collectionId);
-      collections.push(collection);
-    }
-    return collections;
+    return await fetchCollectionsForUser(user.privateEventCollections);
   } catch (error) {
     eventCollectionsServiceLogger.error(
       `Error getting organiser private event collections for userId: ${userId}: ${error}`

@@ -36,6 +36,7 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
       disabled: false,
     };
   }
+  const { loading = false, disabled = false, ...rest } = props;
 
   const MaybeDisabledLink = ({
     children,

@@ -24,11 +24,11 @@ interface EventCollectionPageProps {
     id: string;
   };
 }
+const logger = new Logger("EventCollectionPage");
 
 export default function EventCollectionPage({ params }: EventCollectionPageProps) {
   const collectionId = params.id;
   const router = useRouter();
-  const logger = new Logger("EventCollectionPage");
 
   const [loading, setLoading] = useState(true);
   const [collection, setCollection] = useState<EventCollection>(EMPTY_EVENT_COLLECTION);
@@ -113,6 +113,7 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
                 {/* Tab Navigation */}
                 <div className="flex items-center gap-1 mb-6 border-b border-gray-200">
                   <button
+                    type="button"
                     onClick={() => setActiveTab("upcoming")}
                     className={`px-4 py-2 font-medium text-sm transition-colors ${
                       activeTab === "upcoming"
@@ -123,6 +124,7 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
                     Upcoming Events ({upcomingEvents.length})
                   </button>
                   <button
+                    type="button"
                     onClick={() => setActiveTab("past")}
                     className={`px-4 py-2 font-medium text-sm transition-colors ${
                       activeTab === "past"
@@ -167,7 +169,7 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
                     <p className="text-gray-500 text-sm mt-2">Past events will appear here</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
                     {pastEvents.map((event) => (
                       <EventCard
                         key={event.eventId}

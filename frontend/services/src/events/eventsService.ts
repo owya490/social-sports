@@ -91,10 +91,11 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
         : [docRef.id];
 
       // If event is public, add it to the upcoming events
-      updatedUserEventsObject.publicUpcomingOrganiserEvents = user.publicUpcomingOrganiserEvents
-        ? [...user.publicUpcomingOrganiserEvents, docRef.id]
-        : [docRef.id];
-
+      if (!eventDataWithTokens.isPrivate) {
+        updatedUserEventsObject.publicUpcomingOrganiserEvents = user.publicUpcomingOrganiserEvents
+          ? [...user.publicUpcomingOrganiserEvents, docRef.id]
+          : [docRef.id];
+      }
       await updateUser(data.organiserId, updatedUserEventsObject, transaction);
     });
 

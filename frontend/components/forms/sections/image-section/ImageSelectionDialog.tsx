@@ -58,7 +58,7 @@ export const ImageSelectionDialog = ({
     };
 
     loadImages();
-  }, [isOpen, onLoadImages]);
+  }, [isOpen]);
 
   const validateImage = (file: File) => {
     const config = ImageConfig[imageType];

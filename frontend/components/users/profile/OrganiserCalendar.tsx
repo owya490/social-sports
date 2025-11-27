@@ -92,9 +92,12 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
 
   return (
     <div className="pt-8">
-      <div className="md:flex gap-4 max-h-[430px]">
+      <div className="md:flex gap-4 md:max-h-[430px]">
         {/* Mobile: Sliding View */}
-        <div className="md:hidden w-full overflow-hidden">
+        <div
+          className="md:hidden w-full overflow-hidden transition-all duration-300"
+          style={{ height: showEventsList ? "auto" : "380px" }}
+        >
           {events.length === 0 && (
             <p className="text-sm font-light text-gray-500 mb-4">No upcoming events for this organiser</p>
           )}
@@ -149,7 +152,7 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
               >
                 <span>←</span> Back to Calendar
               </button>
-              <div className="min-h-[300px]">
+              <div>
                 <h3 className="text-xl font-semibold mb-4">
                   {selectedDate
                     ? `Events on ${selectedDate.toLocaleDateString("en-US", {
