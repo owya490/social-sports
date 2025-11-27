@@ -58,8 +58,21 @@
 @media screen and (max-width: 768px) {
   .mantine-RichTextEditor-content,
   .mantine-Input-input,
+  .mantine-Select-input,
+  .mantine-Textarea-input,
   input,
-  select {
+  textarea,
+  select,
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  input[type="search"],
+  input[type="url"] {
     font-size: 16px !important;
   }
 }

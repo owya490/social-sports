@@ -10,9 +10,15 @@ export interface EventCollectionCardProps {
   collection: EventCollection;
   organiser: PublicUserData;
   loading?: boolean;
+  isPublicView?: boolean;
 }
 
-export default function EventCollectionCard({ loading, collection, organiser }: EventCollectionCardProps) {
+export default function EventCollectionCard({
+  loading,
+  collection,
+  organiser,
+  isPublicView = false,
+}: EventCollectionCardProps) {
   if (loading) {
     return (
       <div className="bg-white w-full">
@@ -26,8 +32,12 @@ export default function EventCollectionCard({ loading, collection, organiser }: 
     );
   }
 
+  const href = isPublicView
+    ? `/event-collection/${collection.eventCollectionId}`
+    : `/organiser/event/event-collection/${collection.eventCollectionId}`;
+
   return (
-    <Link href={`/organiser/event/event-collection/${collection.eventCollectionId}`}>
+    <Link href={href}>
       <div className="bg-white text-left w-full hover:cursor-pointer hover:scale-[1.02] transition-all duration-300 md:min-w-72">
         <div
           className="w-full"
