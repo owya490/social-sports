@@ -181,7 +181,7 @@ export default function UserProfilePage({ params }: any) {
               <div className="text-center py-12">
                 <p className="text-gray-600 text-lg">No public collections</p>
                 <p className="text-gray-500 text-sm mt-2">
-                  This organiser hasn't created any public event collections yet
+                  This organiser hasn&apos;t created any public event collections yet
                 </p>
               </div>
             ) : (
