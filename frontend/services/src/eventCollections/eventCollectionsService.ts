@@ -8,6 +8,7 @@ import {
   PUBLIC_EVENT_COLLECTION_USER_FIELD,
 } from "@/interfaces/EventCollectionTypes";
 import { EventId } from "@/interfaces/EventTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { PRIVATE_USER_PATH, PUBLIC_USER_PATH, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { executeResilientPromises } from "@/utilities/promiseUtils";
@@ -215,6 +216,42 @@ export async function removeEventFromCollection(
     eventCollectionsServiceLogger.info(`Removed event ${eventId} from collection ${collectionId}`);
   } catch (error) {
     eventCollectionsServiceLogger.error(`Error removing event from collection: ${error}`);
+    throw error;
+  }
+}
+
+export async function addRecurringTemplateToCollection(
+  collectionId: EventCollectionId,
+  templateId: RecurrenceTemplateId,
+  isPrivate: boolean
+): Promise<void> {
+  try {
+    const collectionPath = isPrivate ? PRIVATE_EVENT_COLLECTION_PATH : PUBLIC_EVENT_COLLECTION_PATH;
+    const collectionRef = doc(db, collectionPath, collectionId);
+    await updateDoc(collectionRef, {
+      recurringEventTemplateIds: arrayUnion(templateId),
+    });
+    eventCollectionsServiceLogger.info(`Added recurring template ${templateId} to collection ${collectionId}`);
+  } catch (error) {
+    eventCollectionsServiceLogger.error(`Error adding recurring template to collection: ${error}`);
+    throw error;
+  }
+}
+
+export async function removeRecurringTemplateFromCollection(
+  collectionId: EventCollectionId,
+  templateId: RecurrenceTemplateId,
+  isPrivate: boolean
+): Promise<void> {
+  try {
+    const collectionPath = isPrivate ? PRIVATE_EVENT_COLLECTION_PATH : PUBLIC_EVENT_COLLECTION_PATH;
+    const collectionRef = doc(db, collectionPath, collectionId);
+    await updateDoc(collectionRef, {
+      recurringEventTemplateIds: arrayRemove(templateId),
+    });
+    eventCollectionsServiceLogger.info(`Removed recurring template ${templateId} from collection ${collectionId}`);
+  } catch (error) {
+    eventCollectionsServiceLogger.error(`Error removing recurring template from collection: ${error}`);
     throw error;
   }
 }
