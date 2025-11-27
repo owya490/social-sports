@@ -290,7 +290,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
         recurringEventTemplateIds: prev.recurringEventTemplateIds.filter((id) => id !== templateId),
       }));
     } catch (error) {
-      logger.error(`Failed to remove recurring template: ${error}`);
+      logger.error(`Failed to remove recurring event: ${error}`);
       router.push(getErrorUrl(error));
     }
   };
@@ -387,7 +387,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
                         {collection.name}
                       </h1>
                     )}
-                    <div className="flex items-center gap-2 ml-auto">
+                    <div className={`flex items-center gap-2 ml-auto ${isEditingTitle ? "hidden md:flex" : ""}`}>
                       <button
                         type="button"
                         onClick={() => setShowPrivacyDialog(true)}
@@ -501,11 +501,11 @@ export default function CollectionPage({ params }: CollectionPageProps) {
             <h2 className="text-lg md:text-xl font-bold text-core-text">
               {addContentTab === "events"
                 ? `Events (${loading ? "..." : eventDataList.length})`
-                : `Recurring Templates (${collection.recurringEventTemplateIds.length})`}
+                : `Recurring Events (${collection.recurringEventTemplateIds.length})`}
             </h2>
             <InvertedHighlightButton
               onClick={handleOpenAddEventsDialog}
-              text={`Add ${addContentTab === "events" ? "Events" : "Recurring Templates"}`}
+              text={`Add ${addContentTab === "events" ? "Events" : "Recurring Events"}`}
             />
           </div>
 
@@ -599,16 +599,16 @@ export default function CollectionPage({ params }: CollectionPageProps) {
               <div className="text-center">
                 <Image
                   src={noSearchResultLineDrawing}
-                  alt="No recurring templates found"
+                  alt="No recurring events found"
                   width={400}
                   height={240}
                   className="opacity-60 mx-auto mb-6"
                 />
                 <div className="text-gray-600 font-medium text-lg sm:text-2xl">
-                  No recurring templates in this collection
+                  No recurring events in this collection
                 </div>
                 <p className="text-gray-500 text-sm mt-2">
-                  Click &quot;Add Recurring Templates&quot; to add recurring event templates to this collection
+                  Click &quot;Add Recurring Events&quot; to add recurring event templates to this collection
                 </p>
               </div>
             </div>
@@ -714,7 +714,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
             <div className="flex justify-between items-center p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div>
                 <h2 className="text-xl font-semibold text-core-text">
-                  {addContentTab === "events" ? "Add Events to Collection" : "Add Recurring Templates to Collection"}
+                  {addContentTab === "events" ? "Add Events to Collection" : "Add Recurring Events to Collection"}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
                   {addContentTab === "events"
