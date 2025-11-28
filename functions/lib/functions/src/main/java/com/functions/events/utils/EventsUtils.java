@@ -71,7 +71,7 @@ public class EventsUtils {
         String eventId = event.getEventId();
 
         if (endDate == null || registrationDeadline == null) {
-            logger.error("Event " + eventId + " missing date fields");
+            logger.error("Event {} missing date fields", eventId);
             throw new RuntimeException("Event " + eventId + " missing date fields");
         }
 
@@ -79,13 +79,14 @@ public class EventsUtils {
         Instant eventEnd = Instant.ofEpochSecond(endDate.getSeconds(), endDate.getNanos());
         Instant registrationEnd = Instant.ofEpochSecond(registrationDeadline.getSeconds(), registrationDeadline.getNanos());
 
-        if (paused || now.isAfter(eventEnd) || now.isAfter(registrationEnd)) {
-            logger.warn("Event " + eventId + " not available: " +
-                    "paused=" + paused + ", concluded=" + now.isAfter(eventEnd) + 
-                    ", registrationClosed=" + now.isAfter(registrationEnd));
+        Boolean isEventEnded = now.isAfter(eventEnd);
+        Boolean isRegistrationEnded = now.isAfter(registrationEnd);
+        if (paused || isEventEnded || isRegistrationEnded) {
+            logger.warn("Event {} not available: paused={}, concluded={}, registrationClosed={}",
+                    eventId, paused, isEventEnded, isRegistrationEnded);
             throw new CheckoutDateTimeException("Event " + eventId + " not available: " +
-                    "paused=" + paused + ", concluded=" + now.isAfter(eventEnd) + 
-                    ", registrationClosed=" + now.isAfter(registrationEnd));
+                    "paused=" + paused + ", concluded=" + isEventEnded + 
+                    ", registrationClosed=" + isRegistrationEnded);
         }
     }
 
