@@ -54,7 +54,7 @@ public class EventsUtils {
     public static String extractOrganiserIdForEvent(EventData event) {
         String eventString = event != null ? event.toString() : "null";
         if (event == null || event.getOrganiserId() == null || event.getOrganiserId().isEmpty()) {
-            logger.error("Failed to fetch organiser ID for event: " + eventString);
+            logger.error("Failed to fetch organiser ID for event: {}", eventString);
             throw new RuntimeException("Failed to fetch organiser ID for event: " + eventString);
         }
 
