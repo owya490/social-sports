@@ -1,21 +1,27 @@
 package com.functions.events.repositories;
 
-import com.functions.firebase.services.FirebaseService;
-import com.functions.events.models.EventData;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
+import com.functions.events.models.EventData;
+import com.functions.firebase.services.FirebaseService;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Transaction;
 
 public class EventsRepository {
     private static final Logger logger = LoggerFactory.getLogger(EventsRepository.class);
 
     public static Optional<EventData> getEventById(String eventId) {
+        return getEventById(eventId, Optional.empty());
+    }
+
+    public static Optional<EventData> getEventById(String eventId, Optional<Transaction> transaction) {
         try {
-            EventData eventData = findEventDocumentSnapshot(eventId).toObject(EventData.class);
+            EventData eventData = findEventDocumentSnapshot(eventId, transaction).toObject(EventData.class);
             if (eventData == null) {
                 logger.error("Failed to map returned event document snapshot to EventData type: {}", eventId);
                 throw new Exception("Failed to map returned event document snapshot to EventData type: " + eventId);
@@ -29,12 +35,12 @@ public class EventsRepository {
         }
     }
 
-    private static DocumentSnapshot findEventDocumentSnapshot(String eventId) throws Exception {
+    private static DocumentSnapshot findEventDocumentSnapshot(String eventId, Optional<Transaction> transaction) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         try {
             for (String path : FirebaseService.CollectionPaths.EVENT_PATHS) {
                 DocumentReference docRef = db.document(path + "/" + eventId);
-                DocumentSnapshot maybeDocSnapshot = docRef.get().get();
+                DocumentSnapshot maybeDocSnapshot = transaction.isPresent() ? transaction.get().get(docRef).get() : docRef.get().get();
                 if (maybeDocSnapshot.exists()) {
                     return maybeDocSnapshot;
                 }

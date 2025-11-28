@@ -1,5 +1,8 @@
 package com.functions.global.controllers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
 import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
 import com.functions.global.handlers.HandlerRegistry;
@@ -7,12 +10,11 @@ import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
+import com.functions.stripe.config.StripeConfig;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Unified endpoint that routes requests to specific handlers based on the endpoint type.
@@ -21,6 +23,10 @@ import org.slf4j.LoggerFactory;
  */
 public class GlobalAppController implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(GlobalAppController.class);
+
+    public GlobalAppController() {
+        StripeConfig.initialize();
+    }
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
