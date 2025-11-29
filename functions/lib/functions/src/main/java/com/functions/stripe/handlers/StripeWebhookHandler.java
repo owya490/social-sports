@@ -65,8 +65,6 @@ public class StripeWebhookHandler {
             return;
         }
         
-        // Initialize Stripe
-        StripeConfig.initialize();
         
         // Security check: Ensure webhook secret is configured
         if (StripeConfig.STRIPE_WEBHOOK_ENDPOINT_SECRET == null || StripeConfig.STRIPE_WEBHOOK_ENDPOINT_SECRET.isEmpty()) {
@@ -79,21 +77,22 @@ public class StripeWebhookHandler {
         String payload;
         try (BufferedReader reader = request.getReader()) {
             StringBuilder sb = new StringBuilder();
-            String line;
+            char[] buffer = new char[1024];
+            int bytesRead;
             int totalSize = 0;
             
-            while ((line = reader.readLine()) != null) {
-                totalSize += line.length();
+            while ((bytesRead = reader.read(buffer)) != -1) {
+                totalSize += bytesRead;
                 if (totalSize > MAX_PAYLOAD_SIZE) {
                     logger.error("[Webhook-{}] Request payload exceeds maximum size limit of {} bytes", 
                                 uuid, MAX_PAYLOAD_SIZE);
                     response.setStatusCode(413); // Payload Too Large
                     return;
                 }
-                sb.append(line).append("\n");
+                sb.append(buffer, 0, bytesRead);
             }
             
-            payload = sb.toString().trim();
+            payload = sb.toString();
             
             if (payload.isEmpty()) {
                 logger.error("[Webhook-{}] Request body is empty", uuid);

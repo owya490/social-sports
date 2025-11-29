@@ -16,8 +16,7 @@ import com.functions.events.models.EventMetadata;
 import com.functions.events.models.Purchaser;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
-import com.functions.fulfilment.handlers.CompleteFulfilmentSessionHandler;
-import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
+import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.stripe.models.Order;
 import com.functions.stripe.models.Ticket;
 import com.google.api.core.ApiFuture;
@@ -32,7 +31,7 @@ import com.stripe.model.checkout.Session;
 
 /**
  * Service class for handling Stripe webhook processing.
- * Manages ticket purchases, refunds, and session expirations.
+ * Manages ticket purchases and stripe session completions.
  */
 public class WebhookService {
     private static final Logger logger = LoggerFactory.getLogger(WebhookService.class);
@@ -51,8 +50,7 @@ public class WebhookService {
         Firestore db = FirebaseService.getFirestore();
         DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
         
-        ApiFuture<DocumentSnapshot> future = transaction.get(eventMetadataRef);
-        DocumentSnapshot eventMetadataSnapshot = future.get();
+        DocumentSnapshot eventMetadataSnapshot = transaction.get(eventMetadataRef).get();
         
         if (!eventMetadataSnapshot.exists()) {
             logger.error("Unable to find event provided in datastore to fulfill purchase. eventId={}", eventId);
@@ -306,9 +304,7 @@ public class WebhookService {
         
         Firestore db = FirebaseService.getFirestore();
         
-        // Hash the email for the Firestore key
         String emailHash = hashEmail(customerEmail);
-        
         DocumentReference attendeeRef = db.collection("Attendees").document("emails")
             .collection(emailHash).document(eventId);
         
@@ -361,34 +357,6 @@ public class WebhookService {
         // Add current checkout session to the processed list
         transaction.update(eventMetadataRef, "completedStripeCheckoutSessionIds", 
                           FieldValue.arrayUnion(checkoutSessionId));
-    }
-    
-    // TODO: rather than recreating the function here, we should just call the underlying implementation directly
-    /**
-     * Completes a fulfilment session by calling the Java cloud function.
-     * 
-     * @param fulfilmentSessionId The fulfilment session ID
-     * @param fulfilmentEntityId The fulfilment entity ID
-     */
-    public static void completeFulfilmentSession(String fulfilmentSessionId, String fulfilmentEntityId) {
-        logger.info("Completing fulfilment session with ID: {} and entity ID: {}", 
-                   fulfilmentSessionId, fulfilmentEntityId);
-        
-        try {
-            CompleteFulfilmentSessionRequest request = new CompleteFulfilmentSessionRequest(
-                fulfilmentSessionId, fulfilmentEntityId
-            );
-            
-            CompleteFulfilmentSessionHandler handler = new CompleteFulfilmentSessionHandler();
-            String result = handler.handle(request);
-            
-            logger.info("Successfully completed fulfilment session with ID: {} and entity ID: {}. Result: {}", 
-                       fulfilmentSessionId, fulfilmentEntityId, result);
-        } catch (Exception e) {
-            logger.error("Failed to complete fulfilment session with ID {} and entity ID {}: {}", 
-                        fulfilmentSessionId, fulfilmentEntityId, e.getMessage(), e);
-            throw new RuntimeException("Failed to complete fulfilment session", e);
-        }
     }
     
     /**
@@ -468,7 +436,7 @@ public class WebhookService {
             
             // Complete fulfilment session if requested
             if (completeFulfilmentSession && fulfilmentSessionId != null && endFulfilmentEntityId != null) {
-                completeFulfilmentSession(fulfilmentSessionId, endFulfilmentEntityId);
+                FulfilmentService.completeFulfilmentSession(fulfilmentSessionId, endFulfilmentEntityId);
             }
             
             // Send email to purchasing consumer
