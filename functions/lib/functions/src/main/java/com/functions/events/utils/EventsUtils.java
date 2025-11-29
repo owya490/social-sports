@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
-import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.users.models.PrivateUserData;
@@ -17,7 +16,6 @@ import com.functions.users.models.PublicUserData;
 import com.functions.users.services.Users;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 
 public class EventsUtils {
@@ -53,39 +51,27 @@ public class EventsUtils {
     /**
      * Fetches organiser ID for an event.
      */
-    public static String fetchOrganiserIdForEvent(String eventId, Boolean isPrivate) {
-        try {
-            Firestore db = FirebaseService.getFirestore();
-            DocumentSnapshot eventSnapshot = getEventRef(db, eventId, isPrivate).get().get();
-
-            if (!eventSnapshot.exists()) {
-                logger.error("Event " + eventId + " does not exist");
-                throw new RuntimeException("Event " + eventId + " does not exist");
-            }
-
-            EventData event = eventSnapshot.toObject(EventData.class);
-            if (event == null || event.getOrganiserId() == null || event.getOrganiserId().isEmpty()) {
-                logger.error("Event " + eventId + " missing organiserId");
-                throw new RuntimeException("Event " + eventId + " missing organiserId");
-            }
-
-            return event.getOrganiserId();
-        } catch (Exception e) {
-            logger.error("Failed to fetch organiser ID for event {}: {}", eventId, e.getMessage(), e);
-            throw new RuntimeException("Failed to fetch organiser ID for event " + eventId, e);
+    public static String extractOrganiserIdForEvent(EventData event) {
+        String eventString = event != null ? event.toString() : "null";
+        if (event == null || event.getOrganiserId() == null || event.getOrganiserId().isEmpty()) {
+            logger.error("Failed to fetch organiser ID for event: {}", eventString);
+            throw new RuntimeException("Failed to fetch organiser ID for event: " + eventString);
         }
+
+        return event.getOrganiserId();
     }
 
     /**
      * Validates event timing: not paused, not concluded, registration still open.
      */
-    public static void validateEventTiming(EventData event, String eventId) {
+    public static void validateEventTiming(EventData event) {
         Boolean paused = event.getPaused() != null ? event.getPaused() : false;
         Timestamp endDate = event.getEndDate();
         Timestamp registrationDeadline = event.getRegistrationDeadline();
+        String eventId = event.getEventId();
 
         if (endDate == null || registrationDeadline == null) {
-            logger.error("Event " + eventId + " missing date fields");
+            logger.error("Event {} missing date fields", eventId);
             throw new RuntimeException("Event " + eventId + " missing date fields");
         }
 
@@ -93,10 +79,14 @@ public class EventsUtils {
         Instant eventEnd = Instant.ofEpochSecond(endDate.getSeconds(), endDate.getNanos());
         Instant registrationEnd = Instant.ofEpochSecond(registrationDeadline.getSeconds(), registrationDeadline.getNanos());
 
-        if (paused || now.isAfter(eventEnd) || now.isAfter(registrationEnd)) {
+        Boolean isEventEnded = now.isAfter(eventEnd);
+        Boolean isRegistrationEnded = now.isAfter(registrationEnd);
+        if (paused || isEventEnded || isRegistrationEnded) {
+            logger.warn("Event {} not available: paused={}, concluded={}, registrationClosed={}",
+                    eventId, paused, isEventEnded, isRegistrationEnded);
             throw new CheckoutDateTimeException("Event " + eventId + " not available: " +
-                    "paused=" + paused + ", concluded=" + now.isAfter(eventEnd) + 
-                    ", registrationClosed=" + now.isAfter(registrationEnd));
+                    "paused=" + paused + ", concluded=" + isEventEnded + 
+                    ", registrationClosed=" + isRegistrationEnded);
         }
     }
 

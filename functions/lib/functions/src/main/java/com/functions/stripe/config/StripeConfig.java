@@ -28,39 +28,34 @@ public class StripeConfig {
     // Webhook configuration
     public static final String STRIPE_WEBHOOK_ENDPOINT_SECRET = Global.getEnv("STRIPE_WEBHOOK_ENDPOINT_SECRET");
 
-    private static volatile boolean initialized = false;
-    private static final Object initLock = new Object();
+    private static boolean initialized = false;
 
     /**
      * Explicitly initializes Stripe configuration with the API key.
-     * This method is thread-safe and idempotent - calling it multiple times has no additional effect.
      * 
      * @throws IllegalStateException if STRIPE_API_KEY environment variable is not set
      * @throws RuntimeException if initialization fails
      */
     public static void initialize() {
         if (initialized) {
+            logger.info("Stripe configuration already initialized");
             return;
         }
 
-        synchronized (initLock) {
-            if (initialized) {
-                return;
-            }
+        logger.info("Initializing Stripe configuration");
 
-            try {
-                String stripeApiKey = Global.getEnv("STRIPE_API_KEY");
-                if (stripeApiKey == null || stripeApiKey.isEmpty()) {
-                    logger.error("STRIPE_API_KEY environment variable is not set");
-                    throw new IllegalStateException("STRIPE_API_KEY environment variable is not set");
-                }
-                Stripe.apiKey = stripeApiKey;
-                initialized = true;
-                logger.info("Stripe API key initialized successfully");
-            } catch (Exception e) {
-                logger.error("Failed to initialize Stripe configuration", e);
-                throw new RuntimeException("Failed to initialize Stripe configuration", e);
+        try {
+            String stripeApiKey = Global.getEnv("STRIPE_API_KEY");
+            if (stripeApiKey == null || stripeApiKey.isEmpty()) {
+                logger.error("STRIPE_API_KEY environment variable is not set");
+                throw new IllegalStateException("STRIPE_API_KEY environment variable is not set");
             }
+            Stripe.apiKey = stripeApiKey;
+            initialized = true;
+            logger.info("Stripe API key initialized successfully");
+        } catch (Exception e) {
+            logger.error("Failed to initialize Stripe configuration", e);
+            throw new RuntimeException("Failed to initialize Stripe configuration", e);
         }
     }
 

@@ -1,14 +1,17 @@
 package com.functions.users.services;
 
+import java.util.Optional;
+
+import com.functions.firebase.services.FirebaseService;
+import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.models.PublicUserData;
 import com.functions.users.models.UserData;
 import com.functions.users.utils.UsersUtils;
+import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
-import com.functions.firebase.services.FirebaseService;
-import com.functions.utils.JavaUtils;
-import com.functions.firebase.services.FirebaseService.CollectionPaths;
+import com.google.cloud.firestore.Transaction;
 
 public class Users {
 
@@ -46,9 +49,13 @@ public class Users {
 	}
 
 	public static PrivateUserData getPrivateUserDataById(String userId) throws Exception {
+		return getPrivateUserDataById(userId, Optional.empty());
+	}
+
+	public static PrivateUserData getPrivateUserDataById(String userId, Optional<Transaction> transaction) throws Exception {
 		Firestore db = FirebaseService.getFirestore();
 		DocumentReference docRef = db.collection(CollectionPaths.USERS).document(CollectionPaths.ACTIVE)
 				.collection(CollectionPaths.PRIVATE).document(userId);
-        return docRef.get().get().toObject(PrivateUserData.class);
+		return transaction.isPresent() ? transaction.get().get(docRef).get().toObject(PrivateUserData.class) : docRef.get().get().toObject(PrivateUserData.class);
 	}
 }

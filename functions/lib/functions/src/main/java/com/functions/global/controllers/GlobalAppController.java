@@ -25,6 +25,10 @@ import com.google.cloud.functions.HttpResponse;
 public class GlobalAppController implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(GlobalAppController.class);
 
+    public GlobalAppController() {
+        StripeConfig.initialize();
+    }
+
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         setResponseHeaders(response);

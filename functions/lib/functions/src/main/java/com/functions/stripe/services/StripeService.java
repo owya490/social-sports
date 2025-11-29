@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
+import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 import com.functions.utils.JavaUtils;
@@ -24,8 +25,6 @@ public class StripeService {
 
     /**
      * Gets a Stripe checkout URL for the specified event.
-     * This method now calls the Java CheckoutService directly, enabling proper transaction support
-     * and eliminating network calls to Python functions.
      *
      * @param eventId The event ID to create a checkout for
      * @param isPrivate Whether the event is private
@@ -87,6 +86,13 @@ public class StripeService {
                     // We should just reject silently and prevent the entire checkout transaction
                     // from going ahead.
                     logger.warn("Cannot checkout for event {}: time based error: {}", eventId, e);
+                    throw e;
+                } catch (CheckoutVacancyException e) {
+                    // We don't need to log error and alert for this error because this
+                    // vacancy based error is out of our direct control.
+                    // We should just reject silently and prevent the entire checkout transaction
+                    // from going ahead.
+                    logger.warn("Cannot checkout for event {}: vacancy based error: {}", eventId, e);
                     throw e;
                 }
                 catch (Exception e) {
