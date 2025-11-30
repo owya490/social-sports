@@ -55,7 +55,7 @@ public class CheckoutService {
      * @return Response containing the checkout URL
      */
     public static CreateStripeCheckoutSessionResponse createStripeCheckoutSession(
-            CreateStripeCheckoutSessionRequest request) {
+            CreateStripeCheckoutSessionRequest request) throws Exception {
         try {
             logger.info("Creating checkout session for event {} ({} tickets)", request.eventId(), request.quantity());
 
@@ -84,7 +84,7 @@ public class CheckoutService {
                     return new CheckoutTransactionResult(eventData, stripeAccountId);
                 } catch (Exception e) {
                     logger.error("Reservation commit failed for event {}: {}", request.eventId(), e.getMessage(), e);
-                    throw new RuntimeException("Reservation commit failed: " + e.getMessage(), e);
+                    throw e;
                 }
             });
 
@@ -100,7 +100,7 @@ public class CheckoutService {
             
         } catch (Exception e) {
             logger.error("Checkout failed for event {}: {}", request.eventId(), e.getMessage(), e);
-            throw new RuntimeException("Checkout failed: " + e.getMessage(), e);
+            throw e;
         }
     }
 
@@ -133,7 +133,7 @@ public class CheckoutService {
      * @param eventData Event data - contains event details
      * @param privateUserData Private user data - contains organiser details
      */
-    private static void commitReservation(Transaction transaction, CreateStripeCheckoutSessionRequest request, EventData eventData, PrivateUserData privateUserData) {
+    private static void commitReservation(Transaction transaction, CreateStripeCheckoutSessionRequest request, EventData eventData, PrivateUserData privateUserData) throws Exception {
         try {
             validateEventForCheckout(eventData, request.quantity());
 
@@ -160,7 +160,7 @@ public class CheckoutService {
             }
         } catch (Exception e) {
             logger.error("Reservation commit failed for event {}: {}", request.eventId(), e.getMessage(), e);
-            throw new RuntimeException("Reservation commit failed: " + e.getMessage(), e);
+            throw e;
         }
     }
 
@@ -389,7 +389,7 @@ public class CheckoutService {
             throw e;
         } catch (Exception e) {
             logger.error("Organiser validation failed for {}: {}", organiserId, e.getMessage(), e);
-            throw new RuntimeException("Organiser validation failed: " + e.getMessage(), e);
+            throw e;
         }
     }
 }
