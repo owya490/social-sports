@@ -243,7 +243,8 @@ export function BasicInformation({
         hasLocationError = false;
       }
 
-      if (hasDateError || hasPriceError || hasLocationError || name.trim() === "") {
+      const hasNameError = name.trim() === "";
+      if (hasDateError || hasPriceError || hasLocationError || hasNameError) {
         setHasError(true);
       } else {
         setHasError(false);
