@@ -58,6 +58,13 @@ export const STRIPE_MIN_PRICE_ERROR_MESSAGE = `Price cannot be below $${(
   MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100
 ).toFixed(2)}`;
 
+const validatePrice = (amount: number): string | null => {
+  if (amount > 0 && amount < MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100) {
+    return STRIPE_MIN_PRICE_ERROR_MESSAGE;
+  }
+  return null;
+};
+
 export function BasicInformation({
   name,
   location,
@@ -184,10 +191,6 @@ export function BasicInformation({
     updateField({ price: dollarsToCents(amount) }); // Update the cost field in the parent component
   };
 
-  const handleEventCostSliderChange = (amount: number) => {
-    handleCustomAmountChange(amount);
-  };
-
   useEffect(() => {
     const validateErrors = () => {
       const currentDateTime = new Date();
@@ -221,14 +224,8 @@ export function BasicInformation({
         hasDateError = true;
       }
 
-      let hasPriceError = false;
-      if (customAmount < MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100) {
-        setPriceWarning(STRIPE_MIN_PRICE_ERROR_MESSAGE);
-        hasPriceError = true;
-      } else {
-        setPriceWarning(null);
-      }
-
+      setPriceWarning(validatePrice(customAmount));
+      let hasPriceError = priceWarning !== null;
       if (priceInputRef.current) {
         if (hasPriceError) {
           priceInputRef.current.setCustomValidity(STRIPE_MIN_PRICE_ERROR_MESSAGE);
@@ -395,7 +392,7 @@ export function BasicInformation({
           <div className="w-full px-5">
             <CreateEventCostSlider
               initialCustomAmount={customAmount}
-              onCustomAmountChange={handleEventCostSliderChange}
+              onCustomAmountChange={handleCustomAmountChange}
               setPriceWarning={setPriceWarning}
             />
           </div>
@@ -417,11 +414,7 @@ export function BasicInformation({
                     value = 0;
                   }
                   handleCustomAmountChange(value);
-                  if (value < MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100) {
-                    setPriceWarning(STRIPE_MIN_PRICE_ERROR_MESSAGE);
-                  } else {
-                    setPriceWarning(null);
-                  }
+                  setPriceWarning(validatePrice(value));
                 }}
                 className="rounded-md focus:ring-0"
                 size="lg"
