@@ -89,7 +89,7 @@ export function BasicInformation({
   setHasError,
 }: BasicInformationProps) {
   const router = useRouter();
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [hasLocationError, setHasLocationError] = useState<boolean>(false);
   const priceInputRef = useRef<HTMLInputElement>(null);
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
@@ -235,15 +235,6 @@ export function BasicInformation({
         }
       }
 
-      let hasLocationError = false;
-      if (location === "") {
-        setLocationError("Location is required.");
-        hasLocationError = true;
-      } else {
-        setLocationError(null);
-        hasLocationError = false;
-      }
-
       const hasNameError = name.trim() === "";
       if (hasDateError || hasPriceError || hasLocationError || hasNameError) {
         setHasError(true);
@@ -252,7 +243,18 @@ export function BasicInformation({
       }
     };
     validateErrors();
-  }, [startDate, startTime, endDate, endTime, registrationEndDate, registrationEndTime, customAmount, location, name]);
+  }, [
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+    registrationEndDate,
+    registrationEndTime,
+    customAmount,
+    location,
+    name,
+    hasLocationError,
+  ]);
 
   const handlePaymentsActiveChange = (paymentsActive: string) => {
     updateField({ paymentsActive: paymentsActive.toLowerCase() === "true" });
@@ -358,9 +360,9 @@ export function BasicInformation({
             <LocationAutocompleteForm
               location={location}
               updateField={updateField}
-              setLocationError={setLocationError}
+              setHasLocationError={setHasLocationError}
             />
-            {locationError !== "" && <div className="text-red-600 text-sm mt-2">{locationError}</div>}
+            {hasLocationError && <div className="text-red-600 text-sm mt-2">Selected location is required.</div>}
           </div>
         </div>
         <div>

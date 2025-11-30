@@ -6,10 +6,10 @@ import { BasicData } from "../events/create/forms/BasicForm";
 interface AutocompleteFormProps {
   location: string;
   updateField: (fields: Partial<BasicData>) => void;
-  setLocationError: (value: string | null) => void;
+  setHasLocationError: (value: boolean) => void;
 }
 
-const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateField, setLocationError }) => {
+const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, updateField, setHasLocationError }) => {
   const [address, setAddress] = useState<string>(location);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +35,8 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, u
         try {
           const { lat, lng } = await getLocationCoordinates(full_address);
           updateField({ lat, lng });
-          setLocationError(null);
+          setHasLocationError(false);
+          inputRef.current?.setCustomValidity("");
         } catch (error) {
           console.error(error);
         }
@@ -47,7 +48,8 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, u
     if (e.target.value.trim() === "") {
       setAddress("");
       updateField({ location: "" });
-      setLocationError("Please Select Location");
+      setHasLocationError(true);
+      inputRef.current?.setCustomValidity("Please Select Location");
     }
   };
 
