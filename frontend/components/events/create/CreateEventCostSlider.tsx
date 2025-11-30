@@ -1,6 +1,11 @@
+"use client";
+
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { Slider } from "@material-tailwind/react";
 import React, { useEffect, useState } from "react";
+
+const MIN_COST = MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100;
+const MAX_COST = 60;
 
 interface CreateEventCostSliderProps {
   initialCustomAmount?: number;
@@ -15,10 +20,6 @@ function CreateEventCostSlider({
 }: CreateEventCostSliderProps) {
   const [eventCost, setEventCost] = useState(initialCustomAmount);
   const [displayedCost, setDisplayedCost] = useState(initialCustomAmount);
-
-  // Define the slider's min and max values
-  const MIN_COST = MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100;
-  const MAX_COST = 60;
 
   // Update the slider when the initialCustomAmount prop changes
   useEffect(() => {
@@ -52,6 +53,7 @@ function CreateEventCostSlider({
           min={MIN_COST}
           max={MAX_COST}
           step={0.5}
+          aria-label="Event ticket price in dollars"
           className="text-black relative z-10"
           barClassName="rounded-none bg-gray-300"
           thumbClassName="rounded-full bg-white z-20"
