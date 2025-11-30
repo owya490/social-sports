@@ -92,7 +92,6 @@ export default function CreateEvent() {
 
   const [loading, setLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [locationError, setLocationError] = useState("");
   const [hasAlert, setHasAlert] = useState(false);
   const [AlertMessage, setAlertMessage] = useState("");
 
@@ -117,8 +116,6 @@ export default function CreateEvent() {
       user={user}
       setLoading={setLoading}
       setHasError={setHasError}
-      locationError={locationError}
-      setLocationError={setLocationError}
     />,
     <FormWrapper key="image-form-wrapper">
       <ImageForm
@@ -191,12 +188,6 @@ export default function CreateEvent() {
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-
-  useEffect(() => {
-    if (hasError) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [hasError]);
 
   async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
     setLoading(true);
@@ -323,8 +314,7 @@ export default function CreateEvent() {
                 //TODO: Add service layer protection
                 <InvertedHighlightButton
                   type="submit"
-                  className={`px-7 ml-auto lg:mr-2 ${hasError ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                  disabled={hasError}
+                  className={`px-7 ml-auto lg:mr-2 ${hasError ? "opacity-50" : ""}`}
                 >
                   Next
                 </InvertedHighlightButton>
