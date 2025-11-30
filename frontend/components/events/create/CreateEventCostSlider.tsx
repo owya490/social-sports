@@ -1,5 +1,4 @@
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
-import { centsToDollars } from "@/utilities/priceUtils";
 import { Slider } from "@material-tailwind/react";
 import React, { useEffect, useState } from "react";
 
@@ -33,9 +32,7 @@ function CreateEventCostSlider({
     const value = parseFloat(e.target.value);
 
     const clampedValue = Math.min(Math.max(value, MIN_COST), MAX_COST);
-    if (clampedValue >= centsToDollars(MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS)) {
-      setPriceWarning(null);
-    }
+    setPriceWarning(null);
 
     setEventCost(clampedValue);
     setDisplayedCost(value); // Always display the actual entered value

@@ -314,7 +314,7 @@ export default function CreateEvent() {
                 //TODO: Add service layer protection
                 <InvertedHighlightButton
                   type="submit"
-                  className={`px-7 ml-auto lg:mr-2 ${hasError ? "opacity-50" : "cursor-pointer"}`}
+                  className={`px-7 ml-auto lg:mr-2 ${hasError ? "opacity-50" : ""}`}
                 >
                   Next
                 </InvertedHighlightButton>
