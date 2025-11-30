@@ -4,6 +4,7 @@ import LocationAutocompleteForm from "@/components/utility/AutoComplete";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
@@ -21,6 +22,8 @@ import CustomTimeInput from "../CustomTimeInput";
 import { FormWrapper } from "./FormWrapper";
 import { RecurringEventsForm } from "./RecurringEventsForm";
 import "./form.css";
+
+const logger = new Logger("BasicForm");
 
 export type BasicData = {
   name: string;
@@ -51,9 +54,9 @@ type BasicInformationProps = BasicData & {
   setHasError: (value: boolean) => void;
 };
 
-export const STRIPE_MIN_PRICE_ERROR_MESSAGE = `Price cannot be below $${centsToDollars(
-  MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS
-)}`;
+export const STRIPE_MIN_PRICE_ERROR_MESSAGE = `Price cannot be below $${(
+  MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100
+).toFixed(2)}`;
 
 export function BasicInformation({
   name,
@@ -183,7 +186,6 @@ export function BasicInformation({
 
   const handleEventCostSliderChange = (amount: number) => {
     handleCustomAmountChange(amount);
-    updateField({ price: dollarsToCents(amount) });
   };
 
   useEffect(() => {
@@ -301,13 +303,7 @@ export function BasicInformation({
                 date={endDate}
                 placeholder="End Date"
                 handleChange={handleEndDateChange}
-                errorMessage={
-                  dateWarning?.includes("end date") || timeWarning
-                    ? dateWarning?.includes("end date")
-                      ? dateWarning
-                      : timeWarning || ""
-                    : ""
-                }
+                errorMessage={dateWarning?.includes("end date") ? dateWarning : timeWarning ?? ""}
               />
             </div>
             <div className="basis-1/4">
@@ -413,10 +409,10 @@ export function BasicInformation({
                 type="number"
                 step=".01"
                 error={!!priceWarning}
-                min={0}
+                min={0.5}
                 onChange={(e) => {
                   let value = parseFloat(parseFloat(e.target.value).toFixed(2));
-                  console.log(value);
+                  logger.debug(`Price input value: ${value}`);
                   if (isNaN(value)) {
                     value = 0;
                   }
