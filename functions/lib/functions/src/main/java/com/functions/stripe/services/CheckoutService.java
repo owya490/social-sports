@@ -355,7 +355,7 @@ public class CheckoutService {
     }
 
     /**
-     * Validates Stripe account OUTSIDE transaction. Performs Stripe API call if needed.
+     * Performs Stripe API call if needed.
      * Returns the active Stripe account ID or throws exception.
      */
     private static String validateAndGetStripeAccount(String organiserId, PrivateUserData organiser) throws StripeException {
