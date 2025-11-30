@@ -8,7 +8,7 @@ export default function CustomDateInput({
 }: {
   placeholder: string;
   date: string;
-  handleChange: (value: any) => void;
+  handleChange: (value: string) => void;
   errorMessage?: string;
 }) {
   const inputId = useId();

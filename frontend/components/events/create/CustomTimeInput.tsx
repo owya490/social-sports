@@ -8,7 +8,7 @@ export default function CustomTimeInput({
 }: {
   placeholder: string;
   value: string;
-  handleChange: (value: any) => void;
+  handleChange: (value: string) => void;
   errorMessage?: string;
 }) {
   const inputId = useId();

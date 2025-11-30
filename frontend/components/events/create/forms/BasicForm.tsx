@@ -224,8 +224,9 @@ export function BasicInformation({
         hasDateError = true;
       }
 
-      setPriceWarning(validatePrice(customAmount));
-      let hasPriceError = priceWarning !== null;
+      const priceValidationError = validatePrice(customAmount);
+      setPriceWarning(priceValidationError);
+      let hasPriceError = priceValidationError !== null;
       if (priceInputRef.current) {
         if (hasPriceError) {
           priceInputRef.current.setCustomValidity(STRIPE_MIN_PRICE_ERROR_MESSAGE);
