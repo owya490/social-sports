@@ -23,6 +23,9 @@ public class StripeService {
 
     public static final String FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID = "get_stripe_checkout_url_by_event_id";
 
+    // https://docs.stripe.com/api/charges#:~:text=The%20minimum%20amount%20is%20%240.50%20US%20or%20equivalent%20in%20charge%20currency.
+    public static final int MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT = 50;
+
     /**
      * Gets a Stripe checkout URL for the specified event.
      *

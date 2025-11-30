@@ -119,7 +119,7 @@ public class CheckoutService {
 
         // Validate price
         Integer price = eventData.getPrice();
-        if (price == null || (price < 1 && price != 0)) {
+        if (price == null || (price < StripeService.MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT && price != 0)) {
             logger.error("Event " + eventData.getEventId() + " invalid price: " + price);
             throw new RuntimeException("Event " + eventData.getEventId() + " invalid price: " + price);
         }
