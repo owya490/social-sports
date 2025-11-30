@@ -2,10 +2,12 @@ export default function CustomTimeInput({
   placeholder,
   value,
   handleChange,
+  errorMessage,
 }: {
   placeholder: string;
   value: string;
   handleChange: (value: any) => void;
+  errorMessage?: string;
 }) {
   return (
     <div className="relative">
@@ -18,10 +20,13 @@ export default function CustomTimeInput({
         onChange={(e) => {
           handleChange(e.target.value);
         }}
+        ref={(input) => {
+          if (input) {
+            input.setCustomValidity(errorMessage || "");
+          }
+        }}
       ></input>
-      <label className="absolute -top-2 left-3 bg-white flex px-1 text-xs font-light">
-        {placeholder}
-      </label>
+      <label className="absolute -top-2 left-3 bg-white flex px-1 text-xs font-light">{placeholder}</label>
     </div>
   );
 }

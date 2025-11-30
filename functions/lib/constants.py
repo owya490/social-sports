@@ -31,3 +31,5 @@ INACTIVE_PRIVATE = "Events/InActive/Private"
 EVENT_METADATA = "EventsMetadata"
 
 SYDNEY_TIMEZONE = pytz.timezone("Australia/Sydney")
+
+MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS = 50

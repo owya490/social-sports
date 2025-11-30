@@ -2,10 +2,12 @@ export default function CustomDateInput({
   placeholder,
   date,
   handleChange,
+  errorMessage,
 }: {
   placeholder: string;
   date: string;
   handleChange: (value: any) => void;
+  errorMessage?: string;
 }) {
   return (
     <div className="relative">
@@ -17,10 +19,13 @@ export default function CustomDateInput({
         onChange={(e) => {
           handleChange(e.target.value);
         }}
+        ref={(input) => {
+          if (input) {
+            input.setCustomValidity(errorMessage || "");
+          }
+        }}
       ></input>
-      <label className="absolute -top-2 left-3 bg-white flex px-1 text-xs font-light">
-        {placeholder}
-      </label>
+      <label className="absolute -top-2 left-3 bg-white flex px-1 text-xs font-light">{placeholder}</label>
     </div>
   );
 }

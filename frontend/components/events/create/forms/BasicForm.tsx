@@ -4,6 +4,7 @@ import LocationAutocompleteForm from "@/components/utility/AutoComplete";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
+import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
@@ -13,7 +14,7 @@ import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { Switch } from "@mantine/core";
 import { Input, Option, Select } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
 import CustomTimeInput from "../CustomTimeInput";
@@ -45,15 +46,16 @@ export type BasicData = {
 
 type BasicInformationProps = BasicData & {
   user: UserData;
-  locationError: string;
   updateField: (fields: Partial<BasicData>) => void;
   setLoading: (value: boolean) => void;
   setHasError: (value: boolean) => void;
-  setLocationError: (value: string) => void;
 };
 
-export function 
-BasicInformation({
+export const STRIPE_MIN_PRICE_ERROR_MESSAGE = `Price cannot be below $${centsToDollars(
+  MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS
+)}`;
+
+export function BasicInformation({
   name,
   location,
   startDate,
@@ -68,7 +70,6 @@ BasicInformation({
   isPrivate,
   paymentsActive,
   user,
-  locationError,
   stripeFeeToCustomer,
   promotionalCodesEnabled,
   eventLink,
@@ -76,11 +77,13 @@ BasicInformation({
   updateField,
   setLoading,
   setHasError,
-  setLocationError,
 }: BasicInformationProps) {
   const router = useRouter();
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
+  const [priceWarning, setPriceWarning] = useState<string | null>(null);
   const [isAdditionalSettingsOpen, setIsAdditionalSettingsOpen] = useState(false);
   const [customRegistrationDeadlineEnabled, setCustomRegistrationDeadlineEnabled] = useState(false);
   const [error, setError] = useState("");
@@ -170,62 +173,85 @@ BasicInformation({
     });
   };
 
-  useEffect(() => {
-    const dateAdndTimeErrors = () => {
-      const currentDateTime = new Date();
-      const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
-      const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
-      const selectedRegistrationEndDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
-
-      if (currentDateTime > selectedStartDateTime) {
-        setDateWarning("Event start date and time is in the past!");
-        return;
-      } else {
-        setDateWarning(null);
-      }
-
-      if (selectedEndDateTime < selectedStartDateTime) {
-        setTimeWarning("Event must end after it starts!");
-        return;
-      } else {
-        setTimeWarning(null);
-      }
-
-      if (currentDateTime > selectedRegistrationEndDateTime) {
-        setDateWarning("Event registration end date and time is in the past!");
-        return;
-      } else {
-        setDateWarning(null);
-      }
-
-      if (selectedRegistrationEndDateTime > selectedEndDateTime) {
-        setDateWarning("Event registration end date and time is after the event!");
-        return;
-      } else {
-        setDateWarning(null);
-      }
-
-      if (currentDateTime > selectedStartDateTime || selectedEndDateTime < selectedStartDateTime) {
-        setHasError(true);
-      } else {
-        setHasError(false);
-      }
-    };
-    dateAdndTimeErrors();
-  }, [startDate, startTime, endDate, endTime, registrationEndDate, registrationEndTime]);
-
-  const [customAmount, setCustomAmount] = useState(centsToDollars(price)); // customAmount is for frontend display and is stored in a int with decimal places. Price is stored in cents.
-
-  const handleEventCostSliderChange = (amount: number) => {
-    handleCustomAmountChange(amount);
-    updateField({ price: dollarsToCents(amount) });
-  };
+  const [customAmount, setCustomAmount] = useState(centsToDollars(price));
 
   const handleCustomAmountChange = (amount: number) => {
     amount = Number.isNaN(amount) ? 0 : amount;
     setCustomAmount(amount);
     updateField({ price: dollarsToCents(amount) }); // Update the cost field in the parent component
   };
+
+  const handleEventCostSliderChange = (amount: number) => {
+    handleCustomAmountChange(amount);
+    updateField({ price: dollarsToCents(amount) });
+  };
+
+  useEffect(() => {
+    const validateErrors = () => {
+      const currentDateTime = new Date();
+      const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
+      const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
+      const selectedRegistrationEndDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
+
+      let hasDateError = false;
+
+      if (currentDateTime > selectedStartDateTime) {
+        setDateWarning("Event start date and time is in the past!");
+        hasDateError = true;
+      } else {
+        setDateWarning(null);
+      }
+
+      if (selectedEndDateTime < selectedStartDateTime) {
+        setTimeWarning("Event must end after it starts!");
+        hasDateError = true;
+      } else {
+        setTimeWarning(null);
+      }
+
+      if (currentDateTime > selectedRegistrationEndDateTime) {
+        setDateWarning("Event registration end date and time is in the past!");
+        hasDateError = true;
+      }
+
+      if (selectedRegistrationEndDateTime > selectedEndDateTime) {
+        setDateWarning("Event registration end date and time is after the event!");
+        hasDateError = true;
+      }
+
+      let hasPriceError = false;
+      if (customAmount < MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100) {
+        setPriceWarning(STRIPE_MIN_PRICE_ERROR_MESSAGE);
+        hasPriceError = true;
+      } else {
+        setPriceWarning(null);
+      }
+
+      if (priceInputRef.current) {
+        if (hasPriceError) {
+          priceInputRef.current.setCustomValidity(STRIPE_MIN_PRICE_ERROR_MESSAGE);
+        } else {
+          priceInputRef.current.setCustomValidity("");
+        }
+      }
+
+      let hasLocationError = false;
+      if (location === "") {
+        setLocationError("Location is required.");
+        hasLocationError = true;
+      } else {
+        setLocationError(null);
+        hasLocationError = false;
+      }
+
+      if (hasDateError || hasPriceError || hasLocationError || name.trim() === "") {
+        setHasError(true);
+      } else {
+        setHasError(false);
+      }
+    };
+    validateErrors();
+  }, [startDate, startTime, endDate, endTime, registrationEndDate, registrationEndTime, customAmount, location, name]);
 
   const handlePaymentsActiveChange = (paymentsActive: string) => {
     updateField({ paymentsActive: paymentsActive.toLowerCase() === "true" });
@@ -255,16 +281,42 @@ BasicInformation({
           <label className="text-black text-lg font-semibold">When does your event start and end?</label>
           <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row md:space-x-2 mt-4">
             <div className="basis-1/3">
-              <CustomDateInput date={startDate} placeholder="Start Date" handleChange={handleStartDateChange} />
+              <CustomDateInput
+                date={startDate}
+                placeholder="Start Date"
+                handleChange={handleStartDateChange}
+                errorMessage={dateWarning?.includes("start date") ? dateWarning : ""}
+              />
             </div>
             <div className="basis-1/4">
-              <CustomTimeInput value={startTime} placeholder="Start Time" handleChange={handleStartTimeChange} />
+              <CustomTimeInput
+                value={startTime}
+                placeholder="Start Time"
+                handleChange={handleStartTimeChange}
+                errorMessage={dateWarning?.includes("start date") ? dateWarning : ""}
+              />
             </div>
             <div className="basis-1/3">
-              <CustomDateInput date={endDate} placeholder="End Date" handleChange={handleEndDateChange} />
+              <CustomDateInput
+                date={endDate}
+                placeholder="End Date"
+                handleChange={handleEndDateChange}
+                errorMessage={
+                  dateWarning?.includes("end date") || timeWarning
+                    ? dateWarning?.includes("end date")
+                      ? dateWarning
+                      : timeWarning || ""
+                    : ""
+                }
+              />
             </div>
             <div className="basis-1/4">
-              <CustomTimeInput value={endTime} placeholder="End Time" handleChange={handleEndTimeChange} />
+              <CustomTimeInput
+                value={endTime}
+                placeholder="End Time"
+                handleChange={handleEndTimeChange}
+                errorMessage={timeWarning || ""}
+              />
             </div>
           </div>
           {dateWarning && <div className="text-red-600 text-sm mt-2">{dateWarning}</div>}
@@ -289,6 +341,7 @@ BasicInformation({
                     date={registrationEndDate}
                     placeholder="Registration End Date"
                     handleChange={handleRegistrationEndDateChange}
+                    errorMessage={dateWarning?.includes("registration") ? dateWarning : ""}
                   />
                 </div>
                 <div className="basis-1/3">
@@ -296,6 +349,7 @@ BasicInformation({
                     value={registrationEndTime}
                     placeholder="Registration End Time"
                     handleChange={handleRegistrationEndTimeChange}
+                    errorMessage={dateWarning?.includes("registration") ? dateWarning : ""}
                   />
                 </div>
               </>
@@ -307,7 +361,6 @@ BasicInformation({
           <label className="text-black text-lg font-semibold">Where is it located?</label>
           <div className="mt-4">
             <LocationAutocompleteForm
-              setHasError={setHasError}
               location={location}
               updateField={updateField}
               setLocationError={setLocationError}
@@ -347,30 +400,38 @@ BasicInformation({
             <CreateEventCostSlider
               initialCustomAmount={customAmount}
               onCustomAmountChange={handleEventCostSliderChange}
+              setPriceWarning={setPriceWarning}
             />
           </div>
           <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3 my-6">
             <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
               <Input
+                inputRef={priceInputRef}
                 label="Price"
                 crossOrigin={undefined}
                 value={customAmount}
                 type="number"
                 step=".01"
+                error={!!priceWarning}
+                min={0}
                 onChange={(e) => {
                   let value = parseFloat(parseFloat(e.target.value).toFixed(2));
                   console.log(value);
-                  if (!isNaN(value)) {
-                    value = Math.max(value, 0);
-                  } else {
+                  if (isNaN(value)) {
                     value = 0;
                   }
                   handleCustomAmountChange(value);
+                  if (value < MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100) {
+                    setPriceWarning(STRIPE_MIN_PRICE_ERROR_MESSAGE);
+                  } else {
+                    setPriceWarning(null);
+                  }
                 }}
                 className="rounded-md focus:ring-0"
                 size="lg"
                 icon={<CurrencyDollarIcon />}
               />
+              {priceWarning && <div className="text-red-600 text-sm mt-2">{priceWarning}</div>}
             </div>
             <div className="w-full md:w-1/2 mt-4 md:mt-0">
               <Input
