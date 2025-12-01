@@ -1,6 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
-import { PublicUserData } from "@/interfaces/UserTypes";
+import { PublicUserData, UserId } from "@/interfaces/UserTypes"; // Import PublicUserData and UserId
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { displayPrice } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
@@ -15,7 +15,8 @@ interface EventCardProps {
   image: string;
   thumbnail: string;
   name: string;
-  organiser: PublicUserData;
+  organiserId: UserId;
+  organiser?: PublicUserData; // Optional organiser
   startTime: Timestamp;
   location: string;
   price: number;
@@ -30,7 +31,8 @@ export default function EventCard(props: EventCardProps) {
     image,
     thumbnail,
     name,
-    organiser,
+    organiserId,
+    organiser, // Destructure organiser
     startTime,
     location,
     price,
@@ -74,7 +76,7 @@ export default function EventCard(props: EventCardProps) {
               <h4 className="font-light text-gray-500 text-xs ml-auto">{`$${displayPrice(price)}`}</h4>
             </div>
             <h2 className="text-lg font-semibold mt-0.5 whitespace-nowrap overflow-hidden text-core-text">{name}</h2>
-            <UserInlineDisplay organiser={organiser} />
+            <UserInlineDisplay organiserId={organiserId} organiser={organiser} />
             <div className="mt-1 space-y-3">
               <div className="flex items-center ml-0.5">
                 <MapPinIcon className="w-4 shrink-0" />

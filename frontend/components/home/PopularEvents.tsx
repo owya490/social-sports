@@ -69,6 +69,7 @@ export default function PopularEvents() {
                         thumbnail={event.thumbnail}
                         name={event.name}
                         organiser={event.organiser}
+                        organiserId={event.organiserId}
                         startTime={event.startDate}
                         location={event.location}
                         price={event.price}

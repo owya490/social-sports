@@ -50,7 +50,7 @@ export interface NewEventData extends AbstractEventData {}
 
 export interface EventData extends AbstractEventData {
   eventId: EventId;
-  organiser: PublicUserData;
+  organiser?: PublicUserData;
 }
 
 export interface EventDataWithoutOrganiser extends AbstractEventData {
@@ -119,6 +119,7 @@ export interface Purchaser {
   email: string;
   attendees: Record<Name, Attendee>;
   totalTicketCount: number;
+  size?: number; // Optional size for backwards compatibility or specific use cases
 }
 
 export interface Attendee {
@@ -132,4 +133,15 @@ type EmailHash = string;
 export enum SearchType {
   EVENT,
   USER,
+}
+
+export interface BasicEvent {
+  eventId: EventId;
+  eventName: string;
+  eventDate: string;
+  eventLocation: string;
+  eventSport: string;
+  eventPrice: number;
+  eventImage: string;
+  accessCount: number;
 }

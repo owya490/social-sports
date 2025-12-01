@@ -53,5 +53,27 @@
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
-  
+
+  <!-- Newly added static pages -->
+  <url>
+    <loc>https://www.sportshub.net.au/featured/sydney/volleyball</loc>
+    <lastmod>2025-11-03T12:00:00+10:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.sportshub.net.au/featured/sydney/badminton</loc>
+    <lastmod>2025-11-03T12:00:00+10:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.sportshub.net.au/featured/sydney/social_sports</loc>
+    <lastmod>2025-11-03T12:00:00+10:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
 </urlset>

@@ -58,6 +58,7 @@ export default function UpcomingEventsCarousel({ organiser, events, loading }: U
                     thumbnail={event.thumbnail}
                     name={event.name}
                     organiser={event.organiser}
+                    organiserId={event.organiserId}
                     startTime={event.startDate}
                     location={event.location}
                     price={event.price}

@@ -98,6 +98,7 @@ export const PreviewForm = ({ form, user }: PreviewFormProps) => {
             }
             name={form.name}
             organiser={user}
+            organiserId={user.userId}
             startTime={Timestamp.fromDate(myDate)}
             location={form.location}
             price={form.price}
