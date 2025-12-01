@@ -16,7 +16,6 @@ import {
 } from "@/services/src/users/usersService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
-import Head from "next/head";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
@@ -215,71 +214,6 @@ export default function Dashboard() {
 
   return (
     <>
-      <Head>
-        {/* SEO Meta Tags for Dashboard/Homepage */}
-        <title>SPORTSHUB | Find Sports Events Near You</title>
-        <meta
-          name="description"
-          content="Discover and book local sports events on SPORTSHUB. Find basketball, volleyball, soccer, tennis and more recreational sports activities in your area."
-        />
-        <meta
-          name="keywords"
-          content="sportshub, local sports events, book sports, recreational sports, australia sports, find sports near me, sports activities"
-        />
-
-        {/* Open Graph Tags for Social Sharing */}
-        <meta property="og:title" content="SPORTSHUB Dashboard - Find Sports Events Near You" />
-        <meta
-          property="og:description"
-          content="Discover and book local sports events. Basketball, volleyball, soccer, tennis and more!"
-        />
-        <meta property="og:url" content="https://www.sportshub.net.au/" />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://www.sportshub.net.au/images/logo.png" />
-
-        {/* Twitter Card Tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="SPORTSHUB Dashboard - Find Sports Events Near You" />
-        <meta
-          name="twitter:description"
-          content="Discover and book local sports events. Basketball, volleyball, soccer, tennis and more!"
-        />
-        <meta name="twitter:image" content="https://www.sportshub.net.au/images/logo.png" />
-
-        {/* Additional SEO Tags */}
-        <meta name="robots" content="index, follow" />
-        <meta name="author" content="SPORTSHUB" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="canonical" href="https://www.sportshub.net.au/" />
-
-        {/* Local Business Schema for Australian Sports Platform */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            name: "SPORTSHUB Dashboard",
-            description: "Find and book local sports events in Australia",
-            url: "https://www.sportshub.net.au/",
-            mainEntity: {
-              "@type": "SearchResultsPage",
-              name: "Sports Events Search",
-              description: "Search and discover local sports activities and events",
-            },
-            breadcrumb: {
-              "@type": "BreadcrumbList",
-              itemListElement: [
-                {
-                  "@type": "ListItem",
-                  position: 1,
-                  name: "Home",
-                  item: "https://www.sportshub.net.au/",
-                },
-              ],
-            },
-          })}
-        </script>
-      </Head>
-
       <div>
         <div className="flex justify-center">
           <FilterBanner

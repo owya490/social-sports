@@ -1,6 +1,19 @@
 package com.functions.events.services;
 
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
@@ -11,12 +24,6 @@ import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.*;
 
 public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
@@ -90,6 +97,14 @@ public class RecurringEventsCronService {
                         } catch (Exception e) {
                             logger.error("Failed to update custom event links for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
                             // Continue with event creation even if custom links update fails
+                        }
+
+                        // Add event to event collections that contain the recurrence template
+                        try {
+                            EventCollectionsService.addEventToEventCollectionsWithRecurrenceTemplate(recurrenceTemplateId, newEventId);
+                        } catch (Exception e) {
+                            logger.error("Failed to add event to event collection for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
+                            // Continue with event creation even if event collection update fails
                         }
                     }
 

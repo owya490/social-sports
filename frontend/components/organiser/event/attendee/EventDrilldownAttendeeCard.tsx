@@ -1,14 +1,18 @@
+"use client";
+
 import { EventId, EventMetadata, Purchaser } from "@/interfaces/EventTypes";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
-import { EllipsisVerticalIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon } from "@heroicons/react/20/solid";
+import { DocumentTextIcon, EllipsisVerticalIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
 import { EditAttendeeTicketsDialog } from "./EditAttendeeTicketsDialog";
 import RemoveAttendeeDialog from "./RemoveAttendeeDialog";
-import { UserCircleIcon } from "@heroicons/react/20/solid";
+import ViewAttendeeFormResponsesDialog from "./ViewAttendeeFormResponsesDialog";
 interface EventDrilldownAttendeeCardProps {
   attendeeName: string;
   purchaser: Purchaser;
   eventId: EventId;
+  eventMetadata: EventMetadata;
   setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
 }
@@ -17,17 +21,22 @@ const EventDrilldownAttendeeCard = ({
   attendeeName,
   purchaser,
   eventId,
+  eventMetadata,
   setEventMetadata,
   setEventVacancy,
 }: EventDrilldownAttendeeCardProps) => {
   const [isRemoveAttendeeModalOpen, setIsRemoveAttendeeModalOpen] = useState<boolean>(false);
   const [isEditAttendeeTicketsDialogModalOpen, setIsEditAttendeeTicketsDialogModalOpen] = useState<boolean>(false);
+  const [isViewFormResponsesDialogOpen, setIsViewFormResponsesDialogOpen] = useState<boolean>(false);
 
   function closeRemoveAttendeeModal() {
     setIsRemoveAttendeeModalOpen(false);
   }
   function closeEditAttendeeTicketsDialogModal() {
     setIsEditAttendeeTicketsDialogModalOpen(false);
+  }
+  function closeViewFormResponsesDialog() {
+    setIsViewFormResponsesDialogOpen(false);
   }
 
   const tickets = purchaser.attendees[attendeeName].ticketCount;
@@ -38,7 +47,7 @@ const EventDrilldownAttendeeCard = ({
     <div className="grid grid-flow-col justify-stretch py-2 grid-cols-7 items-center text-xs md:text-base">
       <div className="col-span-1 w-14 text-center">{tickets}</div>
       <div className="flex flex-row items-center col-span-2">
-        <UserCircleIcon className="w-10 rounded-full hidden lg:block mr-2"/>
+        <UserCircleIcon className="w-10 rounded-full hidden lg:block mr-2" />
         <div className="">{attendeeName}</div>
       </div>
       <div className="col-span-2 break-all mr-2 xl:col-span-3">{email}</div>
@@ -64,6 +73,15 @@ const EventDrilldownAttendeeCard = ({
         >
           <MenuItems className="absolute right-0 mt-1 w-52 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
             <div className="px-1 py-1">
+              <MenuItem>
+                <div
+                  className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:cursor-pointer hover:text-white hover:bg-black `}
+                  onClick={() => setIsViewFormResponsesDialogOpen(true)}
+                >
+                  <DocumentTextIcon className="h-5 mr-2" />
+                  View form responses
+                </div>
+              </MenuItem>
               <MenuItem>
                 <div
                   className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:cursor-pointer hover:text-white hover:bg-black `}
@@ -113,6 +131,14 @@ const EventDrilldownAttendeeCard = ({
           setEventVacancy={setEventVacancy}
         />
       </div>
+      <ViewAttendeeFormResponsesDialog
+        isOpen={isViewFormResponsesDialogOpen}
+        onClose={closeViewFormResponsesDialog}
+        attendeeName={attendeeName}
+        purchaser={purchaser}
+        eventId={eventId}
+        eventMetadata={eventMetadata}
+      />
     </div>
   );
 };

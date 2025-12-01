@@ -24,7 +24,7 @@ public abstract class AbstractUserData {
 	private ContactInformation publicContactInformation;
 	private List<String> publicUpcomingOrganiserEvents = new ArrayList<>();
 	private String username;
-
+	private List<String> publicEventCollections = new ArrayList<>();
 	/** 
 	 * Private User Data fields
 	 * NEEDS TO MATCH PrivateUserData.java AND PrivateUserData in UserTypes.ts
@@ -41,7 +41,7 @@ public abstract class AbstractUserData {
 	private List<String> recurrenceTemplates = new ArrayList<>();
 	private Boolean sendOrganiserTicketEmails = false;
 	private List<String> forms = new ArrayList<>();
-
+	private List<String> privateEventCollections = new ArrayList<>();
 	@Data
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class ContactInformation {

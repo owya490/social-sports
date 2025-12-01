@@ -108,7 +108,9 @@ export interface EventMetadata {
 
 export const EmptyEventMetadata: EventMetadata = {
   eventId: "",
-  purchaserMap: { "": { email: "", attendees: { "": { phone: "", ticketCount: 0 } }, totalTicketCount: 0 } },
+  purchaserMap: {
+    "": { email: "", attendees: { "": { phone: "", ticketCount: 0, formResponseIds: [] } }, totalTicketCount: 0 },
+  },
   completeTicketCount: 0,
   completedStripeCheckoutSessionIds: [],
   organiserId: "",
@@ -124,6 +126,7 @@ export interface Purchaser {
 export interface Attendee {
   phone: string;
   ticketCount: number;
+  formResponseIds?: string[];
 }
 
 export type Name = string;

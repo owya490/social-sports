@@ -28,7 +28,7 @@ import {
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
-import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
@@ -81,21 +81,23 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     batch.set(docRef, eventDataWithTokens);
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
-    const user = await getFullUserById(data.organiserId);
-    if (user.organiserEvents === undefined) {
-      user.organiserEvents = [docRef.id];
-    } else {
-      user.organiserEvents.push(docRef.id);
-    }
-    // If event is public, add it to the upcoming events
-    if (!eventDataWithTokens.isPrivate) {
-      if (user.publicUpcomingOrganiserEvents === undefined) {
-        user.publicUpcomingOrganiserEvents = [docRef.id];
-      } else {
-        user.publicUpcomingOrganiserEvents.push(docRef.id);
+
+    await runTransaction(db, async (transaction) => {
+      const user = await getFullUserById(data.organiserId, transaction);
+
+      const updatedUserEventsObject: Partial<UserData> = {};
+      updatedUserEventsObject.organiserEvents = user.organiserEvents
+        ? [...user.organiserEvents, docRef.id]
+        : [docRef.id];
+
+      // If event is public, add it to the upcoming events
+      if (!eventDataWithTokens.isPrivate) {
+        updatedUserEventsObject.publicUpcomingOrganiserEvents = user.publicUpcomingOrganiserEvents
+          ? [...user.publicUpcomingOrganiserEvents, docRef.id]
+          : [docRef.id];
       }
-    }
-    await updateUser(data.organiserId, user);
+      await updateUser(data.organiserId, updatedUserEventsObject, transaction);
+    });
 
     // We want to bust all our caches when we create a new event.
     bustEventsLocalStorageCache();
