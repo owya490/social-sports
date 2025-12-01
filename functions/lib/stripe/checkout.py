@@ -45,7 +45,10 @@ class StripeCheckoutRequest:
     if not isinstance(self.successUrl, str):
       raise ValueError("Success Url must be provided as a string.")
 
-SPORTSHUB_FEE_ACCOUNTS = ["l8V4y8iHR8WUQJFAYSLNU9s1G522", "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2"]
+SPORTSHUB_FEE_ACCOUNTS = [
+  "l8V4y8iHR8WUQJFAYSLNU9s1G522", # Acers Prod
+  "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2" # Owen Dev
+  ]
 SPORTSHUB_FEE_PERCENTAGE = 0.01
 
 def calculate_stripe_fee(price: float, organiser_id: str) -> int:
