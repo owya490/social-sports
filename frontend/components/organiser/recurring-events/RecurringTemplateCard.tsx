@@ -21,6 +21,8 @@ export interface RecurringTemplateCardProps {
   createDaysBefore: number;
   recurrenceEnabled: boolean;
   disabled: boolean;
+  disableLink?: boolean;
+  openInNewTab?: boolean;
 }
 
 export default function RecurringTemplateCard(props: RecurringTemplateCardProps) {
@@ -30,9 +32,45 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
       loading: false,
     };
   }
+  if (props.disableLink === undefined) {
+    props = {
+      ...props,
+      disableLink: false,
+    };
+  }
+  if (props.openInNewTab === undefined) {
+    props = {
+      ...props,
+      openInNewTab: false,
+    };
+  }
 
+  const MaybeDisabledLink = ({
+    children,
+    disableLink = false,
+    openInNewTab = false,
+    url,
+  }: {
+    children: React.ReactNode;
+    disableLink?: boolean;
+    openInNewTab?: boolean;
+    url: string;
+  }) => {
+    if (disableLink) {
+      return <div>{children}</div>;
+    }
+    return (
+      <Link href={url} target={openInNewTab ? "_blank" : undefined}>
+        {children}
+      </Link>
+    );
+  };
   return (
-    <Link href={`/organiser/event/recurring-events/${props.recurrenceTemplateId}`}>
+    <MaybeDisabledLink
+      disableLink={props.disableLink}
+      openInNewTab={props.openInNewTab}
+      url={`/organiser/event/recurring-events/${props.recurrenceTemplateId}`}
+    >
       <div className="bg-white rounded-lg text-left border-gray-300 border w-full hover:cursor-pointer">
         {props.loading ? (
           <div>
@@ -88,6 +126,6 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
           </>
         )}
       </div>
-    </Link>
+    </MaybeDisabledLink>
   );
 }

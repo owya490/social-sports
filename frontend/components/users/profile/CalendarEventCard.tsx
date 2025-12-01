@@ -120,7 +120,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
             alt={event.name}
             width={0}
             height={0}
-            className="object-cover w-40 h-full aspect-square rounded-lg"
+            className="object-cover w-40 h-40 aspect-square rounded-lg"
           />
         </div>
 

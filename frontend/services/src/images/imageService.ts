@@ -1,4 +1,5 @@
 import { SportConfig, SPORTS_CONFIG } from "@/config/SportsConfig";
+import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { getDownloadURL, getMetadata, listAll, ref, StorageReference, uploadBytes } from "firebase/storage";
@@ -13,6 +14,7 @@ export interface AllImageData {
 export const EVENT_THUMBNAIL_PATH = "/eventThumbnails";
 export const EVENT_IMAGE_PATH = "/eventImages";
 export const FORM_IMAGE_PATH = "/formImages";
+export const PROFILE_PICTURE_PATH = "/profilepicture";
 
 export const imageServiceLogger = new Logger("imageServiceLogger");
 
@@ -72,6 +74,11 @@ export async function getUsersFormImagesUrls(userId: UserId): Promise<string[]> 
   return await fetchAndSortImageUrls(userRef);
 }
 
+export async function getUsersProfilePhotosUrls(userId: UserId): Promise<string[]> {
+  const userRef = ref(storage, "users/" + userId + PROFILE_PICTURE_PATH);
+  return await fetchAndSortImageUrls(userRef);
+}
+
 export function getThumbnailUrlsBySport(sport: string) {
   const sportConfig: SportConfig = SPORTS_CONFIG[sport];
   if (sportConfig) {
@@ -83,7 +90,7 @@ export function getThumbnailUrlsBySport(sport: string) {
 export function getImageAndThumbnailUrlsWithDefaults(formData: AllImageData & { sport: string }) {
   // If the image field is undefined, it will stay as this default image.
   var imageUrl =
-    "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
+    DEFAULT_EVENT_IMAGE_URL;
   // Otherwise if its a string, which means it is already uploaded, reuse the same imageUrl
   if (formData.image !== undefined && typeof formData.image === "string") {
     imageUrl = formData.image;
@@ -133,7 +140,7 @@ export async function getEventImageUrls(eventID: string): Promise<string[]> {
 }
 
 export async function uploadProfilePhoto(userID: string, file: File): Promise<string> {
-  const imagePath = `users/${userID}/profilepicture${generateImageId()}`;
+  const imagePath = `users/${userID}${PROFILE_PICTURE_PATH}/${generateImageId()}`;
   const imageRef = ref(storage, imagePath);
   const url = await uploadImage(imageRef, file);
 

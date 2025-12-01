@@ -50,6 +50,20 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
     return events.map((event) => startOfDay(event.startDate.toDate()));
   }, [events]);
 
+  // Calculate the date range for navigation limits
+  const { startMonth, endMonth } = useMemo(() => {
+    if (eventDates.length === 0) {
+      return { startMonth: undefined, endMonth: undefined };
+    }
+
+    // Sort dates to find earliest and latest
+    const sortedDates = [...eventDates].sort((a, b) => a.getTime() - b.getTime());
+    return {
+      startMonth: sortedDates[0], // Earliest event date
+      endMonth: sortedDates[sortedDates.length - 1], // Latest event date
+    };
+  }, [eventDates]);
+
   // Get events for the selected date
   const eventsForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
@@ -78,9 +92,12 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
 
   return (
     <div className="pt-8">
-      <div className="md:flex gap-4 max-h-[430px]">
+      <div className="md:flex gap-4 md:max-h-[430px]">
         {/* Mobile: Sliding View */}
-        <div className="md:hidden w-full overflow-hidden">
+        <div
+          className="md:hidden w-full overflow-hidden transition-all duration-300"
+          style={{ height: showEventsList ? "auto" : "380px" }}
+        >
           {events.length === 0 && (
             <p className="text-sm font-light text-gray-500 mb-4">No upcoming events for this organiser</p>
           )}
@@ -99,6 +116,8 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
                   onSelect={handleDateSelect}
                   month={month}
                   onMonthChange={setMonth}
+                  startMonth={startMonth}
+                  endMonth={endMonth}
                   disabled={(date) => {
                     if (events.length === 0) return true;
                     const dateStart = startOfDay(date);
@@ -133,7 +152,7 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
               >
                 <span>←</span> Back to Calendar
               </button>
-              <div className="min-h-[300px]">
+              <div>
                 <h3 className="text-xl font-semibold mb-4">
                   {selectedDate
                     ? `Events on ${selectedDate.toLocaleDateString("en-US", {
@@ -171,6 +190,8 @@ export default function OrganiserCalendar({ events }: OrganiserCalendarProps) {
                 onSelect={handleDateSelect}
                 month={month}
                 onMonthChange={setMonth}
+                startMonth={startMonth}
+                endMonth={endMonth}
                 disabled={(date) => {
                   if (events.length === 0) return true;
                   const dateStart = startOfDay(date);

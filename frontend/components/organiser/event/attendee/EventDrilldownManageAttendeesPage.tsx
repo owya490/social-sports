@@ -82,6 +82,7 @@ const EventDrilldownManageAttendeesPage = ({
               purchaser={purchaser}
               key={`${purchaser.email}-${attendeeName}`}
               eventId={eventId}
+              eventMetadata={eventMetadata}
               setEventMetadata={setEventMetadata}
               setEventVacancy={setEventVacancy}
             />

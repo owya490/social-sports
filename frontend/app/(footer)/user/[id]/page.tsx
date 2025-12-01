@@ -1,10 +1,13 @@
 "use client";
 import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
 import Loading from "@/components/loading/Loading";
+import EventCollectionCard from "@/components/organiser/event-collection/EventCollectionCard";
 import OrganiserCalendar from "@/components/users/profile/OrganiserCalendar";
+import { EventCollection } from "@/interfaces/EventCollectionTypes";
 import { EventData } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { getOrganiserPublicEventCollections } from "@/services/src/eventCollections/eventCollectionsService";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getErrorUrl } from "@/services/src/urlUtils";
 import { UserNotFoundError } from "@/services/src/users/userErrors";
@@ -22,7 +25,9 @@ export default function UserProfilePage({ params }: any) {
   const [loading, setLoading] = useState(true);
   const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyPublicUserData);
   const [upcomingOrganiserEvents, setUpcomingOrganiserEvents] = useState<EventData[]>([]);
+  const [publicEventCollections, setPublicEventCollections] = useState<EventCollection[]>([]);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<"events" | "collections">("events");
   useEffect(() => {
     const fetchEvents = async (user: PublicUserData) => {
       const eventPromises = (user.publicUpcomingOrganiserEvents || []).map(
@@ -34,7 +39,13 @@ export default function UserProfilePage({ params }: any) {
 
       // Update the state with the fetched events
       setUpcomingOrganiserEvents(events);
-      setLoading(false);
+      return events;
+    };
+
+    const fetchCollections = async (userId: UserId) => {
+      const collections = await getOrganiserPublicEventCollections(userId);
+      setPublicEventCollections(collections);
+      return collections;
     };
 
     const fetchUserProfile = async () => {
@@ -42,13 +53,19 @@ export default function UserProfilePage({ params }: any) {
         const userIdMapFromUsername = await getUsernameMapping(userId);
         const user = await getPublicUserById(userIdMapFromUsername.userId);
         setPublicUserProfile(user);
-        await fetchEvents(user);
+
+        // Fetch both events and collections in parallel
+        await Promise.all([fetchEvents(user), fetchCollections(userIdMapFromUsername.userId)]);
+        setLoading(false);
       } catch (error) {
         if (error instanceof UserNotFoundError) {
           try {
             const userById = await getPublicUserById(userId, true);
             setPublicUserProfile(userById);
-            await fetchEvents(userById);
+
+            // Fetch both events and collections in parallel
+            await Promise.all([fetchEvents(userById), fetchCollections(userId)]);
+            setLoading(false);
             return;
           } catch (error) {
             logger.error(`Error fetching user profile: ${error}`);
@@ -126,10 +143,62 @@ export default function UserProfilePage({ params }: any) {
                 </button>
               )}
             </div>
-            <div className="h-[1px] bg-core-outline my-4"></div>
           </div>
         </div>
-        <OrganiserCalendar events={upcomingOrganiserEvents} />
+
+        {/* Tab Navigation */}
+        <div className="pt-8 md:pt-12">
+          <div className="flex items-center gap-1 border-b border-gray-200 mb-6">
+            <button
+              type="button"
+              onClick={() => setActiveTab("events")}
+              className={`px-4 py-3 font-medium text-sm transition-colors ${
+                activeTab === "events" ? "text-core-text border-b-2 border-black" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Events
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("collections")}
+              className={`px-4 py-3 font-medium text-sm transition-colors ${
+                activeTab === "collections"
+                  ? "text-core-text border-b-2 border-black"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Collections
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "events" ? (
+          <OrganiserCalendar events={upcomingOrganiserEvents} />
+        ) : (
+          <div className="px-4 md:px-0">
+            {publicEventCollections.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-600 text-lg">No public collections</p>
+                <p className="text-gray-500 text-sm mt-2">
+                  This organiser hasn&apos;t created any public event collections yet
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+                {publicEventCollections.map((collection) => (
+                  <EventCollectionCard
+                    key={collection.eventCollectionId}
+                    collection={collection}
+                    organiser={publicUserProfile}
+                    loading={false}
+                    isPublicView={true}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

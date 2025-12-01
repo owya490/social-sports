@@ -2,6 +2,7 @@
 import Loading from "@/components/loading/Loading";
 import { FieldTypes, RenderEditableField, RenderNonEditableField } from "@/components/users/profile/ProfileFields";
 import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel";
+import { EmailChangeModal } from "@/components/users/profile/EmailChangeModal";
 import { useUser } from "@/components/utility/UserContext";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
@@ -29,6 +30,7 @@ const Profile = () => {
   const { user, setUser } = useUser();
   const [loading, setLoading] = useState(true);
   const [usernameWarning, setUsernameWarning] = useState(false);
+  const [emailChangeModalOpened, setEmailChangeModalOpened] = useState(false);
 
   useEffect(() => {
     if (user.userId !== "") {
@@ -91,6 +93,15 @@ const Profile = () => {
                     handleUserProfileUpdate("isSearchable", event.currentTarget.checked);
                   }}
                 />
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => setEmailChangeModalOpened(true)}
+                  className="bg-black px-3 py-1.5 text-white rounded-lg"
+                  type="button"
+                >
+                  Change Email
+                </button>
               </div>
             </div>
           </div>
@@ -209,6 +220,12 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      <EmailChangeModal
+        isOpen={emailChangeModalOpened}
+        onClose={() => setEmailChangeModalOpened(false)}
+        currentEmail={user.contactInformation.email}
+      />
     </div>
   );
 };
