@@ -16,7 +16,8 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from google.protobuf.timestamp_pb2 import Timestamp
-from lib.constants import MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS, db, MIN_INSTANCE
+from lib.constants import (MIN_INSTANCE,
+                           MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS, db)
 from lib.logging import Logger
 from lib.stripe.commons import ERROR_URL
 
@@ -44,11 +45,23 @@ class StripeCheckoutRequest:
     if not isinstance(self.successUrl, str):
       raise ValueError("Success Url must be provided as a string.")
 
-def calculate_stripe_fee(price: float) -> int:
+SPORTSHUB_FEE_ACCOUNTS = ["l8V4y8iHR8WUQJFAYSLNU9s1G522", "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2"]
+SPORTSHUB_FEE_PERCENTAGE = 0.01
+
+def calculate_stripe_fee(price: float, organiser_id: str) -> int:
   # Stripe fee is 30c + 1.7% of total price as price passed in is in cents already
   # can just do the calculation and return a whole integer
-  return int(math.ceil(30 + (price * 0.017)))
+  # if the organiser is part of the FEE accounts, add the application percentage to the fee
+  fee_percentage = 0.017
+  if organiser_id in SPORTSHUB_FEE_ACCOUNTS:
+    fee_percentage = fee_percentage + SPORTSHUB_FEE_PERCENTAGE
+  return int(math.ceil(30 + (price * fee_percentage)))
 
+def calculate_sportshub_fee(price: float, organiser_id: str) -> int:
+  # if the organiser is part of the FEE accounts, add the application percentage to the fee
+  if organiser_id in SPORTSHUB_FEE_ACCOUNTS:
+    return int(math.ceil(price * SPORTSHUB_FEE_PERCENTAGE))
+  return 0
 
 @firestore.transactional
 def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger: Logger, event_id: str, quantity: int, is_private: bool, cancel_url: str, success_url: str, complete_fulfilment_session: bool, fulfilment_session_id: Optional[str], end_fulfilment_entity_id: Optional[str]) -> str:
@@ -164,7 +177,7 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
   shipping_options: Optional[List[Dict[str, Any]]] = None
   stripe_fee_to_customer = event.get("stripeFeeToCustomer")
   if stripe_fee_to_customer is True and price != 0:
-    stripe_surcharge_fee = calculate_stripe_fee(price * quantity) # We need to overall order price for surcharge. not just singular ticket price
+    stripe_surcharge_fee = calculate_stripe_fee(price * quantity, organiser_id) # We need to overall order price for surcharge. not just singular ticket price
     logger.info(f"Application fee calculated to be {stripe_surcharge_fee} for event {event_id} with price {price} with quantity {quantity}.")
     shipping_options = [{
         "shipping_rate_data": {
@@ -223,7 +236,8 @@ def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger:
     "cancel_url": cancel_url,
     "stripe_account": organiser_stripe_account_id,
     "expires_at": int(time.time() + 1800),
-    "allow_promotion_codes": promotional_codes_enabled
+    "allow_promotion_codes": promotional_codes_enabled,
+    "payment_intent_data":{"application_fee_amount": calculate_sportshub_fee(price * quantity, organiser_id)},
   }
   
   # Add shipping_options only if it's not None
