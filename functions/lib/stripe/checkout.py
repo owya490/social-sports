@@ -46,7 +46,7 @@ class StripeCheckoutRequest:
       raise ValueError("Success Url must be provided as a string.")
 
 SPORTSHUB_FEE_ACCOUNTS = [
-  "l8V4y8iHR8WUQJFAYSLNU9s1G522", # Acers Prod
+  "obodlRDZycR062927qTjsah0FHr2", # Acers Prod
   "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2" # Owen Dev
   ]
 SPORTSHUB_FEE_PERCENTAGE = 0.01
@@ -58,6 +58,7 @@ def calculate_stripe_fee(price: float, organiser_id: str) -> int:
   fee_percentage = 0.017
   if organiser_id in SPORTSHUB_FEE_ACCOUNTS:
     fee_percentage = fee_percentage + SPORTSHUB_FEE_PERCENTAGE
+    print(f"Organiser {organiser_id} is part of the FEE accounts. Adding {SPORTSHUB_FEE_PERCENTAGE} to the fee percentage. Dynamic fee is {int(math.ceil(30 + (price * fee_percentage)))}")
   return int(math.ceil(30 + (price * fee_percentage)))
 
 def calculate_sportshub_fee(price: float, organiser_id: str) -> int:
