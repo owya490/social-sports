@@ -52,20 +52,31 @@ public class EventsUtils {
      * Fetches organiser ID for an event.
      */
     public static String extractOrganiserIdForEvent(EventData event) {
-        String eventString = event != null ? event.toString() : "null";
-        if (event == null || event.getOrganiserId() == null || event.getOrganiserId().isEmpty()) {
+        if (event == null) {
+            logger.error("Failed to fetch organiser ID for event: null");
+            throw new RuntimeException("Failed to fetch organiser ID for event: null");
+        }
+
+        String organiserId = event.getOrganiserId();
+        if (organiserId == null || organiserId.isEmpty()) {
+            String eventString = event.toString();
             logger.error("Failed to fetch organiser ID for event: {}", eventString);
             throw new RuntimeException("Failed to fetch organiser ID for event: " + eventString);
         }
 
-        return event.getOrganiserId();
+        return organiserId;
     }
 
     /**
      * Validates event timing: not paused, not concluded, registration still open.
      */
-    public static void validateEventTiming(EventData event) {
-        Boolean paused = event.getPaused() != null ? event.getPaused() : false;
+    public static void validateEventTiming(EventData event) throws Exception {
+        if (event == null) {
+            logger.error("Failed to validate event timing: event is null");
+            throw new RuntimeException("Failed to validate event timing: event is null");
+        }
+
+        boolean paused = event.getPaused() != null ? event.getPaused() : false;
         Timestamp endDate = event.getEndDate();
         Timestamp registrationDeadline = event.getRegistrationDeadline();
         String eventId = event.getEventId();
