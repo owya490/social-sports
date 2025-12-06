@@ -151,14 +151,9 @@ public class FirebaseService {
     public static <T> T createFirestoreTransaction(Transaction.Function<T> consumer) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         ApiFuture<T> futureTransaction = db.runTransaction(consumer);
-        try {
-            // Wait for the transaction to complete
-            T result = futureTransaction.get();
-            logger.info("Transaction completed with result: " + result);
-            return result;
-        } catch (Exception e) {
-            logger.error("Transaction failed: " + e.getMessage());
-            throw e;
-        }
+        // Wait for the transaction to complete
+        T result = futureTransaction.get();
+        logger.info("Transaction completed with result: " + result);
+        return result;
     }
 }
