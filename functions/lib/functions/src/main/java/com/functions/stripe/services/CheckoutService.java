@@ -282,7 +282,7 @@ public class CheckoutService {
         Boolean stripeFeeToCustomer = eventData.getStripeFeeToCustomer();
         if (stripeFeeToCustomer != null && Boolean.TRUE.equals(stripeFeeToCustomer) && eventData.getPrice() != 0) {
             long totalOrderPrice = (long) eventData.getPrice() * (long) request.quantity();
-            long stripeFee = StripeConfig.calculateStripeFee(totalOrderPrice);
+            long stripeFee = StripeConfig.calculateStripeFee(totalOrderPrice, eventData.getOrganiserId());
             logger.info("Stripe surcharge calculated: {} cents for event {} (price={}, quantity={})",
                     stripeFee, eventData.getEventId(), eventData.getPrice(), request.quantity());
 

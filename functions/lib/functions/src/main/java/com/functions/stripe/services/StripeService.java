@@ -96,8 +96,7 @@ public class StripeService {
                 // from going ahead.
                 logger.warn("Cannot checkout for event {}: vacancy based error: {}", eventId, e);
                 throw e;
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.error("Failed to create Stripe checkout session for event ID {}: {}", eventId, e.getMessage());
                 throw new RuntimeException("Failed to create Stripe checkout session", e);
             }

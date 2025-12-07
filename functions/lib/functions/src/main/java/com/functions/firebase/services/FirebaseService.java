@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -154,7 +155,7 @@ public class FirebaseService {
         ApiFuture<T> futureTransaction = db.runTransaction(consumer);
         try {
             // Wait for the transaction to complete
-            T result = futureTransaction.get();
+            T result = futureTransaction.get(30, TimeUnit.SECONDS);
             logger.info("Transaction completed with result: " + result);
             return result;
         } catch (ExecutionException e) {
