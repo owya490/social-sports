@@ -11,6 +11,8 @@ import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
 import com.functions.stripe.config.StripeConfig;
+import com.functions.stripe.exceptions.CheckoutDateTimeException;
+import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
@@ -87,6 +89,16 @@ public class GlobalAppController implements HttpFunction {
             response.setStatusCode(404);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
                     new ErrorResponse(e.getMessage())));
+        } catch (CheckoutVacancyException e) {
+            logger.warn("Checkout vacancy error: {}", e.getMessage());
+            response.setStatusCode(400);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse("Checkout vacancy error: " + e.getMessage())));
+        } catch (CheckoutDateTimeException e) {
+            logger.warn("Checkout date time error: {}", e.getMessage());
+            response.setStatusCode(400);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse("Checkout date time error: " + e.getMessage())));
         } catch (Exception e) {
             logger.error("Error processing request", e);
             response.setStatusCode(500);

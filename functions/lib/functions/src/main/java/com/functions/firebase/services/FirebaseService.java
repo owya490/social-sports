@@ -5,6 +5,7 @@ import static com.functions.utils.JavaUtils.objectMapper;
 import java.io.FileInputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -151,9 +152,19 @@ public class FirebaseService {
     public static <T> T createFirestoreTransaction(Transaction.Function<T> consumer) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         ApiFuture<T> futureTransaction = db.runTransaction(consumer);
-        // Wait for the transaction to complete
-        T result = futureTransaction.get();
-        logger.info("Transaction completed with result: " + result);
-        return result;
+        try {
+            // Wait for the transaction to complete
+            T result = futureTransaction.get();
+            logger.info("Transaction completed with result: " + result);
+            return result;
+        } catch (ExecutionException e) {
+            // Unwrap the ExecutionException to expose the original exception
+            // This allows specific exception handlers (e.g., CheckoutVacancyException) to catch it
+            Throwable cause = e.getCause();
+            if (cause instanceof Exception) {
+                throw (Exception) cause;
+            }
+            throw e;
+        }
     }
 }
