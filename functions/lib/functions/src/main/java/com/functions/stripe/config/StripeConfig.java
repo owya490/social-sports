@@ -1,5 +1,7 @@
 package com.functions.stripe.config;
 
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,12 +16,20 @@ public class StripeConfig {
     private static final Logger logger = LoggerFactory.getLogger(StripeConfig.class);
 
     // Feature flags for easily gating Java implementation of Python Stripe functionality.
-    public static final boolean JAVA_STRIPE_ENABLED = true;
+    public static final boolean JAVA_STRIPE_ENABLED = false;
     public static final boolean JAVA_STRIPE_WEBHOOK_ENABLED = true;
 
     public static final String ERROR_URL = "/error";
     public static final String CURRENCY = "aud";
     public static final int CHECKOUT_SESSION_EXPIRY_SECONDS = 1800; // 30 minutes
+
+    public static final Set<String> SPORTSHUB_FEE_ACCOUNTS = Set.of(
+        "obodlRDZycR062927qTjsah0FHr2", // Acers Prod
+        "PT57cJxfbdRXOQgJH2nAs6cZnFH3", // OneU (Ricky Tang) Prod
+        "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2" // Owen Dev
+    );
+
+    public static final double SPORTSHUB_FEE_PERCENTAGE = 0.01; // 1%
 
     // Stripe fee calculation constants
     private static final int STRIPE_FIXED_FEE_CENTS = 30;
@@ -66,7 +76,11 @@ public class StripeConfig {
      * @param priceInCents The price in cents
      * @return The Stripe fee in cents
      */
-    public static long calculateStripeFee(long priceInCents) {
+    public static long calculateStripeFee(long priceInCents, String organiserId) {
+        if (SPORTSHUB_FEE_ACCOUNTS.contains(organiserId)) {
+            logger.info("Organiser {} is part of the FEE accounts. Adding {} to the fee percentage. Dynamic fee is {}", organiserId, SPORTSHUB_FEE_PERCENTAGE, (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * (STRIPE_PERCENTAGE_FEE + SPORTSHUB_FEE_PERCENTAGE))));
+            return (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * (STRIPE_PERCENTAGE_FEE + SPORTSHUB_FEE_PERCENTAGE)));
+        }
         return (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * STRIPE_PERCENTAGE_FEE));
     }
 }

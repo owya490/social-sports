@@ -33,6 +33,7 @@ import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
+import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
@@ -88,12 +89,12 @@ public class FulfilmentService {
     /**
      * Initializes a checkout fulfilment session for the given event ID.
      */
-    public static Optional<String> initCheckoutFulfilmentSession(String eventId,
-                                                                 Integer numTickets) {
+    public static String initCheckoutFulfilmentSession(String eventId,
+                                                                 Integer numTickets) throws Exception {
         try {
             if (numTickets == null || numTickets <= 0) {
                 logger.error("Invalid numTickets {} for eventId {}", numTickets, eventId);
-                return Optional.empty();
+                throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
             }
             // TODO: optimistically reserve tickets and at the current price using a transaction
 
@@ -118,24 +119,21 @@ public class FulfilmentService {
                             .map(SimpleEntry::getValue)
                             .collect(Collectors.toList()));
             return FulfilmentService.createFulfilmentSession(fulfilmentSessionId, eventId,
-                    numTickets, fulfilmentEntities).map(sessionId -> {
-                if (sessionId.isEmpty()) {
-                    logger.error("Empty session ID returned from createFulfilmentSession for event ID: {}", eventId);
-                    throw new RuntimeException(
-                            "Failed to create fulfilment session for event ID: " + eventId);
-                }
-                logger.info("Created fulfilment session for event ID: {}, session ID: {}", eventId, sessionId);
-                return sessionId;
-            });
+                    numTickets, fulfilmentEntities);
         } catch (CheckoutDateTimeException e) {
             // Don't log error and alert for error that is outside of our direct control
             // because this is a time based error.
             logger.warn("Cannot checkout for event {}: time based error: {}", eventId, e);
-        }
-        catch (Exception e) {
+            throw e;
+        } catch (CheckoutVacancyException e) {
+            // Don't log error and alert for error that is outside of our direct control
+            // because this is a vacancy error.
+            logger.warn("Cannot checkout for event {}: vacancy error: {}", eventId, e);
+            throw e;
+        } catch (Exception e) {
             logger.error("Failed to init checkout fulfilment session: {}", eventId, e);
+            throw e;
         }
-        return Optional.empty();
     }
 
     private static List<SimpleEntry<String, FulfilmentEntity>> constructCheckoutFulfilmentEntities(
@@ -228,9 +226,8 @@ public class FulfilmentService {
         return entityIds.get(endEntityIndex);
     }
 
-    private static Optional<String> createFulfilmentSession(String sessionId, String eventId,
-                                                            Integer numTickets, List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities) {
-        try {
+    private static String createFulfilmentSession(String sessionId, String eventId,
+                                                            Integer numTickets, List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities) throws Exception {
             // Convert list to map and order
             Map<String, FulfilmentEntity> entityMap = new HashMap<>();
             List<String> entityOrder = new ArrayList<>();
@@ -254,11 +251,7 @@ public class FulfilmentService {
 
             logger.info("Fulfilment session created with ID: {} for event ID: {}",
                     fulfilmentSessionId, eventId);
-            return Optional.of(fulfilmentSessionId);
-        } catch (Exception e) {
-            logger.error("Failed to create fulfilment session for event ID: {}", eventId, e);
-            return Optional.empty();
-        }
+            return fulfilmentSessionId;
     }
 
     private static Optional<GetNextFulfilmentEntityResponse> getNextFulfilmentEntity(

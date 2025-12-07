@@ -56,52 +56,41 @@ public class CheckoutService {
      */
     public static CreateStripeCheckoutSessionResponse createStripeCheckoutSession(
             CreateStripeCheckoutSessionRequest request) throws Exception {
-        try {
-            logger.info("Creating checkout session for event {} ({} tickets)", request.eventId(), request.quantity());
+        logger.info("Creating checkout session for event {} ({} tickets)", request.eventId(), request.quantity());
 
-            // Section A: Perform SPORTSHUB domain specific operations
-            CheckoutTransactionResult checkoutTransactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
-                try {
-                    Optional<EventData> maybeEventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction));
+        // Section A: Perform SPORTSHUB domain specific operations
+        CheckoutTransactionResult checkoutTransactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
+            Optional<EventData> maybeEventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction));
 
-                    if (maybeEventData.isEmpty()) {
-                        throw new RuntimeException("No event found for eventId: " + request.eventId());
-                    }
+            if (maybeEventData.isEmpty()) {
+                throw new RuntimeException("No event found for eventId: " + request.eventId());
+            }
 
-                    EventData eventData = maybeEventData.get();
-                    if (eventData == null) {
-                        throw new RuntimeException("Event data is null");
-                    }
+            EventData eventData = maybeEventData.get();
+            if (eventData == null) {
+                throw new RuntimeException("Event data is null");
+            }
 
-                    String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);
-                    PrivateUserData privateUserData = Users.getPrivateUserDataById(organiserId, Optional.of(transaction));
-                    
-                    String stripeAccountId = validateAndGetStripeAccount(organiserId, privateUserData);
-
-                    commitReservation(transaction, request, eventData, privateUserData);
-                    logger.info("Reservation committed successfully for event {}", request.eventId());
-
-                    return new CheckoutTransactionResult(eventData, stripeAccountId);
-                } catch (Exception e) {
-                    logger.error("Reservation commit failed for event {}: {}", request.eventId(), e.getMessage(), e);
-                    throw e;
-                }
-            });
-
-            // Section B: Create Stripe session (external I/O) with retries
-            StripeSessionResult sessionResult = createStripeSessionWithRetries(request, checkoutTransactionResult.eventData(), checkoutTransactionResult.stripeAccountId());
-            logger.info("Stripe session {} created successfully for event {}", 
-                    sessionResult.sessionId, checkoutTransactionResult.eventData().getEventId());
-
-            logger.info("Checkout complete for event {}, organiser {}, account {}", 
-                    request.eventId(), EventsUtils.extractOrganiserIdForEvent(checkoutTransactionResult.eventData()), checkoutTransactionResult.stripeAccountId());
-
-            return new CreateStripeCheckoutSessionResponse(sessionResult.checkoutUrl);
+            String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);
+            PrivateUserData privateUserData = Users.getPrivateUserDataById(organiserId, Optional.of(transaction));
             
-        } catch (Exception e) {
-            logger.error("Checkout failed for event {}: {}", request.eventId(), e.getMessage(), e);
-            throw e;
-        }
+            String stripeAccountId = validateAndGetStripeAccount(organiserId, privateUserData);
+
+            commitReservation(transaction, request, eventData, privateUserData);
+            logger.info("Reservation committed successfully for event {}", request.eventId());
+
+            return new CheckoutTransactionResult(eventData, stripeAccountId);
+        });
+
+        // Section B: Create Stripe session (external I/O) with retries
+        StripeSessionResult sessionResult = createStripeSessionWithRetries(request, checkoutTransactionResult.eventData(), checkoutTransactionResult.stripeAccountId());
+        logger.info("Stripe session {} created successfully for event {}", 
+                sessionResult.sessionId, checkoutTransactionResult.eventData().getEventId());
+
+        logger.info("Checkout complete for event {}, organiser {}, account {}", 
+                request.eventId(), EventsUtils.extractOrganiserIdForEvent(checkoutTransactionResult.eventData()), checkoutTransactionResult.stripeAccountId());
+
+        return new CreateStripeCheckoutSessionResponse(sessionResult.checkoutUrl);
     }
 
     private static void validateEventForCheckout(EventData eventData, Integer quantity) throws Exception {
@@ -134,33 +123,28 @@ public class CheckoutService {
      * @param privateUserData Private user data - contains organiser details
      */
     private static void commitReservation(Transaction transaction, CreateStripeCheckoutSessionRequest request, EventData eventData, PrivateUserData privateUserData) throws Exception {
-        try {
-            validateEventForCheckout(eventData, request.quantity());
+        validateEventForCheckout(eventData, request.quantity());
 
-            Firestore db = FirebaseService.getFirestore();
-            String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);
+        Firestore db = FirebaseService.getFirestore();
+        String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);
 
-            DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(), request.isPrivate());
-            DocumentReference organiserRef = UsersUtils.getUserRef(db, organiserId);
+        DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(), request.isPrivate());
+        DocumentReference organiserRef = UsersUtils.getUserRef(db, organiserId);
 
-            boolean needsActivation = Boolean.FALSE.equals(privateUserData.getStripeAccountActive());
-            Integer currentVacancy = eventData.getVacancy();
+        boolean needsActivation = Boolean.FALSE.equals(privateUserData.getStripeAccountActive());
+        Integer currentVacancy = eventData.getVacancy();
 
-            // PHASE 2: WRITE - Reserve tickets and track session
-            Integer newVacancy = currentVacancy - request.quantity();
-            transaction.update(eventRef, "vacancy", newVacancy);
-            eventData.setVacancy(newVacancy);
-            logger.info("Reserved {} tickets for event {} at {} cents (vacancy: {} -> {})",
-                    request.quantity(), request.eventId(), eventData.getPrice(), currentVacancy, newVacancy);
-            
-            // Activate Stripe account if needed
-            if (needsActivation) {
-                transaction.update(organiserRef, "stripeAccountActive", true);
-                logger.info("Activated Stripe account for organiser {}", organiserId);
-            }
-        } catch (Exception e) {
-            logger.error("Reservation commit failed for event {}: {}", request.eventId(), e.getMessage(), e);
-            throw e;
+        // PHASE 2: WRITE - Reserve tickets and track session
+        Integer newVacancy = currentVacancy - request.quantity();
+        transaction.update(eventRef, "vacancy", newVacancy);
+        eventData.setVacancy(newVacancy);
+        logger.info("Reserved {} tickets for event {} at {} cents (vacancy: {} -> {})",
+                request.quantity(), request.eventId(), eventData.getPrice(), currentVacancy, newVacancy);
+        
+        // Activate Stripe account if needed
+        if (needsActivation) {
+            transaction.update(organiserRef, "stripeAccountActive", true);
+            logger.info("Activated Stripe account for organiser {}", organiserId);
         }
     }
 
@@ -298,7 +282,7 @@ public class CheckoutService {
         Boolean stripeFeeToCustomer = eventData.getStripeFeeToCustomer();
         if (stripeFeeToCustomer != null && Boolean.TRUE.equals(stripeFeeToCustomer) && eventData.getPrice() != 0) {
             long totalOrderPrice = (long) eventData.getPrice() * (long) request.quantity();
-            long stripeFee = StripeConfig.calculateStripeFee(totalOrderPrice);
+            long stripeFee = StripeConfig.calculateStripeFee(totalOrderPrice, eventData.getOrganiserId());
             logger.info("Stripe surcharge calculated: {} cents for event {} (price={}, quantity={})",
                     stripeFee, eventData.getEventId(), eventData.getPrice(), request.quantity());
 
