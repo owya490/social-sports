@@ -22,13 +22,13 @@ public class StripeConfig {
     public static final String CURRENCY = "aud";
     public static final int CHECKOUT_SESSION_EXPIRY_SECONDS = 1800; // 30 minutes
 
-    public static final Set<String> SPORTSHUB_FEE_ACCOUNTS = Set.of(
+    private static final Set<String> SPORTSHUB_FEE_ACCOUNTS = Set.of(
         "obodlRDZycR062927qTjsah0FHr2", // Acers Prod
         "PT57cJxfbdRXOQgJH2nAs6cZnFH3", // OneU (Ricky Tang) Prod
         "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2" // Owen Dev
     );
 
-    public static final double SPORTSHUB_FEE_PERCENTAGE = 0.01; // 1%
+    private static final double SPORTSHUB_FEE_PERCENTAGE = 0.01; // 1%
 
     // Stripe fee calculation constants
     private static final int STRIPE_FIXED_FEE_CENTS = 30;
@@ -78,6 +78,14 @@ public class StripeConfig {
             return (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * (STRIPE_PERCENTAGE_FEE + SPORTSHUB_FEE_PERCENTAGE)));
         }
         return (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * STRIPE_PERCENTAGE_FEE));
+    }
+
+    public static long calculateSportsHubFee(long priceInCents, String organiserId) {
+        // if the organiser is part of the FEE accounts, add the application percentage to the fee
+        if (SPORTSHUB_FEE_ACCOUNTS.contains(organiserId)) {
+            return (long) Math.ceil(priceInCents * SPORTSHUB_FEE_PERCENTAGE);
+        }
+        return 0;
     }
 }
 
