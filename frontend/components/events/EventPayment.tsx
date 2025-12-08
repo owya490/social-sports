@@ -52,7 +52,7 @@ export default function EventPayment(props: EventPaymentProps) {
   // Merge with stored ticket counts and deduplicate
   const allCounts = [...new Set([...vacancyBasedCounts, ...ticketsWithStoredSessions])].sort((a, b) => a - b);
 
-  const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0]);
+  const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0] ?? 1);
 
   const handleAttendeeCount = (value?: string) => {
     if (value) {

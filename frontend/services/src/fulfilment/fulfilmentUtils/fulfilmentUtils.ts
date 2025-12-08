@@ -28,6 +28,8 @@ export function getCompleteFulfilmentSessionUrl(): string {
 export function purgeExpiredFulfilmentSessions(): void {
   const now = new Date();
 
+  const sessionsToRemove: { eventId: EventId; numTickets: number }[] = [];
+
   // Find all fulfilment session ID keys
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -44,23 +46,27 @@ export function purgeExpiredFulfilmentSessions(): void {
 
           if (storedTimestamp === null) {
             // No timestamp found, remove the orphaned session ID
-            clearStoredFulfilmentSessionId(eventId, numTickets);
+            sessionsToRemove.push({ eventId, numTickets });
           } else {
             const sessionTimestamp = new Date(storedTimestamp);
             if (isNaN(sessionTimestamp.valueOf())) {
               // Invalid timestamp, remove session
-              clearStoredFulfilmentSessionId(eventId, numTickets);
+              sessionsToRemove.push({ eventId, numTickets });
             } else {
               const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
               if (timeDifference >= FULFILMENT_SESSION_EXPIRY_MILLIS) {
                 // Session expired, remove session
-                clearStoredFulfilmentSessionId(eventId, numTickets);
+                sessionsToRemove.push({ eventId, numTickets });
               }
             }
           }
         }
       }
     }
+  }
+
+  for (const session of sessionsToRemove) {
+    clearStoredFulfilmentSessionId(session.eventId, session.numTickets);
   }
 
   fulfilmentUtilsLogger.info(`Purged expired/invalid fulfilment sessions from localStorage`);

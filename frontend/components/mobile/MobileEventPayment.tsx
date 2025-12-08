@@ -51,7 +51,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
   // Merge with stored ticket counts and deduplicate
   const allCounts = [...new Set([...vacancyBasedCounts, ...storedTicketCounts])].sort((a, b) => a - b);
 
-  const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0]);
+  const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0] ?? 1);
 
   const handleAttendeeCount = (value?: string) => {
     if (value) {
