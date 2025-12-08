@@ -3,6 +3,7 @@ package com.functions.users.models;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.functions.users.models.AbstractUserData.ActiveBooking;
 import com.functions.users.models.AbstractUserData.ContactInformation;
 
@@ -14,6 +15,7 @@ import lombok.Data;
  * REMEBER TO UPDATE UsersUtils.java
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PrivateUserData {
 	private String gender;
 	private String dob;
@@ -25,7 +27,7 @@ public class PrivateUserData {
 	private Boolean stripeAccountActive;
 	private List<String> organiserEvents = new ArrayList<>();
 	private List<String> recurrenceTemplates = new ArrayList<>();
-	private List<String> publicOrganiserEvents = new ArrayList<>();
 	private Boolean sendOrganiserTicketEmails = false;
 	private List<String> forms = new ArrayList<>();
+	private List<String> privateEventCollections = new ArrayList<>();
 }

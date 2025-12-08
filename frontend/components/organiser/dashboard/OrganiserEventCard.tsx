@@ -18,6 +18,8 @@ export interface OrganiserEventCardProps {
   price: number;
   vacancy: number;
   loading?: boolean;
+  disabled?: boolean;
+  openInNewTab?: boolean;
 }
 
 export default function OrganiserEventCard(props: OrganiserEventCardProps) {
@@ -25,11 +27,44 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
     props = {
       ...props,
       loading: false,
+      openInNewTab: false,
     };
   }
+  if (props.disabled === undefined) {
+    props = {
+      ...props,
+      disabled: false,
+    };
+  }
+
+  const MaybeDisabledLink = ({
+    children,
+    disabled = false,
+    openInNewTab = false,
+    url,
+  }: {
+    children: React.ReactNode;
+    disabled?: boolean;
+    openInNewTab?: boolean;
+    url: string;
+  }) => {
+    if (disabled) {
+      return <div>{children}</div>;
+    }
+    return (
+      <Link href={url} target={openInNewTab ? "_blank" : undefined}>
+        {children}
+      </Link>
+    );
+  };
+
   return (
-    <Link href={`/organiser/event/${props.eventId}`}>
-      <div className="bg-white rounded-lg text-left border-gray-300 border w-full sm:w-[300px] xl:w-[290px] 2xl:w-[320px] hover:cursor-pointer">
+    <MaybeDisabledLink
+      disabled={props.disabled}
+      openInNewTab={props.openInNewTab}
+      url={`/organiser/event/${props.eventId}`}
+    >
+      <div className="bg-white rounded-lg text-left border-gray-300 border w-full hover:cursor-pointer">
         {props.loading ? (
           <div>
             <LoadingSkeletonOrganiserEventCard />
@@ -64,6 +99,6 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
           </>
         )}
       </div>
-    </Link>
+    </MaybeDisabledLink>
   );
 }

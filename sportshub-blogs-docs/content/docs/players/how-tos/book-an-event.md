@@ -55,4 +55,4 @@ Booking sports events on SPORTSHUB is quick and secure with our integrated Strip
 
 ---
 
-**Need help?** [Contact support](/contact) or reach out to the event organiser directly.
+**Need help?** [Contact support](/docs/contact-us) or reach out to the event organiser directly.

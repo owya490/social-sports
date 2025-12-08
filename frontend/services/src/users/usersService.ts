@@ -10,12 +10,28 @@ import {
 } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
-import { deleteDoc, doc, getDoc, runTransaction, setDoc, Transaction, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  runTransaction,
+  setDoc,
+  Transaction,
+  updateDoc,
+} from "firebase/firestore";
+import { tokenizeText } from "../events/eventsUtils/commonEventsUtils";
 import { db } from "../firebase";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
-import { DEFAULT_USER_PROFILE_PICTURE } from "./usersConstants";
+import { DEFAULT_USER_PROFILE_PICTURE, USERS_REFRESH_MILLIS, UsersLocalStorageKeys } from "./usersConstants";
 import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
-import { setUsersDataIntoLocalStorage, tryGetActivePublicUserDataFromLocalStorage } from "./usersUtils/getUsersUtils";
+import {
+  fetchUsersByTokenMatch,
+  getAllUsersDataFromLocalStorage,
+  setUsersDataIntoLocalStorage,
+  tryGetActivePublicUserDataFromLocalStorage,
+} from "./usersUtils/getUsersUtils";
 import { generateUsername } from "./usersUtils/usernameUtils";
 
 export const userServiceLogger = new Logger("userServiceLogger");
@@ -77,10 +93,10 @@ export async function getPublicUserById(
       userData.profilePicture = DEFAULT_USER_PROFILE_PICTURE;
     }
 
+    const userDataWithDefaults = { ...EmptyPublicUserData, ...userData };
     // set local storage with data
-    if (client) setUsersDataIntoLocalStorage(userId, userData);
-
-    return { ...EmptyPublicUserData, ...userData };
+    if (client) setUsersDataIntoLocalStorage(userId, userDataWithDefaults);
+    return userDataWithDefaults;
   } catch (error) {
     if (error instanceof UserNotFoundError) {
       userServiceLogger.error(`User ID=${userId} did not exist when expected by reference: ${error}`);
@@ -92,15 +108,21 @@ export async function getPublicUserById(
   }
 }
 
-export async function getPrivateUserById(userId: UserId): Promise<PrivateUserData> {
+export async function getPrivateUserById(userId: UserId, transaction?: Transaction): Promise<PrivateUserData> {
   userServiceLogger.info(`Fetching private user by ID:, ${userId}`);
   if (userId === undefined || userId === null) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
   try {
-    const userDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
-    if (!userDoc.exists()) {
+    const userDocRef = doc(db, "Users", "Active", "Private", userId);
+    var userDoc;
+    if (transaction) {
+      userDoc = await transaction.get(userDocRef);
+    } else {
+      userDoc = await getDoc(userDocRef);
+    }
+    if (!userDoc.exists() || userDoc === undefined) {
       throw new UserNotFoundError(userId);
     }
     const userData = userDoc.data() as PrivateUserData;
@@ -117,17 +139,29 @@ export async function getPrivateUserById(userId: UserId): Promise<PrivateUserDat
   }
 }
 
-export async function getFullUserById(userId: UserId): Promise<UserData> {
+export async function getFullUserById(userId: UserId, transaction?: Transaction): Promise<UserData> {
   userServiceLogger.info(`Fetching Full user by ID: ${userId}`);
   if (userId === undefined) {
     userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
   try {
-    const publicDoc = await getDoc(doc(db, "Users", "Active", "Public", userId));
-    const privateDoc = await getDoc(doc(db, "Users", "Active", "Private", userId));
+    const publicDocRef = doc(db, "Users", "Active", "Public", userId);
+    var publicDoc;
+    if (transaction) {
+      publicDoc = await transaction.get(publicDocRef);
+    } else {
+      publicDoc = await getDoc(publicDocRef);
+    }
+    const privateDocRef = doc(db, "Users", "Active", "Private", userId);
+    var privateDoc;
+    if (transaction) {
+      privateDoc = await transaction.get(privateDocRef);
+    } else {
+      privateDoc = await getDoc(privateDocRef);
+    }
 
-    if (!publicDoc.exists() && !privateDoc.exists()) {
+    if (!publicDoc.exists() || publicDoc === undefined || !privateDoc.exists() || privateDoc === undefined) {
       throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
     }
 
@@ -145,6 +179,43 @@ export async function getFullUserById(userId: UserId): Promise<UserData> {
       userServiceLogger.error(`Error fetching public user by ID=${userId}: ${error}`);
       throw new UsersServiceError(userId);
     }
+  }
+}
+
+export async function getAllPublicUsers(isActive?: boolean): Promise<PublicUserData[]> {
+  userServiceLogger.info(`getAllPublicUsers`);
+  try {
+    // If isActive is present, keep its value, otherwise default to true
+    isActive = isActive === undefined ? true : isActive;
+
+    // if its in local storage and we have not exceeded the refresh time limit since the last time we fetched all users, return all our local storage
+    if (
+      localStorage.getItem(UsersLocalStorageKeys.UsersData) !== null &&
+      localStorage.getItem(UsersLocalStorageKeys.LastFetchedAllUserData) !== null
+    ) {
+      const lastFetchedDate = new Date(parseInt(localStorage.getItem(UsersLocalStorageKeys.LastFetchedAllUserData)!));
+      if (new Date().valueOf() - lastFetchedDate.valueOf() < USERS_REFRESH_MILLIS) {
+        return getAllUsersDataFromLocalStorage();
+      }
+    }
+    // otherwise, get it all again and set the new timer to the current time
+    // Only gets public user data, as we do not want a get all private user data function... thats a data leak waiting to happen lol
+    const publicUserCollectionRef = collection(db, "Users", isActive ? "Active" : "InActive", "Public");
+    const publicUsersSnapshot = await getDocs(publicUserCollectionRef);
+    const publicUsersData: PublicUserData[] = [];
+
+    publicUsersSnapshot.forEach((doc) => {
+      const publicUserData = doc.data() as PublicUserData;
+      publicUserData.userId = doc.id;
+      // also set it in local storage
+      setUsersDataIntoLocalStorage(doc.id, publicUserData);
+      publicUsersData.push(publicUserData);
+    });
+    localStorage.setItem(UsersLocalStorageKeys.LastFetchedAllUserData, new Date().valueOf().toString());
+    return publicUsersData;
+  } catch (error) {
+    userServiceLogger.error(`getAllPublicUsers ${error}`);
+    throw error;
   }
 }
 
@@ -187,7 +258,6 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
     const publicDataToUpdate = extractPublicUserData(newData);
     const privateDataToUpdate = extractPrivateUserData(newData);
 
-    console.log("publicDataToUpdate", publicDataToUpdate);
     // Update public & private user data
     if (transaction) {
       transaction.update(publicUserDocRef, publicDataToUpdate);
@@ -228,6 +298,24 @@ export async function getFullUserByIdForUserContextWithRetries(userId: string): 
   }
   userServiceLogger.error(`This is bad, we shouldn't have reached as it means all 3 retries failed. id=${userId}`);
   throw new UsersServiceError(userId, "Reached maximum retries, throwing error gracefully");
+}
+
+export async function searchUserByKeyword(userKeyword: string): Promise<PublicUserData[]> {
+  userServiceLogger.info(`searchUserByKeyword ${userKeyword}`);
+  try {
+    if (!userKeyword) {
+      throw new Error("UserKeyword is empty");
+    }
+
+    const publicUserCollectionRef = collection(db, "Users", "Active", "Public");
+    // only search by the first 8 tokens to avoid performance issues
+    const searchKeywords = tokenizeText(userKeyword).slice(0, 8);
+    const users: PublicUserData[] = await fetchUsersByTokenMatch(publicUserCollectionRef, searchKeywords);
+    return users;
+  } catch (error) {
+    userServiceLogger.error(`searchEventsByKeyword ${error}`);
+    throw error;
+  }
 }
 
 export async function getUsernameMapping(

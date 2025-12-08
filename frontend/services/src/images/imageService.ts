@@ -1,7 +1,8 @@
 import { SportConfig, SPORTS_CONFIG } from "@/config/SportsConfig";
+import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { getDownloadURL, listAll, ref, StorageReference, uploadBytes } from "firebase/storage";
+import { getDownloadURL, getMetadata, listAll, ref, StorageReference, uploadBytes } from "firebase/storage";
 import { v4 as uuidv4 } from "uuid";
 import { storage } from "../firebase";
 
@@ -13,51 +14,69 @@ export interface AllImageData {
 export const EVENT_THUMBNAIL_PATH = "/eventThumbnails";
 export const EVENT_IMAGE_PATH = "/eventImages";
 export const FORM_IMAGE_PATH = "/formImages";
+export const PROFILE_PICTURE_PATH = "/profilepicture";
 
 export const imageServiceLogger = new Logger("imageServiceLogger");
 
-export async function getUsersEventThumbnailsUrls(userID: string): Promise<string[]> {
-  const userRef = ref(storage, "users/" + userID + EVENT_THUMBNAIL_PATH);
-
+interface ImageMetadata {
+  url: string;
+  timeCreated: number;
+}
+/**
+ * Helper function to fetch image URLs from a storage reference and sort by most recent
+ */
+async function fetchAndSortImageUrls(storageRef: StorageReference): Promise<string[]> {
   try {
-    const res = await listAll(userRef);
-    const urls = res.items.map((itemRef) => {
-      return getDownloadURL(itemRef);
-    });
-    return await Promise.all(urls);
+    const res = await listAll(storageRef);
+
+    // Fetch metadata and URLs for each item
+    const itemsWithMetadata = await Promise.all(
+      res.items.map(async (itemRef): Promise<ImageMetadata | null> => {
+        try {
+          const metadata = await getMetadata(itemRef);
+          const url = await getDownloadURL(itemRef);
+          return {
+            url,
+            timeCreated: new Date(metadata.timeCreated).getTime(),
+          };
+        } catch (error) {
+          imageServiceLogger.error(`Error fetching metadata for image ${itemRef.fullPath} ${error}`);
+          return null;
+        }
+      })
+    );
+
+    // Sort by most recent first
+    const filteredItemsWithMetadata: ImageMetadata[] = itemsWithMetadata.filter(
+      (item): item is ImageMetadata => item !== null
+    );
+    filteredItemsWithMetadata.sort((a: ImageMetadata, b: ImageMetadata) => b.timeCreated - a.timeCreated);
+
+    return filteredItemsWithMetadata.map((item) => item.url);
   } catch (error) {
     imageServiceLogger.error(`Error fetching images ${error}`);
     return [];
   }
+}
+
+export async function getUsersEventThumbnailsUrls(userID: string): Promise<string[]> {
+  const userRef = ref(storage, "users/" + userID + EVENT_THUMBNAIL_PATH);
+  return await fetchAndSortImageUrls(userRef);
 }
 
 export async function getUsersEventImagesUrls(userID: string): Promise<string[]> {
   const userRef = ref(storage, "users/" + userID + EVENT_IMAGE_PATH);
-
-  try {
-    const res = await listAll(userRef);
-    const urls = res.items.map((itemRef) => {
-      return getDownloadURL(itemRef);
-    });
-    return await Promise.all(urls);
-  } catch (error) {
-    imageServiceLogger.error(`Error fetching images ${error}`);
-    return [];
-  }
+  return await fetchAndSortImageUrls(userRef);
 }
 
 export async function getUsersFormImagesUrls(userId: UserId): Promise<string[]> {
   const userRef = ref(storage, "users/" + userId + FORM_IMAGE_PATH);
-  try {
-    const res = await listAll(userRef);
-    const urls = res.items.map((itemRef) => {
-      return getDownloadURL(itemRef);
-    });
-    return await Promise.all(urls);
-  } catch (error) {
-    imageServiceLogger.error(`Error fetching images ${error}`);
-    return [];
-  }
+  return await fetchAndSortImageUrls(userRef);
+}
+
+export async function getUsersProfilePhotosUrls(userId: UserId): Promise<string[]> {
+  const userRef = ref(storage, "users/" + userId + PROFILE_PICTURE_PATH);
+  return await fetchAndSortImageUrls(userRef);
 }
 
 export function getThumbnailUrlsBySport(sport: string) {
@@ -71,7 +90,7 @@ export function getThumbnailUrlsBySport(sport: string) {
 export function getImageAndThumbnailUrlsWithDefaults(formData: AllImageData & { sport: string }) {
   // If the image field is undefined, it will stay as this default image.
   var imageUrl =
-    "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
+    DEFAULT_EVENT_IMAGE_URL;
   // Otherwise if its a string, which means it is already uploaded, reuse the same imageUrl
   if (formData.image !== undefined && typeof formData.image === "string") {
     imageUrl = formData.image;
@@ -116,24 +135,12 @@ export async function getEventImageLocation(eventID: string): Promise<string[]> 
 }
 
 export async function getEventImageUrls(eventID: string): Promise<string[]> {
-  const imageRefs = await getEventImageLocation(eventID);
-  try {
-    const urlPromises = imageRefs.map((imageRef) => {
-      const refPath = ref(storage, imageRef);
-      return getDownloadURL(refPath);
-    });
-
-    const urls = await Promise.all(urlPromises);
-
-    return urls;
-  } catch (error) {
-    imageServiceLogger.error(`Error fetching download URLs ${error}`);
-    return [];
-  }
+  const eventRef = ref(storage, "events/" + eventID);
+  return await fetchAndSortImageUrls(eventRef);
 }
 
 export async function uploadProfilePhoto(userID: string, file: File): Promise<string> {
-  const imagePath = `users/${userID}/profilepicture${generateImageId()}`;
+  const imagePath = `users/${userID}${PROFILE_PICTURE_PATH}/${generateImageId()}`;
   const imageRef = ref(storage, imagePath);
   const url = await uploadImage(imageRef, file);
 

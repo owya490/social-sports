@@ -19,14 +19,17 @@ import {
   ImageSection,
   SectionId,
 } from "@/interfaces/FormTypes";
+import { ImageType } from "@/interfaces/ImageTypes";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
+import { getUsersFormImagesUrls, uploadFormImage } from "@/services/src/images/imageService";
 import { sleep } from "@/utilities/sleepUtil";
-import { ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import { ArrowDownIcon, ArrowUpIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ReactSortable } from "react-sortablejs";
 import { v4 as uuidv4 } from "uuid";
 import EmptyInfoSection from "./EmptyInfoSection";
+import FormBackButton from "./FormBackButton";
 import FormDesktopEditBar from "./FormDesktopEditBar";
 import FormMobileEditBar from "./FormMobileEditBar";
 export interface FormEditorParams {
@@ -331,14 +334,8 @@ const FormEditor = ({ formId }: FormEditorParams) => {
   return (
     <div className="flex min-h-screen bg-gray-100 p-8 justify-center pt-20">
       {/* Sticky Back Button */}
-      <div className="fixed top-20 left-2 md:left-8 z-50">
-        <button
-          onClick={handleBackClick}
-          className="flex items-center justify-center min-w-16 gap-2 px-2.5 py-2.5 bg-white rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-        >
-          <ArrowLeftIcon className="w-5 h-5 text-gray-700" />
-          <span className="text-base font-medium text-gray-700 hidden md:block">Back</span>
-        </button>
+      <div className="fixed top-[78px] left-4 sm:left-[88px] z-50">
+        <FormBackButton onClick={handleBackClick} />
       </div>
       {/* Back Button Warning Dialog */}
       {showBackWarning && (
@@ -489,6 +486,16 @@ const FormEditor = ({ formId }: FormEditorParams) => {
         isOpen={showImageSelectionDialog}
         onClose={() => setShowImageSelectionDialog(false)}
         onImageSelected={handleImageSelectionComplete}
+        imageType={ImageType.FORM}
+        imageUrls={[]}
+        onLoadImages={async () => {
+          return await getUsersFormImagesUrls(user.userId);
+        }}
+        onUploadImage={async (file: File) => {
+          return await uploadFormImage(user.userId, file);
+        }}
+        title="Add Image Section"
+        buttonText="Add Image Section"
       />
     </div>
   );

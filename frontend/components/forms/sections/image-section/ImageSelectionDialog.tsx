@@ -2,9 +2,9 @@
 
 import { BlackHighlightButton, InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { ImageSection } from "@/components/gallery/ImageSection";
-import { useUser } from "@/components/utility/UserContext";
+import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { ImageConfig, ImageType } from "@/interfaces/ImageTypes";
-import { getUsersFormImagesUrls, uploadFormImage } from "@/services/src/images/imageService";
+import { Logger } from "@/observability/logger";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import imageCompression from "browser-image-compression";
 import { useEffect, useState } from "react";
@@ -13,34 +13,55 @@ interface ImageSelectionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onImageSelected: (imageUrl: string) => void;
+  imageType: ImageType;
+  imageUrls: string[];
+  onLoadImages: () => Promise<string[]>;
+  onUploadImage: (file: File) => Promise<string>;
+  title?: string;
+  buttonText?: string;
 }
 
-export const ImageSelectionDialog = ({ isOpen, onClose, onImageSelected }: ImageSelectionDialogProps) => {
-  const { user } = useUser();
-  const [formImageUrls, setFormImageUrls] = useState<string[]>([]);
+export const ImageSelectionDialog = ({
+  isOpen,
+  onClose,
+  onImageSelected,
+  imageType,
+  imageUrls: initialImageUrls,
+  onLoadImages,
+  onUploadImage,
+  title = "Select Image",
+  buttonText = "Select Image",
+}: ImageSelectionDialogProps) => {
+  const logger = new Logger("ImageSelectionDialogLogger");
+
+  const [imageUrls, setImageUrls] = useState<string[]>(initialImageUrls);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string>("");
 
-  // Load existing form images from API
+  // Load images when dialog opens
   useEffect(() => {
-    const loadFormImages = async () => {
-      if (isOpen && user.userId) {
+    const loadImages = async () => {
+      if (isOpen) {
+        setIsLoading(true);
         try {
-          const images = await getUsersFormImagesUrls(user.userId);
-          setFormImageUrls(images);
+          const images = await onLoadImages();
+          setImageUrls(images);
         } catch (error) {
-          console.error("Error fetching form images:", error);
-          setErrorMessage("Failed to load existing images.");
+          logger.error(`Error fetching images: ${error}`);
+          setErrorMessage(`Failed to load existing images: ${error}`);
+        } finally {
+          setIsLoading(false);
         }
       }
     };
 
-    loadFormImages();
-  }, [isOpen, user.userId]);
+    loadImages();
+  }, [isOpen]);
 
   const validateImage = (file: File) => {
-    const config = ImageConfig[ImageType.FORM];
+    const config = ImageConfig[imageType];
     if (!config.supportedTypes.includes(file.type)) {
       setErrorMessage("Please upload a valid image file (jpg, png).");
       return false;
@@ -69,16 +90,16 @@ export const ImageSelectionDialog = ({ isOpen, onClose, onImageSelected }: Image
         fileToUpload = await imageCompression(imageFile, options);
       }
 
-      const downloadUrl = await uploadFormImage(user.userId, fileToUpload);
+      const downloadUrl = await onUploadImage(fileToUpload);
 
-      const updatedImages = [downloadUrl, ...formImageUrls];
-      setFormImageUrls(updatedImages);
+      const updatedImages = [downloadUrl, ...imageUrls];
+      setImageUrls(updatedImages);
 
       // Auto-select the newly uploaded image
       setSelectedImageUrl(downloadUrl);
       setErrorMessage(null);
     } catch (error) {
-      console.error("Error during image upload:", error);
+      logger.error(`Error during image upload: ${error}`);
       setErrorMessage("Failed to upload image. Please try again.");
     } finally {
       setIsUploading(false);
@@ -113,7 +134,7 @@ export const ImageSelectionDialog = ({ isOpen, onClose, onImageSelected }: Image
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-core-outline">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-core-outline">
-          <h2 className="text-xl font-semibold text-core-text">Add Image Section</h2>
+          <h2 className="text-xl font-semibold text-core-text">{title}</h2>
           <button onClick={handleClose} className="p-2 hover:bg-core-hover rounded-full transition-colors">
             <XMarkIcon className="w-5 h-5 text-core-text" />
           </button>
@@ -136,21 +157,27 @@ export const ImageSelectionDialog = ({ isOpen, onClose, onImageSelected }: Image
           )}
 
           {/* Image Selection */}
-          <ImageSection
-            type={ImageType.FORM}
-            imageUrls={formImageUrls.slice(0, 5)} // Show up to 5 images
-            onImageUploaded={handleImageUpload}
-            gridCols="grid-cols-2 md:grid-cols-3"
-            selectedImageUrl={selectedImageUrl}
-            onImageSelect={handleImageSelect}
-          />
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <ImageSection
+              type={imageType}
+              imageUrls={imageUrls.slice(0, 5)} // Show up to 5 images
+              onImageUploaded={handleImageUpload}
+              gridCols="grid-cols-2 md:grid-cols-3"
+              selectedImageUrl={selectedImageUrl}
+              onImageSelect={handleImageSelect}
+            />
+          )}
         </div>
 
         {/* Footer */}
         <div className="p-6 border-t border-core-outline flex justify-end gap-3">
           <InvertedHighlightButton text="Cancel" onClick={handleClose} />
           <BlackHighlightButton
-            text={isUploading ? "Processing..." : "Add Image Section"}
+            text={isUploading ? "Processing..." : buttonText}
             onClick={handleCreateSection}
             disabled={!selectedImageUrl || isUploading}
             className={

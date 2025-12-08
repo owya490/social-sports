@@ -76,7 +76,7 @@ def send_create_event_email_with_loops(
         # Retry once more on rate limit after waiting 1 second
         if response.status_code == 429:
             logger.info(
-                f"We got rate limited, retrying after 1 second. eventId={request_data.eventId}, body={response.json()}"
+                f"We got rate limited, retrying after 1 second. eventId={request_data.eventId}, body={response.text}"
             )
             time.sleep(1)
             response = requests.post(

@@ -28,7 +28,7 @@ _Running sports events, classes, or activities_
 - Set up recurring events and promotional codes
 - Communicate with participants and track analytics
 
-**Start here:** 👉 **[For Organisers Documentation](organisers/)**
+**Start here:** 👉 **[For Organisers Documentation](/docs/organisers/)**
 
 ---
 
@@ -43,7 +43,7 @@ _Looking to join sports events and activities_
 - Manage your bookings and receive confirmations
 - Connect with local sports communities
 
-**Start here:** 👉 **[For Players Documentation](players/)**
+**Start here:** 👉 **[For Players Documentation](/docs/players/)**
 
 ## 🔍 Searching SPORTSHUB Docs
 
@@ -57,8 +57,8 @@ Can't find what you're looking for? Use these tools to navigate our documentatio
 
 ## Need Help?
 
-- 📧 **Contact Support:** [Get in touch with our team](/contact)
-- 📚 **Browse Documentation:** Explore detailed guides for [Players](players/) or [Organisers](organisers/)
+- 📧 **Contact Support:** [Get in touch with our team](/docs/contact-us)
+- 📚 **Browse Documentation:** Explore detailed guides for [Players](/docs/players/) or [Organisers](/docs/organisers/)
 - 🌐 **Visit SPORTSHUB:** [sportshub.net.au](https://www.sportshub.net.au/dashboard)
 
 **Ready to get started?** Choose your path above and dive into the world of social sports! 🎾

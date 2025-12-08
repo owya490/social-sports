@@ -3,14 +3,15 @@ import { Step, Stepper, Typography } from "@material-tailwind/react";
 
 interface CreateEventStepperProps {
   activeStep: number;
+  onStepClick: (step: number) => void;
 }
 
-export default function CreateEventStepper({ activeStep }: CreateEventStepperProps) {
+export default function CreateEventStepper({ activeStep, onStepClick }: CreateEventStepperProps) {
   const stepLabels = ["Basic Information", "Images", "Description", "Preview and Create"];
 
   return (
     <Stepper activeStep={activeStep}>
-      <Step onClick={() => {}}>
+      <Step onClick={() => onStepClick(0)} className="cursor-pointer">
         <UserIcon className="h-5 w-5" />
         <div
           className={`absolute -bottom-[4.5rem] w-max text-center ${
@@ -32,7 +33,7 @@ export default function CreateEventStepper({ activeStep }: CreateEventStepperPro
           </Typography>
         </div>
       </Step>
-      <Step onClick={() => {}}>
+      <Step onClick={() => onStepClick(1)} className="cursor-pointer">
         <PhotoIcon className="h-5 w-5" />
         <div
           className={`absolute -bottom-[4.5rem] w-max text-center ${
@@ -54,7 +55,7 @@ export default function CreateEventStepper({ activeStep }: CreateEventStepperPro
           </Typography>
         </div>
       </Step>
-      <Step onClick={() => {}}>
+      <Step onClick={() => onStepClick(2)} className="cursor-pointer">
         <PencilSquareIcon className="h-5 w-5" />
         <div
           className={`absolute -bottom-[4.5rem] w-max text-center ${
@@ -76,7 +77,7 @@ export default function CreateEventStepper({ activeStep }: CreateEventStepperPro
           </Typography>
         </div>
       </Step>
-      <Step onClick={() => {}}>
+      <Step onClick={() => onStepClick(3)} className="cursor-pointer">
         <CalendarIcon className="h-5 w-5" />
         <div
           className={`absolute -bottom-[4.5rem] w-max text-center ${

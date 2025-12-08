@@ -131,7 +131,7 @@ export const AboutCard = () => {
         </div>
       </div>
       <p className="mt-6 text-sm text-gray-500">
-        SportsHub is officially registered under the partnership: A.Y Chee & E.Z Ni & R Peng & B Wang & O.A Yang & D
+        SPORTSHUB is officially registered under the partnership: A.Y Chee & E.Z Ni & R Peng & B Wang & O.A Yang & D
         Zhang.
       </p>
     </div>

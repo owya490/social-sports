@@ -1,6 +1,7 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { EventId } from "./EventTypes";
 import { FormId } from "./FormTypes";
+import { EventCollectionId } from "./EventCollectionTypes";
 
 export type UserId = string;
 
@@ -19,6 +20,7 @@ export interface PublicUserData {
   };
   publicUpcomingOrganiserEvents: EventId[];
   bio: string;
+  publicEventCollections: EventCollectionId[];
 }
 
 export interface PrivateUserData {
@@ -35,10 +37,10 @@ export interface PrivateUserData {
   stripeAccount: string | null;
   stripeAccountActive: boolean | null;
   organiserEvents: string[];
-  publicOrganiserEvents: string[];
   recurrenceTemplates: string[];
   forms: FormId[];
   sendOrganiserTicketEmails: boolean;
+  privateEventCollections: EventCollectionId[];
 }
 
 export interface NewUserData extends PublicUserData, PrivateUserData {
@@ -65,6 +67,7 @@ export const EmptyPublicUserData: PublicUserData = {
   nameTokens: [],
   publicUpcomingOrganiserEvents: [],
   bio: "",
+  publicEventCollections: [],
 };
 
 // BEWARE - PLEASE TAKE CARE WHEN EDITING THESE AS THEY WILL AFFECT DESERIALISATION AND DEFAULT USER CREATION
@@ -80,12 +83,12 @@ export const EmptyPrivateUserData: PrivateUserData = {
   location: "",
   activeBookings: [],
   organiserEvents: [],
-  publicOrganiserEvents: [],
   recurrenceTemplates: [],
   stripeAccount: null,
   stripeAccountActive: null,
   forms: [],
   sendOrganiserTicketEmails: false,
+  privateEventCollections: [],
 };
 
 export const EmptyUserData: UserData = {
@@ -106,3 +109,6 @@ export interface IUsersDataLocalStorage {
 export interface UsernameMap {
   userId: UserId;
 }
+
+export const PUBLIC_USER_PATH = "Users/Active/Public";
+export const PRIVATE_USER_PATH = "Users/Active/Private";

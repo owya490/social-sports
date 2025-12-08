@@ -2,6 +2,7 @@ export enum ImageType {
   THUMBNAIL = "thumbnail",
   IMAGE = "image",
   FORM = "form",
+  PROFILE_PICTURE = "profile_picture",
 }
 
 export enum ImageOrientation {
@@ -33,6 +34,9 @@ interface TypeConfig {
   description: string;
   supportedTypes: string[];
 }
+
+export const DEFAULT_EVENT_IMAGE_URL =
+  "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5";
 
 export const ImageConfig: Record<ImageType, TypeConfig> = {
   [ImageType.THUMBNAIL]: {
@@ -104,6 +108,27 @@ export const ImageConfig: Record<ImageType, TypeConfig> = {
     title: "Select or Upload Form Image",
     description:
       "Choose an existing form image or upload a new one. This can be either landscape (5:4) or portrait (4:5) orientation.",
+    supportedTypes: ["image/jpeg", "image/png"],
+  },
+  [ImageType.PROFILE_PICTURE]: {
+    allowedOrientations: [ImageOrientation.LANDSCAPE], // Square profile pictures
+    orientationConfigs: {
+      [ImageOrientation.LANDSCAPE]: {
+        aspectText: "1:1 (Square)",
+        aspectRatio: 1,
+        minCropWidth: 200,
+        minCropHeight: 200,
+        displayWidth: "w-full",
+      },
+    },
+    defaultAspectRatio: 1,
+    aspectText: "1:1 (Square)",
+    displayName: "Profile Picture",
+    containerAspect: "aspect-square",
+    defaultImageWidth: 300,
+    defaultImageHeight: 300,
+    title: "Profile Pictures",
+    description: "Square aspect ratio (1:1) - Choose an existing profile picture or upload a new one",
     supportedTypes: ["image/jpeg", "image/png"],
   },
 };

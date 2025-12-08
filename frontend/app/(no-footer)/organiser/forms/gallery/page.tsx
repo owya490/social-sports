@@ -1,7 +1,6 @@
 "use client";
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { FormPreviewCard } from "@/components/organiser/forms/FormPreviewCard";
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyForm, Form, FormId } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
@@ -41,33 +40,31 @@ const FormsGallery = () => {
   }, [user]);
 
   return (
-    <div className="md:ml-14 mt-14 mb-14">
-      <OrganiserNavbar currPage="FormsGallery" />
-      <div className="w-full flex justify-center">
-        <div className="screen-width-primary">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl my-6">Form Gallery</h1>
-          {/* create form button */}
+    <div className="w-full flex justify-center mt-6">
+      <div className="screen-width-primary">
+        <div className="flex justify-between">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl">Form Gallery</h1>
           <div className="flex justify-end mb-4">
             <Link href="/organiser/forms/create-form/editor">
               <InvertedHighlightButton text="Create Form" className="px-4 py-2" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {forms.map((form) => {
-              return (
-                <FormPreviewCard
-                  formDescription={form.description}
-                  key={form.formId}
-                  formTitle={form.title}
-                  sectionsOrder={form.sectionsOrder}
-                  sectionsMap={form.sectionsMap}
-                  formId={form.formId}
-                  lastUpdated={form.lastUpdated}
-                  isLoading={isLoading}
-                />
-              );
-            })}
-          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {forms.map((form) => {
+            return (
+              <FormPreviewCard
+                formDescription={form.description}
+                key={form.formId}
+                formTitle={form.title}
+                sectionsOrder={form.sectionsOrder}
+                sectionsMap={form.sectionsMap}
+                formId={form.formId}
+                lastUpdated={form.lastUpdated}
+                isLoading={isLoading}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

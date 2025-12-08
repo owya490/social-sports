@@ -75,7 +75,7 @@ def send_email_with_loop(
 
     if response.status_code != 200:
         logger.error(
-            f"Failed to send payment confirmation for orderId={order_id}, body={response.json()}"
+            f"Failed to send payment confirmation for orderId={order_id}, body={response.text}"
         )
         raise Exception("Failed to send payment confirmation.")
 

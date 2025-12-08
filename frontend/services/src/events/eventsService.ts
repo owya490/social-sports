@@ -28,7 +28,7 @@ import {
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
-import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData, UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
@@ -81,21 +81,23 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     batch.set(docRef, eventDataWithTokens);
     createEventMetadata(batch, docRef.id, data);
     batch.commit();
-    const user = await getFullUserById(data.organiserId);
-    if (user.organiserEvents === undefined) {
-      user.organiserEvents = [docRef.id];
-    } else {
-      user.organiserEvents.push(docRef.id);
-    }
-    // If event is public, add it to the upcoming events
-    if (!eventDataWithTokens.isPrivate) {
-      if (user.publicUpcomingOrganiserEvents === undefined) {
-        user.publicUpcomingOrganiserEvents = [docRef.id];
-      } else {
-        user.publicUpcomingOrganiserEvents.push(docRef.id);
+
+    await runTransaction(db, async (transaction) => {
+      const user = await getFullUserById(data.organiserId, transaction);
+
+      const updatedUserEventsObject: Partial<UserData> = {};
+      updatedUserEventsObject.organiserEvents = user.organiserEvents
+        ? [...user.organiserEvents, docRef.id]
+        : [docRef.id];
+
+      // If event is public, add it to the upcoming events
+      if (!eventDataWithTokens.isPrivate) {
+        updatedUserEventsObject.publicUpcomingOrganiserEvents = user.publicUpcomingOrganiserEvents
+          ? [...user.publicUpcomingOrganiserEvents, docRef.id]
+          : [docRef.id];
       }
-    }
-    await updateUser(data.organiserId, user);
+      await updateUser(data.organiserId, updatedUserEventsObject, transaction);
+    });
 
     // We want to bust all our caches when we create a new event.
     bustEventsLocalStorageCache();
@@ -177,7 +179,8 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
     }
 
     const eventCollectionRef = collection(db, CollectionPaths.Events, EventStatus.Active, EventPrivacy.Public);
-    const searchKeywords = tokenizeText(nameKeyword);
+    // only search by the first 8 tokens to avoid performance issues
+    const searchKeywords = tokenizeText(nameKeyword).slice(0, 8);
     const eventTokenMatchCount: Map<string, number> = await fetchEventTokenMatches(eventCollectionRef, searchKeywords);
 
     const eventsData = await processEventData(eventCollectionRef, eventTokenMatchCount);
@@ -189,6 +192,7 @@ export async function searchEventsByKeyword(nameKeyword: string, locationKeyword
     throw error;
   }
 }
+
 export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   eventServiceLogger.info(`getAllEvents`);
   try {
@@ -269,6 +273,7 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
     eventServiceLogger.error(`updateEventById ${error}`);
+    throw error;
   }
 }
 
@@ -484,6 +489,9 @@ export async function setAttendeeTickets(
   attendeeName: Name,
   eventId: EventId
 ) {
+  if (numTickets < 0) {
+    throw new Error("Number of tickets cannot be less than 0!");
+  }
   try {
     // validatePurchaserDetails(purchaser);
     // TODO: need to fix validatPurchaserDetails because purchaser details is currently hardcoded with 0 tickets and this fails one of the validatePurchaserDetails checks.
@@ -499,9 +507,13 @@ export async function setAttendeeTickets(
       ).data() as EventDataWithoutOrganiser;
 
       const eventCapacity = eventDataWithoutOrganiser.capacity;
-
+      // Get the original ticket count of the attendee (primitive so no need to worry about reference issues)
+      const originalTicketCount = eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount;
       // Update attendee ticket count
       eventMetadata.purchaserMap[emailHash].attendees[attendeeName].ticketCount = numTickets;
+
+      const deltaTicketCount = numTickets - originalTicketCount;
+
       eventMetadata = recalculateEventsMetadataTotalTicketCounts(eventMetadata);
 
       const newEventTotalTicketCount = eventMetadata.completeTicketCount;
@@ -516,7 +528,7 @@ export async function setAttendeeTickets(
       }
 
       // Update the vacancy in eventData
-      eventDataWithoutOrganiser.vacancy = eventCapacity - newEventTotalTicketCount;
+      eventDataWithoutOrganiser.vacancy = eventDataWithoutOrganiser.vacancy - deltaTicketCount;
       transaction.update(eventMetadataDocRef, eventMetadata as Partial<EventMetadata>);
       transaction.update(
         eventDataWithoutOrganiserDocRef,

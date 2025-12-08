@@ -16,7 +16,8 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import IS_PROD, db
-from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
+from lib.emails.purchase_event import (PurchaseEventRequest,
+                                       send_email_on_purchase_event)
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
@@ -70,6 +71,58 @@ class SessionMetadata:
             raise ValueError("End Fulfilment Entity Id must be provided as a string.")
 
 
+def get_form_response_ids_from_fulfilment_session(
+    logger: Logger, fulfilment_session_id: str, transaction: Transaction
+) -> list[str]:
+    """
+    Retrieve form response IDs from a fulfilment session on a best-effort basis.
+    Returns an empty list if the session is not found or has no form entities.
+    """
+    if not fulfilment_session_id:
+        return []
+
+    try:
+        fulfilment_session_ref = db.collection("FulfilmentSessions").document(
+            fulfilment_session_id
+        )
+        fulfilment_session_snapshot = fulfilment_session_ref.get(
+            transaction=transaction
+        )
+
+        if not fulfilment_session_snapshot.exists:
+            logger.error(
+                f"Fulfilment session not found: {fulfilment_session_id}. Skipping form response IDs."
+            )
+            return []
+
+        fulfilment_session_data = fulfilment_session_snapshot.to_dict()
+        fulfilment_entity_map = fulfilment_session_data.get("fulfilmentEntityMap", {})
+
+        form_response_ids = []
+        for entity_data in fulfilment_entity_map.values():
+            if entity_data.get("type") == "FORMS":
+                form_response_id = entity_data.get("formResponseId")
+                if form_response_id:
+                    form_response_ids.append(form_response_id)
+
+        if form_response_ids:
+            logger.info(
+                f"Retrieved {form_response_ids} form response IDs from fulfilment session {fulfilment_session_id}"
+            )
+        else:
+            logger.info(
+                f"No form response IDs found in fulfilment session {fulfilment_session_id}"
+            )
+
+        return form_response_ids
+
+    except Exception as e:
+        logger.warning(
+            f"Failed to retrieve form response IDs from fulfilment session {fulfilment_session_id}: {e}. Continuing without form responses."
+        )
+        return []
+
+
 @firestore.transactional
 def check_if_session_has_been_processed_already(
     transaction: Transaction, logger: Logger, checkout_session_id: str, event_id: str
@@ -119,6 +172,7 @@ def fulfill_completed_event_ticket_purchase(
     full_name: str,
     phone_number: str,
     payment_details: stripe.checkout.Session.TotalDetails,
+    fulfilment_session_id: str,
 ) -> str | None:  # Typing of customer is customer details
     # Update the event to include the new attendees
     private_path = "Private" if is_private else "Public"
@@ -126,6 +180,11 @@ def fulfill_completed_event_ticket_purchase(
     event_metadata_ref = db.collection(f"EventsMetadata").document(event_id)
 
     maybe_event = event_ref.get(transaction=transaction)
+
+    # Retrieve form response IDs before starting transaction (best effort)
+    form_response_ids = get_form_response_ids_from_fulfilment_session(
+        logger, fulfilment_session_id, transaction
+    )
 
     if not maybe_event.exists:
         logger.error(
@@ -185,13 +244,24 @@ def fulfill_completed_event_ticket_purchase(
         purchaser["attendees"][full_name] = {
             "phone": phone_number,
             "ticketCount": item.quantity,
+            "formResponseIds": form_response_ids if form_response_ids else [],
         }
     else:
-        purchaser["attendees"][full_name] = {
+        # Merge form response IDs if they exist
+        existing_form_responses = purchaser["attendees"][full_name].get(
+            "formResponseIds", []
+        )
+        all_form_responses = list(
+            dict.fromkeys(existing_form_responses + form_response_ids)
+        )
+
+        attendee_data = {
             "phone": phone_number,
             "ticketCount": purchaser["attendees"][full_name]["ticketCount"]
             + item.quantity,
+            "formResponseIds": all_form_responses if all_form_responses else [],
         }
+        purchaser["attendees"][full_name] = attendee_data
 
     body = {
         f"purchaserMap.{email_hash}": purchaser,
@@ -429,6 +499,7 @@ def fulfilment_workflow_on_ticket_purchase(
         full_name,
         phone_number,
         checkout_session.total_details,
+        fulfilment_session_id,
     )
     if orderId == None:
         logger.error(
@@ -503,7 +574,8 @@ def fulfilment_workflow_on_expired_session(
 
 @https_fn.on_request(
     cors=options.CorsOptions(
-        cors_origins=["localhost", "www.sportshub.net.au", "*"], cors_methods=["post"]
+        cors_origins=["localhost", "www.sportshub.net.au", "*"],
+        cors_methods=["post", "get"],
     ),
     region="australia-southeast1",
 )
@@ -512,6 +584,13 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
     uid = str(uuid.uuid4())
     logger = Logger(f"stripe_webhook_logger_{uid}")
     logger.add_tag("uuid", uid)
+
+    # Handle GET requests (health checks from GCP/Firebase) - log warning and return early
+    if req.method == "GET":
+        logger.warning(
+            "Received GET request to webhook endpoint. Returning 200 without processing."
+        )
+        return https_fn.Response(status=200)
 
     payload = req.data
 

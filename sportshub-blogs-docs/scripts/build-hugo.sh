@@ -83,9 +83,14 @@ echo "📄 Copying top-level files..."
 for file in "$HUGO_PUBLIC_DIR"/*; do
     if [ -f "$file" ]; then
         filename=$(basename "$file")
-        # Skip sitemap.xml to avoid merge conflicts
-        if [ "$filename" = "sitemap.xml" ]; then
+        # Skip sitemap.xml and webmanifest files to avoid merge conflicts
+        if [[ "$filename" = "sitemap.xml" || "$filename" =~ ^(.*\.webmanifest|site\.webmanifest)$ ]]; then
             echo "⏭️  Skipping $filename to avoid merge conflicts..."
+            continue
+        fi
+        # Skip favicon and icon files (handled by Next.js in frontend/app)
+        if [[ "$filename" =~ ^(favicon\.ico|favicon-16x16\.png|favicon-32x32\.png|apple-touch-icon\.png|android-chrome-.*\.png)$ ]]; then
+            echo "⏭️  Skipping $filename (using Next.js icons)..."
             continue
         fi
         echo "📄 Copying $filename..."

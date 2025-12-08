@@ -1,11 +1,9 @@
 import EventDescription from "@/components/events/EventDescription";
-import EventImage from "@/components/events/EventImage";
 import { EventData } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
 import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
-import { URL } from "@/interfaces/Types";
 
 interface EventDetailsProps {
   eventData: EventData;
@@ -19,13 +17,9 @@ export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
 
   return (
-    <div className="flex justify-center w-full">
-      <div className="pb-10 w-full md:screen-width-primary">
-        <div className="sm:rounded-xl overflow-hidden">
-          <EventImage imageSrc={eventData.image as URL} />
-        </div>
-
-        <div className="lg:flex w-full mt-5">
+    <div className="flex justify-center w-full px-2 md:px-0">
+      <div className="w-full md:screen-width-primary">
+        <div className="lg:flex w-full gap-16">
           <div className="lg:hidden">
             <MobileEventPayment
               startDate={eventData.startDate}
@@ -44,17 +38,15 @@ export function EventDetails(props: EventDetailsProps) {
             />
           </div>
 
-          <div className="mx-2 lg:w-2/3 xl:w-3/4">
-            <EventDescription
-              title={eventData.name}
-              description={eventData.description} // TODO make firebase take string
-            />
-            <div className="flex">
+          <div className="lg:w-2/3 xl:w-3/4">
+            <EventDescription title={eventData.name} description={eventData.description} />
+            <div className="flex mt-4">
               <div className="hidden lg:block">
                 <TagGroup tags={eventTags} />
               </div>
             </div>
           </div>
+
           <div className="hidden lg:block lg:w-1/3 xl:w-1/4">
             <EventPayment
               startDate={eventData.startDate}

@@ -2,6 +2,7 @@
 import Loading from "@/components/loading/Loading";
 import { FieldTypes, RenderEditableField, RenderNonEditableField } from "@/components/users/profile/ProfileFields";
 import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel";
+import { EmailChangeModal } from "@/components/users/profile/EmailChangeModal";
 import { useUser } from "@/components/utility/UserContext";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
@@ -29,6 +30,7 @@ const Profile = () => {
   const { user, setUser } = useUser();
   const [loading, setLoading] = useState(true);
   const [usernameWarning, setUsernameWarning] = useState(false);
+  const [emailChangeModalOpened, setEmailChangeModalOpened] = useState(false);
 
   useEffect(() => {
     if (user.userId !== "") {
@@ -55,9 +57,9 @@ const Profile = () => {
   ) : (
     <div className="w-screen flex justify-center mb-10 px-1">
       <div className="screen-width-primary">
-        <div className="mt-16 mb-10 block lg:flex lg:space-x-10">
+        <div className="mt-6 mb-10 block lg:flex lg:space-x-10">
           <div className="basis-2/5 space-y-6">
-            <div className="flex mt-8 mb-4 font-bold text-2xl">
+            <div className="flex mb-4 font-bold text-2xl">
               {user.firstName}&apos;s Profile
               {user.isVerifiedOrganiser && (
                 <div>
@@ -91,6 +93,15 @@ const Profile = () => {
                     handleUserProfileUpdate("isSearchable", event.currentTarget.checked);
                   }}
                 />
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => setEmailChangeModalOpened(true)}
+                  className="bg-black px-3 py-1.5 text-white rounded-lg"
+                  type="button"
+                >
+                  Change Email
+                </button>
               </div>
             </div>
           </div>
@@ -209,6 +220,12 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      <EmailChangeModal
+        isOpen={emailChangeModalOpened}
+        onClose={() => setEmailChangeModalOpened(false)}
+        currentEmail={user.contactInformation.email}
+      />
     </div>
   );
 };

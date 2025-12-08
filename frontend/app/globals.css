@@ -32,9 +32,30 @@
 }
 
 :root {
-  --navbar-height: 65px;
+  --navbar-height: 56px; /* Match h-14 (3.5rem = 56px) */
+  --footer-height: 32px; /* Match h-8 (2rem = 32px) */
 }
 
 html {
   scroll-padding-top: var(--navbar-height);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Prevent mobile zoom on input focus by ensuring minimum 16px font size */
+@media screen and (max-width: 768px) {
+  input,
+  textarea,
+  select,
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  input[type="search"],
+  input[type="url"] {
+    font-size: 16px !important;
+  }
 }

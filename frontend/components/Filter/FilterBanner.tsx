@@ -16,16 +16,16 @@ import ChevronRightButton from "../elements/ChevronRightButton";
 import FilterDialog, {
   DAY_END_TIME_STRING,
   DAY_START_TIME_STRING,
-  DEFAULT_END_DATE,
+  DEFAULT_DATE_RANGE,
   DEFAULT_MAX_PRICE,
   DEFAULT_MAX_PROXIMITY,
   DEFAULT_SORT_BY_CATEGORY,
-  DEFAULT_START_DATE,
   PRICE_SLIDER_MAX_VALUE,
   PROXIMITY_SLIDER_MAX_VALUE,
   SortByCategory,
 } from "./FilterDialog";
 import FilterIcon from "./FilterIcon";
+import { DateRange } from "react-day-picker";
 
 interface FilterBannerProps {
   eventDataList: EventData[];
@@ -55,20 +55,8 @@ export default function FilterBanner({
   const [appliedMaxPriceSliderValue, setAppliedMaxPriceSliderValue] = useState<number>(DEFAULT_MAX_PRICE);
   const [maxProximitySliderValue, setMaxProximitySliderValue] = useState<number>(DEFAULT_MAX_PROXIMITY); // max proximity in kms.
   const [appliedMaxProximitySliderValue, setAppliedMaxProximitySliderValue] = useState<number>(DEFAULT_MAX_PROXIMITY);
-  const [dateRange, setDateRange] = useState<{
-    startDate: string | null;
-    endDate: string | null;
-  }>({
-    startDate: DEFAULT_START_DATE,
-    endDate: DEFAULT_END_DATE,
-  });
-  const [appliedDateRange, setAppliedDateRange] = useState<{
-    startDate: string | null;
-    endDate: string | null;
-  }>({
-    startDate: DEFAULT_START_DATE,
-    endDate: DEFAULT_END_DATE,
-  });
+  const [dateRange, setDateRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange>(DEFAULT_DATE_RANGE);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   function closeModal() {
     setIsFilterModalOpen(false);
@@ -84,8 +72,7 @@ export default function FilterBanner({
     });
   };
 
-  async function applyFilters(selectedSportProp: string) {
-    console.log("FILTERING", srcLocation);
+  async function applyFilters(selectedSportProp: string): Promise<void> {
     const isAnyPriceBool = maxPriceSliderValue === PRICE_SLIDER_MAX_VALUE;
     // changed it so that instead of it running only if its not max, if locaiton is not ""
     const isAnyProximityBool = srcLocation === "" || maxProximitySliderValue === PROXIMITY_SLIDER_MAX_VALUE;
@@ -100,11 +87,11 @@ export default function FilterBanner({
     setAppliedMaxPriceSliderValue(maxPriceSliderValue);
 
     // Filter by DATERANGE
-    if (dateRange.startDate && dateRange.endDate) {
+    if (dateRange.from && dateRange.to) {
       let newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
-        Timestamp.fromDate(new Date(dateRange.startDate + DAY_START_TIME_STRING)), // TODO: needed to specify maximum time range on particular day.
-        Timestamp.fromDate(new Date(dateRange.endDate + DAY_END_TIME_STRING))
+        Timestamp.fromDate(new Date(dateRange.from.toISOString().split("T")[0] + DAY_START_TIME_STRING)),
+        Timestamp.fromDate(new Date(dateRange.to.toISOString().split("T")[0] + DAY_END_TIME_STRING))
       );
       filteredEventDataList = newEventDataList;
     }
@@ -161,7 +148,7 @@ export default function FilterBanner({
   }, [triggerFilterApply]);
 
   return (
-    <div className="pt-16 bg-white w-full px-3">
+    <div className=" w-full px-3">
       <div className="h-20 flex items-center mt-2 w-full lg:px-10 xl:px-16 2xl:px-24 3xl:px-40">
         <div
           id="filter-overflow"

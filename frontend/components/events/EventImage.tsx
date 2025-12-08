@@ -13,7 +13,7 @@ export default function EventImage(props: EventImageProps) {
       rel="preload"
       loading="eager"
       src={props.imageSrc}
-      alt="..."
+      alt="Event Image"
       width={0}
       height={0}
       className="object-cover h-auto w-full aspect-video"

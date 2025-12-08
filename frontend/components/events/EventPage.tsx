@@ -2,10 +2,12 @@
 
 import EventBanner from "@/components/events/EventBanner";
 import { EventDetails } from "@/components/events/EventDetails";
+import EventImage from "@/components/events/EventImage";
 import RecommendedEvents from "@/components/events/RecommendedEvents";
 import Loading from "@/components/loading/Loading";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
+import { URL } from "@/interfaces/Types";
 import { getEventById, incrementEventAccessCountById } from "@/services/src/events/eventsService";
 import { getTagById } from "@/services/src/tagService";
 import { useRouter } from "next/navigation";
@@ -20,7 +22,7 @@ export default function EventPage({ params }: any) {
 
   useEffect(() => {
     if (eventId === "404") {
-      router.push("/404");
+      router.push("/not-found");
       return;
     }
 
@@ -50,7 +52,22 @@ export default function EventPage({ params }: any) {
   return loading ? (
     <Loading />
   ) : (
-    <div className="text-black mt-12">
+    <>
+      {/* Hero Image Section */}
+      <div className="w-full">
+        <div className="flex justify-center">
+          <div className="w-full md:screen-width-primary">
+            <div className="px-4 py-4 md:px-0 md:py-6">
+              <div className="rounded-xl md:rounded-2xl overflow-hidden shadow-sm md:mx-12">
+                {/* <EventImage imageSrc={eventData.image as URL} /> */}
+                <EventImage imageSrc={eventData.image as URL} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Event Banner with title and organiser info */}
       <EventBanner
         name={eventData.name}
         startDate={eventData.startDate}
@@ -58,6 +75,8 @@ export default function EventPage({ params }: any) {
         vacancy={eventData.vacancy}
         hideVacancy={eventData.hideVacancy}
       />
+
+      {/* Event Details */}
       <div className="mt-1 mb-10">
         <EventDetails eventData={eventData} eventTags={eventTags} setLoading={setLoading} />
         {/* Stub for Orgnaiser on Event Page
@@ -70,6 +89,6 @@ export default function EventPage({ params }: any) {
       <div className="lg:hidden">
         <MobileEventDetailFooter date={eventData.startDate} />
       </div> */}
-    </div>
+    </>
   );
 }

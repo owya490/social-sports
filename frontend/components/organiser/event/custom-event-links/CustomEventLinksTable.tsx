@@ -230,6 +230,7 @@ export default function CustomEventLinksTable({
                       <Input
                         label="Custom Link Name"
                         crossOrigin={undefined}
+                        className="focus:ring-0"
                         value={link.customEventLinkName}
                         onChange={(e) => handleFieldChange(link.id, "customEventLinkName", () => e.target.value)}
                       />
@@ -245,6 +246,7 @@ export default function CustomEventLinksTable({
                       <Input
                         label="Custom Link"
                         crossOrigin={undefined}
+                        className="focus:ring-0"
                         value={link.customEventLink}
                         onChange={(e) => {
                           // Convert to lowercase and remove whitespaces
