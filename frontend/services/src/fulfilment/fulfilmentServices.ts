@@ -22,6 +22,7 @@ import { Logger } from "@/observability/logger";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
+  clearStoredFulfilmentSessionId,
   getDeleteFulfilmentSessionUrl,
   getStoredFulfilmentSessionId,
   storeFulfilmentSessionId,
@@ -102,6 +103,7 @@ export async function initFulfilmentSession(
             fulfilmentServiceLogger.warn(
               `initFulfilmentSession: Existing session ${existingSessionId} is invalid or expired on backend, creating new session: ${error}`
             );
+            clearStoredFulfilmentSessionId(eventId, numTickets);
             // Session is invalid, continue to create a new one
           }
         }

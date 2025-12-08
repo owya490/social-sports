@@ -48,33 +48,50 @@ export function storeFulfilmentSessionId(
  * Keys are specific to eventId and numTickets.
  */
 export function getStoredFulfilmentSessionId(eventId: EventId, numTickets: number): FulfilmentSessionId | null {
-  const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets);
-  const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets);
+  try {
+    const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets);
+    const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets);
 
-  const storedSessionId = localStorage.getItem(sessionIdKey);
-  const storedTimestamp = localStorage.getItem(timestampKey);
+    const storedSessionId = localStorage.getItem(sessionIdKey);
+    const storedTimestamp = localStorage.getItem(timestampKey);
 
-  if (storedSessionId === null || storedTimestamp === null) {
-    fulfilmentUtilsLogger.info(`No stored fulfilment session found for eventId: ${eventId}, numTickets: ${numTickets}`);
-    return null;
-  }
+    if (storedSessionId === null || storedTimestamp === null) {
+      fulfilmentUtilsLogger.info(
+        `No stored fulfilment session found for eventId: ${eventId}, numTickets: ${numTickets}`
+      );
+      return null;
+    }
 
-  const now = new Date();
-  const sessionTimestamp = new Date(storedTimestamp);
-  const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
+    const now = new Date();
+    const sessionTimestamp = new Date(storedTimestamp);
+    if (isNaN(sessionTimestamp.valueOf())) {
+      fulfilmentUtilsLogger.info(
+        `Invalid stored timestamp for eventId: ${eventId}, numTickets: ${numTickets}, clearing it`
+      );
+      clearStoredFulfilmentSessionId(eventId, numTickets);
+      return null;
+    }
+    const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
 
-  if (timeDifference >= FULFILMENT_SESSION_EXPIRY_MILLIS) {
+    if (timeDifference >= FULFILMENT_SESSION_EXPIRY_MILLIS) {
+      fulfilmentUtilsLogger.info(
+        `Stored fulfilment session has expired for eventId: ${eventId}, numTickets: ${numTickets}, clearing it`
+      );
+      clearStoredFulfilmentSessionId(eventId, numTickets);
+      return null;
+    }
+
     fulfilmentUtilsLogger.info(
-      `Stored fulfilment session has expired for eventId: ${eventId}, numTickets: ${numTickets}, clearing it`
+      `Retrieved valid fulfilment session ID: ${storedSessionId} for eventId: ${eventId}, numTickets: ${numTickets}`
+    );
+    return storedSessionId as FulfilmentSessionId;
+  } catch (error) {
+    fulfilmentUtilsLogger.error(
+      `Error getting stored fulfilment session ID: ${error} for eventId: ${eventId}, numTickets: ${numTickets}`
     );
     clearStoredFulfilmentSessionId(eventId, numTickets);
     return null;
   }
-
-  fulfilmentUtilsLogger.info(
-    `Retrieved valid fulfilment session ID: ${storedSessionId} for eventId: ${eventId}, numTickets: ${numTickets}`
-  );
-  return storedSessionId as FulfilmentSessionId;
 }
 
 /**
