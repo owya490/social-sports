@@ -21,7 +21,12 @@ import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getUrlWithCurrentHostname } from "../urlUtils";
-import { getDeleteFulfilmentSessionUrl } from "./fulfilmentUtils/fulfilmentUtils";
+import {
+  clearStoredFulfilmentSessionId,
+  getDeleteFulfilmentSessionUrl,
+  getStoredFulfilmentSessionId,
+  storeFulfilmentSessionId,
+} from "./fulfilmentUtils/fulfilmentUtils";
 
 // Flag for development purposes to enable or disable fulfilment session functionality.
 export const FULFILMENT_SESSION_ENABLED = true;
@@ -62,6 +67,10 @@ export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
  *
  * NOTE: Fulfilment entities are initialized in the order they are provided in
  * `fulfilmentSessionType.fulfilmentEntityTypes`.
+ *
+ * Before creating a new session, checks if there's an existing valid session in localStorage (within 20 minutes).
+ * If found and still valid on the backend, returns the existing session instead of creating a new one.
+ * Sessions are keyed by eventId and numTickets to ensure proper context isolation.
  */
 export async function initFulfilmentSession(
   fulfilmentSessionType: FulfilmentSessionType
@@ -69,7 +78,43 @@ export async function initFulfilmentSession(
   try {
     switch (fulfilmentSessionType.type) {
       case "checkout": {
-        return await initCheckoutFulfilmentSession(fulfilmentSessionType.eventId, fulfilmentSessionType.numTickets);
+        const { eventId, numTickets } = fulfilmentSessionType;
+
+        // Check for existing session in localStorage specific to this event and ticket count
+        const existingSessionId = getStoredFulfilmentSessionId(eventId, numTickets);
+
+        if (existingSessionId) {
+          fulfilmentServiceLogger.info(
+            `initFulfilmentSession: Found existing session in localStorage: ${existingSessionId} for eventId: ${eventId}, numTickets: ${numTickets}, verifying with backend`
+          );
+
+          try {
+            // Verify the session still exists on the backend
+            await getFulfilmentSessionInfo(existingSessionId, null);
+
+            fulfilmentServiceLogger.info(
+              `initFulfilmentSession: Existing session ${existingSessionId} is valid, reusing it`
+            );
+
+            return {
+              fulfilmentSessionId: existingSessionId,
+            };
+          } catch (error) {
+            fulfilmentServiceLogger.warn(
+              `initFulfilmentSession: Existing session ${existingSessionId} is invalid or expired on backend, creating new session: ${error}`
+            );
+            clearStoredFulfilmentSessionId(eventId, numTickets);
+            // Session is invalid, continue to create a new one
+          }
+        }
+
+        // No valid existing session, create a new one
+        const response = await initCheckoutFulfilmentSession(eventId, numTickets);
+
+        // Store the new session ID in localStorage with event and ticket context
+        storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets);
+
+        return response;
       }
     }
   } catch (error) {
