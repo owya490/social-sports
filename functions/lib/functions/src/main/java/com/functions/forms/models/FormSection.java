@@ -23,6 +23,7 @@ import lombok.experimental.SuperBuilder;
         @JsonSubTypes.Type(value = TextSection.class, name = "TEXT"),
         @JsonSubTypes.Type(value = MultipleChoiceSection.class, name = "MULTIPLE_CHOICE"),
         @JsonSubTypes.Type(value = DropdownSelectSection.class, name = "DROPDOWN_SELECT"),
+        @JsonSubTypes.Type(value = TickboxSection.class, name = "TICKBOX"),
         @JsonSubTypes.Type(value = MultipleChoiceSection.class, name = "BINARY_CHOICE"), // Same as MULTIPLE_CHOICE
         @JsonSubTypes.Type(value = FileUploadSection.class, name = "FILE_UPLOAD"),
         @JsonSubTypes.Type(value = DateTimeSection.class, name = "DATE_TIME"),

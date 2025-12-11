@@ -5,6 +5,7 @@ import { HeaderSectionBuilder } from "@/components/forms/sections/header-section
 import { ImageSectionBuilder } from "@/components/forms/sections/image-section/ImageSectionBuilder";
 import { ImageSelectionDialog } from "@/components/forms/sections/image-section/ImageSelectionDialog";
 import { TextSectionBuilder } from "@/components/forms/sections/text-section/TextSectionBuilder";
+import { TickboxSectionBuilder } from "@/components/forms/sections/tickbox-section/TickboxSectionBuilder";
 import Loading from "@/components/loading/Loading";
 import Modal from "@/components/utility/Modal";
 import { useUser } from "@/components/utility/UserContext";
@@ -93,19 +94,25 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     };
   }, [isFormModified]);
 
-  // Helper function to filter empty options from dropdown sections
+  // Helper function to filter empty options from dropdown and tickbox sections
   const filterEmptyOptions = (form: Form): Form => {
     const filteredSectionsMap = { ...form.sectionsMap };
     const sectionsWithNoValidOptions: string[] = [];
 
     Object.keys(filteredSectionsMap).forEach((sectionId) => {
       const section = filteredSectionsMap[sectionId as SectionId];
-      if (section.type === FormSectionType.DROPDOWN_SELECT && "options" in section) {
+      if (
+        (section.type === FormSectionType.DROPDOWN_SELECT || section.type === FormSectionType.TICKBOX) &&
+        "options" in section
+      ) {
         // Filter out empty options
         const nonEmptyOptions = section.options.filter((option: string) => option.trim() !== "");
 
         if (nonEmptyOptions.length === 0) {
-          sectionsWithNoValidOptions.push(section.question || "Untitled dropdown question");
+          sectionsWithNoValidOptions.push(
+            section.question ||
+              `Untitled ${section.type === FormSectionType.DROPDOWN_SELECT ? "dropdown" : "tickbox"} question`
+          );
         } else {
           section.options = nonEmptyOptions;
         }
@@ -116,9 +123,9 @@ const FormEditor = ({ formId }: FormEditorParams) => {
     if (sectionsWithNoValidOptions.length > 0) {
       const questionsList = sectionsWithNoValidOptions.map((q) => `"${q}"`).join(", ");
       throw new Error(
-        `The following dropdown question${sectionsWithNoValidOptions.length > 1 ? "s" : ""} ${
+        `The following question${sectionsWithNoValidOptions.length > 1 ? "s" : ""} ${
           sectionsWithNoValidOptions.length > 1 ? "have" : "has"
-        } no valid options: ${questionsList}. Please add at least one option to each dropdown question.`
+        } no valid options: ${questionsList}. Please add at least one option to each question.`
       );
     }
 
@@ -310,6 +317,22 @@ const FormEditor = ({ formId }: FormEditorParams) => {
           />
         );
 
+      case FormSectionType.TICKBOX:
+        return (
+          <TickboxSectionBuilder
+            section={section}
+            sectionId={sectionId}
+            onUpdate={(updatedSection) => {
+              setForm((prevForm) => ({
+                ...prevForm,
+                sectionsMap: { ...prevForm.sectionsMap, [sectionId]: updatedSection },
+              }));
+            }}
+            onDelete={deleteSection}
+            onDuplicate={duplicateSection}
+          />
+        );
+
       case FormSectionType.IMAGE:
         return (
           <ImageSectionBuilder
@@ -396,6 +419,15 @@ const FormEditor = ({ formId }: FormEditorParams) => {
             required: true,
           })
         }
+        onAddTickboxSection={() =>
+          addSection({
+            type: FormSectionType.TICKBOX,
+            question: "",
+            options: [""],
+            imageUrl: null,
+            required: true,
+          })
+        }
         onAddImageSection={() => setShowImageSelectionDialog(true)}
         onSaveForm={handleSubmitClick}
         isFormModified={isFormModified}
@@ -414,6 +446,15 @@ const FormEditor = ({ formId }: FormEditorParams) => {
         onAddDropdownSection={() =>
           addSection({
             type: FormSectionType.DROPDOWN_SELECT,
+            question: "",
+            options: [""],
+            imageUrl: null,
+            required: true,
+          })
+        }
+        onAddTickboxSection={() =>
+          addSection({
+            type: FormSectionType.TICKBOX,
             question: "",
             options: [""],
             imageUrl: null,
