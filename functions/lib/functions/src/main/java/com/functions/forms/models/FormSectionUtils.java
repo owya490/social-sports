@@ -1,10 +1,11 @@
 package com.functions.forms.models;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Utility class for handling FormSection deserialization from Firebase.
@@ -36,6 +37,9 @@ public class FormSectionUtils {
                     break;
                 case DROPDOWN_SELECT:
                     section = objectMapper.convertValue(sectionData, DropdownSelectSection.class);
+                    break;
+                case TICKBOX:
+                    section = objectMapper.convertValue(sectionData, TickboxSection.class);
                     break;
                 case FILE_UPLOAD:
                     section = objectMapper.convertValue(sectionData, FileUploadSection.class);

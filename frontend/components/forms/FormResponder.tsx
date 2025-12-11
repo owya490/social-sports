@@ -3,6 +3,7 @@ import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionResponse";
 import { HeaderSectionResponse } from "@/components/forms/sections/header-section/HeaderSectionResponse";
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
+import { TickboxSectionResponse } from "@/components/forms/sections/tickbox-section/TickboxSectionResponse";
 import Loading from "@/components/loading/Loading";
 import { EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponseId, FormSectionType, SectionId } from "@/interfaces/FormTypes";
@@ -205,6 +206,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
             case FormSectionType.MULTIPLE_CHOICE:
             case FormSectionType.DROPDOWN_SELECT:
               return section.answer && section.answer.trim() !== "";
+            case FormSectionType.TICKBOX:
+              return section.answer && section.answer.length > 0;
             case FormSectionType.FILE_UPLOAD:
               return section.fileUrl && section.fileUrl.trim() !== "";
             case FormSectionType.DATE_TIME:
@@ -224,6 +227,36 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
     };
 
     const stringAnswerOnChange = (sectionId: SectionId, newAnswer: string) => {
+      if (!form) return;
+
+      // Mark as having unsaved changes
+      setHasUnsavedChangesState(true);
+
+      setForm((prevForm) => {
+        if (!prevForm) return prevForm;
+
+        // Create a new Map copy to avoid mutation
+        const newSectionsMap = { ...prevForm.sectionsMap };
+
+        // Get the section to update
+        const section = newSectionsMap[sectionId];
+        if (!section) return prevForm; // no change if section not found
+
+        // Update the answer (create a new object to keep immutability)
+        const updatedSection = { ...section, answer: newAnswer };
+
+        // Set it back into the new object
+        newSectionsMap[sectionId] = updatedSection;
+
+        // Return a new form object with updated sections
+        return {
+          ...prevForm,
+          sectionsMap: newSectionsMap,
+        };
+      });
+    };
+
+    const arrayAnswerOnChange = (sectionId: SectionId, newAnswer: string[]) => {
       if (!form) return;
 
       // Mark as having unsaved changes
@@ -301,6 +334,17 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
                       dropdownSelectSection={section}
                       answerOnChange={(newAnswer: string) => {
                         stringAnswerOnChange(sectionId, newAnswer);
+                      }}
+                      canEdit={canEdit}
+                    />
+                  );
+                case FormSectionType.TICKBOX:
+                  return (
+                    <TickboxSectionResponse
+                      key={sectionId}
+                      tickboxSection={section}
+                      answerOnChange={(newAnswer: string[]) => {
+                        arrayAnswerOnChange(sectionId, newAnswer);
                       }}
                       canEdit={canEdit}
                     />
