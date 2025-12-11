@@ -273,6 +273,10 @@ export default function Dashboard() {
                   })
               : eventDataList
                   .sort((a, b) => b.accessCount - a.accessCount)
+                  // filter for all eventsids not 123
+                  .filter((event) => {
+                    return event.eventId !== "D3pCLA6szpz1SBc2OJAz";
+                  })
                   .map((event, eventIdx) => {
                     return (
                       <EventCard

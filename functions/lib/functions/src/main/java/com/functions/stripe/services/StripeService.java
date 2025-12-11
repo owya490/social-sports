@@ -15,6 +15,7 @@ public class StripeService {
     private static final Logger logger = LoggerFactory.getLogger(StripeService.class);
 
     public static final String FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID = "get_stripe_checkout_url_by_event_id";
+    public static final String ERROR_URL = "/error";
 
     // TODO: configure cancel URL
     public static String getStripeCheckoutFromEventId(String eventId,
@@ -50,6 +51,14 @@ public class StripeService {
                         try {
                             GetStripeCheckoutUrlByEventIdResponse stripeResponse = JavaUtils.objectMapper
                                     .readValue(response.result(), GetStripeCheckoutUrlByEventIdResponse.class);
+                            // If the stripe checkout URL is null, error URL, or cancel URL, throw a runtime exception
+                            if (stripeResponse.url() == null 
+                                || stripeResponse.url().equals(ERROR_URL) 
+                                || stripeResponse.url().equals(cancelUrl.orElse(UrlUtils.SPORTSHUB_URL
+                            ))) {
+                                logger.error("Stripe checkout URL is null or error URL or cancel URL. Throwing runtime exception.");
+                                throw new RuntimeException("Stripe checkout URL is null or error URL or cancel URL.");
+                            }
                             return stripeResponse.url();
                         } catch (Exception e) {
                             logger.error("Failed to parse Stripe checkout response for event ID {}: {}", eventId,

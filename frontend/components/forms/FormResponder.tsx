@@ -235,20 +235,20 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       setForm((prevForm) => {
         if (!prevForm) return prevForm;
 
-        // Create a new Map copy to avoid mutation
         const newSectionsMap = { ...prevForm.sectionsMap };
-
-        // Get the section to update
         const section = newSectionsMap[sectionId];
-        if (!section) return prevForm; // no change if section not found
+        if (!section) return prevForm;
 
-        // Update the answer (create a new object to keep immutability)
-        const updatedSection = { ...section, answer: newAnswer } as any;
+        // Narrow the type to sections that accept a string answer
+        if (
+          section.type === FormSectionType.TEXT ||
+          section.type === FormSectionType.MULTIPLE_CHOICE ||
+          section.type === FormSectionType.DROPDOWN_SELECT
+        ) {
+          const updatedSection = { ...section, answer: newAnswer };
+          newSectionsMap[sectionId] = updatedSection;
+        }
 
-        // Set it back into the new object
-        newSectionsMap[sectionId] = updatedSection;
-
-        // Return a new form object with updated sections
         return {
           ...prevForm,
           sectionsMap: newSectionsMap,
@@ -265,20 +265,16 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       setForm((prevForm) => {
         if (!prevForm) return prevForm;
 
-        // Create a new Map copy to avoid mutation
         const newSectionsMap = { ...prevForm.sectionsMap };
-
-        // Get the section to update
         const section = newSectionsMap[sectionId];
-        if (!section) return prevForm; // no change if section not found
+        if (!section) return prevForm;
 
-        // Update the answer (create a new object to keep immutability)
-        const updatedSection = { ...section, answer: newAnswer } as any;
+        // Narrow the type to sections that accept string[] answer (TICKBOX)
+        if (section.type === FormSectionType.TICKBOX) {
+          const updatedSection = { ...section, answer: newAnswer };
+          newSectionsMap[sectionId] = updatedSection;
+        }
 
-        // Set it back into the new object
-        newSectionsMap[sectionId] = updatedSection;
-
-        // Return a new form object with updated sections
         return {
           ...prevForm,
           sectionsMap: newSectionsMap,
