@@ -243,7 +243,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
         if (!section) return prevForm; // no change if section not found
 
         // Update the answer (create a new object to keep immutability)
-        const updatedSection = { ...section, answer: newAnswer };
+        const updatedSection = { ...section, answer: newAnswer } as any;
 
         // Set it back into the new object
         newSectionsMap[sectionId] = updatedSection;
@@ -273,7 +273,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
         if (!section) return prevForm; // no change if section not found
 
         // Update the answer (create a new object to keep immutability)
-        const updatedSection = { ...section, answer: newAnswer };
+        const updatedSection = { ...section, answer: newAnswer } as any;
 
         // Set it back into the new object
         newSectionsMap[sectionId] = updatedSection;
