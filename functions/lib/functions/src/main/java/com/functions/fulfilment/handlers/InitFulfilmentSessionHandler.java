@@ -1,7 +1,5 @@
 package com.functions.fulfilment.handlers;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,20 +24,15 @@ public class InitFulfilmentSessionHandler implements Handler<InitCheckoutFulfilm
     }
 
     @Override
-    public InitCheckoutFulfilmentSessionResponse handle(InitCheckoutFulfilmentSessionRequest request) {
+    public InitCheckoutFulfilmentSessionResponse handle(InitCheckoutFulfilmentSessionRequest request) throws Exception {
         logger.info("Handling init fulfilment session request for event ID: {}, numTickets: {}, request: {}",
                 request.eventId(), request.numTickets(), request);
 
-        Optional<String> maybeFulfilmentSessionId = FulfilmentService.initCheckoutFulfilmentSession(
+        String fulfilmentSessionId = FulfilmentService.initCheckoutFulfilmentSession(
                 request.eventId(), request.numTickets());
 
-        if (maybeFulfilmentSessionId.isPresent()) {
-            logger.info("[InitFulfilmentSessionHandler] Fulfilment session successfully created: {}",
-                    maybeFulfilmentSessionId.get());
-            return new InitCheckoutFulfilmentSessionResponse(maybeFulfilmentSessionId.get());
-        } else {
-            logger.error("Failed to create fulfilment session for event ID: {}, request: {}", request.eventId(), request);
-            throw new RuntimeException("Failed to create fulfilment session for event ID: " + request.eventId());
-        }
+        logger.info("[InitFulfilmentSessionHandler] Fulfilment session successfully created: {}",
+                fulfilmentSessionId);
+        return new InitCheckoutFulfilmentSessionResponse(fulfilmentSessionId);
     }
 }
