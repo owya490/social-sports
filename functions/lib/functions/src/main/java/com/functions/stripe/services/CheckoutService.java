@@ -276,7 +276,10 @@ public class CheckoutService {
                         .build())
                 .setSuccessUrl(request.successUrl())
                 .setCancelUrl(request.cancelUrl())
-                .setExpiresAt(Instant.now().getEpochSecond() + StripeConfig.CHECKOUT_SESSION_EXPIRY_SECONDS);
+                .setExpiresAt(Instant.now().getEpochSecond() + StripeConfig.CHECKOUT_SESSION_EXPIRY_SECONDS)
+                .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
+                        .setApplicationFeeAmount(StripeConfig.calculateSportsHubFee((long) eventData.getPrice() * (long) request.quantity(), eventData.getOrganiserId()))
+                        .build());
 
         // Add Stripe fee if passed to customer
         Boolean stripeFeeToCustomer = eventData.getStripeFeeToCustomer();
