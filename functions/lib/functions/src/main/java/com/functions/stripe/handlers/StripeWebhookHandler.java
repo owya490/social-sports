@@ -194,7 +194,7 @@ public class StripeWebhookHandler {
             default:
                 logger.error("[Webhook-{}] Stripe sent a webhook request which does not match any handled events. " +
                             "eventType={}, eventId={}", uuid, eventType, event.getId());
-                response.setStatusCode(500);
+                response.setStatusCode(200);
                 return;
         }
         
@@ -214,6 +214,11 @@ public class StripeWebhookHandler {
         try {
             String checkoutSessionId = session.getId();
             String stripeAccount = event.getAccount();
+
+            if (stripeAccount == null || stripeAccount.isEmpty()) {
+                logger.error("[Webhook-{}] Stripe account is null or empty for session {}", uuid, checkoutSessionId);
+                return false;
+            }
             
             // Retrieve the full session with expanded line items
             Session fullSession = Session.retrieve(
@@ -471,7 +476,7 @@ public class StripeWebhookHandler {
         
         // Basic email validation regex
         // Matches most valid email formats without being overly permissive
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,63}$";
         
         return email.matches(emailRegex) && email.length() <= 254; // RFC 5321 max length
     }

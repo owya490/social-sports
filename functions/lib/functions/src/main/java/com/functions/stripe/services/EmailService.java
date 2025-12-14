@@ -83,7 +83,8 @@ public class EmailService {
             
             if (attempt < maxRetries - 1) {
                 try {
-                    Thread.sleep(1000);
+                    long delay = (long) Math.pow(2, attempt) * 1000;
+                    Thread.sleep(delay);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     break;
@@ -139,13 +140,16 @@ public class EmailService {
     }
     
     private static DocumentSnapshot fetchDocument(Firestore db, String... pathSegments) throws ExecutionException, InterruptedException {
+        if (pathSegments == null || pathSegments.length == 0) {
+            throw new IllegalArgumentException("Path segments cannot be null or empty");
+        }
         if (pathSegments.length == 2) {
              return db.collection(pathSegments[0]).document(pathSegments[1]).get().get();
         } else if (pathSegments.length == 4) {
              return db.collection(pathSegments[0]).document(pathSegments[1])
                       .collection(pathSegments[2]).document(pathSegments[3]).get().get();
         }
-        throw new IllegalArgumentException("Unsupported path segments length");
+        throw new IllegalArgumentException("Unsupported path segments length: " + pathSegments.length + ". Expected 2 or 4.");
     }
     
     private static Map<String, String> buildEmailVariables(DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
