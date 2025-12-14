@@ -17,4 +17,4 @@ export const EMPTY_TICKET: Ticket = {
   purchaseDate: Timestamp.now(),
 };
 
-export const TicketCollectionPath = "Tickets";
+export const TicketsCollectionPath = "Tickets";

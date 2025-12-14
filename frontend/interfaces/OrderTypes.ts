@@ -23,4 +23,4 @@ export const EMPTY_ORDER: Order = {
   tickets: [],
 };
 
-export const OrderCollectionPath = "Orders";
+export const OrdersCollectionPath = "Orders";
