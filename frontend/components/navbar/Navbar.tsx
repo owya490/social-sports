@@ -1,10 +1,21 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import Logo from "./Logo";
 import ProfilePic from "./ProfilePic";
 import SearchBar from "./SearchBar";
 
+// Routes where the navbar should be hidden
+const HIDDEN_NAVBAR_ROUTES = ["/organiser/wrapped"];
+
 export default function Navbar() {
+  const pathname = usePathname();
+
+  // Hide navbar on specific routes
+  if (HIDDEN_NAVBAR_ROUTES.some((route) => pathname.startsWith(route))) {
+    return null;
+  }
+
   return (
     <header className="bg-white fixed top-0 w-full z-50 box-border border-b-[1px] border-core-outline h-[var(--navbar-height)]">
       <nav

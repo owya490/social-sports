@@ -4,17 +4,16 @@ import React from "react";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.sportshub.net.au"),
   title: "SPORTSHUB | Find your next social sport session!",
   description: "SPORTSHUB helps you organise local sports events. Build your community and watch it grow.",
-
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
 
   icons: {
     icon: [
@@ -30,7 +29,7 @@ export const metadata: Metadata = {
 
   robots: "index, follow",
   authors: [{ name: "SPORTSHUB" }],
-  
+
   openGraph: {
     title: "SPORTSHUB | Find your next social sport session!",
     description:
