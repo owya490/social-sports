@@ -1,7 +1,9 @@
 package com.functions.wrapped.services;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,9 @@ import com.functions.wrapped.repositories.WrappedRepository;
 public class WrappedService {
     private static final Logger logger = LoggerFactory.getLogger(WrappedService.class);
 
+    // Sydney timezone for all date calculations
+    private static final ZoneId SYDNEY_TIMEZONE = ZoneId.of("Australia/Sydney");
+
     // Average time in minutes to verify a bank transfer booking
     private static final int AVG_MINUTES_PER_BANK_TRANSFER_VERIFICATION = 5;
 
@@ -64,6 +69,14 @@ public class WrappedService {
     public static SportshubWrappedData getOrGenerateWrappedData(String organiserId, int year, String wrappedId) throws Exception {
         logger.info("Getting or generating wrapped data for organiserId: {}, year: {}, wrappedId: {}", 
                 organiserId, year, wrappedId);
+
+        // Validate input
+        if (organiserId == null || organiserId.isEmpty()) {
+            throw new IllegalArgumentException("organiserId cannot be null or empty");
+        }
+        if (year < 2020 || year > LocalDate.now(SYDNEY_TIMEZONE).getYear()) {
+            throw new IllegalArgumentException("Invalid year: " + year);
+        }
 
         boolean requiresVerification = wrappedId != null && !wrappedId.isEmpty();
 
@@ -109,17 +122,32 @@ public class WrappedService {
     public static SportshubWrappedData generateWrappedData(String organiserId, int year) throws Exception {
         logger.info("Generating wrapped data for organiserId: {}, year: {}", organiserId, year);
 
+        // Validate input
+        if (organiserId == null || organiserId.isEmpty()) {
+            throw new IllegalArgumentException("organiserId cannot be null or empty");
+        }
+
         String wrappedId = UUID.randomUUID().toString();
 
         UserData userData = Users.getUserDataById(organiserId);
+        if (userData == null) {
+            logger.error("User not found for organiserId: {}", organiserId);
+            throw new RuntimeException("User not found for organiserId: " + organiserId);
+        }
 
         // Get organiser name
         String organiserName = getOrganiserName(userData);
 
-        // Calculate date range for the year
+        // Calculate date range for the year (using Sydney timezone)
         DateRange dateRange = calculateDateRange(year);
 
-        List<EventData> eventData = getAllOrganiserEventsInDateRange(userData.getOrganiserEvents(), dateRange);
+        // Get organiser events with null safety
+        List<String> organiserEventIds = userData.getOrganiserEvents();
+        if (organiserEventIds == null) {
+            organiserEventIds = Collections.emptyList();
+        }
+
+        List<EventData> eventData = getAllOrganiserEventsInDateRange(organiserEventIds, dateRange);
 
         Map<String, EventMetadata> eventMetadataMap = getAllOrganiserEventMetadataForEventsInDateRange(eventData);
 
@@ -161,33 +189,41 @@ public class WrappedService {
     /**
      * Gets the organiser's display name.
      * 
-     * @param organiserId The organiser's user ID
-     * @return The organiser's name
+     * @param userData The user data
+     * @return The organiser's name, or "Organiser" if not available
      */
     private static String getOrganiserName(UserData userData) {
-        return userData.getFirstName();
+        if (userData == null) {
+            return "Organiser";
+        }
+        String firstName = userData.getFirstName();
+        return (firstName != null && !firstName.isEmpty()) ? firstName : "Organiser";
     }
 
     /**
-     * Calculates the date range for the wrapped data.
+     * Calculates the date range for the wrapped data using Sydney timezone.
      *
      * @param year The year
      * @return The date range
      */
     private static DateRange calculateDateRange(int year) {
-        // from start of the year to today
+        // from start of the year to today (in Sydney timezone)
         LocalDate from = LocalDate.of(year, 1, 1);
-        LocalDate to = LocalDate.now();
+        LocalDate to = LocalDate.now(SYDNEY_TIMEZONE);
         return new DateRange(from.format(DateTimeFormatter.ISO_LOCAL_DATE),
                 to.format(DateTimeFormatter.ISO_LOCAL_DATE));
     }
 
     private static List<EventData> getAllOrganiserEventsInDateRange(List<String> eventIds, DateRange dateRange) {
+        if (eventIds == null || eventIds.isEmpty()) {
+            return Collections.emptyList();
+        }
         return eventIds.stream()
+                .filter(id -> id != null && !id.isEmpty())
                 .map(EventsRepository::getEventById)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .filter(event -> TimeUtils.isTimestampInRange(event.getStartDate(), dateRange))
+                .filter(event -> event.getStartDate() != null && TimeUtils.isTimestampInRange(event.getStartDate(), dateRange))
                 .toList();
     }
 
@@ -235,7 +271,7 @@ public class WrappedService {
      * @return The number of events created
      */
     private static int calculateEventsCreated(List<EventData> eventData) {
-        return eventData.size();
+        return (eventData != null) ? eventData.size() : 0;
     }
 
     /**
@@ -245,35 +281,43 @@ public class WrappedService {
      * @return The total tickets sold
      */
     private static int calculateTicketsSold(Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap) {
+        if (eventOrderTicketMap == null || eventOrderTicketMap.isEmpty()) {
+            return 0;
+        }
         return eventOrderTicketMap.values().stream()
+                .filter(map -> map != null)
                 .map(TicketsService::calculateTotalTicketCount)
                 .reduce(0, Integer::sum);
     }
 
     /**
      * Calculates the total sales volume in cents for the given year.
-     * Source: call Stripe API to calculate total volume
      *
-     * @param organiserId The organiser's user ID
-     * @param year        The year to calculate for
+     * @param eventOrderTicketMap Map of EventId -> Map<Order, List<Ticket>>
      * @return The total sales in cents
      */
     private static long calculateTotalSales(Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap) {
+        if (eventOrderTicketMap == null || eventOrderTicketMap.isEmpty()) {
+            return 0L;
+        }
         return eventOrderTicketMap.values().stream()
+                .filter(map -> map != null)
                 .map(TicketsService::calculateNetSales)
                 .reduce(0L, Long::sum);
     }
 
     /**
      * Calculates the total event views across all events in the given year.
-     * Source: add all event view counts
      *
-     * @param organiserId The organiser's user ID
-     * @param year        The year to calculate for
+     * @param eventData List of event data
      * @return The total event views
      */
     private static int calculateTotalEventViews(List<EventData> eventData) {
+        if (eventData == null || eventData.isEmpty()) {
+            return 0;
+        }
         return eventData.stream()
+                .filter(event -> event != null)
                 .map(EventData::getAccessCount)
                 .reduce(0, Integer::sum);
     }
@@ -288,18 +332,34 @@ public class WrappedService {
     private static List<TopAttendee> calculateTopRegularAttendees(
             Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap) {
         
+        if (eventOrderTicketMap == null || eventOrderTicketMap.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         // Map of email -> (Map of fullName -> count, total tickets)
         Map<String, AttendeeData> attendeeMap = new HashMap<>();
 
         for (Map<Order, List<Ticket>> orderTicketsMap : eventOrderTicketMap.values()) {
+            if (orderTicketsMap == null) {
+                continue;
+            }
             for (Order order : orderTicketsMap.keySet()) {
+                if (order == null) {
+                    continue;
+                }
+                
                 String email = order.getEmail();
                 if (email == null || email.isEmpty()) {
                     continue;
                 }
 
                 String fullName = order.getFullName();
-                int ticketCount = order.getTickets().size();
+                if (fullName == null || fullName.isEmpty()) {
+                    fullName = "Unknown";
+                }
+                
+                List<String> tickets = order.getTickets();
+                int ticketCount = (tickets != null) ? tickets.size() : 0;
 
                 AttendeeData data = attendeeMap.computeIfAbsent(email, k -> new AttendeeData());
                 data.totalTickets += ticketCount;
@@ -333,22 +393,39 @@ public class WrappedService {
     }
 
     /**
-     * Finds the most popular event based on view count.
-     * Source: find the event with the most views
+     * Finds the most popular event based on revenue.
      *
-     * @param organiserId The organiser's user ID
-     * @param year        The year to calculate for
+     * @param eventData List of event data
+     * @param eventOrderTicketMap Map of event orders and tickets
      * @return The most popular event details
      */
     private static MostPopularEvent calculateMostPopularEventByRevenue(List<EventData> eventData, Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap) {
         MostPopularEvent mostPopularEvent = new MostPopularEvent("", "", "", 0, 0L);
 
+        if (eventData == null || eventData.isEmpty()) {
+            return mostPopularEvent;
+        }
+
         for (EventData event : eventData) {
+            if (event == null) {
+                continue;
+            }
+            
             String eventId = event.getEventId();
-            Map<Order, List<Ticket>> orderTicketsMap = eventOrderTicketMap.getOrDefault(eventId, Map.of());
+            if (eventId == null) {
+                continue;
+            }
+            
+            Map<Order, List<Ticket>> orderTicketsMap = (eventOrderTicketMap != null) 
+                    ? eventOrderTicketMap.getOrDefault(eventId, Map.of()) 
+                    : Map.of();
             long revenue = TicketsService.calculateNetSales(orderTicketsMap);
+            
             if (revenue > mostPopularEvent.getRevenue()) {
-                mostPopularEvent = new MostPopularEvent(eventId, event.getImage(), event.getName(), event.getAccessCount(), revenue);
+                String image = (event.getImage() != null) ? event.getImage() : "";
+                String name = (event.getName() != null) ? event.getName() : "Unnamed Event";
+                int accessCount = event.getAccessCount();
+                mostPopularEvent = new MostPopularEvent(eventId, image, name, accessCount, revenue);
             }
         }
         return mostPopularEvent;

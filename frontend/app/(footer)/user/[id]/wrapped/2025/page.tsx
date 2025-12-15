@@ -12,7 +12,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const WRAPPED_YEAR = 2025;
-const MIN_LOADING_TIME_MS = 3000;
+const MIN_LOADING_TIME_MS = 10000;
 
 const publicWrappedPageLogger = new Logger("publicWrappedPageLogger");
 
