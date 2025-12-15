@@ -113,7 +113,7 @@ export function MostPopularEventSection({ mostPopularEvent }: MostPopularEventSe
             className="text-center"
           >
             <p className="text-5xl sm:text-6xl font-black text-white">{mostPopularEvent.attendance}</p>
-            <p className="mt-2 text-gray-400 text-lg">attendees</p>
+            <p className="mt-2 text-gray-400 text-lg">views</p>
           </motion.div>
 
           <div className="hidden sm:block w-px h-20 bg-white/20" />

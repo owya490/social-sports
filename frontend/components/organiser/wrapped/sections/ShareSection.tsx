@@ -136,6 +136,8 @@ export function ShareSection({ organiserName, year, wrappedId }: ShareSectionPro
         <p className="mt-16 text-gray-400 text-sm">
           Thank you for choosing SPORTSHUB. Here&apos;s to an even bigger {year + 1}! 🚀
         </p>
+
+        <p className="mt-4 text-gray-300 text-xs italic">*Numbers are calculated on a best effort basis.</p>
       </AnimatedSection>
     </section>
   );
