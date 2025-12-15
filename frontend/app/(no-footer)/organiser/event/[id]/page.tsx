@@ -114,27 +114,6 @@ export default function EventPage({ params }: EventPageProps) {
       });
   }, []);
 
-  useEffect(() => {
-    window.onscroll = () => {
-      // Prevent side panel on small screen as its doesn't exist
-      if (window.innerWidth > 640) {
-        if (window.scrollY > 310) {
-          document.getElementById("side-panel")!.classList.add("fixed");
-          document.getElementById("side-panel")!.classList.add("top-[110px]");
-          document.getElementById("event-drilldown-details-page")!.classList.add("ml-[296px]");
-        } else if (window.scrollY <= 310) {
-          document.getElementById("side-panel")!.classList.remove("fixed");
-          document.getElementById("side-panel")!.classList.remove("top-[110px]");
-          document.getElementById("event-drilldown-details-page")!.classList.remove("ml-[296px]");
-        }
-      }
-    };
-
-    return () => {
-      window.onscroll = null;
-    };
-  }, []);
-
   return (
     <>
       <EventDrilldownBanner
@@ -159,7 +138,7 @@ export default function EventPage({ params }: EventPageProps) {
           setCurrSidebarPage={setCurrSidebarPage}
         />
         <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
-          <div id="side-panel" className="z-20">
+          <div className="hidden sm:block sticky top-[110px] self-start z-20">
             <EventDrilldownSidePanel
               loading={loading}
               currSidebarPage={currSidebarPage}
@@ -169,7 +148,7 @@ export default function EventPage({ params }: EventPageProps) {
               user={user}
             />
           </div>
-          <div id="event-drilldown-details-page" className="w-full mb-20 sm:mb-0">
+          <div className="flex-1 w-full mb-20 sm:mb-0">
             {currSidebarPage === "Details" && (
               <>
                 <EventDrilldownDetailsPage
