@@ -197,9 +197,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
 
       return form.sectionsOrder.every((sectionId) => {
         const section = form.sectionsMap[sectionId];
-        if (!section) return true; // Skip if section not found
+        if (!section) return true; 
 
-        // If section is required, check if it has a valid answer based on type
         if (section.required) {
           switch (section.type) {
             case FormSectionType.TEXT:
