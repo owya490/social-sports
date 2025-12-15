@@ -3,6 +3,7 @@ import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionResponse";
 import { HeaderSectionResponse } from "@/components/forms/sections/header-section/HeaderSectionResponse";
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
+import { TickboxSectionResponse } from "@/components/forms/sections/tickbox-section/TickboxSectionResponse";
 import Loading from "@/components/loading/Loading";
 import { EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponseId, FormSectionType, SectionId } from "@/interfaces/FormTypes";
@@ -204,7 +205,9 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
             case FormSectionType.TEXT:
             case FormSectionType.MULTIPLE_CHOICE:
             case FormSectionType.DROPDOWN_SELECT:
-              return section.answer && section.answer.trim() !== "";
+              return typeof section.answer === "string" && section.answer.trim() !== "";
+            case FormSectionType.TICKBOX:
+              return section.answer && section.answer.length > 0;
             case FormSectionType.FILE_UPLOAD:
               return section.fileUrl && section.fileUrl.trim() !== "";
             case FormSectionType.DATE_TIME:
@@ -232,20 +235,46 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       setForm((prevForm) => {
         if (!prevForm) return prevForm;
 
-        // Create a new Map copy to avoid mutation
         const newSectionsMap = { ...prevForm.sectionsMap };
-
-        // Get the section to update
         const section = newSectionsMap[sectionId];
-        if (!section) return prevForm; // no change if section not found
+        if (!section) return prevForm;
 
-        // Update the answer (create a new object to keep immutability)
-        const updatedSection = { ...section, answer: newAnswer };
+        // Narrow the type to sections that accept a string answer
+        if (
+          section.type === FormSectionType.TEXT ||
+          section.type === FormSectionType.MULTIPLE_CHOICE ||
+          section.type === FormSectionType.DROPDOWN_SELECT
+        ) {
+          const updatedSection = { ...section, answer: newAnswer };
+          newSectionsMap[sectionId] = updatedSection;
+        }
 
-        // Set it back into the new object
-        newSectionsMap[sectionId] = updatedSection;
+        return {
+          ...prevForm,
+          sectionsMap: newSectionsMap,
+        };
+      });
+    };
 
-        // Return a new form object with updated sections
+    const arrayAnswerOnChange = (sectionId: SectionId, newAnswer: string[]) => {
+      if (!form) return;
+
+      // Mark as having unsaved changes
+      setHasUnsavedChangesState(true);
+
+      setForm((prevForm) => {
+        if (!prevForm) return prevForm;
+
+        const newSectionsMap = { ...prevForm.sectionsMap };
+        const section = newSectionsMap[sectionId];
+        if (!section) return prevForm;
+
+        // Narrow the type to sections that accept string[] answer (TICKBOX)
+        if (section.type === FormSectionType.TICKBOX) {
+          const updatedSection = { ...section, answer: newAnswer };
+          newSectionsMap[sectionId] = updatedSection;
+        }
+
         return {
           ...prevForm,
           sectionsMap: newSectionsMap,
@@ -301,6 +330,17 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
                       dropdownSelectSection={section}
                       answerOnChange={(newAnswer: string) => {
                         stringAnswerOnChange(sectionId, newAnswer);
+                      }}
+                      canEdit={canEdit}
+                    />
+                  );
+                case FormSectionType.TICKBOX:
+                  return (
+                    <TickboxSectionResponse
+                      key={sectionId}
+                      tickboxSection={section}
+                      answerOnChange={(newAnswer: string[]) => {
+                        arrayAnswerOnChange(sectionId, newAnswer);
                       }}
                       canEdit={canEdit}
                     />

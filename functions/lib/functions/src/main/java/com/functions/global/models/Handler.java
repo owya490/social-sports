@@ -11,5 +11,5 @@ import com.functions.global.models.requests.UnifiedRequest;
 public interface Handler<S, T> {
     S parse(UnifiedRequest data);
 
-    T handle(S parsedRequestData);
+    T handle(S parsedRequestData) throws Exception;
 }
