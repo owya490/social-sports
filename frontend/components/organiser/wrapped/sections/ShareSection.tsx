@@ -3,6 +3,8 @@
 import { AnimatedSection } from "@/components/organiser/wrapped/AnimatedSection";
 import { Confetti } from "@/components/organiser/wrapped/Confetti";
 import { useUser } from "@/components/utility/UserContext";
+import { Logger } from "@/observability/logger";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -13,13 +15,15 @@ interface ShareSectionProps {
   wrappedId: string;
 }
 
+const logger = new Logger("ShareSection");
+
 export function ShareSection({ organiserName, year, wrappedId }: ShareSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [copied, setCopied] = useState(false);
   const { user } = useUser();
 
-  const shareUrl = `https://sportshub.net.au/${user.username}/wrapped/${year}?wrappedId=${wrappedId}`;
+  const shareUrl = getUrlWithCurrentHostname(`/user/${user.username}/wrapped/${year}?wrappedId=${wrappedId}`);
 
   const handleCopyLink = async () => {
     try {
@@ -27,7 +31,7 @@ export function ShareSection({ organiserName, year, wrappedId }: ShareSectionPro
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      logger.error("Failed to copy: " + err);
     }
   };
 
