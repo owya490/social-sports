@@ -1,6 +1,6 @@
 import { FormSection, SectionId, TickboxSection } from "@/interfaces/FormTypes";
 import { DocumentDuplicateIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { useCallback, useRef } from "react";
+import { KeyboardEvent, useCallback, useRef } from "react";
 
 interface TickboxSectionBuilderProps {
   section: TickboxSection;
@@ -21,6 +21,7 @@ export const TickboxSectionBuilder = ({
 
   // Helper function to check if last option is empty
   const isLastOptionEmpty = () => {
+    if (section.options.length === 0) return false;
     return section.options[section.options.length - 1] === "";
   };
 
@@ -104,11 +105,11 @@ export const TickboxSectionBuilder = ({
 
   // Handle key events on option inputs
   const handleOptionKeyDown = useCallback(
-    (e: React.KeyboardEvent, index: number) => {
+    (e: KeyboardEvent<HTMLInputElement>, index: number) => {
       if (e.key === "Enter") {
         e.preventDefault();
         handleAddOption(index + 1);
-      } else if (e.key === "Backspace" && section.options[index] === "") {
+      } else if (e.key === "Backspace" && section.options.length > 0 && section.options[index] === "") {
         e.preventDefault();
         handleDeleteEmptyOption(index);
       }
@@ -151,6 +152,7 @@ export const TickboxSectionBuilder = ({
 
             {/* Delete option button */}
             <button
+              type="button"
               onClick={() => handleRemoveOption(index)}
               disabled={section.options.length === 1 && isLastOptionEmpty()}
               className={`p-1.5 rounded-md ${
@@ -168,6 +170,7 @@ export const TickboxSectionBuilder = ({
         {/* Add option button */}
         <div className="w-full flex justify-center">
           <button
+            type="button"
             className={`border p-2 rounded-md ${
               isLastOptionEmpty() ? "border-gray-200 cursor-not-allowed" : "border-gray-300 hover:bg-core-hover"
             }`}
@@ -183,6 +186,7 @@ export const TickboxSectionBuilder = ({
       {/* Section Controls */}
       <div className="flex justify-end items-center gap-2 pt-2">
         <button
+          type="button"
           onClick={() => onDelete(sectionId)}
           className="flex items-center gap-1 px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
         >
@@ -190,6 +194,7 @@ export const TickboxSectionBuilder = ({
           <span>Delete</span>
         </button>
         <button
+          type="button"
           onClick={() => onDuplicate(section)}
           className="flex items-center gap-1 px-2 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition-colors duration-200"
         >
@@ -198,11 +203,11 @@ export const TickboxSectionBuilder = ({
         </button>
         <span className="text-sm text-gray-600">Required</span>
         <button
+          type="button"
           onClick={() => updateSection({ required: !section.required })}
-          className="relative w-9 h-5 rounded-full transition-colors duration-300"
-          style={{
-            backgroundColor: section.required ? "#4CAF50" : "#ccc",
-          }}
+          className={`relative w-9 h-5 rounded-full transition-colors duration-300 ${
+            section.required ? "bg-[#4CAF50]" : "bg-[#ccc]"
+          }`}
           aria-label={`Toggle required field ${section.required ? "off" : "on"}`}
         >
           <div
