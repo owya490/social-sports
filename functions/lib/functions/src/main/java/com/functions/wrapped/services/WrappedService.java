@@ -51,22 +51,50 @@ public class WrappedService {
     /**
      * Gets or generates wrapped data for an organiser.
      * First checks if cached data exists, otherwise generates fresh data.
+     * 
+     * If wrappedId is provided (non-null and non-empty), it will be verified against
+     * the stored data. This is used for public share links. If verification fails,
+     * an exception is thrown.
      *
      * @param organiserId The organiser's user ID
      * @param year        The year for the wrapped data
+     * @param wrappedId   Optional wrappedId for verification (null or empty to skip verification)
      * @return The wrapped data
      */
-    public static SportshubWrappedData getOrGenerateWrappedData(String organiserId, int year) throws Exception {
-        logger.info("Getting or generating wrapped data for organiserId: {}, year: {}", organiserId, year);
+    public static SportshubWrappedData getOrGenerateWrappedData(String organiserId, int year, String wrappedId) throws Exception {
+        logger.info("Getting or generating wrapped data for organiserId: {}, year: {}, wrappedId: {}", 
+                organiserId, year, wrappedId);
+
+        boolean requiresVerification = wrappedId != null && !wrappedId.isEmpty();
 
         // Check if we have cached wrapped data
         Optional<SportshubWrappedData> cachedData = WrappedRepository.getWrappedData(organiserId, year);
+        
         if (cachedData.isPresent()) {
+            SportshubWrappedData data = cachedData.get();
+            
+            // If wrappedId is provided, verify it matches
+            if (requiresVerification) {
+                if (!wrappedId.equals(data.getWrappedId())) {
+                    logger.warn("wrappedId mismatch for organiserId: {}, year: {}. Expected: {}, Got: {}", 
+                            organiserId, year, data.getWrappedId(), wrappedId);
+                    throw new RuntimeException("Invalid share link - wrappedId does not match");
+                }
+                logger.info("wrappedId verified successfully for organiserId: {}, year: {}", organiserId, year);
+            }
+            
             logger.info("Found cached wrapped data for organiserId: {}, year: {}", organiserId, year);
-            return cachedData.get();
+            return data;
         }
 
-        // Generate fresh wrapped data
+        // If verification is required but no data exists, that's an error
+        if (requiresVerification) {
+            logger.warn("No wrapped data found for organiserId: {}, year: {} but wrappedId verification was required", 
+                    organiserId, year);
+            throw new RuntimeException("Wrapped data not found for this organiser");
+        }
+
+        // Generate fresh wrapped data (only when no verification is required)
         logger.info("Generating fresh wrapped data for organiserId: {}, year: {}", organiserId, year);
         return generateWrappedData(organiserId, year);
     }
@@ -373,4 +401,5 @@ public class WrappedService {
         // Generate fresh data (saveWrappedData will overwrite any existing data)
         return generateWrappedData(organiserId, year);
     }
+
 }

@@ -29,13 +29,14 @@ public class GetWrappedHandler implements Handler<GetWrappedRequest, GetWrappedR
 
     @Override
     public GetWrappedResponse handle(GetWrappedRequest request) {
-        logger.info("Handling get wrapped request for organiserId: {}, year: {}", 
-                request.organiserId(), request.year());
+        logger.info("Handling get wrapped request for organiserId: {}, year: {}, wrappedId: {}", 
+                request.organiserId(), request.year(), request.wrappedId());
 
         try {
             SportshubWrappedData wrappedData = WrappedService.getOrGenerateWrappedData(
                     request.organiserId(), 
-                    request.year()
+                    request.year(),
+                    request.wrappedId()
             );
 
             logger.info("Successfully retrieved wrapped data for organiserId: {}, year: {}", 

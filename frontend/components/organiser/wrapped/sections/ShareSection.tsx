@@ -23,7 +23,7 @@ export function ShareSection({ organiserName, year, wrappedId }: ShareSectionPro
   const [copied, setCopied] = useState(false);
   const { user } = useUser();
 
-  const shareUrl = getUrlWithCurrentHostname(`/${user.username}/wrapped/${year}?wrappedId=${wrappedId}`);
+  const shareUrl = getUrlWithCurrentHostname(`/user/${user.username}/wrapped/${year}?wrappedId=${wrappedId}`);
 
   const handleCopyLink = async () => {
     try {

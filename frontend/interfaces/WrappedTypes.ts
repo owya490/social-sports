@@ -1,9 +1,14 @@
 /**
  * Request to get Sportshub Wrapped data for an organiser.
+ *
+ * If wrappedId is provided, it will be verified against the stored data.
+ * This is used for public share links where verification is required.
+ * If wrappedId is null/undefined, no verification is performed (for organiser's own view).
  */
 export type GetWrappedRequest = {
   organiserId: string;
   year: number;
+  wrappedId?: string; // Optional - if provided, verifies the share link
 };
 
 /**
