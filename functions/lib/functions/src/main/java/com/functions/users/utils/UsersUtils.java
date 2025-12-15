@@ -1,8 +1,11 @@
 package com.functions.users.utils;
 
+import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.models.PublicUserData;
 import com.functions.users.models.UserData;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.Firestore;
 
 public class UsersUtils {
 	/**
@@ -45,5 +48,15 @@ public class UsersUtils {
 		privateUserData.setPrivateEventCollections(data.getPrivateEventCollections());
 
 		return privateUserData;
+	}
+
+	/**
+	 * Builds user document reference (private collection).
+	 */
+	public static DocumentReference getUserRef(Firestore db, String userId) {
+		return db.collection(CollectionPaths.USERS)
+				.document(CollectionPaths.ACTIVE)
+				.collection(CollectionPaths.PRIVATE)
+				.document(userId);
 	}
 }

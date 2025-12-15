@@ -1,14 +1,25 @@
 package com.functions.events.utils;
 
-import com.functions.users.models.PrivateUserData;
-import com.functions.users.models.PublicUserData;
-import com.functions.users.services.Users;
-
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.functions.events.models.EventData;
+import com.functions.firebase.services.FirebaseService.CollectionPaths;
+import com.functions.stripe.exceptions.CheckoutDateTimeException;
+import com.functions.users.models.PrivateUserData;
+import com.functions.users.models.PublicUserData;
+import com.functions.users.services.Users;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.Firestore;
+
 public class EventsUtils {
+    private static final Logger logger = LoggerFactory.getLogger(EventsUtils.class);
     public static List<String> tokenizeText(String text) {
         return Arrays.stream(text.toLowerCase().split("\\s+")).filter(token -> !token.isEmpty())
                 .collect(Collectors.toList());
@@ -35,5 +46,67 @@ public class EventsUtils {
         privateUserData.setOrganiserEvents(organiserEvents);
 
         Users.updatePrivateUserData(userId, privateUserData);
+    }
+
+    /**
+     * Fetches organiser ID for an event.
+     */
+    public static String extractOrganiserIdForEvent(EventData event) {
+        if (event == null) {
+            logger.error("Failed to fetch organiser ID for event: null");
+            throw new RuntimeException("Failed to fetch organiser ID for event: null");
+        }
+
+        String organiserId = event.getOrganiserId();
+        if (organiserId == null || organiserId.isEmpty()) {
+            String eventString = event.toString();
+            logger.error("Failed to fetch organiser ID for event: {}", eventString);
+            throw new RuntimeException("Failed to fetch organiser ID for event: " + eventString);
+        }
+
+        return organiserId;
+    }
+
+    /**
+     * Validates event timing: not paused, not concluded, registration still open.
+     */
+    public static void validateEventTiming(EventData event) throws Exception {
+        if (event == null) {
+            logger.error("Failed to validate event timing: event is null");
+            throw new RuntimeException("Failed to validate event timing: event is null");
+        }
+
+        boolean paused = event.getPaused() != null ? event.getPaused() : false;
+        Timestamp endDate = event.getEndDate();
+        Timestamp registrationDeadline = event.getRegistrationDeadline();
+        String eventId = event.getEventId();
+
+        if (endDate == null || registrationDeadline == null) {
+            logger.error("Event {} missing date fields", eventId);
+            throw new RuntimeException("Event " + eventId + " missing date fields");
+        }
+
+        Instant now = Instant.now();
+        Instant eventEnd = Instant.ofEpochSecond(endDate.getSeconds(), endDate.getNanos());
+        Instant registrationEnd = Instant.ofEpochSecond(registrationDeadline.getSeconds(), registrationDeadline.getNanos());
+
+        Boolean isEventEnded = now.isAfter(eventEnd);
+        Boolean isRegistrationEnded = now.isAfter(registrationEnd);
+        if (paused || isEventEnded || isRegistrationEnded) {
+            logger.warn("Event {} not available: paused={}, concluded={}, registrationClosed={}",
+                    eventId, paused, isEventEnded, isRegistrationEnded);
+            throw new CheckoutDateTimeException("Event " + eventId + " not available: " +
+                    "paused=" + paused + ", concluded=" + isEventEnded + 
+                    ", registrationClosed=" + isRegistrationEnded);
+        }
+    }
+
+    /**
+     * Builds event document reference.
+     */
+    public static DocumentReference getEventRef(Firestore db, String eventId, Boolean isPrivate) {
+        String privacyPath = Boolean.TRUE.equals(isPrivate) ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
+        return db.collection(CollectionPaths.EVENTS + "/" + CollectionPaths.ACTIVE + "/" + privacyPath)
+                .document(eventId);
     }
 }
