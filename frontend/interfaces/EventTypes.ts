@@ -4,7 +4,9 @@ import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
 
 export type EventId = string;
 export type StripeCheckoutSessionId = string;
+
 export type OrderId = string;
+export type TicketId = string;
 
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;

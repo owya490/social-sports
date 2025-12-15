@@ -3,15 +3,21 @@ import { Tag } from "@/interfaces/TagTypes";
 import { getAllTags } from "@/services/src/tagService";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProfilePic from "../navbar/ProfilePic";
 import Logo from "./../../public/images/BlackLogo.svg";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileSearchInput from "./MobileSearchInput";
 
+// Routes where the navbar should be hidden
+const HIDDEN_NAVBAR_ROUTES = ["/organiser/wrapped"];
+
 export default function MobileNavbar() {
+  const pathname = usePathname();
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
+
   useEffect(() => {
     getAllTags()
       .then((tags) => {
@@ -22,9 +28,16 @@ export default function MobileNavbar() {
         setTags([]); // Set empty array as fallback
       });
   }, []);
+
+  // Hide navbar on specific routes
+  if (HIDDEN_NAVBAR_ROUTES.some((route) => pathname.startsWith(route))) {
+    return null;
+  }
+
   const handleSearchExpanded = () => {
     setSearchExpanded(!searchExpanded);
   };
+
   return (
     <header className="bg-white fixed top-0 w-full z-50">
       <nav

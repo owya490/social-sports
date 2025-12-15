@@ -1,6 +1,6 @@
 "use client";
 
-import { DocumentTextIcon, ListBulletIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, DocumentTextIcon, ListBulletIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "@material-tailwind/react";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import { FormNavButton } from "./FormUtilityComponents";
@@ -8,6 +8,7 @@ import { FormNavButton } from "./FormUtilityComponents";
 interface FormDesktopEditBarProps {
   onAddTextSection: () => void;
   onAddDropdownSection: () => void;
+  onAddTickboxSection: () => void;
   onAddImageSection: () => void;
   onSaveForm: () => void;
   isFormModified: boolean;
@@ -17,6 +18,7 @@ interface FormDesktopEditBarProps {
 const FormDesktopEditBar = ({
   onAddTextSection,
   onAddDropdownSection,
+  onAddTickboxSection,
   onAddImageSection,
   onSaveForm,
   isFormModified,
@@ -31,6 +33,10 @@ const FormDesktopEditBar = ({
 
         <FormNavButton onClick={onAddDropdownSection} tooltipContent="Add Dropdown Question">
           <ListBulletIcon className="w-6 h-6 stroke-1 text-black" />
+        </FormNavButton>
+
+        <FormNavButton onClick={onAddTickboxSection} tooltipContent="Add Tickbox Question">
+          <CheckCircleIcon className="w-6 h-6 stroke-1 text-black" />
         </FormNavButton>
 
         <FormNavButton onClick={onAddImageSection} tooltipContent="Add Image Section">

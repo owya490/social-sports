@@ -1,13 +1,22 @@
 package com.functions.forms.services;
 
-import com.functions.events.repositories.EventsRepository;
-import com.functions.forms.models.*;
-import com.functions.forms.repositories.FormsRepository;
-import com.google.cloud.firestore.Transaction;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
+import com.functions.events.repositories.EventsRepository;
+import com.functions.forms.models.DateTimeSection;
+import com.functions.forms.models.DropdownSelectSection;
+import com.functions.forms.models.FileUploadSection;
+import com.functions.forms.models.FormResponse;
+import com.functions.forms.models.FormSection;
+import com.functions.forms.models.ImageSection;
+import com.functions.forms.models.MultipleChoiceSection;
+import com.functions.forms.models.TextSection;
+import com.functions.forms.models.TickboxSection;
+import com.functions.forms.repositories.FormsRepository;
+import com.google.cloud.firestore.Transaction;
 
 public class FormsUtils {
     private static final Logger logger = LoggerFactory.getLogger(FormsUtils.class);
@@ -30,7 +39,6 @@ public class FormsUtils {
                     "[FormsUtils] Failed to retrieve form ID for event ID: " + eventId, e);
         }
     }
-
 
     public static boolean isFormResponseComplete(FormResponse formResponse) {
         logger.info("[FormsUtils] Checking if form response is complete: {}", formResponse);
@@ -55,40 +63,19 @@ public class FormsUtils {
                 continue;
             }
 
-            switch (section.getType()) {
-                case TEXT:
-                    if (!((TextSection) section).hasAnswer()) {
-                        return false;
-                    }
-                    break;
-                case MULTIPLE_CHOICE:
-                    if (!((MultipleChoiceSection) section).hasAnswer()) {
-                        return false;
-                    }
-                    break;
-                case DROPDOWN_SELECT:
-                    if (!((DropdownSelectSection) section).hasAnswer()) {
-                        return false;
-                    }
-                    break;
-                case FILE_UPLOAD:
-                    if (!((FileUploadSection) section).hasFileUrl()) {
-                        return false;
-                    }
-                    break;
-                case DATE_TIME:
-                    if (!((DateTimeSection) section).hasTimestamp()) {
-                        return false;
-                    }
-                    break;
-                case IMAGE:
-                    if (!((ImageSection) section).hasImageUrl()) {
-                        return false;
-                    }
-                    break;
-                default:
-                    logger.error("[FormsUtils] Unknown section type: {}", section.getType());
-                    return false;
+            boolean hasAnswer = switch (section.getType()) {
+                case TEXT -> ((TextSection) section).hasAnswer();
+                case MULTIPLE_CHOICE -> ((MultipleChoiceSection) section).hasAnswer();
+                case DROPDOWN_SELECT -> ((DropdownSelectSection) section).hasAnswer();
+                case TICKBOX -> ((TickboxSection) section).hasAnswer();
+                case FILE_UPLOAD -> ((FileUploadSection) section).hasFileUrl();
+                case DATE_TIME -> ((DateTimeSection) section).hasTimestamp();
+                case IMAGE -> ((ImageSection) section).hasImageUrl();
+                // No default! If you add a new enum value, this won't compile.
+            };
+
+            if (!hasAnswer) {
+                return false;
             }
         }
         logger.info("[FormsUtils] Form response is complete: {}", formResponse);
@@ -96,7 +83,8 @@ public class FormsUtils {
     }
 
     /**
-     * Copies a temporary form response to the submitted collection and deletes the temporary
+     * Copies a temporary form response to the submitted collection and deletes the
+     * temporary
      * version
      *
      * @param formId         The form ID
@@ -106,7 +94,7 @@ public class FormsUtils {
      * @throws RuntimeException if there's an error during the copy operation
      */
     public static void copyTempFormResponseToSubmitted(String formId, String eventId,
-                                                       String formResponseId, Optional<Transaction> transaction) {
+            String formResponseId, Optional<Transaction> transaction) {
         try {
             String logPrefix = transaction.isPresent() ? "transactional " : "";
             logger.info(
@@ -122,8 +110,10 @@ public class FormsUtils {
 
             // Step 3: Save to submitted collection
             FormsRepository.saveSubmittedFormResponse(tempFormResponse, transaction);
-            logger.info("Successfully saved form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}, formResponse: {}",
-                    transaction.isPresent() ? "transaction" : "regular operation", formId, eventId, formResponseId, tempFormResponse);
+            logger.info(
+                    "Successfully saved form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}, formResponse: {}",
+                    transaction.isPresent() ? "transaction" : "regular operation", formId, eventId, formResponseId,
+                    tempFormResponse);
 
             // Step 4: Delete from temporary collection
             FormsRepository.deleteTempFormResponse(formId, eventId, formResponseId, transaction);
@@ -148,28 +138,34 @@ public class FormsUtils {
     }
 
     /**
-     * Copies a temporary form response to the submitted collection using pre-read data and deletes the temporary version.
-     * This method is designed for use within transactions where all reads must occur before writes.
+     * Copies a temporary form response to the submitted collection using pre-read
+     * data and deletes the temporary version.
+     * This method is designed for use within transactions where all reads must
+     * occur before writes.
      *
      * @param tempFormResponse The pre-read temporary form response
      * @param transaction      Optional transaction to use for atomic operations
      * @throws RuntimeException if there's an error during the copy operation
      */
-    public static void copyTempFormResponseToSubmittedWithData(FormResponse tempFormResponse, Optional<Transaction> transaction) {
+    public static void copyTempFormResponseToSubmittedWithData(FormResponse tempFormResponse,
+            Optional<Transaction> transaction) {
         try {
             String logPrefix = transaction.isPresent() ? "transactional " : "";
             logger.info(
                     "Starting {}copy of pre-read temporary form response to submitted - formId: {}, eventId: {}, formResponseId: {}",
-                    logPrefix, tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId());
+                    logPrefix, tempFormResponse.getFormId(), tempFormResponse.getEventId(),
+                    tempFormResponse.getFormResponseId());
 
             // Step 1: Set submission time for the final submission
             tempFormResponse.setSubmissionTime(com.google.cloud.Timestamp.now());
 
             // Step 2: Save to submitted collection
             FormsRepository.saveSubmittedFormResponse(tempFormResponse, transaction);
-            logger.info("Successfully saved pre-read form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}, formResponse: {}",
+            logger.info(
+                    "Successfully saved pre-read form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}, formResponse: {}",
                     transaction.isPresent() ? "transaction" : "regular operation",
-                    tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId(), tempFormResponse);
+                    tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId(),
+                    tempFormResponse);
 
             // Step 3: Delete from temporary collection
             FormsRepository.deleteTempFormResponse(tempFormResponse.getFormId(), tempFormResponse.getEventId(),
@@ -185,10 +181,12 @@ public class FormsUtils {
             logger.error(
                     "[FormsUtils] Error copying pre-read temporary form response to submitted using {} - formId: {}, eventId: {}, formResponseId: {}: {}",
                     transaction.isPresent() ? "transaction" : "regular operation",
-                    tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId(), e.getMessage());
+                    tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId(),
+                    e.getMessage());
             throw new RuntimeException(
                     "[FormsUtils] Failed to copy pre-read temporary form response to submitted - formId: "
-                            + tempFormResponse.getFormId() + ", eventId: " + tempFormResponse.getEventId() + ", formResponseId: "
+                            + tempFormResponse.getFormId() + ", eventId: " + tempFormResponse.getEventId()
+                            + ", formResponseId: "
                             + tempFormResponse.getFormResponseId(),
                     e);
         }

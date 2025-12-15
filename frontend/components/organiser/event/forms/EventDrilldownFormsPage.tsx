@@ -52,7 +52,19 @@ const getAnswerDisplay = (section: FormSection | undefined): string => {
   switch (section.type) {
     case FormSectionType.TEXT:
     case FormSectionType.DROPDOWN_SELECT:
+    case FormSectionType.MULTIPLE_CHOICE:
       return section.answer || "—";
+    case FormSectionType.TICKBOX:
+      return section.answer?.join(", ") || "—";
+    case FormSectionType.DATE_TIME:
+      if (!section.timestamp) return "—";
+      try {
+        return new Date(section.timestamp).toLocaleString();
+      } catch {
+        return section.timestamp;
+      }
+    case FormSectionType.FILE_UPLOAD:
+      return section.fileUrl || "—";
     default:
       return "—";
   }
