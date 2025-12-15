@@ -205,7 +205,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
             case FormSectionType.TEXT:
             case FormSectionType.MULTIPLE_CHOICE:
             case FormSectionType.DROPDOWN_SELECT:
-              return section.answer && section.answer.trim() !== "";
+            case FormSectionType.BINARY_CHOICE:
+              return typeof section.answer === "string" && section.answer.trim() !== "";
             case FormSectionType.TICKBOX:
               return section.answer && section.answer.length > 0;
             case FormSectionType.FILE_UPLOAD:
@@ -243,7 +244,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
         if (
           section.type === FormSectionType.TEXT ||
           section.type === FormSectionType.MULTIPLE_CHOICE ||
-          section.type === FormSectionType.DROPDOWN_SELECT
+          section.type === FormSectionType.DROPDOWN_SELECT ||
+          section.type === FormSectionType.BINARY_CHOICE
         ) {
           const updatedSection = { ...section, answer: newAnswer };
           newSectionsMap[sectionId] = updatedSection;
