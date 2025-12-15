@@ -1,5 +1,20 @@
 package com.functions.firebase.services;
 
+import static com.functions.utils.JavaUtils.objectMapper;
+
+import java.io.FileInputStream;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.functions.firebase.models.requests.CallFirebaseFunctionRequest;
 import com.functions.firebase.models.responses.CallFirebaseFunctionResponse;
 import com.functions.global.handlers.Global;
@@ -13,21 +28,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
 import com.posthog.java.PostHog;
+
 import lombok.Getter;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.FileInputStream;
-import java.util.List;
-import java.util.Optional;
-
-import static com.functions.utils.JavaUtils.objectMapper;
 
 public class FirebaseService {
 
@@ -46,6 +48,8 @@ public class FirebaseService {
                 "Events/InActive/Public",
                 "Events/InActive/Private");
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
+        public static final String TICKETS = "Tickets";
+        public static final String ORDERS = "Orders";
         public static final String TEMP_FORM_RESPONSE_PATH = "Forms/FormResponses/Temp";
         public static final String SUBMITTED_FORM_RESPONSE_PATH = "Forms/FormResponses/Submitted";
         public static final List<String> FORM_RESPONSE_PATHS = List.of(

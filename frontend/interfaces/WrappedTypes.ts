@@ -1,3 +1,18 @@
+/**
+ * Request to get Sportshub Wrapped data for an organiser.
+ */
+export type GetWrappedRequest = {
+  organiserId: string;
+  year: number;
+};
+
+/**
+ * Response containing the Sportshub Wrapped data for an organiser.
+ */
+export type GetWrappedResponse = {
+  sportshubWrappedData: SportshubWrapped;
+};
+
 export type SportshubWrapped = {
   organiserName: string;
   organiserId: string;
@@ -55,7 +70,8 @@ export const mockWrappedData: SportshubWrapped = {
   ],
 
   mostPopularEvent: {
-    eventImage: "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fc5vFAZ3NlSXVuHGrwlkCjJr3RXX2%2FeventThumbnails%2F0e4265ae-9387-4455-a757-c14cddd41454_1757329424559?alt=media&token=41987621-2527-4cc0-bd4b-65647530788b",
+    eventImage:
+      "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fc5vFAZ3NlSXVuHGrwlkCjJr3RXX2%2FeventThumbnails%2F0e4265ae-9387-4455-a757-c14cddd41454_1757329424559?alt=media&token=41987621-2527-4cc0-bd4b-65647530788b",
     eventId: "cr52yV7whtZnyAzVjTCF",
     name: "Summer Beach Volleyball Championship",
     attendance: 256,

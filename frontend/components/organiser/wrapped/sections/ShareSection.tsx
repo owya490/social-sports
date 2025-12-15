@@ -31,7 +31,7 @@ export function ShareSection({ organiserName, year, wrappedId }: ShareSectionPro
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      logger.error("Failed to copy:", err);
+      logger.error("Failed to copy: " + err);
     }
   };
 

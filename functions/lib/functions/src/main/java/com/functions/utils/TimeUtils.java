@@ -114,9 +114,9 @@ public class TimeUtils {
 	 * @return Array of [startTimestamp, endTimestamp]
 	 */
 	public static Timestamp[] dateRangeToTimestamps(DateRange dateRange) {
-		Timestamp start = isoDateToTimestamp(dateRange.from());
+		Timestamp start = isoDateToTimestamp(dateRange.getFrom());
 		// End timestamp should be end of day
-		LocalDate endDate = parseIsoDateToLocalDate(dateRange.to());
+		LocalDate endDate = parseIsoDateToLocalDate(dateRange.getTo());
 		Timestamp end = Timestamp.ofTimeSecondsAndNanos(
 				endDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond() - 1, 0);
 		return new Timestamp[] { start, end };
@@ -130,8 +130,8 @@ public class TimeUtils {
 	 * @return true if the date is within the range
 	 */
 	public static boolean isDateInRange(LocalDate date, DateRange dateRange) {
-		LocalDate from = parseIsoDateToLocalDate(dateRange.from());
-		LocalDate to = parseIsoDateToLocalDate(dateRange.to());
+		LocalDate from = parseIsoDateToLocalDate(dateRange.getFrom());
+		LocalDate to = parseIsoDateToLocalDate(dateRange.getTo());
 		return !date.isBefore(from) && !date.isAfter(to);
 	}
 

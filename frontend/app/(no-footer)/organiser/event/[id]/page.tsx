@@ -90,8 +90,9 @@ export default function EventPage({ params }: EventPageProps) {
         setEventIsActive(event.isActive);
         setEventFormId(event.formId);
         setEventHideVacancy(event.hideVacancy);
+        return event;
       })
-      .then(() => {
+      .then((event) => {
         getEventsMetadataByEventId(eventId).then((eventMetadata) => {
           setEventMetadata(eventMetadata);
           calculateNetSales(eventMetadata)
@@ -100,7 +101,7 @@ export default function EventPage({ params }: EventPageProps) {
             })
             .catch((error) => {
               eventServiceLogger.error(`Error calculating net sales: ${error}`);
-              setTotalNetSales(eventMetadata.completeTicketCount * eventPrice);
+              setTotalNetSales(eventMetadata.completeTicketCount * event.price);
             });
         });
       })

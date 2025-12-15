@@ -11,7 +11,6 @@ import com.functions.firebase.services.FirebaseService;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
-
 public class EventsRepository {
     private static final Logger logger = LoggerFactory.getLogger(EventsRepository.class);
 
@@ -52,6 +51,7 @@ public class EventsRepository {
     }
 
     public static Optional<EventMetadata> getEventMetadataById(String eventId) {
+        Firestore db = FirebaseService.getFirestore();
         try {
             DocumentReference docRef = db.document(FirebaseService.CollectionPaths.EVENTS_METADATA + "/" + eventId);
             DocumentSnapshot maybeDocSnapshot = docRef.get().get();

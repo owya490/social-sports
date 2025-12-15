@@ -2,9 +2,13 @@ package com.functions.wrapped.services;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +16,9 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.tickets.models.Order;
+import com.functions.tickets.models.Ticket;
+import com.functions.tickets.services.TicketsService;
 import com.functions.users.models.UserData;
 import com.functions.users.services.Users;
 import com.functions.utils.TimeUtils;
@@ -32,12 +39,14 @@ public class WrappedService {
     // Average time in minutes to verify a bank transfer booking
     private static final int AVG_MINUTES_PER_BANK_TRANSFER_VERIFICATION = 5;
 
-    // Eventbrite fee percentage (approximately 6.95% + $0.99 per ticket)
-    private static final double EVENTBRITE_FEE_PERCENTAGE = 0.0695;
-    private static final int EVENTBRITE_FEE_PER_TICKET_CENTS = 99;
+    // Eventbrite fees: 5.35% + $1.19 per ticket
+    private static final double EVENTBRITE_FEE_PERCENTAGE = 0.0535;
+    private static final long EVENTBRITE_FEE_PER_TICKET_CENTS = 119L;
 
-    // Sportshub fee percentage
-    private static final double SPORTSHUB_FEE_PERCENTAGE = 0.029; // 2.9% Stripe fee
+    // Sportshub fees: Stripe (1.75% + $0.30) + Sportshub (1.0% of sales)
+    private static final double STRIPE_FEE_PERCENTAGE = 0.0175;
+    private static final long STRIPE_FEE_PER_TICKET_CENTS = 30L;
+    private static final double SPORTSHUB_FEE_PERCENTAGE = 0.01;
 
     /**
      * Gets or generates wrapped data for an organiser.
@@ -84,22 +93,20 @@ public class WrappedService {
 
         List<EventData> eventData = getAllOrganiserEventsInDateRange(userData.getOrganiserEvents(), dateRange);
 
-        List<EventMetadata> eventMetadata = getAllOrganiserEventMetadataForEventsInDateRange(eventData);
-        
+        Map<String, EventMetadata> eventMetadataMap = getAllOrganiserEventMetadataForEventsInDateRange(eventData);
+
+        // Build the eventOrderTicketMap: Map<EventId, Map<Order, List<Ticket>>>
+        Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap = buildEventOrderTicketMap(eventData, eventMetadataMap);
+
         // Calculate all metrics
         int eventsCreated = calculateEventsCreated(eventData);
-
-
-        // get the list of orders and tickets and store it in a map
-        // Map<EventId, Map<OrderId, List<TicketId>>>
-
-        int ticketsSold = calculateTicketsSold(eventMetadata);
-        long totalSales = calculateTotalSales(organiserId, year, dateRange);
-        int totalEventViews = calculateTotalEventViews(organiserId, year, dateRange);
-        List<TopAttendee> topRegularAttendees = calculateTopRegularAttendees(organiserId, year, dateRange);
-        MostPopularEvent mostPopularEvent = calculateMostPopularEvent(organiserId, year, dateRange);
-        int minutesSavedBookkeeping = calculateMinutesSavedBookkeeping(organiserId, year, ticketsSold, dateRange);
-        long feesSavedVsEventbrite = calculateFeesSavedVsEventbrite(totalSales, ticketsSold, dateRange);
+        int ticketsSold = calculateTicketsSold(eventOrderTicketMap);
+        long totalSales = calculateTotalSales(eventOrderTicketMap);
+        int totalEventViews = calculateTotalEventViews(eventData);
+        List<TopAttendee> topRegularAttendees = calculateTopRegularAttendees(eventOrderTicketMap);
+        MostPopularEvent mostPopularEvent = calculateMostPopularEventByRevenue(eventData, eventOrderTicketMap);
+        int minutesSavedBookkeeping = calculateMinutesSavedBookkeeping(ticketsSold);
+        long feesSavedVsEventbrite = calculateFeesSavedVsEventbrite(totalSales, ticketsSold);
 
         SportshubWrappedData wrappedData = new SportshubWrappedData(
                 organiserName,
@@ -156,13 +163,42 @@ public class WrappedService {
                 .toList();
     }
 
-    private static List<EventMetadata> getAllOrganiserEventMetadataForEventsInDateRange(List<EventData> eventData) {
+    private static Map<String, EventMetadata> getAllOrganiserEventMetadataForEventsInDateRange(List<EventData> eventData) {
         return eventData.stream()
                 .map(EventData::getEventId)
-                .map(EventsRepository::getEventMetadataById)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toList();
+                .collect(Collectors.toMap(Function.identity(), eventId -> EventsRepository.getEventMetadataById(eventId).orElse(null)))
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() != null)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    /**
+     * Builds a map of EventId -> Map<Order, List<Ticket>> for all events.
+     * This consolidates all order and ticket data for metric calculations.
+     *
+     * @param eventData List of event data
+     * @param eventMetadata List of event metadata
+     * @return Map of EventId -> Map<Order, List<Ticket>>
+     */
+    private static Map<String, Map<Order, List<Ticket>>> buildEventOrderTicketMap(
+            List<EventData> eventData, 
+            Map<String, EventMetadata> eventMetadataMap) {
+        
+        Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap = new HashMap<>();
+
+        for (EventData event : eventData) {
+            String eventId = event.getEventId();
+            EventMetadata metadata = eventMetadataMap.get(eventId);
+            
+            if (metadata != null && metadata.getOrderIds() != null && !metadata.getOrderIds().isEmpty()) {
+                Map<Order, List<Ticket>> orderTicketsMap = TicketsService.getOrdersAndTickets(metadata.getOrderIds());
+                eventOrderTicketMap.put(eventId, orderTicketsMap);
+            }
+        }
+
+        logger.info("Built eventOrderTicketMap for {} events", eventOrderTicketMap.size());
+        return eventOrderTicketMap;
     }
 
     /**
@@ -175,21 +211,15 @@ public class WrappedService {
     }
 
     /**
-     * Calculates the total number of tickets sold across all events in the given
-     * year.
-     * Source: iterate through all events metadata and add up completed ticket count
+     * Calculates the total number of tickets sold across all events.
      *
-     * @param organiserId The organiser's user ID
-     * @param year        The year to calculate for
+     * @param eventOrderTicketMap Map of EventId -> Map<Order, List<Ticket>>
      * @return The total tickets sold
      */
-    private static int calculateTicketsSold(String organiserId, int year, DateRange dateRange) {
-        // TODO: Implement
-        // - Get all events for the organiser in the year
-        // - For each event, get the EventMetadata
-        // - Sum up completeTicketCount from each event's metadata
-        logger.info("STUB: calculateTicketsSold for organiserId: {}, year: {}", organiserId, year);
-        return 0;
+    private static int calculateTicketsSold(Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap) {
+        return eventOrderTicketMap.values().stream()
+                .map(TicketsService::calculateTotalTicketCount)
+                .reduce(0, Integer::sum);
     }
 
     /**
@@ -200,13 +230,10 @@ public class WrappedService {
      * @param year        The year to calculate for
      * @return The total sales in cents
      */
-    private static long calculateTotalSales(String organiserId, int year, DateRange dateRange) {
-        // TODO: Implement
-        // - Get organiser's Stripe account ID from private user data
-        // - Call Stripe API to get balance transactions for the year
-        // - Sum up the gross amounts
-        logger.info("STUB: calculateTotalSales for organiserId: {}, year: {}", organiserId, year);
-        return 0L;
+    private static long calculateTotalSales(Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap) {
+        return eventOrderTicketMap.values().stream()
+                .map(TicketsService::calculateNetSales)
+                .reduce(0L, Long::sum);
     }
 
     /**
@@ -217,33 +244,64 @@ public class WrappedService {
      * @param year        The year to calculate for
      * @return The total event views
      */
-    private static int calculateTotalEventViews(String organiserId, int year, DateRange dateRange) {
-        // TODO: Implement
-        // - Get all events for the organiser in the year
-        // - For each event, get the view count
-        // - Sum up all view counts
-        logger.info("STUB: calculateTotalEventViews for organiserId: {}, year: {}", organiserId, year);
-        return 0;
+    private static int calculateTotalEventViews(List<EventData> eventData) {
+        return eventData.stream()
+                .map(EventData::getAccessCount)
+                .reduce(0, Integer::sum);
     }
 
     /**
      * Calculates the top 5 regular attendees for the organiser's events.
-     * Source: keep a map of all attendees by iterating through orders to see how
-     * many tickets they bought
+     * Groups by email and uses the most frequently appearing fullName for each email.
      *
-     * @param organiserId The organiser's user ID
-     * @param year        The year to calculate for
-     * @return List of top 5 attendees with their attendance counts
+     * @param eventOrderTicketMap Map of EventId -> Map<Order, List<Ticket>>
+     * @return List of top 5 attendees sorted by ticket count descending
      */
-    private static List<TopAttendee> calculateTopRegularAttendees(String organiserId, int year, DateRange dateRange) {
-        // TODO: Implement
-        // - Get all events for the organiser in the year
-        // - For each event, iterate through the orders/purchaserMap in metadata
-        // - Build a map of attendee email -> (name, total ticket count)
-        // - Sort by ticket count descending
-        // - Return top 5
-        logger.info("STUB: calculateTopRegularAttendees for organiserId: {}, year: {}", organiserId, year);
-        return List.of();
+    private static List<TopAttendee> calculateTopRegularAttendees(
+            Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap) {
+        
+        // Map of email -> (Map of fullName -> count, total tickets)
+        Map<String, AttendeeData> attendeeMap = new HashMap<>();
+
+        for (Map<Order, List<Ticket>> orderTicketsMap : eventOrderTicketMap.values()) {
+            for (Order order : orderTicketsMap.keySet()) {
+                String email = order.getEmail();
+                if (email == null || email.isEmpty()) {
+                    continue;
+                }
+
+                String fullName = order.getFullName();
+                int ticketCount = order.getTickets().size();
+
+                AttendeeData data = attendeeMap.computeIfAbsent(email, k -> new AttendeeData());
+                data.totalTickets += ticketCount;
+                data.nameFrequency.merge(fullName, 1, Integer::sum);
+            }
+        }
+
+        // Convert to TopAttendee list and sort by ticket count
+        return attendeeMap.entrySet().stream()
+                .map(entry -> {
+                    String email = entry.getKey();
+                    AttendeeData data = entry.getValue();
+                    // Get the most frequent name
+                    String mostFrequentName = data.nameFrequency.entrySet().stream()
+                            .max(Map.Entry.comparingByValue())
+                            .map(Map.Entry::getKey)
+                            .orElse("Unknown");
+                    return new TopAttendee(mostFrequentName, email, data.totalTickets);
+                })
+                .sorted((a, b) -> Integer.compare(b.getAttendanceCount(), a.getAttendanceCount()))
+                .limit(5)
+                .toList();
+    }
+
+    /**
+     * Helper class to track attendee data during calculation.
+     */
+    private static class AttendeeData {
+        int totalTickets = 0;
+        Map<String, Integer> nameFrequency = new HashMap<>();
     }
 
     /**
@@ -254,14 +312,18 @@ public class WrappedService {
      * @param year        The year to calculate for
      * @return The most popular event details
      */
-    private static MostPopularEvent calculateMostPopularEvent(String organiserId, int year, DateRange dateRange) {
-        // TODO: Implement
-        // - Get all events for the organiser in the year
-        // - Find the event with the highest view count
-        // - Get the event's details (name, image, attendance from metadata, revenue)
-        // - Return MostPopularEvent record
-        logger.info("STUB: calculateMostPopularEvent for organiserId: {}, year: {}", organiserId, year);
-        return new MostPopularEvent("", "", "No events", 0, 0L);
+    private static MostPopularEvent calculateMostPopularEventByRevenue(List<EventData> eventData, Map<String, Map<Order, List<Ticket>>> eventOrderTicketMap) {
+        MostPopularEvent mostPopularEvent = new MostPopularEvent("", "", "", 0, 0L);
+
+        for (EventData event : eventData) {
+            String eventId = event.getEventId();
+            Map<Order, List<Ticket>> orderTicketsMap = eventOrderTicketMap.getOrDefault(eventId, Map.of());
+            long revenue = TicketsService.calculateNetSales(orderTicketsMap);
+            if (revenue > mostPopularEvent.getRevenue()) {
+                mostPopularEvent = new MostPopularEvent(eventId, event.getImage(), event.getName(), event.getAccessCount(), revenue);
+            }
+        }
+        return mostPopularEvent;
     }
 
     /**
@@ -274,18 +336,8 @@ public class WrappedService {
      * @param ticketsSold The number of tickets sold (used in calculation)
      * @return The estimated minutes saved
      */
-    private static int calculateMinutesSavedBookkeeping(String organiserId, int year, int ticketsSold,
-            DateRange dateRange) {
-        // TODO: Implement
-        // - Calculate based on average time to verify bank transfers
-        // - Multiply by number of tickets that would have required manual verification
-        // - For now, estimate that ~20% of tickets would be bank transfers
-        logger.info("STUB: calculateMinutesSavedBookkeeping for organiserId: {}, year: {}", organiserId, year);
-
-        // Estimate: 20% of tickets would be bank transfers, each taking
-        // AVG_MINUTES_PER_BANK_TRANSFER_VERIFICATION minutes
-        int estimatedBankTransfers = (int) (ticketsSold * 0.2);
-        return estimatedBankTransfers * AVG_MINUTES_PER_BANK_TRANSFER_VERIFICATION;
+    private static int calculateMinutesSavedBookkeeping(int ticketsSold) {
+        return ticketsSold * AVG_MINUTES_PER_BANK_TRANSFER_VERIFICATION;
     }
 
     /**
@@ -296,21 +348,16 @@ public class WrappedService {
      * @param ticketsSold The number of tickets sold
      * @return The fees saved in cents
      */
-    private static long calculateFeesSavedVsEventbrite(long totalSales, int ticketsSold, DateRange dateRange) {
-        // TODO: Implement with actual fee structures
-        // Eventbrite fees: ~6.95% + $0.99 per ticket
-        // Sportshub fees: ~2.9% (Stripe)
-        logger.info("STUB: calculateFeesSavedVsEventbrite for totalSales: {}, ticketsSold: {}", totalSales,
-                ticketsSold);
-
-        // Calculate Eventbrite fees
-        long eventbriteFees = (long) (totalSales * EVENTBRITE_FEE_PERCENTAGE) +
-                ((long) ticketsSold * EVENTBRITE_FEE_PER_TICKET_CENTS);
-
-        // Calculate Sportshub fees (just Stripe processing)
-        long sportshubFees = (long) (totalSales * SPORTSHUB_FEE_PERCENTAGE);
-
-        // Return the difference
+    private static long calculateFeesSavedVsEventbrite(long totalSales, int ticketsSold) {
+        // Eventbrite: 5.35% of sales + $1.19 per ticket
+        long eventbriteFees = Math.round(totalSales * EVENTBRITE_FEE_PERCENTAGE) 
+                + (ticketsSold * EVENTBRITE_FEE_PER_TICKET_CENTS);
+        
+        // Sportshub: Stripe (1.75% + $0.30/ticket) + Sportshub (1.0% of sales)
+        long sportshubFees = Math.round(totalSales * STRIPE_FEE_PERCENTAGE) 
+                + (ticketsSold * STRIPE_FEE_PER_TICKET_CENTS) 
+                + Math.round(totalSales * SPORTSHUB_FEE_PERCENTAGE);
+        
         return eventbriteFees - sportshubFees;
     }
 
@@ -323,13 +370,7 @@ public class WrappedService {
      */
     public static SportshubWrappedData regenerateWrappedData(String organiserId, int year) throws Exception {
         logger.info("Force regenerating wrapped data for organiserId: {}, year: {}", organiserId, year);
-
-        // Delete existing cached data if any
-        if (WrappedRepository.wrappedDataExists(organiserId, year)) {
-            WrappedRepository.deleteWrappedData(organiserId, year);
-        }
-
-        // Generate fresh data
+        // Generate fresh data (saveWrappedData will overwrite any existing data)
         return generateWrappedData(organiserId, year);
     }
 }

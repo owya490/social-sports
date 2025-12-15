@@ -80,9 +80,9 @@ export default function Dashboard() {
                   </Link>
                 </div>
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                  <Link href="/profile">
+                  <Link href="/organiser/wrapped/2025">
                     <div className="h-full flex justify-center items-center">
-                      <p>Edit your profile</p>
+                      <p>View your 2025 Wrapped</p>
                     </div>
                   </Link>
                 </div>
