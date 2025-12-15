@@ -24,7 +24,29 @@ const getAnswerDisplay = (section: FormSection | undefined): string | React.JSX.
   switch (section.type) {
     case FormSectionType.TEXT:
     case FormSectionType.DROPDOWN_SELECT:
+    case FormSectionType.MULTIPLE_CHOICE:
       return section.answer || "—";
+    case FormSectionType.TICKBOX:
+      return section.answer?.join(", ") || "—";
+    case FormSectionType.DATE_TIME:
+      if (!section.timestamp) return "—";
+      try {
+        return new Date(section.timestamp).toLocaleString();
+      } catch {
+        return section.timestamp;
+      }
+    case FormSectionType.FILE_UPLOAD:
+      if (!section.fileUrl) return "—";
+      return (
+        <a
+          href={section.fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-800 underline hover:text-blue-900"
+        >
+          View File
+        </a>
+      );
     default:
       return "—";
   }
