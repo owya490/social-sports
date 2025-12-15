@@ -9,6 +9,15 @@ export enum Frequency {
   MONTHLY = "MONTHLY",
 }
 
+/**
+ * A reserved slot entry for recurring events.
+ * Allows organisers to pre-reserve spots for specific email addresses.
+ */
+export interface ReservedSlot {
+  email: string;
+  slots: number; // Number of tickets reserved for this email
+}
+
 export interface RecurrenceData {
   frequency: Frequency;
   recurrenceAmount: number;
@@ -16,6 +25,7 @@ export interface RecurrenceData {
   recurrenceEnabled: boolean;
   allRecurrences: Timestamp[];
   pastRecurrences: Record<string, EventId>;
+  reservedSlots?: ReservedSlot[];
 }
 
 export interface RecurrenceTemplate {
@@ -48,6 +58,12 @@ export interface NewRecurrenceFormData {
    * If recurrence is enabled for this event.
    */
   recurrenceEnabled: boolean;
+  /**
+   * List of reserved slots for specific email addresses.
+   * These emails will have spots automatically reserved in each recurring event.
+   * Optional - defaults to empty array for backward compatibility.
+   */
+  reservedSlots?: ReservedSlot[];
 }
 
 export const DEFAULT_RECURRENCE_FORM_DATA: NewRecurrenceFormData = {
@@ -55,6 +71,7 @@ export const DEFAULT_RECURRENCE_FORM_DATA: NewRecurrenceFormData = {
   recurrenceAmount: 1,
   createDaysBefore: 1,
   recurrenceEnabled: false,
+  reservedSlots: [],
 };
 
 export const EMPTY_RECURRENCE_TEMPLATE: RecurrenceTemplate = {
@@ -64,5 +81,6 @@ export const EMPTY_RECURRENCE_TEMPLATE: RecurrenceTemplate = {
     ...DEFAULT_RECURRENCE_FORM_DATA,
     allRecurrences: [],
     pastRecurrences: {},
+    reservedSlots: [],
   },
 };
