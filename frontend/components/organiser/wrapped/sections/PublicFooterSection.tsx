@@ -72,6 +72,8 @@ export function PublicFooterSection({ organiserName, year, username }: PublicFoo
         </div>
 
         <p className="mt-16 text-gray-400 text-sm">Powered by SPORTSHUB</p>
+
+        <p className="mt-4 text-gray-300 text-xs italic">*Numbers are calculated on a best effort basis.</p>
       </AnimatedSection>
     </section>
   );
