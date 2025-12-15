@@ -1,5 +1,4 @@
 import { displayPrice } from "@/utilities/priceUtils";
-import React from "react";
 import Skeleton from "react-loading-skeleton";
 
 interface EventDrilldownStatBannerProps {
@@ -8,6 +7,7 @@ interface EventDrilldownStatBannerProps {
   completeTicketCount: number;
   eventCapacity: number;
   eventPrice: number;
+  totalNetSales: number;
 }
 
 const EventDrilldownStatBanner = ({
@@ -15,7 +15,7 @@ const EventDrilldownStatBanner = ({
   eventAccessCount,
   completeTicketCount,
   eventCapacity,
-  eventPrice,
+  totalNetSales,
 }: EventDrilldownStatBannerProps) => {
   return (
     <div className="hidden md:block">
@@ -30,7 +30,7 @@ const EventDrilldownStatBanner = ({
                 }}
               />
             ) : (
-              `$A${((completeTicketCount ?? 0) * displayPrice(eventPrice)).toFixed(2)}`
+              `$A${displayPrice(totalNetSales).toFixed(2)}`
             )}
           </div>
         </div>
@@ -45,7 +45,7 @@ const EventDrilldownStatBanner = ({
                 }}
               />
             ) : (
-               `${completeTicketCount ?? 0}/${eventCapacity}`
+              `${completeTicketCount ?? 0}/${eventCapacity}`
             )}
           </div>
         </div>
