@@ -1,5 +1,6 @@
 export type SportshubWrapped = {
   organiserName: string;
+  organiserId: string;
   year: number;
   dateRange: {
     from: string; // ISO date
@@ -33,6 +34,7 @@ export type SportshubWrapped = {
 
 export const mockWrappedData: SportshubWrapped = {
   organiserName: "Sydney Social Sports",
+  organiserId: "1234567890",
   year: 2025,
   dateRange: {
     from: "2025-01-01",
