@@ -18,3 +18,5 @@ functions/venv/pyvenv.cfg
 
 # Ignore Next.js auto-generated TypeScript definitions
 next-env.d.ts
+
+tsconfig.tsbuildinfo
