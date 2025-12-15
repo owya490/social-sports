@@ -66,11 +66,12 @@ export default function PublicWrappedPage({ params }: { params: { id: string } }
   }
 
   if (error || !data) {
-    return <WrappedError message={error || "Something went wrong"} />;
+    return <WrappedError message={error || "Something went wrong"} className="-mt-[var(--navbar-height)]" />;
   }
 
   return (
     <WrappedContent
+      className="-mt-[var(--navbar-height)]"
       data={data}
       footerSection={
         <PublicFooterSection
