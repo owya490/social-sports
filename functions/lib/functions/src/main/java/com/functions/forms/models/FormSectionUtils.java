@@ -47,10 +47,6 @@ public class FormSectionUtils {
                 case DATE_TIME:
                     section = objectMapper.convertValue(sectionData, DateTimeSection.class);
                     break;
-                case BINARY_CHOICE:
-                    // BINARY_CHOICE is handled the same as MULTIPLE_CHOICE
-                    section = objectMapper.convertValue(sectionData, MultipleChoiceSection.class);
-                    break;
                 case IMAGE:
                     section = objectMapper.convertValue(sectionData, ImageSection.class);
                     break;

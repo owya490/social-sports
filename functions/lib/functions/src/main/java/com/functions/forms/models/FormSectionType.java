@@ -5,7 +5,6 @@ public enum FormSectionType {
     MULTIPLE_CHOICE,
     DROPDOWN_SELECT,
     TICKBOX,
-    BINARY_CHOICE,
     FILE_UPLOAD,
     DATE_TIME,
     IMAGE
