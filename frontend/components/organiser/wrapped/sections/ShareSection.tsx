@@ -52,7 +52,7 @@ export function ShareSection({ organiserName, year, wrappedId }: ShareSectionPro
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-20 left-[10%] text-4xl">🎉</div>
         <div className="absolute top-32 right-[15%] text-3xl">🏆</div>
-        <div className="absolute bottom-40 left-[20%] text-3xl">⚽</div>
+        <div className="absolute bottom-36 left-[20%] text-3xl">⚽</div>
         <div className="absolute bottom-32 right-[10%] text-4xl">🔥</div>
         <div className="absolute top-1/2 left-[5%] text-2xl">✨</div>
         <div className="absolute top-1/3 right-[8%] text-2xl">💪</div>
@@ -81,12 +81,12 @@ export function ShareSection({ organiserName, year, wrappedId }: ShareSectionPro
         </p>
 
         {/* Action Buttons */}
-        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="mt-12 flex flex-col sm:flex-row items-stretch justify-center gap-4">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleCopyLink}
-            className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full font-semibold text-lg flex items-center justify-center gap-3 hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full font-semibold text-lg flex items-center justify-center gap-3 hover:shadow-lg hover:shadow-orange-500/25 transition-all min-w-[240px]"
           >
             {copied ? (
               <>
@@ -110,11 +110,11 @@ export function ShareSection({ organiserName, year, wrappedId }: ShareSectionPro
             )}
           </motion.button>
 
-          <Link href="/organiser/dashboard">
+          <Link href="/organiser/dashboard" className="min-w-[240px]">
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="w-full sm:w-auto px-8 py-4 bg-black text-white rounded-full font-semibold text-lg flex items-center justify-center gap-3 hover:bg-gray-800 transition-colors"
+              className="h-full px-8 py-4 bg-black text-white rounded-full font-semibold text-lg flex items-center justify-center gap-3 hover:bg-gray-800 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
