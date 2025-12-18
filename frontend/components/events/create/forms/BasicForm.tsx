@@ -624,7 +624,7 @@ export function BasicInformation({
                   {WAITLIST_ENABLED && (
                     <div>
                       <label className="text-black text-lg font-semibold">
-                        Do you want to allow Waitlist for this Event?
+                        Do you want to enable Waitlists for this Event?
                       </label>
                       <p className="text-sm mb-5 mt-2">
                         Selecting &quot;Yes&quot; will mean customers will be able to join a waitlist for this event
