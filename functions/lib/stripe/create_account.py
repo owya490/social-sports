@@ -92,8 +92,9 @@ def create_stripe_standard_account(req: https_fn.CallableRequest):
   body_data = req.data
 
   # Security Check to see if user is authenticated
-  if (req.auth.uid == None):
-    return https_fn.Response(status=401, body_data=json.dumps({"url": ERROR_URL}))
+  if req.auth is None or req.auth.uid is None:
+    logger.error("Unauthenticated request to create_stripe_standard_account")
+    return json.dumps({"url": ERROR_URL})
   
   # Validate the incoming request to contain the necessary fields
   try:
