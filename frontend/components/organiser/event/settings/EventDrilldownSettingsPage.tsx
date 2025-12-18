@@ -27,6 +27,8 @@ interface EventDrilldownSettingsPageProps {
   setPromotionalCodesEnabled: (event: boolean) => void;
   hideVacancy: boolean;
   setHideVacancy: (event: boolean) => void;
+  waitlistEnabled: boolean;
+  setWaitlistEnabled: (event: boolean) => void;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -45,6 +47,8 @@ const EventDrilldownSettingsPage = ({
   setPromotionalCodesEnabled,
   hideVacancy,
   setHideVacancy,
+  waitlistEnabled,
+  setWaitlistEnabled,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
@@ -133,6 +137,17 @@ const EventDrilldownSettingsPage = ({
         updateData={(event: boolean) => {
           updateEventById(eventId, {
             hideVacancy: event,
+          });
+        }}
+      />
+      <LabelledSwitch
+        title={"Enable Waitlist"}
+        description={"Enable to allow customers to join a waitlist for this event."}
+        state={waitlistEnabled}
+        setState={setWaitlistEnabled}
+        updateData={(event: boolean) => {
+          updateEventById(eventId, {
+            waitlistEnabled: event,
           });
         }}
       />

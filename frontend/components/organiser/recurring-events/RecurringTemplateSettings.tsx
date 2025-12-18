@@ -15,6 +15,8 @@ interface RecurringTemplateSettingsProps {
   setPromotionalCodesEnabled: (event: boolean) => void;
   hideVacancy: boolean;
   setHideVacancy: (event: boolean) => void;
+  waitlistEnabled: boolean;
+  setWaitlistEnabled: (event: boolean) => void;
 }
 
 export const RecurringTemplateSettings = ({
@@ -27,6 +29,8 @@ export const RecurringTemplateSettings = ({
   setPromotionalCodesEnabled,
   hideVacancy,
   setHideVacancy,
+  waitlistEnabled,
+  setWaitlistEnabled,
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   return (
@@ -94,6 +98,23 @@ export const RecurringTemplateSettings = ({
             setLoading(true);
             const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
               hideVacancy: event,
+            });
+            if (success) {
+              setLoading(false);
+            } else {
+              window.location.reload();
+            }
+          }}
+        />
+        <LabelledSwitch
+          title={"Enable Waitlist"}
+          description={"Enable to allow customers to join a waitlist for this event."}
+          state={waitlistEnabled}
+          setState={setWaitlistEnabled}
+          updateData={async (event: boolean) => {
+            setLoading(true);
+            const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+              waitlistEnabled: event,
             });
             if (success) {
               setLoading(false);
