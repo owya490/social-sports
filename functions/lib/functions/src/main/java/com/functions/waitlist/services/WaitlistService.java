@@ -4,6 +4,8 @@ import com.functions.waitlist.models.WaitlistEntry;
 import com.functions.waitlist.models.requests.JoinWaitlistRequest;
 import com.functions.waitlist.models.responses.JoinWaitlistResponse;
 import com.functions.waitlist.repositories.WaitlistRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,10 +17,12 @@ import java.util.Optional;
  * - update notifiedAt timestamp
  */
 public class WaitlistService {
+  private static final Logger logger = LoggerFactory.getLogger(WaitlistService.class);
   public static JoinWaitlistResponse joinWaitlist(JoinWaitlistRequest request) {
     try {
       Optional<WaitlistEntry> entry = WaitlistRepository.getWaitlistEntry(request.getEventId(), request.getEmail());
       if (entry.isPresent()) {
+        logger.info("User {} already on waitlist for event {}", request.getEmail(), request.getEventId());
         return JoinWaitlistResponse.builder()
           .success(false)
           .message("User already on waitlist")
@@ -32,11 +36,14 @@ public class WaitlistService {
         .build();
       
       WaitlistRepository.addToWaitlist(request.getEventId(), request.getEmail(), newEntry);
+      logger.info("User {} successfully joined waitlist for event {}", request.getEmail(), request.getEventId());
       return JoinWaitlistResponse.builder()
         .success(true)
         .message("User added to waitlist")
         .build();
     } catch (Exception e) {
+      logger.error("Failed to add user {} to waitlist for event {}", 
+        request.getEmail(), request.getEventId(), e);
       return JoinWaitlistResponse.builder()
         .success(false)
         .message("Failed to add user to waitlist")
@@ -54,6 +61,8 @@ public class WaitlistService {
     }
       return false;
     } catch (Exception e) {
+      logger.error("Failed to remove user {} from the waitlist for event {}", 
+        email, eventId, e);
       return false;
     }
   }
@@ -72,8 +81,12 @@ public class WaitlistService {
         }
         WaitlistRepository.updateNotifiedAt(eventId, entry.getEmail());      
       }
+      logger.info("Successfully notified users from the waitlist for event {}", eventId);
+
       return true;
     } catch (Exception e) {
+      logger.error("Failed to notify users from the waitlist for event {}", 
+        eventId, e);
       return false;
     }
   }

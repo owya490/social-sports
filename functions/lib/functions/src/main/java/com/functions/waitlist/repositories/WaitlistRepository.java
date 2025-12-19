@@ -69,7 +69,7 @@ public class WaitlistRepository {
       String emailHash = hashEmail(email);
 
       if(getWaitlistEntry(eventId, email).isEmpty()) {
-        logger.warn("User {} is not on the waitlist for event {}", email, eventId);
+        logger.warn("User {} is not on the waitlist for event {}", emailHash, eventId);
         return;
       }
 
