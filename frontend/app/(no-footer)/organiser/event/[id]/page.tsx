@@ -56,6 +56,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
+  const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
@@ -90,6 +91,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventIsActive(event.isActive);
         setEventFormId(event.formId);
         setEventHideVacancy(event.hideVacancy);
+        setEventWaitlistEnabled(event.waitlistEnabled);
         return event;
       })
       .then((event) => {
@@ -209,6 +211,8 @@ export default function EventPage({ params }: EventPageProps) {
                 setPromotionalCodesEnabled={setEventPromotionalCodesEnabled}
                 hideVacancy={eventHideVacancy}
                 setHideVacancy={setEventHideVacancy}
+                waitlistEnabled={eventWaitlistEnabled}
+                setWaitlistEnabled={setEventWaitlistEnabled}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

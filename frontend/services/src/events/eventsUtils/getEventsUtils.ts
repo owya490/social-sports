@@ -143,6 +143,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       eventLink: event.eventLink,
       formId: event.formId,
       hideVacancy: event.hideVacancy,
+      waitlistEnabled: event.waitlistEnabled,
     });
   });
   return eventsDataFinal;
