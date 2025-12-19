@@ -28,6 +28,9 @@ public abstract class AbstractEventData {
 	private LocationLatLng locationLatLng;
 	private Integer capacity;
 	private Integer vacancy;
+	/**
+	 * Price in cents
+	 */
 	private Integer price;
 	private String organiserId;
 	@JsonSerialize(using = JavaUtils.TimestampSerializer.class)
@@ -58,6 +61,7 @@ public abstract class AbstractEventData {
 	@Nullable
 	private String formId;
 	private Boolean hideVacancy; // Optional field
+	private Boolean waitlistEnabled = true; // Default to true
 
 	@Data
 	public static class LocationLatLng {

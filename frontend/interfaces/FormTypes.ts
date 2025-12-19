@@ -24,6 +24,7 @@ export type FormSection =
   | TextSection
   | MultipleChoiceSection
   | DropdownSelectSection
+  | TickboxSection
   | FileUploadSection
   | DateTimeSection
   | ImageSection;
@@ -32,7 +33,7 @@ export enum FormSectionType {
   TEXT = "TEXT",
   MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
   DROPDOWN_SELECT = "DROPDOWN_SELECT",
-  BINARY_CHOICE = "BINARY_CHOICE",
+  TICKBOX = "TICKBOX",
   FILE_UPLOAD = "FILE_UPLOAD",
   DATE_TIME = "DATE_TIME",
   IMAGE = "IMAGE",
@@ -60,6 +61,12 @@ export interface DropdownSelectSection extends AbstractSection {
   type: FormSectionType.DROPDOWN_SELECT;
   options: string[];
   answer?: string; // value of chosen option
+}
+
+export interface TickboxSection extends AbstractSection {
+  type: FormSectionType.TICKBOX;
+  options: string[];
+  answer?: string[];
 }
 
 export interface FileUploadSection extends AbstractSection {

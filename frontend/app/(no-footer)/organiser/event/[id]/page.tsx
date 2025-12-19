@@ -18,6 +18,7 @@ import { FormId } from "@/interfaces/FormTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
+import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -55,8 +56,10 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
+  const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
+  const [totalNetSales, setTotalNetSales] = useState<number>(0);
   const router = useRouter();
 
   const { user } = useUser();
@@ -88,6 +91,21 @@ export default function EventPage({ params }: EventPageProps) {
         setEventIsActive(event.isActive);
         setEventFormId(event.formId);
         setEventHideVacancy(event.hideVacancy);
+        setEventWaitlistEnabled(event.waitlistEnabled);
+        return event;
+      })
+      .then((event) => {
+        getEventsMetadataByEventId(eventId).then((eventMetadata) => {
+          setEventMetadata(eventMetadata);
+          calculateNetSales(eventMetadata)
+            .then((totalNetSales) => {
+              setTotalNetSales(totalNetSales);
+            })
+            .catch((error) => {
+              eventServiceLogger.error(`Error calculating net sales: ${error}`);
+              setTotalNetSales(eventMetadata.completeTicketCount * event.price);
+            });
+        });
       })
       .finally(async () => {
         await sleep(500);
@@ -97,30 +115,6 @@ export default function EventPage({ params }: EventPageProps) {
         eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
         router.push("/error");
       });
-    getEventsMetadataByEventId(eventId).then((eventMetadata) => {
-      setEventMetadata(eventMetadata);
-    });
-  }, []);
-
-  useEffect(() => {
-    window.onscroll = () => {
-      // Prevent side panel on small screen as its doesn't exist
-      if (window.innerWidth > 640) {
-        if (window.scrollY > 310) {
-          document.getElementById("side-panel")!.classList.add("fixed");
-          document.getElementById("side-panel")!.classList.add("top-[110px]");
-          document.getElementById("event-drilldown-details-page")!.classList.add("ml-[296px]");
-        } else if (window.scrollY <= 310) {
-          document.getElementById("side-panel")!.classList.remove("fixed");
-          document.getElementById("side-panel")!.classList.remove("top-[110px]");
-          document.getElementById("event-drilldown-details-page")!.classList.remove("ml-[296px]");
-        }
-      }
-    };
-
-    return () => {
-      window.onscroll = null;
-    };
   }, []);
 
   return (
@@ -139,6 +133,7 @@ export default function EventPage({ params }: EventPageProps) {
           completeTicketCount={eventMetadata.completeTicketCount}
           eventCapacity={eventCapacity}
           eventPrice={eventPrice}
+          totalNetSales={totalNetSales}
         />
         <MobileEventDrilldownNavTabs
           navigationTabs={["Details", "Attendees", "Forms", "Images", "Settings"]}
@@ -146,7 +141,7 @@ export default function EventPage({ params }: EventPageProps) {
           setCurrSidebarPage={setCurrSidebarPage}
         />
         <div className="flex flex-row md:mt-10 max-w-6xl xl:mx-auto">
-          <div id="side-panel" className="z-20">
+          <div className="hidden sm:block sticky top-[110px] self-start z-20">
             <EventDrilldownSidePanel
               loading={loading}
               currSidebarPage={currSidebarPage}
@@ -156,7 +151,7 @@ export default function EventPage({ params }: EventPageProps) {
               user={user}
             />
           </div>
-          <div id="event-drilldown-details-page" className="w-full mb-20 sm:mb-0">
+          <div className="flex-1 w-full mb-20 sm:mb-0">
             {currSidebarPage === "Details" && (
               <>
                 <EventDrilldownDetailsPage
@@ -190,7 +185,7 @@ export default function EventPage({ params }: EventPageProps) {
                 setEventMetadata={setEventMetadata}
               />
             )}
-            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata}/>}
+            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata} />}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}
@@ -216,6 +211,8 @@ export default function EventPage({ params }: EventPageProps) {
                 setPromotionalCodesEnabled={setEventPromotionalCodesEnabled}
                 hideVacancy={eventHideVacancy}
                 setHideVacancy={setEventHideVacancy}
+                waitlistEnabled={eventWaitlistEnabled}
+                setWaitlistEnabled={setEventWaitlistEnabled}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

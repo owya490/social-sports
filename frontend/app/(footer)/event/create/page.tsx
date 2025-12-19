@@ -54,6 +54,7 @@ export type FormData = {
   newRecurrenceData: NewRecurrenceFormData;
   hideVacancy: boolean;
   formId: FormId | null;
+  waitlistEnabled: boolean;
 };
 
 const INITIAL_DATA: FormData = {
@@ -83,6 +84,7 @@ const INITIAL_DATA: FormData = {
   newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
   hideVacancy: false,
   formId: null,
+  waitlistEnabled: true,
 };
 
 export default function CreateEvent() {
@@ -258,6 +260,7 @@ export default function CreateEvent() {
       paused: formData.paused,
       eventLink: formData.eventLink,
       hideVacancy: formData.hideVacancy,
+      waitlistEnabled: formData.waitlistEnabled,
       formId: formData.formId,
     };
   }
