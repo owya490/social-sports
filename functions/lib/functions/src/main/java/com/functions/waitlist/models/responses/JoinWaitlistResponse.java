@@ -19,6 +19,11 @@ public class JoinWaitlistResponse {
     private boolean success;
 
     /**
+     * The email hash of the user
+     */
+    
+    private String emailHash;
+    /**
      * Human-readable message
      */
     private String message;

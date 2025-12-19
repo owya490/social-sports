@@ -7,7 +7,6 @@ import com.functions.waitlist.repositories.WaitlistRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -18,6 +17,7 @@ import java.util.Optional;
  */
 public class WaitlistService {
   private static final Logger logger = LoggerFactory.getLogger(WaitlistService.class);
+
   public static JoinWaitlistResponse joinWaitlist(JoinWaitlistRequest request) {
     try {
       Optional<WaitlistEntry> entry = WaitlistRepository.getWaitlistEntry(request.getEventId(), request.getEmail());
@@ -35,7 +35,7 @@ public class WaitlistService {
         .notifiedAt(null)
         .build();
       
-      WaitlistRepository.addToWaitlist(request.getEventId(), request.getEmail(), newEntry);
+      WaitlistRepository.addToWaitlist(request.getEventId(), newEntry);
       logger.info("User {} successfully joined waitlist for event {}", request.getEmail(), request.getEventId());
       return JoinWaitlistResponse.builder()
         .success(true)
@@ -67,27 +67,4 @@ public class WaitlistService {
     }
   }
   
-  // notify the waitlist if not already notified within last 12 hours; changes the notifiedAt timestamp to the current time
-  public static boolean notifyWaitlist(String eventId) {
-    try {
-      List<WaitlistEntry> entries = WaitlistRepository.getWaitlistByEventId(eventId);
-      long now = System.currentTimeMillis();
-      
-      // for every person in the waitlist
-      for (WaitlistEntry entry : entries) {
-        // Skip if notified within last 12 hours
-        if (entry.getNotifiedAt() != null && (now - entry.getNotifiedAt()) / 1000 < 60 * 60 * 12) {
-          continue;
-        }
-        WaitlistRepository.updateNotifiedAt(eventId, entry.getEmail());      
-      }
-      logger.info("Successfully notified users from the waitlist for event {}", eventId);
-
-      return true;
-    } catch (Exception e) {
-      logger.error("Failed to notify users from the waitlist for event {}", 
-        eventId, e);
-      return false;
-    }
-  }
 }

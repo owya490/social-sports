@@ -29,6 +29,6 @@ public class JoinWaitlistRequest {
     /**
      * Number of tickets requested
      */
-    private int ticketCount;
+    private Integer ticketCount;
 }
 

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,23 +36,23 @@ public class WaitlistRepository {
       return waitlistEntries;
     } catch (Exception e) {
       logger.error("Error retrieving waitlist for event: {}", eventId, e);
-      return List.of(); // return empty list if error
+      return List.of(); 
     }
   }
 
   /**
    * Add a user to the waitlist for an event
    */
-  public static void addToWaitlist(String eventId, String email, WaitlistEntry entry) throws Exception {
+  public static void addToWaitlist(String eventId, WaitlistEntry entry) throws Exception {
     try {
-      // don't need a return type
       Firestore db = FirebaseService.getFirestore();
-      // get reference to the waitlist pool collection
       CollectionReference collectionRef = db.collection(WAITLIST_COLLECTION).document(eventId).collection(WAITLIST_POOL_COLLECTION);
-      // add the entry to the waitlist pool collection
-      collectionRef.add(entry).get(); // used to wait for an async operation to complete 
+      String emailHash = hashEmail(entry.getEmail());
 
-      logger.info("Added user {} to waitlist for event {}", email, eventId);
+      // Use emailHash as document ID to enable lookups/updates/deletes
+      collectionRef.document(emailHash).set(entry).get();
+
+      logger.info("Added user {} to waitlist for event {}", emailHash, eventId);
     } catch (Exception e) {
       logger.error("Error adding to waitlist for event: {}", eventId, e);
       throw new Exception("Failed to add to waitlist: " + e.getMessage(), e);
@@ -73,8 +74,7 @@ public class WaitlistRepository {
         return;
       }
 
-      // remove the entry from the waitlist pool collection
-      collectionRef.document(emailHash).delete().get(); // used to wait for an async operation to complete 
+      collectionRef.document(emailHash).delete().get();
 
       logger.info("Removed user {} from waitlist for event {}", emailHash, eventId);
     } catch (Exception e) {
@@ -88,8 +88,6 @@ public class WaitlistRepository {
    */
   public static Optional<WaitlistEntry> getWaitlistEntry(String eventId, String email) {
     try {
-      // do we need to return if the user is on the waitlist? hmmm right now it returns a snapshot which 
-      // is read-only and like a copy
       Firestore db = FirebaseService.getFirestore();
       CollectionReference collectionRef = db.collection(WAITLIST_COLLECTION).document(eventId).collection(WAITLIST_POOL_COLLECTION);
       String emailHash = hashEmail(email);
@@ -107,15 +105,15 @@ public class WaitlistRepository {
   /**
    * Update the notifiedAt timestamp for a waitlist entry
    */
-  public static void updateNotifiedAt(String eventId, String email) throws Exception {
+  public static void updateNotifiedAt(String eventId, String email, Instant notifiedAt) throws Exception {
     try {
       Firestore db = FirebaseService.getFirestore();
       CollectionReference collectionRef = db.collection(WAITLIST_COLLECTION).document(eventId).collection(WAITLIST_POOL_COLLECTION);
       
       String emailHash = hashEmail(email);
-      long now = System.currentTimeMillis();  // Current timestamp in milliseconds
+      long timestamp = notifiedAt.toEpochMilli();
       
-      collectionRef.document(emailHash).update("notifiedAt", now).get();
+      collectionRef.document(emailHash).update("notifiedAt", timestamp).get();
 
       logger.info("Updated notifiedAt for user {} in waitlist for event {}", emailHash, eventId);
     } catch (Exception e) {
