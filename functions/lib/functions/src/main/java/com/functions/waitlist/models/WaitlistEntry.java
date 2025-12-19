@@ -1,5 +1,6 @@
 package com.functions.waitlist.models;
 
+import com.google.cloud.Timestamp;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,10 +26,10 @@ public class WaitlistEntry {
     private String email;
 
     /**
-     * Unix timestamp of when we last notified this user.
+     * Timestamp of when we last notified this user.
      * Null if never notified. Used to prevent spam notifications.
      */
-    private Long notifiedAt;
+    private Timestamp notifiedAt;
 
     /**
      * Number of tickets the user wants

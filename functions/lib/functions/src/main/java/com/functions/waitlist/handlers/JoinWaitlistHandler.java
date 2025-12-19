@@ -1,4 +1,4 @@
-package com.functions.waitlist.controllers;
+package com.functions.waitlist.handlers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +14,8 @@ import com.functions.waitlist.services.WaitlistService;
 /**
  * Handler for joining an event waitlist.
  */
-public class JoinWaitlistEndpointHandler implements Handler<JoinWaitlistRequest, JoinWaitlistResponse> {
-    private static final Logger logger = LoggerFactory.getLogger(JoinWaitlistEndpointHandler.class);
+public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWaitlistResponse> {
+    private static final Logger logger = LoggerFactory.getLogger(JoinWaitlistHandler.class);
 
     @Override
     public JoinWaitlistRequest parse(UnifiedRequest data) {

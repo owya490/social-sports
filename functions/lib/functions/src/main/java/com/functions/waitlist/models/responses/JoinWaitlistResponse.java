@@ -21,7 +21,6 @@ public class JoinWaitlistResponse {
     /**
      * The email hash of the user
      */
-    
     private String emailHash;
     /**
      * Human-readable message

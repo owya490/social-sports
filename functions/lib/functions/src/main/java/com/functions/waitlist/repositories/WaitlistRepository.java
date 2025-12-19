@@ -2,6 +2,7 @@ package com.functions.waitlist.repositories;
 
 import com.functions.firebase.services.FirebaseService;
 import com.functions.waitlist.models.WaitlistEntry;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
@@ -25,12 +26,22 @@ public class WaitlistRepository {
   private static final String WAITLIST_POOL_COLLECTION = "WaitlistPool";
 
   /**
+   * Helper method to get the WaitlistPool collection reference for an event.
+   * Reduces duplication across repository methods.
+   */
+  private static CollectionReference getWaitlistPoolRef(String eventId) {
+    Firestore db = FirebaseService.getFirestore();
+    return db.collection(WAITLIST_COLLECTION)
+            .document(eventId)
+            .collection(WAITLIST_POOL_COLLECTION);
+  }
+
+  /**
    * Get the waitlist document for an event
    */
   public static List<WaitlistEntry> getWaitlistByEventId(String eventId) {
     try {
-      Firestore db = FirebaseService.getFirestore();
-      CollectionReference collectionRef = db.collection(WAITLIST_COLLECTION).document(eventId).collection(WAITLIST_POOL_COLLECTION);
+      CollectionReference collectionRef = getWaitlistPoolRef(eventId);
       List<WaitlistEntry> waitlistEntries = collectionRef.get().get().toObjects(WaitlistEntry.class);
 
       return waitlistEntries;
@@ -45,8 +56,7 @@ public class WaitlistRepository {
    */
   public static void addToWaitlist(String eventId, WaitlistEntry entry) throws Exception {
     try {
-      Firestore db = FirebaseService.getFirestore();
-      CollectionReference collectionRef = db.collection(WAITLIST_COLLECTION).document(eventId).collection(WAITLIST_POOL_COLLECTION);
+      CollectionReference collectionRef = getWaitlistPoolRef(eventId);
       String emailHash = hashEmail(entry.getEmail());
 
       // Use emailHash as document ID to enable lookups/updates/deletes
@@ -64,8 +74,7 @@ public class WaitlistRepository {
    */
   public static void removeFromWaitlist(String eventId, String email) throws Exception {
     try {
-      Firestore db = FirebaseService.getFirestore();
-      CollectionReference collectionRef = db.collection(WAITLIST_COLLECTION).document(eventId).collection(WAITLIST_POOL_COLLECTION);
+      CollectionReference collectionRef = getWaitlistPoolRef(eventId);
       
       String emailHash = hashEmail(email);
 
@@ -88,8 +97,7 @@ public class WaitlistRepository {
    */
   public static Optional<WaitlistEntry> getWaitlistEntry(String eventId, String email) {
     try {
-      Firestore db = FirebaseService.getFirestore();
-      CollectionReference collectionRef = db.collection(WAITLIST_COLLECTION).document(eventId).collection(WAITLIST_POOL_COLLECTION);
+      CollectionReference collectionRef = getWaitlistPoolRef(eventId);
       String emailHash = hashEmail(email);
       DocumentSnapshot maybeSnapshot = collectionRef.document(emailHash).get().get();
       if (maybeSnapshot.exists()) {
@@ -107,13 +115,10 @@ public class WaitlistRepository {
    */
   public static void updateNotifiedAt(String eventId, String email, Instant notifiedAt) throws Exception {
     try {
-      Firestore db = FirebaseService.getFirestore();
-      CollectionReference collectionRef = db.collection(WAITLIST_COLLECTION).document(eventId).collection(WAITLIST_POOL_COLLECTION);
+      CollectionReference collectionRef = getWaitlistPoolRef(eventId);
       
-      String emailHash = hashEmail(email);
-      long timestamp = notifiedAt.toEpochMilli();
-      
-      collectionRef.document(emailHash).update("notifiedAt", timestamp).get();
+      String emailHash = hashEmail(email);      
+      collectionRef.document(emailHash).update("notifiedAt", notifiedAt).get();
 
       logger.info("Updated notifiedAt for user {} in waitlist for event {}", emailHash, eventId);
     } catch (Exception e) {
