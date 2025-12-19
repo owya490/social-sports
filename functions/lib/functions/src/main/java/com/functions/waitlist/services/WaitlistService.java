@@ -17,7 +17,6 @@ import java.util.Optional;
 public class WaitlistService {
   public static JoinWaitlistResponse joinWaitlist(JoinWaitlistRequest request) {
     try {
-      // check if waitlist is toggled on for the event
       Optional<WaitlistEntry> entry = WaitlistRepository.getWaitlistEntry(request.getEventId(), request.getEmail());
       if (entry.isPresent()) {
         return JoinWaitlistResponse.builder()

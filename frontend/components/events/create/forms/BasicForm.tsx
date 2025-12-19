@@ -621,32 +621,32 @@ export function BasicInformation({
                       </Select>
                     </div>
                   </div>
-                  {WAITLIST_ENABLED && (
-                    <div>
-                      <label className="text-black text-lg font-semibold">
-                        Do you want to enable Waitlists for this Event?
-                      </label>
-                      <p className="text-sm mb-5 mt-2">
-                        Selecting &quot;Yes&quot; will mean customers will be able to join a waitlist for this event
-                        when the event is sold out. They will receive an email when a ticket becomes available.
-                      </p>
-                      <div className="mt-4">
-                        <Select
-                          size="md"
-                          label="Waitlist Enabled"
-                          value={waitlistEnabled ? "Yes" : "No"}
-                          onChange={(e) => {
-                            const value = e || "Yes";
-                            handleWaitlistEnabledChange(value);
-                          }}
-                        >
-                          <Option value="Yes">Yes</Option>
-                          <Option value="No">No</Option>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
                 </>
+              )}
+              {WAITLIST_ENABLED && (
+                <div>
+                  <label className="text-black text-lg font-semibold">
+                    Do you want to enable Waitlists for this Event?
+                  </label>
+                  <p className="text-sm mb-5 mt-2">
+                    Selecting &quot;Yes&quot; will mean customers will be able to join a waitlist for this event
+                    when the event is sold out. They will receive an email when a ticket becomes available.
+                  </p>
+                  <div className="mt-4">
+                    <Select
+                      size="md"
+                      label="Waitlist Enabled"
+                      value={waitlistEnabled ? "Yes" : "No"}
+                      onChange={(e) => {
+                        const value = e || "Yes";
+                        handleWaitlistEnabledChange(value);
+                      }}
+                    >
+                      <Option value="Yes">Yes</Option>
+                      <Option value="No">No</Option>
+                    </Select>
+                  </div>
+                </div>
               )}
             </>
           )}
