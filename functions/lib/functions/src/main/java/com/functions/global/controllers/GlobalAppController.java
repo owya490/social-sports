@@ -13,6 +13,7 @@ import com.functions.global.models.responses.UnifiedResponse;
 import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
+import com.functions.stripe.handlers.StripeWebhookHandler;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
@@ -37,6 +38,12 @@ public class GlobalAppController implements HttpFunction {
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(204); // No Content
+            return;
+        }
+
+        if (StripeConfig.JAVA_STRIPE_WEBHOOK_ENABLED && request.getFirstHeader("Stripe-Signature").isPresent()) {
+            logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
+            StripeWebhookHandler.handleWebhook(request, response);
             return;
         }
 
@@ -121,7 +128,7 @@ public class GlobalAppController implements HttpFunction {
     private void setResponseHeaders(HttpResponse response) {
         response.appendHeader("Access-Control-Allow-Origin", "*");
         response.appendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Stripe-Signature");
         response.appendHeader("Access-Control-Max-Age", "3600"); // Cache preflight for 1 hour
         response.appendHeader("Content-Type", "application/json; charset=UTF-8");
     }
