@@ -3,7 +3,7 @@ package com.functions.fulfilment.models.responses;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.functions.fulfilment.models.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 
 // TODO: refactor this in a way where we don't have to overload this one response model with all information
 // from all different fulfilment entity types.
