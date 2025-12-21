@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.services.FirebaseService;
 import com.functions.tickets.models.Ticket;
+import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
@@ -112,5 +113,15 @@ public class TicketsRepository {
         }
         return tickets;
     }
-}
 
+    public static boolean updateTicket(String ticketId, Ticket ticket) {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            db.collection(TICKETS_COLLECTION).document(ticketId).update(JavaUtils.toMap(ticket));
+            return true;
+        } catch (Exception e) {
+            logger.error("Failed to update ticket: {}", ticketId, e);
+            return false;
+        }
+    }
+}

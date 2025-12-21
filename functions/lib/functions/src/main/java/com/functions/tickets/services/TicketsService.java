@@ -51,7 +51,8 @@ public class TicketsService {
     }
 
     /**
-     * Calculates net sales from orders and their tickets (ticket prices minus discounts).
+     * Calculates net sales from orders and their tickets (ticket prices minus
+     * discounts).
      *
      * @param orderTicketsMap Map of Order -> List of Tickets
      * @return Net sales in cents
@@ -71,5 +72,17 @@ public class TicketsService {
         }
 
         return totalTicketSales - totalDiscounts;
+    }
+
+    public static void updateOrderAndTicketStatus(String orderId, OrderAndTicketStatus orderAndTicketStatus) {
+        Order order = OrdersRepository.getOrderById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found " + orderId));
+        List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets());
+        for (Ticket ticket : tickets) {
+            ticket.setStatus(orderAndTicketStatus);
+            TicketsRepository.updateTicket(ticket.getTicketId(), ticket);
+        }
+        order.setStatus(orderAndTicketStatus);
+        OrdersRepository.updateOrder(orderId, order);
     }
 }
