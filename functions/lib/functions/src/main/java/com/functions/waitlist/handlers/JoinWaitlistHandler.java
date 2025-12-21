@@ -47,8 +47,8 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
      * Validates email format using regex pattern
      */
     private boolean isValidEmail(String email) {
-        // RFC 5322 compliant regex pattern for email validation
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        // RFC 5322 compliant regex pattern for email validation (matches eventsService.ts)
+        String emailRegex = "^(([^<>()\\[\\]\\\\.,;:\\s@\"]+(\\.+[^<>()\\[\\]\\\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$";
         return email != null && email.matches(emailRegex);
     }
 }

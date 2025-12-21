@@ -1,5 +1,8 @@
 package com.functions.waitlist.models;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.functions.utils.JavaUtils;
 import com.google.cloud.Timestamp;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,6 +32,8 @@ public class WaitlistEntry {
      * Timestamp of when we last notified this user.
      * Null if never notified. Used to prevent spam notifications.
      */
+    @JsonSerialize(using = JavaUtils.TimestampSerializer.class)
+    @JsonDeserialize(using = JavaUtils.TimestampDeserializer.class)
     private Timestamp notifiedAt;
 
     /**

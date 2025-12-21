@@ -40,6 +40,7 @@ public class WaitlistService {
       return JoinWaitlistResponse.builder()
         .success(true)
         .message("User added to waitlist")
+        .emailHash(WaitlistRepository.hashEmail(request.getEmail()))
         .build();
     } catch (Exception e) {
       logger.error("Failed to add user {} to waitlist for event {}", 

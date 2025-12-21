@@ -118,7 +118,11 @@ public class WaitlistRepository {
       CollectionReference collectionRef = getWaitlistPoolRef(eventId);
       
       String emailHash = hashEmail(email);      
-      collectionRef.document(emailHash).update("notifiedAt", notifiedAt).get();
+      Timestamp timestamp = Timestamp.ofTimeSecondsAndNanos(
+        notifiedAt.getEpochSecond(), 
+        notifiedAt.getNano()
+      );
+      collectionRef.document(emailHash).update("notifiedAt", timestamp).get();
 
       logger.info("Updated notifiedAt for user {} in waitlist for event {}", emailHash, eventId);
     } catch (Exception e) {
