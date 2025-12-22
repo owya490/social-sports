@@ -41,7 +41,8 @@ import com.google.cloud.firestore.Transaction;
 
 public class FulfilmentService {
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
-    private static final int CLEANUP_CUTOFF_MINUTES = 35;
+    // Cut off for old fulfilment sessions is 1 week (7 days) for data retention purposes
+    private static final int CLEANUP_CUTOFF_MINUTES = 60 * 24 * 7;
 
     /**
      * Cleanup fulfilment sessions older than the default cutoff minutes.
