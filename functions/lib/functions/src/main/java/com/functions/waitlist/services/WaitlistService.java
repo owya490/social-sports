@@ -18,11 +18,13 @@ public class WaitlistService {
     public static JoinWaitlistResponse joinWaitlist(JoinWaitlistRequest request) {
         try {
             Optional<WaitlistEntry> entry = WaitlistRepository.getWaitlistEntry(request.getEventId(), request.getEmail());
+            String hashedEmail = WaitlistRepository.hashEmail(request.getEmail());
             if (entry.isPresent()) {
-                logger.info("User {} already on waitlist for event {}", request.getEmail(), request.getEventId());
+                logger.info("User {} already on waitlist for event {}", hashedEmail, request.getEventId());
                 return JoinWaitlistResponse.builder()
                     .success(false)
                     .message("User already on waitlist")
+                    .emailHash(hashedEmail)
                     .build();
             }
             WaitlistEntry newEntry = WaitlistEntry.builder()
@@ -33,15 +35,14 @@ public class WaitlistService {
                 .build();
             
             WaitlistRepository.addToWaitlist(request.getEventId(), newEntry);
-            logger.info("User {} successfully joined waitlist for event {}", request.getEmail(), request.getEventId());
+            logger.info("User {} successfully joined waitlist for event {}", hashedEmail, request.getEventId());
             return JoinWaitlistResponse.builder()
                 .success(true)
                 .message("User added to waitlist")
-                .emailHash(WaitlistRepository.hashEmail(request.getEmail()))
+                .emailHash(hashedEmail)
                 .build();
         } catch (Exception e) {
-            logger.error("Failed to add user {} to waitlist for event {}", 
-                request.getEmail(), request.getEventId(), e);
+            logger.error("Failed to add user to waitlist for event {}", request.getEventId(), e);
             return JoinWaitlistResponse.builder()
                 .success(false)
                 .message("Failed to add user to waitlist")

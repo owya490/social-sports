@@ -28,8 +28,6 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
 
     @Override
     public JoinWaitlistResponse handle(JoinWaitlistRequest request) {
-        logger.info("Handling join waitlist request for event: {}, email: {}", 
-                request.getEventId(), request.getEmail());
         
         // Validate email format
         if (!isValidEmail(request.getEmail())) {
