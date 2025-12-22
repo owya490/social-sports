@@ -49,20 +49,28 @@ public class WaitlistService {
         }
     }
 
-    // remove the person from the waitlist
+    // organiser removes attendee from waitlist
     public static boolean removeFromWaitlist(String eventId, String email) {
         try {
-            Optional<WaitlistEntry> entry = WaitlistRepository.getWaitlistEntry(eventId, email);
-            if (entry.isPresent()) { // if the entry is present, remove it from the waitlist
-                WaitlistRepository.removeFromWaitlist(eventId, email);
-                return true;
-            }
-            return false;
+
+            WaitlistRepository.removeFromWaitlist(eventId, email);
+            return true;
         } catch (Exception e) {
             logger.error("Failed to remove user {} from the waitlist for event {}", 
                 email, eventId, e);
             return false;
         }
     }
-    
+
+    // attendee removes themselves from waitlist
+    public static boolean removeFromWaitlistByHash(String eventId, String emailHash) {
+        try {
+            WaitlistRepository.removeFromWaitlistByHash(eventId, emailHash);
+            return true;
+        } catch (Exception e) {
+            logger.error("Failed to remove user with hash {} from the waitlist for event {}", 
+                emailHash, eventId, e);
+            return false;
+        }
+    }
 }
