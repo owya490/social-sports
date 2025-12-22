@@ -159,7 +159,7 @@ public class WaitlistRepository {
    * Hash an email address for use as a Firestore field key
    */
   public static String hashEmail(String email) throws NoSuchAlgorithmException {
-    MessageDigest md = MessageDigest.getInstance("SHA-256"); // deterministic hashing function
+    MessageDigest md = MessageDigest.getInstance("SHA-256");
     byte[] hash = md.digest(email.toLowerCase().trim().getBytes());
     StringBuilder hexString = new StringBuilder();
     for (byte b : hash) {
