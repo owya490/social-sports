@@ -70,7 +70,8 @@ public class WaitlistRepository {
   }
 
   /**
-   * Remove a user from the waitlist
+   * Remove a user from the waitlist by email
+   * Used for admin/organizer operations
    */
   public static void removeFromWaitlist(String eventId, String email) throws Exception {
     try {
@@ -78,8 +79,9 @@ public class WaitlistRepository {
       
       String emailHash = hashEmail(email);
 
-      if(getWaitlistEntry(eventId, email).isEmpty()) {
-        logger.warn("User {} is not on the waitlist for event {}", emailHash, eventId);
+      DocumentSnapshot snapshot = collectionRef.document(emailHash).get().get();
+      if (!snapshot.exists()) {
+        logger.warn("No waitlist entry found with hash {} for event {}", emailHash, eventId);
         return;
       }
 
@@ -88,6 +90,28 @@ public class WaitlistRepository {
       logger.info("Removed user {} from waitlist for event {}", emailHash, eventId);
     } catch (Exception e) {
       logger.error("Error removing from waitlist for event: {}", eventId, e);
+      throw new Exception("Failed to remove from waitlist: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Remove a user from the waitlist using their email hash
+   * Used for direct removal links sent via email (no authentication required)
+   */
+  public static void removeFromWaitlistByHash(String eventId, String emailHash) throws Exception {
+    try {
+      CollectionReference collectionRef = getWaitlistPoolRef(eventId);
+      
+      DocumentSnapshot snapshot = collectionRef.document(emailHash).get().get();
+      if (!snapshot.exists()) {
+        logger.warn("No waitlist entry found with hash {} for event {}", emailHash, eventId);
+        return;
+      }
+
+      collectionRef.document(emailHash).delete().get();
+      logger.info("Removed user with hash {} from waitlist for event {}", emailHash, eventId);
+    } catch (Exception e) {
+      logger.error("Error removing from waitlist by hash for event: {}", eventId, e);
       throw new Exception("Failed to remove from waitlist: " + e.getMessage(), e);
     }
   }
