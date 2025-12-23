@@ -12,11 +12,9 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.emails.requests.LoopsRequest;
 import com.functions.global.handlers.Global;
 import com.functions.utils.JavaUtils;
-
-import lombok.Builder;
-import lombok.Data;
 
 /**
  * Service for sending emails via Loops.so.
@@ -25,16 +23,7 @@ public class EmailClient {
     private static final Logger logger = LoggerFactory.getLogger(EmailClient.class);
     
     private static final String LOOPS_API_KEY = Global.getEnv("LOOPS_API_KEY");
-    private static final String LOOPS_TRANSACTIONAL_URL = "https://app.loops.so/api/v1/transactional";
-
-
-    @Data
-    @Builder
-    private static class LoopsRequest {
-        private String transactionalId;
-        private String email;
-        private Map<String, String> dataVariables;
-    }
+    private static final String LOOPS_TRANSACTIONAL_URL = "https://app.loops.so/api/v1/transactional";  
 
     /**
      * Sends an email with retry logic (recommended for production use).
@@ -84,7 +73,7 @@ public class EmailClient {
      * @param variables      The email template variables
      * @throws IOException if the email fails to send
      */
-    public static void sendEmailWithLoop(String transactionalId, String email, 
+    private static void sendEmailWithLoop(String transactionalId, String email, 
                                          Map<String, String> variables) throws IOException {
         if (LOOPS_API_KEY == null) {
             throw new IOException("LOOPS_API_KEY is not set.");
@@ -99,11 +88,11 @@ public class EmailClient {
         String jsonBody = JavaUtils.objectMapper.writeValueAsString(request);
         
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            sendLoopRequest(client, jsonBody, false);
+            sendLoopRequest(client, jsonBody);
         }
     }
     
-    private static void sendLoopRequest(CloseableHttpClient client, String jsonBody, boolean isRetry) throws IOException {
+    private static void sendLoopRequest(CloseableHttpClient client, String jsonBody) throws IOException {
         HttpPost post = new HttpPost(LOOPS_TRANSACTIONAL_URL);
         post.setHeader("Authorization", "Bearer " + LOOPS_API_KEY);
         post.setHeader("Content-Type", "application/json");
@@ -112,14 +101,14 @@ public class EmailClient {
         try (CloseableHttpResponse response = client.execute(post)) {
             int statusCode = response.getStatusLine().getStatusCode();
             
-            if (statusCode == 429 && !isRetry) {
+            if (statusCode == 429) {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new IOException("Interrupted while waiting to retry Loops API", e);
                 }
-                sendLoopRequest(client, jsonBody, true);
+                sendLoopRequest(client, jsonBody);
                 return;
             }
             
