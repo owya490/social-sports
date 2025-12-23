@@ -9,7 +9,6 @@ import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 import com.functions.waitlist.models.requests.JoinWaitlistRequest;
 import com.functions.waitlist.models.responses.JoinWaitlistResponse;
-import com.functions.waitlist.repositories.WaitlistRepository;
 import com.functions.waitlist.services.WaitlistService;
 
 /**
@@ -38,15 +37,15 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
         }
 
         logger.info("Handling join waitlist request for eventId: {}, email: {}",
-                request.getEventId(), WaitlistRepository.hashEmail(request.getEmail()));
+                request.getEventId(), request.getEmail());
 
         // email validation
         if (!isValidEmail(request.getEmail())) {
-            logger.error("Invalid email format for email: {}", WaitlistRepository.hashEmail(request.getEmail()));
+            logger.error("Invalid email format for email: {}", request.getEmail());
             return JoinWaitlistResponse.builder()
                 .success(false)
                 .message("invalid email format")
-                .emailHash(WaitlistRepository.hashEmail(request.getEmail())).build();
+                .emailHash(request.getEmail()).build();
         }
 
         return WaitlistService.joinWaitlist(request);
