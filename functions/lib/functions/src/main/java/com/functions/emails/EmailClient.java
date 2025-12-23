@@ -25,29 +25,30 @@ public class EmailClient {
     private static final String LOOPS_API_KEY = Global.getEnv("LOOPS_API_KEY");
     private static final String LOOPS_TRANSACTIONAL_URL = "https://app.loops.so/api/v1/transactional";  
 
+    private static int MAX_RETRIES = 3;
+
     /**
      * Sends an email with retry logic (recommended for production use).
      * 
      * @param transactionalId The Loops transactional email ID
      * @param email          The recipient email address
      * @param variables      The email template variables
-     * @param maxRetries     Maximum number of retry attempts
      * @return true if email was sent successfully, false otherwise
      */
     public static boolean sendEmailWithLoopWithRetries(String transactionalId, String email, 
-                                                       Map<String, String> variables, int maxRetries) {
-        for (int attempt = 0; attempt < maxRetries; attempt++) {
+                                                       Map<String, String> variables) {
+        for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
                 sendEmailWithLoop(transactionalId, email, variables);
-                logger.info("Successfully sent email to {} (attempt {}/{})", email, attempt + 1, maxRetries);
+                logger.info("Successfully sent email to {} (attempt {}/{})", email, attempt + 1, MAX_RETRIES);
                 return true;
             } catch (Exception e) {
                 logger.error("Failed to send email to {} (attempt {}/{}): {}", 
-                           email, attempt + 1, maxRetries, e.getMessage(), e);
+                           email, attempt + 1, MAX_RETRIES, e.getMessage(), e);
             }
 
             // Exponential backoff: 1s, 2s, 4s, 8s...
-            if (attempt < maxRetries - 1) {
+            if (attempt < MAX_RETRIES - 1) {
                 try {
                     long delay = (long) Math.pow(2, attempt) * 1000;
                     logger.info("Retrying email send to {} after {}ms delay", email, delay);
@@ -60,7 +61,7 @@ public class EmailClient {
             }
         }
 
-        logger.warn("Failed to send email after {} attempts to {}", maxRetries, email);
+        logger.warn("Failed to send email after {} attempts to {}", MAX_RETRIES, email);
         return false;
     }
 
