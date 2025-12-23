@@ -38,11 +38,11 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
         }
 
         logger.info("Handling join waitlist request for eventId: {}, email: {}",
-                request.getEventId(), request.getEmail());
+                request.getEventId(), WaitlistRepository.hashEmail(request.getEmail()));
 
         // email validation
         if (!isValidEmail(request.getEmail())) {
-            logger.error("Invalid email format for email: {}", request.getEmail());
+            logger.error("Invalid email format for email: {}", WaitlistRepository.hashEmail(request.getEmail()));
             return JoinWaitlistResponse.builder()
                 .success(false)
                 .message("invalid email format")
