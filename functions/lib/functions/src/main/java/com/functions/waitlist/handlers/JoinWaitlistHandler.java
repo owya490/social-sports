@@ -1,5 +1,6 @@
 package com.functions.waitlist.handlers;
 
+import org.apache.commons.validator.routines.EmailValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,21 +43,22 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
         // email validation
         if (!isValidEmail(request.getEmail())) {
             logger.error("Invalid email format for email: {}", request.getEmail());
+
             return JoinWaitlistResponse.builder()
                 .success(false)
                 .message("invalid email format")
-                .emailHash(request.getEmail()).build();
+                // no need to hash email since it is invalid
+                .build();
         }
 
         return WaitlistService.joinWaitlist(request);
     }
 
     /**
-     * Validates email format using regex pattern
+     * Validates email format using Apache Commons EmailValidator
      */
     private boolean isValidEmail(String email) {
-        String emailRegex = "^(([^<>()\\[\\]\\\\.,;:\\s@\"]+(\\.+[^<>()\\[\\]\\\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$";
-        return email != null && email.matches(emailRegex);
+        return email != null && EmailValidator.getInstance().isValid(email);
     }
 }
 
