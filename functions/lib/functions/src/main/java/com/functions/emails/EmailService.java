@@ -57,8 +57,6 @@ public class EmailService {
             "startDate", EmailUtils.formatTimestamp(eventStartDate),
             "endDate", EmailUtils.formatTimestamp(eventEndDate),
             "location", location);
-
-
         logger.info("Sending waitlist email notification to {} for event {}", email, eventName);
         return EmailClient.sendEmailWithLoopWithRetries(EmailTemplateType.WAITLIST_NOTIFICATION.getTransactionalId(), email, variables);
     }
