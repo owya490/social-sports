@@ -34,7 +34,7 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
 
         // check for null request and null values
         if (request == null || request.getEmail() == null || request.getEventId() == null) {
-            throw new IllegalArgumentException("email and eventId are required");
+            throw new IllegalArgumentException("Both email and eventId are required");
         }
 
         logger.info("Handling join waitlist request for eventId: {}, email: {}",
@@ -43,12 +43,7 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
         // email validation
         if (!isValidEmail(request.getEmail())) {
             logger.error("Invalid email format for email: {}", request.getEmail());
-
-            return JoinWaitlistResponse.builder()
-                .success(false)
-                .message("invalid email format")
-                // no need to hash email since it is invalid
-                .build();
+            throw new IllegalArgumentException("Invalid email format");
         }
 
         return WaitlistService.joinWaitlist(request);
