@@ -13,10 +13,16 @@ import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.UrlUtils;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.RequestOptions;
+import com.stripe.param.PaymentIntentCancelParams;
+import com.stripe.param.PaymentIntentCaptureParams;
 
 /**
  * Service class for Stripe operations.
- * Now uses the Java CheckoutService directly instead of calling Python functions.
+ * Now uses the Java CheckoutService directly instead of calling Python
+ * functions.
  */
 public class StripeService {
     private static final Logger logger = LoggerFactory.getLogger(StripeService.class);
@@ -30,34 +36,35 @@ public class StripeService {
     /**
      * Gets a Stripe checkout URL for the specified event.
      *
-     * @param eventId The event ID to create a checkout for
-     * @param isPrivate Whether the event is private
-     * @param numTickets Number of tickets to purchase
-     * @param successUrl Optional success URL (defaults to event success page)
-     * @param cancelUrl Optional cancel URL (defaults to home page)
-     * @param fulfilmentSessionId The fulfilment session ID
+     * @param eventId               The event ID to create a checkout for
+     * @param isPrivate             Whether the event is private
+     * @param numTickets            Number of tickets to purchase
+     * @param successUrl            Optional success URL (defaults to event success
+     *                              page)
+     * @param cancelUrl             Optional cancel URL (defaults to home page)
+     * @param fulfilmentSessionId   The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
      * @return The Stripe checkout URL
      * @throws RuntimeException if checkout creation fails
      */
     public static String getStripeCheckoutFromEventId(String eventId,
-                                                      boolean isPrivate,
-                                                      Integer numTickets,
-                                                      Optional<String> successUrl,
-                                                      Optional<String> cancelUrl,
-                                                      String fulfilmentSessionId,
-                                                      String endFulfilmentEntityId) {
+            boolean isPrivate,
+            Integer numTickets,
+            Optional<String> successUrl,
+            Optional<String> cancelUrl,
+            String fulfilmentSessionId,
+            String endFulfilmentEntityId) {
         String newSuccessUrl = successUrl.orElse(
                 UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
                         .orElse(UrlUtils.SPORTSHUB_URL));
-        
+
         String newCancelUrl = cancelUrl.orElse(
                 UrlUtils.getUrlWithCurrentEnvironment("/")
                         .orElse(UrlUtils.SPORTSHUB_URL));
 
         logger.info(
                 "Getting Stripe checkout URL for event ID: {}, isPrivate: {}, numTickets: {}, " +
-                "successUrl: {}, cancelUrl: {}, fulfilmentSessionId: {}",
+                        "successUrl: {}, cancelUrl: {}, fulfilmentSessionId: {}",
                 eventId, isPrivate, numTickets, newSuccessUrl, newCancelUrl, fulfilmentSessionId);
 
         CreateStripeCheckoutSessionRequest request = new CreateStripeCheckoutSessionRequest(
@@ -68,8 +75,7 @@ public class StripeService {
                 newSuccessUrl,
                 true,
                 fulfilmentSessionId,
-                endFulfilmentEntityId
-        );
+                endFulfilmentEntityId);
 
         if (StripeConfig.JAVA_STRIPE_ENABLED) {
             try {
@@ -104,25 +110,93 @@ public class StripeService {
         }
 
         return FirebaseService.callFirebaseFunction(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID, request)
-        .map(response -> {
-            try {
-                CreateStripeCheckoutSessionResponse stripeResponse = JavaUtils.objectMapper
-                        .readValue(response.result(), CreateStripeCheckoutSessionResponse.class);
-                            // If the stripe checkout URL is null, error URL, or cancel URL, throw a runtime exception
-                            if (stripeResponse.url() == null 
-                                || stripeResponse.url().equals(ERROR_URL) 
-                                || stripeResponse.url().equals(cancelUrl.orElse(UrlUtils.SPORTSHUB_URL
-                            ))) {
-                                logger.error("Stripe checkout URL is null or error URL or cancel URL. Throwing runtime exception.");
-                                throw new RuntimeException("Stripe checkout URL is null or error URL or cancel URL.");
-                            }
-                return stripeResponse.url();
-            } catch (Exception e) {
-                logger.error("Failed to parse Stripe checkout response for event ID {}: {}", eventId,
-                        e.getMessage());
-                throw new RuntimeException("Failed to parse Stripe checkout response", e);
-            }
-        }).orElseThrow(() -> new RuntimeException("Failed to get Stripe checkout URL"));
+                .map(response -> {
+                    try {
+                        CreateStripeCheckoutSessionResponse stripeResponse = JavaUtils.objectMapper
+                                .readValue(response.result(), CreateStripeCheckoutSessionResponse.class);
+                        // If the stripe checkout URL is null, error URL, or cancel URL, throw a runtime
+                        // exception
+                        if (stripeResponse.url() == null
+                                || stripeResponse.url().equals(ERROR_URL)
+                                || stripeResponse.url().equals(cancelUrl.orElse(UrlUtils.SPORTSHUB_URL))) {
+                            logger.error(
+                                    "Stripe checkout URL is null or error URL or cancel URL. Throwing runtime exception.");
+                            throw new RuntimeException("Stripe checkout URL is null or error URL or cancel URL.");
+                        }
+                        return stripeResponse.url();
+                    } catch (Exception e) {
+                        logger.error("Failed to parse Stripe checkout response for event ID {}: {}", eventId,
+                                e.getMessage());
+                        throw new RuntimeException("Failed to parse Stripe checkout response", e);
+                    }
+                }).orElseThrow(() -> new RuntimeException("Failed to get Stripe checkout URL"));
+    }
+
+    /**
+     * Captures an authorized PaymentIntent.
+     * After the payment method is authorized, the PaymentIntent status transitions
+     * to requires_capture.
+     * This captures the total authorized amount by default.
+     *
+     * @param paymentIntentId The Stripe PaymentIntent ID to capture
+     * @param stripeAccountId The connected Stripe account ID (for Connect accounts)
+     * @return The captured PaymentIntent
+     * @throws StripeException if the capture operation fails
+     */
+    public static PaymentIntent capturePaymentIntent(String paymentIntentId, String stripeAccountId)
+            throws StripeException {
+        logger.info("Capturing PaymentIntent: {} for Stripe account: {}", paymentIntentId, stripeAccountId);
+
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(
+                paymentIntentId,
+                RequestOptions.builder()
+                        .setStripeAccount(stripeAccountId)
+                        .build());
+
+        PaymentIntentCaptureParams params = PaymentIntentCaptureParams.builder().build();
+
+        PaymentIntent capturedPaymentIntent = paymentIntent.capture(
+                params,
+                RequestOptions.builder()
+                        .setStripeAccount(stripeAccountId)
+                        .build());
+
+        logger.info("Successfully captured PaymentIntent: {}, status: {}",
+                capturedPaymentIntent.getId(), capturedPaymentIntent.getStatus());
+
+        return capturedPaymentIntent;
+    }
+
+    /**
+     * Cancels a PaymentIntent.
+     * Use this when the booking is rejected either by default or by the organiser.
+     *
+     * @param paymentIntentId The Stripe PaymentIntent ID to cancel
+     * @param stripeAccountId The connected Stripe account ID (for Connect accounts)
+     * @return The canceled PaymentIntent
+     * @throws StripeException if the cancel operation fails
+     */
+    public static PaymentIntent cancelPaymentIntent(String paymentIntentId, String stripeAccountId)
+            throws StripeException {
+        logger.info("Canceling PaymentIntent: {} for Stripe account: {}", paymentIntentId, stripeAccountId);
+
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(
+                paymentIntentId,
+                RequestOptions.builder()
+                        .setStripeAccount(stripeAccountId)
+                        .build());
+
+        PaymentIntentCancelParams params = PaymentIntentCancelParams.builder().build();
+
+        PaymentIntent canceledPaymentIntent = paymentIntent.cancel(
+                params,
+                RequestOptions.builder()
+                        .setStripeAccount(stripeAccountId)
+                        .build());
+
+        logger.info("Successfully canceled PaymentIntent: {}, status: {}",
+                canceledPaymentIntent.getId(), canceledPaymentIntent.getStatus());
+
+        return canceledPaymentIntent;
     }
 }
-

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.services.FirebaseService;
 import com.functions.tickets.models.Order;
+import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
@@ -59,5 +60,15 @@ public class OrdersRepository {
         }
         return orders;
     }
-}
 
+    public static boolean updateOrder(String orderId, Order order) {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            db.collection(ORDERS_COLLECTION).document(orderId).update(JavaUtils.toMap(order));
+            return true;
+        } catch (Exception e) {
+            logger.error("Failed to update order: {}", orderId, e);
+            return false;
+        }
+    }
+}
