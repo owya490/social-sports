@@ -19,8 +19,7 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * Service for sending emails related to event purchases.
- * Replaces the previous Python email service implementation with a direct Java implementation.
+ * Service for sending emails via Loops.so.
  */
 public class EmailClient {
     private static final Logger logger = LoggerFactory.getLogger(EmailClient.class);
