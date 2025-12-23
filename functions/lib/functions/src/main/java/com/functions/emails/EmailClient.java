@@ -26,11 +26,6 @@ public class EmailClient {
     
     private static final String LOOPS_API_KEY = Global.getEnv("LOOPS_API_KEY");
     private static final String LOOPS_TRANSACTIONAL_URL = "https://app.loops.so/api/v1/transactional";
-    
-    // Transactional IDs for different email types
-    public static final String PURCHASE_EMAIL_ID = "cm4r78nk301ehx79nrrxaijgl";
-    public static final String WAITLIST_CONFIRMATION_EMAIL_ID = "cmjcdaf0h05gt0i56iicea2ys";
-    public static final String WAITLIST_NOTIFICATION_EMAIL_ID = "cmjgp5at54ceh0iyg06ddxftt";
 
 
     @Data

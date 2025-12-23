@@ -40,7 +40,7 @@ public class EmailService {
 
 
         logger.info("Sending waitlist email confirmation to {} for event {}", email, eventName);
-        return EmailClient.sendEmailWithLoopWithRetries(EmailClient.WAITLIST_CONFIRMATION_EMAIL_ID, email, variables, maxRetries);
+        return EmailClient.sendEmailWithLoopWithRetries(EmailTemplateType.WAITLIST_CONFIRMATION.getTransactionalId(), email, variables, maxRetries);
     }
 
 
@@ -67,7 +67,7 @@ public class EmailService {
 
 
         logger.info("Sending waitlist email notification to {} for event {}", email, eventName);
-        return EmailClient.sendEmailWithLoopWithRetries(EmailClient.WAITLIST_NOTIFICATION_EMAIL_ID, email, variables, maxRetries);
+        return EmailClient.sendEmailWithLoopWithRetries(EmailTemplateType.WAITLIST_NOTIFICATION.getTransactionalId(), email, variables, maxRetries);
     }
     
     /**
