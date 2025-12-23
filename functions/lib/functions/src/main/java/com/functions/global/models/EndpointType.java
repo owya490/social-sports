@@ -15,6 +15,8 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
+import com.functions.waitlist.models.requests.JoinWaitlistRequest;
+import com.functions.waitlist.models.responses.JoinWaitlistResponse;
 import com.functions.wrapped.models.requests.GetWrappedRequest;
 import com.functions.wrapped.models.responses.GetWrappedResponse;
 
@@ -35,8 +37,9 @@ public enum EndpointType {
     GET_FULFILMENT_SESSION_INFO(GetFulfilmentSessionInfoRequest.class, GetFulfilmentSessionInfoResponse.class),
     GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class),
     COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class),
-    GET_SPORTSHUB_WRAPPED(GetWrappedRequest.class, GetWrappedResponse.class);
-
+    GET_SPORTSHUB_WRAPPED(GetWrappedRequest.class, GetWrappedResponse.class),
+    COMPLETE_WAITLIST_SESSION(JoinWaitlistRequest.class, JoinWaitlistResponse.class);
+ 
     private final Class<?> requestClass;
     private final Class<?> responseClass;
 
