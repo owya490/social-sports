@@ -18,6 +18,7 @@ public class EmailService {
      * @param name The name of the user who has joined the waitlist
      * @param eventLocation The location of the event
      * @param eventUrl The URL to the event
+     * @param eventId The ID of the event
      * @param hashedEmail The hashed email of the user who has joined the waitlist
      * @param email      The email of the user who has joined the waitlist
      * @return true if email was sent successfully, false otherwise
@@ -34,7 +35,7 @@ public class EmailService {
 
 
         logger.info("Sending waitlist email confirmation to {} for event {}", email, eventName);
-        return EmailClient.sendEmailWithLoopWithRetries(EmailTemplateType.WAITLIST_CONFIRMATION.getTransactionalId(), email, variables);
+        return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.WAITLIST_CONFIRMATION.getTransactionalId(), email, variables);
     }
 
 
@@ -58,7 +59,7 @@ public class EmailService {
             "endDate", EmailUtils.formatTimestamp(eventEndDate),
             "location", location);
         logger.info("Sending waitlist email notification to {} for event {}", email, eventName);
-        return EmailClient.sendEmailWithLoopWithRetries(EmailTemplateType.WAITLIST_NOTIFICATION.getTransactionalId(), email, variables);
+        return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.WAITLIST_NOTIFICATION.getTransactionalId(), email, variables);
     }
     
 }

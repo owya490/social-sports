@@ -8,7 +8,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +24,7 @@ public class EmailClient {
     private static final String LOOPS_API_KEY = Global.getEnv("LOOPS_API_KEY");
     private static final String LOOPS_TRANSACTIONAL_URL = "https://app.loops.so/api/v1/transactional";  
 
-    private static int MAX_RETRIES = 3;
+    private static final int MAX_RETRIES = 3;
 
     /**
      * Sends an email with retry logic (recommended for production use).
@@ -35,19 +34,25 @@ public class EmailClient {
      * @param variables      The email template variables
      * @return true if email was sent successfully, false otherwise
      */
-    public static boolean sendEmailWithLoopWithRetries(String transactionalId, String email, 
+    public static boolean sendEmailWithLoopsWithRetries(String transactionalId, String email, 
                                                        Map<String, String> variables) {
         for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
-                sendEmailWithLoop(transactionalId, email, variables);
-                logger.info("Successfully sent email to {} (attempt {}/{})", email, attempt + 1, MAX_RETRIES);
-                return true;
+                int statusCode = sendEmailWithLoops(transactionalId, email, variables);
+                if (statusCode >= 200 && statusCode < 300) {
+                    // if success, return true and don't retry
+                    logger.info("Successfully sent email to {} (attempt {}) with status {}", email, attempt + 1, statusCode);
+                    return true;
+                } else {
+                    logger.error("Failed to send email to {} (attempt {}): Status {}", 
+                           email, attempt + 1, statusCode);
+                }
             } catch (Exception e) {
                 logger.error("Failed to send email to {} (attempt {}/{}): {}", 
                            email, attempt + 1, MAX_RETRIES, e.getMessage(), e);
             }
 
-            // Exponential backoff: 1s, 2s, 4s, 8s...
+            // Exponential backoff
             if (attempt < MAX_RETRIES - 1) {
                 try {
                     long delay = (long) Math.pow(2, attempt) * 1000;
@@ -61,20 +66,19 @@ public class EmailClient {
             }
         }
 
-        logger.warn("Failed to send email after {} attempts to {}", MAX_RETRIES, email);
+        logger.error("Failed to send email after {} attempts to {}", MAX_RETRIES, email);
         return false;
     }
 
     /**
      * Sends an email without retry logic (single attempt).
-     * For production use, prefer sendEmailWithLoopWithRetries().
      * 
      * @param transactionalId The Loops transactional email ID
      * @param email          The recipient email address
      * @param variables      The email template variables
      * @throws IOException if the email fails to send
      */
-    private static void sendEmailWithLoop(String transactionalId, String email, 
+    private static int sendEmailWithLoops(String transactionalId, String email, 
                                          Map<String, String> variables) throws IOException {
         if (LOOPS_API_KEY == null) {
             throw new IOException("LOOPS_API_KEY is not set.");
@@ -89,35 +93,22 @@ public class EmailClient {
         String jsonBody = JavaUtils.objectMapper.writeValueAsString(request);
         
         try (CloseableHttpClient client = HttpClients.createDefault()) {
-            sendLoopRequest(client, jsonBody);
+            return sendLoopsRequest(client, jsonBody);
         }
     }
     
-    private static void sendLoopRequest(CloseableHttpClient client, String jsonBody) throws IOException {
+    private static int sendLoopsRequest(CloseableHttpClient client, String jsonBody) throws IOException {
         HttpPost post = new HttpPost(LOOPS_TRANSACTIONAL_URL);
         post.setHeader("Authorization", "Bearer " + LOOPS_API_KEY);
         post.setHeader("Content-Type", "application/json");
         post.setEntity(new StringEntity(jsonBody));
+
         
         try (CloseableHttpResponse response = client.execute(post)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            
-            if (statusCode == 429) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new IOException("Interrupted while waiting to retry Loops API", e);
-                }
-                sendLoopRequest(client, jsonBody);
-                return;
-            }
-            
-            if (statusCode < 200 || statusCode >= 300) {
-                String responseBody = EntityUtils.toString(response.getEntity());
-                logger.error("Failed to send email via Loops. Status: {}, Body: {}", statusCode, responseBody);
-                throw new IOException("Failed to send email via Loops. Status: " + statusCode);
-            }
+            return response.getStatusLine().getStatusCode();
+        } catch (IOException e) {
+            logger.error("Failed to send Loops request. Exception: {}", e.getMessage());
+            throw e;
         }
     }
 }
