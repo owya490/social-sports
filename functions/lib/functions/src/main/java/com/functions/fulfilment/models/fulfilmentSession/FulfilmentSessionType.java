@@ -2,13 +2,13 @@ package com.functions.fulfilment.models.fulfilmentSession;
 
 import com.functions.fulfilment.models.FulfilmentSessionService;
 import com.functions.fulfilment.services.BookingApprovalFulfilmentService;
-import com.functions.fulfilment.services.CheckoutFulfilfmentService;
+import com.functions.fulfilment.services.CheckoutFulfilmentService;
 
 import lombok.Getter;
 
 @Getter
 public enum FulfilmentSessionType {
-    CHECKOUT(new CheckoutFulfilfmentService()),
+    CHECKOUT(new CheckoutFulfilmentService()),
     BOOKING_APPROVAL(new BookingApprovalFulfilmentService());
 
     private final FulfilmentSessionService<? extends FulfilmentSession> fulfilmentSessionService;

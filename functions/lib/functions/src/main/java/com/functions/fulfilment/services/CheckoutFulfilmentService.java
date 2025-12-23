@@ -4,7 +4,6 @@ import static com.functions.fulfilment.services.FulfilmentService.getEndFulfilme
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
-import com.functions.forms.services.FormsUtils;
 import com.functions.fulfilment.models.FulfilmentSessionService;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
@@ -30,14 +28,15 @@ import com.functions.stripe.services.StripeService;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
 
-public class CheckoutFulfilfmentService implements FulfilmentSessionService<CheckoutFulfilmentSession> {
+public class CheckoutFulfilmentService implements FulfilmentSessionService<CheckoutFulfilmentSession> {
 
-    private static final Logger logger = LoggerFactory.getLogger(CheckoutFulfilfmentService.class);
+    private static final Logger logger = LoggerFactory.getLogger(CheckoutFulfilmentService.class);
 
     /**
      * Initializes a checkout fulfilment session for the given event ID.
      */
-    public CheckoutFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId, Integer numTickets) throws Exception {
+    public CheckoutFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
+            Integer numTickets) throws Exception {
         try {
 
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
@@ -47,7 +46,8 @@ public class CheckoutFulfilfmentService implements FulfilmentSessionService<Chec
             }
 
             EventData eventData = maybeEventData.get();
-            List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructCheckoutFulfilmentEntities(eventId,
+            List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructCheckoutFulfilmentEntities(
+                    eventId,
                     eventData, numTickets,
                     fulfilmentSessionId);
             logger.info(
@@ -61,15 +61,10 @@ public class CheckoutFulfilfmentService implements FulfilmentSessionService<Chec
                             .map(SimpleEntry::getValue)
                             .collect(Collectors.toList()));
 
-            Map<String, FulfilmentEntity> entityMap = new HashMap<>();
-            List<String> entityOrder = new ArrayList<>();
-
-            for (SimpleEntry<String, FulfilmentEntity> entry : fulfilmentEntities) {
-                String entityId = entry.getKey();
-                FulfilmentEntity entity = entry.getValue();
-                entityMap.put(entityId, entity);
-                entityOrder.add(entityId);
-            }
+            SimpleEntry<Map<String, FulfilmentEntity>, List<String>> orderedFulfilmentEntities = FulfilmentSessionService
+                    .getOrderedFulfilmentEntities(fulfilmentEntities);
+            Map<String, FulfilmentEntity> entityMap = orderedFulfilmentEntities.getKey();
+            List<String> entityOrder = orderedFulfilmentEntities.getValue();
 
             CheckoutFulfilmentSession session = CheckoutFulfilmentSession.builder()
                     .fulfilmentSessionStartTime(Timestamp.now())
@@ -104,7 +99,7 @@ public class CheckoutFulfilfmentService implements FulfilmentSessionService<Chec
 
         // 1. FORMS entities - one for each ticket
         try {
-            Optional<String> formId = FormsUtils.getFormIdByEventId(eventId);
+            Optional<String> formId = Optional.ofNullable(eventData.getFormId());
             if (formId.isPresent()) {
                 for (int i = 0; i < numTickets; i++) {
                     tempEntities.add(
@@ -149,7 +144,8 @@ public class CheckoutFulfilfmentService implements FulfilmentSessionService<Chec
                         ? UrlUtils
                                 .getUrlWithCurrentEnvironment(String.format("/fulfilment/%s/%s",
                                         fulfilmentSessionId, prevEntityId))
-                                .orElse(UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId).orElse(UrlUtils.SPORTSHUB_URL))
+                                .orElse(UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId)
+                                        .orElse(UrlUtils.SPORTSHUB_URL))
                         : UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId).orElse(UrlUtils.SPORTSHUB_URL);
 
                 String stripeCheckoutLink = StripeService.getStripeCheckoutUrl(eventId,

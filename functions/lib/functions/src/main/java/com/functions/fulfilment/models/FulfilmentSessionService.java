@@ -9,11 +9,11 @@ import java.util.Map;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 
-
 public interface FulfilmentSessionService<T extends FulfilmentSession> {
     T initFulfilmentSession(String fulfilmentSessionId, String eventId, Integer numTickets) throws Exception;
 
-    public static SimpleEntry<Map<String, FulfilmentEntity>, List<String>> getOrderedFulfilmentEntities(List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities) throws Exception {
+    public static SimpleEntry<Map<String, FulfilmentEntity>, List<String>> getOrderedFulfilmentEntities(
+            List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities) {
         Map<String, FulfilmentEntity> entityMap = new HashMap<>();
         List<String> entityOrder = new ArrayList<>();
 

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.fulfilment.models.FulfilmentSessionService;
+import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
@@ -35,10 +36,6 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
     public BookingApprovalFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
             Integer numTickets) throws Exception {
         try {
-            if (numTickets == null || numTickets <= 0) {
-                logger.error("Invalid numTickets {} for eventId {}", numTickets, eventId);
-                throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
-            }
 
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
             if (maybeEventData.isEmpty()) {
@@ -78,15 +75,15 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
         } catch (CheckoutDateTimeException e) {
             // Don't log error and alert for error that is outside of our direct control
             // because this is a time based error.
-            logger.warn("Cannot checkout for event {}: time based error: {}", eventId, e);
+            logger.warn("Cannot booking approval checkout for event {}: time based error: {}", eventId, e);
             throw e;
         } catch (CheckoutVacancyException e) {
             // Don't log error and alert for error that is outside of our direct control
             // because this is a vacancy error.
-            logger.warn("Cannot checkout for event {}: vacancy error: {}", eventId, e);
+            logger.warn("Cannot booking approval checkout for event {}: vacancy error: {}", eventId, e);
             throw e;
         } catch (Exception e) {
-            logger.error("Failed to init checkout fulfilment session: {}", eventId, e);
+            logger.error("Failed to init booking approval checkout fulfilment session: {}", eventId, e);
             throw e;
         }
     }
@@ -110,12 +107,12 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                 }
             }
         } catch (Exception e) {
-            logger.error("[FulfilmentService] Error constructing FORMS entities for event ID: {}", eventId, e);
+            logger.error("[BookingApprovalFulfilmentService] Error constructing FORMS entities for event ID: {}", eventId, e);
             throw new RuntimeException(
-                    "[FulfilmentService] Failed to construct FORMS entities for event ID: " + eventId, e);
+                    "[BookingApprovalFulfilmentService] Failed to construct FORMS entities for event ID: " + eventId, e);
         }
 
-        // 2. STRIPE entity (will be updated with correct success URL later)
+        // 2. DELAYED_STRIPE entity (will be updated with correct success URL later)
         tempEntities.add(StripeFulfilmentEntity.builder().url("") // Placeholder URL
                 .type(FulfilmentEntityType.DELAYED_STRIPE).build());
 
@@ -133,13 +130,13 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
 
         String endFulfilmentEntityId = getEndFulfilmentEntityId(eventId, tempEntities, entityIds);
 
-        // TODO: simplify this piece of code once we modularise stripe checkout python
+        // TODO: simplify this piece of code once we modularise delayed stripe checkout python
         // logic
         for (int i = 0; i < tempEntities.size(); i++) {
             FulfilmentEntity entity = tempEntities.get(i);
             String entityId = entityIds.get(i);
 
-            if (entity.getType() == FulfilmentEntityType.STRIPE) {
+            if (entity.getType() == FulfilmentEntityType.DELAYED_STRIPE) {
                 String prevEntityId = (i - 1 >= 0) ? entityIds.get(i - 1) : null;
                 String cancelUrl = prevEntityId != null
                         ? UrlUtils
@@ -149,14 +146,14 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                                         .orElse(UrlUtils.SPORTSHUB_URL))
                         : UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId).orElse(UrlUtils.SPORTSHUB_URL);
 
-                String stripeCheckoutLink = StripeService.getDelayedStripeCheckoutUrl(eventId,
+                String delayedStripeCheckoutLink = StripeService.getDelayedStripeCheckoutUrl(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
                         fulfilmentSessionId, endFulfilmentEntityId);
 
-                logger.info("Created Stripe checkout link for event ID {}", eventId);
-                logger.debug("Stripe checkout link: {}", stripeCheckoutLink);
-                entity = StripeFulfilmentEntity.builder().url(stripeCheckoutLink)
-                        .type(FulfilmentEntityType.STRIPE).build();
+                logger.info("Created delayed Stripe checkout link for event ID {}", eventId);
+                logger.debug("Delayed Stripe checkout link: {}", delayedStripeCheckoutLink);
+                entity = DelayedStripeFulfilmentEntity.builder().url(delayedStripeCheckoutLink)
+                        .type(FulfilmentEntityType.DELAYED_STRIPE).build();
                 fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
             } else {
                 fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
