@@ -35,7 +35,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_FULFILMENT_ENTITY_INFO, new GetFulfilmentEntityInfoHandler());
         handlers.put(EndpointType.COMPLETE_FULFILMENT_SESSION, new CompleteFulfilmentSessionHandler());
         handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED, new GetWrappedHandler());
-        handlers.put(EndpointType.COMPLETE_WAITLIST_SESSION, new JoinWaitlistHandler());
+        handlers.put(EndpointType.COMPLETE_WAITLIST_SESSION, new JoinWaitlistHandler()); 
     }
 
     /**

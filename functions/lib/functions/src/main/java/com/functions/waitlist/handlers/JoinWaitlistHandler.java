@@ -20,6 +20,8 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
     @Override
     public JoinWaitlistRequest parse(UnifiedRequest data) {
         try {
+            // parse the JSON data from the global app controller into a request object 
+            // treeToValue is a utility method that converts a JSON tree node into a normal Java object.
             return JavaUtils.objectMapper.treeToValue(data.data(), JoinWaitlistRequest.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to parse JoinWaitlistRequest", e);
@@ -28,16 +30,24 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
 
     @Override
     public JoinWaitlistResponse handle(JoinWaitlistRequest request) {
-        
-        // Validate email format
-        if (!isValidEmail(request.getEmail())) {
-            return JoinWaitlistResponse.builder()
-                    .success(false)
-                    .message("invalid email format")
-                    .build();
+
+        // check for null request and null values
+        if (request == null || request.getEmail() == null || request.getEventId() == null) {
+            throw new IllegalArgumentException("email and eventId are required");
         }
 
-        // Call service
+        logger.info("Handling join waitlist request for eventId: {}, email: {}",
+                request.getEventId(), request.getEmail());
+
+        // email validation
+        if (!isValidEmail(request.getEmail())) {
+            logger.error("Invalid email format for email: {}", request.getEmail());
+            return JoinWaitlistResponse.builder()
+                .success(false)
+                .message("invalid email format")
+                .emailHash(request.getEmail()).build();
+        }
+
         return WaitlistService.joinWaitlist(request);
     }
 
@@ -45,7 +55,6 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
      * Validates email format using regex pattern
      */
     private boolean isValidEmail(String email) {
-        // RFC 5322 compliant regex pattern for email validation (matches eventsService.ts)
         String emailRegex = "^(([^<>()\\[\\]\\\\.,;:\\s@\"]+(\\.+[^<>()\\[\\]\\\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$";
         return email != null && email.matches(emailRegex);
     }
