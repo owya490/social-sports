@@ -38,7 +38,7 @@ public enum EndpointType {
     GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class),
     COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class),
     GET_SPORTSHUB_WRAPPED(GetWrappedRequest.class, GetWrappedResponse.class),
-    COMPLETE_WAITLIST_SESSION(JoinWaitlistRequest.class, JoinWaitlistResponse.class);
+    JOIN_EVENT_WAITLIST(JoinWaitlistRequest.class, JoinWaitlistResponse.class);
  
     private final Class<?> requestClass;
     private final Class<?> responseClass;
