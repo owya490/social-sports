@@ -9,6 +9,7 @@ import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 import com.functions.waitlist.models.requests.JoinWaitlistRequest;
 import com.functions.waitlist.models.responses.JoinWaitlistResponse;
+import com.functions.waitlist.repositories.WaitlistRepository;
 import com.functions.waitlist.services.WaitlistService;
 
 /**
@@ -45,7 +46,7 @@ public class JoinWaitlistHandler implements Handler<JoinWaitlistRequest, JoinWai
             return JoinWaitlistResponse.builder()
                 .success(false)
                 .message("invalid email format")
-                .emailHash(request.getEmail()).build();
+                .emailHash(WaitlistRepository.hashEmail(request.getEmail())).build();
         }
 
         return WaitlistService.joinWaitlist(request);
