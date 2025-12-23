@@ -5,6 +5,7 @@ import java.net.URI;
 import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.stripe.param.checkout.SessionCreateParams.PaymentIntentData.CaptureMethod;
 
 /**
  * Request model for creating a Stripe checkout session.
@@ -17,8 +18,8 @@ public record CreateStripeCheckoutSessionRequest(
         @JsonProperty("successUrl") String successUrl,
         @JsonProperty("completeFulfilmentSession") @Nonnull Boolean completeFulfilmentSession,
         @JsonProperty("fulfilmentSessionId") @Nonnull String fulfilmentSessionId,
-        @JsonProperty("endFulfilmentEntityId") @Nonnull String endFulfilmentEntityId
-) {
+        @JsonProperty("endFulfilmentEntityId") @Nonnull String endFulfilmentEntityId,
+        @JsonProperty("captureMethod") @Nonnull CaptureMethod captureMethod) {
     /**
      * Compact constructor that validates all fields at creation time.
      * 
@@ -26,7 +27,7 @@ public record CreateStripeCheckoutSessionRequest(
      */
     public CreateStripeCheckoutSessionRequest {
         validate(eventId, isPrivate, quantity, cancelUrl, successUrl, completeFulfilmentSession,
-                 fulfilmentSessionId, endFulfilmentEntityId);
+                fulfilmentSessionId, endFulfilmentEntityId, captureMethod);
     }
 
     /**
@@ -34,9 +35,9 @@ public record CreateStripeCheckoutSessionRequest(
      * 
      * @throws IllegalArgumentException if validation fails
      */
-    private static void validate(String eventId, Boolean isPrivate, Integer quantity, 
-                                  String cancelUrl, String successUrl, Boolean completeFulfilmentSession,
-                                  String fulfilmentSessionId, String endFulfilmentEntityId) {
+    private static void validate(String eventId, Boolean isPrivate, Integer quantity,
+            String cancelUrl, String successUrl, Boolean completeFulfilmentSession,
+            String fulfilmentSessionId, String endFulfilmentEntityId, CaptureMethod captureMethod) {
         if (eventId == null || eventId.isBlank()) {
             throw new IllegalArgumentException("Event ID must be provided as a non-empty string.");
         }
@@ -49,21 +50,22 @@ public record CreateStripeCheckoutSessionRequest(
         if (cancelUrl == null || cancelUrl.isBlank()) {
             throw new IllegalArgumentException("Cancel URL must be provided as a non-empty string.");
         }
-        try { 
-            URI.create(cancelUrl); 
+        try {
+            URI.create(cancelUrl);
         } catch (Exception e) {
             throw new IllegalArgumentException("Cancel URL must be a valid URI.", e);
         }
         if (successUrl == null || successUrl.isBlank()) {
             throw new IllegalArgumentException("Success URL must be provided as a non-empty string.");
         }
-        try { 
-            URI.create(successUrl); 
+        try {
+            URI.create(successUrl);
         } catch (Exception e) {
             throw new IllegalArgumentException("Success URL must be a valid URI.", e);
         }
         if (completeFulfilmentSession == null) {
-            throw new IllegalArgumentException("Complete Fulfilment Session must be provided as a boolean but was null.");
+            throw new IllegalArgumentException(
+                    "Complete Fulfilment Session must be provided as a boolean but was null.");
         }
         if (fulfilmentSessionId == null || fulfilmentSessionId.isBlank()) {
             throw new IllegalArgumentException("Fulfilment Session ID must be provided as a non-empty string.");
@@ -71,6 +73,8 @@ public record CreateStripeCheckoutSessionRequest(
         if (endFulfilmentEntityId == null || endFulfilmentEntityId.isBlank()) {
             throw new IllegalArgumentException("End Fulfilment Entity ID must be provided as a non-empty string.");
         }
+        if (captureMethod == null) {
+            throw new IllegalArgumentException("Capture Method must be provided as a CaptureMethod enum but was null.");
+        }
     }
 }
-

@@ -1,4 +1,4 @@
-package com.functions.fulfilment.models;
+package com.functions.fulfilment.models.fulfilmentEntities;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
