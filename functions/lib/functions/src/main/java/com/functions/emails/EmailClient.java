@@ -23,7 +23,7 @@ import lombok.Data;
  * Replaces the previous Python email service implementation with a direct Java implementation.
  */
 public class EmailClient {
-    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+    private static final Logger logger = LoggerFactory.getLogger(EmailClient.class);
     
     private static final String LOOPS_API_KEY = Global.getEnv("LOOPS_API_KEY");
     private static final String LOOPS_TRANSACTIONAL_URL = "https://app.loops.so/api/v1/transactional";
@@ -131,8 +131,8 @@ public class EmailClient {
             
             if (statusCode < 200 || statusCode >= 300) {
                 String responseBody = EntityUtils.toString(response.getEntity());
-                logger.error("Failed to send payment confirmation via Loops. Status: {}, Body: {}", statusCode, responseBody);
-                throw new IOException("Failed to send payment confirmation via Loops. Status: " + statusCode);
+                logger.error("Failed to send email via Loops. Status: {}, Body: {}", statusCode, responseBody);
+                throw new IOException("Failed to send email via Loops. Status: " + statusCode);
             }
         }
     }
