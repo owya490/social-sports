@@ -2,9 +2,9 @@ import { Timestamp } from "firebase/firestore";
 import { OrderId, TicketId } from "./EventTypes";
 
 export enum OrderAndTicketStatus {
-  APPROVED,
-  PENDING,
-  REJECTED,
+  APPROVED = "APPROVED",
+  PENDING = "PENDING",
+  REJECTED = "REJECTED",
 }
 
 export interface Order {
