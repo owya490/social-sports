@@ -1,28 +1,26 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
-import { EventData, EventId, EventMetadata, Purchaser } from "@/interfaces/EventTypes";
+import { EventData, EventMetadata } from "@/interfaces/EventTypes";
 import { FormId, FormResponse } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
-import { getEventById } from "@/services/src/events/eventsService";
+import { getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 
 interface ViewAttendeeFormResponsesDialogProps {
-  isOpen: boolean;
   onClose: () => void;
   attendeeName: string;
-  purchaser: Purchaser;
-  eventId: EventId;
+  attendeeEmail: string;
+  eventData: EventData;
   eventMetadata: EventMetadata;
 }
 
-const ViewAttendeeFormResponsesDialog = ({
-  isOpen,
+export const ViewAttendeeFormResponsesDialog = ({
   onClose,
   attendeeName,
-  purchaser,
-  eventId,
+  attendeeEmail,
+  eventData,
   eventMetadata,
 }: ViewAttendeeFormResponsesDialogProps) => {
   const logger = new Logger("ViewAttendeeFormResponsesDialog");
@@ -39,7 +37,6 @@ const ViewAttendeeFormResponsesDialog = ({
         setError(null);
 
         // Get event data to find formId
-        const eventData: EventData = await getEventById(eventId);
         if (!eventData.formId) {
           setFormId(null);
           setLoading(false);
@@ -53,9 +50,18 @@ const ViewAttendeeFormResponsesDialog = ({
         setFormTitle(form.title);
 
         // Get all form responses for this event
-        const allResponses = await getFormResponsesForEvent(eventData.formId, eventId);
+        const allResponses = await getFormResponsesForEvent(eventData.formId, eventData.eventId);
 
-        // Filter responses for this specific attendee
+        // Find the attendee in purchaserMap by matching email and name
+        const emailHash = getPurchaserEmailHash(attendeeEmail.toLowerCase());
+        const purchaser = eventMetadata.purchaserMap[emailHash];
+
+        if (!purchaser) {
+          logger.warn(`No purchaser found for email ${attendeeEmail}`);
+          setFormResponses([]);
+          return;
+        }
+
         const attendeeData = purchaser.attendees[attendeeName];
         if (!attendeeData) {
           logger.warn(`No attendee data found for name "${attendeeName}" on purchaser ${purchaser.email}.`);
@@ -77,12 +83,8 @@ const ViewAttendeeFormResponsesDialog = ({
       }
     };
 
-    if (isOpen) {
-      fetchFormResponses();
-    }
-  }, [isOpen, eventId, attendeeName, purchaser]);
-
-  if (!isOpen) return null;
+    fetchFormResponses();
+  }, [eventData.eventId, attendeeName, attendeeEmail, eventMetadata]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -123,7 +125,7 @@ const ViewAttendeeFormResponsesDialog = ({
             <FormResponsesTable
               formResponses={formResponses}
               formId={formId}
-              eventId={eventId}
+              eventId={eventData.eventId}
               eventMetadata={eventMetadata}
               showPurchaserColumn={false}
             />
@@ -138,5 +140,3 @@ const ViewAttendeeFormResponsesDialog = ({
     </div>
   );
 };
-
-export default ViewAttendeeFormResponsesDialog;
