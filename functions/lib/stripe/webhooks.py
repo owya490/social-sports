@@ -338,6 +338,7 @@ def fulfill_completed_event_ticket_purchase(
             "tickets": ticket_list,
             "stripePaymentIntentId": payment_intent_id,
             "status": resolve_order_and_ticket_status(capture_method),
+            "formResponseIds": form_response_ids if form_response_ids else [],
         },
     )
 
