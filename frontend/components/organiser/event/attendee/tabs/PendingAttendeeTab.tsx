@@ -1,4 +1,4 @@
-import { EventMetadata } from "@/interfaces/EventTypes";
+
 import { Order } from "@/interfaces/OrderTypes";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import { CheckIcon, DocumentTextIcon, EllipsisVerticalIcon, XMarkIcon } from "@heroicons/react/24/outline";
@@ -6,8 +6,6 @@ import { Dispatch, Fragment, SetStateAction } from "react";
 import AttendeeListTable from "../AttendeeListTable";
 
 interface PendingAttendeeTabProps {
-  eventMetadata: EventMetadata;
-  eventId: string;
   pendingOrders: Order[];
   loadingPendingOrders: boolean;
   onApproveOrder: (order: Order) => void;
@@ -16,7 +14,6 @@ interface PendingAttendeeTabProps {
 }
 
 export const PendingAttendeeTab = ({
-  eventId,
   pendingOrders,
   loadingPendingOrders,
   onApproveOrder,

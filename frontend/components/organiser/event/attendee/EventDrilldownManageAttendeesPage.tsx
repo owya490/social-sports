@@ -1,12 +1,12 @@
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
+import { Logger } from "@/observability/logger";
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import InviteAttendeeDialog from "./AddAttendeeDialog";
 import { ViewAttendeeFormResponsesDialog } from "./ViewAttendeeFormResponsesDialog";
 import { ApprovedAttendeeTab } from "./tabs/ApprovedAttendeeTab";
 import { PendingAttendeeTab } from "./tabs/PendingAttendeeTab";
-import { Logger } from "@/observability/logger";
 
 interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
@@ -43,7 +43,7 @@ export const EventDrilldownManageAttendeesPage = ({
 
   // Fetch pending orders
   useEffect(() => {
-    const fetchPendingOrders = async () => {
+    const fetchPendingOrders = () => {
       if (orderTicketsMap.size === 0) {
         setPendingOrders([]);
         if (!hasInitializedTabRef.current) {
@@ -76,7 +76,7 @@ export const EventDrilldownManageAttendeesPage = ({
       }
     };
 
-    const fetchApprovedOrders = async () => {
+    const fetchApprovedOrders = () => {
       if (orderTicketsMap.size === 0) {
         setApprovedOrders([]);
         return;
@@ -101,9 +101,13 @@ export const EventDrilldownManageAttendeesPage = ({
 
   const pendingOrdersCount = pendingOrders.length;
 
-  const handleApproveOrder = async (order: Order) => {};
+  const handleApproveOrder = (order: Order) => {
+    logger.info(`Approving order: ${order.orderId}`);
+  };
 
-  const handleRejectOrder = async (order: Order) => {};
+  const handleRejectOrder = (order: Order) => {
+    logger.info(`Rejecting order: ${order.orderId}`);
+  };
 
   return (
     <div className="flex flex-col space-y-4 mb-6 w-full p-1 pt-3 md:p-0">
@@ -153,8 +157,6 @@ export const EventDrilldownManageAttendeesPage = ({
       {/* Pending Tab Content */}
       {activeTab === "pending" && (
         <PendingAttendeeTab
-          eventMetadata={eventMetadata}
-          eventId={eventId}
           pendingOrders={pendingOrders}
           loadingPendingOrders={loadingPendingOrders}
           onApproveOrder={handleApproveOrder}
