@@ -29,19 +29,6 @@ public class EmailClient {
     /**
      * Sends an email with retry logic (recommended for production use).
      * 
-     * @param templateType   The email template type enum
-     * @param email          The recipient email address
-     * @param variables      The email template variables
-     * @return true if email was sent successfully, false otherwise
-     */
-    public static boolean sendEmailWithLoopsWithRetries(EmailTemplateType templateType, String email, 
-                                                       Map<String, String> variables) {
-        return sendEmailWithLoopsWithRetries(templateType.templateId, email, variables);
-    }
-
-    /**
-     * Sends an email with retry logic (recommended for production use).
-     * 
      * @param transactionalId The Loops transactional email ID
      * @param email          The recipient email address
      * @param variables      The email template variables
