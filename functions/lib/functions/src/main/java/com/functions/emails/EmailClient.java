@@ -34,21 +34,22 @@ public class EmailClient {
      * @param variables      The email template variables
      * @return true if email was sent successfully, false otherwise
      */
-    public static boolean sendEmailWithLoopsWithRetries(String transactionalId, String email, 
+    public static boolean sendEmailWithLoopsWithRetries(EmailTemplateType templateType, String email, 
                                                        Map<String, String> variables) {
         for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
-                int statusCode = sendEmailWithLoops(transactionalId, email, variables);
+                HttpResponseResult result = sendEmailWithLoops(templateType.templateId, email, variables);
+                int statusCode = result.getStatusCode();
                 if (statusCode >= 200 && statusCode < 300) {
                     // if success, return true and don't retry
                     logger.info("Successfully sent email to {} (attempt {}) with status {}", email, attempt + 1, statusCode);
                     return true;
                 } else {
-                    logger.error("Failed to send email to {} (attempt {}): Status {}", 
-                           email, attempt + 1, statusCode);
+                    logger.warn("Failed to send email to {} (attempt {}): Status {} and message {}", 
+                           email, attempt + 1, statusCode, result.getMessage());
                 }
             } catch (Exception e) {
-                logger.error("Failed to send email to {} (attempt {}/{}): {}", 
+                logger.warn("Failed to send email to {} (attempt {}/{}): {}", 
                            email, attempt + 1, MAX_RETRIES, e.getMessage(), e);
             }
 
@@ -78,7 +79,7 @@ public class EmailClient {
      * @param variables      The email template variables
      * @throws IOException if the email fails to send
      */
-    private static int sendEmailWithLoops(String transactionalId, String email, 
+    private static HttpResponseResult sendEmailWithLoops(String transactionalId, String email, 
                                          Map<String, String> variables) throws IOException {
         if (LOOPS_API_KEY == null) {
             throw new IOException("LOOPS_API_KEY is not set.");
@@ -97,7 +98,7 @@ public class EmailClient {
         }
     }
     
-    private static int sendLoopsRequest(CloseableHttpClient client, String jsonBody) throws IOException {
+    private static HttpResponseResult sendLoopsRequest(CloseableHttpClient client, String jsonBody) throws IOException {
         HttpPost post = new HttpPost(LOOPS_TRANSACTIONAL_URL);
         post.setHeader("Authorization", "Bearer " + LOOPS_API_KEY);
         post.setHeader("Content-Type", "application/json");
@@ -105,7 +106,11 @@ public class EmailClient {
 
         
         try (CloseableHttpResponse response = client.execute(post)) {
-            return response.getStatusLine().getStatusCode();
+            HttpResponseResult result = new HttpResponseResult(
+                response.getStatusLine().getStatusCode(),
+                response.getStatusLine().getReasonPhrase()
+            );
+            return result;
         } catch (IOException e) {
             logger.error("Failed to send Loops request. Exception: {}", e.getMessage());
             throw e;

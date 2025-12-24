@@ -1,8 +1,9 @@
 package com.functions.emails;
 
+import java.time.ZoneId;
 import java.util.Map;
 
-import com.functions.emails.utils.EmailUtils;
+import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class EmailService {
 
 
         logger.info("Sending waitlist email confirmation to {} for event {}", email, eventName);
-        return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.WAITLIST_CONFIRMATION.templateId, email, variables);
+        return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.WAITLIST_CONFIRMATION, email, variables);
     }
 
 
@@ -55,11 +56,11 @@ public class EmailService {
         Map<String, String> variables = Map.of(
             "name", name, 
             "eventName", eventName,
-            "startDate", EmailUtils.formatTimestamp(eventStartDate),
-            "endDate", EmailUtils.formatTimestamp(eventEndDate),
+            "startDate", TimeUtils.getTimestampStringFromTimezone(eventStartDate, ZoneId.of("Australia/Sydney")),
+            "endDate", TimeUtils.getTimestampStringFromTimezone(eventEndDate, ZoneId.of("Australia/Sydney")),
             "location", location);
         logger.info("Sending waitlist email notification to {} for event {}", email, eventName);
-        return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.WAITLIST_NOTIFICATION.templateId, email, variables);
+        return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.WAITLIST_NOTIFICATION, email, variables);
     }
     
 }
