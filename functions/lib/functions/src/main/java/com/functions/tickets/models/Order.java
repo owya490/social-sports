@@ -23,5 +23,7 @@ public class Order {
     private String fullName;
     private String phone;
     private List<String> tickets = new ArrayList<>(); // List of ticketIds
+    private String stripePaymentIntentId;
+    private OrderAndTicketStatus status = OrderAndTicketStatus.APPROVED;
+    private List<String> formResponseIds = new ArrayList<>();
 }
-

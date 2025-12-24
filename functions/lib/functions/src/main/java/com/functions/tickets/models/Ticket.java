@@ -17,5 +17,5 @@ public class Ticket {
     private String orderId;
     private long price; // in cents
     private Timestamp purchaseDate;
+    private OrderAndTicketStatus status = OrderAndTicketStatus.APPROVED;
 }
-
