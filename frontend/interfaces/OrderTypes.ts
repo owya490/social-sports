@@ -18,6 +18,7 @@ export interface Order {
   tickets: TicketId[];
   stripePaymentIntentId: string;
   status: OrderAndTicketStatus;
+  formResponseIds: string[];
 }
 
 export const EMPTY_ORDER: Order = {
@@ -31,6 +32,7 @@ export const EMPTY_ORDER: Order = {
   tickets: [],
   stripePaymentIntentId: "",
   status: OrderAndTicketStatus.APPROVED,
+  formResponseIds: [],
 };
 
 export const OrdersCollectionPath = "Orders";
