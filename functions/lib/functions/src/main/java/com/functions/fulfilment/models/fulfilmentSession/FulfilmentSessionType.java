@@ -10,6 +10,7 @@ import lombok.Getter;
 public enum FulfilmentSessionType {
     CHECKOUT(new CheckoutFulfilmentService()),
     BOOKING_APPROVAL(new BookingApprovalFulfilmentService());
+    JOIN_WAITLIST(new JoinWaitlistFulfilmentService());
 
     private final FulfilmentSessionService<? extends FulfilmentSession> fulfilmentSessionService;
 
