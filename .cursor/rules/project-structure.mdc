@@ -1,0 +1,91 @@
+---
+alwaysApply: true
+---
+
+# SPORTSHUB Project Structure & Architecture
+
+## Overview
+
+SPORTSHUB is a modern sports event booking platform built with Next.js, Firebase, TypeScript, Java and Python. The platform enables users to discover, book, and host social sports events.
+
+## Project Structure
+
+### Frontend (`/frontend/`)
+
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript with strict mode enabled
+- **Styling**:
+  - Tailwind CSS with Material Tailwind components
+  - Headless UI frontend components
+  - `tailwind.config.ts` for codebase wide styling standards
+- **State Management**: React hooks and context
+- **Authentication**: Firebase Auth
+- **Database**: Firestore (client-side)
+
+#### Key Directories:
+
+- `app/` - Next.js App Router pages and layouts
+- `components/` - Reusable React components organized by feature
+- `interfaces/` - TypeScript type definitions and interfaces
+- `services/` - API services and business logic
+- `utilities/` - Helper functions and utilities
+- `config/` - Configuration files
+- `public/` - Static assets
+
+### Backend (`/functions/`)
+
+- **Runtime**: Python 3.x with Firebase Functions
+- **Database**: Firestore (server-side)
+- **Payments**: Stripe integration
+- **Email**: SendGrid for notifications
+- **Logging**: Google Cloud Logging
+
+#### Key Directories:
+
+- `lib/` - Python business logic and utilities
+- `lib/functions/` - Java-based microservices and business logic
+- `lib/emails/` - Email templates and logic
+- `lib/stripe/` - Payment processing
+- `tests/` - Unit and integration tests
+
+### Infrastructure
+
+- **Hosting**: Vercel (client), Google Cloud/Firebase (serverless functions)
+- **CI/CD**: GitHub Actions
+- **Monitoring**: Grafana Faro (client) and Google Cloud Logging (backend/cloud) for observability
+
+## Architecture Principles
+
+### 1. Separation of Concerns
+
+- Frontend handles UI/UX and client-side logic
+- Backend handles business logic, payments, and data processing
+- Clear interface contracts between layers
+
+### 2. Type Safety
+
+- Strict TypeScript configuration
+- Comprehensive interface definitions
+- Branded types for domain-specific strings
+
+### 3. Component Organization
+
+- Feature-based component grouping
+- Reusable UI components
+- Clear prop interfaces
+
+### 4. Service Layer Pattern
+
+- Business logic abstracted into services
+- Consistent error handling
+- Centralized data access patterns
+
+## Key Technologies
+
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
+- **Backend**: Firebase Functions (Python/Java), Firestore, Google Cloud Functions (Java)
+- **Payments**: Stripe with connected accounts
+- **Authentication**: Firebase Auth
+- **Maps**: Google Maps API
+- **Testing**: Jest, React Testing Library
+- **Observability**: Grafana Faro (client), Google Cloud Logging (backend/cloud)
