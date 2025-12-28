@@ -25,8 +25,6 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
     
     private static final Logger logger = LoggerFactory.getLogger(WaitlistFulfilmentService.class);
 
-    // we just need the fulfilment session id and event id since that's all the info we need to initialise the session
-    // fulfilment session id is required due to FulfilmentService interface
     public WaitlistFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId, Integer numTickets) throws Exception {
         try {
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
@@ -35,14 +33,12 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
                 throw new Exception("Failed to find event data for event ID: " + eventId);
             }
             EventData eventData = maybeEventData.get();
-    
-            // first need to check if the event is open for waitlist
+
             if (!Boolean.TRUE.equals(eventData.getWaitlistEnabled())) {
                 logger.error("Event is not open for waitlist: {}", eventId);
                 throw new Exception("Event is not open for waitlist: " + eventId);
             }
     
-            // load up the fulfilment entities for the waitlist 
             // Pair of FulfilmentEntityId and FulfilmentEntity
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = new ArrayList<>();
     
