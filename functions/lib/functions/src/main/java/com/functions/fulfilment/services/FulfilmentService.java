@@ -100,6 +100,9 @@ public class FulfilmentService {
             case BOOKING_APPROVAL ->
                 fulfilmentSession = FulfilmentSessionType.BOOKING_APPROVAL.getFulfilmentSessionService()
                         .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets);
+            case WAITLIST ->
+                fulfilmentSession = FulfilmentSessionType.WAITLIST.getFulfilmentSessionService()
+                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets);
             default ->
                 throw new Exception("Invalid fulfilment session type: " + fulfilmentSessionType);
         }

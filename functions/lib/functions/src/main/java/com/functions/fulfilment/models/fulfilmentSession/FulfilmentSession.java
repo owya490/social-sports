@@ -153,6 +153,20 @@ public abstract class FulfilmentSession {
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
                         .numTickets(numTicketsBookingApproval).build();
+            case WAITLIST:
+                Integer numTicketsWaitlist = null;
+                Long numTicketsLongWaitlist = snapshot.getLong("numTickets");
+                // Firestore does not separate Ints vs Longs 
+                if (numTicketsLongWaitlist != null) {
+                    numTicketsWaitlist = numTicketsLongWaitlist.intValue();
+                }
+                return WaitlistFulfilmentSession.builder()
+                        .eventData(objectMapper.convertValue(snapshot.get("eventData"), 
+                            EventData.class))
+                        .fulfilmentSessionStartTime(
+                            snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
+                        .numTickets(numTicketsWaitlist).build();
             default:
                 throw new IllegalArgumentException(
                         "Unknown FulfilmentSession type: " + sessionType);

@@ -26,19 +26,20 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
     private static final Logger logger = LoggerFactory.getLogger(WaitlistFulfilmentService.class);
 
     // we just need the fulfilment session id and event id since that's all the info we need to initialise the session
+    // fulfilment session id is required due to FulfilmentService interface
     public WaitlistFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId, Integer numTickets) throws Exception {
         
         Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
         if (maybeEventData.isEmpty()) {
             logger.error("Failed to find event data for event ID: {}", eventId);
-            throw new RuntimeException("Failed to find event data for event ID: " + eventId);
+            throw new IllegalStateException("Failed to find event data for event ID: " + eventId);
         }
         EventData eventData = maybeEventData.get();
 
         // first need to check if the event is open for waitlist
-        if (!eventData.getWaitlistEnabled()) {
+        if (!Boolean.TRUE.equals(eventData.getWaitlistEnabled())) {
             logger.error("Event is not open for waitlist: {}", eventId);
-            throw new Exception("Event is not open for waitlist: " + eventId);
+            throw new IllegalStateException("Event is not open for waitlist: " + eventId);
         }
 
         // load up the fulfilment entities for the waitlist 
@@ -66,7 +67,8 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
                 .getOrderedFulfilmentEntities(fulfilmentEntities);
         Map<String, FulfilmentEntity> entityMap = orderedFulfilmentEntities.getKey();
         List<String> entityOrder = orderedFulfilmentEntities.getValue();
-        
+        logger.info("initialised fulfilmend session id: {}", fulfilmentSessionId);
+
         return WaitlistFulfilmentSession.builder()
                 .fulfilmentSessionStartTime(Timestamp.now())
                 .eventData(eventData)
