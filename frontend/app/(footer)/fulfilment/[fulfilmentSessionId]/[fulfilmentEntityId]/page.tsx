@@ -4,6 +4,7 @@ import { HighlightButton } from "@/components/elements/HighlightButton";
 import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
 import UnsavedChangesModal from "@/components/forms/UnsavedChangesModal";
 import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
+import WaitlistFulfilmentEntity from "@/components/fulfilment/WaitlistFulfilmentEntity";
 import Loading from "@/components/loading/Loading";
 import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
 import {
@@ -290,9 +291,15 @@ const FulfilmentSessionEntityPage = ({
       );
     case FulfilmentEntityType.WAITLIST:
       return (
-        <div>
-            <h1>Waitlist</h1>
-        </div>
+        <WaitlistFulfilmentEntity
+          fulfilmentSessionId={params.fulfilmentSessionId}
+          fulfilmentEntityId={params.fulfilmentEntityId}
+          eventId={getFulfilmentEntityInfoResponse.eventId}
+          fulfilmentSessionInfo={fulfilmentSessionInfo}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          logger={fulfilmentSessionEntityPageLogger}
+        />
       );
     case FulfilmentEntityType.END:
       return (
