@@ -288,6 +288,12 @@ const FulfilmentSessionEntityPage = ({
           {renderErrorAlert()}
         </>
       );
+    case FulfilmentEntityType.WAITLIST:
+      return (
+        <div>
+            <h1>Waitlist</h1>
+        </div>
+      );
     case FulfilmentEntityType.END:
       return (
         <EndFulfilmentHandler

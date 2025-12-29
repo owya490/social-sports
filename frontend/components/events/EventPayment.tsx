@@ -32,6 +32,7 @@ interface EventPaymentProps {
   setLoading: (value: boolean) => void;
   eventLink: string;
   organiserId: string;
+  waitlistEnabled: boolean;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
@@ -54,12 +55,19 @@ export default function EventPayment(props: EventPaymentProps) {
   const allCounts = [...new Set([...vacancyBasedCounts, ...ticketsWithStoredSessions])].sort((a, b) => a - b);
 
   const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0] ?? 1);
-
   const handleAttendeeCount = (value?: string) => {
     if (value) {
       setAttendeeCount(parseInt(value));
     }
   };
+
+  const [waitlistAttendeeCount, setWaitlistAttendeeCount] = useState<number>(1);
+  const handleWaitlistAttendeeCount = (value?: string) => {
+    if (value) {
+      setWaitlistAttendeeCount(parseInt(value));
+    }
+  };
+
 
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
@@ -116,31 +124,39 @@ export default function EventPayment(props: EventPaymentProps) {
           ) : props.isPaymentsActive ? (
             <div className="w-full">
               {props.vacancy === 0 && allCounts.length === 0 ? (
-                <div className="text-center">
-                  <h3 className="font-semibold text-core-text mb-2 text-center">Sold Out</h3>
-                  <p className="text-sm text-gray-600 mb-4 text-center">Join the waitlist to be notified if spots open up.</p>
+                props.waitlistEnabled ? (
+                <>
                   <div className="mb-4 !text-black">
                     <Select
                       className="text-black"
                       label="Number of tickets"
                       size="lg"
-                      value={`${attendeeCount}`}
-                      onChange={handleAttendeeCount}
+                      value={`${waitlistAttendeeCount}`}
+                      onChange={handleWaitlistAttendeeCount}
                     >
-                      {allCounts.map((count) => (
+                      {Array.from({ length: MAX_TICKETS_PER_ORDER }, (_, i) => i + 1).map((count) => (
                         <Option key={`attendee-option-${count}`} value={`${count}`}>
                           {count} Ticket{count > 1 ? "s" : ""}
                         </Option>
                       ))}
                     </Select>
-                  </div>    
+                  </div>
                   <JoinWaitlistButton
                     eventId={props.eventId}
-                    ticketCount={attendeeCount}
+                    ticketCount={waitlistAttendeeCount}
                     setLoading={props.setLoading}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
-                </div>
+                  <p className="text-xs text-gray-600 mt-3 text-center">
+                    Join this event's waitlist to be notified if spots become available.
+                  </p>
+                </>
+                ) : (
+                  <div className="text-center py-4">
+                    <h3 className="font-semibold text-core-text mb-1">Sold Out</h3>
+                    <p className="text-sm text-gray-600">Please check back later.</p>
+                  </div>
+                )
               ) : (
                 <>
                   <div className="mb-4 !text-black">

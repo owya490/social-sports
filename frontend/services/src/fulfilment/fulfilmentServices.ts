@@ -119,39 +119,8 @@ export async function initFulfilmentSession(
       case "waitlist": {
         const { eventId, numTickets } = fulfilmentSessionType;
 
-        // Check for existing session in localStorage specific to this event and ticket count
-        const existingSessionId = getStoredFulfilmentSessionId(eventId, numTickets);
-
-        if (existingSessionId) {
-          fulfilmentServiceLogger.info(
-            `initFulfilmentSession: Found existing session in localStorage: ${existingSessionId} for eventId: ${eventId}, numTickets: ${numTickets}, verifying with backend`
-          );
-
-          try {
-            // Verify the session still exists on the backend
-            await getFulfilmentSessionInfo(existingSessionId, null);
-
-            fulfilmentServiceLogger.info(
-              `initFulfilmentSession: Existing session ${existingSessionId} is valid, reusing it`
-            );
-
-            return {
-              fulfilmentSessionId: existingSessionId,
-            };
-          } catch (error) {
-            fulfilmentServiceLogger.warn(
-              `initFulfilmentSession: Existing session ${existingSessionId} is invalid or expired on backend, creating new session: ${error}`
-            );
-            clearStoredFulfilmentSessionId(eventId, numTickets);
-            // Session is invalid, continue to create a new one
-          }
-        }
-
         // No valid existing session, create a new one
         const response = await initWaitlistFulfilmentSession(eventId, numTickets);
-
-        // Store the new session ID in localStorage with event and ticket context
-        storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets);
 
         return response;
       }
