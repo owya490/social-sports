@@ -16,6 +16,7 @@ import { useMemo, useState } from "react";
 import BookingButton from "./BookingButton";
 import ContactEventButton from "./ContactEventButton";
 import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
+import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -116,8 +117,14 @@ export default function EventPayment(props: EventPaymentProps) {
             <div className="w-full">
               {props.vacancy === 0 && allCounts.length === 0 ? (
                 <div className="text-center py-4">
-                  <h3 className="font-semibold text-core-text mb-1">Sold Out</h3>
-                  <p className="text-sm text-gray-600">Please check back later.</p>
+                  <h3 className="font-semibold text-core-text mb-2 text-center">Sold Out</h3>
+                  <p className="text-sm text-gray-600 mb-4 text-center">Join the waitlist to be notified if spots open up.</p>
+                  <JoinWaitlistButton
+                    eventId={props.eventId}
+                    ticketCount={1}
+                    setLoading={props.setLoading}
+                    className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
+                  />
                 </div>
               ) : (
                 <>
