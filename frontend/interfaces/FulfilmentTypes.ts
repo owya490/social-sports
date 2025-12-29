@@ -8,11 +8,20 @@ export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
 export type FulfilmentEntityId = Branded<string, "FulfilmentEntityId">;
 
-export type FulfilmentSessionType = {
-  type: "checkout";
-} & CheckoutFulfilmentSessionType;
+export type FulfilmentSessionType =
+  | ({
+      type: "checkout";
+    } & CheckoutFulfilmentSessionType)
+  | ({
+      type: "waitlist";
+    } & WaitlistFulfilmentSessionType);
 
 export type CheckoutFulfilmentSessionType = {
+  eventId: EventId;
+  numTickets: number;
+};
+
+export type WaitlistFulfilmentSessionType = {
   eventId: EventId;
   numTickets: number;
 };
