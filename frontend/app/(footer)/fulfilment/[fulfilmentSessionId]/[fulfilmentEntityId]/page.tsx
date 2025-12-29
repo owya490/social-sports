@@ -291,6 +291,7 @@ const FulfilmentSessionEntityPage = ({
       );
     case FulfilmentEntityType.WAITLIST:
       return (
+        <>
         <WaitlistFulfilmentEntity
           fulfilmentSessionId={params.fulfilmentSessionId}
           fulfilmentEntityId={params.fulfilmentEntityId}
@@ -300,18 +301,18 @@ const FulfilmentSessionEntityPage = ({
           onPrev={handlePrev}
           logger={fulfilmentSessionEntityPageLogger}
         />
+        {renderErrorAlert()}
+        </>
       );
     case FulfilmentEntityType.END:
       return (
-        <>
         <EndFulfilmentHandler
           fulfilmentSessionId={params.fulfilmentSessionId}
           fulfilmentEntityId={params.fulfilmentEntityId}
           url={getFulfilmentEntityInfoResponse.url}
           logger={fulfilmentSessionEntityPageLogger}
         />
-        {renderErrorAlert()}
-        </>
+
       );
     default:
       return (
