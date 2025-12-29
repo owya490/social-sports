@@ -16,6 +16,7 @@ import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 
+import com.google.cloud.Timestamp;
 
 public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponseRequest, SaveTempFormResponseResponse> {
     private static final Logger logger = LoggerFactory.getLogger(SaveTempFormResponseHandler.class);
@@ -31,48 +32,38 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
 
     @Override
     public SaveTempFormResponseResponse handle(SaveTempFormResponseRequest request) {
-        if (request == null || request.formResponse() == null) {
+        if (request == null || request.getFormResponse() == null) {
             throw new IllegalArgumentException("formResponse is required");
         }
 
-        logger.info("Handling save temporary form response request for formId: {}, eventId: {}, formResponse: {}",
-                request.formResponse().getFormId(), request.formResponse().getEventId(), request.formResponse());
+        logger.info("Handling save form response request for formId: {}, eventId: {}",
+                request.getFormResponse().getFormId(), request.getFormResponse().getEventId());
 
-        Optional<String> maybeFormResponseId = saveTempFormResponse(request.formResponse());
+        Optional<String> maybeFormResponseId = saveTempFormResponse(request.getFormResponse());
 
         if (maybeFormResponseId.isPresent()) {
             String formResponseId = maybeFormResponseId.get();
-            logger.info("Temporary form response saved successfully with ID: {}", formResponseId);
+            logger.info("Form response saved successfully with ID: {}", formResponseId);
             return new SaveTempFormResponseResponse(formResponseId);
         } else {
-            logger.error("Failed to save temporary form response for formId: {}, eventId: {}",
-                    request.formResponse().getFormId(), request.formResponse().getEventId());
-            throw new RuntimeException("Failed to save temporary form response");
+            logger.error("Failed to save form response for formId: {}, eventId: {}",
+                    request.getFormResponse().getFormId(), request.getFormResponse().getEventId());
+            throw new RuntimeException("Failed to save form response");
         }
     }
 
-    /**
-     * Saves a FormResponse as a temporary submission.
-     * The form response must be complete (all required sections answered) to be
-     * saved.
-     *
-     * @param formResponse The FormResponse to save
-     * @return The generated formResponseId
-     * @throws RuntimeException if there's an error saving the form response
-     */
     private static Optional<String> saveTempFormResponse(FormResponse formResponse) {
         try {
             if (!FormsUtils.isFormResponseComplete(formResponse)) {
                 logger.error(
-                        "[FormsUtils] Trying to save incomplete form response for formId: {}, eventId: {}, formResponse: {}",
+                        "[FormsUtils] Trying to save incomplete temp form response for formId: {}, eventId: {}, formResponse: {}",
                         formResponse.getFormId(), formResponse.getEventId(), formResponse);
                 return Optional.empty();
             }
 
-            logger.info("Saving temporary form response for formId: {}, eventId: {}",
-                    formResponse.getFormId(), formResponse.getEventId());
+            logger.info("Saving temp form response for formId: {}, eventId: {}", formResponse.getFormId(),
+                    formResponse.getEventId());
 
-            // Generate a unique formResponseId if not already set
             String formResponseId = formResponse.getFormResponseId();
             if (formResponseId != null && formResponseId.contains("/")) {
                 throw new IllegalArgumentException("formResponseId must not contain '/'");
@@ -82,9 +73,7 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
                 formResponse.setFormResponseId(formResponseId);
             }
 
-            // Clear the submission time for temp form responses
-            formResponse.setSubmissionTime(null);
-
+            // Save to temp collection
             FormsRepository.saveTempFormResponse(formResponse);
 
             logger.info("Successfully saved temporary form response with ID: {}", formResponseId);
