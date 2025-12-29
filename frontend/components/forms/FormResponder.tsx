@@ -50,6 +50,8 @@ interface FormResponderProps {
   };
   onValidationChange?: (isValid: boolean) => void;
   onSaveLoadingChange?: (isLoading: boolean) => void;
+  isEmbedded?: boolean;
+  hideSaveButton?: boolean;
 }
 
 const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
@@ -63,6 +65,8 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       fulfilmentInfo,
       onValidationChange,
       onSaveLoadingChange,
+      isEmbedded = false,
+      hideSaveButton = false,
     },
     ref
   ) => {
@@ -302,9 +306,9 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
     }
 
     return (
-      <div className="bg-core-hover">
-        <div className="flex w-screen justify-center">
-          <div className="screen-width-primary space-y-8 md:px-32">
+      <div className={`${isEmbedded ? "w-full" : "bg-core-hover"}`}>
+        <div className={`flex ${isEmbedded ? "w-full" : "w-screen"} justify-center`}>
+          <div className={`${isEmbedded ? "w-full space-y-4" : "screen-width-primary space-y-8 md:px-32"}`}>
             <HeaderSectionResponse formTitle={form.title} formDescription={form.description} organiser={organiser} />
             {form.sectionsOrder.map((sectionId) => {
               const section = form.sectionsMap[sectionId];
@@ -350,56 +354,58 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
                   return null;
               }
             })}
-            <div className={`w-full ${canEdit ? "flex" : "hidden"}`}>
-              <div className="w-fit ml-auto bg-white py-2 px-4 rounded-lg flex justify-between gap-4">
-                {!areAllRequiredFieldsFilled() ? (
-                  <Tooltip
-                    content="Please fill out all required sections before saving"
-                    placement="top"
-                    className="bg-gray-800 text-white text-xs"
-                    animate={{
-                      mount: { scale: 1, y: 0 },
-                      unmount: { scale: 0, y: 25 },
-                    }}
-                  >
-                    <div>
-                      <InvertedHighlightButton
-                        type="submit"
-                        className="border-1 px-3 ml-auto bg-gray-100 text-gray-400 cursor-not-allowed"
-                        onClick={undefined}
-                        disabled={true}
-                      >
-                        <span className="text-sm flex items-center gap-2">
-                          <FloppyDiskIcon className="h-4 w-4" /> Save
-                        </span>
-                      </InvertedHighlightButton>
-                    </div>
-                  </Tooltip>
-                ) : (
+            {!hideSaveButton && (
+              <div className={`w-full ${canEdit ? "flex" : "hidden"}`}>
+                <div className="w-fit ml-auto bg-white py-2 px-4 rounded-lg flex justify-between gap-4">
+                  {!areAllRequiredFieldsFilled() ? (
+                    <Tooltip
+                      content="Please fill out all required sections before saving"
+                      placement="top"
+                      className="bg-gray-800 text-white text-xs"
+                      animate={{
+                        mount: { scale: 1, y: 0 },
+                        unmount: { scale: 0, y: 25 },
+                      }}
+                    >
+                      <div>
+                        <InvertedHighlightButton
+                          type="submit"
+                          className="border-1 px-3 ml-auto bg-gray-100 text-gray-400 cursor-not-allowed"
+                          onClick={undefined}
+                          disabled={true}
+                        >
+                          <span className="text-sm flex items-center gap-2">
+                            <FloppyDiskIcon className="h-4 w-4" /> Save
+                          </span>
+                        </InvertedHighlightButton>
+                      </div>
+                    </Tooltip>
+                  ) : (
+                    <InvertedHighlightButton
+                      type="submit"
+                      className="border-1 px-3 ml-auto bg-white"
+                      onClick={onSave}
+                      disabled={false}
+                    >
+                      <span className="text-sm flex items-center gap-2">
+                        <FloppyDiskIcon className="h-4 w-4" /> Save
+                      </span>
+                    </InvertedHighlightButton>
+                  )}
                   <InvertedHighlightButton
                     type="submit"
-                    className="border-1 px-3 ml-auto bg-white"
-                    onClick={onSave}
-                    disabled={false}
+                    className="border-1 px-3 bg-white ml-auto"
+                    onClick={() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
                   >
                     <span className="text-sm flex items-center gap-2">
-                      <FloppyDiskIcon className="h-4 w-4" /> Save
+                      <ChevronUpIcon className="h-4 w-4" /> Return to Top
                     </span>
                   </InvertedHighlightButton>
-                )}
-                <InvertedHighlightButton
-                  type="submit"
-                  className="border-1 px-3 bg-white ml-auto"
-                  onClick={() => {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                >
-                  <span className="text-sm flex items-center gap-2">
-                    <ChevronUpIcon className="h-4 w-4" /> Return to Top
-                  </span>
-                </InvertedHighlightButton>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
