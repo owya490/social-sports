@@ -160,7 +160,6 @@ async function initCheckoutFulfilmentSession(
 
 /**
  * Initializes a waitlist fulfilment session for the given event ID.
- * i don't know whether this is correct or not 
  */
 async function initWaitlistFulfilmentSession(
   eventId: EventId,

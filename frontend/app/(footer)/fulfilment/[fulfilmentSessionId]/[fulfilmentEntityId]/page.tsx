@@ -303,12 +303,15 @@ const FulfilmentSessionEntityPage = ({
       );
     case FulfilmentEntityType.END:
       return (
+        <>
         <EndFulfilmentHandler
           fulfilmentSessionId={params.fulfilmentSessionId}
           fulfilmentEntityId={params.fulfilmentEntityId}
           url={getFulfilmentEntityInfoResponse.url}
           logger={fulfilmentSessionEntityPageLogger}
         />
+        {renderErrorAlert()}
+        </>
       );
     default:
       return (

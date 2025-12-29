@@ -68,7 +68,6 @@ export default function EventPayment(props: EventPaymentProps) {
     }
   };
 
-
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
 
@@ -148,7 +147,7 @@ export default function EventPayment(props: EventPaymentProps) {
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
                   <p className="text-xs text-gray-600 mt-3 text-center">
-                    Join this event's waitlist to be notified if spots become available.
+                    Join this event&apos;s waitlist to be notified if spots become available.
                   </p>
                 </>
                 ) : (
