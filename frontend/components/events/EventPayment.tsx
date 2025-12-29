@@ -116,12 +116,27 @@ export default function EventPayment(props: EventPaymentProps) {
           ) : props.isPaymentsActive ? (
             <div className="w-full">
               {props.vacancy === 0 && allCounts.length === 0 ? (
-                <div className="text-center py-4">
+                <div className="text-center">
                   <h3 className="font-semibold text-core-text mb-2 text-center">Sold Out</h3>
                   <p className="text-sm text-gray-600 mb-4 text-center">Join the waitlist to be notified if spots open up.</p>
+                  <div className="mb-4 !text-black">
+                    <Select
+                      className="text-black"
+                      label="Number of tickets"
+                      size="lg"
+                      value={`${attendeeCount}`}
+                      onChange={handleAttendeeCount}
+                    >
+                      {allCounts.map((count) => (
+                        <Option key={`attendee-option-${count}`} value={`${count}`}>
+                          {count} Ticket{count > 1 ? "s" : ""}
+                        </Option>
+                      ))}
+                    </Select>
+                  </div>    
                   <JoinWaitlistButton
                     eventId={props.eventId}
-                    ticketCount={1}
+                    ticketCount={attendeeCount}
                     setLoading={props.setLoading}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
