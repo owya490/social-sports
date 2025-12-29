@@ -64,7 +64,7 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
             Map<String, FulfilmentEntity> entityMap = orderedFulfilmentEntities.getKey();
             List<String> entityOrder = orderedFulfilmentEntities.getValue();
             
-            logger.info("initialised fulfilmend session id: {}", fulfilmentSessionId);
+            logger.info("initialised fulfilment session id: {}", fulfilmentSessionId);
             return WaitlistFulfilmentSession.builder()
                     .fulfilmentSessionStartTime(Timestamp.now())
                     .eventData(eventData)
