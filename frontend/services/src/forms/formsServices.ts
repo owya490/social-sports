@@ -355,28 +355,35 @@ export async function submitManualFormResponse(
     `submitManualFormResponse: formId=${formId}, eventId=${eventId}, responseId=${formResponseId}`
   );
 
-  const batch = writeBatch(db);
+  try {
+    const batch = writeBatch(db);
 
-  // 1. Reference to Temp doc
-  const tempDocRef = doc(db, FormResponsePaths.Temp, formId, eventId, formResponseId);
+    // 1. Reference to Temp doc
+    const tempDocRef = doc(db, FormResponsePaths.Temp, formId, eventId, formResponseId);
 
-  // 2. Get the data
-  const tempDocSnap = await getDoc(tempDocRef);
-  if (!tempDocSnap.exists()) {
-    throw new Error("Temp form response not found");
+    // 2. Get the data
+    const tempDocSnap = await getDoc(tempDocRef);
+    if (!tempDocSnap.exists()) {
+      throw new Error("Temp form response not found");
+    }
+    const data = tempDocSnap.data() as FormResponse;
+
+    // 3. Add submission time
+    data.submissionTime = Timestamp.now();
+
+    // 4. Reference to Submitted doc
+    const submittedDocRef = doc(db, FormResponsePaths.Submitted, formId, eventId, formResponseId);
+
+    // 5. Add to batch
+    batch.set(submittedDocRef, data);
+    batch.delete(tempDocRef);
+
+    // 6. Commit
+    await batch.commit();
+  } catch (error) {
+    formsServiceLogger.error(
+      `submitManualFormResponse: Failed to submit manual form response. formId: ${formId}, eventId: ${eventId}, formResponseId: ${formResponseId}, error: ${error}`
+    );
+    throw error;
   }
-  const data = tempDocSnap.data() as FormResponse;
-
-  // 3. Add submission time
-  data.submissionTime = Timestamp.now();
-
-  // 4. Reference to Submitted doc
-  const submittedDocRef = doc(db, FormResponsePaths.Submitted, formId, eventId, formResponseId);
-
-  // 5. Add to batch
-  batch.set(submittedDocRef, data);
-  batch.delete(tempDocRef);
-
-  // 6. Commit
-  await batch.commit();
 }
