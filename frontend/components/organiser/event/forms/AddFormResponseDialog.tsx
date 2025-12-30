@@ -1,6 +1,5 @@
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
-import Loading from "@/components/loading/Loading";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { submitManualFormResponse } from "@/services/src/forms/formsServices";
@@ -119,9 +118,7 @@ const AddFormResponseDialog = ({ isOpen, onClose, formId, eventId, refreshRespon
                       disabled={saving}
                     >
                       {saving ? (
-                        <span className="flex items-center gap-2">
-                          <Loading inline /> Saving...
-                        </span>
+                        <span className="flex items-center gap-2">Saving...</span>
                       ) : (
                         <span className="text-sm flex items-center gap-2">
                           <FloppyDiskIcon className="h-4 w-4" /> Save Response

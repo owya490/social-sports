@@ -201,7 +201,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
 
       return form.sectionsOrder.every((sectionId) => {
         const section = form.sectionsMap[sectionId];
-        if (!section) return true; 
+        if (!section) return true;
 
         if (section.required) {
           switch (section.type) {
@@ -293,7 +293,12 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       }
     }, [form, onValidationChange]);
 
-    if (loading || saveLoading) {
+    if (loading) {
+      if (isEmbedded) return null;
+      return <Loading />;
+    }
+
+    if (saveLoading && !isEmbedded) {
       return <Loading />;
     }
 
