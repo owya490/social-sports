@@ -11,11 +11,9 @@ import {
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById } from "@/services/src/events/eventsService";
+import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-// Email validation regex
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface WaitlistFulfilmentEntityProps {
   fulfilmentSessionId: FulfilmentSessionId;
@@ -44,10 +42,24 @@ const WaitlistFulfilmentEntity = ({
   // Form state
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   // Validation - check both fields are filled and email is valid format
-  const isValidEmail = EMAIL_REGEX.test(email.trim());
+  const isValidEmail = validateEmail(email);
   const areAllRequiredFieldsFilled = fullName.trim() !== "" && email.trim() !== "" && isValidEmail;
+
+  useEffect(() => {
+    if (isValidEmail) {
+      setEmailError("");
+    } else {
+      setEmailError(EMAIL_VALIDATION_ERROR_MESSAGE);
+    }
+  }, [isValidEmail]);
+
+  // Handle email change with validation
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+  };
 
   // Determine navigation based on current position
   const currentIndex = fulfilmentSessionInfo?.currentEntityIndex ?? 0;
@@ -118,8 +130,9 @@ const WaitlistFulfilmentEntity = ({
               eventData={eventData}
               fullName={fullName}
               email={email}
+              emailError={emailError}
               onFullNameChange={setFullName}
-              onEmailChange={setEmail}
+              onEmailChange={handleEmailChange}
             />
           </div>
         </div>
