@@ -4,7 +4,6 @@ import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
 import Loading from "@/components/loading/Loading";
 import JoinWaitlistForm from "@/components/waitlist/JoinWaitlistForm";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
-import { FormResponseId } from "@/interfaces/FormTypes";
 import {
   FulfilmentEntityId,
   FulfilmentSessionId,
@@ -12,16 +11,12 @@ import {
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById } from "@/services/src/events/eventsService";
-import { updateFulfilmentEntityWithWaitlistData } from "@/services/src/waitlist/waitlistService";
 import { getErrorUrl } from "@/services/src/urlUtils";
+import { updateFulfilmentEntityWithWaitlistData } from "@/services/src/waitlist/waitlistService";
 import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-export interface WaitlistResponderRef {
-    save: () => Promise<void>;
-    areAllRequiredFieldsFilled: () => boolean;
-  }
 
 interface WaitlistFulfilmentEntityProps {
   fulfilmentSessionId: FulfilmentSessionId;
@@ -98,34 +93,25 @@ const WaitlistFulfilmentEntity = ({
   }, []);
 
   const onWaitlistFulfilmentEntitySaveAndNext = async (): Promise<void> => {
+    if (!areAllRequiredFieldsFilled) return;
 
+    setIsSaving(true);
     try {
       logger.info(
         `WaitlistFulfilmentEntity: Waitlist entry saved with fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}`
       );
 
-      const response = await updateFulfilmentEntityWithWaitlistData(fulfilmentSessionId, fulfilmentEntityId, fullName, email);
+      const response = await updateFulfilmentEntityWithWaitlistData(
+        fulfilmentSessionId,
+        fulfilmentEntityId,
+        fullName,
+        email
+      );
       if (!response.success) {
         logger.error(`WaitlistFulfilmentEntity: Failed to update waitlist entry: ${response.message}`);
         router.push(getErrorUrl(new Error(response.message)));
         return;
       }
-
-      await onNext();
-    } catch (error) {
-      logger.error(`WaitlistFulfilmentEntity: Error saving waitlist entry: ${error}`);
-    }
-  };
-
-  const handleSaveAndNext = async () => {
-    if (!areAllRequiredFieldsFilled) return;
-
-    setIsSaving(true);
-    try {
-      // TODO: Save waitlist entry to backend when service is implemented
-      logger.info(
-        `WaitlistFulfilmentEntity: Saving waitlist entry for fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}, fullName: ${fullName}, email: ${email}`
-      );
 
       await onNext();
     } catch (error) {
@@ -141,7 +127,7 @@ const WaitlistFulfilmentEntity = ({
 
   return (
     <FulfilmentEntityPage
-      onNext={handleSaveAndNext}
+      onNext={onWaitlistFulfilmentEntitySaveAndNext}
       onPrev={onPrev}
       showPrevButton={!isFirstEntity}
       showNextButton={!isLastEntity}
