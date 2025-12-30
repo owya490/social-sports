@@ -15,5 +15,4 @@ public class WaitlistFulfilmentEntity extends FulfilmentEntity {
     }
     private String eventId;
     private Integer ticketCount;
-    // somehow get email
 }
