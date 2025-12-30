@@ -18,6 +18,7 @@ import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentEntities.WaitlistFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.utils.UrlUtils;
@@ -60,8 +61,7 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
             // 2. End entity
             String endEntityId = UUID.randomUUID().toString();
             FulfilmentEntity endEntity = EndFulfilmentEntity.builder()
-                    // TODO change to waitlist success page
-                    .url(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
+                    .url(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s?fulfilmentSessionType=%s", eventId, FulfilmentSessionType.WAITLIST.name()))
                             .orElse(UrlUtils.SPORTSHUB_URL + "/dashboard"))
                     .type(FulfilmentEntityType.END).build();
             fulfilmentEntities.add(new SimpleEntry<>(endEntityId, endEntity));

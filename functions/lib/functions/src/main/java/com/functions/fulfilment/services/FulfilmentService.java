@@ -21,6 +21,7 @@ import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmen
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity.FulfilmentEntityHookInput;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
@@ -193,6 +194,16 @@ public class FulfilmentService {
             logger.info("[FulfilmentService] Next fulfilment entity found: {}",
                     nextEntityId);
 
+            FulfilmentEntity nextEntity = fulfilmentSession.getFulfilmentEntityMap().get(nextEntityId);
+            
+            if (nextEntity.onStartHook().isPresent()) {
+                boolean result = nextEntity.onStartHook().get().apply(new FulfilmentEntityHookInput(nextEntityId, fulfilmentSession));
+                if (!result) {
+                    logger.warn("Next fulfilment entity onStartHook failed, preventing progression to next entity: {}", nextEntityId);
+                    return Optional.empty();
+                }
+            }
+
             return Optional.of(new GetNextFulfilmentEntityResponse(
                     nextEntityId));
         } catch (Exception e) {
@@ -332,15 +343,14 @@ public class FulfilmentService {
                 return Optional.empty();
             }
 
-            // Ensure the current fulfilment entity is completed before proceeding
-            if (completedFulfilmentEntity(
-                    fulfilmentSession.getFulfilmentEntityMap().get(currentEntityId))) {
-                logger.info("Current fulfilment entity is completed: {}", currentEntityId);
-            } else {
-                logger.error(
-                        "Attempting to get next fulfilment entity but current fulfilment entity is not completed: {}",
-                        currentEntityId);
-                return Optional.empty();
+            FulfilmentEntity currentEntity = fulfilmentSession.getFulfilmentEntityMap().get(currentEntityId);
+            
+            if (currentEntity.onEndHook().isPresent()) {
+                boolean result = currentEntity.onEndHook().get().apply(new FulfilmentEntityHookInput(currentEntityId, fulfilmentSession));
+                if (!result) {
+                    logger.warn("Current fulfilment entity onEndHook failed, preventing progression to next entity: {}", currentEntityId);
+                    return Optional.empty();
+                }
             }
 
             // Get the next entity
@@ -350,35 +360,6 @@ public class FulfilmentService {
                     fulfilmentSessionId, e);
             return Optional.empty();
         }
-    }
-
-    private static boolean completedFulfilmentEntity(FulfilmentEntity entity) {
-        if (entity == null || entity.getType() == null) {
-            return false;
-        }
-
-        if (entity.getType() == FulfilmentEntityType.FORMS) {
-            FormsFulfilmentEntity formsEntity = (FormsFulfilmentEntity) entity;
-            if (formsEntity.getFormResponseId() == null || formsEntity.getFormResponseId().isEmpty()) {
-                logger.info(
-                        "Form response ID missing for form ID: {}, event ID: {}; treating entity as incomplete",
-                        formsEntity.getFormId(), formsEntity.getEventId());
-                return false;
-            }
-            Optional<FormResponse> maybeFormResponse = FormsRepository.getFormResponseById(formsEntity.getFormId(),
-                    formsEntity.getEventId(), formsEntity.getFormResponseId());
-            if (maybeFormResponse.isEmpty()) {
-                logger.info(
-                        "Form response not found for form ID: {}, event ID: {}, response ID: {}",
-                        formsEntity.getFormId(), formsEntity.getEventId(),
-                        formsEntity.getFormResponseId());
-                return false;
-            }
-
-            FormResponse formResponse = maybeFormResponse.get();
-            return FormsUtils.isFormResponseComplete(formResponse);
-        }
-        return true;
     }
 
     /**
