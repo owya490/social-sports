@@ -16,8 +16,6 @@ import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 
-import com.google.cloud.Timestamp;
-
 public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponseRequest, SaveTempFormResponseResponse> {
     private static final Logger logger = LoggerFactory.getLogger(SaveTempFormResponseHandler.class);
 
