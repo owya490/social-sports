@@ -12,16 +12,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class JoinWaitlistResponse {
+public class UpdateFulfilmentEntityWithWaitlistDataResponse {
     /**
      * Whether the operation was successful
      */
     private boolean success;
 
-    /**
-     * The email hash of the user
-     */
-    private String emailHash;
     /**
      * Human-readable message
      */

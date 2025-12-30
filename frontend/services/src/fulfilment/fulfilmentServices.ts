@@ -1,6 +1,5 @@
 import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
-import { FormResponseId } from "@/interfaces/FormTypes";
 import {
   FulfilmentEntityId,
   FulfilmentSessionId,
@@ -15,7 +14,6 @@ import {
   GetPrevFulfilmentEntityResponse,
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
-  UpdateFulfilmentEntityWithFormResponseIdRequest,
   FulfilmentSessionType,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
@@ -313,39 +311,6 @@ export async function getFulfilmentEntityInfo(
     return response;
   } catch (error) {
     fulfilmentServiceLogger.error(`getFulfilmentEntityInfo: Failed to fetch fulfilment entity info: ${error}`);
-    throw error;
-  }
-}
-
-export async function updateFulfilmentEntityWithFormResponseId(
-  fulfilmentSessionId: FulfilmentSessionId,
-  fulfilmentEntityId: FulfilmentEntityId,
-  formResponseId: FormResponseId
-): Promise<void> {
-  fulfilmentServiceLogger.info(
-    `updateFulfilmentEntityWithFormResponseId: Updating fulfilment entity with form response ID for session ID: ${fulfilmentSessionId}, entity ID: ${fulfilmentEntityId}, form response ID: ${formResponseId}`
-  );
-
-  const request: UpdateFulfilmentEntityWithFormResponseIdRequest = {
-    fulfilmentSessionId,
-    fulfilmentEntityId,
-    formResponseId,
-  };
-
-  try {
-    const response = await executeGlobalAppControllerFunction<UpdateFulfilmentEntityWithFormResponseIdRequest, void>(
-      EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
-      request
-    );
-
-    fulfilmentServiceLogger.info(
-      `updateFulfilmentEntityWithResponseId: Successfully updated fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with formResponseId: ${formResponseId}`
-    );
-    return response;
-  } catch (error) {
-    fulfilmentServiceLogger.error(
-      `updateFulfilmentEntityWithFormResponseId: Failed to update fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with form response ID ${formResponseId}: ${error}`
-    );
     throw error;
   }
 }

@@ -137,6 +137,18 @@ export type UpdateFulfilmentEntityWithFormResponseIdRequest = {
   formResponseId: FormResponseId;
 };
 
+export type UpdateFulfilmentEntityWithWaitlistDataRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  fulfilmentEntityId: FulfilmentEntityId;
+  fullName: string;
+  email: string;
+};
+
+export type UpdateFulfilmentEntityWithWaitlistDataResponse = {
+  success: boolean;
+  message: string;
+};
+
 /**
  * Payload we send to java deleteFulfilmentSession function
  */

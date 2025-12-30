@@ -4,6 +4,7 @@ import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
 import Loading from "@/components/loading/Loading";
 import JoinWaitlistForm from "@/components/waitlist/JoinWaitlistForm";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
+import { FormResponseId } from "@/interfaces/FormTypes";
 import {
   FulfilmentEntityId,
   FulfilmentSessionId,
@@ -11,9 +12,16 @@ import {
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById } from "@/services/src/events/eventsService";
+import { updateFulfilmentEntityWithWaitlistData } from "@/services/src/waitlist/waitlistService";
+import { getErrorUrl } from "@/services/src/urlUtils";
 import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+export interface WaitlistResponderRef {
+    save: () => Promise<void>;
+    areAllRequiredFieldsFilled: () => boolean;
+  }
 
 interface WaitlistFulfilmentEntityProps {
   fulfilmentSessionId: FulfilmentSessionId;
@@ -88,6 +96,26 @@ const WaitlistFulfilmentEntity = ({
 
     fetchEventData();
   }, []);
+
+  const onWaitlistFulfilmentEntitySaveAndNext = async (): Promise<void> => {
+
+    try {
+      logger.info(
+        `WaitlistFulfilmentEntity: Waitlist entry saved with fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}`
+      );
+
+      const response = await updateFulfilmentEntityWithWaitlistData(fulfilmentSessionId, fulfilmentEntityId, fullName, email);
+      if (!response.success) {
+        logger.error(`WaitlistFulfilmentEntity: Failed to update waitlist entry: ${response.message}`);
+        router.push(getErrorUrl(new Error(response.message)));
+        return;
+      }
+
+      await onNext();
+    } catch (error) {
+      logger.error(`WaitlistFulfilmentEntity: Error saving waitlist entry: ${error}`);
+    }
+  };
 
   const handleSaveAndNext = async () => {
     if (!areAllRequiredFieldsFilled) return;
