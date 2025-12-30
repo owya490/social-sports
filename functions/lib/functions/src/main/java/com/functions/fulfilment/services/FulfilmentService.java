@@ -144,7 +144,7 @@ public class FulfilmentService {
         }
         EventData eventData = maybeEventData.get();
 
-        if (eventData.getWaitlistEnabled() && eventData.getVacancy() <= 0) {
+        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && eventData.getVacancy() != null && eventData.getVacancy() <= 0) {
             return FulfilmentSessionType.WAITLIST;
         }
 
