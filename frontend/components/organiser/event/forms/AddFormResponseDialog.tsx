@@ -3,6 +3,7 @@ import FormResponder, { FormResponderRef } from "@/components/forms/FormResponde
 import Loading from "@/components/loading/Loading";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
+import { submitManualFormResponse } from "@/services/src/forms/formsServices";
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
@@ -33,7 +34,10 @@ const AddFormResponseDialog = ({ isOpen, onClose, formId, eventId, refreshRespon
     try {
       setSaving(true);
       setError(null);
-      await formResponderRef.current.save();
+      const savedId = await formResponderRef.current.save();
+      if (savedId) {
+        await submitManualFormResponse(formId, eventId, savedId);
+      }
       refreshResponses();
       onClose();
     } catch (err: any) {
