@@ -3,7 +3,7 @@
 import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
 import Loading from "@/components/loading/Loading";
 import JoinWaitlistForm from "@/components/waitlist/JoinWaitlistForm";
-import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import {
   FulfilmentEntityId,
   FulfilmentSessionId,
@@ -18,11 +18,10 @@ import { useEffect, useState } from "react";
 interface WaitlistFulfilmentEntityProps {
   fulfilmentSessionId: FulfilmentSessionId;
   fulfilmentEntityId: FulfilmentEntityId;
-  eventId: string | null;
+  eventId: EventId | null;
   fulfilmentSessionInfo: GetFulfilmentSessionInfoResponse | null;
   onNext: () => Promise<void>;
   onPrev: () => Promise<void>;
-  logger: Logger;
 }
 
 const WaitlistFulfilmentEntity = ({
@@ -32,8 +31,8 @@ const WaitlistFulfilmentEntity = ({
   fulfilmentSessionInfo,
   onNext,
   onPrev,
-  logger,
 }: WaitlistFulfilmentEntityProps) => {
+  const logger = new Logger("WaitlistFulfilmentEntityLogger");
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
@@ -42,19 +41,19 @@ const WaitlistFulfilmentEntity = ({
   // Form state
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Validation - check both fields are filled and email is valid format
   const isValidEmail = validateEmail(email);
   const areAllRequiredFieldsFilled = fullName.trim() !== "" && email.trim() !== "" && isValidEmail;
 
   useEffect(() => {
-    if (isValidEmail) {
-      setEmailError("");
+    if (isValidEmail || email.trim() === "") {
+      setErrorMessage("");
     } else {
-      setEmailError(EMAIL_VALIDATION_ERROR_MESSAGE);
+      setErrorMessage(EMAIL_VALIDATION_ERROR_MESSAGE);
     }
-  }, [isValidEmail]);
+  }, [email]);
 
   // Handle email change with validation
   const handleEmailChange = (value: string) => {
@@ -130,7 +129,7 @@ const WaitlistFulfilmentEntity = ({
               eventData={eventData}
               fullName={fullName}
               email={email}
-              emailError={emailError}
+              errorMessage={errorMessage}
               onFullNameChange={setFullName}
               onEmailChange={handleEmailChange}
             />

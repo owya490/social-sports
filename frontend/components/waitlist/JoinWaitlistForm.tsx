@@ -9,7 +9,7 @@ interface JoinWaitlistFormProps {
   eventData: EventData;
   fullName: string;
   email: string;
-  emailError?: string;
+  errorMessage?: string;
   onFullNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
 }
@@ -18,7 +18,7 @@ const JoinWaitlistForm = ({
   eventData,
   fullName,
   email,
-  emailError,
+  errorMessage,
   onFullNameChange,
   onEmailChange,
 }: JoinWaitlistFormProps) => {
@@ -51,21 +51,9 @@ const JoinWaitlistForm = ({
         formDescription={waitlistDescription}
         organiser={eventData.organiser}
       />
-      <TextSectionResponse
-        textSection={fullNameSection}
-        answerOnChange={onFullNameChange}
-        canEdit={true}
-      />
-      <div>
-        <TextSectionResponse
-          textSection={emailSection}
-          answerOnChange={onEmailChange}
-          canEdit={true}
-        />
-        {emailError && (
-          <p className="text-red-500 text-sm mt-2 px-8">{emailError}</p>
-        )}
-      </div>
+      <TextSectionResponse textSection={fullNameSection} answerOnChange={onFullNameChange} canEdit={true} />
+      <TextSectionResponse textSection={emailSection} answerOnChange={onEmailChange} canEdit={true} />
+      {errorMessage && <p className="text-red-500 text-sm mt-2 px-8">{errorMessage}</p>}
     </>
   );
 };

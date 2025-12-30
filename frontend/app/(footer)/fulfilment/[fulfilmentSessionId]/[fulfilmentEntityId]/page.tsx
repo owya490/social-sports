@@ -299,7 +299,6 @@ const FulfilmentSessionEntityPage = ({
           fulfilmentSessionInfo={fulfilmentSessionInfo}
           onNext={handleNext}
           onPrev={handlePrev}
-          logger={fulfilmentSessionEntityPageLogger}
         />
         {renderErrorAlert()}
         </>

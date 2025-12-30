@@ -35,6 +35,7 @@ export function EventDetails(props: EventDetailsProps) {
               setLoading={setLoading}
               eventLink={eventData.eventLink}
               organiserId={eventData.organiserId}
+              waitlistEnabled={eventData.waitlistEnabled}
             />
           </div>
 

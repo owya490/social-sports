@@ -8,6 +8,11 @@ export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
 export type FulfilmentEntityId = Branded<string, "FulfilmentEntityId">;
 
+export enum FulfilmentSessionType {
+  CHECKOUT = "CHECKOUT",
+  WAITLIST = "WAITLIST",
+}
+
 /**
  * Base type for fulfilment session data shared across all session types.
  */
@@ -23,12 +28,12 @@ export type WaitlistFulfilmentSessionType = FulfilmentSessionBase;
 /**
  * Both checkout and waitlist use the fulfilment session workflow
  */
-export type FulfilmentSessionType =
+export type FulfilmentSessionDataType =
   | ({
-      type: "checkout";
+      type: FulfilmentSessionType.CHECKOUT;
     } & CheckoutFulfilmentSessionType)
   | ({
-      type: "waitlist";
+      type: FulfilmentSessionType.WAITLIST;
     } & WaitlistFulfilmentSessionType);
 
 /**

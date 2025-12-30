@@ -16,7 +16,7 @@ import { useMemo, useState } from "react";
 import BookingButton from "./BookingButton";
 import ContactEventButton from "./ContactEventButton";
 import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
-import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
+import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 
 interface EventPaymentProps {

@@ -1,5 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { FulfilmentSessionType } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { getNextFulfilmentEntityUrl, initFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
 import { getErrorUrl } from "@/services/src/urlUtils";
@@ -30,7 +31,7 @@ export default function JoinWaitlistButton({
 
     try {
       const { fulfilmentSessionId } = await initFulfilmentSession({
-        type: "waitlist",
+        type: FulfilmentSessionType.WAITLIST,
         eventId: eventId,
         numTickets: ticketCount,
       });

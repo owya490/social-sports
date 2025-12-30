@@ -4,7 +4,7 @@ import { FormResponseId } from "@/interfaces/FormTypes";
 import {
   FulfilmentEntityId,
   FulfilmentSessionId,
-  FulfilmentSessionType,
+  FulfilmentSessionDataType,
   GetFulfilmentEntityInfoRequest,
   GetFulfilmentEntityInfoResponse,
   GetFulfilmentSessionInfoRequest,
@@ -16,6 +16,7 @@ import {
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
   UpdateFulfilmentEntityWithFormResponseIdRequest,
+  FulfilmentSessionType,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
@@ -73,11 +74,11 @@ export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
  * Sessions are keyed by eventId and numTickets to ensure proper context isolation.
  */
 export async function initFulfilmentSession(
-  fulfilmentSessionType: FulfilmentSessionType
+  fulfilmentSessionType: FulfilmentSessionDataType
 ): Promise<InitCheckoutFulfilmentSessionResponse> {
   try {
     switch (fulfilmentSessionType.type) {
-      case "checkout": {
+      case FulfilmentSessionType.CHECKOUT: {
         const { eventId, numTickets } = fulfilmentSessionType;
 
         // Check for existing session in localStorage specific to this event and ticket count
@@ -116,7 +117,7 @@ export async function initFulfilmentSession(
 
         return response;
       }
-      case "waitlist": {
+      case FulfilmentSessionType.WAITLIST: {
         const { eventId, numTickets } = fulfilmentSessionType;
 
         // No valid existing session, create a new one
