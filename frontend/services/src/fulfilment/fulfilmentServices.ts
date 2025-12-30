@@ -4,7 +4,7 @@ import { FormResponseId } from "@/interfaces/FormTypes";
 import {
   FulfilmentEntityId,
   FulfilmentSessionId,
-  FulfilmentSessionType,
+  FulfilmentSessionDataType,
   GetFulfilmentEntityInfoRequest,
   GetFulfilmentEntityInfoResponse,
   GetFulfilmentSessionInfoRequest,
@@ -16,6 +16,7 @@ import {
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
   UpdateFulfilmentEntityWithFormResponseIdRequest,
+  FulfilmentSessionType,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
@@ -73,11 +74,11 @@ export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
  * Sessions are keyed by eventId and numTickets to ensure proper context isolation.
  */
 export async function initFulfilmentSession(
-  fulfilmentSessionType: FulfilmentSessionType
+  fulfilmentSessionType: FulfilmentSessionDataType
 ): Promise<InitCheckoutFulfilmentSessionResponse> {
   try {
     switch (fulfilmentSessionType.type) {
-      case "checkout": {
+      case FulfilmentSessionType.CHECKOUT: {
         const { eventId, numTickets } = fulfilmentSessionType;
 
         // Check for existing session in localStorage specific to this event and ticket count
@@ -116,6 +117,14 @@ export async function initFulfilmentSession(
 
         return response;
       }
+      case FulfilmentSessionType.WAITLIST: {
+        const { eventId, numTickets } = fulfilmentSessionType;
+
+        // No valid existing session, create a new one
+        const response = await initWaitlistFulfilmentSession(eventId, numTickets);
+
+        return response;
+      }
     }
   } catch (error) {
     fulfilmentServiceLogger.error(`initFulfilmentSessionNew: ${error}`);
@@ -145,6 +154,33 @@ async function initCheckoutFulfilmentSession(
   } catch (error) {
     fulfilmentServiceLogger.error(
       `initCheckoutFulfilmentSessionNew: Failed to initialize fulfilment session: ${error}`
+    );
+    throw error;
+  }
+}
+
+/**
+ * Initializes a waitlist fulfilment session for the given event ID.
+ */
+async function initWaitlistFulfilmentSession(
+  eventId: EventId,
+  numTickets: number
+): Promise<InitCheckoutFulfilmentSessionResponse> {
+  fulfilmentServiceLogger.info(
+    `initWaitlistFulfilmentSession: Initializing waitlist fulfilment session for event ID: ${eventId}`
+  );
+  try {
+    const response = await executeGlobalAppControllerFunction<
+      InitCheckoutFulfilmentSessionRequest,
+      InitCheckoutFulfilmentSessionResponse
+    >(EndpointType.INIT_FULFILMENT_SESSION, {
+      eventId,
+      numTickets,
+    });
+    return response;
+  } catch (error) {
+    fulfilmentServiceLogger.error(
+      `initWaitlistFulfilmentSession: Failed to initialize waitlist fulfilment session: ${error}`
     );
     throw error;
   }
