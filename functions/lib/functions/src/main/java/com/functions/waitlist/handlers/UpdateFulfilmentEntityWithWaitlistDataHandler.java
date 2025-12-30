@@ -13,7 +13,7 @@ import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlist
 import com.functions.waitlist.models.responses.UpdateFulfilmentEntityWithWaitlistDataResponse;
 
 /**
- * Handler for joining an event waitlist.
+ * Handler for updating fulfilment entity with waitlist registration data (name + email).
  */
 public class UpdateFulfilmentEntityWithWaitlistDataHandler implements
         Handler<UpdateFulfilmentEntityWithWaitlistDataRequest, UpdateFulfilmentEntityWithWaitlistDataResponse> {
@@ -27,7 +27,7 @@ public class UpdateFulfilmentEntityWithWaitlistDataHandler implements
             // Java object.
             return JavaUtils.objectMapper.treeToValue(data.data(), UpdateFulfilmentEntityWithWaitlistDataRequest.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to parse JoinWaitlistRequest", e);
+            throw new RuntimeException("Failed to parse UpdateFulfilmentEntityWithWaitlistDataRequest", e);
         }
     }
 
@@ -37,8 +37,8 @@ public class UpdateFulfilmentEntityWithWaitlistDataHandler implements
         try {
 
             // check for null request and null values
-            if (request == null || request.getEmail() == null || request.getFulfilmentSessionId() == null) {
-                throw new IllegalArgumentException("Both email and fulfilmentSessionId are required");
+            if (request == null || request.getEmail() == null || request.getFulfilmentSessionId() == null || request.getFulfilmentEntityId() == null) {
+                throw new IllegalArgumentException("Email, fulfilmentSessionId and fulfilmentEntityId are required");
             }
 
             logger.info(
