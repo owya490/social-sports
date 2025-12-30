@@ -125,14 +125,14 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   <div className="mb-4 !text-black">
                     <Select
                       className="text-black"
-                      label="Number of tickets"
+                      label="Number of Attendees"
                       size="lg"
                       value={`${waitlistAttendeeCount}`}
                       onChange={handleWaitlistAttendeeCount}
                     >
                       {Array.from({ length: MAX_TICKETS_PER_ORDER }, (_, i) => i + 1).map((count) => (
                         <Option key={`attendee-option-${count}`} value={`${count}`}>
-                          {count} Ticket{count > 1 ? "s" : ""}
+                          {count} Attendee{count > 1 ? "s" : ""}
                         </Option>
                       ))}
                     </Select>
