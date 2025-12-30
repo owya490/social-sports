@@ -16,6 +16,7 @@ import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.WaitlistFulfilmentEntity;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.annotation.DocumentId;
@@ -99,6 +100,9 @@ public abstract class FulfilmentSession {
                         break;
                     case FORMS:
                         entity = objectMapper.readValue(json, FormsFulfilmentEntity.class);
+                        break;
+                    case WAITLIST:
+                        entity = objectMapper.readValue(json, WaitlistFulfilmentEntity.class);
                         break;
                     case END:
                         entity = objectMapper.readValue(json, EndFulfilmentEntity.class);
