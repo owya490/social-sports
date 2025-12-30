@@ -1,7 +1,6 @@
 package com.functions.fulfilment.models.fulfilmentEntities;
 
 import java.util.Optional;
-
 import java.util.function.Function;
 
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
@@ -19,13 +18,13 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class EndFulfilmentEntity extends FulfilmentEntity {
     private String url;
-    
+
     {
         setType(FulfilmentEntityType.END);
     }
 
     @Override
-    public Optional<Function<FulfilmentEntityHookInput, Boolean>> onEndHook() {
+    public Optional<Function<FulfilmentEntityHookInput, Boolean>> onStartHook() {
         return Optional.of(input -> {
             FulfilmentSession fulfilmentSession = input.fulfilmentSession();
             FulfilmentSessionType type = fulfilmentSession.getType();
@@ -33,17 +32,19 @@ public class EndFulfilmentEntity extends FulfilmentEntity {
             switch (type) {
                 case WAITLIST:
                     return fulfilmentSession.getFulfilmentEntityMap().values().stream()
-                        .filter(entity -> entity.getType() == FulfilmentEntityType.WAITLIST)
-                        .map(entity -> (WaitlistFulfilmentEntity) entity)
-                        .filter(entity -> WaitlistService.validateWaitlistEntry(eventId, entity.getEmail(), entity.getName(), entity.getTicketCount()))
-                        .map(entity -> {
-                            try {
-                                WaitlistService.joinEventWaitlist(eventId, entity.getEmail(), entity.getName(), entity.getTicketCount());
-                            } catch (Exception e) {
-                                return false;
-                            }
-                            return true;
-                        }).allMatch(bool -> bool == true); // All waitlist entries must be valid to proceed
+                            .filter(entity -> entity.getType() == FulfilmentEntityType.WAITLIST)
+                            .map(entity -> (WaitlistFulfilmentEntity) entity)
+                            .filter(entity -> WaitlistService.validateWaitlistEntry(eventId, entity.getEmail(),
+                                    entity.getName(), entity.getTicketCount()))
+                            .map(entity -> {
+                                try {
+                                    WaitlistService.joinEventWaitlist(eventId, entity.getEmail(), entity.getName(),
+                                            entity.getTicketCount());
+                                } catch (Exception e) {
+                                    return false;
+                                }
+                                return true;
+                            }).allMatch(bool -> bool == true); // All waitlist entries must be valid to proceed
                 default:
                     return true; // Other entity types are considered complete by default
             }
