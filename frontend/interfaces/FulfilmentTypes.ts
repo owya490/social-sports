@@ -140,7 +140,7 @@ export type UpdateFulfilmentEntityWithFormResponseIdRequest = {
 export type UpdateFulfilmentEntityWithWaitlistDataRequest = {
   fulfilmentSessionId: FulfilmentSessionId;
   fulfilmentEntityId: FulfilmentEntityId;
-  fullName: string;
+  name: string;
   email: string;
 };
 

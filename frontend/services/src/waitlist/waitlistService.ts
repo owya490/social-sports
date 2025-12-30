@@ -7,6 +7,7 @@ import {
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { fulfilmentServiceLogger } from "../fulfilment/fulfilmentServices";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
+import { truncate } from "fs/promises";
 
 export const WAITLIST_ENABLED = false;
 
@@ -22,7 +23,7 @@ export async function updateFulfilmentEntityWithWaitlistData(
   const request: UpdateFulfilmentEntityWithWaitlistDataRequest = {
     fulfilmentSessionId,
     fulfilmentEntityId,
-    fullName,
+    name: fullName,
     email,
   };
 
