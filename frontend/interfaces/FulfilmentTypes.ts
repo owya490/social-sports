@@ -8,14 +8,33 @@ export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
 export type FulfilmentEntityId = Branded<string, "FulfilmentEntityId">;
 
-export type FulfilmentSessionType = {
-  type: "checkout";
-} & CheckoutFulfilmentSessionType;
+export enum FulfilmentSessionType {
+  CHECKOUT = "CHECKOUT",
+  WAITLIST = "WAITLIST",
+}
 
-export type CheckoutFulfilmentSessionType = {
+/**
+ * Base type for fulfilment session data shared across all session types.
+ */
+export type FulfilmentSessionBase = {
   eventId: EventId;
   numTickets: number;
 };
+
+export type CheckoutFulfilmentSessionType = FulfilmentSessionBase;
+
+export type WaitlistFulfilmentSessionType = FulfilmentSessionBase;
+
+/**
+ * Both checkout and waitlist use the fulfilment session workflow
+ */
+export type FulfilmentSessionDataType =
+  | ({
+      type: FulfilmentSessionType.CHECKOUT;
+    } & CheckoutFulfilmentSessionType)
+  | ({
+      type: FulfilmentSessionType.WAITLIST;
+    } & WaitlistFulfilmentSessionType);
 
 /**
  * Types of fulfilment entities that can be processed in a fulfilment session.
@@ -26,6 +45,7 @@ export enum FulfilmentEntityType {
   STRIPE = "STRIPE",
   FORMS = "FORMS",
   END = "END",
+  WAITLIST = "WAITLIST",
 }
 
 /**

@@ -1,4 +1,4 @@
-package com.functions.fulfilment.models;
+package com.functions.fulfilment.models.fulfilmentEntities;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -9,11 +9,10 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @NoArgsConstructor
-public class FormsFulfilmentEntity extends FulfilmentEntity {
+public class WaitlistFulfilmentEntity extends FulfilmentEntity {
     {
-        setType(FulfilmentEntityType.FORMS);
+        setType(FulfilmentEntityType.WAITLIST);
     }
-    private String formId;
     private String eventId;
-    private String formResponseId;
+    private Integer ticketCount;
 }
