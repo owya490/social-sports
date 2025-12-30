@@ -8,6 +8,21 @@ export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
 export type FulfilmentEntityId = Branded<string, "FulfilmentEntityId">;
 
+/**
+ * Base type for fulfilment session data shared across all session types.
+ */
+export type FulfilmentSessionBase = {
+  eventId: EventId;
+  numTickets: number;
+};
+
+export type CheckoutFulfilmentSessionType = FulfilmentSessionBase;
+
+export type WaitlistFulfilmentSessionType = FulfilmentSessionBase;
+
+/**
+ * Both checkout and waitlist use the fulfilment session workflow
+ */
 export type FulfilmentSessionType =
   | ({
       type: "checkout";
@@ -15,16 +30,6 @@ export type FulfilmentSessionType =
   | ({
       type: "waitlist";
     } & WaitlistFulfilmentSessionType);
-
-export type CheckoutFulfilmentSessionType = {
-  eventId: EventId;
-  numTickets: number;
-};
-
-export type WaitlistFulfilmentSessionType = {
-  eventId: EventId;
-  numTickets: number;
-};
 
 /**
  * Types of fulfilment entities that can be processed in a fulfilment session.
