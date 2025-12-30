@@ -143,6 +143,11 @@ public class FulfilmentService {
             throw new RuntimeException("Failed to find event data for event ID: " + eventId);
         }
         EventData eventData = maybeEventData.get();
+
+        if (eventData.getWaitlistEnabled() && eventData.getVacancy() <= 0) {
+            return FulfilmentSessionType.WAITLIST;
+        }
+
         FulfilmentSessionType fulfilmentSessionType = FulfilmentSessionType.CHECKOUT;
 
         if (eventData.getBookingApprovalEnabled()) {
@@ -454,8 +459,8 @@ public class FulfilmentService {
                 return ((DelayedStripeFulfilmentEntity) entity).getUrl();
             case END:
                 return ((EndFulfilmentEntity) entity).getUrl();
-            case FORMS:
-                // Forms entities don't have URLs, return null
+            case FORMS, WAITLIST:
+                // Forms and Waitlist entities don't have URLs, return null
                 return null;
             default:
                 logger.warn("Unknown entity type for URL retrieval: {}", entity.getType());
