@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.EventMetadata;
 import com.functions.firebase.services.FirebaseService;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -52,6 +53,21 @@ public class EventsRepository {
         } catch (Exception e) {
             logger.error("Error finding event document reference for ID: {}", eventId, e);
             throw new Exception("Could not find event document reference for ID: " + eventId, e);
+        }
+    }
+
+    public static Optional<EventMetadata> getEventMetadataById(String eventId) {
+        Firestore db = FirebaseService.getFirestore();
+        try {
+            DocumentReference docRef = db.document(FirebaseService.CollectionPaths.EVENTS_METADATA + "/" + eventId);
+            DocumentSnapshot maybeDocSnapshot = docRef.get().get();
+            if (maybeDocSnapshot.exists()) {
+                return Optional.of(maybeDocSnapshot.toObject(EventMetadata.class));
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            logger.error("Error retrieving event metadata by ID: {}", eventId, e);
+            return Optional.empty();
         }
     }
 }

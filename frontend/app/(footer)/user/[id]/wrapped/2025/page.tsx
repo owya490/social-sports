@@ -1,44 +1,53 @@
 "use client";
 
-import { BackButton } from "@/components/organiser/wrapped/BackButton";
-import { ProgressIndicator } from "@/components/organiser/wrapped/ProgressIndicator";
-import { ShareSection } from "@/components/organiser/wrapped/sections/ShareSection";
+import { PublicFooterSection } from "@/components/organiser/wrapped/sections/PublicFooterSection";
 import { WrappedContent } from "@/components/organiser/wrapped/WrappedContent";
 import { WrappedError } from "@/components/organiser/wrapped/WrappedError";
 import { WrappedLoading } from "@/components/organiser/wrapped/WrappedLoading";
-import { useUser } from "@/components/utility/UserContext";
 import { SportshubWrapped } from "@/interfaces/WrappedTypes";
 import { Logger } from "@/observability/logger";
+import { getUsernameMapping } from "@/services/src/users/usersService";
 import { getWrappedData } from "@/services/src/wrapped/wrappedServices";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const WRAPPED_YEAR = 2025;
 const MIN_LOADING_TIME_MS = 10000;
 
-const wrappedPageLogger = new Logger("wrappedPageLogger");
+const publicWrappedPageLogger = new Logger("publicWrappedPageLogger");
 
-export default function WrappedPage() {
-  const { user } = useUser();
+export default function PublicWrappedPage({ params }: { params: { id: string } }) {
+  const username = params.id;
+  const searchParams = useSearchParams();
+  const wrappedId = searchParams.get("wrappedId");
+
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<SportshubWrapped | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchWrappedData = async () => {
-      if (!user.userId) {
+      if (!wrappedId) {
+        setError("Invalid share link - missing wrappedId");
+        setIsLoading(false);
         return;
       }
 
       const startTime = Date.now();
 
       try {
-        wrappedPageLogger.info(`Fetching wrapped data for user: ${user.userId}`);
-        const wrappedData = await getWrappedData(user.userId, WRAPPED_YEAR);
+        publicWrappedPageLogger.info(`Fetching public wrapped data for username: ${username}`);
+
+        const usernameMapping = await getUsernameMapping(username);
+        const organiserId = usernameMapping.userId;
+
+        const wrappedData = await getWrappedData(organiserId, WRAPPED_YEAR, wrappedId);
         setData(wrappedData);
-        wrappedPageLogger.info(`Successfully fetched wrapped data for user: ${user.userId}`);
+
+        publicWrappedPageLogger.info(`Successfully fetched public wrapped data for username: ${username}`);
       } catch (err) {
-        wrappedPageLogger.error(`Failed to fetch wrapped data: ${err}`);
-        setError("Failed to load your wrapped data. Please try again later.");
+        publicWrappedPageLogger.error(`Failed to fetch public wrapped data: ${err}`);
+        setError("This wrapped link is invalid or has expired.");
       } finally {
         const elapsed = Date.now() - startTime;
         const remainingTime = Math.max(0, MIN_LOADING_TIME_MS - elapsed);
@@ -50,38 +59,25 @@ export default function WrappedPage() {
     };
 
     fetchWrappedData();
-  }, []);
+  }, [username, wrappedId]);
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return <WrappedLoading />;
   }
 
-  if (error) {
-    return (
-      <WrappedError
-        message={error}
-        linkHref="/organiser/dashboard"
-        linkText="Return to Dashboard"
-        className="-mt-[var(--navbar-height)]"
-      />
-    );
+  if (error || !data) {
+    return <WrappedError message={error || "Something went wrong"} className="-mt-[var(--navbar-height)]" />;
   }
 
   return (
     <WrappedContent
-      data={data}
       className="-mt-[var(--navbar-height)]"
-      headerElements={
-        <>
-          <BackButton />
-          <ProgressIndicator />
-        </>
-      }
+      data={data}
       footerSection={
-        <ShareSection
+        <PublicFooterSection
           organiserName={data.organiserName || "Organiser"}
           year={data.year || WRAPPED_YEAR}
-          wrappedId={data.wrappedId || ""}
+          username={username}
         />
       }
     />

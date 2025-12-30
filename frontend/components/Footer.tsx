@@ -1,7 +1,27 @@
+"use client";
+
 import { LightBulbIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+// Routes where the footer should be hidden (as regex patterns)
+const HIDDEN_FOOTER_ROUTES = [
+  /^\/organiser\/wrapped/, // Organiser wrapped page
+  /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
+];
+
+const shouldHideFooter = (pathname: string): boolean => {
+  return HIDDEN_FOOTER_ROUTES.some((pattern) => pattern.test(pathname));
+};
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  // Hide footer on specific routes
+  if (shouldHideFooter(pathname)) {
+    return null;
+  }
+
   return (
     <footer className="w-full bg-white border-t-[1px] border-gray-400 bottom-0 h-[var(--footer-height)] flex justify-center items-center fixed z-50">
       <div className="screen-width-dashboard text-xs flex">

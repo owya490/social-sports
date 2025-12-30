@@ -5,6 +5,7 @@ import { Logger } from "@/observability/logger";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
+import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -27,6 +28,8 @@ interface EventDrilldownSettingsPageProps {
   setPromotionalCodesEnabled: (event: boolean) => void;
   hideVacancy: boolean;
   setHideVacancy: (event: boolean) => void;
+  waitlistEnabled: boolean;
+  setWaitlistEnabled: (event: boolean) => void;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -45,6 +48,8 @@ const EventDrilldownSettingsPage = ({
   setPromotionalCodesEnabled,
   hideVacancy,
   setHideVacancy,
+  waitlistEnabled,
+  setWaitlistEnabled,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
@@ -136,6 +141,19 @@ const EventDrilldownSettingsPage = ({
           });
         }}
       />
+      {WAITLIST_ENABLED && (
+        <LabelledSwitch
+          title={"Enable Waitlist"}
+          description={"Enable to allow customers to join a waitlist for this event."}
+          state={waitlistEnabled}
+          setState={setWaitlistEnabled}
+          updateData={(event: boolean) => {
+            updateEventById(eventId, {
+              waitlistEnabled: event,
+            });
+          }}
+        />
+      )}
       <BlackHighlightButton
         text="Delete Event"
         onClick={() => {

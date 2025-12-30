@@ -10,8 +10,15 @@ import Logo from "./../../public/images/BlackLogo.svg";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileSearchInput from "./MobileSearchInput";
 
-// Routes where the navbar should be hidden
-const HIDDEN_NAVBAR_ROUTES = ["/organiser/wrapped"];
+// Routes where the navbar should be hidden (as regex patterns)
+const HIDDEN_NAVBAR_ROUTES = [
+  /^\/organiser\/wrapped/, // Organiser wrapped page
+  /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
+];
+
+const shouldHideNavbar = (pathname: string): boolean => {
+  return HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname));
+};
 
 export default function MobileNavbar() {
   const pathname = usePathname();
@@ -30,7 +37,7 @@ export default function MobileNavbar() {
   }, []);
 
   // Hide navbar on specific routes
-  if (HIDDEN_NAVBAR_ROUTES.some((route) => pathname.startsWith(route))) {
+  if (shouldHideNavbar(pathname)) {
     return null;
   }
 

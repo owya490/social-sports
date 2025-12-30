@@ -16,7 +16,7 @@ public class StripeConfig {
     private static final Logger logger = LoggerFactory.getLogger(StripeConfig.class);
 
     // Feature flags for easily gating Java implementation of Python Stripe functionality.
-    public static final boolean JAVA_STRIPE_ENABLED = false;
+    public static final boolean JAVA_STRIPE_ENABLED = true;
     public static final boolean JAVA_STRIPE_WEBHOOK_ENABLED = true;
 
     public static final String ERROR_URL = "/error";
