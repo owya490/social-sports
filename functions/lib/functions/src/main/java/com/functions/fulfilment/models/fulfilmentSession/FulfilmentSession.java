@@ -16,6 +16,7 @@ import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.WaitlistFulfilmentEntity;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.annotation.DocumentId;
@@ -100,6 +101,9 @@ public abstract class FulfilmentSession {
                     case FORMS:
                         entity = objectMapper.readValue(json, FormsFulfilmentEntity.class);
                         break;
+                    case WAITLIST:
+                        entity = objectMapper.readValue(json, WaitlistFulfilmentEntity.class);
+                        break;
                     case END:
                         entity = objectMapper.readValue(json, EndFulfilmentEntity.class);
                         break;
@@ -153,6 +157,20 @@ public abstract class FulfilmentSession {
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
                         .numTickets(numTicketsBookingApproval).build();
+            case WAITLIST:
+                Integer numTicketsWaitlist = null;
+                Long numTicketsLongWaitlist = snapshot.getLong("numTickets");
+                // Firestore does not separate Ints vs Longs 
+                if (numTicketsLongWaitlist != null) {
+                    numTicketsWaitlist = numTicketsLongWaitlist.intValue();
+                }
+                return WaitlistFulfilmentSession.builder()
+                        .eventData(objectMapper.convertValue(snapshot.get("eventData"), 
+                            EventData.class))
+                        .fulfilmentSessionStartTime(
+                            snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
+                        .numTickets(numTicketsWaitlist).build();
             default:
                 throw new IllegalArgumentException(
                         "Unknown FulfilmentSession type: " + sessionType);
