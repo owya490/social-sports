@@ -6,8 +6,10 @@ import { FormId, FormResponse, FormSection, FormSectionType, FormTitle } from "@
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import AddFormResponseDialog from "./AddFormResponseDialog";
 import { FormResponsesTable } from "./FormResponsesTable";
 
 interface EventDrilldownFormsPageProps {
@@ -79,6 +81,39 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
   const [formId, setFormId] = useState<FormId | null>(null);
   const [formTitle, setFormTitle] = useState<FormTitle | null>(null);
   const [attachingForm, setAttachingForm] = useState(false);
+  const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
+
+  const fetchResponses = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      let currentFormId: FormId | null = null;
+
+      const eventData: EventData = await getEventById(eventId);
+      if (eventData.formId) {
+        currentFormId = eventData.formId as FormId;
+        setFormId(eventData.formId);
+      } else {
+        setFormId(null);
+        setFormTitle(null);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch form details to get the title
+      const form = await getForm(currentFormId);
+      setFormTitle(form.title);
+
+      const formResponse = await getFormResponsesForEvent(currentFormId, eventId);
+      setFormResponses(formResponse);
+    } catch (err) {
+      logger.error(`Failed to load form responses: ${err}`);
+      setError("Failed to load form responses");
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId]);
 
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
@@ -115,44 +150,8 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
   };
 
   useEffect(() => {
-    const fetchResponses = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        let formId: FormId | null = null;
-
-        const eventData: EventData = await getEventById(eventId);
-        if (eventData.formId) {
-          formId = eventData.formId as FormId;
-          setFormId(eventData.formId);
-          setLoading(false);
-        }
-
-        if (!formId) {
-          // No formId found - this is okay, we'll show the FormSelector
-          setFormId(null);
-          setFormTitle(null);
-          setLoading(false);
-          return;
-        }
-
-        // Fetch form details to get the title
-        const form = await getForm(formId);
-        setFormTitle(form.title);
-
-        const formResponse = await getFormResponsesForEvent(formId as FormId, eventId);
-        setFormResponses(formResponse);
-      } catch (err) {
-        logger.error(`Failed to load form responses: ${err}`);
-        setError("Failed to load form responses");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchResponses();
-  }, [eventId]);
+  }, [fetchResponses]);
 
   if (loading) return <div>Loading form responses...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
@@ -177,21 +176,27 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     );
   }
 
-  if (formResponses.length === 0)
-    return (
-      <div className="w-full md:w-[calc(100%-18rem)] my-2 p-2">
-        <h1 className="text-2xl font-extrabold mb-2">Form Responses</h1>
-        {formTitle && <p className="text-sm text-gray-400 mb-6 line-clamp-1">Form: {formTitle}</p>}
-        <div className="bg-core-hover rounded-lg p-6 mb-6">
-          <p className="text-sm text-core-text">No responses submitted</p>
-        </div>
-        {attachingForm ? (
-          <div className="text-sm text-gray-600">Attaching form to event...</div>
-        ) : (
-          <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
-        )}
+  // Common Header logic
+  const renderHeader = () => (
+    <div className="flex items-center justify-between mb-4 px-1 md:px-0">
+      <div>
+        <h1 className="text-2xl font-extrabold mb-1">Form Responses</h1>
+        {formTitle && <p className="text-sm text-gray-400 line-clamp-1">Form: {formTitle}</p>}
       </div>
-    );
+      <div className="flex items-center gap-2">
+        {formResponses.length > 0 && (
+          <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
+        )}
+        <button
+          onClick={() => setIsAddFormResponseDialogOpen(true)}
+          className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-2 md:px-4 py-1.5 md:py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
+        >
+          <PlusIcon className="md:mr-2 h-5 w-5" />
+          <span className="hidden md:block">Add Form Answers</span>
+        </button>
+      </div>
+    </div>
+  );
 
   // Generate CSV data for download
   const formResponseToPurchaser = createFormResponseToPurchaserMap(eventMetadata);
@@ -259,15 +264,31 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     return row;
   });
 
+  if (formResponses.length === 0)
+    return (
+      <div className="w-full md:w-[calc(100%-18rem)] my-2 p-2">
+        {renderHeader()}
+        <div className="bg-core-hover rounded-lg p-6 mb-6">
+          <p className="text-sm text-core-text">No responses submitted</p>
+        </div>
+        {attachingForm ? (
+          <div className="text-sm text-gray-600">Attaching form to event...</div>
+        ) : (
+          <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
+        )}
+        <AddFormResponseDialog
+          isOpen={isAddFormResponseDialogOpen}
+          onClose={() => setIsAddFormResponseDialogOpen(false)}
+          formId={formId}
+          eventId={eventId}
+          refreshResponses={fetchResponses}
+        />
+      </div>
+    );
+
   return (
     <div className="w-full md:w-[calc(100%-18rem)] my-2">
-      <div className="flex items-center justify-between mb-4 px-1 md:px-0">
-        <div>
-          <h1 className="text-2xl font-extrabold mb-1">Form Responses</h1>
-          {formTitle && <p className="text-sm text-gray-400 line-clamp-1">Form: {formTitle}</p>}
-        </div>
-        <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
-      </div>
+      {renderHeader()}
 
       <FormResponsesTable
         formResponses={formResponses}
@@ -275,6 +296,14 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
         eventId={eventId}
         eventMetadata={eventMetadata}
         showPurchaserColumn={true}
+      />
+
+      <AddFormResponseDialog
+        isOpen={isAddFormResponseDialogOpen}
+        onClose={() => setIsAddFormResponseDialogOpen(false)}
+        formId={formId}
+        eventId={eventId}
+        refreshResponses={fetchResponses}
       />
     </div>
   );
