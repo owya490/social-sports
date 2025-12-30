@@ -17,6 +17,7 @@ import BookingButton from "./BookingButton";
 import ContactEventButton from "./ContactEventButton";
 import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
 import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
+import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -123,7 +124,7 @@ export default function EventPayment(props: EventPaymentProps) {
           ) : props.isPaymentsActive ? (
             <div className="w-full">
               {props.vacancy === 0 && allCounts.length === 0 ? (
-                props.waitlistEnabled ? (
+                props.waitlistEnabled && WAITLIST_ENABLED ? (
                 <>
                   <div className="mb-4 !text-black">
                     <Select
