@@ -374,7 +374,7 @@ export async function updateFulfilmentEntityWithFormResponseId(
     );
 
     fulfilmentServiceLogger.info(
-      `updateFulfilmentEntityWithResponseId: Successfully updated fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with formResponseId: ${formResponseId}`
+      `updateFulfilmentEntityWithFormResponseId: Successfully updated fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with formResponseId: ${formResponseId}`
     );
     return response;
   } catch (error) {

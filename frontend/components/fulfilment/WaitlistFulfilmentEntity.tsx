@@ -97,10 +97,6 @@ const WaitlistFulfilmentEntity = ({
 
     setIsSaving(true);
     try {
-      logger.info(
-        `WaitlistFulfilmentEntity: Waitlist entry saved with fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}`
-      );
-
       const response = await updateFulfilmentEntityWithWaitlistData(
         fulfilmentSessionId,
         fulfilmentEntityId,
@@ -112,6 +108,10 @@ const WaitlistFulfilmentEntity = ({
         router.push(getErrorUrl(new Error(response.message)));
         return;
       }
+
+      logger.info(
+        `WaitlistFulfilmentEntity: Waitlist entry saved with fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}`
+      );
 
       await onNext();
     } catch (error) {

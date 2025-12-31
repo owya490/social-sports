@@ -56,7 +56,7 @@ public class WaitlistService {
         if (eventData == null) {
             return false;
         }
-        if (eventData.getWaitlistEnabled() == false) {
+        if (!Boolean.TRUE.equals(eventData.getWaitlistEnabled())) {
             return false;
         }
         return true;

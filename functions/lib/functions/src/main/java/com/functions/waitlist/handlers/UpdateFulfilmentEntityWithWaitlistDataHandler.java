@@ -13,7 +13,8 @@ import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlist
 import com.functions.waitlist.models.responses.UpdateFulfilmentEntityWithWaitlistDataResponse;
 
 /**
- * Handler for updating fulfilment entity with waitlist registration data (name + email).
+ * Handler for updating fulfilment entity with waitlist registration data (name
+ * + email).
  */
 public class UpdateFulfilmentEntityWithWaitlistDataHandler implements
         Handler<UpdateFulfilmentEntityWithWaitlistDataRequest, UpdateFulfilmentEntityWithWaitlistDataResponse> {
@@ -34,37 +35,35 @@ public class UpdateFulfilmentEntityWithWaitlistDataHandler implements
     @Override
     public UpdateFulfilmentEntityWithWaitlistDataResponse handle(
             UpdateFulfilmentEntityWithWaitlistDataRequest request) {
+        // check for null request and null values
+        if (request == null || request.getEmail() == null || request.getName() == null
+                || request.getFulfilmentSessionId() == null || request.getFulfilmentEntityId() == null) {
+            throw new IllegalArgumentException("Email, name, fulfilmentSessionId and fulfilmentEntityId are required");
+        }
+
+        
+        // email validation
+        if (!isValidEmail(request.getEmail())) {
+            logger.error("Invalid email format for email: {}", request.getEmail());
+            throw new IllegalArgumentException("Invalid email format");
+        }
+
+        logger.info(
+                "Handling update waitlist fulfilment entity with data request for fulfilmentSessionId: {}, email: {}",
+                request.getFulfilmentSessionId(), request.getEmail());
         try {
-
-            // check for null request and null values
-            if (request == null || request.getEmail() == null || request.getFulfilmentSessionId() == null || request.getFulfilmentEntityId() == null) {
-                throw new IllegalArgumentException("Email, fulfilmentSessionId and fulfilmentEntityId are required");
-            }
-
-            logger.info(
-                    "Handling update waitlist fulfilment entity with data request for fulfilmentSessionId: {}, email: {}",
-                    request.getFulfilmentSessionId(), request.getEmail());
-
-            // email validation
-            if (!isValidEmail(request.getEmail())) {
-                logger.error("Invalid email format for email: {}", request.getEmail());
-                throw new IllegalArgumentException("Invalid email format");
-            }
-
             WaitlistFulfilmentService.updateFulfilmentEntityWithWaitlistData(request.getFulfilmentSessionId(),
                     request.getFulfilmentEntityId(), request.getName(), request.getEmail());
-
+                    
             return UpdateFulfilmentEntityWithWaitlistDataResponse.builder()
-                    .success(true)
-                    .message("Waitlist entity updated successfully")
-                    .build();
+                .success(true)
+                .message("Waitlist entity updated successfully")
+                .build();
         } catch (Exception e) {
             logger.error("Failed to update waitlist fulfilment entity with data: {}", e.getMessage());
-            return UpdateFulfilmentEntityWithWaitlistDataResponse.builder()
-                    .success(false)
-                    .message(e.getMessage())
-                    .build();
+            throw new RuntimeException("Failed to update waitlist fulfilment entity", e);
         }
+
     }
 
     /**
