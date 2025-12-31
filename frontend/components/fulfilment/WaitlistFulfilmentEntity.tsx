@@ -11,9 +11,12 @@ import {
 } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById } from "@/services/src/events/eventsService";
+import { getErrorUrl } from "@/services/src/urlUtils";
+import { updateFulfilmentEntityWithWaitlistData } from "@/services/src/waitlist/waitlistService";
 import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
 
 interface WaitlistFulfilmentEntityProps {
   fulfilmentSessionId: FulfilmentSessionId;
@@ -89,14 +92,25 @@ const WaitlistFulfilmentEntity = ({
     fetchEventData();
   }, []);
 
-  const handleSaveAndNext = async () => {
+  const onWaitlistFulfilmentEntitySaveAndNext = async (): Promise<void> => {
     if (!areAllRequiredFieldsFilled) return;
 
     setIsSaving(true);
     try {
-      // TODO: Save waitlist entry to backend when service is implemented
+      const response = await updateFulfilmentEntityWithWaitlistData(
+        fulfilmentSessionId,
+        fulfilmentEntityId,
+        fullName,
+        email
+      );
+      if (!response.success) {
+        logger.error(`WaitlistFulfilmentEntity: Failed to update waitlist entry: ${response.message}`);
+        router.push(getErrorUrl(new Error(response.message)));
+        return;
+      }
+
       logger.info(
-        `WaitlistFulfilmentEntity: Saving waitlist entry for fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}, fullName: ${fullName}, email: ${email}`
+        `WaitlistFulfilmentEntity: Waitlist entry saved with fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}`
       );
 
       await onNext();
@@ -113,7 +127,7 @@ const WaitlistFulfilmentEntity = ({
 
   return (
     <FulfilmentEntityPage
-      onNext={handleSaveAndNext}
+      onNext={onWaitlistFulfilmentEntitySaveAndNext}
       onPrev={onPrev}
       showPrevButton={!isFirstEntity}
       showNextButton={!isLastEntity}

@@ -10,11 +10,16 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class JoinWaitlistRequest {
+public class UpdateFulfilmentEntityWithWaitlistDataRequest {
     /**
-     * The event ID to join waitlist for
+     * The fulfilment session ID to update
      */
-    private String eventId;
+    private String fulfilmentSessionId;
+
+    /**
+     * The fulfilment entity ID to update
+     */
+    private String fulfilmentEntityId;
 
     /**
      * User's display name
@@ -25,10 +30,5 @@ public class JoinWaitlistRequest {
      * User's email address
      */
     private String email;
-
-    /**
-     * Number of tickets requested
-     */
-    private Integer ticketCount;
 }
 

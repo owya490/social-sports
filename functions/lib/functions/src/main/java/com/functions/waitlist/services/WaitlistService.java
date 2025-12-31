@@ -1,9 +1,11 @@
 package com.functions.waitlist.services;
 
+import com.functions.events.models.EventData;
+import com.functions.events.repositories.EventsRepository;
 import com.functions.waitlist.models.WaitlistEntry;
-import com.functions.waitlist.models.requests.JoinWaitlistRequest;
-import com.functions.waitlist.models.responses.JoinWaitlistResponse;
 import com.functions.waitlist.repositories.WaitlistRepository;
+
+import org.apache.commons.validator.routines.EmailValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,55 +17,51 @@ import java.util.Optional;
 public class WaitlistService {
     private static final Logger logger = LoggerFactory.getLogger(WaitlistService.class);
 
-    public static JoinWaitlistResponse joinWaitlist(JoinWaitlistRequest request) {
+    public static void joinEventWaitlist(String eventId, String email, String name, Integer ticketCount) {
         try {
-            Optional<WaitlistEntry> entry = WaitlistRepository.getWaitlistEntry(request.getEventId(), request.getEmail());
-            String hashedEmail = WaitlistRepository.hashEmail(request.getEmail());
+            Optional<WaitlistEntry> entry = WaitlistRepository.getWaitlistEntry(eventId, email);
+            String hashedEmail = WaitlistRepository.hashEmail(email);
             if (entry.isPresent()) {
-                logger.info("User {} already on waitlist for event {}", hashedEmail, request.getEventId());
-                return JoinWaitlistResponse.builder()
-                    .success(false)
-                    .message("User already on waitlist")
-                    .emailHash(hashedEmail)
-                    .build();
+                logger.info("User {} ({}) already on waitlist for event {}", email, hashedEmail, eventId);
+                return;
             }
             WaitlistEntry newEntry = WaitlistEntry.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .ticketCount(request.getTicketCount())
+                .name(name)
+                .email(email)
+                .ticketCount(ticketCount)
                 .notifiedAt(null)
                 .build();
-            
-            WaitlistRepository.addToWaitlist(request.getEventId(), newEntry);
-            logger.info("User {} successfully joined waitlist for event {}", hashedEmail, request.getEventId());
-            return JoinWaitlistResponse.builder()
-                .success(true)
-                .message("User added to waitlist")
-                .emailHash(hashedEmail)
-                .build();
+            WaitlistRepository.addToWaitlist(eventId, newEntry);
+            logger.info("User {} ({}) successfully joined waitlist for event {}", email, hashedEmail, eventId);
         } catch (Exception e) {
-            logger.error("Failed to add user to waitlist for event {}", request.getEventId(), e);
-            return JoinWaitlistResponse.builder()
-                .success(false)
-                .message("Failed to add user to waitlist")
-                .build();
+            logger.error("Failed to add user {} to waitlist for event {}", email, eventId, e);
+            throw new RuntimeException("Failed to add user to waitlist for event " + eventId, e);
         }
     }
 
-    // organiser removes attendee from waitlist
-    public static boolean removeFromWaitlist(String eventId, String email) {
-        try {
-
-            WaitlistRepository.removeFromWaitlist(eventId, email);
-            return true;
-        } catch (Exception e) {
-            logger.error("Failed to remove user {} from the waitlist for event {}", 
-                email, eventId, e);
+    public static boolean validateWaitlistEntry(String eventId, String email, String name, Integer ticketCount) {
+        if (email == null || email.isEmpty() || !EmailValidator.getInstance().isValid(email)) {
             return false;
         }
+        if (name == null || name.isEmpty()) {
+            return false;
+        }
+        if (ticketCount == null || ticketCount <= 0) {
+            return false;
+        }
+        if (eventId == null || eventId.isEmpty()) {
+            return false;
+        }
+        EventData eventData = EventsRepository.getEventById(eventId).orElse(null);
+        if (eventData == null) {
+            return false;
+        }
+        if (!Boolean.TRUE.equals(eventData.getWaitlistEnabled())) {
+            return false;
+        }
+        return true;
     }
 
-    // attendee removes themselves from waitlist
     public static boolean removeFromWaitlistByHash(String eventId, String emailHash) {
         try {
             WaitlistRepository.removeFromWaitlistByHash(eventId, emailHash);
