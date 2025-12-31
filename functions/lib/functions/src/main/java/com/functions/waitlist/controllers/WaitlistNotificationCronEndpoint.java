@@ -1,4 +1,4 @@
-package com.functions.waitlist.handlers;
+package com.functions.waitlist.controllers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

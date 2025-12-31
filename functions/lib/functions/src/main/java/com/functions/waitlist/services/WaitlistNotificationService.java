@@ -156,7 +156,9 @@ public class WaitlistNotificationService {
                         event.getStartDate(),
                         event.getEndDate(),
                         event.getLocation(),
-                        entry.getEmail());
+                        entry.getEmail(),
+                        eventId
+                    );
 
                 if (emailSent) {
                     // Update notifiedAt timestamp
