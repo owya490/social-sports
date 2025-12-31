@@ -1,0 +1,75 @@
+package com.functions.waitlist.handlers;
+
+import org.apache.commons.validator.routines.EmailValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.functions.fulfilment.services.WaitlistFulfilmentService;
+import com.functions.global.models.Handler;
+import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.utils.JavaUtils;
+import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlistDataRequest;
+import com.functions.waitlist.models.responses.UpdateFulfilmentEntityWithWaitlistDataResponse;
+
+/**
+ * Handler for updating fulfilment entity with waitlist registration data (name
+ * + email).
+ */
+public class UpdateFulfilmentEntityWithWaitlistDataHandler implements
+        Handler<UpdateFulfilmentEntityWithWaitlistDataRequest, UpdateFulfilmentEntityWithWaitlistDataResponse> {
+    private static final Logger logger = LoggerFactory.getLogger(UpdateFulfilmentEntityWithWaitlistDataHandler.class);
+
+    @Override
+    public UpdateFulfilmentEntityWithWaitlistDataRequest parse(UnifiedRequest data) {
+        try {
+            // parse the JSON data from the global app controller into a request object
+            // treeToValue is a utility method that converts a JSON tree node into a normal
+            // Java object.
+            return JavaUtils.objectMapper.treeToValue(data.data(), UpdateFulfilmentEntityWithWaitlistDataRequest.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse UpdateFulfilmentEntityWithWaitlistDataRequest", e);
+        }
+    }
+
+    @Override
+    public UpdateFulfilmentEntityWithWaitlistDataResponse handle(
+            UpdateFulfilmentEntityWithWaitlistDataRequest request) {
+        // check for null request and null values
+        if (request == null || request.getEmail() == null || request.getName() == null
+                || request.getFulfilmentSessionId() == null || request.getFulfilmentEntityId() == null) {
+            throw new IllegalArgumentException("Email, name, fulfilmentSessionId and fulfilmentEntityId are required");
+        }
+
+        
+        // email validation
+        if (!isValidEmail(request.getEmail())) {
+            logger.error("Invalid email format for email: {}", request.getEmail());
+            throw new IllegalArgumentException("Invalid email format");
+        }
+
+        logger.info(
+                "Handling update waitlist fulfilment entity with data request for fulfilmentSessionId: {}, email: {}",
+                request.getFulfilmentSessionId(), request.getEmail());
+        try {
+            WaitlistFulfilmentService.updateFulfilmentEntityWithWaitlistData(request.getFulfilmentSessionId(),
+                    request.getFulfilmentEntityId(), request.getName(), request.getEmail());
+                    
+            return UpdateFulfilmentEntityWithWaitlistDataResponse.builder()
+                .success(true)
+                .message("Waitlist entity updated successfully")
+                .build();
+        } catch (Exception e) {
+            logger.error("Failed to update waitlist fulfilment entity with data: {}", e.getMessage());
+            throw new RuntimeException("Failed to update waitlist fulfilment entity", e);
+        }
+
+    }
+
+    /**
+     * Validates email format using Apache Commons EmailValidator
+     */
+    private boolean isValidEmail(String email) {
+        return email != null && EmailValidator.getInstance().isValid(email);
+    }
+}

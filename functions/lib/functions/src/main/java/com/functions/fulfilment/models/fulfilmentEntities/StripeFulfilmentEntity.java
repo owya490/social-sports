@@ -1,4 +1,4 @@
-package com.functions.fulfilment.models;
+package com.functions.fulfilment.models.fulfilmentEntities;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -9,10 +9,10 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @SuperBuilder
 @NoArgsConstructor
-public class EndFulfilmentEntity extends  FulfilmentEntity {
+public class StripeFulfilmentEntity extends FulfilmentEntity {
     private String url;
     
     {
-        setType(FulfilmentEntityType.END);
+        setType(FulfilmentEntityType.STRIPE);
     }
 }
