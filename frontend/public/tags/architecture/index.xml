@@ -1,328 +1,328 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Architecture</title><link>https://www.sportshub.net.au/tags/architecture/</link><description>Recent content in Architecture on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 30 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://www.sportshub.net.au/tags/architecture/index.xml" rel="self" type="application/rss+xml"/><item><title>[Feature] SPORTSHUB Forms</title><link>https://www.sportshub.net.au/blogs/features/sportshub-forms/</link><pubDate>Tue, 30 Sep 2025 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/blogs/features/sportshub-forms/</guid><description>
-&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/forms-thumbnail-landscape.png" alt="Forms Architecture" loading="lazy" /&gt;&lt;/p&gt;
-&lt;h1&gt;Building SPORTSHUB Forms 📝&lt;/h1&gt;&lt;p&gt;One of SPORTSHUB&amp;rsquo;s most powerful features is our &lt;strong&gt;Forms system&lt;/strong&gt; – allowing event organizers to collect custom information from attendees during the ticket purchase process. But what makes this feature truly special isn&amp;rsquo;t just what it does for users, but how we built it by fundamentally rethinking our payment architecture.&lt;/p&gt;
-&lt;h2&gt;What Are SPORTSHUB Forms?&lt;span class="hx:absolute hx:-mt-20" id="what-are-sportshub-forms"&gt;&lt;/span&gt;
-&lt;a href="#what-are-sportshub-forms" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;SPORTSHUB Forms transform the ticket purchasing experience by allowing event organizers to get the necessary information they need from attendees – all in one smooth, integrated workflow. Instead of juggling separate surveys, emails, and spreadsheets, organizers can gather everything from dietary preferences to emergency contacts right during checkout.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/forms-gallery.png" alt="Forms Gallery" loading="lazy" /&gt;&lt;/p&gt;
-&lt;h3&gt;What Makes Forms &lt;strong&gt;Great&lt;/strong&gt; for Event Organizers:&lt;span class="hx:absolute hx:-mt-20" id="what-makes-forms-great-for-event-organizers"&gt;&lt;/span&gt;
-&lt;a href="#what-makes-forms-great-for-event-organizers" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;🎯 Collect Any Information You Need&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Gather dietary restrictions, t-shirt sizes, skill levels, team preferences&lt;/li&gt;
-&lt;li&gt;Collect emergency contacts, medical information, or accessibility needs&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;⚡ Seamless Ticket Purchase Experience&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;No separate forms to send after payment – everything happens during checkout&lt;/li&gt;
-&lt;li&gt;Attendees complete forms as part of buying tickets, ensuring 100% completion rates&lt;/li&gt;
-&lt;li&gt;Each ticket can have its own custom information requirements&lt;/li&gt;
-&lt;li&gt;Form links are &lt;strong&gt;shareable&lt;/strong&gt;, meaning attendees can easily send a form to other attendees to complete&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;🔧 Flexible Form Building&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Choose from text input, multiple choice/dropdown and image sections&lt;/li&gt;
-&lt;li&gt;Set required fields to ensure you get critical information&lt;/li&gt;
-&lt;li&gt;Real-time validation prevents errors and incomplete submissions&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;📊 Organized Data Collection&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;All responses automatically organized by event and ticket&lt;/li&gt;
-&lt;li&gt;Export responses to CSV for easy analysis and planning&lt;/li&gt;
-&lt;li&gt;No more chasing attendees for missing information after they&amp;rsquo;ve paid&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/forms-example.png" alt="Forms Example" loading="lazy" /&gt;&lt;/p&gt;
-&lt;h2&gt;The Technical Challenge: Generalizing Payment Workflows&lt;span class="hx:absolute hx:-mt-20" id="the-technical-challenge-generalizing-payment-workflows"&gt;&lt;/span&gt;
-&lt;a href="#the-technical-challenge-generalizing-payment-workflows" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Initially, SPORTSHUB had a simple ticket purchasing flow:&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;Select tickets → Pay with Stripe → Done.&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;But forms introduced a new complexity: we needed a &lt;strong&gt;multi-step workflow&lt;/strong&gt; that could handle different types of interactions before, during, and after payment.&lt;/p&gt;
-&lt;h3&gt;From Simple to Multi-Step&lt;span class="hx:absolute hx:-mt-20" id="from-simple-to-multi-step"&gt;&lt;/span&gt;
-&lt;a href="#from-simple-to-multi-step" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-typescript" data-lang="typescript"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// Before: Simple ticket purchase
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;&lt;/span&gt;&lt;span style="color:#a6e22e"&gt;EventPayment&lt;/span&gt; &lt;span style="color:#960050;background-color:#1e0010"&gt;→&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;StripeCheckout&lt;/span&gt; &lt;span style="color:#960050;background-color:#1e0010"&gt;→&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;Success&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// After: Multi-step workflow with forms
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;&lt;/span&gt;&lt;span style="color:#a6e22e"&gt;EventPayment&lt;/span&gt; &lt;span style="color:#960050;background-color:#1e0010"&gt;→&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;Form&lt;/span&gt; &lt;span style="color:#960050;background-color:#1e0010"&gt;→&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;Form&lt;/span&gt; &lt;span style="color:#960050;background-color:#1e0010"&gt;→&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;StripePayment&lt;/span&gt; &lt;span style="color:#960050;background-color:#1e0010"&gt;→&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;Success&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/forms-thumbnail-landscape.png" alt="Forms Architecture" loading="lazy" />&lt;/p>
+&lt;h1>Building SPORTSHUB Forms 📝&lt;/h1>&lt;p>One of SPORTSHUB&amp;rsquo;s most powerful features is our &lt;strong>Forms system&lt;/strong> – allowing event organizers to collect custom information from attendees during the ticket purchase process. But what makes this feature truly special isn&amp;rsquo;t just what it does for users, but how we built it by fundamentally rethinking our payment architecture.&lt;/p>
+&lt;h2>What Are SPORTSHUB Forms?&lt;span class="hx:absolute hx:-mt-20" id="what-are-sportshub-forms">&lt;/span>
+&lt;a href="#what-are-sportshub-forms" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>SPORTSHUB Forms transform the ticket purchasing experience by allowing event organizers to get the necessary information they need from attendees – all in one smooth, integrated workflow. Instead of juggling separate surveys, emails, and spreadsheets, organizers can gather everything from dietary preferences to emergency contacts right during checkout.&lt;/p>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/forms-gallery.png" alt="Forms Gallery" loading="lazy" />&lt;/p>
+&lt;h3>What Makes Forms &lt;strong>Great&lt;/strong> for Event Organizers:&lt;span class="hx:absolute hx:-mt-20" id="what-makes-forms-great-for-event-organizers">&lt;/span>
+&lt;a href="#what-makes-forms-great-for-event-organizers" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;strong>🎯 Collect Any Information You Need&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Gather dietary restrictions, t-shirt sizes, skill levels, team preferences&lt;/li>
+&lt;li>Collect emergency contacts, medical information, or accessibility needs&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>⚡ Seamless Ticket Purchase Experience&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>No separate forms to send after payment – everything happens during checkout&lt;/li>
+&lt;li>Attendees complete forms as part of buying tickets, ensuring 100% completion rates&lt;/li>
+&lt;li>Each ticket can have its own custom information requirements&lt;/li>
+&lt;li>Form links are &lt;strong>shareable&lt;/strong>, meaning attendees can easily send a form to other attendees to complete&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>🔧 Flexible Form Building&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Choose from text input, multiple choice/dropdown and image sections&lt;/li>
+&lt;li>Set required fields to ensure you get critical information&lt;/li>
+&lt;li>Real-time validation prevents errors and incomplete submissions&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>📊 Organized Data Collection&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>All responses automatically organized by event and ticket&lt;/li>
+&lt;li>Export responses to CSV for easy analysis and planning&lt;/li>
+&lt;li>No more chasing attendees for missing information after they&amp;rsquo;ve paid&lt;/li>
+&lt;/ul>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/forms-example.png" alt="Forms Example" loading="lazy" />&lt;/p>
+&lt;h2>The Technical Challenge: Generalizing Payment Workflows&lt;span class="hx:absolute hx:-mt-20" id="the-technical-challenge-generalizing-payment-workflows">&lt;/span>
+&lt;a href="#the-technical-challenge-generalizing-payment-workflows" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Initially, SPORTSHUB had a simple ticket purchasing flow:&lt;/p>
+&lt;blockquote>
+&lt;p>Select tickets → Pay with Stripe → Done.&lt;/p>
+&lt;/blockquote>
+&lt;p>But forms introduced a new complexity: we needed a &lt;strong>multi-step workflow&lt;/strong> that could handle different types of interactions before, during, and after payment.&lt;/p>
+&lt;h3>From Simple to Multi-Step&lt;span class="hx:absolute hx:-mt-20" id="from-simple-to-multi-step">&lt;/span>
+&lt;a href="#from-simple-to-multi-step" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-typescript" data-lang="typescript">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Before: Simple ticket purchase
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#a6e22e">EventPayment&lt;/span> &lt;span style="color:#960050;background-color:#1e0010">→&lt;/span> &lt;span style="color:#a6e22e">StripeCheckout&lt;/span> &lt;span style="color:#960050;background-color:#1e0010">→&lt;/span> &lt;span style="color:#a6e22e">Success&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// After: Multi-step workflow with forms
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#a6e22e">EventPayment&lt;/span> &lt;span style="color:#960050;background-color:#1e0010">→&lt;/span> &lt;span style="color:#a6e22e">Form&lt;/span> &lt;span style="color:#960050;background-color:#1e0010">→&lt;/span> &lt;span style="color:#a6e22e">Form&lt;/span> &lt;span style="color:#960050;background-color:#1e0010">→&lt;/span> &lt;span style="color:#a6e22e">StripePayment&lt;/span> &lt;span style="color:#960050;background-color:#1e0010">→&lt;/span> &lt;span style="color:#a6e22e">Success&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;This required us to completely rethink our payment architecture and led to the creation of our &lt;strong&gt;Fulfilment Session&lt;/strong&gt; system.&lt;/p&gt;
-&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/forms-workflow.png" alt="Forms Workflow" loading="lazy" /&gt;&lt;/p&gt;
-&lt;h2&gt;Fulfilment Sessions: The Foundation&lt;span class="hx:absolute hx:-mt-20" id="fulfilment-sessions-the-foundation"&gt;&lt;/span&gt;
-&lt;a href="#fulfilment-sessions-the-foundation" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;We realized we needed to abstract the concept of &amp;ldquo;completing a purchase&amp;rdquo; into a series of &lt;strong&gt;fulfilment entities&lt;/strong&gt; that could be processed in sequence.&lt;/p&gt;
-&lt;p&gt;The beauty of this system lies in its &lt;strong&gt;modular design&lt;/strong&gt;. Each fulfillment entity is completely independent and interchangeable, allowing us to easily swap components or add new functionality without touching existing code. Need to switch from Stripe to PayPal? Simply replace the &lt;code&gt;STRIPE&lt;/code&gt; entity. Want to add a waiver signing step? Insert a &lt;code&gt;WAIVER&lt;/code&gt; entity before payment. This plug-and-play approach gives us incredible flexibility to customize the user journey for different event types while maintaining a clean, maintainable codebase.&lt;/p&gt;
-&lt;h3&gt;The Core Concept&lt;span class="hx:absolute hx:-mt-20" id="the-core-concept"&gt;&lt;/span&gt;
-&lt;a href="#the-core-concept" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;enum&lt;/span&gt; FulfilmentEntityType {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; FORMS, &lt;span style="color:#75715e"&gt;// Collect custom information&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; STRIPE, &lt;span style="color:#75715e"&gt;// Process payment&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; END &lt;span style="color:#75715e"&gt;// Complete the transaction&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;p>This required us to completely rethink our payment architecture and led to the creation of our &lt;strong>Fulfilment Session&lt;/strong> system.&lt;/p>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/forms-workflow.png" alt="Forms Workflow" loading="lazy" />&lt;/p>
+&lt;h2>Fulfilment Sessions: The Foundation&lt;span class="hx:absolute hx:-mt-20" id="fulfilment-sessions-the-foundation">&lt;/span>
+&lt;a href="#fulfilment-sessions-the-foundation" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>We realized we needed to abstract the concept of &amp;ldquo;completing a purchase&amp;rdquo; into a series of &lt;strong>fulfilment entities&lt;/strong> that could be processed in sequence.&lt;/p>
+&lt;p>The beauty of this system lies in its &lt;strong>modular design&lt;/strong>. Each fulfillment entity is completely independent and interchangeable, allowing us to easily swap components or add new functionality without touching existing code. Need to switch from Stripe to PayPal? Simply replace the &lt;code>STRIPE&lt;/code> entity. Want to add a waiver signing step? Insert a &lt;code>WAIVER&lt;/code> entity before payment. This plug-and-play approach gives us incredible flexibility to customize the user journey for different event types while maintaining a clean, maintainable codebase.&lt;/p>
+&lt;h3>The Core Concept&lt;span class="hx:absolute hx:-mt-20" id="the-core-concept">&lt;/span>
+&lt;a href="#the-core-concept" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">public&lt;/span> &lt;span style="color:#66d9ef">enum&lt;/span> FulfilmentEntityType {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> FORMS, &lt;span style="color:#75715e">// Collect custom information&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> STRIPE, &lt;span style="color:#75715e">// Process payment&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> END &lt;span style="color:#75715e">// Complete the transaction&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;Each fulfilment session contains an ordered list of entities that must be completed:&lt;/p&gt;
-&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// Example: Event with form → payment → completion&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;List&lt;span style="color:#f92672"&gt;&amp;lt;&lt;/span&gt;FulfilmentEntity&lt;span style="color:#f92672"&gt;&amp;gt;&lt;/span&gt; entities &lt;span style="color:#f92672"&gt;=&lt;/span&gt; &lt;span style="color:#f92672"&gt;[&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; FormsFulfilmentEntity, &lt;span style="color:#75715e"&gt;// Collect attendee info&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; StripeFulfilmentEntity, &lt;span style="color:#75715e"&gt;// Process payment&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; EndFulfilmentEntity &lt;span style="color:#75715e"&gt;// Redirect to success page&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;]&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;p>Each fulfilment session contains an ordered list of entities that must be completed:&lt;/p>
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Example: Event with form → payment → completion&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>List&lt;span style="color:#f92672">&amp;lt;&lt;/span>FulfilmentEntity&lt;span style="color:#f92672">&amp;gt;&lt;/span> entities &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#f92672">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> FormsFulfilmentEntity, &lt;span style="color:#75715e">// Collect attendee info&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> StripeFulfilmentEntity, &lt;span style="color:#75715e">// Process payment&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> EndFulfilmentEntity &lt;span style="color:#75715e">// Redirect to success page&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">]&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;h3&gt;Multi-Ticket Forms&lt;span class="hx:absolute hx:-mt-20" id="multi-ticket-forms"&gt;&lt;/span&gt;
-&lt;a href="#multi-ticket-forms" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;For events requiring multiple tickets, we create &lt;strong&gt;one form entity per ticket&lt;/strong&gt;:&lt;/p&gt;
-&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// 3 tickets = 3 form entities + 1 payment + 1 end&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;List&lt;span style="color:#f92672"&gt;&amp;lt;&lt;/span&gt;FulfilmentEntity&lt;span style="color:#f92672"&gt;&amp;gt;&lt;/span&gt; entities &lt;span style="color:#f92672"&gt;=&lt;/span&gt; &lt;span style="color:#f92672"&gt;[&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; FormsFulfilmentEntity, &lt;span style="color:#75715e"&gt;// Ticket 1 info&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; FormsFulfilmentEntity, &lt;span style="color:#75715e"&gt;// Ticket 2 info &lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; FormsFulfilmentEntity, &lt;span style="color:#75715e"&gt;// Ticket 3 info&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; StripeFulfilmentEntity, &lt;span style="color:#75715e"&gt;// Single payment&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; EndFulfilmentEntity &lt;span style="color:#75715e"&gt;// Success&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#f92672"&gt;]&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;h3>Multi-Ticket Forms&lt;span class="hx:absolute hx:-mt-20" id="multi-ticket-forms">&lt;/span>
+&lt;a href="#multi-ticket-forms" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>For events requiring multiple tickets, we create &lt;strong>one form entity per ticket&lt;/strong>:&lt;/p>
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// 3 tickets = 3 form entities + 1 payment + 1 end&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>List&lt;span style="color:#f92672">&amp;lt;&lt;/span>FulfilmentEntity&lt;span style="color:#f92672">&amp;gt;&lt;/span> entities &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#f92672">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> FormsFulfilmentEntity, &lt;span style="color:#75715e">// Ticket 1 info&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> FormsFulfilmentEntity, &lt;span style="color:#75715e">// Ticket 2 info &lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> FormsFulfilmentEntity, &lt;span style="color:#75715e">// Ticket 3 info&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> StripeFulfilmentEntity, &lt;span style="color:#75715e">// Single payment&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> EndFulfilmentEntity &lt;span style="color:#75715e">// Success&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">]&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;h2&gt;From Stateful to Stateless: A Design Evolution&lt;span class="hx:absolute hx:-mt-20" id="from-stateful-to-stateless-a-design-evolution"&gt;&lt;/span&gt;
-&lt;a href="#from-stateful-to-stateless-a-design-evolution" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;The &lt;strong&gt;Stateful&lt;/strong&gt; Approach (v1)&lt;span class="hx:absolute hx:-mt-20" id="the-stateful-approach-v1"&gt;&lt;/span&gt;
-&lt;a href="#the-stateful-approach-v1" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Initially, we built a stateful system where the backend tracked user progress:&lt;/p&gt;
-&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// Backend maintains state&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;class&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;FulfilmentSession&lt;/span&gt; {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;private&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;int&lt;/span&gt; currentEntityIndex;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;private&lt;/span&gt; String currentUserId;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;private&lt;/span&gt; Map&lt;span style="color:#f92672"&gt;&amp;lt;&lt;/span&gt;String, FulfilmentEntity&lt;span style="color:#f92672"&gt;&amp;gt;&lt;/span&gt; entities;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; FulfilmentEntity &lt;span style="color:#a6e22e"&gt;getCurrentEntity&lt;/span&gt;() {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;return&lt;/span&gt; entities.&lt;span style="color:#a6e22e"&gt;get&lt;/span&gt;(currentEntityIndex);
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;h2>From Stateful to Stateless: A Design Evolution&lt;span class="hx:absolute hx:-mt-20" id="from-stateful-to-stateless-a-design-evolution">&lt;/span>
+&lt;a href="#from-stateful-to-stateless-a-design-evolution" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>The &lt;strong>Stateful&lt;/strong> Approach (v1)&lt;span class="hx:absolute hx:-mt-20" id="the-stateful-approach-v1">&lt;/span>
+&lt;a href="#the-stateful-approach-v1" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Initially, we built a stateful system where the backend tracked user progress:&lt;/p>
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Backend maintains state&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">FulfilmentSession&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">private&lt;/span> &lt;span style="color:#66d9ef">int&lt;/span> currentEntityIndex;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">private&lt;/span> String currentUserId;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">private&lt;/span> Map&lt;span style="color:#f92672">&amp;lt;&lt;/span>String, FulfilmentEntity&lt;span style="color:#f92672">&amp;gt;&lt;/span> entities;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">public&lt;/span> FulfilmentEntity &lt;span style="color:#a6e22e">getCurrentEntity&lt;/span>() {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> entities.&lt;span style="color:#a6e22e">get&lt;/span>(currentEntityIndex);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;&lt;strong&gt;Problems with this approach:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Complex state management&lt;/li&gt;
-&lt;li&gt;Race conditions between multiple browser tabs&lt;/li&gt;
-&lt;li&gt;Inability to accurately manage state when users are redirected to external sites&lt;/li&gt;
-&lt;li&gt;Difficult error recovery&lt;/li&gt;
-&lt;li&gt;Server-side session tracking overhead&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;The &lt;strong&gt;Stateless&lt;/strong&gt; Approach (v2)&lt;span class="hx:absolute hx:-mt-20" id="the-stateless-approach-v2"&gt;&lt;/span&gt;
-&lt;a href="#the-stateless-approach-v2" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;We realized a much simpler approach: &lt;strong&gt;if a user has a link to a specific fulfilment entity, they&amp;rsquo;re on that step&lt;/strong&gt;. The URL becomes the state.&lt;/p&gt;
-&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-typescript" data-lang="typescript"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// URL structure defines the current state
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;&lt;/span&gt;&lt;span style="color:#e6db74"&gt;/fulfilment/&lt;/span&gt;{&lt;span style="color:#a6e22e"&gt;sessionId&lt;/span&gt;}&lt;span style="color:#f92672"&gt;/&lt;/span&gt;{&lt;span style="color:#a6e22e"&gt;entityId&lt;/span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// No server-side tracking needed!
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// The URL tells us exactly where the user is
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;p>&lt;strong>Problems with this approach:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Complex state management&lt;/li>
+&lt;li>Race conditions between multiple browser tabs&lt;/li>
+&lt;li>Inability to accurately manage state when users are redirected to external sites&lt;/li>
+&lt;li>Difficult error recovery&lt;/li>
+&lt;li>Server-side session tracking overhead&lt;/li>
+&lt;/ul>
+&lt;h3>The &lt;strong>Stateless&lt;/strong> Approach (v2)&lt;span class="hx:absolute hx:-mt-20" id="the-stateless-approach-v2">&lt;/span>
+&lt;a href="#the-stateless-approach-v2" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>We realized a much simpler approach: &lt;strong>if a user has a link to a specific fulfilment entity, they&amp;rsquo;re on that step&lt;/strong>. The URL becomes the state.&lt;/p>
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-typescript" data-lang="typescript">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// URL structure defines the current state
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#e6db74">/fulfilment/&lt;/span>{&lt;span style="color:#a6e22e">sessionId&lt;/span>}&lt;span style="color:#f92672">/&lt;/span>{&lt;span style="color:#a6e22e">entityId&lt;/span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// No server-side tracking needed!
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// The URL tells us exactly where the user is
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;&lt;strong&gt;Benefits of stateless design:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Simplicity&lt;/strong&gt;: No complex state tracking&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Reliability&lt;/strong&gt;: Users can bookmark, refresh, or share links&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Scalability&lt;/strong&gt;: No server-side session storage&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Multi-device&lt;/strong&gt;: Same URL works across devices&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Error Recovery&lt;/strong&gt;: Users can always return to their exact position&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Implementation Details&lt;span class="hx:absolute hx:-mt-20" id="implementation-details"&gt;&lt;/span&gt;
-&lt;a href="#implementation-details" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;class&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;FulfilmentService&lt;/span&gt; {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#75715e"&gt;// Stateless entity info retrieval&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; GetFulfilmentEntityInfoResponse &lt;span style="color:#a6e22e"&gt;getFulfilmentEntityInfo&lt;/span&gt;(
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; String fulfilmentSessionId,
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; String fulfilmentEntityId
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; ) {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#75715e"&gt;// No session tracking - just return entity details&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; FulfilmentEntity entity &lt;span style="color:#f92672"&gt;=&lt;/span&gt; getEntityById(fulfilmentEntityId);
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;return&lt;/span&gt; createResponse(entity);
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;p>&lt;strong>Benefits of stateless design:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Simplicity&lt;/strong>: No complex state tracking&lt;/li>
+&lt;li>&lt;strong>Reliability&lt;/strong>: Users can bookmark, refresh, or share links&lt;/li>
+&lt;li>&lt;strong>Scalability&lt;/strong>: No server-side session storage&lt;/li>
+&lt;li>&lt;strong>Multi-device&lt;/strong>: Same URL works across devices&lt;/li>
+&lt;li>&lt;strong>Error Recovery&lt;/strong>: Users can always return to their exact position&lt;/li>
+&lt;/ul>
+&lt;h3>Implementation Details&lt;span class="hx:absolute hx:-mt-20" id="implementation-details">&lt;/span>
+&lt;a href="#implementation-details" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">public&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">FulfilmentService&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// Stateless entity info retrieval&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">public&lt;/span> GetFulfilmentEntityInfoResponse &lt;span style="color:#a6e22e">getFulfilmentEntityInfo&lt;/span>(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> String fulfilmentSessionId,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> String fulfilmentEntityId
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// No session tracking - just return entity details&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> FulfilmentEntity entity &lt;span style="color:#f92672">=&lt;/span> getEntityById(fulfilmentEntityId);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> createResponse(entity);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;p&gt;The frontend handles navigation between entities by constructing URLs:&lt;/p&gt;
-&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-typescript" data-lang="typescript"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;// Navigate to next entity
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;&lt;/span&gt;&lt;span style="color:#66d9ef"&gt;const&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;nextEntityId&lt;/span&gt; &lt;span style="color:#f92672"&gt;=&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;await&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;getNextFulfilmentEntity&lt;/span&gt;(&lt;span style="color:#a6e22e"&gt;sessionId&lt;/span&gt;, &lt;span style="color:#a6e22e"&gt;currentEntityId&lt;/span&gt;);
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#a6e22e"&gt;router&lt;/span&gt;.&lt;span style="color:#a6e22e"&gt;push&lt;/span&gt;(&lt;span style="color:#e6db74"&gt;`/fulfilment/&lt;/span&gt;&lt;span style="color:#e6db74"&gt;${&lt;/span&gt;&lt;span style="color:#a6e22e"&gt;sessionId&lt;/span&gt;&lt;span style="color:#e6db74"&gt;}&lt;/span&gt;&lt;span style="color:#e6db74"&gt;/&lt;/span&gt;&lt;span style="color:#e6db74"&gt;${&lt;/span&gt;&lt;span style="color:#a6e22e"&gt;nextEntityId&lt;/span&gt;&lt;span style="color:#e6db74"&gt;}&lt;/span&gt;&lt;span style="color:#e6db74"&gt;`&lt;/span&gt;);&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;p>The frontend handles navigation between entities by constructing URLs:&lt;/p>
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-typescript" data-lang="typescript">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Navigate to next entity
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">nextEntityId&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">await&lt;/span> &lt;span style="color:#a6e22e">getNextFulfilmentEntity&lt;/span>(&lt;span style="color:#a6e22e">sessionId&lt;/span>, &lt;span style="color:#a6e22e">currentEntityId&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">router&lt;/span>.&lt;span style="color:#a6e22e">push&lt;/span>(&lt;span style="color:#e6db74">`/fulfilment/&lt;/span>&lt;span style="color:#e6db74">${&lt;/span>&lt;span style="color:#a6e22e">sessionId&lt;/span>&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">/&lt;/span>&lt;span style="color:#e6db74">${&lt;/span>&lt;span style="color:#a6e22e">nextEntityId&lt;/span>&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">`&lt;/span>);&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;h2&gt;The GlobalAppController: Unifying Our Architecture&lt;span class="hx:absolute hx:-mt-20" id="the-globalappcontroller-unifying-our-architecture"&gt;&lt;/span&gt;
-&lt;a href="#the-globalappcontroller-unifying-our-architecture" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;As our fulfilment and forms functionality grew, we faced another challenge: &lt;strong&gt;endpoint proliferation&lt;/strong&gt;. We had separate cloud functions for:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;initFulfilmentSession&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;getFulfilmentEntityInfo&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;getNextFulfilmentEntity&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;saveTempFormResponse&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;updateFulfilmentEntity&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&amp;hellip;and many more&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;The Problem: Cold Starts and Complexity&lt;span class="hx:absolute hx:-mt-20" id="the-problem-cold-starts-and-complexity"&gt;&lt;/span&gt;
-&lt;a href="#the-problem-cold-starts-and-complexity" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Each separate endpoint meant:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Multiple cold starts&lt;/strong&gt;: Each function had to warm up independently&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Resource inefficiency&lt;/strong&gt;: Couldn&amp;rsquo;t share minimum instances across functions&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Deployment complexity&lt;/strong&gt;: Managing dozens of individual functions&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Inconsistent error handling&lt;/strong&gt;: Different patterns across functions&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;The Solution: One Controller to Rule Them All&lt;span class="hx:absolute hx:-mt-20" id="the-solution-one-controller-to-rule-them-all"&gt;&lt;/span&gt;
-&lt;a href="#the-solution-one-controller-to-rule-them-all" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;We created the &lt;strong&gt;GlobalAppController&lt;/strong&gt; – a unified endpoint that routes all requests internally:&lt;/p&gt;
-&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#a6e22e"&gt;@HttpFunction&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;class&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;GlobalAppController&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;implements&lt;/span&gt; HttpFunction {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;void&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;service&lt;/span&gt;(HttpRequest request, HttpResponse response) {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; UnifiedRequest unifiedRequest &lt;span style="color:#f92672"&gt;=&lt;/span&gt; parseRequest(request);
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Object result &lt;span style="color:#f92672"&gt;=&lt;/span&gt; routeRequest(unifiedRequest);
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; sendResponse(response, result);
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;private&lt;/span&gt; Object &lt;span style="color:#a6e22e"&gt;routeRequest&lt;/span&gt;(UnifiedRequest request) {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; EndpointType endpointType &lt;span style="color:#f92672"&gt;=&lt;/span&gt; request.&lt;span style="color:#a6e22e"&gt;endpointType&lt;/span&gt;();
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; Handler handler &lt;span style="color:#f92672"&gt;=&lt;/span&gt; HandlerRegistry.&lt;span style="color:#a6e22e"&gt;getHandler&lt;/span&gt;(endpointType);
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;return&lt;/span&gt; handler.&lt;span style="color:#a6e22e"&gt;handle&lt;/span&gt;(handler.&lt;span style="color:#a6e22e"&gt;parse&lt;/span&gt;(request));
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;h2>The GlobalAppController: Unifying Our Architecture&lt;span class="hx:absolute hx:-mt-20" id="the-globalappcontroller-unifying-our-architecture">&lt;/span>
+&lt;a href="#the-globalappcontroller-unifying-our-architecture" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>As our fulfilment and forms functionality grew, we faced another challenge: &lt;strong>endpoint proliferation&lt;/strong>. We had separate cloud functions for:&lt;/p>
+&lt;ul>
+&lt;li>&lt;code>initFulfilmentSession&lt;/code>&lt;/li>
+&lt;li>&lt;code>getFulfilmentEntityInfo&lt;/code>&lt;/li>
+&lt;li>&lt;code>getNextFulfilmentEntity&lt;/code>&lt;/li>
+&lt;li>&lt;code>saveTempFormResponse&lt;/code>&lt;/li>
+&lt;li>&lt;code>updateFulfilmentEntity&lt;/code>&lt;/li>
+&lt;li>&amp;hellip;and many more&lt;/li>
+&lt;/ul>
+&lt;h3>The Problem: Cold Starts and Complexity&lt;span class="hx:absolute hx:-mt-20" id="the-problem-cold-starts-and-complexity">&lt;/span>
+&lt;a href="#the-problem-cold-starts-and-complexity" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Each separate endpoint meant:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Multiple cold starts&lt;/strong>: Each function had to warm up independently&lt;/li>
+&lt;li>&lt;strong>Resource inefficiency&lt;/strong>: Couldn&amp;rsquo;t share minimum instances across functions&lt;/li>
+&lt;li>&lt;strong>Deployment complexity&lt;/strong>: Managing dozens of individual functions&lt;/li>
+&lt;li>&lt;strong>Inconsistent error handling&lt;/strong>: Different patterns across functions&lt;/li>
+&lt;/ul>
+&lt;h3>The Solution: One Controller to Rule Them All&lt;span class="hx:absolute hx:-mt-20" id="the-solution-one-controller-to-rule-them-all">&lt;/span>
+&lt;a href="#the-solution-one-controller-to-rule-them-all" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>We created the &lt;strong>GlobalAppController&lt;/strong> – a unified endpoint that routes all requests internally:&lt;/p>
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a6e22e">@HttpFunction&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">public&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">GlobalAppController&lt;/span> &lt;span style="color:#66d9ef">implements&lt;/span> HttpFunction {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">public&lt;/span> &lt;span style="color:#66d9ef">void&lt;/span> &lt;span style="color:#a6e22e">service&lt;/span>(HttpRequest request, HttpResponse response) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> UnifiedRequest unifiedRequest &lt;span style="color:#f92672">=&lt;/span> parseRequest(request);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Object result &lt;span style="color:#f92672">=&lt;/span> routeRequest(unifiedRequest);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> sendResponse(response, result);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">private&lt;/span> Object &lt;span style="color:#a6e22e">routeRequest&lt;/span>(UnifiedRequest request) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> EndpointType endpointType &lt;span style="color:#f92672">=&lt;/span> request.&lt;span style="color:#a6e22e">endpointType&lt;/span>();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Handler handler &lt;span style="color:#f92672">=&lt;/span> HandlerRegistry.&lt;span style="color:#a6e22e">getHandler&lt;/span>(endpointType);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> handler.&lt;span style="color:#a6e22e">handle&lt;/span>(handler.&lt;span style="color:#a6e22e">parse&lt;/span>(request));
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;h3&gt;Type-Safe Routing&lt;span class="hx:absolute hx:-mt-20" id="type-safe-routing"&gt;&lt;/span&gt;
-&lt;a href="#type-safe-routing" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The magic happens in our &lt;code&gt;EndpointType&lt;/code&gt; enum and &lt;code&gt;HandlerRegistry&lt;/code&gt;:&lt;/p&gt;
-&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code"&gt;
-&lt;div&gt;&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-java" data-lang="java"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;enum&lt;/span&gt; EndpointType {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; SAVE_TEMP_FORM_RESPONSE(SaveTempFormResponseRequest.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;, SaveTempFormResponseResponse.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;),
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; INIT_FULFILMENT_SESSION(InitCheckoutFulfilmentSessionRequest.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;, InitCheckoutFulfilmentSessionResponse.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;),
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;, GetFulfilmentEntityInfoResponse.&lt;span style="color:#a6e22e"&gt;class&lt;/span&gt;),
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#75715e"&gt;// ... all other endpoints&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;public&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;class&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;HandlerRegistry&lt;/span&gt; {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;private&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;static&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;final&lt;/span&gt; Map&lt;span style="color:#f92672"&gt;&amp;lt;&lt;/span&gt;EndpointType, Handler&lt;span style="color:#f92672"&gt;&amp;lt;?&lt;/span&gt;, &lt;span style="color:#f92672"&gt;?&amp;gt;&amp;gt;&lt;/span&gt; handlers &lt;span style="color:#f92672"&gt;=&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;new&lt;/span&gt; HashMap&lt;span style="color:#f92672"&gt;&amp;lt;&amp;gt;&lt;/span&gt;();
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;static&lt;/span&gt; {
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; handlers.&lt;span style="color:#a6e22e"&gt;put&lt;/span&gt;(SAVE_TEMP_FORM_RESPONSE, &lt;span style="color:#66d9ef"&gt;new&lt;/span&gt; SaveTempFormResponseHandler());
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; handlers.&lt;span style="color:#a6e22e"&gt;put&lt;/span&gt;(INIT_FULFILMENT_SESSION, &lt;span style="color:#66d9ef"&gt;new&lt;/span&gt; InitFulfilmentSessionHandler());
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; handlers.&lt;span style="color:#a6e22e"&gt;put&lt;/span&gt;(GET_FULFILMENT_ENTITY_INFO, &lt;span style="color:#66d9ef"&gt;new&lt;/span&gt; GetFulfilmentEntityInfoHandler());
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#75715e"&gt;// ... register all handlers&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; }
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0"&gt;
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;h3>Type-Safe Routing&lt;span class="hx:absolute hx:-mt-20" id="type-safe-routing">&lt;/span>
+&lt;a href="#type-safe-routing" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>The magic happens in our &lt;code>EndpointType&lt;/code> enum and &lt;code>HandlerRegistry&lt;/code>:&lt;/p>
+&lt;div class="hextra-code-block hx:relative hx:mt-6 hx:first:mt-0 hx:group/code">
+&lt;div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-java" data-lang="java">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">public&lt;/span> &lt;span style="color:#66d9ef">enum&lt;/span> EndpointType {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> SAVE_TEMP_FORM_RESPONSE(SaveTempFormResponseRequest.&lt;span style="color:#a6e22e">class&lt;/span>, SaveTempFormResponseResponse.&lt;span style="color:#a6e22e">class&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> INIT_FULFILMENT_SESSION(InitCheckoutFulfilmentSessionRequest.&lt;span style="color:#a6e22e">class&lt;/span>, InitCheckoutFulfilmentSessionResponse.&lt;span style="color:#a6e22e">class&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.&lt;span style="color:#a6e22e">class&lt;/span>, GetFulfilmentEntityInfoResponse.&lt;span style="color:#a6e22e">class&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// ... all other endpoints&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">public&lt;/span> &lt;span style="color:#66d9ef">class&lt;/span> &lt;span style="color:#a6e22e">HandlerRegistry&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">private&lt;/span> &lt;span style="color:#66d9ef">static&lt;/span> &lt;span style="color:#66d9ef">final&lt;/span> Map&lt;span style="color:#f92672">&amp;lt;&lt;/span>EndpointType, Handler&lt;span style="color:#f92672">&amp;lt;?&lt;/span>, &lt;span style="color:#f92672">?&amp;gt;&amp;gt;&lt;/span> handlers &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#66d9ef">new&lt;/span> HashMap&lt;span style="color:#f92672">&amp;lt;&amp;gt;&lt;/span>();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">static&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> handlers.&lt;span style="color:#a6e22e">put&lt;/span>(SAVE_TEMP_FORM_RESPONSE, &lt;span style="color:#66d9ef">new&lt;/span> SaveTempFormResponseHandler());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> handlers.&lt;span style="color:#a6e22e">put&lt;/span>(INIT_FULFILMENT_SESSION, &lt;span style="color:#66d9ef">new&lt;/span> InitFulfilmentSessionHandler());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> handlers.&lt;span style="color:#a6e22e">put&lt;/span>(GET_FULFILMENT_ENTITY_INFO, &lt;span style="color:#66d9ef">new&lt;/span> GetFulfilmentEntityInfoHandler());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#75715e">// ... register all handlers&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;/div>&lt;div class="hextra-code-copy-btn-container hx:opacity-0 hx:transition hx:group-hover/code:opacity-100 hx:flex hx:gap-1 hx:absolute hx:m-[11px] hx:right-0 hx:top-0">
 &lt;button
 class="hextra-code-copy-btn hx:group/copybtn hx:cursor-pointer hx:transition-all hx:active:opacity-50 hx:bg-primary-700/5 hx:border hx:border-black/5 hx:text-gray-600 hx:hover:text-gray-900 hx:rounded-md hx:p-1.5 hx:dark:bg-primary-300/10 hx:dark:border-white/10 hx:dark:text-gray-400 hx:dark:hover:text-gray-50"
 title="Copy code"
-&gt;
-&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4"&gt;&lt;/div&gt;
-&lt;/button&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;h3&gt;Frontend Integration&lt;span class="hx:absolute hx:-mt-20" id="frontend-integration"&gt;&lt;/span&gt;
-&lt;a href="#frontend-integration" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The frontend sends all requests to a single endpoint via a central &lt;code&gt;executeGlobalAppControllerFunction&lt;/code&gt; method, ensuring
-our code remains modular to easily add any new functionalities on the GlobalAppController.&lt;/p&gt;
-&lt;h3&gt;The Benefits&lt;span class="hx:absolute hx:-mt-20" id="the-benefits"&gt;&lt;/span&gt;
-&lt;a href="#the-benefits" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;Performance Improvements:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Reduced cold starts&lt;/strong&gt;: Single function stays warm longer&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Efficient resource utilization&lt;/strong&gt;: One minimum instance handles all traffic&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Better connection pooling&lt;/strong&gt;: Shared database connections&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;Development Benefits:&lt;/strong&gt;&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Unified error handling&lt;/strong&gt;: Consistent patterns across all endpoints&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Easier testing&lt;/strong&gt;: Mock one controller instead of many functions&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Simplified deployment&lt;/strong&gt;: Single function to deploy and monitor&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Type safety&lt;/strong&gt;: Compile-time checks for request/response types&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;The Result: A Powerful, Scalable System&lt;span class="hx:absolute hx:-mt-20" id="the-result-a-powerful-scalable-system"&gt;&lt;/span&gt;
-&lt;a href="#the-result-a-powerful-scalable-system" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The combination of stateless fulfilment sessions and the GlobalAppController created a system that is:&lt;/p&gt;
-&lt;h3&gt;For Users:&lt;span class="hx:absolute hx:-mt-20" id="for-users"&gt;&lt;/span&gt;
-&lt;a href="#for-users" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Seamless&lt;/strong&gt;: Forms feel like a natural part of checkout&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Reliable&lt;/strong&gt;: Can resume from any point without losing progress&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Flexible&lt;/strong&gt;: Supports complex multi-step workflows&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;For Developers:&lt;span class="hx:absolute hx:-mt-20" id="for-developers"&gt;&lt;/span&gt;
-&lt;a href="#for-developers" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Maintainable&lt;/strong&gt;: Clear separation of concerns&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Scalable&lt;/strong&gt;: Stateless design handles any load&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Extensible&lt;/strong&gt;: Easy to add new fulfilment entity types&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;For Infrastructure:&lt;span class="hx:absolute hx:-mt-20" id="for-infrastructure"&gt;&lt;/span&gt;
-&lt;a href="#for-infrastructure" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Efficient&lt;/strong&gt;: Reduced cold starts and better resource utilization&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Simple&lt;/strong&gt;: One endpoint to monitor and maintain&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Cost-effective&lt;/strong&gt;: Optimized minimum instance allocation&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;Looking Forward&lt;span class="hx:absolute hx:-mt-20" id="looking-forward"&gt;&lt;/span&gt;
-&lt;a href="#looking-forward" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The architecture we built for Forms has become the foundation for other SPORTSHUB features. The fulfilment session pattern is now used for:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Event creation workflows&lt;/strong&gt;&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;User onboarding flows&lt;/strong&gt;&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Payment processing&lt;/strong&gt;&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Multi-step operations&lt;/strong&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;And the GlobalAppController pattern has simplified our entire backend architecture, making it easier to add new features while maintaining performance and reliability.&lt;/p&gt;
-&lt;hr&gt;
-&lt;p&gt;&lt;em&gt;The SPORTSHUB Forms feature represents a perfect example of how good architecture decisions compound over time. By thinking deeply about the underlying patterns and building flexible, reusable systems, we created something that works beautifully for users while being a joy to work with as developers.&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Want to try SPORTSHUB Forms?&lt;/strong&gt; Create an event and add a custom form to see the magic in action! 🚀&lt;/p&gt;</description></item></channel></rss>
+>
+&lt;div class="copy-icon hx:group-[.copied]/copybtn:hidden hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;div class="success-icon hx:hidden hx:group-[.copied]/copybtn:block hx:pointer-events-none hx:h-4 hx:w-4">&lt;/div>
+&lt;/button>
+&lt;/div>
+&lt;/div>
+&lt;h3>Frontend Integration&lt;span class="hx:absolute hx:-mt-20" id="frontend-integration">&lt;/span>
+&lt;a href="#frontend-integration" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>The frontend sends all requests to a single endpoint via a central &lt;code>executeGlobalAppControllerFunction&lt;/code> method, ensuring
+our code remains modular to easily add any new functionalities on the GlobalAppController.&lt;/p>
+&lt;h3>The Benefits&lt;span class="hx:absolute hx:-mt-20" id="the-benefits">&lt;/span>
+&lt;a href="#the-benefits" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;strong>Performance Improvements:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Reduced cold starts&lt;/strong>: Single function stays warm longer&lt;/li>
+&lt;li>&lt;strong>Efficient resource utilization&lt;/strong>: One minimum instance handles all traffic&lt;/li>
+&lt;li>&lt;strong>Better connection pooling&lt;/strong>: Shared database connections&lt;/li>
+&lt;/ul>
+&lt;p>&lt;strong>Development Benefits:&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Unified error handling&lt;/strong>: Consistent patterns across all endpoints&lt;/li>
+&lt;li>&lt;strong>Easier testing&lt;/strong>: Mock one controller instead of many functions&lt;/li>
+&lt;li>&lt;strong>Simplified deployment&lt;/strong>: Single function to deploy and monitor&lt;/li>
+&lt;li>&lt;strong>Type safety&lt;/strong>: Compile-time checks for request/response types&lt;/li>
+&lt;/ul>
+&lt;h2>The Result: A Powerful, Scalable System&lt;span class="hx:absolute hx:-mt-20" id="the-result-a-powerful-scalable-system">&lt;/span>
+&lt;a href="#the-result-a-powerful-scalable-system" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The combination of stateless fulfilment sessions and the GlobalAppController created a system that is:&lt;/p>
+&lt;h3>For Users:&lt;span class="hx:absolute hx:-mt-20" id="for-users">&lt;/span>
+&lt;a href="#for-users" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Seamless&lt;/strong>: Forms feel like a natural part of checkout&lt;/li>
+&lt;li>&lt;strong>Reliable&lt;/strong>: Can resume from any point without losing progress&lt;/li>
+&lt;li>&lt;strong>Flexible&lt;/strong>: Supports complex multi-step workflows&lt;/li>
+&lt;/ul>
+&lt;h3>For Developers:&lt;span class="hx:absolute hx:-mt-20" id="for-developers">&lt;/span>
+&lt;a href="#for-developers" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Maintainable&lt;/strong>: Clear separation of concerns&lt;/li>
+&lt;li>&lt;strong>Scalable&lt;/strong>: Stateless design handles any load&lt;/li>
+&lt;li>&lt;strong>Extensible&lt;/strong>: Easy to add new fulfilment entity types&lt;/li>
+&lt;/ul>
+&lt;h3>For Infrastructure:&lt;span class="hx:absolute hx:-mt-20" id="for-infrastructure">&lt;/span>
+&lt;a href="#for-infrastructure" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Efficient&lt;/strong>: Reduced cold starts and better resource utilization&lt;/li>
+&lt;li>&lt;strong>Simple&lt;/strong>: One endpoint to monitor and maintain&lt;/li>
+&lt;li>&lt;strong>Cost-effective&lt;/strong>: Optimized minimum instance allocation&lt;/li>
+&lt;/ul>
+&lt;h2>Looking Forward&lt;span class="hx:absolute hx:-mt-20" id="looking-forward">&lt;/span>
+&lt;a href="#looking-forward" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The architecture we built for Forms has become the foundation for other SPORTSHUB features. The fulfilment session pattern is now used for:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Event creation workflows&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>User onboarding flows&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>Payment processing&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>Multi-step operations&lt;/strong>&lt;/li>
+&lt;/ul>
+&lt;p>And the GlobalAppController pattern has simplified our entire backend architecture, making it easier to add new features while maintaining performance and reliability.&lt;/p>
+&lt;hr>
+&lt;p>&lt;em>The SPORTSHUB Forms feature represents a perfect example of how good architecture decisions compound over time. By thinking deeply about the underlying patterns and building flexible, reusable systems, we created something that works beautifully for users while being a joy to work with as developers.&lt;/em>&lt;/p>
+&lt;p>&lt;strong>Want to try SPORTSHUB Forms?&lt;/strong> Create an event and add a custom form to see the magic in action! 🚀&lt;/p></description></item></channel></rss>
