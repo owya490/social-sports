@@ -19,12 +19,16 @@ public class WaitlistNotificationService {
 
     private static final long NOTIFICATION_DELAY_MS = 1000 * 60 * 60 * 12; // 12 hours
 
+    /**
+     * Notify all waitlists for all events.
+     * 
+     * @return NotificationResult with counts of notified and failed emails
+     */
     public static NotificationResult notifyAllWaitlists() {
         // Get all event IDs that have waitlists
         List<String> eventIds = WaitlistRepository.getAllWaitlistEventIds();
         if (eventIds.isEmpty()) {
             logger.info("[WaitlistNotificationCronEndpoint] No waitlists found to process");
-            // do i need to return a status code here?
             return new NotificationResult(0, 0);
         }
 
@@ -51,7 +55,7 @@ public class WaitlistNotificationService {
                 }
             } catch (Exception e) {
                 eventsSkipped++;
-                logger.error("[WaitlistNotificationCronEndpoint] Error processing waitlist for event: {}", eventId, e);
+                logger.error("[WaitlistNotificationService] Error processing waitlist for event: {}", eventId, e);
             }
         }
 
@@ -62,9 +66,9 @@ public class WaitlistNotificationService {
                 eventsProcessed, eventsSkipped, totalNotified, totalFailed);
 
         if (totalFailed == 0 && eventsSkipped == 0) {
-            logger.info("[WaitlistNotificationCronEndpoint] {}", resultMessage);
+            logger.info("[WaitlistNotificationService] {}", resultMessage);
         } else {
-            logger.warn("[WaitlistNotificationCronEndpoint] {} Failed events: {}", resultMessage, failedEvents);
+            logger.warn("[WaitlistNotificationService] {} Failed events: {}", resultMessage, failedEvents);
         }
 
         return new NotificationResult(totalNotified, totalFailed);
@@ -84,7 +88,7 @@ public class WaitlistNotificationService {
         // Fetch event details
         Optional<EventData> maybeEvent = EventsRepository.getEventById(eventId);
         if (maybeEvent.isEmpty()) {
-            logger.warn("[WaitlistNotificationCronEndpoint] Event not found, skipping waitlist: {}", eventId);
+            logger.warn("[WaitlistNotificationService] Event not found, skipping waitlist: {}", eventId);
             return new NotificationResult(0, 0);
         }
 
@@ -92,27 +96,27 @@ public class WaitlistNotificationService {
 
         // Skip inactive events
         if (event.getIsActive() == null || !event.getIsActive()) {
-            logger.debug("[WaitlistNotificationCronEndpoint] Skipping inactive event: {}", eventId);
+            logger.debug("[WaitlistNotificationService] Skipping inactive event: {}", eventId);
             return new NotificationResult(0, 0);
         }
 
         if (!Boolean.TRUE.equals(event.getWaitlistEnabled())) {
-            logger.debug("[WaitlistNotificationCronEndpoint] Skipping event with waitlist disabled: {}", eventId);
+            logger.debug("[WaitlistNotificationService] Skipping event with waitlist disabled: {}", eventId);
             return new NotificationResult(0, 0);
         }
 
         // Fetch waitlist entries for the event
         List<WaitlistEntry> waitlistEntries = WaitlistRepository.getWaitlistByEventId(eventId);
         if (waitlistEntries.isEmpty()) {
-            logger.debug("[WaitlistNotificationCronEndpoint] No waitlist entries for event: {}", eventId);
+            logger.debug("[WaitlistNotificationService] No waitlist entries for event: {}", eventId);
             return new NotificationResult(0, 0);
         }
 
         // Send notifications to users
         for (WaitlistEntry entry : waitlistEntries) {
             // Skip users who have already been notified less than 12 hours ago
-            if (entry.getNotifiedAt() != null && (entry.getNotifiedAt().toDate().getTime()
-                    - notificationTime.toEpochMilli() < NOTIFICATION_DELAY_MS)) {
+            if (entry.getNotifiedAt() != null && (notificationTime.toEpochMilli() 
+                - entry.getNotifiedAt().toDate().getTime() < NOTIFICATION_DELAY_MS)) {
                 continue;
             }
 
@@ -129,16 +133,16 @@ public class WaitlistNotificationService {
                     // Update notifiedAt timestamp
                     WaitlistRepository.updateNotifiedAt(eventId, entry.getEmail(), notificationTime);
                     notifiedCount++;
-                    logger.info("[WaitlistNotificationCronEndpoint] Successfully notified user: {} for event: {}",
+                    logger.info("[WaitlistNotificationService] Successfully notified user: {} for event: {}",
                             entry.getEmail(), eventId);
                 } else {
                     failedCount++;
-                    logger.error("[WaitlistNotificationCronEndpoint] Failed to send email to: {} for event: {}",
+                    logger.error("[WaitlistNotificationService] Failed to send email to: {} for event: {}",
                             entry.getEmail(), eventId);
                 }
             } catch (Exception e) {
                 failedCount++;
-                logger.error("[WaitlistNotificationCronEndpoint] Error notifying user: {} for event: {}",
+                logger.error("[WaitlistNotificationService] Error notifying user: {} for event: {}",
                         entry.getEmail(), eventId, e);
             }
         }

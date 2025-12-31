@@ -44,15 +44,9 @@ public class WaitlistNotificationCronEndpoint implements HttpFunction {
 
         if (result.failedCount() == 0) {
             response.setStatusCode(200);
-            response.getWriter().write("Waitlist notification cron completed successfully.");
-        } else if (result.notifiedCount() > 0) {
-            response.setStatusCode(207);
-            response.getWriter().write("Partial success. Failed to notify some waitlists.");
         } else {
             response.setStatusCode(500);
-            response.getWriter().write("Waitlist notification cron failed.");
         }
-
         response.getWriter().write("Waitlist notification cron completed. Notified: " + result.notifiedCount() + " failed: " + result.failedCount());
     }
 }
