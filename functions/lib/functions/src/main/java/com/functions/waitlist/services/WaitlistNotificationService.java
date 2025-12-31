@@ -100,6 +100,12 @@ public class WaitlistNotificationService {
             logger.info("[WaitlistNotificationService] Skipping inactive event: {}", eventId);
             return new NotificationResult(0, 0);
         }
+
+        if (!Boolean.TRUE.equals(event.getWaitlistEnabled())) {
+            logger.info("[WaitlistNotificationService] Skipping event with waitlist disabled: {}", eventId);
+            return new NotificationResult(0, 0);
+        }
+
         // Skip events past registration deadline
         Timestamp registrationDeadline = event.getRegistrationDeadline();
         if (registrationDeadline != null) {
@@ -121,11 +127,6 @@ public class WaitlistNotificationService {
                 return new NotificationResult(0, 0);
             }
         } 
-
-        if (!Boolean.TRUE.equals(event.getWaitlistEnabled())) {
-            logger.info("[WaitlistNotificationService] Skipping event with waitlist disabled: {}", eventId);
-            return new NotificationResult(0, 0);
-        }
 
         // Skip events with no vacancy
         if (event.getVacancy() == null || event.getVacancy() <= 0) {
