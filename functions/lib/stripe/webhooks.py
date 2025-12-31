@@ -363,6 +363,13 @@ def record_checkout_session_by_customer_email(
         merge=True,
     )
 
+def remove_potential_waitlist_entry(event_id, email): 
+    email_hash = str(int(hashlib.md5(str(email).encode("utf-8")).hexdigest(), 16))
+
+    waitlist_entry_ref = db.collection(f"Waitlist/{event_id}/WaitlistPool").document(email_hash)
+    waitlist_entry_ref.delete()
+    
+
 
 @firestore.transactional
 def restock_tickets_after_expired_checkout(
@@ -539,6 +546,9 @@ def fulfilment_workflow_on_ticket_purchase(
     record_checkout_session_by_customer_email(
         transaction, event_id, checkout_session, customer_details
     )
+
+    remove_potential_waitlist_entry(event_id, customer_details.email)
+
     logger.info(
         f"Successfully handled checkout.session.completed webhook event. session={checkout_session_id}"
     )
