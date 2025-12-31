@@ -80,6 +80,7 @@ fi
 echo "Deploying $FUNCTION_NAME (Entry point: $ENDPOINT_CLASS_NAME) to $ENVIRONMENT under project $PROJECT_NAME"
 
 gcloud functions deploy $FUNCTION_NAME \
+    --gen2 \
     --entry-point $ENDPOINT_CLASS_NAME \
     --runtime java17 \
     --trigger-http \
