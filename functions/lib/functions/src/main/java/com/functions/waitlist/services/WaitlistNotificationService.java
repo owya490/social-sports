@@ -10,6 +10,7 @@ import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.waitlist.models.WaitlistEntry;
 import com.functions.waitlist.repositories.WaitlistRepository;
+import com.google.cloud.Timestamp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,7 @@ public class WaitlistNotificationService {
         if (totalFailed == 0 && eventsSkipped == 0) {
             logger.info("[WaitlistNotificationService] {}", resultMessage);
         } else {
-            logger.warn("[WaitlistNotificationService] {} Failed events: {}", resultMessage, failedEvents);
+            logger.error("[WaitlistNotificationService] {} Failed events: {}", resultMessage, failedEvents);
         }
 
         return new NotificationResult(totalNotified, totalFailed);
@@ -96,19 +97,46 @@ public class WaitlistNotificationService {
 
         // Skip inactive events
         if (event.getIsActive() == null || !event.getIsActive()) {
-            logger.debug("[WaitlistNotificationService] Skipping inactive event: {}", eventId);
+            logger.info("[WaitlistNotificationService] Skipping inactive event: {}", eventId);
+            return new NotificationResult(0, 0);
+        }
+        // Skip events past registration deadline
+        Timestamp registrationDeadline = event.getRegistrationDeadline();
+        if (registrationDeadline != null) {
+            Instant registrationEnd = Instant.ofEpochSecond(registrationDeadline.getSeconds(), registrationDeadline.getNanos());
+            if (notificationTime.isAfter(registrationEnd)) {
+                logger.info("[WaitlistNotificationService] Skipping event past registration deadline: {}", eventId);
+                return new NotificationResult(0, 0);
+            }
+        } else {
+            Timestamp startDate = event.getStartDate();
+            if (startDate != null) {
+                Instant startDateInstant = Instant.ofEpochSecond(startDate.getSeconds(), startDate.getNanos());
+                if (notificationTime.isAfter(startDateInstant)) {
+                    logger.info("[WaitlistNotificationService] Skipping event past start date: {}", eventId);
+                    return new NotificationResult(0, 0);
+                }
+            } else {
+                logger.info("[WaitlistNotificationService] Skipping event with no start date: {}", eventId);
+                return new NotificationResult(0, 0);
+            }
+        } 
+
+        if (!Boolean.TRUE.equals(event.getWaitlistEnabled())) {
+            logger.info("[WaitlistNotificationService] Skipping event with waitlist disabled: {}", eventId);
             return new NotificationResult(0, 0);
         }
 
-        if (!Boolean.TRUE.equals(event.getWaitlistEnabled())) {
-            logger.debug("[WaitlistNotificationService] Skipping event with waitlist disabled: {}", eventId);
+        // Skip events with no vacancy
+        if (event.getVacancy() == null || event.getVacancy() <= 0) {
+            logger.info("[WaitlistNotificationService] Skipping event with no vacancy: {}", eventId);
             return new NotificationResult(0, 0);
         }
 
         // Fetch waitlist entries for the event
         List<WaitlistEntry> waitlistEntries = WaitlistRepository.getWaitlistByEventId(eventId);
         if (waitlistEntries.isEmpty()) {
-            logger.debug("[WaitlistNotificationService] No waitlist entries for event: {}", eventId);
+            logger.info("[WaitlistNotificationService] No waitlist entries for event: {}", eventId);
             return new NotificationResult(0, 0);
         }
 
