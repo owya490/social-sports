@@ -17,7 +17,10 @@ import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentEntities.WaitlistFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
+import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
 
@@ -50,14 +53,17 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
             FulfilmentEntity waitlistEntity = WaitlistFulfilmentEntity.builder()
                     .eventId(eventId)
                     .ticketCount(numTickets)
+                    .name(null)
+                    .email(null)
                     .type(FulfilmentEntityType.WAITLIST).build();
             fulfilmentEntities.add(new SimpleEntry<>(waitlistEntityId, waitlistEntity));
 
             // 2. End entity
             String endEntityId = UUID.randomUUID().toString();
             FulfilmentEntity endEntity = EndFulfilmentEntity.builder()
-                    // TODO change to waitlist success page
-                    .url(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
+                    .url(UrlUtils
+                            .getUrlWithCurrentEnvironment(String.format("/event/success/%s?fulfilmentSessionType=%s",
+                                    eventId, FulfilmentSessionType.WAITLIST.name()))
                             .orElse(UrlUtils.SPORTSHUB_URL + "/dashboard"))
                     .type(FulfilmentEntityType.END).build();
             fulfilmentEntities.add(new SimpleEntry<>(endEntityId, endEntity));
@@ -81,4 +87,37 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
         }
     }
 
+    public static void updateFulfilmentEntityWithWaitlistData(String fulfilmentSessionId, String fulfilmentEntityId,
+            String name, String email) throws Exception {
+        logger.info("Updating waitlist fulfilment entity with data for session ID: {} and entity ID: {}",
+                fulfilmentSessionId, fulfilmentEntityId);
+        try {
+            Optional<FulfilmentSession> maybeFulfilmentSession = FulfilmentSessionRepository
+                    .getFulfilmentSession(fulfilmentSessionId, Optional.empty());
+            if (maybeFulfilmentSession.isEmpty()) {
+                logger.error("Waitlist fulfilment session not found for ID: {}", fulfilmentSessionId);
+                throw new Exception("Waitlist fulfilment session not found for ID: " + fulfilmentSessionId);
+            }
+            FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
+            FulfilmentEntity waitlistEntity = fulfilmentSession.getFulfilmentEntityMap().get(fulfilmentEntityId);
+
+            if (waitlistEntity == null || waitlistEntity.getType() != FulfilmentEntityType.WAITLIST) {
+                logger.error("Waitlist entity not found for ID: {}", fulfilmentEntityId);
+                throw new Exception("Waitlist entity not found for ID: " + fulfilmentEntityId);
+            }
+
+            if (!(waitlistEntity instanceof WaitlistFulfilmentEntity)) {
+                logger.error("Entity is not a WaitlistFulfilmentEntity for ID: {}", fulfilmentEntityId);
+                throw new Exception("Entity is not a WaitlistFulfilmentEntity for ID: " + fulfilmentEntityId);
+            }
+
+            WaitlistFulfilmentEntity waitlistFulfilmentEntity = (WaitlistFulfilmentEntity) waitlistEntity;
+            waitlistFulfilmentEntity.setName(name);
+            waitlistFulfilmentEntity.setEmail(email);
+            FulfilmentSessionRepository.updateFulfilmentSession(fulfilmentSessionId, fulfilmentSession);
+        } catch (Exception e) {
+            logger.error("Failed to update waitlist fulfilment entity with data: {}", e.getMessage());
+            throw e;
+        }
+    }
 }

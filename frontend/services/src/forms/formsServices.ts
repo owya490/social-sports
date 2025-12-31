@@ -20,6 +20,12 @@ import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
+import {
+  FulfilmentSessionId,
+  FulfilmentEntityId,
+  UpdateFulfilmentEntityWithFormResponseIdRequest,
+} from "@/interfaces/FulfilmentTypes";
+import { fulfilmentServiceLogger } from "../fulfilment/fulfilmentServices";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
@@ -341,6 +347,39 @@ export async function getActiveFormsForUser(userId: UserId): Promise<Form[]> {
   } catch (error) {
     formsServiceLogger.error(
       `getActiveFormsForUser: Error getting active forms for userId: ${userId}, error: ${error}`
+    );
+    throw error;
+  }
+}
+
+export async function updateFulfilmentEntityWithFormResponseId(
+  fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentEntityId: FulfilmentEntityId,
+  formResponseId: FormResponseId
+): Promise<void> {
+  fulfilmentServiceLogger.info(
+    `updateFulfilmentEntityWithFormResponseId: Updating fulfilment entity with form response ID for session ID: ${fulfilmentSessionId}, entity ID: ${fulfilmentEntityId}, form response ID: ${formResponseId}`
+  );
+
+  const request: UpdateFulfilmentEntityWithFormResponseIdRequest = {
+    fulfilmentSessionId,
+    fulfilmentEntityId,
+    formResponseId,
+  };
+
+  try {
+    const response = await executeGlobalAppControllerFunction<UpdateFulfilmentEntityWithFormResponseIdRequest, void>(
+      EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
+      request
+    );
+
+    fulfilmentServiceLogger.info(
+      `updateFulfilmentEntityWithFormResponseId: Successfully updated fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with formResponseId: ${formResponseId}`
+    );
+    return response;
+  } catch (error) {
+    fulfilmentServiceLogger.error(
+      `updateFulfilmentEntityWithFormResponseId: Failed to update fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with form response ID ${formResponseId}: ${error}`
     );
     throw error;
   }
