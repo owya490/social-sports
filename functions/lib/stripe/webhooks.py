@@ -16,7 +16,8 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import IS_PROD, db
-from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
+from lib.emails.purchase_event import (PurchaseEventRequest,
+                                       send_email_on_purchase_event)
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
@@ -305,7 +306,7 @@ def fulfill_completed_event_ticket_purchase(
         logger.error(f"Item quantity is None, cannot create tickets. item={item}")
         return None
 
-    for _ in range(item.quantity):
+    for item_index in range(item.quantity):
         tickets_id_ref = db.collection("Tickets").document()
 
         # Check if price and unit_amount exist
@@ -321,6 +322,11 @@ def fulfill_completed_event_ticket_purchase(
                 "price": item.price.unit_amount,
                 "purchaseDate": purchase_time,
                 "status": resolve_order_and_ticket_status(capture_method),
+                "formResponseId": (
+                    form_response_ids[item_index]
+                    if form_response_ids and item_index < len(form_response_ids)
+                    else None
+                ),
             },
         )
         ticket_list.append(tickets_id_ref.id)
@@ -338,7 +344,6 @@ def fulfill_completed_event_ticket_purchase(
             "tickets": ticket_list,
             "stripePaymentIntentId": payment_intent_id,
             "status": resolve_order_and_ticket_status(capture_method),
-            "formResponseIds": form_response_ids if form_response_ids else [],
         },
     )
 
@@ -736,10 +741,16 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
             line_items = session.line_items
             customer_details = session.customer_details
             payment_intent_id = session.payment_intent
-            capture_method = stripe.PaymentIntent.retrieve(
-                payment_intent_id,
-                stripe_account=connected_account_id,
-            ).capture_method
+            try:
+                capture_method = stripe.PaymentIntent.retrieve(
+                    payment_intent_id,
+                    stripe_account=connected_account_id,
+                ).capture_method
+            except Exception as e:
+                logger.error(
+                    f"Unable to obtain capture method from payment intent. payment_intent_id={payment_intent_id} connected_account_id={connected_account_id} error={e}"
+                )
+                return https_fn.Response(status=500)
 
             if line_items is None:
                 logger.error(
