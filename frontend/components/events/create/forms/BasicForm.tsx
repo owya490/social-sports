@@ -5,12 +5,12 @@ import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
-import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
@@ -661,8 +661,9 @@ export function BasicInformation({
                         Do you want to enable Booking Approval for this Event?
                       </label>
                       <p className="text-sm mb-5 mt-2">
-                        Selecting &quot;Yes&quot; will mean bookings will require your approval before they are confirmed.
-                        You will need to manually approve each booking within 48 hours via organiser hub otherwise the booking will be automatically rejected.
+                        Selecting &quot;Yes&quot; will mean bookings will require your approval before they are
+                        confirmed. You will need to manually approve each booking within 48 hours via organiser hub
+                        otherwise the booking will be automatically rejected.
                       </p>
                       <div className="mt-4">
                         <Select
