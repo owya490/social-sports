@@ -93,7 +93,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventFormId(event.formId);
         setEventHideVacancy(event.hideVacancy);
         setEventWaitlistEnabled(event.waitlistEnabled);
-        setEventBookingApprovalEnabled(event.bookingApprovalEnabled ?? false);
+        setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
         return event;
       })
       .then((event) => {
