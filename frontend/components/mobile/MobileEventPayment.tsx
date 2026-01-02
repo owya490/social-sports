@@ -14,6 +14,8 @@ import { useMemo, useState } from "react";
 import BookingButton from "../events/BookingButton";
 import ContactEventButton from "../events/ContactEventButton";
 import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
+import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
+import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 
 interface MobileEventPaymentProps {
   location: string;
@@ -29,6 +31,7 @@ interface MobileEventPaymentProps {
   setLoading: (value: boolean) => void;
   eventLink: string;
   organiserId: string;
+  waitlistEnabled: boolean;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
@@ -56,6 +59,13 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const handleAttendeeCount = (value?: string) => {
     if (value) {
       setAttendeeCount(parseInt(value));
+    }
+  };
+
+  const [waitlistAttendeeCount, setWaitlistAttendeeCount] = useState<number>(1);
+  const handleWaitlistAttendeeCount = (value?: string) => {
+    if (value) {
+      setWaitlistAttendeeCount(parseInt(value));
     }
   };
 
@@ -110,11 +120,40 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
         ) : props.isPaymentsActive ? (
           <div className="w-full">
             {props.vacancy === 0 && allCounts.length === 0 ? (
-              <div className="text-center py-2">
-                <h3 className="font-semibold text-black mb-1">Sold Out</h3>
-                <p className="text-sm text-gray-600">Please check back later.</p>
-              </div>
-            ) : (
+                props.waitlistEnabled && WAITLIST_ENABLED ? (
+                <>
+                  <div className="mb-4 !text-black">
+                    <Select
+                      className="text-black"
+                      label="Number of Attendees"
+                      size="lg"
+                      value={`${waitlistAttendeeCount}`}
+                      onChange={handleWaitlistAttendeeCount}
+                    >
+                      {Array.from({ length: MAX_TICKETS_PER_ORDER }, (_, i) => i + 1).map((count) => (
+                        <Option key={`attendee-option-${count}`} value={`${count}`}>
+                          {count} Attendee{count > 1 ? "s" : ""}
+                        </Option>
+                      ))}
+                    </Select>
+                  </div>
+                  <JoinWaitlistButton
+                    eventId={props.eventId}
+                    ticketCount={waitlistAttendeeCount}
+                    setLoading={props.setLoading}
+                    className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
+                  />
+                  <p className="text-xs text-gray-600 mt-3 text-center">
+                    Join this event&apos;s waitlist to be notified if spots become available.
+                  </p>
+                </>
+                ) : (
+                  <div className="text-center py-4">
+                    <h3 className="font-semibold text-core-text mb-1">Sold Out</h3>
+                    <p className="text-sm text-gray-600">Please check back later.</p>
+                  </div>
+                )
+              ) : (
               <div className="flex gap-2">
                 <div className="w-3/5 shrink-0">
                   <Select

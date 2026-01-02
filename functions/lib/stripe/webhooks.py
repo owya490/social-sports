@@ -159,6 +159,13 @@ def add_stripe_event_and_checkout_tags(logger: Logger, event: Event):
     )
 
 
+def resolve_order_and_ticket_status(capture_method: str) -> str:
+    if capture_method == "manual":
+        return "PENDING"
+    else:
+        return "APPROVED"
+
+
 # Will return orderId for email to pick up and read order information. If this function fails, either logic error or transactions fail, it will return None
 @firestore.transactional
 def fulfill_completed_event_ticket_purchase(
@@ -173,6 +180,8 @@ def fulfill_completed_event_ticket_purchase(
     phone_number: str,
     payment_details: stripe.checkout.Session.TotalDetails,
     fulfilment_session_id: str,
+    payment_intent_id: str,
+    capture_method: str,
 ) -> str | None:  # Typing of customer is customer details
     # Update the event to include the new attendees
     private_path = "Private" if is_private else "Public"
@@ -297,7 +306,7 @@ def fulfill_completed_event_ticket_purchase(
         logger.error(f"Item quantity is None, cannot create tickets. item={item}")
         return None
 
-    for _ in range(item.quantity):
+    for item_index in range(item.quantity):
         tickets_id_ref = db.collection("Tickets").document()
 
         # Check if price and unit_amount exist
@@ -312,6 +321,12 @@ def fulfill_completed_event_ticket_purchase(
                 "orderId": order_id_ref.id,
                 "price": item.price.unit_amount,
                 "purchaseDate": purchase_time,
+                "status": resolve_order_and_ticket_status(capture_method),
+                "formResponseId": (
+                    form_response_ids[item_index]
+                    if form_response_ids and item_index < len(form_response_ids)
+                    else None
+                ),
             },
         )
         ticket_list.append(tickets_id_ref.id)
@@ -327,6 +342,8 @@ def fulfill_completed_event_ticket_purchase(
             "applicationFees": application_fees,
             "discounts": discounts,
             "tickets": ticket_list,
+            "stripePaymentIntentId": payment_intent_id,
+            "status": resolve_order_and_ticket_status(capture_method),
         },
     )
 
@@ -478,6 +495,8 @@ def fulfilment_workflow_on_ticket_purchase(
     complete_fulfilment_session: bool,
     fulfilment_session_id: str,
     end_fulfilment_entity_id: str,
+    payment_intent_id: str,
+    capture_method: str,
 ):
     # Check if this checkout_session_id has already been processed.
     if check_if_session_has_been_processed_already(
@@ -500,6 +519,8 @@ def fulfilment_workflow_on_ticket_purchase(
         phone_number,
         checkout_session.total_details,
         fulfilment_session_id,
+        payment_intent_id,
+        capture_method,
     )
     if orderId == None:
         logger.error(
@@ -648,10 +669,11 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
 
             # Retrieve the completed session
             checkout_session_id = event["data"]["object"]["id"]
+            connected_account_id = event["account"]
             session = stripe.checkout.Session.retrieve(
                 checkout_session_id,
                 expand=["line_items"],
-                stripe_account=event["account"],
+                stripe_account=connected_account_id,
             )
 
             if session is None:
@@ -718,6 +740,17 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
 
             line_items = session.line_items
             customer_details = session.customer_details
+            payment_intent_id = session.payment_intent
+            try:
+                capture_method = stripe.PaymentIntent.retrieve(
+                    payment_intent_id,
+                    stripe_account=connected_account_id,
+                ).capture_method
+            except Exception as e:
+                logger.error(
+                    f"Unable to obtain capture method from payment intent. payment_intent_id={payment_intent_id} connected_account_id={connected_account_id} error={e}"
+                )
+                return https_fn.Response(status=500)
 
             if line_items is None:
                 logger.error(
@@ -728,6 +761,18 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
             if customer_details is None:
                 logger.error(
                     f"Unable to obtain customer from session. session={session.id}"
+                )
+                return https_fn.Response(status=500)
+
+            if payment_intent_id is None:
+                logger.error(
+                    f"Unable to obtain payment intent id from session. session={session.id}"
+                )
+                return https_fn.Response(status=500)
+
+            if capture_method is None:
+                logger.error(
+                    f"Unable to obtain capture method from session. session={session.id}"
                 )
                 return https_fn.Response(status=500)
 
@@ -750,6 +795,8 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
                 session_metadata.completeFulfilmentSession,
                 session_metadata.fulfilmentSessionId,
                 session_metadata.endFulfilmentEntityId,
+                payment_intent_id,
+                capture_method,
             )
 
         # Handle the checkout.session.expired event
