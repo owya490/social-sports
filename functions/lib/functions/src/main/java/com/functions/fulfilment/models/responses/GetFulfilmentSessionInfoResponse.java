@@ -4,7 +4,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.functions.fulfilment.models.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.google.cloud.Timestamp;
 
 public record GetFulfilmentSessionInfoResponse(

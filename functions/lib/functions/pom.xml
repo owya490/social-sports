@@ -105,6 +105,12 @@
       <artifactId>stripe-java</artifactId>
       <version>30.2.0</version>
     </dependency>
+    <!-- Apache Commons Validator for email validation -->
+    <dependency>
+      <groupId>commons-validator</groupId>
+      <artifactId>commons-validator</artifactId>
+      <version>1.9.0</version>
+    </dependency>
   </dependencies>
 
   <build>
