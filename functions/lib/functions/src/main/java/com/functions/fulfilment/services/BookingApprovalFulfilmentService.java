@@ -113,7 +113,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
         }
 
         // 2. DELAYED_STRIPE entity (will be updated with correct success URL later)
-        tempEntities.add(StripeFulfilmentEntity.builder().url("") // Placeholder URL
+        tempEntities.add(DelayedStripeFulfilmentEntity.builder().url("") // Placeholder URL
                 .type(FulfilmentEntityType.DELAYED_STRIPE).build());
 
         // 3. END entity

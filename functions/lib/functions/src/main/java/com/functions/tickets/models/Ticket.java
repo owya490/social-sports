@@ -1,5 +1,7 @@
 package com.functions.tickets.models;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.Timestamp;
 
@@ -17,5 +19,7 @@ public class Ticket {
     private String orderId;
     private long price; // in cents
     private Timestamp purchaseDate;
+    private OrderAndTicketStatus status = OrderAndTicketStatus.APPROVED;
+    @Nullable
+    private String formResponseId; // the absence of this means the ticket was purchased without a form response
 }
-
