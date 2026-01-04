@@ -2,7 +2,7 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
-import { Form, FormId, FormResponse, FormSection, FormSectionType, FormTitle } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
