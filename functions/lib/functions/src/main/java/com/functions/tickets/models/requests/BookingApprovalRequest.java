@@ -11,5 +11,5 @@ public record BookingApprovalRequest(
         @JsonProperty("eventId") String eventId,
         @JsonProperty("organiserId") String organiserId,
         @JsonProperty("orderId") String orderId,
-        @JsonProperty("stripePaymentIntentOperation") BookingApprovalOperation stripePaymentIntentOperation) {
+        @JsonProperty("bookingApprovalOperation") BookingApprovalOperation bookingApprovalOperation) {
 }

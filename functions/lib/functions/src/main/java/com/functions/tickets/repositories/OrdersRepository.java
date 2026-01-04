@@ -13,6 +13,7 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Transaction;
 
 /**
  * Repository for accessing order data from Firestore.
@@ -28,10 +29,15 @@ public class OrdersRepository {
      * @return Optional containing the order if found
      */
     public static Optional<Order> getOrderById(String orderId) {
+        return getOrderById(orderId, Optional.empty());
+    }
+
+    public static Optional<Order> getOrderById(String orderId, Optional<Transaction> transaction) {
         try {
             Firestore db = FirebaseService.getFirestore();
             DocumentReference docRef = db.collection(ORDERS_COLLECTION).document(orderId);
-            DocumentSnapshot snapshot = docRef.get().get();
+            DocumentSnapshot snapshot = transaction.isPresent() ? transaction.get().get(docRef).get()
+                    : docRef.get().get();
 
             if (snapshot.exists()) {
                 Order order = snapshot.toObject(Order.class);
@@ -54,21 +60,33 @@ public class OrdersRepository {
      * @return List of orders found
      */
     public static List<Order> getOrdersByIds(List<String> orderIds) {
+        return getOrdersByIds(orderIds, Optional.empty());
+    }
+
+    public static List<Order> getOrdersByIds(List<String> orderIds, Optional<Transaction> transaction) {
         List<Order> orders = new ArrayList<>();
         for (String orderId : orderIds) {
-            getOrderById(orderId).ifPresent(orders::add);
+            getOrderById(orderId, transaction).ifPresent(orders::add);
         }
         return orders;
     }
 
-    public static boolean updateOrder(String orderId, Order order) {
+    public static void updateOrder(String orderId, Order order) {
+        updateOrder(orderId, order, Optional.empty());
+    }
+
+    public static void updateOrder(String orderId, Order order, Optional<Transaction> transaction) {
         try {
             Firestore db = FirebaseService.getFirestore();
-            db.collection(ORDERS_COLLECTION).document(orderId).update(JavaUtils.toMap(order));
-            return true;
+            DocumentReference docRef = db.collection(ORDERS_COLLECTION).document(orderId);
+            if (transaction.isPresent()) {
+                transaction.get().update(docRef, JavaUtils.toMap(order));
+            } else {
+                docRef.update(JavaUtils.toMap(order)).get();
+            }
         } catch (Exception e) {
             logger.error("Failed to update order: {}", orderId, e);
-            return false;
+            throw new RuntimeException("Failed to update order", e);
         }
     }
 }

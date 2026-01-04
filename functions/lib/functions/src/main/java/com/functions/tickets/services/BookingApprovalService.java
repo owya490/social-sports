@@ -8,9 +8,11 @@ import com.functions.events.repositories.EventsRepository;
 import com.functions.stripe.services.StripeService;
 import com.functions.tickets.models.BookingApprovalOperation;
 import com.functions.tickets.models.Order;
+import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.users.models.UserData;
 import com.functions.users.services.Users;
+import com.stripe.exception.StripeException;
 
 public class BookingApprovalService {
     private static final Logger logger = LoggerFactory.getLogger(BookingApprovalService.class);
@@ -65,8 +67,14 @@ public class BookingApprovalService {
             String orderId) {
         try {
             StripeService.capturePaymentIntent(stripePaymentIntentId, stripeAccountId);
-            updateOrderAndTicketStatus(orderId, OrderAndTicketStatus.APPROVED);
+            TicketsService.updateOrderAndTicketStatus(orderId, OrderAndTicketStatus.APPROVED);
+        // send emails
             return true;
+        } catch (StripeException e){
+            logger.error(
+                    "Failed to capture PaymentIntent for stripePaymentIntentId: {}, stripeAccountId: {}, orderId: {}",
+                    stripePaymentIntentId, stripeAccountId, orderId, e);
+            return false;
         } catch (Exception e) {
             logger.error(
                     "Failed to execute approval operation for stripePaymentIntentId: {}, stripeAccountId: {}, orderId: {}",
@@ -79,9 +87,14 @@ public class BookingApprovalService {
             String orderId, int numTicketsInOrder) {
         try {
             StripeService.cancelPaymentIntent(stripePaymentIntentId, stripeAccountId);
-            updateOrderAndTicketStatus(orderId, OrderAndTicketStatus.REJECTED);
+            TicketsService.updateOrderAndTicketStatus(orderId, OrderAndTicketStatus.REJECTED);
             // TODO use the refund function to refund the tickets
             return true;
+        } catch (StripeException e){
+            logger.error(
+                    "Failed to cancel PaymentIntent for stripePaymentIntentId: {}, stripeAccountId: {}, orderId: {}",
+                    stripePaymentIntentId, stripeAccountId, orderId, e);
+            return false;
         } catch (Exception e) {
             logger.error(
                     "Failed to execute rejection operation for stripePaymentIntentId: {}, stripeAccountId: {}, orderId: {}",

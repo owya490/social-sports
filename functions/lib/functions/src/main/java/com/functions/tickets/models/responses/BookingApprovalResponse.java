@@ -9,6 +9,6 @@ import com.functions.tickets.models.BookingApprovalOperation;
 public record BookingApprovalResponse(
         @JsonProperty("success") boolean success,
         @JsonProperty("orderId") String orderId,
-        @JsonProperty("operation") BookingApprovalOperation operation,
+        @JsonProperty("bookingApprovalOperation") BookingApprovalOperation bookingApprovalOperation,
         @JsonProperty("message") String message) {
 }
