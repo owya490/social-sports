@@ -13,6 +13,11 @@ import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.UrlUtils;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.RequestOptions;
+import com.stripe.param.PaymentIntentCancelParams;
+import com.stripe.param.PaymentIntentCaptureParams;
 import com.stripe.param.checkout.SessionCreateParams.PaymentIntentData.CaptureMethod;
 
 /**
@@ -176,5 +181,73 @@ public class StripeService {
                         throw new RuntimeException("Failed to parse Stripe checkout response", e);
                     }
                 }).orElseThrow(() -> new RuntimeException("Failed to get Stripe checkout URL"));
+    }
+
+    /**
+     * Captures an authorized PaymentIntent.
+     * After the payment method is authorized, the PaymentIntent status transitions
+     * to requires_capture.
+     * This captures the total authorized amount by default.
+     *
+     * @param paymentIntentId The Stripe PaymentIntent ID to capture
+     * @param stripeAccountId The connected Stripe account ID (for Connect accounts)
+     * @return The captured PaymentIntent
+     * @throws StripeException if the capture operation fails
+     */
+    public static PaymentIntent capturePaymentIntent(String paymentIntentId, String stripeAccountId)
+            throws StripeException {
+        logger.info("Capturing PaymentIntent: {} for Stripe account: {}", paymentIntentId, stripeAccountId);
+
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(
+                paymentIntentId,
+                RequestOptions.builder()
+                        .setStripeAccount(stripeAccountId)
+                        .build());
+
+        PaymentIntentCaptureParams params = PaymentIntentCaptureParams.builder().build();
+
+        PaymentIntent capturedPaymentIntent = paymentIntent.capture(
+                params,
+                RequestOptions.builder()
+                        .setStripeAccount(stripeAccountId)
+                        .build());
+
+        logger.info("Successfully captured PaymentIntent: {}, status: {}",
+                capturedPaymentIntent.getId(), capturedPaymentIntent.getStatus());
+
+        return capturedPaymentIntent;
+    }
+
+    /**
+     * Cancels a PaymentIntent.
+     * Use this when the booking is rejected either by default or by the organiser.
+     *
+     * @param paymentIntentId The Stripe PaymentIntent ID to cancel
+     * @param stripeAccountId The connected Stripe account ID (for Connect accounts)
+     * @return The canceled PaymentIntent
+     * @throws StripeException if the cancel operation fails
+     */
+    public static PaymentIntent cancelPaymentIntent(String paymentIntentId, String stripeAccountId)
+            throws StripeException {
+        logger.info("Canceling PaymentIntent: {} for Stripe account: {}", paymentIntentId, stripeAccountId);
+
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(
+                paymentIntentId,
+                RequestOptions.builder()
+                        .setStripeAccount(stripeAccountId)
+                        .build());
+
+        PaymentIntentCancelParams params = PaymentIntentCancelParams.builder().build();
+
+        PaymentIntent canceledPaymentIntent = paymentIntent.cancel(
+                params,
+                RequestOptions.builder()
+                        .setStripeAccount(stripeAccountId)
+                        .build());
+
+        logger.info("Successfully canceled PaymentIntent: {}, status: {}",
+                canceledPaymentIntent.getId(), canceledPaymentIntent.getStatus());
+
+        return canceledPaymentIntent;
     }
 }
