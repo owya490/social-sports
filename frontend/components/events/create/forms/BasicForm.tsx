@@ -266,7 +266,15 @@ export function BasicInformation({
   ]);
 
   const handlePaymentsActiveChange = (paymentsActive: string) => {
-    updateField({ paymentsActive: paymentsActive.toLowerCase() === "true" });
+    const isActive = paymentsActive.toLowerCase() === "true";
+    updateField({ 
+      paymentsActive: isActive,
+      // Reset payment-related fields when payments are disabled
+      ...(!isActive && {
+        stripeFeeToCustomer: false,
+        promotionalCodesEnabled: false
+      })
+    });
   };
 
   return (
