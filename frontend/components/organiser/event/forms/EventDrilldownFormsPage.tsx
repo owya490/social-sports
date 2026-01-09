@@ -2,7 +2,7 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
-import { FormId, FormResponse, FormSection, FormSectionType, FormTitle } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
@@ -77,7 +77,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formId, setFormId] = useState<FormId | null>(null);
-  const [formTitle, setFormTitle] = useState<FormTitle | null>(null);
+  const [form, setForm] = useState<Form | null>(null);
   const [attachingForm, setAttachingForm] = useState(false);
 
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
@@ -91,7 +91,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
       if (!selectedFormId) {
         // Detach form: clear local state
         setFormId(null);
-        setFormTitle(null);
+        setForm(null);
         setFormResponses([]);
         return;
       }
@@ -101,7 +101,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
 
       // Fetch form details to get the title
       const form = await getForm(selectedFormId);
-      setFormTitle(form.title);
+      setForm(form);
 
       // Fetch responses for the newly attached form
       const formResponse = await getFormResponsesForEvent(selectedFormId, eventId);
@@ -132,15 +132,14 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
         if (!formId) {
           // No formId found - this is okay, we'll show the FormSelector
           setFormId(null);
-          setFormTitle(null);
+          setForm(null);
           setLoading(false);
           return;
         }
 
         // Fetch form details to get the title
         const form = await getForm(formId);
-        setFormTitle(form.title);
-
+        setForm(form);
         const formResponse = await getFormResponsesForEvent(formId as FormId, eventId);
         setFormResponses(formResponse);
       } catch (err) {
@@ -181,7 +180,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     return (
       <div className="w-full md:w-[calc(100%-18rem)] my-2 p-2">
         <h1 className="text-2xl font-extrabold mb-2">Form Responses</h1>
-        {formTitle && <p className="text-sm text-gray-400 mb-6 line-clamp-1">Form: {formTitle}</p>}
+        {form && <p className="text-sm text-gray-400 mb-6 line-clamp-1">Form: {form.title}</p>}
         <div className="bg-core-hover rounded-lg p-6 mb-6">
           <p className="text-sm text-core-text">No responses submitted</p>
         </div>
@@ -264,13 +263,14 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
       <div className="flex items-center justify-between mb-4 px-1 md:px-0">
         <div>
           <h1 className="text-2xl font-extrabold mb-1">Form Responses</h1>
-          {formTitle && <p className="text-sm text-gray-400 line-clamp-1">Form: {formTitle}</p>}
+          {form && <p className="text-sm text-gray-400 line-clamp-1">Form: {form.title}</p>}
         </div>
         <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
       </div>
 
       <FormResponsesTable
         formResponses={formResponses}
+        form={form!}
         formId={formId!}
         eventId={eventId}
         eventMetadata={eventMetadata}

@@ -1,5 +1,5 @@
 import { EventId, EventMetadata } from "@/interfaces/EventTypes";
-import { FormId, FormResponse, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
@@ -13,6 +13,7 @@ interface PurchaserInfo {
 interface FormResponsesTableProps {
   formResponses: FormResponse[];
   formId: FormId;
+  form: Form;
   eventId: EventId;
   eventMetadata: EventMetadata;
   showPurchaserColumn?: boolean;
@@ -99,6 +100,7 @@ const createQuestionMappingForResponse = (responseMap: Record<SectionId, FormSec
 export const FormResponsesTable = ({
   formResponses,
   formId,
+  form,
   eventId,
   eventMetadata,
   showPurchaserColumn = true,
@@ -155,7 +157,47 @@ export const FormResponsesTable = ({
     });
   });
 
-  const sortedQuestions = Array.from(allQuestionIdentifiers).sort((a, b) => a.localeCompare(b));
+  // Build question identifiers from current form in the same way as responses
+  const currentFormQuestionIdentifiers = new Map<string, number>(); // identifier -> order index
+  const formQuestionCounts = new Map<string, number>();
+
+  form.sectionsOrder.forEach((sectionId, orderIndex) => {
+    const section = form.sectionsMap[sectionId];
+    if (section && section.type !== FormSectionType.IMAGE) {
+      const question = section.question.trim();
+      const count = formQuestionCounts.get(question) || 0;
+      formQuestionCounts.set(question, count + 1);
+
+      const uniqueIdentifier = count === 0 ? question : `${question} ${count + 1}`;
+      currentFormQuestionIdentifiers.set(uniqueIdentifier, orderIndex);
+    }
+  });
+
+  // Sort questions: current form questions first (by form order), then removed questions (alphabetically)
+  const sortedQuestions = Array.from(allQuestionIdentifiers).sort((a, b) => {
+    const aInCurrentForm = currentFormQuestionIdentifiers.has(a);
+    const bInCurrentForm = currentFormQuestionIdentifiers.has(b);
+
+    // Both are in current form: sort by order in form
+    if (aInCurrentForm && bInCurrentForm) {
+      const aOrder = currentFormQuestionIdentifiers.get(a)!;
+      const bOrder = currentFormQuestionIdentifiers.get(b)!;
+      return aOrder - bOrder;
+    }
+
+    // a is in current form, b is not: a comes first
+    if (aInCurrentForm && !bInCurrentForm) {
+      return -1;
+    }
+
+    // b is in current form, a is not: b comes first
+    if (!aInCurrentForm && bInCurrentForm) {
+      return 1;
+    }
+
+    // Neither is in current form: sort alphabetically
+    return a.localeCompare(b);
+  });
 
   // Calculate minimum table width
   const purchaserColumnWidth = showPurchaserColumn ? 300 : 0;
