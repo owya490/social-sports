@@ -55,6 +55,7 @@ export type FormData = {
   hideVacancy: boolean;
   formId: FormId | null;
   waitlistEnabled: boolean;
+  bookingApprovalEnabled: boolean;
 };
 
 const INITIAL_DATA: FormData = {
@@ -85,6 +86,7 @@ const INITIAL_DATA: FormData = {
   hideVacancy: false,
   formId: null,
   waitlistEnabled: true,
+  bookingApprovalEnabled: false,
 };
 
 export default function CreateEvent() {
@@ -261,6 +263,7 @@ export default function CreateEvent() {
       eventLink: formData.eventLink,
       hideVacancy: formData.hideVacancy,
       waitlistEnabled: formData.waitlistEnabled,
+      bookingApprovalEnabled: formData.bookingApprovalEnabled,
       formId: formData.formId,
     };
   }
