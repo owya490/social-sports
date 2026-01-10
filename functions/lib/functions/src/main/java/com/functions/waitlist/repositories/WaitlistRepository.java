@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +38,7 @@ public class WaitlistRepository {
   }
 
   /**
-   * Get the waitlist document for an event
+   * Get the waitlist documents for an event
    */
   public static List<WaitlistEntry> getWaitlistByEventId(String eventId) {
     try {
@@ -152,6 +153,24 @@ public class WaitlistRepository {
     } catch (Exception e) {
       logger.error("Error updating notifiedAt for event: {}", eventId, e);
       throw new Exception("Failed to update notifiedAt: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Get all event IDs that have waitlists.
+   * Returns a list of event IDs from the Waitlist collection.
+   */
+  public static List<String> getAllWaitlistEventIds() {
+    try {
+      Firestore db = FirebaseService.getFirestore();
+      List<String> eventIds = new ArrayList<>();
+      for (com.google.cloud.firestore.DocumentReference docRef : db.collection(WAITLIST_COLLECTION).listDocuments()) {
+        eventIds.add(docRef.getId());
+      }
+      return eventIds;
+    } catch (Exception e) {
+      logger.error("Error retrieving all waitlist event IDs", e);
+      return List.of();
     }
   }
 
