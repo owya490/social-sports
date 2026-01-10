@@ -6,18 +6,22 @@ import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldo
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
-import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
+import { EventDrilldownManageAttendeesPage } from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
 import EventDrilldownFormsPage from "@/components/organiser/event/forms/EventDrilldownFormsPage";
 import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
+import { getOrdersByIds } from "@/services/src/tickets/orderService";
+import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
@@ -33,7 +37,7 @@ interface EventPageProps {
 //brians
 export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
-  const [_eventData, setEventData] = useState<EventData>();
+  const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [loading, setLoading] = useState<boolean>(true);
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
@@ -60,6 +64,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
+  const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
   const router = useRouter();
 
   const { user } = useUser();
@@ -95,9 +100,19 @@ export default function EventPage({ params }: EventPageProps) {
         return event;
       })
       .then((event) => {
-        getEventsMetadataByEventId(eventId).then((eventMetadata) => {
+        getEventsMetadataByEventId(eventId).then(async (eventMetadata) => {
           setEventMetadata(eventMetadata);
-          calculateNetSales(eventMetadata)
+          const allOrders = await getOrdersByIds(eventMetadata.orderIds);
+          const allTickets = await getTicketsByIds(allOrders.flatMap((order) => order.tickets));
+          const orderTicketsMap = new Map<Order, Ticket[]>();
+          allOrders.forEach((order) => {
+            orderTicketsMap.set(
+              order,
+              allTickets.filter((ticket) => ticket.orderId === order.orderId)
+            );
+          });
+          setOrderTicketsMap(orderTicketsMap);
+          calculateNetSales(orderTicketsMap)
             .then((totalNetSales) => {
               setTotalNetSales(totalNetSales);
             })
@@ -181,8 +196,10 @@ export default function EventPage({ params }: EventPageProps) {
               <EventDrilldownManageAttendeesPage
                 eventMetadata={eventMetadata}
                 eventId={eventId}
+                eventData={eventData}
                 setEventVacancy={setEventVacancy}
                 setEventMetadata={setEventMetadata}
+                orderTicketsMap={orderTicketsMap}
               />
             )}
             {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata} />}
