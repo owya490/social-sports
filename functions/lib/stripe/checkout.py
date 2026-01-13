@@ -48,8 +48,8 @@ class StripeCheckoutRequest:
 SPORTSHUB_FEE_ACCOUNTS = [
   "obodlRDZycR062927qTjsah0FHr2", # Acers Prod
   "PT57cJxfbdRXOQgJH2nAs6cZnFH3", # OneU (Ricky Tang) Prod
-  "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2" # Owen Dev
-  "tihrtHXNCKVkYpmJIVijKDWkkvq2" # Syrio Volleyball
+  "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", # Owen Dev
+  "tihrtHXNCKVkYpmJIVijKDWkkvq2", # Syrio Volleyball
   "J7wsz3TTK1ddhJPZFlDRIc10siw1" # Lynx Volleyball
   ]
 SPORTSHUB_FEE_PERCENTAGE = 0.01
