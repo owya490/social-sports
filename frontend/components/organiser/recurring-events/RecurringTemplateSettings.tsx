@@ -3,6 +3,7 @@ import { LabelledSwitch } from "@/components/elements/LabelledSwitch";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
+import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { Spinner } from "@material-tailwind/react";
 import { useState } from "react";
 
@@ -18,6 +19,8 @@ interface RecurringTemplateSettingsProps {
   setHideVacancy: (event: boolean) => void;
   waitlistEnabled: boolean;
   setWaitlistEnabled: (event: boolean) => void;
+  bookingApprovalEnabled: boolean;
+  setBookingApprovalEnabled: (event: boolean) => void;
 }
 
 export const RecurringTemplateSettings = ({
@@ -32,6 +35,8 @@ export const RecurringTemplateSettings = ({
   setHideVacancy,
   waitlistEnabled,
   setWaitlistEnabled,
+  bookingApprovalEnabled,
+  setBookingApprovalEnabled,
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   return (
@@ -117,6 +122,25 @@ export const RecurringTemplateSettings = ({
               setLoading(true);
               const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
                 waitlistEnabled: event,
+              });
+              if (success) {
+                setLoading(false);
+              } else {
+                window.location.reload();
+              }
+            }}
+          />
+        )}
+        {BOOKING_APPROVAL_ENABLED && (
+          <LabelledSwitch
+            title={"Enable Booking Approval"}
+            description={"Enable to require manual approval for bookings before they are confirmed."}
+            state={bookingApprovalEnabled}
+            setState={setBookingApprovalEnabled}
+            updateData={async (event: boolean) => {
+              setLoading(true);
+              const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+                bookingApprovalEnabled: event,
               });
               if (success) {
                 setLoading(false);

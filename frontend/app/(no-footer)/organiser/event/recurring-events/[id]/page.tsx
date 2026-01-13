@@ -58,6 +58,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
+  const [eventBookingApprovalEnabled, setEventBookingApprovalEnabled] = useState<boolean>(false);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
@@ -95,6 +96,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventPromotionalCodesEnabled(recurrenceTemplate.eventData.promotionalCodesEnabled);
         setEventHideVacancy(recurrenceTemplate.eventData.hideVacancy);
         setEventWaitlistEnabled(recurrenceTemplate.eventData.waitlistEnabled);
+        setEventBookingApprovalEnabled(recurrenceTemplate.eventData.bookingApprovalEnabled);
         const isRecurrenceEnded = calculateRecurrenceEnded(recurrenceTemplate);
         setRecurrenceEnded(isRecurrenceEnded);
         // Edge case, if the recurrence is ended, it should not be enabled
@@ -200,6 +202,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   setHideVacancy={setEventHideVacancy}
                   waitlistEnabled={eventWaitlistEnabled}
                   setWaitlistEnabled={setEventWaitlistEnabled}
+                  bookingApprovalEnabled={eventBookingApprovalEnabled}
+                  setBookingApprovalEnabled={setEventBookingApprovalEnabled}
                 />
               </>
             )}
