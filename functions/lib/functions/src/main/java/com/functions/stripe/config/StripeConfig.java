@@ -26,7 +26,9 @@ public class StripeConfig {
     private static final Set<String> SPORTSHUB_FEE_ACCOUNTS = Set.of(
         "obodlRDZycR062927qTjsah0FHr2", // Acers Prod
         "PT57cJxfbdRXOQgJH2nAs6cZnFH3", // OneU (Ricky Tang) Prod
-        "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2" // Owen Dev
+        "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", // Owen Dev
+        "tihrtHXNCKVkYpmJIVijKDWkkvq2", // Syrio Volleyball
+        "J7wsz3TTK1ddhJPZFlDRIc10siw1" // Lynx Volleyball
     );
 
     private static final double SPORTSHUB_FEE_PERCENTAGE = 0.01; // 1%
