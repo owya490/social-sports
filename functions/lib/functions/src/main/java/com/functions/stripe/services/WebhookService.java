@@ -10,6 +10,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.emails.EmailService;
 import com.functions.events.models.Attendee;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
@@ -17,8 +18,9 @@ import com.functions.events.models.Purchaser;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.fulfilment.services.FulfilmentService;
-import com.functions.stripe.models.Order;
-import com.functions.stripe.models.Ticket;
+import com.functions.tickets.models.Order;
+import com.functions.tickets.models.OrderAndTicketStatus;
+import com.functions.tickets.models.Ticket;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -35,6 +37,72 @@ import com.stripe.model.checkout.Session;
  */
 public class WebhookService {
     private static final Logger logger = LoggerFactory.getLogger(WebhookService.class);
+    
+    /**
+     * Retrieves form response IDs from a fulfilment session on a best-effort basis.
+     * Returns an empty list if the session is not found or has no form entities.
+     * 
+     * @param transaction The Firestore transaction
+     * @param fulfilmentSessionId The fulfilment session ID
+     * @return List of form response IDs
+     */
+    private static List<String> getFormResponseIdsFromFulfilmentSession(
+            Transaction transaction, String fulfilmentSessionId) {
+        
+        if (fulfilmentSessionId == null || fulfilmentSessionId.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            DocumentReference fulfilmentSessionRef = db.collection("FulfilmentSessions")
+                .document(fulfilmentSessionId);
+            
+            DocumentSnapshot fulfilmentSessionSnapshot = transaction.get(fulfilmentSessionRef).get();
+            
+            if (!fulfilmentSessionSnapshot.exists()) {
+                logger.error("Fulfilment session not found: {}. Skipping form response IDs.", fulfilmentSessionId);
+                return new ArrayList<>();
+            }
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> fulfilmentEntityMap = 
+                (Map<String, Object>) fulfilmentSessionSnapshot.get("fulfilmentEntityMap");
+            
+            if (fulfilmentEntityMap == null || fulfilmentEntityMap.isEmpty()) {
+                logger.info("No fulfilment entity map found in fulfilment session {}", fulfilmentSessionId);
+                return new ArrayList<>();
+            }
+            
+            List<String> formResponseIds = new ArrayList<>();
+            
+            for (Map.Entry<String, Object> entry : fulfilmentEntityMap.entrySet()) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> entityData = (Map<String, Object>) entry.getValue();
+                
+                if (entityData != null && "FORMS".equals(entityData.get("type"))) {
+                    String formResponseId = (String) entityData.get("formResponseId");
+                    if (formResponseId != null && !formResponseId.isEmpty()) {
+                        formResponseIds.add(formResponseId);
+                    }
+                }
+            }
+            
+            if (!formResponseIds.isEmpty()) {
+                logger.info("Retrieved {} form response IDs from fulfilment session {}: {}", 
+                           formResponseIds.size(), fulfilmentSessionId, formResponseIds);
+            } else {
+                logger.info("No form response IDs found in fulfilment session {}", fulfilmentSessionId);
+            }
+            
+            return formResponseIds;
+            
+        } catch (Exception e) {
+            logger.warn("Failed to retrieve form response IDs from fulfilment session {}: {}. " +
+                       "Continuing without form responses.", fulfilmentSessionId, e.getMessage());
+            return new ArrayList<>();
+        }
+    }
     
     /**
      * Checks if a checkout session has already been processed.
@@ -90,6 +158,19 @@ public class WebhookService {
     }
     
     /**
+     * Resolves the order and ticket status based on the capture method.
+     * 
+     * @param captureMethod The Stripe payment intent capture method
+     * @return PENDING if manual capture, APPROVED otherwise
+     */
+    private static OrderAndTicketStatus resolveOrderAndTicketStatus(String captureMethod) {
+        if ("manual".equalsIgnoreCase(captureMethod)) {
+            return OrderAndTicketStatus.PENDING;
+        }
+        return OrderAndTicketStatus.APPROVED;
+    }
+    
+    /**
      * Fulfills a completed event ticket purchase within a transaction.
      * Creates tickets, orders, and updates event metadata.
      * 
@@ -102,6 +183,9 @@ public class WebhookService {
      * @param fullName The customer's full name
      * @param phoneNumber The customer's phone number
      * @param totalDetails The payment details from Stripe
+     * @param fulfilmentSessionId The fulfilment session ID (can be null)
+     * @param paymentIntentId The Stripe payment intent ID
+     * @param captureMethod The Stripe payment intent capture method
      * @return The order ID if successful, null otherwise
      */
     public static String fulfillCompletedEventTicketPurchase(
@@ -113,7 +197,10 @@ public class WebhookService {
             String customerEmail,
             String fullName,
             String phoneNumber,
-            Session.TotalDetails totalDetails) throws Exception {
+            Session.TotalDetails totalDetails,
+            String fulfilmentSessionId,
+            String paymentIntentId,
+            String captureMethod) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -121,6 +208,9 @@ public class WebhookService {
             CollectionPaths.EVENTS + "/" + CollectionPaths.ACTIVE + "/" + privacyPath
         ).document(eventId);
         DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
+        
+        // Retrieve form response IDs from fulfilment session (best effort)
+        List<String> formResponseIds = getFormResponseIdsFromFulfilmentSession(transaction, fulfilmentSessionId);
         
         // Read event data
         ApiFuture<DocumentSnapshot> eventFuture = transaction.get(eventRef);
@@ -216,9 +306,24 @@ public class WebhookService {
             attendee = new Attendee();
             attendee.setPhone(phoneNumber);
             attendee.setTicketCount(quantity.intValue());
+            attendee.setFormResponseIds(formResponseIds != null ? new ArrayList<>(formResponseIds) : new ArrayList<>());
         } else {
             attendee.setPhone(phoneNumber);
             attendee.setTicketCount(attendee.getTicketCount() + quantity.intValue());
+            
+            // Merge form response IDs (avoid duplicates)
+            List<String> existingFormResponses = attendee.getFormResponseIds();
+            if (existingFormResponses == null) {
+                existingFormResponses = new ArrayList<>();
+            }
+            if (formResponseIds != null && !formResponseIds.isEmpty()) {
+                for (String formResponseId : formResponseIds) {
+                    if (!existingFormResponses.contains(formResponseId)) {
+                        existingFormResponses.add(formResponseId);
+                    }
+                }
+            }
+            attendee.setFormResponseIds(existingFormResponses);
         }
         attendees.put(fullName, attendee);
         purchaserMap.put(emailHash, purchaser);
@@ -248,33 +353,44 @@ public class WebhookService {
             discounts = totalDetails.getAmountDiscount() != null ? totalDetails.getAmountDiscount() : 0;
         }
         
+        // Resolve status based on capture method
+        OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
+        
         List<String> ticketIds = new ArrayList<>();
         
         // Create tickets
         for (int i = 0; i < quantity; i++) {
             DocumentReference ticketRef = db.collection("Tickets").document();
             
-            Ticket ticket = Ticket.builder()
-                .eventId(eventId)
-                .orderId(orderRef.getId())
-                .price(unitAmount)
-                .purchaseDate(purchaseTime)
-                .build();
+            // Associate form response ID with ticket if available
+            String formResponseId = null;
+            if (formResponseIds != null && i < formResponseIds.size()) {
+                formResponseId = formResponseIds.get(i);
+            }
+            
+            Ticket ticket = new Ticket();
+            ticket.setEventId(eventId);
+            ticket.setOrderId(orderRef.getId());
+            ticket.setPrice(unitAmount);
+            ticket.setPurchaseDate(purchaseTime);
+            ticket.setStatus(status);
+            ticket.setFormResponseId(formResponseId);
             
             transaction.create(ticketRef, ticket);
             ticketIds.add(ticketRef.getId());
         }
         
         // Create order
-        Order order = Order.builder()
-            .datePurchased(purchaseTime)
-            .email(customerEmail)
-            .fullName(fullName)
-            .phone(phoneNumber)
-            .applicationFees(applicationFees)
-            .discounts(discounts)
-            .tickets(ticketIds)
-            .build();
+        Order order = new Order();
+        order.setDatePurchased(purchaseTime);
+        order.setEmail(customerEmail);
+        order.setFullName(fullName);
+        order.setPhone(phoneNumber);
+        order.setApplicationFees(applicationFees);
+        order.setDiscounts(discounts);
+        order.setTickets(ticketIds);
+        order.setStripePaymentIntentId(paymentIntentId);
+        order.setStatus(status);
         
         transaction.set(orderRef, order);
         
@@ -374,6 +490,8 @@ public class WebhookService {
      * @param completeFulfilmentSession Whether to complete the fulfilment session
      * @param fulfilmentSessionId The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
+     * @param paymentIntentId The Stripe payment intent ID
+     * @param captureMethod The Stripe payment intent capture method
      * @return true if successful, false otherwise
      */
     public static boolean fulfilmentWorkflowOnTicketPurchase(
@@ -387,7 +505,9 @@ public class WebhookService {
             String phoneNumber,
             boolean completeFulfilmentSession,
             String fulfilmentSessionId,
-            String endFulfilmentEntityId) {
+            String endFulfilmentEntityId,
+            String paymentIntentId,
+            String captureMethod) {
         
         try {
             // Run the fulfillment logic in a transaction
@@ -400,7 +520,6 @@ public class WebhookService {
                         return null;
                     }
                     
-                    // Fulfill the purchase
                     String orderIdResult = fulfillCompletedEventTicketPurchase(
                         transaction,
                         checkoutSessionId,
@@ -410,7 +529,10 @@ public class WebhookService {
                         customerEmail,
                         fullName,
                         phoneNumber,
-                        checkoutSession.getTotalDetails()
+                        checkoutSession.getTotalDetails(),
+                        fulfilmentSessionId,
+                        paymentIntentId,
+                        captureMethod
                     );
                     
                     if (orderIdResult == null) {
@@ -435,6 +557,9 @@ public class WebhookService {
             }
             
             // Complete fulfilment session if requested
+            // TODO: now that fulfilment session is the default behaviour of checkout, clean up
+            // should be enabled by default, and thus we don't need the completeFulfilmentSession
+            // check anymore.
             if (completeFulfilmentSession && fulfilmentSessionId != null && endFulfilmentEntityId != null) {
                 FulfilmentService.completeFulfilmentSession(fulfilmentSessionId, endFulfilmentEntityId);
             }

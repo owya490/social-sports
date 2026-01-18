@@ -19,6 +19,7 @@ import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.LineItem;
 import com.stripe.model.LineItemCollection;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
@@ -28,6 +29,7 @@ import com.stripe.net.Webhook;
  * This is called from GlobalAppController when a Stripe webhook is detected.
  */
 public class StripeWebhookHandler {
+    // TODO: need to add tags like in add_stripe_event_and_checkout_tags
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookHandler.class);
     
     private static final List<String> IGNORED_EVENT_IDS = Arrays.asList("evt_1SAvvn05pkiJLNbsHt1mHThW");
@@ -267,11 +269,9 @@ public class StripeWebhookHandler {
                 String key = field.getKey();
                 if ("attendeeFullName".equals(key)) {
                     if (field.getText() != null && field.getText().getValue() != null) {
-                        String rawName = field.getText().getValue();
-                        // Sanitize and validate name input
-                        fullName = sanitizeTextField(rawName, 200);
+                        fullName = field.getText().getValue();
                         if (fullName == null || fullName.trim().isEmpty()) {
-                            logger.error("[Webhook-{}] Invalid or empty attendeeFullName after sanitization", uuid);
+                            logger.error("[Webhook-{}] Invalid or empty attendeeFullName", uuid);
                             return false;
                         }
                     } else {
@@ -280,11 +280,9 @@ public class StripeWebhookHandler {
                     }
                 } else if ("attendeePhone".equals(key)) {
                     if (field.getText() != null && field.getText().getValue() != null) {
-                        String rawPhone = field.getText().getValue();
-                        // Sanitize and validate phone input
-                        phoneNumber = sanitizeTextField(rawPhone, 50);
+                        phoneNumber = field.getText().getValue();
                         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-                            logger.error("[Webhook-{}] Invalid or empty attendeePhone after sanitization", uuid);
+                            logger.error("[Webhook-{}] Invalid or empty attendeePhone", uuid);
                             return false;
                         }
                     } else {
@@ -329,8 +327,40 @@ public class StripeWebhookHandler {
                 return false;
             }
             
+            // Retrieve payment intent and capture method
+            String paymentIntentId = fullSession.getPaymentIntent();
+            if (paymentIntentId == null || paymentIntentId.isEmpty()) {
+                logger.error("[Webhook-{}] Payment intent ID is null or empty for session {}", uuid, checkoutSessionId);
+                return false;
+            }
+            
+            String captureMethod;
+            try {
+                PaymentIntent paymentIntent = PaymentIntent.retrieve(
+                    paymentIntentId,
+                    com.stripe.net.RequestOptions.builder()
+                        .setStripeAccount(stripeAccount)
+                        .build()
+                );
+                
+                if (paymentIntent == null || paymentIntent.getCaptureMethod() == null) {
+                    logger.error("[Webhook-{}] Unable to retrieve payment intent or capture method. paymentIntentId={}", 
+                                uuid, paymentIntentId);
+                    return false;
+                }
+                
+                captureMethod = paymentIntent.getCaptureMethod();
+                logger.info("[Webhook-{}] Retrieved capture method: {} for payment intent: {}", 
+                           uuid, captureMethod, paymentIntentId);
+                
+            } catch (Exception e) {
+                logger.error("[Webhook-{}] Failed to retrieve payment intent: {}", uuid, e.getMessage(), e);
+                return false;
+            }
+            
             logger.info("[Webhook-{}] Attempting to fulfill completed event ticket purchase. session={}, eventId={}, " +
-                       "customer={}", uuid, checkoutSessionId, sessionMetadata.getEventId(), customerEmail);
+                       "customer={}, paymentIntentId={}, captureMethod={}", 
+                       uuid, checkoutSessionId, sessionMetadata.getEventId(), customerEmail, paymentIntentId, captureMethod);
             
             // Execute the fulfillment workflow
             boolean success = WebhookService.fulfilmentWorkflowOnTicketPurchase(
@@ -344,7 +374,9 @@ public class StripeWebhookHandler {
                 phoneNumber,
                 sessionMetadata.getCompleteFulfilmentSession(),
                 sessionMetadata.getFulfilmentSessionId(),
-                sessionMetadata.getEndFulfilmentEntityId()
+                sessionMetadata.getEndFulfilmentEntityId(),
+                paymentIntentId,
+                captureMethod
             );
             
             return success;
@@ -434,32 +466,6 @@ public class StripeWebhookHandler {
             logger.error("[Webhook-{}] Error handling checkout.session.expired: {}", uuid, e.getMessage(), e);
             return false;
         }
-    }
-    
-    /**
-     * Sanitizes text field input to prevent injection attacks.
-     * Removes control characters and limits length.
-     * 
-     * @param input The input string
-     * @param maxLength Maximum allowed length
-     * @return Sanitized string or null if invalid
-     */
-    private static String sanitizeTextField(String input, int maxLength) {
-        if (input == null) {
-            return null;
-        }
-        
-        // Remove control characters and other potentially dangerous characters
-        String sanitized = input.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "")
-                               .replaceAll("[<>\"'`]", "")
-                               .trim();
-        
-        // Enforce maximum length
-        if (sanitized.length() > maxLength) {
-            sanitized = sanitized.substring(0, maxLength);
-        }
-        
-        return sanitized;
     }
     
     /**
