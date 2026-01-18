@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - master
+      - reserved-events  # Temporary: push to this branch to deploy only to dev
 
 jobs:
   deploy-java-cloud-run-functions:
@@ -18,7 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        env: [dev, prod]
+        # On master: deploy to both dev and prod. On other branches: deploy only to dev
+        env: ${{ github.ref == 'refs/heads/master' && fromJson('["dev", "prod"]') || fromJson('["dev"]') }}
     steps:
       # Checkout the repository
       - name: Checkout repository

@@ -18,6 +18,7 @@ import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
+import com.functions.events.models.ReservedSlot;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
@@ -86,6 +87,20 @@ public class RecurringEventsCronService {
                         Timestamp newRegistrationDeadline = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventDeadlineDeltaMillis) * 1000);
                         newEventDataDeepCopy.setEndDate(newEndDate);
                         newEventDataDeepCopy.setRegistrationDeadline(newRegistrationDeadline);
+
+                        // Apply reserved slots to reduce vacancy
+                        List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
+                        if (reservedSlots != null && !reservedSlots.isEmpty()) {
+                            int totalReservedSlots = reservedSlots.stream()
+                                    .mapToInt(ReservedSlot::getSlots)
+                                    .sum();
+                            int currentVacancy = newEventDataDeepCopy.getVacancy();
+                            int newVacancy = Math.max(0, currentVacancy - totalReservedSlots);
+                            newEventDataDeepCopy.setVacancy(newVacancy);
+                            logger.info("Applied {} reserved slots to event. Vacancy reduced from {} to {}",
+                                    totalReservedSlots, currentVacancy, newVacancy);
+                        }
+
                         String newEventId = CreateEventHandler.createEvent(newEventDataDeepCopy, transaction);
                         logger.info("New event id: {}", newEventId);
                         createdEventIds.add(newEventId);

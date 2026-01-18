@@ -155,6 +155,7 @@ export async function updateRecurrenceTemplateRecurrenceData(
         recurrenceAmount: recurrenceTemplate.recurrenceData.recurrenceAmount,
         createDaysBefore: recurrenceTemplate.recurrenceData.createDaysBefore,
         recurrenceEnabled: recurrenceTemplate.recurrenceData.recurrenceEnabled,
+        reservedSlots: recurrenceTemplate.recurrenceData.reservedSlots || [],
         ...updatedData,
       },
     });
