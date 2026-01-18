@@ -467,6 +467,16 @@ public class WebhookService {
             return;
         }
         
+        // Verify event exists before updating vacancy to avoid transaction commit failures
+        ApiFuture<DocumentSnapshot> eventFuture = transaction.get(eventRef);
+        DocumentSnapshot eventSnapshot = eventFuture.get();
+        
+        if (!eventSnapshot.exists()) {
+            logger.error("Unable to find event to restock tickets for expired checkout. eventId={}, isPrivate={}", 
+                        eventId, isPrivate);
+            throw new IllegalStateException("Event does not exist: eventId=" + eventId);
+        }
+        
         // Restock the tickets
         transaction.update(eventRef, "vacancy", FieldValue.increment(quantity));
         
@@ -617,7 +627,11 @@ public class WebhookService {
                 }
             });
             
+            if (result) {
             logger.info("Successfully handled checkout.session.expired webhook event. session={}", checkoutSessionId);
+            } else {
+                logger.error("Failed to handle checkout.session.expired webhook event. session={}", checkoutSessionId);
+            }
             return result;
             
         } catch (Exception e) {

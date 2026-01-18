@@ -1,8 +1,8 @@
 package com.functions.stripe.handlers;
 
 import java.io.BufferedReader;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ public class StripeWebhookHandler {
     // TODO: need to add tags like in add_stripe_event_and_checkout_tags
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookHandler.class);
     
-    private static final List<String> IGNORED_EVENT_IDS = Arrays.asList("evt_1SAvvn05pkiJLNbsHt1mHThW");
+    private static final Set<String> IGNORED_EVENT_IDS = Set.of("evt_1SAvvn05pkiJLNbsHt1mHThW");
     private static final String SPORTSHUB_URL_DOMAIN = "sportshub";
     private static final int MAX_PAYLOAD_SIZE = 1024 * 1024; // 1MB max payload size
     
@@ -68,9 +68,8 @@ public class StripeWebhookHandler {
         }
         
         
-        // Security check: Ensure webhook secret is configured
         if (StripeConfig.STRIPE_WEBHOOK_ENDPOINT_SECRET == null || StripeConfig.STRIPE_WEBHOOK_ENDPOINT_SECRET.isEmpty()) {
-            logger.error("[Webhook-{}] CRITICAL SECURITY ERROR: Webhook endpoint secret is not configured", uuid);
+            logger.error("[Webhook-{}] Webhook endpoint secret is not configured", uuid);
             response.setStatusCode(500);
             return;
         }

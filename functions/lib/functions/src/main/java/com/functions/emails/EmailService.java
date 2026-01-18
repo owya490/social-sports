@@ -1,6 +1,8 @@
 package com.functions.emails;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -14,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.services.FirebaseService;
+import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -27,7 +30,7 @@ public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
     
     private static final ZoneId SYDNEY_TIMEZONE = ZoneId.of("Australia/Sydney");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy, HH:mm");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm");
 
     /**
      * Sends an email confirmation to a user who has joined the waitlist for an event.
@@ -91,40 +94,19 @@ public class EmailService {
      * @return true if email was sent successfully, false otherwise
      */
     public static boolean sendPurchaseEmail(String eventId, String visibility, String email, String firstName, String orderId) {
-        return sendPurchaseEmailWithRetries(eventId, visibility, email, firstName, orderId, 3);
-    }
-    
-    /**
-     * Sends a purchase confirmation email with retry logic.
-     */
-    private static boolean sendPurchaseEmailWithRetries(String eventId, String visibility, String email, 
-                                                        String firstName, String orderId, int maxRetries) {
-        for (int attempt = 0; attempt < maxRetries; attempt++) {
-            try {
-                if (sendPurchaseEmailInternal(eventId, visibility, email, firstName, orderId)) {
-                    logger.info("Successfully sent purchase email for order {} to {} (attempt {}/{})", 
-                               orderId, email, attempt + 1, maxRetries);
-                    return true;
-                }
-            } catch (Exception e) {
-                logger.error("Failed to send purchase email for order {} to {} (attempt {}/{}): {}", 
-                           orderId, email, attempt + 1, maxRetries, e.getMessage(), e);
+        try {
+            boolean result = sendPurchaseEmailInternal(eventId, visibility, email, firstName, orderId);
+            if (result) {
+                logger.info("Successfully sent purchase email for order {} to {}", orderId, email);
+            } else {
+                logger.warn("Failed to send purchase email for order {} to {}", orderId, email);
             }
-            
-            if (attempt < maxRetries - 1) {
-                try {
-                    long delay = (long) Math.pow(2, attempt) * 1000;
-                    Thread.sleep(delay);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
+            return result;
+        } catch (Exception e) {
+            logger.error("Failed to send purchase email for order {} to {}: {}", 
+                       orderId, email, e.getMessage(), e);
+            return false;
         }
-        
-        logger.warn("Failed to send purchase email after {} attempts for order {} to {}", 
-                    maxRetries, orderId, email);
-        return false;
     }
     
     /**
@@ -135,13 +117,13 @@ public class EmailService {
         Firestore db = FirebaseService.getFirestore();
         
         // Fetch Data
-        DocumentSnapshot eventSnapshot = fetchDocument(db, "Events", "Active", visibility, eventId);
+        DocumentSnapshot eventSnapshot = fetchDocument(db, CollectionPaths.EVENTS, CollectionPaths.ACTIVE, visibility, eventId);
         if (!eventSnapshot.exists()) {
             logger.error("Unable to find event provided in datastore to send email. eventId={}", eventId);
             return false;
         }
         
-        DocumentSnapshot orderSnapshot = fetchDocument(db, "Orders", orderId);
+        DocumentSnapshot orderSnapshot = fetchDocument(db, CollectionPaths.ORDERS, orderId);
         if (!orderSnapshot.exists()) {
             logger.error("Unable to find orderId provided in datastore to send email. orderId={}", orderId);
             return false;
@@ -190,11 +172,8 @@ public class EmailService {
         Timestamp endTimestamp = event.get("endDate", Timestamp.class);
         Timestamp purchasedTimestamp = order.get("datePurchased", Timestamp.class);
         
-        Double price = event.getDouble("price");
-        if (price == null) {
-             Long priceLong = event.getLong("price");
-             price = priceLong != null ? priceLong.doubleValue() : 0.0;
-        }
+        // Robustly extract price from Firestore, handling various numeric types
+        double priceInCents = extractPrice(event);
         
         List<?> tickets = (List<?>) order.get("tickets");
         String quantity = tickets != null ? String.valueOf(tickets.size()) : "0";
@@ -205,26 +184,65 @@ public class EmailService {
             "orderId", Optional.ofNullable(orderId).orElse(""),
             "datePurchased", formatTimestamp(purchasedTimestamp),
             "quantity", quantity,
-            "price", centsToDollars(price),
+            "price", centsToDollars(priceInCents),
             "startDate", formatTimestamp(startTimestamp),
             "endDate", formatTimestamp(endTimestamp),
             "location", Optional.ofNullable(event.getString("location")).orElse("")
         );
     }
+    
+    /**
+     * Extracts price from a Firestore document, handling multiple possible types.
+     * 
+     * @param event The event document snapshot
+     * @return The price in cents as a double, or 0.0 if not found or invalid
+     */
+    private static double extractPrice(DocumentSnapshot event) {
+        Object priceObj = event.get("price");
+        
+        if (priceObj == null) {
+            return 0.0;
+        }
+        
+        // Handle different numeric types
+        if (priceObj instanceof Double) {
+            return (Double) priceObj;
+        } else if (priceObj instanceof Long) {
+            return ((Long) priceObj).doubleValue();
+        } else if (priceObj instanceof Integer) {
+            return ((Integer) priceObj).doubleValue();
+        } else if (priceObj instanceof String) {
+            try {
+                return Double.parseDouble((String) priceObj);
+            } catch (NumberFormatException e) {
+                logger.warn("Failed to parse price string '{}', defaulting to 0.0", priceObj);
+                return 0.0;
+            }
+        } else {
+            logger.warn("Unexpected price type '{}', defaulting to 0.0", priceObj.getClass().getName());
+            return 0.0;
+        }
+    }
 
     private static String formatTimestamp(Timestamp timestamp) {
         if (timestamp == null) return "";
-        ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos()), SYDNEY_TIMEZONE);
+        // Use TimeUtils conversion pattern for consistency, then apply email-specific format
+        Instant instant = timestamp.toSqlTimestamp().toInstant();
+        ZonedDateTime zdt = instant.atZone(SYDNEY_TIMEZONE);
         return zdt.format(DATE_FORMATTER);
     }
     
     private static String centsToDollars(Double priceInCents) {
         if (priceInCents == null) return "$0.00";
-        return String.format("$%.2f", priceInCents / 100.0);
+        
+        // Use BigDecimal for precise decimal arithmetic to avoid floating-point errors
+        BigDecimal cents = BigDecimal.valueOf(priceInCents);
+        BigDecimal dollars = cents.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        return "$" + dollars.toPlainString();
     }
     
     private static Optional<String> getOrganiserEmailForTicketEmail(Firestore db, String organiserId) throws ExecutionException, InterruptedException {
-        DocumentSnapshot organiserSnapshot = fetchDocument(db, "Users", "Active", "Private", organiserId);
+        DocumentSnapshot organiserSnapshot = fetchDocument(db, CollectionPaths.USERS, CollectionPaths.ACTIVE, CollectionPaths.PRIVATE, organiserId);
                                                
         if (!organiserSnapshot.exists()) {
             logger.error("Organiser does not exist: organiserId={}", organiserId);
