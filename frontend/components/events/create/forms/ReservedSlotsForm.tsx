@@ -4,7 +4,7 @@ import { ReservedSlot } from "@/interfaces/RecurringEventTypes";
 import { validateEmail, EMAIL_VALIDATION_ERROR_MESSAGE } from "@/utilities/emailValidationUtils";
 import { TrashIcon, PlusIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { Input } from "@material-tailwind/react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
 
 interface ReservedSlotsFormProps {
   reservedSlots: ReservedSlot[];
@@ -12,39 +12,86 @@ interface ReservedSlotsFormProps {
   maxCapacity?: number;
 }
 
-interface AddSlotFormData {
-  email: string;
-  name: string;
-  slots: number;
+// Separate component to manage local string state for number input
+interface EditableSlotInputProps {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+  size?: "md" | "lg";
 }
+
+const EditableSlotInput = ({ value, onChange, min = 1, max, size = "md" }: EditableSlotInputProps) => {
+  const [localValue, setLocalValue] = useState(String(value));
+
+  // Sync local state when prop value changes (e.g., from parent update)
+  useEffect(() => {
+    setLocalValue(String(value));
+  }, [value]);
+
+  const handleBlur = () => {
+    const parsed = parseInt(localValue);
+    if (isNaN(parsed) || parsed < min) {
+      setLocalValue(String(min));
+      onChange(min);
+    } else if (max !== undefined && parsed > max) {
+      setLocalValue(String(max));
+      onChange(max);
+    } else {
+      onChange(parsed);
+    }
+  };
+
+  return (
+    <Input
+      crossOrigin={undefined}
+      type="number"
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={handleBlur}
+      min={min}
+      max={max}
+      size={size}
+      className="rounded-md focus:ring-0"
+    />
+  );
+};
 
 export const ReservedSlotsForm = ({
   reservedSlots,
   setReservedSlots,
   maxCapacity,
 }: ReservedSlotsFormProps) => {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-    setError,
-  } = useForm<AddSlotFormData>({
-    defaultValues: {
-      email: "",
-      name: "",
-      slots: 1,
-    },
-  });
+  const [newEmail, setNewEmail] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newSlots, setNewSlots] = useState<string>("1");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const totalReservedSlots = reservedSlots.reduce((sum, slot) => sum + slot.slots, 0);
-  const watchedSlots = watch("slots");
 
-  const onAddSlot = (data: AddSlotFormData) => {
-    const trimmedEmail = data.email.trim().toLowerCase();
-    const trimmedName = data.name.trim();
+  const handleAddSlot = () => {
+    setEmailError(null);
+    setNameError(null);
+
+    const trimmedEmail = newEmail.trim().toLowerCase();
+    const trimmedName = newName.trim();
+    const slotsValue = parseInt(newSlots) || 1;
+
+    if (!trimmedEmail) {
+      setEmailError("Email is required");
+      return;
+    }
+
+    if (!validateEmail(trimmedEmail)) {
+      setEmailError(EMAIL_VALIDATION_ERROR_MESSAGE);
+      return;
+    }
+
+    if (!trimmedName) {
+      setNameError("Name is required");
+      return;
+    }
 
     // Check for duplicate email and name combination
     if (
@@ -54,24 +101,26 @@ export const ReservedSlotsForm = ({
           slot.name.toLowerCase() === trimmedName.toLowerCase()
       )
     ) {
-      setError("email", { message: "This email and name combination already has reserved slots" });
+      setEmailError("This email and name combination already has reserved slots");
       return;
     }
 
     // Check capacity
-    if (maxCapacity && totalReservedSlots + data.slots > maxCapacity) {
-      setError("email", { message: `Cannot exceed event capacity (${maxCapacity} spots)` });
+    if (maxCapacity && totalReservedSlots + slotsValue > maxCapacity) {
+      setEmailError(`Cannot exceed event capacity (${maxCapacity} spots)`);
       return;
     }
 
     const newSlot: ReservedSlot = {
       email: trimmedEmail,
       name: trimmedName,
-      slots: data.slots,
+      slots: slotsValue,
     };
 
     setReservedSlots([...reservedSlots, newSlot]);
-    reset();
+    setNewEmail("");
+    setNewName("");
+    setNewSlots("1");
   };
 
   const handleRemoveSlot = (emailToRemove: string, nameToRemove: string) => {
@@ -102,15 +151,7 @@ export const ReservedSlotsForm = ({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleSubmit(onAddSlot)();
-    }
-  };
-
-  const handleSlotsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 1) {
-      const max = maxCapacity ? maxCapacity - totalReservedSlots : 99;
-      setValue("slots", Math.min(value, max));
+      handleAddSlot();
     }
   };
 
@@ -123,62 +164,62 @@ export const ReservedSlotsForm = ({
       </p>
 
       {/* Add new reserved slot */}
-      <form onSubmit={handleSubmit(onAddSlot)}>
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr_auto] gap-2 mb-4 items-end">
-          <div>
-            <Input
-              label="Email Address"
-              crossOrigin={undefined}
-              {...register("email", {
-                required: "Email is required",
-                validate: (value) => validateEmail(value) || EMAIL_VALIDATION_ERROR_MESSAGE,
-              })}
-              onKeyDown={handleKeyPress}
-              error={!!errors.email}
-              className="rounded-md focus:ring-0"
-              size="lg"
-            />
-          </div>
-          <div>
-            <Input
-              label="Attendee Name"
-              crossOrigin={undefined}
-              {...register("name", {
-                required: "Name is required",
-                validate: (value) => value.trim().length > 0 || "Name is required",
-              })}
-              onKeyDown={handleKeyPress}
-              error={!!errors.name}
-              className="rounded-md focus:ring-0"
-              size="lg"
-            />
-          </div>
-          <div>
-            <Input
-              label="Slots"
-              crossOrigin={undefined}
-              type="number"
-              value={watchedSlots}
-              onChange={handleSlotsChange}
-              onKeyDown={handleKeyPress}
-              min={1}
-              max={maxCapacity ? maxCapacity - totalReservedSlots : 99}
-              className="rounded-md focus:ring-0"
-              size="lg"
-            />
-          </div>
-          <button
-            type="submit"
-            className="flex items-center justify-center bg-black text-white rounded-lg hover:bg-gray-800 transition-colors h-[42px] w-[42px]"
-          >
-            <PlusIcon className="w-5 h-5" />
-          </button>
+      <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr_auto] gap-2 mb-4 items-end">
+        <div>
+          <Input
+            label="Email Address"
+            crossOrigin={undefined}
+            value={newEmail}
+            onChange={(e) => {
+              setNewEmail(e.target.value);
+              setEmailError(null);
+            }}
+            onKeyDown={handleKeyPress}
+            error={!!emailError}
+            className="rounded-md focus:ring-0"
+            size="lg"
+          />
         </div>
+        <div>
+          <Input
+            label="Attendee Name"
+            crossOrigin={undefined}
+            value={newName}
+            onChange={(e) => {
+              setNewName(e.target.value);
+              setNameError(null);
+            }}
+            onKeyDown={handleKeyPress}
+            error={!!nameError}
+            className="rounded-md focus:ring-0"
+            size="lg"
+          />
+        </div>
+        <div>
+          <Input
+            label="Slots"
+            crossOrigin={undefined}
+            type="number"
+            value={newSlots}
+            onChange={(e) => setNewSlots(e.target.value)}
+            onKeyDown={handleKeyPress}
+            min={1}
+            className="rounded-md focus:ring-0"
+            size="lg"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleAddSlot}
+          className="flex items-center justify-center bg-black text-white rounded-lg hover:bg-gray-800 transition-colors h-[42px] w-[42px]"
+        >
+          <PlusIcon className="w-5 h-5" />
+        </button>
+      </div>
 
-        {/* Error messages */}
-        {errors.email && <div className="text-red-600 text-sm mb-3">{errors.email.message}</div>}
-        {errors.name && <div className="text-red-600 text-sm mb-3">{errors.name.message}</div>}
-      </form>
+      {/* Error messages */}
+      {emailError && <div className="text-red-600 text-sm mb-3">{emailError}</div>}
+      {nameError && <div className="text-red-600 text-sm mb-3">{nameError}</div>}
 
       {/* Reserved slots list */}
       {reservedSlots.length > 0 && (
@@ -206,20 +247,12 @@ export const ReservedSlotsForm = ({
                   <span className="text-sm text-gray-800 truncate">{slot.email}</span>
                   <span className="text-sm text-gray-800 truncate">{slot.name}</span>
                   <div>
-                    <Input
-                      crossOrigin={undefined}
-                      type="number"
+                    <EditableSlotInput
                       value={slot.slots}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        if (!isNaN(value)) {
-                          handleUpdateSlots(slot.email, slot.name, value);
-                        }
-                      }}
+                      onChange={(newValue) => handleUpdateSlots(slot.email, slot.name, newValue)}
                       min={1}
-                      max={maxCapacity ? maxCapacity - totalReservedSlots + slot.slots : 99}
+                      max={maxCapacity ? maxCapacity - totalReservedSlots + slot.slots : undefined}
                       size="md"
-                      className="rounded-md focus:ring-0"
                     />
                   </div>
                   <button
@@ -248,20 +281,12 @@ export const ReservedSlotsForm = ({
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500">Slots:</span>
                     <div className="w-20">
-                      <Input
-                        crossOrigin={undefined}
-                        type="number"
+                      <EditableSlotInput
                         value={slot.slots}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value);
-                          if (!isNaN(value)) {
-                            handleUpdateSlots(slot.email, slot.name, value);
-                          }
-                        }}
+                        onChange={(newValue) => handleUpdateSlots(slot.email, slot.name, newValue)}
                         min={1}
-                        max={maxCapacity ? maxCapacity - totalReservedSlots + slot.slots : 99}
+                        max={maxCapacity ? maxCapacity - totalReservedSlots + slot.slots : undefined}
                         size="md"
-                        className="rounded-md focus:ring-0"
                       />
                     </div>
                   </div>
