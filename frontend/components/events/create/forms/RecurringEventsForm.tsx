@@ -1,4 +1,4 @@
-import { Frequency, NewRecurrenceFormData, ReservedSlot } from "@/interfaces/RecurringEventTypes";
+import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
 import { Radio, Switch } from "@mantine/core";
@@ -6,7 +6,6 @@ import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { RecurringEventsPreviewTable } from "./RecurringEventsPreviewTable";
-import { ReservedSlotsForm } from "./ReservedSlotsForm";
 import "./form.css";
 
 export const MAX_RECURRENCE_AMOUNT = 99;
@@ -15,10 +14,9 @@ interface RecurringEventsFormProps {
   startDate: string;
   newRecurrenceData: NewRecurrenceFormData;
   setRecurrenceData: (data: NewRecurrenceFormData) => void;
-  capacity?: number;
 }
 
-export const RecurringEventsForm = ({ startDate, newRecurrenceData, setRecurrenceData, capacity }: RecurringEventsFormProps) => {
+export const RecurringEventsForm = ({ startDate, newRecurrenceData, setRecurrenceData }: RecurringEventsFormProps) => {
   const [recurrenceDates, setRecurrenceDates] = useState<Timestamp[]>([]);
 
   useEffect(() => {
@@ -62,13 +60,6 @@ export const RecurringEventsForm = ({ startDate, newRecurrenceData, setRecurrenc
     setRecurrenceData({
       ...newRecurrenceData,
       createDaysBefore: value === undefined ? 1 : parseInt(value),
-    });
-  };
-
-  const handleReservedSlotsChange = (slots: ReservedSlot[]) => {
-    setRecurrenceData({
-      ...newRecurrenceData,
-      reservedSlots: slots,
     });
   };
 
@@ -160,13 +151,6 @@ export const RecurringEventsForm = ({ startDate, newRecurrenceData, setRecurrenc
           )}
         </div>
       </div>
-      {newRecurrenceData.recurrenceEnabled && (
-        <ReservedSlotsForm
-          reservedSlots={newRecurrenceData.reservedSlots || []}
-          setReservedSlots={handleReservedSlotsChange}
-          maxCapacity={capacity}
-        />
-      )}
     </>
   );
 };

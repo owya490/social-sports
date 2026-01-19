@@ -577,7 +577,6 @@ export function BasicInformation({
                   setRecurrenceData={(data: NewRecurrenceFormData) => {
                     updateField({ newRecurrenceData: data });
                   }}
-                  capacity={capacity}
                 />
               </div>
               {user.stripeAccountActive && paymentsActive && (
