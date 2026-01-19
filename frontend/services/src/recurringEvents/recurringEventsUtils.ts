@@ -43,6 +43,7 @@ export function extractNewRecurrenceFormDataFromRecurrenceData(recurrenceData: R
     createDaysBefore: recurrenceData.createDaysBefore,
     recurrenceAmount: recurrenceData.recurrenceAmount,
     recurrenceEnabled: recurrenceData.recurrenceEnabled,
+    reservedSlots: recurrenceData.reservedSlots || [],
   };
 }
 
