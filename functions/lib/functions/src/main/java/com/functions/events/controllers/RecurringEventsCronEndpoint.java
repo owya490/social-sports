@@ -40,20 +40,8 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
 
         ZoneId sydneyZone = ZoneId.of("Australia/Sydney");
         LocalDate sydneyDate = ZonedDateTime.now(sydneyZone).toLocalDate();
-
-        // Query params for testing: ?forceCreate=true&templateId=xxx
-        boolean forceCreate = request.getFirstQueryParameter("forceCreate")
-                .map(v -> v.equalsIgnoreCase("true"))
-                .orElse(false);
-        String templateId = request.getFirstQueryParameter("templateId").orElse(null);
-
-        List<String> createdEvents;
-        if (forceCreate && templateId != null) {
-            logger.info("Force creating event for templateId: {}", templateId);
-            createdEvents = createEventsFromRecurrenceTemplates(sydneyDate, templateId, true);
-        } else {
-            createdEvents = createEventsFromRecurrenceTemplates(sydneyDate);
-        }
+        
+        List<String> createdEvents = createEventsFromRecurrenceTemplates(sydneyDate);
 
         response.getWriter()
                 .write("Recurring events processed for: " + sydneyDate + ". Created events: " + createdEvents);

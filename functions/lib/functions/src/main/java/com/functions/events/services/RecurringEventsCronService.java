@@ -1,9 +1,6 @@
 package com.functions.events.services;
 
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -13,16 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.handlers.CreateEventHandler;
-import com.functions.events.models.Attendee;
-import com.functions.events.models.EventMetadata;
 import com.functions.events.models.NewEventData;
-import com.functions.events.models.Purchaser;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.models.ReservedSlot;
@@ -31,12 +24,7 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
-import com.google.cloud.firestore.WriteResult;
-
-import static com.functions.firebase.services.FirebaseService.CollectionPaths.EVENTS_METADATA;
 
 public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
@@ -59,7 +47,7 @@ public class RecurringEventsCronService {
 
         List<String> createdEventIds = new ArrayList<>();
         
-        // Track events that need reserved slots added (processed after main transaction)
+        // Track events that need reserved slots processed (after main transaction)
         Map<String, List<ReservedSlot>> eventsNeedingReservedSlots = new HashMap<>();
 
         for (String recurrenceTemplateId : activeRecurrenceTemplateIds) {
@@ -117,47 +105,13 @@ public class RecurringEventsCronService {
                         newEventDataDeepCopy.setEndDate(newEndDate);
                         newEventDataDeepCopy.setRegistrationDeadline(newRegistrationDeadline);
 
-                        // Apply reserved slots - reduce vacancy
-                        List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
-                        int totalReservedSlots = 0;
-                        if (reservedSlots != null && !reservedSlots.isEmpty()) {
-                            // Validate and normalize: filter out null slots and null/negative slot counts
-                            reservedSlots = reservedSlots.stream()
-                                    .filter(slot -> slot != null)
-                                    .filter(slot -> slot.getSlots() != null && slot.getSlots() > 0)
-                                    .collect(Collectors.toList());
-                            
-                            if (!reservedSlots.isEmpty()) {
-                                totalReservedSlots = reservedSlots.stream()
-                                        .mapToInt(ReservedSlot::getSlots)
-                                        .sum();
-                                int currentVacancy = newEventDataDeepCopy.getVacancy();
-                                
-                                // Backend validation: cap reserved slots to available capacity
-                                if (totalReservedSlots > currentVacancy) {
-                                    logger.warn("Reserved slots ({}) exceed vacancy ({}). Capping to available capacity.", 
-                                            totalReservedSlots, currentVacancy);
-                                    // Filter reserved slots to fit within capacity and recompute total
-                                    reservedSlots = capReservedSlotsToCapacity(reservedSlots, currentVacancy);
-                                    totalReservedSlots = reservedSlots.stream()
-                                            .mapToInt(ReservedSlot::getSlots)
-                                            .sum();
-                                }
-                                
-                                int newVacancy = currentVacancy - totalReservedSlots;
-                                newEventDataDeepCopy.setVacancy(newVacancy);
-                                logger.info("Applied {} reserved slots to event. Vacancy reduced from {} to {}",
-                                        totalReservedSlots, currentVacancy, newVacancy);
-                            }
-                        }
-
                         String newEventId = CreateEventHandler.createEvent(newEventDataDeepCopy, transaction);
 
                         logger.info("New event id: {}", newEventId);
                         createdEventIds.add(newEventId);
                         
                         // Track reserved slots for processing after transaction completes
-                        // (Firestore requires all reads before writes, so we can't update eventMetadata here)
+                        List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
                         if (reservedSlots != null && !reservedSlots.isEmpty()) {
                             eventsNeedingReservedSlots.put(newEventId, new ArrayList<>(reservedSlots));
                         }
@@ -206,41 +160,13 @@ public class RecurringEventsCronService {
             String eventId = entry.getKey();
             List<ReservedSlot> reservedSlots = entry.getValue();
             
-            boolean success = false;
-            Exception lastException = null;
-            int maxRetries = 3;
-            
-            // Bounded retry attempts
-            for (int attempt = 1; attempt <= maxRetries && !success; attempt++) {
-                try {
-                    FirebaseService.createFirestoreTransaction(transaction -> {
-                        addReservedSlotsAsAttendees(eventId, reservedSlots, transaction);
-                        return null;
-                    });
-                    success = true;
-                    logger.info("Successfully added reserved slots as attendees for event {} on attempt {}", eventId, attempt);
-                } catch (Exception e) {
-                    lastException = e;
-                    logger.warn("Attempt {}/{} failed to add reserved slots for event {}: {}", 
-                            attempt, maxRetries, eventId, e.getMessage());
-                    if (attempt < maxRetries) {
-                        try {
-                            // Exponential backoff: 100ms, 200ms, 400ms...
-                            Thread.sleep(100L * (1L << (attempt - 1)));
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            // If all retries failed, persist for reconciliation
-            if (!success && lastException != null) {
-                String reconciliationId = persistReservedSlotsReconciliation(eventId, reservedSlots, lastException);
-                logger.error("All {} retry attempts failed to add reserved slots for event {}. " +
-                        "Persisted reconciliation record: {}. Error: {}", 
-                        maxRetries, eventId, reconciliationId, lastException.getMessage(), lastException);
+            try {
+                FirebaseService.createFirestoreTransaction(transaction -> {
+                    ReservedSlotService.processReservedSlots(eventId, reservedSlots, transaction);
+                    return null;
+                });
+            } catch (Exception e) {
+                logger.error("Failed to process reserved slots for event {}: {}", eventId, e.getMessage(), e);
             }
         }
 
@@ -281,191 +207,5 @@ public class RecurringEventsCronService {
         }
     }
 
-    /**
-     * Adds reserved slots as actual attendees in the event metadata purchaserMap.
-     * This makes them visible in the "Manage Attendees" view.
-     * Must be called in its own transaction (separate from event creation).
-     */
-    private static void addReservedSlotsAsAttendees(String eventId, List<ReservedSlot> reservedSlots, Transaction transaction) throws Exception {
-        Firestore db = FirebaseService.getFirestore();
-        DocumentReference eventMetadataDocRef = db.collection(EVENTS_METADATA).document(eventId);
-        
-        // Read first (Firestore requires all reads before writes)
-        EventMetadata eventMetadata = transaction.get(eventMetadataDocRef).get().toObject(EventMetadata.class);
 
-        if (eventMetadata == null) {
-            throw new Exception("Event metadata not found for eventId: " + eventId);
-        }
-
-        Map<String, Purchaser> purchaserMap = eventMetadata.getPurchaserMap();
-        if (purchaserMap == null) {
-            purchaserMap = new HashMap<>();
-        }
-
-        int totalTicketsAdded = 0;
-
-        for (ReservedSlot reservedSlot : reservedSlots) {
-            String email = reservedSlot.getEmail();
-            String name = reservedSlot.getName();
-            Integer slots = reservedSlot.getSlots();
-
-            // Validate required fields (matches frontend addEventAttendee validation)
-            if (email == null || email.trim().isEmpty() || 
-                name == null || name.trim().isEmpty() || 
-                slots == null || slots <= 0) {
-                logger.warn("Skipping invalid reserved slot: {}", reservedSlot);
-                continue;
-            }
-
-            email = email.toLowerCase().trim();
-            name = name.trim();
-
-            String emailHash = getEmailHash(email);
-
-            // Create attendee info
-            Attendee attendee = new Attendee();
-            attendee.setPhone(""); // No phone for reserved slots
-            attendee.setTicketCount(slots);
-
-            // Check if purchaser already exists for this email (aggregation logic)
-            if (purchaserMap.containsKey(emailHash)) {
-                Purchaser existingPurchaser = purchaserMap.get(emailHash);
-                Map<String, Attendee> attendees = existingPurchaser.getAttendees();
-                if (attendees == null) {
-                    attendees = new HashMap<>();
-                }
-                // Add or update attendee under this purchaser
-                if (attendees.containsKey(name)) {
-                    // Same email + same name: aggregate tickets
-                    Attendee existingAttendee = attendees.get(name);
-                    existingAttendee.setTicketCount(existingAttendee.getTicketCount() + slots);
-                } else {
-                    // Same email + different name: add new attendee
-                    attendees.put(name, attendee);
-                }
-                existingPurchaser.setAttendees(attendees);
-                existingPurchaser.setTotalTicketCount(existingPurchaser.getTotalTicketCount() + slots);
-            } else {
-                // Create new purchaser
-                Purchaser purchaser = new Purchaser();
-                purchaser.setEmail(email);
-                Map<String, Attendee> attendees = new HashMap<>();
-                attendees.put(name, attendee);
-                purchaser.setAttendees(attendees);
-                purchaser.setTotalTicketCount(slots);
-                purchaserMap.put(emailHash, purchaser);
-            }
-
-            totalTicketsAdded += slots;
-            logger.info("Added reserved slot as attendee: email={}, name={}, slots={}", email, name, slots);
-        }
-
-        // Write after all reads are done
-        eventMetadata.setPurchaserMap(purchaserMap);
-        eventMetadata.setCompleteTicketCount(eventMetadata.getCompleteTicketCount() + totalTicketsAdded);
-        transaction.set(eventMetadataDocRef, eventMetadata);
-
-        logger.info("Successfully added {} reserved slots ({} tickets) as attendees for event {}", 
-                reservedSlots.size(), totalTicketsAdded, eventId);
-    }
-
-    /**
-     * Computes the email hash matching the frontend getPurchaserEmailHash function.
-     * MD5 hash converted to BigInteger string.
-     */
-    private static String getEmailHash(String email) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(email.getBytes());
-            BigInteger bigInt = new BigInteger(1, digest);
-            return bigInt.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("MD5 algorithm not available", e);
-        }
-    }
-
-    /**
-     * Caps reserved slots to fit within the available capacity.
-     * Processes slots in order, reducing or skipping slots that would exceed capacity.
-     */
-    private static List<ReservedSlot> capReservedSlotsToCapacity(List<ReservedSlot> reservedSlots, int maxCapacity) {
-        List<ReservedSlot> cappedSlots = new ArrayList<>();
-        int remainingCapacity = Math.max(0, maxCapacity);
-
-        for (ReservedSlot slot : reservedSlots) {
-            // Skip null slots or slots with null/non-positive slot counts
-            if (slot == null || slot.getSlots() == null || slot.getSlots() <= 0) {
-                continue;
-            }
-            
-            if (remainingCapacity <= 0) {
-                logger.warn("Skipping reserved slot for {} - no capacity remaining", slot.getEmail());
-                break;
-            }
-
-            int slotsToAdd = Math.min(slot.getSlots(), remainingCapacity);
-            if (slotsToAdd < slot.getSlots()) {
-                logger.warn("Reducing reserved slots for {} from {} to {} due to capacity limit",
-                        slot.getEmail(), slot.getSlots(), slotsToAdd);
-            }
-
-            ReservedSlot cappedSlot = new ReservedSlot();
-            cappedSlot.setEmail(slot.getEmail());
-            cappedSlot.setName(slot.getName());
-            cappedSlot.setSlots(slotsToAdd);
-            cappedSlots.add(cappedSlot);
-
-            remainingCapacity -= slotsToAdd;
-        }
-
-        return cappedSlots;
-    }
-
-    /**
-     * Persists a failed reserved slots operation to a reconciliation collection for later retry/resolution.
-     * This ensures that even if adding reserved slots as attendees fails, the data is not lost
-     * and can be reconciled later.
-     *
-     * @param eventId The event ID that the reserved slots were meant for
-     * @param reservedSlots The list of reserved slots that failed to be added
-     * @param exception The exception that caused the failure
-     * @return The reconciliation document ID for tracking
-     */
-    private static String persistReservedSlotsReconciliation(String eventId, List<ReservedSlot> reservedSlots, Exception exception) {
-        try {
-            Firestore db = FirebaseService.getFirestore();
-            DocumentReference reconciliationDocRef = db.collection("ReservedSlotsReconciliation").document();
-            
-            Map<String, Object> reconciliationData = new HashMap<>();
-            reconciliationData.put("eventId", eventId);
-            reconciliationData.put("status", "PENDING");
-            reconciliationData.put("createdAt", Timestamp.now());
-            reconciliationData.put("errorMessage", exception.getMessage());
-            reconciliationData.put("errorType", exception.getClass().getSimpleName());
-            reconciliationData.put("retryCount", 0);
-            
-            // Convert reserved slots to a list of maps for Firestore storage
-            List<Map<String, Object>> slotsData = new ArrayList<>();
-            for (ReservedSlot slot : reservedSlots) {
-                Map<String, Object> slotMap = new HashMap<>();
-                slotMap.put("email", slot.getEmail());
-                slotMap.put("name", slot.getName());
-                slotMap.put("slots", slot.getSlots());
-                slotsData.add(slotMap);
-            }
-            reconciliationData.put("reservedSlots", slotsData);
-            
-            WriteResult writeResult = reconciliationDocRef.set(reconciliationData).get();
-            logger.info("Persisted reconciliation record {} for event {} at {}", 
-                    reconciliationDocRef.getId(), eventId, writeResult.getUpdateTime());
-            
-            return reconciliationDocRef.getId();
-        } catch (Exception e) {
-            // If we can't even persist the reconciliation record, log everything we can
-            logger.error("CRITICAL: Failed to persist reconciliation record for event {}. " +
-                    "Reserved slots data: {}. Original error: {}. Reconciliation error: {}", 
-                    eventId, reservedSlots, exception.getMessage(), e.getMessage(), e);
-            return "FAILED_TO_PERSIST";
-        }
-    }
 }
