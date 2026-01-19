@@ -51,9 +51,11 @@ const RecurringTemplateDrilldownSettings = ({
     if (currentSlots.length !== originalSlots.length) return true;
     
     for (let i = 0; i < currentSlots.length; i++) {
-      if (currentSlots[i].email !== originalSlots[i].email ||
-          currentSlots[i].name !== originalSlots[i].name ||
-          currentSlots[i].slots !== originalSlots[i].slots) {
+      const currentSlot = currentSlots[i];
+      const originalSlot = originalSlots.find(
+        (s) => s.email === currentSlot.email && s.name === currentSlot.name
+      );
+      if (!originalSlot || currentSlot.slots !== originalSlot.slots) {
         return true;
       }
     }
@@ -112,9 +114,9 @@ const RecurringTemplateDrilldownSettings = ({
   };
 
   return (
-    <div className="space-y-6 max-w-6xl xl:mx-auto">
+    <div className="space-y-6">
       {/* Recurrence Settings Section */}
-      <div className="bg-organiser-light-gray p-10 rounded-3xl">
+      <div className="bg-organiser-light-gray p-6 sm:p-10 rounded-3xl">
         {loading ? (
           <div>
             <LoadingSkeletonBig />
@@ -213,23 +215,27 @@ const RecurringTemplateDrilldownSettings = ({
 
       {/* Reserved Slots Section */}
       {!loading && (
-        <div className="bg-organiser-light-gray p-10 rounded-3xl">
+        <div className="bg-organiser-light-gray p-6 sm:p-10 rounded-3xl">
           <ReservedSlotsForm
             reservedSlots={newRecurrenceData.reservedSlots || []}
             setReservedSlots={handleReservedSlotsChange}
             maxCapacity={capacity}
           />
-          <div className="flex w-full mt-6">
-            <Button
-              variant="light"
-              color="dark"
-              className="ml-auto"
-              onClick={submitNewRecurrenceData}
-              disabled={!hasChanges() || updating}
-            >
-              {updating ? <Spinner /> : <>Save</>}
-            </Button>
-          </div>
+        </div>
+      )}
+
+      {/* Save Button */}
+      {!loading && (
+        <div className="flex w-full">
+          <Button
+            variant="light"
+            color="dark"
+            className="ml-auto"
+            onClick={submitNewRecurrenceData}
+            disabled={!hasChanges() || updating}
+          >
+            {updating ? <Spinner /> : <>Save</>}
+          </Button>
         </div>
       )}
     </div>

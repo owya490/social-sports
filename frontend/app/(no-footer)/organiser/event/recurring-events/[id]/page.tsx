@@ -138,19 +138,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         loading={loading}
       />
       <div className="sm:px-10 sm:pb-10">
-        <RecurringTemplateDrilldownSettings
-          loading={loading}
-          updating={updatingRecurrenceData}
-          newRecurrenceData={newRecurrenceData}
-          originalRecurrenceData={originalRecurrenceData}
-          setNewRecurrenceData={setNewRecurrenceData}
-          startDate={eventStartDate}
-          submitNewRecurrenceData={submitNewRecurrenceData}
-          isRecurrenceEnded={recurrenceEnded}
-          capacity={eventCapacity}
-        />
         <MobileEventDrilldownNavTabs
-          navigationTabs={["Details", "Past Events", "Settings"]}
+          navigationTabs={["Details", "Past Events", "Recurrence", "Settings"]}
           currSidebarPage={currSidebarPage}
           setCurrSidebarPage={setCurrSidebarPage}
         />
@@ -194,6 +183,19 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
               <>
                 <RecurringTemplatePastEvents pastEvents={pastEvents} />
               </>
+            )}
+            {currSidebarPage === "Recurrence" && (
+              <RecurringTemplateDrilldownSettings
+                loading={loading}
+                updating={updatingRecurrenceData}
+                newRecurrenceData={newRecurrenceData}
+                originalRecurrenceData={originalRecurrenceData}
+                setNewRecurrenceData={setNewRecurrenceData}
+                startDate={eventStartDate}
+                submitNewRecurrenceData={submitNewRecurrenceData}
+                isRecurrenceEnded={recurrenceEnded}
+                capacity={eventCapacity}
+              />
             )}
             {currSidebarPage === "Settings" && (
               <>
