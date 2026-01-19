@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
+import com.google.cloud.firestore.WriteResult;
 
 import static com.functions.firebase.services.FirebaseService.CollectionPaths.EVENTS_METADATA;
 
@@ -119,24 +121,34 @@ public class RecurringEventsCronService {
                         List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
                         int totalReservedSlots = 0;
                         if (reservedSlots != null && !reservedSlots.isEmpty()) {
-                            totalReservedSlots = reservedSlots.stream()
-                                    .mapToInt(ReservedSlot::getSlots)
-                                    .sum();
-                            int currentVacancy = newEventDataDeepCopy.getVacancy();
+                            // Validate and normalize: filter out null slots and null/negative slot counts
+                            reservedSlots = reservedSlots.stream()
+                                    .filter(slot -> slot != null)
+                                    .filter(slot -> slot.getSlots() != null && slot.getSlots() > 0)
+                                    .collect(Collectors.toList());
                             
-                            // Backend validation: cap reserved slots to available capacity
-                            if (totalReservedSlots > currentVacancy) {
-                                logger.warn("Reserved slots ({}) exceed vacancy ({}). Capping to available capacity.", 
-                                        totalReservedSlots, currentVacancy);
-                                totalReservedSlots = currentVacancy;
-                                // Filter reserved slots to fit within capacity
-                                reservedSlots = capReservedSlotsToCapacity(reservedSlots, currentVacancy);
+                            if (!reservedSlots.isEmpty()) {
+                                totalReservedSlots = reservedSlots.stream()
+                                        .mapToInt(ReservedSlot::getSlots)
+                                        .sum();
+                                int currentVacancy = newEventDataDeepCopy.getVacancy();
+                                
+                                // Backend validation: cap reserved slots to available capacity
+                                if (totalReservedSlots > currentVacancy) {
+                                    logger.warn("Reserved slots ({}) exceed vacancy ({}). Capping to available capacity.", 
+                                            totalReservedSlots, currentVacancy);
+                                    // Filter reserved slots to fit within capacity and recompute total
+                                    reservedSlots = capReservedSlotsToCapacity(reservedSlots, currentVacancy);
+                                    totalReservedSlots = reservedSlots.stream()
+                                            .mapToInt(ReservedSlot::getSlots)
+                                            .sum();
+                                }
+                                
+                                int newVacancy = currentVacancy - totalReservedSlots;
+                                newEventDataDeepCopy.setVacancy(newVacancy);
+                                logger.info("Applied {} reserved slots to event. Vacancy reduced from {} to {}",
+                                        totalReservedSlots, currentVacancy, newVacancy);
                             }
-                            
-                            int newVacancy = currentVacancy - totalReservedSlots;
-                            newEventDataDeepCopy.setVacancy(newVacancy);
-                            logger.info("Applied {} reserved slots to event. Vacancy reduced from {} to {}",
-                                    totalReservedSlots, currentVacancy, newVacancy);
                         }
 
                         String newEventId = CreateEventHandler.createEvent(newEventDataDeepCopy, transaction);
@@ -193,14 +205,42 @@ public class RecurringEventsCronService {
         for (Map.Entry<String, List<ReservedSlot>> entry : eventsNeedingReservedSlots.entrySet()) {
             String eventId = entry.getKey();
             List<ReservedSlot> reservedSlots = entry.getValue();
-            try {
-                FirebaseService.createFirestoreTransaction(transaction -> {
-                    addReservedSlotsAsAttendees(eventId, reservedSlots, transaction);
-                    return null;
-                });
-            } catch (Exception e) {
-                logger.error("Failed to add reserved slots as attendees for event {}: {}", eventId, e.getMessage(), e);
-                // Continue processing other events even if one fails
+            
+            boolean success = false;
+            Exception lastException = null;
+            int maxRetries = 3;
+            
+            // Bounded retry attempts
+            for (int attempt = 1; attempt <= maxRetries && !success; attempt++) {
+                try {
+                    FirebaseService.createFirestoreTransaction(transaction -> {
+                        addReservedSlotsAsAttendees(eventId, reservedSlots, transaction);
+                        return null;
+                    });
+                    success = true;
+                    logger.info("Successfully added reserved slots as attendees for event {} on attempt {}", eventId, attempt);
+                } catch (Exception e) {
+                    lastException = e;
+                    logger.warn("Attempt {}/{} failed to add reserved slots for event {}: {}", 
+                            attempt, maxRetries, eventId, e.getMessage());
+                    if (attempt < maxRetries) {
+                        try {
+                            // Exponential backoff: 100ms, 200ms, 400ms...
+                            Thread.sleep(100L * (1L << (attempt - 1)));
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // If all retries failed, persist for reconciliation
+            if (!success && lastException != null) {
+                String reconciliationId = persistReservedSlotsReconciliation(eventId, reservedSlots, lastException);
+                logger.error("All {} retry attempts failed to add reserved slots for event {}. " +
+                        "Persisted reconciliation record: {}. Error: {}", 
+                        maxRetries, eventId, reconciliationId, lastException.getMessage(), lastException);
             }
         }
 
@@ -350,9 +390,14 @@ public class RecurringEventsCronService {
      */
     private static List<ReservedSlot> capReservedSlotsToCapacity(List<ReservedSlot> reservedSlots, int maxCapacity) {
         List<ReservedSlot> cappedSlots = new ArrayList<>();
-        int remainingCapacity = maxCapacity;
+        int remainingCapacity = Math.max(0, maxCapacity);
 
         for (ReservedSlot slot : reservedSlots) {
+            // Skip null slots or slots with null/non-positive slot counts
+            if (slot == null || slot.getSlots() == null || slot.getSlots() <= 0) {
+                continue;
+            }
+            
             if (remainingCapacity <= 0) {
                 logger.warn("Skipping reserved slot for {} - no capacity remaining", slot.getEmail());
                 break;
@@ -374,5 +419,53 @@ public class RecurringEventsCronService {
         }
 
         return cappedSlots;
+    }
+
+    /**
+     * Persists a failed reserved slots operation to a reconciliation collection for later retry/resolution.
+     * This ensures that even if adding reserved slots as attendees fails, the data is not lost
+     * and can be reconciled later.
+     *
+     * @param eventId The event ID that the reserved slots were meant for
+     * @param reservedSlots The list of reserved slots that failed to be added
+     * @param exception The exception that caused the failure
+     * @return The reconciliation document ID for tracking
+     */
+    private static String persistReservedSlotsReconciliation(String eventId, List<ReservedSlot> reservedSlots, Exception exception) {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            DocumentReference reconciliationDocRef = db.collection("ReservedSlotsReconciliation").document();
+            
+            Map<String, Object> reconciliationData = new HashMap<>();
+            reconciliationData.put("eventId", eventId);
+            reconciliationData.put("status", "PENDING");
+            reconciliationData.put("createdAt", Timestamp.now());
+            reconciliationData.put("errorMessage", exception.getMessage());
+            reconciliationData.put("errorType", exception.getClass().getSimpleName());
+            reconciliationData.put("retryCount", 0);
+            
+            // Convert reserved slots to a list of maps for Firestore storage
+            List<Map<String, Object>> slotsData = new ArrayList<>();
+            for (ReservedSlot slot : reservedSlots) {
+                Map<String, Object> slotMap = new HashMap<>();
+                slotMap.put("email", slot.getEmail());
+                slotMap.put("name", slot.getName());
+                slotMap.put("slots", slot.getSlots());
+                slotsData.add(slotMap);
+            }
+            reconciliationData.put("reservedSlots", slotsData);
+            
+            WriteResult writeResult = reconciliationDocRef.set(reconciliationData).get();
+            logger.info("Persisted reconciliation record {} for event {} at {}", 
+                    reconciliationDocRef.getId(), eventId, writeResult.getUpdateTime());
+            
+            return reconciliationDocRef.getId();
+        } catch (Exception e) {
+            // If we can't even persist the reconciliation record, log everything we can
+            logger.error("CRITICAL: Failed to persist reconciliation record for event {}. " +
+                    "Reserved slots data: {}. Original error: {}. Reconciliation error: {}", 
+                    eventId, reservedSlots, exception.getMessage(), e.getMessage(), e);
+            return "FAILED_TO_PERSIST";
+        }
     }
 }

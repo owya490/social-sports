@@ -23,6 +23,7 @@ import {
 } from "@/services/src/recurringEvents/recurringEventsService";
 import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
 import { sleep } from "@/utilities/sleepUtil";
+import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -66,6 +67,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
 
   const [newRecurrenceData, setNewRecurrenceData] = useState<NewRecurrenceFormData>(DEFAULT_RECURRENCE_FORM_DATA);
   const [originalRecurrenceData, setOriginalRecurrenceData] = useState<NewRecurrenceFormData | null>(null);
+  const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
+  const [showErrorAlert, setShowErrorAlert] = useState<boolean>(false);
 
   const recurrenceTemplateId: RecurrenceTemplateId = params.id;
   useEffect(() => {
@@ -120,10 +123,19 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
 
   const submitNewRecurrenceData = async () => {
     setUpdatingRecurrenceData(true);
-    await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
-    // Update original data after successful save (deep copy)
-    setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
-    setUpdatingRecurrenceData(false);
+    setShowErrorAlert(false);
+    setShowSuccessAlert(false);
+    try {
+      await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
+      // Update original data after successful save (deep copy)
+      setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
+      setShowSuccessAlert(true);
+    } catch (error) {
+      console.error("Failed to update recurrence data:", error);
+      setShowErrorAlert(true);
+    } finally {
+      setUpdatingRecurrenceData(false);
+    }
   };
 
   return (
@@ -214,6 +226,26 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
             )}
           </div>
         </div>
+      </div>
+
+      {/* Alerts */}
+      <div className="fixed left-4 bottom-4 w-fit z-40">
+        <Alert
+          open={showSuccessAlert}
+          onClose={() => setShowSuccessAlert(false)}
+          color="green"
+          className="mb-16 md:mb-0"
+        >
+          Recurrence settings saved successfully!
+        </Alert>
+        <Alert
+          open={showErrorAlert}
+          onClose={() => setShowErrorAlert(false)}
+          color="red"
+          className="mb-16 md:mb-0"
+        >
+          Failed to save recurrence settings. Please try again.
+        </Alert>
       </div>
     </>
   );

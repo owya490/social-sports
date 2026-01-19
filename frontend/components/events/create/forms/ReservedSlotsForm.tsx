@@ -1,7 +1,10 @@
+"use client";
+
 import { ReservedSlot } from "@/interfaces/RecurringEventTypes";
+import { validateEmail, EMAIL_VALIDATION_ERROR_MESSAGE } from "@/utilities/emailValidationUtils";
 import { TrashIcon, PlusIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { Input } from "@material-tailwind/react";
-import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 interface ReservedSlotsFormProps {
   reservedSlots: ReservedSlot[];
@@ -9,71 +12,66 @@ interface ReservedSlotsFormProps {
   maxCapacity?: number;
 }
 
+interface AddSlotFormData {
+  email: string;
+  name: string;
+  slots: number;
+}
+
 export const ReservedSlotsForm = ({
   reservedSlots,
   setReservedSlots,
   maxCapacity,
 }: ReservedSlotsFormProps) => {
-  const [newEmail, setNewEmail] = useState("");
-  const [newName, setNewName] = useState("");
-  const [newSlots, setNewSlots] = useState<number>(1);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [nameError, setNameError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+    setError,
+  } = useForm<AddSlotFormData>({
+    defaultValues: {
+      email: "",
+      name: "",
+      slots: 1,
+    },
+  });
 
   const totalReservedSlots = reservedSlots.reduce((sum, slot) => sum + slot.slots, 0);
+  const watchedSlots = watch("slots");
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleAddSlot = () => {
-    setEmailError(null);
-    setNameError(null);
-
-    if (!newEmail.trim()) {
-      setEmailError("Email is required");
-      return;
-    }
-
-    if (!validateEmail(newEmail.trim())) {
-      setEmailError("Please enter a valid email address");
-      return;
-    }
-
-    if (!newName.trim()) {
-      setNameError("Name is required");
-      return;
-    }
+  const onAddSlot = (data: AddSlotFormData) => {
+    const trimmedEmail = data.email.trim().toLowerCase();
+    const trimmedName = data.name.trim();
 
     // Check for duplicate email and name combination
     if (
       reservedSlots.some(
         (slot) =>
-          slot.email.toLowerCase() === newEmail.trim().toLowerCase() &&
-          slot.name.toLowerCase() === newName.trim().toLowerCase()
+          slot.email.toLowerCase() === trimmedEmail &&
+          slot.name.toLowerCase() === trimmedName.toLowerCase()
       )
     ) {
-      setEmailError("This email and name combination already has reserved slots");
+      setError("email", { message: "This email and name combination already has reserved slots" });
       return;
     }
 
     // Check capacity
-    if (maxCapacity && totalReservedSlots + newSlots > maxCapacity) {
-      setEmailError(`Cannot exceed event capacity (${maxCapacity} spots)`);
+    if (maxCapacity && totalReservedSlots + data.slots > maxCapacity) {
+      setError("email", { message: `Cannot exceed event capacity (${maxCapacity} spots)` });
       return;
     }
 
     const newSlot: ReservedSlot = {
-      email: newEmail.trim().toLowerCase(),
-      name: newName.trim(),
-      slots: newSlots,
+      email: trimmedEmail,
+      name: trimmedName,
+      slots: data.slots,
     };
 
     setReservedSlots([...reservedSlots, newSlot]);
-    setNewEmail("");
-    setNewName("");
-    setNewSlots(1);
+    reset();
   };
 
   const handleRemoveSlot = (emailToRemove: string, nameToRemove: string) => {
@@ -104,7 +102,15 @@ export const ReservedSlotsForm = ({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleAddSlot();
+      handleSubmit(onAddSlot)();
+    }
+  };
+
+  const handleSlotsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 1) {
+      const max = maxCapacity ? maxCapacity - totalReservedSlots : 99;
+      setValue("slots", Math.min(value, max));
     }
   };
 
@@ -117,69 +123,62 @@ export const ReservedSlotsForm = ({
       </p>
 
       {/* Add new reserved slot */}
-      <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr_auto] gap-2 mb-4 items-end">
-        <div>
-          <Input
-            label="Email Address"
-            crossOrigin={undefined}
-            value={newEmail}
-            onChange={(e) => {
-              setNewEmail(e.target.value);
-              setEmailError(null);
-            }}
-            onKeyDown={handleKeyPress}
-            error={!!emailError}
-            className="rounded-md focus:ring-0"
-            size="lg"
-          />
+      <form onSubmit={handleSubmit(onAddSlot)}>
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr_auto] gap-2 mb-4 items-end">
+          <div>
+            <Input
+              label="Email Address"
+              crossOrigin={undefined}
+              {...register("email", {
+                required: "Email is required",
+                validate: (value) => validateEmail(value) || EMAIL_VALIDATION_ERROR_MESSAGE,
+              })}
+              onKeyDown={handleKeyPress}
+              error={!!errors.email}
+              className="rounded-md focus:ring-0"
+              size="lg"
+            />
+          </div>
+          <div>
+            <Input
+              label="Attendee Name"
+              crossOrigin={undefined}
+              {...register("name", {
+                required: "Name is required",
+                validate: (value) => value.trim().length > 0 || "Name is required",
+              })}
+              onKeyDown={handleKeyPress}
+              error={!!errors.name}
+              className="rounded-md focus:ring-0"
+              size="lg"
+            />
+          </div>
+          <div>
+            <Input
+              label="Slots"
+              crossOrigin={undefined}
+              type="number"
+              value={watchedSlots}
+              onChange={handleSlotsChange}
+              onKeyDown={handleKeyPress}
+              min={1}
+              max={maxCapacity ? maxCapacity - totalReservedSlots : 99}
+              className="rounded-md focus:ring-0"
+              size="lg"
+            />
+          </div>
+          <button
+            type="submit"
+            className="flex items-center justify-center bg-black text-white rounded-lg hover:bg-gray-800 transition-colors h-[42px] w-[42px]"
+          >
+            <PlusIcon className="w-5 h-5" />
+          </button>
         </div>
-        <div>
-          <Input
-            label="Attendee Name"
-            crossOrigin={undefined}
-            value={newName}
-            onChange={(e) => {
-              setNewName(e.target.value);
-              setNameError(null);
-            }}
-            onKeyDown={handleKeyPress}
-            error={!!nameError}
-            className="rounded-md focus:ring-0"
-            size="lg"
-          />
-        </div>
-        <div>
-          <Input
-            label="Slots"
-            crossOrigin={undefined}
-            type="number"
-            value={newSlots}
-            onChange={(e) => {
-              const value = parseInt(e.target.value);
-              if (!isNaN(value) && value >= 1) {
-                const max = maxCapacity ? maxCapacity - totalReservedSlots : 99;
-                setNewSlots(Math.min(value, max));
-              }
-            }}
-            onKeyDown={handleKeyPress}
-            min={1}
-            max={maxCapacity ? maxCapacity - totalReservedSlots : 99}
-            className="rounded-md focus:ring-0"
-            size="lg"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={handleAddSlot}
-          className="flex items-center justify-center bg-black text-white rounded-lg hover:bg-gray-800 transition-colors h-[42px] w-[42px]"
-        >
-          <PlusIcon className="w-5 h-5" />
-        </button>
-      </div>
 
-      {/* Error messages */}
-      {emailError && <div className="text-red-600 text-sm mb-3">{emailError}</div>}
-      {nameError && <div className="text-red-600 text-sm mb-3">{nameError}</div>}
+        {/* Error messages */}
+        {errors.email && <div className="text-red-600 text-sm mb-3">{errors.email.message}</div>}
+        {errors.name && <div className="text-red-600 text-sm mb-3">{errors.name.message}</div>}
+      </form>
 
       {/* Reserved slots list */}
       {reservedSlots.length > 0 && (
