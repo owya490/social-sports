@@ -1,3 +1,5 @@
+"use client";
+
 import { MAX_RECURRENCE_AMOUNT } from "@/components/events/create/forms/RecurringEventsForm";
 import { ReservedSlotsForm } from "@/components/events/create/forms/ReservedSlotsForm";
 import LoadingSkeletonBig from "@/components/loading/LoadingSkeletonBig";
