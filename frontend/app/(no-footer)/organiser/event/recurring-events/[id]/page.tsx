@@ -66,6 +66,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const router = useRouter();
 
   const [newRecurrenceData, setNewRecurrenceData] = useState<NewRecurrenceFormData>(DEFAULT_RECURRENCE_FORM_DATA);
+  const [originalRecurrenceData, setOriginalRecurrenceData] = useState<NewRecurrenceFormData | null>(null);
 
   const recurrenceTemplateId: RecurrenceTemplateId = params.id;
   useEffect(() => {
@@ -89,6 +90,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventFormId(recurrenceTemplate.eventData.formId);
         const newRecurrenceData = extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData);
         setNewRecurrenceData(newRecurrenceData);
+        // Store original data for change detection (deep copy)
+        setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
         setPastEvents(recurrenceTemplate.recurrenceData.pastRecurrences);
         seteventPaused(recurrenceTemplate.eventData.paused);
         setEventPaymentsActive(recurrenceTemplate.eventData.paymentsActive);
@@ -120,6 +123,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const submitNewRecurrenceData = async () => {
     setUpdatingRecurrenceData(true);
     await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
+    // Update original data after successful save (deep copy)
+    setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
     setUpdatingRecurrenceData(false);
   };
 
@@ -137,10 +142,12 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
           loading={loading}
           updating={updatingRecurrenceData}
           newRecurrenceData={newRecurrenceData}
+          originalRecurrenceData={originalRecurrenceData}
           setNewRecurrenceData={setNewRecurrenceData}
           startDate={eventStartDate}
           submitNewRecurrenceData={submitNewRecurrenceData}
           isRecurrenceEnded={recurrenceEnded}
+          capacity={eventCapacity}
         />
         <MobileEventDrilldownNavTabs
           navigationTabs={["Details", "Past Events", "Settings"]}
