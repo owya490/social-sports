@@ -188,6 +188,6 @@ def send_email_on_purchase_event(request_data: PurchaseEventRequest):
         return True
     except Exception as e:
         logger.error(
-            f"Error sending create event email. eventId={request_data.eventId} error={e}"
+            f"Error sending purchase event email. eventId={request_data.eventId} error={e}"
         )
         return False

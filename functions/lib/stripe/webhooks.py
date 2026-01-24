@@ -537,9 +537,10 @@ def fulfilment_workflow_on_ticket_purchase(
             logger, fulfilment_session_id, end_fulfilment_entity_id
         )
 
-    # Send email to purchasing consumer. Retry sending email 3 times, before exiting and completing order. If email breaks, its not the end of the world.
+    # Send email to purchasing consumer. Retry sending email 3 times with exponential backoff, before exiting and completing order. If email breaks, its not the end of the world.
     success = False
-    for _ in range(3):
+    max_retries = 3
+    for attempt in range(max_retries):
         success = send_email_on_purchase_event(
             PurchaseEventRequest(
                 event_id,
@@ -551,10 +552,18 @@ def fulfilment_workflow_on_ticket_purchase(
         )
         if success:
             break
+        
+        # Exponential backoff: wait 1s, 2s, 4s between retries
+        if attempt < max_retries - 1:
+            delay = 2 ** attempt  # 1, 2, 4 seconds
+            logger.info(
+                f"Email send failed for orderId={orderId}, retrying in {delay}s (attempt {attempt + 1}/{max_retries})"
+            )
+            time.sleep(delay)
 
     if not success:
         logger.warning(
-            f"Was unable to send email to {customer_details.email}. orderId={orderId}"
+            f"Was unable to send email to {customer_details.email} after {max_retries} attempts. orderId={orderId}"
         )
 
     record_checkout_session_by_customer_email(
