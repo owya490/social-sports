@@ -553,9 +553,9 @@ def fulfilment_workflow_on_ticket_purchase(
         if success:
             break
         
-        # Exponential backoff: wait 1s, 2s, 4s between retries
+        # Exponential backoff: wait 1s, 2s between retries
         if attempt < max_retries - 1:
-            delay = 2 ** attempt  # 1, 2, 4 seconds
+            delay = 2 ** attempt  # 1, 2 seconds
             logger.info(
                 f"Email send failed for orderId={orderId}, retrying in {delay}s (attempt {attempt + 1}/{max_retries})"
             )
