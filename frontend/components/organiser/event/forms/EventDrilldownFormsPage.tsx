@@ -1,12 +1,13 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";
-import { EventData, EventMetadata } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData, EventMetadata } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
 import { Timestamp } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormResponsesTable } from "./FormResponsesTable";
 
@@ -79,7 +80,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
   const [formId, setFormId] = useState<FormId | null>(null);
   const [form, setForm] = useState<Form | null>(null);
   const [attachingForm, setAttachingForm] = useState(false);
-
+  const router = useRouter();
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
       setAttachingForm(true);
@@ -123,6 +124,11 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
         let formId: FormId | null = null;
 
         const eventData: EventData = await getEventById(eventId);
+        if (eventData.organiserId !== user.userId) {
+          setError("You are not authorised to view this event");
+          router.push("/organiser/dashboard");
+          return EmptyEventData;
+        }
         if (eventData.formId) {
           formId = eventData.formId as FormId;
           setFormId(eventData.formId);
