@@ -83,6 +83,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
   const [attachingForm, setAttachingForm] = useState(false);
   const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
 
+  // useCallback is required here to prevent infinite loops in the useEffect below
   const fetchResponses = useCallback(async () => {
     try {
       setLoading(true);

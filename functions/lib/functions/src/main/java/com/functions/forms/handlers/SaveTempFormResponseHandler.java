@@ -41,7 +41,7 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
 
         if (maybeFormResponseId.isPresent()) {
             String formResponseId = maybeFormResponseId.get();
-            logger.info("Form response saved successfully with ID: {}", formResponseId);
+            logger.info("Temporary form response saved successfully with ID: {}", formResponseId);
             return new SaveTempFormResponseResponse(formResponseId);
         } else {
             logger.error("Failed to save form response for formId: {}, eventId: {}",
@@ -70,6 +70,9 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
                 formResponseId = UUID.randomUUID().toString();
                 formResponse.setFormResponseId(formResponseId);
             }
+
+            // Clear the submission time for temp form responses
+            formResponse.setSubmissionTime(null);
 
             // Save to temp collection
             FormsRepository.saveTempFormResponse(formResponse);
