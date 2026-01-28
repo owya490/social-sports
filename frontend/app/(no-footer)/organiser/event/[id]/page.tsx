@@ -13,7 +13,7 @@ import { EventDrilldownImagesPage } from "@/components/organiser/event/images/Ev
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
@@ -68,6 +68,10 @@ export default function EventPage({ params }: EventPageProps) {
   useEffect(() => {
     getEventById(eventId)
       .then((event) => {
+        if (event.organiserId !== user.userId) {
+          router.push("/organiser/dashboard");
+          return EmptyEventData;
+        }
         setEventData(event);
         setEventName(event.name);
         setEventStartDate(event.startDate);
