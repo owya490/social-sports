@@ -44,6 +44,14 @@ const RecurringTemplateDrilldownSidePanel = ({
         </div>
         <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
+            currSidebarPage === "Recurrence" ? "bg-white" : ""
+          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          onClick={() => setCurrSidebarPage("Recurrence")}
+        >
+          Recurrence
+        </div>
+        <div
+          className={`text-organiser-dark-gray-text font-bold text-md ${
             currSidebarPage === "Settings" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
           onClick={() => setCurrSidebarPage("Settings")}

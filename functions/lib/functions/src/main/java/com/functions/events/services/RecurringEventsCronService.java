@@ -18,6 +18,7 @@ import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
+import com.functions.events.models.ReservedSlot;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
@@ -45,6 +46,9 @@ public class RecurringEventsCronService {
         List<String> moveToInactiveRecurringEvents = new ArrayList<>();
 
         List<String> createdEventIds = new ArrayList<>();
+        
+        // Track events that need reserved slots processed (after main transaction)
+        Map<String, List<ReservedSlot>> eventsNeedingReservedSlots = new HashMap<>();
 
         for (String recurrenceTemplateId : activeRecurrenceTemplateIds) {
 
@@ -67,7 +71,21 @@ public class RecurringEventsCronService {
                 List<Timestamp> allRecurrences = recurrenceData.getAllRecurrences();
 
                 if (createEventWorkflow) {
-                    allRecurrences = List.of(allRecurrences.get(0));
+                    // Find the first recurrence that hasn't been created yet
+                    Timestamp nextUncreatedRecurrence = null;
+                    for (Timestamp ts : allRecurrences) {
+                        String tsString = TimeUtils.getTimestampStringFromTimezone(ts, ZoneId.of("Australia/Sydney"));
+                        if (!pastRecurrences.containsKey(tsString)) {
+                            nextUncreatedRecurrence = ts;
+                            break;
+                        }
+                    }
+                    if (nextUncreatedRecurrence != null) {
+                        allRecurrences = List.of(nextUncreatedRecurrence);
+                    } else {
+                        logger.info("All recurrences already created for template: {}", recurrenceTemplateId);
+                        allRecurrences = List.of(); // Empty list - nothing to create
+                    }
                 }
 
                 for (Timestamp recurrenceTimestamp : allRecurrences) {
@@ -86,9 +104,17 @@ public class RecurringEventsCronService {
                         Timestamp newRegistrationDeadline = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventDeadlineDeltaMillis) * 1000);
                         newEventDataDeepCopy.setEndDate(newEndDate);
                         newEventDataDeepCopy.setRegistrationDeadline(newRegistrationDeadline);
+
                         String newEventId = CreateEventHandler.createEvent(newEventDataDeepCopy, transaction);
+
                         logger.info("New event id: {}", newEventId);
                         createdEventIds.add(newEventId);
+                        
+                        // Track reserved slots for processing after transaction completes
+                        List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
+                        if (reservedSlots != null && !reservedSlots.isEmpty()) {
+                            eventsNeedingReservedSlots.put(newEventId, new ArrayList<>(reservedSlots));
+                        }
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
 
                         // Update custom event links references
@@ -129,8 +155,22 @@ public class RecurringEventsCronService {
             });
         }
 
-        for (
-                String recurringEventId : moveToInactiveRecurringEvents) {
+        // Process reserved slots in separate transactions (after event creation transactions complete)
+        for (Map.Entry<String, List<ReservedSlot>> entry : eventsNeedingReservedSlots.entrySet()) {
+            String eventId = entry.getKey();
+            List<ReservedSlot> reservedSlots = entry.getValue();
+            
+            try {
+                FirebaseService.createFirestoreTransaction(transaction -> {
+                    ReservedSlotService.processReservedSlots(eventId, reservedSlots, transaction);
+                    return null;
+                });
+            } catch (Exception e) {
+                logger.error("Failed to process reserved slots for event {}: {}", eventId, e.getMessage(), e);
+            }
+        }
+
+        for (String recurringEventId : moveToInactiveRecurringEvents) {
             FirebaseService.createFirestoreTransaction(transaction -> {
                 moveRecurringEventToInactive(recurringEventId, transaction);
                 return null;
@@ -166,4 +206,6 @@ public class RecurringEventsCronService {
             logger.error("Unable to move Recurrence Template {}", recurrenceId, e);
         }
     }
+
+
 }
