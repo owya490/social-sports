@@ -75,7 +75,7 @@ const getAnswerDisplay = (section: FormSection | undefined): string => {
 
 const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownFormsPageProps) => {
   const logger = new Logger("EventDrilldownFormsPageLogger");
-  const { user } = useUser();
+  const { user, userLoading } = useUser();
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +84,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
   const [attachingForm, setAttachingForm] = useState(false);
   const router = useRouter();
   const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
+  const [organiserEmail, setOrganiserEmail] = useState<string>("");
 
   // useCallback is required here to prevent infinite loops in the useEffect below
   const fetchResponses = useCallback(async () => {
@@ -94,6 +95,15 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
       let currentFormId: FormId | null = null;
 
       const eventData: EventData = await getEventById(eventId);
+      if (userLoading || !user.userId) {
+        return;
+      }
+      const email =
+        eventData.organiser?.publicContactInformation?.email || user.contactInformation?.email || "";
+      setOrganiserEmail(email);
+      if (!email) {
+        logger.warn(`Organiser email not found for event ${eventId}, organiserId: ${eventData.organiserId}`);
+      }
       if (eventData.organiserId !== user.userId) {
         setError("You are not authorised to view this event");
         router.push("/organiser/dashboard");
@@ -121,7 +131,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     } finally {
       setLoading(false);
     }
-  }, [eventId, user.userId, router]);
+  }, [eventId, user.userId, userLoading, router]);
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
       setAttachingForm(true);
@@ -265,8 +275,9 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     });
 
     const purchaserInfo = formResponseToPurchaser.get(response.formResponseId);
-    row.purchaserName = purchaserInfo?.name || "—";
-    row.purchaserEmail = purchaserInfo?.email || "—";
+    const manualSubmissionText = `manual submission for ${organiserEmail}`;
+    row.purchaserName = purchaserInfo?.name || manualSubmissionText;
+    row.purchaserEmail = purchaserInfo?.email || manualSubmissionText;
     row.submissionTime = formatTimestamp(response.submissionTime);
 
     return row;
@@ -305,6 +316,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
         eventId={eventId}
         eventMetadata={eventMetadata}
         showPurchaserColumn={true}
+        organiserEmail={organiserEmail}
       />
 
       <AddFormResponseDialog
