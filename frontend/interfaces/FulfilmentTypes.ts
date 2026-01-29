@@ -174,7 +174,6 @@ export type GetFulfilmentSessionInfoResponse = {
   currentEntityIndex: number | null;
   fulfilmentSessionStartTime: Timestamp;
 };
-
 /**
  * Payload we send to java completeFulfilmentSession function
  */
@@ -186,3 +185,4 @@ export type CompleteFulfilmentSessionRequest = {
    */
   fulfilmentEntityId: FulfilmentEntityId;
 };
+
