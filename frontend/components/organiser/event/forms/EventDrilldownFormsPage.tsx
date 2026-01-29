@@ -190,6 +190,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
         )}
         <button
           onClick={() => setIsAddFormResponseDialogOpen(true)}
+          aria-label="Add Form Answers"
           className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-2 md:px-4 py-1.5 md:py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
         >
           <PlusIcon className="md:mr-2 h-5 w-5" />

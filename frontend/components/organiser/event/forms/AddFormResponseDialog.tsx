@@ -1,7 +1,9 @@
+"use client";
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
+import { Logger } from "@/observability/logger";
 import { submitManualFormResponse } from "@/services/src/forms/formsServices";
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
@@ -15,6 +17,8 @@ interface AddFormResponseDialogProps {
   eventId: EventId;
   refreshResponses: () => void;
 }
+
+const logger = new Logger("AddFormResponseDialogLogger");
 
 const AddFormResponseDialog = ({ isOpen, onClose, formId, eventId, refreshResponses }: AddFormResponseDialogProps) => {
   const formResponderRef = useRef<FormResponderRef>(null);
@@ -34,13 +38,16 @@ const AddFormResponseDialog = ({ isOpen, onClose, formId, eventId, refreshRespon
       setSaving(true);
       setError(null);
       const savedId = await formResponderRef.current.save();
-      if (savedId) {
-        await submitManualFormResponse(formId, eventId, savedId);
+      if (!savedId) {
+        logger.error("Failed to save form response: save() returned null");
+        setError("Failed to save form response. Please try again.");
+        return;
       }
+      await submitManualFormResponse(formId, eventId, savedId);
       refreshResponses();
       onClose();
     } catch (err: any) {
-      console.error("Failed to save form response:", err);
+      logger.error(`Failed to save form response: ${err}`);
       setError(`Failed to save form response. ${err.message || "Please try again."}`);
     } finally {
       setSaving(false);
@@ -80,7 +87,9 @@ const AddFormResponseDialog = ({ isOpen, onClose, formId, eventId, refreshRespon
                     Add Manual Form Response
                   </DialogTitle>
                   <button
+                    type="button"
                     onClick={onClose}
+                    aria-label="Close dialog"
                     className="p-1 hover:bg-gray-100 rounded-full transition-colors focus:outline-none"
                   >
                     <XMarkIcon className="w-6 h-6 text-gray-500" />
