@@ -2,46 +2,88 @@
 
 import { BackButton } from "@/components/organiser/wrapped/BackButton";
 import { ProgressIndicator } from "@/components/organiser/wrapped/ProgressIndicator";
-import { EventsCreatedSection } from "@/components/organiser/wrapped/sections/EventsCreatedSection";
-import { EventViewsSection } from "@/components/organiser/wrapped/sections/EventViewsSection";
-import { FeesSavedSection } from "@/components/organiser/wrapped/sections/FeesSavedSection";
-import { HeroSection } from "@/components/organiser/wrapped/sections/HeroSection";
-import { MostPopularEventSection } from "@/components/organiser/wrapped/sections/MostPopularEventSection";
 import { ShareSection } from "@/components/organiser/wrapped/sections/ShareSection";
-import { TicketsSoldSection } from "@/components/organiser/wrapped/sections/TicketsSoldSection";
-import { TimeSavedSection } from "@/components/organiser/wrapped/sections/TimeSavedSection";
-import { TopAttendeesSection } from "@/components/organiser/wrapped/sections/TopAttendeesSection";
-import { TotalSalesSection } from "@/components/organiser/wrapped/sections/TotalSalesSection";
-import { mockWrappedData } from "@/interfaces/WrappedTypes";
+import { WrappedContent } from "@/components/organiser/wrapped/WrappedContent";
+import { WrappedError } from "@/components/organiser/wrapped/WrappedError";
+import { WrappedLoading } from "@/components/organiser/wrapped/WrappedLoading";
+import { useUser } from "@/components/utility/UserContext";
+import { SportshubWrapped } from "@/interfaces/WrappedTypes";
+import { Logger } from "@/observability/logger";
+import { getWrappedData } from "@/services/src/wrapped/wrappedServices";
+import { useEffect, useState } from "react";
+
+const WRAPPED_YEAR = 2025;
+const MIN_LOADING_TIME_MS = 10000;
+
+const wrappedPageLogger = new Logger("wrappedPageLogger");
 
 export default function WrappedPage() {
-  // In production, this would come from props or a data fetch
-  const data = mockWrappedData;
+  const { user } = useUser();
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<SportshubWrapped | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchWrappedData = async () => {
+      if (!user.userId) {
+        return;
+      }
+
+      const startTime = Date.now();
+
+      try {
+        wrappedPageLogger.info(`Fetching wrapped data for user: ${user.userId}`);
+        const wrappedData = await getWrappedData(user.userId, WRAPPED_YEAR);
+        setData(wrappedData);
+        wrappedPageLogger.info(`Successfully fetched wrapped data for user: ${user.userId}`);
+      } catch (err) {
+        wrappedPageLogger.error(`Failed to fetch wrapped data: ${err}`);
+        setError("Failed to load your wrapped data. Please try again later.");
+      } finally {
+        const elapsed = Date.now() - startTime;
+        const remainingTime = Math.max(0, MIN_LOADING_TIME_MS - elapsed);
+
+        setTimeout(() => {
+          setIsLoading(false);
+        }, remainingTime);
+      }
+    };
+
+    fetchWrappedData();
+  }, []);
+
+  if (isLoading || !data) {
+    return <WrappedLoading />;
+  }
+
+  if (error) {
+    return (
+      <WrappedError
+        message={error}
+        linkHref="/organiser/dashboard"
+        linkText="Return to Dashboard"
+        className="-mt-[var(--navbar-height)]"
+      />
+    );
+  }
 
   return (
-    <main id="wrapped-container" className="bg-white -mt-[var(--navbar-height)]">
-      <BackButton />
-      <ProgressIndicator />
-
-      <HeroSection organiserName={data.organiserName} year={data.year} dateRange={data.dateRange} />
-
-      <EventsCreatedSection eventsCreated={data.eventsCreated} />
-
-      <TicketsSoldSection ticketsSold={data.ticketsSold} />
-
-      <TotalSalesSection totalSales={data.totalSales} />
-
-      <EventViewsSection totalEventViews={data.totalEventViews} />
-
-      <TopAttendeesSection topRegularAttendees={data.topRegularAttendees} />
-
-      <MostPopularEventSection mostPopularEvent={data.mostPopularEvent} />
-
-      <TimeSavedSection minutesSavedBookkeeping={data.minutesSavedBookkeeping} />
-
-      <FeesSavedSection feesSavedVsEventbrite={data.feesSavedVsEventbrite} />
-
-      <ShareSection organiserName={data.organiserName} year={data.year} wrappedId={data.wrappedId} />
-    </main>
+    <WrappedContent
+      data={data}
+      className="-mt-[var(--navbar-height)]"
+      headerElements={
+        <>
+          <BackButton />
+          <ProgressIndicator />
+        </>
+      }
+      footerSection={
+        <ShareSection
+          organiserName={data.organiserName || "Organiser"}
+          year={data.year || WRAPPED_YEAR}
+          wrappedId={data.wrappedId || ""}
+        />
+      }
+    />
   );
 }

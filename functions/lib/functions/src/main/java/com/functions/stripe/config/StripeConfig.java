@@ -16,7 +16,7 @@ public class StripeConfig {
     private static final Logger logger = LoggerFactory.getLogger(StripeConfig.class);
 
     // Feature flag for easily gating Java implementation of Python Stripe functionality.
-    public static final boolean JAVA_STRIPE_ENABLED = false;
+    public static final boolean JAVA_STRIPE_ENABLED = true;
 
     public static final String ERROR_URL = "/error";
     public static final String CURRENCY = "aud";
@@ -25,7 +25,9 @@ public class StripeConfig {
     private static final Set<String> SPORTSHUB_FEE_ACCOUNTS = Set.of(
         "obodlRDZycR062927qTjsah0FHr2", // Acers Prod
         "PT57cJxfbdRXOQgJH2nAs6cZnFH3", // OneU (Ricky Tang) Prod
-        "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2" // Owen Dev
+        "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", // Owen Dev
+        "tihrtHXNCKVkYpmJIVijKDWkkvq2", // Syrio Volleyball
+        "J7wsz3TTK1ddhJPZFlDRIc10siw1" // Lynx Volleyball
     );
 
     private static final double SPORTSHUB_FEE_PERCENTAGE = 0.01; // 1%

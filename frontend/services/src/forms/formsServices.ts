@@ -9,12 +9,18 @@ import {
   SaveTempFormResponseRequest,
   SaveTempFormResponseResponse,
 } from "@/interfaces/FormTypes";
+import {
+  FulfilmentEntityId,
+  FulfilmentSessionId,
+  UpdateFulfilmentEntityWithFormResponseIdRequest,
+} from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { PrivateUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
+import { fulfilmentServiceLogger } from "../fulfilment/fulfilmentServices";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormResponsePaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
@@ -383,6 +389,39 @@ export async function submitManualFormResponse(
   } catch (error) {
     formsServiceLogger.error(
       `submitManualFormResponse: Failed to submit manual form response. formId: ${formId}, eventId: ${eventId}, formResponseId: ${formResponseId}, error: ${error}`
+    );
+    throw error;
+  }
+}
+
+export async function updateFulfilmentEntityWithFormResponseId(
+  fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentEntityId: FulfilmentEntityId,
+  formResponseId: FormResponseId
+): Promise<void> {
+  fulfilmentServiceLogger.info(
+    `updateFulfilmentEntityWithFormResponseId: Updating fulfilment entity with form response ID for session ID: ${fulfilmentSessionId}, entity ID: ${fulfilmentEntityId}, form response ID: ${formResponseId}`
+  );
+
+  const request: UpdateFulfilmentEntityWithFormResponseIdRequest = {
+    fulfilmentSessionId,
+    fulfilmentEntityId,
+    formResponseId,
+  };
+
+  try {
+    const response = await executeGlobalAppControllerFunction<UpdateFulfilmentEntityWithFormResponseIdRequest, void>(
+      EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
+      request
+    );
+
+    fulfilmentServiceLogger.info(
+      `updateFulfilmentEntityWithFormResponseId: Successfully updated fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with formResponseId: ${formResponseId}`
+    );
+    return response;
+  } catch (error) {
+    fulfilmentServiceLogger.error(
+      `updateFulfilmentEntityWithFormResponseId: Failed to update fulfilment entity ${fulfilmentEntityId} in fulfilmentSession ${fulfilmentSessionId} with form response ID ${formResponseId}: ${error}`
     );
     throw error;
   }

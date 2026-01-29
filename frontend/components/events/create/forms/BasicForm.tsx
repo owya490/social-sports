@@ -9,6 +9,7 @@ import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/strip
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
+import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
@@ -43,6 +44,7 @@ export type BasicData = {
   lng: number;
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
+  waitlistEnabled: boolean;
   eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
 };
@@ -82,6 +84,7 @@ export function BasicInformation({
   user,
   stripeFeeToCustomer,
   promotionalCodesEnabled,
+  waitlistEnabled,
   eventLink,
   newRecurrenceData,
   updateField,
@@ -183,6 +186,12 @@ export function BasicInformation({
     });
   };
 
+  const handleWaitlistEnabledChange = (value: string) => {
+    updateField({
+      waitlistEnabled: value === "Yes",
+    });
+  };
+
   const [customAmount, setCustomAmount] = useState(centsToDollars(price));
 
   const handleCustomAmountChange = (amount: number) => {
@@ -257,7 +266,15 @@ export function BasicInformation({
   ]);
 
   const handlePaymentsActiveChange = (paymentsActive: string) => {
-    updateField({ paymentsActive: paymentsActive.toLowerCase() === "true" });
+    const isActive = paymentsActive.toLowerCase() === "true";
+    updateField({ 
+      paymentsActive: isActive,
+      // Reset payment-related fields when payments are disabled
+      ...(!isActive && {
+        stripeFeeToCustomer: false,
+        promotionalCodesEnabled: false
+      })
+    });
   };
 
   return (
@@ -562,7 +579,7 @@ export function BasicInformation({
                   }}
                 />
               </div>
-              {user.stripeAccountActive && (
+              {user.stripeAccountActive && paymentsActive && (
                 <>
                   <div>
                     <label className="text-black text-lg font-semibold">
@@ -612,6 +629,31 @@ export function BasicInformation({
                       </Select>
                     </div>
                   </div>
+                  {WAITLIST_ENABLED && (
+                    <div>
+                      <label className="text-black text-lg font-semibold">
+                        Do you want to enable Waitlists for this Event?
+                      </label>
+                      <p className="text-sm mb-5 mt-2">
+                        Selecting &quot;Yes&quot; will mean customers will be able to join a waitlist for this event
+                        when the event is sold out. They will receive an email when a ticket becomes available.
+                      </p>
+                      <div className="mt-4">
+                        <Select
+                          size="md"
+                          label="Waitlist Enabled"
+                          value={waitlistEnabled ? "Yes" : "No"}
+                          onChange={(e) => {
+                            const value = e || "Yes";
+                            handleWaitlistEnabledChange(value);
+                          }}
+                        >
+                          <Option value="Yes">Yes</Option>
+                          <Option value="No">No</Option>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </>

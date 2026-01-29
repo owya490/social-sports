@@ -2,12 +2,13 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
-import { FormId, FormResponse, FormSection, FormSectionType, FormTitle } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import AddFormResponseDialog from "./AddFormResponseDialog";
 import { FormResponsesTable } from "./FormResponsesTable";
@@ -79,8 +80,9 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formId, setFormId] = useState<FormId | null>(null);
-  const [formTitle, setFormTitle] = useState<FormTitle | null>(null);
+  const [form, setForm] = useState<Form | null>(null);
   const [attachingForm, setAttachingForm] = useState(false);
+  const router = useRouter();
   const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
 
   // useCallback is required here to prevent infinite loops in the useEffect below
@@ -92,19 +94,24 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
       let currentFormId: FormId | null = null;
 
       const eventData: EventData = await getEventById(eventId);
+      if (eventData.organiserId !== user.userId) {
+        setError("You are not authorised to view this event");
+        router.push("/organiser/dashboard");
+        return;
+      }
       if (eventData.formId) {
         currentFormId = eventData.formId as FormId;
         setFormId(eventData.formId);
       } else {
         setFormId(null);
-        setFormTitle(null);
+        setForm(null);
         setLoading(false);
         return;
       }
 
       // Fetch form details to get the title
       const form = await getForm(currentFormId);
-      setFormTitle(form.title);
+      setForm(form);
 
       const formResponse = await getFormResponsesForEvent(currentFormId, eventId);
       setFormResponses(formResponse);
@@ -114,8 +121,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
-
+  }, [eventId, user.userId, router]);
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
       setAttachingForm(true);
@@ -127,7 +133,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
       if (!selectedFormId) {
         // Detach form: clear local state
         setFormId(null);
-        setFormTitle(null);
+        setForm(null);
         setFormResponses([]);
         return;
       }
@@ -137,7 +143,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
 
       // Fetch form details to get the title
       const form = await getForm(selectedFormId);
-      setFormTitle(form.title);
+      setForm(form);
 
       // Fetch responses for the newly attached form
       const formResponse = await getFormResponsesForEvent(selectedFormId, eventId);
@@ -182,7 +188,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     <div className="flex items-center justify-between mb-4 px-1 md:px-0">
       <div>
         <h1 className="text-2xl font-extrabold mb-1">Form Responses</h1>
-        {formTitle && <p className="text-sm text-gray-400 line-clamp-1">Form: {formTitle}</p>}
+        {form && <p className="text-sm text-gray-400 line-clamp-1">Form: {form.title}</p>}
       </div>
       <div className="flex items-center gap-2">
         {formResponses.length > 0 && (
@@ -294,6 +300,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
 
       <FormResponsesTable
         formResponses={formResponses}
+        form={form!}
         formId={formId!}
         eventId={eventId}
         eventMetadata={eventMetadata}

@@ -46,6 +46,7 @@ interface AbstractEventData {
   eventLink: string;
   formId: FormId | null;
   hideVacancy: boolean; // should default to false
+  waitlistEnabled: boolean; // should default to true
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -97,6 +98,7 @@ export const EmptyEventData: EventData = {
   eventLink: "",
   formId: null,
   hideVacancy: false,
+  waitlistEnabled: true,
 };
 
 export interface EventMetadata {

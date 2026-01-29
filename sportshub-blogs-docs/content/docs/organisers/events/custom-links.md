@@ -2,7 +2,7 @@
 title: Custom Links
 weight: 3
 prev: /docs/organiser/events/recurring-events
-next: /docs/organiser/events
+next: /docs/organiser/event-collections
 ---
 
 ## Overview

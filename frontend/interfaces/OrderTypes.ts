@@ -1,6 +1,12 @@
 import { Timestamp } from "firebase/firestore";
 import { OrderId, TicketId } from "./EventTypes";
 
+export enum OrderAndTicketStatus {
+  APPROVED = "APPROVED",
+  PENDING = "PENDING",
+  REJECTED = "REJECTED",
+}
+
 export interface Order {
   orderId: OrderId;
   applicationFees: number;
@@ -10,6 +16,8 @@ export interface Order {
   fullName: string;
   phone: string;
   tickets: TicketId[];
+  stripePaymentIntentId: string;
+  status: OrderAndTicketStatus;
 }
 
 export const EMPTY_ORDER: Order = {
@@ -21,6 +29,8 @@ export const EMPTY_ORDER: Order = {
   fullName: "",
   phone: "",
   tickets: [],
+  stripePaymentIntentId: "",
+  status: OrderAndTicketStatus.APPROVED,
 };
 
 export const OrdersCollectionPath = "Orders";

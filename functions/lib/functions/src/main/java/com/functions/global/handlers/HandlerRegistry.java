@@ -14,6 +14,8 @@ import com.functions.fulfilment.handlers.InitFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.UpdateFulfilmentEntityWithFormResponseIdHandler;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.Handler;
+import com.functions.wrapped.handlers.GetWrappedHandler;
+import com.functions.waitlist.handlers.UpdateFulfilmentEntityWithWaitlistDataHandler;
 
 /**
  * Registry for mapping endpoint types to their corresponding handler implementations.
@@ -32,6 +34,8 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_FULFILMENT_SESSION_INFO, new GetFulfilmentSessionInfoHandler());
         handlers.put(EndpointType.GET_FULFILMENT_ENTITY_INFO, new GetFulfilmentEntityInfoHandler());
         handlers.put(EndpointType.COMPLETE_FULFILMENT_SESSION, new CompleteFulfilmentSessionHandler());
+        handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED, new GetWrappedHandler());
+        handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA, new UpdateFulfilmentEntityWithWaitlistDataHandler()); 
     }
 
     /**

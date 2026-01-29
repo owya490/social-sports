@@ -13,7 +13,7 @@ import { EventDrilldownImagesPage } from "@/components/organiser/event/images/Ev
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
@@ -56,6 +56,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
+  const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
@@ -67,6 +68,10 @@ export default function EventPage({ params }: EventPageProps) {
   useEffect(() => {
     getEventById(eventId)
       .then((event) => {
+        if (event.organiserId !== user.userId) {
+          router.push("/organiser/dashboard");
+          return EmptyEventData;
+        }
         setEventData(event);
         setEventName(event.name);
         setEventStartDate(event.startDate);
@@ -90,8 +95,10 @@ export default function EventPage({ params }: EventPageProps) {
         setEventIsActive(event.isActive);
         setEventFormId(event.formId);
         setEventHideVacancy(event.hideVacancy);
+        setEventWaitlistEnabled(event.waitlistEnabled);
+        return event;
       })
-      .then(() => {
+      .then((event) => {
         getEventsMetadataByEventId(eventId).then((eventMetadata) => {
           setEventMetadata(eventMetadata);
           calculateNetSales(eventMetadata)
@@ -100,7 +107,7 @@ export default function EventPage({ params }: EventPageProps) {
             })
             .catch((error) => {
               eventServiceLogger.error(`Error calculating net sales: ${error}`);
-              setTotalNetSales(eventMetadata.completeTicketCount * eventPrice);
+              setTotalNetSales(eventMetadata.completeTicketCount * event.price);
             });
         });
       })
@@ -208,6 +215,8 @@ export default function EventPage({ params }: EventPageProps) {
                 setPromotionalCodesEnabled={setEventPromotionalCodesEnabled}
                 hideVacancy={eventHideVacancy}
                 setHideVacancy={setEventHideVacancy}
+                waitlistEnabled={eventWaitlistEnabled}
+                setWaitlistEnabled={setEventWaitlistEnabled}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

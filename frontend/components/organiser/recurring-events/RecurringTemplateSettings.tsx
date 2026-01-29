@@ -2,6 +2,7 @@
 import { LabelledSwitch } from "@/components/elements/LabelledSwitch";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
+import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { Spinner } from "@material-tailwind/react";
 import { useState } from "react";
 
@@ -15,6 +16,8 @@ interface RecurringTemplateSettingsProps {
   setPromotionalCodesEnabled: (event: boolean) => void;
   hideVacancy: boolean;
   setHideVacancy: (event: boolean) => void;
+  waitlistEnabled: boolean;
+  setWaitlistEnabled: (event: boolean) => void;
 }
 
 export const RecurringTemplateSettings = ({
@@ -27,6 +30,8 @@ export const RecurringTemplateSettings = ({
   setPromotionalCodesEnabled,
   hideVacancy,
   setHideVacancy,
+  waitlistEnabled,
+  setWaitlistEnabled,
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   return (
@@ -102,6 +107,25 @@ export const RecurringTemplateSettings = ({
             }
           }}
         />
+        {WAITLIST_ENABLED && (
+          <LabelledSwitch
+            title={"Enable Waitlist"}
+            description={"Enable to allow customers to join a waitlist for this event."}
+            state={waitlistEnabled}
+            setState={setWaitlistEnabled}
+            updateData={async (event: boolean) => {
+              setLoading(true);
+              const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+                waitlistEnabled: event,
+              });
+              if (success) {
+                setLoading(false);
+              } else {
+                window.location.reload();
+              }
+            }}
+          />
+        )}
       </div>
       {loading && (
         <div className="bg-core-hover opacity-50 top-0 absolute h-full w-full flex justify-center items-center">

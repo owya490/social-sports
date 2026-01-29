@@ -35,12 +35,30 @@ const EventDrilldownManageAttendeesPage = ({
     .filter(({ attendeeDetailsObj }) => attendeeDetailsObj.ticketCount > 0)
     .sort((a, b) => a.attendeeName.localeCompare(b.attendeeName));
 
-  const allAttendeesCsvData = sortedAttendeeEntries.map(({ attendeeName, attendeeDetailsObj, purchaser }) => ({
-    "Ticket Count": attendeeDetailsObj.ticketCount,
-    "Attendee Name": attendeeName,
-    Email: purchaser.email,
-    "Phone Number": attendeeDetailsObj.phone ? `'${attendeeDetailsObj.phone}` : "N/A",
-  }));
+  const allAttendeesCsvData = sortedAttendeeEntries.flatMap(({ attendeeName, attendeeDetailsObj, purchaser }) => {
+    const rows = [
+      {
+        "Ticket Count": `${attendeeDetailsObj.ticketCount}`,
+        "Attendee Name": attendeeName,
+        Email: purchaser.email,
+        "Phone Number": attendeeDetailsObj.phone ? `'${attendeeDetailsObj.phone}` : "N/A",
+      },
+    ];
+
+    // Add additional rows for tickets beyond the first one
+    if (attendeeDetailsObj.ticketCount > 1) {
+      for (let i = 1; i < attendeeDetailsObj.ticketCount; i++) {
+        rows.push({
+          "Ticket Count": "",
+          "Attendee Name": `${attendeeName} +${i}`,
+          Email: purchaser.email,
+          "Phone Number": attendeeDetailsObj.phone ? `'${attendeeDetailsObj.phone}` : "N/A",
+        });
+      }
+    }
+
+    return rows;
+  });
 
   const csvHeaders = [
     { label: "Ticket Count", key: "Ticket Count" },

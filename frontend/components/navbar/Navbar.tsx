@@ -5,14 +5,21 @@ import Logo from "./Logo";
 import ProfilePic from "./ProfilePic";
 import SearchBar from "./SearchBar";
 
-// Routes where the navbar should be hidden
-const HIDDEN_NAVBAR_ROUTES = ["/organiser/wrapped"];
+// Routes where the navbar should be hidden (as regex patterns)
+const HIDDEN_NAVBAR_ROUTES = [
+  /^\/organiser\/wrapped/, // Organiser wrapped page
+  /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
+];
+
+const shouldHideNavbar = (pathname: string): boolean => {
+  return HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname));
+};
 
 export default function Navbar() {
   const pathname = usePathname();
 
   // Hide navbar on specific routes
-  if (HIDDEN_NAVBAR_ROUTES.some((route) => pathname.startsWith(route))) {
+  if (shouldHideNavbar(pathname)) {
     return null;
   }
 

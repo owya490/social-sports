@@ -21,7 +21,7 @@ import {
 } from "@/services/src/forms/formsServices";
 import { extractFormResponseFromForm } from "@/services/src/forms/formsUtils/createFormResponseUtils";
 import { findFormResponseDocRef } from "@/services/src/forms/formsUtils/formsUtils";
-import { updateFulfilmentEntityWithFormResponseId } from "@/services/src/fulfilment/fulfilmentServices";
+import { updateFulfilmentEntityWithFormResponseId } from "@/services/src/forms/formsServices";
 import { getPublicUserById } from "@/services/src/users/usersService";
 import { ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
