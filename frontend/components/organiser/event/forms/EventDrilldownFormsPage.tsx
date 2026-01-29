@@ -84,7 +84,6 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
   const [attachingForm, setAttachingForm] = useState(false);
   const router = useRouter();
   const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
-  const [organiserEmail, setOrganiserEmail] = useState<string>("");
 
   // useCallback is required here to prevent infinite loops in the useEffect below
   const fetchResponses = useCallback(async () => {
@@ -99,12 +98,6 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
         setError("You are not authorised to view this event");
         router.push("/organiser/dashboard");
         return;
-      }
-      // Get organiser email from event data, fallback to user's email since user is the organiser
-      const email = eventData.organiser?.publicContactInformation?.email || user.contactInformation?.email || "";
-      setOrganiserEmail(email);
-      if (!email) {
-        logger.warn(`Organiser email not found for event ${eventId}, organiserId: ${eventData.organiserId}`);
       }
       if (eventData.formId) {
         currentFormId = eventData.formId as FormId;
@@ -272,9 +265,8 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     });
 
     const purchaserInfo = formResponseToPurchaser.get(response.formResponseId);
-    const manualSubmissionText = `manual submission for ${organiserEmail}`;
-    row.purchaserName = purchaserInfo?.name || manualSubmissionText;
-    row.purchaserEmail = purchaserInfo?.email || manualSubmissionText;
+    row.purchaserName = purchaserInfo?.name || "—";
+    row.purchaserEmail = purchaserInfo?.email || "—";
     row.submissionTime = formatTimestamp(response.submissionTime);
 
     return row;
@@ -313,7 +305,6 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
         eventId={eventId}
         eventMetadata={eventMetadata}
         showPurchaserColumn={true}
-        organiserEmail={organiserEmail}
       />
 
       <AddFormResponseDialog
