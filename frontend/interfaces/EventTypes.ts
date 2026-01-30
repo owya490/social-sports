@@ -4,6 +4,7 @@ import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
 
 export type EventId = string;
 export type StripeCheckoutSessionId = string;
+export type StripePaymentIntentId = string;
 
 export type OrderId = string;
 export type TicketId = string;
@@ -106,6 +107,7 @@ export interface EventMetadata {
   purchaserMap: Record<EmailHash, Purchaser>;
   completeTicketCount: number;
   completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
+  completedStripePaymentIntentIds: StripePaymentIntentId[];
   organiserId: UserId;
   orderIds: OrderId[];
 }
@@ -117,6 +119,7 @@ export const EmptyEventMetadata: EventMetadata = {
   },
   completeTicketCount: 0,
   completedStripeCheckoutSessionIds: [],
+  completedStripePaymentIntentIds: [],
   organiserId: "",
   orderIds: [],
 };

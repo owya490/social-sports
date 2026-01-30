@@ -3,11 +3,14 @@ package com.functions.tickets.services;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.firebase.services.FirebaseService;
 import com.functions.tickets.models.Order;
+import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
@@ -51,7 +54,8 @@ public class TicketsService {
     }
 
     /**
-     * Calculates net sales from orders and their tickets (ticket prices minus discounts).
+     * Calculates net sales from orders and their tickets (ticket prices minus
+     * discounts).
      *
      * @param orderTicketsMap Map of Order -> List of Tickets
      * @return Net sales in cents
@@ -71,5 +75,20 @@ public class TicketsService {
         }
 
         return totalTicketSales - totalDiscounts;
+    }
+
+    public static void updateOrderAndTicketStatus(String orderId, OrderAndTicketStatus orderAndTicketStatus) throws Exception {
+        FirebaseService.createFirestoreTransaction(transaction -> {
+            Order order = OrdersRepository.getOrderById(orderId, Optional.of(transaction))
+                    .orElseThrow(() -> new RuntimeException("Order not found " + orderId));
+            List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets(), Optional.of(transaction));
+            for (Ticket ticket : tickets) {
+                ticket.setStatus(orderAndTicketStatus);
+                TicketsRepository.updateTicket(ticket.getTicketId(), ticket, Optional.of(transaction));
+            }
+            order.setStatus(orderAndTicketStatus);
+            OrdersRepository.updateOrder(orderId, order, Optional.of(transaction));
+            return null;
+        });
     }
 }
