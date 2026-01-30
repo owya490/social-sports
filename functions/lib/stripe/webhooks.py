@@ -18,7 +18,8 @@ from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import IS_PROD, db
 from lib.emails.cancel_event import send_cancellation_email
-from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
+from lib.emails.purchase_event import (PurchaseEventRequest,
+                                       send_email_on_purchase_event)
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
@@ -149,7 +150,6 @@ def check_if_session_has_been_processed_already(
     return False
 
 
-@firestore.transactional
 def check_if_payment_intent_has_been_processed_already(
     transaction: Transaction, logger: Logger, payment_intent_id: str, event_id: str
 ) -> bool:
@@ -446,7 +446,6 @@ def record_checkout_session_by_customer_email(
     )
 
 
-@firestore.transactional
 def restock_tickets(
     transaction: Transaction,
     event_id: str,
@@ -462,7 +461,6 @@ def restock_tickets(
     transaction.update(event_ref, {"vacancy": firestore.Increment(ticket_count)})
 
 
-@firestore.transactional
 def update_tickets_status_to_rejected(
     transaction: Transaction,
     logger: Logger,
@@ -477,7 +475,6 @@ def update_tickets_status_to_rejected(
         logger.info(f"Updated ticket {ticket_id} status to REJECTED")
 
 
-@firestore.transactional
 def update_order_status_to_rejected(
     transaction: Transaction,
     logger: Logger,
@@ -491,7 +488,6 @@ def update_order_status_to_rejected(
     logger.info(f"Updated order {order_id} status to REJECTED")
 
 
-@firestore.transactional
 def handle_payment_intent_cancellation(
     transaction: Transaction,
     logger: Logger,
@@ -1041,16 +1037,6 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
                 logger.error(f"Order data incomplete. orderId={order_id}")
                 return https_fn.Response(status=500)
 
-            for ticket_id in ticket_ids:
-                ticket_ref = db.collection("Tickets").document(ticket_id)
-                ticket = ticket_ref.get()
-                if not ticket.exists:
-                    logger.error(f"Ticket {ticket_id} not found for order {order_id}")
-                    return https_fn.Response(status=500)
-
-                ticket_data = ticket.to_dict()
-                event_id = ticket_data.get("eventId")
-
             # Get event information from the order's tickets
             # We need to get the eventId and isPrivate from one of the tickets
             try:
@@ -1120,6 +1106,8 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
                     f"Error handling payment intent cancellation for {payment_intent_id}: {e}"
                 )
                 return https_fn.Response(status=500)
+            
+            transaction.commit()
 
             # Get event name for email
             try:
