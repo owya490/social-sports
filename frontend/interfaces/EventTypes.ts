@@ -48,6 +48,7 @@ interface AbstractEventData {
   formId: FormId | null;
   hideVacancy: boolean; // should default to false
   waitlistEnabled: boolean; // should default to true
+  bookingApprovalEnabled: boolean; // should default to false
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -100,6 +101,7 @@ export const EmptyEventData: EventData = {
   formId: null,
   hideVacancy: false,
   waitlistEnabled: true,
+  bookingApprovalEnabled: false,
 };
 
 export interface EventMetadata {

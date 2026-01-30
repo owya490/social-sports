@@ -5,6 +5,7 @@ import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
@@ -45,6 +46,7 @@ export type BasicData = {
   stripeFeeToCustomer: boolean;
   promotionalCodesEnabled: boolean;
   waitlistEnabled: boolean;
+  bookingApprovalEnabled: boolean;
   eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
 };
@@ -85,6 +87,7 @@ export function BasicInformation({
   stripeFeeToCustomer,
   promotionalCodesEnabled,
   waitlistEnabled,
+  bookingApprovalEnabled,
   eventLink,
   newRecurrenceData,
   updateField,
@@ -189,6 +192,12 @@ export function BasicInformation({
   const handleWaitlistEnabledChange = (value: string) => {
     updateField({
       waitlistEnabled: value === "Yes",
+    });
+  };
+
+  const handleBookingApprovalEnabledChange = (value: string) => {
+    updateField({
+      bookingApprovalEnabled: value === "Yes",
     });
   };
 
@@ -646,6 +655,32 @@ export function BasicInformation({
                           onChange={(e) => {
                             const value = e || "Yes";
                             handleWaitlistEnabledChange(value);
+                          }}
+                        >
+                          <Option value="Yes">Yes</Option>
+                          <Option value="No">No</Option>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                  {BOOKING_APPROVAL_ENABLED && (
+                    <div>
+                      <label className="text-black text-lg font-semibold">
+                        Do you want to enable Booking Approval for this Event?
+                      </label>
+                      <p className="text-sm mb-5 mt-2">
+                        Selecting &quot;Yes&quot; will mean bookings will require your approval before they are
+                        confirmed. You will need to manually approve each booking within 48 hours via organiser hub
+                        otherwise the booking will be automatically rejected.
+                      </p>
+                      <div className="mt-4">
+                        <Select
+                          size="md"
+                          label="Booking Approval Enabled"
+                          value={bookingApprovalEnabled ? "Yes" : "No"}
+                          onChange={(e) => {
+                            const value = e || "Yes";
+                            handleBookingApprovalEnabledChange(value);
                           }}
                         >
                           <Option value="Yes">Yes</Option>
