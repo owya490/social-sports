@@ -62,6 +62,7 @@ public abstract class AbstractEventData {
 	private String formId;
 	private Boolean hideVacancy; // Optional field
 	private Boolean waitlistEnabled = true; // Default to true
+	private Boolean bookingApprovalEnabled = false; // Optional field
 
 	@Data
 	public static class LocationLatLng {

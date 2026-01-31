@@ -1,7 +1,7 @@
 package com.functions.fulfilment.repositories;
 
 import com.functions.firebase.services.FirebaseService;
-import com.functions.fulfilment.models.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import org.slf4j.Logger;

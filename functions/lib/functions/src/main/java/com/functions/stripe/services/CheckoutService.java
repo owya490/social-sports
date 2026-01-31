@@ -279,6 +279,7 @@ public class CheckoutService {
                 .setExpiresAt(Instant.now().getEpochSecond() + StripeConfig.CHECKOUT_SESSION_EXPIRY_SECONDS)
                 .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
                         .setApplicationFeeAmount(StripeConfig.calculateSportsHubFee((long) eventData.getPrice() * (long) request.quantity(), eventData.getOrganiserId()))
+                        .setCaptureMethod(request.captureMethod())
                         .build());
 
         // Add Stripe fee if passed to customer
@@ -314,7 +315,7 @@ public class CheckoutService {
                 com.stripe.net.RequestOptions.builder()
                         .setStripeAccount(stripeAccountId)
                         .build());
-
+            
         logger.info("Created Stripe checkout session {} for event {}", session.getId(), eventData.getEventId());
 
         return new StripeSessionResult(session.getId(), session.getUrl());

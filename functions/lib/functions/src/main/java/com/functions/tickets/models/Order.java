@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.functions.utils.JavaUtils;
 import com.google.cloud.Timestamp;
 
 import lombok.Data;
@@ -17,6 +20,8 @@ import lombok.Data;
 public class Order {
     private String orderId;
     private long applicationFees; // in cents
+    @JsonSerialize(using = JavaUtils.TimestampSerializer.class)
+    @JsonDeserialize(using = JavaUtils.TimestampDeserializer.class)
     private Timestamp datePurchased;
     private long discounts; // in cents
     private String email;
@@ -25,5 +30,4 @@ public class Order {
     private List<String> tickets = new ArrayList<>(); // List of ticketIds
     private String stripePaymentIntentId;
     private OrderAndTicketStatus status = OrderAndTicketStatus.APPROVED;
-    private List<String> formResponseIds = new ArrayList<>();
 }

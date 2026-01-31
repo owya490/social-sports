@@ -20,7 +20,7 @@ import com.google.cloud.firestore.Transaction;
 
 public class FormsUtils {
     private static final Logger logger = LoggerFactory.getLogger(FormsUtils.class);
-
+    
     public static Optional<String> getFormIdByEventId(String eventId) {
         try {
             return EventsRepository.getEventById(eventId).map(maybeEventData -> {

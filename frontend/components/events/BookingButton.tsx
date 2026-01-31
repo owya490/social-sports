@@ -1,5 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { FulfilmentSessionType } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { getNextFulfilmentEntityUrl, initFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
 import { getErrorUrl } from "@/services/src/urlUtils";
@@ -25,7 +26,7 @@ export default function BookingButton({ eventId, ticketCount, setLoading, classN
 
     try {
       const { fulfilmentSessionId } = await initFulfilmentSession({
-        type: "checkout",
+        type: FulfilmentSessionType.CHECKOUT,
         eventId: eventId,
         numTickets: ticketCount,
       });

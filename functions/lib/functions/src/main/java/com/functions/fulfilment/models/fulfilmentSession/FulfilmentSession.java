@@ -1,22 +1,31 @@
-package com.functions.fulfilment.models;
+package com.functions.fulfilment.models.fulfilmentSession;
 
-import com.functions.events.models.EventData;
-import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.annotation.DocumentId;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static com.functions.utils.JavaUtils.objectMapper;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.functions.utils.JavaUtils.objectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.functions.events.models.EventData;
+import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.WaitlistFulfilmentEntity;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.annotation.DocumentId;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Data
 @SuperBuilder(toBuilder = true)
@@ -86,8 +95,14 @@ public abstract class FulfilmentSession {
                     case STRIPE:
                         entity = objectMapper.readValue(json, StripeFulfilmentEntity.class);
                         break;
+                    case DELAYED_STRIPE:
+                        entity = objectMapper.readValue(json, DelayedStripeFulfilmentEntity.class);
+                        break;
                     case FORMS:
                         entity = objectMapper.readValue(json, FormsFulfilmentEntity.class);
+                        break;
+                    case WAITLIST:
+                        entity = objectMapper.readValue(json, WaitlistFulfilmentEntity.class);
                         break;
                     case END:
                         entity = objectMapper.readValue(json, EndFulfilmentEntity.class);
@@ -117,10 +132,10 @@ public abstract class FulfilmentSession {
         // Create the appropriate session type
         switch (sessionType) {
             case CHECKOUT:
-                Integer numTickets = null;
-                Long numTicketsLong = snapshot.getLong("numTickets");
-                if (numTicketsLong != null) {
-                    numTickets = numTicketsLong.intValue();
+                Integer numTicketsCheckout = null;
+                Long numTicketsLongCheckout = snapshot.getLong("numTickets");
+                if (numTicketsLongCheckout != null) {
+                    numTicketsCheckout = numTicketsLongCheckout.intValue();
                 }
                 return CheckoutFulfilmentSession.builder()
                         .eventData(objectMapper.convertValue(snapshot.get("eventData"),
@@ -128,7 +143,34 @@ public abstract class FulfilmentSession {
                         .fulfilmentSessionStartTime(
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTickets).build();
+                        .numTickets(numTicketsCheckout).build();
+            case BOOKING_APPROVAL:
+                Integer numTicketsBookingApproval = null;
+                Long numTicketsLongBookingApproval = snapshot.getLong("numTickets");
+                if (numTicketsLongBookingApproval != null) {
+                    numTicketsBookingApproval = numTicketsLongBookingApproval.intValue();
+                }
+                return BookingApprovalFulfilmentSession.builder()
+                        .eventData(objectMapper.convertValue(snapshot.get("eventData"),
+                                EventData.class))
+                        .fulfilmentSessionStartTime(
+                                snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
+                        .numTickets(numTicketsBookingApproval).build();
+            case WAITLIST:
+                Integer numTicketsWaitlist = null;
+                Long numTicketsLongWaitlist = snapshot.getLong("numTickets");
+                // Firestore does not separate Ints vs Longs 
+                if (numTicketsLongWaitlist != null) {
+                    numTicketsWaitlist = numTicketsLongWaitlist.intValue();
+                }
+                return WaitlistFulfilmentSession.builder()
+                        .eventData(objectMapper.convertValue(snapshot.get("eventData"), 
+                            EventData.class))
+                        .fulfilmentSessionStartTime(
+                            snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
+                        .numTickets(numTicketsWaitlist).build();
             default:
                 throw new IllegalArgumentException(
                         "Unknown FulfilmentSession type: " + sessionType);

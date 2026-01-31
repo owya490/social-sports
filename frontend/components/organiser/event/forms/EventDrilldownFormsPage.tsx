@@ -2,12 +2,15 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
-import { FormId, FormResponse, FormSection, FormSectionType, FormTitle } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import AddFormResponseDialog from "./AddFormResponseDialog";
 import { FormResponsesTable } from "./FormResponsesTable";
 
 interface EventDrilldownFormsPageProps {
@@ -72,14 +75,63 @@ const getAnswerDisplay = (section: FormSection | undefined): string => {
 
 const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownFormsPageProps) => {
   const logger = new Logger("EventDrilldownFormsPageLogger");
-  const { user } = useUser();
+  const { user, userLoading } = useUser();
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formId, setFormId] = useState<FormId | null>(null);
-  const [formTitle, setFormTitle] = useState<FormTitle | null>(null);
+  const [form, setForm] = useState<Form | null>(null);
   const [attachingForm, setAttachingForm] = useState(false);
+  const router = useRouter();
+  const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
+  const [organiserEmail, setOrganiserEmail] = useState<string>("");
 
+  // useCallback is required here to prevent infinite loops in the useEffect below
+  const fetchResponses = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      let currentFormId: FormId | null = null;
+
+      const eventData: EventData = await getEventById(eventId);
+      if (userLoading || !user.userId) {
+        return;
+      }
+      const email =
+        eventData.organiser?.publicContactInformation?.email || user.contactInformation?.email || "";
+      setOrganiserEmail(email);
+      if (!email) {
+        logger.warn(`Organiser email not found for event ${eventId}, organiserId: ${eventData.organiserId}`);
+      }
+      if (eventData.organiserId !== user.userId) {
+        setError("You are not authorised to view this event");
+        router.push("/organiser/dashboard");
+        return;
+      }
+      if (eventData.formId) {
+        currentFormId = eventData.formId as FormId;
+        setFormId(eventData.formId);
+      } else {
+        setFormId(null);
+        setForm(null);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch form details to get the title
+      const form = await getForm(currentFormId);
+      setForm(form);
+
+      const formResponse = await getFormResponsesForEvent(currentFormId, eventId);
+      setFormResponses(formResponse);
+    } catch (err) {
+      logger.error(`Failed to load form responses: ${err}`);
+      setError("Failed to load form responses");
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId, user.userId, userLoading, router]);
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
       setAttachingForm(true);
@@ -91,7 +143,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
       if (!selectedFormId) {
         // Detach form: clear local state
         setFormId(null);
-        setFormTitle(null);
+        setForm(null);
         setFormResponses([]);
         return;
       }
@@ -101,7 +153,7 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
 
       // Fetch form details to get the title
       const form = await getForm(selectedFormId);
-      setFormTitle(form.title);
+      setForm(form);
 
       // Fetch responses for the newly attached form
       const formResponse = await getFormResponsesForEvent(selectedFormId, eventId);
@@ -115,44 +167,8 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
   };
 
   useEffect(() => {
-    const fetchResponses = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        let formId: FormId | null = null;
-
-        const eventData: EventData = await getEventById(eventId);
-        if (eventData.formId) {
-          formId = eventData.formId as FormId;
-          setFormId(eventData.formId);
-          setLoading(false);
-        }
-
-        if (!formId) {
-          // No formId found - this is okay, we'll show the FormSelector
-          setFormId(null);
-          setFormTitle(null);
-          setLoading(false);
-          return;
-        }
-
-        // Fetch form details to get the title
-        const form = await getForm(formId);
-        setFormTitle(form.title);
-
-        const formResponse = await getFormResponsesForEvent(formId as FormId, eventId);
-        setFormResponses(formResponse);
-      } catch (err) {
-        logger.error(`Failed to load form responses: ${err}`);
-        setError("Failed to load form responses");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchResponses();
-  }, [eventId]);
+  }, [fetchResponses]);
 
   if (loading) return <div>Loading form responses...</div>;
   if (error) return <div className="text-red-600">{error}</div>;
@@ -177,21 +193,28 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     );
   }
 
-  if (formResponses.length === 0)
-    return (
-      <div className="w-full md:w-[calc(100%-18rem)] my-2 p-2">
-        <h1 className="text-2xl font-extrabold mb-2">Form Responses</h1>
-        {formTitle && <p className="text-sm text-gray-400 mb-6 line-clamp-1">Form: {formTitle}</p>}
-        <div className="bg-core-hover rounded-lg p-6 mb-6">
-          <p className="text-sm text-core-text">No responses submitted</p>
-        </div>
-        {attachingForm ? (
-          <div className="text-sm text-gray-600">Attaching form to event...</div>
-        ) : (
-          <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
-        )}
+  // Common Header logic
+  const renderHeader = () => (
+    <div className="flex items-center justify-between mb-4 px-1 md:px-0">
+      <div>
+        <h1 className="text-2xl font-extrabold mb-1">Form Responses</h1>
+        {form && <p className="text-sm text-gray-400 line-clamp-1">Form: {form.title}</p>}
       </div>
-    );
+      <div className="flex items-center gap-2">
+        {formResponses.length > 0 && (
+          <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
+        )}
+        <button
+          onClick={() => setIsAddFormResponseDialogOpen(true)}
+          aria-label="Add Form Answers"
+          className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-2 md:px-4 py-1.5 md:py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
+        >
+          <PlusIcon className="md:mr-2 h-5 w-5" />
+          <span className="hidden md:block">Add Form Answers</span>
+        </button>
+      </div>
+    </div>
+  );
 
   // Generate CSV data for download
   const formResponseToPurchaser = createFormResponseToPurchaserMap(eventMetadata);
@@ -252,29 +275,56 @@ const EventDrilldownFormsPage = ({ eventId, eventMetadata }: EventDrilldownForms
     });
 
     const purchaserInfo = formResponseToPurchaser.get(response.formResponseId);
-    row.purchaserName = purchaserInfo?.name || "—";
-    row.purchaserEmail = purchaserInfo?.email || "—";
+    const manualSubmissionText = `manual submission for ${organiserEmail}`;
+    row.purchaserName = purchaserInfo?.name || manualSubmissionText;
+    row.purchaserEmail = purchaserInfo?.email || manualSubmissionText;
     row.submissionTime = formatTimestamp(response.submissionTime);
 
     return row;
   });
 
+  if (formResponses.length === 0)
+    return (
+      <div className="w-full md:w-[calc(100%-18rem)] my-2 p-2">
+        {renderHeader()}
+        <div className="bg-core-hover rounded-lg p-6 mb-6">
+          <p className="text-sm text-core-text">No responses submitted</p>
+        </div>
+        {attachingForm ? (
+          <div className="text-sm text-gray-600">Attaching form to event...</div>
+        ) : (
+          <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
+        )}
+        <AddFormResponseDialog
+          isOpen={isAddFormResponseDialogOpen}
+          onClose={() => setIsAddFormResponseDialogOpen(false)}
+          formId={formId}
+          eventId={eventId}
+          refreshResponses={fetchResponses}
+        />
+      </div>
+    );
+
   return (
     <div className="w-full md:w-[calc(100%-18rem)] my-2">
-      <div className="flex items-center justify-between mb-4 px-1 md:px-0">
-        <div>
-          <h1 className="text-2xl font-extrabold mb-1">Form Responses</h1>
-          {formTitle && <p className="text-sm text-gray-400 line-clamp-1">Form: {formTitle}</p>}
-        </div>
-        <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
-      </div>
+      {renderHeader()}
 
       <FormResponsesTable
         formResponses={formResponses}
+        form={form!}
         formId={formId!}
         eventId={eventId}
         eventMetadata={eventMetadata}
         showPurchaserColumn={true}
+        organiserEmail={organiserEmail}
+      />
+
+      <AddFormResponseDialog
+        isOpen={isAddFormResponseDialogOpen}
+        onClose={() => setIsAddFormResponseDialogOpen(false)}
+        formId={formId}
+        eventId={eventId}
+        refreshResponses={fetchResponses}
       />
     </div>
   );

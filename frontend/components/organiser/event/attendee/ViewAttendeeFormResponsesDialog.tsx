@@ -1,7 +1,7 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
-import { FormId, FormResponse } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
@@ -28,7 +28,7 @@ export const ViewAttendeeFormResponsesDialog = ({
   const [error, setError] = useState<string | null>(null);
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [formId, setFormId] = useState<FormId | null>(null);
-  const [formTitle, setFormTitle] = useState<string | null>(null);
+  const [form, setForm] = useState<Form | null>(null);
 
   useEffect(() => {
     const fetchFormResponses = async () => {
@@ -47,7 +47,7 @@ export const ViewAttendeeFormResponsesDialog = ({
 
         // Get form title
         const form = await getForm(eventData.formId);
-        setFormTitle(form.title);
+        setForm(form);
 
         // Get all form responses for this event
         const allResponses = await getFormResponsesForEvent(eventData.formId, eventData.eventId);
@@ -96,7 +96,7 @@ export const ViewAttendeeFormResponsesDialog = ({
             <p className="text-sm text-gray-600 mt-1">
               Attendee: <span className="font-medium">{attendeeName}</span>
             </p>
-            {formTitle && <p className="text-xs text-gray-500 mt-0.5">Form: {formTitle}</p>}
+            {form && <p className="text-xs text-gray-500 mt-0.5">Form: {form.title}</p>}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Close">
             <XMarkIcon className="w-6 h-6" />
@@ -117,6 +117,11 @@ export const ViewAttendeeFormResponsesDialog = ({
             <div className="text-center py-12">
               <p className="text-gray-600">No form is attached to this event</p>
             </div>
+          ) : !form ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No form found for formId: {formId}</p>
+              <p className="text-gray-600">Please contact SPORTSHUB support.</p>
+            </div>
           ) : formResponses.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">No form responses found for this attendee</p>
@@ -125,6 +130,7 @@ export const ViewAttendeeFormResponsesDialog = ({
             <FormResponsesTable
               formResponses={formResponses}
               formId={formId}
+              form={form}
               eventId={eventData.eventId}
               eventMetadata={eventMetadata}
               showPurchaserColumn={false}

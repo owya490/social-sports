@@ -8,14 +8,34 @@ export type FulfilmentSessionId = Branded<string, "FulfilmentSessionId">;
 
 export type FulfilmentEntityId = Branded<string, "FulfilmentEntityId">;
 
-export type FulfilmentSessionType = {
-  type: "checkout";
-} & CheckoutFulfilmentSessionType;
+export enum FulfilmentSessionType {
+  CHECKOUT = "CHECKOUT",
+  WAITLIST = "WAITLIST",
+  BOOKING_APPROVAL = "BOOKING_APPROVAL",
+}
 
-export type CheckoutFulfilmentSessionType = {
+/**
+ * Base type for fulfilment session data shared across all session types.
+ */
+export type FulfilmentSessionBase = {
   eventId: EventId;
   numTickets: number;
 };
+
+export type CheckoutFulfilmentSessionType = FulfilmentSessionBase;
+
+export type WaitlistFulfilmentSessionType = FulfilmentSessionBase;
+
+/**
+ * Both checkout and waitlist use the fulfilment session workflow
+ */
+export type FulfilmentSessionDataType =
+  | ({
+      type: FulfilmentSessionType.CHECKOUT;
+    } & CheckoutFulfilmentSessionType)
+  | ({
+      type: FulfilmentSessionType.WAITLIST;
+    } & WaitlistFulfilmentSessionType);
 
 /**
  * Types of fulfilment entities that can be processed in a fulfilment session.
@@ -24,8 +44,10 @@ export type CheckoutFulfilmentSessionType = {
  */
 export enum FulfilmentEntityType {
   STRIPE = "STRIPE",
+  DELAYED_STRIPE = "DELAYED_STRIPE",
   FORMS = "FORMS",
   END = "END",
+  WAITLIST = "WAITLIST",
 }
 
 /**
@@ -117,6 +139,18 @@ export type UpdateFulfilmentEntityWithFormResponseIdRequest = {
   formResponseId: FormResponseId;
 };
 
+export type UpdateFulfilmentEntityWithWaitlistDataRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  fulfilmentEntityId: FulfilmentEntityId;
+  name: string;
+  email: string;
+};
+
+export type UpdateFulfilmentEntityWithWaitlistDataResponse = {
+  success: boolean;
+  message: string;
+};
+
 /**
  * Payload we send to java deleteFulfilmentSession function
  */
@@ -140,7 +174,6 @@ export type GetFulfilmentSessionInfoResponse = {
   currentEntityIndex: number | null;
   fulfilmentSessionStartTime: Timestamp;
 };
-
 /**
  * Payload we send to java completeFulfilmentSession function
  */
@@ -152,3 +185,4 @@ export type CompleteFulfilmentSessionRequest = {
    */
   fulfilmentEntityId: FulfilmentEntityId;
 };
+
