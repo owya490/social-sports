@@ -22,15 +22,29 @@ export function timestampToTimeOfDay24Hour(timestamp: Timestamp) {
 
 export function timestampToDateString(timestamp: Timestamp): string {
   let date = timestamp.toDate();
-  //   let date = new Date(timestamp).toDateString();
   return date.toDateString();
 }
 
+let cachedTimezoneShort: string | null = null;
+
+/**
+ * Returns the short timezone name for the browser's current timezone (e.g., "AEST", "AEDT", "PST")
+ * Result is cached after first call.
+ */
+export function getCurrentTimezoneShort(): string {
+  if (cachedTimezoneShort === null) {
+    cachedTimezoneShort =
+      new Intl.DateTimeFormat("en-AU", { timeZoneName: "short" })
+        .formatToParts(new Date())
+        .find((part) => part.type === "timeZoneName")?.value || "AEST";
+  }
+  return cachedTimezoneShort;
+}
+
 export function timestampToEventCardDateString(timestamp: Timestamp) {
-  // return `${timestampToDateString(timestamp).toUpperCase()} · ${timestampToTimeOfDay24Hour(timestamp)} AEST`;
-  return `${timestampToDateString(timestamp).toUpperCase().replace("2025", "")} · ${timestampToTimeOfDay24Hour(
+  return `${timestampToDateString(timestamp).toUpperCase()} · ${timestampToTimeOfDay24Hour(
     timestamp
-  )} AEST`;
+  )} ${getCurrentTimezoneShort()}`;
 }
 
 export function formatTimeTo12Hour(time: string) {
