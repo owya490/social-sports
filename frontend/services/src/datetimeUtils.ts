@@ -186,7 +186,7 @@ export function formatMobileSameDayDateTime(startDate: Timestamp, endDate: Times
   const endTime = formatMobileTime(endHours, endMinutes);
 
   // Timezone
-  const timezone = date.toLocaleDateString("en-AU", { timeZoneName: "short" }).split(", ")[1] || "AEDT";
+  const timezone = getCurrentTimezoneShort();
 
   return `${dayName}, ${day} ${month} ${year}, ${startTime} - ${endTime} ${timezone}`;
 }
