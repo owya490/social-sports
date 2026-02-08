@@ -1,6 +1,9 @@
 package com.functions.events.repositories;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +14,9 @@ import com.functions.firebase.services.FirebaseService;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.Transaction;
 
 public class EventsRepository {
@@ -69,5 +75,37 @@ public class EventsRepository {
             logger.error("Error retrieving event metadata by ID: {}", eventId, e);
             return Optional.empty();
         }
+    }
+
+    /**
+     * Get all active public events for a specific organiser.
+     *
+     * @param organiserId the organiser's user ID
+     * @return list of events for the organiser
+     * @throws InterruptedException if the operation is interrupted
+     * @throws ExecutionException   if the operation fails
+     */
+    public static List<EventData> getActivePublicEventsByOrganiser(String organiserId) 
+            throws InterruptedException, ExecutionException {
+        logger.info("Querying active public events for organiser: {}", organiserId);
+        
+        Firestore db = FirebaseService.getFirestore();
+        
+        Query query = db.collection(FirebaseService.CollectionPaths.EVENTS)
+                .document(FirebaseService.CollectionPaths.ACTIVE)
+                .collection(FirebaseService.CollectionPaths.PUBLIC)
+                .whereEqualTo("organiserId", organiserId);
+        
+        QuerySnapshot querySnapshot = query.get().get();
+        List<EventData> events = new ArrayList<>();
+        
+        for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
+            EventData eventData = document.toObject(EventData.class);
+            eventData.setEventId(document.getId());
+            events.add(eventData);
+        }
+        
+        logger.info("Found {} active public events for organiser {}", events.size(), organiserId);
+        return events;
     }
 }
