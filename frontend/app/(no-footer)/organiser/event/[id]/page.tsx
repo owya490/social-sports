@@ -67,7 +67,8 @@ export default function EventPage({ params }: EventPageProps) {
 
   const eventId: EventId = params.id;
   useEffect(() => {
-    getEventById(eventId)
+    if (user.userId) {
+      getEventById(eventId)
       .then((event) => {
         if (event.organiserId !== user.userId) {
           router.push("/organiser/dashboard");
@@ -121,7 +122,8 @@ export default function EventPage({ params }: EventPageProps) {
         eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
         router.push("/error");
       });
-  }, []);
+    }
+  }, [user.userId]);
 
   return (
     <>
