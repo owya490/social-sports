@@ -1,6 +1,7 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { EventMetadata, Purchaser } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
@@ -21,7 +22,7 @@ interface ApprovedAttendeeActionsProps {
   eventId: string;
   setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
-  onViewFormResponses: (order: Order) => void;
+  setSelectedOrderForFormResponses: (order: Order) => void;
 }
 
 export const ApprovedAttendeeActions = ({
@@ -30,7 +31,7 @@ export const ApprovedAttendeeActions = ({
   eventId,
   setEventMetadata,
   setEventVacancy,
-  onViewFormResponses,
+  setSelectedOrderForFormResponses,
 }: ApprovedAttendeeActionsProps) => {
   const [isRemoveAttendeeModalOpen, setIsRemoveAttendeeModalOpen] = useState<boolean>(false);
   const [isEditAttendeeTicketsDialogModalOpen, setIsEditAttendeeTicketsDialogModalOpen] = useState<boolean>(false);
@@ -66,7 +67,7 @@ export const ApprovedAttendeeActions = ({
               <MenuItem>
                 <div
                   className={`text-black group flex w-full items-center rounded-md px-2 py-2 text-sm hover:cursor-pointer hover:text-white hover:bg-black `}
-                  onClick={() => onViewFormResponses(order)}
+                  onClick={() => setSelectedOrderForFormResponses(order)}
                 >
                   <DocumentTextIcon className="h-5 mr-2" />
                   View form responses
@@ -126,39 +127,31 @@ export const ApprovedAttendeeActions = ({
 };
 
 interface ApprovedAttendeeTabProps {
-  approvedOrders: Order[];
+  approvedOrderTicketsMap: Map<Order, Ticket[]>;
   eventMetadata: EventMetadata;
   eventId: string;
   loadingApprovedOrders: boolean;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setIsFilterModalOpen: Dispatch<SetStateAction<boolean>>;
-  onViewFormResponses: (order: Order) => void;
+  setSelectedOrderForFormResponses: (order: Order) => void;
 }
 
 export const ApprovedAttendeeTab = ({
-  approvedOrders,
+  approvedOrderTicketsMap,
   eventMetadata,
   eventId,
   loadingApprovedOrders,
   setEventVacancy,
   setEventMetadata,
   setIsFilterModalOpen,
-  onViewFormResponses,
+  setSelectedOrderForFormResponses,
 }: ApprovedAttendeeTabProps) => {
-  const sortedOrders = approvedOrders
+  const sortedOrders = Array.from(approvedOrderTicketsMap.keys())
     .map((order) => {
       var newOrder = { ...order };
+      // get manual addition tickets which are from the legacy attendee map
       const legacyAttendee = eventMetadata.purchaserMap[getPurchaserEmailHash(order.email)].attendees[order.fullName];
-      if (order.formResponseIds && order.formResponseIds.length === 0) {
-        const legacyFormResponseIds = legacyAttendee.formResponseIds;
-        if (legacyFormResponseIds && legacyFormResponseIds.length > 0) {
-          newOrder = {
-            ...newOrder,
-            formResponseIds: legacyFormResponseIds,
-          };
-        }
-      }
       const legacyTickets = legacyAttendee.ticketCount;
       if (order.tickets && legacyTickets && order.tickets.length < legacyTickets) {
         newOrder = {
@@ -223,7 +216,7 @@ export const ApprovedAttendeeTab = ({
         eventId={eventId}
         setEventMetadata={setEventMetadata}
         setEventVacancy={setEventVacancy}
-        onViewFormResponses={onViewFormResponses}
+        setSelectedOrderForFormResponses={setSelectedOrderForFormResponses}
       />
     );
   };

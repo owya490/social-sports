@@ -30,12 +30,15 @@ export const EventDrilldownManageAttendeesPage = ({
   const logger = new Logger("EventDrilldownManageAttendeesPage");
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>("approved");
-  const [approvedOrders, setApprovedOrders] = useState<Order[]>([]);
+  const [approvedOrderTicketsMap, setApprovedOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [loadingApprovedOrders, setLoadingApprovedOrders] = useState<boolean>(false);
-  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+  const [pendingOrderTicketsMap, setPendingOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [loadingPendingOrders, setLoadingPendingOrders] = useState<boolean>(false);
   const [selectedOrderForFormResponses, setSelectedOrderForFormResponses] = useState<Order | null>(null);
   const hasInitializedTabRef = useRef<boolean>(false);
+
+  console.log(orderTicketsMap)
+  console.log(Array.from(orderTicketsMap.keys())[0])
 
   function closeModal() {
     setIsFilterModalOpen(false);
@@ -45,7 +48,7 @@ export const EventDrilldownManageAttendeesPage = ({
   useEffect(() => {
     const fetchPendingOrders = () => {
       if (orderTicketsMap.size === 0) {
-        setPendingOrders([]);
+        setPendingOrderTicketsMap(new Map());
         if (!hasInitializedTabRef.current) {
           setActiveTab("approved");
           hasInitializedTabRef.current = true;
@@ -55,18 +58,23 @@ export const EventDrilldownManageAttendeesPage = ({
 
       setLoadingPendingOrders(true);
       try {
-        const orders = Array.from(orderTicketsMap.keys());
-        const pending = orders.filter((order) => order.status === OrderAndTicketStatus.PENDING);
-        setPendingOrders(pending);
+        const pendingMap = new Map<Order, Ticket[]>();
+        orderTicketsMap.forEach((tickets, order) => {
+          if (order.status === OrderAndTicketStatus.PENDING) {
+            pendingMap.set(order, tickets);
+          }
+        });
+
+        setPendingOrderTicketsMap(pendingMap);
 
         // Set initial tab based on pending orders only on first load
         if (!hasInitializedTabRef.current) {
-          setActiveTab(pending.length > 0 ? "pending" : "approved");
+          setActiveTab(pendingMap.size > 0 ? "pending" : "approved");
           hasInitializedTabRef.current = true;
         }
       } catch (error) {
         logger.error(`Error fetching pending orders: ${error}`);
-        setPendingOrders([]);
+        setPendingOrderTicketsMap(new Map());
         if (!hasInitializedTabRef.current) {
           setActiveTab("approved");
           hasInitializedTabRef.current = true;
@@ -78,18 +86,23 @@ export const EventDrilldownManageAttendeesPage = ({
 
     const fetchApprovedOrders = () => {
       if (orderTicketsMap.size === 0) {
-        setApprovedOrders([]);
+        setApprovedOrderTicketsMap(new Map());
         return;
       }
 
       setLoadingApprovedOrders(true);
       try {
-        const orders = Array.from(orderTicketsMap.keys());
-        const approved = orders.filter((order) => order.status === OrderAndTicketStatus.APPROVED);
-        setApprovedOrders(approved);
+        const approvedMap = new Map<Order, Ticket[]>();
+        orderTicketsMap.forEach((tickets, order) => {
+          if (order.status === OrderAndTicketStatus.APPROVED) {
+            approvedMap.set(order, tickets);
+          }
+        });
+
+        setApprovedOrderTicketsMap(approvedMap);
       } catch (error) {
         logger.error(`Error fetching approved orders: ${error}`);
-        setApprovedOrders([]);
+        setApprovedOrderTicketsMap(new Map());
       } finally {
         setLoadingApprovedOrders(false);
       }
@@ -99,7 +112,7 @@ export const EventDrilldownManageAttendeesPage = ({
     fetchApprovedOrders();
   }, [orderTicketsMap]);
 
-  const pendingOrdersCount = pendingOrders.length;
+  const pendingOrdersCount = pendingOrderTicketsMap.size;
 
   const handleApproveOrder = (order: Order) => {
     logger.info(`Approving order: ${order.orderId}`);
@@ -143,25 +156,25 @@ export const EventDrilldownManageAttendeesPage = ({
       {/* Attendees Tab Content */}
       {activeTab === "approved" && (
         <ApprovedAttendeeTab
-          approvedOrders={approvedOrders}
+          approvedOrderTicketsMap={approvedOrderTicketsMap}
           eventMetadata={eventMetadata}
           eventId={eventId}
           loadingApprovedOrders={loadingApprovedOrders}
           setEventVacancy={setEventVacancy}
           setEventMetadata={setEventMetadata}
           setIsFilterModalOpen={setIsFilterModalOpen}
-          onViewFormResponses={(order: Order) => setSelectedOrderForFormResponses(order)}
+          setSelectedOrderForFormResponses={(order: Order) => setSelectedOrderForFormResponses(order)}
         />
       )}
 
       {/* Pending Tab Content */}
       {activeTab === "pending" && (
         <PendingAttendeeTab
-          pendingOrders={pendingOrders}
+          pendingOrderTicketsMap={pendingOrderTicketsMap}
           loadingPendingOrders={loadingPendingOrders}
           onApproveOrder={handleApproveOrder}
           onRejectOrder={handleRejectOrder}
-          setSelectedOrderForFormResponses={setSelectedOrderForFormResponses}
+          setSelectedOrderForFormResponses={(order: Order) => setSelectedOrderForFormResponses(order)}
         />
       )}
       <div className="grow">
@@ -178,8 +191,7 @@ export const EventDrilldownManageAttendeesPage = ({
             onClose={() => {
               setSelectedOrderForFormResponses(null);
             }}
-            attendeeName={selectedOrderForFormResponses?.fullName}
-            attendeeEmail={selectedOrderForFormResponses?.email}
+            orderTicketsMap={new Map([[selectedOrderForFormResponses, orderTicketsMap.get(selectedOrderForFormResponses)!]])}
             eventData={eventData}
             eventMetadata={eventMetadata}
           />

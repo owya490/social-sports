@@ -1,27 +1,27 @@
-
 import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import { CheckIcon, DocumentTextIcon, EllipsisVerticalIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Dispatch, Fragment, SetStateAction } from "react";
+import { Fragment } from "react";
 import AttendeeListTable from "../AttendeeListTable";
 
 interface PendingAttendeeTabProps {
-  pendingOrders: Order[];
+  pendingOrderTicketsMap: Map<Order, Ticket[]>;
   loadingPendingOrders: boolean;
   onApproveOrder: (order: Order) => void;
   onRejectOrder: (order: Order) => void;
-  setSelectedOrderForFormResponses: Dispatch<SetStateAction<Order | null>>;
+  setSelectedOrderForFormResponses: (order: Order) => void;
 }
 
 export const PendingAttendeeTab = ({
-  pendingOrders,
+  pendingOrderTicketsMap,
   loadingPendingOrders,
   onApproveOrder,
   onRejectOrder,
   setSelectedOrderForFormResponses,
 }: PendingAttendeeTabProps) => {
   // Convert orders to table data format
-  const tableData = pendingOrders.map((order) => ({
+  const tableData = Array.from(pendingOrderTicketsMap.keys()).map((order) => ({
     key: order.orderId,
     ticketCount: order.tickets.length,
     name: order.fullName,

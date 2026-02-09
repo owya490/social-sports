@@ -1,25 +1,25 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
-import { Form, FormId, FormResponse } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { getPurchaserEmailHash } from "@/services/src/events/eventsService";
-import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
+import { getForm, getFormResponse } from "@/services/src/forms/formsServices";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 
 interface ViewAttendeeFormResponsesDialogProps {
   onClose: () => void;
-  attendeeName: string;
-  attendeeEmail: string;
+  orderTicketsMap: Map<Order, Ticket[]>;
   eventData: EventData;
   eventMetadata: EventMetadata;
 }
 
 export const ViewAttendeeFormResponsesDialog = ({
   onClose,
-  attendeeName,
-  attendeeEmail,
+  orderTicketsMap,
   eventData,
   eventMetadata,
 }: ViewAttendeeFormResponsesDialogProps) => {
@@ -29,6 +29,22 @@ export const ViewAttendeeFormResponsesDialog = ({
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [formId, setFormId] = useState<FormId | null>(null);
   const [form, setForm] = useState<Form | null>(null);
+
+  console.log(orderTicketsMap)
+
+  const orderFormResponseIds = new Set<FormResponseId>();
+  orderTicketsMap.keys().map((order) => {
+    // get formResponseIds on Tickets
+    const tickets = orderTicketsMap.get(order)!;
+    const ticketFormResponseIds = tickets.map((ticket) => ticket.formResponseId).filter((formResponseId) => formResponseId !== null);
+    ticketFormResponseIds.forEach((formResponseId) => orderFormResponseIds.add(formResponseId));
+
+    // get legacy form response Ids in the legacyAttendeeMap
+    const legacyAttendee = eventMetadata.purchaserMap[getPurchaserEmailHash(order.email)].attendees[order.fullName];
+    const legacyFormResponseIds = legacyAttendee.formResponseIds || [];
+    legacyFormResponseIds.forEach((formResponseId: string) => orderFormResponseIds.add(formResponseId as FormResponseId));
+  })
+  
 
   useEffect(() => {
     const fetchFormResponses = async () => {
@@ -49,32 +65,13 @@ export const ViewAttendeeFormResponsesDialog = ({
         const form = await getForm(eventData.formId);
         setForm(form);
 
-        // Get all form responses for this event
-        const allResponses = await getFormResponsesForEvent(eventData.formId, eventData.eventId);
+        const fetchedFormResponses: FormResponse[] = [];
 
-        // Find the attendee in purchaserMap by matching email and name
-        const emailHash = getPurchaserEmailHash(attendeeEmail.toLowerCase());
-        const purchaser = eventMetadata.purchaserMap[emailHash];
-
-        if (!purchaser) {
-          logger.warn(`No purchaser found for email ${attendeeEmail}`);
-          setFormResponses([]);
-          return;
-        }
-
-        const attendeeData = purchaser.attendees[attendeeName];
-        if (!attendeeData) {
-          logger.warn(`No attendee data found for name "${attendeeName}" on purchaser ${purchaser.email}.`);
-          setFormResponses([]);
-          return;
-        }
-        const attendeeFormResponseIds = attendeeData.formResponseIds || [];
-
-        const filteredResponses = allResponses.filter((response) =>
-          attendeeFormResponseIds.includes(response.formResponseId)
-        );
-
-        setFormResponses(filteredResponses);
+        orderFormResponseIds.forEach(async (formResponseId) => {
+          fetchedFormResponses.push(await getFormResponse(eventData.formId as FormId, eventData.eventId, formResponseId));
+        })
+        
+        setFormResponses(fetchedFormResponses || []);
       } catch (err) {
         logger.error(`Failed to load form responses: ${err}`);
         setError("Failed to load form responses");
@@ -84,7 +81,9 @@ export const ViewAttendeeFormResponsesDialog = ({
     };
 
     fetchFormResponses();
-  }, [eventData.eventId, attendeeName, attendeeEmail, eventMetadata]);
+  }, [eventData.eventId, orderTicketsMap, eventMetadata]);
+
+  const attendeeNames = Array.from(orderTicketsMap.keys()).map((order) => order.fullName).join(", ");
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -94,7 +93,7 @@ export const ViewAttendeeFormResponsesDialog = ({
           <div>
             <h2 className="text-2xl font-bold text-core-text">Form Responses</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Attendee: <span className="font-medium">{attendeeName}</span>
+              Attendee: <span className="font-medium">{attendeeNames}</span>
             </p>
             {form && <p className="text-xs text-gray-500 mt-0.5">Form: {form.title}</p>}
           </div>
