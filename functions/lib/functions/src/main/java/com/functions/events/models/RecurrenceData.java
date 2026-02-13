@@ -1,8 +1,10 @@
 package com.functions.events.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.Timestamp;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +12,7 @@ import java.util.Map;
 @Builder(toBuilder=true)
 @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RecurrenceData {
 	RecurrenceData.Frequency frequency;
 	Integer recurrenceAmount;
@@ -22,12 +25,20 @@ public class RecurrenceData {
 	 */
 	Map<String, String> pastRecurrences;
 
+	/**
+	 * List of reserved slots for specific email addresses.
+	 * These emails will have spots automatically reserved in each recurring event.
+	 */
+	@Builder.Default
+	List<ReservedSlot> reservedSlots = new ArrayList<>();
+
 	public static RecurrenceData.RecurrenceDataBuilder builderFromNewRecurrenceData(NewRecurrenceData newRecurrenceData) {
 		return RecurrenceData.builder()
 				.frequency(newRecurrenceData.getFrequency())
 				.recurrenceAmount(newRecurrenceData.getRecurrenceAmount())
 				.createDaysBefore(newRecurrenceData.getCreateDaysBefore())
-				.recurrenceEnabled(newRecurrenceData.getRecurrenceEnabled());
+				.recurrenceEnabled(newRecurrenceData.getRecurrenceEnabled())
+				.reservedSlots(newRecurrenceData.getReservedSlots() != null ? newRecurrenceData.getReservedSlots() : new ArrayList<>());
 	}
 
 	public NewRecurrenceData extractNewRecurrenceData() {
@@ -36,6 +47,7 @@ public class RecurrenceData {
 				.recurrenceAmount(this.recurrenceAmount)
 				.createDaysBefore(this.createDaysBefore)
 				.recurrenceEnabled(this.recurrenceEnabled)
+				.reservedSlots(this.reservedSlots != null ? this.reservedSlots : new ArrayList<>())
 				.build();
 	}
 

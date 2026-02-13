@@ -119,6 +119,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
 
   const submitNewRecurrenceData = async () => {
     setUpdatingRecurrenceData(true);
+    console.log("newRecurrenceData", newRecurrenceData);
     await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
     setUpdatingRecurrenceData(false);
   };
@@ -141,6 +142,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
           startDate={eventStartDate}
           submitNewRecurrenceData={submitNewRecurrenceData}
           isRecurrenceEnded={recurrenceEnded}
+          capacity={eventCapacity}
         />
         <MobileEventDrilldownNavTabs
           navigationTabs={["Details", "Past Events", "Settings"]}

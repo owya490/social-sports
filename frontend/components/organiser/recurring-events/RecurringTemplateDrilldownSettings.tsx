@@ -1,6 +1,7 @@
 import { MAX_RECURRENCE_AMOUNT } from "@/components/events/create/forms/RecurringEventsForm";
+import { ReservedSlotsForm } from "@/components/events/create/forms/ReservedSlotsForm";
 import LoadingSkeletonBig from "@/components/loading/LoadingSkeletonBig";
-import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
+import { Frequency, NewRecurrenceFormData, ReservedSlot } from "@/interfaces/RecurringEventTypes";
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
 import { Button, Radio, Switch } from "@mantine/core";
@@ -16,6 +17,7 @@ interface RecurringTemplateDrilldownSettingsProps {
   setNewRecurrenceData: (data: NewRecurrenceFormData) => void;
   submitNewRecurrenceData: () => void;
   isRecurrenceEnded: boolean;
+  capacity?: number;
 }
 
 const RecurringTemplateDrilldownSettings = ({
@@ -26,6 +28,7 @@ const RecurringTemplateDrilldownSettings = ({
   setNewRecurrenceData,
   submitNewRecurrenceData,
   isRecurrenceEnded,
+  capacity,
 }: RecurringTemplateDrilldownSettingsProps) => {
   const [recurrenceDates, setRecurrenceDates] = useState<Timestamp[]>([]);
 
@@ -69,6 +72,13 @@ const RecurringTemplateDrilldownSettings = ({
     setNewRecurrenceData({
       ...newRecurrenceData,
       createDaysBefore: value === undefined ? 1 : parseInt(value),
+    });
+  };
+
+  const handleReservedSlotsChange = (slots: ReservedSlot[]) => {
+    setNewRecurrenceData({
+      ...newRecurrenceData,
+      reservedSlots: slots,
     });
   };
 
@@ -154,6 +164,13 @@ const RecurringTemplateDrilldownSettings = ({
                     );
                   })
                 }
+
+                {/* Reserved Slots Section */}
+                <ReservedSlotsForm
+                  reservedSlots={newRecurrenceData.reservedSlots || []}
+                  setReservedSlots={handleReservedSlotsChange}
+                  maxCapacity={capacity}
+                />
               </>
             )}
           </div>
