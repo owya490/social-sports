@@ -15,6 +15,8 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
+import com.functions.tickets.models.requests.BookingApprovalRequest;
+import com.functions.tickets.models.responses.BookingApprovalResponse;
 import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlistDataRequest;
 import com.functions.waitlist.models.responses.UpdateFulfilmentEntityWithWaitlistDataResponse;
 import com.functions.wrapped.models.requests.GetWrappedRequest;
@@ -23,12 +25,14 @@ import com.functions.wrapped.models.responses.GetWrappedResponse;
 import lombok.Getter;
 
 /**
- * Enum defining all available endpoint types with their corresponding request and response classes.
- * This enables type-safe routing and deserialization in the GlobalAppController.
+ * Enum defining all available endpoint types with their corresponding request
+ * and response classes.
+ * This enables type-safe routing and deserialization in the
+ * GlobalAppController.
  */
 @Getter
 public enum EndpointType {
-    SAVE_TEMP_FORM_RESPONSE(SaveTempFormResponseRequest.class,SaveTempFormResponseResponse.class), 
+    SAVE_TEMP_FORM_RESPONSE(SaveTempFormResponseRequest.class, SaveTempFormResponseResponse.class),
     CREATE_EVENT(NewEventData.class, String.class),
     INIT_FULFILMENT_SESSION(InitCheckoutFulfilmentSessionRequest.class, InitCheckoutFulfilmentSessionResponse.class),
     UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID(UpdateFulfilmentEntityWithFormResponseIdRequest.class, String.class),
@@ -38,8 +42,10 @@ public enum EndpointType {
     GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class),
     COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class),
     GET_SPORTSHUB_WRAPPED(GetWrappedRequest.class, GetWrappedResponse.class),
-    UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA(UpdateFulfilmentEntityWithWaitlistDataRequest.class, UpdateFulfilmentEntityWithWaitlistDataResponse.class);
- 
+    UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA(UpdateFulfilmentEntityWithWaitlistDataRequest.class,
+            UpdateFulfilmentEntityWithWaitlistDataResponse.class),
+    BOOKING_APPROVAL(BookingApprovalRequest.class, BookingApprovalResponse.class);
+
     private final Class<?> requestClass;
     private final Class<?> responseClass;
 
@@ -47,5 +53,4 @@ public enum EndpointType {
         this.requestClass = requestClass;
         this.responseClass = responseClass;
     }
-
 }

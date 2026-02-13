@@ -1,3 +1,4 @@
+import { OrderId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 
@@ -12,4 +13,11 @@ export async function calculateNetSales(orderTicketsMap: Map<Order, Ticket[]>): 
   const totalDiscounts = orderResults.reduce((sum, result) => sum + result.discounts, 0);
 
   return totalTicketSales - totalDiscounts;
+}
+
+export function getEntryFromOrderTicketsMapByOrderId(orderTicketsMap: Map<Order, Ticket[]>, orderId: OrderId): [Order, Ticket[]] | undefined {
+  console.log(orderTicketsMap)
+  console.log(orderId)
+  console.log(Array.from(orderTicketsMap.entries()).find(([order]) => order.orderId === orderId))
+  return Array.from(orderTicketsMap.entries()).find(([order]) => order.orderId === orderId) ?? undefined;
 }

@@ -2,11 +2,15 @@ import { EventData, EventMetadata } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
+import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalService";
+import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import InviteAttendeeDialog from "./AddAttendeeDialog";
 import { ViewAttendeeFormResponsesDialog } from "./ViewAttendeeFormResponsesDialog";
 import { ApprovedAttendeeTab } from "./tabs/ApprovedAttendeeTab";
 import { PendingAttendeeTab } from "./tabs/PendingAttendeeTab";
+import { RejectedAttendeeTab } from "./tabs/RejectedAttendeeTab";
 
 interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
@@ -17,7 +21,7 @@ interface EventDrilldownManageAttendeesPageProps {
   orderTicketsMap: Map<Order, Ticket[]>;
 }
 
-type TabType = "approved" | "pending";
+type TabType = "approved" | "pending" | "rejected";
 
 export const EventDrilldownManageAttendeesPage = ({
   eventMetadata,
@@ -34,6 +38,8 @@ export const EventDrilldownManageAttendeesPage = ({
   const [loadingApprovedOrders, setLoadingApprovedOrders] = useState<boolean>(false);
   const [pendingOrderTicketsMap, setPendingOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [loadingPendingOrders, setLoadingPendingOrders] = useState<boolean>(false);
+  const [rejectedOrderTicketsMap, setRejectedOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
+  const [loadingRejectedOrders, setLoadingRejectedOrders] = useState<boolean>(false);
   const [selectedOrderForFormResponses, setSelectedOrderForFormResponses] = useState<Order | null>(null);
   const hasInitializedTabRef = useRef<boolean>(false);
 
@@ -108,27 +114,126 @@ export const EventDrilldownManageAttendeesPage = ({
       }
     };
 
+    const fetchRejectedOrders = () => {
+      if (orderTicketsMap.size === 0) {
+        setRejectedOrderTicketsMap(new Map());
+        return;
+      }
+
+      setLoadingRejectedOrders(true);
+      try {
+        const rejectedMap = new Map<Order, Ticket[]>();
+        orderTicketsMap.forEach((tickets, order) => {
+          if (order.status === OrderAndTicketStatus.REJECTED) {
+            rejectedMap.set(order, tickets);
+          }
+        });
+
+        setRejectedOrderTicketsMap(rejectedMap);
+      } catch (error) {
+        logger.error(`Error fetching rejected orders: ${error}`);
+        setRejectedOrderTicketsMap(new Map());
+      } finally {
+        setLoadingRejectedOrders(false);
+      }
+    };
+
     fetchPendingOrders();
     fetchApprovedOrders();
+    fetchRejectedOrders();
   }, [orderTicketsMap]);
 
   const pendingOrdersCount = pendingOrderTicketsMap.size;
 
-  const handleApproveOrder = (order: Order) => {
-    logger.info(`Approving order: ${order.orderId}`);
+  const moveOrderFromPending = (order: Order, tickets: Ticket[], targetStatus: OrderAndTicketStatus) => {
+    // Remove from pending
+    const newPendingMap = new Map(pendingOrderTicketsMap);
+    newPendingMap.delete(order);
+    setPendingOrderTicketsMap(newPendingMap);
+
+    // Add to target map with updated status
+    const updatedOrder: Order = { ...order, status: targetStatus };
+    if (targetStatus === OrderAndTicketStatus.APPROVED) {
+      const newApprovedMap = new Map(approvedOrderTicketsMap);
+      newApprovedMap.set(updatedOrder, tickets);
+      setApprovedOrderTicketsMap(newApprovedMap);
+    } else if (targetStatus === OrderAndTicketStatus.REJECTED) {
+      const newRejectedMap = new Map(rejectedOrderTicketsMap);
+      newRejectedMap.set(updatedOrder, tickets);
+      setRejectedOrderTicketsMap(newRejectedMap);
+    }
   };
 
-  const handleRejectOrder = (order: Order) => {
+  const handleApproveOrder = async (order: Order) => {
+    logger.info(`Approving order: ${order.orderId}`);
+    const toastId = toast.loading("Approving order...");
+    try {
+      const response = await approveBooking(eventId, eventData.organiserId, order.orderId);
+      const tickets = pendingOrderTicketsMap.get(order) ?? [];
+
+      if (response.success) {
+        moveOrderFromPending(order, tickets, OrderAndTicketStatus.APPROVED);
+        toast.success("Order approved successfully", { id: toastId });
+      } else {
+        // Backend returned 200 but the order could not be approved as expected
+        // e.g. PaymentIntent expired → order was automatically rejected
+        moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
+        toast.error(
+          response.message || "Order could not be approved and has been moved to rejected.",
+          { id: toastId, duration: 6000 }
+        );
+      }
+
+      logger.info(`Approve order response: ${JSON.stringify(response)}`);
+    } catch (error) {
+      logger.error(`Failed to approve order ${order.orderId}: ${error}`);
+      toast.error("Failed to approve order. Please try again.", { id: toastId });
+    }
+  };
+
+  const handleRejectOrder = async (order: Order) => {
     logger.info(`Rejecting order: ${order.orderId}`);
+    const toastId = toast.loading("Rejecting order...");
+    try {
+      const response = await rejectBooking(eventId, eventData.organiserId, order.orderId);
+      const tickets = pendingOrderTicketsMap.get(order) ?? [];
+
+      if (response.success) {
+        moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
+        toast.success("Order rejected successfully", { id: toastId });
+      } else {
+        // Backend returned 200 but the payment had already expired/been canceled
+        // The order was still moved to rejected, which is the intended outcome
+        moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
+        toast(
+          response.message || "Order was already rejected due to payment expiry.",
+          { id: toastId, icon: "⚠️", duration: 6000 }
+        );
+      }
+
+      logger.info(`Reject order response: ${JSON.stringify(response)}`);
+    } catch (error) {
+      logger.error(`Failed to reject order ${order.orderId}: ${error}`);
+      toast.error("Failed to reject order. Please try again.", { id: toastId });
+    }
   };
 
   return (
     <div className="flex flex-col space-y-4 mb-6 w-full p-1 pt-3 md:p-0">
+      <Toaster
+        position="bottom-left"
+        toastOptions={{
+          style: {
+            fontSize: "14px",
+            maxWidth: "400px",
+          },
+        }}
+      />
       {/* Tabs */}
       <div className="flex md:space-x-1 border-b border-gray-300">
         <button
           onClick={() => setActiveTab("approved")}
-          className={`basis-1/2 md:basis-auto px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors relative text-center ${
+          className={`basis-1/3 md:basis-auto px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors relative text-center ${
             activeTab === "approved"
               ? "text-black border-b-2 border-black"
               : "text-organiser-title-gray-text hover:text-black"
@@ -138,7 +243,7 @@ export const EventDrilldownManageAttendeesPage = ({
         </button>
         <button
           onClick={() => setActiveTab("pending")}
-          className={`basis-1/2 md:basis-auto px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors relative text-center ${
+          className={`basis-1/3 md:basis-auto px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors relative text-center ${
             activeTab === "pending"
               ? "text-black border-b-2 border-black"
               : "text-organiser-title-gray-text hover:text-black"
@@ -150,6 +255,16 @@ export const EventDrilldownManageAttendeesPage = ({
               {pendingOrdersCount}
             </span>
           )}
+        </button>
+        <button
+          onClick={() => setActiveTab("rejected")}
+          className={`basis-1/3 md:basis-auto px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium transition-colors relative text-center ${
+            activeTab === "rejected"
+              ? "text-black border-b-2 border-black"
+              : "text-organiser-title-gray-text hover:text-black"
+          }`}
+        >
+          Rejected
         </button>
       </div>
 
@@ -177,6 +292,16 @@ export const EventDrilldownManageAttendeesPage = ({
           setSelectedOrderForFormResponses={(order: Order) => setSelectedOrderForFormResponses(order)}
         />
       )}
+
+      {/* Rejected Tab Content */}
+      {activeTab === "rejected" && (
+        <RejectedAttendeeTab
+          rejectedOrderTicketsMap={rejectedOrderTicketsMap}
+          eventId={eventId}
+          loadingRejectedOrders={loadingRejectedOrders}
+          setSelectedOrderForFormResponses={(order: Order) => setSelectedOrderForFormResponses(order)}
+        />
+      )}
       <div className="grow">
         <InviteAttendeeDialog
           setIsFilterModalOpen={setIsFilterModalOpen}
@@ -191,7 +316,7 @@ export const EventDrilldownManageAttendeesPage = ({
             onClose={() => {
               setSelectedOrderForFormResponses(null);
             }}
-            orderTicketsMap={new Map([[selectedOrderForFormResponses, orderTicketsMap.get(selectedOrderForFormResponses)!]])}
+            orderTicketsMap={new Map([getEntryFromOrderTicketsMapByOrderId(orderTicketsMap, selectedOrderForFormResponses.orderId)!])}
             eventData={eventData}
             eventMetadata={eventMetadata}
           />

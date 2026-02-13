@@ -30,10 +30,8 @@ export const ViewAttendeeFormResponsesDialog = ({
   const [formId, setFormId] = useState<FormId | null>(null);
   const [form, setForm] = useState<Form | null>(null);
 
-  console.log(orderTicketsMap)
-
   const orderFormResponseIds = new Set<FormResponseId>();
-  orderTicketsMap.keys().map((order) => {
+  Array.from(orderTicketsMap.keys()).forEach((order) => {
     // get formResponseIds on Tickets
     const tickets = orderTicketsMap.get(order)!;
     const ticketFormResponseIds = tickets.map((ticket) => ticket.formResponseId).filter((formResponseId) => formResponseId !== null);
@@ -44,6 +42,8 @@ export const ViewAttendeeFormResponsesDialog = ({
     const legacyFormResponseIds = legacyAttendee.formResponseIds || [];
     legacyFormResponseIds.forEach((formResponseId: string) => orderFormResponseIds.add(formResponseId as FormResponseId));
   })
+
+  console.log(orderFormResponseIds)
   
 
   useEffect(() => {
@@ -65,13 +65,13 @@ export const ViewAttendeeFormResponsesDialog = ({
         const form = await getForm(eventData.formId);
         setForm(form);
 
-        const fetchedFormResponses: FormResponse[] = [];
+        const fetchedFormResponses = await Promise.all(
+          Array.from(orderFormResponseIds).map((formResponseId) =>
+            getFormResponse(eventData.formId as FormId, eventData.eventId, formResponseId)
+          )
+        );
 
-        orderFormResponseIds.forEach(async (formResponseId) => {
-          fetchedFormResponses.push(await getFormResponse(eventData.formId as FormId, eventData.eventId, formResponseId));
-        })
-        
-        setFormResponses(fetchedFormResponses || []);
+        setFormResponses(fetchedFormResponses);
       } catch (err) {
         logger.error(`Failed to load form responses: ${err}`);
         setError("Failed to load form responses");
