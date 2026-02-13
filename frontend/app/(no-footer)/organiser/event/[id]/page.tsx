@@ -206,6 +206,7 @@ export default function EventPage({ params }: EventPageProps) {
                 setEventVacancy={setEventVacancy}
                 setEventMetadata={setEventMetadata}
                 orderTicketsMap={orderTicketsMap}
+                setOrderTicketsMap={setOrderTicketsMap}
               />
             )}
             {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata} />}

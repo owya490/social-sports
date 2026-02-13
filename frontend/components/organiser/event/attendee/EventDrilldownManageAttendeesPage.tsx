@@ -19,6 +19,7 @@ interface EventDrilldownManageAttendeesPageProps {
   setEventVacancy: Dispatch<SetStateAction<number>>;
   setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   orderTicketsMap: Map<Order, Ticket[]>;
+  setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 type TabType = "approved" | "pending" | "rejected";
@@ -30,6 +31,7 @@ export const EventDrilldownManageAttendeesPage = ({
   setEventVacancy,
   setEventMetadata,
   orderTicketsMap,
+  setOrderTicketsMap,
 }: EventDrilldownManageAttendeesPageProps) => {
   const logger = new Logger("EventDrilldownManageAttendeesPage");
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
@@ -145,23 +147,43 @@ export const EventDrilldownManageAttendeesPage = ({
 
   const pendingOrdersCount = pendingOrderTicketsMap.size;
 
+  const deleteFromMapByOrderId = (map: Map<Order, Ticket[]>, orderId: string): Map<Order, Ticket[]> => {
+    const newMap = new Map(map);
+    for (const [key] of newMap) {
+      if (key.orderId === orderId) {
+        newMap.delete(key);
+        break;
+      }
+    }
+    return newMap;
+  };
+
   const moveOrderFromPending = (order: Order, tickets: Ticket[], targetStatus: OrderAndTicketStatus) => {
-    // Remove from pending
-    const newPendingMap = new Map(pendingOrderTicketsMap);
-    newPendingMap.delete(order);
-    setPendingOrderTicketsMap(newPendingMap);
+    // Remove from pending by orderId
+    setPendingOrderTicketsMap((prev) => deleteFromMapByOrderId(prev, order.orderId));
 
     // Add to target map with updated status
     const updatedOrder: Order = { ...order, status: targetStatus };
     if (targetStatus === OrderAndTicketStatus.APPROVED) {
-      const newApprovedMap = new Map(approvedOrderTicketsMap);
-      newApprovedMap.set(updatedOrder, tickets);
-      setApprovedOrderTicketsMap(newApprovedMap);
+      setApprovedOrderTicketsMap((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(updatedOrder, tickets);
+        return newMap;
+      });
     } else if (targetStatus === OrderAndTicketStatus.REJECTED) {
-      const newRejectedMap = new Map(rejectedOrderTicketsMap);
-      newRejectedMap.set(updatedOrder, tickets);
-      setRejectedOrderTicketsMap(newRejectedMap);
+      setRejectedOrderTicketsMap((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(updatedOrder, tickets);
+        return newMap;
+      });
     }
+
+    // Sync the parent orderTicketsMap: remove old order by orderId, add updated order
+    setOrderTicketsMap((prev) => {
+      const newMap = deleteFromMapByOrderId(prev, order.orderId);
+      newMap.set(updatedOrder, tickets);
+      return newMap;
+    });
   };
 
   const handleApproveOrder = async (order: Order) => {
