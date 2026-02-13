@@ -104,7 +104,7 @@ export const EventDrilldownManageAttendeesPage = ({
             approvedMap.set(order, tickets);
           }
         });
-
+        console.log("approvedMap", approvedMap);
         setApprovedOrderTicketsMap(approvedMap);
       } catch (error) {
         logger.error(`Error fetching approved orders: ${error}`);
@@ -180,14 +180,14 @@ export const EventDrilldownManageAttendeesPage = ({
         moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
         toast.error(
           response.message || "Order could not be approved and has been moved to rejected.",
-          { id: toastId, duration: 6000 }
+          { id: toastId }
         );
       }
 
       logger.info(`Approve order response: ${JSON.stringify(response)}`);
     } catch (error) {
       logger.error(`Failed to approve order ${order.orderId}: ${error}`);
-      toast.error("Failed to approve order. Please try again.", { id: toastId });
+      toast.error("Failed to approve order. Please try again and contact SPORTSHUB support if the problem persists.", { id: toastId });
     }
   };
 
@@ -207,14 +207,14 @@ export const EventDrilldownManageAttendeesPage = ({
         moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
         toast(
           response.message || "Order was already rejected due to payment expiry.",
-          { id: toastId, icon: "⚠️", duration: 6000 }
+          { id: toastId, icon: "⚠️" }
         );
       }
 
       logger.info(`Reject order response: ${JSON.stringify(response)}`);
     } catch (error) {
       logger.error(`Failed to reject order ${order.orderId}: ${error}`);
-      toast.error("Failed to reject order. Please try again.", { id: toastId });
+      toast.error("Failed to reject order. Please try again and contact SPORTSHUB support if the problem persists.", { id: toastId });
     }
   };
 
@@ -223,9 +223,11 @@ export const EventDrilldownManageAttendeesPage = ({
       <Toaster
         position="bottom-left"
         toastOptions={{
+          duration: 10000,
           style: {
-            fontSize: "14px",
-            maxWidth: "400px",
+            fontSize: "16px",
+            maxWidth: "500px",
+            padding: "16px 20px",
           },
         }}
       />

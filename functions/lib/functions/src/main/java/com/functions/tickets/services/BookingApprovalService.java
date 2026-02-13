@@ -168,7 +168,7 @@ public class BookingApprovalService {
                 + "Syncing Firestore status to REJECTED.", stripePaymentIntentId, orderId);
         updateOrderAndTicketStatusWithRetry(orderId, OrderAndTicketStatus.REJECTED);
         String message = String.format(
-                "PaymentIntent has expired or been canceled. Order %s has been automatically rejected.",
+                "Stripe Payment has expired or been canceled. Order %s has been automatically rejected.",
                 orderId);
         return new BookingApprovalResponse(false, orderId, operation, message);
     }

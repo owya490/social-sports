@@ -147,6 +147,7 @@ export const ApprovedAttendeeTab = ({
   setIsFilterModalOpen,
   setSelectedOrderForFormResponses,
 }: ApprovedAttendeeTabProps) => {
+  // TODO figure out how to account for manual addition tickets
   const sortedOrders = Array.from(approvedOrderTicketsMap.keys())
     .map((order) => {
       var newOrder = { ...order };
