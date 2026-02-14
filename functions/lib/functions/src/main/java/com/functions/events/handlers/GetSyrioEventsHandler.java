@@ -38,9 +38,9 @@ public class GetSyrioEventsHandler implements Handler<GetSyrioEventsRequest, Get
             List<EventData> events = EventsService.getActivePublicEventsByOrganiser(SYRIO_ORGANISER_ID);
             logger.info("Successfully retrieved {} Syrio events", events.size());
             return new GetSyrioEventsResponse(events);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             logger.error("Failed to get Syrio events", e);
-            throw new RuntimeException("Failed to get Syrio events: " + e.getMessage(), e);
+            throw e;
         }
     }
 }
