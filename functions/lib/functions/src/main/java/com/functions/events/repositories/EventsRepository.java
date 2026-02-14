@@ -1,6 +1,7 @@
 package com.functions.events.repositories;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -82,30 +83,44 @@ public class EventsRepository {
      *
      * @param organiserId the organiser's user ID
      * @return list of events for the organiser
-     * @throws InterruptedException if the operation is interrupted
-     * @throws ExecutionException   if the operation fails
      */
-    public static List<EventData> getActivePublicEventsByOrganiser(String organiserId) 
-            throws InterruptedException, ExecutionException {
-        logger.info("Querying active public events for organiser: {}", organiserId);
-        
-        Firestore db = FirebaseService.getFirestore();
-        
-        Query query = db.collection(FirebaseService.CollectionPaths.EVENTS)
-                .document(FirebaseService.CollectionPaths.ACTIVE)
-                .collection(FirebaseService.CollectionPaths.PUBLIC)
-                .whereEqualTo("organiserId", organiserId);
-        
-        QuerySnapshot querySnapshot = query.get().get();
-        List<EventData> events = new ArrayList<>();
-        
-        for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
-            EventData eventData = document.toObject(EventData.class);
-            eventData.setEventId(document.getId());
-            events.add(eventData);
+    public static List<EventData> getActivePublicEventsByOrganiser(String organiserId) {
+        if (organiserId == null || organiserId.trim().isEmpty()) {
+            throw new IllegalArgumentException("organiserId cannot be null or empty");
         }
         
-        logger.info("Found {} active public events for organiser {}", events.size(), organiserId);
-        return events;
+        logger.info("Querying active public events for organiser: {}", organiserId);
+        
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            
+            Query query = db.collection(FirebaseService.CollectionPaths.EVENTS)
+                    .document(FirebaseService.CollectionPaths.ACTIVE)
+                    .collection(FirebaseService.CollectionPaths.PUBLIC)
+                    .whereEqualTo("organiserId", organiserId);
+            
+            QuerySnapshot querySnapshot = query.get().get();
+            List<EventData> events = new ArrayList<>();
+            
+            for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
+                EventData eventData = document.toObject(EventData.class);
+                if (eventData == null) {
+                    logger.warn("Failed to map document to EventData, skipping document with ID: {}", document.getId());
+                    continue;
+                }
+                eventData.setEventId(document.getId());
+                events.add(eventData);
+            }
+            
+            logger.info("Found {} active public events for organiser {}", events.size(), organiserId);
+            return events;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Interrupted while fetching events for organiser: {}", organiserId, e);
+            return Collections.emptyList();
+        } catch (ExecutionException e) {
+            logger.error("Failed to fetch events for organiser: {}", organiserId, e);
+            return Collections.emptyList();
+        }
     }
 }

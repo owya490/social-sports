@@ -32,11 +32,19 @@ public class EventsService {
             
             Timestamp now = Timestamp.now();
             List<EventData> futureEvents = events.stream()
-                    .filter(event -> event.getStartDate() != null && event.getStartDate().compareTo(now) >= 0)
+                    .filter(event -> {
+                        if (event.getStartDate() == null) {
+                            logger.warn("Event {} has null startDate, excluding from results", 
+                                event.getEventId() != null ? event.getEventId() : "unknown");
+                            return false;
+                        }
+                        return event.getStartDate().compareTo(now) >= 0;
+                    })
                     .sorted(Comparator.comparing(EventData::getStartDate))
                     .collect(Collectors.toList());
             
-            logger.info("Found {} future events for organiser {}", futureEvents.size(), organiserId);
+            logger.info("Found {} future events for organiser {} (filtered from {} total events)", 
+                futureEvents.size(), organiserId, events.size());
             return futureEvents;
         } catch (Exception e) {
             logger.error("Error getting active public events for organiser: {}", organiserId, e);
