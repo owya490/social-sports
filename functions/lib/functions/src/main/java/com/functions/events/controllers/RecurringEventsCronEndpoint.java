@@ -40,10 +40,10 @@ public class RecurringEventsCronEndpoint implements HttpFunction {
 
         ZoneId sydneyZone = ZoneId.of("Australia/Sydney");
         LocalDate sydneyDate = ZonedDateTime.now(sydneyZone).toLocalDate();
-
+        
         List<String> createdEvents = createEventsFromRecurrenceTemplates(sydneyDate);
 
         response.getWriter()
-                .write("Recurring events processed for: " + sydneyDate + "Created events: " + createdEvents);
+                .write("Recurring events processed for: " + sydneyDate + ". Created events: " + createdEvents);
     }
 }

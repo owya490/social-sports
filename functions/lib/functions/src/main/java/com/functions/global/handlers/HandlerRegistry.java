@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.functions.events.handlers.CreateEventHandler;
+import com.functions.events.handlers.GetSyrioEventsHandler;
 import com.functions.forms.handlers.SaveTempFormResponseHandler;
 import com.functions.fulfilment.handlers.CompleteFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.GetFulfilmentEntityInfoHandler;
@@ -16,6 +17,7 @@ import com.functions.global.models.EndpointType;
 import com.functions.global.models.Handler;
 import com.functions.tickets.handlers.BookingApprovalHandler;
 import com.functions.waitlist.handlers.UpdateFulfilmentEntityWithWaitlistDataHandler;
+import com.functions.wrapped.handlers.GetWrappedHandler;
 import com.functions.wrapped.handlers.GetWrappedHandler;
 
 /**
@@ -41,6 +43,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA,
                 new UpdateFulfilmentEntityWithWaitlistDataHandler());
         handlers.put(EndpointType.BOOKING_APPROVAL, new BookingApprovalHandler());
+        handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());
     }
 
     /**

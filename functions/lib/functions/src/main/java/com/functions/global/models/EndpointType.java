@@ -1,6 +1,8 @@
 package com.functions.global.models;
 
 import com.functions.events.models.NewEventData;
+import com.functions.events.models.requests.GetSyrioEventsRequest;
+import com.functions.events.models.responses.GetSyrioEventsResponse;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
 import com.functions.forms.models.responses.SaveTempFormResponseResponse;
 import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
@@ -44,7 +46,8 @@ public enum EndpointType {
     GET_SPORTSHUB_WRAPPED(GetWrappedRequest.class, GetWrappedResponse.class),
     UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA(UpdateFulfilmentEntityWithWaitlistDataRequest.class,
             UpdateFulfilmentEntityWithWaitlistDataResponse.class),
-    BOOKING_APPROVAL(BookingApprovalRequest.class, BookingApprovalResponse.class);
+    BOOKING_APPROVAL(BookingApprovalRequest.class, BookingApprovalResponse.class),
+    GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;
