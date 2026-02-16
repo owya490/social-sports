@@ -16,6 +16,7 @@ import com.functions.events.models.EventMetadata;
 import com.functions.events.models.Purchaser;
 import com.functions.events.models.ReservedSlot;
 import com.functions.events.repositories.EventsRepository;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Transaction;
 
 import static com.functions.waitlist.repositories.WaitlistRepository.hashEmail;
@@ -37,6 +38,7 @@ public class ReservedSlotService {
         }
 
         // Read event data and metadata using EventsRepository
+        // IMPORTANT: All reads must happen before any writes in Firestore transactions
         Optional<EventData> eventDataOpt = EventsRepository.getEventById(eventId, Optional.of(transaction));
         if (eventDataOpt.isEmpty()) {
             throw new Exception("Event not found for eventId: " + eventId);
@@ -49,6 +51,10 @@ public class ReservedSlotService {
             throw new Exception("Event metadata not found for eventId: " + eventId);
         }
         EventMetadata eventMetadata = eventMetadataOpt.get();
+        
+        // Get the DocumentReference for event metadata before any writes
+        // This ensures we can update it later without violating read-before-write rule
+        DocumentReference eventMetadataDocRef = EventsRepository.getEventMetadataDocumentReference(eventId);
 
         // Validate and normalize reserved slots
         List<ReservedSlot> reservedSlots = rawReservedSlots.stream()
@@ -123,10 +129,11 @@ public class ReservedSlotService {
             logger.info("Added reserved slot as attendee: email={}, name={}, slots={}", email, name, slots);
         }
 
-        // Update event metadata
+        // Update event metadata using the pre-fetched DocumentReference
+        // This avoids reading again after writes have been performed
         eventMetadata.setPurchaserMap(purchaserMap);
         eventMetadata.setCompleteTicketCount(eventMetadata.getCompleteTicketCount() + totalTicketsAdded);
-        EventsRepository.updateEventMetadataById(eventId, eventMetadata, transaction);
+        EventsRepository.updateEventMetadataByReference(eventMetadataDocRef, eventMetadata, transaction);
 
         logger.info("Successfully processed {} reserved slots ({} tickets) for event {}", 
                 reservedSlots.size(), totalTicketsAdded, eventId);
