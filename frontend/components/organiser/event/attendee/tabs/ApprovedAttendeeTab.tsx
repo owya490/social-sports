@@ -1,6 +1,6 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { EventMetadata, Purchaser } from "@/interfaces/EventTypes";
-import { Order } from "@/interfaces/OrderTypes";
+import { EMPTY_ORDER, Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
@@ -12,7 +12,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Dispatch, Fragment, SetStateAction, useState } from "react";
-import AttendeeListTable from "../AttendeeListTable";
+import AttendeeListTable, { MANUAL_ORDER_ID_PREFIX } from "../AttendeeListTable";
 import { EditAttendeeTicketsDialog } from "../EditAttendeeTicketsDialog";
 import RemoveAttendeeDialog from "../RemoveAttendeeDialog";
 
@@ -147,21 +147,55 @@ export const ApprovedAttendeeTab = ({
   setIsFilterModalOpen,
   setSelectedOrderForFormResponses,
 }: ApprovedAttendeeTabProps) => {
-  // TODO figure out how to account for manual addition tickets
-  const sortedOrders = Array.from(approvedOrderTicketsMap.keys())
-    .map((order) => {
-      var newOrder = { ...order };
-      // get manual addition tickets which are from the legacy attendee map
-      const legacyAttendee = eventMetadata.purchaserMap[getPurchaserEmailHash(order.email)].attendees[order.fullName];
-      const legacyTickets = legacyAttendee.ticketCount;
-      if (order.tickets && legacyTickets && order.tickets.length < legacyTickets) {
-        newOrder = {
-          ...newOrder,
-          tickets: [...order.tickets, ...Array(legacyTickets - order.tickets.length).fill("MANUAL_ADDITION")],
-        };
+  const allOrders = Array.from(approvedOrderTicketsMap.keys());
+
+  // Sum ticket counts per email+name from approved orders
+  const orderTicketCountByEmailName = new Map<string, number>();
+  allOrders.forEach((order) => {
+    const key = `${order.email}::${order.fullName}`;
+    orderTicketCountByEmailName.set(key, (orderTicketCountByEmailName.get(key) ?? 0) + (order.tickets?.length ?? 0));
+  });
+
+  // Check eventMetadata for attendees that have more or fewer tickets than in orders
+  const manualAdditionOrders: Order[] = [];
+  const ticketsToRemoveByEmailName = new Map<string, number>();
+
+  Object.entries(eventMetadata.purchaserMap).forEach(([, purchaser]) => {
+    Object.entries(purchaser.attendees).forEach(([attendeeName, attendee]) => {
+      const key = `${purchaser.email}::${attendeeName}`;
+      const orderTicketCount = orderTicketCountByEmailName.get(key) ?? 0;
+      const legacyTicketCount = attendee.ticketCount ?? 0;
+
+      if (legacyTicketCount > orderTicketCount) {
+        const manualCount = legacyTicketCount - orderTicketCount;
+        manualAdditionOrders.push({
+          ...EMPTY_ORDER,
+          orderId: `${MANUAL_ORDER_ID_PREFIX}${purchaser.email}-${attendeeName}`,
+          email: purchaser.email,
+          fullName: `${attendeeName}`,
+          phone: attendee.phone ?? "",
+          tickets: Array(manualCount).fill("MANUAL_ADDITION"),
+        });
+      } else if (legacyTicketCount < orderTicketCount) {
+        // Organiser manually removed tickets — cap to the legacy count
+        ticketsToRemoveByEmailName.set(key, orderTicketCount - legacyTicketCount);
       }
-      return newOrder;
-    })
+    });
+  });
+
+  // Trim tickets from orders where the organiser manually removed some
+  const adjustedOrders = allOrders.map((order) => {
+    const key = `${order.email}::${order.fullName}`;
+    const toRemove = ticketsToRemoveByEmailName.get(key);
+    if (toRemove && toRemove > 0) {
+      const trimAmount = Math.min(toRemove, order.tickets.length);
+      ticketsToRemoveByEmailName.set(key, toRemove - trimAmount);
+      return { ...order, tickets: order.tickets.slice(0, order.tickets.length - trimAmount) };
+    }
+    return order;
+  });
+
+  const sortedOrders = [...adjustedOrders, ...manualAdditionOrders]
     .filter((order) => order.tickets.length > 0)
     .sort((a: Order, b: Order) => a.email.localeCompare(b.email));
 

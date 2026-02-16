@@ -1,6 +1,8 @@
 import { UserCircleIcon } from "@heroicons/react/20/solid";
 import { ReactNode } from "react";
 
+export const MANUAL_ORDER_ID_PREFIX = "manual-";
+
 interface AttendeeRowData {
   key: string;
   ticketCount: number;
@@ -61,7 +63,12 @@ const AttendeeListTable = <T extends AttendeeRowData>({
               <td className="py-2 px-1 md:px-2 text-xs md:text-base">
                 <div className="flex flex-row items-center">
                   <UserCircleIcon className="w-8 md:w-10 rounded-full hidden lg:block mr-2 flex-shrink-0" />
-                  <div className="truncate">{item.name}</div>
+                  <div className="truncate">
+                    <div>{item.name}</div>
+                    {(item as any).order?.orderId?.startsWith("manual-") && (
+                      <div className="text-[10px] text-gray-500 -mt-1 leading-tight">Direct Addition</div>
+                    )}
+                  </div>
                 </div>
               </td>
               <td className="py-2 px-1 md:px-2 text-xs md:text-base break-all">{item.email}</td>
