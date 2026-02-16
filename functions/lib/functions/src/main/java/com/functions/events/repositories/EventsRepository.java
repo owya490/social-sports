@@ -64,10 +64,14 @@ public class EventsRepository {
     }
 
     public static Optional<EventMetadata> getEventMetadataById(String eventId) {
+        return getEventMetadataById(eventId, Optional.empty());
+    }
+
+    public static Optional<EventMetadata> getEventMetadataById(String eventId, Optional<Transaction> transaction) {
         Firestore db = FirebaseService.getFirestore();
         try {
             DocumentReference docRef = db.document(FirebaseService.CollectionPaths.EVENTS_METADATA + "/" + eventId);
-            DocumentSnapshot maybeDocSnapshot = docRef.get().get();
+            DocumentSnapshot maybeDocSnapshot = transaction.isPresent() ? transaction.get().get(docRef).get() : docRef.get().get();
             if (maybeDocSnapshot.exists()) {
                 return Optional.of(maybeDocSnapshot.toObject(EventMetadata.class));
             }
@@ -122,5 +126,51 @@ public class EventsRepository {
             logger.error("Failed to fetch events for organiser: {}", organiserId, e);
             return Collections.emptyList();
         }
+    }
+
+    /**
+     * Updates a field in the event document by ID.
+     * Finds the event across all possible paths and updates it within a transaction.
+     *
+     * @param eventId The event ID
+     * @param field The field name to update
+     * @param value The new value
+     * @param transaction The Firestore transaction (required)
+     * @throws Exception If the event is not found
+     */
+    public static void updateEventById(String eventId, String field, Object value, Transaction transaction) throws Exception {
+        DocumentReference docRef = findEventDocumentReference(eventId, transaction);
+        transaction.update(docRef, field, value);
+    }
+
+    /**
+     * Updates the event metadata document by ID within a transaction.
+     *
+     * @param eventId The event ID
+     * @param eventMetadata The updated event metadata object
+     * @param transaction The Firestore transaction (required)
+     * @throws Exception If the metadata document is not found
+     */
+    public static void updateEventMetadataById(String eventId, EventMetadata eventMetadata, Transaction transaction) throws Exception {
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference docRef = db.document(FirebaseService.CollectionPaths.EVENTS_METADATA + "/" + eventId);
+        // Read first to ensure it exists (Firestore requires all reads before writes)
+        DocumentSnapshot snapshot = transaction.get(docRef).get();
+        if (!snapshot.exists()) {
+            throw new Exception("Event metadata not found for eventId: " + eventId);
+        }
+        transaction.set(docRef, eventMetadata);
+    }
+
+    private static DocumentReference findEventDocumentReference(String eventId, Transaction transaction) throws Exception {
+        Firestore db = FirebaseService.getFirestore();
+        for (String path : FirebaseService.CollectionPaths.EVENT_PATHS) {
+            DocumentReference docRef = db.document(path + "/" + eventId);
+            DocumentSnapshot snapshot = transaction.get(docRef).get();
+            if (snapshot.exists()) {
+                return docRef;
+            }
+        }
+        throw new Exception("No event document found for eventId: " + eventId);
     }
 }
