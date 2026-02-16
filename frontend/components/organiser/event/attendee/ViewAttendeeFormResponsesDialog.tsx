@@ -34,8 +34,9 @@ export const ViewAttendeeFormResponsesDialog = ({
   Array.from(orderTicketsMap.keys()).forEach((order) => {
     // get formResponseIds on Tickets
     const tickets = orderTicketsMap.get(order)!;
-    const ticketFormResponseIds = tickets.map((ticket) => ticket.formResponseId).filter((formResponseId) => formResponseId !== null);
-    ticketFormResponseIds.forEach((formResponseId) => orderFormResponseIds.add(formResponseId));
+    tickets.map((ticket) => ticket.formResponseId)
+      .filter((formResponseId): formResponseId is FormResponseId => formResponseId !== null)
+      .forEach((formResponseId) => orderFormResponseIds.add(formResponseId as FormResponseId));
 
     // get legacy form response Ids in the legacyAttendeeMap
     const legacyAttendee = eventMetadata.purchaserMap[getPurchaserEmailHash(order.email)].attendees[order.fullName];
