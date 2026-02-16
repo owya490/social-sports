@@ -15,11 +15,14 @@ import com.functions.fulfilment.handlers.InitFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.UpdateFulfilmentEntityWithFormResponseIdHandler;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.Handler;
+import com.functions.tickets.handlers.BookingApprovalHandler;
 import com.functions.waitlist.handlers.UpdateFulfilmentEntityWithWaitlistDataHandler;
+import com.functions.wrapped.handlers.GetWrappedHandler;
 import com.functions.wrapped.handlers.GetWrappedHandler;
 
 /**
- * Registry for mapping endpoint types to their corresponding handler implementations.
+ * Registry for mapping endpoint types to their corresponding handler
+ * implementations.
  * This provides centralized handler management and type-safe routing.
  */
 public class HandlerRegistry {
@@ -29,14 +32,17 @@ public class HandlerRegistry {
         handlers.put(EndpointType.SAVE_TEMP_FORM_RESPONSE, new SaveTempFormResponseHandler());
         handlers.put(EndpointType.CREATE_EVENT, new CreateEventHandler());
         handlers.put(EndpointType.INIT_FULFILMENT_SESSION, new InitFulfilmentSessionHandler());
-        handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID, new UpdateFulfilmentEntityWithFormResponseIdHandler());
+        handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
+                new UpdateFulfilmentEntityWithFormResponseIdHandler());
         handlers.put(EndpointType.GET_PREV_FULFILMENT_ENTITY, new GetPrevFulfilmentEntityHandler());
         handlers.put(EndpointType.GET_NEXT_FULFILMENT_ENTITY, new GetNextFulfilmentEntityHandler());
         handlers.put(EndpointType.GET_FULFILMENT_SESSION_INFO, new GetFulfilmentSessionInfoHandler());
         handlers.put(EndpointType.GET_FULFILMENT_ENTITY_INFO, new GetFulfilmentEntityInfoHandler());
         handlers.put(EndpointType.COMPLETE_FULFILMENT_SESSION, new CompleteFulfilmentSessionHandler());
         handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED, new GetWrappedHandler());
-        handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA, new UpdateFulfilmentEntityWithWaitlistDataHandler());
+        handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA,
+                new UpdateFulfilmentEntityWithWaitlistDataHandler());
+        handlers.put(EndpointType.BOOKING_APPROVAL, new BookingApprovalHandler());
         handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());
     }
 
@@ -45,7 +51,8 @@ public class HandlerRegistry {
      *
      * @param endpointType the endpoint type
      * @return the handler implementation
-     * @throws IllegalArgumentException if no handler is registered for the endpoint type
+     * @throws IllegalArgumentException if no handler is registered for the endpoint
+     *                                  type
      */
     @SuppressWarnings("unchecked")
     public static <S, T> Handler<S, T> getHandler(EndpointType endpointType) {

@@ -1,28 +1,26 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
-import { EventData, EventId, EventMetadata, Purchaser } from "@/interfaces/EventTypes";
-import { Form, FormId, FormResponse } from "@/interfaces/FormTypes";
+import { EventData, EventMetadata } from "@/interfaces/EventTypes";
+import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
-import { getEventById } from "@/services/src/events/eventsService";
-import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
+import { getPurchaserEmailHash } from "@/services/src/events/eventsService";
+import { getForm, getFormResponse } from "@/services/src/forms/formsServices";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 
 interface ViewAttendeeFormResponsesDialogProps {
-  isOpen: boolean;
   onClose: () => void;
-  attendeeName: string;
-  purchaser: Purchaser;
-  eventId: EventId;
+  orderTicketsMap: Map<Order, Ticket[]>;
+  eventData: EventData;
   eventMetadata: EventMetadata;
 }
 
-const ViewAttendeeFormResponsesDialog = ({
-  isOpen,
+export const ViewAttendeeFormResponsesDialog = ({
   onClose,
-  attendeeName,
-  purchaser,
-  eventId,
+  orderTicketsMap,
+  eventData,
   eventMetadata,
 }: ViewAttendeeFormResponsesDialogProps) => {
   const logger = new Logger("ViewAttendeeFormResponsesDialog");
@@ -32,6 +30,20 @@ const ViewAttendeeFormResponsesDialog = ({
   const [formId, setFormId] = useState<FormId | null>(null);
   const [form, setForm] = useState<Form | null>(null);
 
+  const orderFormResponseIds = new Set<FormResponseId>();
+  Array.from(orderTicketsMap.keys()).forEach((order) => {
+    // get formResponseIds on Tickets
+    const tickets = orderTicketsMap.get(order)!;
+    tickets.map((ticket) => ticket.formResponseId)
+      .filter((formResponseId): formResponseId is FormResponseId => formResponseId !== null)
+      .forEach((formResponseId) => orderFormResponseIds.add(formResponseId as FormResponseId));
+
+    // get legacy form response Ids in the legacyAttendeeMap
+    const legacyAttendee = eventMetadata.purchaserMap[getPurchaserEmailHash(order.email)].attendees[order.fullName];
+    const legacyFormResponseIds = legacyAttendee.formResponseIds || [];
+    legacyFormResponseIds.forEach((formResponseId: string) => orderFormResponseIds.add(formResponseId as FormResponseId));
+  })
+  
   useEffect(() => {
     const fetchFormResponses = async () => {
       try {
@@ -39,7 +51,6 @@ const ViewAttendeeFormResponsesDialog = ({
         setError(null);
 
         // Get event data to find formId
-        const eventData: EventData = await getEventById(eventId);
         if (!eventData.formId) {
           setFormId(null);
           setLoading(false);
@@ -52,23 +63,13 @@ const ViewAttendeeFormResponsesDialog = ({
         const form = await getForm(eventData.formId);
         setForm(form);
 
-        // Get all form responses for this event
-        const allResponses = await getFormResponsesForEvent(eventData.formId, eventId);
-
-        // Filter responses for this specific attendee
-        const attendeeData = purchaser.attendees[attendeeName];
-        if (!attendeeData) {
-          logger.warn(`No attendee data found for name "${attendeeName}" on purchaser ${purchaser.email}.`);
-          setFormResponses([]);
-          return;
-        }
-        const attendeeFormResponseIds = attendeeData.formResponseIds || [];
-
-        const filteredResponses = allResponses.filter((response) =>
-          attendeeFormResponseIds.includes(response.formResponseId)
+        const fetchedFormResponses = await Promise.all(
+          Array.from(orderFormResponseIds).map((formResponseId) =>
+            getFormResponse(eventData.formId as FormId, eventData.eventId, formResponseId)
+          )
         );
 
-        setFormResponses(filteredResponses);
+        setFormResponses(fetchedFormResponses);
       } catch (err) {
         logger.error(`Failed to load form responses: ${err}`);
         setError("Failed to load form responses");
@@ -77,12 +78,10 @@ const ViewAttendeeFormResponsesDialog = ({
       }
     };
 
-    if (isOpen) {
-      fetchFormResponses();
-    }
-  }, [isOpen, eventId, attendeeName, purchaser]);
+    fetchFormResponses();
+  }, [eventData.eventId, orderTicketsMap, eventMetadata]);
 
-  if (!isOpen) return null;
+  const attendeeNames = Array.from(orderTicketsMap.keys()).map((order) => order.fullName).join(", ");
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -92,7 +91,7 @@ const ViewAttendeeFormResponsesDialog = ({
           <div>
             <h2 className="text-2xl font-bold text-core-text">Form Responses</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Attendee: <span className="font-medium">{attendeeName}</span>
+              Attendee: <span className="font-medium">{attendeeNames}</span>
             </p>
             {form && <p className="text-xs text-gray-500 mt-0.5">Form: {form.title}</p>}
           </div>
@@ -115,6 +114,11 @@ const ViewAttendeeFormResponsesDialog = ({
             <div className="text-center py-12">
               <p className="text-gray-600">No form is attached to this event</p>
             </div>
+          ) : !form ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No form found for formId: {formId}</p>
+              <p className="text-gray-600">Please contact SPORTSHUB support.</p>
+            </div>
           ) : formResponses.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-600">No form responses found for this attendee</p>
@@ -123,8 +127,8 @@ const ViewAttendeeFormResponsesDialog = ({
             <FormResponsesTable
               formResponses={formResponses}
               formId={formId}
-              form={form!}
-              eventId={eventId}
+              form={form}
+              eventId={eventData.eventId}
               eventMetadata={eventMetadata}
               showPurchaserColumn={false}
             />
@@ -139,5 +143,3 @@ const ViewAttendeeFormResponsesDialog = ({
     </div>
   );
 };
-
-export default ViewAttendeeFormResponsesDialog;
