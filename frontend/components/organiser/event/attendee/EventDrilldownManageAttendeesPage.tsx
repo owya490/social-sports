@@ -106,7 +106,6 @@ export const EventDrilldownManageAttendeesPage = ({
             approvedMap.set(order, tickets);
           }
         });
-        console.log("approvedMap", approvedMap);
         setApprovedOrderTicketsMap(approvedMap);
       } catch (error) {
         logger.error(`Error fetching approved orders: ${error}`);

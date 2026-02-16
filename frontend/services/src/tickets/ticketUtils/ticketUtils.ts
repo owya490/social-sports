@@ -16,8 +16,5 @@ export async function calculateNetSales(orderTicketsMap: Map<Order, Ticket[]>): 
 }
 
 export function getEntryFromOrderTicketsMapByOrderId(orderTicketsMap: Map<Order, Ticket[]>, orderId: OrderId): [Order, Ticket[]] | undefined {
-  console.log(orderTicketsMap)
-  console.log(orderId)
-  console.log(Array.from(orderTicketsMap.entries()).find(([order]) => order.orderId === orderId))
   return Array.from(orderTicketsMap.entries()).find(([order]) => order.orderId === orderId) ?? undefined;
 }
