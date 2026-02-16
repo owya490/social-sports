@@ -162,6 +162,30 @@ public class EventsRepository {
         transaction.set(docRef, eventMetadata);
     }
 
+    /**
+     * Updates the event metadata document using a pre-fetched DocumentReference within a transaction.
+     * This method should be used when the DocumentReference has already been read in the transaction
+     * to avoid violating Firestore's read-before-write rule.
+     *
+     * @param docRef The document reference (must have been read earlier in the transaction)
+     * @param eventMetadata The updated event metadata object
+     * @param transaction The Firestore transaction (required)
+     */
+    public static void updateEventMetadataByReference(DocumentReference docRef, EventMetadata eventMetadata, Transaction transaction) throws Exception {
+        transaction.set(docRef, eventMetadata);
+    }
+
+    /**
+     * Gets the DocumentReference for event metadata by event ID.
+     *
+     * @param eventId The event ID
+     * @return The DocumentReference for the event metadata
+     */
+    public static DocumentReference getEventMetadataDocumentReference(String eventId) {
+        Firestore db = FirebaseService.getFirestore();
+        return db.document(FirebaseService.CollectionPaths.EVENTS_METADATA + "/" + eventId);
+    }
+
     private static DocumentReference findEventDocumentReference(String eventId, Transaction transaction) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         for (String path : FirebaseService.CollectionPaths.EVENT_PATHS) {
