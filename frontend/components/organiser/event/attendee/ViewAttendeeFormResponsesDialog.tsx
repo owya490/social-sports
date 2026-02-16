@@ -43,10 +43,7 @@ export const ViewAttendeeFormResponsesDialog = ({
     const legacyFormResponseIds = legacyAttendee.formResponseIds || [];
     legacyFormResponseIds.forEach((formResponseId: string) => orderFormResponseIds.add(formResponseId as FormResponseId));
   })
-
-  console.log(orderFormResponseIds)
   
-
   useEffect(() => {
     const fetchFormResponses = async () => {
       try {
