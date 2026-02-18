@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.functions.events.handlers.CreateEventHandler;
+import com.functions.events.handlers.GetEventByIdHandler;
 import com.functions.events.handlers.GetSyrioEventsHandler;
 import com.functions.forms.handlers.SaveTempFormResponseHandler;
 import com.functions.fulfilment.handlers.CompleteFulfilmentSessionHandler;
@@ -38,6 +39,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED, new GetWrappedHandler());
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA, new UpdateFulfilmentEntityWithWaitlistDataHandler());
         handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());
+        handlers.put(EndpointType.GET_EVENT_BY_ID, new GetEventByIdHandler());
     }
 
     /**
