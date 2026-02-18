@@ -26,40 +26,44 @@ public class GetEventByIdHandler implements Handler<GetEventByIdRequest, GetEven
         try {
             return JavaUtils.objectMapper.treeToValue(data.data(), GetEventByIdRequest.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to parse GetEventByIdRequest", e);
+            throw new IllegalArgumentException("Failed to parse GetEventByIdRequest", e);
         }
     }
 
     @Override
     public GetEventByIdResponse handle(GetEventByIdRequest request) {
-        logger.info("Handling get event by ID request for eventId: {}", request.eventId());
+        String eventId = request.eventId();
+        if (eventId == null || eventId.isBlank()) {
+            logger.warn("GetEventById rejected: eventId is null or blank");
+            throw new IllegalArgumentException("eventId is required and must be non-empty");
+        }
+
+        logger.info("Handling get event by ID request for eventId: {}", eventId);
 
         try {
-            Optional<EventData> eventOptional = EventsRepository.getEventById(request.eventId());
+            Optional<EventData> eventOptional = EventsRepository.getEventById(eventId);
             
             if (eventOptional.isEmpty()) {
-                logger.warn("Event not found: {}", request.eventId());
-                throw new RuntimeException("Event not found: " + request.eventId());
+                logger.warn("Event not found: {}", eventId);
+                throw new RuntimeException("Event not found: " + eventId);
             }
 
             EventData event = eventOptional.get();
 
-            // Validate the event is active
             if (event.getIsActive() == null || !event.getIsActive()) {
-                logger.warn("Event is not active: {}", request.eventId());
-                throw new RuntimeException("Event is not active: " + request.eventId());
+                logger.warn("Event is not active: {}", eventId);
+                throw new RuntimeException("Event is not active: " + eventId);
             }
 
-            // Validate the event is public
-            if (event.getIsPrivate() != null && event.getIsPrivate()) {
+            if (event.getIsPrivate() == null || event.getIsPrivate()) {
                 logger.warn("Event is private: {}", request.eventId());
                 throw new RuntimeException("Event is private: " + request.eventId());
             }
 
-            logger.info("Successfully retrieved event: {}", request.eventId());
+            logger.info("Successfully retrieved event: {}", eventId);
             return new GetEventByIdResponse(event);
         } catch (RuntimeException e) {
-            logger.error("Failed to get event by ID: {}", request.eventId(), e);
+            logger.error("Failed to get event by ID: {}", eventId, e);
             throw e;
         }
     }
