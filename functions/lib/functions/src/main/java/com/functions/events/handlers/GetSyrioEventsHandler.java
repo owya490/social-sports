@@ -19,7 +19,7 @@ import com.functions.utils.JavaUtils;
  */
 public class GetSyrioEventsHandler implements Handler<GetSyrioEventsRequest, GetSyrioEventsResponse> {
     private static final Logger logger = LoggerFactory.getLogger(GetSyrioEventsHandler.class);
-    private static final String SYRIO_ORGANISER_ID = "4jCSqGcc1PV7EWDL4CagipVIi8n2";
+    private static final String SYRIO_ORGANISER_ID = "tihrtHXNCKVkYpmJIVijKDWkkvq2";
 
     @Override
     public GetSyrioEventsRequest parse(UnifiedRequest data) {
