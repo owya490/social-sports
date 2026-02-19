@@ -34,7 +34,7 @@ export function shouldHideNavbar(pathname: string): boolean {
 export function useNavbarVisibility(): boolean {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const { replace } = useRouter();
 
   // Initialized synchronously so the very first client render can already hide the navbar
   // without waiting for useEffect to write sessionStorage.
@@ -75,7 +75,7 @@ export function useNavbarVisibility(): boolean {
       newSearchParams.delete("hideNavbar");
       const newSearch = newSearchParams.toString();
       const newUrl = newSearch ? `${pathname}?${newSearch}` : pathname;
-      router.replace(newUrl, { scroll: false });
+      replace(newUrl, { scroll: false });
       return;
     }
 
@@ -93,7 +93,7 @@ export function useNavbarVisibility(): boolean {
     // On a fulfilment route without ?hideNavbar=true — sync state with sessionStorage
     const [, fulfilmentSessionId] = fulfilmentMatch!;
     setIsNavbarHidden(sessionStorage.getItem(`hideNavbar_${fulfilmentSessionId}`) === "true");
-  }, [pathname, searchParams, router]);
+  }, [pathname, searchParams, replace]);
 
   return isNavbarHidden;
 }

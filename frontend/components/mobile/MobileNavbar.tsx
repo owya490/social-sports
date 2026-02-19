@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import ProfilePic from "../navbar/ProfilePic";
-import { useNavbarVisibility } from "../navbar/navbarVisibility";
+import { useNavbarVisibility } from "@components/navbar/navbarVisibility";
 import Logo from "./../../public/images/BlackLogo.svg";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileSearchInput from "./MobileSearchInput";
@@ -16,15 +16,23 @@ export default function MobileNavbar() {
   const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {
+    if (isNavbarHidden) return;
+
+    let cancelled = false;
     getAllTags()
       .then((tags) => {
-        setTags(tags);
+        if (!cancelled) setTags(tags);
       })
       .catch((error) => {
-        console.error("Failed to fetch tags:", error);
-        setTags([]); // Set empty array as fallback
+        if (!cancelled) {
+          console.error("Failed to fetch tags:", error);
+          setTags([]);
+        }
       });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [isNavbarHidden]);
 
   if (isNavbarHidden) {
     return (
