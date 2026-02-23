@@ -9,23 +9,23 @@ import {
   SaveTempFormResponseRequest,
   SaveTempFormResponseResponse,
 } from "@/interfaces/FormTypes";
+import {
+  FulfilmentEntityId,
+  FulfilmentSessionId,
+  UpdateFulfilmentEntityWithFormResponseIdRequest,
+} from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { PrivateUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, writeBatch } from "firebase/firestore";
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
+import { fulfilmentServiceLogger } from "../fulfilment/fulfilmentServices";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getPrivateUserById } from "../users/usersService";
-import { FormPaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
+import { FormPaths, FormResponsePaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
-import {
-  FulfilmentSessionId,
-  FulfilmentEntityId,
-  UpdateFulfilmentEntityWithFormResponseIdRequest,
-} from "@/interfaces/FulfilmentTypes";
-import { fulfilmentServiceLogger } from "../fulfilment/fulfilmentServices";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
@@ -347,6 +347,48 @@ export async function getActiveFormsForUser(userId: UserId): Promise<Form[]> {
   } catch (error) {
     formsServiceLogger.error(
       `getActiveFormsForUser: Error getting active forms for userId: ${userId}, error: ${error}`
+    );
+    throw error;
+  }
+}
+
+export async function submitManualFormResponse(
+  formId: FormId,
+  eventId: EventId,
+  formResponseId: FormResponseId
+): Promise<void> {
+  formsServiceLogger.info(
+    `submitManualFormResponse: formId=${formId}, eventId=${eventId}, responseId=${formResponseId}`
+  );
+
+  try {
+    const batch = writeBatch(db);
+
+    // 1. Reference to Temp doc
+    const tempDocRef = doc(db, FormResponsePaths.Temp, formId, eventId, formResponseId);
+
+    // 2. Get the data
+    const tempDocSnap = await getDoc(tempDocRef);
+    if (!tempDocSnap.exists()) {
+      throw new Error("Temp form response not found");
+    }
+    const data = tempDocSnap.data() as FormResponse;
+
+    // 3. Add submission time
+    data.submissionTime = Timestamp.now();
+
+    // 4. Reference to Submitted doc
+    const submittedDocRef = doc(db, FormResponsePaths.Submitted, formId, eventId, formResponseId);
+
+    // 5. Add to batch
+    batch.set(submittedDocRef, data);
+    batch.delete(tempDocRef);
+
+    // 6. Commit
+    await batch.commit();
+  } catch (error) {
+    formsServiceLogger.error(
+      `submitManualFormResponse: Failed to submit manual form response. formId: ${formId}, eventId: ${eventId}, formResponseId: ${formResponseId}, error: ${error}`
     );
     throw error;
   }

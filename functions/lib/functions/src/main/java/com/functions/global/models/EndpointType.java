@@ -1,6 +1,10 @@
 package com.functions.global.models;
 
 import com.functions.events.models.NewEventData;
+import com.functions.events.models.requests.GetEventByIdRequest;
+import com.functions.events.models.requests.GetSyrioEventsRequest;
+import com.functions.events.models.responses.GetEventByIdResponse;
+import com.functions.events.models.responses.GetSyrioEventsResponse;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
 import com.functions.forms.models.responses.SaveTempFormResponseResponse;
 import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
@@ -38,7 +42,9 @@ public enum EndpointType {
     GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class),
     COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class),
     GET_SPORTSHUB_WRAPPED(GetWrappedRequest.class, GetWrappedResponse.class),
-    UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA(UpdateFulfilmentEntityWithWaitlistDataRequest.class, UpdateFulfilmentEntityWithWaitlistDataResponse.class);
+    UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA(UpdateFulfilmentEntityWithWaitlistDataRequest.class, UpdateFulfilmentEntityWithWaitlistDataResponse.class),
+    GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class),
+    GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class);
  
     private final Class<?> requestClass;
     private final Class<?> responseClass;

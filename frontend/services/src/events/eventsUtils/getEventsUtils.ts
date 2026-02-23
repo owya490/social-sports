@@ -144,6 +144,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       formId: event.formId,
       hideVacancy: event.hideVacancy,
       waitlistEnabled: event.waitlistEnabled,
+      bookingApprovalEnabled: event.bookingApprovalEnabled,
     });
   });
   return eventsDataFinal;

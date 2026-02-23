@@ -4,6 +4,7 @@ import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
 
 export type EventId = string;
 export type StripeCheckoutSessionId = string;
+export type StripePaymentIntentId = string;
 
 export type OrderId = string;
 export type TicketId = string;
@@ -47,6 +48,7 @@ interface AbstractEventData {
   formId: FormId | null;
   hideVacancy: boolean; // should default to false
   waitlistEnabled: boolean; // should default to true
+  bookingApprovalEnabled: boolean; // should default to false
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -99,6 +101,7 @@ export const EmptyEventData: EventData = {
   formId: null,
   hideVacancy: false,
   waitlistEnabled: true,
+  bookingApprovalEnabled: false,
 };
 
 export interface EventMetadata {
@@ -106,6 +109,7 @@ export interface EventMetadata {
   purchaserMap: Record<EmailHash, Purchaser>;
   completeTicketCount: number;
   completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
+  completedStripePaymentIntentIds: StripePaymentIntentId[];
   organiserId: UserId;
   orderIds: OrderId[];
 }
@@ -117,6 +121,7 @@ export const EmptyEventMetadata: EventMetadata = {
   },
   completeTicketCount: 0,
   completedStripeCheckoutSessionIds: [],
+  completedStripePaymentIntentIds: [],
   organiserId: "",
   orderIds: [],
 };

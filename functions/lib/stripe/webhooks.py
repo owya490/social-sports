@@ -3,6 +3,7 @@
 ###############################
 
 import hashlib
+import json
 import time
 import uuid
 from dataclasses import dataclass
@@ -16,6 +17,7 @@ from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import IS_PROD, db
+from lib.emails.cancel_event import send_cancellation_email
 from lib.emails.purchase_event import (PurchaseEventRequest,
                                        send_email_on_purchase_event)
 from lib.logging import Logger
@@ -146,6 +148,69 @@ def check_if_session_has_been_processed_already(
         return True
 
     return False
+
+
+def check_if_payment_intent_has_been_processed_already(
+    transaction: Transaction, logger: Logger, payment_intent_id: str, event_id: str
+) -> bool:
+    """
+    Check if a payment intent has already been processed by checking EventMetadata.
+    Returns True if already processed, False otherwise.
+    """
+    maybe_event_metadata = (
+        db.collection(f"EventsMetadata").document(event_id).get(transaction=transaction)
+    )
+
+    if not maybe_event_metadata.exists:
+        logger.error(f"Unable to find event metadata in datastore. eventId={event_id}")
+        return False
+
+    event_metadata = maybe_event_metadata.to_dict()
+
+    completed_payment_intent_ids = event_metadata.get("completedStripePaymentIntentIds")
+    if completed_payment_intent_ids is None:
+        return False
+
+    if payment_intent_id in completed_payment_intent_ids:
+        return True
+
+    return False
+
+
+def query_order_by_payment_intent_id(
+    logger: Logger, payment_intent_id: str
+) -> dict | None:
+    """
+    Query the Orders collection to find an order associated with the given payment intent ID.
+    Returns the order document data if found, None otherwise.
+    """
+    try:
+        orders_query = (
+            db.collection("Orders")
+            .where("stripePaymentIntentId", "==", payment_intent_id)
+            .limit(1)
+            .get()
+        )
+
+        if len(orders_query) == 0:
+            logger.warning(
+                f"No order found with payment intent ID: {payment_intent_id}"
+            )
+            return None
+
+        order_doc = orders_query[0]
+        order_data = order_doc.to_dict()
+        order_data["orderId"] = order_doc.id
+        logger.info(
+            f"Found order {order_doc.id} for payment intent {payment_intent_id}"
+        )
+        return order_data
+
+    except Exception as e:
+        logger.error(
+            f"Error querying order by payment intent ID {payment_intent_id}: {e}"
+        )
+        return None
 
 
 def add_stripe_event_and_checkout_tags(logger: Logger, event: Event):
@@ -381,6 +446,86 @@ def record_checkout_session_by_customer_email(
     )
 
 
+def restock_tickets(
+    transaction: Transaction,
+    event_id: str,
+    is_private: bool,
+    ticket_count: int,
+):
+    """
+    Restock tickets by incrementing the vacancy count for an event.
+    This is a transactional function that can be reused across different workflows.
+    """
+    private_path = "Private" if is_private else "Public"
+    event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
+    transaction.update(event_ref, {"vacancy": firestore.Increment(ticket_count)})
+
+
+def update_tickets_status_to_rejected(
+    transaction: Transaction,
+    logger: Logger,
+    ticket_ids: list[str],
+):
+    """
+    Update the status of multiple tickets to REJECTED.
+    """
+    for ticket_id in ticket_ids:
+        ticket_ref = db.collection("Tickets").document(ticket_id)
+        transaction.update(ticket_ref, {"status": "REJECTED"})
+        logger.info(f"Updated ticket {ticket_id} status to REJECTED")
+
+
+def update_order_status_to_rejected(
+    transaction: Transaction,
+    logger: Logger,
+    order_id: str,
+):
+    """
+    Update the status of an order to REJECTED.
+    """
+    order_ref = db.collection("Orders").document(order_id)
+    transaction.update(order_ref, {"status": "REJECTED"})
+    logger.info(f"Updated order {order_id} status to REJECTED")
+
+
+def handle_payment_intent_cancellation(
+    transaction: Transaction,
+    logger: Logger,
+    payment_intent_id: str,
+    event_id: str,
+    is_private: bool,
+    ticket_count: int,
+    order_id: str,
+    ticket_ids: list[str],
+):
+    """
+    Handle payment intent cancellation workflow:
+    1. Restock tickets
+    2. Update ticket statuses to REJECTED
+    3. Update order status to REJECTED
+    4. Add payment intent ID to completedStripePaymentIntentIds list in EventMetadata
+    """
+    event_metadata_ref = db.collection("EventsMetadata").document(event_id)
+
+    # Restock tickets
+    restock_tickets(transaction, event_id, is_private, ticket_count)
+
+    # Update ticket statuses to REJECTED
+    update_tickets_status_to_rejected(transaction, logger, ticket_ids)
+
+    # Update order status to REJECTED
+    update_order_status_to_rejected(transaction, logger, order_id)
+
+    # Add payment intent ID to the processed list
+    transaction.update(
+        event_metadata_ref,
+        {"completedStripePaymentIntentIds": firestore.ArrayUnion([payment_intent_id])},
+    )
+    logger.info(
+        f"Added payment intent {payment_intent_id} to completedStripePaymentIntentIds for event {event_id}"
+    )
+
+
 @firestore.transactional
 def restock_tickets_after_expired_checkout(
     transaction: Transaction,
@@ -389,15 +534,13 @@ def restock_tickets_after_expired_checkout(
     is_private: bool,
     line_items,
 ):
-    private_path = "Private" if is_private else "Public"
-    event_ref = db.collection(f"Events/Active/{private_path}").document(event_id)
     event_metadata_ref = db.collection(f"EventsMetadata").document(event_id)
 
     item = line_items["data"][
         0
     ]  # we only offer one item type per checkout (can buy multiple quantities)
 
-    transaction.update(event_ref, {"vacancy": firestore.Increment(item.quantity)})
+    restock_tickets(transaction, event_id, is_private, item.quantity)
 
     # Add current checkout session to the processed list
     transaction.update(
@@ -537,9 +680,10 @@ def fulfilment_workflow_on_ticket_purchase(
             logger, fulfilment_session_id, end_fulfilment_entity_id
         )
 
-    # Send email to purchasing consumer. Retry sending email 3 times, before exiting and completing order. If email breaks, its not the end of the world.
+    # Send email to purchasing consumer. Retry sending email 3 times with exponential backoff, before exiting and completing order. If email breaks, its not the end of the world.
     success = False
-    for _ in range(3):
+    max_retries = 3
+    for attempt in range(max_retries):
         success = send_email_on_purchase_event(
             PurchaseEventRequest(
                 event_id,
@@ -551,10 +695,18 @@ def fulfilment_workflow_on_ticket_purchase(
         )
         if success:
             break
+        
+        # Exponential backoff: wait 1s, 2s between retries
+        if attempt < max_retries - 1:
+            delay = 2 ** attempt  # 1, 2 seconds
+            logger.info(
+                f"Email send failed for orderId={orderId}, retrying in {delay}s (attempt {attempt + 1}/{max_retries})"
+            )
+            time.sleep(delay)
 
     if not success:
         logger.warning(
-            f"Was unable to send email to {customer_details.email}. orderId={orderId}"
+            f"Was unable to send email to {customer_details.email} after {max_retries} attempts. orderId={orderId}"
         )
 
     record_checkout_session_by_customer_email(
@@ -855,7 +1007,164 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
                 session_metadata.isPrivate,
                 line_items,
             )
+        case "payment_intent.canceled":
+            logger.add_tags(
+                {
+                    "eventType": event["type"],
+                    "eventId": event.id,
+                    "paymentIntentId": event["data"]["object"]["id"],
+                    "stripeAccount": event["account"],
+                }
+            )
+            logger.info(
+                f"Processing webhook event of payment_intent.canceled for {event.id}."
+            )
 
+            # Get payment intent ID from the event
+            payment_intent_id = event["data"]["object"]["id"]
+            if not payment_intent_id:
+                logger.error(
+                    f"Unable to retrieve payment intent ID from webhook event. event={event}"
+                )
+                return https_fn.Response(status=400)
+
+            # Query Orders collection to find the order associated with this payment intent
+            order_data = query_order_by_payment_intent_id(logger, payment_intent_id)
+            if order_data is None:
+                logger.error(
+                    f"No order found for payment intent {payment_intent_id}. Returning 200 to acknowledge webhook."
+                )
+                return https_fn.Response(status=200)
+
+            order_id = order_data.get("orderId")
+            ticket_ids = order_data.get("tickets", [])
+            email = order_data.get("email")
+            full_name = order_data.get("fullName", "")
+            ticket_count = len(ticket_ids)
+
+            if not order_id:
+                logger.error(f"Order data incomplete. orderId={order_id}")
+                return https_fn.Response(status=500)
+
+            # Get event information from the order's tickets
+            # We need to get the eventId and isPrivate from one of the tickets
+            try:
+                first_ticket_ref = db.collection("Tickets").document(ticket_ids[0])
+                first_ticket = first_ticket_ref.get()
+                if not first_ticket.exists:
+                    logger.error(
+                        f"First ticket {ticket_ids[0]} not found for order {order_id}"
+                    )
+                    return https_fn.Response(status=500)
+
+                ticket_data = first_ticket.to_dict()
+                event_id = ticket_data.get("eventId")
+                if not event_id:
+                    logger.error(f"Event ID not found in ticket {ticket_ids[0]}")
+                    return https_fn.Response(status=500)
+
+                # Determine if event is private by checking both paths
+                private_event_ref = db.collection("Events/Active/Private").document(
+                    event_id
+                )
+                public_event_ref = db.collection("Events/Active/Public").document(
+                    event_id
+                )
+
+                private_event = private_event_ref.get()
+                public_event = public_event_ref.get()
+
+                if not private_event.exists and not public_event.exists:
+                    logger.error(
+                        f"Event {event_id} not found in either Private or Public collections"
+                    )
+                    return https_fn.Response(status=500)
+
+                is_private = private_event.exists
+
+            except Exception as e:
+                logger.error(
+                    f"Error retrieving event information for order {order_id}: {e}"
+                )
+                return https_fn.Response(status=500)
+
+            # Check if payment intent has already been processed
+            transaction = db.transaction()
+            if check_if_payment_intent_has_been_processed_already(
+                transaction, logger, payment_intent_id, event_id
+            ):
+                logger.info(
+                    f"Payment intent {payment_intent_id} has already been processed. Returning early."
+                )
+                return https_fn.Response(status=200)
+
+            # Handle the cancellation workflow
+            try:
+                handle_payment_intent_cancellation(
+                    transaction,
+                    logger,
+                    payment_intent_id,
+                    event_id,
+                    is_private,
+                    ticket_count,
+                    order_id,
+                    ticket_ids,
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error handling payment intent cancellation for {payment_intent_id}: {e}"
+                )
+                return https_fn.Response(status=500)
+            
+            transaction.commit()
+
+            # Get event name for email
+            try:
+                private_path = "Private" if is_private else "Public"
+                event_ref = db.collection(f"Events/Active/{private_path}").document(
+                    event_id
+                )
+                event_doc = event_ref.get()
+                if not event_doc.exists:
+                    logger.error(
+                        f"Event {event_id} not found when trying to send cancellation email"
+                    )
+                    event_name = "Event"
+                else:
+                    event_data = event_doc.to_dict()
+                    event_name = event_data.get("name", "Event")
+            except Exception as e:
+                logger.error(f"Error retrieving event name for cancellation email: {e}")
+                event_name = "Event"
+
+            # Send cancellation email to customer
+            if email:
+                success = False
+                for _ in range(3):
+                    success = send_cancellation_email(
+                        logger,
+                        email,
+                        full_name,
+                        event_name,
+                        order_id,
+                        ticket_count,
+                    )
+                    if success:
+                        break
+
+                if not success:
+                    logger.warning(
+                        f"Was unable to send cancellation email to {email}. orderId={order_id}"
+                    )
+            else:
+                logger.warning(
+                    f"No email found in order {order_id} to send cancellation email"
+                )
+
+            logger.info(
+                f"Successfully handled payment_intent.canceled webhook event. paymentIntentId={payment_intent_id}, orderId={order_id}"
+            )
+            return https_fn.Response(status=200)
         # Default case
         case _:
             logger.error(
