@@ -112,6 +112,7 @@ public class TicketsService {
         return FirebaseService.createFirestoreTransaction(transaction -> {
             Timestamp now = Timestamp.now();
             OrderAndTicketStatus status = request.status() != null ? request.status() : OrderAndTicketStatus.PENDING;
+            String orderId = OrdersRepository.generateOrderId();
 
             Order order = new Order();
             order.setEmail(request.email());
@@ -127,6 +128,7 @@ public class TicketsService {
             for (CreateOrderRequest.TicketInput ticketInput : request.tickets()) {
                 Ticket ticket = new Ticket();
                 ticket.setEventId(request.eventId());
+                ticket.setOrderId(orderId);
                 ticket.setPrice(ticketInput.price());
                 ticket.setPurchaseDate(now);
                 ticket.setStatus(status);
@@ -137,7 +139,7 @@ public class TicketsService {
             }
 
             order.setTickets(ticketIds);
-            String orderId = OrdersRepository.createOrder(order, request.eventId(), transaction);
+            OrdersRepository.createOrder(order, request.eventId(), orderId, transaction);
 
             logger.info("Created order {} with {} tickets for eventId: {}", orderId, ticketIds.size(),
                     request.eventId());

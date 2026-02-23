@@ -18,7 +18,6 @@ import com.functions.fulfilment.handlers.InitFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.UpdateFulfilmentEntityWithFormResponseIdHandler;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.Handler;
-import com.functions.tickets.handlers.CreateOrderHandler;
 import com.functions.tickets.handlers.GetOrderHandler;
 import com.functions.tickets.handlers.GetOrdersByEventHandler;
 import com.functions.tickets.handlers.GetTicketHandler;
@@ -49,7 +48,6 @@ public class HandlerRegistry {
                 new UpdateFulfilmentEntityWithWaitlistDataHandler());
         handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());
         handlers.put(EndpointType.GET_EVENT_BY_ID, new GetEventByIdHandler());
-        handlers.put(EndpointType.CREATE_ORDER, new CreateOrderHandler());
         handlers.put(EndpointType.GET_ORDER, new GetOrderHandler());
         handlers.put(EndpointType.GET_TICKET, new GetTicketHandler());
         handlers.put(EndpointType.GET_ORDERS_BY_EVENT, new GetOrdersByEventHandler());

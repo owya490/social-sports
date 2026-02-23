@@ -24,11 +24,9 @@ import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
 import com.functions.tickets.models.Ticket;
-import com.functions.tickets.models.requests.create.CreateOrderRequest;
 import com.functions.tickets.models.requests.get.GetOrderRequest;
 import com.functions.tickets.models.requests.get.GetOrdersByEventRequest;
 import com.functions.tickets.models.requests.get.GetTicketRequest;
-import com.functions.tickets.models.responses.create.CreateOrderResponse;
 import com.functions.tickets.models.responses.get.GetOrderResponse;
 import com.functions.tickets.models.responses.get.GetOrdersByEventResponse;
 import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlistDataRequest;
@@ -60,7 +58,6 @@ public enum EndpointType {
             UpdateFulfilmentEntityWithWaitlistDataResponse.class),
     GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class),
     GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class),
-    CREATE_ORDER(CreateOrderRequest.class, CreateOrderResponse.class),
     GET_ORDER(GetOrderRequest.class, GetOrderResponse.class),
     GET_TICKET(GetTicketRequest.class, Ticket.class),
     GET_ORDERS_BY_EVENT(GetOrdersByEventRequest.class, GetOrdersByEventResponse.class),

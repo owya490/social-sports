@@ -44,6 +44,7 @@ public class AttendeeService {
             }
 
             Timestamp now = Timestamp.now();
+            String orderId = OrdersRepository.generateOrderId();
 
             Order order = new Order();
             order.setEmail(request.email());
@@ -59,6 +60,7 @@ public class AttendeeService {
             for (int i = 0; i < request.numTickets(); i++) {
                 Ticket ticket = new Ticket();
                 ticket.setEventId(request.eventId());
+                ticket.setOrderId(orderId);
                 ticket.setPrice(request.price());
                 ticket.setPurchaseDate(now);
                 ticket.setStatus(OrderAndTicketStatus.APPROVED);
@@ -68,7 +70,7 @@ public class AttendeeService {
             }
 
             order.setTickets(ticketIds);
-            String orderId = OrdersRepository.createOrder(order, request.eventId(), transaction);
+            OrdersRepository.createOrder(order, request.eventId(), orderId, transaction);
 
             EventsRepository.updateEventById(request.eventId(), "vacancy",
                     eventData.getVacancy() - request.numTickets(), transaction);
@@ -139,6 +141,7 @@ public class AttendeeService {
                 for (int i = 0; i < delta; i++) {
                     Ticket ticket = new Ticket();
                     ticket.setEventId(request.eventId());
+                    ticket.setOrderId(order.getOrderId());
                     ticket.setPrice(price);
                     ticket.setPurchaseDate(now);
                     ticket.setStatus(OrderAndTicketStatus.APPROVED);

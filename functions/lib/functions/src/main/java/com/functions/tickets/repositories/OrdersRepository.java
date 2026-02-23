@@ -92,8 +92,16 @@ public class OrdersRepository {
     }
 
     /**
+     * Generates a new unique order ID without writing to Firestore.
+     */
+    public static String generateOrderId() {
+        Firestore db = FirebaseService.getFirestore();
+        return db.collection(ORDERS_COLLECTION).document().getId();
+    }
+
+    /**
      * Creates a new order document in Firestore and appends the orderId to the
-     * event metadata's orderIds array.
+     * event metadata's orderIds array. Auto-generates the orderId.
      *
      * @param order       The order to create (orderId will be set from the new
      *                    document)
@@ -102,9 +110,23 @@ public class OrdersRepository {
      * @return The generated order ID
      */
     public static String createOrder(Order order, String eventId, Transaction transaction) {
+        String orderId = generateOrderId();
+        return createOrder(order, eventId, orderId, transaction);
+    }
+
+    /**
+     * Creates an order document with a pre-determined orderId and appends it to
+     * the event metadata's orderIds array.
+     *
+     * @param order       The order to create
+     * @param eventId     The event this order belongs to
+     * @param orderId     The pre-generated order ID
+     * @param transaction The Firestore transaction
+     * @return The order ID
+     */
+    public static String createOrder(Order order, String eventId, String orderId, Transaction transaction) {
         Firestore db = FirebaseService.getFirestore();
-        DocumentReference docRef = db.collection(ORDERS_COLLECTION).document();
-        String orderId = docRef.getId();
+        DocumentReference docRef = db.collection(ORDERS_COLLECTION).document(orderId);
         order.setOrderId(orderId);
         transaction.set(docRef, JavaUtils.toMap(order));
 
