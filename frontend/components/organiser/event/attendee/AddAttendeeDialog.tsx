@@ -1,5 +1,5 @@
 import Loading from "@/components/loading/Loading";
-import { EventId, EventMetadata, Name } from "@/interfaces/EventTypes";
+import { EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { getEventById } from "@/services/src/events/eventsService";
 import { addAttendee } from "@/services/src/organiser/organiserService";
