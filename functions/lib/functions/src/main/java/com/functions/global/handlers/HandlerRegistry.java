@@ -3,6 +3,8 @@ package com.functions.global.handlers;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.functions.attendee.handlers.AddAttendeeHandler;
+import com.functions.attendee.handlers.SetAttendeeTicketsHandler;
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.handlers.GetEventByIdHandler;
 import com.functions.events.handlers.GetSyrioEventsHandler;
@@ -16,7 +18,6 @@ import com.functions.fulfilment.handlers.InitFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.UpdateFulfilmentEntityWithFormResponseIdHandler;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.Handler;
-import com.functions.tickets.handlers.BookingApprovalHandler;
 import com.functions.tickets.handlers.CreateOrderHandler;
 import com.functions.tickets.handlers.GetOrderHandler;
 import com.functions.tickets.handlers.GetOrdersByEventHandler;
@@ -48,11 +49,12 @@ public class HandlerRegistry {
                 new UpdateFulfilmentEntityWithWaitlistDataHandler());
         handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());
         handlers.put(EndpointType.GET_EVENT_BY_ID, new GetEventByIdHandler());
-        handlers.put(EndpointType.BOOKING_APPROVAL, new BookingApprovalHandler());
         handlers.put(EndpointType.CREATE_ORDER, new CreateOrderHandler());
         handlers.put(EndpointType.GET_ORDER, new GetOrderHandler());
         handlers.put(EndpointType.GET_TICKET, new GetTicketHandler());
         handlers.put(EndpointType.GET_ORDERS_BY_EVENT, new GetOrdersByEventHandler());
+        handlers.put(EndpointType.ADD_ATTENDEE, new AddAttendeeHandler());
+        handlers.put(EndpointType.SET_ATTENDEE_TICKETS, new SetAttendeeTicketsHandler());
     }
 
     /**
