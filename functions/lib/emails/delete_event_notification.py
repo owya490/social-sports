@@ -1,19 +1,22 @@
+import base64
 import json
 import time
+import traceback
 import uuid
-import base64
 from dataclasses import dataclass
 from datetime import datetime
-from google.protobuf.timestamp_pb2 import Timestamp
 
 import requests
 from firebase_functions import https_fn, options
+from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import SYDNEY_TIMEZONE, db
-from lib.emails.constants import LOOPS_API_KEY, LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID, LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID
+from lib.emails.commons import get_user_data_public
+from lib.emails.constants import (LOOPS_API_KEY,
+                                  LOOPS_DELETE_EVENT_ATTENDEE_TEMPLATE_ID,
+                                  LOOPS_DELETE_EVENT_ORGANISER_TEMPLATE_ID)
 from lib.logging import Logger
 from lib.utils.priceUtils import centsToDollars
-from lib.emails.commons import get_user_data_public
-import traceback
+
 
 @dataclass
 class DeleteEventRequest:
@@ -91,7 +94,7 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
     organiser_id = event_delete_data.get("organiserId")
     event_date = event_delete_data.get("startDate") 
     date_string = event_date.strftime("%Y-%m-%d %H")
-    purchaser_map = event_metadata_data.get("purchaserMap", {})
+    order_ids = event_metadata_data.get("orderIds", [])
 
     missing_fields = [
         field_name
@@ -120,16 +123,23 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
     event_price = centsToDollars(event_price)
     logger.info(f"Converted event price to dollars: {event_price}")
 
-    # Prepare attendees list for the email template
-    attendees = [
-        {
-            "name": name,
-            "email": purchaser_info.get("email"),
-            "tickets": purchaser_info.get("totalTicketCount", 0)
-        }
-        for purchaser_info in purchaser_map.values()
-        for name, attendee_info in purchaser_info.get("attendees", {}).items()
-    ]
+    # Fetch orders and build attendees list
+    attendees = []
+    for order_id in order_ids:
+        order_doc = db.collection("Orders").document(order_id).get()
+        if not order_doc.exists:
+            logger.warning(f"Order not found: {order_id}")
+            continue
+        order_data = order_doc.to_dict()
+        order_status = order_data.get("status", "")
+        if order_status != "APPROVED":
+            continue
+        ticket_ids = order_data.get("tickets", [])
+        attendees.append({
+            "name": order_data.get("fullName", ""),
+            "email": order_data.get("email", ""),
+            "tickets": len(ticket_ids),
+        })
 
     # Send organizer email
     try:

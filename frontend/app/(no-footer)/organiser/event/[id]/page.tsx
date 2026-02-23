@@ -211,7 +211,7 @@ export default function EventPage({ params }: EventPageProps) {
                 setOrderTicketsMap={setOrderTicketsMap}
               />
             )}
-            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata} />}
+            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata} orderTicketsMap={orderTicketsMap} />}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}

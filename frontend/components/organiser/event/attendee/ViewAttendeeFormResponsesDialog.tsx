@@ -129,7 +129,7 @@ export const ViewAttendeeFormResponsesDialog = ({
               formId={formId}
               form={form}
               eventId={eventData.eventId}
-              eventMetadata={eventMetadata}
+              orderTicketsMap={orderTicketsMap}
               showPurchaserColumn={false}
             />
           )}

@@ -3,17 +3,18 @@
 ########################
 
 import os
-from time import sleep
 import uuid
 from dataclasses import dataclass
+from time import sleep
+
 from firebase_functions import https_fn, options
 from google.protobuf.timestamp_pb2 import Timestamp
-from lib.emails.commons import cents_to_dollars
 from lib.constants import db
+from lib.emails.commons import cents_to_dollars
 from lib.logging import Logger
 from lib.sendgrid.constants import (
-    DELETE_EVENT_ORGANISER_EMAIL_TEMPLATE_ID,
     DELETE_EVENT_ATTENDEE_EMAIL_TEMPLATE_ID,
+    DELETE_EVENT_ORGANISER_EMAIL_TEMPLATE_ID,
     SENDGRID_API_KEY,
 )
 from sendgrid import SendGridAPIClient
@@ -84,7 +85,7 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
     organiser_email = event_delete_data.get("userEmail")
     event_date = event_delete_data.get("startDate")
     date_string = event_date.strftime("%Y-%m-%d %H")
-    purchaser_map = event_metadata_data.get("purchaserMap", {})
+    order_ids = event_metadata_data.get("orderIds", [])
 
     missing_fields = [
         field_name
@@ -119,16 +120,25 @@ def send_email_on_delete_event(req: https_fn.CallableRequest):
 
     sg = SendGridAPIClient(SENDGRID_API_KEY)
 
-    # Prepare attendees list for the email template
-    attendees = [
-        {
-            "name": name,
-            "email": purchaser_info.get("email"),
-            "tickets": purchaser_info.get("totalTicketCount", 0),
-        }
-        for purchaser_info in purchaser_map.values()
-        for name, attendee_info in purchaser_info.get("attendees", {}).items()
-    ]
+    # Fetch orders and build attendees list
+    attendees = []
+    for order_id in order_ids:
+        order_doc = db.collection("Orders").document(order_id).get()
+        if not order_doc.exists:
+            logger.warning(f"Order not found: {order_id}")
+            continue
+        order_data = order_doc.to_dict()
+        order_status = order_data.get("status", "")
+        if order_status != "APPROVED":
+            continue
+        ticket_ids = order_data.get("tickets", [])
+        attendees.append(
+            {
+                "name": order_data.get("fullName", ""),
+                "email": order_data.get("email", ""),
+                "tickets": len(ticket_ids),
+            }
+        )
 
     # Send organizer email
     try:

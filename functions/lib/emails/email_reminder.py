@@ -39,9 +39,21 @@ def get_purchasers(logger: Logger, event_id: str) -> list[Purchaser]:
         event_metadata_dict = event_metadata.to_dict()
         purchasers: list[Purchaser] = []
 
-        for purchaser in dict(event_metadata_dict.get("purchaserMap", {})).values():
-            names = list(dict(purchaser.get("attendees", {})).keys())
-            purchasers.append(Purchaser(names=names, email=purchaser.get("email")))
+        order_ids = event_metadata_dict.get("orderIds", [])
+        for order_id in order_ids:
+            order_doc = db.collection("Orders").document(order_id).get()
+            if not order_doc.exists:
+                logger.warning(f"Order not found: {order_id}")
+                continue
+            order_data = order_doc.to_dict()
+            if order_data.get("status", "") != "APPROVED":
+                continue
+            purchasers.append(
+                Purchaser(
+                    names=[order_data.get("fullName", "")],
+                    email=order_data.get("email", ""),
+                )
+            )
 
         return purchasers
 

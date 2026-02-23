@@ -1,5 +1,7 @@
-import { EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
@@ -15,7 +17,7 @@ interface FormResponsesTableProps {
   formId: FormId;
   form: Form;
   eventId: EventId;
-  eventMetadata: EventMetadata;
+  orderTicketsMap: Map<Order, Ticket[]>;
   showPurchaserColumn?: boolean;
   organiserEmail?: string;
 }
@@ -60,21 +62,18 @@ const formatTimestamp = (ts: Timestamp | null): string => {
   return date.toLocaleString();
 };
 
-const createFormResponseToPurchaserMap = (eventMetadata: EventMetadata): Map<string, PurchaserInfo> => {
+const createFormResponseMap = (orderTicketsMap: Map<Order, Ticket[]>): Map<string, PurchaserInfo> => {
   const formResponseToPurchaser = new Map<string, PurchaserInfo>();
 
-  if (!eventMetadata.purchaserMap) return formResponseToPurchaser;
-
-  Object.values(eventMetadata.purchaserMap).forEach((purchaser) => {
-    const email = purchaser.email || "";
-    if (purchaser.attendees) {
-      Object.entries(purchaser.attendees).forEach(([name, attendeeData]) => {
-        const formResponseIds = attendeeData.formResponseIds || [];
-        formResponseIds.forEach((formResponseId: string) => {
-          formResponseToPurchaser.set(formResponseId, { name, email });
+  orderTicketsMap.forEach((tickets, order) => {
+    tickets.forEach((ticket) => {
+      if (ticket.formResponseId) {
+        formResponseToPurchaser.set(ticket.formResponseId, {
+          name: order.fullName,
+          email: order.email,
         });
-      });
-    }
+      }
+    });
   });
 
   return formResponseToPurchaser;
@@ -103,7 +102,7 @@ export const FormResponsesTable = ({
   formId,
   form,
   eventId,
-  eventMetadata,
+  orderTicketsMap,
   showPurchaserColumn = true,
   organiserEmail = "",
 }: FormResponsesTableProps) => {
@@ -121,7 +120,7 @@ export const FormResponsesTable = ({
   };
 
   // Create mapping from form response ID to purchaser info
-  const formResponseToPurchaser = createFormResponseToPurchaserMap(eventMetadata);
+  const formResponseToPurchaser = createFormResponseMap(orderTicketsMap);
 
   // Sort form responses by purchaser (email, then name) if showing purchaser column
   const sortedFormResponses = showPurchaserColumn
