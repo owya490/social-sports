@@ -36,7 +36,7 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
     });
     const { password, ...userDataWithoutPassword } = data;
     // Save user data temporarily in your database
-    const userId = userCredential.user.uid;
+    const userId = userCredential.user.uid as UserId;
     await saveTempUserData(userId, { ...userDataWithoutPassword, userId: userId });
     authServiceLogger.info("Temp User Data Created", {
       email: data.contactInformation.email,
@@ -84,33 +84,33 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
       authServiceLogger.info("Email is verified. Proceeding with login.", { userId: userCredential.user.uid });
 
       try {
-        await getPublicUserById(userCredential.user.uid);
+        await getPublicUserById(userCredential.user.uid as UserId);
 
         // Sync email from Firebase Auth to Firestore if needed
-        await syncEmailOnLogin(userCredential.user.uid);
+        await syncEmailOnLogin(userCredential.user.uid as UserId);
 
-        return userCredential.user.uid; // User exists, sign-in successful
+        return userCredential.user.uid as UserId; // User exists, sign-in successful
       } catch (error: unknown) {
         if (error instanceof UserNotFoundError) {
           authServiceLogger.info("User not found in public users. Attempting to retrieve temporary user data.", {
             userId: userCredential.user.uid,
           });
 
-          const userData = await getTempUserData(userCredential.user.uid);
+          const userData = await getTempUserData(userCredential.user.uid as UserId);
 
           if (userData !== null) {
             try {
-              await createUser(userData, userCredential.user.uid);
+              await createUser(userData, userCredential.user.uid as UserId);
               authServiceLogger.info("Temporary user data found and user created successfully.", {
                 userId: userCredential.user.uid,
               });
 
               // Proceed with deletion of temporary user data
-              await deleteTempUserData(userCredential.user.uid);
+              await deleteTempUserData(userCredential.user.uid as UserId);
               authServiceLogger.info("Temporary user data deleted after successful creation.", {
                 userId: userCredential.user.uid,
               });
-              return userCredential.user.uid; // User created and temporary data deleted successfully
+              return userCredential.user.uid as UserId; // User created and temporary data deleted successfully
             } catch (creationError) {
               authServiceLogger.error("Error during user creation. Attempting rollback.", {
                 userId: userCredential.user.uid,
@@ -118,7 +118,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
 
               // Rollback only if user creation succeeded and temporary data deletion failed
               try {
-                await deleteUser(userCredential.user.uid);
+                await deleteUser(userCredential.user.uid as UserId);
                 authServiceLogger.error("User creation rolled back successfully.", { userId: userCredential.user.uid });
               } catch (rollbackError) {
                 const rollbackErrorMessage =
@@ -171,11 +171,11 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
   }
 }
 
-export async function saveTempUserData(userId: string, data: UserData) {
+export async function saveTempUserData(userId: UserId, data: UserData) {
   await setDoc(doc(db, "TempUsers", userId), data);
 }
 
-export async function getTempUserData(userId: string): Promise<UserData | null> {
+export async function getTempUserData(userId: UserId): Promise<UserData | null> {
   try {
     const docRef = doc(db, "TempUsers", userId); // Get a reference to the document
     const docSnap = await getDoc(docRef); // Retrieve the document snapshot
@@ -192,7 +192,7 @@ export async function getTempUserData(userId: string): Promise<UserData | null> 
   }
 }
 
-async function deleteTempUserData(userId: string) {
+async function deleteTempUserData(userId: UserId) {
   await deleteDoc(doc(db, "TempUsers", userId));
 }
 
@@ -327,7 +327,7 @@ export async function updateUserEmail(newEmail: string, currentPassword: string)
  * Called automatically after successful login to ensure consistency
  * @param userId - The user ID to sync email for
  */
-export async function syncEmailOnLogin(userId: string): Promise<void> {
+export async function syncEmailOnLogin(userId: UserId): Promise<void> {
   try {
     const user = auth.currentUser;
 
@@ -349,7 +349,7 @@ export async function syncEmailOnLogin(userId: string): Promise<void> {
       });
 
       // Update email using service layer
-      await updateUser(userId, {
+      await updateUser(userId as UserId, {
         contactInformation: {
           ...privateUserData.contactInformation,
           email: user.email,

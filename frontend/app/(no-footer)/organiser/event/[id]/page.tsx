@@ -65,7 +65,7 @@ export default function EventPage({ params }: EventPageProps) {
 
   const { user } = useUser();
 
-  const eventId: EventId = params.id;
+  const eventId = params.id as EventId;
   useEffect(() => {
     if (user.userId) {
       getEventById(eventId)
@@ -178,7 +178,7 @@ export default function EventPage({ params }: EventPageProps) {
                   eventRegistrationDeadline={eventRegistrationDeadline}
                   eventEventLink={eventEventLink}
                   isActive={eventIsActive}
-                  updateData={updateEventById}
+                  updateData={(id: string, data: any) => updateEventById(id as EventId, data)}
                   isRecurrenceTemplate={false}
                   eventFormId={eventFormId}
                 />

@@ -199,7 +199,7 @@ export default function CreateEvent() {
 
     const newEventData = convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
     const newRecurrenceData = formData.newRecurrenceData;
-    let newEventId = "";
+    let newEventId = "" as EventId;
     try {
       if (newRecurrenceData.recurrenceEnabled) {
         const [firstEventId, _newRecurrenceTemplateId] = await createRecurrenceTemplate(

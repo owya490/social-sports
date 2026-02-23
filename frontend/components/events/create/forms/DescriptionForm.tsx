@@ -1,4 +1,5 @@
 "use client";
+import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
@@ -37,7 +38,7 @@ export function DescriptionForm({ description, formId, updateField, user }: Desc
           <div className="w-full mt-8">
             <DescriptionRichTextEditor description={description} updateDescription={updateDescription} />
           </div>
-          {evaluateFulfilmentSessionEnabled(user.userId, "") && (
+          {evaluateFulfilmentSessionEnabled(user.userId, "" as EventId) && (
             <>
               <div className="w-full mt-8">
                 <FormSelector formId={formId} updateField={updateFormId} user={user} />

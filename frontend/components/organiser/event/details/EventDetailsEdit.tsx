@@ -20,7 +20,7 @@ import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 
 import { useUser } from "@/components/utility/UserContext";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
@@ -58,7 +58,7 @@ export const EventDetailsEdit = ({
   updateData,
   isRecurrenceTemplate,
 }: {
-  eventId: string;
+  eventId: EventId;
   eventStartDate: Timestamp;
   eventEndDate: Timestamp;
   eventLocation: string;
@@ -783,7 +783,7 @@ export const EventDetailsEdit = ({
             )}
           </div>
         </div>
-        {evaluateFulfilmentSessionEnabled(user.userId, "") && (
+        {evaluateFulfilmentSessionEnabled(user.userId, "" as EventId) && (
           <div className="px-2 flex flex-row space-x-2">
             <DocumentTextIcon className="w-4 mt-2 shrink-0" />
             <div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { EventId } from "@/interfaces/EventTypes";
 import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
 import { useUser } from "@components/utility/UserContext";
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
@@ -221,7 +222,7 @@ export default function OrganiserNavbar() {
             );
           }}
         </Menu>{" "}
-        {evaluateFulfilmentSessionEnabled(user.userId, "") && (
+        {evaluateFulfilmentSessionEnabled(user.userId, "" as EventId) && (
           <NavButton
             href={`/organiser/forms/gallery`}
             isActive={currPage.startsWith("/organiser/forms/gallery")}

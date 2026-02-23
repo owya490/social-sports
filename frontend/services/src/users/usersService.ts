@@ -36,7 +36,7 @@ import { generateUsername } from "./usersUtils/usernameUtils";
 
 export const userServiceLogger = new Logger("userServiceLogger");
 
-export async function createUser(data: UserData, userId: string): Promise<void> {
+export async function createUser(data: UserData, userId: UserId): Promise<void> {
   try {
     userServiceLogger.info(`Creating new user:", ${data}, ${userId}`);
 
@@ -208,7 +208,7 @@ export async function getAllPublicUsers(isActive?: boolean): Promise<PublicUserD
       const publicUserData = doc.data() as PublicUserData;
       publicUserData.userId = doc.id;
       // also set it in local storage
-      setUsersDataIntoLocalStorage(doc.id, publicUserData);
+      setUsersDataIntoLocalStorage(doc.id as UserId, publicUserData);
       publicUsersData.push(publicUserData);
     });
     localStorage.setItem(UsersLocalStorageKeys.LastFetchedAllUserData, new Date().valueOf().toString());
@@ -274,7 +274,7 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
   }
 }
 
-export async function getFullUserByIdForUserContextWithRetries(userId: string): Promise<UserData> {
+export async function getFullUserByIdForUserContextWithRetries(userId: UserId): Promise<UserData> {
   // Retry if database call fail, otherwise if unexist, handle error case
   const RETRY_COUNT = 3;
   var count = 0;

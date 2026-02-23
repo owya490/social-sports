@@ -1,3 +1,4 @@
+import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
@@ -48,7 +49,7 @@ const EventDrilldownSidePanel = ({
         >
           Manage Attendees
         </div>
-        {evaluateFulfilmentSessionEnabled(user.userId, "") && (
+        {evaluateFulfilmentSessionEnabled(user.userId, "" as EventId) && (
           <div
             className={`text-organiser-dark-gray-text font-bold text-md ${
               currSidebarPage === "Forms" ? "bg-white" : ""

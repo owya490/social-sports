@@ -1,4 +1,4 @@
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { QueryFieldFilterConstraint, Timestamp, collection, getDocs, limit, query, where } from "firebase/firestore";
 import geofire from "geofire-common";
 import { SortByCategory } from "../../components/Filter/FilterDialog";
@@ -202,7 +202,7 @@ async function filterEventsByWhereClausesAndProximity(
 
     filteredEventsSnapshot.forEach((doc) => {
       const filteredEventData = doc.data() as EventData;
-      filteredEventData.eventId = doc.id;
+      filteredEventData.eventId = doc.id as EventId;
       filteredEventsData.push(filteredEventData);
     });
 

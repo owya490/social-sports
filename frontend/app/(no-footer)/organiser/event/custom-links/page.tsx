@@ -3,8 +3,8 @@ import Loading from "@/components/loading/Loading";
 import CustomEventLinksTable from "@/components/organiser/event/custom-event-links/CustomEventLinksTable";
 import { useUser } from "@/components/utility/UserContext";
 import { CustomEventLink } from "@/interfaces/CustomLinkTypes";
-import { EventData } from "@/interfaces/EventTypes";
-import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
+import { RecurrenceTemplate, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { getAllOrganiserCustomEventLinks } from "@/services/src/events/customEventLinks/customEventLinksService";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
@@ -24,9 +24,9 @@ export default function CustomLinks() {
     const fetchData = async () => {
       try {
         const [events, templates, links] = await Promise.all([
-          Promise.all(user.publicUpcomingOrganiserEvents.map(async (eventId: string) => await getEventById(eventId))),
+          Promise.all(user.publicUpcomingOrganiserEvents.map(async (eventId: string) => await getEventById(eventId as EventId))),
           Promise.all(
-            user.recurrenceTemplates.map(async (templateId: string) => await getRecurrenceTemplate(templateId))
+            user.recurrenceTemplates.map(async (templateId: string) => await getRecurrenceTemplate(templateId as RecurrenceTemplateId))
           ),
           getAllOrganiserCustomEventLinks(user.userId),
         ]);

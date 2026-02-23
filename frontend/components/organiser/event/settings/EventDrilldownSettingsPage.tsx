@@ -1,6 +1,6 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { useUser } from "@/components/utility/UserContext";
-import { EventMetadata } from "@/interfaces/EventTypes";
+import { EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
@@ -14,7 +14,7 @@ import { LabelledSwitch } from "../../../elements/LabelledSwitch";
 import DeleteEventModal from "./DeleteEventModal";
 
 interface EventDrilldownSettingsPageProps {
-  eventId: string;
+  eventId: EventId;
   eventMetadata: EventMetadata;
   eventName: string;
   eventStartDate: Timestamp;

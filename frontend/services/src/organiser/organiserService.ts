@@ -9,7 +9,7 @@ export async function addAttendee(
   name: Name,
   phoneNumber: string,
   numTickets: number,
-  eventId: string
+  eventId: EventId
 ): Promise<void> {
   try {
     const attendeeInfo: Attendee = {

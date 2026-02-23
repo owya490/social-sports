@@ -14,9 +14,9 @@ export interface Ticket {
 }
 
 export const EMPTY_TICKET: Ticket = {
-  ticketId: "",
-  eventId: "",
-  orderId: "",
+  ticketId: "" as TicketId,
+  eventId: "" as EventId,
+  orderId: "" as OrderId,
   price: 0,
   purchaseDate: Timestamp.now(),
   status: OrderAndTicketStatus.APPROVED,

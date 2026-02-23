@@ -1,7 +1,8 @@
 import { Timestamp } from "firebase/firestore";
 import { EmptyEventData, EventId, NewEventData } from "./EventTypes";
+import { Branded } from "./index";
 
-export type RecurrenceTemplateId = string;
+export type RecurrenceTemplateId = Branded<string, "RecurrenceTemplateId">;
 
 export enum Frequency {
   WEEKLY = "WEEKLY",
@@ -77,7 +78,7 @@ export const DEFAULT_RECURRENCE_FORM_DATA: NewRecurrenceFormData = {
 };
 
 export const EMPTY_RECURRENCE_TEMPLATE: RecurrenceTemplate = {
-  recurrenceTemplateId: "",
+  recurrenceTemplateId: "" as RecurrenceTemplateId,
   eventData: EmptyEventData,
   recurrenceData: {
     ...DEFAULT_RECURRENCE_FORM_DATA,

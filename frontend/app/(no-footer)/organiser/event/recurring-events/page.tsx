@@ -1,7 +1,7 @@
 "use client";
 import RecurringTemplateCard from "@/components/organiser/recurring-events/RecurringTemplateCard";
 import { useUser } from "@/components/utility/UserContext";
-import { EMPTY_RECURRENCE_TEMPLATE, Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
+import { EMPTY_RECURRENCE_TEMPLATE, Frequency, RecurrenceTemplate, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Logger } from "@/observability/logger";
 import {
   calculateRecurrenceEnded,
@@ -53,7 +53,7 @@ export default function RecurringEventDashboard() {
               return (
                 <div className="w-full" key={templateIdx}>
                   <RecurringTemplateCard
-                    recurrenceTemplateId={""}
+                    recurrenceTemplateId={"" as RecurrenceTemplateId}
                     image={""}
                     name={""}
                     startTime={Timestamp.now()}
