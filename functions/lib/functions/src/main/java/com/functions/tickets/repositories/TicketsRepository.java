@@ -3,6 +3,7 @@ package com.functions.tickets.repositories;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.Transaction;
 
 /**
@@ -88,6 +90,47 @@ public class TicketsRepository {
         } catch (Exception e) {
             logger.error("Failed to update ticket: {}", ticketId, e);
             throw new RuntimeException("Failed to update ticket", e);
+        }
+    }
+
+    /**
+     * Creates a new ticket document in Firestore.
+     *
+     * @param ticket      The ticket to create (ticketId will be set from the new
+     *                    document)
+     * @param transaction The Firestore transaction
+     * @return The generated ticket ID
+     */
+    public static String createTicket(Ticket ticket, Transaction transaction) {
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference docRef = db.collection(TICKETS_COLLECTION).document();
+        String ticketId = docRef.getId();
+        ticket.setTicketId(ticketId);
+        transaction.set(docRef, JavaUtils.toMap(ticket));
+        return ticketId;
+    }
+
+    /**
+     * Gets all tickets for a given event ID.
+     *
+     * @param eventId The event ID
+     * @return List of tickets belonging to the event
+     */
+    public static List<Ticket> getTicketsByEventId(String eventId) {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            List<QueryDocumentSnapshot> docs = db.collection(TICKETS_COLLECTION)
+                    .whereEqualTo("eventId", eventId)
+                    .get().get().getDocuments();
+
+            return docs.stream().map(doc -> {
+                Ticket ticket = doc.toObject(Ticket.class);
+                ticket.setTicketId(doc.getId());
+                return ticket;
+            }).collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Failed to get tickets by eventId: {}", eventId, e);
+            return new ArrayList<>();
         }
     }
 }

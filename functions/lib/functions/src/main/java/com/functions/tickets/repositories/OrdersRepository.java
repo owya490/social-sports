@@ -12,6 +12,7 @@ import com.functions.tickets.models.Order;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
 
@@ -88,5 +89,29 @@ public class OrdersRepository {
             logger.error("Failed to update order: {}", orderId, e);
             throw new RuntimeException("Failed to update order", e);
         }
+    }
+
+    /**
+     * Creates a new order document in Firestore and appends the orderId to the
+     * event metadata's orderIds array.
+     *
+     * @param order       The order to create (orderId will be set from the new
+     *                    document)
+     * @param eventId     The event this order belongs to
+     * @param transaction The Firestore transaction
+     * @return The generated order ID
+     */
+    public static String createOrder(Order order, String eventId, Transaction transaction) {
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference docRef = db.collection(ORDERS_COLLECTION).document();
+        String orderId = docRef.getId();
+        order.setOrderId(orderId);
+        transaction.set(docRef, JavaUtils.toMap(order));
+
+        DocumentReference metadataRef = db.collection(FirebaseService.CollectionPaths.EVENTS_METADATA)
+                .document(eventId);
+        transaction.update(metadataRef, "orderIds", FieldValue.arrayUnion(orderId));
+
+        return orderId;
     }
 }
