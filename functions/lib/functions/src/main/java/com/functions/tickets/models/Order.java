@@ -30,4 +30,5 @@ public class Order {
     private List<String> tickets = new ArrayList<>(); // List of ticketIds
     private String stripePaymentIntentId;
     private OrderAndTicketStatus status = OrderAndTicketStatus.APPROVED;
+    private OrderAndTicketType type = OrderAndTicketType.GENERAL;
 }

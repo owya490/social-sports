@@ -27,4 +27,6 @@ public class Ticket {
     private OrderAndTicketStatus status = OrderAndTicketStatus.APPROVED;
     @Nullable
     private String formResponseId; // the absence of this means the ticket was purchased without a form response
+    @Nullable
+    private OrderAndTicketType type = OrderAndTicketType.GENERAL;
 }

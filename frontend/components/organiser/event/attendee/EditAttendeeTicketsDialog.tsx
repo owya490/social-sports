@@ -1,37 +1,46 @@
 import Loading from "@/components/loading/Loading";
-import { EventId, EventMetadata, Name, Purchaser } from "@/interfaces/EventTypes";
-import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { getEventById, setAttendeeTickets } from "@/services/src/events/eventsService";
+import { EventData, EventId } from "@/interfaces/EventTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
+import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
+import { getEventById } from "@/services/src/events/eventsService";
+import { getOrderById } from "@/services/src/tickets/orderService";
+import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert, Input } from "@material-tailwind/react";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 interface EditAttendeeTicketsDialogProps {
   setIsEditAttendeeTicketsDialogModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
   isEditAttendeeTicketsDialogModalOpen: boolean;
-  email: string;
-  numTickets: number;
-  purchaser: Purchaser;
-  attendeeName: Name;
+  order: Order;
+  tickets: Ticket[];
   eventId: EventId;
-  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  eventData: EventData;
   setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
+  setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 export const EditAttendeeTicketsDialog = ({
   closeModal,
   isEditAttendeeTicketsDialogModalOpen,
-  email,
-  numTickets,
-  purchaser,
-  attendeeName,
+  order,
+  tickets,
   eventId,
-  setEventMetadata,
+  eventData,
   setEventVacancy,
+  setOrderTicketsMap,
 }: EditAttendeeTicketsDialogProps) => {
+  const numTickets = tickets.length;
   const [newNumTickets, setNewNumTickets] = useState<string>(numTickets.toString());
+
+  useEffect(() => {
+    if (isEditAttendeeTicketsDialogModalOpen) {
+      setNewNumTickets(numTickets.toString());
+    }
+  }, [isEditAttendeeTicketsDialogModalOpen, numTickets]);
 
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
   const [showErrorMessage, setShowErrorMessage] = useState<boolean>(false);
@@ -46,10 +55,21 @@ export const EditAttendeeTicketsDialog = ({
   const handleEditAttendeeTickets = async () => {
     try {
       setLoading(true);
-      await setAttendeeTickets(parseInt(newNumTickets), purchaser, attendeeName, eventId);
-      const updatedEventMetadata = await getEventsMetadataByEventId(eventId);
+      await setAttendeeTickets({
+        eventId,
+        orderId: order.orderId,
+        numTickets: parseInt(newNumTickets),
+      });
+      const updatedOrder = await getOrderById(order.orderId);
+      const updatedTickets = await getTicketsByIds(updatedOrder.tickets);
+      setOrderTicketsMap((prev) => {
+        const next = new Map(prev);
+        const [oldOrder] = Array.from(next.entries()).find(([o]) => o.orderId === order.orderId) ?? [];
+        if (oldOrder) next.delete(oldOrder);
+        next.set(updatedOrder, updatedTickets);
+        return next;
+      });
       const updatedEventData = await getEventById(eventId);
-      setEventMetadata(updatedEventMetadata);
       setEventVacancy(updatedEventData.vacancy);
       setShowSuccessAlert(true);
       setShowErrorMessage(false);
@@ -118,7 +138,7 @@ export const EditAttendeeTicketsDialog = ({
                         </div>
                       </Description>
                       <Description className=" text-organiser-dark-gray-text p-2 mb-2 text-sm">
-                        <span className="font-semibold"> {email}</span> currently has{" "}
+                        <span className="font-semibold"> {order.email}</span> currently has{" "}
                         <span className="font-semibold">{numTickets}</span> tickets.
                         <br></br>
                         Change this to:
@@ -130,11 +150,13 @@ export const EditAttendeeTicketsDialog = ({
                           required
                           value={newNumTickets}
                           type="number"
+                          min={0}
+                          max={numTickets + eventData.vacancy}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
                             if (!isNaN(value)) {
-                              const maxValue = Math.max(value, 0);
-                              setNewNumTickets(maxValue.toString());
+                              const capped = Math.min(Math.max(value, 0), numTickets + eventData.vacancy);
+                              setNewNumTickets(capped.toString());
                             } else {
                               setNewNumTickets("0");
                             }
