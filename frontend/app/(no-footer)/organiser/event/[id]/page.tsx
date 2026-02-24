@@ -6,9 +6,9 @@ import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldo
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
-import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
+import { EventDrilldownManageAttendeesPage } from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
-import EventDrilldownFormsPage from "@/components/organiser/event/forms/EventDrilldownFormsPage";
+import { EventDrilldownFormsPage } from "@/components/organiser/event/forms/EventDrilldownFormsPage";
 import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
@@ -211,7 +211,7 @@ export default function EventPage({ params }: EventPageProps) {
                 setOrderTicketsMap={setOrderTicketsMap}
               />
             )}
-            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata} />}
+            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} orderTicketsMap={orderTicketsMap} />}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}
