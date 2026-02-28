@@ -78,7 +78,7 @@ const INITIAL_DATA: FormData = {
   paymentsActive: false,
   lat: 0,
   lng: 0,
-  stripeFeeToCustomer: false,
+  stripeFeeToCustomer: true,
   promotionalCodesEnabled: false,
   paused: false,
   eventLink: "",

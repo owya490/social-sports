@@ -53,7 +53,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
   const [eventEventLink, setEventEventLink] = useState<string>("");
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
-  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
+  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(true);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
