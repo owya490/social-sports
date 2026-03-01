@@ -1,5 +1,6 @@
 package com.functions.waitlist.services;
 
+import com.functions.emails.EmailService;
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.waitlist.models.WaitlistEntry;
@@ -32,6 +33,19 @@ public class WaitlistService {
                 .notifiedAt(null)
                 .build();
             WaitlistRepository.addToWaitlist(eventId, newEntry);
+            EventData eventData = EventsRepository.getEventById(eventId).orElse(null);
+            if (eventData == null) {
+                logger.error("Failed to get event data for event {}", eventId);
+                return;
+            }
+            String eventName = eventData.getName();
+            String eventLocation = eventData.getLocation();
+            String eventUrl = eventData.getEventLink();
+            boolean emailSent = EmailService.sendWaitlistEmailConfirmation(eventName, name, eventLocation, eventUrl, eventId, hashedEmail, email);
+            if (!emailSent) {
+                logger.error("Failed to send waitlist email confirmation to user {} for event {}", email, eventId);
+                return;
+            }
             logger.info("User {} ({}) successfully joined waitlist for event {}", email, hashedEmail, eventId);
         } catch (Exception e) {
             logger.error("Failed to add user {} to waitlist for event {}", email, eventId, e);
