@@ -55,7 +55,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [_eventPaused, seteventPaused] = useState<boolean>(false);
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
-  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
+  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(true);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
