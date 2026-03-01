@@ -49,6 +49,7 @@ interface AbstractEventData {
   hideVacancy: boolean; // should default to false
   waitlistEnabled: boolean; // should default to true
   bookingApprovalEnabled: boolean; // should default to false
+  showAttendeesOnEventPage: boolean; // should default to false
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -102,6 +103,7 @@ export const EmptyEventData: EventData = {
   hideVacancy: false,
   waitlistEnabled: true,
   bookingApprovalEnabled: false,
+  showAttendeesOnEventPage: false,
 };
 
 export interface EventMetadata {
