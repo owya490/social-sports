@@ -1,0 +1,148 @@
+---
+globs: *.test.ts,*.test.tsx,*.test.js,*.test.jsx,*.spec.ts,*.spec.tsx
+---
+
+# Testing & Quality Assurance Guidelines
+
+## Testing Framework Setup
+
+### Frontend Testing
+
+- **Framework**: Jest with React Testing Library
+- **Configuration**: [jest.config.js](mdc:frontend/jest.config.js)
+- **Environment**: Node.js test environment
+- **TypeScript**: ts-jest for TypeScript support
+
+### Backend Testing
+
+- **Python**: pytest for unit and integration tests
+- **Java**: JUnit for microservice testing
+- **Location**: `/functions/tests/` for Python tests
+
+## Frontend Testing Patterns
+
+### Component Testing Example
+
+```typescript
+import { render, screen, fireEvent } from "@testing-library/react";
+import { jest } from "@jest/globals";
+
+describe("ComponentName", () => {
+  it("renders correctly and handles interactions", () => {
+    const mockOnClick = jest.fn();
+    render(<ComponentName onClick={mockOnClick} />);
+
+    expect(screen.getByText("Expected Text")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button"));
+    expect(mockOnClick).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+### Testing Best Practices
+
+- **Test Behavior, Not Implementation**: Focus on user interactions and outcomes
+- **Mock External Dependencies**: Firebase, APIs, external services
+- **Test Edge Cases**: Error states, boundary conditions, validation failures
+- **Use Descriptive Test Names**: Clearly describe what is being tested
+
+## Backend Testing Patterns
+
+### Python Testing (Legacy)
+
+```python
+import pytest
+from unittest.mock import Mock, patch
+
+@patch('lib.firestore.collection')
+def test_function_success(mock_collection):
+    # Arrange, Act, Assert pattern
+    result = function_under_test(valid_data)
+    assert result['success'] is True
+```
+
+### Java Testing (Primary)
+
+```java
+@ExtendWith(MockitoExtension.class)
+class ServiceTest {
+    @Mock private Repository repository;
+    @InjectMocks private Service service;
+
+    @Test
+    void testMethod_Success() {
+        // Arrange, Act, Assert
+        when(repository.save(any())).thenReturn(expectedResult);
+        Result result = service.method(validData);
+        assertThat(result).isEqualTo(expectedResult);
+    }
+}
+```
+
+## Test Organization & Quality
+
+### File Structure & Naming
+
+- Test files: `*.test.ts`, `*.test.tsx`, `*.spec.ts`
+- Organize by feature: `components/`, `services/`, `utilities/`
+- Use descriptive test names and `describe` blocks
+
+### Coverage & CI Requirements
+
+- **Target**: >80% code coverage
+- **Focus**: Critical business logic and user-facing functionality
+- **CI**: Run tests on every PR, fail builds on test failures
+- **Tools**: ESLint, TypeScript, Jest coverage reporting
+
+## Mocking & Testing Strategies
+
+### Frontend Mocking
+
+```typescript
+// Mock Firebase
+jest.mock("firebase/firestore", () => ({
+  collection: jest.fn(),
+  doc: jest.fn(),
+  getDoc: jest.fn(),
+}));
+
+// Mock API services
+jest.mock("@/services/api", () => ({
+  fetchEvents: jest.fn(),
+  createEvent: jest.fn(),
+}));
+```
+
+### Backend Mocking
+
+```python
+@patch('lib.stripe.create_payment_intent')
+@patch('lib.sendgrid.send_email')
+def test_function_with_external_services(mock_email, mock_stripe):
+    # Test implementation
+    pass
+```
+
+## Specialized Testing
+
+### Accessibility Testing
+
+- Use `@testing-library/jest-dom` accessibility matchers
+- Test keyboard navigation and screen reader compatibility
+- Verify color contrast ratios
+
+### Error Handling Testing
+
+- **Frontend**: Network failures, invalid input, authentication errors
+- **Backend**: Database failures, API failures, validation errors
+
+### Performance Testing
+
+- **Frontend**: Component render times, image loading, API response times
+- **Backend**: Function execution times, database query performance
+
+### Test Data Management
+
+- Create reusable test fixtures and factories
+- Use test databases with proper cleanup
+- Reset state between tests for isolation
