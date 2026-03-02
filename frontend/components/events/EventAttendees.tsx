@@ -5,6 +5,7 @@ import {
   getEventAttendeeNames,
 } from "@/services/src/attendee/attendeeService";
 import { useEffect, useState } from "react";
+import Skeleton from "react-loading-skeleton";
 import { ViewAllAttendeesModal } from "./ViewAllAttendeesModal";
 
 interface EventAttendeesProps {
@@ -58,7 +59,17 @@ export function EventAttendees({ eventId, showAttendeesOnEventPage }: EventAtten
     return (
       <div className="mt-6">
         <h3 className="text-base font-semibold text-gray-900 mb-3">Who&apos;s going</h3>
-        <div className="text-sm text-gray-500">Loading attendees...</div>
+        <div className="grid w-full grid-cols-4 gap-3 md:grid-cols-6">
+          {Array.from({ length: previewCount }).map((_, index) => (
+            <div
+              key={index}
+              className="w-full rounded-lg border border-gray-200 bg-white px-2 py-3 flex flex-col items-center gap-2"
+            >
+              <Skeleton circle height={40} width={40} />
+              <Skeleton height={10} width={60} />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
