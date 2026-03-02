@@ -1,7 +1,5 @@
 "use client";
 
-import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
-import { useUser } from "@components/utility/UserContext";
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowPathIcon,
@@ -76,7 +74,6 @@ const NavButton = ({ href, isActive, tooltipContent, children }: NavButtonProps)
 };
 
 export default function OrganiserNavbar() {
-  const { user } = useUser();
   const currPage = usePathname();
 
   return (
@@ -221,15 +218,13 @@ export default function OrganiserNavbar() {
             );
           }}
         </Menu>{" "}
-        {evaluateFulfilmentSessionEnabled(user.userId, "") && (
-          <NavButton
-            href={`/organiser/forms/gallery`}
-            isActive={currPage.startsWith("/organiser/forms/gallery")}
-            tooltipContent="Forms"
-          >
-            <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
-          </NavButton>
-        )}
+        <NavButton
+          href={`/organiser/forms/gallery`}
+          isActive={currPage.startsWith("/organiser/forms/gallery")}
+          tooltipContent="Forms"
+        >
+          <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
+        </NavButton>
         <NavButton
           href="/organiser/gallery"
           isActive={currPage.startsWith("/organiser/gallery")}

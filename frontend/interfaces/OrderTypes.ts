@@ -27,7 +27,7 @@ export interface Order {
 }
 
 export const EMPTY_ORDER: Order = {
-  orderId: "",
+  orderId: "" as OrderId,
   applicationFees: 0,
   datePurchased: Timestamp.now(),
   discounts: 0,

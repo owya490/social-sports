@@ -6,7 +6,7 @@ import EventImage from "@/components/events/EventImage";
 import RecommendedEvents from "@/components/events/RecommendedEvents";
 import Loading from "@/components/loading/Loading";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
-import { Tag } from "@/interfaces/TagTypes";
+import { Tag, TagId } from "@/interfaces/TagTypes";
 import { URL } from "@/interfaces/Types";
 import { getEventById, incrementEventAccessCountById } from "@/services/src/events/eventsService";
 import { getTagById } from "@/services/src/tagService";
@@ -31,7 +31,7 @@ export default function EventPage({ params }: any) {
         setEventData(event);
         if (event.eventTags && typeof event.eventTags === "object") {
           event.eventTags.map((tagId) => {
-            getTagById(tagId).then((tag) => {
+            getTagById(tagId as TagId).then((tag) => {
               setEventTags([...eventTags, tag]);
             });
           });

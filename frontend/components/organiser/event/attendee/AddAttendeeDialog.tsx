@@ -1,5 +1,5 @@
 import Loading from "@/components/loading/Loading";
-import { EventMetadata } from "@/interfaces/EventTypes";
+import { EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { getEventById } from "@/services/src/events/eventsService";
 import { addAttendee } from "@/services/src/organiser/organiserService";
@@ -12,7 +12,7 @@ interface InviteAttendeeDialogProps {
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
   isFilterModalOpen: boolean;
-  eventId: string;
+  eventId: EventId;
   setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
 }

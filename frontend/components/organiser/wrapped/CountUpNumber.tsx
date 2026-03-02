@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useInView, useSpring, useTransform } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface CountUpNumberProps {
   value: number;
@@ -20,6 +20,7 @@ export function CountUpNumber({
 }: CountUpNumberProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [displayText, setDisplayText] = useState("0");
 
   const spring = useSpring(0, {
     duration: duration * 1000,
@@ -31,6 +32,11 @@ export function CountUpNumber({
   );
 
   useEffect(() => {
+    const unsubscribe = display.onChange((latest) => setDisplayText(latest));
+    return unsubscribe;
+  }, [display]);
+
+  useEffect(() => {
     if (isInView) {
       spring.set(value);
     }
@@ -39,7 +45,7 @@ export function CountUpNumber({
   return (
     <span ref={ref} className={className}>
       {prefix}
-      <motion.span>{display}</motion.span>
+      <motion.span>{displayText}</motion.span>
       {suffix}
     </span>
   );

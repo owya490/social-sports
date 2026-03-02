@@ -5,7 +5,7 @@ import { getEventById } from "@/services/src/events/eventsService";
 import { Metadata } from "next";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const eventId: EventId = params.id;
+  const eventId = params.id as EventId;
   const event = await getEventById(eventId, true, false);
 
   return generateEventPageMetadata(event);

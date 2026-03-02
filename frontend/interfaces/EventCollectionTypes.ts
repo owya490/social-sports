@@ -1,6 +1,9 @@
 import { EventId } from "./EventTypes";
+import { Branded } from "./index";
 import { RecurrenceTemplateId } from "./RecurringEventTypes";
 import { UserId } from "./UserTypes";
+
+export type EventCollectionId = Branded<string, "EventCollectionId">;
 
 export interface EventCollection {
   eventCollectionId: EventCollectionId;
@@ -13,16 +16,14 @@ export interface EventCollection {
   image: string;
 }
 
-export type EventCollectionId = string;
-
 export const EMPTY_EVENT_COLLECTION: EventCollection = {
-  eventCollectionId: "",
+  eventCollectionId: "" as EventCollectionId,
   name: "",
   description: "",
   eventIds: [],
   recurringEventTemplateIds: [],
   isPrivate: true,
-  organiserId: "",
+  organiserId: "" as UserId,
   image: "",
 };
 
