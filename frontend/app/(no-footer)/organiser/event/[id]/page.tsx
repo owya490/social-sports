@@ -17,6 +17,7 @@ import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata }
 import { FormId } from "@/interfaces/FormTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
@@ -200,6 +201,10 @@ export default function EventPage({ params }: EventPageProps) {
                 eventId={eventId}
                 eventImage={eventImage}
                 eventThumbnail={eventThumbnail}
+                updateData={async (id, data) => {
+                  await updateEventById(id, data);
+                  bustEventsLocalStorageCache();
+                }}
               />
             )}
             {currSidebarPage === "Settings" && (
