@@ -267,6 +267,7 @@ export default function CreateEvent() {
       waitlistEnabled: formData.waitlistEnabled,
       bookingApprovalEnabled: formData.bookingApprovalEnabled,
       formId: formData.formId,
+      showAttendeesOnEventPage: formData.showAttendeesOnEventPage,
     };
   }
 
