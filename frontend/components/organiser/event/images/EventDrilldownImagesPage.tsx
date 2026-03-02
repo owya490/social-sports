@@ -3,8 +3,6 @@ import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { UserData } from "@/interfaces/UserTypes";
-import { updateEventById } from "@/services/src/events/eventsService";
-import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Spinner } from "@material-tailwind/react";
@@ -15,6 +13,7 @@ interface EventDrilldownImagesPageProps {
   eventId: string;
   eventImage: string;
   eventThumbnail: string;
+  updateData: (id: string, data: { image?: string; thumbnail?: string }) => Promise<void>;
 }
 
 export const EventDrilldownImagesPage = ({
@@ -22,6 +21,7 @@ export const EventDrilldownImagesPage = ({
   eventId,
   eventImage,
   eventThumbnail,
+  updateData,
 }: EventDrilldownImagesPageProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [submitLoading, setSubmitLoading] = useState<boolean>(false);
@@ -58,8 +58,7 @@ export const EventDrilldownImagesPage = ({
     setSubmitLoading(true);
 
     try {
-      await updateEventById(eventId, { image: allImageData.image, thumbnail: allImageData.thumbnail });
-      bustEventsLocalStorageCache();
+      await updateData(eventId, { image: allImageData.image, thumbnail: allImageData.thumbnail });
     } catch (error) {
       console.error("Error updating event:", error);
     }
