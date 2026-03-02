@@ -40,6 +40,8 @@ import { Timestamp } from "firebase/firestore";
 import { useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
+type SportId = (typeof SPORTS_CONFIG)[keyof typeof SPORTS_CONFIG]["value"];
+
 export const EventDetailsEdit = ({
   eventId,
   eventStartDate,
@@ -646,8 +648,20 @@ export const EventDetailsEdit = ({
                       label="Sport"
                       size="lg"
                       value={sport}
-                      onChange={(e: string | any) => {
-                        setNewEditSport(e);
+                      onChange={(value: unknown) => {
+                        if (typeof value === "string") {
+                          setNewEditSport(value as SportId);
+                          return;
+                        }
+
+                        if (Array.isArray(value)) {
+                          const selectedSports = value
+                            .filter((item): item is string => typeof item === "string")
+                            .map((item) => item as SportId);
+                          if (selectedSports.length > 0) {
+                            setNewEditSport(selectedSports[0]);
+                          }
+                        }
                       }}
                     >
                       {Object.entries(SPORTS_CONFIG).map((entry, idx) => {
@@ -800,8 +814,15 @@ export const EventDetailsEdit = ({
                       label="Attach Form"
                       size="lg"
                       value={newEditAttachFormId ?? "null"}
-                      onChange={(e: string | any) => {
-                        setNewEditAttachFormId(e === "null" ? null : (e as FormId));
+                      onChange={(value: unknown) => {
+                        if (value === "null") {
+                          setNewEditAttachFormId(null);
+                          return;
+                        }
+
+                        if (typeof value === "string") {
+                          setNewEditAttachFormId(value as FormId);
+                        }
                       }}
                     >
                       {forms.map((form) => {
