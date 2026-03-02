@@ -16,7 +16,7 @@ interface EventAttendeesProps {
 const MOBILE_PREVIEW_COUNT = 8;
 const DESKTOP_PREVIEW_COUNT = 6;
 
-function getInitial(name: string): string {
+export function getInitial(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) return "?";
   return trimmed.charAt(0).toUpperCase();

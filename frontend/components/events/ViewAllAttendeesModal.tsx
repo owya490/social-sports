@@ -3,17 +3,12 @@
 import type { EventAttendeeNameAndTicketCount } from "@/services/src/attendee/attendeeService";
 import { Dialog, Transition, TransitionChild } from "@headlessui/react";
 import { Fragment } from "react";
+import { getInitial } from "./EventAttendees";
 
 interface ViewAllAttendeesModalProps {
   isOpen: boolean;
   onClose: () => void;
   attendees: EventAttendeeNameAndTicketCount[];
-}
-
-function getInitial(name: string): string {
-  const trimmed = name.trim();
-  if (!trimmed) return "?";
-  return trimmed.charAt(0).toUpperCase();
 }
 
 export function ViewAllAttendeesModal({ isOpen, onClose, attendees }: ViewAllAttendeesModalProps) {
