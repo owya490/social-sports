@@ -156,7 +156,6 @@ export default function EventPage({ params }: EventPageProps) {
               setCurrSidebarPage={setCurrSidebarPage}
               eventName={eventName}
               eventStartDate={eventStartDate}
-              user={user}
             />
           </div>
           <div className="flex-1 w-full mb-20 sm:mb-0">

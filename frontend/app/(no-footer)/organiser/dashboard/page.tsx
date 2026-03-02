@@ -4,10 +4,9 @@ import { OrganiserAnnouncementBanner } from "@/components/organiser/dashboard/Or
 import OrganiserChecklist from "@/components/organiser/dashboard/OrganiserChecklist";
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { getOrganiserEvents } from "@/services/src/events/eventsService";
-import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -63,15 +62,13 @@ export default function Dashboard() {
                     </div>
                   </Link>
                 </div>
-                {evaluateFulfilmentSessionEnabled(user.userId, "" as EventId) && (
-                  <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray  rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
-                    <Link href={`/organiser/forms/create-form/editor`}>
-                      <div className="h-full flex justify-center items-center">
-                        <p>Create a form</p>
-                      </div>
-                    </Link>
-                  </div>
-                )}
+                <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray  rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
+                  <Link href={`/organiser/forms/create-form/editor`}>
+                    <div className="h-full flex justify-center items-center">
+                      <p>Create a form</p>
+                    </div>
+                  </Link>
+                </div>
                 <div className="flex-1 min-h-full font-semibold text-2xl bg-organiser-light-gray rounded-2xl hover:bg-highlight-yellow hover:text-white hover:cursor-pointer">
                   <Link href="/organiser/event/dashboard">
                     <div className="h-full flex justify-center items-center">

@@ -1,7 +1,4 @@
-import { EventId } from "@/interfaces/EventTypes";
-import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
 import { Timestamp } from "firebase/firestore";
 import { Dispatch, SetStateAction } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -12,7 +9,6 @@ interface EventDrilldownSidePanelProps {
   setCurrSidebarPage: Dispatch<SetStateAction<string>>;
   eventName: string;
   eventStartDate: Timestamp;
-  user: UserData;
 }
 
 const EventDrilldownSidePanel = ({
@@ -21,7 +17,6 @@ const EventDrilldownSidePanel = ({
   setCurrSidebarPage,
   eventName,
   eventStartDate,
-  user,
 }: EventDrilldownSidePanelProps) => {
   return (
     <div className="bg-organiser-light-gray mr-10 w-48 md:w-64 rounded-3xl hidden sm:block">
@@ -49,16 +44,14 @@ const EventDrilldownSidePanel = ({
         >
           Manage Attendees
         </div>
-        {evaluateFulfilmentSessionEnabled(user.userId, "" as EventId) && (
-          <div
-            className={`text-organiser-dark-gray-text font-bold text-md ${
-              currSidebarPage === "Forms" ? "bg-white" : ""
-            } hover:bg-white px-8 py-3 transition ease-in-out`}
-            onClick={() => setCurrSidebarPage("Forms")}
-          >
-            Forms
-          </div>
-        )}
+        <div
+          className={`text-organiser-dark-gray-text font-bold text-md ${
+            currSidebarPage === "Forms" ? "bg-white" : ""
+          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          onClick={() => setCurrSidebarPage("Forms")}
+        >
+          Forms
+        </div>
         <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
             currSidebarPage === "Images" ? "bg-white" : ""
