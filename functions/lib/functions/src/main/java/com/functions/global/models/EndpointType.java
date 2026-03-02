@@ -1,8 +1,10 @@
 package com.functions.global.models;
 
 import com.functions.attendee.models.requests.AddAttendeeRequest;
+import com.functions.attendee.models.requests.GetEventAttendeeNamesRequest;
 import com.functions.attendee.models.requests.SetAttendeeTicketsRequest;
 import com.functions.attendee.models.responses.AddAttendeeResponse;
+import com.functions.attendee.models.responses.GetEventAttendeeNamesResponse;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.requests.GetEventByIdRequest;
@@ -62,7 +64,8 @@ public enum EndpointType {
     GET_TICKET(GetTicketRequest.class, Ticket.class),
     GET_ORDERS_BY_EVENT(GetOrdersByEventRequest.class, GetOrdersByEventResponse.class),
     ADD_ATTENDEE(AddAttendeeRequest.class, AddAttendeeResponse.class),
-    SET_ATTENDEE_TICKETS(SetAttendeeTicketsRequest.class, SetAttendeeTicketsResponse.class);
+    SET_ATTENDEE_TICKETS(SetAttendeeTicketsRequest.class, SetAttendeeTicketsResponse.class),
+    GET_EVENT_ATTENDEE_NAMES(GetEventAttendeeNamesRequest.class, GetEventAttendeeNamesResponse.class);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;

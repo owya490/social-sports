@@ -65,3 +65,31 @@ export async function setAttendeeTicketsViaBackend(
     throw error;
   }
 }
+
+export interface EventAttendeeNameAndTicketCount {
+  name: string;
+  ticketCount: number;
+}
+
+export interface GetEventAttendeeNamesRequest {
+  eventId: string;
+}
+
+export interface GetEventAttendeeNamesResponse {
+  attendees: EventAttendeeNameAndTicketCount[];
+}
+
+export async function getEventAttendeeNames(eventId: string): Promise<EventAttendeeNameAndTicketCount[]> {
+  attendeeServiceLogger.info(`getEventAttendeeNames: eventId=${eventId}`);
+  try {
+    const response = await executeGlobalAppControllerFunction<
+      GetEventAttendeeNamesRequest,
+      GetEventAttendeeNamesResponse
+    >(EndpointType.GET_EVENT_ATTENDEE_NAMES, { eventId });
+    attendeeServiceLogger.info(`getEventAttendeeNames: success, count=${response.attendees.length}`);
+    return response.attendees;
+  } catch (error) {
+    attendeeServiceLogger.error(`getEventAttendeeNames failed: ${error}`);
+    throw error;
+  }
+}

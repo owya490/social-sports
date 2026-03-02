@@ -21,6 +21,8 @@ interface RecurringTemplateSettingsProps {
   setWaitlistEnabled: (event: boolean) => void;
   bookingApprovalEnabled: boolean;
   setBookingApprovalEnabled: (event: boolean) => void;
+  showAttendeesOnEventPage: boolean;
+  setShowAttendeesOnEventPage: (event: boolean) => void;
 }
 
 export const RecurringTemplateSettings = ({
@@ -37,6 +39,8 @@ export const RecurringTemplateSettings = ({
   setWaitlistEnabled,
   bookingApprovalEnabled,
   setBookingApprovalEnabled,
+  showAttendeesOnEventPage,
+  setShowAttendeesOnEventPage,
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   return (
@@ -150,6 +154,23 @@ export const RecurringTemplateSettings = ({
             }}
           />
         )}
+        <LabelledSwitch
+          title={"Show Attendees on Event Page"}
+          description={"Display registered attendees on the public event page."}
+          state={showAttendeesOnEventPage}
+          setState={setShowAttendeesOnEventPage}
+          updateData={async (event: boolean) => {
+            setLoading(true);
+            const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+              showAttendeesOnEventPage: event,
+            });
+            if (success) {
+              setLoading(false);
+            } else {
+              window.location.reload();
+            }
+          }}
+        />
       </div>
       {loading && (
         <div className="bg-core-hover opacity-50 top-0 absolute h-full w-full flex justify-center items-center">
