@@ -1,4 +1,5 @@
 import EventDescription from "@/components/events/EventDescription";
+import { EventAttendees } from "@/components/events/EventAttendees";
 import { EventData } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
 import { TagGroup } from "../TagGroup";
@@ -41,6 +42,10 @@ export function EventDetails(props: EventDetailsProps) {
 
           <div className="lg:w-2/3 xl:w-3/4">
             <EventDescription title={eventData.name} description={eventData.description} />
+            <EventAttendees
+              eventId={eventData.eventId}
+              showAttendeesOnEventPage={eventData.showAttendeesOnEventPage ?? false}
+            />
             <div className="flex mt-4">
               <div className="hidden lg:block">
                 <TagGroup tags={eventTags} />

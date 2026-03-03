@@ -56,6 +56,7 @@ export type FormData = {
   formId: FormId | null;
   waitlistEnabled: boolean;
   bookingApprovalEnabled: boolean;
+  showAttendeesOnEventPage: boolean;
 };
 
 const INITIAL_DATA: FormData = {
@@ -87,6 +88,7 @@ const INITIAL_DATA: FormData = {
   formId: null,
   waitlistEnabled: true,
   bookingApprovalEnabled: false,
+  showAttendeesOnEventPage: false,
 };
 
 export default function CreateEvent() {
@@ -265,6 +267,7 @@ export default function CreateEvent() {
       waitlistEnabled: formData.waitlistEnabled,
       bookingApprovalEnabled: formData.bookingApprovalEnabled,
       formId: formData.formId,
+      showAttendeesOnEventPage: formData.showAttendeesOnEventPage,
     };
   }
 
