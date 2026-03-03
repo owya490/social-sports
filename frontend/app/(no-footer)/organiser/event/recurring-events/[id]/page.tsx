@@ -209,6 +209,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                 eventThumbnail={eventThumbnail}
                 updateData={async (id, data) => {
                   await updateRecurrenceTemplateEventData(id, data);
+                  if (data.image !== undefined) setEventImage(data.image);
+                  if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
                 }}
               />
             )}

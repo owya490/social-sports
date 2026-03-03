@@ -3,6 +3,7 @@ import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Spinner } from "@material-tailwind/react";
@@ -30,6 +31,8 @@ export const EventDrilldownImagesPage = ({
   const [eventThumbnailUrls, setEventThumbnailUrls] = useState<string[]>([]);
 
   const [allImageData, setAllImageData] = useState<AllImageData>({ image: undefined, thumbnail: undefined });
+
+  const logger = new Logger("EventDrilldownImagesPage");
 
   useEffect(() => {
     const fetchUserImages = async () => {
@@ -60,7 +63,7 @@ export const EventDrilldownImagesPage = ({
     try {
       await updateData(eventId, { image: allImageData.image, thumbnail: allImageData.thumbnail });
     } catch (error) {
-      console.error("Error updating event:", error);
+      logger.error(`Error updating event: ${error}`);
     }
 
     await sleep(2000);
