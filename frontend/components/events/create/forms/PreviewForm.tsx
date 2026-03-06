@@ -1,5 +1,6 @@
 import { FormData } from "@/app/(footer)/event/create/page";
 import EventCard from "@/components/events/EventCard";
+import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
 import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
@@ -85,7 +86,7 @@ export const PreviewForm = ({ form, user }: PreviewFormProps) => {
         <div className="w-full">
           <div className="text-lg lg:text-lg font-bold mb-2 text-gray-600 text-center">Your EventCard preview:</div>
           <EventCard
-            eventId=""
+            eventId={"" as EventId}
             image={
               form.image === "" || form.image === undefined
                 ? "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5"

@@ -2,6 +2,7 @@
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
+import { EventId } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
@@ -11,7 +12,7 @@ import { useEffect, useState } from "react";
 
 interface EventDrilldownImagesPageProps {
   user: UserData;
-  eventId: string;
+  eventId: EventId;
   eventImage: string;
   eventThumbnail: string;
   updateData: (id: string, data: { image?: string; thumbnail?: string }) => Promise<void>;

@@ -1,5 +1,6 @@
 "use client";
 import FormResponder from "@/components/forms/FormResponder";
+import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { useParams } from "next/navigation";
 
@@ -10,7 +11,7 @@ const FormPreview = () => {
   return (
     <div className="bg-core-hover h-screen overflow-hidden">
       <div className="pt-10 pb-24 sm:pb-20 h-full overflow-y-auto">
-        <FormResponder formId={formId} eventId={""} formResponseId={null} isPreview={true} />
+        <FormResponder formId={formId} eventId={"" as EventId} formResponseId={null} isPreview={true} />
       </div>
     </div>
   );

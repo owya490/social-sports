@@ -4,7 +4,7 @@ import CollectionBanner from "@/components/collections/CollectionBanner";
 import EventCard from "@/components/events/EventCard";
 import Loading from "@/components/loading/Loading";
 import OrganiserCalendar from "@/components/users/profile/OrganiserCalendar";
-import { EMPTY_EVENT_COLLECTION, EventCollection } from "@/interfaces/EventCollectionTypes";
+import { EMPTY_EVENT_COLLECTION, EventCollection, EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
@@ -28,7 +28,7 @@ interface EventCollectionPageProps {
 const logger = new Logger("EventCollectionPage");
 
 export default function EventCollectionPage({ params }: EventCollectionPageProps) {
-  const collectionId = params.id;
+  const collectionId = params.id as EventCollectionId;
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);

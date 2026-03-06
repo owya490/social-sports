@@ -2,8 +2,8 @@
 import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
 import { UserCard } from "@/components/users/UserCard";
-import { EmptyEventData, EventData, SearchType } from "@/interfaces/EventTypes";
-import { PublicUserData } from "@/interfaces/UserTypes";
+import { EmptyEventData, EventData, EventId, SearchType } from "@/interfaces/EventTypes";
+import { PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
@@ -115,7 +115,7 @@ export default function Dashboard() {
             const events = await searchEventsByKeyword(event, location);
             let tempEventDataList: EventData[] = [];
             for (const singleEvent of events) {
-              const eventData = await getEventById(singleEvent.eventId);
+              const eventData = await getEventById(singleEvent.eventId as EventId);
               tempEventDataList.push(eventData);
             }
             setEventDataList(tempEventDataList);
@@ -260,7 +260,7 @@ export default function Dashboard() {
                     return (
                       <UserCard
                         key={userIdx}
-                        userId={user.userId}
+                        userId={user.userId as UserId}
                         firstName={user.firstName}
                         surname={user.surname}
                         username={user.username}

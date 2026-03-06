@@ -1,3 +1,4 @@
+import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
@@ -18,7 +19,7 @@ interface EventDrilldownDetailsPageProps {
   eventVacancy: number;
   eventPrice: number;
   eventImage: string;
-  eventId: string;
+  eventId: EventId;
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
   isActive: boolean;

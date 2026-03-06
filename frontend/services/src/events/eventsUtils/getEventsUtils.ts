@@ -1,5 +1,5 @@
-import { EmptyEventData, EventData, EventDataWithoutOrganiser } from "@/interfaces/EventTypes";
-import { PublicUserData } from "@/interfaces/UserTypes";
+import { EmptyEventData, EventData, EventDataWithoutOrganiser, EventId } from "@/interfaces/EventTypes";
+import { PublicUserData, UserId } from "@/interfaces/UserTypes";
 import {
   CollectionReference,
   DocumentData,
@@ -16,7 +16,7 @@ import { eventServiceLogger } from "../eventsService";
 
 // const router = useRouter();
 
-export async function findEventDoc(eventId: string): Promise<QueryDocumentSnapshot<DocumentData, DocumentData>> {
+export async function findEventDoc(eventId: EventId): Promise<QueryDocumentSnapshot<DocumentData, DocumentData>> {
   try {
     // Search through the paths
     for (const path of EVENT_PATHS) {
@@ -81,13 +81,13 @@ export async function getAllEventsFromCollectionRef(
 
     eventsSnapshot.forEach((doc) => {
       const eventData = doc.data() as EventDataWithoutOrganiser;
-      eventData.eventId = doc.id;
+      eventData.eventId = doc.id as EventId;
       eventsDataWithoutOrganiser.push(eventData);
     });
 
     for (const event of eventsDataWithoutOrganiser) {
       try {
-        const organiser = await getPublicUserById(event.organiserId);
+        const organiser = await getPublicUserById(event.organiserId as UserId);
         eventsData.push({
           ...EmptyEventData, // initiate default values
           ...event,

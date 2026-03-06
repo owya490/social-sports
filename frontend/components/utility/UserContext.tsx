@@ -1,7 +1,7 @@
 "use client";
 import { auth } from "@/services/src/firebase";
 import { createContext, useContext, useEffect, useState } from "react";
-import { EmptyUserData, UserData } from "../../interfaces/UserTypes";
+import { EmptyUserData, UserData, UserId } from "../../interfaces/UserTypes";
 
 import { getTempUserData } from "@/services/src/auth/authService";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
@@ -53,10 +53,10 @@ export default function UserContext({ children }: { children: any }) {
       if (userAuth && auth.currentUser?.emailVerified) {
         const { uid } = userAuth;
         try {
-          const userData = await getFullUserByIdForUserContextWithRetries(uid);
+          const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
           setUser(userData);
         } catch {
-          const userData = await getTempUserData(auth.currentUser.uid);
+          const userData = await getTempUserData(auth.currentUser.uid as UserId);
           if (!userData) {
             router.push("/error");
           }
@@ -83,7 +83,7 @@ export default function UserContext({ children }: { children: any }) {
           // will satify both the above conditions and then skip the create user workflow due to this
           // redirecting to dashboard, hence we need to do another check to see if they are in the create
           // user workflow
-          const userData = await getTempUserData(auth.currentUser.uid);
+          const userData = await getTempUserData(auth.currentUser.uid as UserId);
           console.log("userData", userData);
           if (!userData) {
             router.push("/");

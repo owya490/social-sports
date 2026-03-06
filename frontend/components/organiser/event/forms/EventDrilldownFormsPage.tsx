@@ -1,7 +1,7 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";
-import { EventData, EventMetadata } from "@/interfaces/EventTypes";
+import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
@@ -14,7 +14,7 @@ import AddFormResponseDialog from "./AddFormResponseDialog";
 import { FormResponsesTable } from "./FormResponsesTable";
 
 interface EventDrilldownFormsPageProps {
-  eventId: string;
+  eventId: EventId;
   eventMetadata: EventMetadata;
 }
 

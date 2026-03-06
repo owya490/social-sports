@@ -43,10 +43,10 @@ export async function appendFormIdForUser(formId: FormId, userId: UserId): Promi
   createFormUtilsLogger.info(`Appending formId ${formId} to userId: ${userId}`);
   try {
     const privateUserData = await getPrivateUserById(userId);
-    privateUserData.forms !== undefined && privateUserData.forms !== null
-      ? privateUserData.forms.push(formId)
-      : (privateUserData.forms = [formId]);
-    await updateUser(userId, privateUserData);
+    const updatedForms = privateUserData.forms !== undefined && privateUserData.forms !== null
+      ? [...privateUserData.forms, formId]
+      : [formId];
+    await updateUser(userId, { forms: updatedForms });
     createFormUtilsLogger.info(`Successfully appended formId ${formId} to userId: ${userId}`);
   } catch (error) {
     createFormUtilsLogger.error(`appendFormIdForUser Error: ${error}`);

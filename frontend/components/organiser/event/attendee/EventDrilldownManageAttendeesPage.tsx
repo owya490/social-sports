@@ -1,5 +1,5 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
-import { EventMetadata } from "@/interfaces/EventTypes";
+import { EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/outline";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import InviteAttendeeDialog from "./AddAttendeeDialog";
@@ -7,7 +7,7 @@ import EventDrilldownAttendeeCard from "./EventDrilldownAttendeeCard";
 
 interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
-  eventId: string;
+  eventId: EventId;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
 }

@@ -72,7 +72,7 @@ export async function fetchUsersByTokenMatch(
       querySnapshot.forEach((publicUserDoc) => {
         const publicUserData = publicUserDoc.data() as PublicUserData;
         publicUserData.userId = publicUserDoc.id;
-        publicUserDataById.set(publicUserData.userId, publicUserData);
+        publicUserDataById.set(publicUserData.userId as UserId, publicUserData);
       });
     }
     userServiceLogger.info("User token matches fetched successfully.");

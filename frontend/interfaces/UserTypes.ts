@@ -2,8 +2,9 @@ import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstant
 import { EventId } from "./EventTypes";
 import { FormId } from "./FormTypes";
 import { EventCollectionId } from "./EventCollectionTypes";
+import { Branded } from "./index";
 
-export type UserId = string;
+export type UserId = Branded<string, "UserId">;
 
 export interface PublicUserData {
   userId: string;
@@ -94,7 +95,7 @@ export const EmptyPrivateUserData: PrivateUserData = {
 export const EmptyUserData: UserData = {
   ...EmptyPublicUserData,
   ...EmptyPrivateUserData,
-  userId: "",
+  userId: "" as UserId,
 };
 
 export const EmptyNewUserData: NewUserData = {

@@ -50,7 +50,7 @@ export async function createRecurrenceTemplate(
     body: JSON.stringify(content),
   });
   const response = (await rawResponse.json()) as CreateRecurrenceTemplateResponse;
-  return [response.eventId, response.recurrenceTemplateId];
+  return [response.eventId as EventId, response.recurrenceTemplateId as RecurrenceTemplateId];
 }
 
 export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<RecurrenceTemplate[]> {
@@ -63,7 +63,7 @@ export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<R
     const recurrenceTemplateList: RecurrenceTemplate[] = [];
     for (const recurrenceTemplateId of organiserEvents) {
       try {
-        const recurrenceTemplate: RecurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+        const recurrenceTemplate: RecurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId as RecurrenceTemplateId);
         recurrenceTemplateList.push(recurrenceTemplate);
       } catch {
         recurringEventsServiceLogger.warn(

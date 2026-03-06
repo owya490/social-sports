@@ -1,4 +1,5 @@
 import { EventMetadata, NewEventData } from "@/interfaces/EventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { EVENTS_REFRESH_MILLIS, LocalStorageKeys } from "../eventsConstants";
 const rateLimitLogger = new Logger("RateLimitLogger");
@@ -38,7 +39,7 @@ export function extractEventsMetadataFields(eventData: NewEventData): EventMetad
     purchaserMap: {},
     completedStripeCheckoutSessionIds: [],
     completedStripePaymentIntentIds: [],
-    organiserId: eventData.organiserId,
+    organiserId: eventData.organiserId as UserId,
     completeTicketCount: 0,
     orderIds: [],
   };
