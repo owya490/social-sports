@@ -1,0 +1,190 @@
+---
+globs: *.py,*.java
+---
+
+# Backend Guidelines
+
+## Architecture Overview
+
+### Technology Stack
+
+- **Primary**: Java 17 LTS microservices in `lib/functions/`
+- **Secondary**: Python 3.x with Firebase Functions - we want to move away from python functions and have the backend written primarily in Java.
+- **Database**: Firestore (NoSQL)
+- **Payments**: Stripe API integration
+- **Email**: Loops for notifications (migrating from deprecated SendGrid)
+- **Logging**: Google Cloud Logging
+- **Alerts**: Google Cloud Alerting
+
+See `.cursor/rules/project-structure.mdc` for complete architecture overview.
+
+## Java Microservices
+
+### Structure (`/functions/lib/functions/`)
+
+- `src/main/java/com/functions/` - Main Java source
+- Organized by domain: `events/`, `users/`, `utils/`
+- Each domain has: `models/`, `controllers/`, `handlers/`, `services/`, `repositories/`
+
+### Java Patterns
+
+#### 1. Handler Pattern
+
+- Each domain should have its own handler which extends an abstract Handler.java class
+- Handlers are responsible for decoding incoming requests and implementing general business logic
+- Services serve much the same purpose as Handlers, but are an older style of implementing business logic for when each
+  endpoint serves one purpose. We probably want to unify other endpoints in the future to one GlobalAppController to
+  reduce the overhead of having to manage multiple endpoints and multiple instances if we want to keep those endpoints
+  responsive.
+
+#### 2. Repository Pattern
+
+- Use repositories for data access
+- Implement proper error handling
+- Use Firestore client for database operations
+- Handle transactions appropriately
+
+#### 3. Model Classes
+
+- Use proper Java naming conventions
+- Implement validation in model classes
+- Use appropriate data types
+- Include proper constructors and getters/setters
+- Models in Java should match up with the client side interfaces/types in TypeScript
+
+#### 4. Java Optional<T>
+
+- When the outcome of an operation is not known (e.g., database call) we prefer to be explicit with failures rather
+  than returning an Optional<T>.
+- Only use Optional<T> when the value is truly semantically optional.
+
+#### 5. Error handling
+
+- On crucial business logic, we prefer to fail fast so upstream callers are aware of the error and do not execute
+  further unintended actions.
+
+## Python Functions Structure
+
+### Directory Organization (`/functions/`)
+
+- `main.py` - Entry point and function exports
+- `lib/` - Core business logic and utilities
+- `lib/auth.py` - Authentication utilities
+- `lib/constants.py` - Application constants
+- `lib/emails/` - Email templates and sending logic
+- `lib/stripe/` - Payment processing and webhooks
+- `lib/utils/` - Utility functions
+- `tests/` - Unit and integration tests
+
+### Function Patterns
+
+#### 1. Function Structure
+
+See existing examples in the codebase
+
+#### 2. Error Handling
+
+- Always wrap functions in try-except blocks
+- Use structured logging with Google Cloud Logging
+- Return consistent error response format
+- Log errors with appropriate severity levels
+
+#### 3. Authentication
+
+See `.cursor/rules/security-authentication.mdc` for comprehensive authentication patterns.
+
+## Database Guidelines
+
+### Firestore Best Practices
+
+- Use consistent document structure
+- Implement proper indexing for queries
+- Use subcollections for related data
+- Handle offline scenarios gracefully
+
+### Data Modeling
+
+- Design for query patterns
+- Use denormalization when appropriate
+- Implement proper security rules
+- Consider data consistency requirements
+
+## Payment Processing
+
+### Stripe Integration
+
+- Use Stripe's connected accounts for organizers
+- Implement proper webhook handling
+- Handle payment failures gracefully
+- Maintain audit trails for transactions
+
+### Security Considerations
+
+- Never store sensitive payment data
+- Use Stripe's secure tokenization
+- Implement proper webhook signature verification
+- Handle PCI compliance requirements
+
+## Email System
+
+### Loops Integration
+
+- Use Loops for all new email implementations
+- Use templates for consistent email formatting
+- Implement proper error handling for email failures
+- Track email delivery status
+- Handle unsubscribe requests properly
+
+**Note**: SendGrid is deprecated. All new email functionality should use Loops. Existing SendGrid code in `lib/sendgrid/` and `lib/emails/` should be migrated to Loops as opportunities arise.
+
+### Email Types
+
+- Event notifications
+- Payment confirmations
+- Reminder emails
+- System notifications
+
+## Logging and Monitoring
+
+### Google Cloud Logging
+
+- Use structured logging with appropriate severity levels
+- Include relevant context in log messages
+- Implement proper log aggregation
+- Monitor function performance and errors
+
+### Error Tracking
+
+- Log all exceptions with stack traces
+- Include request context in error logs
+- Implement alerting for critical errors
+- Track function execution metrics
+
+## Testing Guidelines
+
+### Unit Testing
+
+- Test individual functions in isolation
+- Mock external dependencies
+- Test both success and failure scenarios
+- Maintain high test coverage
+
+## Deployment and Configuration
+
+### Environment Management
+
+- Use environment variables for configuration
+- Separate development and production settings
+- Use Firebase project aliases
+- Implement proper secret management
+
+### Function Deployment
+
+- Use Firebase CLI for deployment
+- Implement proper versioning
+- Test functions before deployment
+- Monitor deployment success
+
+## Security Best Practices
+
+See `.cursor/rules/security-authentication.mdc` for comprehensive security guidelines.
