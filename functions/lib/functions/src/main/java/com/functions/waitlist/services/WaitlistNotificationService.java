@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 public class WaitlistNotificationService {
     private static final Logger logger = LoggerFactory.getLogger(WaitlistNotificationService.class);
 
-    private static final long NOTIFICATION_DELAY_MS = 1000 * 60 * 60 * 12; // 12 hours
+    private static final long NOTIFICATION_DELAY_MS = 1000 * 60 * 60 * 24; // 24 hours to prevent spam notifications
 
     /**
      * Notify all waitlists for all events.
@@ -143,7 +143,7 @@ public class WaitlistNotificationService {
 
         // Send notifications to users
         for (WaitlistEntry entry : waitlistEntries) {
-            // Skip users who have already been notified less than 12 hours ago
+            // Skip users who have already been notified less than 24 hours ago
             if (entry.getNotifiedAt() != null && (notificationTime.toEpochMilli() 
                 - entry.getNotifiedAt().toDate().getTime() < NOTIFICATION_DELAY_MS)) {
                 continue;
