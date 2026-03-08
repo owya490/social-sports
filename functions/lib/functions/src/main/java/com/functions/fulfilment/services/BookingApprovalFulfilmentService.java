@@ -21,7 +21,6 @@ import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
-import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.BookingApprovalFulfilmentSession;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
@@ -113,7 +112,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
         }
 
         // 2. DELAYED_STRIPE entity (will be updated with correct success URL later)
-        tempEntities.add(StripeFulfilmentEntity.builder().url("") // Placeholder URL
+        tempEntities.add(DelayedStripeFulfilmentEntity.builder().url("") // Placeholder URL
                 .type(FulfilmentEntityType.DELAYED_STRIPE).build());
 
         // 3. END entity

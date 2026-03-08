@@ -11,6 +11,7 @@ export type FulfilmentEntityId = Branded<string, "FulfilmentEntityId">;
 export enum FulfilmentSessionType {
   CHECKOUT = "CHECKOUT",
   WAITLIST = "WAITLIST",
+  BOOKING_APPROVAL = "BOOKING_APPROVAL",
 }
 
 /**
@@ -43,6 +44,7 @@ export type FulfilmentSessionDataType =
  */
 export enum FulfilmentEntityType {
   STRIPE = "STRIPE",
+  DELAYED_STRIPE = "DELAYED_STRIPE",
   FORMS = "FORMS",
   END = "END",
   WAITLIST = "WAITLIST",
@@ -172,7 +174,6 @@ export type GetFulfilmentSessionInfoResponse = {
   currentEntityIndex: number | null;
   fulfilmentSessionStartTime: Timestamp;
 };
-
 /**
  * Payload we send to java completeFulfilmentSession function
  */
@@ -184,3 +185,4 @@ export type CompleteFulfilmentSessionRequest = {
    */
   fulfilmentEntityId: FulfilmentEntityId;
 };
+

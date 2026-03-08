@@ -180,7 +180,6 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
         logger.error(f"Failed to send email to organizer. Exception: {e}")
     
     MAX_RETRIES = 3  
-    RETRY_DELAY_SECONDS = 1
     for purchaser_info in attendees:
         purchaser_email = purchaser_info.get("email")
         ticket_count = purchaser_info.get("tickets")
@@ -210,8 +209,10 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
                 logger.error(f"Attempt {attempt}: Failed to send email to {purchaser_email}. Exception: {e}")
 
             if attempt < MAX_RETRIES:
-                logger.info(f"Retrying email to {purchaser_email} in {RETRY_DELAY_SECONDS} seconds...")
-                time.sleep(RETRY_DELAY_SECONDS)
+                # Exponential backoff: 1s, 2s for retries (after initial 0.5s jitter)
+                delay = 2 ** (attempt - 1)  # 1s, 2s
+                logger.info(f"Retrying email to {purchaser_email} in {delay}s...")
+                time.sleep(delay)
             else:
                 logger.error(f"Failed to send email to {purchaser_email} after {MAX_RETRIES} attempts.")
 

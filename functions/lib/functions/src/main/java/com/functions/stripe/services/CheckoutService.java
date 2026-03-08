@@ -315,7 +315,7 @@ public class CheckoutService {
                 com.stripe.net.RequestOptions.builder()
                         .setStripeAccount(stripeAccountId)
                         .build());
-
+            
         logger.info("Created Stripe checkout session {} for event {}", session.getId(), eventData.getEventId());
 
         return new StripeSessionResult(session.getId(), session.getUrl());

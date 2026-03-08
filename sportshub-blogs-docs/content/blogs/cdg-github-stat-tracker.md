@@ -11,7 +11,7 @@ authors:
 image: "https://cdn.modrinth.com/data/66emo7X3/15dcaeb3ac082e22d733b681406004dec390428f.png"
 ---
 
-![CDG Stat Tracker App Dashboard](/images/CDG-STATTRAKR.png)
+![CDG Stat Tracker App Dashboard](/images/blogs/cdg-stat-trakr-banner.png)
 
 # Turning Code Commits into Epic Quests: Our 4-Hour Hackathon Success Story
 

@@ -1,26 +1,20 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import Logo from "./Logo";
+import { useNavbarVisibility } from "./navbarVisibility";
 import ProfilePic from "./ProfilePic";
 import SearchBar from "./SearchBar";
 
-// Routes where the navbar should be hidden (as regex patterns)
-const HIDDEN_NAVBAR_ROUTES = [
-  /^\/organiser\/wrapped/, // Organiser wrapped page
-  /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
-];
-
-const shouldHideNavbar = (pathname: string): boolean => {
-  return HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname));
-};
-
 export default function Navbar() {
-  const pathname = usePathname();
+  const isNavbarHidden = useNavbarVisibility();
 
-  // Hide navbar on specific routes
-  if (shouldHideNavbar(pathname)) {
-    return null;
+  if (isNavbarHidden) {
+    return (
+      <div
+        className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-core-hover"
+        aria-hidden="true"
+      />
+    );
   }
 
   return (

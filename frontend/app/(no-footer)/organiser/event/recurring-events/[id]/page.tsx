@@ -1,6 +1,7 @@
 "use client";
 
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
+import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
 import EventDrilldownBanner from "@/components/organiser/EventDrilldownBanner";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSettings";
@@ -14,6 +15,7 @@ import {
   NewRecurrenceFormData,
   RecurrenceTemplateId,
 } from "@/interfaces/RecurringEventTypes";
+import { useUser } from "@/components/utility/UserContext";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
 import {
   calculateRecurrenceEnded,
@@ -23,6 +25,7 @@ import {
 } from "@/services/src/recurringEvents/recurringEventsService";
 import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
 import { sleep } from "@/utilities/sleepUtil";
+import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -47,6 +50,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventLocation, setEventLocation] = useState<string>("");
   const [eventPrice, setEventPrice] = useState<number>(0);
   const [eventImage, setEventImage] = useState<string>("");
+  const [eventThumbnail, setEventThumbnail] = useState<string>("");
   const [_eventAccessCount, setEventAccessCount] = useState<number>(0);
   const [eventCapacity, setEventCapacity] = useState<number>(0);
   const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
@@ -54,17 +58,23 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [_eventPaused, seteventPaused] = useState<boolean>(false);
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
-  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
+  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(true);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
+  const [eventBookingApprovalEnabled, setEventBookingApprovalEnabled] = useState<boolean>(false);
+  const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState<boolean>(false);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
 
   const router = useRouter();
+  const { user } = useUser();
 
   const [newRecurrenceData, setNewRecurrenceData] = useState<NewRecurrenceFormData>(DEFAULT_RECURRENCE_FORM_DATA);
+  const [originalRecurrenceData, setOriginalRecurrenceData] = useState<NewRecurrenceFormData | null>(null);
+  const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
+  const [showErrorAlert, setShowErrorAlert] = useState<boolean>(false);
 
   const recurrenceTemplateId: RecurrenceTemplateId = params.id;
   useEffect(() => {
@@ -80,6 +90,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventSport(recurrenceTemplate.eventData.sport);
         setEventPrice(recurrenceTemplate.eventData.price);
         setEventImage(recurrenceTemplate.eventData.image);
+        setEventThumbnail(recurrenceTemplate.eventData.thumbnail);
         setEventAccessCount(recurrenceTemplate.eventData.accessCount);
         setEventCapacity(recurrenceTemplate.eventData.capacity);
         setEventIsActive(recurrenceTemplate.eventData.isActive);
@@ -88,6 +99,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventFormId(recurrenceTemplate.eventData.formId);
         const newRecurrenceData = extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData);
         setNewRecurrenceData(newRecurrenceData);
+        // Store original data for change detection (deep copy)
+        setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
         setPastEvents(recurrenceTemplate.recurrenceData.pastRecurrences);
         seteventPaused(recurrenceTemplate.eventData.paused);
         setEventPaymentsActive(recurrenceTemplate.eventData.paymentsActive);
@@ -95,6 +108,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventPromotionalCodesEnabled(recurrenceTemplate.eventData.promotionalCodesEnabled);
         setEventHideVacancy(recurrenceTemplate.eventData.hideVacancy);
         setEventWaitlistEnabled(recurrenceTemplate.eventData.waitlistEnabled);
+        setEventBookingApprovalEnabled(recurrenceTemplate.eventData.bookingApprovalEnabled);
+        setEventShowAttendeesOnEventPage(recurrenceTemplate.eventData.showAttendeesOnEventPage);
         const isRecurrenceEnded = calculateRecurrenceEnded(recurrenceTemplate);
         setRecurrenceEnded(isRecurrenceEnded);
         // Edge case, if the recurrence is ended, it should not be enabled
@@ -117,8 +132,19 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
 
   const submitNewRecurrenceData = async () => {
     setUpdatingRecurrenceData(true);
-    await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
-    setUpdatingRecurrenceData(false);
+    setShowErrorAlert(false);
+    setShowSuccessAlert(false);
+    try {
+      await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
+      // Update original data after successful save (deep copy)
+      setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
+      setShowSuccessAlert(true);
+    } catch (error) {
+      console.error("Failed to update recurrence data:", error);
+      setShowErrorAlert(true);
+    } finally {
+      setUpdatingRecurrenceData(false);
+    }
   };
 
   return (
@@ -131,17 +157,8 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         loading={loading}
       />
       <div className="sm:px-10 sm:pb-10">
-        <RecurringTemplateDrilldownSettings
-          loading={loading}
-          updating={updatingRecurrenceData}
-          newRecurrenceData={newRecurrenceData}
-          setNewRecurrenceData={setNewRecurrenceData}
-          startDate={eventStartDate}
-          submitNewRecurrenceData={submitNewRecurrenceData}
-          isRecurrenceEnded={recurrenceEnded}
-        />
         <MobileEventDrilldownNavTabs
-          navigationTabs={["Details", "Past Events", "Settings"]}
+          navigationTabs={["Details", "Past Events", "Recurrence", "Images", "Settings"]}
           currSidebarPage={currSidebarPage}
           setCurrSidebarPage={setCurrSidebarPage}
         />
@@ -186,6 +203,32 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                 <RecurringTemplatePastEvents pastEvents={pastEvents} />
               </>
             )}
+            {currSidebarPage === "Images" && user && (
+              <EventDrilldownImagesPage
+                user={user}
+                eventId={recurrenceTemplateId}
+                eventImage={eventImage}
+                eventThumbnail={eventThumbnail}
+                updateData={async (id, data) => {
+                  await updateRecurrenceTemplateEventData(id, data);
+                  if (data.image !== undefined) setEventImage(data.image);
+                  if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
+                }}
+              />
+            )}
+            {currSidebarPage === "Recurrence" && (
+              <RecurringTemplateDrilldownSettings
+                loading={loading}
+                updating={updatingRecurrenceData}
+                newRecurrenceData={newRecurrenceData}
+                originalRecurrenceData={originalRecurrenceData}
+                setNewRecurrenceData={setNewRecurrenceData}
+                startDate={eventStartDate}
+                submitNewRecurrenceData={submitNewRecurrenceData}
+                isRecurrenceEnded={recurrenceEnded}
+                capacity={eventCapacity}
+              />
+            )}
             {currSidebarPage === "Settings" && (
               <>
                 <RecurringTemplateSettings
@@ -200,11 +243,35 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   setHideVacancy={setEventHideVacancy}
                   waitlistEnabled={eventWaitlistEnabled}
                   setWaitlistEnabled={setEventWaitlistEnabled}
+                  bookingApprovalEnabled={eventBookingApprovalEnabled}
+                  setBookingApprovalEnabled={setEventBookingApprovalEnabled}
+                  showAttendeesOnEventPage={eventShowAttendeesOnEventPage}
+                  setShowAttendeesOnEventPage={setEventShowAttendeesOnEventPage}
                 />
               </>
             )}
           </div>
         </div>
+      </div>
+
+      {/* Alerts */}
+      <div className="fixed left-4 bottom-4 w-fit z-40">
+        <Alert
+          open={showSuccessAlert}
+          onClose={() => setShowSuccessAlert(false)}
+          color="green"
+          className="mb-16 md:mb-0"
+        >
+          Recurrence settings saved successfully!
+        </Alert>
+        <Alert
+          open={showErrorAlert}
+          onClose={() => setShowErrorAlert(false)}
+          color="red"
+          className="mb-16 md:mb-0"
+        >
+          Failed to save recurrence settings. Please try again.
+        </Alert>
       </div>
     </>
   );

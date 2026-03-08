@@ -1,4 +1,4 @@
-import { GetFulfilmentSessionInfoResponse } from "@/interfaces/FulfilmentTypes";
+import { FulfilmentEntityType, GetFulfilmentSessionInfoResponse } from "@/interfaces/FulfilmentTypes";
 import { CreditCardIcon, DocumentTextIcon, StarIcon, UserIcon } from "@heroicons/react/24/outline";
 import { Step, Stepper, Typography } from "@material-tailwind/react";
 
@@ -25,22 +25,38 @@ export default function FulfilmentEntityStepper({ fulfilmentSessionInfo }: Fulfi
       {stepLabels.map((stepLabel, index) => {
         const icon = (() => {
           switch (stepLabel) {
-            case "STRIPE":
+            case FulfilmentEntityType.DELAYED_STRIPE:
               return <CreditCardIcon className="h-5 w-5" />;
-            case "FORMS":
+            case FulfilmentEntityType.STRIPE:
+              return <CreditCardIcon className="h-5 w-5" />;
+            case FulfilmentEntityType.FORMS:
               return <DocumentTextIcon className="h-5 w-5" />;
-            case "END":
+            case FulfilmentEntityType.END:
               return <StarIcon className="h-5 w-5" />;
             default:
               return <UserIcon className="h-5 w-5" />;
           }
         })();
 
+        const label = (() => {
+          switch (stepLabel) {
+            case FulfilmentEntityType.DELAYED_STRIPE:
+              return "Payment";
+            case FulfilmentEntityType.STRIPE:
+              return "Payment";
+            case FulfilmentEntityType.FORMS:
+              return "Forms";
+            case FulfilmentEntityType.END:
+              return "End";
+            default:
+              return "Unknown";
+          }
+        })();
+
         // Increment occurrence for this type
         occurrenceByType[stepLabel] = (occurrenceByType[stepLabel] || 0) + 1;
         const showNumber = (countsByType[stepLabel] || 0) > 1;
-        const formattedStepLabel = stepLabel.charAt(0).toUpperCase() + stepLabel.slice(1).toLowerCase();
-        const displayLabel = `${formattedStepLabel}${showNumber ? ` ${occurrenceByType[stepLabel]}` : ""}`;
+        const displayLabel = `${label}${showNumber ? ` ${occurrenceByType[stepLabel]}` : ""}`;
 
         // Hide labels below md when there are more than 5 steps
         const labelVisibilityClass =

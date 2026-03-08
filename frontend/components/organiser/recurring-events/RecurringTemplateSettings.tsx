@@ -3,6 +3,7 @@ import { LabelledSwitch } from "@/components/elements/LabelledSwitch";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
+import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { Spinner } from "@material-tailwind/react";
 import { useState } from "react";
 
@@ -18,6 +19,10 @@ interface RecurringTemplateSettingsProps {
   setHideVacancy: (event: boolean) => void;
   waitlistEnabled: boolean;
   setWaitlistEnabled: (event: boolean) => void;
+  bookingApprovalEnabled: boolean;
+  setBookingApprovalEnabled: (event: boolean) => void;
+  showAttendeesOnEventPage: boolean;
+  setShowAttendeesOnEventPage: (event: boolean) => void;
 }
 
 export const RecurringTemplateSettings = ({
@@ -32,6 +37,10 @@ export const RecurringTemplateSettings = ({
   setHideVacancy,
   waitlistEnabled,
   setWaitlistEnabled,
+  bookingApprovalEnabled,
+  setBookingApprovalEnabled,
+  showAttendeesOnEventPage,
+  setShowAttendeesOnEventPage,
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   return (
@@ -126,6 +135,42 @@ export const RecurringTemplateSettings = ({
             }}
           />
         )}
+        {BOOKING_APPROVAL_ENABLED && (
+          <LabelledSwitch
+            title={"Enable Booking Approval"}
+            description={"Enable to require manual approval for bookings before they are confirmed."}
+            state={bookingApprovalEnabled}
+            setState={setBookingApprovalEnabled}
+            updateData={async (event: boolean) => {
+              setLoading(true);
+              const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+                bookingApprovalEnabled: event,
+              });
+              if (success) {
+                setLoading(false);
+              } else {
+                window.location.reload();
+              }
+            }}
+          />
+        )}
+        <LabelledSwitch
+          title={"Show Attendees on Event Page"}
+          description={"Display registered attendees on the public event page."}
+          state={showAttendeesOnEventPage}
+          setState={setShowAttendeesOnEventPage}
+          updateData={async (event: boolean) => {
+            setLoading(true);
+            const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+              showAttendeesOnEventPage: event,
+            });
+            if (success) {
+              setLoading(false);
+            } else {
+              window.location.reload();
+            }
+          }}
+        />
       </div>
       {loading && (
         <div className="bg-core-hover opacity-50 top-0 absolute h-full w-full flex justify-center items-center">

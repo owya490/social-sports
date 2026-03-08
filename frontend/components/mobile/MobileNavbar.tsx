@@ -3,42 +3,44 @@ import { Tag } from "@/interfaces/TagTypes";
 import { getAllTags } from "@/services/src/tagService";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProfilePic from "../navbar/ProfilePic";
+import { useNavbarVisibility } from "@components/navbar/navbarVisibility";
 import Logo from "./../../public/images/BlackLogo.svg";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileSearchInput from "./MobileSearchInput";
 
-// Routes where the navbar should be hidden (as regex patterns)
-const HIDDEN_NAVBAR_ROUTES = [
-  /^\/organiser\/wrapped/, // Organiser wrapped page
-  /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
-];
-
-const shouldHideNavbar = (pathname: string): boolean => {
-  return HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname));
-};
-
 export default function MobileNavbar() {
-  const pathname = usePathname();
+  const isNavbarHidden = useNavbarVisibility();
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {
+    if (isNavbarHidden) return;
+
+    let cancelled = false;
     getAllTags()
       .then((tags) => {
-        setTags(tags);
+        if (!cancelled) setTags(tags);
       })
       .catch((error) => {
-        console.error("Failed to fetch tags:", error);
-        setTags([]); // Set empty array as fallback
+        if (!cancelled) {
+          console.error("Failed to fetch tags:", error);
+          setTags([]);
+        }
       });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [isNavbarHidden]);
 
-  // Hide navbar on specific routes
-  if (shouldHideNavbar(pathname)) {
-    return null;
+  if (isNavbarHidden) {
+    return (
+      <div
+        className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-core-hover"
+        aria-hidden="true"
+      />
+    );
   }
 
   const handleSearchExpanded = () => {

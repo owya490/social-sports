@@ -1,81 +1,81 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – SPORTSHUB Forms</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/</link><description>Recent content in SPORTSHUB Forms on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/index.xml" rel="self" type="application/rss+xml"/><item><title>Creating a Form</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/create-form/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/create-form/</guid><description>
-&lt;h3&gt;Getting Started&lt;span class="hx:absolute hx:-mt-20" id="getting-started"&gt;&lt;/span&gt;
-&lt;a href="#getting-started" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Creating forms in SPORTSHUB is designed to be intuitive and user-friendly. Access the form builder directly from your Organiser Hub where you can design custom forms tailored to your specific event needs.
-&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/form-editor.png" alt="form-editor" loading="lazy" /&gt;&lt;/p&gt;
-&lt;h3&gt;Form Builder Features&lt;span class="hx:absolute hx:-mt-20" id="form-builder-features"&gt;&lt;/span&gt;
-&lt;a href="#form-builder-features" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Drag-and-Drop Interface&lt;/strong&gt;: Easily add and arrange form fields with an intuitive builder&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Multiple Section Support&lt;/strong&gt;: Organize your form into logical sections for better user experience&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Flexible Field Types&lt;/strong&gt;: Include text fields, dropdowns, images, and soon more&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Custom Validation&lt;/strong&gt;: Set required fields and validation rules to ensure data quality&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Form Sections&lt;span class="hx:absolute hx:-mt-20" id="form-sections"&gt;&lt;/span&gt;
-&lt;a href="#form-sections" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Organize your form with different sections such as:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Personal Information&lt;/strong&gt;: Name, contact details, emergency contacts&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Medical Information&lt;/strong&gt;: Allergies, medical conditions, fitness levels&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Event-Specific Questions&lt;/strong&gt;: Skill level, equipment needs, dietary requirements&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Legal &amp;amp; Compliance&lt;/strong&gt;: Waivers, terms and conditions, photo consent&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Additional Services&lt;/strong&gt;: Merchandise, catering options, transport&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;Attaching Forms to Events&lt;span class="hx:absolute hx:-mt-20" id="attaching-forms-to-events"&gt;&lt;/span&gt;
-&lt;a href="#attaching-forms-to-events" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/form-attach.png" alt="form-attach" loading="lazy" /&gt;
-Once you&amp;rsquo;ve created your form, attaching it to an event is straightforward:&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;&lt;strong&gt;Save Your Form&lt;/strong&gt;: Complete your form design and save it to your form library&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Navigate to Event Settings&lt;/strong&gt;: Go to your event management page (recurring or single event)&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Attach Form&lt;/strong&gt;: Select your form from the dropdown menu and attach it to your event&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Configure Settings&lt;/strong&gt;: Set whether the form is required or optional for registration&lt;/li&gt;
-&lt;/ol&gt;
-&lt;h2&gt;Best Practices&lt;span class="hx:absolute hx:-mt-20" id="best-practices"&gt;&lt;/span&gt;
-&lt;a href="#best-practices" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3&gt;Form Design Tips&lt;span class="hx:absolute hx:-mt-20" id="form-design-tips"&gt;&lt;/span&gt;
-&lt;a href="#form-design-tips" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Keep It Relevant&lt;/strong&gt;: Only ask for information you actually need&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Clear Instructions&lt;/strong&gt;: Provide helpful guidance for each section&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Logical Flow&lt;/strong&gt;: Organize questions in a natural, progressive order&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Mobile-Friendly&lt;/strong&gt;: Ensure your form works well on all devices&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Regular Review&lt;/strong&gt;: Check form responses regularly to identify any issues&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Data Security&lt;/strong&gt;: All player data is securely stored and protected&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Communication&lt;/strong&gt;: Use form data to send targeted, relevant communications&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Continuous Improvement&lt;/strong&gt;: Update forms based on player feedback and event needs&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;SPORTSHUB Forms transform event registration from a fragmented process into a seamless, professional experience that benefits both organisers and players.&lt;/p&gt;</description></item><item><title>Filling out a Form</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/fill-form/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/fill-form/</guid><description>
-&lt;h3&gt;During Checkout&lt;span class="hx:absolute hx:-mt-20" id="during-checkout"&gt;&lt;/span&gt;
-&lt;a href="#during-checkout" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/form-submit.png" alt="form-submit" loading="lazy" /&gt;
-When players register for your event, they&amp;rsquo;ll encounter your custom form as part of their checkout session. The form appears seamlessly integrated into the registration flow, ensuring a smooth user experience.&lt;/p&gt;
-&lt;h3&gt;One Form Per Ticket&lt;span class="hx:absolute hx:-mt-20" id="one-form-per-ticket"&gt;&lt;/span&gt;
-&lt;a href="#one-form-per-ticket" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Each ticket purchase requires one complete form submission. This ensures you have comprehensive information for every player attending your event, making event management and communication more effective.&lt;/p&gt;
-&lt;h3&gt;Required Fields and Payment&lt;span class="hx:absolute hx:-mt-20" id="required-fields-and-payment"&gt;&lt;/span&gt;
-&lt;a href="#required-fields-and-payment" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;All forms must be filled out (all required fields answered) before the player can progress to the payment step. This ensures data integrity and quality for your sporting events.&lt;/p&gt;</description></item><item><title>Viewing Form Responses</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/view-form/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/view-form/</guid><description>
-&lt;h3&gt;Accessing Responses&lt;span class="hx:absolute hx:-mt-20" id="accessing-responses"&gt;&lt;/span&gt;
-&lt;a href="#accessing-responses" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/form-response.png" alt="form-response" loading="lazy" /&gt;
-All form responses are available in your Event Management page within the Organiser Hub. You can:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;View Individual Responses&lt;/strong&gt;: See detailed information for each player&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Export Data&lt;/strong&gt;: Download responses in various formats for external analysis&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Filter and Search&lt;/strong&gt;: Quickly find specific players or response patterns&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Real-time Updates&lt;/strong&gt;: See new responses as they come in&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h3&gt;Response Management Features&lt;span class="hx:absolute hx:-mt-20" id="response-management-features"&gt;&lt;/span&gt;
-&lt;a href="#response-management-features" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Player Communication&lt;/strong&gt;: Contact players directly based on their form responses&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Event Planning&lt;/strong&gt;: Use collected data to better plan logistics, catering, and equipment&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Compliance Tracking&lt;/strong&gt;: Ensure all necessary waivers and documents are completed&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Analytics&lt;/strong&gt;: Gain insights into player demographics and preferences&lt;/li&gt;
-&lt;/ul&gt;</description></item></channel></rss>
+&lt;h3>Getting Started&lt;span class="hx:absolute hx:-mt-20" id="getting-started">&lt;/span>
+&lt;a href="#getting-started" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Creating forms in SPORTSHUB is designed to be intuitive and user-friendly. Access the form builder directly from your Organiser Hub where you can design custom forms tailored to your specific event needs.
+&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/form-editor.png" alt="form-editor" loading="lazy" />&lt;/p>
+&lt;h3>Form Builder Features&lt;span class="hx:absolute hx:-mt-20" id="form-builder-features">&lt;/span>
+&lt;a href="#form-builder-features" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Drag-and-Drop Interface&lt;/strong>: Easily add and arrange form fields with an intuitive builder&lt;/li>
+&lt;li>&lt;strong>Multiple Section Support&lt;/strong>: Organize your form into logical sections for better user experience&lt;/li>
+&lt;li>&lt;strong>Flexible Field Types&lt;/strong>: Include text fields, dropdowns, images, and soon more&lt;/li>
+&lt;li>&lt;strong>Custom Validation&lt;/strong>: Set required fields and validation rules to ensure data quality&lt;/li>
+&lt;/ul>
+&lt;h3>Form Sections&lt;span class="hx:absolute hx:-mt-20" id="form-sections">&lt;/span>
+&lt;a href="#form-sections" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Organize your form with different sections such as:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Personal Information&lt;/strong>: Name, contact details, emergency contacts&lt;/li>
+&lt;li>&lt;strong>Medical Information&lt;/strong>: Allergies, medical conditions, fitness levels&lt;/li>
+&lt;li>&lt;strong>Event-Specific Questions&lt;/strong>: Skill level, equipment needs, dietary requirements&lt;/li>
+&lt;li>&lt;strong>Legal &amp;amp; Compliance&lt;/strong>: Waivers, terms and conditions, photo consent&lt;/li>
+&lt;li>&lt;strong>Additional Services&lt;/strong>: Merchandise, catering options, transport&lt;/li>
+&lt;/ul>
+&lt;h2>Attaching Forms to Events&lt;span class="hx:absolute hx:-mt-20" id="attaching-forms-to-events">&lt;/span>
+&lt;a href="#attaching-forms-to-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/form-attach.png" alt="form-attach" loading="lazy" />
+Once you&amp;rsquo;ve created your form, attaching it to an event is straightforward:&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>Save Your Form&lt;/strong>: Complete your form design and save it to your form library&lt;/li>
+&lt;li>&lt;strong>Navigate to Event Settings&lt;/strong>: Go to your event management page (recurring or single event)&lt;/li>
+&lt;li>&lt;strong>Attach Form&lt;/strong>: Select your form from the dropdown menu and attach it to your event&lt;/li>
+&lt;li>&lt;strong>Configure Settings&lt;/strong>: Set whether the form is required or optional for registration&lt;/li>
+&lt;/ol>
+&lt;h2>Best Practices&lt;span class="hx:absolute hx:-mt-20" id="best-practices">&lt;/span>
+&lt;a href="#best-practices" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>Form Design Tips&lt;span class="hx:absolute hx:-mt-20" id="form-design-tips">&lt;/span>
+&lt;a href="#form-design-tips" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>
+&lt;p>&lt;strong>Keep It Relevant&lt;/strong>: Only ask for information you actually need&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Clear Instructions&lt;/strong>: Provide helpful guidance for each section&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Logical Flow&lt;/strong>: Organize questions in a natural, progressive order&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Mobile-Friendly&lt;/strong>: Ensure your form works well on all devices&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Regular Review&lt;/strong>: Check form responses regularly to identify any issues&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Data Security&lt;/strong>: All player data is securely stored and protected&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Communication&lt;/strong>: Use form data to send targeted, relevant communications&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Continuous Improvement&lt;/strong>: Update forms based on player feedback and event needs&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>SPORTSHUB Forms transform event registration from a fragmented process into a seamless, professional experience that benefits both organisers and players.&lt;/p></description></item><item><title>Filling out a Form</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/fill-form/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/fill-form/</guid><description>
+&lt;h3>During Checkout&lt;span class="hx:absolute hx:-mt-20" id="during-checkout">&lt;/span>
+&lt;a href="#during-checkout" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/form-submit.png" alt="form-submit" loading="lazy" />
+When players register for your event, they&amp;rsquo;ll encounter your custom form as part of their checkout session. The form appears seamlessly integrated into the registration flow, ensuring a smooth user experience.&lt;/p>
+&lt;h3>One Form Per Ticket&lt;span class="hx:absolute hx:-mt-20" id="one-form-per-ticket">&lt;/span>
+&lt;a href="#one-form-per-ticket" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Each ticket purchase requires one complete form submission. This ensures you have comprehensive information for every player attending your event, making event management and communication more effective.&lt;/p>
+&lt;h3>Required Fields and Payment&lt;span class="hx:absolute hx:-mt-20" id="required-fields-and-payment">&lt;/span>
+&lt;a href="#required-fields-and-payment" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>All forms must be filled out (all required fields answered) before the player can progress to the payment step. This ensures data integrity and quality for your sporting events.&lt;/p></description></item><item><title>Viewing Form Responses</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/view-form/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/view-form/</guid><description>
+&lt;h3>Accessing Responses&lt;span class="hx:absolute hx:-mt-20" id="accessing-responses">&lt;/span>
+&lt;a href="#accessing-responses" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/form-response.png" alt="form-response" loading="lazy" />
+All form responses are available in your Event Management page within the Organiser Hub. You can:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>View Individual Responses&lt;/strong>: See detailed information for each player&lt;/li>
+&lt;li>&lt;strong>Export Data&lt;/strong>: Download responses in various formats for external analysis&lt;/li>
+&lt;li>&lt;strong>Filter and Search&lt;/strong>: Quickly find specific players or response patterns&lt;/li>
+&lt;li>&lt;strong>Real-time Updates&lt;/strong>: See new responses as they come in&lt;/li>
+&lt;/ul>
+&lt;h3>Response Management Features&lt;span class="hx:absolute hx:-mt-20" id="response-management-features">&lt;/span>
+&lt;a href="#response-management-features" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>&lt;strong>Player Communication&lt;/strong>: Contact players directly based on their form responses&lt;/li>
+&lt;li>&lt;strong>Event Planning&lt;/strong>: Use collected data to better plan logistics, catering, and equipment&lt;/li>
+&lt;li>&lt;strong>Compliance Tracking&lt;/strong>: Ensure all necessary waivers and documents are completed&lt;/li>
+&lt;li>&lt;strong>Analytics&lt;/strong>: Gain insights into player demographics and preferences&lt;/li>
+&lt;/ul></description></item></channel></rss>

@@ -6,6 +6,7 @@ import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/ev
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
+import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -30,6 +31,10 @@ interface EventDrilldownSettingsPageProps {
   setHideVacancy: (event: boolean) => void;
   waitlistEnabled: boolean;
   setWaitlistEnabled: (event: boolean) => void;
+  bookingApprovalEnabled: boolean;
+  setBookingApprovalEnabled: (event: boolean) => void;
+  showAttendeesOnEventPage: boolean;
+  setShowAttendeesOnEventPage: (event: boolean) => void;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -50,6 +55,10 @@ const EventDrilldownSettingsPage = ({
   setHideVacancy,
   waitlistEnabled,
   setWaitlistEnabled,
+  bookingApprovalEnabled,
+  setBookingApprovalEnabled,
+  showAttendeesOnEventPage,
+  setShowAttendeesOnEventPage,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
@@ -154,6 +163,30 @@ const EventDrilldownSettingsPage = ({
           }}
         />
       )}
+      {BOOKING_APPROVAL_ENABLED && (
+        <LabelledSwitch
+          title={"Enable Booking Approval"}
+          description={"Enable to require manual approval for bookings before they are confirmed."}
+          state={bookingApprovalEnabled}
+          setState={setBookingApprovalEnabled}
+          updateData={(event: boolean) => {
+            updateEventById(eventId, {
+              bookingApprovalEnabled: event,
+            });
+          }}
+        />
+      )}
+      <LabelledSwitch
+        title={"Show Attendees on Event Page"}
+        description={"Display registered attendees on the public event page."}
+        state={showAttendeesOnEventPage}
+        setState={setShowAttendeesOnEventPage}
+        updateData={(event: boolean) => {
+          updateEventById(eventId, {
+            showAttendeesOnEventPage: event,
+          });
+        }}
+      />
       <BlackHighlightButton
         text="Delete Event"
         onClick={() => {

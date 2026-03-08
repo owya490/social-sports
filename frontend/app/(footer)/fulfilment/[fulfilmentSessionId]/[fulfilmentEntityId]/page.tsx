@@ -217,6 +217,20 @@ const FulfilmentSessionEntityPage = ({
       }
       router.push(getFulfilmentEntityInfoResponse.url.toString());
       return renderErrorAlert();
+    case FulfilmentEntityType.DELAYED_STRIPE:
+      if (getFulfilmentEntityInfoResponse.url === null) {
+        fulfilmentSessionEntityPageLogger.error(
+          `Delayed Stripe Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${
+            params.fulfilmentSessionId
+          }, fulfilmentEntityId: ${params.fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
+            getFulfilmentEntityInfoResponse
+          )}`
+        );
+        router.push("/error");
+        return renderErrorAlert();
+      }
+      router.push(getFulfilmentEntityInfoResponse.url.toString());
+      return renderErrorAlert();
     case FulfilmentEntityType.FORMS:
       if (getFulfilmentEntityInfoResponse.formId === null || getFulfilmentEntityInfoResponse.eventId === null) {
         fulfilmentSessionEntityPageLogger.error(
@@ -292,15 +306,15 @@ const FulfilmentSessionEntityPage = ({
     case FulfilmentEntityType.WAITLIST:
       return (
         <>
-        <WaitlistFulfilmentEntity
-          fulfilmentSessionId={params.fulfilmentSessionId}
-          fulfilmentEntityId={params.fulfilmentEntityId}
-          eventId={getFulfilmentEntityInfoResponse.eventId}
-          fulfilmentSessionInfo={fulfilmentSessionInfo}
-          onNext={handleNext}
-          onPrev={handlePrev}
-        />
-        {renderErrorAlert()}
+          <WaitlistFulfilmentEntity
+            fulfilmentSessionId={params.fulfilmentSessionId}
+            fulfilmentEntityId={params.fulfilmentEntityId}
+            eventId={getFulfilmentEntityInfoResponse.eventId}
+            fulfilmentSessionInfo={fulfilmentSessionInfo}
+            onNext={handleNext}
+            onPrev={handlePrev}
+          />
+          {renderErrorAlert()}
         </>
       );
     case FulfilmentEntityType.END:
@@ -311,7 +325,6 @@ const FulfilmentSessionEntityPage = ({
           url={getFulfilmentEntityInfoResponse.url}
           logger={fulfilmentSessionEntityPageLogger}
         />
-
       );
     default:
       return (

@@ -1,5 +1,5 @@
 import { EventId, EventMetadata } from "@/interfaces/EventTypes";
-import { FormId, FormResponse, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
@@ -13,9 +13,11 @@ interface PurchaserInfo {
 interface FormResponsesTableProps {
   formResponses: FormResponse[];
   formId: FormId;
+  form: Form;
   eventId: EventId;
   eventMetadata: EventMetadata;
   showPurchaserColumn?: boolean;
+  organiserEmail?: string;
 }
 
 const getAnswerDisplay = (section: FormSection | undefined): string | React.JSX.Element => {
@@ -99,9 +101,11 @@ const createQuestionMappingForResponse = (responseMap: Record<SectionId, FormSec
 export const FormResponsesTable = ({
   formResponses,
   formId,
+  form,
   eventId,
   eventMetadata,
   showPurchaserColumn = true,
+  organiserEmail = "",
 }: FormResponsesTableProps) => {
   const [headersExpanded, setHeadersExpanded] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
@@ -155,11 +159,47 @@ export const FormResponsesTable = ({
     });
   });
 
-  const sortedQuestions = Array.from(allQuestionIdentifiers).sort((a, b) => a.localeCompare(b));
+  // Build question identifiers from current form in the same way as responses
+  const currentFormQuestionIdentifiers = new Map<string, number>(); // identifier -> order index
+  const formQuestionCounts = new Map<string, number>();
 
-  // Calculate minimum table width
-  const purchaserColumnWidth = showPurchaserColumn ? 300 : 0;
-  const minTableWidth = 30 + purchaserColumnWidth + sortedQuestions.length * 150 + 400 + 30;
+  form.sectionsOrder.forEach((sectionId, orderIndex) => {
+    const section = form.sectionsMap[sectionId];
+    if (section && section.type !== FormSectionType.IMAGE) {
+      const question = section.question.trim();
+      const count = formQuestionCounts.get(question) || 0;
+      formQuestionCounts.set(question, count + 1);
+
+      const uniqueIdentifier = count === 0 ? question : `${question} ${count + 1}`;
+      currentFormQuestionIdentifiers.set(uniqueIdentifier, orderIndex);
+    }
+  });
+
+  // Sort questions: current form questions first (by form order), then removed questions (alphabetically)
+  const sortedQuestions = Array.from(allQuestionIdentifiers).sort((a, b) => {
+    const aInCurrentForm = currentFormQuestionIdentifiers.has(a);
+    const bInCurrentForm = currentFormQuestionIdentifiers.has(b);
+
+    // Both are in current form: sort by order in form
+    if (aInCurrentForm && bInCurrentForm) {
+      const aOrder = currentFormQuestionIdentifiers.get(a)!;
+      const bOrder = currentFormQuestionIdentifiers.get(b)!;
+      return aOrder - bOrder;
+    }
+
+    // a is in current form, b is not: a comes first
+    if (aInCurrentForm && !bInCurrentForm) {
+      return -1;
+    }
+
+    // b is in current form, a is not: b comes first
+    if (!aInCurrentForm && bInCurrentForm) {
+      return 1;
+    }
+
+    // Neither is in current form: sort alphabetically
+    return a.localeCompare(b);
+  });
 
   if (sortedFormResponses.length === 0) {
     return (
@@ -171,13 +211,13 @@ export const FormResponsesTable = ({
 
   return (
     <div className="border border-core-outline rounded-lg max-h-[600px] overflow-x-auto overflow-y-auto w-full">
-      <table className="table-auto text-left w-full" style={{ minWidth: `${minTableWidth}px` }}>
+      <table className="table-auto text-left w-full">
         {/* Header */}
         <thead className="text-organiser-title-gray-text font-bold text-sm bg-core-hover border-b border-core-outline sticky top-0 z-20">
           <tr>
             <th className="px-3 py-2 border-r border-core-outline w-[30px]">#</th>
             {showPurchaserColumn && (
-              <th className="px-3 py-2 border-r border-core-outline w-[300px]">Purchaser Details</th>
+              <th className="px-3 py-2 border-r border-core-outline min-w-[350px]">Purchaser Details</th>
             )}
             {sortedQuestions.map((question, i) => (
               <th
@@ -224,8 +264,10 @@ export const FormResponsesTable = ({
                 prevPurchaser.name !== currentPurchaser.name);
 
             // Calculate rowspan for merged cells
+            // Only group entries with actual purchasers - manual submissions should each show individually
             let rowspan = 1;
             if (showPurchaserDetails && currentPurchaser) {
+              // Group by purchaser email and name
               for (let i = idx + 1; i < sortedFormResponses.length; i++) {
                 const nextPurchaser = formResponseToPurchaser.get(sortedFormResponses[i].formResponseId);
                 if (
@@ -239,6 +281,7 @@ export const FormResponsesTable = ({
                 }
               }
             }
+            // Manual submissions (no purchaser) don't get grouped - each shows individually
 
             return (
               <tr key={`response-${idx}`} className={rowClasses}>
@@ -253,14 +296,17 @@ export const FormResponsesTable = ({
                   </Link>
                 </td>
                 {showPurchaserDetails && (
-                  <td rowSpan={rowspan} className="px-3 py-2 w-[300px] align-top border-r border-core-outline">
+                  <td rowSpan={rowspan} className="px-3 py-2 min-w-[350px] align-top border-r border-core-outline">
                     {currentPurchaser ? (
                       <div className="flex flex-col gap-1">
                         <div className="font-medium text-sm">{currentPurchaser.name}</div>
                         <div className="text-xs text-gray-600 break-words">{currentPurchaser.email}</div>
                       </div>
                     ) : (
-                      <div className="text-gray-400">—</div>
+                      <div className="flex flex-col gap-1">
+                        <div className="text-xs text-gray-600">Manual Submission from</div>
+                        <div className="text-xs text-gray-600 break-words">{organiserEmail || "organiser"}</div>
+                      </div>
                     )}
                   </td>
                 )}

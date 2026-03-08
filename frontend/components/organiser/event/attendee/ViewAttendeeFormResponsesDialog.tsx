@@ -1,7 +1,7 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
 import { EventData, EventId, EventMetadata, Purchaser } from "@/interfaces/EventTypes";
-import { FormId, FormResponse } from "@/interfaces/FormTypes";
+import { Form, FormId, FormResponse } from "@/interfaces/FormTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
@@ -30,7 +30,7 @@ const ViewAttendeeFormResponsesDialog = ({
   const [error, setError] = useState<string | null>(null);
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const [formId, setFormId] = useState<FormId | null>(null);
-  const [formTitle, setFormTitle] = useState<string | null>(null);
+  const [form, setForm] = useState<Form | null>(null);
 
   useEffect(() => {
     const fetchFormResponses = async () => {
@@ -50,7 +50,7 @@ const ViewAttendeeFormResponsesDialog = ({
 
         // Get form title
         const form = await getForm(eventData.formId);
-        setFormTitle(form.title);
+        setForm(form);
 
         // Get all form responses for this event
         const allResponses = await getFormResponsesForEvent(eventData.formId, eventId);
@@ -94,7 +94,7 @@ const ViewAttendeeFormResponsesDialog = ({
             <p className="text-sm text-gray-600 mt-1">
               Attendee: <span className="font-medium">{attendeeName}</span>
             </p>
-            {formTitle && <p className="text-xs text-gray-500 mt-0.5">Form: {formTitle}</p>}
+            {form && <p className="text-xs text-gray-500 mt-0.5">Form: {form.title}</p>}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors" title="Close">
             <XMarkIcon className="w-6 h-6" />
@@ -123,6 +123,7 @@ const ViewAttendeeFormResponsesDialog = ({
             <FormResponsesTable
               formResponses={formResponses}
               formId={formId}
+              form={form!}
               eventId={eventId}
               eventMetadata={eventMetadata}
               showPurchaserColumn={false}

@@ -73,23 +73,29 @@ def send_create_event_email_with_loops(
         logger.info(f"Loops API response status: {response.status_code}")
         logger.info(f"Loops API response body: {response.text}")
 
-        # Retry once more on rate limit after waiting 1 second
-        if response.status_code == 429:
-            logger.info(
-                f"We got rate limited, retrying after 1 second. eventId={request_data.eventId}, body={response.text}"
-            )
-            time.sleep(1)
-            response = requests.post(
-                "https://app.loops.so/api/v1/transactional",
-                data=json.dumps(body),
-                headers=headers,
-            )
-            logger.info(f"Loops API retry response status: {response.status_code}")
-            logger.info(f"Loops API retry response body: {response.text}")
+        # Retry on rate limit with exponential backoff (up to 2 retries)
+        max_retries = 2
+        for attempt in range(max_retries):
+            if response.status_code == 429:
+                delay = 2 ** attempt  # 1s, 2s
+                logger.info(
+                    f"We got rate limited, retrying after {delay}s. eventId={request_data.eventId} (attempt {attempt + 1}/{max_retries})"
+                )
+                time.sleep(delay)
+                response = requests.post(
+                    "https://app.loops.so/api/v1/transactional",
+                    data=json.dumps(body),
+                    headers=headers,
+                    timeout=10,
+                )
+                logger.info(f"Loops API retry response status: {response.status_code}")
+                logger.info(f"Loops API retry response body: {response.text}")
+            else:
+                break
 
         if response.status_code != 200:
             logger.error(
-                f"Failed to send create event email for eventId={request_data.eventId}, body={response.text}"
+                f"Failed to send create event email for eventId={request_data.eventId}, status={response.status_code}, body={response.text}"
             )
 
         # Sleep for 300ms to avoid getting rate limited

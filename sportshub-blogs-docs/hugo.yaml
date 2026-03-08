@@ -13,7 +13,7 @@ params:
     logo:
       src: /images/logo.png
       alt: SPORTSHUB
-      link: /blogs
+      link: /
       width: 40
 
   footer:

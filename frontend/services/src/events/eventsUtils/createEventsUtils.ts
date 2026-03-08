@@ -37,6 +37,7 @@ export function extractEventsMetadataFields(eventData: NewEventData): EventMetad
   return {
     purchaserMap: {},
     completedStripeCheckoutSessionIds: [],
+    completedStripePaymentIntentIds: [],
     organiserId: eventData.organiserId,
     completeTicketCount: 0,
     orderIds: [],
