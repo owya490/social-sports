@@ -53,15 +53,16 @@ public class EmailService {
      * @param email          The email of the user who is on the waitlist
      * @return true if email was sent successfully, false otherwise
      */
-    public static boolean sendWaitlistEmailNotification(String eventName, String name, Timestamp eventStartDate,
-            Timestamp eventEndDate,
-            String location, String email) {
+    public static boolean sendWaitlistEmailNotification(String eventName, String name, Timestamp eventStartDate, Timestamp eventEndDate, 
+        String location,String email, String eventId) {
         Map<String, String> variables = Map.of(
-                "name", name,
-                "eventName", eventName,
-                "startDate", TimeUtils.getTimestampStringFromTimezone(eventStartDate, ZoneId.of("Australia/Sydney")),
-                "endDate", TimeUtils.getTimestampStringFromTimezone(eventEndDate, ZoneId.of("Australia/Sydney")),
-                "location", location);
+            "name", name, 
+            "eventName", eventName,
+            "startDate", TimeUtils.getTimestampStringFromTimezone(eventStartDate, ZoneId.of("Australia/Sydney")),
+            "endDate", TimeUtils.getTimestampStringFromTimezone(eventEndDate, ZoneId.of("Australia/Sydney")),
+            "location", location, 
+            "eventId", eventId
+        );
         logger.info("Sending waitlist email notification to {} for event {}", email, eventName);
         return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.WAITLIST_NOTIFICATION, email, variables);
     }
