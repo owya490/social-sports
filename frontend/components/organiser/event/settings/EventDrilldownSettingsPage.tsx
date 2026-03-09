@@ -33,6 +33,8 @@ interface EventDrilldownSettingsPageProps {
   setWaitlistEnabled: (event: boolean) => void;
   bookingApprovalEnabled: boolean;
   setBookingApprovalEnabled: (event: boolean) => void;
+  showAttendeesOnEventPage: boolean;
+  setShowAttendeesOnEventPage: (event: boolean) => void;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -55,6 +57,8 @@ const EventDrilldownSettingsPage = ({
   setWaitlistEnabled,
   bookingApprovalEnabled,
   setBookingApprovalEnabled,
+  showAttendeesOnEventPage,
+  setShowAttendeesOnEventPage,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
@@ -172,6 +176,17 @@ const EventDrilldownSettingsPage = ({
           }}
         />
       )}
+      <LabelledSwitch
+        title={"Show Attendees on Event Page"}
+        description={"Display registered attendees on the public event page."}
+        state={showAttendeesOnEventPage}
+        setState={setShowAttendeesOnEventPage}
+        updateData={(event: boolean) => {
+          updateEventById(eventId, {
+            showAttendeesOnEventPage: event,
+          });
+        }}
+      />
       <BlackHighlightButton
         text="Delete Event"
         onClick={() => {

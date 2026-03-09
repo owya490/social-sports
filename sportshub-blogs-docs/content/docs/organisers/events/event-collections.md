@@ -2,7 +2,7 @@
 title: Event Collections
 weight: 4
 prev: /docs/organiser/events/custom-links
-next: /docs/organiser/events
+next: /docs/organiser/events/event-settings
 ---
 
 ## Overview

@@ -387,6 +387,7 @@ def fulfill_completed_event_ticket_purchase(
                 "price": item.price.unit_amount,
                 "purchaseDate": purchase_time,
                 "status": resolve_order_and_ticket_status(capture_method),
+                "type": "GENERAL",
                 "formResponseId": (
                     form_response_ids[item_index]
                     if form_response_ids and item_index < len(form_response_ids)
@@ -409,6 +410,7 @@ def fulfill_completed_event_ticket_purchase(
             "tickets": ticket_list,
             "stripePaymentIntentId": payment_intent_id,
             "status": resolve_order_and_ticket_status(capture_method),
+            "type": "GENERAL",
         },
     )
 

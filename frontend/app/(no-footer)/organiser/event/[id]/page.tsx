@@ -17,6 +17,7 @@ import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata }
 import { FormId } from "@/interfaces/FormTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
@@ -53,11 +54,12 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventRegistrationDeadline, setEventRegistrationDeadline] = useState<Timestamp>(Timestamp.now());
   const [eventEventLink, setEventEventLink] = useState<string>("");
   const [eventPaymentsActive, setEventPaymentsActive] = useState<boolean>(false);
-  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(false);
+  const [eventStripeFeeToCustomer, setEventStripeFeeToCustomer] = useState<boolean>(true);
   const [eventPromotionalCodesEnabled, setEventPromotionalCodesEnabled] = useState<boolean>(false);
   const [eventHideVacancy, setEventHideVacancy] = useState<boolean>(false);
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventBookingApprovalEnabled, setEventBookingApprovalEnabled] = useState<boolean>(false);
+  const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState<boolean>(false);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
@@ -99,6 +101,7 @@ export default function EventPage({ params }: EventPageProps) {
         setEventHideVacancy(event.hideVacancy);
         setEventWaitlistEnabled(event.waitlistEnabled);
         setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
+        setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
         return event;
       })
       .then((event) => {
@@ -199,6 +202,10 @@ export default function EventPage({ params }: EventPageProps) {
                 eventId={eventId}
                 eventImage={eventImage}
                 eventThumbnail={eventThumbnail}
+                updateData={async (id, data) => {
+                  await updateEventById(id, data);
+                  bustEventsLocalStorageCache();
+                }}
               />
             )}
             {currSidebarPage === "Settings" && (
@@ -222,6 +229,8 @@ export default function EventPage({ params }: EventPageProps) {
                 setWaitlistEnabled={setEventWaitlistEnabled}
                 bookingApprovalEnabled={eventBookingApprovalEnabled}
                 setBookingApprovalEnabled={setEventBookingApprovalEnabled}
+                showAttendeesOnEventPage={eventShowAttendeesOnEventPage}
+                setShowAttendeesOnEventPage={setEventShowAttendeesOnEventPage}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

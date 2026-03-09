@@ -17,6 +17,7 @@ import com.functions.events.repositories.EventsRepository;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
+import com.functions.tickets.models.OrderAndTicketType;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
@@ -55,6 +56,7 @@ public class AttendeeService {
             order.setApplicationFees(0);
             order.setDiscounts(0);
             order.setStatus(OrderAndTicketStatus.APPROVED);
+            order.setType(OrderAndTicketType.MANUAL);
 
             List<String> ticketIds = new ArrayList<>();
             for (int i = 0; i < request.numTickets(); i++) {
@@ -64,6 +66,7 @@ public class AttendeeService {
                 ticket.setPrice(request.price());
                 ticket.setPurchaseDate(now);
                 ticket.setStatus(OrderAndTicketStatus.APPROVED);
+                ticket.setType(OrderAndTicketType.MANUAL);
 
                 String ticketId = TicketsRepository.createTicket(ticket, transaction);
                 ticketIds.add(ticketId);
@@ -72,8 +75,9 @@ public class AttendeeService {
             order.setTickets(ticketIds);
             OrdersRepository.createOrder(order, request.eventId(), orderId, transaction);
 
-            EventsRepository.updateEventById(request.eventId(), "vacancy",
-                    eventData.getVacancy() - request.numTickets(), transaction);
+            // NOTE: Vacancy is updated in the frontend function
+            // EventsRepository.updateEventById(request.eventId(), "vacancy",
+            // eventData.getVacancy() - request.numTickets(), transaction);
 
             logger.info("Added attendee: orderId={}, ticketCount={}, eventId={}",
                     orderId, ticketIds.size(), request.eventId());
@@ -145,6 +149,7 @@ public class AttendeeService {
                     ticket.setPrice(price);
                     ticket.setPurchaseDate(now);
                     ticket.setStatus(OrderAndTicketStatus.APPROVED);
+                    ticket.setType(OrderAndTicketType.MANUAL);
 
                     String ticketId = TicketsRepository.createTicket(ticket, transaction);
                     newTicketIds.add(ticketId);
