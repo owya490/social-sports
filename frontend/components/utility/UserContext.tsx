@@ -56,7 +56,7 @@ export default function UserContext({ children }: { children: any }) {
           const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
           setUser(userData);
         } catch {
-          const userData = await getTempUserData(auth.currentUser.uid as UserId);
+          const userData = await getTempUserData(uid as UserId);
           if (!userData) {
             router.push("/error");
           }
@@ -83,7 +83,8 @@ export default function UserContext({ children }: { children: any }) {
           // will satify both the above conditions and then skip the create user workflow due to this
           // redirecting to dashboard, hence we need to do another check to see if they are in the create
           // user workflow
-          const userData = await getTempUserData(auth.currentUser.uid as UserId);
+          const { uid } = auth.currentUser;
+          const userData = await getTempUserData(uid as UserId);
           if (!userData) {
             router.push("/");
           }

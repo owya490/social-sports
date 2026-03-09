@@ -38,7 +38,7 @@ export const userServiceLogger = new Logger("userServiceLogger");
 
 export async function createUser(data: UserData, userId: UserId): Promise<void> {
   try {
-    userServiceLogger.info(`Creating new user:", ${data}, ${userId}`);
+    userServiceLogger.info(`Creating new user: ${userId}`);
 
     const uniqueUsername = await generateUsername(data.firstName);
     // create the username mapping to optimistically "shotgun" that username

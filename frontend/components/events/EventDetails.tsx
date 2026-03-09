@@ -36,7 +36,7 @@ export function EventDetails(props: EventDetailsProps) {
               paused={eventData.paused}
               setLoading={setLoading}
               eventLink={eventData.eventLink}
-              organiserId={eventData.organiserId as UserId}
+              organiserId={eventData.organiserId}
               waitlistEnabled={eventData.waitlistEnabled}
             />
           </div>

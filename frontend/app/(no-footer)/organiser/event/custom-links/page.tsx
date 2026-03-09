@@ -26,7 +26,7 @@ export default function CustomLinks() {
         const [events, templates, links] = await Promise.all([
           Promise.all(user.publicUpcomingOrganiserEvents.map(async (eventId: string) => await getEventById(eventId as EventId))),
           Promise.all(
-            user.recurrenceTemplates.map(async (templateId: string) => await getRecurrenceTemplate(templateId as RecurrenceTemplateId))
+            user.recurrenceTemplates.map(async (templateId) => await getRecurrenceTemplate(templateId))
           ),
           getAllOrganiserCustomEventLinks(user.userId),
         ]);

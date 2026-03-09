@@ -2,7 +2,7 @@ import { FormId } from "@/interfaces/FormTypes";
 import { PRIVATE_USER_PATH, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { arrayUnion, doc, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { db } from "@/services/src/firebase";
 import { FORMS_MAX_EVENTS, FORMS_REFRESH_MILLIS, LocalStorageKeys } from "../formsConstants";
 
 

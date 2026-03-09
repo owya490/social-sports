@@ -13,7 +13,11 @@ import { getTagById } from "@/services/src/tagService";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function EventPage({ params }: any) {
+type EventPageProps = {
+  params: { id: string };
+};
+
+export default function EventPage({ params }: EventPageProps) {
   const eventId = params.id as EventId;
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
@@ -30,7 +34,7 @@ export default function EventPage({ params }: any) {
       .then((event) => {
         setEventData(event);
         if (event.eventTags && typeof event.eventTags === "object") {
-          event.eventTags.map((tagId) => {
+          event.eventTags.forEach((tagId) => {
             getTagById(tagId as TagId).then((tag) => {
               setEventTags((prev) => [...prev, tag]);
             });

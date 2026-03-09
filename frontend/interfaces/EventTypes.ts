@@ -26,7 +26,7 @@ interface AbstractEventData {
   capacity: number;
   vacancy: number;
   price: number;
-  organiserId: string;
+  organiserId: UserId;
   registrationDeadline: Timestamp;
   name: string;
   description: string;
@@ -82,7 +82,7 @@ export const EmptyEventData: EventData = {
   capacity: 0,
   vacancy: 0,
   price: 0,
-  organiserId: "",
+  organiserId: "" as UserId,
   registrationDeadline: new Timestamp(0, 0),
   name: "",
   description: "",

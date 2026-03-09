@@ -83,7 +83,7 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     batch.commit();
 
     await runTransaction(db, async (transaction) => {
-      const user = await getFullUserById(data.organiserId as UserId, transaction);
+      const user = await getFullUserById(data.organiserId, transaction);
 
       const updatedUserEventsObject: Partial<UserData> = {};
       updatedUserEventsObject.organiserEvents = user.organiserEvents
@@ -96,7 +96,7 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
           ? [...user.publicUpcomingOrganiserEvents, docRef.id as EventId]
           : [docRef.id as EventId];
       }
-      await updateUser(data.organiserId as UserId, updatedUserEventsObject, transaction);
+      await updateUser(data.organiserId, updatedUserEventsObject, transaction);
     });
 
     // We want to bust all our caches when we create a new event.
@@ -151,7 +151,7 @@ export async function getEventById(
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
     var organiser: PublicUserData = EmptyPublicUserData;
     try {
-      organiser = await getPublicUserById(eventWithoutOrganiser.organiserId as UserId, bypassCache, client);
+      organiser = await getPublicUserById(eventWithoutOrganiser.organiserId, bypassCache, client);
     } catch (error) {
       eventServiceLogger.error(`getEventById ${error}`);
       throw error;

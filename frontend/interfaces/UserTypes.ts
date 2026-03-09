@@ -2,6 +2,7 @@ import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstant
 import { EventId } from "./EventTypes";
 import { FormId } from "./FormTypes";
 import { EventCollectionId } from "./EventCollectionTypes";
+import { RecurrenceTemplateId } from "./RecurringEventTypes";
 import { Branded } from "./index";
 
 export type UserId = Branded<string, "UserId">;
@@ -38,7 +39,7 @@ export interface PrivateUserData {
   stripeAccount: string | null;
   stripeAccountActive: boolean | null;
   organiserEvents: string[];
-  recurrenceTemplates: string[];
+  recurrenceTemplates: RecurrenceTemplateId[];
   forms: FormId[];
   sendOrganiserTicketEmails: boolean;
   privateEventCollections: EventCollectionId[];

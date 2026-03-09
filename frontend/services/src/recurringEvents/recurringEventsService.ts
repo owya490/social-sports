@@ -63,7 +63,7 @@ export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<R
     const recurrenceTemplateList: RecurrenceTemplate[] = [];
     for (const recurrenceTemplateId of organiserEvents) {
       try {
-        const recurrenceTemplate: RecurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId as RecurrenceTemplateId);
+        const recurrenceTemplate: RecurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
         recurrenceTemplateList.push(recurrenceTemplate);
       } catch {
         recurringEventsServiceLogger.warn(
