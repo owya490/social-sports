@@ -188,11 +188,11 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   eventVacancy={eventVacancy}
                   eventPrice={eventPrice}
                   eventImage={eventImage}
-                  eventId={recurrenceTemplateId as unknown as EventId}
+                  eventId={recurrenceTemplateId}
                   isActive={eventIsActive}
                   eventRegistrationDeadline={eventRegistrationDeadline}
                   eventEventLink={eventEventLink}
-                  updateData={(id: string, data: any) => updateRecurrenceTemplateEventData(id as RecurrenceTemplateId, data)}
+                  updateData={async (id, data) => { await updateRecurrenceTemplateEventData(id, data); }}
                   isRecurrenceTemplate={true}
                   eventFormId={eventFormId}
                 />

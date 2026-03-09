@@ -290,7 +290,7 @@ export async function getFullUserByIdForUserContextWithRetries(userId: UserId): 
       } else if (error instanceof UsersServiceError) {
         // This is most likely a transient database error, retry with backoff
         userServiceLogger.info(`Failed ${count} times in getting full user id=${userId}, retrying.`);
-        sleep(50);
+        await sleep(50);
       } else {
         userServiceLogger.warn(`Interesting, returned unexpected error: ${error}`);
       }

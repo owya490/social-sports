@@ -3,6 +3,7 @@ import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { EventId } from "@/interfaces/EventTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
@@ -10,21 +11,21 @@ import { sleep } from "@/utilities/sleepUtil";
 import { Spinner } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 
-interface EventDrilldownImagesPageProps {
+interface EventDrilldownImagesPageProps<T extends EventId | RecurrenceTemplateId> {
   user: UserData;
-  eventId: EventId;
+  eventId: T;
   eventImage: string;
   eventThumbnail: string;
-  updateData: (id: string, data: { image?: string; thumbnail?: string }) => Promise<void>;
+  updateData: (id: T, data: { image?: string; thumbnail?: string }) => Promise<void>;
 }
 
-export const EventDrilldownImagesPage = ({
+export const EventDrilldownImagesPage = <T extends EventId | RecurrenceTemplateId>({
   user,
   eventId,
   eventImage,
   eventThumbnail,
   updateData,
-}: EventDrilldownImagesPageProps) => {
+}: EventDrilldownImagesPageProps<T>) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [submitLoading, setSubmitLoading] = useState<boolean>(false);
 

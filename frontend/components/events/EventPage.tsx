@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function EventPage({ params }: any) {
-  const eventId: EventId = params.id;
+  const eventId = params.id as EventId;
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [eventTags, setEventTags] = useState<Tag[]>([]);
@@ -32,7 +32,7 @@ export default function EventPage({ params }: any) {
         if (event.eventTags && typeof event.eventTags === "object") {
           event.eventTags.map((tagId) => {
             getTagById(tagId as TagId).then((tag) => {
-              setEventTags([...eventTags, tag]);
+              setEventTags((prev) => [...prev, tag]);
             });
           });
         }

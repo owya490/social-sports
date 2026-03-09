@@ -32,7 +32,7 @@ export function CountUpNumber({
   );
 
   useEffect(() => {
-    const unsubscribe = display.onChange((latest) => setDisplayText(latest));
+    const unsubscribe = display.onChange((latest: string) => setDisplayText(latest));
     return unsubscribe;
   }, [display]);
 

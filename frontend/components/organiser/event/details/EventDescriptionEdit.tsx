@@ -1,24 +1,25 @@
 "use client";
 import DescriptionRichTextEditor from "@/components/editor/DescriptionRichTextEditor";
 import OrganiserEventDescription from "@/components/events/OrganiserEventDescription";
-import { EventId } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { CheckIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
-export const EventDescriptionEdit = ({
+export const EventDescriptionEdit = <T extends EventId | RecurrenceTemplateId>({
   eventId,
   eventDescription,
   isActive,
   loading,
   updateData,
 }: {
-  eventId: EventId;
+  eventId: T;
   eventDescription: string;
   isActive: boolean;
   loading: boolean;
-  updateData: (id: string, data: any) => any;
+  updateData: (id: T, data: Partial<EventData>) => Promise<void>;
 }) => {
   const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const [editDescription, setEditDescription] = useState(false);

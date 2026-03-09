@@ -21,6 +21,7 @@ import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 import { useUser } from "@/components/utility/UserContext";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventData, EventId } from "@/interfaces/EventTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
@@ -42,7 +43,7 @@ import Skeleton from "react-loading-skeleton";
 
 type SportId = (typeof SPORTS_CONFIG)[keyof typeof SPORTS_CONFIG]["value"];
 
-export const EventDetailsEdit = ({
+export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
   eventId,
   eventStartDate,
   eventEndDate,
@@ -59,7 +60,7 @@ export const EventDetailsEdit = ({
   updateData,
   isRecurrenceTemplate,
 }: {
-  eventId: EventId;
+  eventId: T;
   eventStartDate: Timestamp;
   eventEndDate: Timestamp;
   eventLocation: string;
@@ -72,7 +73,7 @@ export const EventDetailsEdit = ({
   eventFormId: FormId | null;
   loading: boolean;
   isActive: boolean;
-  updateData: (id: string, data: any) => any;
+  updateData: (id: T, data: Partial<EventData>) => Promise<void>;
   isRecurrenceTemplate: boolean;
 }) => {
   loadGoogleMapsScript();
@@ -254,7 +255,8 @@ export const EventDetailsEdit = ({
   const [capacity, setCapacity] = useState(0);
 
   const handleCapacityUpdate = async () => {
-    const valid = await updateEventCapacityById(eventId, newEditCapacity);
+    // eventId is EventId here because handleCapacityUpdate is only called when !isRecurrenceTemplate
+    const valid = await updateEventCapacityById(eventId as EventId, newEditCapacity);
     if (valid) {
       setCapacity(newEditCapacity);
     } else {
@@ -839,14 +841,15 @@ export const EventDetailsEdit = ({
                     {attachForm === null ? (
                       "No form attached"
                     ) : (
-                      <div
-                        className="flex items-center gap-2 w-fit px-1 py-0.5 -mx-1 -my-0.5 rounded cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 w-fit px-1 py-0.5 -mx-1 -my-0.5 rounded hover:bg-gray-100 transition-colors duration-200"
                         onClick={() => router.push(`/organiser/forms/${attachForm.formId}/preview`)}
-                        title="View form preview"
+                        aria-label={`View preview for form: ${attachForm.title}`}
                       >
                         <span>{attachForm.title}</span>
                         <ArrowTopRightOnSquareIcon className="w-4 h-4 text-blue-600 shrink-0" />
-                      </div>
+                      </button>
                     )}
                   </div>
                 )}

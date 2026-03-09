@@ -31,7 +31,6 @@ interface EventPageProps {
   };
 }
 
-//brians
 export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [_eventData, setEventData] = useState<EventData>();
@@ -180,7 +179,7 @@ export default function EventPage({ params }: EventPageProps) {
                   eventRegistrationDeadline={eventRegistrationDeadline}
                   eventEventLink={eventEventLink}
                   isActive={eventIsActive}
-                  updateData={(id: string, data: any) => updateEventById(id as EventId, data)}
+                  updateData={updateEventById}
                   isRecurrenceTemplate={false}
                   eventFormId={eventFormId}
                 />

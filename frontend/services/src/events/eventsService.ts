@@ -56,7 +56,7 @@ import {
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
 interface CreateEventResponse {
-  eventId: string;
+  eventId: EventId;
 }
 
 //Function to create a Event
@@ -308,7 +308,7 @@ export async function archiveAndDeleteEvent(eventId: EventId, userId: UserId, em
       }
     }
 
-    const publicUser = await getPublicUserById(userId as UserId);
+    const publicUser = await getPublicUserById(userId);
     const upcomingOrganiserEvents = publicUser.publicUpcomingOrganiserEvents;
 
     // Add all event fields to the deleted document, with additional deletion metadata

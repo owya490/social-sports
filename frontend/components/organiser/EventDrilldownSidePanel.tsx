@@ -27,47 +27,52 @@ const EventDrilldownSidePanel = ({
         </div>
         <div className="h-20"></div>
       </div>
-      <div className="flex flex-col hover:cursor-pointer">
-        <div
-          className={`text-organiser-dark-gray-text font-bold text-md ${
+      <div className="flex flex-col">
+        <button
+          type="button"
+          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
             currSidebarPage === "Details" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
           onClick={() => setCurrSidebarPage("Details")}
         >
           Details
-        </div>
-        <div
-          className={`text-organiser-dark-gray-text font-bold text-md ${
+        </button>
+        <button
+          type="button"
+          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
             currSidebarPage === "Attendees" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
           onClick={() => setCurrSidebarPage("Attendees")}
         >
           Manage Attendees
-        </div>
-        <div
-          className={`text-organiser-dark-gray-text font-bold text-md ${
+        </button>
+        <button
+          type="button"
+          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
             currSidebarPage === "Forms" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
           onClick={() => setCurrSidebarPage("Forms")}
         >
           Forms
-        </div>
-        <div
-          className={`text-organiser-dark-gray-text font-bold text-md ${
+        </button>
+        <button
+          type="button"
+          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
             currSidebarPage === "Images" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
           onClick={() => setCurrSidebarPage("Images")}
         >
           Images
-        </div>
-        <div
-          className={`text-organiser-dark-gray-text font-bold text-md ${
+        </button>
+        <button
+          type="button"
+          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
             currSidebarPage === "Settings" ? "bg-white" : ""
           } hover:bg-white px-8 py-3 transition ease-in-out`}
           onClick={() => setCurrSidebarPage("Settings")}
         >
           Settings
-        </div>
+        </button>
         {/* <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
             currSidebarPage === "Communication" ? "bg-white" : ""
