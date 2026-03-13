@@ -2,7 +2,6 @@ import EventDescription from "@/components/events/EventDescription";
 import { EventAttendees } from "@/components/events/EventAttendees";
 import { EventData } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
-import { UserId } from "@/interfaces/UserTypes";
 import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";

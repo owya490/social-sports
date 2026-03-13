@@ -4,7 +4,7 @@ import CustomEventLinksTable from "@/components/organiser/event/custom-event-lin
 import { useUser } from "@/components/utility/UserContext";
 import { CustomEventLink } from "@/interfaces/CustomLinkTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { RecurrenceTemplate, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
+import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { getAllOrganiserCustomEventLinks } from "@/services/src/events/customEventLinks/customEventLinksService";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
