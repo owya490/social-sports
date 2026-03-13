@@ -12,6 +12,7 @@ public class EventsMetadataUtils {
 		EventMetadata eventMetadata = new EventMetadata();
 		eventMetadata.setPurchaserMap(new HashMap<String, Purchaser>());
 		eventMetadata.setCompletedStripeCheckoutSessionIds(new ArrayList<String>());
+		eventMetadata.setCompletedStripePaymentIntentIds(new ArrayList<String>());
 		eventMetadata.setOrganiserId(eventData.getOrganiserId());
 		eventMetadata.setCompleteTicketCount(0);
 		eventMetadata.setOrderIds(new ArrayList<String>());

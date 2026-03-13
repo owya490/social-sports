@@ -17,7 +17,8 @@ public class StripeConfig {
 
     // Feature flags for easily gating Java implementation of Python Stripe functionality.
     public static final boolean JAVA_STRIPE_ENABLED = true;
-    public static final boolean JAVA_STRIPE_WEBHOOK_ENABLED = true;
+    public static final boolean JAVA_STRIPE_WEBHOOK_ENABLED =
+            getEnvFlag("JAVA_STRIPE_WEBHOOK_ENABLED", false);
 
     public static final String ERROR_URL = "/error";
     public static final String CURRENCY = "aud";
@@ -71,6 +72,18 @@ public class StripeConfig {
         }
     }
 
+    private static boolean getEnvFlag(String key, boolean defaultValue) {
+        String rawValue = Global.getEnv(key);
+        if (rawValue == null || rawValue.isBlank()) {
+            logger.info("Feature flag {} is not set. Using default={}", key, defaultValue);
+            return defaultValue;
+        }
+
+        boolean parsed = Boolean.parseBoolean(rawValue);
+        logger.info("Feature flag {} resolved to {}", key, parsed);
+        return parsed;
+    }
+
     /**
      * Calculates the Stripe fee for a given price.
      * Stripe fee is 30c + 1.7% of total price.
@@ -94,4 +107,3 @@ public class StripeConfig {
         return 0;
     }
 }
-

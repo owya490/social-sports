@@ -12,6 +12,7 @@ import com.functions.global.handlers.Global;
 import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.models.SessionMetadata;
 import com.functions.stripe.services.WebhookService;
+import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 import com.stripe.exception.SignatureVerificationException;
@@ -20,7 +21,6 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.LineItem;
 import com.stripe.model.LineItemCollection;
 import com.stripe.model.PaymentIntent;
-import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 
@@ -143,54 +143,19 @@ public class StripeWebhookHandler {
             response.setStatusCode(200);
             return;
         }
-        
-        // Get the event data
-        EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
-        StripeObject stripeObject;
-        
-        if (dataObjectDeserializer.getObject().isPresent()) {
-            stripeObject = dataObjectDeserializer.getObject().get();
-        } else {
-            logger.error("[Webhook-{}] Unable to deserialize event data for event {}", uuid, event.getId());
-            response.setStatusCode(500);
-            return;
-        }
-        
-        if (!(stripeObject instanceof Session)) {
-            logger.error("[Webhook-{}] Event data is not a Session object for event {}", uuid, event.getId());
-            response.setStatusCode(500);
-            return;
-        }
-        
-        Session session = (Session) stripeObject;
-        
-        // In production, only process events from SportsHub
-        String projectName = Global.getEnv("PROJECT_NAME");
-        logger.info("[Webhook-{}] Project name: {}", uuid, projectName);
-        boolean isProd = "socialsportsprod".equals(projectName);
-        
-        if (isProd) {
-            String successUrl = session.getSuccessUrl() != null ? session.getSuccessUrl().toLowerCase() : "";
-            String cancelUrl = session.getCancelUrl() != null ? session.getCancelUrl().toLowerCase() : "";
-            
-            if (!successUrl.contains(SPORTSHUB_URL_DOMAIN) && !cancelUrl.contains(SPORTSHUB_URL_DOMAIN)) {
-                logger.info("[Webhook-{}] Ignoring event as it is not a SPORTSHUB event. eventId={}, " +
-                           "successUrl={}, cancelUrl={}", uuid, event.getId(), successUrl, cancelUrl);
-                response.setStatusCode(200);
-                return;
-            }
-        }
-        
         // Route based on event type
         String eventType = event.getType();
         boolean success = false;
         
         switch (eventType) {
             case "checkout.session.completed":
-                success = handleCheckoutSessionCompleted(uuid, event, session);
+                success = handleCheckoutSessionCompleted(uuid, event);
                 break;
             case "checkout.session.expired":
-                success = handleCheckoutSessionExpired(uuid, event, session);
+                success = handleCheckoutSessionExpired(uuid, event);
+                break;
+            case "payment_intent.canceled":
+                success = handlePaymentIntentCanceled(uuid, event);
                 break;
             default:
                 logger.error("[Webhook-{}] Stripe sent a webhook request which does not match any handled events. " +
@@ -209,11 +174,15 @@ public class StripeWebhookHandler {
     /**
      * Handles checkout.session.completed webhook event.
      */
-    private static boolean handleCheckoutSessionCompleted(String uuid, Event event, Session session) {
+    private static boolean handleCheckoutSessionCompleted(String uuid, Event event) {
         logger.info("[Webhook-{}] Processing checkout.session.completed for event {}", uuid, event.getId());
         
         try {
-            String checkoutSessionId = session.getId();
+            String checkoutSessionId = extractObjectIdFromEvent(event, uuid);
+            if (checkoutSessionId == null || checkoutSessionId.isBlank()) {
+                logger.error("[Webhook-{}] Unable to retrieve checkout session ID from event {}", uuid, event.getId());
+                return false;
+            }
             String stripeAccount = event.getAccount();
 
             if (stripeAccount == null || stripeAccount.isEmpty()) {
@@ -235,6 +204,10 @@ public class StripeWebhookHandler {
             if (fullSession == null) {
                 logger.error("[Webhook-{}] Unable to retrieve stripe checkout session from webhook event", uuid);
                 return false;
+            }
+
+            if (shouldIgnoreNonSportsHubCheckoutEvent(uuid, event, fullSession)) {
+                return true;
             }
             
             // Parse session metadata
@@ -269,7 +242,7 @@ public class StripeWebhookHandler {
                 if ("attendeeFullName".equals(key)) {
                     if (field.getText() != null && field.getText().getValue() != null) {
                         fullName = field.getText().getValue();
-                        if (fullName == null || fullName.trim().isEmpty()) {
+                        if (fullName.trim().isEmpty()) {
                             logger.error("[Webhook-{}] Invalid or empty attendeeFullName", uuid);
                             return false;
                         }
@@ -280,7 +253,7 @@ public class StripeWebhookHandler {
                 } else if ("attendeePhone".equals(key)) {
                     if (field.getText() != null && field.getText().getValue() != null) {
                         phoneNumber = field.getText().getValue();
-                        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+                        if (phoneNumber.trim().isEmpty()) {
                             logger.error("[Webhook-{}] Invalid or empty attendeePhone", uuid);
                             return false;
                         }
@@ -389,11 +362,11 @@ public class StripeWebhookHandler {
     /**
      * Handles checkout.session.expired webhook event.
      */
-    private static boolean handleCheckoutSessionExpired(String uuid, Event event, Session session) {
+    private static boolean handleCheckoutSessionExpired(String uuid, Event event) {
         logger.info("[Webhook-{}] Processing checkout.session.expired for event {}", uuid, event.getId());
         
         try {
-            String checkoutSessionId = session.getId();
+            String checkoutSessionId = extractObjectIdFromEvent(event, uuid);
             if (checkoutSessionId == null || checkoutSessionId.isEmpty()) {
                 logger.error("[Webhook-{}] Checkout session ID is null or empty", uuid);
                 return false;
@@ -419,6 +392,10 @@ public class StripeWebhookHandler {
             if (fullSession == null) {
                 logger.error("[Webhook-{}] Unable to retrieve stripe checkout session from webhook event", uuid);
                 return false;
+            }
+
+            if (shouldIgnoreNonSportsHubCheckoutEvent(uuid, event, fullSession)) {
+                return true;
             }
             
             // Parse session metadata
@@ -466,6 +443,75 @@ public class StripeWebhookHandler {
             return false;
         }
     }
+
+    /**
+     * Handles payment_intent.canceled webhook event.
+     */
+    private static boolean handlePaymentIntentCanceled(String uuid, Event event) {
+        logger.info("[Webhook-{}] Processing payment_intent.canceled for event {}", uuid, event.getId());
+
+        String paymentIntentId = extractObjectIdFromEvent(event, uuid);
+        if (paymentIntentId == null || paymentIntentId.isBlank()) {
+            logger.error("[Webhook-{}] Unable to retrieve payment intent ID from event {}", uuid, event.getId());
+            return false;
+        }
+
+        boolean success = WebhookService.fulfilmentWorkflowOnPaymentIntentCanceled(paymentIntentId);
+        if (!success) {
+            logger.error("[Webhook-{}] Failed to process payment_intent.canceled for paymentIntentId={}",
+                    uuid, paymentIntentId);
+        }
+        return success;
+    }
+
+    /**
+     * Extracts the Stripe object id from an event payload.
+     * Falls back to raw JSON parsing when SDK deserialization is unavailable.
+     */
+    private static String extractObjectIdFromEvent(Event event, String uuid) {
+        try {
+            EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
+            if (dataObjectDeserializer.getObject().isPresent()) {
+                Object object = dataObjectDeserializer.getObject().get();
+                if (object instanceof Session session) {
+                    return session.getId();
+                }
+                if (object instanceof PaymentIntent paymentIntent) {
+                    return paymentIntent.getId();
+                }
+            }
+
+            String rawJson = dataObjectDeserializer.getRawJson();
+            if (rawJson != null && !rawJson.isBlank()) {
+                String id = JavaUtils.objectMapper.readTree(rawJson).path("id").asText(null);
+                if (id != null && !id.isBlank()) {
+                    return id;
+                }
+            }
+        } catch (Exception e) {
+            logger.error("[Webhook-{}] Failed extracting event object ID for event {}: {}",
+                    uuid, event.getId(), e.getMessage());
+        }
+        return null;
+    }
+
+    private static boolean shouldIgnoreNonSportsHubCheckoutEvent(String uuid, Event event, Session session) {
+        String projectName = Global.getEnv("PROJECT_NAME");
+        logger.info("[Webhook-{}] Project name: {}", uuid, projectName);
+        boolean isProd = "socialsportsprod".equals(projectName);
+        if (!isProd) {
+            return false;
+        }
+
+        String successUrl = session.getSuccessUrl() != null ? session.getSuccessUrl().toLowerCase() : "";
+        String cancelUrl = session.getCancelUrl() != null ? session.getCancelUrl().toLowerCase() : "";
+        if (!successUrl.contains(SPORTSHUB_URL_DOMAIN) && !cancelUrl.contains(SPORTSHUB_URL_DOMAIN)) {
+            logger.info("[Webhook-{}] Ignoring non-SPORTSHUB checkout event. eventId={}, successUrl={}, cancelUrl={}",
+                    uuid, event.getId(), successUrl, cancelUrl);
+            return true;
+        }
+        return false;
+    }
     
     /**
      * Validates email address format.
@@ -486,4 +532,3 @@ public class StripeWebhookHandler {
         return email.matches(emailRegex) && email.length() <= 254; // RFC 5321 max length
     }
 }
-

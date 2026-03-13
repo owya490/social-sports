@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.EventData;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
+import com.functions.global.handlers.Global;
 import com.functions.tickets.models.Order;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
@@ -30,6 +31,8 @@ import com.google.cloud.firestore.Firestore;
  */
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+    private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID =
+            Global.getEnv("LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID");
 
     private static final ZoneId SYDNEY_TIMEZONE = ZoneId.of("Australia/Sydney");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm");
@@ -309,5 +312,41 @@ public class EmailService {
             logger.error("Error sending purchase confirmation email for orderId: {}", order.getOrderId(), e);
             return false;
         }
+    }
+
+    /**
+     * Sends a payment cancellation email after tickets/order are marked as REJECTED.
+     *
+     * @param email recipient email
+     * @param fullName purchaser full name
+     * @param eventName event name
+     * @param orderId order ID
+     * @param ticketCount number of canceled tickets
+     * @return true if email was sent successfully, false otherwise
+     */
+    public static boolean sendCancellationEmail(String email, String fullName, String eventName,
+                                                String orderId, int ticketCount) {
+        if (LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID == null
+                || LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID.isBlank()) {
+            logger.warn("LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID not configured. Skipping cancellation email.");
+            return false;
+        }
+
+        Map<String, String> variables = Map.of(
+                "name", Optional.ofNullable(fullName).orElse(""),
+                "eventName", Optional.ofNullable(eventName).orElse("Event"),
+                "orderId", Optional.ofNullable(orderId).orElse(""),
+                "ticketCount", String.valueOf(ticketCount)
+        );
+
+        boolean sent = EmailClient.sendEmailWithLoopsWithRetries(
+                LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID, email, variables);
+
+        if (sent) {
+            logger.info("Successfully sent cancellation email for order {} to {}", orderId, email);
+        } else {
+            logger.warn("Failed to send cancellation email for order {} to {}", orderId, email);
+        }
+        return sent;
     }
 }
