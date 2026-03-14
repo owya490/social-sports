@@ -10,8 +10,7 @@ import { useEffect, useState } from "react";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
 import { UserInlineDisplay } from "../users/UserInlineDisplay";
 
-interface EventCardProps {
-  eventId: EventId;
+interface EventCardBaseProps {
   image: string;
   thumbnail: string;
   name: string;
@@ -21,12 +20,22 @@ interface EventCardProps {
   price: number;
   vacancy: number;
   loading: boolean;
-  isClickable?: boolean;
 }
+
+type ClickableEventCardProps = EventCardBaseProps & {
+  eventId: EventId;
+  isClickable?: true;
+};
+
+type PreviewEventCardProps = EventCardBaseProps & {
+  isClickable: false;
+  eventId?: never;
+};
+
+type EventCardProps = ClickableEventCardProps | PreviewEventCardProps;
 
 export default function EventCard(props: EventCardProps) {
   const {
-    eventId,
     image,
     thumbnail,
     name,
@@ -35,7 +44,6 @@ export default function EventCard(props: EventCardProps) {
     location,
     price,
     loading,
-    isClickable = true,
   } = props;
 
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -87,5 +95,9 @@ export default function EventCard(props: EventCardProps) {
     </div>
   );
 
-  return isClickable ? <Link href={`/event/${eventId}`}>{cardContent}</Link> : cardContent;
+  if (props.isClickable === false) {
+    return cardContent;
+  }
+
+  return <Link href={`/event/${props.eventId}`}>{cardContent}</Link>;
 }

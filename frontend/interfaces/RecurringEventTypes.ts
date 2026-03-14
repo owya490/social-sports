@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
-import { EmptyEventData, EventId, NewEventData } from "./EventTypes";
-import { Branded } from "./index";
+import { Branded } from "@/interfaces";
+import { EmptyEventData, EventId, NewEventData } from "@/interfaces/EventTypes";
 
 export type RecurrenceTemplateId = Branded<string, "RecurrenceTemplateId">;
 

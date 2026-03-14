@@ -38,12 +38,10 @@ export interface FormResponderRef {
   hasUnsavedChanges: () => boolean;
 }
 
-interface FormResponderProps {
+interface FormResponderCommonProps {
   formId: FormId;
-  eventId: EventId;
   formResponseId: FormResponseId | null;
   canEditForm?: boolean;
-  isPreview?: boolean;
   fulfilmentInfo?: {
     fulfilmentSessionId: FulfilmentSessionId;
     fulfilmentEntityId: FulfilmentEntityId;
@@ -54,11 +52,22 @@ interface FormResponderProps {
   hideSaveButton?: boolean;
 }
 
+type FormResponderPreviewProps = FormResponderCommonProps & {
+  isPreview: true;
+  eventId?: never;
+};
+
+type FormResponderStandardProps = FormResponderCommonProps & {
+  isPreview?: false;
+  eventId: EventId;
+};
+
+type FormResponderProps = FormResponderPreviewProps | FormResponderStandardProps;
+
 const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
-  (
-    {
+  (props, ref) => {
+    const {
       formId,
-      eventId,
       formResponseId,
       canEditForm,
       isPreview,
@@ -67,28 +76,29 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       onSaveLoadingChange,
       isEmbedded = false,
       hideSaveButton = false,
-    },
-    ref
-  ) => {
+    } = props;
+    const eventId = isPreview ? undefined : props.eventId;
+
     // if we are in preview mode, we can't edit the form
-    canEditForm = isPreview === true ? false : canEditForm;
+    const resolvedCanEditForm = isPreview === true ? false : canEditForm;
 
     const router = useRouter();
     const [form, setForm] = useState<Form | null>(null);
     const [organiser, setOrganiser] = useState<PublicUserData>(EmptyPublicUserData);
     const [loading, setLoading] = useState<boolean>(true);
     const [saveLoading, setSaveLoading] = useState<boolean>(false);
-    const [canEdit, setCanEdit] = useState<boolean>(canEditForm ?? false);
+    const [canEdit, setCanEdit] = useState<boolean>(resolvedCanEditForm ?? false);
     const [formResponseIdState, setFormResponseIdState] = useState<FormResponseId | null>(formResponseId);
     const [hasUnsavedChangesState, setHasUnsavedChangesState] = useState<boolean>(false);
     function setCanEditWrapper(canEdit: boolean) {
-      setCanEdit(canEditForm ?? canEdit);
+      setCanEdit(resolvedCanEditForm ?? canEdit);
     }
 
     const onSave = async (): Promise<FormResponseId | null> => {
-      formResponderLogger.info(`Saving form response for formId: ${formId}, eventId: ${eventId}`);
+      formResponderLogger.info(`Saving form response for formId: ${formId}, eventId: ${eventId ?? "preview"}`);
       if (!form) return null;
       if (!canEdit) return null;
+      if (!eventId) return null;
 
       setSaveLoading(true);
       onSaveLoadingChange?.(true);
@@ -145,6 +155,10 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
           return;
         }
         if (!isPreview) {
+          if (!eventId) {
+            router.push("/error");
+            return;
+          }
           // check the form is actually attached to the event as we are not in preview mode
           const expectedFormId = await getFormIdByEventId(eventId);
           if (expectedFormId !== formId) {
@@ -174,6 +188,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       };
 
       const fetchFormResponseData = async () => {
+        if (!eventId) return;
         if (!formResponseIdState) return;
         const docRef = await findFormResponseDocRef(formId, eventId, formResponseIdState);
         if (docRef.path.includes(FormResponsePaths.Temp)) {
@@ -193,7 +208,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       };
 
       fetchFormData();
-    }, [formResponseIdState]);
+    }, [eventId, formId, formResponseIdState, isPreview, router]);
 
     // Function to check if all required fields are filled
     const areAllRequiredFieldsFilled = () => {

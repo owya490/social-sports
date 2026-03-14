@@ -50,7 +50,7 @@ export async function createRecurrenceTemplate(
     body: JSON.stringify(content),
   });
   const response = (await rawResponse.json()) as CreateRecurrenceTemplateResponse;
-  return [response.eventId as EventId, response.recurrenceTemplateId as RecurrenceTemplateId];
+  return [response.eventId, response.recurrenceTemplateId];
 }
 
 export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<RecurrenceTemplate[]> {

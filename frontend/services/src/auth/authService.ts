@@ -349,7 +349,7 @@ export async function syncEmailOnLogin(userId: UserId): Promise<void> {
       });
 
       // Update email using service layer
-      await updateUser(userId as UserId, {
+      await updateUser(userId, {
         contactInformation: {
           ...privateUserData.contactInformation,
           email: user.email,

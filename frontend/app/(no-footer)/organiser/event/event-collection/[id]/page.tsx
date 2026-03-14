@@ -80,7 +80,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
   const [collectionLink, setCollectionLink] = useState("");
   useEffect(() => {
     setCollectionLink(getUrlWithCurrentHostname(`/event-collection/${collectionId}`));
-  }, []);
+  }, [collectionId]);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -132,7 +132,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
     };
 
     fetchData();
-  }, []);
+  }, [collectionId, router]);
 
   // Focus on input when entering edit mode
   useEffect(() => {

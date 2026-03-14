@@ -5,6 +5,9 @@ import { db } from "./firebase";
 export async function getTagById(tagId: TagId): Promise<Tag> {
   try {
     const tagDoc = await getDoc(doc(db, "EventTags", tagId));
+    if (!tagDoc.exists()) {
+      throw new Error(`Tag not found for id=${tagId}`);
+    }
     return { ...(tagDoc.data() as Tag), id: tagDoc.id as TagId };
   } catch (error) {
     console.log(error);

@@ -80,7 +80,7 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
     };
 
     fetchCollectionData();
-  }, []);
+  }, [collectionId, router]);
 
   return loading ? (
     <Loading />

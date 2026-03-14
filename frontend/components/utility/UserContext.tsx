@@ -1,7 +1,7 @@
 "use client";
 import { auth } from "@/services/src/firebase";
 import { createContext, useContext, useEffect, useState } from "react";
-import { EmptyUserData, UserData, UserId } from "../../interfaces/UserTypes";
+import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 
 import { getTempUserData } from "@/services/src/auth/authService";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
@@ -59,7 +59,9 @@ export default function UserContext({ children }: { children: any }) {
           const userData = await getTempUserData(uid as UserId);
           if (!userData) {
             router.push("/error");
+            return;
           }
+          setUser(userData);
         }
       }
       setUserLoading(false);

@@ -1,7 +1,7 @@
-import { EventId } from "./EventTypes";
-import { Branded } from "./index";
-import { RecurrenceTemplateId } from "./RecurringEventTypes";
-import { UserId } from "./UserTypes";
+import { Branded } from "@/interfaces";
+import { EventId } from "@/interfaces/EventTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 
 export type EventCollectionId = Branded<string, "EventCollectionId">;
 

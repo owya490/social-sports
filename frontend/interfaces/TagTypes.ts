@@ -1,4 +1,4 @@
-import { Branded } from "./index";
+import { Branded } from "@/interfaces";
 
 export type TagId = Branded<string, "TagId">;
 

@@ -1,5 +1,4 @@
 import { EventMetadata, NewEventData } from "@/interfaces/EventTypes";
-import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { EVENTS_REFRESH_MILLIS, LocalStorageKeys } from "../eventsConstants";
 const rateLimitLogger = new Logger("RateLimitLogger");

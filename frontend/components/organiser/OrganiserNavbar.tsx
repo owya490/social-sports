@@ -220,7 +220,7 @@ export default function OrganiserNavbar() {
         </Menu>{" "}
         <NavButton
           href={`/organiser/forms/gallery`}
-          isActive={currPage.startsWith("/organiser/forms/gallery")}
+          isActive={currPage.startsWith("/organiser/forms")}
           tooltipContent="Forms"
         >
           <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />

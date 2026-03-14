@@ -1,4 +1,4 @@
-import { EventId } from "./EventTypes";
+import { EventId } from "@/interfaces/EventTypes";
 
 /**
  * Request to get Sportshub Wrapped data for an organiser.

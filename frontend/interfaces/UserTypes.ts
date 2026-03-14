@@ -1,9 +1,9 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
-import { EventId } from "./EventTypes";
-import { FormId } from "./FormTypes";
-import { EventCollectionId } from "./EventCollectionTypes";
-import { RecurrenceTemplateId } from "./RecurringEventTypes";
-import { Branded } from "./index";
+import { Branded } from "@/interfaces";
+import { EventCollectionId } from "@/interfaces/EventCollectionTypes";
+import { EventId } from "@/interfaces/EventTypes";
+import { FormId } from "@/interfaces/FormTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 
 export type UserId = Branded<string, "UserId">;
 

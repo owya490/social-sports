@@ -71,8 +71,9 @@ export async function fetchUsersByTokenMatch(
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((publicUserDoc) => {
         const publicUserData = publicUserDoc.data() as PublicUserData;
-        publicUserData.userId = publicUserDoc.id;
-        publicUserDataById.set(publicUserData.userId as UserId, publicUserData);
+        const userId = publicUserDoc.id as UserId;
+        publicUserData.userId = userId;
+        publicUserDataById.set(userId, publicUserData);
       });
     }
     userServiceLogger.info("User token matches fetched successfully.");

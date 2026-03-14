@@ -113,11 +113,9 @@ export default function Dashboard() {
         } else {
           try {
             const events = await searchEventsByKeyword(event, location);
-            let tempEventDataList: EventData[] = [];
-            for (const singleEvent of events) {
-              const eventData = await getEventById(singleEvent.eventId as EventId);
-              tempEventDataList.push(eventData);
-            }
+            const tempEventDataList = await Promise.all(
+              events.map((singleEvent) => getEventById(singleEvent.eventId as EventId))
+            );
             setEventDataList(tempEventDataList);
             setSearchDataList(tempEventDataList);
             setPublicUserDataList([]);
