@@ -39,6 +39,6 @@ async function getEventIdFromUserAndEventLink(username: string, customEventLink:
     return eventId;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
-    return "404";
+    return "404" as EventId;
   }
 }

@@ -1,8 +1,10 @@
 import { FormId } from "@/interfaces/FormTypes";
-import { UserId } from "@/interfaces/UserTypes";
+import { PRIVATE_USER_PATH, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { getPrivateUserById, updateUser } from "../../users/usersService";
+import { arrayUnion, doc, updateDoc } from "firebase/firestore";
+import { db } from "@/services/src/firebase";
 import { FORMS_MAX_EVENTS, FORMS_REFRESH_MILLIS, LocalStorageKeys } from "../formsConstants";
+
 
 const createFormUtilsLogger = new Logger("createFormUtilsLogger");
 
@@ -42,11 +44,8 @@ export function rateLimitCreateForm(): boolean {
 export async function appendFormIdForUser(formId: FormId, userId: UserId): Promise<void> {
   createFormUtilsLogger.info(`Appending formId ${formId} to userId: ${userId}`);
   try {
-    const privateUserData = await getPrivateUserById(userId);
-    privateUserData.forms !== undefined && privateUserData.forms !== null
-      ? privateUserData.forms.push(formId)
-      : (privateUserData.forms = [formId]);
-    await updateUser(userId, privateUserData);
+    const privateUserDocRef = doc(db, PRIVATE_USER_PATH, userId);
+    await updateDoc(privateUserDocRef, { forms: arrayUnion(formId) });
     createFormUtilsLogger.info(`Successfully appended formId ${formId} to userId: ${userId}`);
   } catch (error) {
     createFormUtilsLogger.error(`appendFormIdForUser Error: ${error}`);

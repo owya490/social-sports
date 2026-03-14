@@ -9,7 +9,7 @@ import { ImageSelectionDialog } from "@/components/forms/sections/image-section/
 import OrganiserEventCard from "@/components/organiser/dashboard/OrganiserEventCard";
 import RecurringTemplateCard from "@/components/organiser/recurring-events/RecurringTemplateCard";
 import { useUser } from "@/components/utility/UserContext";
-import { EMPTY_EVENT_COLLECTION, EventCollection } from "@/interfaces/EventCollectionTypes";
+import { EMPTY_EVENT_COLLECTION, EventCollection, EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { ImageType } from "@/interfaces/ImageTypes";
 import { RecurrenceTemplate, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
@@ -53,7 +53,7 @@ interface CollectionPageProps {
 }
 
 export default function CollectionPage({ params }: CollectionPageProps) {
-  const collectionId = params.id;
+  const collectionId = params.id as EventCollectionId;
   const { user } = useUser();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -80,7 +80,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
   const [collectionLink, setCollectionLink] = useState("");
   useEffect(() => {
     setCollectionLink(getUrlWithCurrentHostname(`/event-collection/${collectionId}`));
-  }, []);
+  }, [collectionId]);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -132,7 +132,7 @@ export default function CollectionPage({ params }: CollectionPageProps) {
     };
 
     fetchData();
-  }, []);
+  }, [collectionId, router]);
 
   // Focus on input when entering edit mode
   useEffect(() => {

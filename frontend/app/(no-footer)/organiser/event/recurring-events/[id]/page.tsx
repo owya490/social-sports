@@ -76,7 +76,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
   const [showErrorAlert, setShowErrorAlert] = useState<boolean>(false);
 
-  const recurrenceTemplateId: RecurrenceTemplateId = params.id;
+  const recurrenceTemplateId = params.id as RecurrenceTemplateId;
   useEffect(() => {
     getRecurrenceTemplate(recurrenceTemplateId)
       .then((recurrenceTemplate) => {
@@ -192,7 +192,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   isActive={eventIsActive}
                   eventRegistrationDeadline={eventRegistrationDeadline}
                   eventEventLink={eventEventLink}
-                  updateData={updateRecurrenceTemplateEventData}
+                  updateData={async (id, data) => { await updateRecurrenceTemplateEventData(id, data); }}
                   isRecurrenceTemplate={true}
                   eventFormId={eventFormId}
                 />

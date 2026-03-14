@@ -28,7 +28,7 @@ import {
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
-import { EmptyPublicUserData, PublicUserData, UserData } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
@@ -56,7 +56,7 @@ import {
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
 interface CreateEventResponse {
-  eventId: string;
+  eventId: EventId;
 }
 
 //Function to create a Event
@@ -79,7 +79,7 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     const batch = externalBatch !== undefined ? externalBatch : writeBatch(db);
     const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate));
     batch.set(docRef, eventDataWithTokens);
-    createEventMetadata(batch, docRef.id, data);
+    createEventMetadata(batch, docRef.id as EventId, data);
     batch.commit();
 
     await runTransaction(db, async (transaction) => {
@@ -93,8 +93,8 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
       // If event is public, add it to the upcoming events
       if (!eventDataWithTokens.isPrivate) {
         updatedUserEventsObject.publicUpcomingOrganiserEvents = user.publicUpcomingOrganiserEvents
-          ? [...user.publicUpcomingOrganiserEvents, docRef.id]
-          : [docRef.id];
+          ? [...user.publicUpcomingOrganiserEvents, docRef.id as EventId]
+          : [docRef.id as EventId];
       }
       await updateUser(data.organiserId, updatedUserEventsObject, transaction);
     });
@@ -104,7 +104,7 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     bustUserLocalStorageCache();
 
     eventServiceLogger.info(`createEvent succeeded for ${docRef.id}`);
-    return docRef.id;
+    return docRef.id as EventId;
   } catch (error) {
     eventServiceLogger.error(`createEvent ${error}`);
     throw error;
@@ -223,7 +223,7 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
   }
 }
 
-export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
+export async function getOrganiserEvents(userId: UserId): Promise<EventData[]> {
   eventServiceLogger.info(`getOrganiserEvents`);
   try {
     const privateDoc = await getPrivateUserById(userId);
@@ -234,7 +234,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
 
     for (const eventId of organiserEvents) {
       promisesList.push(
-        getEventById(eventId).catch((error) => {
+        getEventById(eventId as EventId).catch((error) => {
           eventServiceLogger.warn(
             `Organiser cannot find an event which is present in their personal event list. organiser=${userId} eventId=${eventId}`
           );
@@ -257,7 +257,7 @@ export async function getOrganiserEvents(userId: string): Promise<EventData[]> {
   }
 }
 
-export async function updateEventById(eventId: string, updatedData: Partial<EventData>) {
+export async function updateEventById(eventId: EventId, updatedData: Partial<EventData>) {
   eventServiceLogger.info(`updateEventByName ${eventId}`);
   try {
     const eventDocRef = await findEventDocRef(eventId); // Get document reference by ID
@@ -277,7 +277,7 @@ export async function updateEventById(eventId: string, updatedData: Partial<Even
   }
 }
 
-export async function archiveAndDeleteEvent(eventId: EventId, userId: string, email: string): Promise<void> {
+export async function archiveAndDeleteEvent(eventId: EventId, userId: UserId, email: string): Promise<void> {
   eventServiceLogger.info(`Starting process to archive and delete event: ${eventId}`);
 
   const batch: WriteBatch = writeBatch(db);
@@ -403,7 +403,7 @@ export async function updateEventFromDocRef(
   }
 }
 
-export async function updateEventMetadataFromEventId(eventId: string, updatedData: Partial<EventMetadata>) {
+export async function updateEventMetadataFromEventId(eventId: EventId, updatedData: Partial<EventMetadata>) {
   try {
     const eventMetadataDocRef = doc(db, CollectionPaths.EventsMetadata, eventId); // Get document reference by ID
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { EventId } from "@/interfaces/EventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import {
   formatMobileDifferentDayDateTime,
   formatMobileSameDayDateTime,
@@ -24,13 +26,13 @@ interface MobileEventPaymentProps {
   startDate: Timestamp;
   endDate: Timestamp;
   registrationEndDate: Timestamp;
-  eventId: string;
+  eventId: EventId;
   isPaymentsActive: boolean;
   isPrivate: boolean;
   paused: boolean;
   setLoading: (value: boolean) => void;
   eventLink: string;
-  organiserId: string;
+  organiserId: UserId;
   waitlistEnabled: boolean;
 }
 

@@ -1,5 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { getStoredFulfilmentSessionId } from "@/services/src/fulfilment/fulfilmentUtils/fulfilmentUtils";
 import { displayPrice } from "@/utilities/priceUtils";
@@ -32,7 +33,7 @@ interface EventPaymentProps {
   paused: boolean;
   setLoading: (value: boolean) => void;
   eventLink: string;
-  organiserId: string;
+  organiserId: UserId;
   waitlistEnabled: boolean;
 }
 

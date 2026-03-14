@@ -10,7 +10,7 @@ export async function addAttendee(
   name: Name,
   phoneNumber: string,
   numTickets: number,
-  eventId: string
+  eventId: EventId
 ): Promise<void> {
   try {
     await addAttendeeViaBackend({
@@ -36,7 +36,7 @@ export async function addAttendee(
     await addEventAttendee(purchaserInfo, eventId);
   } catch (error) {
     organiserServiceLogger.error(
-      `Error adding new attendee in addAttendee() from eventId: ${eventId} and attendee: ${email}, ${name}, ${phoneNumber}, ${numTickets}, ${eventId}`
+      `Error adding new attendee in addAttendee() from eventId: ${eventId}, numTickets: ${numTickets}`
     );
     organiserServiceLogger.error(JSON.stringify(error, null, 2));
     throw error;

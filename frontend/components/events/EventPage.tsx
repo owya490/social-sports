@@ -6,15 +6,19 @@ import EventImage from "@/components/events/EventImage";
 import RecommendedEvents from "@/components/events/RecommendedEvents";
 import Loading from "@/components/loading/Loading";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
-import { Tag } from "@/interfaces/TagTypes";
+import { Tag, TagId } from "@/interfaces/TagTypes";
 import { URL } from "@/interfaces/Types";
 import { getEventById, incrementEventAccessCountById } from "@/services/src/events/eventsService";
 import { getTagById } from "@/services/src/tagService";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function EventPage({ params }: any) {
-  const eventId: EventId = params.id;
+type EventPageProps = {
+  params: { id: string };
+};
+
+export default function EventPage({ params }: EventPageProps) {
+  const eventId = params.id as EventId;
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [eventTags, setEventTags] = useState<Tag[]>([]);
@@ -30,9 +34,9 @@ export default function EventPage({ params }: any) {
       .then((event) => {
         setEventData(event);
         if (event.eventTags && typeof event.eventTags === "object") {
-          event.eventTags.map((tagId) => {
-            getTagById(tagId).then((tag) => {
-              setEventTags([...eventTags, tag]);
+          event.eventTags.forEach((tagId) => {
+            getTagById(tagId as TagId).then((tag) => {
+              setEventTags((prev) => [...prev, tag]);
             });
           });
         }

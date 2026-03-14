@@ -1,6 +1,4 @@
-import { UserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
 import { Timestamp } from "firebase/firestore";
 import { Dispatch, SetStateAction } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -11,8 +9,10 @@ interface EventDrilldownSidePanelProps {
   setCurrSidebarPage: Dispatch<SetStateAction<string>>;
   eventName: string;
   eventStartDate: Timestamp;
-  user: UserData;
 }
+
+const sidebarButtonClassName =
+  "text-organiser-dark-gray-text font-bold text-md text-left px-8 py-3 transition ease-in-out hover:bg-white focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black";
 
 const EventDrilldownSidePanel = ({
   loading,
@@ -20,7 +20,6 @@ const EventDrilldownSidePanel = ({
   setCurrSidebarPage,
   eventName,
   eventStartDate,
-  user,
 }: EventDrilldownSidePanelProps) => {
   return (
     <div className="bg-organiser-light-gray mr-10 w-48 md:w-64 rounded-3xl hidden sm:block">
@@ -31,49 +30,42 @@ const EventDrilldownSidePanel = ({
         </div>
         <div className="h-20"></div>
       </div>
-      <div className="flex flex-col hover:cursor-pointer">
-        <div
-          className={`text-organiser-dark-gray-text font-bold text-md ${
-            currSidebarPage === "Details" ? "bg-white" : ""
-          } hover:bg-white px-8 py-3 transition ease-in-out`}
+      <div className="flex flex-col">
+        <button
+          type="button"
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Details" ? "bg-white" : ""}`}
           onClick={() => setCurrSidebarPage("Details")}
         >
           Details
-        </div>
-        <div
-          className={`text-organiser-dark-gray-text font-bold text-md ${
-            currSidebarPage === "Attendees" ? "bg-white" : ""
-          } hover:bg-white px-8 py-3 transition ease-in-out`}
+        </button>
+        <button
+          type="button"
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Attendees" ? "bg-white" : ""}`}
           onClick={() => setCurrSidebarPage("Attendees")}
         >
           Manage Attendees
-        </div>
-        {evaluateFulfilmentSessionEnabled(user.userId, "") && (
-          <div
-            className={`text-organiser-dark-gray-text font-bold text-md ${
-              currSidebarPage === "Forms" ? "bg-white" : ""
-            } hover:bg-white px-8 py-3 transition ease-in-out`}
-            onClick={() => setCurrSidebarPage("Forms")}
-          >
-            Forms
-          </div>
-        )}
-        <div
-          className={`text-organiser-dark-gray-text font-bold text-md ${
-            currSidebarPage === "Images" ? "bg-white" : ""
-          } hover:bg-white px-8 py-3 transition ease-in-out`}
+        </button>
+        <button
+          type="button"
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Forms" ? "bg-white" : ""}`}
+          onClick={() => setCurrSidebarPage("Forms")}
+        >
+          Forms
+        </button>
+        <button
+          type="button"
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Images" ? "bg-white" : ""}`}
           onClick={() => setCurrSidebarPage("Images")}
         >
           Images
-        </div>
-        <div
-          className={`text-organiser-dark-gray-text font-bold text-md ${
-            currSidebarPage === "Settings" ? "bg-white" : ""
-          } hover:bg-white px-8 py-3 transition ease-in-out`}
+        </button>
+        <button
+          type="button"
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Settings" ? "bg-white" : ""}`}
           onClick={() => setCurrSidebarPage("Settings")}
         >
           Settings
-        </div>
+        </button>
         {/* <div
           className={`text-organiser-dark-gray-text font-bold text-md ${
             currSidebarPage === "Communication" ? "bg-white" : ""

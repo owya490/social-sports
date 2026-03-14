@@ -1,13 +1,14 @@
 import { Timestamp } from "firebase/firestore";
 import { FormId } from "./FormTypes";
+import { Branded } from "./index";
 import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
 
-export type EventId = string;
-export type StripeCheckoutSessionId = string;
-export type StripePaymentIntentId = string;
+export type EventId = Branded<string, "EventId">;
+export type StripeCheckoutSessionId = Branded<string, "StripeCheckoutSessionId">;
+export type StripePaymentIntentId = Branded<string, "StripePaymentIntentId">;
 
-export type OrderId = string;
-export type TicketId = string;
+export type OrderId = Branded<string, "OrderId">;
+export type TicketId = Branded<string, "TicketId">;
 
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;
@@ -25,7 +26,7 @@ interface AbstractEventData {
   capacity: number;
   vacancy: number;
   price: number;
-  organiserId: string;
+  organiserId: UserId;
   registrationDeadline: Timestamp;
   name: string;
   description: string;
@@ -69,7 +70,7 @@ export interface DeletedEvent extends AbstractEventData {
 }
 
 export const EmptyEventData: EventData = {
-  eventId: "",
+  eventId: "" as EventId,
   organiser: EmptyPublicUserData,
   startDate: new Timestamp(0, 0),
   endDate: new Timestamp(0, 0),
@@ -81,7 +82,7 @@ export const EmptyEventData: EventData = {
   capacity: 0,
   vacancy: 0,
   price: 0,
-  organiserId: "",
+  organiserId: "" as UserId,
   registrationDeadline: new Timestamp(0, 0),
   name: "",
   description: "",
@@ -117,14 +118,12 @@ export interface EventMetadata {
 }
 
 export const EmptyEventMetadata: EventMetadata = {
-  eventId: "",
-  purchaserMap: {
-    "": { email: "", attendees: { "": { phone: "", ticketCount: 0, formResponseIds: [] } }, totalTicketCount: 0 },
-  },
+  eventId: "" as EventId,
+  purchaserMap: {} as Record<EmailHash, Purchaser>,
   completeTicketCount: 0,
   completedStripeCheckoutSessionIds: [],
   completedStripePaymentIntentIds: [],
-  organiserId: "",
+  organiserId: "" as UserId,
   orderIds: [],
 };
 
@@ -141,7 +140,7 @@ export interface Attendee {
 }
 
 export type Name = string;
-type EmailHash = string;
+export type EmailHash = string;
 
 export enum SearchType {
   EVENT,

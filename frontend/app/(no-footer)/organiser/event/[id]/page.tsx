@@ -31,7 +31,6 @@ interface EventPageProps {
   };
 }
 
-//brians
 export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [_eventData, setEventData] = useState<EventData>();
@@ -67,66 +66,66 @@ export default function EventPage({ params }: EventPageProps) {
 
   const { user } = useUser();
 
-  const eventId: EventId = params.id;
+  const eventId = params.id as EventId;
   useEffect(() => {
     if (user.userId) {
       getEventById(eventId)
-      .then((event) => {
-        if (event.organiserId !== user.userId) {
-          router.push("/organiser/dashboard");
-          return EmptyEventData;
-        }
-        setEventData(event);
-        setEventName(event.name);
-        setEventStartDate(event.startDate);
-        setEventEndDate(event.endDate);
-        setEventOrganiser(event.organiser);
-        setEventVacancy(event.vacancy);
-        setEventDescription(event.description);
-        setEventLocation(event.location);
-        setEventSport(event.sport);
-        setEventPrice(event.price);
-        setEventImage(event.image);
-        setEventThumbnail(event.thumbnail);
-        setEventAccessCount(event.accessCount);
-        setEventCapacity(event.capacity);
-        setEventPaused(event.paused);
-        setEventPaymentsActive(event.paymentsActive);
-        setEventRegistrationDeadline(event.registrationDeadline);
-        setEventEventLink(event.eventLink);
-        setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
-        setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
-        setEventIsActive(event.isActive);
-        setEventFormId(event.formId);
-        setEventHideVacancy(event.hideVacancy);
-        setEventWaitlistEnabled(event.waitlistEnabled);
-        setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
-        setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
-        return event;
-      })
-      .then((event) => {
-        getEventsMetadataByEventId(eventId).then((eventMetadata) => {
-          setEventMetadata(eventMetadata);
-          calculateNetSales(eventMetadata)
-            .then((totalNetSales) => {
-              setTotalNetSales(totalNetSales);
-            })
-            .catch((error) => {
-              eventServiceLogger.error(`Error calculating net sales: ${error}`);
-              setTotalNetSales(eventMetadata.completeTicketCount * event.price);
-            });
+        .then((event) => {
+          if (event.organiserId !== user.userId) {
+            router.push("/organiser/dashboard");
+            return EmptyEventData;
+          }
+          setEventData(event);
+          setEventName(event.name);
+          setEventStartDate(event.startDate);
+          setEventEndDate(event.endDate);
+          setEventOrganiser(event.organiser);
+          setEventVacancy(event.vacancy);
+          setEventDescription(event.description);
+          setEventLocation(event.location);
+          setEventSport(event.sport);
+          setEventPrice(event.price);
+          setEventImage(event.image);
+          setEventThumbnail(event.thumbnail);
+          setEventAccessCount(event.accessCount);
+          setEventCapacity(event.capacity);
+          setEventPaused(event.paused);
+          setEventPaymentsActive(event.paymentsActive);
+          setEventRegistrationDeadline(event.registrationDeadline);
+          setEventEventLink(event.eventLink);
+          setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
+          setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
+          setEventIsActive(event.isActive);
+          setEventFormId(event.formId);
+          setEventHideVacancy(event.hideVacancy);
+          setEventWaitlistEnabled(event.waitlistEnabled);
+          setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
+          setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
+          return event;
+        })
+        .then((event) => {
+          getEventsMetadataByEventId(eventId).then((eventMetadata) => {
+            setEventMetadata(eventMetadata);
+            calculateNetSales(eventMetadata)
+              .then((totalNetSales) => {
+                setTotalNetSales(totalNetSales);
+              })
+              .catch((error) => {
+                eventServiceLogger.error(`Error calculating net sales: ${error}`);
+                setTotalNetSales(eventMetadata.completeTicketCount * event.price);
+              });
+          });
+        })
+        .finally(async () => {
+          await sleep(500);
+          setLoading(false);
+        })
+        .catch((error) => {
+          eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
+          router.push("/error");
         });
-      })
-      .finally(async () => {
-        await sleep(500);
-        setLoading(false);
-      })
-      .catch((error) => {
-        eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
-        router.push("/error");
-      });
     }
-  }, [user.userId]);
+  }, [eventId, router, user.userId]);
 
   return (
     <>
@@ -159,7 +158,6 @@ export default function EventPage({ params }: EventPageProps) {
               setCurrSidebarPage={setCurrSidebarPage}
               eventName={eventName}
               eventStartDate={eventStartDate}
-              user={user}
             />
           </div>
           <div className="flex-1 w-full mb-20 sm:mb-0">
