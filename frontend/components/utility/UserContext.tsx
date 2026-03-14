@@ -53,16 +53,21 @@ export default function UserContext({ children }: { children: any }) {
       if (userAuth && auth.currentUser?.emailVerified) {
         const { uid } = userAuth;
         try {
-          const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-          setUser(userData);
-        } catch {
-          const userData = await getTempUserData(uid as UserId);
-          if (!userData) {
-            router.push("/error");
-            return;
+          try {
+            const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
+            setUser(userData);
+          } catch {
+            const userData = await getTempUserData(uid as UserId);
+            if (!userData) {
+              router.push("/error");
+              return;
+            }
+            setUser(userData);
           }
-          setUser(userData);
+        } finally {
+          setUserLoading(false);
         }
+        return;
       }
       setUserLoading(false);
     });

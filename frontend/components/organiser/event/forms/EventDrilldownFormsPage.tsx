@@ -1,3 +1,5 @@
+"use client";
+
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";

@@ -6,24 +6,28 @@ import { UserId } from "@/interfaces/UserTypes";
 export type EventCollectionId = Branded<string, "EventCollectionId">;
 
 export interface EventCollection {
-  eventCollectionId: EventCollectionId;
+  eventCollectionId: EventCollectionId | null;
   name: string;
   description: string;
   eventIds: EventId[];
   recurringEventTemplateIds: RecurrenceTemplateId[];
   isPrivate: boolean;
-  organiserId: UserId;
+  organiserId: UserId | null;
   image: string;
 }
 
+/**
+ * Loading placeholders intentionally leave IDs null so branded ID types only
+ * represent persisted entities we actually loaded or created.
+ */
 export const EMPTY_EVENT_COLLECTION: EventCollection = {
-  eventCollectionId: "" as EventCollectionId,
+  eventCollectionId: null,
   name: "",
   description: "",
   eventIds: [],
   recurringEventTemplateIds: [],
   isPrivate: true,
-  organiserId: "" as UserId,
+  organiserId: null,
   image: "",
 };
 

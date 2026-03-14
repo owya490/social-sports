@@ -46,6 +46,9 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
         setCollection(collectionData);
 
         // Fetch the organiser
+        if (!collectionData.organiserId) {
+          throw new Error(`Event collection ${collectionId} is missing organiserId`);
+        }
         const organiserData = await getPublicUserById(collectionData.organiserId);
         setOrganiser(organiserData);
 

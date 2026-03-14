@@ -11,6 +11,9 @@ interface EventDrilldownSidePanelProps {
   eventStartDate: Timestamp;
 }
 
+const sidebarButtonClassName =
+  "text-organiser-dark-gray-text font-bold text-md text-left px-8 py-3 transition ease-in-out hover:bg-white focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black";
+
 const EventDrilldownSidePanel = ({
   loading,
   currSidebarPage,
@@ -30,45 +33,35 @@ const EventDrilldownSidePanel = ({
       <div className="flex flex-col">
         <button
           type="button"
-          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
-            currSidebarPage === "Details" ? "bg-white" : ""
-          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Details" ? "bg-white" : ""}`}
           onClick={() => setCurrSidebarPage("Details")}
         >
           Details
         </button>
         <button
           type="button"
-          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
-            currSidebarPage === "Attendees" ? "bg-white" : ""
-          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Attendees" ? "bg-white" : ""}`}
           onClick={() => setCurrSidebarPage("Attendees")}
         >
           Manage Attendees
         </button>
         <button
           type="button"
-          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
-            currSidebarPage === "Forms" ? "bg-white" : ""
-          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Forms" ? "bg-white" : ""}`}
           onClick={() => setCurrSidebarPage("Forms")}
         >
           Forms
         </button>
         <button
           type="button"
-          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
-            currSidebarPage === "Images" ? "bg-white" : ""
-          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Images" ? "bg-white" : ""}`}
           onClick={() => setCurrSidebarPage("Images")}
         >
           Images
         </button>
         <button
           type="button"
-          className={`text-organiser-dark-gray-text font-bold text-md text-left ${
-            currSidebarPage === "Settings" ? "bg-white" : ""
-          } hover:bg-white px-8 py-3 transition ease-in-out`}
+          className={`${sidebarButtonClassName} ${currSidebarPage === "Settings" ? "bg-white" : ""}`}
           onClick={() => setCurrSidebarPage("Settings")}
         >
           Settings

@@ -650,19 +650,9 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
                       label="Sport"
                       size="lg"
                       value={sport}
-                      onChange={(value: unknown) => {
-                        if (typeof value === "string") {
+                      onChange={(value?: string) => {
+                        if (value) {
                           setNewEditSport(value as SportId);
-                          return;
-                        }
-
-                        if (Array.isArray(value)) {
-                          const selectedSports = value
-                            .filter((item): item is string => typeof item === "string")
-                            .map((item) => item as SportId);
-                          if (selectedSports.length > 0) {
-                            setNewEditSport(selectedSports[0]);
-                          }
                         }
                       }}
                     >

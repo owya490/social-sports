@@ -219,7 +219,7 @@ export default function OrganiserNavbar() {
           }}
         </Menu>{" "}
         <NavButton
-          href={`/organiser/forms/gallery`}
+          href="/organiser/forms/gallery"
           isActive={currPage.startsWith("/organiser/forms")}
           tooltipContent="Forms"
         >
