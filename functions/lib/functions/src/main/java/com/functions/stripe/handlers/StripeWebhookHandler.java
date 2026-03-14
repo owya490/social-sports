@@ -291,10 +291,9 @@ public class StripeWebhookHandler {
                 return false;
             }
             
-            String customerEmail = customerDetails.getEmail();
-            
-            // Validate and sanitize email address
-            if (customerEmail == null || !isValidEmail(customerEmail)) {
+            String customerEmail = normalizeCustomerEmail(customerDetails.getEmail());
+
+            if (customerEmail == null) {
                 logger.error("[Webhook-{}] Invalid customer email address for session {}", uuid, checkoutSessionId);
                 return false;
             }
@@ -513,22 +512,16 @@ public class StripeWebhookHandler {
         return false;
     }
     
-    /**
-     * Validates email address format.
-     * Uses a simple but effective regex pattern.
-     * 
-     * @param email The email address to validate
-     * @return true if valid, false otherwise
-     */
-    private static boolean isValidEmail(String email) {
-        if (email == null || email.isEmpty()) {
-            return false;
+    private static String normalizeCustomerEmail(String email) {
+        if (email == null) {
+            return null;
         }
-        
-        // Basic email validation regex
-        // Matches most valid email formats without being overly permissive
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,63}$";
-        
-        return email.matches(emailRegex) && email.length() <= 254; // RFC 5321 max length
+
+        String normalizedEmail = email.trim();
+        if (normalizedEmail.isEmpty()) {
+            return null;
+        }
+
+        return normalizedEmail;
     }
 }

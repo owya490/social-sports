@@ -35,7 +35,8 @@ public class EmailService {
             Global.getEnv("LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID");
 
     private static final ZoneId SYDNEY_TIMEZONE = ZoneId.of("Australia/Sydney");
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm");
+    // Keep purchase email formatting aligned with the legacy Python implementation.
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy, HH:mm");
 
     /**
      * Sends an email confirmation to a user who has joined the waitlist for an

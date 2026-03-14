@@ -34,11 +34,13 @@ public class SessionMetadata {
         if (completeFulfilmentSession == null) {
             throw new IllegalArgumentException("Complete Fulfilment Session must be provided as a boolean.");
         }
-        if (fulfilmentSessionId != null && fulfilmentSessionId.isEmpty()) {
-            throw new IllegalArgumentException("Fulfilment Session Id must be provided as a string or null.");
-        }
-        if (endFulfilmentEntityId == null || endFulfilmentEntityId.isEmpty()) {
-            throw new IllegalArgumentException("End Fulfilment Entity Id must be provided as a string.");
+        if (completeFulfilmentSession) {
+            if (fulfilmentSessionId == null || fulfilmentSessionId.isEmpty()) {
+                throw new IllegalArgumentException("Fulfilment Session Id must be provided when fulfilment completion is enabled.");
+            }
+            if (endFulfilmentEntityId == null || endFulfilmentEntityId.isEmpty()) {
+                throw new IllegalArgumentException("End Fulfilment Entity Id must be provided when fulfilment completion is enabled.");
+            }
         }
     }
 
@@ -54,7 +56,6 @@ public class SessionMetadata {
             throw new IllegalArgumentException("Session metadata cannot be null");
         }
 
-        
         String isPrivateStr = metadata.get("isPrivate");
         if (isPrivateStr == null) {
             throw new IllegalArgumentException("Is Private must be provided as a boolean.");
@@ -71,11 +72,17 @@ public class SessionMetadata {
             .eventId(metadata.get("eventId"))
             .isPrivate(isPrivate)
             .completeFulfilmentSession(completeFulfilmentSession)
-            .fulfilmentSessionId(metadata.get("fulfilmentSessionId"))
-            .endFulfilmentEntityId(metadata.get("endFulfilmentEntityId"))
+            .fulfilmentSessionId(normalizeBlankToNull(metadata.get("fulfilmentSessionId")))
+            .endFulfilmentEntityId(normalizeBlankToNull(metadata.get("endFulfilmentEntityId")))
             .build();
         sessionMetadata.validate();
         return sessionMetadata;
     }
-}
 
+    private static String normalizeBlankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value;
+    }
+}

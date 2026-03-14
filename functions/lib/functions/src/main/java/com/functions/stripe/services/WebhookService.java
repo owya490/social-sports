@@ -1,7 +1,5 @@
 package com.functions.stripe.services;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +22,7 @@ import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
+import com.functions.waitlist.repositories.WaitlistRepository;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -40,10 +39,19 @@ import com.stripe.model.checkout.Session;
  */
 public class WebhookService {
     private static final Logger logger = LoggerFactory.getLogger(WebhookService.class);
+    private static final int MAX_FULFILMENT_RETRIES = 3;
+    private static final int MAX_PURCHASE_EMAIL_RETRIES = 3;
+    private static final long FULFILMENT_RETRY_DELAY_MS = 2000;
+    private static final long PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS = 1000;
 
     private enum PaymentIntentCancellationTransactionResult {
         PROCESSED,
         ALREADY_PROCESSED
+    }
+
+    @FunctionalInterface
+    interface RetryableBooleanOperation {
+        boolean run() throws Exception;
     }
     
     /**
@@ -76,17 +84,24 @@ public class WebhookService {
             @SuppressWarnings("unchecked")
             Map<String, Object> fulfilmentEntityMap = 
                 (Map<String, Object>) fulfilmentSessionSnapshot.get("fulfilmentEntityMap");
+            @SuppressWarnings("unchecked")
+            List<String> fulfilmentEntityIds =
+                (List<String>) fulfilmentSessionSnapshot.get("fulfilmentEntityIds");
             
             if (fulfilmentEntityMap == null || fulfilmentEntityMap.isEmpty()) {
                 logger.info("No fulfilment entity map found in fulfilment session {}", fulfilmentSessionId);
                 return new ArrayList<>();
             }
+            if (fulfilmentEntityIds == null || fulfilmentEntityIds.isEmpty()) {
+                logger.info("No fulfilment entity ids found in fulfilment session {}", fulfilmentSessionId);
+                return new ArrayList<>();
+            }
             
             List<String> formResponseIds = new ArrayList<>();
             
-            for (Map.Entry<String, Object> entry : fulfilmentEntityMap.entrySet()) {
+            for (String fulfilmentEntityId : fulfilmentEntityIds) {
                 @SuppressWarnings("unchecked")
-                Map<String, Object> entityData = (Map<String, Object>) entry.getValue();
+                Map<String, Object> entityData = (Map<String, Object>) fulfilmentEntityMap.get(fulfilmentEntityId);
                 
                 if (entityData != null && "FORMS".equals(entityData.get("type"))) {
                     String formResponseId = (String) entityData.get("formResponseId");
@@ -138,12 +153,7 @@ public class WebhookService {
             return false;
         }
         
-        List<String> completedSessions = eventMetadata.getCompletedStripeCheckoutSessionIds();
-        if (completedSessions == null) {
-            return false;
-        }
-        
-        return completedSessions.contains(checkoutSessionId);
+        return getProcessedCheckoutSessionIds(eventMetadata).contains(checkoutSessionId);
     }
 
     /**
@@ -178,23 +188,89 @@ public class WebhookService {
 
         return completedPaymentIntents.contains(paymentIntentId);
     }
-    
-    /**
-     * Hashes an email address for use as a Firestore key.
-     * Firestore doesn't like @ or . characters in keys.
-     * 
-     * @param email The email to hash
-     * @return The hashed email as a string
-     */
+
+    private static List<String> getProcessedCheckoutSessionIds(EventMetadata eventMetadata) {
+        List<String> processedSessionIds = new ArrayList<>();
+        if (eventMetadata == null) {
+            return processedSessionIds;
+        }
+
+        if (eventMetadata.getCompletedStripeCheckoutSession() != null) {
+            processedSessionIds.addAll(eventMetadata.getCompletedStripeCheckoutSession());
+        }
+        if (eventMetadata.getCompletedStripeCheckoutSessionIds() != null) {
+            processedSessionIds.addAll(eventMetadata.getCompletedStripeCheckoutSessionIds());
+        }
+        return processedSessionIds;
+    }
+
     private static String hashEmail(String email) {
         try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] messageDigest = md.digest(email.getBytes());
-            BigInteger no = new BigInteger(1, messageDigest);
-            return no.toString();
+            return WaitlistRepository.hashEmail(email);
         } catch (Exception e) {
             logger.error("Failed to hash email: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to hash email", e);
+        }
+    }
+
+    static Map<String, Object> serializeCheckoutSessionForFirestore(Session checkoutSession) {
+        if (checkoutSession == null) {
+            return new HashMap<>();
+        }
+
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> serializedSession = com.functions.utils.JavaUtils.objectMapper.readValue(
+                    checkoutSession.toJson(),
+                    Map.class);
+            return serializedSession != null ? serializedSession : new HashMap<>();
+        } catch (Exception e) {
+            logger.warn("Failed to serialize checkout session {} for Firestore compatibility: {}",
+                    checkoutSession.getId(), e.getMessage());
+            Map<String, Object> fallbackSession = new HashMap<>();
+            fallbackSession.put("id", checkoutSession.getId());
+            return fallbackSession;
+        }
+    }
+
+    static boolean retryBooleanOperation(
+            String operationName,
+            int maxRetries,
+            long initialDelayMs,
+            boolean exponentialBackoff,
+            RetryableBooleanOperation operation) {
+
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                if (operation.run()) {
+                    return true;
+                }
+
+                logger.warn("{} returned unsuccessful on attempt {}/{}",
+                        operationName, attempt + 1, maxRetries);
+            } catch (Exception e) {
+                logger.warn("{} failed on attempt {}/{}: {}",
+                        operationName, attempt + 1, maxRetries, e.getMessage(), e);
+            }
+
+            if (attempt < maxRetries - 1) {
+                long delayMs = exponentialBackoff
+                        ? initialDelayMs * (1L << attempt)
+                        : initialDelayMs;
+                logger.info("Retrying {} in {}ms", operationName, delayMs);
+                sleepBeforeRetry(delayMs, operationName);
+            }
+        }
+
+        return false;
+    }
+
+    static void sleepBeforeRetry(long delayMs, String operationName) {
+        try {
+            Thread.sleep(delayMs);
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            logger.warn("Interrupted while retrying {}", operationName);
         }
     }
     
@@ -531,7 +607,7 @@ public class WebhookService {
             .collection(emailHash).document(eventId);
         
         Map<String, Object> data = new HashMap<>();
-        data.put("checkout_sessions", FieldValue.arrayUnion(checkoutSession.getId()));
+        data.put("checkout_sessions", FieldValue.arrayUnion(serializeCheckoutSessionForFirestore(checkoutSession)));
         
         transaction.set(attendeeRef, data, com.google.cloud.firestore.SetOptions.merge());
     }
@@ -678,15 +754,34 @@ public class WebhookService {
             // should be enabled by default, and thus we don't need the completeFulfilmentSession
             // check anymore.
             if (completeFulfilmentSession && fulfilmentSessionId != null && endFulfilmentEntityId != null) {
-                FulfilmentService.completeFulfilmentSession(fulfilmentSessionId, endFulfilmentEntityId);
+                boolean fulfilmentCompleted = retryBooleanOperation(
+                        "complete fulfilment session",
+                        MAX_FULFILMENT_RETRIES,
+                        FULFILMENT_RETRY_DELAY_MS,
+                        false,
+                        () -> FulfilmentService.completeFulfilmentSession(fulfilmentSessionId, endFulfilmentEntityId));
+                if (!fulfilmentCompleted) {
+                    logger.warn("Was unable to complete fulfilment session {} after {} attempts",
+                            fulfilmentSessionId, MAX_FULFILMENT_RETRIES);
+                }
             }
             
-            // Send email to purchasing consumer
-            String visibility = isPrivate ? "Private" : "Public";
-            boolean emailSuccess = EmailService.sendPurchaseEmail(eventId, visibility, customerEmail, fullName, orderId);
-            
-            if (!emailSuccess) {
-                logger.warn("Was unable to send email to {}. orderId={}", customerEmail, orderId);
+            OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
+            if (status == OrderAndTicketStatus.APPROVED) {
+                String visibility = isPrivate ? "Private" : "Public";
+                boolean emailSuccess = retryBooleanOperation(
+                        "send purchase email",
+                        MAX_PURCHASE_EMAIL_RETRIES,
+                        PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS,
+                        true,
+                        () -> EmailService.sendPurchaseEmail(eventId, visibility, customerEmail, fullName, orderId));
+                
+                if (!emailSuccess) {
+                    logger.warn("Was unable to send email to {} after {} attempts. orderId={}",
+                            customerEmail, MAX_PURCHASE_EMAIL_RETRIES, orderId);
+                }
+            } else {
+                logger.info("Skipping purchase email for order {} because status is {}", orderId, status);
             }
             
             logger.info("Successfully handled checkout.session.completed webhook event. session={}", checkoutSessionId);
