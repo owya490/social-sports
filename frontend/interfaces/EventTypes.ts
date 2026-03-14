@@ -41,7 +41,7 @@ interface AbstractEventData {
   accessCount: number;
   sport: string;
   paymentsActive: boolean;
-  stripeFeeToCustomer: boolean; // should default to false
+  stripeFeeToCustomer: boolean; // should default to true
   promotionalCodesEnabled: boolean; // should default to false
   paused: boolean; // should default to false
   eventLink: string;
@@ -49,6 +49,7 @@ interface AbstractEventData {
   hideVacancy: boolean; // should default to false
   waitlistEnabled: boolean; // should default to true
   bookingApprovalEnabled: boolean; // should default to false
+  showAttendeesOnEventPage: boolean; // should default to false
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -94,7 +95,7 @@ export const EmptyEventData: EventData = {
   sport: "",
   isPrivate: false,
   paymentsActive: false,
-  stripeFeeToCustomer: false,
+  stripeFeeToCustomer: true,
   promotionalCodesEnabled: false,
   paused: false,
   eventLink: "",
@@ -102,6 +103,7 @@ export const EmptyEventData: EventData = {
   hideVacancy: false,
   waitlistEnabled: true,
   bookingApprovalEnabled: false,
+  showAttendeesOnEventPage: false,
 };
 
 export interface EventMetadata {

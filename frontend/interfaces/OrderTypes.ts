@@ -7,6 +7,11 @@ export enum OrderAndTicketStatus {
   REJECTED = "REJECTED",
 }
 
+export enum OrderAndTicketType {
+  MANUAL = "MANUAL",
+  GENERAL = "GENERAL",
+}
+
 export interface Order {
   orderId: OrderId;
   applicationFees: number;
@@ -18,6 +23,7 @@ export interface Order {
   tickets: TicketId[];
   stripePaymentIntentId: string;
   status: OrderAndTicketStatus;
+  type: OrderAndTicketType;
 }
 
 export const EMPTY_ORDER: Order = {
@@ -31,6 +37,7 @@ export const EMPTY_ORDER: Order = {
   tickets: [],
   stripePaymentIntentId: "",
   status: OrderAndTicketStatus.APPROVED,
+  type: OrderAndTicketType.GENERAL,
 };
 
 export const OrdersCollectionPath = "Orders";

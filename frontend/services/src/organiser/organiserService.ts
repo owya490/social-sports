@@ -1,5 +1,6 @@
 import { Attendee, EventId, Name, Purchaser } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
+import { addAttendeeViaBackend } from "../attendee/attendeeService";
 import { addEventAttendee, setAttendeeTickets } from "../events/eventsService";
 
 export const organiserServiceLogger = new Logger("organiserServiceLogger");
@@ -12,6 +13,15 @@ export async function addAttendee(
   eventId: string
 ): Promise<void> {
   try {
+    await addAttendeeViaBackend({
+      eventId: eventId,
+      email: email,
+      fullName: name,
+      phone: phoneNumber,
+      numTickets: numTickets,
+      price: 0,
+    });
+
     const attendeeInfo: Attendee = {
       phone: phoneNumber,
       ticketCount: numTickets,
