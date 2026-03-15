@@ -9,7 +9,15 @@ import lombok.Data;
 public class EventMetadata {
 	private Map<String, Purchaser> purchaserMap;
 	private Integer completeTicketCount;
+	/**
+	 * Legacy read-only field kept for backward compatibility during migration.
+	 *
+	 * @deprecated Use completedStripeCheckoutSessionIds for all new writes.
+	 */
+	@Deprecated
 	private List<String> completedStripeCheckoutSession;
+	private List<String> completedStripeCheckoutSessionIds;
+	private List<String> completedStripePaymentIntentIds;
 	private String organiserId;
 	private List<String> orderIds;
 }

@@ -1,0 +1,989 @@
+package com.functions.stripe.services;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.functions.emails.EmailService;
+import com.functions.events.models.Attendee;
+import com.functions.events.models.EventData;
+import com.functions.events.models.EventMetadata;
+import com.functions.events.models.Purchaser;
+import com.functions.firebase.services.FirebaseService;
+import com.functions.firebase.services.FirebaseService.CollectionPaths;
+import com.functions.fulfilment.services.FulfilmentService;
+import com.functions.tickets.models.Order;
+import com.functions.tickets.models.OrderAndTicketStatus;
+import com.functions.tickets.models.Ticket;
+import com.functions.tickets.repositories.OrdersRepository;
+import com.functions.tickets.repositories.TicketsRepository;
+import com.functions.utils.LogSanitizer;
+import com.functions.waitlist.repositories.WaitlistRepository;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.FieldValue;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Transaction;
+import com.stripe.model.LineItem;
+import com.stripe.model.checkout.Session;
+
+/**
+ * Service class for handling Stripe webhook processing.
+ * Manages ticket purchases and stripe session completions.
+ */
+public class WebhookService {
+    private static final Logger logger = LoggerFactory.getLogger(WebhookService.class);
+    private static final int MAX_FULFILMENT_RETRIES = 3;
+    private static final int MAX_PURCHASE_EMAIL_RETRIES = 3;
+    private static final long FULFILMENT_RETRY_DELAY_MS = 2000;
+    private static final long PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS = 1000;
+
+    private enum PaymentIntentCancellationTransactionResult {
+        PROCESSED,
+        ALREADY_PROCESSED
+    }
+
+    @FunctionalInterface
+    interface RetryableBooleanOperation {
+        boolean run() throws Exception;
+    }
+    
+    /**
+     * Retrieves form response IDs from a fulfilment session on a best-effort basis.
+     * Returns an empty list if the session is not found or has no form entities.
+     * 
+     * @param transaction The Firestore transaction
+     * @param fulfilmentSessionId The fulfilment session ID
+     * @return List of form response IDs
+     */
+    private static List<String> getFormResponseIdsFromFulfilmentSession(
+            Transaction transaction, String fulfilmentSessionId) {
+        
+        if (fulfilmentSessionId == null || fulfilmentSessionId.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            DocumentReference fulfilmentSessionRef = db.collection(CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)
+                .document(fulfilmentSessionId);
+            
+            DocumentSnapshot fulfilmentSessionSnapshot = transaction.get(fulfilmentSessionRef).get();
+            
+            if (!fulfilmentSessionSnapshot.exists()) {
+                logger.error("Fulfilment session not found: {}. Skipping form response IDs.", fulfilmentSessionId);
+                return new ArrayList<>();
+            }
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> fulfilmentEntityMap = 
+                (Map<String, Object>) fulfilmentSessionSnapshot.get("fulfilmentEntityMap");
+            @SuppressWarnings("unchecked")
+            List<String> fulfilmentEntityIds =
+                (List<String>) fulfilmentSessionSnapshot.get("fulfilmentEntityIds");
+            
+            if (fulfilmentEntityMap == null || fulfilmentEntityMap.isEmpty()) {
+                logger.info("No fulfilment entity map found in fulfilment session {}", fulfilmentSessionId);
+                return new ArrayList<>();
+            }
+            if (fulfilmentEntityIds == null || fulfilmentEntityIds.isEmpty()) {
+                logger.info("No fulfilment entity ids found in fulfilment session {}", fulfilmentSessionId);
+                return new ArrayList<>();
+            }
+            
+            List<String> formResponseIds = new ArrayList<>();
+            
+            for (String fulfilmentEntityId : fulfilmentEntityIds) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> entityData = (Map<String, Object>) fulfilmentEntityMap.get(fulfilmentEntityId);
+                
+                if (entityData != null && "FORMS".equals(entityData.get("type"))) {
+                    String formResponseId = (String) entityData.get("formResponseId");
+                    if (formResponseId != null && !formResponseId.isEmpty()) {
+                        formResponseIds.add(formResponseId);
+                    }
+                }
+            }
+            
+            if (!formResponseIds.isEmpty()) {
+                logger.info("Retrieved {} form response IDs from fulfilment session {}: {}", 
+                           formResponseIds.size(), fulfilmentSessionId, formResponseIds);
+            } else {
+                logger.info("No form response IDs found in fulfilment session {}", fulfilmentSessionId);
+            }
+            
+            return formResponseIds;
+            
+        } catch (Exception e) {
+            logger.warn("Failed to retrieve form response IDs from fulfilment session {}: {}. " +
+                       "Continuing without form responses.", fulfilmentSessionId, e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * Checks if a checkout session has already been processed.
+     * 
+     * @param transaction The Firestore transaction
+     * @param checkoutSessionId The checkout session ID to check
+     * @param eventId The event ID
+     * @return true if already processed, false otherwise
+     */
+    public static boolean checkIfSessionHasBeenProcessedAlready(
+            Transaction transaction, String checkoutSessionId, String eventId) throws Exception {
+        
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
+        
+        DocumentSnapshot eventMetadataSnapshot = transaction.get(eventMetadataRef).get();
+        
+        if (!eventMetadataSnapshot.exists()) {
+            logger.error("Unable to find event provided in datastore to fulfill purchase. eventId={}", eventId);
+            return false;
+        }
+        
+        EventMetadata eventMetadata = eventMetadataSnapshot.toObject(EventMetadata.class);
+        if (eventMetadata == null) {
+            return false;
+        }
+        
+        return getProcessedCheckoutSessionIds(eventMetadata).contains(checkoutSessionId);
+    }
+
+    /**
+     * Checks if a payment intent cancellation webhook has already been processed.
+     *
+     * @param transaction The Firestore transaction
+     * @param paymentIntentId The Stripe payment intent ID
+     * @param eventId The event ID
+     * @return true if already processed, false otherwise
+     */
+    public static boolean checkIfPaymentIntentHasBeenProcessedAlready(
+            Transaction transaction, String paymentIntentId, String eventId) throws Exception {
+
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
+        DocumentSnapshot eventMetadataSnapshot = transaction.get(eventMetadataRef).get();
+
+        if (!eventMetadataSnapshot.exists()) {
+            logger.error("Unable to find event metadata in datastore. eventId={}", eventId);
+            return false;
+        }
+
+        EventMetadata eventMetadata = eventMetadataSnapshot.toObject(EventMetadata.class);
+        if (eventMetadata == null) {
+            return false;
+        }
+
+        List<String> completedPaymentIntents = eventMetadata.getCompletedStripePaymentIntentIds();
+        if (completedPaymentIntents == null) {
+            return false;
+        }
+
+        return completedPaymentIntents.contains(paymentIntentId);
+    }
+
+    private static List<String> getProcessedCheckoutSessionIds(EventMetadata eventMetadata) {
+        List<String> processedSessionIds = new ArrayList<>();
+        if (eventMetadata == null) {
+            return processedSessionIds;
+        }
+
+        if (eventMetadata.getCompletedStripeCheckoutSession() != null) {
+            processedSessionIds.addAll(eventMetadata.getCompletedStripeCheckoutSession());
+        }
+        if (eventMetadata.getCompletedStripeCheckoutSessionIds() != null) {
+            processedSessionIds.addAll(eventMetadata.getCompletedStripeCheckoutSessionIds());
+        }
+        return processedSessionIds;
+    }
+
+    private static String hashEmail(String email) {
+        try {
+            return WaitlistRepository.hashEmail(email);
+        } catch (Exception e) {
+            logger.error("Failed to hash email: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to hash email", e);
+        }
+    }
+
+    static Map<String, Object> serializeCheckoutSessionForFirestore(Session checkoutSession) {
+        if (checkoutSession == null) {
+            return new HashMap<>();
+        }
+
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> serializedSession = com.functions.utils.JavaUtils.objectMapper.readValue(
+                    checkoutSession.toJson(),
+                    Map.class);
+            return serializedSession != null ? serializedSession : new HashMap<>();
+        } catch (Exception e) {
+            logger.warn("Failed to serialize checkout session {} for Firestore compatibility: {}",
+                    checkoutSession.getId(), e.getMessage());
+            Map<String, Object> fallbackSession = new HashMap<>();
+            fallbackSession.put("id", checkoutSession.getId());
+            return fallbackSession;
+        }
+    }
+
+    static boolean retryBooleanOperation(
+            String operationName,
+            int maxRetries,
+            long initialDelayMs,
+            boolean exponentialBackoff,
+            RetryableBooleanOperation operation) {
+
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                if (operation.run()) {
+                    return true;
+                }
+
+                logger.warn("{} returned unsuccessful on attempt {}/{}",
+                        operationName, attempt + 1, maxRetries);
+            } catch (Exception e) {
+                logger.warn("{} failed on attempt {}/{}: {}",
+                        operationName, attempt + 1, maxRetries, e.getMessage(), e);
+            }
+
+            if (attempt < maxRetries - 1) {
+                long delayMs = exponentialBackoff
+                        ? initialDelayMs * (1L << attempt)
+                        : initialDelayMs;
+                logger.info("Retrying {} in {}ms", operationName, delayMs);
+                sleepBeforeRetry(delayMs, operationName);
+            }
+        }
+
+        return false;
+    }
+
+    static void sleepBeforeRetry(long delayMs, String operationName) {
+        try {
+            Thread.sleep(delayMs);
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            logger.warn("Interrupted while retrying {}", operationName);
+        }
+    }
+    
+    /**
+     * Resolves the order and ticket status based on the capture method.
+     * 
+     * @param captureMethod The Stripe payment intent capture method
+     * @return PENDING if manual capture, APPROVED otherwise
+     */
+    private static OrderAndTicketStatus resolveOrderAndTicketStatus(String captureMethod) {
+        if ("manual".equalsIgnoreCase(captureMethod)) {
+            return OrderAndTicketStatus.PENDING;
+        }
+        return OrderAndTicketStatus.APPROVED;
+    }
+
+    static EventMetadata initializeEventMetadata(EventMetadata eventMetadata, String organiserId) {
+        EventMetadata resolvedMetadata = eventMetadata != null ? eventMetadata : new EventMetadata();
+
+        if (resolvedMetadata.getOrganiserId() == null || resolvedMetadata.getOrganiserId().isBlank()) {
+            resolvedMetadata.setOrganiserId(organiserId);
+        }
+        if (resolvedMetadata.getPurchaserMap() == null) {
+            resolvedMetadata.setPurchaserMap(new HashMap<>());
+        }
+        if (resolvedMetadata.getCompleteTicketCount() == null) {
+            resolvedMetadata.setCompleteTicketCount(0);
+        }
+        if (resolvedMetadata.getCompletedStripeCheckoutSessionIds() == null) {
+            resolvedMetadata.setCompletedStripeCheckoutSessionIds(new ArrayList<>());
+        }
+        if (resolvedMetadata.getCompletedStripePaymentIntentIds() == null) {
+            resolvedMetadata.setCompletedStripePaymentIntentIds(new ArrayList<>());
+        }
+        if (resolvedMetadata.getOrderIds() == null) {
+            resolvedMetadata.setOrderIds(new ArrayList<>());
+        }
+
+        return resolvedMetadata;
+    }
+    
+    /**
+     * Fulfills a completed event ticket purchase within a transaction.
+     * Creates tickets, orders, and updates event metadata.
+     * 
+     * @param transaction The Firestore transaction
+     * @param checkoutSessionId The checkout session ID
+     * @param eventId The event ID
+     * @param isPrivate Whether the event is private
+     * @param lineItems The Stripe line items from the checkout
+     * @param customerEmail The customer's email
+     * @param fullName The customer's full name
+     * @param phoneNumber The customer's phone number
+     * @param totalDetails The payment details from Stripe
+     * @param fulfilmentSessionId The fulfilment session ID (can be null)
+     * @param paymentIntentId The Stripe payment intent ID
+     * @param applicationFeeAmount The Stripe application fee amount in cents
+     * @param captureMethod The Stripe payment intent capture method
+     * @return The order ID if successful, null otherwise
+     */
+    public static String fulfillCompletedEventTicketPurchase(
+            Transaction transaction,
+            String checkoutSessionId,
+            String eventId,
+            boolean isPrivate,
+            List<LineItem> lineItems,
+            String customerEmail,
+            String fullName,
+            String phoneNumber,
+            Session.TotalDetails totalDetails,
+            String fulfilmentSessionId,
+            String paymentIntentId,
+            long applicationFeeAmount,
+            String captureMethod) throws Exception {
+        
+        Firestore db = FirebaseService.getFirestore();
+        String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
+        DocumentReference eventRef = db.collection(CollectionPaths.EVENTS)
+            .document(CollectionPaths.ACTIVE)
+            .collection(privacyPath)
+            .document(eventId);
+        DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
+
+        // Retrieve form response IDs from fulfilment session (best effort)
+        List<String> formResponseIds = getFormResponseIdsFromFulfilmentSession(transaction, fulfilmentSessionId);
+        
+        // Read event data
+        ApiFuture<DocumentSnapshot> eventFuture = transaction.get(eventRef);
+        DocumentSnapshot eventSnapshot = eventFuture.get();
+        
+        if (!eventSnapshot.exists()) {
+            logger.error("Unable to find event provided in datastore to fulfill purchase. eventId={}, isPrivate={}", 
+                        eventId, isPrivate);
+            return null;
+        }
+        
+        EventData event = eventSnapshot.toObject(EventData.class);
+        if (event == null) {
+            logger.error("Event data is null for eventId={}", eventId);
+            return null;
+        }
+        
+        // Get the first line item (we only offer one item type per checkout)
+        if (lineItems == null || lineItems.isEmpty()) {
+            logger.error("Line items are empty for checkout session {}", checkoutSessionId);
+            return null;
+        }
+        
+        LineItem item = lineItems.get(0);
+        Long quantity = item.getQuantity();
+        if (quantity == null) {
+            logger.error("Item quantity is null for checkout session {}", checkoutSessionId);
+            return null;
+        }
+        
+        Long unitAmount = item.getPrice() != null ? item.getPrice().getUnitAmount() : null;
+        if (unitAmount == null) {
+            logger.error("Item unit amount is null for checkout session {}", checkoutSessionId);
+            return null;
+        }
+        
+        // Hash the email for use as a Firestore key
+        String emailHash = hashEmail(customerEmail);
+        
+        // Read event metadata
+        ApiFuture<DocumentSnapshot> metadataFuture = transaction.get(eventMetadataRef);
+        DocumentSnapshot maybeEventMetadata = metadataFuture.get();
+        
+        boolean metadataExists = maybeEventMetadata.exists();
+        EventMetadata existingEventMetadata = metadataExists ? maybeEventMetadata.toObject(EventMetadata.class) : null;
+        boolean shouldCreateMetadataDocument = !metadataExists || existingEventMetadata == null;
+        EventMetadata eventMetadata = initializeEventMetadata(existingEventMetadata, event.getOrganiserId());
+        
+        logger.info("Event metadata: {}", eventMetadata);
+        Map<String, Purchaser> purchaserMap = eventMetadata.getPurchaserMap();
+        
+        // Initialize purchaser if doesn't exist
+        Purchaser purchaser = purchaserMap.get(emailHash);
+        if (purchaser == null) {
+            purchaser = new Purchaser();
+            purchaser.setEmail(customerEmail);
+            purchaser.setAttendees(new HashMap<>());
+            purchaser.setTotalTicketCount(0);
+        }
+        
+        // Update purchaser information
+        purchaser.setEmail(customerEmail);
+        purchaser.setTotalTicketCount(purchaser.getTotalTicketCount() + quantity.intValue());
+        
+        // Update attendee information
+        Map<String, Attendee> attendees = purchaser.getAttendees();
+        if (attendees == null) {
+            attendees = new HashMap<>();
+            purchaser.setAttendees(attendees);
+        }
+        
+        Attendee attendee = attendees.get(fullName);
+        if (attendee == null) {
+            attendee = new Attendee();
+            attendee.setPhone(phoneNumber);
+            attendee.setTicketCount(quantity.intValue());
+            attendee.setFormResponseIds(formResponseIds != null ? new ArrayList<>(formResponseIds) : new ArrayList<>());
+        } else {
+            attendee.setPhone(phoneNumber);
+            attendee.setTicketCount(attendee.getTicketCount() + quantity.intValue());
+            
+            // Merge form response IDs (avoid duplicates)
+            List<String> existingFormResponses = attendee.getFormResponseIds();
+            if (existingFormResponses == null) {
+                existingFormResponses = new ArrayList<>();
+            }
+            if (formResponseIds != null && !formResponseIds.isEmpty()) {
+                for (String formResponseId : formResponseIds) {
+                    if (!existingFormResponses.contains(formResponseId)) {
+                        existingFormResponses.add(formResponseId);
+                    }
+                }
+            }
+            attendee.setFormResponseIds(existingFormResponses);
+        }
+        attendees.put(fullName, attendee);
+        purchaserMap.put(emailHash, purchaser);
+        
+        // Prepare update for event metadata
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("purchaserMap." + emailHash, purchaser);
+        updates.put("completeTicketCount", FieldValue.increment(quantity));
+        
+        if (shouldCreateMetadataDocument) {
+            eventMetadata.setCompleteTicketCount(eventMetadata.getCompleteTicketCount() + quantity.intValue());
+            transaction.set(eventMetadataRef, eventMetadata);
+        } else {
+            transaction.update(eventMetadataRef, updates);
+        }
+        
+        logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}",
+                LogSanitizer.redactEmail(customerEmail), fullName);
+        
+        // Create order and tickets
+        Timestamp purchaseTime = Timestamp.now();
+        DocumentReference orderRef = db.collection(CollectionPaths.ORDERS).document();
+        
+        long applicationFees = applicationFeeAmount;
+        long discounts = 0;
+        if (totalDetails != null) {
+            discounts = totalDetails.getAmountDiscount() != null ? totalDetails.getAmountDiscount() : 0;
+        }
+        
+        // Resolve status based on capture method
+        OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
+        
+        List<String> ticketIds = new ArrayList<>();
+        
+        // Create tickets
+        for (int i = 0; i < quantity; i++) {
+            DocumentReference ticketRef = db.collection(CollectionPaths.TICKETS).document();
+            
+            // Associate form response ID with ticket if available
+            String formResponseId = null;
+            if (formResponseIds != null && i < formResponseIds.size()) {
+                formResponseId = formResponseIds.get(i);
+            }
+            
+            Ticket ticket = new Ticket();
+            ticket.setEventId(eventId);
+            ticket.setOrderId(orderRef.getId());
+            ticket.setPrice(unitAmount);
+            ticket.setPurchaseDate(purchaseTime);
+            ticket.setStatus(status);
+            ticket.setFormResponseId(formResponseId);
+            
+            transaction.create(ticketRef, ticket);
+            ticketIds.add(ticketRef.getId());
+        }
+        
+        // Create order
+        Order order = new Order();
+        order.setDatePurchased(purchaseTime);
+        order.setEmail(customerEmail);
+        order.setFullName(fullName);
+        order.setPhone(phoneNumber);
+        order.setApplicationFees(applicationFees);
+        order.setDiscounts(discounts);
+        order.setTickets(ticketIds);
+        order.setStripePaymentIntentId(paymentIntentId);
+        order.setStatus(status);
+        
+        transaction.set(orderRef, order);
+        
+        // Update event metadata with order ID
+        transaction.update(eventMetadataRef, "orderIds", FieldValue.arrayUnion(orderRef.getId()));
+        
+        // Record the checkout session ID to ensure idempotency
+        transaction.update(eventMetadataRef, "completedStripeCheckoutSessionIds", 
+                          FieldValue.arrayUnion(checkoutSessionId));
+        
+        return orderRef.getId();
+    }
+
+    private static void restockTickets(
+            Transaction transaction,
+            String eventId,
+            boolean isPrivate,
+            int ticketCount) throws Exception {
+
+        Firestore db = FirebaseService.getFirestore();
+        String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
+        DocumentReference eventRef = db.collection(CollectionPaths.EVENTS)
+                .document(CollectionPaths.ACTIVE)
+                .collection(privacyPath)
+                .document(eventId);
+
+        DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
+        if (!eventSnapshot.exists()) {
+            throw new IllegalStateException("Event does not exist for restock. eventId=" + eventId);
+        }
+
+        transaction.update(eventRef, "vacancy", FieldValue.increment(ticketCount));
+    }
+
+    private static void updateTicketsStatusToRejected(
+            Transaction transaction,
+            List<String> ticketIds) {
+
+        Firestore db = FirebaseService.getFirestore();
+        for (String ticketId : ticketIds) {
+            DocumentReference ticketRef = db.collection(CollectionPaths.TICKETS).document(ticketId);
+            transaction.update(ticketRef, "status", OrderAndTicketStatus.REJECTED.name());
+            logger.info("Updated ticket {} status to REJECTED", ticketId);
+        }
+    }
+
+    private static void updateOrderStatusToRejected(
+            Transaction transaction,
+            String orderId) {
+
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference orderRef = db.collection(CollectionPaths.ORDERS).document(orderId);
+        transaction.update(orderRef, "status", OrderAndTicketStatus.REJECTED.name());
+        logger.info("Updated order {} status to REJECTED", orderId);
+    }
+
+    /**
+     * Handles payment intent cancellation side effects within a transaction.
+     */
+    private static void handlePaymentIntentCancellation(
+            Transaction transaction,
+            String paymentIntentId,
+            String eventId,
+            boolean isPrivate,
+            int ticketCount,
+            String orderId,
+            List<String> ticketIds) throws Exception {
+
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
+
+        restockTickets(transaction, eventId, isPrivate, ticketCount);
+        updateTicketsStatusToRejected(transaction, ticketIds);
+        updateOrderStatusToRejected(transaction, orderId);
+
+        transaction.update(eventMetadataRef, "completedStripePaymentIntentIds",
+                FieldValue.arrayUnion(paymentIntentId));
+        logger.info("Added payment intent {} to completedStripePaymentIntentIds for event {}",
+                paymentIntentId, eventId);
+    }
+    
+    /**
+     * Records a checkout session by customer email for tracking purposes.
+     * 
+     * @param transaction The Firestore transaction
+     * @param eventId The event ID
+     * @param checkoutSession The Stripe checkout session
+     * @param customerEmail The customer's email
+     */
+    public static void recordCheckoutSessionByCustomerEmail(
+            Transaction transaction,
+            String eventId,
+            Session checkoutSession,
+            String customerEmail) throws Exception {
+        
+        Firestore db = FirebaseService.getFirestore();
+        
+        String emailHash = hashEmail(customerEmail);
+        DocumentReference attendeeRef = db.collection(CollectionPaths.ATTENDEES).document("emails")
+            .collection(emailHash).document(eventId);
+        
+        Map<String, Object> data = new HashMap<>();
+        data.put("checkout_sessions", FieldValue.arrayUnion(serializeCheckoutSessionForFirestore(checkoutSession)));
+        
+        transaction.set(attendeeRef, data, com.google.cloud.firestore.SetOptions.merge());
+    }
+    
+    /**
+     * Restocks tickets after a checkout session expires.
+     * 
+     * @param transaction The Firestore transaction
+     * @param checkoutSessionId The checkout session ID
+     * @param eventId The event ID
+     * @param isPrivate Whether the event is private
+     * @param lineItems The line items from the expired session
+     */
+    public static void restockTicketsAfterExpiredCheckout(
+            Transaction transaction,
+            String checkoutSessionId,
+            String eventId,
+            boolean isPrivate,
+            List<LineItem> lineItems) throws Exception {
+        
+        Firestore db = FirebaseService.getFirestore();
+        String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
+
+        DocumentReference eventRef = db.collection(CollectionPaths.EVENTS)
+            .document(CollectionPaths.ACTIVE)
+            .collection(privacyPath)
+            .document(eventId);
+        DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
+        
+        if (lineItems == null || lineItems.isEmpty()) {
+            logger.error("Line items are empty for expired checkout session {}", checkoutSessionId);
+            return;
+        }
+        
+        LineItem item = lineItems.get(0);
+        Long quantity = item.getQuantity();
+        
+        if (quantity == null) {
+            logger.error("Item quantity is null for expired checkout session {}", checkoutSessionId);
+            return;
+        }
+        
+        // Verify event exists before updating vacancy to avoid transaction commit failures
+        ApiFuture<DocumentSnapshot> eventFuture = transaction.get(eventRef);
+        DocumentSnapshot eventSnapshot = eventFuture.get();
+        
+        if (!eventSnapshot.exists()) {
+            logger.error("Unable to find event to restock tickets for expired checkout. eventId={}, isPrivate={}", 
+                        eventId, isPrivate);
+            throw new IllegalStateException("Event does not exist: eventId=" + eventId);
+        }
+        
+        // Restock the tickets
+        transaction.update(eventRef, "vacancy", FieldValue.increment(quantity));
+        
+        // Add current checkout session to the processed list
+        transaction.update(eventMetadataRef, "completedStripeCheckoutSessionIds", 
+                          FieldValue.arrayUnion(checkoutSessionId));
+    }
+    
+    /**
+     * Orchestrates the entire workflow for processing a completed ticket purchase.
+     * Runs within a Firestore transaction to ensure atomicity.
+     * 
+     * @param checkoutSessionId The checkout session ID
+     * @param eventId The event ID
+     * @param isPrivate Whether the event is private
+     * @param lineItems The line items from the checkout
+     * @param customerEmail The customer's email
+     * @param checkoutSession The full checkout session
+     * @param fullName The customer's full name
+     * @param phoneNumber The customer's phone number
+     * @param completeFulfilmentSession Whether to complete the fulfilment session
+     * @param fulfilmentSessionId The fulfilment session ID
+     * @param endFulfilmentEntityId The end fulfilment entity ID
+     * @param paymentIntentId The Stripe payment intent ID
+     * @param applicationFeeAmount The Stripe application fee amount in cents
+     * @param captureMethod The Stripe payment intent capture method
+     * @return true if successful, false otherwise
+     */
+    public static boolean fulfilmentWorkflowOnTicketPurchase(
+            String checkoutSessionId,
+            String eventId,
+            boolean isPrivate,
+            List<LineItem> lineItems,
+            String customerEmail,
+            Session checkoutSession,
+            String fullName,
+            String phoneNumber,
+            boolean completeFulfilmentSession,
+            String fulfilmentSessionId,
+            String endFulfilmentEntityId,
+            String paymentIntentId,
+            long applicationFeeAmount,
+            String captureMethod) {
+        
+        try {
+            // Run the fulfillment logic in a transaction
+            String orderId = FirebaseService.createFirestoreTransaction(transaction -> {
+                try {
+                    // Check if already processed
+                    if (checkIfSessionHasBeenProcessedAlready(transaction, checkoutSessionId, eventId)) {
+                        logger.info("Current webhook event checkout session has been already processed. " +
+                                   "Returning early. session={}", checkoutSessionId);
+                        return null;
+                    }
+                    
+                    String orderIdResult = fulfillCompletedEventTicketPurchase(
+                        transaction,
+                        checkoutSessionId,
+                        eventId,
+                        isPrivate,
+                        lineItems,
+                        customerEmail,
+                        fullName,
+                        phoneNumber,
+                        checkoutSession.getTotalDetails(),
+                        fulfilmentSessionId,
+                        paymentIntentId,
+                        applicationFeeAmount,
+                        captureMethod
+                    );
+                    
+                    if (orderIdResult == null) {
+                        logger.error("Fulfillment of event ticket purchase was unsuccessful. session={}, eventId={}, " +
+                                    "customer={}", checkoutSessionId, eventId,
+                                LogSanitizer.redactEmail(customerEmail));
+                        throw new RuntimeException("Fulfillment failed");
+                    }
+                    
+                    // Record checkout session by customer email
+                    recordCheckoutSessionByCustomerEmail(transaction, eventId, checkoutSession, customerEmail);
+                    
+                    return orderIdResult;
+                } catch (Exception e) {
+                    logger.error("Error in fulfillment transaction: {}", e.getMessage(), e);
+                    throw new RuntimeException("Transaction failed", e);
+                }
+            });
+            
+            if (orderId == null) {
+                // Already processed
+                return true;
+            }
+            
+            // Complete fulfilment session if requested
+            // TODO: now that fulfilment session is the default behaviour of checkout, clean up
+            // should be enabled by default, and thus we don't need the completeFulfilmentSession
+            // check anymore.
+            if (completeFulfilmentSession && fulfilmentSessionId != null && endFulfilmentEntityId != null) {
+                boolean fulfilmentCompleted = retryBooleanOperation(
+                        "complete fulfilment session",
+                        MAX_FULFILMENT_RETRIES,
+                        FULFILMENT_RETRY_DELAY_MS,
+                        false,
+                        () -> FulfilmentService.completeFulfilmentSession(fulfilmentSessionId, endFulfilmentEntityId));
+                if (!fulfilmentCompleted) {
+                    logger.warn("Was unable to complete fulfilment session {} after {} attempts",
+                            fulfilmentSessionId, MAX_FULFILMENT_RETRIES);
+                }
+            }
+            
+            OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
+            if (status == OrderAndTicketStatus.APPROVED) {
+                String visibility = isPrivate ? "Private" : "Public";
+                boolean emailSuccess = retryBooleanOperation(
+                        "send purchase email",
+                        MAX_PURCHASE_EMAIL_RETRIES,
+                        PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS,
+                        true,
+                        () -> EmailService.sendPurchaseEmail(eventId, visibility, customerEmail, fullName, orderId));
+                
+                if (!emailSuccess) {
+                    logger.warn("Was unable to send email to {} after {} attempts. orderId={}",
+                            LogSanitizer.redactEmail(customerEmail), MAX_PURCHASE_EMAIL_RETRIES, orderId);
+                }
+            } else {
+                logger.info("Skipping purchase email for order {} because status is {}", orderId, status);
+            }
+            
+            logger.info("Successfully handled checkout.session.completed webhook event. session={}", checkoutSessionId);
+            return true;
+            
+        } catch (Exception e) {
+            logger.error("Error processing ticket purchase workflow: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    /**
+     * Orchestrates the workflow for processing an expired checkout session.
+     * Runs within a Firestore transaction to ensure atomicity.
+     * 
+     * @param checkoutSessionId The checkout session ID
+     * @param eventId The event ID
+     * @param isPrivate Whether the event is private
+     * @param lineItems The line items from the expired session
+     * @return true if successful, false otherwise
+     */
+    public static boolean fulfilmentWorkflowOnExpiredSession(
+            String checkoutSessionId,
+            String eventId,
+            boolean isPrivate,
+            List<LineItem> lineItems) {
+        
+        try {
+            Boolean result = FirebaseService.createFirestoreTransaction(transaction -> {
+                try {
+                    // Check if already processed
+                    if (checkIfSessionHasBeenProcessedAlready(transaction, checkoutSessionId, eventId)) {
+                        logger.info("Current webhook event checkout session has been already processed. " +
+                                   "Returning early. session={}", checkoutSessionId);
+                        return true;
+                    }
+                    
+                    // Restock tickets
+                    restockTicketsAfterExpiredCheckout(transaction, checkoutSessionId, eventId, isPrivate, lineItems);
+                    
+                    return true;
+                } catch (Exception e) {
+                    logger.error("Error in expired session transaction: {}", e.getMessage(), e);
+                    throw new RuntimeException("Transaction failed", e);
+                }
+            });
+            
+            if (result) {
+                logger.info("Successfully handled checkout.session.expired webhook event. session={}", checkoutSessionId);
+            } else {
+                logger.error("Failed to handle checkout.session.expired webhook event. session={}", checkoutSessionId);
+            }
+            return result;
+            
+        } catch (Exception e) {
+            logger.error("Error processing expired session workflow: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Handles payment_intent.canceled webhook workflow:
+     * - Restock tickets
+     * - Mark order/tickets as REJECTED
+     * - Record payment intent idempotency marker
+     * - Send cancellation email (best effort)
+     *
+     * @param paymentIntentId Stripe payment intent ID
+     * @return true if webhook should be considered successfully processed
+     */
+    public static boolean fulfilmentWorkflowOnPaymentIntentCanceled(String paymentIntentId) {
+        try {
+            Optional<Order> maybeOrder = OrdersRepository.getOrderByStripePaymentIntentId(paymentIntentId);
+            if (maybeOrder.isEmpty()) {
+                logger.warn("No order found with payment intent ID: {}", paymentIntentId);
+                return true;
+            }
+
+            Order order = maybeOrder.get();
+            String orderId = order.getOrderId();
+            List<String> ticketIds = order.getTickets() != null ? order.getTickets() : new ArrayList<>();
+            if (orderId == null || orderId.isBlank()) {
+                logger.error("Order data incomplete for payment intent {}: orderId missing", paymentIntentId);
+                return false;
+            }
+            if (ticketIds.isEmpty()) {
+                logger.error("Order {} has no tickets for payment intent {}", orderId, paymentIntentId);
+                return false;
+            }
+
+            Optional<Ticket> maybeFirstTicket = TicketsRepository.getTicketById(ticketIds.get(0));
+            if (maybeFirstTicket.isEmpty()) {
+                logger.error("First ticket {} not found for order {}", ticketIds.get(0), orderId);
+                return false;
+            }
+
+            Ticket firstTicket = maybeFirstTicket.get();
+            String eventId = firstTicket.getEventId();
+            if (eventId == null || eventId.isBlank()) {
+                logger.error("Event ID not found in ticket {} for order {}", ticketIds.get(0), orderId);
+                return false;
+            }
+
+            Firestore db = FirebaseService.getFirestore();
+            DocumentReference privateEventRef = db.collection(CollectionPaths.EVENTS)
+                    .document(CollectionPaths.ACTIVE)
+                    .collection(CollectionPaths.PRIVATE)
+                    .document(eventId);
+            DocumentReference publicEventRef = db.collection(CollectionPaths.EVENTS)
+                    .document(CollectionPaths.ACTIVE)
+                    .collection(CollectionPaths.PUBLIC)
+                    .document(eventId);
+            List<DocumentSnapshot> eventSnapshots = db.getAll(privateEventRef, publicEventRef).get();
+            DocumentSnapshot privateEvent = eventSnapshots.get(0);
+            DocumentSnapshot publicEvent = eventSnapshots.get(1);
+
+            if (!privateEvent.exists() && !publicEvent.exists()) {
+                logger.error("Event {} not found in either Private or Public collections", eventId);
+                return false;
+            }
+            boolean isPrivate = privateEvent.exists();
+            int ticketCount = ticketIds.size();
+
+            PaymentIntentCancellationTransactionResult transactionResult =
+                    FirebaseService.createFirestoreTransaction(transaction -> {
+                        try {
+                            if (checkIfPaymentIntentHasBeenProcessedAlready(transaction, paymentIntentId, eventId)) {
+                                logger.info("Payment intent {} has already been processed. Returning early.",
+                                        paymentIntentId);
+                                return PaymentIntentCancellationTransactionResult.ALREADY_PROCESSED;
+                            }
+
+                            handlePaymentIntentCancellation(
+                                    transaction,
+                                    paymentIntentId,
+                                    eventId,
+                                    isPrivate,
+                                    ticketCount,
+                                    orderId,
+                                    ticketIds);
+
+                            return PaymentIntentCancellationTransactionResult.PROCESSED;
+                        } catch (Exception e) {
+                            logger.error("Error in payment intent cancellation transaction for {}: {}",
+                                    paymentIntentId, e.getMessage(), e);
+                            throw new RuntimeException("Transaction failed", e);
+                        }
+                    });
+
+            if (transactionResult == PaymentIntentCancellationTransactionResult.ALREADY_PROCESSED) {
+                return true;
+            }
+
+            String eventName = "Event";
+            DocumentSnapshot eventSnapshot = (isPrivate ? privateEvent : publicEvent);
+            if (eventSnapshot.exists()) {
+                String resolvedName = eventSnapshot.getString("name");
+                if (resolvedName != null && !resolvedName.isBlank()) {
+                    eventName = resolvedName;
+                }
+            }
+
+            String email = order.getEmail();
+            if (email != null && !email.isBlank()) {
+                boolean emailSent = EmailService.sendCancellationEmail(
+                        email,
+                        order.getFullName(),
+                        eventName,
+                        orderId,
+                        ticketCount);
+                if (!emailSent) {
+                    logger.warn("Was unable to send cancellation email to {}. orderId={}",
+                            LogSanitizer.redactEmail(email), orderId);
+                }
+            } else {
+                logger.warn("No email found in order to send cancellation email. orderId={}", orderId);
+            }
+
+            logger.info("Successfully handled payment_intent.canceled webhook event. paymentIntentId={}, orderId={}",
+                    paymentIntentId, orderId);
+            return true;
+        } catch (Exception e) {
+            logger.error("Error processing payment_intent.canceled workflow for {}: {}",
+                    paymentIntentId, e.getMessage(), e);
+            return false;
+        }
+    }
+}

@@ -36,9 +36,27 @@ public class EmailClient {
      */
     public static boolean sendEmailWithLoopsWithRetries(EmailTemplateType templateType, String email, 
                                                        Map<String, String> variables) {
+        return sendEmailWithLoopsWithRetries(templateType.templateId, email, variables);
+    }
+
+    /**
+     * Sends an email with retry logic using a raw Loops transactional template ID.
+     *
+     * @param transactionalId The Loops transactional email ID
+     * @param email The recipient email address
+     * @param variables The email template variables
+     * @return true if email was sent successfully, false otherwise
+     */
+    public static boolean sendEmailWithLoopsWithRetries(String transactionalId, String email,
+                                                       Map<String, String> variables) {
+        if (transactionalId == null || transactionalId.isBlank()) {
+            logger.error("Cannot send email: transactionalId is null or blank");
+            return false;
+        }
+
         for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
-                HttpResponseResult result = sendEmailWithLoops(templateType.templateId, email, variables);
+                HttpResponseResult result = sendEmailWithLoops(transactionalId, email, variables);
                 int statusCode = result.getStatusCode();
                 if (statusCode >= 200 && statusCode < 300) {
                     // if success, return true and don't retry
