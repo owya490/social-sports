@@ -125,7 +125,7 @@ public class OrdersRepository {
             return Optional.ofNullable(order);
         } catch (Exception e) {
             logger.error("Failed to query order by stripePaymentIntentId: {}", paymentIntentId, e);
-            return Optional.empty();
+            throw new RuntimeException("Failed to query order by stripePaymentIntentId: " + paymentIntentId, e);
         }
     }
 

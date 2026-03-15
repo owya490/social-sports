@@ -22,6 +22,7 @@ import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
+import com.functions.utils.LogSanitizer;
 import com.functions.waitlist.repositories.WaitlistRepository;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
@@ -286,6 +287,31 @@ public class WebhookService {
         }
         return OrderAndTicketStatus.APPROVED;
     }
+
+    static EventMetadata initializeEventMetadata(EventMetadata eventMetadata, String organiserId) {
+        EventMetadata resolvedMetadata = eventMetadata != null ? eventMetadata : new EventMetadata();
+
+        if (resolvedMetadata.getOrganiserId() == null || resolvedMetadata.getOrganiserId().isBlank()) {
+            resolvedMetadata.setOrganiserId(organiserId);
+        }
+        if (resolvedMetadata.getPurchaserMap() == null) {
+            resolvedMetadata.setPurchaserMap(new HashMap<>());
+        }
+        if (resolvedMetadata.getCompleteTicketCount() == null) {
+            resolvedMetadata.setCompleteTicketCount(0);
+        }
+        if (resolvedMetadata.getCompletedStripeCheckoutSessionIds() == null) {
+            resolvedMetadata.setCompletedStripeCheckoutSessionIds(new ArrayList<>());
+        }
+        if (resolvedMetadata.getCompletedStripePaymentIntentIds() == null) {
+            resolvedMetadata.setCompletedStripePaymentIntentIds(new ArrayList<>());
+        }
+        if (resolvedMetadata.getOrderIds() == null) {
+            resolvedMetadata.setOrderIds(new ArrayList<>());
+        }
+
+        return resolvedMetadata;
+    }
     
     /**
      * Fulfills a completed event ticket purchase within a transaction.
@@ -302,6 +328,7 @@ public class WebhookService {
      * @param totalDetails The payment details from Stripe
      * @param fulfilmentSessionId The fulfilment session ID (can be null)
      * @param paymentIntentId The Stripe payment intent ID
+     * @param applicationFeeAmount The Stripe application fee amount in cents
      * @param captureMethod The Stripe payment intent capture method
      * @return The order ID if successful, null otherwise
      */
@@ -317,6 +344,7 @@ public class WebhookService {
             Session.TotalDetails totalDetails,
             String fulfilmentSessionId,
             String paymentIntentId,
+            long applicationFeeAmount,
             String captureMethod) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
@@ -372,34 +400,13 @@ public class WebhookService {
         ApiFuture<DocumentSnapshot> metadataFuture = transaction.get(eventMetadataRef);
         DocumentSnapshot maybeEventMetadata = metadataFuture.get();
         
-        EventMetadata eventMetadata;
         boolean metadataExists = maybeEventMetadata.exists();
-        
-        if (metadataExists) {
-            eventMetadata = maybeEventMetadata.toObject(EventMetadata.class);
-            if (eventMetadata == null) {
-                eventMetadata = new EventMetadata();
-                eventMetadata.setOrganiserId(event.getOrganiserId());
-                eventMetadata.setPurchaserMap(new HashMap<>());
-                eventMetadata.setCompletedStripeCheckoutSessionIds(new ArrayList<>());
-                eventMetadata.setCompletedStripePaymentIntentIds(new ArrayList<>());
-            }
-        } else {
-            eventMetadata = new EventMetadata();
-            eventMetadata.setOrganiserId(event.getOrganiserId());
-            eventMetadata.setPurchaserMap(new HashMap<>());
-            eventMetadata.setCompletedStripeCheckoutSessionIds(new ArrayList<>());
-            eventMetadata.setCompletedStripePaymentIntentIds(new ArrayList<>());
-        }
+        EventMetadata existingEventMetadata = metadataExists ? maybeEventMetadata.toObject(EventMetadata.class) : null;
+        boolean shouldCreateMetadataDocument = !metadataExists || existingEventMetadata == null;
+        EventMetadata eventMetadata = initializeEventMetadata(existingEventMetadata, event.getOrganiserId());
         
         logger.info("Event metadata: {}", eventMetadata);
-        
-        // Initialize purchaser map if null
         Map<String, Purchaser> purchaserMap = eventMetadata.getPurchaserMap();
-        if (purchaserMap == null) {
-            purchaserMap = new HashMap<>();
-            eventMetadata.setPurchaserMap(purchaserMap);
-        }
         
         // Initialize purchaser if doesn't exist
         Purchaser purchaser = purchaserMap.get(emailHash);
@@ -453,23 +460,23 @@ public class WebhookService {
         updates.put("purchaserMap." + emailHash, purchaser);
         updates.put("completeTicketCount", FieldValue.increment(quantity));
         
-        if (metadataExists) {
-            transaction.update(eventMetadataRef, updates);
+        if (shouldCreateMetadataDocument) {
+            eventMetadata.setCompleteTicketCount(eventMetadata.getCompleteTicketCount() + quantity.intValue());
+            transaction.set(eventMetadataRef, eventMetadata);
         } else {
-            transaction.set(eventMetadataRef, updates);
+            transaction.update(eventMetadataRef, updates);
         }
         
-        logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}", 
-                   customerEmail, fullName);
+        logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}",
+                LogSanitizer.redactEmail(customerEmail), fullName);
         
         // Create order and tickets
         Timestamp purchaseTime = Timestamp.now();
         DocumentReference orderRef = db.collection(CollectionPaths.ORDERS).document();
         
-        long applicationFees = 0;
+        long applicationFees = applicationFeeAmount;
         long discounts = 0;
         if (totalDetails != null) {
-            applicationFees = totalDetails.getAmountShipping() != null ? totalDetails.getAmountShipping() : 0;
             discounts = totalDetails.getAmountDiscount() != null ? totalDetails.getAmountDiscount() : 0;
         }
         
@@ -528,7 +535,7 @@ public class WebhookService {
             Transaction transaction,
             String eventId,
             boolean isPrivate,
-            int ticketCount) {
+            int ticketCount) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -536,6 +543,12 @@ public class WebhookService {
                 .document(CollectionPaths.ACTIVE)
                 .collection(privacyPath)
                 .document(eventId);
+
+        DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
+        if (!eventSnapshot.exists()) {
+            throw new IllegalStateException("Event does not exist for restock. eventId=" + eventId);
+        }
+
         transaction.update(eventRef, "vacancy", FieldValue.increment(ticketCount));
     }
 
@@ -571,7 +584,7 @@ public class WebhookService {
             boolean isPrivate,
             int ticketCount,
             String orderId,
-            List<String> ticketIds) {
+            List<String> ticketIds) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
         DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
@@ -684,6 +697,7 @@ public class WebhookService {
      * @param fulfilmentSessionId The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
      * @param paymentIntentId The Stripe payment intent ID
+     * @param applicationFeeAmount The Stripe application fee amount in cents
      * @param captureMethod The Stripe payment intent capture method
      * @return true if successful, false otherwise
      */
@@ -700,6 +714,7 @@ public class WebhookService {
             String fulfilmentSessionId,
             String endFulfilmentEntityId,
             String paymentIntentId,
+            long applicationFeeAmount,
             String captureMethod) {
         
         try {
@@ -725,12 +740,14 @@ public class WebhookService {
                         checkoutSession.getTotalDetails(),
                         fulfilmentSessionId,
                         paymentIntentId,
+                        applicationFeeAmount,
                         captureMethod
                     );
                     
                     if (orderIdResult == null) {
                         logger.error("Fulfillment of event ticket purchase was unsuccessful. session={}, eventId={}, " +
-                                    "customer={}", checkoutSessionId, eventId, customerEmail);
+                                    "customer={}", checkoutSessionId, eventId,
+                                LogSanitizer.redactEmail(customerEmail));
                         throw new RuntimeException("Fulfillment failed");
                     }
                     
@@ -778,7 +795,7 @@ public class WebhookService {
                 
                 if (!emailSuccess) {
                     logger.warn("Was unable to send email to {} after {} attempts. orderId={}",
-                            customerEmail, MAX_PURCHASE_EMAIL_RETRIES, orderId);
+                            LogSanitizer.redactEmail(customerEmail), MAX_PURCHASE_EMAIL_RETRIES, orderId);
                 }
             } else {
                 logger.info("Skipping purchase email for order {} because status is {}", orderId, status);
@@ -830,7 +847,7 @@ public class WebhookService {
             });
             
             if (result) {
-            logger.info("Successfully handled checkout.session.expired webhook event. session={}", checkoutSessionId);
+                logger.info("Successfully handled checkout.session.expired webhook event. session={}", checkoutSessionId);
             } else {
                 logger.error("Failed to handle checkout.session.expired webhook event. session={}", checkoutSessionId);
             }
@@ -886,18 +903,17 @@ public class WebhookService {
             }
 
             Firestore db = FirebaseService.getFirestore();
-            DocumentSnapshot privateEvent = db.collection(CollectionPaths.EVENTS)
+            DocumentReference privateEventRef = db.collection(CollectionPaths.EVENTS)
                     .document(CollectionPaths.ACTIVE)
                     .collection(CollectionPaths.PRIVATE)
-                    .document(eventId)
-                    .get()
-                    .get();
-            DocumentSnapshot publicEvent = db.collection(CollectionPaths.EVENTS)
+                    .document(eventId);
+            DocumentReference publicEventRef = db.collection(CollectionPaths.EVENTS)
                     .document(CollectionPaths.ACTIVE)
                     .collection(CollectionPaths.PUBLIC)
-                    .document(eventId)
-                    .get()
-                    .get();
+                    .document(eventId);
+            List<DocumentSnapshot> eventSnapshots = db.getAll(privateEventRef, publicEventRef).get();
+            DocumentSnapshot privateEvent = eventSnapshots.get(0);
+            DocumentSnapshot publicEvent = eventSnapshots.get(1);
 
             if (!privateEvent.exists() && !publicEvent.exists()) {
                 logger.error("Event {} not found in either Private or Public collections", eventId);
@@ -954,10 +970,11 @@ public class WebhookService {
                         orderId,
                         ticketCount);
                 if (!emailSent) {
-                    logger.warn("Was unable to send cancellation email to {}. orderId={}", email, orderId);
+                    logger.warn("Was unable to send cancellation email to {}. orderId={}",
+                            LogSanitizer.redactEmail(email), orderId);
                 }
             } else {
-                logger.warn("No email found in order {} to send cancellation email", orderId);
+                logger.warn("No email found in order to send cancellation email. orderId={}", orderId);
             }
 
             logger.info("Successfully handled payment_intent.canceled webhook event. paymentIntentId={}, orderId={}",

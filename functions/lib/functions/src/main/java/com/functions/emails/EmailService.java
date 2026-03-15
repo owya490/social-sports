@@ -3,10 +3,7 @@ package com.functions.emails;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +17,7 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.global.handlers.Global;
 import com.functions.tickets.models.Order;
+import com.functions.utils.LogSanitizer;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -33,10 +31,6 @@ public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
     private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID =
             Global.getEnv("LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID");
-
-    private static final ZoneId SYDNEY_TIMEZONE = ZoneId.of("Australia/Sydney");
-    // Keep purchase email formatting aligned with the legacy Python implementation.
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy, HH:mm");
 
     /**
      * Sends an email confirmation to a user who has joined the waitlist for an
@@ -101,17 +95,18 @@ public class EmailService {
      * @return true if email was sent successfully, false otherwise
      */
     public static boolean sendPurchaseEmail(String eventId, String visibility, String email, String firstName, String orderId) {
+        String redactedEmail = LogSanitizer.redactEmail(email);
         try {
             boolean result = sendPurchaseEmailInternal(eventId, visibility, email, firstName, orderId);
             if (result) {
-                logger.info("Successfully sent purchase email for order {} to {}", orderId, email);
+                logger.info("Successfully sent purchase email for order {} to {}", orderId, redactedEmail);
             } else {
-                logger.warn("Failed to send purchase email for order {} to {}", orderId, email);
+                logger.warn("Failed to send purchase email for order {} to {}", orderId, redactedEmail);
             }
             return result;
         } catch (Exception e) {
             logger.error("Failed to send purchase email for order {} to {}: {}",
-                       orderId, email, e.getMessage(), e);
+                    orderId, redactedEmail, e.getMessage(), e);
             return false;
         }
     }
@@ -142,7 +137,7 @@ public class EmailService {
         // Send email to attendee using EmailClient
         boolean attendeeEmailSent = EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.PURCHASE, email, variables);
         if (!attendeeEmailSent) {
-            logger.error("Failed to send purchase email to attendee {}", email);
+            logger.error("Failed to send purchase email to attendee {}", LogSanitizer.redactEmail(email));
             return false;
         }
 
@@ -189,11 +184,11 @@ public class EmailService {
             "name", Optional.ofNullable(firstName).orElse(""),
             "eventName", Optional.ofNullable(event.getString("name")).orElse(""),
             "orderId", Optional.ofNullable(orderId).orElse(""),
-            "datePurchased", formatTimestamp(purchasedTimestamp),
+            "datePurchased", TimeUtils.formatTimestampForEmail(purchasedTimestamp),
             "quantity", quantity,
             "price", centsToDollars(priceInCents),
-            "startDate", formatTimestamp(startTimestamp),
-            "endDate", formatTimestamp(endTimestamp),
+            "startDate", TimeUtils.formatTimestampForEmail(startTimestamp),
+            "endDate", TimeUtils.formatTimestampForEmail(endTimestamp),
             "location", Optional.ofNullable(event.getString("location")).orElse("")
         );
     }
@@ -231,14 +226,6 @@ public class EmailService {
         }
     }
 
-    private static String formatTimestamp(Timestamp timestamp) {
-        if (timestamp == null) return "";
-        // Use TimeUtils conversion pattern for consistency, then apply email-specific format
-        Instant instant = timestamp.toSqlTimestamp().toInstant();
-        ZonedDateTime zdt = instant.atZone(SYDNEY_TIMEZONE);
-        return zdt.format(DATE_FORMATTER);
-    }
-
     private static String centsToDollars(Double priceInCents) {
         if (priceInCents == null) return "$0.00";
 
@@ -257,16 +244,27 @@ public class EmailService {
         }
 
         if (Boolean.TRUE.equals(organiserSnapshot.getBoolean("sendOrganiserTicketEmails"))) {
-            try {
+            Object contactInfo = organiserSnapshot.get("contactInformation");
+            if (contactInfo instanceof Map<?, ?> contactInfoMap) {
                 @SuppressWarnings("unchecked")
-                Map<String, Object> contactInfo = (Map<String, Object>) organiserSnapshot.get("contactInformation");
-                if (contactInfo != null && contactInfo.get("email") instanceof String) {
-                    return Optional.of((String) contactInfo.get("email"));
-                }
-            } catch (Exception e) {
-                logger.error("Failed to find organiser email for sendOrganiserTicketEmail. organiserId={}", organiserId);
-                throw new RuntimeException("Failed to find organiser email for sendOrganiserTicketEmail. organiserId=" + organiserId, e);
+                Map<String, Object> typedContactInfo = (Map<String, Object>) contactInfoMap;
+                return extractContactEmail(typedContactInfo);
             }
+
+            logger.warn("Organiser contact information is missing or malformed. organiserId={}", organiserId);
+        }
+
+        return Optional.empty();
+    }
+
+    static Optional<String> extractContactEmail(Map<String, Object> contactInfo) {
+        if (contactInfo == null) {
+            return Optional.empty();
+        }
+
+        Object email = contactInfo.get("email");
+        if (email instanceof String emailString && !emailString.isBlank()) {
+            return Optional.of(emailString);
         }
 
         return Optional.empty();
@@ -306,8 +304,8 @@ public class EmailService {
                     "endDate", endDateString,
                     "location", eventData.getLocation() != null ? eventData.getLocation() : "");
 
-            logger.info("Sending purchase confirmation email to {} for event {} with orderId {}", email,
-                    eventData.getName(), order.getOrderId());
+            logger.info("Sending purchase confirmation email to {} for event {} with orderId {}",
+                    LogSanitizer.redactEmail(email), eventData.getName(), order.getOrderId());
             return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.PURCHASE, email, variables);
         } catch (Exception e) {
             logger.error("Error sending purchase confirmation email for orderId: {}", order.getOrderId(), e);
@@ -342,11 +340,12 @@ public class EmailService {
 
         boolean sent = EmailClient.sendEmailWithLoopsWithRetries(
                 LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID, email, variables);
+        String redactedEmail = LogSanitizer.redactEmail(email);
 
         if (sent) {
-            logger.info("Successfully sent cancellation email for order {} to {}", orderId, email);
+            logger.info("Successfully sent cancellation email for order {} to {}", orderId, redactedEmail);
         } else {
-            logger.warn("Failed to send cancellation email for order {} to {}", orderId, email);
+            logger.warn("Failed to send cancellation email for order {} to {}", orderId, redactedEmail);
         }
         return sent;
     }

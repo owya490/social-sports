@@ -1,6 +1,9 @@
 package com.functions.stripe.handlers;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -10,9 +13,11 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.global.handlers.Global;
 import com.functions.stripe.config.StripeConfig;
+import com.functions.stripe.config.StripeCustomFieldKeys;
 import com.functions.stripe.models.SessionMetadata;
 import com.functions.stripe.services.WebhookService;
 import com.functions.utils.JavaUtils;
+import com.functions.utils.LogSanitizer;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 import com.stripe.exception.SignatureVerificationException;
@@ -34,7 +39,7 @@ public class StripeWebhookHandler {
     
     private static final Set<String> IGNORED_EVENT_IDS = Set.of("evt_1SAvvn05pkiJLNbsHt1mHThW");
     private static final String SPORTSHUB_URL_DOMAIN = "sportshub";
-    private static final int MAX_PAYLOAD_SIZE = 1024 * 1024; // 1MB max payload size
+    static final int MAX_PAYLOAD_SIZE = 1024 * 1024; // 1MB max payload size
     
     /**
      * Processes a Stripe webhook request with security checks.
@@ -76,30 +81,18 @@ public class StripeWebhookHandler {
         
         // Get the request body with size limit to prevent DOS attacks
         String payload;
-        try (BufferedReader reader = request.getReader()) {
-            StringBuilder sb = new StringBuilder();
-            char[] buffer = new char[1024];
-            int bytesRead;
-            int totalSize = 0;
-            
-            while ((bytesRead = reader.read(buffer)) != -1) {
-                totalSize += bytesRead;
-                if (totalSize > MAX_PAYLOAD_SIZE) {
-                    logger.error("[Webhook-{}] Request payload exceeds maximum size limit of {} bytes", 
-                                uuid, MAX_PAYLOAD_SIZE);
-                    response.setStatusCode(413); // Payload Too Large
-                    return;
-                }
-                sb.append(buffer, 0, bytesRead);
-            }
-            
-            payload = sb.toString();
-            
+        try (InputStream inputStream = request.getInputStream()) {
+            payload = readPayload(inputStream, request.getContentLength());
             if (payload.isEmpty()) {
                 logger.error("[Webhook-{}] Request body is empty", uuid);
                 response.setStatusCode(400);
                 return;
             }
+        } catch (PayloadTooLargeException e) {
+            logger.error("[Webhook-{}] Request payload exceeds maximum size limit of {} bytes",
+                    uuid, MAX_PAYLOAD_SIZE);
+            response.setStatusCode(413);
+            return;
         } catch (Exception e) {
             logger.error("[Webhook-{}] Failed to read request body: {}", uuid, e.getMessage());
             response.setStatusCode(400);
@@ -107,7 +100,7 @@ public class StripeWebhookHandler {
         }
         
         String sigHeader = request.getFirstHeader("Stripe-Signature").orElse(null);
-        if (sigHeader == null || sigHeader.isEmpty()) {
+        if (sigHeader == null || sigHeader.isBlank()) {
             logger.error("[Webhook-{}] Request headers did not contain valid Stripe-Signature", uuid);
             response.setStatusCode(401); // Unauthorized
             return;
@@ -239,7 +232,7 @@ public class StripeWebhookHandler {
             
             for (Session.CustomField field : fullSession.getCustomFields()) {
                 String key = field.getKey();
-                if ("attendeeFullName".equals(key)) {
+                if (StripeCustomFieldKeys.ATTENDEE_FULL_NAME.equals(key)) {
                     if (field.getText() != null && field.getText().getValue() != null) {
                         fullName = field.getText().getValue();
                         if (fullName.trim().isEmpty()) {
@@ -250,7 +243,7 @@ public class StripeWebhookHandler {
                         logger.error("[Webhook-{}] attendeeFullName field text or value is null", uuid);
                         return false;
                     }
-                } else if ("attendeePhone".equals(key)) {
+                } else if (StripeCustomFieldKeys.ATTENDEE_PHONE.equals(key)) {
                     if (field.getText() != null && field.getText().getValue() != null) {
                         phoneNumber = field.getText().getValue();
                         if (phoneNumber.trim().isEmpty()) {
@@ -300,12 +293,13 @@ public class StripeWebhookHandler {
             
             // Retrieve payment intent and capture method
             String paymentIntentId = fullSession.getPaymentIntent();
-            if (paymentIntentId == null || paymentIntentId.isEmpty()) {
+            if (paymentIntentId == null || paymentIntentId.isBlank()) {
                 logger.error("[Webhook-{}] Payment intent ID is null or empty for session {}", uuid, checkoutSessionId);
                 return false;
             }
             
             String captureMethod;
+            long applicationFeeAmount;
             try {
                 PaymentIntent paymentIntent = PaymentIntent.retrieve(
                     paymentIntentId,
@@ -321,6 +315,7 @@ public class StripeWebhookHandler {
                 }
                 
                 captureMethod = paymentIntent.getCaptureMethod();
+                applicationFeeAmount = getApplicationFeeAmount(paymentIntent);
                 logger.info("[Webhook-{}] Retrieved capture method: {} for payment intent: {}", 
                            uuid, captureMethod, paymentIntentId);
                 
@@ -331,7 +326,8 @@ public class StripeWebhookHandler {
             
             logger.info("[Webhook-{}] Attempting to fulfill completed event ticket purchase. session={}, eventId={}, " +
                        "customer={}, paymentIntentId={}, captureMethod={}", 
-                       uuid, checkoutSessionId, sessionMetadata.getEventId(), customerEmail, paymentIntentId, captureMethod);
+                       uuid, checkoutSessionId, sessionMetadata.getEventId(),
+                       LogSanitizer.redactEmail(customerEmail), paymentIntentId, captureMethod);
             
             // Execute the fulfillment workflow
             boolean success = WebhookService.fulfilmentWorkflowOnTicketPurchase(
@@ -347,6 +343,7 @@ public class StripeWebhookHandler {
                 sessionMetadata.getFulfilmentSessionId(),
                 sessionMetadata.getEndFulfilmentEntityId(),
                 paymentIntentId,
+                applicationFeeAmount,
                 captureMethod
             );
             
@@ -511,6 +508,35 @@ public class StripeWebhookHandler {
         }
         return false;
     }
+
+    static String readPayload(InputStream inputStream, long contentLength)
+            throws IOException, PayloadTooLargeException {
+        if (contentLength > MAX_PAYLOAD_SIZE) {
+            throw new PayloadTooLargeException();
+        }
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        int totalBytesRead = 0;
+        int currentBytesRead;
+
+        while ((currentBytesRead = inputStream.read(buffer)) != -1) {
+            totalBytesRead += currentBytesRead;
+            if (totalBytesRead > MAX_PAYLOAD_SIZE) {
+                throw new PayloadTooLargeException();
+            }
+            outputStream.write(buffer, 0, currentBytesRead);
+        }
+
+        return outputStream.toString(StandardCharsets.UTF_8);
+    }
+
+    static long getApplicationFeeAmount(PaymentIntent paymentIntent) {
+        if (paymentIntent == null || paymentIntent.getApplicationFeeAmount() == null) {
+            return 0L;
+        }
+        return paymentIntent.getApplicationFeeAmount();
+    }
     
     private static String normalizeCustomerEmail(String email) {
         if (email == null) {
@@ -523,5 +549,9 @@ public class StripeWebhookHandler {
         }
 
         return normalizedEmail;
+    }
+
+    static final class PayloadTooLargeException extends IOException {
+        private static final long serialVersionUID = 1L;
     }
 }

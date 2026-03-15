@@ -41,7 +41,9 @@ public class GlobalAppController implements HttpFunction {
             return;
         }
 
-        if (StripeConfig.JAVA_STRIPE_WEBHOOK_ENABLED && request.getFirstHeader("Stripe-Signature").isPresent()) {
+        if (StripeConfig.JAVA_STRIPE_WEBHOOK_ENABLED
+                && (request.getFirstHeader("Stripe-Signature").isPresent()
+                        || "GET".equalsIgnoreCase(request.getMethod()))) {
             logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
             StripeWebhookHandler.handleWebhook(request, response);
             return;
