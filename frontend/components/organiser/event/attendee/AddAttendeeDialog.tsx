@@ -161,9 +161,9 @@ const InviteAttendeeDialog = ({
                     </div>
                   ) : (
                     <form
-                      onSubmit={(e) => {
+                      onSubmit={async (e) => {
                         e.preventDefault();
-                        handleAddAttendee();
+                        await handleAddAttendee();
                       }}
                     >
                       <DialogTitle
