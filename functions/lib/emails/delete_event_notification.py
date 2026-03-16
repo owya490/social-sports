@@ -51,7 +51,22 @@ def get_attendees_from_orders(
         purchaser_email = order_data.get("email")
         purchaser_name = order_data.get("fullName", "")
         ticket_ids = order_data.get("tickets", []) or []
-        approved_ticket_count = len(ticket_ids)
+        approved_ticket_count = 0
+
+        for ticket_id in ticket_ids:
+            maybe_ticket_doc = db.collection("Tickets").document(ticket_id).get()
+            if not maybe_ticket_doc.exists:
+                logger.warning(
+                    f"Ticket missing while collecting attendees. eventId={event_id} ticketId={ticket_id}"
+                )
+                continue
+
+            ticket_data = maybe_ticket_doc.to_dict() or {}
+            if (
+                ticket_data.get("eventId") == event_id
+                and ticket_data.get("status") == "APPROVED"
+            ):
+                approved_ticket_count += 1
 
         if approved_ticket_count <= 0:
             continue

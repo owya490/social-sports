@@ -36,7 +36,7 @@ const DeleteEventModal = ({
         .map(([order, tickets]) => ({
           attendeeName: order.fullName?.trim() || order.email,
           attendeeEmail: order.email,
-          ticketCount: tickets.length,
+          ticketCount: tickets.filter((ticket) => ticket.status === OrderAndTicketStatus.APPROVED).length,
         }))
         .filter((row) => row.ticketCount > 0)
         .sort((row1, row2) => {

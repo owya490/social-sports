@@ -59,7 +59,21 @@ def get_purchasers(logger: Logger, event_id: str) -> list[Purchaser]:
                 continue
 
             ticket_ids = order_data.get("tickets", []) or []
-            approved_ticket_count = len(ticket_ids)
+            approved_ticket_count = 0
+            for ticket_id in ticket_ids:
+                maybe_ticket = db.collection("Tickets").document(ticket_id).get()
+                if not maybe_ticket.exists:
+                    logger.warning(
+                        f"Ticket missing while collecting reminder attendees. eventId={event_id} ticketId={ticket_id}"
+                    )
+                    continue
+
+                ticket_data = maybe_ticket.to_dict() or {}
+                if (
+                    ticket_data.get("eventId") == event_id
+                    and ticket_data.get("status") == "APPROVED"
+                ):
+                    approved_ticket_count += 1
 
             if approved_ticket_count <= 0:
                 continue
