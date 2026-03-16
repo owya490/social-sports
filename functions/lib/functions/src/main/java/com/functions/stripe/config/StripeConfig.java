@@ -22,12 +22,13 @@ public class StripeConfig {
     public static final String CURRENCY = "aud";
     public static final int CHECKOUT_SESSION_EXPIRY_SECONDS = 1800; // 30 minutes
 
-    private static final Set<String> SPORTSHUB_FEE_ACCOUNTS = Set.of(
-        "obodlRDZycR062927qTjsah0FHr2", // Acers Prod
-        "PT57cJxfbdRXOQgJH2nAs6cZnFH3", // OneU (Ricky Tang) Prod
-        "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", // Owen Dev
-        "tihrtHXNCKVkYpmJIVijKDWkkvq2", // Syrio Volleyball
-        "J7wsz3TTK1ddhJPZFlDRIc10siw1" // Lynx Volleyball
+    private static final Set<String> SPORTSHUB_FEE_EXEMPT_ACCOUNTS = Set.of(
+        "tihrtHXNCKVkYpmJIVijKDWkkvq2", // Syrio Volleyball Club
+        "KOy7g8V970QGRW0dlJdrf6zSmiV2", // Going Global Volleyball Club
+        "lF3ubYlMvdSpg9XR9J75PESF4Y32", // Sydney Thunder Volleyball
+        "98PJNSoCmNU5zslxa1wIdZ3mPdf2", // Sydney Grass Volleyball
+        "Pvwt23x0JrdlzomKHnJYcy3tJ8z2", // Raptors Volleyball Club
+        "qfsJZjCeWtWb0RZzl7kNK2Mh1Xx1"  // Japan Volleyball AU Club
     );
 
     private static final double SPORTSHUB_FEE_PERCENTAGE = 0.01; // 1%
@@ -75,19 +76,19 @@ public class StripeConfig {
      * @return The Stripe fee in cents
      */
     public static long calculateStripeFee(long priceInCents, String organiserId) {
-        if (SPORTSHUB_FEE_ACCOUNTS.contains(organiserId)) {
-            logger.info("Organiser {} is part of the FEE accounts. Adding {} to the fee percentage. Dynamic fee is {}", organiserId, SPORTSHUB_FEE_PERCENTAGE, (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * (STRIPE_PERCENTAGE_FEE + SPORTSHUB_FEE_PERCENTAGE))));
+        if (!SPORTSHUB_FEE_EXEMPT_ACCOUNTS.contains(organiserId)) {
+            logger.info("Organiser {} is subject to SportHub fee. Adding {} to the fee percentage. Dynamic fee is {}", organiserId, SPORTSHUB_FEE_PERCENTAGE, (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * (STRIPE_PERCENTAGE_FEE + SPORTSHUB_FEE_PERCENTAGE))));
             return (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * (STRIPE_PERCENTAGE_FEE + SPORTSHUB_FEE_PERCENTAGE)));
         }
         return (long) Math.ceil(STRIPE_FIXED_FEE_CENTS + (priceInCents * STRIPE_PERCENTAGE_FEE));
     }
 
     public static long calculateSportsHubFee(long priceInCents, String organiserId) {
-        // if the organiser is part of the FEE accounts, add the application percentage to the fee
-        if (SPORTSHUB_FEE_ACCOUNTS.contains(organiserId)) {
-            return (long) Math.ceil(priceInCents * SPORTSHUB_FEE_PERCENTAGE);
+        // if the organiser is exempt, no SportHub fee
+        if (SPORTSHUB_FEE_EXEMPT_ACCOUNTS.contains(organiserId)) {
+            return 0;
         }
-        return 0;
+        return (long) Math.ceil(priceInCents * SPORTSHUB_FEE_PERCENTAGE);
     }
 }
 
