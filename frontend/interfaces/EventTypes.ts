@@ -114,6 +114,7 @@ export interface EventMetadata {
   completedStripePaymentIntentIds: StripePaymentIntentId[];
   organiserId: UserId;
   orderIds: OrderId[];
+  useTicketsOverPurchaserMap: boolean;
 }
 
 export const EmptyEventMetadata: EventMetadata = {
@@ -126,6 +127,7 @@ export const EmptyEventMetadata: EventMetadata = {
   completedStripePaymentIntentIds: [],
   organiserId: "",
   orderIds: [],
+  useTicketsOverPurchaserMap: true,
 };
 
 export interface Purchaser {
