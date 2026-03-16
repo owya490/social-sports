@@ -23,7 +23,6 @@ public class StripeConfig {
     public static final int CHECKOUT_SESSION_EXPIRY_SECONDS = 1800; // 30 minutes
 
     private static final Set<String> SPORTSHUB_FEE_EXEMPT_ACCOUNTS = Set.of(
-        "tihrtHXNCKVkYpmJIVijKDWkkvq2", // Syrio Volleyball Club
         "KOy7g8V970QGRW0dlJdrf6zSmiV2", // Going Global Volleyball Club
         "lF3ubYlMvdSpg9XR9J75PESF4Y32", // Sydney Thunder Volleyball
         "98PJNSoCmNU5zslxa1wIdZ3mPdf2", // Sydney Grass Volleyball
