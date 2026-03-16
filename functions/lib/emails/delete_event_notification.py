@@ -2,6 +2,7 @@ import json
 import time
 import uuid
 import base64
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -22,6 +23,54 @@ class DeleteEventRequest:
     def __post_init__(self):
         if not isinstance(self.eventId, str):
             raise ValueError("Event Id must be provided as a string.")
+
+
+def get_attendees_from_orders(
+    logger: Logger, event_id: str, event_metadata_data: dict
+) -> tuple[list[dict], list[dict]]:
+    """
+    Build organizer attendee rows and attendee-notification rows from Orders/Tickets.
+    """
+    attendees: list[dict] = []
+    attendee_notification_rows: list[dict] = []
+    email_ticket_counts: dict[str, int] = defaultdict(int)
+
+    order_ids = event_metadata_data.get("orderIds", []) or []
+    for order_id in order_ids:
+        maybe_order_doc = db.collection("Orders").document(order_id).get()
+        if not maybe_order_doc.exists:
+            logger.warning(
+                f"Order missing while collecting attendees. eventId={event_id} orderId={order_id}"
+            )
+            continue
+
+        order_data = maybe_order_doc.to_dict() or {}
+        if order_data.get("status") != "APPROVED":
+            continue
+
+        purchaser_email = order_data.get("email")
+        purchaser_name = order_data.get("fullName", "")
+        ticket_ids = order_data.get("tickets", []) or []
+        approved_ticket_count = len(ticket_ids)
+
+        if approved_ticket_count <= 0:
+            continue
+
+        attendees.append(
+            {
+                "name": purchaser_name or purchaser_email or "Attendee",
+                "email": purchaser_email,
+                "tickets": approved_ticket_count,
+            }
+        )
+        if purchaser_email:
+            email_ticket_counts[purchaser_email] += approved_ticket_count
+
+    attendee_notification_rows = [
+        {"email": email, "tickets": ticket_count}
+        for email, ticket_count in email_ticket_counts.items()
+    ]
+    return attendees, attendee_notification_rows
 
 def generate_attendee_list_txt(attendees: list) -> str:
     """Generate a text file with attendee details and return it as a base64 string."""
@@ -91,7 +140,6 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
     organiser_id = event_delete_data.get("organiserId")
     event_date = event_delete_data.get("startDate") 
     date_string = event_date.strftime("%Y-%m-%d %H")
-    purchaser_map = event_metadata_data.get("purchaserMap", {})
 
     missing_fields = [
         field_name
@@ -120,16 +168,10 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
     event_price = centsToDollars(event_price)
     logger.info(f"Converted event price to dollars: {event_price}")
 
-    # Prepare attendees list for the email template
-    attendees = [
-        {
-            "name": name,
-            "email": purchaser_info.get("email"),
-            "tickets": purchaser_info.get("totalTicketCount", 0)
-        }
-        for purchaser_info in purchaser_map.values()
-        for name, attendee_info in purchaser_info.get("attendees", {}).items()
-    ]
+    # Prepare attendees list from Orders/Tickets as source of truth
+    attendees, attendee_notification_rows = get_attendees_from_orders(
+        logger, request_data.eventId, event_metadata_data
+    )
 
     # Send organizer email
     try:
@@ -180,7 +222,7 @@ def send_email_on_delete_event_v2(req: https_fn.CallableRequest):
         logger.error(f"Failed to send email to organizer. Exception: {e}")
     
     MAX_RETRIES = 3  
-    for purchaser_info in attendees:
+    for purchaser_info in attendee_notification_rows:
         purchaser_email = purchaser_info.get("email")
         ticket_count = purchaser_info.get("tickets")
         for attempt in range(1, MAX_RETRIES + 1):

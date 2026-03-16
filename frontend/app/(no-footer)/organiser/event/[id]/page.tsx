@@ -231,7 +231,7 @@ export default function EventPage({ params }: EventPageProps) {
             )}
             {currSidebarPage === "Settings" && (
               <EventDrilldownSettingsPage
-                eventMetadata={eventMetadata}
+                orderTicketsMap={orderTicketsMap}
                 eventName={eventName}
                 eventStartDate={eventStartDate}
                 router={router}

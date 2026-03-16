@@ -80,9 +80,7 @@ public class AttendeeService {
             order.setTickets(ticketIds);
             OrdersRepository.createOrder(order, request.eventId(), orderId, transaction);
 
-            DocumentReference metadataRef = FirebaseService.getFirestore()
-                    .collection(FirebaseService.CollectionPaths.EVENTS_METADATA)
-                    .document(request.eventId());
+            DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
             transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(request.numTickets()));
             EventsRepository.updateEventByReference(eventRef, "vacancy",
                     eventData.getVacancy() - request.numTickets(), transaction);
@@ -135,9 +133,7 @@ public class AttendeeService {
                 order.setStatus(OrderAndTicketStatus.REJECTED);
                 OrdersRepository.updateOrder(order.getOrderId(), order, Optional.of(transaction));
 
-                DocumentReference metadataRef = FirebaseService.getFirestore()
-                        .collection(FirebaseService.CollectionPaths.EVENTS_METADATA)
-                        .document(request.eventId());
+                DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-currentApproved));
 
                 EventsRepository.updateEventByReference(eventRef, "vacancy",
@@ -176,9 +172,7 @@ public class AttendeeService {
                 order.setTickets(updatedTicketList);
                 OrdersRepository.updateOrder(order.getOrderId(), order, Optional.of(transaction));
 
-                DocumentReference metadataRef = FirebaseService.getFirestore()
-                        .collection(FirebaseService.CollectionPaths.EVENTS_METADATA)
-                        .document(request.eventId());
+                DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(delta));
 
                 EventsRepository.updateEventByReference(eventRef, "vacancy",
@@ -196,9 +190,7 @@ public class AttendeeService {
                     TicketsRepository.updateTicket(ticket.getTicketId(), ticket, Optional.of(transaction));
                 }
 
-                DocumentReference metadataRef = FirebaseService.getFirestore()
-                        .collection(FirebaseService.CollectionPaths.EVENTS_METADATA)
-                        .document(request.eventId());
+                DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-toReject));
 
                 EventsRepository.updateEventByReference(eventRef, "vacancy",

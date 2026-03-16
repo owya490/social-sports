@@ -32,7 +32,7 @@ const InviteAttendeeDialog = ({
   const [attendeeEmail, setAttendeeEmail] = useState<string>("");
   const [attendeeName, setAttendeeName] = useState<string>("");
   const [attendeePhoneNumber, setAttendeePhoneNumber] = useState<string>("");
-  const [numTickets, setNumTickets] = useState<string>("0");
+  const [numTickets, setNumTickets] = useState<string>("1");
 
   const [loading, setLoading] = useState<boolean>(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
@@ -51,7 +51,7 @@ const InviteAttendeeDialog = ({
     setAttendeeEmail("");
     setAttendeeName("");
     setAttendeePhoneNumber("");
-    setNumTickets("0");
+    setNumTickets("1");
   };
 
   const handleAddAttendee = async () => {
@@ -218,15 +218,15 @@ const InviteAttendeeDialog = ({
                           required
                           value={numTickets}
                           type="number"
-                          min={0}
+                          min={1}
                           max={eventData.vacancy}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
                             if (!isNaN(value)) {
-                              const capped = Math.min(Math.max(value, 0), eventData.vacancy);
+                              const capped = Math.min(Math.max(value, 1), eventData.vacancy);
                               setNumTickets(capped.toString());
                             } else {
-                              setNumTickets("0");
+                              setNumTickets("1");
                             }
                           }}
                           className="focus:ring-0"

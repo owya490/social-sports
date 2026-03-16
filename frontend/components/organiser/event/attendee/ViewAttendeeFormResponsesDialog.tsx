@@ -1,3 +1,4 @@
+"use client";
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";

@@ -16,6 +16,6 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ReservedSlot {
     private String email;
-    private String name; // Attendee name (required for purchaserMap)
+    private String name; // Attendee name
     private Integer slots; // Number of tickets reserved for this email
 }

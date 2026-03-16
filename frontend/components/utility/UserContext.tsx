@@ -84,7 +84,6 @@ export default function UserContext({ children }: { children: any }) {
           // redirecting to dashboard, hence we need to do another check to see if they are in the create
           // user workflow
           const userData = await getTempUserData(auth.currentUser.uid);
-          console.log("userData", userData);
           if (!userData) {
             router.push("/");
           }

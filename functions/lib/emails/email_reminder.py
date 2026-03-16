@@ -2,6 +2,7 @@ import json
 import time
 import uuid
 from dataclasses import dataclass
+from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 import requests
@@ -36,14 +37,46 @@ class EventReminderVariables:
 def get_purchasers(logger: Logger, event_id: str) -> list[Purchaser]:
     try:
         event_metadata = db.collection(EVENT_METADATA).document(event_id).get()
+        if not event_metadata.exists:
+            logger.warning(f"Event metadata missing. eventId={event_id}")
+            return []
+
         event_metadata_dict = event_metadata.to_dict()
-        purchasers: list[Purchaser] = []
+        purchaser_by_email: dict[str, set[str]] = defaultdict(set)
 
-        for purchaser in dict(event_metadata_dict.get("purchaserMap", {})).values():
-            names = list(dict(purchaser.get("attendees", {})).keys())
-            purchasers.append(Purchaser(names=names, email=purchaser.get("email")))
+        # Orders/Tickets is the source of truth for attendees.
+        order_ids = event_metadata_dict.get("orderIds", []) or []
+        for order_id in order_ids:
+            maybe_order = db.collection("Orders").document(order_id).get()
+            if not maybe_order.exists:
+                logger.warning(
+                    f"Order missing while collecting reminder attendees. eventId={event_id} orderId={order_id}"
+                )
+                continue
 
-        return purchasers
+            order_data = maybe_order.to_dict() or {}
+            if order_data.get("status") != "APPROVED":
+                continue
+
+            ticket_ids = order_data.get("tickets", []) or []
+            approved_ticket_count = len(ticket_ids)
+
+            if approved_ticket_count <= 0:
+                continue
+
+            purchaser_email = order_data.get("email")
+            purchaser_name = (order_data.get("fullName") or "").strip()
+            if not purchaser_email:
+                continue
+
+            purchaser_by_email[purchaser_email].add(
+                purchaser_name if purchaser_name else purchaser_email
+            )
+
+        return [
+            Purchaser(names=sorted(list(names)), email=email)
+            for email, names in sorted(purchaser_by_email.items())
+        ]
 
     except Exception as e:
         logger.error(f"Error getting event details. eventId={event_id} error={e}")

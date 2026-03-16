@@ -166,7 +166,9 @@ def migrate_purchaser_map(req: https_fn.Request) -> https_fn.Response:
                         }
                     )
                 else:
-                    event_metadata_ref_doc = db.collection(EVENT_METADATA).document(event_id)
+                    event_metadata_ref_doc = db.collection(EVENT_METADATA).document(
+                        event_id
+                    )
 
                     transaction = db.transaction()
                     new_order_id = _create_backfill_order_and_tickets(
