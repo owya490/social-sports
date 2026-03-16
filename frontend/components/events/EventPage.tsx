@@ -24,33 +24,56 @@ export default function EventPage({ eventId }: EventPageProps) {
   const router = useRouter();
 
   useEffect(() => {
+    let isActive = true;
+
     if (eventId === "404") {
       router.push("/not-found");
       return;
     }
 
-    getEventById(eventId)
-      .then((event) => {
+    const loadEvent = async () => {
+      try {
+        const event = await getEventById(eventId);
+        if (!isActive) {
+          return;
+        }
+
         setEventData(event);
-        if (event.eventTags && typeof event.eventTags === "object") {
-          event.eventTags.forEach((tagId) => {
-            getTagById(tagId as TagId).then((tag) => {
-              setEventTags((prev) => [...prev, tag]);
-            });
-          });
+
+        if (Array.isArray(event.eventTags) && event.eventTags.length > 0) {
+          const tagResults = await Promise.allSettled(event.eventTags.map((tagId) => getTagById(tagId as TagId)));
+          if (!isActive) {
+            return;
+          }
+
+          setEventTags(
+            tagResults.flatMap((result) => {
+              return result.status === "fulfilled" ? [result.value] : [];
+            })
+          );
+        } else {
+          setEventTags([]);
         }
 
         incrementEventAccessCountById(eventId, 1, event.isActive, event.isPrivate);
-      })
-      .finally(() => {
-        setLoading(false);
-      })
-      .catch(() => {
+      } catch {
+        if (!isActive) {
+          return;
+        }
         router.push("/error");
-      });
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    };
 
-    //  eslint-disable-next-line
-  }, []);
+    void loadEvent();
+
+    return () => {
+      isActive = false;
+    };
+  }, [eventId, router]);
 
   return loading ? (
     <Loading />
