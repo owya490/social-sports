@@ -169,7 +169,7 @@ export default function CreateEvent() {
     return true;
   }
 
-  function submit(e: FormEvent, stepIndex?: number) {
+  async function submit(e: FormEvent, stepIndex?: number) {
     e.preventDefault();
     if (!validateForm()) {
       return;
@@ -186,22 +186,23 @@ export default function CreateEvent() {
     }
 
     try {
-      createEventWorkflow(data, user).then((eventId) => {
+      const eventId = await createEventWorkflow(data, user);
+      if (eventId !== null) {
         router.push(`/event/${eventId}`);
-      });
+      }
     } catch (e) {
       console.log(e);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
+  async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId | null> {
     setLoading(true);
     const [imageUrl, thumbnailUrl] = getImageAndThumbnailUrlsWithDefaults({ ...formData });
 
     const newEventData = convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
     const newRecurrenceData = formData.newRecurrenceData;
-    let newEventId = "" as EventId;
+    let newEventId: EventId | null = null;
     try {
       if (newRecurrenceData.recurrenceEnabled) {
         const [firstEventId, _newRecurrenceTemplateId] = await createRecurrenceTemplate(
@@ -211,6 +212,9 @@ export default function CreateEvent() {
         newEventId = firstEventId;
       } else {
         newEventId = await createEvent(newEventData);
+      }
+      if (newEventId === null) {
+        return null;
       }
       await sendEmailOnCreateEventV2(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {

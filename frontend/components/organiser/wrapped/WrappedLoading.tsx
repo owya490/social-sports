@@ -98,7 +98,7 @@ export function WrappedLoading() {
 
         {/* Animated phrase */}
         <div className="relative h-16 w-full overflow-hidden">
-          <AnimatePresence>
+          <AnimatePresence exitBeforeEnter>
             <motion.div
               key={phraseIndex}
               initial={{ opacity: 0, y: 20 }}

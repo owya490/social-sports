@@ -14,11 +14,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type EventPageProps = {
-  params: { id: string };
+  eventId: EventId;
 };
 
-export default function EventPage({ params }: EventPageProps) {
-  const eventId = params.id as EventId;
+export default function EventPage({ eventId }: EventPageProps) {
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [eventTags, setEventTags] = useState<Tag[]>([]);

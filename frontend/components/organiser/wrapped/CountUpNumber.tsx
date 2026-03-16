@@ -31,7 +31,13 @@ export function CountUpNumber({
     Math.round(current).toLocaleString("en-AU")
   );
 
-  useEffect(() => display.onChange((latest: string) => setDisplayText(latest)), [display]);
+  useEffect(() => {
+    const unsubscribe = display.onChange((latest: string) => {
+      setDisplayText(latest);
+    });
+
+    return unsubscribe;
+  }, [display]);
 
   useEffect(() => {
     if (isInView) {

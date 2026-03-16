@@ -17,6 +17,7 @@ import {
 } from "@/interfaces/RecurringEventTypes";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import {
   calculateRecurrenceEnded,
   getRecurrenceTemplate,
@@ -35,6 +36,8 @@ interface RecurrenceTemplatePageProps {
     id: string;
   };
 }
+
+const logger = new Logger("RecurrenceTemplatePage");
 
 export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
@@ -78,8 +81,9 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
 
   const recurrenceTemplateId = params.id as RecurrenceTemplateId;
   useEffect(() => {
-    getRecurrenceTemplate(recurrenceTemplateId)
-      .then((recurrenceTemplate) => {
+    const loadRecurrenceTemplate = async () => {
+      try {
+        const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
         setEventData(recurrenceTemplate.eventData);
         setEventName(recurrenceTemplate.eventData.name);
         setEventStartDate(recurrenceTemplate.eventData.startDate);
@@ -119,16 +123,17 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
             recurrenceEnabled: false,
           });
         }
-      })
-      .finally(async () => {
+      } catch (error) {
+        logger.error(`Failed to load recurrence template ${recurrenceTemplateId}: ${error}`);
+        router.push("/error");
+      } finally {
         await sleep(500);
         setLoading(false);
-      })
-      .catch((_error) => {
-        // dont need to log here as we should have caught all the necessary logs in the service layer
-        router.push("/error");
-      });
-  }, []);
+      }
+    };
+
+    void loadRecurrenceTemplate();
+  }, [recurrenceTemplateId, router]);
 
   const submitNewRecurrenceData = async () => {
     setUpdatingRecurrenceData(true);
@@ -140,7 +145,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
       setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
       setShowSuccessAlert(true);
     } catch (error) {
-      console.error("Failed to update recurrence data:", error);
+      logger.error(`Failed to update recurrence data for ${recurrenceTemplateId}: ${error}`);
       setShowErrorAlert(true);
     } finally {
       setUpdatingRecurrenceData(false);

@@ -39,10 +39,17 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
 
   useEffect(() => {
+    let isActive = true;
+
     const fetchCollectionData = async () => {
+      setLoading(true);
+
       try {
         // Fetch the collection
         const collectionData = await getEventCollectionById(collectionId);
+        if (!isActive) {
+          return;
+        }
         setCollection(collectionData);
 
         // Fetch the organiser
@@ -50,6 +57,9 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
           throw new Error(`Event collection ${collectionId} is missing organiserId`);
         }
         const organiserData = await getPublicUserById(collectionData.organiserId);
+        if (!isActive) {
+          return;
+        }
         setOrganiser(organiserData);
 
         // Fetch all events in the collection
@@ -69,10 +79,16 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
         const upcoming = validEvents.filter((event: EventData) => event.startDate.toDate() >= now);
         const past = validEvents.filter((event: EventData) => event.startDate.toDate() < now);
 
+        if (!isActive) {
+          return;
+        }
         setUpcomingEvents(upcoming);
         setPastEvents(past);
         setLoading(false);
       } catch (error) {
+        if (!isActive) {
+          return;
+        }
         if (error instanceof EventCollectionNotFoundError) {
           router.push("/not-found");
           return;
@@ -83,6 +99,10 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
     };
 
     fetchCollectionData();
+
+    return () => {
+      isActive = false;
+    };
   }, [collectionId, router]);
 
   return loading ? (

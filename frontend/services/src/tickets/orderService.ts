@@ -1,5 +1,5 @@
 import { OrderId } from "@/interfaces/EventTypes";
-import { EMPTY_ORDER, Order, OrdersCollectionPath } from "@/interfaces/OrderTypes";
+import { EMPTY_ORDER_DEFAULTS, Order, OrdersCollectionPath } from "@/interfaces/OrderTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "@/services/src/firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -15,7 +15,7 @@ export async function getOrderById(orderId: OrderId): Promise<Order> {
       throw new Error(`Order not found, ${orderId}`);
     }
     const orderData = order.data() as Order;
-    return { ...EMPTY_ORDER, ...orderData, orderId: orderId };
+    return { ...EMPTY_ORDER_DEFAULTS, ...orderData, orderId: orderId };
   } catch (error) {
     orderServiceLogger.error(`getOrderById ${error}`);
     throw error;

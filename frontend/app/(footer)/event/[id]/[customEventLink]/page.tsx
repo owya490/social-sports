@@ -23,7 +23,7 @@ export default async function Page({ params }: any) {
   const { username, customEventLink } = getUsernameAndEventLink(params);
   const eventId = await getEventIdFromUserAndEventLink(username, customEventLink);
 
-  return <EventPage params={{ id: eventId }} />;
+  return <EventPage eventId={eventId} />;
 }
 
 function getUsernameAndEventLink(params: any) {
