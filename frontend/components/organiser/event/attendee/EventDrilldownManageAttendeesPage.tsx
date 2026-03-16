@@ -109,7 +109,6 @@ export const EventDrilldownManageAttendeesPage = ({
           eventId={eventId}
           loadingApprovedOrders={loadingApprovedOrders}
           eventData={eventData}
-          eventMetadata={eventMetadata}
           setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
           setOrderTicketsMap={setOrderTicketsMap}

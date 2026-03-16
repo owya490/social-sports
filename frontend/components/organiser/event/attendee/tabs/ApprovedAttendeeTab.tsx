@@ -136,7 +136,6 @@ interface ApprovedAttendeeTabProps {
   eventId: string;
   loadingApprovedOrders: boolean;
   eventData: EventData;
-  eventMetadata: EventMetadata;
   setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   setIsFilterModalOpen: Dispatch<SetStateAction<boolean>>;
@@ -153,7 +152,6 @@ export const ApprovedAttendeeTab = ({
   eventId,
   loadingApprovedOrders,
   eventData,
-  eventMetadata,
   setEventMetadata,
   setEventVacancy,
   setIsFilterModalOpen,
