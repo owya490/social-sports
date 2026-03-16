@@ -41,6 +41,5 @@ export function extractEventsMetadataFields(eventData: NewEventData): EventMetad
     organiserId: eventData.organiserId,
     completeTicketCount: 0,
     orderIds: [],
-    useTicketsOverPurchaserMap: true,
   };
 }

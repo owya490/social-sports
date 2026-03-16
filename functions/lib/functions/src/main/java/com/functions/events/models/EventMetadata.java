@@ -12,5 +12,4 @@ public class EventMetadata {
 	private List<String> completedStripeCheckoutSession;
 	private String organiserId;
 	private List<String> orderIds;
-	private Boolean useTicketsOverPurchaserMap;
 }

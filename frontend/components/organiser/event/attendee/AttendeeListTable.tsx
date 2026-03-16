@@ -73,9 +73,13 @@ const AttendeeListTable = <T extends AttendeeRowData>({
               </td>
               <td className="py-2 px-1 md:px-2 text-xs md:text-base break-all">
                 <div>{item.email}</div>
-                {(item as any).order?.orderId && (
-                  <div className="text-[10px] text-gray-500 -mt-1 leading-tight">Id: {(item as any).order.orderId}</div>
-                )}
+                {(item as any).order?.orderId &&
+                  !(item as any).order?.orderId?.startsWith("legacy-") &&
+                  !(item as any).order?.orderId?.startsWith("manual-") && (
+                    <div className="text-[10px] text-gray-500 -mt-1 leading-tight">
+                      Id: {(item as any).order.orderId}
+                    </div>
+                  )}
               </td>
               <td className={`py-2 px-1 md:px-2 text-xs md:text-base break-all ${!item.phone ? "text-gray-300" : ""}`}>
                 {!item.phone ? "N/A" : item.phone}

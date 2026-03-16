@@ -15,7 +15,6 @@ public class EventsMetadataUtils {
 		eventMetadata.setOrganiserId(eventData.getOrganiserId());
 		eventMetadata.setCompleteTicketCount(0);
 		eventMetadata.setOrderIds(new ArrayList<String>());
-		eventMetadata.setUseTicketsOverPurchaserMap(true);
 		return eventMetadata;
 	}
 }

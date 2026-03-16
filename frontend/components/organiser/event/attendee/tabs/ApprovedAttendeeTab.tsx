@@ -3,7 +3,6 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
-import { getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
   DocumentTextIcon,
@@ -168,7 +167,6 @@ export const ApprovedAttendeeTab = ({
       order.tickets
         .map((ticketId) => approvedOrderTicketsMap.get(order)?.find((ticket) => ticket.ticketId === ticketId))
         .filter((ticket) => ticket !== undefined) ?? [],
-    purchaser: eventMetadata.purchaserMap[getPurchaserEmailHash(order.email)],
   }));
 
   const allAttendeesCsvData = sortedOrders.flatMap((order) => {
