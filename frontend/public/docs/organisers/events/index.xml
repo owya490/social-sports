@@ -245,4 +245,42 @@ Complete the essential event details including:&lt;/p>
 &lt;h2>Best Practices&lt;span class="hx:absolute hx:-mt-20" id="best-practices">&lt;/span>
 &lt;a href="#best-practices" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Organize collections by theme (e.g., &amp;ldquo;Beginner Classes&amp;rdquo;, &amp;ldquo;Tournament Series&amp;rdquo;), location, season, or skill level. Use clear, descriptive names and include key information in descriptions.&lt;/p>
 &lt;p>You can create as many collections as you need, and events can belong to multiple collections. View all your collections on the main Event Collections page with collection cards showing the image, name, event count, and privacy status.&lt;/p>
-&lt;p>Event Collections provide a powerful way to organize, share, and manage groups of related events, making it easier for participants to discover and register for your events.&lt;/p></description></item></channel></rss>
+&lt;p>Event Collections provide a powerful way to organize, share, and manage groups of related events, making it easier for participants to discover and register for your events.&lt;/p></description></item><item><title>Event Settings</title><link>https://www.sportshub.net.au/docs/organisers/events/event-settings/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/event-settings/</guid><description>
+&lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Event settings allow you to configure how your event appears and behaves for participants. You can access event settings from the &lt;strong>Settings&lt;/strong> tab when viewing an event (or recurring event template) in your &lt;a href="https://www.sportshub.net.au/organiser" target="_blank" rel="noopener">Organiser Hub&lt;/a>.&lt;/p>
+&lt;h2>Show Attendees on Event Page&lt;span class="hx:absolute hx:-mt-20" id="show-attendees-on-event-page">&lt;/span>
+&lt;a href="#show-attendees-on-event-page" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This setting controls whether a &lt;strong>&amp;ldquo;Who&amp;rsquo;s going&amp;rdquo;&lt;/strong> section appears on your public event page, displaying the names of registered attendees to potential participants.&lt;/p>
+&lt;h3>What Participants See&lt;span class="hx:absolute hx:-mt-20" id="what-participants-see">&lt;/span>
+&lt;a href="#what-participants-see" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>When enabled, a &lt;strong>&amp;ldquo;Who&amp;rsquo;s going&amp;rdquo;&lt;/strong> section appears on the public event page. Each attendee is displayed as a card with their initial in a circular avatar alongside their full name.&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Desktop:&lt;/strong> The grid shows 6 attendees at a glance.&lt;/li>
+&lt;li>&lt;strong>Mobile:&lt;/strong> The grid shows 8 attendees (taking advantage of the narrower card layout).&lt;/li>
+&lt;li>&lt;strong>View all:&lt;/strong> If there are more attendees than can fit in the preview, a &lt;strong>&amp;ldquo;View all (N)&amp;rdquo;&lt;/strong> link appears that opens a full scrollable list in a modal.&lt;/li>
+&lt;/ul>
+&lt;p>The design is clean, minimal, and fits right into the existing event page layout.&lt;/p>
+&lt;h3>Privacy&lt;span class="hx:absolute hx:-mt-20" id="privacy">&lt;/span>
+&lt;a href="#privacy" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Only full names are displayed. No email addresses, phone numbers, ticket types, payment information, or any other private data is exposed. The feature is opt-in and disabled by default.&lt;/p>
+&lt;h3>How to Enable&lt;span class="hx:absolute hx:-mt-20" id="how-to-enable">&lt;/span>
+&lt;a href="#how-to-enable" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;h4>For Single Events&lt;span class="hx:absolute hx:-mt-20" id="for-single-events">&lt;/span>
+&lt;a href="#for-single-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h4>&lt;ol>
+&lt;li>Head to your &lt;strong>Organiser Hub&lt;/strong> and open the event you want to update.&lt;/li>
+&lt;li>Navigate to the &lt;strong>Settings&lt;/strong> tab.&lt;/li>
+&lt;li>Toggle &lt;strong>&amp;ldquo;Show Attendees on Event Page&amp;rdquo;&lt;/strong> to on.&lt;/li>
+&lt;/ol>
+&lt;p>The attendee list will appear on the public event page immediately.&lt;/p>
+&lt;h4>For Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="for-recurring-events">&lt;/span>
+&lt;a href="#for-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h4>&lt;p>If you manage recurring events, you can enable this on the &lt;strong>recurring event template&lt;/strong> as well. Every new event generated from that template will automatically show attendees.&lt;/p>
+&lt;ol>
+&lt;li>Open your recurring event template in the Organiser Hub.&lt;/li>
+&lt;li>Go to the &lt;strong>Settings&lt;/strong> tab.&lt;/li>
+&lt;li>Toggle &lt;strong>&amp;ldquo;Show Attendees on Event Page&amp;rdquo;&lt;/strong> to on.&lt;/li>
+&lt;/ol>
+&lt;p>All future events created from that template will inherit the setting.&lt;/p>
+&lt;h3>When to Use This Setting&lt;span class="hx:absolute hx:-mt-20" id="when-to-use-this-setting">&lt;/span>
+&lt;a href="#when-to-use-this-setting" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Consider enabling this when:&lt;/p>
+&lt;ul>
+&lt;li>You want to leverage social proof to encourage more bookings&lt;/li>
+&lt;li>Your events attract a community where attendees may know each other&lt;/li>
+&lt;li>You run regular events where participants like to see who else is coming&lt;/li>
+&lt;/ul>
+&lt;p>You can toggle the setting on or off at any time, and the change takes effect immediately.&lt;/p></description></item></channel></rss>

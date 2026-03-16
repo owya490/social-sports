@@ -54,14 +54,42 @@ export async function setAttendeeTickets(
     `setAttendeeTicketsViaBackend: orderId=${request.orderId}, eventId=${request.eventId}, numTickets=${request.numTickets}`
   );
   try {
-    const response = await executeGlobalAppControllerFunction<
-      SetAttendeeTicketsRequest,
-      SetAttendeeTicketsResponse
-    >(EndpointType.SET_ATTENDEE_TICKETS, request);
+    const response = await executeGlobalAppControllerFunction<SetAttendeeTicketsRequest, SetAttendeeTicketsResponse>(
+      EndpointType.SET_ATTENDEE_TICKETS,
+      request
+    );
     attendeeServiceLogger.info(`setAttendeeTicketsViaBackend: success`);
     return response;
   } catch (error) {
     attendeeServiceLogger.error(`setAttendeeTicketsViaBackend failed: ${error}`);
+    throw error;
+  }
+}
+
+export interface EventAttendeeNameAndTicketCount {
+  name: string;
+  ticketCount: number;
+}
+
+export interface GetEventAttendeeNamesRequest {
+  eventId: string;
+}
+
+export interface GetEventAttendeeNamesResponse {
+  attendees: EventAttendeeNameAndTicketCount[];
+}
+
+export async function getEventAttendeeNames(eventId: string): Promise<EventAttendeeNameAndTicketCount[]> {
+  attendeeServiceLogger.info(`getEventAttendeeNames: eventId=${eventId}`);
+  try {
+    const response = await executeGlobalAppControllerFunction<
+      GetEventAttendeeNamesRequest,
+      GetEventAttendeeNamesResponse
+    >(EndpointType.GET_EVENT_ATTENDEE_NAMES, { eventId });
+    attendeeServiceLogger.info(`getEventAttendeeNames: success, count=${response.attendees.length}`);
+    return response.attendees;
+  } catch (error) {
+    attendeeServiceLogger.error(`getEventAttendeeNames failed: ${error}`);
     throw error;
   }
 }

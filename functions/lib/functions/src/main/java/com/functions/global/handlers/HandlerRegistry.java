@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.functions.attendee.handlers.AddAttendeeHandler;
+import com.functions.attendee.handlers.GetEventAttendeeNamesHandler;
 import com.functions.attendee.handlers.SetAttendeeTicketsHandler;
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.handlers.GetEventByIdHandler;
@@ -53,6 +54,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_ORDERS_BY_EVENT, new GetOrdersByEventHandler());
         handlers.put(EndpointType.ADD_ATTENDEE, new AddAttendeeHandler());
         handlers.put(EndpointType.SET_ATTENDEE_TICKETS, new SetAttendeeTicketsHandler());
+        handlers.put(EndpointType.GET_EVENT_ATTENDEE_NAMES, new GetEventAttendeeNamesHandler());
     }
 
     /**

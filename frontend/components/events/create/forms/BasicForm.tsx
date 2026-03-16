@@ -280,7 +280,7 @@ export function BasicInformation({
       paymentsActive: isActive,
       // Reset payment-related fields when payments are disabled
       ...(!isActive && {
-        stripeFeeToCustomer: false,
+        stripeFeeToCustomer: true,
         promotionalCodesEnabled: false
       })
     });

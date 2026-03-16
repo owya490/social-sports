@@ -75,8 +75,9 @@ public class AttendeeService {
             order.setTickets(ticketIds);
             OrdersRepository.createOrder(order, request.eventId(), orderId, transaction);
 
-            EventsRepository.updateEventById(request.eventId(), "vacancy",
-                    eventData.getVacancy() - request.numTickets(), transaction);
+            // NOTE: Vacancy is updated in the frontend function
+            // EventsRepository.updateEventById(request.eventId(), "vacancy",
+            // eventData.getVacancy() - request.numTickets(), transaction);
 
             logger.info("Added attendee: orderId={}, ticketCount={}, eventId={}",
                     orderId, ticketIds.size(), request.eventId());
