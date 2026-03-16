@@ -129,6 +129,32 @@ public class EventsRepository {
     }
 
     /**
+     * Gets the DocumentReference for an event by ID. Performs a read - must be called
+     * before any writes in a transaction to satisfy Firestore's read-before-write rule.
+     *
+     * @param eventId The event ID
+     * @param transaction The Firestore transaction (required)
+     * @return The DocumentReference for the event
+     * @throws Exception If the event is not found
+     */
+    public static DocumentReference getEventDocumentReferenceInTransaction(String eventId, Transaction transaction) throws Exception {
+        return findEventDocumentReference(eventId, transaction);
+    }
+
+    /**
+     * Updates a field in the event document using a pre-fetched reference. Use this after
+     * getEventDocumentReferenceInTransaction to avoid read-after-write in transactions.
+     *
+     * @param eventRef The event document reference (from getEventDocumentReferenceInTransaction)
+     * @param field The field name to update
+     * @param value The new value
+     * @param transaction The Firestore transaction (required)
+     */
+    public static void updateEventByReference(DocumentReference eventRef, String field, Object value, Transaction transaction) {
+        transaction.update(eventRef, field, value);
+    }
+
+    /**
      * Updates a field in the event document by ID.
      * Finds the event across all possible paths and updates it within a transaction.
      *

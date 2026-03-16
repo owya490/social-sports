@@ -21,3 +21,14 @@ export async function getTicketById(ticketId: TicketId): Promise<Ticket> {
     throw error;
   }
 }
+
+export async function getTicketsByIds(ticketIds: TicketId[]): Promise<Ticket[]> {
+  ticketServiceLogger.info(`getTicketsByIds, ${ticketIds}`);
+  try {
+    const tickets = await Promise.all(ticketIds.map((ticketId) => getTicketById(ticketId)));
+    return tickets;
+  } catch (error) {
+    ticketServiceLogger.error(`getTicketsByIds ${error}`);
+    throw error;
+  }
+}

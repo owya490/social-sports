@@ -6,19 +6,23 @@ import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldo
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
-import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
+import { EventDrilldownManageAttendeesPage } from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
-import EventDrilldownFormsPage from "@/components/organiser/event/forms/EventDrilldownFormsPage";
+import { EventDrilldownFormsPage } from "@/components/organiser/event/forms/EventDrilldownFormsPage";
 import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { getOrdersByIds } from "@/services/src/tickets/orderService";
+import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
@@ -34,7 +38,7 @@ interface EventPageProps {
 //brians
 export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
-  const [_eventData, setEventData] = useState<EventData>();
+  const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [loading, setLoading] = useState<boolean>(true);
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
@@ -63,6 +67,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
+  const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
   const router = useRouter();
 
   const { user } = useUser();
@@ -71,60 +76,70 @@ export default function EventPage({ params }: EventPageProps) {
   useEffect(() => {
     if (user.userId) {
       getEventById(eventId)
-      .then((event) => {
-        if (event.organiserId !== user.userId) {
-          router.push("/organiser/dashboard");
-          return EmptyEventData;
-        }
-        setEventData(event);
-        setEventName(event.name);
-        setEventStartDate(event.startDate);
-        setEventEndDate(event.endDate);
-        setEventOrganiser(event.organiser);
-        setEventVacancy(event.vacancy);
-        setEventDescription(event.description);
-        setEventLocation(event.location);
-        setEventSport(event.sport);
-        setEventPrice(event.price);
-        setEventImage(event.image);
-        setEventThumbnail(event.thumbnail);
-        setEventAccessCount(event.accessCount);
-        setEventCapacity(event.capacity);
-        setEventPaused(event.paused);
-        setEventPaymentsActive(event.paymentsActive);
-        setEventRegistrationDeadline(event.registrationDeadline);
-        setEventEventLink(event.eventLink);
-        setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
-        setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
-        setEventIsActive(event.isActive);
-        setEventFormId(event.formId);
-        setEventHideVacancy(event.hideVacancy);
-        setEventWaitlistEnabled(event.waitlistEnabled);
-        setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
-        setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
-        return event;
-      })
-      .then((event) => {
-        getEventsMetadataByEventId(eventId).then((eventMetadata) => {
-          setEventMetadata(eventMetadata);
-          calculateNetSales(eventMetadata)
-            .then((totalNetSales) => {
-              setTotalNetSales(totalNetSales);
-            })
-            .catch((error) => {
-              eventServiceLogger.error(`Error calculating net sales: ${error}`);
-              setTotalNetSales(eventMetadata.completeTicketCount * event.price);
+        .then((event) => {
+          if (event.organiserId !== user.userId) {
+            router.push("/organiser/dashboard");
+            return EmptyEventData;
+          }
+          setEventData(event);
+          setEventName(event.name);
+          setEventStartDate(event.startDate);
+          setEventEndDate(event.endDate);
+          setEventOrganiser(event.organiser);
+          setEventVacancy(event.vacancy);
+          setEventDescription(event.description);
+          setEventLocation(event.location);
+          setEventSport(event.sport);
+          setEventPrice(event.price);
+          setEventImage(event.image);
+          setEventThumbnail(event.thumbnail);
+          setEventAccessCount(event.accessCount);
+          setEventCapacity(event.capacity);
+          setEventPaused(event.paused);
+          setEventPaymentsActive(event.paymentsActive);
+          setEventRegistrationDeadline(event.registrationDeadline);
+          setEventEventLink(event.eventLink);
+          setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
+          setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
+          setEventIsActive(event.isActive);
+          setEventFormId(event.formId);
+          setEventHideVacancy(event.hideVacancy);
+          setEventWaitlistEnabled(event.waitlistEnabled);
+          setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
+          setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
+          return event;
+        })
+        .then((event) => {
+          getEventsMetadataByEventId(eventId).then(async (eventMetadata) => {
+            setEventMetadata(eventMetadata);
+            const allOrders = await getOrdersByIds(eventMetadata.orderIds);
+            const allTickets = await getTicketsByIds(allOrders.flatMap((order) => order.tickets));
+            const orderTicketsMap = new Map<Order, Ticket[]>();
+            allOrders.forEach((order) => {
+              orderTicketsMap.set(
+                order,
+                allTickets.filter((ticket) => ticket.orderId === order.orderId)
+              );
             });
+            setOrderTicketsMap(orderTicketsMap);
+            calculateNetSales(orderTicketsMap)
+              .then((totalNetSales) => {
+                setTotalNetSales(totalNetSales);
+              })
+              .catch((error) => {
+                eventServiceLogger.error(`Error calculating net sales: ${error}`);
+                setTotalNetSales(eventMetadata.completeTicketCount * event.price);
+              });
+          });
+        })
+        .finally(async () => {
+          await sleep(500);
+          setLoading(false);
+        })
+        .catch((error) => {
+          eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
+          router.push("/error");
         });
-      })
-      .finally(async () => {
-        await sleep(500);
-        setLoading(false);
-      })
-      .catch((error) => {
-        eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
-        router.push("/error");
-      });
     }
   }, [user.userId]);
 
@@ -190,13 +205,18 @@ export default function EventPage({ params }: EventPageProps) {
             )}
             {currSidebarPage === "Attendees" && (
               <EventDrilldownManageAttendeesPage
+                eventData={eventData}
                 eventMetadata={eventMetadata}
-                eventId={eventId}
-                setEventVacancy={setEventVacancy}
                 setEventMetadata={setEventMetadata}
+                eventId={eventId}
+                orderTicketsMap={orderTicketsMap}
+                setEventVacancy={setEventVacancy}
+                setOrderTicketsMap={setOrderTicketsMap}
               />
             )}
-            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata} />}
+            {currSidebarPage === "Forms" && (
+              <EventDrilldownFormsPage eventId={eventId} orderTicketsMap={orderTicketsMap} />
+            )}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}
