@@ -20,8 +20,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 
-// const SPORTSHUB_ORGANISER_ID = "ZzuRS5v8hhWonnp2qdIOZG8R7f12";
-const SPORTSHUB_ORGANISER_ID = "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2";
+const SPORTSHUB_ORGANISER_ID = "ZzuRS5v8hhWonnp2qdIOZG8R7f12";
 
 export default function Dashboard() {
   const logger = new Logger("DashboardLogger");
