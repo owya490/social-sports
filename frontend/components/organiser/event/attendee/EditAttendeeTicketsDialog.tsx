@@ -1,6 +1,6 @@
 "use client";
 import Loading from "@/components/loading/Loading";
-import { EventData, EventId } from "@/interfaces/EventTypes";
+import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
@@ -20,6 +20,7 @@ interface EditAttendeeTicketsDialogProps {
   tickets: Ticket[];
   eventId: EventId;
   eventData: EventData;
+  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
   setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
@@ -31,6 +32,7 @@ export const EditAttendeeTicketsDialog = ({
   tickets,
   eventId,
   eventData,
+  setEventMetadata,
   setEventVacancy,
   setOrderTicketsMap,
 }: EditAttendeeTicketsDialogProps) => {
@@ -72,6 +74,10 @@ export const EditAttendeeTicketsDialog = ({
       });
       const updatedEventData = await getEventById(eventId);
       setEventVacancy(updatedEventData.vacancy);
+      setEventMetadata((prev) => ({
+        ...prev,
+        completeTicketCount: prev.completeTicketCount - numTickets + parseInt(newNumTickets),
+      }));
       setShowSuccessAlert(true);
       setShowErrorMessage(false);
       closeModal();

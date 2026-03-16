@@ -1,5 +1,5 @@
 import Loading from "@/components/loading/Loading";
-import { EventData, EventId } from "@/interfaces/EventTypes";
+import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
@@ -15,6 +15,8 @@ interface RemoveAttendeeDialogProps {
   order: Order;
   eventId: EventId;
   eventData: EventData;
+  tickets: Ticket[];
+  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
@@ -25,6 +27,8 @@ const RemoveAttendeeDialog = ({
   order,
   eventId,
   eventData,
+  tickets,
+  setEventMetadata,
   setEventVacancy,
   setOrderTicketsMap,
 }: RemoveAttendeeDialogProps) => {
@@ -52,7 +56,11 @@ const RemoveAttendeeDialog = ({
         if (oldOrder) next.delete(oldOrder);
         return next;
       });
-      setEventVacancy(eventData.vacancy + order.tickets.length);
+      setEventVacancy(eventData.vacancy + tickets.length);
+      setEventMetadata((prev) => ({
+        ...prev,
+        completeTicketCount: prev.completeTicketCount - tickets.length,
+      }));
       setShowSuccessAlert(true);
       setShowErrorMessage(false);
       closeModal();

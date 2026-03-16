@@ -1,3 +1,4 @@
+import { OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { UserCircleIcon } from "@heroicons/react/20/solid";
 import { ReactNode } from "react";
 
@@ -65,7 +66,7 @@ const AttendeeListTable = <T extends AttendeeRowData>({
                   <UserCircleIcon className="w-8 md:w-10 rounded-full hidden lg:block mr-2 flex-shrink-0" />
                   <div className="truncate">
                     <div>{item.name}</div>
-                    {(item as any).order?.orderId?.startsWith("manual-") && (
+                    {(item as any).order?.type === OrderAndTicketType.MANUAL && (
                       <div className="text-[10px] text-gray-500 -mt-1 leading-tight">Direct Addition</div>
                     )}
                   </div>

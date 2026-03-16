@@ -1,5 +1,5 @@
 import Loading from "@/components/loading/Loading";
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, EventMetadata } from "@/interfaces/EventTypes";
 import { EMPTY_ORDER, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { addAttendee } from "@/services/src/attendee/attendeeService";
@@ -11,6 +11,7 @@ import React, { Fragment, useEffect, useState } from "react";
 
 interface InviteAttendeeDialogProps {
   eventData: EventData;
+  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
   isFilterModalOpen: boolean;
@@ -21,6 +22,7 @@ interface InviteAttendeeDialogProps {
 
 const InviteAttendeeDialog = ({
   eventData,
+  setEventMetadata,
   closeModal,
   isFilterModalOpen,
   eventId,
@@ -86,6 +88,10 @@ const InviteAttendeeDialog = ({
       }));
       setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
       setEventVacancy(eventData.vacancy - parseInt(numTickets));
+      setEventMetadata((prev) => ({
+        ...prev,
+        completeTicketCount: prev.completeTicketCount + parseInt(numTickets),
+      }));
       resetInputFields();
       setShowSuccessAlert(true);
       setShowErrorMessage(false);

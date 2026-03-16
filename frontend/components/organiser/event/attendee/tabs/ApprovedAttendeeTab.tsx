@@ -1,6 +1,6 @@
 "use client";
 import DownloadCsvButton from "@/components/DownloadCsvButton";
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
@@ -21,6 +21,7 @@ interface ApprovedAttendeeActionsProps {
   tickets: Ticket[];
   eventId: string;
   eventData: EventData;
+  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   setSelectedOrderForFormResponses: (order: Order) => void;
   setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
@@ -31,6 +32,7 @@ export const ApprovedAttendeeActions = ({
   tickets,
   eventId,
   eventData,
+  setEventMetadata,
   setEventVacancy,
   setSelectedOrderForFormResponses,
   setOrderTicketsMap,
@@ -106,6 +108,7 @@ export const ApprovedAttendeeActions = ({
           tickets={tickets}
           eventId={eventId}
           eventData={eventData}
+          setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
           setOrderTicketsMap={setOrderTicketsMap}
         />
@@ -116,8 +119,10 @@ export const ApprovedAttendeeActions = ({
           closeModal={closeRemoveAttendeeModal}
           isRemoveAttendeeModalOpen={isRemoveAttendeeModalOpen}
           order={order}
+          tickets={tickets}
           eventId={eventId}
           eventData={eventData}
+          setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
           setOrderTicketsMap={setOrderTicketsMap}
         />
@@ -131,10 +136,16 @@ interface ApprovedAttendeeTabProps {
   eventId: string;
   loadingApprovedOrders: boolean;
   eventData: EventData;
+  eventMetadata: EventMetadata;
+  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   setIsFilterModalOpen: Dispatch<SetStateAction<boolean>>;
   setSelectedOrderForFormResponses: (order: Order) => void;
   setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
+}
+
+function getOrderTickets(order: Order, approvedOrderTicketsMap: Map<Order, Ticket[]>) {
+  return approvedOrderTicketsMap.get(order) ?? [];
 }
 
 export const ApprovedAttendeeTab = ({
@@ -142,6 +153,8 @@ export const ApprovedAttendeeTab = ({
   eventId,
   loadingApprovedOrders,
   eventData,
+  eventMetadata,
+  setEventMetadata,
   setEventVacancy,
   setIsFilterModalOpen,
   setSelectedOrderForFormResponses,
@@ -150,19 +163,20 @@ export const ApprovedAttendeeTab = ({
   const allOrders = Array.from(approvedOrderTicketsMap.keys());
 
   const sortedOrders = allOrders
-    .filter((order) => order.tickets.length > 0)
+    .filter((order) => getOrderTickets(order, approvedOrderTicketsMap).length > 0)
     .sort((a: Order, b: Order) => a.email.localeCompare(b.email));
 
   // Convert attendee entries to table data format
   const tableData = sortedOrders.map((order, index) => ({
     key: `${order.email}-${order.fullName}-${index}`,
-    ticketCount: order.tickets.length,
+    ticketCount: getOrderTickets(order, approvedOrderTicketsMap).length,
     name: order.fullName,
     email: order.email,
     phone: order.phone ? `${order.phone}` : "N/A",
     order,
     tickets:
-      order.tickets
+      getOrderTickets(order, approvedOrderTicketsMap)
+        .map((ticket) => ticket.ticketId)
         .map((ticketId) => approvedOrderTicketsMap.get(order)?.find((ticket) => ticket.ticketId === ticketId))
         .filter((ticket): ticket is Ticket => ticket !== undefined) ?? [],
   }));
@@ -207,6 +221,7 @@ export const ApprovedAttendeeTab = ({
         tickets={tickets ?? []}
         eventId={eventId}
         eventData={eventData}
+        setEventMetadata={setEventMetadata}
         setEventVacancy={setEventVacancy}
         setSelectedOrderForFormResponses={setSelectedOrderForFormResponses}
         setOrderTicketsMap={setOrderTicketsMap}

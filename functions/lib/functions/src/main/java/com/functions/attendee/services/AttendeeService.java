@@ -22,6 +22,8 @@ import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.FieldValue;
 
 public class AttendeeService {
     private static final Logger logger = LoggerFactory.getLogger(AttendeeService.class);
@@ -37,6 +39,9 @@ public class AttendeeService {
         return FirebaseService.createFirestoreTransaction(transaction -> {
             EventData eventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Event not found: " + request.eventId()));
+
+            DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(request.eventId(),
+                    transaction);
 
             if (eventData.getVacancy() < request.numTickets()) {
                 throw new IllegalArgumentException(String.format(
@@ -75,9 +80,12 @@ public class AttendeeService {
             order.setTickets(ticketIds);
             OrdersRepository.createOrder(order, request.eventId(), orderId, transaction);
 
-            // NOTE: Vacancy is updated in the frontend function
-            // EventsRepository.updateEventById(request.eventId(), "vacancy",
-            // eventData.getVacancy() - request.numTickets(), transaction);
+            DocumentReference metadataRef = FirebaseService.getFirestore()
+                    .collection(FirebaseService.CollectionPaths.EVENTS_METADATA)
+                    .document(request.eventId());
+            transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(request.numTickets()));
+            EventsRepository.updateEventByReference(eventRef, "vacancy",
+                    eventData.getVacancy() - request.numTickets(), transaction);
 
             logger.info("Added attendee: orderId={}, ticketCount={}, eventId={}",
                     orderId, ticketIds.size(), request.eventId());
@@ -103,6 +111,9 @@ public class AttendeeService {
             EventData eventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Event not found: " + request.eventId()));
 
+            DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(request.eventId(),
+                    transaction);
+
             Order order = OrdersRepository.getOrderById(request.orderId(), Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Order not found: " + request.orderId()));
 
@@ -124,7 +135,12 @@ public class AttendeeService {
                 order.setStatus(OrderAndTicketStatus.REJECTED);
                 OrdersRepository.updateOrder(order.getOrderId(), order, Optional.of(transaction));
 
-                EventsRepository.updateEventById(request.eventId(), "vacancy",
+                DocumentReference metadataRef = FirebaseService.getFirestore()
+                        .collection(FirebaseService.CollectionPaths.EVENTS_METADATA)
+                        .document(request.eventId());
+                transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-currentApproved));
+
+                EventsRepository.updateEventByReference(eventRef, "vacancy",
                         eventData.getVacancy() + currentApproved, transaction);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
@@ -160,7 +176,12 @@ public class AttendeeService {
                 order.setTickets(updatedTicketList);
                 OrdersRepository.updateOrder(order.getOrderId(), order, Optional.of(transaction));
 
-                EventsRepository.updateEventById(request.eventId(), "vacancy",
+                DocumentReference metadataRef = FirebaseService.getFirestore()
+                        .collection(FirebaseService.CollectionPaths.EVENTS_METADATA)
+                        .document(request.eventId());
+                transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(delta));
+
+                EventsRepository.updateEventByReference(eventRef, "vacancy",
                         eventData.getVacancy() - delta, transaction);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
@@ -175,7 +196,12 @@ public class AttendeeService {
                     TicketsRepository.updateTicket(ticket.getTicketId(), ticket, Optional.of(transaction));
                 }
 
-                EventsRepository.updateEventById(request.eventId(), "vacancy",
+                DocumentReference metadataRef = FirebaseService.getFirestore()
+                        .collection(FirebaseService.CollectionPaths.EVENTS_METADATA)
+                        .document(request.eventId());
+                transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-toReject));
+
+                EventsRepository.updateEventByReference(eventRef, "vacancy",
                         eventData.getVacancy() + toReject, transaction);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,

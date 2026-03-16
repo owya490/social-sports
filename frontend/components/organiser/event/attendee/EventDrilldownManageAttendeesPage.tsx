@@ -11,6 +11,7 @@ import { ApprovedAttendeeTab } from "./tabs/ApprovedAttendeeTab";
 
 interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
+  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   eventId: string;
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
@@ -22,6 +23,7 @@ type TabType = "approved" | "pending" | "rejected";
 
 export const EventDrilldownManageAttendeesPage = ({
   eventMetadata,
+  setEventMetadata,
   eventId,
   eventData,
   setEventVacancy,
@@ -74,7 +76,7 @@ export const EventDrilldownManageAttendeesPage = ({
   }, [orderTicketsMap]);
 
   return (
-    <div className="flex flex-col space-y-4 mb-6 w-full p-1 pt-3 md:p-0">
+    <div className="flex flex-col space-y-4 mb-20 w-full p-1 pt-3 md:p-0">
       <Toaster
         position="bottom-left"
         toastOptions={{
@@ -107,6 +109,8 @@ export const EventDrilldownManageAttendeesPage = ({
           eventId={eventId}
           loadingApprovedOrders={loadingApprovedOrders}
           eventData={eventData}
+          eventMetadata={eventMetadata}
+          setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
           setOrderTicketsMap={setOrderTicketsMap}
           setIsFilterModalOpen={setIsFilterModalOpen}
@@ -117,6 +121,7 @@ export const EventDrilldownManageAttendeesPage = ({
       <div className="grow">
         <InviteAttendeeDialog
           eventData={eventData}
+          setEventMetadata={setEventMetadata}
           setIsFilterModalOpen={setIsFilterModalOpen}
           closeModal={closeModal}
           isFilterModalOpen={isFilterModalOpen}

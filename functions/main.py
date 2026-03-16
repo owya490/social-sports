@@ -15,4 +15,5 @@ from lib.stripe.webhooks import *
 
 # Util
 # from lib.utils.firebase_move_data import *
+from lib.utils.firebase_migrate_purchaser_map import *
 # from lib.utils.user_data_utils import *
