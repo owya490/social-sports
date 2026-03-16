@@ -37,9 +37,6 @@ export const EventDrilldownManageAttendeesPage = ({
   const [loadingApprovedOrders, setLoadingApprovedOrders] = useState<boolean>(false);
   const [selectedOrderForFormResponses, setSelectedOrderForFormResponses] = useState<Order | null>(null);
 
-  console.log(orderTicketsMap);
-  console.log(Array.from(orderTicketsMap.keys())[0]);
-
   function closeModal() {
     setIsFilterModalOpen(false);
   }
