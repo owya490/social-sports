@@ -14,7 +14,6 @@ interface EventDrilldownManageAttendeesPageProps {
   eventId: string;
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
-  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   orderTicketsMap: Map<Order, Ticket[]>;
   setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
 }
@@ -26,7 +25,6 @@ export const EventDrilldownManageAttendeesPage = ({
   eventId,
   eventData,
   setEventVacancy,
-  setEventMetadata,
   orderTicketsMap,
   setOrderTicketsMap,
 }: EventDrilldownManageAttendeesPageProps) => {
@@ -106,7 +104,6 @@ export const EventDrilldownManageAttendeesPage = ({
       {activeTab === "approved" && (
         <ApprovedAttendeeTab
           approvedOrderTicketsMap={approvedOrderTicketsMap}
-          eventMetadata={eventMetadata}
           eventId={eventId}
           loadingApprovedOrders={loadingApprovedOrders}
           eventData={eventData}

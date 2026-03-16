@@ -1,6 +1,6 @@
 "use client";
 import DownloadCsvButton from "@/components/DownloadCsvButton";
-import { EventData, EventMetadata } from "@/interfaces/EventTypes";
+import { EventData } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
@@ -128,7 +128,6 @@ export const ApprovedAttendeeActions = ({
 
 interface ApprovedAttendeeTabProps {
   approvedOrderTicketsMap: Map<Order, Ticket[]>;
-  eventMetadata: EventMetadata;
   eventId: string;
   loadingApprovedOrders: boolean;
   eventData: EventData;
@@ -140,7 +139,6 @@ interface ApprovedAttendeeTabProps {
 
 export const ApprovedAttendeeTab = ({
   approvedOrderTicketsMap,
-  eventMetadata,
   eventId,
   loadingApprovedOrders,
   eventData,
@@ -166,7 +164,7 @@ export const ApprovedAttendeeTab = ({
     tickets:
       order.tickets
         .map((ticketId) => approvedOrderTicketsMap.get(order)?.find((ticket) => ticket.ticketId === ticketId))
-        .filter((ticket) => ticket !== undefined) ?? [],
+        .filter((ticket): ticket is Ticket => ticket !== undefined) ?? [],
   }));
 
   const allAttendeesCsvData = sortedOrders.flatMap((order) => {
@@ -206,7 +204,7 @@ export const ApprovedAttendeeTab = ({
     return (
       <ApprovedAttendeeActions
         order={order}
-        tickets={tickets}
+        tickets={tickets ?? []}
         eventId={eventId}
         eventData={eventData}
         setEventVacancy={setEventVacancy}

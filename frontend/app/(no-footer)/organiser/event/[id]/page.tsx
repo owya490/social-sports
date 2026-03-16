@@ -19,8 +19,8 @@ import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -210,11 +210,12 @@ export default function EventPage({ params }: EventPageProps) {
                 eventId={eventId}
                 orderTicketsMap={orderTicketsMap}
                 setEventVacancy={setEventVacancy}
-                setEventMetadata={setEventMetadata}
                 setOrderTicketsMap={setOrderTicketsMap}
               />
             )}
-            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} orderTicketsMap={orderTicketsMap} />}
+            {currSidebarPage === "Forms" && (
+              <EventDrilldownFormsPage eventId={eventId} orderTicketsMap={orderTicketsMap} />
+            )}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}
