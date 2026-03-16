@@ -1,3 +1,4 @@
+"use client";
 import Loading from "@/components/loading/Loading";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";

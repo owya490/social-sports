@@ -1,3 +1,4 @@
+"use client";
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
