@@ -45,30 +45,31 @@ class StripeCheckoutRequest:
     if not isinstance(self.successUrl, str):
       raise ValueError("Success Url must be provided as a string.")
 
-SPORTSHUB_FEE_ACCOUNTS = [
-  "obodlRDZycR062927qTjsah0FHr2", # Acers Prod
-  "PT57cJxfbdRXOQgJH2nAs6cZnFH3", # OneU (Ricky Tang) Prod
-  "c5vFAZ3NlSXVuHGrwlkCjJr3RXX2", # Owen Dev
-  "tihrtHXNCKVkYpmJIVijKDWkkvq2", # Syrio Volleyball
-  "J7wsz3TTK1ddhJPZFlDRIc10siw1" # Lynx Volleyball
-  ]
+SPORTSHUB_FEE_EXEMPT_ACCOUNTS = [
+  "tihrtHXNCKVkYpmJIVijKDWkkvq2",  # Syrio Volleyball Club
+  "KOy7g8V970QGRW0dlJdrf6zSmiV2",  # Going Global
+  "lF3ubYlMvdSpg9XR9J75PESF4Y32",  # Sydney Thunder Volleyball
+  "98PJNSoCmNU5zslxa1wIdZ3mPdf2",  # Sydney Grass Volleyball
+  "Pvwt23x0JrdlzomKHnJYcy3tJ8z2",  # Raptors Volleyball Club
+  "qfsJZjCeWtWb0RZzl7kNK2Mh1Xx1",  # Japan Volleyball AU Club
+]
 SPORTSHUB_FEE_PERCENTAGE = 0.01
 
 def calculate_stripe_fee(price: float, organiser_id: str) -> int:
   # Stripe fee is 30c + 1.7% of total price as price passed in is in cents already
   # can just do the calculation and return a whole integer
-  # if the organiser is part of the FEE accounts, add the application percentage to the fee
+  # if the organiser is not exempt, add the SportHub application percentage to the fee
   fee_percentage = 0.017
-  if organiser_id in SPORTSHUB_FEE_ACCOUNTS:
+  if organiser_id not in SPORTSHUB_FEE_EXEMPT_ACCOUNTS:
     fee_percentage = fee_percentage + SPORTSHUB_FEE_PERCENTAGE
-    print(f"Organiser {organiser_id} is part of the FEE accounts. Adding {SPORTSHUB_FEE_PERCENTAGE} to the fee percentage. Dynamic fee is {int(math.ceil(30 + (price * fee_percentage)))}")
+    print(f"Organiser {organiser_id} is subject to SportHub fee. Adding {SPORTSHUB_FEE_PERCENTAGE} to the fee percentage. Dynamic fee is {int(math.ceil(30 + (price * fee_percentage)))}")
   return int(math.ceil(30 + (price * fee_percentage)))
 
 def calculate_sportshub_fee(price: float, organiser_id: str) -> int:
-  # if the organiser is part of the FEE accounts, add the application percentage to the fee
-  if organiser_id in SPORTSHUB_FEE_ACCOUNTS:
-    return int(math.ceil(price * SPORTSHUB_FEE_PERCENTAGE))
-  return 0
+  # if the organiser is exempt, no SportHub fee
+  if organiser_id in SPORTSHUB_FEE_EXEMPT_ACCOUNTS:
+    return 0
+  return int(math.ceil(price * SPORTSHUB_FEE_PERCENTAGE))
 
 @firestore.transactional
 def create_stripe_checkout_session_by_event_id(transaction: Transaction, logger: Logger, event_id: str, quantity: int, is_private: bool, cancel_url: str, success_url: str, complete_fulfilment_session: bool, fulfilment_session_id: Optional[str], end_fulfilment_entity_id: Optional[str]) -> str:
