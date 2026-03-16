@@ -46,7 +46,6 @@ class StripeCheckoutRequest:
       raise ValueError("Success Url must be provided as a string.")
 
 SPORTSHUB_FEE_EXEMPT_ACCOUNTS = [
-  "tihrtHXNCKVkYpmJIVijKDWkkvq2",  # Syrio Volleyball Club
   "KOy7g8V970QGRW0dlJdrf6zSmiV2",  # Going Global
   "lF3ubYlMvdSpg9XR9J75PESF4Y32",  # Sydney Thunder Volleyball
   "98PJNSoCmNU5zslxa1wIdZ3mPdf2",  # Sydney Grass Volleyball
