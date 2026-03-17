@@ -17,6 +17,9 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
+import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
+import com.functions.fulfilment.exceptions.FulfilmentProgressionBlockedException;
+import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
 import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
@@ -166,7 +169,7 @@ public class FulfilmentService {
             Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId,
                     Optional.empty());
             if (maybeFulfilmentSession.isEmpty()) {
-                return Optional.empty();
+                throw new FulfilmentSessionNotFoundException(fulfilmentSessionId);
             }
 
             FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
@@ -174,9 +177,8 @@ public class FulfilmentService {
 
             // Validate current index
             if (currentIndex < -1 || currentIndex >= fulfilmentEntityIds.size()) {
-                logger.error("Invalid current index: {} for fulfilment session ID: {}",
-                        currentIndex, fulfilmentSessionId);
-                return Optional.empty();
+                throw new IllegalArgumentException("Invalid current index " + currentIndex
+                        + " for fulfilment session ID: " + fulfilmentSessionId);
             }
 
             // Calculate next index
@@ -185,7 +187,7 @@ public class FulfilmentService {
                 logger.info(
                         "Reached end of fulfilment workflow for session ID: {} because next index {} is out of bounds of number of entities {}",
                         fulfilmentSessionId, nextIndex, fulfilmentEntityIds.size());
-                return Optional.empty();
+                return Optional.of(new GetNextFulfilmentEntityResponse(null));
             }
 
             // Get next entity
@@ -195,17 +197,24 @@ public class FulfilmentService {
                     nextEntityId);
 
             FulfilmentEntity nextEntity = fulfilmentSession.getFulfilmentEntityMap().get(nextEntityId);
+            if (nextEntity == null) {
+                throw new FulfilmentEntityNotFoundException(nextEntityId);
+            }
             
             if (nextEntity.onStartHook().isPresent()) {
                 boolean result = nextEntity.onStartHook().get().apply(new FulfilmentEntityHookInput(nextEntityId, fulfilmentSession));
                 if (!result) {
-                    logger.warn("Next fulfilment entity onStartHook failed, preventing progression to next entity: {}", nextEntityId);
-                    return Optional.empty();
+                    throw new FulfilmentProgressionBlockedException(
+                            "Next fulfilment entity onStartHook blocked progression for session: "
+                                    + fulfilmentSessionId + ", entity: " + nextEntityId);
                 }
             }
 
             return Optional.of(new GetNextFulfilmentEntityResponse(
                     nextEntityId));
+        } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
+                | IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity for session ID: {}",
                     fulfilmentSessionId, e);
@@ -329,7 +338,7 @@ public class FulfilmentService {
             Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId,
                     Optional.empty());
             if (maybeFulfilmentSession.isEmpty()) {
-                return Optional.empty();
+                throw new FulfilmentSessionNotFoundException(fulfilmentSessionId);
             }
 
             FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
@@ -338,23 +347,28 @@ public class FulfilmentService {
             // Find the index of the current entity
             int currentIndex = fulfilmentEntityIds.indexOf(currentEntityId);
             if (currentIndex == -1) {
-                logger.error("Current entity ID not found in session: {} -> {}",
-                        fulfilmentSessionId, currentEntityId);
-                return Optional.empty();
+                throw new FulfilmentEntityNotFoundException(currentEntityId);
             }
 
             FulfilmentEntity currentEntity = fulfilmentSession.getFulfilmentEntityMap().get(currentEntityId);
+            if (currentEntity == null) {
+                throw new FulfilmentEntityNotFoundException(currentEntityId);
+            }
             
             if (currentEntity.onEndHook().isPresent()) {
                 boolean result = currentEntity.onEndHook().get().apply(new FulfilmentEntityHookInput(currentEntityId, fulfilmentSession));
                 if (!result) {
-                    logger.warn("Current fulfilment entity onEndHook failed, preventing progression to next entity: {}", currentEntityId);
-                    return Optional.empty();
+                    throw new FulfilmentProgressionBlockedException(
+                            "Current fulfilment entity is incomplete for session: "
+                                    + fulfilmentSessionId + ", entity: " + currentEntityId);
                 }
             }
 
             // Get the next entity
             return getNextFulfilmentEntity(fulfilmentSessionId, currentIndex);
+        } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
+                | IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity by current ID for session: {}",
                     fulfilmentSessionId, e);

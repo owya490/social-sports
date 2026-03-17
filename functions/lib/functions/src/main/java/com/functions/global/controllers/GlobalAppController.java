@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
+import com.functions.fulfilment.exceptions.FulfilmentProgressionBlockedException;
 import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
 import com.functions.global.handlers.HandlerRegistry;
 import com.functions.global.models.EndpointType;
@@ -74,6 +75,11 @@ public class GlobalAppController implements HttpFunction {
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(UnifiedResponse.success(result)));
 
+        } catch (FulfilmentProgressionBlockedException e) {
+            logger.warn("Fulfilment progression blocked: {}", e.getMessage());
+            response.setStatusCode(400);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
         } catch (IllegalArgumentException e) {
             logger.warn("Bad request: {}", e.getMessage());
             response.setStatusCode(400);
