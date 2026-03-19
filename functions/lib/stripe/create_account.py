@@ -5,6 +5,7 @@
 import json
 import uuid
 from dataclasses import dataclass
+from typing import Optional
 
 import stripe
 from firebase_admin import firestore
@@ -20,15 +21,17 @@ from lib.stripe.commons import ERROR_URL
 class CreateStandardStripeAccountRequest:
   refreshUrl: str
   returnUrl: str
-  organiser: str
+  organiser: Optional[str] = None
   
   def __post_init__(self):
-    if not isinstance(self.refreshUrl, str):
-      raise ValueError("Refresh Url must be provided as a string.")
-    if not isinstance(self.returnUrl, str):
-      raise ValueError("Return Url must be provided as a string.")
-    if not isinstance(self.organiser, str):
-      raise ValueError("Organiser Id must be provided as a string.")
+    if not isinstance(self.refreshUrl, str) or not self.refreshUrl.strip():
+      raise ValueError("Refresh Url must be provided as a non-empty string.")
+    if not isinstance(self.returnUrl, str) or not self.returnUrl.strip():
+      raise ValueError("Return Url must be provided as a non-empty string.")
+    if self.organiser is not None and not isinstance(self.organiser, str):
+      raise ValueError("Organiser Id must be provided as a string if present.")
+    if isinstance(self.organiser, str) and not self.organiser.strip():
+      self.organiser = None
       
 
 @firestore.transactional
@@ -99,17 +102,16 @@ def create_stripe_standard_account(req: https_fn.CallableRequest):
   # Validate the incoming request to contain the necessary fields
   try:
     request_data = CreateStandardStripeAccountRequest(**body_data)
-  except ValueError as v:
+  except (TypeError, ValueError) as v:
     logger.warning(f"Request body did not contain necessary fields. Error was thrown: {v}. Returned status=400")
     return json.dumps({"url": ERROR_URL})
 
-  logger.add_tag("organiser", request_data.organiser)
+  authenticated_organiser = req.auth.uid
 
-  # If the requester uid is not the organiser, return 401
-  if (not req.auth.uid == request_data.organiser):
-    logger.error(f"Authenticated uid does not match with organiser attached in request body. uid={req.auth.uid} organiser={request_data.organiser}")
-    return https_fn.Response(status=401, body_data=json.dumps({"url": ERROR_URL}))
+  if request_data.organiser is not None and request_data.organiser != authenticated_organiser:
+    logger.warning(f"Ignoring organiser attached in request body because it does not match auth uid. uid={authenticated_organiser} organiser={request_data.organiser}")
   
+  logger.add_tag("organiser", authenticated_organiser)
   transaction = db.transaction()
-  organiser_ref = db.collection("Users/Active/Private").document(request_data.organiser)
+  organiser_ref = db.collection("Users/Active/Private").document(authenticated_organiser)
   return check_and_update_organiser_stripe_account(transaction, logger, organiser_ref, request_data.returnUrl, request_data.refreshUrl)

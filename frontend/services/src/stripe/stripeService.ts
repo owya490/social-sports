@@ -12,7 +12,12 @@ interface StripeCreateStandardAccountResponse {
 
 const stripeServiceLogger = new Logger("stripeServiceLogger");
 
-export async function getStripeStandardAccountLink(organiserId: string, returnUrl: string, refreshUrl: string) {
+export async function getStripeStandardAccountLink(organiserId: UserId, returnUrl: string, refreshUrl: string) {
+  if (!organiserId) {
+    stripeServiceLogger.warn("Failed to return Stripe create standard account link. organiserId was empty.");
+    return "/error";
+  }
+
   const content = {
     organiser: organiserId,
     returnUrl: returnUrl,
