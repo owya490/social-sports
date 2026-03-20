@@ -20,6 +20,8 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 
+const SPORTSHUB_ORGANISER_ID = "ZzuRS5v8hhWonnp2qdIOZG8R7f12";
+
 export default function Dashboard() {
   const logger = new Logger("DashboardLogger");
   const [loading, setLoading] = useState<boolean>(true);
@@ -270,7 +272,19 @@ export default function Dashboard() {
                     );
                   })
               : eventDataList
-                  .sort((a, b) => b.accessCount - a.accessCount)
+                  .sort((a, b) => {
+                    const aIsNonSportHub = a.organiserId !== SPORTSHUB_ORGANISER_ID;
+                    const bIsNonSportHub = b.organiserId !== SPORTSHUB_ORGANISER_ID;
+                    // Non-SportHub clubs first
+                    if (aIsNonSportHub && !bIsNonSportHub) return -1;
+                    if (!aIsNonSportHub && bIsNonSportHub) return 1;
+                    // Same group: sort by closest date (ascending)
+                    const aTime = a.startDate?.toMillis?.() ?? 0;
+                    const bTime = b.startDate?.toMillis?.() ?? 0;
+                    if (aTime !== bTime) return aTime - bTime;
+                    // Same date: sort by accessCount descending
+                    return b.accessCount - a.accessCount;
+                  })
                   .map((event, eventIdx) => {
                     return (
                       <EventCard

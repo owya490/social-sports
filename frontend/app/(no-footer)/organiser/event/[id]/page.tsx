@@ -6,19 +6,23 @@ import EventDrilldownCommunicationPage from "@/components/organiser/EventDrilldo
 import EventDrilldownSharePage from "@/components/organiser/EventDrilldownSharePage";
 import EventDrilldownSidePanel from "@/components/organiser/EventDrilldownSidePanel";
 import EventDrilldownStatBanner from "@/components/organiser/EventDrilldownStatBanner";
-import EventDrilldownManageAttendeesPage from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
+import { EventDrilldownManageAttendeesPage } from "@/components/organiser/event/attendee/EventDrilldownManageAttendeesPage";
 import EventDrilldownDetailsPage from "@/components/organiser/event/details/EventDrilldownDetailsPage";
-import EventDrilldownFormsPage from "@/components/organiser/event/forms/EventDrilldownFormsPage";
+import { EventDrilldownFormsPage } from "@/components/organiser/event/forms/EventDrilldownFormsPage";
 import { EventDrilldownImagesPage } from "@/components/organiser/event/images/EventDrilldownImagesPage";
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { getOrdersByIds } from "@/services/src/tickets/orderService";
+import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
@@ -33,7 +37,7 @@ interface EventPageProps {
 
 export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
-  const [_eventData, setEventData] = useState<EventData>();
+  const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [loading, setLoading] = useState<boolean>(true);
   const [eventName, setEventName] = useState<string>("");
   const [eventStartDate, setEventStartDate] = useState<Timestamp>(Timestamp.now());
@@ -62,6 +66,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
+  const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
   const router = useRouter();
 
   const { user } = useUser();
@@ -72,9 +77,14 @@ export default function EventPage({ params }: EventPageProps) {
       return;
     }
 
+    let isActive = true;
+
     const fetchEvent = async () => {
       try {
         const event = await getEventById(eventId);
+        if (!isActive) {
+          return;
+        }
         if (event.organiserId !== user.userId) {
           router.push("/organiser/dashboard");
           return;
@@ -107,26 +117,58 @@ export default function EventPage({ params }: EventPageProps) {
         setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
 
-        const eventMetadata = await getEventsMetadataByEventId(eventId);
-        setEventMetadata(eventMetadata);
+        const nextEventMetadata = await getEventsMetadataByEventId(eventId);
+        if (!isActive) {
+          return;
+        }
+        setEventMetadata(nextEventMetadata);
+
+        const allOrders = await getOrdersByIds(nextEventMetadata.orderIds);
+        const allTickets = await getTicketsByIds(allOrders.flatMap((order) => order.tickets));
+        const nextOrderTicketsMap = new Map<Order, Ticket[]>();
+        allOrders.forEach((order) => {
+          nextOrderTicketsMap.set(
+            order,
+            allTickets.filter((ticket) => ticket.orderId === order.orderId)
+          );
+        });
+        if (!isActive) {
+          return;
+        }
+        setOrderTicketsMap(nextOrderTicketsMap);
 
         try {
-          const totalNetSales = await calculateNetSales(eventMetadata);
-          setTotalNetSales(totalNetSales);
+          const netSales = await calculateNetSales(nextOrderTicketsMap);
+          if (!isActive) {
+            return;
+          }
+          setTotalNetSales(netSales);
         } catch (error) {
           eventServiceLogger.error(`Error calculating net sales: ${error}`);
-          setTotalNetSales(eventMetadata.completeTicketCount * event.price);
+          if (!isActive) {
+            return;
+          }
+          setTotalNetSales(nextEventMetadata.completeTicketCount * event.price);
         }
       } catch (error) {
+        if (!isActive) {
+          return;
+        }
         eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
         router.push("/error");
       } finally {
         await sleep(500);
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
     void fetchEvent();
+
+    return () => {
+      isActive = false;
+    };
   }, [eventId, router, user.userId]);
 
   return (
@@ -190,13 +232,18 @@ export default function EventPage({ params }: EventPageProps) {
             )}
             {currSidebarPage === "Attendees" && (
               <EventDrilldownManageAttendeesPage
+                eventData={eventData}
                 eventMetadata={eventMetadata}
-                eventId={eventId}
-                setEventVacancy={setEventVacancy}
                 setEventMetadata={setEventMetadata}
+                eventId={eventId}
+                orderTicketsMap={orderTicketsMap}
+                setEventVacancy={setEventVacancy}
+                setOrderTicketsMap={setOrderTicketsMap}
               />
             )}
-            {currSidebarPage === "Forms" && <EventDrilldownFormsPage eventId={eventId} eventMetadata={eventMetadata} />}
+            {currSidebarPage === "Forms" && (
+              <EventDrilldownFormsPage eventId={eventId} orderTicketsMap={orderTicketsMap} />
+            )}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
                 user={user}
@@ -211,7 +258,7 @@ export default function EventPage({ params }: EventPageProps) {
             )}
             {currSidebarPage === "Settings" && (
               <EventDrilldownSettingsPage
-                eventMetadata={eventMetadata}
+                orderTicketsMap={orderTicketsMap}
                 eventName={eventName}
                 eventStartDate={eventStartDate}
                 router={router}

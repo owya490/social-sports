@@ -33,7 +33,7 @@ import { ImageSectionResponse } from "./sections/image-section/ImageSectionRespo
 const formResponderLogger = new Logger("formResponderLogger");
 
 export interface FormResponderRef {
-  save: () => Promise<FormResponseId | null>;
+  save: () => Promise<FormResponseId>;
   areAllRequiredFieldsFilled: () => boolean;
   hasUnsavedChanges: () => boolean;
 }
@@ -46,6 +46,7 @@ interface FormResponderCommonProps {
     fulfilmentSessionId: FulfilmentSessionId;
     fulfilmentEntityId: FulfilmentEntityId;
   };
+  onReadyChange?: (isReady: boolean) => void;
   onValidationChange?: (isValid: boolean) => void;
   onSaveLoadingChange?: (isLoading: boolean) => void;
   isEmbedded?: boolean;
@@ -72,6 +73,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       canEditForm,
       isPreview,
       fulfilmentInfo,
+      onReadyChange,
       onValidationChange,
       onSaveLoadingChange,
       isEmbedded = false,
@@ -94,11 +96,17 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       setCanEdit(resolvedCanEditForm ?? canEdit);
     }
 
-    const onSave = async (): Promise<FormResponseId | null> => {
+    const onSave = async (): Promise<FormResponseId> => {
       formResponderLogger.info(`Saving form response for formId: ${formId}, eventId: ${eventId ?? "preview"}`);
-      if (!form) return null;
-      if (!canEdit) return null;
-      if (!eventId) return null;
+      if (!form) {
+        throw new Error("Form is still loading.");
+      }
+      if (!canEdit) {
+        throw new Error("Form cannot be edited.");
+      }
+      if (!eventId) {
+        throw new Error("Form cannot be saved in preview mode.");
+      }
 
       setSaveLoading(true);
       onSaveLoadingChange?.(true);
@@ -147,6 +155,10 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       }),
       [form, canEdit, formResponseIdState, fulfilmentInfo, saveLoading, hasUnsavedChangesState]
     );
+
+    useEffect(() => {
+      onReadyChange?.(!loading);
+    }, [loading, onReadyChange]);
 
     useEffect(() => {
       const fetchFormData = async () => {

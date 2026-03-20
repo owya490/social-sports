@@ -1,21 +1,17 @@
-import { Purchaser } from "@/interfaces/EventTypes";
-
 interface DeleteEventAttendeeCardProps {
   attendeeName: string;
-  purchaser: Purchaser;
+  attendeeEmail: string;
+  ticketCount: number;
 }
 
-const DeleteEventAttendeeCard = ({ attendeeName, purchaser }: DeleteEventAttendeeCardProps) => {
-  const tickets = purchaser.attendees[attendeeName].ticketCount;
-  const email = purchaser.email;
-
+const DeleteEventAttendeeCard = ({ attendeeName, attendeeEmail, ticketCount }: DeleteEventAttendeeCardProps) => {
   return (
-    <div className="grid grid-flow-col justify-stretch py-2 grid-cols-7 flex items-center text-xs md:text-base">
-      <div className="col-span-1 w-14 text-center">{tickets}</div>
+    <div className="grid grid-flow-col justify-stretch py-2 grid-cols-7 items-center text-xs md:text-base">
+      <div className="col-span-1 w-14 text-center">{ticketCount}</div>
 
       <div className="w-10">{attendeeName}</div>
 
-      <div className="col-span-2">{email}</div>
+      <div className="col-span-2">{attendeeEmail}</div>
     </div>
   );
 };

@@ -36,8 +36,10 @@ public class GetNextFulfilmentEntityHandler implements Handler<GetNextFulfilment
                     request.fulfilmentSessionId());
             return maybeResponse.get();
         } else {
-            logger.info("No more fulfilment entities found for session: {}", request.fulfilmentSessionId());
-            throw new RuntimeException("No more fulfilment entities found for session: " + request.fulfilmentSessionId());
+            logger.error("Failed to determine next fulfilment entity for session: {}",
+                    request.fulfilmentSessionId());
+            throw new IllegalArgumentException(
+                    "Failed to determine next fulfilment entity for session: " + request.fulfilmentSessionId());
         }
     }
 }

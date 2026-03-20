@@ -21,3 +21,14 @@ export async function getOrderById(orderId: OrderId): Promise<Order> {
     throw error;
   }
 }
+
+export async function getOrdersByIds(orderIds: OrderId[]): Promise<Order[]> {
+  orderServiceLogger.info(`getOrdersByIds, ${orderIds}`);
+  try {
+    const orders = await Promise.all(orderIds.map((orderId) => getOrderById(orderId)));
+    return orders;
+  } catch (error) {
+    orderServiceLogger.error(`getOrdersByIds ${error}`);
+    throw error;
+  }
+}

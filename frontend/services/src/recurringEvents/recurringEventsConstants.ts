@@ -22,13 +22,13 @@ export interface FrequencyMetadata {
 
 export const RecurringEventsFrequencyMetadata: Record<Frequency, FrequencyMetadata> = {
   [Frequency.WEEKLY]: {
-    maxPriorDaysForEventCreation: 13,
+    maxPriorDaysForEventCreation: 6,
   },
   [Frequency.FORTNIGHTLY]: {
-    maxPriorDaysForEventCreation: 27,
+    maxPriorDaysForEventCreation: 12,
   },
   [Frequency.MONTHLY]: {
-    maxPriorDaysForEventCreation: 59,
+    maxPriorDaysForEventCreation: 21,
   },
 };
 

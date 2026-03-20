@@ -1,9 +1,9 @@
 import Loading from "@/components/loading/Loading";
-import { EventId, EventMetadata, Name, Purchaser } from "@/interfaces/EventTypes";
-import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { getEventById } from "@/services/src/events/eventsService";
-import { removeAttendee } from "@/services/src/organiser/organiserService";
-import { Dialog, Transition, Description, DialogTitle, TransitionChild, DialogPanel } from "@headlessui/react";
+import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
+import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
+import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
 import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
@@ -12,23 +12,25 @@ interface RemoveAttendeeDialogProps {
   setIsRemoveAttendeeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
   isRemoveAttendeeModalOpen: boolean;
-  email: string;
-  purchaser: Purchaser;
-  attendeeName: Name;
+  order: Order;
   eventId: EventId;
-  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  eventData: EventData;
+  tickets: Ticket[];
+  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
+  setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 const RemoveAttendeeDialog = ({
   closeModal,
   isRemoveAttendeeModalOpen,
-  email,
-  purchaser,
-  attendeeName,
+  order,
   eventId,
+  eventData,
+  tickets,
   setEventMetadata,
   setEventVacancy,
+  setOrderTicketsMap,
 }: RemoveAttendeeDialogProps) => {
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -43,17 +45,28 @@ const RemoveAttendeeDialog = ({
   const handleRemoveAttendee = async () => {
     try {
       setLoading(true);
-      await removeAttendee(purchaser, attendeeName, eventId);
-      const updatedEventMetadata = await getEventsMetadataByEventId(eventId);
-      const updatedEventData = await getEventById(eventId);
-      setEventMetadata(updatedEventMetadata);
-      setEventVacancy(updatedEventData.vacancy);
+      await setAttendeeTickets({
+        eventId,
+        orderId: order.orderId,
+        numTickets: 0,
+      });
+      setOrderTicketsMap((prev) => {
+        const next = new Map(prev);
+        const [oldOrder] = Array.from(next.entries()).find(([o]) => o.orderId === order.orderId) ?? [];
+        if (oldOrder) next.delete(oldOrder);
+        return next;
+      });
+      setEventVacancy(eventData.vacancy + tickets.length);
+      setEventMetadata((prev) => ({
+        ...prev,
+        completeTicketCount: prev.completeTicketCount - tickets.length,
+      }));
       setShowSuccessAlert(true);
       setShowErrorMessage(false);
       closeModal();
     } catch (error) {
       handleErrorRemovingAttendee();
-      setErrorMessage(JSON.stringify(error));
+      setErrorMessage((error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -115,7 +128,7 @@ const RemoveAttendeeDialog = ({
                       </Description>
                       <Description className=" text-organiser-dark-gray-text p-2 mb-2 text-sm">
                         You are about to remove
-                        <span className="font-semibold"> {email}</span>.
+                        <span className="font-semibold"> {order.email}</span>.
                       </Description>
 
                       <div className="mt-2 float-right">

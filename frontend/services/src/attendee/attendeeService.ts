@@ -18,7 +18,7 @@ export interface AddAttendeeResponse {
   ticketIds: string[];
 }
 
-export async function addAttendeeViaBackend(request: AddAttendeeRequest): Promise<AddAttendeeResponse> {
+export async function addAttendee(request: AddAttendeeRequest): Promise<AddAttendeeResponse> {
   attendeeServiceLogger.info(
     `addAttendeeViaBackend: eventId=${request.eventId}, email=${request.email}, numTickets=${request.numTickets}`
   );
@@ -47,7 +47,7 @@ export interface SetAttendeeTicketsResponse {
   message: string;
 }
 
-export async function setAttendeeTicketsViaBackend(
+export async function setAttendeeTickets(
   request: SetAttendeeTicketsRequest
 ): Promise<SetAttendeeTicketsResponse> {
   attendeeServiceLogger.info(

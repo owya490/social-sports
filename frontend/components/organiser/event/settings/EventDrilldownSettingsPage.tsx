@@ -1,12 +1,14 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { useUser } from "@/components/utility/UserContext";
-import { EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EventId } from "@/interfaces/EventTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
+import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
-import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,7 +17,7 @@ import DeleteEventModal from "./DeleteEventModal";
 
 interface EventDrilldownSettingsPageProps {
   eventId: EventId;
-  eventMetadata: EventMetadata;
+  orderTicketsMap: Map<Order, Ticket[]>;
   eventName: string;
   eventStartDate: Timestamp;
   router: ReturnType<typeof useRouter>;
@@ -39,7 +41,7 @@ interface EventDrilldownSettingsPageProps {
 
 const EventDrilldownSettingsPage = ({
   eventId,
-  eventMetadata,
+  orderTicketsMap,
   eventName,
   eventStartDate,
   router,
@@ -197,8 +199,7 @@ const EventDrilldownSettingsPage = ({
       <DeleteEventModal
         eventName={eventName}
         eventStartDate={eventStartDate}
-        eventMetadata={eventMetadata}
-        eventId={eventId}
+        orderTicketsMap={orderTicketsMap}
         modalOpen={modalOpen}
         onClose={onClose}
         onConfirm={onConfirm}

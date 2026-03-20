@@ -17,7 +17,7 @@ export enum Frequency {
  */
 export interface ReservedSlot {
   email: string;
-  name: string; // Attendee name (required for purchaserMap)
+  name: string; // Attendee name
   slots: number; // Number of tickets reserved for this email
 }
 
