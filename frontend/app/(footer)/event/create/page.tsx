@@ -14,6 +14,7 @@ import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
 import {
   getImageAndThumbnailUrlsWithDefaults,
@@ -26,6 +27,8 @@ import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+
+const createEventLogger = new Logger("CreateEvent");
 
 export type FormData = {
   startDate: string;
@@ -191,7 +194,7 @@ export default function CreateEvent() {
         router.push(`/event/${eventId}`);
       }
     } catch (e) {
-      console.log(e);
+      createEventLogger.error(`Error creating event: ${e}`);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }

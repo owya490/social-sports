@@ -8,6 +8,7 @@ import Loading from "@/components/loading/Loading";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { Tag, TagId } from "@/interfaces/TagTypes";
 import { URL } from "@/interfaces/Types";
+import { Logger } from "@/observability/logger";
 import { getEventById, incrementEventAccessCountById } from "@/services/src/events/eventsService";
 import { getTagById } from "@/services/src/tagService";
 import { useRouter } from "next/navigation";
@@ -16,6 +17,8 @@ import { useEffect, useState } from "react";
 type EventPageProps = {
   eventId: EventId;
 };
+
+const eventPageLogger = new Logger("EventPage");
 
 export default function EventPage({ eventId }: EventPageProps) {
   const [loading, setLoading] = useState(true);
@@ -55,7 +58,9 @@ export default function EventPage({ eventId }: EventPageProps) {
           setEventTags([]);
         }
 
-        incrementEventAccessCountById(eventId, 1, event.isActive, event.isPrivate);
+        void incrementEventAccessCountById(eventId, 1, event.isActive, event.isPrivate).catch((error) => {
+          eventPageLogger.warn(`Failed to increment event access count for ${eventId}: ${error}`);
+        });
       } catch {
         if (!isActive) {
           return;

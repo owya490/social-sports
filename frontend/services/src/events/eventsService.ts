@@ -77,8 +77,10 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     const batch = externalBatch !== undefined ? externalBatch : writeBatch(db);
     const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate));
     batch.set(docRef, eventDataWithTokens);
-    createEventMetadata(batch, docRef.id as EventId, data);
-    batch.commit();
+    await createEventMetadata(batch, docRef.id as EventId, data);
+    if (externalBatch === undefined) {
+      await batch.commit();
+    }
 
     await runTransaction(db, async (transaction) => {
       const user = await getFullUserById(data.organiserId, transaction);

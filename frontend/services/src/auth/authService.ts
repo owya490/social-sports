@@ -254,7 +254,7 @@ export async function resetUserPassword(email: string): Promise<void> {
     // Send password reset email
     await sendPasswordResetEmail(auth, email);
     // Password reset email sent successfully
-    authServiceLogger.info(`Password reset email sent to ${email}`);
+    authServiceLogger.info("Password reset email sent");
   } catch (error) {
     // Handle errors
     authServiceLogger.error(`Error sending password reset email: ${error}`);
