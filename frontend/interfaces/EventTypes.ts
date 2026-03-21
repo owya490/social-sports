@@ -64,6 +64,10 @@ export interface EventDataWithoutOrganiser extends AbstractEventData {
   eventId: EventId;
 }
 
+export type CreateEventResponse = {
+  eventId: EventId;
+};
+
 export interface DeletedEvent extends AbstractEventData {
   deletedAt: Timestamp;
   organiserEmail: string;

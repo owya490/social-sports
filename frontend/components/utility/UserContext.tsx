@@ -18,14 +18,14 @@ type LoginUserContextType = {
 
 export const LoginUserContext = createContext<LoginUserContextType>({
   userLoading: true,
-  user: EmptyUserData,
+  user: EmptyUserData as UserData,
   setUser: () => {},
   auth,
   refreshUser: async () => {},
 });
 
 export default function UserContext({ children }: { children: any }) {
-  const [user, setUser] = useState<UserData>(EmptyUserData);
+  const [user, setUser] = useState<UserData>(EmptyUserData as UserData);
   const router = useRouter();
   const pathname = usePathname();
   const [userLoading, setUserLoading] = useState(true);
@@ -34,6 +34,10 @@ export default function UserContext({ children }: { children: any }) {
   const LoginRegisterRoutes = ["/register", "/login"];
 
   const refreshUser = async () => {
+    if (!user.userId) {
+      router.push("/error");
+      return;
+    }
     try {
       const userData = await getFullUserByIdForUserContextWithRetries(user.userId);
       setUser(userData);
@@ -57,12 +61,17 @@ export default function UserContext({ children }: { children: any }) {
             const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
             setUser(userData);
           } catch {
-            const userData = await getTempUserData(uid as UserId);
-            if (!userData) {
+            try {
+              const userData = await getTempUserData(uid as UserId);
+              if (!userData) {
+                router.push("/error");
+                return;
+              }
+              setUser(userData);
+            } catch {
               router.push("/error");
               return;
             }
-            setUser(userData);
           }
         } finally {
           setUserLoading(false);
@@ -91,9 +100,13 @@ export default function UserContext({ children }: { children: any }) {
           // redirecting to dashboard, hence we need to do another check to see if they are in the create
           // user workflow
           const { uid } = auth.currentUser;
-          const userData = await getTempUserData(uid as UserId);
-          if (!userData) {
-            router.push("/");
+          try {
+            const userData = await getTempUserData(uid as UserId);
+            if (!userData) {
+              router.push("/");
+            }
+          } catch {
+            router.push("/error");
           }
         }
       }

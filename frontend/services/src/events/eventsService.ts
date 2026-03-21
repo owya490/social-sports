@@ -1,4 +1,5 @@
 import {
+  CreateEventResponse,
   EmptyEventData,
   EventData,
   EventDataWithoutOrganiser,
@@ -52,10 +53,6 @@ import {
 } from "./eventsUtils/getEventsUtils";
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
-
-interface CreateEventResponse {
-  eventId: EventId;
-}
 
 //Function to create a Event
 export async function createEvent(data: NewEventData, externalBatch?: WriteBatch): Promise<EventId> {

@@ -60,7 +60,7 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
     await signOut(auth);
     bustEventsLocalStorageCache();
     bustUserLocalStorageCache();
-    setUser(EmptyUserData);
+    setUser(EmptyUserData as UserData);
     console.log("Signed out!");
   } catch (error) {
     throw error;

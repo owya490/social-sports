@@ -1,4 +1,5 @@
 import { EventId } from "@/interfaces/EventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 
 /**
  * Request to get Sportshub Wrapped data for an organiser.
@@ -8,7 +9,7 @@ import { EventId } from "@/interfaces/EventTypes";
  * If wrappedId is null/undefined, no verification is performed (for organiser's own view).
  */
 export type GetWrappedRequest = {
-  organiserId: string;
+  organiserId: UserId;
   year: number;
   wrappedId?: string; // Optional - if provided, verifies the share link
 };
@@ -22,7 +23,7 @@ export type GetWrappedResponse = {
 
 export type SportshubWrapped = {
   organiserName: string;
-  organiserId: string;
+  organiserId: UserId;
   year: number;
   dateRange: {
     from: string; // ISO date
@@ -56,7 +57,7 @@ export type SportshubWrapped = {
 
 export const mockWrappedData: SportshubWrapped = {
   organiserName: "Sydney Social Sports",
-  organiserId: "1234567890",
+  organiserId: "1234567890" as UserId,
   year: 2025,
   dateRange: {
     from: "2025-01-01",

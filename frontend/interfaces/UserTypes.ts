@@ -53,6 +53,10 @@ export interface UserData extends PublicUserData, PrivateUserData {
   userId: UserId;
 }
 
+export type EmptyUserData = Omit<UserData, "userId"> & {
+  userId: "";
+};
+
 // BEWARE - PLEASE TAKE CARE WHEN EDITING THESE AS THEY WILL AFFECT DESERIALISATION AND DEFAULT USER CREATION
 export const EmptyPublicUserData: PublicUserData = {
   userId: "",
@@ -93,10 +97,10 @@ export const EmptyPrivateUserData: PrivateUserData = {
   privateEventCollections: [],
 };
 
-export const EmptyUserData: UserData = {
+export const EmptyUserData: EmptyUserData = {
   ...EmptyPublicUserData,
   ...EmptyPrivateUserData,
-  userId: "" as UserId,
+  userId: "",
 };
 
 export const EmptyNewUserData: NewUserData = {
