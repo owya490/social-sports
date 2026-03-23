@@ -18,12 +18,12 @@ import {
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
 interface CreateRecurrenceTemplateResponse {
-  eventId: string;
-  recurrenceTemplateId: string;
+  eventId: EventId;
+  recurrenceTemplateId: RecurrenceTemplateId;
 }
 
 interface UpdateRecurrenceTemplateResponse {
-  recurrenceTemplateId: string;
+  recurrenceTemplateId: RecurrenceTemplateId;
 }
 
 export async function createRecurrenceTemplate(

@@ -1,7 +1,10 @@
+"use client";
+
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData } from "@/interfaces/EventTypes";
+import { EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
@@ -16,7 +19,7 @@ import AddFormResponseDialog from "./AddFormResponseDialog";
 import { FormResponsesTable } from "./FormResponsesTable";
 
 interface EventDrilldownFormsPageProps {
-  eventId: string;
+  eventId: EventId;
   orderTicketsMap: Map<Order, Ticket[]>;
 }
 

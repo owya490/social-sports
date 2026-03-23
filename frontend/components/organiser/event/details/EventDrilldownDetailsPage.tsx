@@ -1,4 +1,6 @@
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import Skeleton from "react-loading-skeleton";
@@ -6,7 +8,7 @@ import { EventDescriptionEdit } from "./EventDescriptionEdit";
 import { EventDetailsEdit } from "./EventDetailsEdit";
 import { EventNameEdit } from "./EventNameEdit";
 
-interface EventDrilldownDetailsPageProps {
+interface EventDrilldownDetailsPageProps<T extends EventId | RecurrenceTemplateId> {
   loading: boolean;
   eventName: string;
   eventStartDate: Timestamp;
@@ -18,16 +20,16 @@ interface EventDrilldownDetailsPageProps {
   eventVacancy: number;
   eventPrice: number;
   eventImage: string;
-  eventId: string;
+  eventId: T;
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
   isActive: boolean;
-  updateData: (id: string, data: any) => any;
+  updateData: (id: T, data: Partial<EventData>) => Promise<void>;
   isRecurrenceTemplate: boolean;
   eventFormId: FormId | null;
 }
 
-const EventDrilldownDetailsPage = ({
+const EventDrilldownDetailsPage = <T extends EventId | RecurrenceTemplateId>({
   loading,
   eventName,
   eventStartDate,
@@ -46,7 +48,7 @@ const EventDrilldownDetailsPage = ({
   updateData,
   isRecurrenceTemplate,
   eventFormId,
-}: EventDrilldownDetailsPageProps) => {
+}: EventDrilldownDetailsPageProps<T>) => {
   return (
     <div className="flex flex-col space-y-4 mb-6">
       <div>

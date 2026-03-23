@@ -6,48 +6,79 @@ import EventImage from "@/components/events/EventImage";
 import RecommendedEvents from "@/components/events/RecommendedEvents";
 import Loading from "@/components/loading/Loading";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
-import { Tag } from "@/interfaces/TagTypes";
+import { Tag, TagId } from "@/interfaces/TagTypes";
 import { URL } from "@/interfaces/Types";
+import { Logger } from "@/observability/logger";
 import { getEventById, incrementEventAccessCountById } from "@/services/src/events/eventsService";
 import { getTagById } from "@/services/src/tagService";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function EventPage({ params }: any) {
-  const eventId: EventId = params.id;
+type EventPageProps = {
+  eventId: EventId;
+};
+
+const eventPageLogger = new Logger("EventPage");
+
+export default function EventPage({ eventId }: EventPageProps) {
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [eventTags, setEventTags] = useState<Tag[]>([]);
   const router = useRouter();
 
   useEffect(() => {
+    let isActive = true;
+
     if (eventId === "404") {
       router.push("/not-found");
       return;
     }
 
-    getEventById(eventId)
-      .then((event) => {
-        setEventData(event);
-        if (event.eventTags && typeof event.eventTags === "object") {
-          event.eventTags.map((tagId) => {
-            getTagById(tagId).then((tag) => {
-              setEventTags([...eventTags, tag]);
-            });
-          });
+    const loadEvent = async () => {
+      try {
+        const event = await getEventById(eventId);
+        if (!isActive) {
+          return;
         }
 
-        incrementEventAccessCountById(eventId, 1, event.isActive, event.isPrivate);
-      })
-      .finally(() => {
-        setLoading(false);
-      })
-      .catch(() => {
-        router.push("/error");
-      });
+        setEventData(event);
 
-    //  eslint-disable-next-line
-  }, []);
+        if (Array.isArray(event.eventTags) && event.eventTags.length > 0) {
+          const tagResults = await Promise.allSettled(event.eventTags.map((tagId) => getTagById(tagId as TagId)));
+          if (!isActive) {
+            return;
+          }
+
+          setEventTags(
+            tagResults.flatMap((result) => {
+              return result.status === "fulfilled" ? [result.value] : [];
+            })
+          );
+        } else {
+          setEventTags([]);
+        }
+
+        void incrementEventAccessCountById(eventId, 1, event.isActive, event.isPrivate).catch((error) => {
+          eventPageLogger.warn(`Failed to increment event access count for ${eventId}: ${error}`);
+        });
+      } catch {
+        if (!isActive) {
+          return;
+        }
+        router.push("/error");
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadEvent();
+
+    return () => {
+      isActive = false;
+    };
+  }, [eventId, router]);
 
   return loading ? (
     <Loading />

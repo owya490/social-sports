@@ -1,3 +1,6 @@
+import { EventId } from "@/interfaces/EventTypes";
+import { UserId } from "@/interfaces/UserTypes";
+
 /**
  * Request to get Sportshub Wrapped data for an organiser.
  *
@@ -6,7 +9,7 @@
  * If wrappedId is null/undefined, no verification is performed (for organiser's own view).
  */
 export type GetWrappedRequest = {
-  organiserId: string;
+  organiserId: UserId;
   year: number;
   wrappedId?: string; // Optional - if provided, verifies the share link
 };
@@ -20,7 +23,7 @@ export type GetWrappedResponse = {
 
 export type SportshubWrapped = {
   organiserName: string;
-  organiserId: string;
+  organiserId: UserId;
   year: number;
   dateRange: {
     from: string; // ISO date
@@ -39,7 +42,7 @@ export type SportshubWrapped = {
   }[];
 
   mostPopularEvent: {
-    eventId: string;
+    eventId: EventId;
     eventImage: string;
     name: string;
     attendance: number;
@@ -54,7 +57,7 @@ export type SportshubWrapped = {
 
 export const mockWrappedData: SportshubWrapped = {
   organiserName: "Sydney Social Sports",
-  organiserId: "1234567890",
+  organiserId: "1234567890" as UserId,
   year: 2025,
   dateRange: {
     from: "2025-01-01",
@@ -77,7 +80,7 @@ export const mockWrappedData: SportshubWrapped = {
   mostPopularEvent: {
     eventImage:
       "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fc5vFAZ3NlSXVuHGrwlkCjJr3RXX2%2FeventThumbnails%2F0e4265ae-9387-4455-a757-c14cddd41454_1757329424559?alt=media&token=41987621-2527-4cc0-bd4b-65647530788b",
-    eventId: "cr52yV7whtZnyAzVjTCF",
+    eventId: "cr52yV7whtZnyAzVjTCF" as EventId,
     name: "Summer Beach Volleyball Championship",
     attendance: 256,
     revenue: 1280000, // $12,800.00

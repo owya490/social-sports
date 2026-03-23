@@ -1,10 +1,9 @@
-import { EventData, EventMetadata } from "@/interfaces/EventTypes";
+import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { Toaster } from "react-hot-toast";
 import InviteAttendeeDialog from "./AddAttendeeDialog";
 import { ViewAttendeeFormResponsesDialog } from "./ViewAttendeeFormResponsesDialog";
 import { ApprovedAttendeeTab } from "./tabs/ApprovedAttendeeTab";
@@ -12,7 +11,7 @@ import { ApprovedAttendeeTab } from "./tabs/ApprovedAttendeeTab";
 interface EventDrilldownManageAttendeesPageProps {
   eventMetadata: EventMetadata;
   setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
-  eventId: string;
+  eventId: EventId;
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   orderTicketsMap: Map<Order, Ticket[]>;
@@ -74,17 +73,6 @@ export const EventDrilldownManageAttendeesPage = ({
 
   return (
     <div className="flex flex-col space-y-4 mb-20 w-full p-1 pt-3 md:p-0">
-      <Toaster
-        position="bottom-left"
-        toastOptions={{
-          duration: 10000,
-          style: {
-            fontSize: "16px",
-            maxWidth: "500px",
-            padding: "16px 20px",
-          },
-        }}
-      />
       {/* Tabs */}
       <div className="flex md:space-x-1 border-b border-gray-300">
         <button

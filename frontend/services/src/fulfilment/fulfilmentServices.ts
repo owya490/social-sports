@@ -2,8 +2,9 @@ import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
 import {
   FulfilmentEntityId,
-  FulfilmentSessionId,
   FulfilmentSessionDataType,
+  FulfilmentSessionId,
+  FulfilmentSessionType,
   GetFulfilmentEntityInfoRequest,
   GetFulfilmentEntityInfoResponse,
   GetFulfilmentSessionInfoRequest,
@@ -14,7 +15,6 @@ import {
   GetPrevFulfilmentEntityResponse,
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
-  FulfilmentSessionType,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
@@ -26,9 +26,6 @@ import {
   getStoredFulfilmentSessionId,
   storeFulfilmentSessionId,
 } from "./fulfilmentUtils/fulfilmentUtils";
-
-// Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = true;
 
 const fulfilmentSessionEnabledUserIdList = [
   // "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
@@ -47,16 +44,6 @@ const fulfilmentSessionEnabledEventIdList: string[] = [
   // "5p3V3XRykiYZava8WAM8",
   // "0kcqoQMnRE9OV3ezstZt", // syrio jersey
 ];
-
-export const evaluateFulfilmentSessionEnabled = (userId: string, eventId: EventId) => {
-  // if (userId && fulfilmentSessionEnabledUserIdList.includes(userId)) {
-  //   return true;
-  // }
-  // if (eventId && fulfilmentSessionEnabledEventIdList.includes(eventId)) {
-  //   return true;
-  // }
-  return FULFILMENT_SESSION_ENABLED;
-};
 
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 

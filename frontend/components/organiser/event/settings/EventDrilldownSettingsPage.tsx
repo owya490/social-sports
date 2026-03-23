@@ -1,5 +1,6 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { useUser } from "@/components/utility/UserContext";
+import { EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
@@ -15,7 +16,7 @@ import { LabelledSwitch } from "../../../elements/LabelledSwitch";
 import DeleteEventModal from "./DeleteEventModal";
 
 interface EventDrilldownSettingsPageProps {
-  eventId: string;
+  eventId: EventId;
   orderTicketsMap: Map<Order, Ticket[]>;
   eventName: string;
   eventStartDate: Timestamp;

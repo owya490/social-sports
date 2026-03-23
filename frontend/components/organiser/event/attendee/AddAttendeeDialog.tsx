@@ -1,6 +1,6 @@
 import Loading from "@/components/loading/Loading";
-import { EventData, EventMetadata } from "@/interfaces/EventTypes";
-import { EMPTY_ORDER, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
+import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
+import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { addAttendee } from "@/services/src/attendee/attendeeService";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
@@ -15,7 +15,7 @@ interface InviteAttendeeDialogProps {
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
   isFilterModalOpen: boolean;
-  eventId: string;
+  eventId: EventId;
   setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
   setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
@@ -67,21 +67,21 @@ const InviteAttendeeDialog = ({
       });
       const now = Timestamp.now();
       const newOrder: Order = {
-        ...EMPTY_ORDER,
-        orderId,
+        ...EMPTY_ORDER_DEFAULTS,
+        orderId: orderId as OrderId,
         email: attendeeEmail,
         fullName: attendeeName,
         phone: attendeePhoneNumber,
-        tickets: ticketIds,
+        tickets: ticketIds as TicketId[],
         datePurchased: now,
         status: OrderAndTicketStatus.APPROVED,
         type: OrderAndTicketType.MANUAL,
       };
       const newTickets: Ticket[] = ticketIds.map((ticketId) => ({
         ...EMPTY_TICKET,
-        ticketId,
+        ticketId: ticketId as TicketId,
         eventId,
-        orderId,
+        orderId: orderId as OrderId,
         purchaseDate: now,
         status: OrderAndTicketStatus.APPROVED,
         type: OrderAndTicketType.MANUAL,

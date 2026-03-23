@@ -1,6 +1,6 @@
 "use client";
 import DownloadCsvButton from "@/components/DownloadCsvButton";
-import { EventData, EventMetadata } from "@/interfaces/EventTypes";
+import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
@@ -19,7 +19,7 @@ import RemoveAttendeeDialog from "../RemoveAttendeeDialog";
 interface ApprovedAttendeeActionsProps {
   order: Order;
   tickets: Ticket[];
-  eventId: string;
+  eventId: EventId;
   eventData: EventData;
   setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
@@ -133,7 +133,7 @@ export const ApprovedAttendeeActions = ({
 
 interface ApprovedAttendeeTabProps {
   approvedOrderTicketsMap: Map<Order, Ticket[]>;
-  eventId: string;
+  eventId: EventId;
   loadingApprovedOrders: boolean;
   eventData: EventData;
   setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;

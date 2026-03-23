@@ -35,7 +35,6 @@ interface EventPageProps {
   };
 }
 
-//brians
 export default function EventPage({ params }: EventPageProps) {
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
@@ -72,76 +71,105 @@ export default function EventPage({ params }: EventPageProps) {
 
   const { user } = useUser();
 
-  const eventId: EventId = params.id;
+  const eventId = params.id as EventId;
   useEffect(() => {
-    if (user.userId) {
-      getEventById(eventId)
-        .then((event) => {
-          if (event.organiserId !== user.userId) {
-            router.push("/organiser/dashboard");
-            return EmptyEventData;
-          }
-          setEventData(event);
-          setEventName(event.name);
-          setEventStartDate(event.startDate);
-          setEventEndDate(event.endDate);
-          setEventOrganiser(event.organiser);
-          setEventVacancy(event.vacancy);
-          setEventDescription(event.description);
-          setEventLocation(event.location);
-          setEventSport(event.sport);
-          setEventPrice(event.price);
-          setEventImage(event.image);
-          setEventThumbnail(event.thumbnail);
-          setEventAccessCount(event.accessCount);
-          setEventCapacity(event.capacity);
-          setEventPaused(event.paused);
-          setEventPaymentsActive(event.paymentsActive);
-          setEventRegistrationDeadline(event.registrationDeadline);
-          setEventEventLink(event.eventLink);
-          setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
-          setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
-          setEventIsActive(event.isActive);
-          setEventFormId(event.formId);
-          setEventHideVacancy(event.hideVacancy);
-          setEventWaitlistEnabled(event.waitlistEnabled);
-          setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
-          setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
-          return event;
-        })
-        .then((event) => {
-          getEventsMetadataByEventId(eventId).then(async (eventMetadata) => {
-            setEventMetadata(eventMetadata);
-            const allOrders = await getOrdersByIds(eventMetadata.orderIds);
-            const allTickets = await getTicketsByIds(allOrders.flatMap((order) => order.tickets));
-            const orderTicketsMap = new Map<Order, Ticket[]>();
-            allOrders.forEach((order) => {
-              orderTicketsMap.set(
-                order,
-                allTickets.filter((ticket) => ticket.orderId === order.orderId)
-              );
-            });
-            setOrderTicketsMap(orderTicketsMap);
-            calculateNetSales(orderTicketsMap)
-              .then((totalNetSales) => {
-                setTotalNetSales(totalNetSales);
-              })
-              .catch((error) => {
-                eventServiceLogger.error(`Error calculating net sales: ${error}`);
-                setTotalNetSales(eventMetadata.completeTicketCount * event.price);
-              });
-          });
-        })
-        .finally(async () => {
-          await sleep(500);
-          setLoading(false);
-        })
-        .catch((error) => {
-          eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
-          router.push("/error");
-        });
+    if (!user.userId) {
+      return;
     }
-  }, [user.userId]);
+
+    let isActive = true;
+
+    const fetchEvent = async () => {
+      try {
+        const event = await getEventById(eventId);
+        if (!isActive) {
+          return;
+        }
+        if (event.organiserId !== user.userId) {
+          router.push("/organiser/dashboard");
+          return;
+        }
+
+        setEventData(event);
+        setEventName(event.name);
+        setEventStartDate(event.startDate);
+        setEventEndDate(event.endDate);
+        setEventOrganiser(event.organiser);
+        setEventVacancy(event.vacancy);
+        setEventDescription(event.description);
+        setEventLocation(event.location);
+        setEventSport(event.sport);
+        setEventPrice(event.price);
+        setEventImage(event.image);
+        setEventThumbnail(event.thumbnail);
+        setEventAccessCount(event.accessCount);
+        setEventCapacity(event.capacity);
+        setEventPaused(event.paused);
+        setEventPaymentsActive(event.paymentsActive);
+        setEventRegistrationDeadline(event.registrationDeadline);
+        setEventEventLink(event.eventLink);
+        setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
+        setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
+        setEventIsActive(event.isActive);
+        setEventFormId(event.formId);
+        setEventHideVacancy(event.hideVacancy);
+        setEventWaitlistEnabled(event.waitlistEnabled);
+        setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
+        setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
+
+        const nextEventMetadata = await getEventsMetadataByEventId(eventId);
+        if (!isActive) {
+          return;
+        }
+        setEventMetadata(nextEventMetadata);
+
+        const allOrders = await getOrdersByIds(nextEventMetadata.orderIds);
+        const allTickets = await getTicketsByIds(allOrders.flatMap((order) => order.tickets));
+        const nextOrderTicketsMap = new Map<Order, Ticket[]>();
+        allOrders.forEach((order) => {
+          nextOrderTicketsMap.set(
+            order,
+            allTickets.filter((ticket) => ticket.orderId === order.orderId)
+          );
+        });
+        if (!isActive) {
+          return;
+        }
+        setOrderTicketsMap(nextOrderTicketsMap);
+
+        try {
+          const netSales = await calculateNetSales(nextOrderTicketsMap);
+          if (!isActive) {
+            return;
+          }
+          setTotalNetSales(netSales);
+        } catch (error) {
+          eventServiceLogger.error(`Error calculating net sales: ${error}`);
+          if (!isActive) {
+            return;
+          }
+          setTotalNetSales(nextEventMetadata.completeTicketCount * event.price);
+        }
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+        eventServiceLogger.error(`Error fetching event by eventId for organiser event drilldown: ${error}`);
+        router.push("/error");
+      } finally {
+        await sleep(500);
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchEvent();
+
+    return () => {
+      isActive = false;
+    };
+  }, [eventId, router, user.userId]);
 
   return (
     <>
@@ -174,7 +202,6 @@ export default function EventPage({ params }: EventPageProps) {
               setCurrSidebarPage={setCurrSidebarPage}
               eventName={eventName}
               eventStartDate={eventStartDate}
-              user={user}
             />
           </div>
           <div className="flex-1 w-full mb-20 sm:mb-0">

@@ -1,7 +1,6 @@
 "use client";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyUserData } from "@/interfaces/UserTypes";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
@@ -13,8 +12,9 @@ export default function RefreshAccountLink() {
   const router = useRouter();
   useEffect(() => {
     // If user is not logged in, cannot activate RefreshAccountLink as will trigger error.
-    if (user !== null && user === EmptyUserData) {
+    if (!user.userId) {
       router.push("/error");
+      return;
     }
     const returnUrl = getUrlWithCurrentHostname("/organiser/dashboard");
     const refreshUrl = getRefreshAccountLinkUrl();

@@ -4,7 +4,7 @@ import CollectionBanner from "@/components/collections/CollectionBanner";
 import EventCard from "@/components/events/EventCard";
 import Loading from "@/components/loading/Loading";
 import OrganiserCalendar from "@/components/users/profile/OrganiserCalendar";
-import { EMPTY_EVENT_COLLECTION, EventCollection } from "@/interfaces/EventCollectionTypes";
+import { EMPTY_EVENT_COLLECTION, EventCollection, EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
@@ -28,7 +28,7 @@ interface EventCollectionPageProps {
 const logger = new Logger("EventCollectionPage");
 
 export default function EventCollectionPage({ params }: EventCollectionPageProps) {
-  const collectionId = params.id;
+  const collectionId = params.id as EventCollectionId;
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -39,14 +39,27 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
 
   useEffect(() => {
+    let isActive = true;
+
     const fetchCollectionData = async () => {
+      setLoading(true);
+
       try {
         // Fetch the collection
         const collectionData = await getEventCollectionById(collectionId);
+        if (!isActive) {
+          return;
+        }
         setCollection(collectionData);
 
         // Fetch the organiser
+        if (!collectionData.organiserId) {
+          throw new Error(`Event collection ${collectionId} is missing organiserId`);
+        }
         const organiserData = await getPublicUserById(collectionData.organiserId);
+        if (!isActive) {
+          return;
+        }
         setOrganiser(organiserData);
 
         // Fetch all events in the collection
@@ -66,10 +79,16 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
         const upcoming = validEvents.filter((event: EventData) => event.startDate.toDate() >= now);
         const past = validEvents.filter((event: EventData) => event.startDate.toDate() < now);
 
+        if (!isActive) {
+          return;
+        }
         setUpcomingEvents(upcoming);
         setPastEvents(past);
         setLoading(false);
       } catch (error) {
+        if (!isActive) {
+          return;
+        }
         if (error instanceof EventCollectionNotFoundError) {
           router.push("/not-found");
           return;
@@ -80,7 +99,11 @@ export default function EventCollectionPage({ params }: EventCollectionPageProps
     };
 
     fetchCollectionData();
-  }, []);
+
+    return () => {
+      isActive = false;
+    };
+  }, [collectionId, router]);
 
   return loading ? (
     <Loading />
