@@ -288,6 +288,10 @@ public class WebhookService {
         return OrderAndTicketStatus.APPROVED;
     }
 
+    static boolean shouldRecordAttendanceForStatus(OrderAndTicketStatus status) {
+        return status == OrderAndTicketStatus.APPROVED;
+    }
+
     static EventMetadata initializeEventMetadata(EventMetadata eventMetadata, String organiserId) {
         EventMetadata resolvedMetadata = eventMetadata != null ? eventMetadata : new EventMetadata();
 
@@ -311,6 +315,138 @@ public class WebhookService {
         }
 
         return resolvedMetadata;
+    }
+
+    static EventMetadata applyAttendanceToEventMetadata(
+            EventMetadata eventMetadata,
+            String organiserId,
+            String customerEmail,
+            String fullName,
+            String phoneNumber,
+            int ticketCount,
+            List<String> formResponseIds) {
+
+        if (customerEmail == null || customerEmail.isBlank()) {
+            throw new IllegalArgumentException("Customer email is required to update event metadata.");
+        }
+        if (fullName == null || fullName.isBlank()) {
+            throw new IllegalArgumentException("Attendee full name is required to update event metadata.");
+        }
+        if (ticketCount <= 0) {
+            throw new IllegalArgumentException("Ticket count must be positive to update event metadata.");
+        }
+
+        EventMetadata resolvedMetadata = initializeEventMetadata(eventMetadata, organiserId);
+        Map<String, Purchaser> purchaserMap = resolvedMetadata.getPurchaserMap();
+
+        String emailHash = hashEmail(customerEmail);
+        Purchaser purchaser = purchaserMap.get(emailHash);
+        if (purchaser == null) {
+            purchaser = new Purchaser();
+            purchaser.setEmail(customerEmail);
+            purchaser.setAttendees(new HashMap<>());
+            purchaser.setTotalTicketCount(0);
+        }
+
+        purchaser.setEmail(customerEmail);
+        purchaser.setTotalTicketCount(purchaser.getTotalTicketCount() + ticketCount);
+
+        Map<String, Attendee> attendees = purchaser.getAttendees();
+        if (attendees == null) {
+            attendees = new HashMap<>();
+            purchaser.setAttendees(attendees);
+        }
+
+        Attendee attendee = attendees.get(fullName);
+        if (attendee == null) {
+            attendee = new Attendee();
+            attendee.setPhone(phoneNumber);
+            attendee.setTicketCount(ticketCount);
+            attendee.setFormResponseIds(formResponseIds != null ? new ArrayList<>(formResponseIds) : new ArrayList<>());
+        } else {
+            attendee.setPhone(phoneNumber);
+            attendee.setTicketCount(attendee.getTicketCount() + ticketCount);
+
+            List<String> existingFormResponses = attendee.getFormResponseIds();
+            if (existingFormResponses == null) {
+                existingFormResponses = new ArrayList<>();
+            }
+            if (formResponseIds != null && !formResponseIds.isEmpty()) {
+                for (String formResponseId : formResponseIds) {
+                    if (formResponseId != null
+                            && !formResponseId.isBlank()
+                            && !existingFormResponses.contains(formResponseId)) {
+                        existingFormResponses.add(formResponseId);
+                    }
+                }
+            }
+            attendee.setFormResponseIds(existingFormResponses);
+        }
+
+        attendees.put(fullName, attendee);
+        purchaserMap.put(emailHash, purchaser);
+        resolvedMetadata.setCompleteTicketCount(resolvedMetadata.getCompleteTicketCount() + ticketCount);
+
+        return resolvedMetadata;
+    }
+
+    public static void recordApprovedOrderAttendance(
+            Transaction transaction,
+            Order order,
+            List<Ticket> tickets) throws Exception {
+
+        if (order == null) {
+            throw new IllegalArgumentException("Order is required to record approved attendance.");
+        }
+        if (tickets == null || tickets.isEmpty()) {
+            throw new IllegalArgumentException("At least one ticket is required to record approved attendance.");
+        }
+
+        String eventId = tickets.get(0).getEventId();
+        if (eventId == null || eventId.isBlank()) {
+            throw new IllegalArgumentException("Ticket eventId is required to record approved attendance.");
+        }
+
+        Optional<EventData> eventOptional = com.functions.events.repositories.EventsRepository
+                .getEventById(eventId, Optional.of(transaction));
+        if (eventOptional.isEmpty()) {
+            throw new IllegalArgumentException("Event not found while recording approved attendance. eventId=" + eventId);
+        }
+
+        EventData event = eventOptional.get();
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
+        DocumentSnapshot eventMetadataSnapshot = transaction.get(eventMetadataRef).get();
+        EventMetadata eventMetadata = eventMetadataSnapshot.exists()
+                ? eventMetadataSnapshot.toObject(EventMetadata.class)
+                : null;
+
+        List<String> formResponseIds = new ArrayList<>();
+        for (Ticket ticket : tickets) {
+            String formResponseId = ticket.getFormResponseId();
+            if (formResponseId != null && !formResponseId.isBlank() && !formResponseIds.contains(formResponseId)) {
+                formResponseIds.add(formResponseId);
+            }
+        }
+
+        EventMetadata updatedMetadata = applyAttendanceToEventMetadata(
+                eventMetadata,
+                event.getOrganiserId(),
+                order.getEmail(),
+                order.getFullName(),
+                order.getPhone(),
+                tickets.size(),
+                formResponseIds);
+        transaction.set(eventMetadataRef, updatedMetadata);
+    }
+
+    private static void appendUniqueValue(List<String> values, String value) {
+        if (values == null || value == null || value.isBlank()) {
+            return;
+        }
+        if (!values.contains(value)) {
+            values.add(value);
+        }
     }
     
     /**
@@ -393,82 +529,13 @@ public class WebhookService {
             return null;
         }
         
-        // Hash the email for use as a Firestore key
-        String emailHash = hashEmail(customerEmail);
-        
         // Read event metadata
         ApiFuture<DocumentSnapshot> metadataFuture = transaction.get(eventMetadataRef);
         DocumentSnapshot maybeEventMetadata = metadataFuture.get();
         
         boolean metadataExists = maybeEventMetadata.exists();
         EventMetadata existingEventMetadata = metadataExists ? maybeEventMetadata.toObject(EventMetadata.class) : null;
-        boolean shouldCreateMetadataDocument = !metadataExists || existingEventMetadata == null;
         EventMetadata eventMetadata = initializeEventMetadata(existingEventMetadata, event.getOrganiserId());
-        
-        logger.info("Event metadata: {}", eventMetadata);
-        Map<String, Purchaser> purchaserMap = eventMetadata.getPurchaserMap();
-        
-        // Initialize purchaser if doesn't exist
-        Purchaser purchaser = purchaserMap.get(emailHash);
-        if (purchaser == null) {
-            purchaser = new Purchaser();
-            purchaser.setEmail(customerEmail);
-            purchaser.setAttendees(new HashMap<>());
-            purchaser.setTotalTicketCount(0);
-        }
-        
-        // Update purchaser information
-        purchaser.setEmail(customerEmail);
-        purchaser.setTotalTicketCount(purchaser.getTotalTicketCount() + quantity.intValue());
-        
-        // Update attendee information
-        Map<String, Attendee> attendees = purchaser.getAttendees();
-        if (attendees == null) {
-            attendees = new HashMap<>();
-            purchaser.setAttendees(attendees);
-        }
-        
-        Attendee attendee = attendees.get(fullName);
-        if (attendee == null) {
-            attendee = new Attendee();
-            attendee.setPhone(phoneNumber);
-            attendee.setTicketCount(quantity.intValue());
-            attendee.setFormResponseIds(formResponseIds != null ? new ArrayList<>(formResponseIds) : new ArrayList<>());
-        } else {
-            attendee.setPhone(phoneNumber);
-            attendee.setTicketCount(attendee.getTicketCount() + quantity.intValue());
-            
-            // Merge form response IDs (avoid duplicates)
-            List<String> existingFormResponses = attendee.getFormResponseIds();
-            if (existingFormResponses == null) {
-                existingFormResponses = new ArrayList<>();
-            }
-            if (formResponseIds != null && !formResponseIds.isEmpty()) {
-                for (String formResponseId : formResponseIds) {
-                    if (!existingFormResponses.contains(formResponseId)) {
-                        existingFormResponses.add(formResponseId);
-                    }
-                }
-            }
-            attendee.setFormResponseIds(existingFormResponses);
-        }
-        attendees.put(fullName, attendee);
-        purchaserMap.put(emailHash, purchaser);
-        
-        // Prepare update for event metadata
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("purchaserMap." + emailHash, purchaser);
-        updates.put("completeTicketCount", FieldValue.increment(quantity));
-        
-        if (shouldCreateMetadataDocument) {
-            eventMetadata.setCompleteTicketCount(eventMetadata.getCompleteTicketCount() + quantity.intValue());
-            transaction.set(eventMetadataRef, eventMetadata);
-        } else {
-            transaction.update(eventMetadataRef, updates);
-        }
-        
-        logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}",
-                LogSanitizer.redactEmail(customerEmail), fullName);
         
         // Create order and tickets
         Timestamp purchaseTime = Timestamp.now();
@@ -482,6 +549,21 @@ public class WebhookService {
         
         // Resolve status based on capture method
         OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
+        if (shouldRecordAttendanceForStatus(status)) {
+            eventMetadata = applyAttendanceToEventMetadata(
+                    eventMetadata,
+                    event.getOrganiserId(),
+                    customerEmail,
+                    fullName,
+                    phoneNumber,
+                    quantity.intValue(),
+                    formResponseIds);
+            logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}",
+                    LogSanitizer.redactEmail(customerEmail), fullName);
+        } else {
+            logger.info("Skipping attendee metadata update for session {} because order status is {}",
+                    checkoutSessionId, status);
+        }
         
         List<String> ticketIds = new ArrayList<>();
         
@@ -520,13 +602,10 @@ public class WebhookService {
         order.setStatus(status);
         
         transaction.set(orderRef, order);
-        
-        // Update event metadata with order ID
-        transaction.update(eventMetadataRef, "orderIds", FieldValue.arrayUnion(orderRef.getId()));
-        
-        // Record the checkout session ID to ensure idempotency
-        transaction.update(eventMetadataRef, "completedStripeCheckoutSessionIds", 
-                          FieldValue.arrayUnion(checkoutSessionId));
+
+        appendUniqueValue(eventMetadata.getOrderIds(), orderRef.getId());
+        appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
+        transaction.set(eventMetadataRef, eventMetadata);
         
         return orderRef.getId();
     }

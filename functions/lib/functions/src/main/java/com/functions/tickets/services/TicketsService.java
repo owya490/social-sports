@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.stripe.services.WebhookService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
@@ -89,6 +90,14 @@ public class TicketsService {
             Order order = OrdersRepository.getOrderById(orderId, Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Order not found " + orderId));
             List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets(), Optional.of(transaction));
+            OrderAndTicketStatus currentStatus = order.getStatus();
+
+            if (currentStatus != orderAndTicketStatus
+                    && currentStatus != OrderAndTicketStatus.APPROVED
+                    && orderAndTicketStatus == OrderAndTicketStatus.APPROVED) {
+                WebhookService.recordApprovedOrderAttendance(transaction, order, tickets);
+            }
+
             for (Ticket ticket : tickets) {
                 ticket.setStatus(orderAndTicketStatus);
                 TicketsRepository.updateTicket(ticket.getTicketId(), ticket, Optional.of(transaction));
