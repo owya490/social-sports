@@ -10,6 +10,7 @@ import HeroSection from "../../../components/landing/HeroSection";
 import ImageHero from "../../../components/landing/ImageHero";
 import ImageHeroPhone from "../../../components/landing/ImageHeroPhone";
 import PaymentsSection from "../../../components/landing/PaymentsSection";
+import PricingComparisonSection from "../../../components/landing/PricingComparisonSection";
 import SportsClubsSection from "../../../components/landing/SportsClubsSection";
 import TechPlatformSection from "../../../components/landing/TechPlatformSection";
 
@@ -30,6 +31,8 @@ export default function Home() {
       <FeatureTilesSection />
 
       <PaymentsSection />
+
+      <PricingComparisonSection />
 
       {/* Feature Overview */}
       <FeatureOverviewSection />
