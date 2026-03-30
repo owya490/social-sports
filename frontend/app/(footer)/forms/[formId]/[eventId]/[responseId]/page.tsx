@@ -24,7 +24,7 @@ export default function PublicFormResponsePreviewPage() {
   return (
     <div className="min-h-[calc(100vh-var(--footer-height))] overflow-hidden bg-core-hover">
       <div className="h-full max-h-[calc(100vh-var(--footer-height))] overflow-y-auto pt-10 pb-24 sm:pb-20">
-        <FormResponder formId={formId} eventId={eventId} formResponseId={responseId} isPreview={true} />
+        <FormResponder formId={formId} eventId={eventId} formResponseId={responseId} />
       </div>
     </div>
   );
