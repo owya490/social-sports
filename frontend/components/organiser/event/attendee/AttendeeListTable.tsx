@@ -1,5 +1,6 @@
 import { OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { UserCircleIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
 import { ReactNode } from "react";
 
 export const MANUAL_ORDER_ID_PREFIX = "manual-";
@@ -77,8 +78,16 @@ const AttendeeListTable = <T extends AttendeeRowData>({
                 {(item as any).order?.orderId &&
                   !(item as any).order?.orderId?.startsWith("legacy-") &&
                   !(item as any).order?.orderId?.startsWith("manual-") && (
-                    <div className="text-[10px] text-gray-500 -mt-1 leading-tight">
-                      Id: {(item as any).order.orderId}
+                    <div className="text-[10px] -mt-1 leading-tight">
+                      <span className="text-gray-500">Id: </span>
+                      <Link
+                        href={`/order/${(item as any).order.orderId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-800 underline hover:text-blue-900 break-all"
+                      >
+                        {(item as any).order.orderId}
+                      </Link>
                     </div>
                   )}
               </td>

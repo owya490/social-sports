@@ -11,6 +11,7 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
+import { getFormSectionAnswerDisplay } from "@/services/src/forms/formsUtils/formsUtils";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -49,30 +50,6 @@ const createFormResponseMap = (orderTicketsMap: Map<Order, Ticket[]>): Map<strin
   });
 
   return formResponseToPurchaser;
-};
-
-const getAnswerDisplay = (section: FormSection | undefined): string => {
-  if (!section) return "—";
-
-  switch (section.type) {
-    case FormSectionType.TEXT:
-    case FormSectionType.DROPDOWN_SELECT:
-    case FormSectionType.MULTIPLE_CHOICE:
-      return section.answer || "—";
-    case FormSectionType.TICKBOX:
-      return section.answer?.join(", ") || "—";
-    case FormSectionType.DATE_TIME:
-      if (!section.timestamp) return "—";
-      try {
-        return new Date(section.timestamp).toLocaleString();
-      } catch {
-        return section.timestamp;
-      }
-    case FormSectionType.FILE_UPLOAD:
-      return section.fileUrl || "—";
-    default:
-      return "—";
-  }
 };
 
 export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrilldownFormsPageProps) => {
@@ -272,7 +249,7 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
 
     sortedQuestions.forEach((questionId) => {
       const section = questionMapping.get(questionId);
-      row[questionId] = section ? getAnswerDisplay(section) : "—";
+      row[questionId] = section ? getFormSectionAnswerDisplay(section) : "—";
     });
 
     const purchaserInfo = formResponseToPurchaser.get(response.formResponseId);
