@@ -184,6 +184,28 @@ public class StripeService {
     }
 
     /**
+     * Retrieves a PaymentIntent from Stripe.
+     *
+     * @param paymentIntentId The Stripe PaymentIntent ID to retrieve
+     * @param stripeAccountId The connected Stripe account ID (for Connect accounts)
+     * @return The retrieved PaymentIntent
+     * @throws StripeException if the retrieve operation fails
+     */
+    public static PaymentIntent retrievePaymentIntent(String paymentIntentId, String stripeAccountId)
+            throws StripeException {
+        logger.info("Retrieving PaymentIntent: {} for Stripe account: {}", paymentIntentId, stripeAccountId);
+
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(
+                paymentIntentId,
+                RequestOptions.builder()
+                        .setStripeAccount(stripeAccountId)
+                        .build());
+
+        logger.info("Retrieved PaymentIntent: {}, status: {}", paymentIntent.getId(), paymentIntent.getStatus());
+        return paymentIntent;
+    }
+
+    /**
      * Captures an authorized PaymentIntent.
      * After the payment method is authorized, the PaymentIntent status transitions
      * to requires_capture.
