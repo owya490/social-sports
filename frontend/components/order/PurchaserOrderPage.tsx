@@ -1,7 +1,7 @@
 "use client";
 
 import Loading from "@/components/loading/Loading";
-import { EventData, EventId } from "@/interfaces/EventTypes";
+import { EventData, EventId, OrderId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { getEventById } from "@/services/src/events/eventsService";
@@ -46,7 +46,7 @@ function StatusChip({ status }: { status: OrderAndTicketStatus }) {
 
 export default function PurchaserOrderPage() {
   const params = useParams();
-  const orderIdParam = params?.orderId as string | undefined;
+  const orderIdParam = params?.orderId as OrderId | undefined;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
