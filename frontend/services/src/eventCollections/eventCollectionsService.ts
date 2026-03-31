@@ -115,7 +115,7 @@ export async function createEventCollection(
     const collectionId = collectionRef.id;
 
     const newCollection: EventCollection = {
-      eventCollectionId: collectionId,
+      eventCollectionId: collectionId as EventCollectionId,
       name,
       description,
       eventIds: [],
@@ -136,7 +136,7 @@ export async function createEventCollection(
     });
 
     eventCollectionsServiceLogger.info(`Created event collection: ${collectionId}`);
-    return collectionId;
+    return collectionId as EventCollectionId;
   } catch (error) {
     eventCollectionsServiceLogger.error(`Error creating event collection: ${error}`);
     throw error;

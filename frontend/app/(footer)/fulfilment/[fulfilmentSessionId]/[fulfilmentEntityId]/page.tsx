@@ -43,6 +43,7 @@ const FulfilmentSessionEntityPage = ({
     useState<GetFulfilmentEntityInfoResponse | null>(null);
   const [fulfilmentSessionInfo, setFulfilmentSessionInfo] = useState<GetFulfilmentSessionInfoResponse | null>(null);
   const formResponderRef = useRef<FormResponderRef>(null);
+  const [isFormReady, setIsFormReady] = useState(false);
   const [areAllRequiredFieldsFilled, setAreAllRequiredFieldsFilled] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -95,9 +96,17 @@ const FulfilmentSessionEntityPage = ({
     setAreAllRequiredFieldsFilled(isValid);
   };
 
+  const handleFormReadyChange = (isReady: boolean) => {
+    setIsFormReady(isReady);
+  };
+
   const handleSaveLoadingChange = (isLoading: boolean) => {
     setIsSaving(isLoading);
   };
+
+  useEffect(() => {
+    setIsFormReady(false);
+  }, [params.fulfilmentSessionId, params.fulfilmentEntityId]);
 
   const handleNext = async () => {
     try {
@@ -250,6 +259,12 @@ const FulfilmentSessionEntityPage = ({
           return;
         }
 
+        if (!isFormReady) {
+          setErrorMessage("Please wait while the form loads.");
+          setShowErrorAlert(true);
+          return;
+        }
+
         try {
           const savedFormResponseId = await formResponderRef.current.save();
           fulfilmentSessionEntityPageLogger.info(
@@ -259,6 +274,8 @@ const FulfilmentSessionEntityPage = ({
           await handleNext();
         } catch (error) {
           fulfilmentSessionEntityPageLogger.error(`Error saving form and navigating to next: ${error}`);
+          setErrorMessage(error instanceof Error ? error.message : "Failed to save the form. Please try again.");
+          setShowErrorAlert(true);
         }
       };
 
@@ -278,6 +295,7 @@ const FulfilmentSessionEntityPage = ({
             fulfilmentSessionInfo={fulfilmentSessionInfo}
             areAllRequiredFieldsFilled={areAllRequiredFieldsFilled}
             isSaving={isSaving}
+            nextDisabledMessage={!isFormReady ? "Please wait while the form loads." : undefined}
             fulfilmentSessionId={params.fulfilmentSessionId}
           >
             <FormResponder
@@ -291,6 +309,7 @@ const FulfilmentSessionEntityPage = ({
               }}
               canEditForm={true}
               isPreview={false}
+              onReadyChange={handleFormReadyChange}
               onValidationChange={handleValidationChange}
               onSaveLoadingChange={handleSaveLoadingChange}
             />

@@ -23,7 +23,7 @@ export default async function Page({ params }: any) {
   const { username, customEventLink } = getUsernameAndEventLink(params);
   const eventId = await getEventIdFromUserAndEventLink(username, customEventLink);
 
-  return <EventPage params={{ id: eventId }} />;
+  return <EventPage eventId={eventId} />;
 }
 
 function getUsernameAndEventLink(params: any) {
@@ -39,6 +39,6 @@ async function getEventIdFromUserAndEventLink(username: string, customEventLink:
     return eventId;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
-    return "404";
+    return "404" as EventId;
   }
 }

@@ -9,17 +9,17 @@ export const OrganiserAnnouncementBanner = () => {
   }
 
   return (
-    <div className="relative isolate flex items-center gap-x-6 overflow-hidden bg-gradient-to-r from-black to-black px-6 py-2.5 sm:px-3.5 sm:before:flex-1">
+    <div className="relative isolate flex items-center gap-x-6 overflow-hidden bg-gradient-to-r from-[#f8f8f8] to-[#f8f8f8] px-6 py-2.5 sm:px-3.5 sm:before:flex-1">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <p className="text-sm leading-6 text-white">
-          <strong className="font-semibold">⚠️ Database Migration Notice</strong>
+        <p className="text-sm leading-6 text-black">
+          <strong className="font-semibold">New: Order page</strong>
           <svg viewBox="0 0 2 2" aria-hidden="true" className="mx-2 inline h-0.5 w-0.5 fill-current">
             <circle r={1} cx={1} cy={1} />
           </svg>
-          Organisers may see data inconsistencies in attendees in the upcoming weeks. We are performing a database
-          migration on <strong>Monday 2nd March</strong> to better support incoming Ticket Features such as Payment
-          Approvals. Please try to avoid manually removing or editing attendees for events until after. Adding attendees
-          is not affected by this migration.
+          You can now review full order details in one place. Open an event, go to the{" "}
+          <strong className="font-semibold">Attendees</strong> table, and click the{" "}
+          <strong className="font-semibold">order ID</strong> under each attendee&apos;s email (the linked value beside{" "}
+          <span className="whitespace-nowrap">Id:</span>). It opens in a new tab so your dashboard stays open.
         </p>
       </div>
       <div className="flex flex-1 justify-end">
@@ -31,7 +31,7 @@ export const OrganiserAnnouncementBanner = () => {
           }}
         >
           <span className="sr-only">Dismiss</span>
-          <XMarkIcon aria-hidden="true" className="h-5 w-5 text-white" />
+          <XMarkIcon aria-hidden="true" className="h-5 w-5 text-black" />
         </button>
       </div>
     </div>

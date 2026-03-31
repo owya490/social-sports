@@ -1,9 +1,11 @@
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
-import { EventId } from "./EventTypes";
-import { FormId } from "./FormTypes";
-import { EventCollectionId } from "./EventCollectionTypes";
+import { Branded } from "@/interfaces";
+import { EventCollectionId } from "@/interfaces/EventCollectionTypes";
+import { EventId } from "@/interfaces/EventTypes";
+import { FormId } from "@/interfaces/FormTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 
-export type UserId = string;
+export type UserId = Branded<string, "UserId">;
 
 export interface PublicUserData {
   userId: string;
@@ -37,7 +39,7 @@ export interface PrivateUserData {
   stripeAccount: string | null;
   stripeAccountActive: boolean | null;
   organiserEvents: string[];
-  recurrenceTemplates: string[];
+  recurrenceTemplates: RecurrenceTemplateId[];
   forms: FormId[];
   sendOrganiserTicketEmails: boolean;
   privateEventCollections: EventCollectionId[];
@@ -50,6 +52,10 @@ export interface NewUserData extends PublicUserData, PrivateUserData {
 export interface UserData extends PublicUserData, PrivateUserData {
   userId: UserId;
 }
+
+export type EmptyUserData = Omit<UserData, "userId"> & {
+  userId: "";
+};
 
 // BEWARE - PLEASE TAKE CARE WHEN EDITING THESE AS THEY WILL AFFECT DESERIALISATION AND DEFAULT USER CREATION
 export const EmptyPublicUserData: PublicUserData = {
@@ -91,7 +97,7 @@ export const EmptyPrivateUserData: PrivateUserData = {
   privateEventCollections: [],
 };
 
-export const EmptyUserData: UserData = {
+export const EmptyUserData: EmptyUserData = {
   ...EmptyPublicUserData,
   ...EmptyPrivateUserData,
   userId: "",

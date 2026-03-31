@@ -1,18 +1,19 @@
 "use client";
 
-import { EventMetadata } from "@/interfaces/EventTypes";
+import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { Dialog, Transition, TransitionChild } from "@headlessui/react";
 import { Spinner } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 import { RedHighlightButton } from "../../../elements/HighlightButton";
 import DeleteEventAttendeeCard from "./DeleteEventAttendeeCard";
+
 interface ShareModalProps {
   eventName: string;
   eventStartDate: Timestamp;
-  eventMetadata: EventMetadata;
-  eventId: string;
+  orderTicketsMap: Map<Order, Ticket[]>;
   modalOpen: boolean;
   loading: boolean;
   onClose: () => void;
@@ -22,13 +23,33 @@ interface ShareModalProps {
 const DeleteEventModal = ({
   eventName,
   eventStartDate,
-  eventMetadata,
+  orderTicketsMap,
   modalOpen,
   loading,
   onClose,
   onConfirm,
 }: ShareModalProps) => {
-  const hasPurchasers = Object.keys(eventMetadata.purchaserMap || {}).length > 0;
+  const attendeeRows = useMemo(
+    () =>
+      Array.from(orderTicketsMap.entries())
+        .filter(([order]) => order.status === OrderAndTicketStatus.APPROVED && !!order.email)
+        .map(([order, tickets]) => ({
+          attendeeName: order.fullName?.trim() || order.email,
+          attendeeEmail: order.email,
+          ticketCount: tickets.filter((ticket) => ticket.status === OrderAndTicketStatus.APPROVED).length,
+        }))
+        .filter((row) => row.ticketCount > 0)
+        .sort((row1, row2) => {
+          const emailComparison = row1.attendeeEmail.localeCompare(row2.attendeeEmail);
+          if (emailComparison !== 0) {
+            return emailComparison;
+          }
+          return row1.attendeeName.localeCompare(row2.attendeeName);
+        }),
+    [orderTicketsMap]
+  );
+
+  const hasAttendees = attendeeRows.length > 0;
 
   return (
     <div className="relative px-4 sm:px-0">
@@ -71,7 +92,7 @@ const DeleteEventModal = ({
                   </div>
                   <div className=" text-sm font-bold px-2">Date: {timestampToEventCardDateString(eventStartDate)}</div>
                   <div className="bg-organiser-light-gray rounded px-2 py-2 ">
-                    {hasPurchasers && (
+                    {hasAttendees && (
                       <div>
                         <div className="font-bold mb-2">Attendees:</div>
                         <div className="grid grid-cols-7 gap-2 text-organiser-title-gray-text font-bold text-xs md:text-base">
@@ -82,34 +103,14 @@ const DeleteEventModal = ({
                         <div className="inline-block w-full h-0.5 my-0 md:my-2 self-stretch bg-organiser-title-gray-text"></div>
                         <div>
                           <div className="text-sm">
-                            {eventMetadata.purchaserMap &&
-                              Object.values(eventMetadata.purchaserMap)
-                                .sort((purchaser1, purchaser2) => {
-                                  return purchaser1.email.localeCompare(purchaser2.email);
-                                })
-                                .map((purchaserObj) =>
-                                  Object.entries(purchaserObj.attendees)
-                                    .sort(
-                                      (
-                                        [attendeeName1, _attendeeDetailsObj1],
-                                        [attendeeName2, _attendeeDetailsObj2]
-                                      ) => {
-                                        return attendeeName1.localeCompare(attendeeName2);
-                                      }
-                                    )
-                                    .map(([attendeeName, attendeeDetailsObj], index) => {
-                                      if (attendeeDetailsObj.ticketCount > 0) {
-                                        return (
-                                          <DeleteEventAttendeeCard
-                                            key={`${purchaserObj.email}-${attendeeName}-${index}`}
-                                            attendeeName={attendeeName}
-                                            purchaser={purchaserObj}
-                                          />
-                                        );
-                                      }
-                                      return null;
-                                    })
-                                )}
+                            {attendeeRows.map((attendeeRow, index) => (
+                              <DeleteEventAttendeeCard
+                                key={`${attendeeRow.attendeeEmail}-${attendeeRow.attendeeName}-${index}`}
+                                attendeeName={attendeeRow.attendeeName}
+                                attendeeEmail={attendeeRow.attendeeEmail}
+                                ticketCount={attendeeRow.ticketCount}
+                              />
+                            ))}
                           </div>
                           <div className="mt-4">
                             An email will be sent to each attendee notifying them. Please handle refunds immediately.

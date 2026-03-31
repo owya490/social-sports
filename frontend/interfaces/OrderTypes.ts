@@ -26,8 +26,7 @@ export interface Order {
   type: OrderAndTicketType;
 }
 
-export const EMPTY_ORDER: Order = {
-  orderId: "",
+export const EMPTY_ORDER_DEFAULTS: Omit<Order, "orderId"> = {
   applicationFees: 0,
   datePurchased: Timestamp.now(),
   discounts: 0,

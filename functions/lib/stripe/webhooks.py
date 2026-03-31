@@ -18,8 +18,7 @@ from google.cloud import firestore
 from google.cloud.firestore import Transaction
 from lib.constants import IS_PROD, db
 from lib.emails.cancel_event import send_cancellation_email
-from lib.emails.purchase_event import (PurchaseEventRequest,
-                                       send_email_on_purchase_event)
+from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
 from stripe import Event, LineItem, ListObject
@@ -697,10 +696,10 @@ def fulfilment_workflow_on_ticket_purchase(
         )
         if success:
             break
-        
+
         # Exponential backoff: wait 1s, 2s between retries
         if attempt < max_retries - 1:
-            delay = 2 ** attempt  # 1, 2 seconds
+            delay = 2**attempt  # 1, 2 seconds
             logger.info(
                 f"Email send failed for orderId={orderId}, retrying in {delay}s (attempt {attempt + 1}/{max_retries})"
             )
@@ -1117,7 +1116,7 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
                     f"Error handling payment intent cancellation for {payment_intent_id}: {e}"
                 )
                 return https_fn.Response(status=500)
-            
+
             transaction.commit()
 
             # Get event name for email

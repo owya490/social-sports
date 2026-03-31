@@ -19,6 +19,7 @@ interface FulfilmentEntityPageProps {
   fulfilmentSessionInfo: GetFulfilmentSessionInfoResponse | null;
   areAllRequiredFieldsFilled?: boolean;
   isSaving?: boolean;
+  nextDisabledMessage?: string;
   fulfilmentSessionId: FulfilmentSessionId;
 }
 
@@ -31,6 +32,7 @@ const FulfilmentEntityPage = ({
   fulfilmentSessionInfo,
   areAllRequiredFieldsFilled = true,
   isSaving = false,
+  nextDisabledMessage,
   fulfilmentSessionId,
 }: FulfilmentEntityPageProps) => {
   const router = useRouter();
@@ -107,6 +109,7 @@ const FulfilmentEntityPage = ({
 
   const getNextTooltipMessage = () => {
     if (!showNextButton) return "No next step available";
+    if (nextDisabledMessage) return nextDisabledMessage;
     if (!areAllRequiredFieldsFilled) return "Please fill out all required sections before continuing";
     if (isSaving) return "Please wait while saving...";
     return "";
@@ -121,7 +124,7 @@ const FulfilmentEntityPage = ({
   };
 
   const handleDisabledNextClick = () => {
-    if (!showNextButton || !areAllRequiredFieldsFilled || isSaving) {
+    if (!showNextButton || !areAllRequiredFieldsFilled || isSaving || !!nextDisabledMessage) {
       setShowMobileTooltip("next");
       setTimeout(() => setShowMobileTooltip(null), 3000);
     }
@@ -227,14 +230,16 @@ const FulfilmentEntityPage = ({
                     <InvertedHighlightButton
                       type="submit"
                       className={`border-1 px-4 ${
-                        showNextButton && areAllRequiredFieldsFilled && !isSaving
+                        showNextButton && areAllRequiredFieldsFilled && !isSaving && !nextDisabledMessage
                           ? "bg-white"
                           : "bg-gray-100 text-gray-400 cursor-not-allowed"
                       }`}
                       onClick={
-                        showNextButton && areAllRequiredFieldsFilled && !isSaving ? onNext : handleDisabledNextClick
+                        showNextButton && areAllRequiredFieldsFilled && !isSaving && !nextDisabledMessage
+                          ? onNext
+                          : handleDisabledNextClick
                       }
-                      disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving}
+                      disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving || !!nextDisabledMessage}
                     >
                       <span className="text-sm flex items-center gap-2">
                         Next <ChevronRightIcon className="h-4 w-4" />
@@ -257,14 +262,16 @@ const FulfilmentEntityPage = ({
                     <InvertedHighlightButton
                       type="submit"
                       className={`border-1 px-4 ${
-                        showNextButton && areAllRequiredFieldsFilled && !isSaving
+                        showNextButton && areAllRequiredFieldsFilled && !isSaving && !nextDisabledMessage
                           ? "bg-white"
                           : "bg-gray-100 text-gray-400 cursor-not-allowed"
                       }`}
                       onClick={
-                        showNextButton && areAllRequiredFieldsFilled && !isSaving ? onNext : handleDisabledNextClick
+                        showNextButton && areAllRequiredFieldsFilled && !isSaving && !nextDisabledMessage
+                          ? onNext
+                          : handleDisabledNextClick
                       }
-                      disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving}
+                      disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving || !!nextDisabledMessage}
                     >
                       <span className="text-sm flex items-center gap-2">
                         Next <ChevronRightIcon className="h-4 w-4" />

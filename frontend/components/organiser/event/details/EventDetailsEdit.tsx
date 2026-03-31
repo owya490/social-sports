@@ -20,7 +20,8 @@ import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 
 import { useUser } from "@/components/utility/UserContext";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
@@ -34,14 +35,15 @@ import {
 } from "@/services/src/datetimeUtils";
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
 import { getActiveFormsForUser, getForm } from "@/services/src/forms/formsServices";
-import { evaluateFulfilmentSessionEnabled } from "@/services/src/fulfilment/fulfilmentServices";
 import { getLocationCoordinates, initializeAutocomplete, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
-export const EventDetailsEdit = ({
+type SportId = (typeof SPORTS_CONFIG)[keyof typeof SPORTS_CONFIG]["value"];
+
+export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
   eventId,
   eventStartDate,
   eventEndDate,
@@ -58,7 +60,7 @@ export const EventDetailsEdit = ({
   updateData,
   isRecurrenceTemplate,
 }: {
-  eventId: string;
+  eventId: T;
   eventStartDate: Timestamp;
   eventEndDate: Timestamp;
   eventLocation: string;
@@ -71,7 +73,7 @@ export const EventDetailsEdit = ({
   eventFormId: FormId | null;
   loading: boolean;
   isActive: boolean;
-  updateData: (id: string, data: any) => any;
+  updateData: (id: T, data: Partial<EventData>) => Promise<void>;
   isRecurrenceTemplate: boolean;
 }) => {
   loadGoogleMapsScript();
@@ -253,7 +255,8 @@ export const EventDetailsEdit = ({
   const [capacity, setCapacity] = useState(0);
 
   const handleCapacityUpdate = async () => {
-    const valid = await updateEventCapacityById(eventId, newEditCapacity);
+    // eventId is EventId here because handleCapacityUpdate is only called when !isRecurrenceTemplate
+    const valid = await updateEventCapacityById(eventId as EventId, newEditCapacity);
     if (valid) {
       setCapacity(newEditCapacity);
     } else {
@@ -647,8 +650,10 @@ export const EventDetailsEdit = ({
                       label="Sport"
                       size="lg"
                       value={sport}
-                      onChange={(e: string | any) => {
-                        setNewEditSport(e);
+                      onChange={(value?: string) => {
+                        if (value) {
+                          setNewEditSport(value as SportId);
+                        }
                       }}
                     >
                       {Object.entries(SPORTS_CONFIG).map((entry, idx) => {
@@ -783,59 +788,65 @@ export const EventDetailsEdit = ({
             )}
           </div>
         </div>
-        {evaluateFulfilmentSessionEnabled(user.userId, "") && (
-          <div className="px-2 flex flex-row space-x-2">
-            <DocumentTextIcon className="w-4 mt-2 shrink-0" />
-            <div>
-              {loading ? (
-                <Skeleton
-                  style={{
-                    height: 12,
-                    width: 100,
-                  }}
-                />
-              ) : (
-                <>
-                  {isEdit ? (
-                    <div className="flex">
-                      <Select
-                        label="Attach Form"
-                        size="lg"
-                        value={newEditAttachFormId ?? "null"}
-                        onChange={(e: string | any) => {
-                          setNewEditAttachFormId(e === "null" ? null : (e as FormId));
-                        }}
+        <div className="px-2 flex flex-row space-x-2">
+          <DocumentTextIcon className="w-4 mt-2 shrink-0" />
+          <div>
+            {loading ? (
+              <Skeleton
+                style={{
+                  height: 12,
+                  width: 100,
+                }}
+              />
+            ) : (
+              <>
+                {isEdit ? (
+                  <div className="flex">
+                    <Select
+                      label="Attach Form"
+                      size="lg"
+                      value={newEditAttachFormId ?? "null"}
+                      onChange={(value: unknown) => {
+                        if (value === "null") {
+                          setNewEditAttachFormId(null);
+                          return;
+                        }
+
+                        if (typeof value === "string") {
+                          setNewEditAttachFormId(value as FormId);
+                        }
+                      }}
+                    >
+                      {forms.map((form) => {
+                        return (
+                          <Option key={form.formId} value={form.formId}>
+                            <p className="text-sm line-clamp-2">{form.title}</p>
+                          </Option>
+                        );
+                      })}
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="mt-2">
+                    {attachForm === null ? (
+                      "No form attached"
+                    ) : (
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 w-fit px-1 py-0.5 -mx-1 -my-0.5 rounded hover:bg-gray-100 transition-colors duration-200"
+                        onClick={() => router.push(`/organiser/forms/${attachForm.formId}/preview`)}
+                        aria-label={`View preview for form: ${attachForm.title}`}
                       >
-                        {forms.map((form) => {
-                          return (
-                            <Option key={form.formId} value={form.formId}>
-                              <p className="text-sm line-clamp-2">{form.title}</p>
-                            </Option>
-                          );
-                        })}
-                      </Select>
-                    </div>
-                  ) : (
-                    <div className="mt-2">
-                      {attachForm === null ? (
-                        "No form attached"
-                      ) : (
-                        <div
-                          className="flex items-center gap-2 w-fit px-1 py-0.5 -mx-1 -my-0.5 rounded cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                          onClick={() => router.push(`/organiser/forms/${attachForm.formId}/preview`)}
-                          title="View form preview"
-                        >
-                          <span>{attachForm.title}</span>
-                          <ArrowTopRightOnSquareIcon className="w-4 h-4 text-blue-600 shrink-0" />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+                        <span>{attachForm.title}</span>
+                        <ArrowTopRightOnSquareIcon className="w-4 h-4 text-blue-600 shrink-0" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        )}
+        </div>
         <div className="px-2 flex flex-row space-x-2">
           <LinkIcon className="w-4 mt-2 shrink-0" />
           <div>

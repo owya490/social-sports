@@ -82,7 +82,7 @@ public class RecurringEventsService {
         // Place content in the firestore database
         try {
             String templateId = RecurrenceTemplateRepository.updateRecurrenceTemplate(recurrenceTemplateId, recurrenceTemplate);
-            logger.info("Successfully updated Recurrence Template {}", recurrenceTemplateId);
+            logger.info("Successfully updated Recurrence Template {} {}", recurrenceTemplateId, recurrenceTemplate);
 
             // Check is recurrence is being reactivated
             boolean isRecurrenceActive = recurrenceTemplate.getEventData().getIsActive();

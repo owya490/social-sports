@@ -53,7 +53,6 @@ export default function RecurringEventDashboard() {
               return (
                 <div className="w-full" key={templateIdx}>
                   <RecurringTemplateCard
-                    recurrenceTemplateId={""}
                     image={""}
                     name={""}
                     startTime={Timestamp.now()}
@@ -65,6 +64,7 @@ export default function RecurringEventDashboard() {
                     recurrenceEnabled={false}
                     loading={true}
                     disabled={true}
+                    disableLink={true}
                   />
                 </div>
               );
