@@ -1,5 +1,9 @@
 package com.functions.stripe.services;
 
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +27,6 @@ import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
 import com.functions.utils.LogSanitizer;
-import com.functions.waitlist.repositories.WaitlistRepository;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -93,24 +96,8 @@ public class WebhookService {
                 logger.info("No fulfilment entity map found in fulfilment session {}", fulfilmentSessionId);
                 return new ArrayList<>();
             }
-            if (fulfilmentEntityIds == null || fulfilmentEntityIds.isEmpty()) {
-                logger.info("No fulfilment entity ids found in fulfilment session {}", fulfilmentSessionId);
-                return new ArrayList<>();
-            }
-            
-            List<String> formResponseIds = new ArrayList<>();
-            
-            for (String fulfilmentEntityId : fulfilmentEntityIds) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> entityData = (Map<String, Object>) fulfilmentEntityMap.get(fulfilmentEntityId);
-                
-                if (entityData != null && "FORMS".equals(entityData.get("type"))) {
-                    String formResponseId = (String) entityData.get("formResponseId");
-                    if (formResponseId != null && !formResponseId.isEmpty()) {
-                        formResponseIds.add(formResponseId);
-                    }
-                }
-            }
+
+            List<String> formResponseIds = extractFormResponseIds(fulfilmentEntityMap, fulfilmentEntityIds);
             
             if (!formResponseIds.isEmpty()) {
                 logger.info("Retrieved {} form response IDs from fulfilment session {}: {}", 
@@ -125,6 +112,48 @@ public class WebhookService {
             logger.warn("Failed to retrieve form response IDs from fulfilment session {}: {}. " +
                        "Continuing without form responses.", fulfilmentSessionId, e.getMessage());
             return new ArrayList<>();
+        }
+    }
+
+    static List<String> extractFormResponseIds(
+            Map<String, Object> fulfilmentEntityMap,
+            List<String> fulfilmentEntityIds) {
+
+        List<String> formResponseIds = new ArrayList<>();
+        if (fulfilmentEntityMap == null || fulfilmentEntityMap.isEmpty()) {
+            return formResponseIds;
+        }
+
+        if (fulfilmentEntityIds != null && !fulfilmentEntityIds.isEmpty()) {
+            for (String fulfilmentEntityId : fulfilmentEntityIds) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> entityData = (Map<String, Object>) fulfilmentEntityMap.get(fulfilmentEntityId);
+                appendFormResponseId(formResponseIds, entityData);
+            }
+            return formResponseIds;
+        }
+
+        for (Object entityValue : fulfilmentEntityMap.values()) {
+            if (!(entityValue instanceof Map<?, ?> entityData)) {
+                continue;
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> typedEntityData = (Map<String, Object>) entityData;
+            appendFormResponseId(formResponseIds, typedEntityData);
+        }
+
+        return formResponseIds;
+    }
+
+    private static void appendFormResponseId(List<String> formResponseIds, Map<String, Object> entityData) {
+        if (entityData == null || !"FORMS".equals(entityData.get("type"))) {
+            return;
+        }
+
+        String formResponseId = (String) entityData.get("formResponseId");
+        if (formResponseId != null && !formResponseId.isEmpty()) {
+            formResponseIds.add(formResponseId);
         }
     }
     
@@ -206,9 +235,15 @@ public class WebhookService {
     }
 
     private static String hashEmail(String email) {
+        if (email == null) {
+            throw new IllegalArgumentException("Email cannot be null");
+        }
+
         try {
-            return WaitlistRepository.hashEmail(email);
-        } catch (Exception e) {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] hash = md.digest(email.getBytes(StandardCharsets.UTF_8));
+            return new BigInteger(1, hash).toString();
+        } catch (NoSuchAlgorithmException e) {
             logger.error("Failed to hash email: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to hash email", e);
         }
@@ -286,10 +321,6 @@ public class WebhookService {
             return OrderAndTicketStatus.PENDING;
         }
         return OrderAndTicketStatus.APPROVED;
-    }
-
-    static boolean shouldRecordAttendanceForStatus(OrderAndTicketStatus status) {
-        return status == OrderAndTicketStatus.APPROVED;
     }
 
     static EventMetadata initializeEventMetadata(EventMetadata eventMetadata, String organiserId) {
@@ -389,57 +420,6 @@ public class WebhookService {
 
         return resolvedMetadata;
     }
-
-    public static void recordApprovedOrderAttendance(
-            Transaction transaction,
-            Order order,
-            List<Ticket> tickets) throws Exception {
-
-        if (order == null) {
-            throw new IllegalArgumentException("Order is required to record approved attendance.");
-        }
-        if (tickets == null || tickets.isEmpty()) {
-            throw new IllegalArgumentException("At least one ticket is required to record approved attendance.");
-        }
-
-        String eventId = tickets.get(0).getEventId();
-        if (eventId == null || eventId.isBlank()) {
-            throw new IllegalArgumentException("Ticket eventId is required to record approved attendance.");
-        }
-
-        Optional<EventData> eventOptional = com.functions.events.repositories.EventsRepository
-                .getEventById(eventId, Optional.of(transaction));
-        if (eventOptional.isEmpty()) {
-            throw new IllegalArgumentException("Event not found while recording approved attendance. eventId=" + eventId);
-        }
-
-        EventData event = eventOptional.get();
-        Firestore db = FirebaseService.getFirestore();
-        DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
-        DocumentSnapshot eventMetadataSnapshot = transaction.get(eventMetadataRef).get();
-        EventMetadata eventMetadata = eventMetadataSnapshot.exists()
-                ? eventMetadataSnapshot.toObject(EventMetadata.class)
-                : null;
-
-        List<String> formResponseIds = new ArrayList<>();
-        for (Ticket ticket : tickets) {
-            String formResponseId = ticket.getFormResponseId();
-            if (formResponseId != null && !formResponseId.isBlank() && !formResponseIds.contains(formResponseId)) {
-                formResponseIds.add(formResponseId);
-            }
-        }
-
-        EventMetadata updatedMetadata = applyAttendanceToEventMetadata(
-                eventMetadata,
-                event.getOrganiserId(),
-                order.getEmail(),
-                order.getFullName(),
-                order.getPhone(),
-                tickets.size(),
-                formResponseIds);
-        transaction.set(eventMetadataRef, updatedMetadata);
-    }
-
     private static void appendUniqueValue(List<String> values, String value) {
         if (values == null || value == null || value.isBlank()) {
             return;
@@ -549,21 +529,16 @@ public class WebhookService {
         
         // Resolve status based on capture method
         OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
-        if (shouldRecordAttendanceForStatus(status)) {
-            eventMetadata = applyAttendanceToEventMetadata(
-                    eventMetadata,
-                    event.getOrganiserId(),
-                    customerEmail,
-                    fullName,
-                    phoneNumber,
-                    quantity.intValue(),
-                    formResponseIds);
-            logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}",
-                    LogSanitizer.redactEmail(customerEmail), fullName);
-        } else {
-            logger.info("Skipping attendee metadata update for session {} because order status is {}",
-                    checkoutSessionId, status);
-        }
+        eventMetadata = applyAttendanceToEventMetadata(
+                eventMetadata,
+                event.getOrganiserId(),
+                customerEmail,
+                fullName,
+                phoneNumber,
+                quantity.intValue(),
+                formResponseIds);
+        logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}",
+                LogSanitizer.redactEmail(customerEmail), fullName);
         
         List<String> ticketIds = new ArrayList<>();
         
@@ -862,22 +837,17 @@ public class WebhookService {
                 }
             }
             
-            OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
-            if (status == OrderAndTicketStatus.APPROVED) {
-                String visibility = isPrivate ? "Private" : "Public";
-                boolean emailSuccess = retryBooleanOperation(
-                        "send purchase email",
-                        MAX_PURCHASE_EMAIL_RETRIES,
-                        PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS,
-                        true,
-                        () -> EmailService.sendPurchaseEmail(eventId, visibility, customerEmail, fullName, orderId));
-                
-                if (!emailSuccess) {
-                    logger.warn("Was unable to send email to {} after {} attempts. orderId={}",
-                            LogSanitizer.redactEmail(customerEmail), MAX_PURCHASE_EMAIL_RETRIES, orderId);
-                }
-            } else {
-                logger.info("Skipping purchase email for order {} because status is {}", orderId, status);
+            String visibility = isPrivate ? "Private" : "Public";
+            boolean emailSuccess = retryBooleanOperation(
+                    "send purchase email",
+                    MAX_PURCHASE_EMAIL_RETRIES,
+                    PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS,
+                    true,
+                    () -> EmailService.sendPurchaseEmail(eventId, visibility, customerEmail, fullName, orderId));
+            
+            if (!emailSuccess) {
+                logger.warn("Was unable to send email to {} after {} attempts. orderId={}",
+                        LogSanitizer.redactEmail(customerEmail), MAX_PURCHASE_EMAIL_RETRIES, orderId);
             }
             
             logger.info("Successfully handled checkout.session.completed webhook event. session={}", checkoutSessionId);

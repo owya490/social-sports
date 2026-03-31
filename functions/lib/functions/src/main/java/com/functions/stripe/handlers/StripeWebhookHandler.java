@@ -255,8 +255,8 @@ public class StripeWebhookHandler {
                         return false;
                     }
                 } else {
-                    logger.warn("[Webhook-{}] Encountered unexpected custom field, ignoring: {}", uuid, key);
-                    // Don't fail on unexpected fields, just log warning
+                    logger.error("[Webhook-{}] Encountered unexpected custom field: {}", uuid, key);
+                    return false;
                 }
             }
             

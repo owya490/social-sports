@@ -5,7 +5,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.emails.EmailService;
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.stripe.services.StripeService;
@@ -62,8 +61,7 @@ public class BookingApprovalService {
 
             boolean success = false;
             if (operation == BookingApprovalOperation.APPROVE) {
-                success = executeApprovalOperation(stripePaymentIntentId, userData.getStripeAccount(), order,
-                        eventData);
+                success = executeApprovalOperation(stripePaymentIntentId, userData.getStripeAccount(), order);
             } else if (operation == BookingApprovalOperation.REJECT) {
                 success = executeRejectionOperation(stripePaymentIntentId, userData.getStripeAccount(), orderId);
             } else {
@@ -82,7 +80,7 @@ public class BookingApprovalService {
     }
 
     private static boolean executeApprovalOperation(String stripePaymentIntentId, String stripeAccountId,
-            Order order, EventData eventData) {
+            Order order) {
         String orderId = order.getOrderId();
         try {
             logger.info("Executing approval operation for stripePaymentIntentId: {}, stripeAccountId: {}, orderId: {}",
@@ -93,9 +91,6 @@ public class BookingApprovalService {
                     stripePaymentIntentId, stripeAccountId, orderId);
             TicketsService.updateOrderAndTicketStatus(orderId, OrderAndTicketStatus.APPROVED);
             logger.info("Successfully updated order and ticket status for orderId: {}", orderId);
-
-            // Send purchase confirmation email to the attendee
-            EmailService.sendPurchaseConfirmationEmail(order, eventData);
 
             return true;
         } catch (StripeException e) {

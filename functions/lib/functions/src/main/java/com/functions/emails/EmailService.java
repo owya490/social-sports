@@ -1,8 +1,6 @@
 package com.functions.emails;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -12,11 +10,9 @@ import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.events.models.EventData;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.global.handlers.Global;
-import com.functions.tickets.models.Order;
 import com.functions.utils.LogSanitizer;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
@@ -29,8 +25,21 @@ import com.google.cloud.firestore.Firestore;
  */
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+    private static final String DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID = "cml0rm3t21e8s0ixa21rvcfnx";
+
+    @FunctionalInterface
+    interface PurchaseEmailSender {
+        boolean send(EmailTemplateType templateType, String email, Map<String, String> variables);
+    }
     private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID =
-            Global.getEnv("LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID");
+            resolveCancellationEmailTemplateId(Global.getEnv("LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID"));
+
+    static String resolveCancellationEmailTemplateId(String configuredTemplateId) {
+        if (configuredTemplateId == null || configuredTemplateId.isBlank()) {
+            return DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID;
+        }
+        return configuredTemplateId;
+    }
 
     /**
      * Sends an email confirmation to a user who has joined the waitlist for an
@@ -145,12 +154,13 @@ public class EmailService {
         String organiserId = eventSnapshot.getString("organiserId");
         if (organiserId != null) {
             Optional<String> organiserEmail = getOrganiserEmailForTicketEmail(db, organiserId);
-            organiserEmail.ifPresent(orgEmail -> {
-                boolean organiserEmailSent = EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.PURCHASE, orgEmail, variables);
-                if (!organiserEmailSent) {
-                    logger.error("Failed to send copy of purchase email to organiser {}", organiserId);
-                }
-            });
+            if (!sendPurchaseEmailCopyToOrganiser(
+                    organiserEmail,
+                    organiserId,
+                    variables,
+                    EmailClient::sendEmailWithLoopsWithRetries)) {
+                logger.warn("Purchase email was sent to attendee, but organiser copy failed for orderId={}", orderId);
+            }
         }
 
         return true;
@@ -180,17 +190,16 @@ public class EmailService {
         List<?> tickets = (List<?>) order.get("tickets");
         String quantity = tickets != null ? String.valueOf(tickets.size()) : "0";
 
-        return Map.of(
-            "name", Optional.ofNullable(firstName).orElse(""),
-            "eventName", Optional.ofNullable(event.getString("name")).orElse(""),
-            "orderId", Optional.ofNullable(orderId).orElse(""),
-            "datePurchased", TimeUtils.formatTimestampForEmail(purchasedTimestamp),
-            "quantity", quantity,
-            "price", centsToDollars(priceInCents),
-            "startDate", TimeUtils.formatTimestampForEmail(startTimestamp),
-            "endDate", TimeUtils.formatTimestampForEmail(endTimestamp),
-            "location", Optional.ofNullable(event.getString("location")).orElse("")
-        );
+        return buildPurchaseEmailVariables(
+                firstName,
+                event.getString("name"),
+                orderId,
+                quantity,
+                priceInCents,
+                TimeUtils.formatTimestampForEmail(purchasedTimestamp),
+                TimeUtils.formatTimestampForEmail(startTimestamp),
+                TimeUtils.formatTimestampForEmail(endTimestamp),
+                event.getString("location"));
     }
 
     /**
@@ -226,13 +235,39 @@ public class EmailService {
         }
     }
 
-    private static String centsToDollars(Double priceInCents) {
-        if (priceInCents == null) return "$0.00";
+    static Map<String, String> buildPurchaseEmailVariables(
+            String firstName,
+            String eventName,
+            String orderId,
+            String quantity,
+            Double priceInCents,
+            String datePurchased,
+            String startDate,
+            String endDate,
+            String location) {
+        String resolvedOrderId = Optional.ofNullable(orderId).orElse("");
+        return Map.of(
+                "name", Optional.ofNullable(firstName).orElse(""),
+                "eventName", Optional.ofNullable(eventName).orElse(""),
+                "orderId", resolvedOrderId,
+                "orderLink", buildOrderLink(resolvedOrderId),
+                "datePurchased", Optional.ofNullable(datePurchased).orElse(""),
+                "quantity", Optional.ofNullable(quantity).orElse("0"),
+                "price", centsToPurchaseEmailPrice(priceInCents),
+                "startDate", Optional.ofNullable(startDate).orElse(""),
+                "endDate", Optional.ofNullable(endDate).orElse(""),
+                "location", Optional.ofNullable(location).orElse(""));
+    }
 
-        // Use BigDecimal for precise decimal arithmetic to avoid floating-point errors
-        BigDecimal cents = BigDecimal.valueOf(priceInCents);
-        BigDecimal dollars = cents.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        return "$" + dollars.toPlainString();
+    static String buildOrderLink(String orderId) {
+        return "https://www.sportshub.net.au/order/" + Optional.ofNullable(orderId).orElse("");
+    }
+
+    static String centsToPurchaseEmailPrice(Double priceInCents) {
+        if (priceInCents == null) {
+            return "0.0";
+        }
+        return String.valueOf(priceInCents / 100.0);
     }
 
     private static Optional<String> getOrganiserEmailForTicketEmail(Firestore db, String organiserId) throws ExecutionException, InterruptedException {
@@ -270,47 +305,22 @@ public class EmailService {
         return Optional.empty();
     }
 
-    /**
-     * Sends a purchase confirmation email to a user who has purchased tickets.
-     * This is the same email template used by the Python purchase_event.py.
-     *
-     * @param order     The order data
-     * @param eventData The event data
-     * @return true if email was sent successfully, false otherwise
-     */
-    public static boolean sendPurchaseConfirmationEmail(Order order, EventData eventData) {
-        try {
-            String email = order.getEmail();
-            String fullName = order.getFullName();
-            // Extract first name from full name (same as Python uses first_name)
-            String firstName = fullName != null && fullName.contains(" ")
-                    ? fullName.split(" ")[0]
-                    : fullName;
+    static boolean sendPurchaseEmailCopyToOrganiser(
+            Optional<String> organiserEmail,
+            String organiserId,
+            Map<String, String> variables,
+            PurchaseEmailSender emailSender) {
+        if (organiserEmail.isEmpty()) {
+            return true;
+        }
 
-            String datePurchasedString = TimeUtils.formatTimestampForEmail(order.getDatePurchased());
-            String startDateString = TimeUtils.formatTimestampForEmail(eventData.getStartDate());
-            String endDateString = TimeUtils.formatTimestampForEmail(eventData.getEndDate());
-            int priceInCents = eventData.getPrice() != null ? eventData.getPrice() : 0;
-            String priceInDollars = centsToDollars((double) priceInCents);
-
-            Map<String, String> variables = Map.of(
-                    "name", firstName != null ? firstName : "",
-                    "eventName", eventData.getName() != null ? eventData.getName() : "",
-                    "orderId", order.getOrderId() != null ? order.getOrderId() : "",
-                    "datePurchased", datePurchasedString,
-                    "quantity", String.valueOf(order.getTickets().size()),
-                    "price", priceInDollars,
-                    "startDate", startDateString,
-                    "endDate", endDateString,
-                    "location", eventData.getLocation() != null ? eventData.getLocation() : "");
-
-            logger.info("Sending purchase confirmation email to {} for event {} with orderId {}",
-                    LogSanitizer.redactEmail(email), eventData.getName(), order.getOrderId());
-            return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.PURCHASE, email, variables);
-        } catch (Exception e) {
-            logger.error("Error sending purchase confirmation email for orderId: {}", order.getOrderId(), e);
+        boolean organiserEmailSent = emailSender.send(EmailTemplateType.PURCHASE, organiserEmail.get(), variables);
+        if (!organiserEmailSent) {
+            logger.error("Failed to send copy of purchase email to organiser {}", organiserId);
             return false;
         }
+
+        return true;
     }
 
     /**

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -27,13 +28,6 @@ public class WebhookServiceTest {
         assertTrue(eventMetadata.getOrderIds().isEmpty());
         assertTrue(eventMetadata.getCompletedStripeCheckoutSessionIds().isEmpty());
         assertTrue(eventMetadata.getCompletedStripePaymentIntentIds().isEmpty());
-    }
-
-    @Test
-    public void shouldRecordAttendanceForStatusOnlyReturnsTrueForApproved() {
-        assertTrue(WebhookService.shouldRecordAttendanceForStatus(OrderAndTicketStatus.APPROVED));
-        assertEquals(false, WebhookService.shouldRecordAttendanceForStatus(OrderAndTicketStatus.PENDING));
-        assertEquals(false, WebhookService.shouldRecordAttendanceForStatus(OrderAndTicketStatus.REJECTED));
     }
 
     @Test
@@ -63,5 +57,47 @@ public class WebhookServiceTest {
         assertNotNull(attendee);
         assertEquals(Integer.valueOf(3), attendee.getTicketCount());
         assertEquals(List.of("form-1", "form-2", "form-3"), attendee.getFormResponseIds());
+    }
+
+    @Test
+    public void applyAttendanceToEventMetadataUsesLegacyPythonCompatibleEmailHash() {
+        EventMetadata eventMetadata = WebhookService.applyAttendanceToEventMetadata(
+                null,
+                "organiser-123",
+                "buyer@example.com",
+                "Taylor Buyer",
+                "0400000000",
+                1,
+                List.of());
+
+        assertTrue(eventMetadata.getPurchaserMap()
+                .containsKey("266944698700326368151495154829773939458"));
+    }
+
+    @Test
+    public void extractFormResponseIdsFallsBackToEntityMapValuesWhenIdsAreMissing() {
+        Map<String, Object> fulfilmentEntityMap = Map.of(
+                "entity-1", Map.of("type", "FORMS", "formResponseId", "form-1"),
+                "entity-2", Map.of("type", "STRIPE"),
+                "entity-3", Map.of("type", "FORMS", "formResponseId", "form-2"));
+
+        List<String> formResponseIds = WebhookService.extractFormResponseIds(fulfilmentEntityMap, null);
+
+        assertEquals(2, formResponseIds.size());
+        assertTrue(formResponseIds.contains("form-1"));
+        assertTrue(formResponseIds.contains("form-2"));
+    }
+
+    @Test
+    public void extractFormResponseIdsUsesEntityIdsOrderingWhenPresent() {
+        Map<String, Object> fulfilmentEntityMap = Map.of(
+                "entity-1", Map.of("type", "FORMS", "formResponseId", "form-1"),
+                "entity-2", Map.of("type", "FORMS", "formResponseId", "form-2"));
+
+        List<String> formResponseIds = WebhookService.extractFormResponseIds(
+                fulfilmentEntityMap,
+                List.of("entity-2", "entity-1"));
+
+        assertEquals(List.of("form-2", "form-1"), formResponseIds);
     }
 }
