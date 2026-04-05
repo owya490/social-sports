@@ -8,11 +8,14 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from lib.constants import SYDNEY_TIMEZONE, db
 from lib.logging import Logger
 from lib.emails.constants import LOOPS_API_KEY
+from lib.emails.purchase_event import get_organiser_email_for_ticket_email
 from lib.utils.priceUtils import centsToDollars
+
+BOOKING_APPROVAL_TRANSACTIONAL_ID = "cmnd2gkqh03ja0ixlz9fx93re"
 
 
 @dataclass
-class PurchaseEventRequest:
+class BookingApprovalEmailRequest:
     eventId: str
     visibility: str
     email: str
@@ -26,11 +29,12 @@ class PurchaseEventRequest:
             raise ValueError("Visibility must be provided as a string.")
 
 
-def send_email_with_loop(
+def send_booking_approval_email_with_loop(
     logger,
     email,
     name,
     event_name,
+    organiser_id,
     order_id,
     date_purchased,
     quantity,
@@ -41,11 +45,12 @@ def send_email_with_loop(
 ):
     headers = {"Authorization": "Bearer " + LOOPS_API_KEY}
     body = {
-        "transactionalId": "cm4r78nk301ehx79nrrxaijgl",
+        "transactionalId": BOOKING_APPROVAL_TRANSACTIONAL_ID,
         "email": email,
         "dataVariables": {
             "name": name,
             "eventName": event_name,
+            "organiserId": organiser_id,
             "orderId": order_id,
             "datePurchased": date_purchased,
             "quantity": quantity,
@@ -62,7 +67,6 @@ def send_email_with_loop(
         headers=headers,
     )
 
-    # Retry once more on rate limit after waiting 1 second
     if response.status_code == 429:
         time.sleep(1)
         response = requests.post(
@@ -73,40 +77,16 @@ def send_email_with_loop(
 
     if response.status_code != 200:
         logger.error(
-            f"Failed to send payment confirmation for orderId={order_id}, body={response.text}"
+            f"Failed to send booking approval email for orderId={order_id}, body={response.text}"
         )
-        raise Exception("Failed to send payment confirmation.")
+        raise Exception("Failed to send booking approval email.")
 
 
-def get_organiser_email_for_ticket_email(
-    logger: Logger, organiser_id: str
-) -> str | None:
-    maybe_organiser_snapshot = (
-        db.collection("Users/Active/Private").document(organiser_id).get()
-    )
-    if not maybe_organiser_snapshot.exists:
-        logger.error(f"Organiser does not exist: organiserId={organiser_id}")
-        return None
-    organiser_data = maybe_organiser_snapshot.to_dict()
-    if organiser_data.get("sendOrganiserTicketEmails", False):
-        try:
-            return organiser_data.get("contactInformation").get("email")
-        except:
-            logger.error(
-                f"Failed to find organiser email for sendOrganiserTicketEmail. organiserId={organiser_id}"
-            )
-            return None
-
-    return None
-
-
-# Left as normal python function as only invoked from the Stripe webhook oncall function. Not exposed to outside world.
-def send_email_on_purchase_event(request_data: PurchaseEventRequest):
+def send_email_on_booking_approval(request_data: BookingApprovalEmailRequest):
     uid = str(uuid.uuid4())
-    logger = Logger(f"loops_purchase_event_logger_{uid}")
+    logger = Logger(f"loops_booking_approval_email_logger_{uid}")
     logger.add_tag("uuid", uid)
 
-    # TODO add fields for public private + maybe add retries as maybe consistency issues due to firebase update, but email is send prior
     maybe_event_data = (
         db.collection(f"Events/Active/{request_data.visibility}")
         .document(request_data.eventId)
@@ -149,12 +129,19 @@ def send_email_on_purchase_event(request_data: PurchaseEventRequest):
             .strftime("%m/%d/%Y, %H:%M")
         )
 
-        # send email to attendee first
-        send_email_with_loop(
+        organiser_id = event_data.get("organiserId")
+        if organiser_id is None:
+            logger.error(
+                f"Event missing organiserId for booking approval email. eventId={request_data.eventId}"
+            )
+            return False
+
+        send_booking_approval_email_with_loop(
             logger,
             request_data.email,
             request_data.first_name,
             event_data.get("name"),
+            organiser_id,
             request_data.orderId,
             date_purchased_string,
             str(len(order_data.get("tickets"))),
@@ -164,16 +151,14 @@ def send_email_on_purchase_event(request_data: PurchaseEventRequest):
             event_data.get("location"),
         )
 
-        # also check if we need to send this to organiser
-        organiser_email = get_organiser_email_for_ticket_email(
-            logger, event_data.get("organiserId")
-        )
+        organiser_email = get_organiser_email_for_ticket_email(logger, organiser_id)
         if not organiser_email == None:
-            send_email_with_loop(
+            send_booking_approval_email_with_loop(
                 logger,
                 organiser_email,
                 request_data.first_name,
                 event_data.get("name"),
+                organiser_id,
                 request_data.orderId,
                 date_purchased_string,
                 str(len(order_data.get("tickets"))),
@@ -186,6 +171,6 @@ def send_email_on_purchase_event(request_data: PurchaseEventRequest):
         return True
     except Exception as e:
         logger.error(
-            f"Error sending purchase event email. eventId={request_data.eventId} error={e}"
+            f"Error sending booking approval email. eventId={request_data.eventId} error={e}"
         )
         return False

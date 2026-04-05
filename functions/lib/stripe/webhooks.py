@@ -16,8 +16,14 @@ from firebase_admin import firestore
 from firebase_functions import https_fn, options
 from google.cloud import firestore
 from google.cloud.firestore import Transaction
-from lib.constants import IS_PROD, db
-from lib.emails.cancel_event import send_cancellation_email
+from google.protobuf.timestamp_pb2 import Timestamp
+
+from lib.constants import IS_PROD, SYDNEY_TIMEZONE, db
+from lib.emails.reject_booking import send_reject_booking_email
+from lib.emails.booking_approval_email import (
+    BookingApprovalEmailRequest,
+    send_email_on_booking_approval,
+)
 from lib.emails.purchase_event import PurchaseEventRequest, send_email_on_purchase_event
 from lib.logging import Logger
 from lib.stripe.commons import STRIPE_WEBHOOK_ENDPOINT_SECRET
@@ -223,11 +229,12 @@ def add_stripe_event_and_checkout_tags(logger: Logger, event: Event):
     )
 
 
-def resolve_order_and_ticket_status(capture_method: str) -> str:
-    if capture_method == "manual":
-        return "PENDING"
-    else:
-        return "APPROVED"
+def is_booking_approval_workflow(capture_method: str) -> bool:
+    return capture_method == "manual"
+
+
+def resolve_order_and_ticket_status(is_booking_approval: bool) -> str:
+    return "PENDING" if is_booking_approval else "APPROVED"
 
 
 # Will return orderId for email to pick up and read order information. If this function fails, either logic error or transactions fail, it will return None
@@ -370,6 +377,9 @@ def fulfill_completed_event_ticket_purchase(
         logger.error(f"Item quantity is None, cannot create tickets. item={item}")
         return None
 
+    is_booking_approval = is_booking_approval_workflow(capture_method)
+    order_ticket_status = resolve_order_and_ticket_status(is_booking_approval)
+
     for item_index in range(item.quantity):
         tickets_id_ref = db.collection("Tickets").document()
 
@@ -385,7 +395,7 @@ def fulfill_completed_event_ticket_purchase(
                 "orderId": order_id_ref.id,
                 "price": item.price.unit_amount,
                 "purchaseDate": purchase_time,
-                "status": resolve_order_and_ticket_status(capture_method),
+                "status": order_ticket_status,
                 "type": "GENERAL",
                 "formResponseId": (
                     form_response_ids[item_index]
@@ -408,7 +418,7 @@ def fulfill_completed_event_ticket_purchase(
             "discounts": discounts,
             "tickets": ticket_list,
             "stripePaymentIntentId": payment_intent_id,
-            "status": resolve_order_and_ticket_status(capture_method),
+            "status": order_ticket_status,
             "type": "GENERAL",
         },
     )
@@ -684,16 +694,28 @@ def fulfilment_workflow_on_ticket_purchase(
     # Send email to purchasing consumer. Retry sending email 3 times with exponential backoff, before exiting and completing order. If email breaks, its not the end of the world.
     success = False
     max_retries = 3
+    is_booking_approval = is_booking_approval_workflow(capture_method)
     for attempt in range(max_retries):
-        success = send_email_on_purchase_event(
-            PurchaseEventRequest(
-                event_id,
-                "Private" if is_private else "Public",
-                customer_details.email,
-                full_name,
-                orderId,
+        if is_booking_approval:
+            success = send_email_on_booking_approval(
+                BookingApprovalEmailRequest(
+                    event_id,
+                    "Private" if is_private else "Public",
+                    customer_details.email,
+                    full_name,
+                    orderId,
+                )
             )
-        )
+        else:
+            success = send_email_on_purchase_event(
+                PurchaseEventRequest(
+                    event_id,
+                    "Private" if is_private else "Public",
+                    customer_details.email,
+                    full_name,
+                    orderId,
+                )
+            )
         if success:
             break
 
@@ -1119,7 +1141,12 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
 
             transaction.commit()
 
-            # Get event name for email
+            # Load event fields for reject-booking email
+            event_name = "Event"
+            organiser_id_for_email = ""
+            start_date_string = ""
+            end_date_string = ""
+            location_string = ""
             try:
                 private_path = "Private" if is_private else "Public"
                 event_ref = db.collection(f"Events/Active/{private_path}").document(
@@ -1128,38 +1155,69 @@ def stripe_webhook_checkout_fulfilment(req: https_fn.Request) -> https_fn.Respon
                 event_doc = event_ref.get()
                 if not event_doc.exists:
                     logger.error(
-                        f"Event {event_id} not found when trying to send cancellation email"
+                        f"Event {event_id} not found when trying to send reject booking email"
                     )
-                    event_name = "Event"
                 else:
                     event_data = event_doc.to_dict()
                     event_name = event_data.get("name", "Event")
+                    oid = event_data.get("organiserId")
+                    if oid is None:
+                        logger.error(
+                            f"Event missing organiserId for reject booking email. eventId={event_id}"
+                        )
+                    else:
+                        organiser_id_for_email = oid
+                    start_ts = event_data.get("startDate")
+                    end_ts = event_data.get("endDate")
+                    if start_ts is not None and end_ts is not None:
+                        start_pb: Timestamp = start_ts.timestamp_pb()
+                        end_pb: Timestamp = end_ts.timestamp_pb()
+                        start_date_string = (
+                            start_pb.ToDatetime()
+                            .astimezone(SYDNEY_TIMEZONE)
+                            .strftime("%m/%d/%Y, %H:%M")
+                        )
+                        end_date_string = (
+                            end_pb.ToDatetime()
+                            .astimezone(SYDNEY_TIMEZONE)
+                            .strftime("%m/%d/%Y, %H:%M")
+                        )
+                    location_string = event_data.get("location") or ""
             except Exception as e:
-                logger.error(f"Error retrieving event name for cancellation email: {e}")
-                event_name = "Event"
+                logger.error(
+                    f"Error retrieving event for reject booking email: {e}"
+                )
 
-            # Send cancellation email to customer
             if email:
-                success = False
-                for _ in range(3):
-                    success = send_cancellation_email(
-                        logger,
-                        email,
-                        full_name,
-                        event_name,
-                        order_id,
-                        ticket_count,
-                    )
-                    if success:
-                        break
-
-                if not success:
+                if not organiser_id_for_email:
                     logger.warning(
-                        f"Was unable to send cancellation email to {email}. orderId={order_id}"
+                        f"Skipping reject booking email: no organiserId on event. orderId={order_id}"
                     )
+                else:
+                    success = False
+                    for _ in range(3):
+                        success = send_reject_booking_email(
+                            logger,
+                            email,
+                            full_name,
+                            event_name,
+                            organiser_id_for_email,
+                            order_id,
+                            ticket_count,
+                            start_date_string,
+                            end_date_string,
+                            location_string,
+                        )
+                        if success:
+                            break
+
+                    if not success:
+                        logger.warning(
+                            f"Was unable to send reject booking email to {email}. orderId={order_id}"
+                        )
             else:
                 logger.warning(
-                    f"No email found in order {order_id} to send cancellation email"
+                    f"No email found in order {order_id} to send reject booking email"
                 )
 
             logger.info(
