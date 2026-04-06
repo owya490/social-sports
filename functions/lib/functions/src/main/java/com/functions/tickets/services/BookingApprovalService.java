@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.stripe.services.StripeService;
+import com.functions.stripe.services.WebhookService;
 import com.functions.tickets.models.BookingApprovalOperation;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
@@ -20,6 +21,11 @@ import com.stripe.exception.StripeException;
 
 public class BookingApprovalService {
     private static final Logger logger = LoggerFactory.getLogger(BookingApprovalService.class);
+
+    @FunctionalInterface
+    interface PurchaseEmailSender {
+        boolean send(String eventId, String visibility, String customerEmail, String fullName, String orderId);
+    }
 
     public static boolean handleBookingApproval(String eventId, String organiserId, String orderId,
             BookingApprovalOperation operation) {
@@ -61,7 +67,7 @@ public class BookingApprovalService {
 
             boolean success = false;
             if (operation == BookingApprovalOperation.APPROVE) {
-                success = executeApprovalOperation(stripePaymentIntentId, userData.getStripeAccount(), order);
+                success = executeApprovalOperation(stripePaymentIntentId, userData.getStripeAccount(), order, eventData);
             } else if (operation == BookingApprovalOperation.REJECT) {
                 success = executeRejectionOperation(stripePaymentIntentId, userData.getStripeAccount(), orderId);
             } else {
@@ -80,7 +86,7 @@ public class BookingApprovalService {
     }
 
     private static boolean executeApprovalOperation(String stripePaymentIntentId, String stripeAccountId,
-            Order order) {
+            Order order, EventData eventData) {
         String orderId = order.getOrderId();
         try {
             logger.info("Executing approval operation for stripePaymentIntentId: {}, stripeAccountId: {}, orderId: {}",
@@ -91,6 +97,10 @@ public class BookingApprovalService {
                     stripePaymentIntentId, stripeAccountId, orderId);
             TicketsService.updateOrderAndTicketStatus(orderId, OrderAndTicketStatus.APPROVED);
             logger.info("Successfully updated order and ticket status for orderId: {}", orderId);
+            boolean purchaseEmailSent = sendPurchaseEmailAfterApproval(order, eventData);
+            if (!purchaseEmailSent) {
+                logger.warn("Failed to send purchase email after approving booking for orderId: {}", orderId);
+            }
 
             return true;
         } catch (StripeException e) {
@@ -104,6 +114,23 @@ public class BookingApprovalService {
                     stripePaymentIntentId, stripeAccountId, orderId, e);
             return false;
         }
+    }
+
+    static boolean sendPurchaseEmailAfterApproval(Order order, EventData eventData) {
+        return sendPurchaseEmailAfterApproval(order, eventData, WebhookService::sendPurchaseEmailWithRetries);
+    }
+
+    static boolean sendPurchaseEmailAfterApproval(
+            Order order,
+            EventData eventData,
+            PurchaseEmailSender purchaseEmailSender) {
+        String visibility = Boolean.TRUE.equals(eventData.getIsPrivate()) ? "Private" : "Public";
+        return purchaseEmailSender.send(
+                eventData.getEventId(),
+                visibility,
+                order.getEmail(),
+                order.getFullName(),
+                order.getOrderId());
     }
 
     private static boolean executeRejectionOperation(String stripePaymentIntentId, String stripeAccountId,

@@ -29,7 +29,7 @@ public class EmailClient {
     /**
      * Sends an email with retry logic (recommended for production use).
      * 
-     * @param transactionalId The Loops transactional email ID
+     * @param templateType The Loops email template type
      * @param email          The recipient email address
      * @param variables      The email template variables
      * @return true if email was sent successfully, false otherwise

@@ -22,7 +22,6 @@ import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
-import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.LineItem;
 import com.stripe.model.LineItemCollection;
 import com.stripe.model.PaymentIntent;
@@ -34,7 +33,6 @@ import com.stripe.net.Webhook;
  * This is called from GlobalAppController when a Stripe webhook is detected.
  */
 public class StripeWebhookHandler {
-    // TODO: need to add tags like in add_stripe_event_and_checkout_tags
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookHandler.class);
     
     private static final Set<String> IGNORED_EVENT_IDS = Set.of("evt_1SAvvn05pkiJLNbsHt1mHThW");
@@ -42,18 +40,7 @@ public class StripeWebhookHandler {
     static final int MAX_PAYLOAD_SIZE = 1024 * 1024; // 1MB max payload size
     
     /**
-     * Processes a Stripe webhook request with security checks.
-     * 
-     * Security features:
-     * - Signature verification using Stripe's official SDK
-     * - Payload size limits to prevent DOS attacks
-     * - Webhook secret validation
-     * - Input sanitization and validation
-     * - Production URL filtering
-     * - Idempotency checks via WebhookService
-     * 
-     * @param request The HTTP request
-     * @param response The HTTP response
+     * Processes a Stripe webhook request.
      */
     public static void handleWebhook(HttpRequest request, HttpResponse response) {
         String uuid = UUID.randomUUID().toString();
@@ -153,6 +140,8 @@ public class StripeWebhookHandler {
             default:
                 logger.error("[Webhook-{}] Stripe sent a webhook request which does not match any handled events. " +
                             "eventType={}, eventId={}", uuid, eventType, event.getId());
+                // We intentionally acknowledge unhandled event types so Stripe does not keep retrying
+                // events that this endpoint is not meant to process.
                 response.setStatusCode(200);
                 return;
         }
@@ -183,7 +172,7 @@ public class StripeWebhookHandler {
                 return false;
             }
             
-            // Retrieve the full session with expanded line items
+            // Stripe omits line items by default, so we explicitly expand them here.
             Session fullSession = Session.retrieve(
                 checkoutSessionId,
                 com.stripe.param.checkout.SessionRetrieveParams.builder()
@@ -299,7 +288,6 @@ public class StripeWebhookHandler {
             }
             
             String captureMethod;
-            long applicationFeeAmount;
             try {
                 PaymentIntent paymentIntent = PaymentIntent.retrieve(
                     paymentIntentId,
@@ -315,7 +303,6 @@ public class StripeWebhookHandler {
                 }
                 
                 captureMethod = paymentIntent.getCaptureMethod();
-                applicationFeeAmount = getApplicationFeeAmount(paymentIntent);
                 logger.info("[Webhook-{}] Retrieved capture method: {} for payment intent: {}", 
                            uuid, captureMethod, paymentIntentId);
                 
@@ -343,7 +330,6 @@ public class StripeWebhookHandler {
                 sessionMetadata.getFulfilmentSessionId(),
                 sessionMetadata.getEndFulfilmentEntityId(),
                 paymentIntentId,
-                applicationFeeAmount,
                 captureMethod
             );
             
@@ -374,7 +360,7 @@ public class StripeWebhookHandler {
                 return false;
             }
             
-            // Retrieve the full session with expanded line items from Stripe API
+            // Stripe omits line items by default, so we explicitly expand them here.
             Session fullSession = Session.retrieve(
                 checkoutSessionId,
                 com.stripe.param.checkout.SessionRetrieveParams.builder()
@@ -462,22 +448,10 @@ public class StripeWebhookHandler {
 
     /**
      * Extracts the Stripe object id from an event payload.
-     * Falls back to raw JSON parsing when SDK deserialization is unavailable.
      */
     private static String extractObjectIdFromEvent(Event event, String uuid) {
         try {
-            EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
-            if (dataObjectDeserializer.getObject().isPresent()) {
-                Object object = dataObjectDeserializer.getObject().get();
-                if (object instanceof Session session) {
-                    return session.getId();
-                }
-                if (object instanceof PaymentIntent paymentIntent) {
-                    return paymentIntent.getId();
-                }
-            }
-
-            String rawJson = dataObjectDeserializer.getRawJson();
+            String rawJson = event.getDataObjectDeserializer().getRawJson();
             if (rawJson != null && !rawJson.isBlank()) {
                 String id = JavaUtils.objectMapper.readTree(rawJson).path("id").asText(null);
                 if (id != null && !id.isBlank()) {
@@ -496,6 +470,7 @@ public class StripeWebhookHandler {
         logger.info("[Webhook-{}] Project name: {}", uuid, projectName);
         boolean isProd = "socialsportsprod".equals(projectName);
         if (!isProd) {
+            // Dev should accept all Stripe test events so local/dev verification remains straightforward.
             return false;
         }
 
@@ -531,13 +506,6 @@ public class StripeWebhookHandler {
         return outputStream.toString(StandardCharsets.UTF_8);
     }
 
-    static long getApplicationFeeAmount(PaymentIntent paymentIntent) {
-        if (paymentIntent == null || paymentIntent.getApplicationFeeAmount() == null) {
-            return 0L;
-        }
-        return paymentIntent.getApplicationFeeAmount();
-    }
-    
     private static String normalizeCustomerEmail(String email) {
         if (email == null) {
             return null;

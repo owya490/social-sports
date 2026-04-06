@@ -1,6 +1,5 @@
 package com.functions.emails;
 
-import java.io.IOException;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -106,64 +105,58 @@ public class EmailService {
     public static boolean sendPurchaseEmail(String eventId, String visibility, String email, String firstName, String orderId) {
         String redactedEmail = LogSanitizer.redactEmail(email);
         try {
-            boolean result = sendPurchaseEmailInternal(eventId, visibility, email, firstName, orderId);
-            if (result) {
-                logger.info("Successfully sent purchase email for order {} to {}", orderId, redactedEmail);
-            } else {
+            Firestore db = FirebaseService.getFirestore();
+
+            DocumentSnapshot eventSnapshot = fetchDocument(
+                    db,
+                    CollectionPaths.EVENTS,
+                    CollectionPaths.ACTIVE,
+                    visibility,
+                    eventId);
+            if (!eventSnapshot.exists()) {
+                logger.error("Unable to find event provided in datastore to send email. eventId={}", eventId);
                 logger.warn("Failed to send purchase email for order {} to {}", orderId, redactedEmail);
+                return false;
             }
-            return result;
+
+            DocumentSnapshot orderSnapshot = fetchDocument(db, CollectionPaths.ORDERS, orderId);
+            if (!orderSnapshot.exists()) {
+                logger.error("Unable to find orderId provided in datastore to send email. orderId={}", orderId);
+                logger.warn("Failed to send purchase email for order {} to {}", orderId, redactedEmail);
+                return false;
+            }
+
+            Map<String, String> variables = buildEmailVariables(eventSnapshot, orderSnapshot, firstName, orderId);
+
+            boolean attendeeEmailSent = EmailClient.sendEmailWithLoopsWithRetries(
+                    EmailTemplateType.PURCHASE,
+                    email,
+                    variables);
+            if (!attendeeEmailSent) {
+                logger.error("Failed to send purchase email to attendee {}", redactedEmail);
+                logger.warn("Failed to send purchase email for order {} to {}", orderId, redactedEmail);
+                return false;
+            }
+
+            String organiserId = eventSnapshot.getString("organiserId");
+            if (organiserId != null) {
+                Optional<String> organiserEmail = getOrganiserEmailForTicketEmail(db, organiserId);
+                if (!sendPurchaseEmailCopyToOrganiser(
+                        organiserEmail,
+                        organiserId,
+                        variables,
+                        EmailClient::sendEmailWithLoopsWithRetries)) {
+                    logger.warn("Purchase email was sent to attendee, but organiser copy failed for orderId={}", orderId);
+                }
+            }
+
+            logger.info("Successfully sent purchase email for order {} to {}", orderId, redactedEmail);
+            return true;
         } catch (Exception e) {
             logger.error("Failed to send purchase email for order {} to {}: {}",
                     orderId, redactedEmail, e.getMessage(), e);
             return false;
         }
-    }
-
-    /**
-     * Internal implementation of sending purchase email.
-     */
-    private static boolean sendPurchaseEmailInternal(String eventId, String visibility, String email,
-                                                    String firstName, String orderId) throws ExecutionException, InterruptedException, IOException {
-        Firestore db = FirebaseService.getFirestore();
-
-        // Fetch Data
-        DocumentSnapshot eventSnapshot = fetchDocument(db, CollectionPaths.EVENTS, CollectionPaths.ACTIVE, visibility, eventId);
-        if (!eventSnapshot.exists()) {
-            logger.error("Unable to find event provided in datastore to send email. eventId={}", eventId);
-            return false;
-        }
-
-        DocumentSnapshot orderSnapshot = fetchDocument(db, CollectionPaths.ORDERS, orderId);
-        if (!orderSnapshot.exists()) {
-            logger.error("Unable to find orderId provided in datastore to send email. orderId={}", orderId);
-            return false;
-        }
-
-        // Prepare Variables
-        Map<String, String> variables = buildEmailVariables(eventSnapshot, orderSnapshot, firstName, orderId);
-
-        // Send email to attendee using EmailClient
-        boolean attendeeEmailSent = EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.PURCHASE, email, variables);
-        if (!attendeeEmailSent) {
-            logger.error("Failed to send purchase email to attendee {}", LogSanitizer.redactEmail(email));
-            return false;
-        }
-
-        // Check and send email to organiser
-        String organiserId = eventSnapshot.getString("organiserId");
-        if (organiserId != null) {
-            Optional<String> organiserEmail = getOrganiserEmailForTicketEmail(db, organiserId);
-            if (!sendPurchaseEmailCopyToOrganiser(
-                    organiserEmail,
-                    organiserId,
-                    variables,
-                    EmailClient::sendEmailWithLoopsWithRetries)) {
-                logger.warn("Purchase email was sent to attendee, but organiser copy failed for orderId={}", orderId);
-            }
-        }
-
-        return true;
     }
 
     private static DocumentSnapshot fetchDocument(Firestore db, String... pathSegments) throws ExecutionException, InterruptedException {

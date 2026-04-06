@@ -1,5 +1,7 @@
 package com.functions.stripe.models;
 
+import java.util.Map;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -51,7 +53,7 @@ public class SessionMetadata {
      * @param metadata The metadata map from Stripe
      * @return SessionMetadata instance
      */
-    public static SessionMetadata fromStripeMetadata(java.util.Map<String, String> metadata) {
+    public static SessionMetadata fromStripeMetadata(Map<String, String> metadata) {
         if (metadata == null) {
             throw new IllegalArgumentException("Session metadata cannot be null");
         }

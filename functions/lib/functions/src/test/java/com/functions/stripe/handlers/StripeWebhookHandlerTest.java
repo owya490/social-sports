@@ -8,8 +8,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
 
-import com.stripe.model.PaymentIntent;
-
 public class StripeWebhookHandlerTest {
     @Test
     public void readPayloadReturnsAsciiContentWithinLimit() throws Exception {
@@ -39,15 +37,5 @@ public class StripeWebhookHandlerTest {
         } catch (StripeWebhookHandler.PayloadTooLargeException expected) {
             // expected
         }
-    }
-
-    @Test
-    public void getApplicationFeeAmountUsesPaymentIntentFeeOrDefaultsToZero() {
-        PaymentIntent paymentIntent = new PaymentIntent();
-        paymentIntent.setApplicationFeeAmount(275L);
-
-        assertEquals(275L, StripeWebhookHandler.getApplicationFeeAmount(paymentIntent));
-        assertEquals(0L, StripeWebhookHandler.getApplicationFeeAmount(new PaymentIntent()));
-        assertEquals(0L, StripeWebhookHandler.getApplicationFeeAmount(null));
     }
 }

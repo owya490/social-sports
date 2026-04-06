@@ -20,6 +20,9 @@ import com.functions.events.models.EventMetadata;
 import com.functions.events.models.Purchaser;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
+import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
@@ -54,7 +57,13 @@ public class WebhookService {
     }
 
     @FunctionalInterface
-    interface RetryableBooleanOperation {
+    interface PurchaseEmailSender {
+        boolean send(String eventId, String visibility, String customerEmail, String fullName, String orderId)
+                throws Exception;
+    }
+
+    @FunctionalInterface
+    private interface RetryableBooleanOperation {
         boolean run() throws Exception;
     }
     
@@ -85,19 +94,14 @@ public class WebhookService {
                 return new ArrayList<>();
             }
             
-            @SuppressWarnings("unchecked")
-            Map<String, Object> fulfilmentEntityMap = 
-                (Map<String, Object>) fulfilmentSessionSnapshot.get("fulfilmentEntityMap");
-            @SuppressWarnings("unchecked")
-            List<String> fulfilmentEntityIds =
-                (List<String>) fulfilmentSessionSnapshot.get("fulfilmentEntityIds");
-            
-            if (fulfilmentEntityMap == null || fulfilmentEntityMap.isEmpty()) {
+            FulfilmentSession fulfilmentSession = FulfilmentSession.fromFirestore(fulfilmentSessionSnapshot);
+            if (fulfilmentSession.getFulfilmentEntityMap() == null
+                    || fulfilmentSession.getFulfilmentEntityMap().isEmpty()) {
                 logger.info("No fulfilment entity map found in fulfilment session {}", fulfilmentSessionId);
                 return new ArrayList<>();
             }
 
-            List<String> formResponseIds = extractFormResponseIds(fulfilmentEntityMap, fulfilmentEntityIds);
+            List<String> formResponseIds = extractFormResponseIds(fulfilmentSession);
             
             if (!formResponseIds.isEmpty()) {
                 logger.info("Retrieved {} form response IDs from fulfilment session {}: {}", 
@@ -115,43 +119,37 @@ public class WebhookService {
         }
     }
 
-    static List<String> extractFormResponseIds(
-            Map<String, Object> fulfilmentEntityMap,
-            List<String> fulfilmentEntityIds) {
+    static List<String> extractFormResponseIds(FulfilmentSession fulfilmentSession) {
 
         List<String> formResponseIds = new ArrayList<>();
-        if (fulfilmentEntityMap == null || fulfilmentEntityMap.isEmpty()) {
+        if (fulfilmentSession == null
+                || fulfilmentSession.getFulfilmentEntityMap() == null
+                || fulfilmentSession.getFulfilmentEntityMap().isEmpty()) {
             return formResponseIds;
         }
 
+        Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
+        List<String> fulfilmentEntityIds = fulfilmentSession.getFulfilmentEntityIds();
         if (fulfilmentEntityIds != null && !fulfilmentEntityIds.isEmpty()) {
             for (String fulfilmentEntityId : fulfilmentEntityIds) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> entityData = (Map<String, Object>) fulfilmentEntityMap.get(fulfilmentEntityId);
-                appendFormResponseId(formResponseIds, entityData);
+                appendFormResponseId(formResponseIds, fulfilmentEntityMap.get(fulfilmentEntityId));
             }
             return formResponseIds;
         }
 
-        for (Object entityValue : fulfilmentEntityMap.values()) {
-            if (!(entityValue instanceof Map<?, ?> entityData)) {
-                continue;
-            }
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> typedEntityData = (Map<String, Object>) entityData;
-            appendFormResponseId(formResponseIds, typedEntityData);
+        for (FulfilmentEntity fulfilmentEntity : fulfilmentEntityMap.values()) {
+            appendFormResponseId(formResponseIds, fulfilmentEntity);
         }
 
         return formResponseIds;
     }
 
-    private static void appendFormResponseId(List<String> formResponseIds, Map<String, Object> entityData) {
-        if (entityData == null || !"FORMS".equals(entityData.get("type"))) {
+    private static void appendFormResponseId(List<String> formResponseIds, FulfilmentEntity fulfilmentEntity) {
+        if (!(fulfilmentEntity instanceof FormsFulfilmentEntity formsFulfilmentEntity)) {
             return;
         }
 
-        String formResponseId = (String) entityData.get("formResponseId");
+        String formResponseId = formsFulfilmentEntity.getFormResponseId();
         if (formResponseId != null && !formResponseId.isEmpty()) {
             formResponseIds.add(formResponseId);
         }
@@ -165,7 +163,7 @@ public class WebhookService {
      * @param eventId The event ID
      * @return true if already processed, false otherwise
      */
-    public static boolean checkIfSessionHasBeenProcessedAlready(
+    private static boolean checkIfSessionHasBeenProcessedAlready(
             Transaction transaction, String checkoutSessionId, String eventId) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
@@ -194,7 +192,7 @@ public class WebhookService {
      * @param eventId The event ID
      * @return true if already processed, false otherwise
      */
-    public static boolean checkIfPaymentIntentHasBeenProcessedAlready(
+    private static boolean checkIfPaymentIntentHasBeenProcessedAlready(
             Transaction transaction, String paymentIntentId, String eventId) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
@@ -249,7 +247,7 @@ public class WebhookService {
         }
     }
 
-    static Map<String, Object> serializeCheckoutSessionForFirestore(Session checkoutSession) {
+    private static Map<String, Object> serializeCheckoutSessionForFirestore(Session checkoutSession) {
         if (checkoutSession == null) {
             return new HashMap<>();
         }
@@ -269,7 +267,7 @@ public class WebhookService {
         }
     }
 
-    static boolean retryBooleanOperation(
+    private static boolean retryBooleanOperation(
             String operationName,
             int maxRetries,
             long initialDelayMs,
@@ -301,7 +299,7 @@ public class WebhookService {
         return false;
     }
 
-    static void sleepBeforeRetry(long delayMs, String operationName) {
+    private static void sleepBeforeRetry(long delayMs, String operationName) {
         try {
             Thread.sleep(delayMs);
         } catch (InterruptedException interruptedException) {
@@ -420,6 +418,79 @@ public class WebhookService {
 
         return resolvedMetadata;
     }
+
+    static EventMetadata rollbackAttendanceFromEventMetadata(
+            EventMetadata eventMetadata,
+            String organiserId,
+            String customerEmail,
+            String fullName,
+            List<Ticket> tickets) {
+
+        EventMetadata resolvedMetadata = initializeEventMetadata(eventMetadata, organiserId);
+        int canceledTicketCount = tickets != null ? tickets.size() : 0;
+        if (canceledTicketCount <= 0) {
+            return resolvedMetadata;
+        }
+
+        Integer completeTicketCount = resolvedMetadata.getCompleteTicketCount();
+        int currentCompleteTicketCount = completeTicketCount != null ? completeTicketCount : 0;
+        resolvedMetadata.setCompleteTicketCount(Math.max(0, currentCompleteTicketCount - canceledTicketCount));
+
+        if (customerEmail == null || customerEmail.isBlank() || fullName == null || fullName.isBlank()) {
+            return resolvedMetadata;
+        }
+
+        Map<String, Purchaser> purchaserMap = resolvedMetadata.getPurchaserMap();
+        if (purchaserMap == null) {
+            return resolvedMetadata;
+        }
+
+        String emailHash = hashEmail(customerEmail);
+        Purchaser purchaser = purchaserMap.get(emailHash);
+        if (purchaser == null) {
+            return resolvedMetadata;
+        }
+
+        int currentPurchaserTicketCount = purchaser.getTotalTicketCount() != null ? purchaser.getTotalTicketCount() : 0;
+        purchaser.setTotalTicketCount(Math.max(0, currentPurchaserTicketCount - canceledTicketCount));
+
+        Map<String, Attendee> attendees = purchaser.getAttendees();
+        if (attendees != null) {
+            Attendee attendee = attendees.get(fullName);
+            if (attendee != null) {
+                int currentAttendeeTicketCount = attendee.getTicketCount() != null ? attendee.getTicketCount() : 0;
+                attendee.setTicketCount(Math.max(0, currentAttendeeTicketCount - canceledTicketCount));
+
+                List<String> remainingFormResponseIds = attendee.getFormResponseIds() != null
+                        ? new ArrayList<>(attendee.getFormResponseIds())
+                        : new ArrayList<>();
+                for (Ticket ticket : tickets) {
+                    String formResponseId = ticket.getFormResponseId();
+                    if (formResponseId != null && !formResponseId.isBlank()) {
+                        remainingFormResponseIds.remove(formResponseId);
+                    }
+                }
+                attendee.setFormResponseIds(remainingFormResponseIds);
+
+                if (attendee.getTicketCount() != null && attendee.getTicketCount() <= 0) {
+                    attendees.remove(fullName);
+                } else {
+                    attendees.put(fullName, attendee);
+                }
+            }
+        }
+
+        if ((purchaser.getAttendees() == null || purchaser.getAttendees().isEmpty())
+                && purchaser.getTotalTicketCount() != null
+                && purchaser.getTotalTicketCount() <= 0) {
+            purchaserMap.remove(emailHash);
+        } else {
+            purchaserMap.put(emailHash, purchaser);
+        }
+
+        return resolvedMetadata;
+    }
+
     private static void appendUniqueValue(List<String> values, String value) {
         if (values == null || value == null || value.isBlank()) {
             return;
@@ -427,6 +498,18 @@ public class WebhookService {
         if (!values.contains(value)) {
             values.add(value);
         }
+    }
+
+    private static EventMetadata getOrInitializeEventMetadata(
+            Transaction transaction,
+            DocumentReference eventMetadataRef,
+            String organiserId) throws Exception {
+
+        DocumentSnapshot metadataSnapshot = transaction.get(eventMetadataRef).get();
+        EventMetadata existingEventMetadata = metadataSnapshot.exists()
+                ? metadataSnapshot.toObject(EventMetadata.class)
+                : null;
+        return initializeEventMetadata(existingEventMetadata, organiserId);
     }
     
     /**
@@ -444,11 +527,10 @@ public class WebhookService {
      * @param totalDetails The payment details from Stripe
      * @param fulfilmentSessionId The fulfilment session ID (can be null)
      * @param paymentIntentId The Stripe payment intent ID
-     * @param applicationFeeAmount The Stripe application fee amount in cents
      * @param captureMethod The Stripe payment intent capture method
      * @return The order ID if successful, null otherwise
      */
-    public static String fulfillCompletedEventTicketPurchase(
+    private static String fulfillCompletedEventTicketPurchase(
             Transaction transaction,
             String checkoutSessionId,
             String eventId,
@@ -460,7 +542,6 @@ public class WebhookService {
             Session.TotalDetails totalDetails,
             String fulfilmentSessionId,
             String paymentIntentId,
-            long applicationFeeAmount,
             String captureMethod) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
@@ -490,13 +571,11 @@ public class WebhookService {
             return null;
         }
         
-        // Get the first line item (we only offer one item type per checkout)
-        if (lineItems == null || lineItems.isEmpty()) {
-            logger.error("Line items are empty for checkout session {}", checkoutSessionId);
+        LineItem item = getSingleCheckoutLineItem(lineItems, checkoutSessionId, false);
+        if (item == null) {
             return null;
         }
-        
-        LineItem item = lineItems.get(0);
+
         Long quantity = item.getQuantity();
         if (quantity == null) {
             logger.error("Item quantity is null for checkout session {}", checkoutSessionId);
@@ -513,19 +592,17 @@ public class WebhookService {
         ApiFuture<DocumentSnapshot> metadataFuture = transaction.get(eventMetadataRef);
         DocumentSnapshot maybeEventMetadata = metadataFuture.get();
         
-        boolean metadataExists = maybeEventMetadata.exists();
-        EventMetadata existingEventMetadata = metadataExists ? maybeEventMetadata.toObject(EventMetadata.class) : null;
+        EventMetadata existingEventMetadata = maybeEventMetadata.exists()
+                ? maybeEventMetadata.toObject(EventMetadata.class)
+                : null;
         EventMetadata eventMetadata = initializeEventMetadata(existingEventMetadata, event.getOrganiserId());
         
         // Create order and tickets
         Timestamp purchaseTime = Timestamp.now();
         DocumentReference orderRef = db.collection(CollectionPaths.ORDERS).document();
         
-        long applicationFees = applicationFeeAmount;
-        long discounts = 0;
-        if (totalDetails != null) {
-            discounts = totalDetails.getAmountDiscount() != null ? totalDetails.getAmountDiscount() : 0;
-        }
+        long applicationFees = resolveApplicationFees(totalDetails);
+        long discounts = resolveDiscounts(totalDetails);
         
         // Resolve status based on capture method
         OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
@@ -585,6 +662,20 @@ public class WebhookService {
         return orderRef.getId();
     }
 
+    static long resolveApplicationFees(Session.TotalDetails totalDetails) {
+        if (totalDetails == null || totalDetails.getAmountShipping() == null) {
+            return 0L;
+        }
+        return totalDetails.getAmountShipping();
+    }
+
+    static long resolveDiscounts(Session.TotalDetails totalDetails) {
+        if (totalDetails == null || totalDetails.getAmountDiscount() == null) {
+            return 0L;
+        }
+        return totalDetails.getAmountDiscount();
+    }
+
     private static void restockTickets(
             Transaction transaction,
             String eventId,
@@ -635,22 +726,76 @@ public class WebhookService {
             Transaction transaction,
             String paymentIntentId,
             String eventId,
+            String organiserId,
             boolean isPrivate,
-            int ticketCount,
             String orderId,
             List<String> ticketIds) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
         DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
+        EventMetadata eventMetadata = getOrInitializeEventMetadata(transaction, eventMetadataRef, organiserId);
+        Order order = OrdersRepository.getOrderById(orderId, Optional.of(transaction))
+                .orElseThrow(() -> new IllegalStateException("Order not found for payment intent cancellation: " + orderId));
+        List<Ticket> tickets = TicketsRepository.getTicketsByIds(ticketIds, Optional.of(transaction));
+        if (tickets.size() != ticketIds.size()) {
+            throw new IllegalStateException(String.format(
+                    "Expected %d tickets for order %s but found %d",
+                    ticketIds.size(),
+                    orderId,
+                    tickets.size()));
+        }
 
-        restockTickets(transaction, eventId, isPrivate, ticketCount);
+        eventMetadata = rollbackAttendanceFromEventMetadata(
+                eventMetadata,
+                organiserId,
+                order.getEmail(),
+                order.getFullName(),
+                tickets);
+
+        restockTickets(transaction, eventId, isPrivate, tickets.size());
         updateTicketsStatusToRejected(transaction, ticketIds);
         updateOrderStatusToRejected(transaction, orderId);
 
-        transaction.update(eventMetadataRef, "completedStripePaymentIntentIds",
-                FieldValue.arrayUnion(paymentIntentId));
+        appendUniqueValue(eventMetadata.getCompletedStripePaymentIntentIds(), paymentIntentId);
+        transaction.set(eventMetadataRef, eventMetadata);
         logger.info("Added payment intent {} to completedStripePaymentIntentIds for event {}",
                 paymentIntentId, eventId);
+    }
+
+    public static boolean sendPurchaseEmailWithRetries(
+            String eventId,
+            String visibility,
+            String customerEmail,
+            String fullName,
+            String orderId) {
+
+        return sendPurchaseEmailWithRetries(
+                eventId,
+                visibility,
+                customerEmail,
+                fullName,
+                orderId,
+                MAX_PURCHASE_EMAIL_RETRIES,
+                PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS,
+                EmailService::sendPurchaseEmail);
+    }
+
+    static boolean sendPurchaseEmailWithRetries(
+            String eventId,
+            String visibility,
+            String customerEmail,
+            String fullName,
+            String orderId,
+            int maxRetries,
+            long initialRetryDelayMs,
+            PurchaseEmailSender purchaseEmailSender) {
+
+        return retryBooleanOperation(
+                "send purchase email",
+                maxRetries,
+                initialRetryDelayMs,
+                true,
+                () -> purchaseEmailSender.send(eventId, visibility, customerEmail, fullName, orderId));
     }
     
     /**
@@ -661,7 +806,7 @@ public class WebhookService {
      * @param checkoutSession The Stripe checkout session
      * @param customerEmail The customer's email
      */
-    public static void recordCheckoutSessionByCustomerEmail(
+    private static void recordCheckoutSessionByCustomerEmail(
             Transaction transaction,
             String eventId,
             Session checkoutSession,
@@ -678,6 +823,51 @@ public class WebhookService {
         
         transaction.set(attendeeRef, data, com.google.cloud.firestore.SetOptions.merge());
     }
+
+    private static LineItem getSingleCheckoutLineItem(
+            List<LineItem> lineItems,
+            String checkoutSessionId,
+            boolean expiredCheckout) {
+
+        String checkoutType = expiredCheckout ? "expired checkout" : "checkout";
+        if (lineItems == null || lineItems.isEmpty()) {
+            logger.error("Line items are empty for {} session {}", checkoutType, checkoutSessionId);
+            return null;
+        }
+
+        // CheckoutService creates one Stripe line item per event purchase and stores ticket count
+        // on that item's quantity. Reject any other payload shape so multi-item checkouts cannot
+        // quietly under-restock or mis-price tickets.
+        if (lineItems.size() != 1) {
+            logger.error("Expected exactly 1 line item for {} session {} but found {}",
+                    checkoutType, checkoutSessionId, lineItems.size());
+            return null;
+        }
+
+        return lineItems.get(0);
+    }
+
+    static long getRequiredCheckoutQuantity(
+            List<LineItem> lineItems,
+            String checkoutSessionId,
+            boolean expiredCheckout) {
+
+        LineItem item = getSingleCheckoutLineItem(lineItems, checkoutSessionId, expiredCheckout);
+        String checkoutType = expiredCheckout ? "expired checkout" : "checkout";
+        if (item == null) {
+            throw new IllegalStateException(
+                    String.format("Unable to read line item for %s session %s", checkoutType, checkoutSessionId));
+        }
+
+        Long quantity = item.getQuantity();
+        if (quantity == null) {
+            logger.error("Item quantity is null for {} session {}", checkoutType, checkoutSessionId);
+            throw new IllegalStateException(
+                    String.format("Missing quantity for %s session %s", checkoutType, checkoutSessionId));
+        }
+
+        return quantity;
+    }
     
     /**
      * Restocks tickets after a checkout session expires.
@@ -688,7 +878,7 @@ public class WebhookService {
      * @param isPrivate Whether the event is private
      * @param lineItems The line items from the expired session
      */
-    public static void restockTicketsAfterExpiredCheckout(
+    private static void restockTicketsAfterExpiredCheckout(
             Transaction transaction,
             String checkoutSessionId,
             String eventId,
@@ -704,18 +894,7 @@ public class WebhookService {
             .document(eventId);
         DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
         
-        if (lineItems == null || lineItems.isEmpty()) {
-            logger.error("Line items are empty for expired checkout session {}", checkoutSessionId);
-            return;
-        }
-        
-        LineItem item = lineItems.get(0);
-        Long quantity = item.getQuantity();
-        
-        if (quantity == null) {
-            logger.error("Item quantity is null for expired checkout session {}", checkoutSessionId);
-            return;
-        }
+        long quantity = getRequiredCheckoutQuantity(lineItems, checkoutSessionId, true);
         
         // Verify event exists before updating vacancy to avoid transaction commit failures
         ApiFuture<DocumentSnapshot> eventFuture = transaction.get(eventRef);
@@ -731,8 +910,12 @@ public class WebhookService {
         transaction.update(eventRef, "vacancy", FieldValue.increment(quantity));
         
         // Add current checkout session to the processed list
-        transaction.update(eventMetadataRef, "completedStripeCheckoutSessionIds", 
-                          FieldValue.arrayUnion(checkoutSessionId));
+        EventMetadata eventMetadata = getOrInitializeEventMetadata(
+                transaction,
+                eventMetadataRef,
+                eventSnapshot.getString("organiserId"));
+        appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
+        transaction.set(eventMetadataRef, eventMetadata);
     }
     
     /**
@@ -751,7 +934,6 @@ public class WebhookService {
      * @param fulfilmentSessionId The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
      * @param paymentIntentId The Stripe payment intent ID
-     * @param applicationFeeAmount The Stripe application fee amount in cents
      * @param captureMethod The Stripe payment intent capture method
      * @return true if successful, false otherwise
      */
@@ -768,7 +950,6 @@ public class WebhookService {
             String fulfilmentSessionId,
             String endFulfilmentEntityId,
             String paymentIntentId,
-            long applicationFeeAmount,
             String captureMethod) {
         
         try {
@@ -794,7 +975,6 @@ public class WebhookService {
                         checkoutSession.getTotalDetails(),
                         fulfilmentSessionId,
                         paymentIntentId,
-                        applicationFeeAmount,
                         captureMethod
                     );
                     
@@ -825,6 +1005,12 @@ public class WebhookService {
             // should be enabled by default, and thus we don't need the completeFulfilmentSession
             // check anymore.
             if (completeFulfilmentSession && fulfilmentSessionId != null && endFulfilmentEntityId != null) {
+                // Keep fulfilment completion out of the checkout transaction. It opens its own
+                // Firestore transaction and touches additional workflow state, so coupling it to
+                // the payment write path would increase contention and could roll back the critical
+                // order/ticket persistence after Stripe has already told us the checkout succeeded.
+                // TODO: look into how we can robustly not have hanging fulfilment sessions when the initial webhook
+                // payment process has gone through.
                 boolean fulfilmentCompleted = retryBooleanOperation(
                         "complete fulfilment session",
                         MAX_FULFILMENT_RETRIES,
@@ -838,16 +1024,16 @@ public class WebhookService {
             }
             
             String visibility = isPrivate ? "Private" : "Public";
-            boolean emailSuccess = retryBooleanOperation(
-                    "send purchase email",
-                    MAX_PURCHASE_EMAIL_RETRIES,
-                    PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS,
-                    true,
-                    () -> EmailService.sendPurchaseEmail(eventId, visibility, customerEmail, fullName, orderId));
+            boolean emailSuccess = sendPurchaseEmailWithRetries(
+                    eventId,
+                    visibility,
+                    customerEmail,
+                    fullName,
+                    orderId);
             
             if (!emailSuccess) {
-                logger.warn("Was unable to send email to {} after {} attempts. orderId={}",
-                        LogSanitizer.redactEmail(customerEmail), MAX_PURCHASE_EMAIL_RETRIES, orderId);
+                logger.warn("Was unable to send purchase email after EmailClient retries. orderId={}, customer={}",
+                        orderId, LogSanitizer.redactEmail(customerEmail));
             }
             
             logger.info("Successfully handled checkout.session.completed webhook event. session={}", checkoutSessionId);
@@ -969,7 +1155,8 @@ public class WebhookService {
                 return false;
             }
             boolean isPrivate = privateEvent.exists();
-            int ticketCount = ticketIds.size();
+            DocumentSnapshot eventSnapshot = isPrivate ? privateEvent : publicEvent;
+            String organiserId = eventSnapshot.getString("organiserId");
 
             PaymentIntentCancellationTransactionResult transactionResult =
                     FirebaseService.createFirestoreTransaction(transaction -> {
@@ -984,8 +1171,8 @@ public class WebhookService {
                                     transaction,
                                     paymentIntentId,
                                     eventId,
+                                    organiserId,
                                     isPrivate,
-                                    ticketCount,
                                     orderId,
                                     ticketIds);
 
@@ -1002,7 +1189,6 @@ public class WebhookService {
             }
 
             String eventName = "Event";
-            DocumentSnapshot eventSnapshot = (isPrivate ? privateEvent : publicEvent);
             if (eventSnapshot.exists()) {
                 String resolvedName = eventSnapshot.getString("name");
                 if (resolvedName != null && !resolvedName.isBlank()) {
@@ -1017,7 +1203,7 @@ public class WebhookService {
                         order.getFullName(),
                         eventName,
                         orderId,
-                        ticketCount);
+                        ticketIds.size());
                 if (!emailSent) {
                     logger.warn("Was unable to send cancellation email to {}. orderId={}",
                             LogSanitizer.redactEmail(email), orderId);

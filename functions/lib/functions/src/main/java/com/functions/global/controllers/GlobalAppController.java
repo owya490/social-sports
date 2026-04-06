@@ -42,9 +42,7 @@ public class GlobalAppController implements HttpFunction {
             return;
         }
 
-        if (StripeConfig.JAVA_STRIPE_WEBHOOK_ENABLED
-                && (request.getFirstHeader("Stripe-Signature").isPresent()
-                        || "GET".equalsIgnoreCase(request.getMethod()))) {
+        if (shouldRouteToStripeWebhook(request)) {
             logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
             StripeWebhookHandler.handleWebhook(request, response);
             return;
@@ -133,10 +131,20 @@ public class GlobalAppController implements HttpFunction {
         return handler.handle(handler.parse(unifiedRequest));
     }
 
+    static boolean shouldRouteToStripeWebhook(HttpRequest request) {
+        return shouldRouteToStripeWebhook(request, StripeConfig.JAVA_STRIPE_WEBHOOK_ENABLED);
+    }
+
+    static boolean shouldRouteToStripeWebhook(HttpRequest request, boolean webhookEnabled) {
+        return webhookEnabled
+                && "POST".equalsIgnoreCase(request.getMethod())
+                && request.getFirstHeader("Stripe-Signature").isPresent();
+    }
+
     private void setResponseHeaders(HttpResponse response) {
         response.appendHeader("Access-Control-Allow-Origin", "*");
         response.appendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Stripe-Signature");
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
         response.appendHeader("Access-Control-Max-Age", "3600"); // Cache preflight for 1 hour
         response.appendHeader("Content-Type", "application/json; charset=UTF-8");
     }
