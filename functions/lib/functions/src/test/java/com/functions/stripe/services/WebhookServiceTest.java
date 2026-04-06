@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,23 @@ public class WebhookServiceTest {
         assertTrue(eventMetadata.getOrderIds().isEmpty());
         assertTrue(eventMetadata.getCompletedStripeCheckoutSessionIds().isEmpty());
         assertTrue(eventMetadata.getCompletedStripePaymentIntentIds().isEmpty());
+    }
+
+    @Test
+    public void initializeEventMetadataHandlesPartialMetadata() {
+        EventMetadata partialMetadata = new EventMetadata();
+        partialMetadata.setOrganiserId("existing-organiser");
+        partialMetadata.setPurchaserMap(new HashMap<>());
+
+        EventMetadata eventMetadata = WebhookService.initializeEventMetadata(partialMetadata, "organiser-123");
+
+        assertEquals("existing-organiser", eventMetadata.getOrganiserId());
+        assertNotNull(eventMetadata.getPurchaserMap());
+        assertEquals(Integer.valueOf(0), eventMetadata.getCompleteTicketCount());
+        assertNotNull(eventMetadata.getOrderIds());
+        assertNotNull(eventMetadata.getCompletedStripeCheckoutSessionIds());
+        assertNotNull(eventMetadata.getCompletedStripePaymentIntentIds());
+        assertTrue(eventMetadata.getPurchaserMap().isEmpty());
     }
 
     @Test
@@ -80,6 +98,38 @@ public class WebhookServiceTest {
 
         assertTrue(eventMetadata.getPurchaserMap()
                 .containsKey("266944698700326368151495154829773939458"));
+    }
+
+    @Test
+    public void applyAttendanceToEventMetadataDefaultsNullNestedCounters() {
+        EventMetadata eventMetadata = WebhookService.initializeEventMetadata(null, "organiser-123");
+        Purchaser purchaser = new Purchaser();
+        purchaser.setEmail("buyer@example.com");
+        purchaser.setAttendees(new HashMap<>());
+        purchaser.setTotalTicketCount(null);
+
+        Attendee attendee = new Attendee();
+        attendee.setPhone("0400000000");
+        attendee.setTicketCount(null);
+        purchaser.getAttendees().put("Taylor Buyer", attendee);
+        eventMetadata.getPurchaserMap().put("266944698700326368151495154829773939458", purchaser);
+
+        EventMetadata updatedMetadata = WebhookService.applyAttendanceToEventMetadata(
+                eventMetadata,
+                "organiser-123",
+                "buyer@example.com",
+                "Taylor Buyer",
+                "0400000000",
+                2,
+                List.of("form-1"));
+
+        Purchaser updatedPurchaser = updatedMetadata.getPurchaserMap()
+                .get("266944698700326368151495154829773939458");
+        Attendee updatedAttendee = updatedPurchaser.getAttendees().get("Taylor Buyer");
+
+        assertEquals(Integer.valueOf(2), updatedPurchaser.getTotalTicketCount());
+        assertEquals(Integer.valueOf(2), updatedAttendee.getTicketCount());
+        assertEquals(List.of("form-1"), updatedAttendee.getFormResponseIds());
     }
 
     @Test

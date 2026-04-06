@@ -16,4 +16,10 @@ public class LogSanitizerTest {
         assertEquals("[redacted-email]", LogSanitizer.redactEmail(" "));
         assertEquals("[redacted-email]", LogSanitizer.redactEmail("not-an-email"));
     }
+
+    @Test
+    public void redactEmailTrimsWhitespaceBeforeMasking() {
+        assertEquals("b***@***", LogSanitizer.redactEmail(" brian@example.com"));
+        assertEquals("b***@***", LogSanitizer.redactEmail("brian@example.com "));
+    }
 }

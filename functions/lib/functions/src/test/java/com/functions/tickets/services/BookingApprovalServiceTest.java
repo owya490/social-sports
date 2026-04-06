@@ -50,12 +50,16 @@ public class BookingApprovalServiceTest {
 
         Order order = new Order();
         order.setOrderId("order-123");
+        order.setEmail("public@example.com");
+        order.setFullName("Jordan Public");
 
         boolean result = BookingApprovalService.sendPurchaseEmailAfterApproval(
                 order,
                 eventData,
                 (eventId, visibility, customerEmail, fullName, orderId) -> {
                     assertEquals("Public", visibility);
+                    assertEquals("public@example.com", customerEmail);
+                    assertEquals("Jordan Public", fullName);
                     return false;
                 });
 

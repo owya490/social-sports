@@ -5,15 +5,20 @@ public final class LogSanitizer {
     }
 
     public static String redactEmail(String email) {
-        if (email == null || email.isBlank()) {
+        if (email == null) {
             return "[redacted-email]";
         }
 
-        int atIndex = email.indexOf('@');
-        if (atIndex <= 0 || atIndex == email.length() - 1) {
+        String normalizedEmail = email.strip();
+        if (normalizedEmail.isEmpty()) {
             return "[redacted-email]";
         }
 
-        return email.charAt(0) + "***@***";
+        int atIndex = normalizedEmail.indexOf('@');
+        if (atIndex <= 0 || atIndex == normalizedEmail.length() - 1) {
+            return "[redacted-email]";
+        }
+
+        return normalizedEmail.charAt(0) + "***@***";
     }
 }

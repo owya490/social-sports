@@ -97,7 +97,7 @@ public class OrdersRepository {
      * Gets the first order matching a Stripe PaymentIntent ID.
      *
      * @param paymentIntentId Stripe payment intent ID
-     * @return Optional containing the first matched order
+     * @return Optional containing the matched order
      */
     public static Optional<Order> getOrderByStripePaymentIntentId(String paymentIntentId) {
         if (paymentIntentId == null || paymentIntentId.isBlank()) {
@@ -109,12 +109,18 @@ public class OrdersRepository {
             Firestore db = FirebaseService.getFirestore();
             QuerySnapshot querySnapshot = db.collection(ORDERS_COLLECTION)
                     .whereEqualTo("stripePaymentIntentId", paymentIntentId)
-                    .limit(1)
+                    .limit(2)
                     .get()
                     .get();
 
             if (querySnapshot.isEmpty()) {
                 return Optional.empty();
+            }
+
+            if (querySnapshot.size() > 1) {
+                logger.error("Multiple orders found for stripePaymentIntentId: {}", paymentIntentId);
+                throw new IllegalStateException(
+                        "Data integrity violation: multiple orders for stripePaymentIntentId: " + paymentIntentId);
             }
 
             QueryDocumentSnapshot document = querySnapshot.getDocuments().get(0);

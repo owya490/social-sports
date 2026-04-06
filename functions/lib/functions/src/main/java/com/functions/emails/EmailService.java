@@ -1,5 +1,7 @@
 package com.functions.emails;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -260,7 +262,11 @@ public class EmailService {
         if (priceInCents == null) {
             return "0.0";
         }
-        return String.valueOf(priceInCents / 100.0);
+        BigDecimal dollars = BigDecimal.valueOf(priceInCents)
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                .stripTrailingZeros();
+        String formatted = dollars.toPlainString();
+        return formatted.contains(".") ? formatted : formatted + ".0";
     }
 
     private static Optional<String> getOrganiserEmailForTicketEmail(Firestore db, String organiserId) throws ExecutionException, InterruptedException {
@@ -341,9 +347,15 @@ public class EmailService {
                 "ticketCount", String.valueOf(ticketCount)
         );
 
-        boolean sent = EmailClient.sendEmailWithLoopsWithRetries(
-                LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID, email, variables);
         String redactedEmail = LogSanitizer.redactEmail(email);
+        final boolean sent;
+        try {
+            sent = EmailClient.sendEmailWithLoopsWithRetries(
+                    LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID, email, variables);
+        } catch (Exception e) {
+            logger.warn("Failed to send cancellation email for order {} to {}", orderId, redactedEmail, e);
+            return false;
+        }
 
         if (sent) {
             logger.info("Successfully sent cancellation email for order {} to {}", orderId, redactedEmail);

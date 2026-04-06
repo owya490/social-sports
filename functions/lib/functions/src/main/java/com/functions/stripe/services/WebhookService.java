@@ -378,7 +378,8 @@ public class WebhookService {
         }
 
         purchaser.setEmail(customerEmail);
-        purchaser.setTotalTicketCount(purchaser.getTotalTicketCount() + ticketCount);
+        int currentPurchaserTicketCount = Optional.ofNullable(purchaser.getTotalTicketCount()).orElse(0);
+        purchaser.setTotalTicketCount(currentPurchaserTicketCount + ticketCount);
 
         Map<String, Attendee> attendees = purchaser.getAttendees();
         if (attendees == null) {
@@ -394,7 +395,8 @@ public class WebhookService {
             attendee.setFormResponseIds(formResponseIds != null ? new ArrayList<>(formResponseIds) : new ArrayList<>());
         } else {
             attendee.setPhone(phoneNumber);
-            attendee.setTicketCount(attendee.getTicketCount() + ticketCount);
+            int currentAttendeeTicketCount = Optional.ofNullable(attendee.getTicketCount()).orElse(0);
+            attendee.setTicketCount(currentAttendeeTicketCount + ticketCount);
 
             List<String> existingFormResponses = attendee.getFormResponseIds();
             if (existingFormResponses == null) {
@@ -906,15 +908,15 @@ public class WebhookService {
             throw new IllegalStateException("Event does not exist: eventId=" + eventId);
         }
         
-        // Restock the tickets
-        transaction.update(eventRef, "vacancy", FieldValue.increment(quantity));
-        
-        // Add current checkout session to the processed list
+        // Firestore transactions require all reads to complete before the first write.
         EventMetadata eventMetadata = getOrInitializeEventMetadata(
                 transaction,
                 eventMetadataRef,
                 eventSnapshot.getString("organiserId"));
         appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
+
+        // Restock the tickets
+        transaction.update(eventRef, "vacancy", FieldValue.increment(quantity));
         transaction.set(eventMetadataRef, eventMetadata);
     }
     

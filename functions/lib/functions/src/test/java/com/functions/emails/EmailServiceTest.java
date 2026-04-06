@@ -55,6 +55,7 @@ public class EmailServiceTest {
     public void centsToPurchaseEmailPriceReturnsBareNumericString() {
         assertEquals("12.5", EmailService.centsToPurchaseEmailPrice(1250.0));
         assertEquals("12.0", EmailService.centsToPurchaseEmailPrice(1200.0));
+        assertEquals("19.99", EmailService.centsToPurchaseEmailPrice(1999.0));
         assertEquals("0.0", EmailService.centsToPurchaseEmailPrice(null));
     }
 

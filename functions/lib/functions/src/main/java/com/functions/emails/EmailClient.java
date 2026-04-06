@@ -36,6 +36,10 @@ public class EmailClient {
      */
     public static boolean sendEmailWithLoopsWithRetries(EmailTemplateType templateType, String email, 
                                                        Map<String, String> variables) {
+        if (templateType == null) {
+            logger.error("Cannot send email: templateType is null");
+            return false;
+        }
         return sendEmailWithLoopsWithRetries(templateType.templateId, email, variables);
     }
 

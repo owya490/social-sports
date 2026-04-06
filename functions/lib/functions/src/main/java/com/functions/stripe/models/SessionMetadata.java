@@ -27,7 +27,7 @@ public class SessionMetadata {
      * @throws IllegalArgumentException if any required field is invalid
      */
     private void validate() {
-        if (eventId == null || eventId.isEmpty()) {
+        if (eventId == null || eventId.isBlank()) {
             throw new IllegalArgumentException("Event Id must be provided as a string.");
         }
         if (isPrivate == null) {
@@ -37,10 +37,10 @@ public class SessionMetadata {
             throw new IllegalArgumentException("Complete Fulfilment Session must be provided as a boolean.");
         }
         if (completeFulfilmentSession) {
-            if (fulfilmentSessionId == null || fulfilmentSessionId.isEmpty()) {
+            if (fulfilmentSessionId == null || fulfilmentSessionId.isBlank()) {
                 throw new IllegalArgumentException("Fulfilment Session Id must be provided when fulfilment completion is enabled.");
             }
-            if (endFulfilmentEntityId == null || endFulfilmentEntityId.isEmpty()) {
+            if (endFulfilmentEntityId == null || endFulfilmentEntityId.isBlank()) {
                 throw new IllegalArgumentException("End Fulfilment Entity Id must be provided when fulfilment completion is enabled.");
             }
         }

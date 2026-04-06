@@ -16,8 +16,7 @@ public class StripeConfig {
     private static final Logger logger = LoggerFactory.getLogger(StripeConfig.class);
 
     public static final boolean JAVA_STRIPE_ENABLED = true;
-    public static final boolean JAVA_STRIPE_WEBHOOK_ENABLED =
-            getEnvFlag("JAVA_STRIPE_WEBHOOK_ENABLED", false);
+    public static final boolean JAVA_STRIPE_WEBHOOK_ENABLED = true;
 
     public static final String ERROR_URL = "/error";
     public static final String CURRENCY = "aud";
@@ -75,18 +74,6 @@ public class StripeConfig {
             logger.error("Failed to initialize Stripe configuration", e);
             throw new RuntimeException("Failed to initialize Stripe configuration", e);
         }
-    }
-
-    private static boolean getEnvFlag(String key, boolean defaultValue) {
-        String rawValue = Global.getEnv(key);
-        if (rawValue == null || rawValue.isBlank()) {
-            logger.info("Feature flag {} is not set. Using default={}", key, defaultValue);
-            return defaultValue;
-        }
-
-        boolean parsed = Boolean.parseBoolean(rawValue);
-        logger.info("Feature flag {} resolved to {}", key, parsed);
-        return parsed;
     }
 
     /**
