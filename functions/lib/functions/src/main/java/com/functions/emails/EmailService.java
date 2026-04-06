@@ -154,6 +154,10 @@ public class EmailService {
 
             logger.info("Successfully sent purchase email for order {} to {}", orderId, redactedEmail);
             return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Purchase email send interrupted for order {} to {}", orderId, redactedEmail, e);
+            return false;
         } catch (Exception e) {
             logger.error("Failed to send purchase email for order {} to {}: {}",
                     orderId, redactedEmail, e.getMessage(), e);
