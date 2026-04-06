@@ -1,11 +1,13 @@
 "use client";
 import { LabelledSwitch } from "@/components/elements/LabelledSwitch";
+import { MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP } from "@/interfaces/EventTypes";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
+import { NumberInput } from "@mantine/core";
 import { Spinner } from "@material-tailwind/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 interface RecurringTemplateSettingsProps {
   recurrenceTemplateId: RecurrenceTemplateId;
@@ -23,6 +25,9 @@ interface RecurringTemplateSettingsProps {
   setBookingApprovalEnabled: (event: boolean) => void;
   showAttendeesOnEventPage: boolean;
   setShowAttendeesOnEventPage: (event: boolean) => void;
+  maxTicketsPerTransaction: number;
+  setMaxTicketsPerTransaction: (n: number) => void;
+  eventCapacity: number;
 }
 
 export const RecurringTemplateSettings = ({
@@ -41,8 +46,31 @@ export const RecurringTemplateSettings = ({
   setBookingApprovalEnabled,
   showAttendeesOnEventPage,
   setShowAttendeesOnEventPage,
+  maxTicketsPerTransaction,
+  setMaxTicketsPerTransaction,
+  eventCapacity,
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
+
+  const maxTicketsAllowed = useMemo(
+    () => Math.max(1, Math.min(eventCapacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)),
+    [eventCapacity]
+  );
+
+  const persistMaxTickets = async (next: number) => {
+    const clamped = Math.max(1, Math.min(maxTicketsAllowed, Math.round(next)));
+    setLoading(true);
+    const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+      maxTicketsPerTransaction: clamped,
+    });
+    if (success) {
+      setMaxTicketsPerTransaction(clamped);
+      setLoading(false);
+    } else {
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="relative">
       <div className="flex flex-col space-y-4 mb-6 px-4 md:px-0">
@@ -171,6 +199,31 @@ export const RecurringTemplateSettings = ({
             }
           }}
         />
+        <div className="flex w-full items-center gap-4">
+          <div>
+            <h3 className="font-bold">Max Tickets Per Transaction</h3>
+            <p className="text-core-text font-light text-sm">
+              Maximum number of tickets a customer can purchase in a single transaction (up to{" "}
+              {Math.min(eventCapacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)} for this template).
+            </p>
+          </div>
+          <NumberInput
+            className="ml-auto w-28 shrink-0"
+            min={1}
+            max={maxTicketsAllowed}
+            value={maxTicketsPerTransaction}
+            onChange={(val) => {
+              if (val === "" || val === undefined) {
+                return;
+              }
+              const n = typeof val === "number" ? val : Number(val);
+              if (!Number.isFinite(n)) {
+                return;
+              }
+              void persistMaxTickets(n);
+            }}
+          />
+        </div>
       </div>
       {loading && (
         <div className="bg-core-hover opacity-50 top-0 absolute h-full w-full flex justify-center items-center">
