@@ -16,7 +16,6 @@ import java.util.Optional;
 import org.junit.Test;
 
 import com.google.cloud.functions.HttpRequest;
-import com.google.cloud.functions.HttpResponse;
 
 public class GlobalAppControllerTest {
     @Test
@@ -33,12 +32,17 @@ public class GlobalAppControllerTest {
     @Test
     public void shouldRouteToStripeWebhookRejectsUnsignedOrNonPostRequests() {
         MockHttpRequest unsignedPostRequest = new MockHttpRequest("POST", Map.of(), "");
+        MockHttpRequest blankSignedPostRequest = new MockHttpRequest(
+                "POST",
+                Map.of("Stripe-Signature", List.of("   ")),
+                "");
         MockHttpRequest signedGetRequest = new MockHttpRequest(
                 "GET",
                 Map.of("Stripe-Signature", List.of("sig_test_123")),
                 "");
 
         assertFalse(GlobalAppController.shouldRouteToStripeWebhook(unsignedPostRequest, true));
+        assertFalse(GlobalAppController.shouldRouteToStripeWebhook(blankSignedPostRequest, true));
         assertFalse(GlobalAppController.shouldRouteToStripeWebhook(signedGetRequest, true));
     }
 

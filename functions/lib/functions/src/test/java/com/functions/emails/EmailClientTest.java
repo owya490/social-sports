@@ -14,4 +14,16 @@ public class EmailClientTest {
                 "buyer@example.com",
                 Map.of()));
     }
+
+    @Test
+    public void sendEmailWithLoopsWithRetriesReturnsFalseWhenTransactionalIdIsNullOrBlank() {
+        assertFalse(EmailClient.sendEmailWithLoopsWithRetries(
+                (String) null,
+                "buyer@example.com",
+                Map.of()));
+        assertFalse(EmailClient.sendEmailWithLoopsWithRetries(
+                "   ",
+                "buyer@example.com",
+                Map.of()));
+    }
 }

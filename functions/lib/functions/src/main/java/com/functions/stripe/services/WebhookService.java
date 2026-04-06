@@ -282,6 +282,11 @@ public class WebhookService {
 
                 logger.warn("{} returned unsuccessful on attempt {}/{}",
                         operationName, attempt + 1, maxRetries);
+            } catch (InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
+                logger.warn("{} interrupted on attempt {}/{}",
+                        operationName, attempt + 1, maxRetries);
+                return false;
             } catch (Exception e) {
                 logger.warn("{} failed on attempt {}/{}: {}",
                         operationName, attempt + 1, maxRetries, e.getMessage(), e);
@@ -292,19 +297,23 @@ public class WebhookService {
                         ? initialDelayMs * (1L << attempt)
                         : initialDelayMs;
                 logger.info("Retrying {} in {}ms", operationName, delayMs);
-                sleepBeforeRetry(delayMs, operationName);
+                if (!sleepBeforeRetry(delayMs, operationName)) {
+                    return false;
+                }
             }
         }
 
         return false;
     }
 
-    private static void sleepBeforeRetry(long delayMs, String operationName) {
+    private static boolean sleepBeforeRetry(long delayMs, String operationName) {
         try {
             Thread.sleep(delayMs);
+            return true;
         } catch (InterruptedException interruptedException) {
             Thread.currentThread().interrupt();
             logger.warn("Interrupted while retrying {}", operationName);
+            return false;
         }
     }
     
@@ -645,6 +654,7 @@ public class WebhookService {
         
         // Create order
         Order order = new Order();
+        order.setOrderId(orderRef.getId());
         order.setDatePurchased(purchaseTime);
         order.setEmail(customerEmail);
         order.setFullName(fullName);

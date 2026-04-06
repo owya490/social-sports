@@ -89,6 +89,19 @@ public class EmailServiceTest {
     }
 
     @Test
+    public void sendPurchaseEmailCopyToOrganiserReturnsFalseWhenSendThrows() {
+        boolean result = EmailService.sendPurchaseEmailCopyToOrganiser(
+                Optional.of("organiser@example.com"),
+                "organiser-123",
+                Map.of("orderId", "order-123"),
+                (templateType, email, variables) -> {
+                    throw new IllegalStateException("loops unavailable");
+                });
+
+        assertFalse(result);
+    }
+
+    @Test
     public void sendPurchaseEmailCopyToOrganiserReturnsTrueWhenSendSucceeds() {
         boolean result = EmailService.sendPurchaseEmailCopyToOrganiser(
                 Optional.of("organiser@example.com"),

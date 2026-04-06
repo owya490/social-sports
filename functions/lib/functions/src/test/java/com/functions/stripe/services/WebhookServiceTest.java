@@ -240,6 +240,29 @@ public class WebhookServiceTest {
     }
 
     @Test
+    public void sendPurchaseEmailWithRetriesStopsImmediatelyWhenInterrupted() {
+        int[] attempts = { 0 };
+
+        boolean result = WebhookService.sendPurchaseEmailWithRetries(
+                "event-123",
+                "Public",
+                "buyer@example.com",
+                "Taylor Buyer",
+                "order-123",
+                3,
+                0,
+                (eventId, visibility, customerEmail, fullName, orderId) -> {
+                    attempts[0]++;
+                    throw new InterruptedException("stop retrying");
+                });
+
+        assertFalse(result);
+        assertEquals(1, attempts[0]);
+        assertTrue(Thread.currentThread().isInterrupted());
+        Thread.interrupted();
+    }
+
+    @Test
     public void getRequiredCheckoutQuantityReturnsSingleLineItemQuantity() {
         LineItem lineItem = new LineItem();
         lineItem.setQuantity(3L);

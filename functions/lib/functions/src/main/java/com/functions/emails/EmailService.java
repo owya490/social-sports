@@ -313,7 +313,15 @@ public class EmailService {
             return true;
         }
 
-        boolean organiserEmailSent = emailSender.send(EmailTemplateType.PURCHASE, organiserEmail.get(), variables);
+        String redactedOrganiserEmail = LogSanitizer.redactEmail(organiserEmail.get());
+        final boolean organiserEmailSent;
+        try {
+            organiserEmailSent = emailSender.send(EmailTemplateType.PURCHASE, organiserEmail.get(), variables);
+        } catch (Exception e) {
+            logger.warn("Failed to send copy of purchase email to organiser {} at {}",
+                    organiserId, redactedOrganiserEmail, e);
+            return false;
+        }
         if (!organiserEmailSent) {
             logger.error("Failed to send copy of purchase email to organiser {}", organiserId);
             return false;

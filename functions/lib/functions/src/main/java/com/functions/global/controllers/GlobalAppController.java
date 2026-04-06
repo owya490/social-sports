@@ -138,7 +138,9 @@ public class GlobalAppController implements HttpFunction {
     static boolean shouldRouteToStripeWebhook(HttpRequest request, boolean webhookEnabled) {
         return webhookEnabled
                 && "POST".equalsIgnoreCase(request.getMethod())
-                && request.getFirstHeader("Stripe-Signature").isPresent();
+                && request.getFirstHeader("Stripe-Signature")
+                        .map(signature -> !signature.trim().isEmpty())
+                        .orElse(false);
     }
 
     private void setResponseHeaders(HttpResponse response) {
