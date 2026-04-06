@@ -323,11 +323,15 @@ public class WebhookService {
      * @param captureMethod The Stripe payment intent capture method
      * @return PENDING if manual capture, APPROVED otherwise
      */
-    private static OrderAndTicketStatus resolveOrderAndTicketStatus(String captureMethod) {
+    static OrderAndTicketStatus resolveOrderAndTicketStatus(String captureMethod) {
         if ("manual".equalsIgnoreCase(captureMethod)) {
             return OrderAndTicketStatus.PENDING;
         }
         return OrderAndTicketStatus.APPROVED;
+    }
+
+    static boolean shouldSendPurchaseEmailAfterCheckout(String captureMethod) {
+        return resolveOrderAndTicketStatus(captureMethod) == OrderAndTicketStatus.APPROVED;
     }
 
     static EventMetadata initializeEventMetadata(EventMetadata eventMetadata, String organiserId) {
@@ -1035,17 +1039,19 @@ public class WebhookService {
                 }
             }
             
-            String visibility = isPrivate ? "Private" : "Public";
-            boolean emailSuccess = sendPurchaseEmailWithRetries(
-                    eventId,
-                    visibility,
-                    customerEmail,
-                    fullName,
-                    orderId);
-            
-            if (!emailSuccess) {
-                logger.warn("Was unable to send purchase email after EmailClient retries. orderId={}, customer={}",
-                        orderId, LogSanitizer.redactEmail(customerEmail));
+            if (shouldSendPurchaseEmailAfterCheckout(captureMethod)) {
+                String visibility = isPrivate ? "Private" : "Public";
+                boolean emailSuccess = sendPurchaseEmailWithRetries(
+                        eventId,
+                        visibility,
+                        customerEmail,
+                        fullName,
+                        orderId);
+
+                if (!emailSuccess) {
+                    logger.warn("Was unable to send purchase email after EmailClient retries. orderId={}, customer={}",
+                            orderId, LogSanitizer.redactEmail(customerEmail));
+                }
             }
             
             logger.info("Successfully handled checkout.session.completed webhook event. session={}", checkoutSessionId);

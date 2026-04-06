@@ -28,6 +28,11 @@ import com.google.cloud.functions.HttpResponse;
 public class GlobalAppController implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(GlobalAppController.class);
 
+    @FunctionalInterface
+    interface StripeWebhookProcessor {
+        void handle(HttpRequest request, HttpResponse response) throws Exception;
+    }
+
     public GlobalAppController() {
         StripeConfig.initialize();
     }
@@ -43,8 +48,7 @@ public class GlobalAppController implements HttpFunction {
         }
 
         if (shouldRouteToStripeWebhook(request)) {
-            logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
-            StripeWebhookHandler.handleWebhook(request, response);
+            handleStripeWebhook(request, response);
             return;
         }
 
@@ -141,6 +145,25 @@ public class GlobalAppController implements HttpFunction {
                 && request.getFirstHeader("Stripe-Signature")
                         .map(signature -> !signature.trim().isEmpty())
                         .orElse(false);
+    }
+
+    static void handleStripeWebhook(HttpRequest request, HttpResponse response) throws Exception {
+        handleStripeWebhook(request, response, StripeWebhookHandler::handleWebhook);
+    }
+
+    static void handleStripeWebhook(
+            HttpRequest request,
+            HttpResponse response,
+            StripeWebhookProcessor stripeWebhookProcessor) throws Exception {
+        logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
+        try {
+            stripeWebhookProcessor.handle(request, response);
+        } catch (Exception e) {
+            logger.error("Unhandled exception while processing Stripe webhook. uri={}", request.getUri(), e);
+            response.setStatusCode(500);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse("Internal server error")));
+        }
     }
 
     private void setResponseHeaders(HttpResponse response) {

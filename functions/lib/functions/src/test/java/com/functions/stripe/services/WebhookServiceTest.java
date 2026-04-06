@@ -263,6 +263,14 @@ public class WebhookServiceTest {
     }
 
     @Test
+    public void shouldSendPurchaseEmailAfterCheckoutSkipsManualCaptureOrders() {
+        assertFalse(WebhookService.shouldSendPurchaseEmailAfterCheckout("manual"));
+        assertFalse(WebhookService.shouldSendPurchaseEmailAfterCheckout("MANUAL"));
+        assertTrue(WebhookService.shouldSendPurchaseEmailAfterCheckout("automatic"));
+        assertTrue(WebhookService.shouldSendPurchaseEmailAfterCheckout(null));
+    }
+
+    @Test
     public void getRequiredCheckoutQuantityReturnsSingleLineItemQuantity() {
         LineItem lineItem = new LineItem();
         lineItem.setQuantity(3L);

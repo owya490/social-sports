@@ -94,10 +94,11 @@ public class OrdersRepository {
     }
 
     /**
-     * Gets the first order matching a Stripe PaymentIntent ID.
+     * Gets the unique order matching a Stripe PaymentIntent ID.
      *
      * @param paymentIntentId Stripe payment intent ID
-     * @return Optional containing the matched order
+     * @return Optional containing the matched order when exactly one exists, otherwise empty
+     * @throws IllegalStateException when multiple orders share the same payment intent ID
      */
     public static Optional<Order> getOrderByStripePaymentIntentId(String paymentIntentId) {
         if (paymentIntentId == null || paymentIntentId.isBlank()) {
@@ -129,6 +130,8 @@ public class OrdersRepository {
                 order.setOrderId(document.getId());
             }
             return Optional.ofNullable(order);
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Failed to query order by stripePaymentIntentId: {}", paymentIntentId, e);
             throw new RuntimeException("Failed to query order by stripePaymentIntentId: " + paymentIntentId, e);
