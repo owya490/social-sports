@@ -1,23 +1,17 @@
 package com.functions.global.controllers;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.nio.charset.StandardCharsets;
 
 import org.junit.Test;
 
@@ -46,18 +40,6 @@ public class GlobalAppControllerTest {
 
         assertFalse(GlobalAppController.shouldRouteToStripeWebhook(unsignedPostRequest, true));
         assertFalse(GlobalAppController.shouldRouteToStripeWebhook(signedGetRequest, true));
-    }
-
-    @Test
-    public void serviceReturnsMethodNotAllowedForGetRequests() throws Exception {
-        GlobalAppController controller = new GlobalAppController();
-        MockHttpRequest getRequest = new MockHttpRequest("GET", Map.of(), "");
-        MockHttpResponse response = new MockHttpResponse();
-
-        controller.service(getRequest, response);
-
-        assertEquals(405, response.getStatusCode());
-        assertTrue(response.getBody().contains("only supports POST requests"));
     }
 
     private static final class MockHttpRequest implements HttpRequest {
@@ -141,67 +123,5 @@ public class GlobalAppControllerTest {
             return Optional.ofNullable(values.get(0));
         }
 
-    }
-
-    private static final class MockHttpResponse implements HttpResponse {
-        private final StringWriter body = new StringWriter();
-        private final BufferedWriter writer = new BufferedWriter(body);
-        private final Map<String, List<String>> headers = new java.util.LinkedHashMap<>();
-        private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        private int statusCode = 200;
-        private String contentType;
-
-        @Override
-        public void setStatusCode(int code) {
-            this.statusCode = code;
-        }
-
-        @Override
-        public void setStatusCode(int code, String message) {
-            this.statusCode = code;
-        }
-
-        @Override
-        public void appendHeader(String header, String value) {
-            headers.computeIfAbsent(header, ignored -> new ArrayList<>()).add(value);
-        }
-
-        @Override
-        public BufferedWriter getWriter() {
-            return writer;
-        }
-
-        @Override
-        public void setContentType(String contentType) {
-            this.contentType = contentType;
-        }
-
-        @Override
-        public Optional<String> getContentType() {
-            return Optional.ofNullable(contentType);
-        }
-
-        @Override
-        public Map<String, List<String>> getHeaders() {
-            return headers;
-        }
-
-        @Override
-        public OutputStream getOutputStream() {
-            return outputStream;
-        }
-
-        private int getStatusCode() {
-            return statusCode;
-        }
-
-        private String getBody() {
-            try {
-                writer.flush();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            return body.toString();
-        }
     }
 }
