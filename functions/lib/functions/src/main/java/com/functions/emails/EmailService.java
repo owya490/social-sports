@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.global.handlers.Global;
-import com.functions.utils.LogSanitizer;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -105,11 +104,10 @@ public class EmailService {
      * @return true if email was sent successfully, false otherwise
      */
     public static boolean sendPurchaseEmail(String eventId, String visibility, String email, String firstName, String orderId) {
-        String redactedEmail = LogSanitizer.redactEmail(email);
         try {
             Firestore db = FirebaseService.getFirestore();
 
-            DocumentSnapshot eventSnapshot = fetchDocument(
+            DocumentSnapshot eventSnapshot = fetchNestedDocument(
                     db,
                     CollectionPaths.EVENTS,
                     CollectionPaths.ACTIVE,
@@ -117,14 +115,12 @@ public class EmailService {
                     eventId);
             if (!eventSnapshot.exists()) {
                 logger.error("Unable to find event provided in datastore to send email. eventId={}", eventId);
-                logger.warn("Failed to send purchase email for order {} to {}", orderId, redactedEmail);
                 return false;
             }
 
-            DocumentSnapshot orderSnapshot = fetchDocument(db, CollectionPaths.ORDERS, orderId);
+            DocumentSnapshot orderSnapshot = fetchRootDocument(db, CollectionPaths.ORDERS, orderId);
             if (!orderSnapshot.exists()) {
                 logger.error("Unable to find orderId provided in datastore to send email. orderId={}", orderId);
-                logger.warn("Failed to send purchase email for order {} to {}", orderId, redactedEmail);
                 return false;
             }
 
@@ -135,8 +131,7 @@ public class EmailService {
                     email,
                     variables);
             if (!attendeeEmailSent) {
-                logger.error("Failed to send purchase email to attendee {}", redactedEmail);
-                logger.warn("Failed to send purchase email for order {} to {}", orderId, redactedEmail);
+                logger.warn("Failed to send purchase email for order {} to {}", orderId, email);
                 return false;
             }
 
@@ -148,40 +143,47 @@ public class EmailService {
                         organiserId,
                         variables,
                         EmailClient::sendEmailWithLoopsWithRetries)) {
-                    logger.warn("Purchase email was sent to attendee, but organiser copy failed for orderId={}", orderId);
+                    logger.warn("Purchase email was sent to attendee {}, but organiser copy failed for orderId={}",
+                            email, orderId);
                 }
             }
 
-            logger.info("Successfully sent purchase email for order {} to {}", orderId, redactedEmail);
+            logger.info("Successfully sent purchase email for order {} to {}", orderId, email);
             return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.warn("Purchase email send interrupted for order {} to {}", orderId, redactedEmail, e);
+            logger.warn("Purchase email send interrupted for order {} to {}", orderId, email, e);
             return false;
         } catch (Exception e) {
             logger.error("Failed to send purchase email for order {} to {}: {}",
-                    orderId, redactedEmail, e.getMessage(), e);
+                    orderId, email, e.getMessage(), e);
             return false;
         }
     }
 
-    private static DocumentSnapshot fetchDocument(Firestore db, String... pathSegments) throws ExecutionException, InterruptedException {
-        if (pathSegments == null || pathSegments.length == 0) {
-            throw new IllegalArgumentException("Path segments cannot be null or empty");
-        }
-        if (pathSegments.length == 2) {
-             return db.collection(pathSegments[0]).document(pathSegments[1]).get().get();
-        } else if (pathSegments.length == 4) {
-             return db.collection(pathSegments[0]).document(pathSegments[1])
-                      .collection(pathSegments[2]).document(pathSegments[3]).get().get();
-        }
-        throw new IllegalArgumentException("Unsupported path segments length: " + pathSegments.length + ". Expected 2 or 4.");
+    private static DocumentSnapshot fetchRootDocument(Firestore db, String collectionPath, String documentId)
+            throws ExecutionException, InterruptedException {
+        return db.collection(collectionPath).document(documentId).get().get();
+    }
+
+    private static DocumentSnapshot fetchNestedDocument(
+            Firestore db,
+            String parentCollectionPath,
+            String parentDocumentId,
+            String childCollectionPath,
+            String childDocumentId) throws ExecutionException, InterruptedException {
+        return db.collection(parentCollectionPath)
+                .document(parentDocumentId)
+                .collection(childCollectionPath)
+                .document(childDocumentId)
+                .get()
+                .get();
     }
 
     private static Map<String, String> buildEmailVariables(DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
-        Timestamp startTimestamp = event.get("startDate", Timestamp.class);
-        Timestamp endTimestamp = event.get("endDate", Timestamp.class);
-        Timestamp purchasedTimestamp = order.get("datePurchased", Timestamp.class);
+        Timestamp startTimestamp = getTimestampField(event, "startDate");
+        Timestamp endTimestamp = getTimestampField(event, "endDate");
+        Timestamp purchasedTimestamp = getTimestampField(order, "datePurchased");
 
         // Robustly extract price from Firestore, handling various numeric types
         double priceInCents = extractPrice(event);
@@ -201,6 +203,23 @@ public class EmailService {
                 event.getString("location"));
     }
 
+    private static Timestamp getTimestampField(DocumentSnapshot snapshot, String fieldName) {
+        Object value = snapshot.get(fieldName);
+        if (value == null) {
+            logger.error("Missing required timestamp field '{}'", fieldName);
+            throw new IllegalStateException("Missing required timestamp field: " + fieldName);
+        }
+
+        if (value instanceof Timestamp timestamp) {
+            return timestamp;
+        }
+
+        logger.error("Unexpected timestamp type '{}' for field '{}'",
+                value.getClass().getName(), fieldName);
+        throw new IllegalStateException(
+                "Unexpected timestamp type for field " + fieldName + ": " + value.getClass().getName());
+    }
+
     /**
      * Extracts price from a Firestore document, handling multiple possible types.
      *
@@ -208,19 +227,24 @@ public class EmailService {
      * @return The price in cents as a double, or 0.0 if not found or invalid
      */
     private static double extractPrice(DocumentSnapshot event) {
+        Long longPrice = event.getLong("price");
+        if (longPrice != null) {
+            return longPrice.doubleValue();
+        }
+
+        Double doublePrice = event.getDouble("price");
+        if (doublePrice != null) {
+            return doublePrice;
+        }
+
         Object priceObj = event.get("price");
 
         if (priceObj == null) {
             return 0.0;
         }
 
-        // Handle different numeric types
-        if (priceObj instanceof Double) {
-            return (Double) priceObj;
-        } else if (priceObj instanceof Long) {
-            return ((Long) priceObj).doubleValue();
-        } else if (priceObj instanceof Integer) {
-            return ((Integer) priceObj).doubleValue();
+        if (priceObj instanceof Number numericPrice) {
+            return numericPrice.doubleValue();
         } else if (priceObj instanceof String) {
             try {
                 return Double.parseDouble((String) priceObj);
@@ -244,22 +268,33 @@ public class EmailService {
             String startDate,
             String endDate,
             String location) {
-        String resolvedOrderId = Optional.ofNullable(orderId).orElse("");
+        String resolvedFirstName = defaultString(firstName);
+        String resolvedEventName = defaultString(eventName);
+        String resolvedOrderId = defaultString(orderId);
+        String resolvedDatePurchased = defaultString(datePurchased);
+        String resolvedQuantity = quantity != null ? quantity : "0";
+        String resolvedStartDate = defaultString(startDate);
+        String resolvedEndDate = defaultString(endDate);
+        String resolvedLocation = defaultString(location);
         return Map.of(
-                "name", Optional.ofNullable(firstName).orElse(""),
-                "eventName", Optional.ofNullable(eventName).orElse(""),
+                "name", resolvedFirstName,
+                "eventName", resolvedEventName,
                 "orderId", resolvedOrderId,
                 "orderLink", buildOrderLink(resolvedOrderId),
-                "datePurchased", Optional.ofNullable(datePurchased).orElse(""),
-                "quantity", Optional.ofNullable(quantity).orElse("0"),
+                "datePurchased", resolvedDatePurchased,
+                "quantity", resolvedQuantity,
                 "price", centsToPurchaseEmailPrice(priceInCents),
-                "startDate", Optional.ofNullable(startDate).orElse(""),
-                "endDate", Optional.ofNullable(endDate).orElse(""),
-                "location", Optional.ofNullable(location).orElse(""));
+                "startDate", resolvedStartDate,
+                "endDate", resolvedEndDate,
+                "location", resolvedLocation);
     }
 
     static String buildOrderLink(String orderId) {
         return "https://www.sportshub.net.au/order/" + Optional.ofNullable(orderId).orElse("");
+    }
+
+    private static String defaultString(String value) {
+        return value != null ? value : "";
     }
 
     static String centsToPurchaseEmailPrice(Double priceInCents) {
@@ -274,7 +309,12 @@ public class EmailService {
     }
 
     private static Optional<String> getOrganiserEmailForTicketEmail(Firestore db, String organiserId) throws ExecutionException, InterruptedException {
-        DocumentSnapshot organiserSnapshot = fetchDocument(db, CollectionPaths.USERS, CollectionPaths.ACTIVE, CollectionPaths.PRIVATE, organiserId);
+        DocumentSnapshot organiserSnapshot = fetchNestedDocument(
+                db,
+                CollectionPaths.USERS,
+                CollectionPaths.ACTIVE,
+                CollectionPaths.PRIVATE,
+                organiserId);
 
         if (!organiserSnapshot.exists()) {
             logger.error("Organiser does not exist: organiserId={}", organiserId);
@@ -317,17 +357,17 @@ public class EmailService {
             return true;
         }
 
-        String redactedOrganiserEmail = LogSanitizer.redactEmail(organiserEmail.get());
         final boolean organiserEmailSent;
         try {
             organiserEmailSent = emailSender.send(EmailTemplateType.PURCHASE, organiserEmail.get(), variables);
         } catch (Exception e) {
             logger.warn("Failed to send copy of purchase email to organiser {} at {}",
-                    organiserId, redactedOrganiserEmail, e);
+                    organiserId, organiserEmail.get(), e);
             return false;
         }
         if (!organiserEmailSent) {
-            logger.error("Failed to send copy of purchase email to organiser {}", organiserId);
+            logger.warn("Failed to send copy of purchase email to organiser {} at {}",
+                    organiserId, organiserEmail.get());
             return false;
         }
 
@@ -359,20 +399,19 @@ public class EmailService {
                 "ticketCount", String.valueOf(ticketCount)
         );
 
-        String redactedEmail = LogSanitizer.redactEmail(email);
         final boolean sent;
         try {
             sent = EmailClient.sendEmailWithLoopsWithRetries(
                     LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID, email, variables);
         } catch (Exception e) {
-            logger.warn("Failed to send cancellation email for order {} to {}", orderId, redactedEmail, e);
+            logger.warn("Failed to send cancellation email for order {} to {}", orderId, email, e);
             return false;
         }
 
         if (sent) {
-            logger.info("Successfully sent cancellation email for order {} to {}", orderId, redactedEmail);
+            logger.info("Successfully sent cancellation email for order {} to {}", orderId, email);
         } else {
-            logger.warn("Failed to send cancellation email for order {} to {}", orderId, redactedEmail);
+            logger.warn("Failed to send cancellation email for order {} to {}", orderId, email);
         }
         return sent;
     }

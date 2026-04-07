@@ -17,7 +17,6 @@ import com.functions.stripe.config.StripeCustomFieldKeys;
 import com.functions.stripe.models.SessionMetadata;
 import com.functions.stripe.services.WebhookService;
 import com.functions.utils.JavaUtils;
-import com.functions.utils.LogSanitizer;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 import com.stripe.exception.SignatureVerificationException;
@@ -313,7 +312,7 @@ public class StripeWebhookHandler {
             logger.info("[Webhook-{}] Attempting to fulfill completed event ticket purchase. session={}, eventId={}, " +
                        "customer={}, paymentIntentId={}, captureMethod={}", 
                        uuid, checkoutSessionId, sessionMetadata.getEventId(),
-                       LogSanitizer.redactEmail(customerEmail), paymentIntentId, captureMethod);
+                       customerEmail, paymentIntentId, captureMethod);
             
             // Execute the fulfillment workflow
             boolean success = WebhookService.fulfilmentWorkflowOnTicketPurchase(

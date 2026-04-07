@@ -6,9 +6,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +31,6 @@ import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
-import com.functions.utils.LogSanitizer;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -223,9 +224,6 @@ public class WebhookService {
             return processedSessionIds;
         }
 
-        if (eventMetadata.getCompletedStripeCheckoutSession() != null) {
-            processedSessionIds.addAll(eventMetadata.getCompletedStripeCheckoutSession());
-        }
         if (eventMetadata.getCompletedStripeCheckoutSessionIds() != null) {
             processedSessionIds.addAll(eventMetadata.getCompletedStripeCheckoutSessionIds());
         }
@@ -411,20 +409,18 @@ public class WebhookService {
             int currentAttendeeTicketCount = Optional.ofNullable(attendee.getTicketCount()).orElse(0);
             attendee.setTicketCount(currentAttendeeTicketCount + ticketCount);
 
-            List<String> existingFormResponses = attendee.getFormResponseIds();
-            if (existingFormResponses == null) {
-                existingFormResponses = new ArrayList<>();
+            Set<String> existingFormResponses = new LinkedHashSet<>();
+            if (attendee.getFormResponseIds() != null) {
+                existingFormResponses.addAll(attendee.getFormResponseIds());
             }
             if (formResponseIds != null && !formResponseIds.isEmpty()) {
                 for (String formResponseId : formResponseIds) {
-                    if (formResponseId != null
-                            && !formResponseId.isBlank()
-                            && !existingFormResponses.contains(formResponseId)) {
+                    if (formResponseId != null && !formResponseId.isBlank()) {
                         existingFormResponses.add(formResponseId);
                     }
                 }
             }
-            attendee.setFormResponseIds(existingFormResponses);
+            attendee.setFormResponseIds(new ArrayList<>(existingFormResponses));
         }
 
         attendees.put(fullName, attendee);
@@ -630,7 +626,7 @@ public class WebhookService {
                 quantity.intValue(),
                 formResponseIds);
         logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}",
-                LogSanitizer.redactEmail(customerEmail), fullName);
+                customerEmail, fullName);
         
         List<String> ticketIds = new ArrayList<>();
         
@@ -997,7 +993,7 @@ public class WebhookService {
                     if (orderIdResult == null) {
                         logger.error("Fulfillment of event ticket purchase was unsuccessful. session={}, eventId={}, " +
                                     "customer={}", checkoutSessionId, eventId,
-                                LogSanitizer.redactEmail(customerEmail));
+                                customerEmail);
                         throw new RuntimeException("Fulfillment failed");
                     }
                     
@@ -1050,7 +1046,7 @@ public class WebhookService {
 
                 if (!emailSuccess) {
                     logger.warn("Was unable to send purchase email after EmailClient retries. orderId={}, customer={}",
-                            orderId, LogSanitizer.redactEmail(customerEmail));
+                            orderId, customerEmail);
                 }
             }
             
@@ -1224,7 +1220,7 @@ public class WebhookService {
                         ticketIds.size());
                 if (!emailSent) {
                     logger.warn("Was unable to send cancellation email to {}. orderId={}",
-                            LogSanitizer.redactEmail(email), orderId);
+                            email, orderId);
                 }
             } else {
                 logger.warn("No email found in order to send cancellation email. orderId={}", orderId);
