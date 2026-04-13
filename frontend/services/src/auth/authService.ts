@@ -6,23 +6,58 @@ import {
   EmailAuthProvider,
   FacebookAuthProvider,
   GoogleAuthProvider,
+  OAuthProvider,
   reauthenticateWithCredential,
+  reload,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  User,
   UserCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
+import { FIREBASE_FUNCTIONS_VERIFY_EMAIL_FOR_SSO_USER, getFirebaseFunctionByName } from "../firebaseFunctionsService";
 import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
 import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 
 const authServiceLogger = new Logger("authServiceLogger");
+
+type VerifySsoEmailResponse = {
+  success?: boolean;
+  error?: string;
+};
+
+async function verifySsoUserEmailWithBackend(firebaseUser: User): Promise<void> {
+  // Google (and most IdPs) already set emailVerified; skip callable to avoid CORS / deploy issues in dev.
+  if (firebaseUser.emailVerified) {
+    return;
+  }
+
+  const callable = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_VERIFY_EMAIL_FOR_SSO_USER);
+  const result = await callable({});
+  const data = result.data as VerifySsoEmailResponse;
+  if (!data?.success) {
+    const code = data?.error ?? "unknown";
+    authServiceLogger.error("verify_email_for_sso_user failed", { code });
+    if (code === "not_sso") {
+      throw new Error("This sign-in method is not eligible for automatic email verification.");
+    }
+    if (code === "unauthenticated") {
+      throw new Error("Authentication failed. Please try again.");
+    }
+    if (code === "user_not_found") {
+      throw new Error("Account not found. Please try again.");
+    }
+    throw new Error("Could not verify your account. Please try again.");
+  }
+  await reload(firebaseUser);
+}
 
 export async function handleEmailAndPasswordSignUp(data: NewUserData) {
   let userCredential; // Declare userCredential outside the try block to access it in the catch block
@@ -171,6 +206,21 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
   }
 }
 
+/**
+ * Email/password login: send the user to /register when there is no Firebase account or no app profile.
+ * Note: some Firebase versions use `auth/invalid-credential` for both wrong password and missing user,
+ * so we cannot redirect in that case without risking false positives.
+ */
+export function shouldRedirectToRegisterAfterFailedLogin(error: unknown): boolean {
+  if (error instanceof FirebaseError && error.code === "auth/user-not-found") {
+    return true;
+  }
+  if (error instanceof Error && error.message === "User data not found.") {
+    return true;
+  }
+  return false;
+}
+
 export async function saveTempUserData(userId: string, data: UserData) {
   await setDoc(doc(db, "TempUsers", userId), data);
 }
@@ -196,50 +246,199 @@ async function deleteTempUserData(userId: string) {
   await deleteDoc(doc(db, "TempUsers", userId));
 }
 
-export async function handleGoogleSignIn() {
+function buildUserDataFromFirebaseUser(firebaseUser: User): UserData {
+  const email = firebaseUser.email?.trim();
+  if (!email) {
+    throw new Error(
+      "We could not read an email from this sign-in. Try another method or check your Apple/Google account settings.",
+    );
+  }
+
+  let firstName = "";
+  let surname = "";
+  const displayName = firebaseUser.displayName?.trim();
+  if (displayName) {
+    const parts = displayName.split(/\s+/).filter(Boolean);
+    firstName = parts[0] ?? "";
+    surname = parts.slice(1).join(" ");
+  }
+  if (!firstName) {
+    const localPart = email.split("@")[0]?.replace(/[^a-zA-Z0-9]/g, "") ?? "";
+    firstName = localPart.length >= 1 ? localPart : "User";
+  }
+
+  const profilePicture = firebaseUser.photoURL ?? EmptyUserData.profilePicture;
+
+  return {
+    ...EmptyUserData,
+    userId: firebaseUser.uid,
+    firstName,
+    surname,
+    profilePicture,
+    publicContactInformation: {
+      ...EmptyUserData.publicContactInformation,
+      email,
+      mobile: "",
+    },
+    contactInformation: {
+      ...EmptyUserData.contactInformation,
+      email,
+      mobile: "",
+    },
+  };
+}
+
+/**
+ * Resolves or creates the app user profile after OAuth sign-in (Google, Apple, Facebook).
+ * New OAuth users get a Firestore profile from the provider; email/password sign-in keeps its own flow.
+ */
+async function completeSignInAfterAuthenticatedUser(uid: string): Promise<UserId | null> {
   try {
-    const provider = new GoogleAuthProvider();
-    const userCredential: UserCredential = await signInWithPopup(auth, provider);
-    const userDocRef = doc(db, "Users", userCredential.user.uid);
+    await getPublicUserById(uid);
+    await syncEmailOnLogin(uid);
+    return uid;
+  } catch (error: unknown) {
+    if (error instanceof UserNotFoundError) {
+      authServiceLogger.info("User not found in public users. Attempting to retrieve temporary user data.", {
+        userId: uid,
+      });
 
-    // Check if the user already exists in your Firestore collection,
-    // and create a new document if not.
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists()) {
-      const userDataToSet = {
-        firstName: userCredential.user.displayName,
-        // TODO: add more fields here
-      };
-      await setDoc(userDocRef, userDataToSet);
+      const userData = await getTempUserData(uid);
+
+      if (userData !== null) {
+        try {
+          await createUser(userData, uid);
+          authServiceLogger.info("Temporary user data found and user created successfully.", { userId: uid });
+          await deleteTempUserData(uid);
+          authServiceLogger.info("Temporary user data deleted after successful creation.", { userId: uid });
+          return uid;
+        } catch {
+          authServiceLogger.error("Error during user creation. Attempting rollback.", { userId: uid });
+          try {
+            await deleteUser(uid);
+            authServiceLogger.error("User creation rolled back successfully.", { userId: uid });
+          } catch (rollbackError) {
+            const rollbackErrorMessage =
+              rollbackError instanceof Error ? rollbackError.message : "Unknown error during rollback";
+            authServiceLogger.error("Failed to roll back user creation:", {
+              error: rollbackErrorMessage,
+              userId: uid,
+            });
+          }
+          throw new Error("User creation failed, rolled back the changes.");
+        }
+      } else {
+        const firebaseUser = auth.currentUser;
+        if (!firebaseUser || firebaseUser.uid !== uid) {
+          authServiceLogger.error("No Firebase session for OAuth profile creation.", { userId: uid });
+          throw new Error("Sign in session expired. Please try again.");
+        }
+
+        authServiceLogger.info("No existing profile; creating user from OAuth provider.", { userId: uid });
+        let oauthUserData: UserData;
+        try {
+          oauthUserData = buildUserDataFromFirebaseUser(firebaseUser);
+        } catch (e: unknown) {
+          throw e instanceof Error ? e : new Error("Could not create a profile from this account.");
+        }
+
+        try {
+          await createUser(oauthUserData, uid);
+          authServiceLogger.info("OAuth profile created successfully.", { userId: uid });
+          await syncEmailOnLogin(uid);
+          return uid;
+        } catch {
+          authServiceLogger.error("Error during OAuth user creation. Attempting rollback.", { userId: uid });
+          try {
+            await deleteUser(uid);
+            authServiceLogger.error("OAuth user creation rolled back.", { userId: uid });
+          } catch (rollbackError) {
+            const rollbackErrorMessage =
+              rollbackError instanceof Error ? rollbackError.message : "Unknown error during rollback";
+            authServiceLogger.error("Failed to roll back OAuth user creation.", {
+              error: rollbackErrorMessage,
+              userId: uid,
+            });
+          }
+          throw new Error("User creation failed, rolled back the changes.");
+        }
+      }
+    } else {
+      throw error;
     }
-
-    authServiceLogger.info("Google signed in");
-  } catch (error) {
-    authServiceLogger.info(`${error}`);
   }
 }
 
-export async function handleFacebookSignIn() {
-  try {
-    const provider = new FacebookAuthProvider();
-    const userCredential: UserCredential = await signInWithPopup(auth, provider);
-    const userDocRef = doc(db, "Users", userCredential.user.uid);
-
-    // Check if the user already exists in your Firestore collection,
-    // and create a new document if not.
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists()) {
-      const userDataToSet = {
-        firstName: userCredential.user.displayName,
-        // TODO: add more fields here
-      };
-      await setDoc(userDocRef, userDataToSet);
+function mapOAuthSignInError(error: unknown): Error {
+  if (error instanceof FirebaseError) {
+    switch (error.code) {
+      case "auth/popup-closed-by-user":
+      case "auth/cancelled-popup-request":
+        return new Error("Sign in was cancelled.");
+      case "auth/account-exists-with-different-credential":
+        return new Error("An account already exists with this email using a different sign-in method.");
+      case "auth/operation-not-allowed":
+        return new Error("This sign-in method is not enabled.");
+      default:
+        authServiceLogger.error("OAuth sign-in Firebase error", { code: error.code, message: error.message });
+        return new Error(error.message || "Sign in failed.");
     }
-
-    authServiceLogger.info("Facebook signed in");
-  } catch (error) {
-    authServiceLogger.info(`${error}`);
   }
+  if (error instanceof Error) {
+    return error;
+  }
+  return new Error("An unknown error occurred.");
+}
+
+async function signInWithOAuthProviderAndComplete(
+  getCredential: () => Promise<UserCredential>,
+  label: string,
+): Promise<UserId | null> {
+  let userCredential: UserCredential | undefined;
+  try {
+    userCredential = await getCredential();
+    await verifySsoUserEmailWithBackend(userCredential.user);
+    authServiceLogger.info(`${label} sign-in completed`, { userId: userCredential.user.uid });
+    return await completeSignInAfterAuthenticatedUser(userCredential.user.uid);
+  } catch (error: unknown) {
+    if (userCredential) {
+      try {
+        await signOut(auth);
+        authServiceLogger.info(`User signed out after error during ${label} sign-in`, {
+          userId: userCredential.user.uid,
+        });
+      } catch (signOutError) {
+        authServiceLogger.error("Failed to sign out user during OAuth error handling.", {
+          error: signOutError instanceof Error ? signOutError.message : "Unknown error",
+          label,
+        });
+      }
+    }
+    throw mapOAuthSignInError(error);
+  }
+}
+
+export async function handleGoogleSignIn(): Promise<UserId | null> {
+  return signInWithOAuthProviderAndComplete(async () => {
+    const provider = new GoogleAuthProvider();
+    return signInWithPopup(auth, provider);
+  }, "Google");
+}
+
+export async function handleAppleSignIn(): Promise<UserId | null> {
+  return signInWithOAuthProviderAndComplete(async () => {
+    const provider = new OAuthProvider("apple.com");
+    provider.addScope("email");
+    provider.addScope("name");
+    return signInWithPopup(auth, provider);
+  }, "Apple");
+}
+
+export async function handleFacebookSignIn(): Promise<UserId | null> {
+  return signInWithOAuthProviderAndComplete(async () => {
+    const provider = new FacebookAuthProvider();
+    return signInWithPopup(auth, provider);
+  }, "Facebook");
 }
 
 const actionCodeSettings = {

@@ -1,5 +1,6 @@
 from lib.auth import *
 from lib.constants import *
+import lib.auth_verify_sso  # noqa: F401 - registers verify_email_for_sso_user callable
 # Emails
 from lib.emails import *
 from lib.emails.email_reminder import *

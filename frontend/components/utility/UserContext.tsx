@@ -50,22 +50,29 @@ export default function UserContext({ children }: { children: any }) {
       // redirecting to dashboard, hence we need to do another check to see if they are in the create
       // user workflow
       setUserLoading(true);
-      if (userAuth && auth.currentUser?.emailVerified) {
+      if (userAuth && userAuth.emailVerified) {
         const { uid } = userAuth;
         try {
           const userData = await getFullUserByIdForUserContextWithRetries(uid);
           setUser(userData);
         } catch {
-          const userData = await getTempUserData(auth.currentUser.uid);
-          if (!userData) {
-            router.push("/error");
+          const tempUser = await getTempUserData(userAuth.uid);
+          if (!tempUser) {
+            const onLoginOrRegister = LoginRegisterRoutes.some((prefix) => pathname.startsWith(prefix));
+            if (onLoginOrRegister) {
+              // Orphan Firebase account (e.g. verified but no app profile). Let the login page sign out
+              // and redirect to /register; do not race with router.push("/error").
+              setUser(EmptyUserData);
+            } else {
+              router.push("/error");
+            }
           }
         }
       }
       setUserLoading(false);
     });
     return () => unsubscriber();
-  }, []);
+  }, [pathname, router]);
   useEffect(() => {
     const checkAuthStatus = async () => {
       if (userLoading) return;
@@ -83,10 +90,15 @@ export default function UserContext({ children }: { children: any }) {
           // will satify both the above conditions and then skip the create user workflow due to this
           // redirecting to dashboard, hence we need to do another check to see if they are in the create
           // user workflow
-          const userData = await getTempUserData(auth.currentUser.uid);
-          console.log("userData", userData);
-          if (!userData) {
+          const tempUser = await getTempUserData(auth.currentUser.uid);
+          if (tempUser) return;
+          const uid = auth.currentUser.uid;
+          if (user.userId === uid && user.userId !== "") {
             router.push("/");
+            return;
+          }
+          if (pathname.startsWith("/login")) {
+            router.push("/register");
           }
         }
       }

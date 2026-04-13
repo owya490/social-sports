@@ -5,6 +5,9 @@ import { app } from "./firebase";
 export const FIREBASE_FUNCTIONS_CREATE_EVENT = "create_event";
 export const FIREBASE_FUNCTIONS_CREATE_RECURRENCE_TEMPLATE = "create_recurrence_template";
 
+// Auth
+export const FIREBASE_FUNCTIONS_VERIFY_EMAIL_FOR_SSO_USER = "verify_email_for_sso_user";
+
 // Stripe
 export const FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT = "create_stripe_standard_account";
 

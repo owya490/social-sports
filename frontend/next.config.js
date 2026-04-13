@@ -36,6 +36,15 @@ const nextConfig = {
     return config;
   },
   experimental: { missingSuspenseWithCSRBailout: false },
+  // Firebase Auth signInWithPopup needs to read popup.closed; strict COOP breaks that in some browsers.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [{ key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" }],
+      },
+    ];
+  },
   async redirects() {
     return [
       {
