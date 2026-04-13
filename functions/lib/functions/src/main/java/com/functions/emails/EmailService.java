@@ -15,6 +15,7 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.global.handlers.Global;
 import com.functions.utils.TimeUtils;
+import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
@@ -26,15 +27,17 @@ import com.google.cloud.firestore.Firestore;
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
     private static final String DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID = "cml0rm3t21e8s0ixa21rvcfnx";
+    private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR =
+            "LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID";
 
     @FunctionalInterface
     interface PurchaseEmailSender {
         boolean send(EmailTemplateType templateType, String email, Map<String, String> variables);
     }
     private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID =
-            resolveCancellationEmailTemplateId(Global.getEnv("LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID"));
+            resolveCancellationEmailTemplateId(Global.getEnv(LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR));
 
-    static String resolveCancellationEmailTemplateId(String configuredTemplateId) {
+    private static String resolveCancellationEmailTemplateId(String configuredTemplateId) {
         if (configuredTemplateId == null || configuredTemplateId.isBlank()) {
             return DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID;
         }
@@ -146,6 +149,8 @@ public class EmailService {
                     logger.warn("Purchase email was sent to attendee {}, but organiser copy failed for orderId={}",
                             email, orderId);
                 }
+            } else {
+                logger.warn("Purchase email was sent to attendee {}, but event {} has no organiserId", email, eventId);
             }
 
             logger.info("Successfully sent purchase email for order {} to {}", orderId, email);
@@ -258,7 +263,7 @@ public class EmailService {
         }
     }
 
-    static Map<String, String> buildPurchaseEmailVariables(
+    private static Map<String, String> buildPurchaseEmailVariables(
             String firstName,
             String eventName,
             String orderId,
@@ -289,15 +294,17 @@ public class EmailService {
                 "location", resolvedLocation);
     }
 
-    static String buildOrderLink(String orderId) {
-        return "https://www.sportshub.net.au/order/" + Optional.ofNullable(orderId).orElse("");
+    private static String buildOrderLink(String orderId) {
+        String resolvedOrderId = Optional.ofNullable(orderId).orElse("");
+        return UrlUtils.getUrlWithCurrentEnvironment("/order/" + resolvedOrderId)
+                .orElse(UrlUtils.SPORTSHUB_URL + "/order/" + resolvedOrderId);
     }
 
     private static String defaultString(String value) {
         return value != null ? value : "";
     }
 
-    static String centsToPurchaseEmailPrice(Double priceInCents) {
+    private static String centsToPurchaseEmailPrice(Double priceInCents) {
         if (priceInCents == null) {
             return "0.0";
         }
@@ -335,7 +342,7 @@ public class EmailService {
         return Optional.empty();
     }
 
-    static Optional<String> extractContactEmail(Map<String, Object> contactInfo) {
+    private static Optional<String> extractContactEmail(Map<String, Object> contactInfo) {
         if (contactInfo == null) {
             return Optional.empty();
         }
@@ -348,7 +355,7 @@ public class EmailService {
         return Optional.empty();
     }
 
-    static boolean sendPurchaseEmailCopyToOrganiser(
+    private static boolean sendPurchaseEmailCopyToOrganiser(
             Optional<String> organiserEmail,
             String organiserId,
             Map<String, String> variables,
@@ -357,7 +364,7 @@ public class EmailService {
             return true;
         }
 
-        final boolean organiserEmailSent;
+        boolean organiserEmailSent;
         try {
             organiserEmailSent = emailSender.send(EmailTemplateType.PURCHASE, organiserEmail.get(), variables);
         } catch (Exception e) {
@@ -388,7 +395,8 @@ public class EmailService {
                                                 String orderId, int ticketCount) {
         if (LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID == null
                 || LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID.isBlank()) {
-            logger.warn("LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID not configured. Skipping cancellation email.");
+            logger.warn("{} not configured. Skipping cancellation email.",
+                    LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR);
             return false;
         }
 
@@ -399,7 +407,7 @@ public class EmailService {
                 "ticketCount", String.valueOf(ticketCount)
         );
 
-        final boolean sent;
+        boolean sent;
         try {
             sent = EmailClient.sendEmailWithLoopsWithRetries(
                     LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID, email, variables);
