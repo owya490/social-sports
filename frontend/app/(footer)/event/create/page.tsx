@@ -281,7 +281,7 @@ export default function CreateEvent() {
   }
 
   function convertDateAndTimeStringToTimestamp(date: string, time: string): Timestamp {
-    let dateObject = new Date(date);
+    const dateObject = new Date(date);
     const timeArr = time.split(":");
     dateObject.setHours(parseInt(timeArr[0]));
     dateObject.setMinutes(parseInt(timeArr[1]));

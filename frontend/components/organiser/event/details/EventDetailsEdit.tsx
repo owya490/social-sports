@@ -390,7 +390,7 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
     }
 
     setUpdateLoading(true);
-    var data = {
+    let data = {
       ...handleDateTimeUpdate(),
       ...handleRegistrationDeadlineUpdate(),
       ...(await handleLocationUpdate()),

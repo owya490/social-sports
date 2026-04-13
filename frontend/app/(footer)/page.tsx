@@ -77,7 +77,7 @@ function DashboardContent() {
     locationParameter: string | null,
     userParameter: string | null
   ): SearchType {
-    var type = SearchType.EVENT;
+    let type = SearchType.EVENT;
     if (eventParameter !== null) {
       type = SearchType.EVENT;
     } else if (userParameter !== null) {
@@ -157,7 +157,7 @@ function DashboardContent() {
           } else {
             // the search is not empty
             // 1. try search the user up by username and if so add it to the first element of the list
-            var users: PublicUserData[] = [];
+            let users: PublicUserData[] = [];
             try {
               const { userId } = await getUsernameMapping(user);
               users.push(await getPublicUserById(userId));

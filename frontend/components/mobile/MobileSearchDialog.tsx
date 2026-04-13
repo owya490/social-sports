@@ -3,7 +3,7 @@ import { Input } from "@material-tailwind/react";
 import { Fragment, useState } from "react";
 
 export default function MobileSearchDialog() {
-  let [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   function closeModal() {
     setIsOpen(false);
