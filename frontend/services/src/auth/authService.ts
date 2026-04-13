@@ -12,6 +12,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  User,
   UserCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
@@ -197,27 +198,188 @@ async function deleteTempUserData(userId: UserId) {
   await deleteDoc(doc(db, "TempUsers", userId));
 }
 
-export async function handleGoogleSignIn() {
+function buildUserDataFromFirebaseUser(firebaseUser: User): UserData {
+  const email = firebaseUser.email?.trim();
+  if (!email) {
+    throw new Error(
+      "We could not read an email from your Google account. Check permissions or use email registration.",
+    );
+  }
+
+  let firstName = "";
+  let surname = "";
+  const displayName = firebaseUser.displayName?.trim();
+  if (displayName) {
+    const parts = displayName.split(/\s+/).filter(Boolean);
+    firstName = parts[0] ?? "";
+    surname = parts.slice(1).join(" ");
+  }
+  if (!firstName) {
+    const localPart = email.split("@")[0]?.replace(/[^a-zA-Z0-9]/g, "") ?? "";
+    firstName = localPart.length >= 1 ? localPart : "User";
+  }
+
+  const profilePicture = firebaseUser.photoURL ?? EmptyUserData.profilePicture;
+
+  return {
+    ...EmptyUserData,
+    userId: firebaseUser.uid as UserId,
+    firstName,
+    surname,
+    profilePicture,
+    publicContactInformation: {
+      ...EmptyUserData.publicContactInformation,
+      email,
+      mobile: "",
+    },
+    contactInformation: {
+      ...EmptyUserData.contactInformation,
+      email,
+      mobile: "",
+    },
+  };
+}
+
+/**
+ * After Google sign-in: load profile, promote TempUsers, or create a new profile from Google.
+ */
+async function completeSignInAfterGoogleAuth(uid: UserId): Promise<UserId | null> {
+  try {
+    await getPublicUserById(uid);
+    await syncEmailOnLogin(uid);
+    return uid;
+  } catch (error: unknown) {
+    if (error instanceof UserNotFoundError) {
+      authServiceLogger.info("User not found in public users. Attempting to retrieve temporary user data.", {
+        userId: uid,
+      });
+
+      const tempUser = await getTempUserData(uid);
+
+      if (tempUser !== null) {
+        try {
+          await createUser(tempUser, uid);
+          authServiceLogger.info("Temporary user data found and user created successfully.", { userId: uid });
+          await deleteTempUserData(uid);
+          authServiceLogger.info("Temporary user data deleted after successful creation.", { userId: uid });
+          return uid;
+        } catch {
+          authServiceLogger.error("Error during user creation. Attempting rollback.", { userId: uid });
+          try {
+            await deleteUser(uid);
+            authServiceLogger.error("User creation rolled back successfully.", { userId: uid });
+          } catch (rollbackError) {
+            const rollbackErrorMessage =
+              rollbackError instanceof Error ? rollbackError.message : "Unknown error during rollback";
+            authServiceLogger.error("Failed to roll back user creation:", {
+              error: rollbackErrorMessage,
+              userId: uid,
+            });
+          }
+          throw new Error("User creation failed, rolled back the changes.");
+        }
+      }
+
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser || firebaseUser.uid !== uid) {
+        authServiceLogger.error("No Firebase session for Google profile creation.", { userId: uid });
+        throw new Error("Sign in session expired. Please try again.");
+      }
+
+      authServiceLogger.info("No existing profile; creating user from Google.", { userId: uid });
+      let oauthUserData: UserData;
+      try {
+        oauthUserData = buildUserDataFromFirebaseUser(firebaseUser);
+      } catch (e: unknown) {
+        throw e instanceof Error ? e : new Error("Could not create a profile from this account.");
+      }
+
+      try {
+        await createUser(oauthUserData, uid);
+        authServiceLogger.info("Google profile created successfully.", { userId: uid });
+        await syncEmailOnLogin(uid);
+        return uid;
+      } catch {
+        authServiceLogger.error("Error during Google user creation. Attempting rollback.", { userId: uid });
+        try {
+          await deleteUser(uid);
+          authServiceLogger.error("Google user creation rolled back.", { userId: uid });
+        } catch (rollbackError) {
+          const rollbackErrorMessage =
+            rollbackError instanceof Error ? rollbackError.message : "Unknown error during rollback";
+          authServiceLogger.error("Failed to roll back Google user creation.", {
+            error: rollbackErrorMessage,
+            userId: uid,
+          });
+        }
+        throw new Error("User creation failed, rolled back the changes.");
+      }
+    } else {
+      throw error;
+    }
+  }
+}
+
+function mapGoogleSignInError(error: unknown): Error {
+  if (error instanceof FirebaseError) {
+    switch (error.code) {
+      case "auth/popup-closed-by-user":
+      case "auth/cancelled-popup-request":
+        return new Error("Sign in was cancelled.");
+      case "auth/account-exists-with-different-credential":
+        return new Error("An account already exists with this email using a different sign-in method.");
+      case "auth/operation-not-allowed":
+        return new Error("This sign-in method is not enabled.");
+      default:
+        authServiceLogger.error("Google sign-in Firebase error", { code: error.code, message: error.message });
+        return new Error(error.message || "Sign in failed.");
+    }
+  }
+  if (error instanceof Error) {
+    return error;
+  }
+  return new Error("An unknown error occurred.");
+}
+
+async function signInWithGoogleAndComplete(): Promise<UserId | null> {
+  let userCredential: UserCredential | undefined;
   try {
     const provider = new GoogleAuthProvider();
-    const userCredential: UserCredential = await signInWithPopup(auth, provider);
-    const userDocRef = doc(db, "Users", userCredential.user.uid);
-
-    // Check if the user already exists in your Firestore collection,
-    // and create a new document if not.
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists()) {
-      const userDataToSet = {
-        firstName: userCredential.user.displayName,
-        // TODO: add more fields here
-      };
-      await setDoc(userDocRef, userDataToSet);
+    userCredential = await signInWithPopup(auth, provider);
+    authServiceLogger.info("Google sign-in completed", { userId: userCredential.user.uid });
+    return await completeSignInAfterGoogleAuth(userCredential.user.uid as UserId);
+  } catch (error: unknown) {
+    if (userCredential) {
+      try {
+        await signOut(auth);
+        authServiceLogger.info(`User signed out after error during Google sign-in`, {
+          userId: userCredential.user.uid,
+        });
+      } catch (signOutError) {
+        authServiceLogger.error("Failed to sign out user during Google error handling.", {
+          error: signOutError instanceof Error ? signOutError.message : "Unknown error",
+        });
+      }
     }
-
-    authServiceLogger.info("Google signed in");
-  } catch (error) {
-    authServiceLogger.info(`${error}`);
+    throw mapGoogleSignInError(error);
   }
+}
+
+export async function handleGoogleSignIn(): Promise<UserId | null> {
+  return signInWithGoogleAndComplete();
+}
+
+/**
+ * Email/password login: redirect to /register when there is no Firebase user or no app profile.
+ */
+export function shouldRedirectToRegisterAfterFailedLogin(error: unknown): boolean {
+  if (error instanceof FirebaseError && error.code === "auth/user-not-found") {
+    return true;
+  }
+  if (error instanceof Error && error.message === "User data not found.") {
+    return true;
+  }
+  return false;
 }
 
 export async function handleFacebookSignIn() {
