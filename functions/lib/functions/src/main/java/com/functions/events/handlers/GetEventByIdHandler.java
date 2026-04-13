@@ -11,6 +11,7 @@ import com.functions.events.models.requests.GetEventByIdRequest;
 import com.functions.events.models.responses.GetEventByIdResponse;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.global.models.Handler;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 
@@ -31,7 +32,7 @@ public class GetEventByIdHandler implements Handler<GetEventByIdRequest, GetEven
     }
 
     @Override
-    public GetEventByIdResponse handle(GetEventByIdRequest request) {
+    public GetEventByIdResponse handle(GetEventByIdRequest request, AuthContext authContext) {
         String eventId = request.eventId();
         if (eventId == null || eventId.isBlank()) {
             logger.warn("GetEventById rejected: eventId is null or blank");

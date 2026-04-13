@@ -16,8 +16,10 @@ import com.functions.events.models.NewEventData;
 import com.functions.events.utils.EventsMetadataUtils;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.global.services.EventAuthorizationService;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
@@ -36,10 +38,18 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
     }
 
     @Override
-    public String handle(NewEventData request) {
+    public String handle(NewEventData request, AuthContext authContext) {
         if (request == null) {
             throw new IllegalArgumentException("Event data is required");
         }
+        if (request.getOrganiserId() == null || request.getOrganiserId().isBlank()) {
+            throw new IllegalArgumentException("organiserId is required");
+        }
+
+        EventAuthorizationService.requireMatchingUser(
+                authContext.requireUid(),
+                request.getOrganiserId(),
+                "You are not allowed to create events for another organiser");
 
         try {
             Firestore db = FirebaseService.getFirestore();

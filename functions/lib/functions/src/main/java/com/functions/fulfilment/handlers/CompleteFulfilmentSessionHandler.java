@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.global.models.Handler;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 
@@ -24,7 +25,8 @@ public class CompleteFulfilmentSessionHandler implements Handler<CompleteFulfilm
   }
 
   @Override
-  public String handle(CompleteFulfilmentSessionRequest parsedRequestData) {
+  public String handle(CompleteFulfilmentSessionRequest parsedRequestData, AuthContext authContext) {
+    FulfilmentService.requireSessionAccess(parsedRequestData.fulfilmentSessionId(), authContext);
     boolean isSuccess = FulfilmentService.completeFulfilmentSession(parsedRequestData.fulfilmentSessionId(), parsedRequestData.fulfilmentEntityId());
     if (isSuccess) {
       logger.info(

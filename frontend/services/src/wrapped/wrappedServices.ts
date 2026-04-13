@@ -36,7 +36,8 @@ export async function getWrappedData(
         organiserId,
         year,
         wrappedId,
-      }
+      },
+      wrappedId ? undefined : { firebaseAuth: true }
     );
 
     wrappedServiceLogger.info(
