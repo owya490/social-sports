@@ -43,16 +43,11 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-interface CollectionPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function CollectionPage({ params }: CollectionPageProps) {
+export default function CollectionPage() {
+  const params = useParams<{ id: string }>();
   const collectionId = params.id as EventCollectionId;
   const { user } = useUser();
   const router = useRouter();

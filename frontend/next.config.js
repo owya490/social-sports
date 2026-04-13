@@ -24,18 +24,14 @@ const nextConfig = {
     GOOGLE_MAPS_PROD_API_KEY: process.env.GOOGLE_MAPS_PROD_API_KEY,
   },
   images: {
-    domains: ["firebasestorage.googleapis.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+      },
+    ],
     unoptimized: true,
   },
-  // https://github.com/open-telemetry/opentelemetry-js/issues/4173#issuecomment-1822938936 to prevent console spamming for
-  // Open Telemetry Critical Dependency: the request of a dependency is an expression.
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, nextRuntime, webpack }) => {
-    // Ignore OpenTelemetry warnings on both client and server builds
-    config.ignoreWarnings = [{ module: /opentelemetry/ }, { module: /require-in-the-middle/ }];
-
-    return config;
-  },
-  experimental: { missingSuspenseWithCSRBailout: false },
   async redirects() {
     return [
       {
