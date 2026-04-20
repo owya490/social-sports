@@ -99,12 +99,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <body className={`${satoshi.className}`}>
             <AccessibilitySkipNavigation />
             <div className="md:hidden">
-              <Suspense fallback={<div className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-white" />}>
+              <Suspense
+                fallback={<div className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-white" />}
+              >
                 <MobileNavbar />
               </Suspense>
             </div>
             <div className="hidden md:block">
-              <Suspense fallback={<div className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-white" />}>
+              <Suspense
+                fallback={<div className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-white" />}
+              >
                 <Navbar />
               </Suspense>
             </div>

@@ -80,7 +80,7 @@ export default function UserProfilePage() {
       }
     };
     fetchUserProfile();
-  }, []);
+  }, [userId, router]);
 
   return loading ? (
     <Loading />

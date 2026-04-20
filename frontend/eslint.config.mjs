@@ -1,6 +1,6 @@
-import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
   ...nextVitals,
@@ -19,7 +19,6 @@ export default defineConfig([
       "prefer-const": "warn",
       "no-var": "warn",
       "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/rules-of-hooks": "warn",
       "react-hooks/immutability": "warn",
       "react-hooks/static-components": "warn",
       "react-hooks/purity": "warn",
