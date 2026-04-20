@@ -15,8 +15,8 @@ import com.stripe.Stripe;
 public class StripeConfig {
     private static final Logger logger = LoggerFactory.getLogger(StripeConfig.class);
 
-    // Feature flag for easily gating Java implementation of Python Stripe functionality.
     public static final boolean JAVA_STRIPE_ENABLED = true;
+    public static final boolean JAVA_STRIPE_WEBHOOK_ENABLED = true;
 
     public static final String ERROR_URL = "/error";
     public static final String CURRENCY = "aud";
@@ -35,6 +35,9 @@ public class StripeConfig {
     // Stripe fee calculation constants
     private static final int STRIPE_FIXED_FEE_CENTS = 30;
     private static final double STRIPE_PERCENTAGE_FEE = 0.017; // 1.7%
+
+    // Webhook configuration
+    public static final String STRIPE_WEBHOOK_ENDPOINT_SECRET = Global.getEnv("STRIPE_WEBHOOK_ENDPOINT_SECRET");
 
     private static boolean initialized = false;
 
@@ -57,6 +60,12 @@ public class StripeConfig {
             if (stripeApiKey == null || stripeApiKey.isEmpty()) {
                 logger.error("STRIPE_API_KEY environment variable is not set");
                 throw new IllegalStateException("STRIPE_API_KEY environment variable is not set");
+            }
+            if (JAVA_STRIPE_WEBHOOK_ENABLED
+                    && (STRIPE_WEBHOOK_ENDPOINT_SECRET == null || STRIPE_WEBHOOK_ENDPOINT_SECRET.isBlank())) {
+                logger.error("STRIPE_WEBHOOK_ENDPOINT_SECRET must be set when JAVA_STRIPE_WEBHOOK_ENABLED is true");
+                throw new IllegalStateException(
+                        "STRIPE_WEBHOOK_ENDPOINT_SECRET must be set when JAVA_STRIPE_WEBHOOK_ENABLED is true");
             }
             Stripe.apiKey = stripeApiKey;
             initialized = true;
@@ -90,4 +99,3 @@ public class StripeConfig {
         return (long) Math.ceil(priceInCents * SPORTSHUB_FEE_PERCENTAGE);
     }
 }
-
