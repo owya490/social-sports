@@ -52,6 +52,7 @@ public class FirebaseService {
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
         public static final String TICKETS = "Tickets";
         public static final String ORDERS = "Orders";
+        public static final String ATTENDEES = "Attendees";
         public static final String TEMP_FORM_RESPONSE_PATH = "Forms/FormResponses/Temp";
         public static final String SUBMITTED_FORM_RESPONSE_PATH = "Forms/FormResponses/Submitted";
         public static final List<String> FORM_RESPONSE_PATHS = List.of(
