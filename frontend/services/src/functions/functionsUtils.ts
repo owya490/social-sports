@@ -1,5 +1,7 @@
 import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
+import { RecurrenceTemplateInUseErrorResponse } from "@/interfaces/cloudFunctions/java/RecurrenceTemplateInUseErrorResponse";
 import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
+import { RecurrenceTemplateInConflictError } from "@/interfaces/exceptions/RecurrenceTemplateInConflictError";
 import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
 import { Environment, getEnvironment } from "@/utilities/environment";
@@ -33,6 +35,15 @@ export async function executeGlobalAppControllerFunction<S, T>(endpointType: End
       `executeGlobalAppControllerFunction: Requested object not found. status=404 message=${errorResponse.errorMessage}`
     );
     throw new NotFoundError("Fulfilment object not found");
+  }
+
+  if (rawResponse.status === 409) {
+    const errorResponse = (await rawResponse.json()) as RecurrenceTemplateInUseErrorResponse;
+    throw new RecurrenceTemplateInConflictError(
+      errorResponse.errorMessage,
+      errorResponse.blockingEventCollectionIds ?? [],
+      errorResponse.blockingCustomEventLinkPaths ?? []
+    );
   }
 
   if (!rawResponse.ok) {

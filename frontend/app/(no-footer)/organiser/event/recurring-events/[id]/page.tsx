@@ -237,6 +237,10 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
             {currSidebarPage === "Settings" && (
               <>
                 <RecurringTemplateSettings
+                  eventName={eventName}
+                  eventStartDate={eventStartDate}
+                  organiserId={user?.userId ?? null}
+                  onRecurringTemplateDeleted={() => router.push("/organiser/event/recurring-events")}
                   recurrenceTemplateId={recurrenceTemplateId}
                   paymentsActive={eventPaymentsActive}
                   setPaymentsActive={setEventPaymentsActive}

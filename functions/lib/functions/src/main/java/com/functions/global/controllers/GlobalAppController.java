@@ -3,6 +3,8 @@ package com.functions.global.controllers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.events.exceptions.RecurrenceTemplateInUseException;
+import com.functions.events.exceptions.RecurrenceTemplateNotFoundException;
 import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
 import com.functions.fulfilment.exceptions.FulfilmentProgressionBlockedException;
 import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
@@ -10,6 +12,7 @@ import com.functions.global.handlers.HandlerRegistry;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
+import com.functions.global.models.responses.RecurrenceTemplateInUseErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
 import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
@@ -90,6 +93,19 @@ public class GlobalAppController implements HttpFunction {
             response.setStatusCode(404);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
                     new ErrorResponse(e.getMessage())));
+        } catch (RecurrenceTemplateNotFoundException e) {
+            logger.warn("Recurrence template not found: {}", e.getMessage());
+            response.setStatusCode(404);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
+        } catch (RecurrenceTemplateInUseException e) {
+            logger.warn("Recurrence template in use: {}", e.getMessage());
+            response.setStatusCode(409);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new RecurrenceTemplateInUseErrorResponse(
+                            e.getMessage(),
+                            e.getBlockingEventCollectionIds(),
+                            e.getBlockingCustomEventLinkPaths())));
         } catch (FulfilmentSessionNotFoundException e) {
             logger.warn("Resource not found: {}", e.getMessage());
             response.setStatusCode(404);

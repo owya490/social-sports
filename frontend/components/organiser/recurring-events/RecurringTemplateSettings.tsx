@@ -1,13 +1,21 @@
 "use client";
 import { LabelledSwitch } from "@/components/elements/LabelledSwitch";
+import { RedHighlightButton } from "@/components/elements/HighlightButton";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { Spinner } from "@material-tailwind/react";
+import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
+import DeleteRecurringTemplateModal from "./DeleteRecurringTemplateModal";
 
 interface RecurringTemplateSettingsProps {
+  eventName: string;
+  eventStartDate: Timestamp;
+  organiserId: UserId | null;
+  onRecurringTemplateDeleted: () => void;
   recurrenceTemplateId: RecurrenceTemplateId;
   paymentsActive: boolean;
   setPaymentsActive: (event: boolean) => void;
@@ -26,6 +34,10 @@ interface RecurringTemplateSettingsProps {
 }
 
 export const RecurringTemplateSettings = ({
+  eventName,
+  eventStartDate,
+  organiserId,
+  onRecurringTemplateDeleted,
   recurrenceTemplateId,
   paymentsActive,
   setPaymentsActive,
@@ -43,8 +55,18 @@ export const RecurringTemplateSettings = ({
   setShowAttendeesOnEventPage,
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   return (
     <div className="relative">
+      <DeleteRecurringTemplateModal
+        eventName={eventName}
+        eventStartDate={eventStartDate}
+        recurrenceTemplateId={recurrenceTemplateId}
+        organiserId={organiserId}
+        modalOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onDeleted={onRecurringTemplateDeleted}
+      />
       <div className="flex flex-col space-y-4 mb-6 px-4 md:px-0">
         <LabelledSwitch
           title={"Enable Event Payments"}
@@ -170,6 +192,19 @@ export const RecurringTemplateSettings = ({
               window.location.reload();
             }
           }}
+        />
+      </div>
+      <div className="mt-10 px-4 md:px-0 border-t border-gray-200 pt-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Danger zone</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Permanently remove this recurring event from your list. You cannot delete it while it is used in an event
+          collection or custom link.
+        </p>
+        <RedHighlightButton
+          text="Delete recurring event"
+          onClick={() => setDeleteModalOpen(true)}
+          className="w-fit"
+          disabled={!organiserId}
         />
       </div>
       {loading && (

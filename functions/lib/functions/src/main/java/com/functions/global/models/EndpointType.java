@@ -7,6 +7,8 @@ import com.functions.attendee.models.responses.AddAttendeeResponse;
 import com.functions.attendee.models.responses.GetEventAttendeeNamesResponse;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
 import com.functions.events.models.NewEventData;
+import com.functions.events.models.requests.DeleteRecurrenceTemplateRequest;
+import com.functions.events.models.responses.DeleteRecurrenceTemplateResponse;
 import com.functions.events.models.requests.GetEventByIdRequest;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
 import com.functions.events.models.responses.GetEventByIdResponse;
@@ -65,7 +67,8 @@ public enum EndpointType {
     GET_ORDERS_BY_EVENT(GetOrdersByEventRequest.class, GetOrdersByEventResponse.class),
     ADD_ATTENDEE(AddAttendeeRequest.class, AddAttendeeResponse.class),
     SET_ATTENDEE_TICKETS(SetAttendeeTicketsRequest.class, SetAttendeeTicketsResponse.class),
-    GET_EVENT_ATTENDEE_NAMES(GetEventAttendeeNamesRequest.class, GetEventAttendeeNamesResponse.class);
+    GET_EVENT_ATTENDEE_NAMES(GetEventAttendeeNamesRequest.class, GetEventAttendeeNamesResponse.class),
+    DELETE_RECURRENCE_TEMPLATE(DeleteRecurrenceTemplateRequest.class, DeleteRecurrenceTemplateResponse.class);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;
