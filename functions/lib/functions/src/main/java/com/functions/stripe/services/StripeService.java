@@ -45,10 +45,10 @@ public class StripeService {
      * @param cancelUrl             Optional cancel URL (defaults to home page)
      * @param fulfilmentSessionId   The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
-     * @return The Stripe checkout URL
+     * @return Checkout session URL and ids (ids may be null when using legacy Firebase path)
      * @throws RuntimeException if checkout creation fails
      */
-    public static String getStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
+    public static CreateStripeCheckoutSessionResponse getStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
             String endFulfilmentEntityId) {
 
@@ -91,10 +91,10 @@ public class StripeService {
      * @param cancelUrl             Optional cancel URL (defaults to home page)
      * @param fulfilmentSessionId   The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
-     * @return The Stripe checkout URL
+     * @return Checkout session URL and ids (ids may be null when using legacy Firebase path)
      * @throws RuntimeException if checkout creation fails
      */
-    public static String getDelayedStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
+    public static CreateStripeCheckoutSessionResponse getDelayedStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
             String endFulfilmentEntityId) {
 
@@ -125,7 +125,7 @@ public class StripeService {
         return getStripeCheckoutFromEventId(request);
     }
 
-    public static String getStripeCheckoutFromEventId(CreateStripeCheckoutSessionRequest request) {
+    public static CreateStripeCheckoutSessionResponse getStripeCheckoutFromEventId(CreateStripeCheckoutSessionRequest request) {
         if (StripeConfig.JAVA_STRIPE_ENABLED) {
             try {
                 CreateStripeCheckoutSessionResponse response = CheckoutService.createStripeCheckoutSession(request);
@@ -138,7 +138,7 @@ public class StripeService {
 
                 logger.info("Successfully retrieved Stripe checkout URL for event ID: {}", request.eventId());
 
-                return response.url();
+                return response;
             } catch (CheckoutDateTimeException e) {
                 // We don't need to log error and alert for this error because this
                 // time based error is out of our direct control.
@@ -174,7 +174,7 @@ public class StripeService {
                                     "Stripe checkout URL is null or error URL or cancel URL. Throwing runtime exception.");
                             throw new RuntimeException("Stripe checkout URL is null or error URL or cancel URL.");
                         }
-                        return stripeResponse.url();
+                        return stripeResponse;
                     } catch (Exception e) {
                         logger.error("Failed to parse Stripe checkout response for event ID {}: {}", request.eventId(),
                                 e.getMessage());

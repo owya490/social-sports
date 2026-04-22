@@ -5,7 +5,7 @@ import { Environment, getEnvironment } from "@/utilities/environment";
 import {
   COMPLETE_FULFILMENT_SESSION_URL,
   DELETE_FULFILMENT_SESSION_URL,
-  FULFILMENT_SESSION_EXPIRY_MILLIS,
+  FULFILMENT_SESSION_CACHE_TTL_MILLIS,
   getFulfilmentSessionExpiryTimestampKey,
   getFulfilmentSessionIdKey,
 } from "../fulfilmentConstants";
@@ -54,7 +54,7 @@ export function purgeExpiredFulfilmentSessions(): void {
               sessionsToRemove.push({ eventId, numTickets });
             } else {
               const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
-              if (timeDifference >= FULFILMENT_SESSION_EXPIRY_MILLIS) {
+              if (timeDifference >= FULFILMENT_SESSION_CACHE_TTL_MILLIS) {
                 // Session expired, remove session
                 sessionsToRemove.push({ eventId, numTickets });
               }
@@ -97,7 +97,8 @@ export function storeFulfilmentSessionId(
 }
 
 /**
- * Retrieves an existing fulfilment session ID from localStorage if it exists and is still valid (within 20 minutes).
+ * Retrieves an existing fulfilment session ID from localStorage if it exists and is still valid
+ * (within FULFILMENT_SESSION_CACHE_TTL_MILLIS, i.e. a few minutes before server-side expiry).
  * Returns null if no valid session exists.
  * Keys are specific to eventId and numTickets.
  */
@@ -127,7 +128,7 @@ export function getStoredFulfilmentSessionId(eventId: EventId, numTickets: numbe
     }
     const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
 
-    if (timeDifference >= FULFILMENT_SESSION_EXPIRY_MILLIS) {
+    if (timeDifference >= FULFILMENT_SESSION_CACHE_TTL_MILLIS) {
       fulfilmentUtilsLogger.info(
         `Stored fulfilment session has expired for eventId: ${eventId}, numTickets: ${numTickets}, clearing it`
       );

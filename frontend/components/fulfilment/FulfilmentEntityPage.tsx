@@ -1,6 +1,7 @@
 "use client";
 
 import { FulfilmentSessionId, GetFulfilmentSessionInfoResponse } from "@/interfaces/FulfilmentTypes";
+import { FULFILMENT_SESSION_EXPIRY_MILLIS } from "@/services/src/fulfilment/fulfilmentConstants";
 import { deleteFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
@@ -53,7 +54,7 @@ const FulfilmentEntityPage = ({
       ? (fulfilmentSessionInfo.fulfilmentSessionStartTime as any).toMillis()
       : new Date((fulfilmentSessionInfo!.fulfilmentSessionStartTime as unknown as string) ?? Date.now()).getTime();
 
-    const expiryMs = startMs + 30 * 60 * 1000; // 30 minutes
+    const expiryMs = startMs + FULFILMENT_SESSION_EXPIRY_MILLIS;
 
     const update = () => {
       const now = Date.now();
