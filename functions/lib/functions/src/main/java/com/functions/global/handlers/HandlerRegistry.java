@@ -7,6 +7,7 @@ import com.functions.attendee.handlers.AddAttendeeHandler;
 import com.functions.attendee.handlers.GetEventAttendeeNamesHandler;
 import com.functions.attendee.handlers.SetAttendeeTicketsHandler;
 import com.functions.events.handlers.CreateEventHandler;
+import com.functions.events.handlers.DeleteRecurrenceTemplateHandler;
 import com.functions.events.handlers.GetEventByIdHandler;
 import com.functions.events.handlers.GetSyrioEventsHandler;
 import com.functions.forms.handlers.SaveTempFormResponseHandler;
@@ -55,6 +56,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.ADD_ATTENDEE, new AddAttendeeHandler());
         handlers.put(EndpointType.SET_ATTENDEE_TICKETS, new SetAttendeeTicketsHandler());
         handlers.put(EndpointType.GET_EVENT_ATTENDEE_NAMES, new GetEventAttendeeNamesHandler());
+        handlers.put(EndpointType.DELETE_RECURRENCE_TEMPLATE, new DeleteRecurrenceTemplateHandler());
     }
 
     /**

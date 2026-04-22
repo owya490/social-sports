@@ -19,6 +19,24 @@ import static com.functions.firebase.services.FirebaseService.CollectionPaths.*;
 public class RecurrenceTemplateRepository {
     private static final Logger logger = LoggerFactory.getLogger(RecurrenceTemplateRepository.class);
 
+    /**
+     * Scans all four RecurringEvents partitions inside the given transaction and returns the document reference of
+     * the first partition where the template exists. Mirrors the approach used in {@code EventsRepository}.
+     *
+     * @throws Exception if the template is not found in any partition
+     */
+    public static DocumentReference findRecurrenceTemplateDocumentReference(String recurrenceTemplateId,
+            Transaction transaction) throws Exception {
+        Firestore db = FirebaseService.getFirestore();
+        for (String path : FirebaseService.CollectionPaths.RECURRING_EVENT_PATHS) {
+            DocumentReference docRef = db.document(path + "/" + recurrenceTemplateId);
+            DocumentSnapshot snapshot = transaction.get(docRef).get();
+            if (snapshot.exists()) {
+                return docRef;
+            }
+        }
+        throw new Exception("No recurrence template document found for id: " + recurrenceTemplateId);
+    }
 
     public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId) {
         return getRecurrenceTemplate(recurrenceTemplateId, null);

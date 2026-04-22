@@ -44,11 +44,17 @@ public class FirebaseService {
         public static final String USERS = "Users";
         public static final String EVENTS_METADATA = "EventsMetadata";
         public static final String RECURRING_EVENTS = "RecurringEvents";
+        public static final String DELETED_RECURRING_EVENTS = "DeletedRecurringEvents";
         public static final List<String> EVENT_PATHS = List.of(
                 "Events/Active/Public",
                 "Events/Active/Private",
                 "Events/InActive/Public",
                 "Events/InActive/Private");
+        public static final List<String> RECURRING_EVENT_PATHS = List.of(
+                "RecurringEvents/Active/Public",
+                "RecurringEvents/Active/Private",
+                "RecurringEvents/InActive/Public",
+                "RecurringEvents/InActive/Private");
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
         public static final String TICKETS = "Tickets";
         public static final String ORDERS = "Orders";

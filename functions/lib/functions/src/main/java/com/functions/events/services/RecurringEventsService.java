@@ -1,20 +1,35 @@
 package com.functions.events.services;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.functions.events.exceptions.RecurrenceTemplateInUseException;
+import com.functions.events.exceptions.RecurrenceTemplateNotFoundException;
+import com.functions.events.models.CustomEventLink;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.NewRecurrenceData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
+import com.functions.events.models.responses.DeleteRecurrenceTemplateResponse;
+import com.functions.events.repositories.CustomEventLinksRepository;
+import com.functions.events.repositories.EventCollectionsRepository;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.firebase.services.FirebaseService;
+import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.services.Users;
+import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.FieldValue;
+import com.google.cloud.firestore.Firestore;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -103,6 +118,71 @@ public class RecurringEventsService {
             logger.error("Error when updating Recurrence Template {}", recurrenceTemplateId, e);
             return Optional.empty();
         }
+    }
+
+    /**
+     * Moves the recurrence template to {@link CollectionPaths#DELETED_RECURRING_EVENTS} and removes its id from the
+     * organiser's {@code recurrenceTemplates} list. Fails if the template is referenced by an event collection or
+     * custom link.
+     */
+    public static DeleteRecurrenceTemplateResponse deleteRecurrenceTemplate(String organiserId, String recurrenceTemplateId)
+            throws RecurrenceTemplateNotFoundException, RecurrenceTemplateInUseException, Exception {
+        RecurrenceTemplate existing = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId)
+                .orElseThrow(() -> new RecurrenceTemplateNotFoundException(recurrenceTemplateId));
+
+        if (!organiserId.equals(existing.getEventData().getOrganiserId())) {
+            throw new IllegalArgumentException("Organiser does not own this recurrence template");
+        }
+
+        List<String> blockingPrivate =
+                EventCollectionsRepository.getEventCollectionIdsContainingRecurringTemplate(true, recurrenceTemplateId);
+        List<String> blockingPublic =
+                EventCollectionsRepository.getEventCollectionIdsContainingRecurringTemplate(false, recurrenceTemplateId);
+        List<String> blockingEventCollectionIds = new ArrayList<>(blockingPrivate);
+        blockingEventCollectionIds.addAll(blockingPublic);
+
+        List<CustomEventLink> customLinks =
+                CustomEventLinksRepository.getAllEventLinksPointedToRecurrence(organiserId, recurrenceTemplateId);
+        List<String> blockingCustomEventLinkPaths = customLinks.stream()
+                .map(CustomEventLink::getCustomEventLink)
+                .filter(s -> s != null && !s.isEmpty())
+                .collect(Collectors.toList());
+
+        if (!blockingEventCollectionIds.isEmpty() || !blockingCustomEventLinkPaths.isEmpty()) {
+            throw new RecurrenceTemplateInUseException(
+                    "This recurring event is still linked to an event collection or custom link. Remove those links first.",
+                    blockingEventCollectionIds,
+                    blockingCustomEventLinkPaths);
+        }
+
+        String deletedAt = Instant.now().toString();
+
+        return FirebaseService.createFirestoreTransaction(transaction -> {
+            DocumentReference sourceRef = RecurrenceTemplateRepository
+                    .findRecurrenceTemplateDocumentReference(recurrenceTemplateId, transaction);
+            RecurrenceTemplate template = transaction.get(sourceRef).get().toObject(RecurrenceTemplate.class);
+            if (template == null || !organiserId.equals(template.getEventData().getOrganiserId())) {
+                throw new IllegalArgumentException("Organiser does not own this recurrence template");
+            }
+
+            Map<String, Object> deletedDoc =
+                    JavaUtils.objectMapper.convertValue(template, new TypeReference<Map<String, Object>>() {});
+            deletedDoc.put("deletedAt", deletedAt);
+
+            Firestore db = FirebaseService.getFirestore();
+            DocumentReference deletedRef =
+                    db.collection(CollectionPaths.DELETED_RECURRING_EVENTS).document(recurrenceTemplateId);
+            transaction.set(deletedRef, deletedDoc);
+            transaction.delete(sourceRef);
+
+            DocumentReference userRef = db.collection(CollectionPaths.USERS)
+                    .document(CollectionPaths.ACTIVE)
+                    .collection(CollectionPaths.PRIVATE)
+                    .document(organiserId);
+            transaction.update(userRef, "recurrenceTemplates", FieldValue.arrayRemove(recurrenceTemplateId));
+
+            return new DeleteRecurrenceTemplateResponse(recurrenceTemplateId, deletedAt);
+        });
     }
 
     private static RecurrenceData calculateRecurrenceDataForCreate(NewRecurrenceData newRecurrenceData, Timestamp startDate) {

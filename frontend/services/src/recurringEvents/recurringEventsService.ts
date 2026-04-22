@@ -5,8 +5,10 @@ import {
   RecurrenceTemplate,
   RecurrenceTemplateId,
 } from "@/interfaces/RecurringEventTypes";
+import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { Timestamp } from "firebase/firestore";
 import { getPrivateUserById } from "../users/usersService";
 import {
@@ -92,6 +94,17 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
 }
 
 // Should be a partial of eventData or NewRecurrenceFormData
+export async function deleteRecurrenceTemplate(
+  recurrenceTemplateId: RecurrenceTemplateId,
+  organiserId: UserId
+): Promise<{ recurrenceTemplateId: RecurrenceTemplateId; deletedAt: string }> {
+  recurringEventsServiceLogger.info(`deleteRecurrenceTemplate id=${recurrenceTemplateId}`);
+  return executeGlobalAppControllerFunction(EndpointType.DELETE_RECURRENCE_TEMPLATE, {
+    recurrenceTemplateId,
+    organiserId,
+  });
+}
+
 export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId, updatedData: any) {
   recurringEventsServiceLogger.info(`Updating Recurrence Template ${recurrenceTemplateId}`);
   var eventData = null;
