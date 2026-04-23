@@ -4,21 +4,12 @@ import static com.functions.utils.JavaUtils.objectMapper;
 
 import java.io.FileInputStream;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.firebase.models.requests.CallFirebaseFunctionRequest;
-import com.functions.firebase.models.responses.CallFirebaseFunctionResponse;
 import com.functions.global.handlers.Global;
 import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -123,34 +114,6 @@ public class FirebaseService {
 
     public static Firestore getFirestore() {
         return db;
-    }
-
-    public static Optional<CallFirebaseFunctionResponse> callFirebaseFunction(String functionName, Object requestData) {
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            String functionUrl = String.format("https://%s-%s.cloudfunctions.net/%s", REGION,
-                    System.getenv("PROJECT_NAME"), functionName);
-
-            HttpPost post = new HttpPost(functionUrl);
-            post.setHeader("Content-Type", "application/json");
-
-            String jsonData = objectMapper.writeValueAsString(new CallFirebaseFunctionRequest(requestData));
-            post.setEntity(new StringEntity(jsonData));
-
-            try (CloseableHttpResponse response = client.execute(post)) {
-                int statusCode = response.getStatusLine().getStatusCode();
-                String responseBody = EntityUtils.toString(response.getEntity());
-
-                if (statusCode < 400) {
-                    return Optional.of(objectMapper.readValue(responseBody, CallFirebaseFunctionResponse.class));
-                } else {
-                    logger.error("Error response from Firebase function {}: {}", functionName, responseBody);
-                    return Optional.empty();
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Error calling Firebase function {}: {}", functionName, e.getMessage(), e);
-            return Optional.empty();
-        }
     }
 
     public static <T> T createFirestoreTransaction(Transaction.Function<T> consumer) throws Exception {
