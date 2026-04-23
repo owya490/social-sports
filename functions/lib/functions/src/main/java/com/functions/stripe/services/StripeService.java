@@ -38,7 +38,11 @@ public class StripeService {
      * @param fulfilmentSessionId   The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
      * @return The Stripe checkout URL
-     * @throws RuntimeException if checkout creation fails
+     * @throws CheckoutDateTimeException if getStripeCheckoutFromEventId rejects checkout
+     *                                   because the event is not currently open
+     * @throws CheckoutVacancyException  if getStripeCheckoutFromEventId rejects checkout
+     *                                   because capacity is unavailable
+     * @throws RuntimeException          if checkout creation fails for any other reason
      */
     public static String getStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
@@ -84,7 +88,11 @@ public class StripeService {
      * @param fulfilmentSessionId   The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
      * @return The Stripe checkout URL
-     * @throws RuntimeException if checkout creation fails
+     * @throws CheckoutDateTimeException if getStripeCheckoutFromEventId rejects checkout
+     *                                   because the event is not currently open
+     * @throws CheckoutVacancyException  if getStripeCheckoutFromEventId rejects checkout
+     *                                   because capacity is unavailable
+     * @throws RuntimeException          if checkout creation fails for any other reason
      */
     public static String getDelayedStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
