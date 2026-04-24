@@ -15,7 +15,6 @@ import com.stripe.Stripe;
 public class StripeConfig {
     private static final Logger logger = LoggerFactory.getLogger(StripeConfig.class);
 
-    public static final boolean JAVA_STRIPE_ENABLED = true;
     public static final boolean JAVA_STRIPE_WEBHOOK_ENABLED = true;
 
     public static final String ERROR_URL = "/error";
