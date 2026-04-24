@@ -413,9 +413,9 @@ export async function updateEventMetadataFromEventId(eventId: EventId, updatedDa
 }
 
 /**
- * Equivalent hashing function to the one located in webhooks.py
+ * Equivalent hashing function to the Java Stripe webhook purchaser hash logic in WebhookService.
  Used to give email hash of purchaser email.
- DO NOT EDIT - MUST ALSO EDIT THE HASH IN webhooks.py
+ DO NOT EDIT - MUST ALSO EDIT THE HASH IN WebhookService
  */
 export function getPurchaserEmailHash(email: string) {
   const md5Hash = crypto.createHash("md5").update(email).digest("hex");
