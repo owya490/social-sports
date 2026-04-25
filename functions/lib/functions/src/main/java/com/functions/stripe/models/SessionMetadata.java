@@ -17,7 +17,6 @@ import lombok.NoArgsConstructor;
 public class SessionMetadata {
     private String eventId;
     private Boolean isPrivate;
-    private Boolean completeFulfilmentSession;
     private String fulfilmentSessionId;
     private String endFulfilmentEntityId;
 
@@ -33,22 +32,17 @@ public class SessionMetadata {
         if (isPrivate == null) {
             throw new IllegalArgumentException("Is Private must be provided as a boolean.");
         }
-        if (completeFulfilmentSession == null) {
-            throw new IllegalArgumentException("Complete Fulfilment Session must be provided as a boolean.");
+        if (fulfilmentSessionId == null || fulfilmentSessionId.isBlank()) {
+            throw new IllegalArgumentException("Fulfilment Session Id must be provided as a non-empty string.");
         }
-        if (completeFulfilmentSession) {
-            if (fulfilmentSessionId == null || fulfilmentSessionId.isBlank()) {
-                throw new IllegalArgumentException("Fulfilment Session Id must be provided when fulfilment completion is enabled.");
-            }
-            if (endFulfilmentEntityId == null || endFulfilmentEntityId.isBlank()) {
-                throw new IllegalArgumentException("End Fulfilment Entity Id must be provided when fulfilment completion is enabled.");
-            }
+        if (endFulfilmentEntityId == null || endFulfilmentEntityId.isBlank()) {
+            throw new IllegalArgumentException("End Fulfilment Entity Id must be provided as a non-empty string.");
         }
     }
 
     /**
      * Parses session metadata from Stripe session metadata map.
-     * Handles string-to-boolean conversion for isPrivate and completeFulfilmentSession.
+     * Handles string-to-boolean conversion for isPrivate.
      * 
      * @param metadata The metadata map from Stripe
      * @return SessionMetadata instance
@@ -63,17 +57,10 @@ public class SessionMetadata {
             throw new IllegalArgumentException("Is Private must be provided as a boolean.");
         }
         Boolean isPrivate = Boolean.parseBoolean(isPrivateStr);
-        
-        String completeFulfilmentSessionStr = metadata.get("completeFulfilmentSession");
-        if (completeFulfilmentSessionStr == null) {
-            throw new IllegalArgumentException("Complete Fulfilment Session must be provided as a boolean.");
-        }
-        Boolean completeFulfilmentSession = Boolean.parseBoolean(completeFulfilmentSessionStr);
 
         SessionMetadata sessionMetadata = SessionMetadata.builder()
             .eventId(metadata.get("eventId"))
             .isPrivate(isPrivate)
-            .completeFulfilmentSession(completeFulfilmentSession)
             .fulfilmentSessionId(normalizeBlankToNull(metadata.get("fulfilmentSessionId")))
             .endFulfilmentEntityId(normalizeBlankToNull(metadata.get("endFulfilmentEntityId")))
             .build();

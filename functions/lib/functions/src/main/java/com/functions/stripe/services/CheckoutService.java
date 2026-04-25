@@ -254,7 +254,6 @@ public class CheckoutService {
                         .build())
                 .putMetadata("eventId", eventData.getEventId())
                 .putMetadata("isPrivate", request.isPrivate().toString())
-                .putMetadata("completeFulfilmentSession", request.completeFulfilmentSession().toString())
                 .putMetadata("fulfilmentSessionId", 
                         request.fulfilmentSessionId() != null ? request.fulfilmentSessionId() : "")
                 .putMetadata("endFulfilmentEntityId", 
