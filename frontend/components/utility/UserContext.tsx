@@ -54,7 +54,7 @@ export default function UserContext({ children }: { children: any }) {
       // redirecting to dashboard, hence we need to do another check to see if they are in the create
       // user workflow
       setUserLoading(true);
-      if (userAuth && auth.currentUser?.emailVerified) {
+      if (userAuth && userAuth.emailVerified) {
         const { uid } = userAuth;
         try {
           try {
@@ -62,12 +62,17 @@ export default function UserContext({ children }: { children: any }) {
             setUser(userData);
           } catch {
             try {
-              const userData = await getTempUserData(uid as UserId);
-              if (!userData) {
-                router.push("/error");
+              const tempUser = await getTempUserData(uid as UserId);
+              if (!tempUser) {
+                const onLoginOrRegister = LoginRegisterRoutes.some((prefix) => pathname.startsWith(prefix));
+                if (onLoginOrRegister) {
+                  setUser(EmptyUserData as UserData);
+                } else {
+                  router.push("/error");
+                }
                 return;
               }
-              setUser(userData);
+              setUser(tempUser);
             } catch {
               router.push("/error");
               return;
@@ -81,7 +86,7 @@ export default function UserContext({ children }: { children: any }) {
       setUserLoading(false);
     });
     return () => unsubscriber();
-  }, []);
+  }, [pathname, router]);
   useEffect(() => {
     const checkAuthStatus = async () => {
       if (userLoading) return;
@@ -101,9 +106,14 @@ export default function UserContext({ children }: { children: any }) {
           // user workflow
           const { uid } = auth.currentUser;
           try {
-            const userData = await getTempUserData(uid as UserId);
-            if (!userData) {
+            const tempUser = await getTempUserData(uid as UserId);
+            if (tempUser) return;
+            if (user.userId === uid && user.userId !== "") {
               router.push("/");
+              return;
+            }
+            if (pathname.startsWith("/login")) {
+              router.push("/register");
             }
           } catch {
             router.push("/error");
