@@ -15,8 +15,6 @@ import com.stripe.Stripe;
 public class StripeConfig {
     private static final Logger logger = LoggerFactory.getLogger(StripeConfig.class);
 
-    public static final boolean JAVA_STRIPE_WEBHOOK_ENABLED = true;
-
     public static final String ERROR_URL = "/error";
     public static final String CURRENCY = "aud";
     public static final int CHECKOUT_SESSION_EXPIRY_SECONDS = 1800; // 30 minutes
@@ -60,11 +58,10 @@ public class StripeConfig {
                 logger.error("STRIPE_API_KEY environment variable is not set");
                 throw new IllegalStateException("STRIPE_API_KEY environment variable is not set");
             }
-            if (JAVA_STRIPE_WEBHOOK_ENABLED
-                    && (STRIPE_WEBHOOK_ENDPOINT_SECRET == null || STRIPE_WEBHOOK_ENDPOINT_SECRET.isBlank())) {
-                logger.error("STRIPE_WEBHOOK_ENDPOINT_SECRET must be set when JAVA_STRIPE_WEBHOOK_ENABLED is true");
+            if (STRIPE_WEBHOOK_ENDPOINT_SECRET == null || STRIPE_WEBHOOK_ENDPOINT_SECRET.isBlank()) {
+                logger.error("STRIPE_WEBHOOK_ENDPOINT_SECRET must be set");
                 throw new IllegalStateException(
-                        "STRIPE_WEBHOOK_ENDPOINT_SECRET must be set when JAVA_STRIPE_WEBHOOK_ENABLED is true");
+                        "STRIPE_WEBHOOK_ENDPOINT_SECRET must be set");
             }
             Stripe.apiKey = stripeApiKey;
             initialized = true;

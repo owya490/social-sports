@@ -48,11 +48,6 @@ jobs:
         with:
           credentials_json: "${{ env.FIREBASE_SERIVCE_ACCOUNT_JSON }}"
 
-      - id: "deploy_stripe_webhook_checkout-fulfilment"
-        uses: "google-github-actions/deploy-cloud-functions@v2"
-        with:
-          name: "stripe_webhook_checkout_fulfilment"
-          runtime: "python310"
       - id: "deploy_create_stripe_standard_account"
         uses: "google-github-actions/deploy-cloud-functions@v2"
         with:

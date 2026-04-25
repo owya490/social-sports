@@ -48,10 +48,5 @@ jobs:
   #     - id: "deploy"
   #       uses: "google-github-actions/deploy-cloud-functions@v2"
   #       with:
-  #         name: "stripe_webhook_checkout_fulfilment"
-  #         runtime: "python310"
-  #     - id: "deploy"
-  #       uses: "google-github-actions/deploy-cloud-functions@v2"
-  #       with:
   #         name: "create_stripe_standard_account"
   #         runtime: "python310"
