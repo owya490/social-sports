@@ -67,7 +67,6 @@ public class StripeService {
                 numTickets,
                 newCancelUrl,
                 newSuccessUrl,
-                true,
                 fulfilmentSessionId,
                 endFulfilmentEntityId,
                 CaptureMethod.AUTOMATIC);
@@ -117,7 +116,6 @@ public class StripeService {
                 numTickets,
                 newCancelUrl,
                 newSuccessUrl,
-                true,
                 fulfilmentSessionId,
                 endFulfilmentEntityId,
                 CaptureMethod.MANUAL);

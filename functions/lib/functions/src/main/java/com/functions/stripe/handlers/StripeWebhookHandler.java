@@ -324,7 +324,6 @@ public class StripeWebhookHandler {
                 fullSession,
                 fullName,
                 phoneNumber,
-                sessionMetadata.getCompleteFulfilmentSession(),
                 sessionMetadata.getFulfilmentSessionId(),
                 sessionMetadata.getEndFulfilmentEntityId(),
                 paymentIntentId,

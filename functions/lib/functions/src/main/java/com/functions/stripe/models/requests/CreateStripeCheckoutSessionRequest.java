@@ -16,7 +16,6 @@ public record CreateStripeCheckoutSessionRequest(
         @JsonProperty("quantity") Integer quantity,
         @JsonProperty("cancelUrl") String cancelUrl,
         @JsonProperty("successUrl") String successUrl,
-        @JsonProperty("completeFulfilmentSession") @Nonnull Boolean completeFulfilmentSession,
         @JsonProperty("fulfilmentSessionId") @Nonnull String fulfilmentSessionId,
         @JsonProperty("endFulfilmentEntityId") @Nonnull String endFulfilmentEntityId,
         @JsonProperty("captureMethod") @Nonnull CaptureMethod captureMethod) {
@@ -26,8 +25,8 @@ public record CreateStripeCheckoutSessionRequest(
      * @throws IllegalArgumentException if validation fails
      */
     public CreateStripeCheckoutSessionRequest {
-        validate(eventId, isPrivate, quantity, cancelUrl, successUrl, completeFulfilmentSession,
-                fulfilmentSessionId, endFulfilmentEntityId, captureMethod);
+        validate(eventId, isPrivate, quantity, cancelUrl, successUrl, fulfilmentSessionId,
+                endFulfilmentEntityId, captureMethod);
     }
 
     /**
@@ -36,7 +35,7 @@ public record CreateStripeCheckoutSessionRequest(
      * @throws IllegalArgumentException if validation fails
      */
     private static void validate(String eventId, Boolean isPrivate, Integer quantity,
-            String cancelUrl, String successUrl, Boolean completeFulfilmentSession,
+            String cancelUrl, String successUrl,
             String fulfilmentSessionId, String endFulfilmentEntityId, CaptureMethod captureMethod) {
         if (eventId == null || eventId.isBlank()) {
             throw new IllegalArgumentException("Event ID must be provided as a non-empty string.");
@@ -62,10 +61,6 @@ public record CreateStripeCheckoutSessionRequest(
             URI.create(successUrl);
         } catch (Exception e) {
             throw new IllegalArgumentException("Success URL must be a valid URI.", e);
-        }
-        if (completeFulfilmentSession == null) {
-            throw new IllegalArgumentException(
-                    "Complete Fulfilment Session must be provided as a boolean but was null.");
         }
         if (fulfilmentSessionId == null || fulfilmentSessionId.isBlank()) {
             throw new IllegalArgumentException("Fulfilment Session ID must be provided as a non-empty string.");
