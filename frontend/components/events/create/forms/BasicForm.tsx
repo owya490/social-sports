@@ -244,7 +244,7 @@ export function BasicInformation({
 
       const priceValidationError = validatePrice(customAmount);
       setPriceWarning(priceValidationError);
-      let hasPriceError = priceValidationError !== null;
+      const hasPriceError = priceValidationError !== null;
       if (priceInputRef.current) {
         if (hasPriceError) {
           priceInputRef.current.setCustomValidity(STRIPE_MIN_PRICE_ERROR_MESSAGE);

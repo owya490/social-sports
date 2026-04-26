@@ -3,7 +3,7 @@ import { TextSection } from "@/interfaces/FormTypes";
 import { Textarea } from "@material-tailwind/react";
 import Image from "next/image";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export const TextSectionResponse = ({
   textSection,
   answerOnChange,

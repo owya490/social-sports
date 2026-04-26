@@ -6,27 +6,31 @@ import { generateEventPageMetadata } from "@/services/src/events/eventsUtils/com
 import { getUsernameMapping } from "@/services/src/users/usersService";
 import { Metadata } from "next";
 
+type EventPageParams = Promise<{ id: string; customEventLink: string }>;
+
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string; customEventLink: string };
+  params: EventPageParams;
 }): Promise<Metadata> {
-  const { username, customEventLink } = getUsernameAndEventLink(params);
+  const resolvedParams = await params;
+  const { username, customEventLink } = getUsernameAndEventLink(resolvedParams);
   const eventId = await getEventIdFromUserAndEventLink(username, customEventLink);
   const event = await getEventById(eventId, true, false);
 
   return generateEventPageMetadata(event);
 }
 
-export default async function Page({ params }: any) {
+export default async function Page({ params }: { params: EventPageParams }) {
   // The first param is the username actually, and the second param is the customEventLink
-  const { username, customEventLink } = getUsernameAndEventLink(params);
+  const resolvedParams = await params;
+  const { username, customEventLink } = getUsernameAndEventLink(resolvedParams);
   const eventId = await getEventIdFromUserAndEventLink(username, customEventLink);
 
   return <EventPage eventId={eventId} />;
 }
 
-function getUsernameAndEventLink(params: any) {
+function getUsernameAndEventLink(params: { id: string; customEventLink: string }) {
   const username = params.id;
   const customEventLink = params.customEventLink;
   return { username, customEventLink };

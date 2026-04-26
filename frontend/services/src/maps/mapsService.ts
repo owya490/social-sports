@@ -16,15 +16,18 @@ const getGoogleMapsApiKey = () => {
   }
 };
 
-export const loadGoogleMapsScript = () => {
-  const googleMapsApiKey = getGoogleMapsApiKey();
+export const useGoogleMapsScript = () => {
+  const googleMapsApiKey = getGoogleMapsApiKey() ?? "";
+  const scriptLoadResult = useLoadScript({
+    googleMapsApiKey,
+    libraries,
+  });
+
   if (!googleMapsApiKey) {
     return null;
   }
-  return useLoadScript({
-    googleMapsApiKey: googleMapsApiKey,
-    libraries,
-  });
+
+  return scriptLoadResult;
 };
 
 export const initializeAutocomplete = (inputRef: React.RefObject<HTMLInputElement>, handlePlaceSelect: () => void) => {

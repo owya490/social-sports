@@ -68,8 +68,8 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
       nameTokens: tokenizeText(data.name),
       locationTokens: tokenizeText(data.location),
     };
-    let isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
-    let isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
+    const isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
+    const isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
 
     const batch = externalBatch !== undefined ? externalBatch : writeBatch(db);
     const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate));
@@ -146,7 +146,7 @@ export async function getEventById(
     const eventDoc = await findEventDoc(eventId);
     const eventWithoutOrganiser = eventDoc.data() as EventDataWithoutOrganiser;
     // Start with empty user but we will fetch the relevant data. If errors, nav to error page.
-    var organiser: PublicUserData = EmptyPublicUserData;
+    let organiser: PublicUserData = EmptyPublicUserData;
     try {
       organiser = await getPublicUserById(eventWithoutOrganiser.organiserId, bypassCache, client);
     } catch (error) {
@@ -200,7 +200,7 @@ export async function getAllEvents(isActive?: boolean, isPrivate?: boolean) {
 
     if (isActive && !isPrivate) {
       const currentDate = new Date();
-      let { success, events } = tryGetAllActivePublicEventsFromLocalStorage(currentDate);
+      const { success, events } = tryGetAllActivePublicEventsFromLocalStorage(currentDate);
       if (success) {
         return events;
       }
@@ -464,7 +464,7 @@ function validatePurchaserDetails(purchaser: Purchaser): void {
 
 export async function updateEventCapacityById(eventId: EventId, capacity: number): Promise<boolean> {
   eventServiceLogger.info(`Updating event capacity for ${eventId} to ${capacity}`);
-  var valid = false;
+  let valid = false;
   try {
     await runTransaction(db, async (transaction) => {
       const eventDocRef = await findEventDocRef(eventId);

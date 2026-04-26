@@ -15,11 +15,12 @@ import { getPublicUserById, getUsernameMapping } from "@/services/src/users/user
 import { EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function UserProfilePage({ params }: any) {
-  const userId: UserId = params.id;
+export default function UserProfilePage() {
+  const params = useParams<{ id: string }>();
+  const userId = params.id as UserId;
   const router = useRouter();
   const logger = new Logger("UserProfilePageLogger");
   const [loading, setLoading] = useState(true);
@@ -79,7 +80,7 @@ export default function UserProfilePage({ params }: any) {
       }
     };
     fetchUserProfile();
-  }, []);
+  }, [userId, router]);
 
   return loading ? (
     <Loading />
