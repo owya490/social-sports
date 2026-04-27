@@ -96,7 +96,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <GrafanaFaro>
         <UserContext>
-          <body className={`${satoshi.className}`}>
+          {/* Browser extensions such as Grammarly add attributes to <body> before hydration. */}
+          <body className={`${satoshi.className}`} suppressHydrationWarning>
             <AccessibilitySkipNavigation />
             <div className="md:hidden">
               <Suspense

@@ -51,7 +51,7 @@ export default function UserProfilePage() {
 
     const fetchUserProfile = async () => {
       try {
-        const userIdMapFromUsername = await getUsernameMapping(userId);
+        const userIdMapFromUsername = await getUsernameMapping(userId, true);
         const user = await getPublicUserById(userIdMapFromUsername.userId);
         setPublicUserProfile(user);
 
