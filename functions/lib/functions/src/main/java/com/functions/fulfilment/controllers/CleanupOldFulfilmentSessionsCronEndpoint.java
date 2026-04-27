@@ -4,12 +4,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.fulfilment.services.FulfilmentService;
+import com.functions.stripe.config.StripeConfig;
 import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
 public class CleanupOldFulfilmentSessionsCronEndpoint implements HttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(CleanupOldFulfilmentSessionsCronEndpoint.class);
+
+    public CleanupOldFulfilmentSessionsCronEndpoint() {
+        StripeConfig.initialize();
+    }
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {

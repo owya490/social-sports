@@ -11,6 +11,7 @@ import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
+import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.handlers.StripeWebhookHandler;
@@ -32,7 +33,9 @@ public class GlobalAppController implements HttpFunction {
         void handle(HttpRequest request, HttpResponse response) throws Exception;
     }
 
-    public GlobalAppController() {}
+    public GlobalAppController() {
+        StripeConfig.initialize();
+    }
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {

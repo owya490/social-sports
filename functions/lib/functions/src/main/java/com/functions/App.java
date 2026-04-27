@@ -8,7 +8,5 @@ import com.functions.stripe.config.StripeConfig;
  */
 public class App 
 {    
-    public static void main( String[] args ) {
-        StripeConfig.initialize();
-    }
+    public static void main( String[] args ) {}
 }
