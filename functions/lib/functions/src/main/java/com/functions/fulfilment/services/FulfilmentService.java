@@ -93,8 +93,9 @@ public class FulfilmentService {
     /**
      * Expires Stripe Checkout Sessions for CHECKOUT / BOOKING_APPROVAL fulfilment sessions older than
      * {@link #STRIPE_EXPIRY_CUTOFF_MINUTES}. Stripe sends {@code checkout.session.expired}; existing webhook restocks.
+     * If the Stripe expiry succeeds, the fulfilment session is also deleted to avoid repeatedly scanning it.
      *
-     * @return number of sessions for which Stripe {@code expire} succeeded
+     * @return number of sessions for which Stripe {@code expire} succeeded and fulfilment session deletion was attempted
      */
     public static int expireStaleStripeCheckoutSessions() throws Exception {
         return expireStaleStripeCheckoutSessions(STRIPE_EXPIRY_CUTOFF_MINUTES);
@@ -102,7 +103,7 @@ public class FulfilmentService {
 
     /**
      * @param cutoffMinutes age threshold vs {@code fulfilmentSessionStartTime}
-     * @return number of sessions for which Stripe {@code expire} succeeded
+     * @return number of sessions for which Stripe {@code expire} succeeded and fulfilment session deletion was attempted
      */
     public static int expireStaleStripeCheckoutSessions(int cutoffMinutes) throws Exception {
         logger.info(

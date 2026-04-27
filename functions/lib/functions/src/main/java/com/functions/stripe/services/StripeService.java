@@ -160,9 +160,11 @@ public class StripeService {
 
     /**
      * Expires an open Stripe Checkout Session for a connected account.
+     * Stripe's expire endpoint is synchronous and returns the updated Checkout Session.
      *
-     * @return true when Stripe accepted the expire call, false when the session was
-     *         already expired/completed or otherwise not open.
+     * @return true only when Stripe returns the Checkout Session in {@code expired}
+     *         status, false when the session was already expired/completed,
+     *         otherwise not open, or Stripe returns an unexpected status.
      * @throws StripeException for non-benign Stripe failures
      */
     public static boolean expireCheckoutSession(String checkoutSessionId, String stripeAccountId)
@@ -173,9 +175,14 @@ public class StripeService {
 
         try {
             Session stripeSession = Session.retrieve(checkoutSessionId, requestOptions);
-            stripeSession.expire(requestOptions);
-            logger.info("Expired Stripe checkout session {}", checkoutSessionId);
-            return true;
+            Session expiredSession = stripeSession.expire(requestOptions);
+            if ("expired".equals(expiredSession.getStatus())) {
+                logger.info("Expired Stripe checkout session {}", checkoutSessionId);
+                return true;
+            }
+            logger.warn("Stripe checkout session {} expire call returned status: {}",
+                    checkoutSessionId, expiredSession.getStatus());
+            return false;
         } catch (StripeException e) {
             if (isBenignCheckoutSessionExpireFailure(e)) {
                 logger.info("Stripe checkout session {} was not expired via API (benign): {}",
