@@ -2,7 +2,6 @@
 
 import { FulfilmentSessionId, GetFulfilmentSessionInfoResponse } from "@/interfaces/FulfilmentTypes";
 import { FULFILMENT_SESSION_EXPIRY_MILLIS } from "@/services/src/fulfilment/fulfilmentConstants";
-import { deleteFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
@@ -89,7 +88,6 @@ const FulfilmentEntityPage = ({
     if (remainingMs <= 0) {
       // Small delay to ensure the timer shows 00:00 before redirecting
       const timeoutId = setTimeout(async () => {
-        await deleteFulfilmentSession(fulfilmentSessionId);
         router.push("/timeout");
       }, 100);
 

@@ -11,12 +11,6 @@ export const FULFILMENT_SESSION_EXPIRY_MILLIS = FULFILMENT_SESSION_EXPIRY_MINUTE
 export const FULFILMENT_SESSION_CACHE_TTL_MINUTES = FULFILMENT_SESSION_EXPIRY_MINUTES - 3;
 export const FULFILMENT_SESSION_CACHE_TTL_MILLIS = FULFILMENT_SESSION_CACHE_TTL_MINUTES * 60 * 1000;
 
-export const DELETE_FULFILMENT_SESSION_URL = {
-  DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/deleteFulfilmentSession",
-  PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/deleteFulfilmentSession",
-  PRODUCTION: "https://australia-southeast1-socialsportsprod.cloudfunctions.net/deleteFulfilmentSession",
-};
-
 export const COMPLETE_FULFILMENT_SESSION_URL = {
   DEVELOPMENT: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/completeFulfilmentSession",
   PREVIEW: "https://australia-southeast1-socialsports-44162.cloudfunctions.net/completeFulfilmentSession",

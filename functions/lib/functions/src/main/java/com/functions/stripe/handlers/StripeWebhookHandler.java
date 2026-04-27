@@ -278,35 +278,45 @@ public class StripeWebhookHandler {
                 return false;
             }
             
-            // Retrieve payment intent and capture method
-            String paymentIntentId = fullSession.getPaymentIntent();
-            if (paymentIntentId == null || paymentIntentId.isBlank()) {
-                logger.error("[Webhook-{}] Payment intent ID is null or empty for session {}", uuid, checkoutSessionId);
-                return false;
-            }
-            
+            String paymentIntentId;
             String captureMethod;
-            try {
-                PaymentIntent paymentIntent = PaymentIntent.retrieve(
-                    paymentIntentId,
-                    com.stripe.net.RequestOptions.builder()
-                        .setStripeAccount(stripeAccount)
-                        .build()
-                );
-                
-                if (paymentIntent == null || paymentIntent.getCaptureMethod() == null) {
-                    logger.error("[Webhook-{}] Unable to retrieve payment intent or capture method. paymentIntentId={}", 
-                                uuid, paymentIntentId);
+            if (isFreeCheckoutSession(fullSession.getAmountTotal())) {
+                // Stripe no-cost checkout sessions can complete without a PaymentIntent:
+                // https://docs.stripe.com/payments/checkout/no-cost-orders
+                logger.info("[Webhook-{}] Free checkout session detected for session {}. amountTotal={}. Skipping payment intent lookup.",
+                        uuid, checkoutSessionId, fullSession.getAmountTotal());
+                paymentIntentId = null;
+                captureMethod = null;
+            } else {
+                // Retrieve payment intent and capture method for paid checkouts.
+                paymentIntentId = fullSession.getPaymentIntent();
+                if (paymentIntentId == null || paymentIntentId.isBlank()) {
+                    logger.error("[Webhook-{}] Payment intent ID is null or empty for session {}", uuid, checkoutSessionId);
                     return false;
                 }
                 
-                captureMethod = paymentIntent.getCaptureMethod();
-                logger.info("[Webhook-{}] Retrieved capture method: {} for payment intent: {}", 
-                           uuid, captureMethod, paymentIntentId);
-                
-            } catch (Exception e) {
-                logger.error("[Webhook-{}] Failed to retrieve payment intent: {}", uuid, e.getMessage(), e);
-                return false;
+                try {
+                    PaymentIntent paymentIntent = PaymentIntent.retrieve(
+                        paymentIntentId,
+                        com.stripe.net.RequestOptions.builder()
+                            .setStripeAccount(stripeAccount)
+                            .build()
+                    );
+                    
+                    if (paymentIntent == null || paymentIntent.getCaptureMethod() == null) {
+                        logger.error("[Webhook-{}] Unable to retrieve payment intent or capture method. paymentIntentId={}", 
+                                    uuid, paymentIntentId);
+                        return false;
+                    }
+                    
+                    captureMethod = paymentIntent.getCaptureMethod();
+                    logger.info("[Webhook-{}] Retrieved capture method: {} for payment intent: {}", 
+                               uuid, captureMethod, paymentIntentId);
+                    
+                } catch (Exception e) {
+                    logger.error("[Webhook-{}] Failed to retrieve payment intent: {}", uuid, e.getMessage(), e);
+                    return false;
+                }
             }
             
             logger.info("[Webhook-{}] Attempting to fulfill completed event ticket purchase. session={}, eventId={}, " +
@@ -479,6 +489,10 @@ public class StripeWebhookHandler {
             return true;
         }
         return false;
+    }
+
+    static boolean isFreeCheckoutSession(Long amountTotal) {
+        return amountTotal != null && amountTotal == 0L;
     }
 
     static String readPayload(InputStream inputStream, long contentLength)
