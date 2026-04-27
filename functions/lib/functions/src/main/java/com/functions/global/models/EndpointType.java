@@ -6,6 +6,7 @@ import com.functions.attendee.models.requests.SetAttendeeTicketsRequest;
 import com.functions.attendee.models.responses.AddAttendeeResponse;
 import com.functions.attendee.models.responses.GetEventAttendeeNamesResponse;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
+import com.functions.auth.models.AuthPolicy;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.requests.GetEventByIdRequest;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
@@ -25,6 +26,8 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
+import com.functions.stripe.models.requests.CreateStripeStandardAccountRequest;
+import com.functions.stripe.models.responses.CreateStripeStandardAccountResponse;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.models.requests.get.GetOrderRequest;
 import com.functions.tickets.models.requests.get.GetOrdersByEventRequest;
@@ -60,6 +63,8 @@ public enum EndpointType {
             UpdateFulfilmentEntityWithWaitlistDataResponse.class),
     GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class),
     GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class),
+    CREATE_STRIPE_STANDARD_ACCOUNT(CreateStripeStandardAccountRequest.class, CreateStripeStandardAccountResponse.class,
+            AuthPolicy.AUTHENTICATED),
     GET_ORDER(GetOrderRequest.class, GetOrderResponse.class),
     GET_TICKET(GetTicketRequest.class, Ticket.class),
     GET_ORDERS_BY_EVENT(GetOrdersByEventRequest.class, GetOrdersByEventResponse.class),
@@ -69,10 +74,17 @@ public enum EndpointType {
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;
+    // TODO: Migrate this endpoint auth metadata into the generalized GlobalAppController auth model.
+    private final AuthPolicy authPolicy;
 
     EndpointType(Class<?> requestClass, Class<?> responseClass) {
+        this(requestClass, responseClass, AuthPolicy.PUBLIC);
+    }
+
+    EndpointType(Class<?> requestClass, Class<?> responseClass, AuthPolicy authPolicy) {
         this.requestClass = requestClass;
         this.responseClass = responseClass;
+        this.authPolicy = authPolicy;
     }
 
 }

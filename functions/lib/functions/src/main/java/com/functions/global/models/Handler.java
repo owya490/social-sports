@@ -1,5 +1,6 @@
 package com.functions.global.models;
 
+import com.functions.auth.models.RequestContext;
 import com.functions.global.models.requests.UnifiedRequest;
 
 /**
@@ -11,5 +12,11 @@ import com.functions.global.models.requests.UnifiedRequest;
 public interface Handler<S, T> {
     S parse(UnifiedRequest data);
 
-    T handle(S parsedRequestData) throws Exception;
+    default T handle(S parsedRequestData) throws Exception {
+        return handle(parsedRequestData, null);
+    }
+
+    default T handle(S parsedRequestData, RequestContext requestContext) throws Exception {
+        return handle(parsedRequestData);
+    }
 }

@@ -1,8 +1,16 @@
 package com.functions.global.controllers;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.auth.exceptions.UnauthenticatedException;
+import com.functions.auth.exceptions.UnauthorizedException;
+import com.functions.auth.models.AuthPolicy;
+import com.functions.auth.models.RequestContext;
+import com.functions.auth.services.AuthService;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
 import com.functions.fulfilment.exceptions.FulfilmentProgressionBlockedException;
 import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
@@ -34,6 +42,12 @@ public class GlobalAppController implements HttpFunction {
     }
 
     public GlobalAppController() {
+        try {
+            FirebaseService.ensureInitialized();
+        } catch (Exception e) {
+            logger.error("Failed to initialize FirebaseService", e);
+            throw new RuntimeException("Failed to initialize FirebaseService", e);
+        }
         StripeConfig.initialize();
     }
 
@@ -80,12 +94,25 @@ public class GlobalAppController implements HttpFunction {
                 return;
             }
 
-            Object result = routeRequest(unifiedRequest);
+            RequestContext requestContext = buildRequestContext(request);
+            validateAuthentication(unifiedRequest.endpointType(), requestContext);
+
+            Object result = routeRequest(unifiedRequest, requestContext);
 
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(UnifiedResponse.success(result)));
 
+        } catch (UnauthenticatedException e) {
+            logger.warn("Unauthenticated request: {}", e.getMessage());
+            response.setStatusCode(401);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
+        } catch (UnauthorizedException e) {
+            logger.warn("Unauthorized request: {}", e.getMessage());
+            response.setStatusCode(401);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
         } catch (FulfilmentProgressionBlockedException e) {
             logger.warn("Fulfilment progression blocked: {}", e.getMessage());
             response.setStatusCode(400);
@@ -124,7 +151,7 @@ public class GlobalAppController implements HttpFunction {
         }
     }
 
-    private Object routeRequest(UnifiedRequest unifiedRequest) throws Exception {
+    private Object routeRequest(UnifiedRequest unifiedRequest, RequestContext requestContext) throws Exception {
         EndpointType endpointType = unifiedRequest.endpointType();
 
         if (!HandlerRegistry.hasHandler(endpointType)) {
@@ -132,7 +159,29 @@ public class GlobalAppController implements HttpFunction {
         }
 
         var handler = HandlerRegistry.getHandler(endpointType);
-        return handler.handle(handler.parse(unifiedRequest));
+        return handler.handle(handler.parse(unifiedRequest), requestContext);
+    }
+
+    private RequestContext buildRequestContext(HttpRequest request) {
+        // TODO: Delegate request context construction to the generalized GlobalAppController auth layer.
+        Optional<String> authorizationHeader = request.getFirstHeader("Authorization");
+        return new RequestContext(AuthService.authenticateBearerToken(authorizationHeader.orElse(null)).orElse(null));
+    }
+
+    private void validateAuthentication(EndpointType endpointType, RequestContext requestContext) {
+        // TODO: Replace this temporary policy evaluator with the generalized GlobalAppController auth layer.
+        AuthPolicy authPolicy = endpointType.getAuthPolicy();
+        switch (authPolicy) {
+            case PUBLIC:
+                return;
+            case AUTHENTICATED:
+                if (requestContext == null || !requestContext.isAuthenticated()) {
+                    throw new UnauthenticatedException("Authentication is required.");
+                }
+                return;
+            default:
+                throw new IllegalStateException("Unsupported auth policy: " + authPolicy);
+        }
     }
 
     static boolean shouldRouteToStripeWebhook(HttpRequest request) {

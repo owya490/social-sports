@@ -3,9 +3,15 @@ import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
 import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
 import { Environment, getEnvironment } from "@/utilities/environment";
+import { auth } from "../firebase";
 import { GLOBAL_APP_CONTROLLER_URL } from "./functionsConstants";
 
 const functionsUtilsLogger = new Logger("functionsUtilsLogger");
+
+// TODO: Generate or share this metadata with the backend auth model to avoid endpoint auth drift.
+const AUTHENTICATED_ENDPOINTS = new Set<EndpointType>([
+  EndpointType.CREATE_STRIPE_STANDARD_ACCOUNT,
+]);
 
 export function getGlobalAppControllerUrl(): string {
   const env = getEnvironment();
@@ -13,17 +19,37 @@ export function getGlobalAppControllerUrl(): string {
 }
 
 export async function executeGlobalAppControllerFunction<S, T>(endpointType: EndpointType, data: S): Promise<T> {
+  return executeGlobalAppControllerFunctionWithOptions(endpointType, data);
+}
+
+export async function executeGlobalAppControllerFunctionWithOptions<S, T>(
+  endpointType: EndpointType,
+  data: S,
+  options?: { requireAuth?: boolean }
+): Promise<T> {
   const request: UnifiedRequest<S> = {
     endpointType: endpointType,
     data: data,
   };
 
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  if (options?.requireAuth || AUTHENTICATED_ENDPOINTS.has(endpointType)) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("Authentication is required to execute this function.");
+    }
+
+    const idToken = await currentUser.getIdToken();
+    headers.Authorization = `Bearer ${idToken}`;
+  }
+
   const rawResponse = await fetch(getGlobalAppControllerUrl(), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers,
     body: JSON.stringify(request),
   });
 

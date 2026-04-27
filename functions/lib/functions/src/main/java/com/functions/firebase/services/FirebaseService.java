@@ -116,6 +116,15 @@ public class FirebaseService {
         return db;
     }
 
+    public static void ensureInitialized() throws Exception {
+        if (FirebaseApp.getApps().isEmpty()) {
+            initialize();
+        }
+        if (db == null) {
+            db = FirestoreClient.getFirestore();
+        }
+    }
+
     public static <T> T createFirestoreTransaction(Transaction.Function<T> consumer) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         ApiFuture<T> futureTransaction = db.runTransaction(consumer);

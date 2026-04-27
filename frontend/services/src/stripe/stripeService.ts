@@ -1,9 +1,7 @@
 import { UserId } from "@/interfaces/UserTypes";
+import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
-import {
-  FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT,
-  getFirebaseFunctionByName,
-} from "../firebaseFunctionsService";
+import { executeGlobalAppControllerFunctionWithOptions } from "../functions/functionsUtils";
 import { getPrivateUserById } from "../users/usersService";
 
 interface StripeCreateStandardAccountResponse {
@@ -18,10 +16,11 @@ export async function getStripeStandardAccountLink(organiserId: string, returnUr
     returnUrl: returnUrl,
     refreshUrl: refreshUrl,
   };
-  const createAccountFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT);
-  return createAccountFunction(content)
-    .then((result) => {
-      const data = JSON.parse(result.data as string) as StripeCreateStandardAccountResponse;
+  return executeGlobalAppControllerFunctionWithOptions<
+    typeof content,
+    StripeCreateStandardAccountResponse
+  >(EndpointType.CREATE_STRIPE_STANDARD_ACCOUNT, content)
+    .then((data) => {
       return data.url;
     })
     .catch((error) => {

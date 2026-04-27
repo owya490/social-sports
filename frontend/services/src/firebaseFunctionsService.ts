@@ -5,9 +5,6 @@ import { app } from "./firebase";
 export const FIREBASE_FUNCTIONS_CREATE_EVENT = "create_event";
 export const FIREBASE_FUNCTIONS_CREATE_RECURRENCE_TEMPLATE = "create_recurrence_template";
 
-// Stripe
-export const FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT = "create_stripe_standard_account";
-
 // Sendgrid
 export const FIREBASE_FUNCTIONS_SEND_EMAIL_ON_CREATE_EVENT = "send_email_on_create_event";
 export const FIREBASE_FUNCTIONS_SEND_EMAIL_ON_DELETE_EVENT = "send_email_on_delete_event";
