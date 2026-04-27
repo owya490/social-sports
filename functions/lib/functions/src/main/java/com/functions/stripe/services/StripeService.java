@@ -12,6 +12,7 @@ import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse
 import com.functions.utils.UrlUtils;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCancelParams;
 import com.stripe.param.PaymentIntentCaptureParams;
@@ -158,6 +159,34 @@ public class StripeService {
     }
 
     /**
+     * Expires an open Stripe Checkout Session for a connected account.
+     *
+     * @return true when Stripe accepted the expire call, false when the session was
+     *         already expired/completed or otherwise not open.
+     * @throws StripeException for non-benign Stripe failures
+     */
+    public static boolean expireCheckoutSession(String checkoutSessionId, String stripeAccountId)
+            throws StripeException {
+        RequestOptions requestOptions = RequestOptions.builder()
+                .setStripeAccount(stripeAccountId)
+                .build();
+
+        try {
+            Session stripeSession = Session.retrieve(checkoutSessionId, requestOptions);
+            stripeSession.expire(requestOptions);
+            logger.info("Expired Stripe checkout session {}", checkoutSessionId);
+            return true;
+        } catch (StripeException e) {
+            if (isBenignCheckoutSessionExpireFailure(e)) {
+                logger.info("Stripe checkout session {} was not expired via API (benign): {}",
+                        checkoutSessionId, e.getMessage());
+                return false;
+            }
+            throw e;
+        }
+    }
+
+    /**
      * Captures an authorized PaymentIntent.
      * After the payment method is authorized, the PaymentIntent status transitions
      * to requires_capture.
@@ -223,5 +252,23 @@ public class StripeService {
                 canceledPaymentIntent.getId(), canceledPaymentIntent.getStatus());
 
         return canceledPaymentIntent;
+    }
+
+    private static boolean isBenignCheckoutSessionExpireFailure(StripeException e) {
+        String code = e.getCode();
+        if (code != null) {
+            if ("checkout_session_already_expired".equals(code) || "checkout_session_not_open".equals(code)) {
+                return true;
+            }
+        }
+        String msg = e.getMessage();
+        if (msg == null) {
+            return false;
+        }
+        String lower = msg.toLowerCase();
+        return lower.contains("already expired")
+                || lower.contains("cannot be expired")
+                || lower.contains("not in `open` status")
+                || lower.contains("not in open status");
     }
 }

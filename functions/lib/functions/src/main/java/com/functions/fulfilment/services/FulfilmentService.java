@@ -34,11 +34,9 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
+import com.functions.stripe.services.StripeService;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
-import com.stripe.exception.StripeException;
-import com.stripe.model.checkout.Session;
-import com.stripe.net.RequestOptions;
 
 public class FulfilmentService {
 
@@ -141,30 +139,22 @@ public class FulfilmentService {
                     continue;
                 }
 
-                RequestOptions requestOptions =
-                        RequestOptions.builder().setStripeAccount(stripeAccountId).build();
                 try {
-                    Session stripeSession = Session.retrieve(checkoutSessionId, requestOptions);
-                    stripeSession.expire(requestOptions);
-                    expiredCount++;
-                    logger.info(
-                            "Expired Stripe checkout session {} for fulfilment session {}",
-                            checkoutSessionId,
-                            sessionId);
-                } catch (StripeException e) {
-                    if (isBenignStripeExpireFailure(e)) {
+                    boolean expired = StripeService.expireCheckoutSession(checkoutSessionId, stripeAccountId);
+                    if (expired) {
+                        expiredCount++;
                         logger.info(
-                                "Stripe session {} for fulfilment {} not expired via API (benign): {}",
+                                "Expired Stripe checkout session {} for fulfilment session {}",
                                 checkoutSessionId,
-                                sessionId,
-                                e.getMessage());
-                    } else {
-                        logger.warn(
-                                "Stripe expire failed for fulfilment session {} checkout {}: {}",
-                                sessionId,
-                                checkoutSessionId,
-                                e.getMessage());
+                                sessionId);
+                        deleteFulfilmentSessionAndTempFormResponses(sessionId);
                     }
+                } catch (Exception e) {
+                    logger.warn(
+                            "Stripe expire failed for fulfilment session {} checkout {}: {}",
+                            sessionId,
+                            checkoutSessionId,
+                            e.getMessage());
                 }
             } catch (Exception e) {
                 logger.error("[FulfilmentService] Error processing Stripe expiry for session {}", sessionId, e);
@@ -192,24 +182,6 @@ public class FulfilmentService {
             }
         }
         return Optional.empty();
-    }
-
-    private static boolean isBenignStripeExpireFailure(StripeException e) {
-        String code = e.getCode();
-        if (code != null) {
-            if ("checkout_session_already_expired".equals(code) || "checkout_session_not_open".equals(code)) {
-                return true;
-            }
-        }
-        String msg = e.getMessage();
-        if (msg == null) {
-            return false;
-        }
-        String lower = msg.toLowerCase();
-        return lower.contains("already expired")
-                || lower.contains("cannot be expired")
-                || lower.contains("not in `open` status")
-                || lower.contains("not in open status");
     }
 
     public static String initFulfilmentSession(String eventId, Integer numTickets) throws Exception {
