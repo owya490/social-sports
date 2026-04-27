@@ -18,6 +18,6 @@ export function parseEnvironment(value: string | undefined): Environment | undef
   }
 }
 
-export function getEnvironment() {
+export function getEnvironment(): Environment | undefined {
   return parseEnvironment(process.env.NEXT_PUBLIC_ENVIRONMENT ?? process.env.ENVIRONMENT);
 }
