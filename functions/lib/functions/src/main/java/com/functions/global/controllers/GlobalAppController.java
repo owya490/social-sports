@@ -11,12 +11,10 @@ import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
-import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.handlers.StripeWebhookHandler;
 import com.functions.utils.JavaUtils;
-import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
@@ -25,16 +23,12 @@ import com.google.cloud.functions.HttpResponse;
  * <p>
  * This provides a single entry point for all function calls while maintaining type safety.
  */
-public class GlobalAppController implements HttpFunction {
+public class GlobalAppController extends AbstractConfiguredHttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(GlobalAppController.class);
 
     @FunctionalInterface
     interface StripeWebhookProcessor {
         void handle(HttpRequest request, HttpResponse response) throws Exception;
-    }
-
-    public GlobalAppController() {
-        StripeConfig.initialize();
     }
 
     @Override

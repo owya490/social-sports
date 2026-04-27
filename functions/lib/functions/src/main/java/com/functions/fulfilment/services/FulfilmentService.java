@@ -42,10 +42,14 @@ public class FulfilmentService {
 
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
     private static final int CLEANUP_CUTOFF_MINUTES = 35;
-    /** Fulfilment sessions older than this get their Stripe Checkout Session expired via cron (webhook restocks). */
+    /**
+     * Fulfilment sessions older than this get their Stripe Checkout Session expired
+     * via cron (webhook restocks).
+     */
     private static final int STRIPE_EXPIRY_CUTOFF_MINUTES = 15;
 
-    private record StripeCheckoutCredentials(String checkoutSessionId, String stripeAccountId) {}
+    private record StripeCheckoutCredentials(String checkoutSessionId, String stripeAccountId) {
+    }
 
     /**
      * Cleanup fulfilment sessions older than the default cutoff minutes.
@@ -91,11 +95,15 @@ public class FulfilmentService {
     }
 
     /**
-     * Expires Stripe Checkout Sessions for CHECKOUT / BOOKING_APPROVAL fulfilment sessions older than
-     * {@link #STRIPE_EXPIRY_CUTOFF_MINUTES}. Stripe sends {@code checkout.session.expired}; existing webhook restocks.
-     * If the Stripe expiry succeeds, the fulfilment session is also deleted to avoid repeatedly scanning it.
+     * Expires Stripe Checkout Sessions for CHECKOUT / BOOKING_APPROVAL fulfilment
+     * sessions older than
+     * {@link #STRIPE_EXPIRY_CUTOFF_MINUTES}. Stripe sends
+     * {@code checkout.session.expired}; existing webhook restocks.
+     * If the Stripe expiry succeeds, the fulfilment session is also deleted to
+     * avoid repeatedly scanning it.
      *
-     * @return number of sessions for which Stripe {@code expire} succeeded and fulfilment session deletion was attempted
+     * @return number of sessions for which Stripe {@code expire} succeeded and
+     *         fulfilment session deletion was attempted
      */
     public static int expireStaleStripeCheckoutSessions() throws Exception {
         return expireStaleStripeCheckoutSessions(STRIPE_EXPIRY_CUTOFF_MINUTES);
@@ -103,7 +111,8 @@ public class FulfilmentService {
 
     /**
      * @param cutoffMinutes age threshold vs {@code fulfilmentSessionStartTime}
-     * @return number of sessions for which Stripe {@code expire} succeeded and fulfilment session deletion was attempted
+     * @return number of sessions for which Stripe {@code expire} succeeded and
+     *         fulfilment session deletion was attempted
      */
     public static int expireStaleStripeCheckoutSessions(int cutoffMinutes) throws Exception {
         logger.info(
@@ -119,8 +128,8 @@ public class FulfilmentService {
         int expiredCount = 0;
         for (String sessionId : candidateIds) {
             try {
-                Optional<FulfilmentSession> maybe =
-                        FulfilmentSessionRepository.getFulfilmentSession(sessionId, Optional.empty());
+                Optional<FulfilmentSession> maybe = FulfilmentSessionRepository.getFulfilmentSession(sessionId,
+                        Optional.empty());
                 if (maybe.isEmpty()) {
                     continue;
                 }
@@ -248,7 +257,8 @@ public class FulfilmentService {
         }
         EventData eventData = maybeEventData.get();
 
-        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && eventData.getVacancy() != null && eventData.getVacancy() <= 0) {
+        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && eventData.getVacancy() != null
+                && eventData.getVacancy() <= 0) {
             return FulfilmentSessionType.WAITLIST;
         }
 
@@ -300,9 +310,10 @@ public class FulfilmentService {
             if (nextEntity == null) {
                 throw new FulfilmentEntityNotFoundException(nextEntityId);
             }
-            
+
             if (nextEntity.onStartHook().isPresent()) {
-                boolean result = nextEntity.onStartHook().get().apply(new FulfilmentEntityHookInput(nextEntityId, fulfilmentSession));
+                boolean result = nextEntity.onStartHook().get()
+                        .apply(new FulfilmentEntityHookInput(nextEntityId, fulfilmentSession));
                 if (!result) {
                     throw new FulfilmentProgressionBlockedException(
                             "Next fulfilment entity onStartHook blocked progression for session: "
@@ -454,9 +465,10 @@ public class FulfilmentService {
             if (currentEntity == null) {
                 throw new FulfilmentEntityNotFoundException(currentEntityId);
             }
-            
+
             if (currentEntity.onEndHook().isPresent()) {
-                boolean result = currentEntity.onEndHook().get().apply(new FulfilmentEntityHookInput(currentEntityId, fulfilmentSession));
+                boolean result = currentEntity.onEndHook().get()
+                        .apply(new FulfilmentEntityHookInput(currentEntityId, fulfilmentSession));
                 if (!result) {
                     throw new FulfilmentProgressionBlockedException(
                             "Current fulfilment entity is incomplete for session: "
