@@ -86,12 +86,15 @@ public class CheckoutService {
         // Section B: Create Stripe session (external I/O) with retries
         StripeSessionResult sessionResult = createStripeSessionWithRetries(request, checkoutTransactionResult.eventData(), checkoutTransactionResult.stripeAccountId());
         logger.info("Stripe session {} created successfully for event {}", 
-                sessionResult.sessionId, checkoutTransactionResult.eventData().getEventId());
+                sessionResult.sessionId(), checkoutTransactionResult.eventData().getEventId());
 
         logger.info("Checkout complete for event {}, organiser {}, account {}", 
                 request.eventId(), EventsUtils.extractOrganiserIdForEvent(checkoutTransactionResult.eventData()), checkoutTransactionResult.stripeAccountId());
 
-        return new CreateStripeCheckoutSessionResponse(sessionResult.checkoutUrl);
+        return new CreateStripeCheckoutSessionResponse(
+                sessionResult.checkoutUrl(),
+                sessionResult.sessionId(),
+                checkoutTransactionResult.stripeAccountId());
     }
 
     private static void validateEventForCheckout(EventData eventData, Integer quantity) throws Exception {
