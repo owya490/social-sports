@@ -78,7 +78,7 @@ export async function getPublicUserById(
       }
     }
     const userDocRef = doc(db, "Users", "Active", "Public", userId);
-    var userDoc;
+    let userDoc;
     if (transaction) {
       userDoc = await transaction.get(userDocRef);
     } else {
@@ -116,7 +116,7 @@ export async function getPrivateUserById(userId: UserId, transaction?: Transacti
   }
   try {
     const userDocRef = doc(db, "Users", "Active", "Private", userId);
-    var userDoc;
+    let userDoc;
     if (transaction) {
       userDoc = await transaction.get(userDocRef);
     } else {
@@ -147,14 +147,14 @@ export async function getFullUserById(userId: UserId, transaction?: Transaction)
   }
   try {
     const publicDocRef = doc(db, "Users", "Active", "Public", userId);
-    var publicDoc;
+    let publicDoc;
     if (transaction) {
       publicDoc = await transaction.get(publicDocRef);
     } else {
       publicDoc = await getDoc(publicDocRef);
     }
     const privateDocRef = doc(db, "Users", "Active", "Private", userId);
-    var privateDoc;
+    let privateDoc;
     if (transaction) {
       privateDoc = await transaction.get(privateDocRef);
     } else {
@@ -277,7 +277,7 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
 export async function getFullUserByIdForUserContextWithRetries(userId: UserId): Promise<UserData> {
   // Retry if database call fail, otherwise if unexist, handle error case
   const RETRY_COUNT = 3;
-  var count = 0;
+  let count = 0;
   while (count <= RETRY_COUNT) {
     count += 1;
     try {
@@ -330,7 +330,7 @@ export async function getUsernameMapping(
   }
   try {
     const usernameDocRef = doc(db, "Usernames", username);
-    var usernameDoc;
+    let usernameDoc;
     if (transaction) {
       usernameDoc = await transaction.get(usernameDocRef);
     } else {

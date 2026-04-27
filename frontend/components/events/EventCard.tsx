@@ -47,6 +47,7 @@ export default function EventCard(props: EventCardProps) {
   } = props;
 
   const [imageLoaded, setImageLoaded] = useState(false);
+  const isCardClickable = props.isClickable !== false;
 
   // Preload images for better performance
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function EventCard(props: EventCardProps) {
               <h4 className="font-light text-gray-500 text-xs ml-auto">{`$${displayPrice(price)}`}</h4>
             </div>
             <h2 className="text-lg font-semibold mt-0.5 whitespace-nowrap overflow-hidden text-core-text">{name}</h2>
-            <UserInlineDisplay organiser={organiser} />
+            <UserInlineDisplay organiser={organiser} isLinkEnabled={!isCardClickable} />
             <div className="mt-1 space-y-3">
               <div className="flex items-center ml-0.5">
                 <MapPinIcon className="w-4 shrink-0" />
@@ -95,7 +96,7 @@ export default function EventCard(props: EventCardProps) {
     </div>
   );
 
-  if (props.isClickable === false) {
+  if (!isCardClickable) {
     return cardContent;
   }
 

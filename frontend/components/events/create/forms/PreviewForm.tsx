@@ -17,10 +17,10 @@ type PreviewFormProps = BasicData & {
 
 export const PreviewForm = ({ form, user }: PreviewFormProps) => {
   const dateString = form.startDate + " " + form.startTime;
-  var [datePart, timePart] = dateString.split(" ");
-  var [year, month, day] = datePart.split("-");
-  var [hours, minutes] = timePart.split(":");
-  var myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+  const [datePart, timePart] = dateString.split(" ");
+  const [year, month, day] = datePart.split("-");
+  const [hours, minutes] = timePart.split(":");
+  const myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
 
   return (
     <div className="lg:grid lg:grid-cols-3 mt-20 space-y-6">

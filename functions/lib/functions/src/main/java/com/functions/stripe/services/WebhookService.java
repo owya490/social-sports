@@ -942,7 +942,6 @@ public class WebhookService {
      * @param checkoutSession The full checkout session
      * @param fullName The customer's full name
      * @param phoneNumber The customer's phone number
-     * @param completeFulfilmentSession Whether to complete the fulfilment session
      * @param fulfilmentSessionId The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
      * @param paymentIntentId The Stripe payment intent ID
@@ -958,7 +957,6 @@ public class WebhookService {
             Session checkoutSession,
             String fullName,
             String phoneNumber,
-            boolean completeFulfilmentSession,
             String fulfilmentSessionId,
             String endFulfilmentEntityId,
             String paymentIntentId,
@@ -1012,27 +1010,21 @@ public class WebhookService {
                 return true;
             }
             
-            // Complete fulfilment session if requested
-            // TODO: now that fulfilment session is the default behaviour of checkout, clean up
-            // should be enabled by default, and thus we don't need the completeFulfilmentSession
-            // check anymore.
-            if (completeFulfilmentSession && fulfilmentSessionId != null && endFulfilmentEntityId != null) {
-                // Keep fulfilment completion out of the checkout transaction. It opens its own
-                // Firestore transaction and touches additional workflow state, so coupling it to
-                // the payment write path would increase contention and could roll back the critical
-                // order/ticket persistence after Stripe has already told us the checkout succeeded.
-                // TODO: look into how we can robustly not have hanging fulfilment sessions when the initial webhook
-                // payment process has gone through.
-                boolean fulfilmentCompleted = retryBooleanOperation(
-                        "complete fulfilment session",
-                        MAX_FULFILMENT_RETRIES,
-                        FULFILMENT_RETRY_DELAY_MS,
-                        false,
-                        () -> FulfilmentService.completeFulfilmentSession(fulfilmentSessionId, endFulfilmentEntityId));
-                if (!fulfilmentCompleted) {
-                    logger.warn("Was unable to complete fulfilment session {} after {} attempts",
-                            fulfilmentSessionId, MAX_FULFILMENT_RETRIES);
-                }
+            // Keep fulfilment completion out of the checkout transaction. It opens its own
+            // Firestore transaction and touches additional workflow state, so coupling it to
+            // the payment write path would increase contention and could roll back the critical
+            // order/ticket persistence after Stripe has already told us the checkout succeeded.
+            // TODO: look into how we can robustly not have hanging fulfilment sessions when the initial webhook
+            // payment process has gone through.
+            boolean fulfilmentCompleted = retryBooleanOperation(
+                    "complete fulfilment session",
+                    MAX_FULFILMENT_RETRIES,
+                    FULFILMENT_RETRY_DELAY_MS,
+                    false,
+                    () -> FulfilmentService.completeFulfilmentSession(fulfilmentSessionId, endFulfilmentEntityId));
+            if (!fulfilmentCompleted) {
+                logger.warn("Was unable to complete fulfilment session {} after {} attempts",
+                        fulfilmentSessionId, MAX_FULFILMENT_RETRIES);
             }
             
             if (shouldSendPurchaseEmailAfterCheckout(captureMethod)) {

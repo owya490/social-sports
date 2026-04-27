@@ -25,17 +25,14 @@ import {
 import { HomeIcon } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 /**
  * Routing page for fulfilment session entities.
  */
-const FulfilmentSessionEntityPage = ({
-  params,
-}: {
-  params: { fulfilmentSessionId: FulfilmentSessionId; fulfilmentEntityId: FulfilmentEntityId };
-}) => {
+const FulfilmentSessionEntityPage = () => {
+  const params = useParams<{ fulfilmentSessionId: FulfilmentSessionId; fulfilmentEntityId: FulfilmentEntityId }>();
   const fulfilmentSessionEntityPageLogger = new Logger("fulfilmentSessionEntityPageLogger");
   const router = useRouter();
   const [loading, setLoading] = useState(true);

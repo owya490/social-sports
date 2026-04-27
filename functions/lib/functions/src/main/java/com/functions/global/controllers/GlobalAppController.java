@@ -136,12 +136,7 @@ public class GlobalAppController implements HttpFunction {
     }
 
     static boolean shouldRouteToStripeWebhook(HttpRequest request) {
-        return shouldRouteToStripeWebhook(request, StripeConfig.JAVA_STRIPE_WEBHOOK_ENABLED);
-    }
-
-    static boolean shouldRouteToStripeWebhook(HttpRequest request, boolean webhookEnabled) {
-        return webhookEnabled
-                && "POST".equalsIgnoreCase(request.getMethod())
+        return "POST".equalsIgnoreCase(request.getMethod())
                 && request.getFirstHeader("Stripe-Signature")
                         .map(signature -> !signature.trim().isEmpty())
                         .orElse(false);
