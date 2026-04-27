@@ -46,7 +46,7 @@ export default function EventCollectionCard({
       ></div>
       <div className="p-4">
         <h2 className="text-lg font-semibold text-core-text">{collection.name}</h2>
-        <UserInlineDisplay organiser={organiser} />
+        <UserInlineDisplay organiser={organiser} isLinkEnabled={!collection.eventCollectionId} />
         <p className="text-gray-600 text-xs font-light mt-1 line-clamp-2">{collection.description}</p>
         <div className="flex items-center justify-between mt-3">
           <p className="text-xs font-light text-gray-500">

@@ -10,8 +10,8 @@ import com.functions.utils.environment.EnvironmentUtils;
 public class UrlUtils {
     private static final Logger logger = LoggerFactory.getLogger(UrlUtils.class);
 
-    // NOTE: this url MUST contain the substring of the one in webhooks.py, otherwise, we risk fulfilment sessions
-    // not being correctly processed by stripe webhook.
+    // NOTE: this url MUST continue to match the domain checks in the Java Stripe webhook handler,
+    // otherwise fulfilment sessions may not be processed.
     public static final String SPORTSHUB_URL = "https://www.sportshub.net.au";
 
     public static Optional<String> getUrlWithCurrentEnvironment(String url) {

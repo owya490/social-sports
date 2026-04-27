@@ -35,7 +35,7 @@ import {
 } from "@/services/src/datetimeUtils";
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
 import { getActiveFormsForUser, getForm } from "@/services/src/forms/formsServices";
-import { getLocationCoordinates, initializeAutocomplete, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
+import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRef, useState } from "react";
@@ -76,8 +76,6 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
   updateData: (id: T, data: Partial<EventData>) => Promise<void>;
   isRecurrenceTemplate: boolean;
 }) => {
-  loadGoogleMapsScript();
-
   const { user } = useUser();
   const router = useRouter();
   const [forms, setForms] = useState<Form[]>([
@@ -161,7 +159,7 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
 
-  const scriptLoadResult = loadGoogleMapsScript();
+  const scriptLoadResult = useGoogleMapsScript();
   const isLoaded = scriptLoadResult ? scriptLoadResult.isLoaded : false;
   const loadError = scriptLoadResult ? scriptLoadResult.loadError : undefined;
 
@@ -390,7 +388,7 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
     }
 
     setUpdateLoading(true);
-    var data = {
+    let data = {
       ...handleDateTimeUpdate(),
       ...handleRegistrationDeadlineUpdate(),
       ...(await handleLocationUpdate()),

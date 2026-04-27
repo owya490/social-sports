@@ -13,13 +13,17 @@ function toEventId(value: string): EventId {
   return value as EventId;
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const eventId = toEventId(params.id);
+type EventPageParams = Promise<{ id: string }>;
+
+export async function generateMetadata({ params }: { params: EventPageParams }): Promise<Metadata> {
+  const { id } = await params;
+  const eventId = toEventId(id);
   const event = await getEventById(eventId, true, false);
 
   return generateEventPageMetadata(event);
 }
 
-export default function Page({ params }: { params: { id: string } }) {
-  return <EventPage eventId={toEventId(params.id)} />;
+export default async function Page({ params }: { params: EventPageParams }) {
+  const { id } = await params;
+  return <EventPage eventId={toEventId(id)} />;
 }

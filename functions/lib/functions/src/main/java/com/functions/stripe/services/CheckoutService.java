@@ -13,6 +13,7 @@ import com.functions.events.repositories.EventsRepository;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.config.StripeConfig;
+import com.functions.stripe.config.StripeCustomFieldKeys;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
@@ -253,13 +254,12 @@ public class CheckoutService {
                         .build())
                 .putMetadata("eventId", eventData.getEventId())
                 .putMetadata("isPrivate", request.isPrivate().toString())
-                .putMetadata("completeFulfilmentSession", request.completeFulfilmentSession().toString())
                 .putMetadata("fulfilmentSessionId", 
                         request.fulfilmentSessionId() != null ? request.fulfilmentSessionId() : "")
                 .putMetadata("endFulfilmentEntityId", 
                         request.endFulfilmentEntityId() != null ? request.endFulfilmentEntityId() : "")
                 .addCustomField(SessionCreateParams.CustomField.builder()
-                        .setKey("attendeeFullName")
+                        .setKey(StripeCustomFieldKeys.ATTENDEE_FULL_NAME)
                         .setLabel(SessionCreateParams.CustomField.Label.builder()
                                 .setType(SessionCreateParams.CustomField.Label.Type.CUSTOM)
                                 .setCustom("Full name for booking")
@@ -267,7 +267,7 @@ public class CheckoutService {
                         .setType(SessionCreateParams.CustomField.Type.TEXT)
                         .build())
                 .addCustomField(SessionCreateParams.CustomField.builder()
-                        .setKey("attendeePhone")
+                        .setKey(StripeCustomFieldKeys.ATTENDEE_PHONE)
                         .setLabel(SessionCreateParams.CustomField.Label.builder()
                                 .setType(SessionCreateParams.CustomField.Label.Type.CUSTOM)
                                 .setCustom("Phone number")
