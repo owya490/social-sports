@@ -3,27 +3,52 @@ import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
 import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
 import { Environment, getEnvironment } from "@/utilities/environment";
+import { auth } from "../firebase";
 import { GLOBAL_APP_CONTROLLER_URL } from "./functionsConstants";
 
 const functionsUtilsLogger = new Logger("functionsUtilsLogger");
+
+export type GlobalFunctionAuthOptions = {
+  firebaseAuth?: boolean;
+  sessionSecret?: string;
+};
 
 export function getGlobalAppControllerUrl(): string {
   const env = getEnvironment();
   return GLOBAL_APP_CONTROLLER_URL[`${env || Environment.DEVELOPMENT}`];
 }
 
-export async function executeGlobalAppControllerFunction<S, T>(endpointType: EndpointType, data: S): Promise<T> {
+export async function executeGlobalAppControllerFunction<S, T>(
+  endpointType: EndpointType,
+  data: S,
+  authOptions?: GlobalFunctionAuthOptions
+): Promise<T> {
   const request: UnifiedRequest<S> = {
     endpointType: endpointType,
     data: data,
   };
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  if (authOptions?.firebaseAuth) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("A signed-in user is required for this request");
+    }
+    headers.Authorization = `Bearer ${await currentUser.getIdToken()}`;
+  }
+
+  if (authOptions?.sessionSecret) {
+    headers["X-Session-Secret"] = authOptions.sessionSecret;
+  }
+
   const rawResponse = await fetch(getGlobalAppControllerUrl(), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers,
+    credentials: "include",
     body: JSON.stringify(request),
   });
 

@@ -34,6 +34,8 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
+import com.functions.global.exceptions.AuthenticationException;
+import com.functions.global.models.AuthContext;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
 
@@ -111,7 +113,24 @@ public class FulfilmentService {
                 throw new Exception("Invalid fulfilment session type: " + fulfilmentSessionType);
         }
 
+        fulfilmentSession.setSessionSecret(UUID.randomUUID().toString());
         return createFulfilmentSession(fulfilmentSessionId, fulfilmentSession);
+    }
+
+    public static void requireSessionAccess(String fulfilmentSessionId, AuthContext authContext) {
+        FulfilmentSession fulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId)
+                .orElseThrow(() -> new AuthenticationException("Fulfilment session not found"));
+        String expectedSecret = fulfilmentSession.getSessionSecret();
+        if (expectedSecret == null || expectedSecret.isBlank()) {
+            throw new AuthenticationException("Fulfilment session is missing a session secret");
+        }
+        if (!expectedSecret.equals(authContext.requireSessionSecret())) {
+            throw new AuthenticationException("Invalid fulfilment session secret");
+        }
+    }
+
+    public static Optional<FulfilmentSession> getFulfilmentSessionById(String fulfilmentSessionId) {
+        return getFulfilmentSessionById(fulfilmentSessionId, Optional.empty());
     }
 
     public static String getEndFulfilmentEntityId(String eventId,

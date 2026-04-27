@@ -63,6 +63,7 @@ export type InitCheckoutFulfilmentSessionRequest = {
  */
 export type InitCheckoutFulfilmentSessionResponse = {
   fulfilmentSessionId: FulfilmentSessionId;
+  fulfilmentSessionSecret: string;
 };
 
 /**

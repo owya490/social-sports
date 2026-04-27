@@ -11,6 +11,7 @@ import com.functions.events.models.requests.GetSyrioEventsRequest;
 import com.functions.events.models.responses.GetSyrioEventsResponse;
 import com.functions.events.services.EventsService;
 import com.functions.global.models.Handler;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 
@@ -31,7 +32,7 @@ public class GetSyrioEventsHandler implements Handler<GetSyrioEventsRequest, Get
     }
 
     @Override
-    public GetSyrioEventsResponse handle(GetSyrioEventsRequest request) {
+    public GetSyrioEventsResponse handle(GetSyrioEventsRequest request, AuthContext authContext) {
         logger.info("Handling get Syrio events request");
 
         try {

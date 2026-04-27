@@ -11,6 +11,8 @@ import {
 } from "../fulfilmentConstants";
 
 const fulfilmentUtilsLogger = new Logger("fulfilmentUtilsLogger");
+const FULFILMENT_SESSION_SECRET_STORAGE_PREFIX = "fulfilmentSessionSecret#";
+const FULFILMENT_SESSION_SECRET_COOKIE = "fulfilmentSessionSecret";
 
 export function getDeleteFulfilmentSessionUrl(): string {
   const env = getEnvironment();
@@ -79,6 +81,7 @@ export function purgeExpiredFulfilmentSessions(): void {
  */
 export function storeFulfilmentSessionId(
   fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentSessionSecret: string,
   eventId: EventId,
   numTickets: number
 ): void {
@@ -91,6 +94,8 @@ export function storeFulfilmentSessionId(
 
   localStorage.setItem(sessionIdKey, fulfilmentSessionId);
   localStorage.setItem(timestampKey, now.toUTCString());
+  localStorage.setItem(getFulfilmentSessionSecretKey(fulfilmentSessionId), fulfilmentSessionSecret);
+  setFulfilmentSessionSecretCookie(fulfilmentSessionSecret);
   fulfilmentUtilsLogger.info(
     `Stored fulfilment session ID: ${fulfilmentSessionId} for eventId: ${eventId}, numTickets: ${numTickets}`
   );
@@ -154,8 +159,31 @@ export function getStoredFulfilmentSessionId(eventId: EventId, numTickets: numbe
 export function clearStoredFulfilmentSessionId(eventId: EventId, numTickets: number): void {
   const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets);
   const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets);
+  const storedSessionId = localStorage.getItem(sessionIdKey);
 
   localStorage.removeItem(sessionIdKey);
   localStorage.removeItem(timestampKey);
+  if (storedSessionId) {
+    localStorage.removeItem(getFulfilmentSessionSecretKey(storedSessionId as FulfilmentSessionId));
+  }
+  clearFulfilmentSessionSecretCookie();
   fulfilmentUtilsLogger.info(`Cleared stored fulfilment session for eventId: ${eventId}, numTickets: ${numTickets}`);
+}
+
+export function getStoredFulfilmentSessionSecret(
+  fulfilmentSessionId: FulfilmentSessionId
+): string | null {
+  return localStorage.getItem(getFulfilmentSessionSecretKey(fulfilmentSessionId));
+}
+
+function getFulfilmentSessionSecretKey(fulfilmentSessionId: FulfilmentSessionId): string {
+  return `${FULFILMENT_SESSION_SECRET_STORAGE_PREFIX}${fulfilmentSessionId}`;
+}
+
+function setFulfilmentSessionSecretCookie(sessionSecret: string): void {
+  document.cookie = `${FULFILMENT_SESSION_SECRET_COOKIE}=${encodeURIComponent(sessionSecret)}; path=/; SameSite=Lax; Secure`;
+}
+
+function clearFulfilmentSessionSecretCookie(): void {
+  document.cookie = `${FULFILMENT_SESSION_SECRET_COOKIE}=; path=/; Max-Age=0; SameSite=Lax; Secure`;
 }
