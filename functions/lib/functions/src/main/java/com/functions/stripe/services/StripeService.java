@@ -159,13 +159,14 @@ public class StripeService {
     }
 
     /**
-     * Expires an open Stripe Checkout Session for a connected account.
+     * Expires a Stripe Checkout Session for a connected account.
      * Stripe's expire endpoint is synchronous and returns the updated Checkout Session.
+     * Only sessions in {@code open} status are expireable; if the session is already
+     * {@code expired}, this is treated as success.
      *
-     * @return true when Stripe returns the Checkout Session in {@code expired}
-     *         status or the session was already expired, false when it was
-     *         completed, otherwise not open, or Stripe returns an unexpected status.
-     * @throws StripeException for non-benign Stripe failures
+     * @return true when the session is in {@code expired} status (already expired or
+     *         expired by this call), false when Stripe returns an unexpected status.
+     * @throws StripeException if retrieval or expiry fails
      */
     public static boolean expireCheckoutSession(String checkoutSessionId, String stripeAccountId)
             throws StripeException {
@@ -173,29 +174,21 @@ public class StripeService {
                 .setStripeAccount(stripeAccountId)
                 .build();
 
-        try {
-            Session stripeSession = Session.retrieve(checkoutSessionId, requestOptions);
-            Session expiredSession = stripeSession.expire(requestOptions);
-            if ("expired".equals(expiredSession.getStatus())) {
-                logger.info("Expired Stripe checkout session {}", checkoutSessionId);
-                return true;
-            }
-            logger.warn("Stripe checkout session {} expire call returned status: {}",
-                    checkoutSessionId, expiredSession.getStatus());
-            return false;
-        } catch (StripeException e) {
-            if (isAlreadyExpiredCheckoutSessionExpireFailure(e)) {
-                logger.info("Stripe checkout session {} was already expired: {}",
-                        checkoutSessionId, e.getMessage());
-                return true;
-            }
-            if (isBenignCheckoutSessionExpireFailure(e)) {
-                logger.info("Stripe checkout session {} was not expired via API (benign): {}",
-                        checkoutSessionId, e.getMessage());
-                return false;
-            }
-            throw e;
+        Session stripeSession = Session.retrieve(checkoutSessionId, requestOptions);
+        if (isSessionExpired(stripeSession)) {
+            logger.info("Stripe checkout session {} is already expired", checkoutSessionId);
+            return true;
         }
+
+        Session expiredSession = stripeSession.expire(requestOptions);
+        if (isSessionExpired(expiredSession)) {
+            logger.info("Expired Stripe checkout session {}", checkoutSessionId);
+            return true;
+        }
+
+        logger.error("Stripe checkout session {} expire call failed with status: {}",
+                checkoutSessionId, expiredSession.getStatus());
+        return false;
     }
 
     /**
@@ -266,32 +259,7 @@ public class StripeService {
         return canceledPaymentIntent;
     }
 
-    private static boolean isBenignCheckoutSessionExpireFailure(StripeException e) {
-        String code = e.getCode();
-        if (code != null) {
-            if ("checkout_session_not_open".equals(code)) {
-                return true;
-            }
-        }
-        String msg = e.getMessage();
-        if (msg == null) {
-            return false;
-        }
-        String lower = msg.toLowerCase();
-        return lower.contains("cannot be expired")
-                || lower.contains("not in `open` status")
-                || lower.contains("not in open status");
-    }
-
-    private static boolean isAlreadyExpiredCheckoutSessionExpireFailure(StripeException e) {
-        String code = e.getCode();
-        if ("checkout_session_already_expired".equals(code)) {
-            return true;
-        }
-        String msg = e.getMessage();
-        if (msg == null) {
-            return false;
-        }
-        return msg.toLowerCase().contains("already expired");
+    private static boolean isSessionExpired(Session session) {
+        return "expired".equals(session.getStatus());
     }
 }
