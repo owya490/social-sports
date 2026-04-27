@@ -44,9 +44,3 @@ jobs:
   #       uses: "google-github-actions/auth@v2"
   #       with:
   #         credentials_json: "${{ env.FIREBASE_SERIVCE_ACCOUNT_JSON }}"
-
-  #     - id: "deploy"
-  #       uses: "google-github-actions/deploy-cloud-functions@v2"
-  #       with:
-  #         name: "create_stripe_standard_account"
-  #         runtime: "python310"
