@@ -92,4 +92,4 @@ gcloud functions deploy $FUNCTION_NAME \
     --project $PROJECT_NAME \
     --set-env-vars PROJECT_NAME=$PROJECT_NAME \
     --memory 512 \
-    "${EXTRA_DEPLOY_ARGS[@]}" # uses 266 MiB of memory, which is greater than the the lower tier of 256
+    "${EXTRA_DEPLOY_ARGS[@]}" # uses 512 MiB of memory, which is greater than the the lower tier of 256
