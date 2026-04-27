@@ -4,18 +4,12 @@ import { Logger } from "@/observability/logger";
 import { Environment, getEnvironment } from "@/utilities/environment";
 import {
   COMPLETE_FULFILMENT_SESSION_URL,
-  DELETE_FULFILMENT_SESSION_URL,
   FULFILMENT_SESSION_EXPIRY_MILLIS,
   getFulfilmentSessionExpiryTimestampKey,
   getFulfilmentSessionIdKey,
 } from "../fulfilmentConstants";
 
 const fulfilmentUtilsLogger = new Logger("fulfilmentUtilsLogger");
-
-export function getDeleteFulfilmentSessionUrl(): string {
-  const env = getEnvironment();
-  return DELETE_FULFILMENT_SESSION_URL[`${env || Environment.DEVELOPMENT}`];
-}
 
 export function getCompleteFulfilmentSessionUrl(): string {
   const env = getEnvironment();
