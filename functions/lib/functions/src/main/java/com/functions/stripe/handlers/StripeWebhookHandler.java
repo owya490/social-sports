@@ -281,9 +281,8 @@ public class StripeWebhookHandler {
             String paymentIntentId;
             String captureMethod;
             if (isFreeCheckoutSession(fullSession.getAmountTotal())) {
-                // Stripe no-cost checkout sessions can complete without a PaymentIntent.
-                // Keep the fulfilment path moving and let downstream logic treat the order
-                // as immediately approved without payment metadata.
+                // Stripe no-cost checkout sessions can complete without a PaymentIntent:
+                // https://docs.stripe.com/payments/checkout/no-cost-orders
                 logger.info("[Webhook-{}] Free checkout session detected for session {}. amountTotal={}. Skipping payment intent lookup.",
                         uuid, checkoutSessionId, fullSession.getAmountTotal());
                 paymentIntentId = null;
