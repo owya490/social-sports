@@ -13,7 +13,15 @@ import { EventDrilldownImagesPage } from "@/components/organiser/event/images/Ev
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import {
+  EmptyEventData,
+  EmptyEventMetadata,
+  EventData,
+  EventId,
+  EventMetadata,
+  MAX_TICKETS_PER_ORDER,
+  MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP,
+} from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
@@ -58,6 +66,7 @@ export default function EventPage() {
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventBookingApprovalEnabled, setEventBookingApprovalEnabled] = useState<boolean>(false);
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState<boolean>(false);
+  const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] = useState<number>(MAX_TICKETS_PER_ORDER);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
@@ -111,6 +120,14 @@ export default function EventPage() {
         setEventWaitlistEnabled(event.waitlistEnabled);
         setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
+        {
+          const maxAllowed = Math.max(
+            1,
+            Math.min(event.capacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)
+          );
+          const raw = event.maxTicketsPerTransaction ?? MAX_TICKETS_PER_ORDER;
+          setEventMaxTicketsPerTransaction(Math.min(maxAllowed, Math.max(1, raw)));
+        }
 
         const nextEventMetadata = await getEventsMetadataByEventId(eventId);
         if (!isActive) {
@@ -274,6 +291,9 @@ export default function EventPage() {
                 setBookingApprovalEnabled={setEventBookingApprovalEnabled}
                 showAttendeesOnEventPage={eventShowAttendeesOnEventPage}
                 setShowAttendeesOnEventPage={setEventShowAttendeesOnEventPage}
+                maxTicketsPerTransaction={eventMaxTicketsPerTransaction}
+                setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
+                eventCapacity={eventCapacity}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

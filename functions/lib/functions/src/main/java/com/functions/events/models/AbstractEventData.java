@@ -64,6 +64,8 @@ public abstract class AbstractEventData {
 	private Boolean waitlistEnabled = true; // Default to true
 	private Boolean bookingApprovalEnabled = false; // Optional field
 	private Boolean showAttendeesOnEventPage = false; // Optional field
+	@Nullable
+	private Integer maxTicketsPerTransaction = 10; // Max tickets per checkout; optional for legacy docs
 
 	@Data
 	public static class LocationLatLng {

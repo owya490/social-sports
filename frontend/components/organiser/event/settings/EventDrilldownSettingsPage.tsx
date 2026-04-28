@@ -1,4 +1,5 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
+import { MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP } from "@/interfaces/EventTypes";
 import { useUser } from "@/components/utility/UserContext";
 import { EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
@@ -9,9 +10,10 @@ import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/ev
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
+import { NumberInput } from "@mantine/core";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { LabelledSwitch } from "../../../elements/LabelledSwitch";
 import DeleteEventModal from "./DeleteEventModal";
 
@@ -37,6 +39,9 @@ interface EventDrilldownSettingsPageProps {
   setBookingApprovalEnabled: (event: boolean) => void;
   showAttendeesOnEventPage: boolean;
   setShowAttendeesOnEventPage: (event: boolean) => void;
+  maxTicketsPerTransaction: number;
+  setMaxTicketsPerTransaction: (n: number) => void;
+  eventCapacity: number;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -61,6 +66,9 @@ const EventDrilldownSettingsPage = ({
   setBookingApprovalEnabled,
   showAttendeesOnEventPage,
   setShowAttendeesOnEventPage,
+  maxTicketsPerTransaction,
+  setMaxTicketsPerTransaction,
+  eventCapacity,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
@@ -91,6 +99,17 @@ const EventDrilldownSettingsPage = ({
 
   const handleDeleteEvent = () => {
     setModalOpen(true);
+  };
+
+  const maxTicketsAllowed = useMemo(
+    () => Math.max(1, Math.min(eventCapacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)),
+    [eventCapacity]
+  );
+
+  const persistMaxTickets = (next: number) => {
+    const clamped = Math.max(1, Math.min(maxTicketsAllowed, Math.round(next)));
+    setMaxTicketsPerTransaction(clamped);
+    void updateEventById(eventId, { maxTicketsPerTransaction: clamped });
   };
 
   return (
@@ -189,6 +208,31 @@ const EventDrilldownSettingsPage = ({
           });
         }}
       />
+      <div className="flex w-full items-center gap-4">
+        <div>
+          <h3 className="font-bold">Max Tickets Per Transaction</h3>
+          <p className="text-core-text font-light text-sm">
+            Maximum number of tickets a customer can purchase in a single transaction (up to{" "}
+            {Math.min(eventCapacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)} for this event).
+          </p>
+        </div>
+        <NumberInput
+          className="ml-auto w-28 shrink-0"
+          min={1}
+          max={maxTicketsAllowed}
+          value={maxTicketsPerTransaction}
+          onChange={(val) => {
+            if (val === "" || val === undefined) {
+              return;
+            }
+            const n = typeof val === "number" ? val : Number(val);
+            if (!Number.isFinite(n)) {
+              return;
+            }
+            persistMaxTickets(n);
+          }}
+        />
+      </div>
       <BlackHighlightButton
         text="Delete Event"
         onClick={() => {

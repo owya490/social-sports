@@ -1,6 +1,6 @@
 "use client";
 
-import { EventId } from "@/interfaces/EventTypes";
+import { EventId, MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
   formatMobileDifferentDayDateTime,
@@ -15,7 +15,6 @@ import { Timestamp } from "firebase/firestore";
 import { useMemo, useState } from "react";
 import BookingButton from "../events/BookingButton";
 import ContactEventButton from "../events/ContactEventButton";
-import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
 import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 
@@ -34,25 +33,31 @@ interface MobileEventPaymentProps {
   eventLink: string;
   organiserId: UserId;
   waitlistEnabled: boolean;
+  maxTicketsPerTransaction?: number;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const { startDate, endDate, registrationEndDate, paused } = props;
 
+  const effectiveMax = Math.min(
+    props.maxTicketsPerTransaction ?? MAX_TICKETS_PER_ORDER,
+    MAX_TICKETS_PER_ORDER
+  );
+
   // Memoize to avoid re-running localStorage checks on every render
   const storedTicketCounts = useMemo(() => {
     const sessions: number[] = [];
-    for (let i = 1; i <= MAX_TICKETS_PER_ORDER; i++) {
+    for (let i = 1; i <= effectiveMax; i++) {
       const storedSession = getStoredFulfilmentSessionId(props.eventId, i);
       if (storedSession !== null) {
         sessions.push(i);
       }
     }
     return sessions;
-  }, [props.eventId]);
+  }, [props.eventId, effectiveMax]);
 
-  // Get ticket counts from vacancy (1 to min(vacancy, MAX_TICKETS_PER_ORDER))
-  const vacancyBasedCounts = Array.from({ length: Math.min(props.vacancy, MAX_TICKETS_PER_ORDER) }, (_, i) => i + 1);
+  // Get ticket counts from vacancy (1 to min(vacancy, effectiveMax))
+  const vacancyBasedCounts = Array.from({ length: Math.min(props.vacancy, effectiveMax) }, (_, i) => i + 1);
   // Merge with stored ticket counts and deduplicate
   const allCounts = [...new Set([...vacancyBasedCounts, ...storedTicketCounts])].sort((a, b) => a - b);
 
@@ -132,7 +137,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                       value={`${waitlistAttendeeCount}`}
                       onChange={handleWaitlistAttendeeCount}
                     >
-                      {Array.from({ length: MAX_TICKETS_PER_ORDER }, (_, i) => i + 1).map((count) => (
+                      {Array.from({ length: effectiveMax }, (_, i) => i + 1).map((count) => (
                         <Option key={`attendee-option-${count}`} value={`${count}`}>
                           {count} Attendee{count > 1 ? "s" : ""}
                         </Option>

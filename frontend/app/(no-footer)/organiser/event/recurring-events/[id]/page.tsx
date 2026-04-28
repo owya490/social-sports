@@ -8,7 +8,12 @@ import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring
 import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
 import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
 import { RecurringTemplateSettings } from "@/components/organiser/recurring-events/RecurringTemplateSettings";
-import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import {
+  EventId,
+  MAX_TICKETS_PER_ORDER,
+  MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP,
+  NewEventData,
+} from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
@@ -62,6 +67,7 @@ export default function RecurrenceTemplatePage() {
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventBookingApprovalEnabled, setEventBookingApprovalEnabled] = useState<boolean>(false);
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState<boolean>(false);
+  const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] = useState<number>(MAX_TICKETS_PER_ORDER);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
@@ -109,6 +115,14 @@ export default function RecurrenceTemplatePage() {
         setEventWaitlistEnabled(recurrenceTemplate.eventData.waitlistEnabled);
         setEventBookingApprovalEnabled(recurrenceTemplate.eventData.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(recurrenceTemplate.eventData.showAttendeesOnEventPage);
+        {
+          const maxAllowed = Math.max(
+            1,
+            Math.min(recurrenceTemplate.eventData.capacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)
+          );
+          const raw = recurrenceTemplate.eventData.maxTicketsPerTransaction ?? MAX_TICKETS_PER_ORDER;
+          setEventMaxTicketsPerTransaction(Math.min(maxAllowed, Math.max(1, raw)));
+        }
         const isRecurrenceEnded = calculateRecurrenceEnded(recurrenceTemplate);
         setRecurrenceEnded(isRecurrenceEnded);
         // Edge case, if the recurrence is ended, it should not be enabled
@@ -247,6 +261,9 @@ export default function RecurrenceTemplatePage() {
                   setBookingApprovalEnabled={setEventBookingApprovalEnabled}
                   showAttendeesOnEventPage={eventShowAttendeesOnEventPage}
                   setShowAttendeesOnEventPage={setEventShowAttendeesOnEventPage}
+                  maxTicketsPerTransaction={eventMaxTicketsPerTransaction}
+                  setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
+                  eventCapacity={eventCapacity}
                 />
               </>
             )}

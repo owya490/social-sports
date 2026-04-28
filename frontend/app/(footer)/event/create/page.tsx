@@ -60,6 +60,7 @@ export type FormData = {
   waitlistEnabled: boolean;
   bookingApprovalEnabled: boolean;
   showAttendeesOnEventPage: boolean;
+  maxTicketsPerTransaction: number;
 };
 
 const INITIAL_DATA: FormData = {
@@ -92,6 +93,7 @@ const INITIAL_DATA: FormData = {
   waitlistEnabled: true,
   bookingApprovalEnabled: false,
   showAttendeesOnEventPage: false,
+  maxTicketsPerTransaction: 10,
 };
 
 export default function CreateEvent() {
@@ -277,6 +279,7 @@ export default function CreateEvent() {
       bookingApprovalEnabled: formData.bookingApprovalEnabled,
       formId: formData.formId,
       showAttendeesOnEventPage: formData.showAttendeesOnEventPage,
+      maxTicketsPerTransaction: Math.min(10, formData.capacity, formData.maxTicketsPerTransaction),
     };
   }
 
