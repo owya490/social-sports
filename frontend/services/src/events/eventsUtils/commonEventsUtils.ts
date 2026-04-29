@@ -161,9 +161,7 @@ export function generateEventPageMetadata(event: EventData) {
       description: `${stripHtmlTags(event.description)}`,
       images: [
         {
-          url: event.image
-            ? `/api/og?src=${encodeURIComponent(event.image)}&title=${encodeURIComponent(event.name)}`
-            : `/api/og`,
+          url: event.image || "",
           width: 1200,
           height: 630,
           alt: "Event Image",
