@@ -239,6 +239,9 @@ jobs:
 
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}
+    # To avoid hitting concurrent cloud/firebase function deployment limits to GCP, we must have python firebase
+    # functions deploy sequentially after java cloud run functions. We started consistently erroring out after
+    # having >13 functions deploying in parallel across both Java and Python.
     needs: deploy-java-cloud-run-functions
     runs-on: ubuntu-latest
     strategy:
