@@ -4,6 +4,10 @@ import type { Metadata, Viewport } from "next";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -11,11 +15,6 @@ export const metadata: Metadata = {
   title: "SPORTSHUB | Find your next social sport session!",
   description:
     "Discover and book local sports events on SPORTSHUB. Find volleyball, badminton, pickleball and more recreational sports activities near you.",
-
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
 
   icons: {
     icon: [
