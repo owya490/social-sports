@@ -168,6 +168,37 @@ jobs:
           fi
           PIDS+=($!)  # Capture PID of last background process ($!)
 
+          # Deploy stripeWebhookEndpoint in background (with conditional prod flags)
+          echo "Starting deployment of stripeWebhookEndpoint..."
+          if [ "${{ matrix.env }}" == "prod" ]; then
+            (gcloud functions deploy stripeWebhookEndpoint \
+              --entry-point com.functions.stripe.controllers.StripeWebhookEndpoint \
+              --runtime java17 \
+              --trigger-http \
+              --allow-unauthenticated \
+              --region australia-southeast1 \
+              --project $PROJECT_ID \
+              --set-env-vars PROJECT_NAME=$PROJECT_ID \
+              --memory 512 \
+              --concurrency 80 \
+              --min-instances 1 \
+              --max-instances 5 \
+              --cpu 1 \
+              --quiet 2>&1 | sed 's/^/[stripeWebhookEndpoint] /') &
+          else
+            (gcloud functions deploy stripeWebhookEndpoint \
+              --entry-point com.functions.stripe.controllers.StripeWebhookEndpoint \
+              --runtime java17 \
+              --trigger-http \
+              --allow-unauthenticated \
+              --region australia-southeast1 \
+              --project $PROJECT_ID \
+              --set-env-vars PROJECT_NAME=$PROJECT_ID \
+              --memory 512 \
+              --quiet 2>&1 | sed 's/^/[stripeWebhookEndpoint] /') &
+          fi
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
           # Wait for all background processes to complete and check their exit codes
           echo ""
           echo "Waiting for all deployments to complete..."

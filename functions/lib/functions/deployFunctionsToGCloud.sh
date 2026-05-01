@@ -7,6 +7,7 @@
 # cleanupOldFulfilmentSessionsCron
 # completeFulfilmentSession
 # globalAppController
+# stripeWebhookEndpoint
 
 # Check if the function name is valid and it should be a list of function name and another list of endpoint class name
 
@@ -17,6 +18,7 @@ VALID_FUNCTIONS=(
     "cleanupOldFulfilmentSessionsCron"
     "completeFulfilmentSession"
     "globalAppController"
+    "stripeWebhookEndpoint"
 )
 
 VALID_ENDPOINTS=(
@@ -26,6 +28,7 @@ VALID_ENDPOINTS=(
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
+    "com.functions.stripe.controllers.StripeWebhookEndpoint"
 )
 
 # Check for exactly 2 arguments
@@ -72,7 +75,7 @@ else
 fi
 
 EXTRA_DEPLOY_ARGS=()
-if [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "globalAppController" ]; then
+if [ "$ENVIRONMENT" == "prod" ] && [[ "$FUNCTION_NAME" == "globalAppController" || "$FUNCTION_NAME" == "stripeWebhookEndpoint" ]]; then
     EXTRA_DEPLOY_ARGS=(
         --concurrency 80
         --min-instances 1
