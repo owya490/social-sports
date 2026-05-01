@@ -29,10 +29,7 @@ export async function executeGlobalAppControllerFunction<S, T>(endpointType: End
 
   if (rawResponse.status === 404) {
     const errorResponse = (await rawResponse.json()) as ErrorResponse;
-    functionsUtilsLogger.error(
-      `executeGlobalAppControllerFunction: Requested object not found. status=404 message=${errorResponse.errorMessage}`
-    );
-    throw new NotFoundError("Fulfilment object not found");
+    throw new NotFoundError(errorResponse.errorMessage || "Requested object not found");
   }
 
   if (!rawResponse.ok) {

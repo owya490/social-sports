@@ -29,7 +29,8 @@ import com.stripe.net.Webhook;
 
 /**
  * Handler for processing Stripe webhook events.
- * This is called from GlobalAppController when a Stripe webhook is detected.
+ * This is shared by the dedicated Stripe webhook endpoint and the legacy
+ * GlobalAppController webhook route.
  */
 public class StripeWebhookHandler {
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookHandler.class);
