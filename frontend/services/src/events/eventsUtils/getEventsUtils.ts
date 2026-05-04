@@ -153,10 +153,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       waitlistEnabled: event.waitlistEnabled,
       bookingApprovalEnabled: event.bookingApprovalEnabled,
       showAttendeesOnEventPage: event.showAttendeesOnEventPage,
-      maxTicketsPerTransaction: clampMaxTicketsPerTransaction(
-        event.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER,
-        event.capacity
-      ),
+      maxTicketsPerTransaction: event.maxTicketsPerTransaction
     });
   });
   return eventsDataFinal;

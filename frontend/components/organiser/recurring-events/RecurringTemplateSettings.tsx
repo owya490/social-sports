@@ -230,12 +230,13 @@ export const RecurringTemplateSettings = ({
             ))}
           </Select>
         </div>
+        {loading && (
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Spinner className="h-4 w-4" />
+            <span>Saving...</span>
+          </div>
+        )}
       </div>
-      {loading && (
-        <div className="bg-core-hover opacity-50 top-0 absolute h-full w-full flex justify-center items-center">
-          <Spinner className="w-8 h-8 opacity-100" />
-        </div>
-      )}
     </div>
   );
 };
