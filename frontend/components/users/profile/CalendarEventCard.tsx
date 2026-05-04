@@ -1,8 +1,9 @@
 "use client";
 import BookingButton from "@/components/events/BookingButton";
 import ContactEventButton from "@/components/events/ContactEventButton";
-import { EventData, MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
+import { EventData } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import { getBuyerTicketCountOptions } from "@/services/src/events/eventsUtils/ticketLimits";
 import { displayPrice } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
@@ -20,11 +21,6 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
   const [ticketCount, setTicketCount] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const effectiveMax = Math.min(
-    event.maxTicketsPerTransaction ?? MAX_TICKETS_PER_ORDER,
-    MAX_TICKETS_PER_ORDER
-  );
-
   const handleTicketCountChange = (value: string | undefined) => {
     if (value) {
       setTicketCount(parseInt(value));
@@ -35,7 +31,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
     <div className="flex gap-3 items-center">
       <div className="flex-shrink-0 md:min-w-64">
         <Select value={ticketCount.toString()} onChange={handleTicketCountChange} label="Tickets" disabled={loading}>
-          {Array.from({ length: Math.min(event.vacancy, effectiveMax) }, (_, i) => i + 1).map((num) => (
+          {getBuyerTicketCountOptions(event.vacancy, event.maxTicketsPerTransaction).map((num) => (
             <Option key={num} value={num.toString()}>
               {num}
             </Option>

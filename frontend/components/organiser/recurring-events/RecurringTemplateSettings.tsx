@@ -1,13 +1,16 @@
 "use client";
 import { LabelledSwitch } from "@/components/elements/LabelledSwitch";
-import { MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP } from "@/interfaces/EventTypes";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
-import { NumberInput } from "@mantine/core";
-import { Spinner } from "@material-tailwind/react";
-import { useMemo, useState } from "react";
+import {
+  clampMaxTicketsPerTransaction,
+  getOrganiserMaxTicketsPerTransactionLimit,
+  getTicketCountOptions,
+} from "@/services/src/events/eventsUtils/ticketLimits";
+import { Option, Select, Spinner } from "@material-tailwind/react";
+import { useState } from "react";
 
 interface RecurringTemplateSettingsProps {
   recurrenceTemplateId: RecurrenceTemplateId;
@@ -52,13 +55,10 @@ export const RecurringTemplateSettings = ({
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
 
-  const maxTicketsAllowed = useMemo(
-    () => Math.max(1, Math.min(eventCapacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)),
-    [eventCapacity]
-  );
+  const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
 
   const persistMaxTickets = async (next: number) => {
-    const clamped = Math.max(1, Math.min(maxTicketsAllowed, Math.round(next)));
+    const clamped = clampMaxTicketsPerTransaction(next, eventCapacity);
     setLoading(true);
     const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
       maxTicketsPerTransaction: clamped,
@@ -204,25 +204,31 @@ export const RecurringTemplateSettings = ({
             <h3 className="font-bold">Max Tickets Per Transaction</h3>
             <p className="text-core-text font-light text-sm">
               Maximum number of tickets a customer can purchase in a single transaction (up to{" "}
-              {Math.min(eventCapacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)} for this template).
+              {maxTicketsAllowed} for this template).
             </p>
           </div>
-          <NumberInput
-            className="ml-auto w-28 shrink-0"
-            min={1}
-            max={maxTicketsAllowed}
-            value={maxTicketsPerTransaction}
-            onChange={(val) => {
-              if (val === "" || val === undefined) {
+          <Select
+            className="text-black"
+            containerProps={{ className: "ml-auto w-28 shrink-0" }}
+            label="Tickets"
+            value={`${maxTicketsPerTransaction}`}
+            onChange={(value) => {
+              if (!value) {
                 return;
               }
-              const n = typeof val === "number" ? val : Number(val);
+              const n = Number(value);
               if (!Number.isFinite(n)) {
                 return;
               }
               void persistMaxTickets(n);
             }}
-          />
+          >
+            {getTicketCountOptions(maxTicketsAllowed).map((count) => (
+              <Option key={`max-tickets-option-${count}`} value={`${count}`}>
+                {count}
+              </Option>
+            ))}
+          </Select>
         </div>
       </div>
       {loading && (

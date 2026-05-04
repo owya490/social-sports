@@ -6,7 +6,7 @@ import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
 
-export { MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
+export { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 
 interface EventDetailsProps {
   eventData: EventData;

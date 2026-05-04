@@ -1,5 +1,4 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
-import { MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP } from "@/interfaces/EventTypes";
 import { useUser } from "@/components/utility/UserContext";
 import { EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
@@ -8,12 +7,17 @@ import { Logger } from "@/observability/logger";
 import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import {
+  clampMaxTicketsPerTransaction,
+  getOrganiserMaxTicketsPerTransactionLimit,
+  getTicketCountOptions,
+} from "@/services/src/events/eventsUtils/ticketLimits";
 import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
-import { NumberInput } from "@mantine/core";
+import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { LabelledSwitch } from "../../../elements/LabelledSwitch";
 import DeleteEventModal from "./DeleteEventModal";
 
@@ -101,13 +105,10 @@ const EventDrilldownSettingsPage = ({
     setModalOpen(true);
   };
 
-  const maxTicketsAllowed = useMemo(
-    () => Math.max(1, Math.min(eventCapacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)),
-    [eventCapacity]
-  );
+  const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
 
   const persistMaxTickets = (next: number) => {
-    const clamped = Math.max(1, Math.min(maxTicketsAllowed, Math.round(next)));
+    const clamped = clampMaxTicketsPerTransaction(next, eventCapacity);
     setMaxTicketsPerTransaction(clamped);
     void updateEventById(eventId, { maxTicketsPerTransaction: clamped });
   };
@@ -213,25 +214,31 @@ const EventDrilldownSettingsPage = ({
           <h3 className="font-bold">Max Tickets Per Transaction</h3>
           <p className="text-core-text font-light text-sm">
             Maximum number of tickets a customer can purchase in a single transaction (up to{" "}
-            {Math.min(eventCapacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)} for this event).
+            {maxTicketsAllowed} for this event).
           </p>
         </div>
-        <NumberInput
-          className="ml-auto w-28 shrink-0"
-          min={1}
-          max={maxTicketsAllowed}
-          value={maxTicketsPerTransaction}
-          onChange={(val) => {
-            if (val === "" || val === undefined) {
+        <Select
+          className="text-black"
+          containerProps={{ className: "ml-auto w-28 shrink-0" }}
+          label="Tickets"
+          value={`${maxTicketsPerTransaction}`}
+          onChange={(value) => {
+            if (!value) {
               return;
             }
-            const n = typeof val === "number" ? val : Number(val);
+            const n = Number(value);
             if (!Number.isFinite(n)) {
               return;
             }
             persistMaxTickets(n);
           }}
-        />
+        >
+          {getTicketCountOptions(maxTicketsAllowed).map((count) => (
+            <Option key={`max-tickets-option-${count}`} value={`${count}`}>
+              {count}
+            </Option>
+          ))}
+        </Select>
       </div>
       <BlackHighlightButton
         text="Delete Event"

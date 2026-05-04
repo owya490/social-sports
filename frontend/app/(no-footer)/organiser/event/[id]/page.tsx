@@ -19,8 +19,7 @@ import {
   EventData,
   EventId,
   EventMetadata,
-  MAX_TICKETS_PER_ORDER,
-  MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP,
+  DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
@@ -29,6 +28,7 @@ import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -71,7 +71,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventBookingApprovalEnabled, setEventBookingApprovalEnabled] = useState<boolean>(false);
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState<boolean>(false);
-  const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] = useState<number>(MAX_TICKETS_PER_ORDER);
+  const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] = useState<number>(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
@@ -125,14 +125,9 @@ export default function EventPage({ params }: EventPageProps) {
         setEventWaitlistEnabled(event.waitlistEnabled);
         setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
-        {
-          const maxAllowed = Math.max(
-            1,
-            Math.min(event.capacity, MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP)
-          );
-          const raw = event.maxTicketsPerTransaction ?? MAX_TICKETS_PER_ORDER;
-          setEventMaxTicketsPerTransaction(Math.min(maxAllowed, Math.max(1, raw)));
-        }
+        setEventMaxTicketsPerTransaction(
+          clampMaxTicketsPerTransaction(event.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER, event.capacity)
+        );
 
         const nextEventMetadata = await getEventsMetadataByEventId(eventId);
         if (!isActive) {

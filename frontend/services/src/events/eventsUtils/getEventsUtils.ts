@@ -3,7 +3,7 @@ import {
   EventData,
   EventDataWithoutOrganiser,
   EventId,
-  MAX_TICKETS_PER_ORDER,
+  DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import {
@@ -19,6 +19,7 @@ import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
 import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
+import { clampMaxTicketsPerTransaction } from "./ticketLimits";
 
 // const router = useRouter();
 
@@ -152,7 +153,10 @@ function getEventsDataFromLocalStorage(): EventData[] {
       waitlistEnabled: event.waitlistEnabled,
       bookingApprovalEnabled: event.bookingApprovalEnabled,
       showAttendeesOnEventPage: event.showAttendeesOnEventPage,
-      maxTicketsPerTransaction: event.maxTicketsPerTransaction ?? MAX_TICKETS_PER_ORDER,
+      maxTicketsPerTransaction: clampMaxTicketsPerTransaction(
+        event.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER,
+        event.capacity
+      ),
     });
   });
   return eventsDataFinal;

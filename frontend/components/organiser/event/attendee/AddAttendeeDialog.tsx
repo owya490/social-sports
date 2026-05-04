@@ -3,6 +3,7 @@ import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfac
 import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { addAttendee } from "@/services/src/attendee/attendeeService";
+import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert, Input } from "@material-tailwind/react";
@@ -223,7 +224,7 @@ const InviteAttendeeDialog = ({
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
                             if (!isNaN(value)) {
-                              const capped = Math.min(Math.max(value, 1), eventData.vacancy);
+                              const capped = clampTicketQuantity(value, 1, eventData.vacancy);
                               setNumTickets(capped.toString());
                             } else {
                               setNumTickets("1");
