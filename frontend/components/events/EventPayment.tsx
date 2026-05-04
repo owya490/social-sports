@@ -2,6 +2,11 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import {
+  getBuyerMaxTicketsPerTransaction,
+  getBuyerTicketCountOptionsWithStoredSessions,
+  getTicketCountOptions,
+} from "@/services/src/events/eventsUtils/ticketLimits";
 import { getStoredFulfilmentSessionId } from "@/services/src/fulfilment/fulfilmentUtils/fulfilmentUtils";
 import { displayPrice } from "@/utilities/priceUtils";
 import {
@@ -13,10 +18,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import BookingButton from "./BookingButton";
 import ContactEventButton from "./ContactEventButton";
-import { MAX_TICKETS_PER_ORDER } from "./EventDetails";
 import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 
@@ -35,26 +39,19 @@ interface EventPaymentProps {
   eventLink: string;
   organiserId: UserId;
   waitlistEnabled: boolean;
+  maxTicketsPerTransaction?: number;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
   const { startDate, endDate, registrationEndDate, paused } = props;
 
-  // Memoize to avoid re-running localStorage checks on every render
-  const ticketsWithStoredSessions = useMemo(() => {
-    const sessions: number[] = [];
-    for (let i = 1; i <= MAX_TICKETS_PER_ORDER; i++) {
-      const storedSession = getStoredFulfilmentSessionId(props.eventId, i);
-      if (storedSession !== null) {
-        sessions.push(i);
-      }
-    }
-    return sessions;
-  }, [props.eventId]);
+  const effectiveMax = getBuyerMaxTicketsPerTransaction(props.maxTicketsPerTransaction);
 
-  const vacancyBasedCounts = Array.from({ length: Math.min(props.vacancy, MAX_TICKETS_PER_ORDER) }, (_, i) => i + 1);
-  // Merge with stored ticket counts and deduplicate
-  const allCounts = [...new Set([...vacancyBasedCounts, ...ticketsWithStoredSessions])].sort((a, b) => a - b);
+  const allCounts = getBuyerTicketCountOptionsWithStoredSessions(
+    props.vacancy,
+    props.maxTicketsPerTransaction,
+    (ticketCount) => getStoredFulfilmentSessionId(props.eventId, ticketCount) !== null
+  );
 
   const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0] ?? 1);
   const handleAttendeeCount = (value?: string) => {
@@ -135,7 +132,7 @@ export default function EventPayment(props: EventPaymentProps) {
                       value={`${waitlistAttendeeCount}`}
                       onChange={handleWaitlistAttendeeCount}
                     >
-                      {Array.from({ length: MAX_TICKETS_PER_ORDER }, (_, i) => i + 1).map((count) => (
+                      {getTicketCountOptions(effectiveMax).map((count) => (
                         <Option key={`attendee-option-${count}`} value={`${count}`}>
                           {count} Attendee{count > 1 ? "s" : ""}
                         </Option>

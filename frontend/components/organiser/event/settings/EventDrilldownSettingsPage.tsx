@@ -1,14 +1,20 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { useUser } from "@/components/utility/UserContext";
-import { EventId } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import {
+  clampMaxTicketsPerTransaction,
+  getOrganiserMaxTicketsPerTransactionLimit,
+  getTicketCountOptions,
+} from "@/services/src/events/eventsUtils/ticketLimits";
 import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
+import { Option, Select, Spinner } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -37,6 +43,9 @@ interface EventDrilldownSettingsPageProps {
   setBookingApprovalEnabled: (event: boolean) => void;
   showAttendeesOnEventPage: boolean;
   setShowAttendeesOnEventPage: (event: boolean) => void;
+  maxTicketsPerTransaction: number;
+  setMaxTicketsPerTransaction: (n: number) => void;
+  eventCapacity: number;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -61,11 +70,15 @@ const EventDrilldownSettingsPage = ({
   setBookingApprovalEnabled,
   showAttendeesOnEventPage,
   setShowAttendeesOnEventPage,
+  maxTicketsPerTransaction,
+  setMaxTicketsPerTransaction,
+  eventCapacity,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
   const logger = new Logger("EventDrilldownSettingsLogger");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const onClose = () => {
     setModalOpen(false);
   };
@@ -93,6 +106,23 @@ const EventDrilldownSettingsPage = ({
     setModalOpen(true);
   };
 
+  const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
+
+  const saveEventSettings = async (data: Partial<EventData>) => {
+    setSaving(true);
+    try {
+      await updateEventById(eventId, data);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const persistMaxTickets = (next: number) => {
+    const clamped = clampMaxTicketsPerTransaction(next, eventCapacity);
+    setMaxTicketsPerTransaction(clamped);
+    void saveEventSettings({ maxTicketsPerTransaction: clamped });
+  };
+
   return (
     <div className="flex flex-col space-y-4 mb-6 px-4 md:px-0">
       <LabelledSwitch
@@ -101,7 +131,7 @@ const EventDrilldownSettingsPage = ({
         state={paused}
         setState={setPaused}
         updateData={(event: boolean) => {
-          updateEventById(eventId, {
+          void saveEventSettings({
             paused: event,
           });
         }}
@@ -112,7 +142,7 @@ const EventDrilldownSettingsPage = ({
         state={paymentsActive}
         setState={setPaymentsActive}
         updateData={(event: boolean) => {
-          updateEventById(eventId, {
+          void saveEventSettings({
             paymentsActive: event,
           });
         }}
@@ -125,7 +155,7 @@ const EventDrilldownSettingsPage = ({
         state={stripeFeeToCustomer}
         setState={setStripeFeeToCustomer}
         updateData={(event: boolean) => {
-          updateEventById(eventId, {
+          void saveEventSettings({
             stripeFeeToCustomer: event,
           });
         }}
@@ -136,7 +166,7 @@ const EventDrilldownSettingsPage = ({
         state={promotionalCodesEnabled}
         setState={setPromotionalCodesEnabled}
         updateData={(event: boolean) => {
-          updateEventById(eventId, {
+          void saveEventSettings({
             promotionalCodesEnabled: event,
           });
         }}
@@ -147,7 +177,7 @@ const EventDrilldownSettingsPage = ({
         state={hideVacancy}
         setState={setHideVacancy}
         updateData={(event: boolean) => {
-          updateEventById(eventId, {
+          void saveEventSettings({
             hideVacancy: event,
           });
         }}
@@ -159,7 +189,7 @@ const EventDrilldownSettingsPage = ({
           state={waitlistEnabled}
           setState={setWaitlistEnabled}
           updateData={(event: boolean) => {
-            updateEventById(eventId, {
+            void saveEventSettings({
               waitlistEnabled: event,
             });
           }}
@@ -172,7 +202,7 @@ const EventDrilldownSettingsPage = ({
           state={bookingApprovalEnabled}
           setState={setBookingApprovalEnabled}
           updateData={(event: boolean) => {
-            updateEventById(eventId, {
+            void saveEventSettings({
               bookingApprovalEnabled: event,
             });
           }}
@@ -184,11 +214,42 @@ const EventDrilldownSettingsPage = ({
         state={showAttendeesOnEventPage}
         setState={setShowAttendeesOnEventPage}
         updateData={(event: boolean) => {
-          updateEventById(eventId, {
+          void saveEventSettings({
             showAttendeesOnEventPage: event,
           });
         }}
       />
+      <div className="flex w-full flex-col gap-3">
+        <div>
+          <h3 className="font-bold">Max Tickets Per Transaction</h3>
+          <p className="text-core-text font-light text-sm">
+            Maximum number of tickets a customer can purchase in a single transaction (up to{" "}
+            {maxTicketsAllowed} for this event).
+          </p>
+        </div>
+        <Select
+          className="text-black"
+          containerProps={{ className: "w-28" }}
+          label="Tickets"
+          value={`${maxTicketsPerTransaction}`}
+          onChange={(value) => {
+            if (!value) {
+              return;
+            }
+            const n = Number(value);
+            if (!Number.isFinite(n)) {
+              return;
+            }
+            persistMaxTickets(n);
+          }}
+        >
+          {getTicketCountOptions(maxTicketsAllowed).map((count) => (
+            <Option key={`max-tickets-option-${count}`} value={`${count}`}>
+              {count}
+            </Option>
+          ))}
+        </Select>
+      </div>
       <BlackHighlightButton
         text="Delete Event"
         onClick={() => {
@@ -205,6 +266,12 @@ const EventDrilldownSettingsPage = ({
         onConfirm={onConfirm}
         loading={deleteLoading}
       />
+      {saving && (
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Spinner className="h-4 w-4" />
+          <span>Saving...</span>
+        </div>
+      )}
     </div>
   );
 };

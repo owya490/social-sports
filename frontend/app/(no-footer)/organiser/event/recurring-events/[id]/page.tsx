@@ -8,7 +8,11 @@ import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring
 import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
 import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
 import { RecurringTemplateSettings } from "@/components/organiser/recurring-events/RecurringTemplateSettings";
-import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import {
+  DEFAULT_MAX_TICKETS_PER_ORDER,
+  EventId,
+  NewEventData,
+} from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
@@ -24,6 +28,7 @@ import {
   updateRecurrenceTemplateEventData,
   updateRecurrenceTemplateRecurrenceData,
 } from "@/services/src/recurringEvents/recurringEventsService";
+import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
@@ -62,6 +67,7 @@ export default function RecurrenceTemplatePage() {
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventBookingApprovalEnabled, setEventBookingApprovalEnabled] = useState<boolean>(false);
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState<boolean>(false);
+  const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] = useState<number>(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
@@ -109,6 +115,12 @@ export default function RecurrenceTemplatePage() {
         setEventWaitlistEnabled(recurrenceTemplate.eventData.waitlistEnabled);
         setEventBookingApprovalEnabled(recurrenceTemplate.eventData.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(recurrenceTemplate.eventData.showAttendeesOnEventPage);
+        setEventMaxTicketsPerTransaction(
+          clampMaxTicketsPerTransaction(
+            recurrenceTemplate.eventData.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER,
+            recurrenceTemplate.eventData.capacity
+          )
+        );
         const isRecurrenceEnded = calculateRecurrenceEnded(recurrenceTemplate);
         setRecurrenceEnded(isRecurrenceEnded);
         // Edge case, if the recurrence is ended, it should not be enabled
@@ -247,6 +259,9 @@ export default function RecurrenceTemplatePage() {
                   setBookingApprovalEnabled={setEventBookingApprovalEnabled}
                   showAttendeesOnEventPage={eventShowAttendeesOnEventPage}
                   setShowAttendeesOnEventPage={setEventShowAttendeesOnEventPage}
+                  maxTicketsPerTransaction={eventMaxTicketsPerTransaction}
+                  setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
+                  eventCapacity={eventCapacity}
                 />
               </>
             )}

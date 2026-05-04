@@ -10,12 +10,13 @@ import { useMultistepForm } from "@/components/events/create/forms/useMultistepF
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
-import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { DEFAULT_MAX_TICKETS_PER_ORDER, EventId, NewEventData } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
+import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import {
   getImageAndThumbnailUrlsWithDefaults,
   getUsersEventImagesUrls,
@@ -60,6 +61,7 @@ export type FormData = {
   waitlistEnabled: boolean;
   bookingApprovalEnabled: boolean;
   showAttendeesOnEventPage: boolean;
+  maxTicketsPerTransaction: number;
 };
 
 const INITIAL_DATA: FormData = {
@@ -92,6 +94,7 @@ const INITIAL_DATA: FormData = {
   waitlistEnabled: true,
   bookingApprovalEnabled: false,
   showAttendeesOnEventPage: false,
+  maxTicketsPerTransaction: DEFAULT_MAX_TICKETS_PER_ORDER,
 };
 
 export default function CreateEvent() {
@@ -277,6 +280,10 @@ export default function CreateEvent() {
       bookingApprovalEnabled: formData.bookingApprovalEnabled,
       formId: formData.formId,
       showAttendeesOnEventPage: formData.showAttendeesOnEventPage,
+      maxTicketsPerTransaction: clampMaxTicketsPerTransaction(
+        formData.maxTicketsPerTransaction,
+        formData.capacity
+      ),
     };
   }
 
