@@ -209,7 +209,7 @@ const EventDrilldownSettingsPage = ({
           });
         }}
       />
-      <div className="flex w-full items-center gap-4">
+      <div className="flex w-full flex-col gap-3">
         <div>
           <h3 className="font-bold">Max Tickets Per Transaction</h3>
           <p className="text-core-text font-light text-sm">
@@ -219,7 +219,7 @@ const EventDrilldownSettingsPage = ({
         </div>
         <Select
           className="text-black"
-          containerProps={{ className: "ml-auto w-28 shrink-0" }}
+          containerProps={{ className: "w-28" }}
           label="Tickets"
           value={`${maxTicketsPerTransaction}`}
           onChange={(value) => {

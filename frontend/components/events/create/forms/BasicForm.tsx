@@ -2,10 +2,16 @@
 
 import LocationAutocompleteForm from "@/components/utility/AutoComplete";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
+import { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
+import {
+  clampMaxTicketsPerTransaction,
+  getOrganiserMaxTicketsPerTransactionLimit,
+  getTicketCountOptions,
+} from "@/services/src/events/eventsUtils/ticketLimits";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
@@ -47,6 +53,7 @@ export type BasicData = {
   promotionalCodesEnabled: boolean;
   waitlistEnabled: boolean;
   bookingApprovalEnabled: boolean;
+  maxTicketsPerTransaction: number;
   eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
 };
@@ -88,6 +95,7 @@ export function BasicInformation({
   promotionalCodesEnabled,
   waitlistEnabled,
   bookingApprovalEnabled,
+  maxTicketsPerTransaction,
   eventLink,
   newRecurrenceData,
   updateField,
@@ -201,6 +209,12 @@ export function BasicInformation({
     });
   };
 
+  const handleMaxTicketsPerTransactionChange = (value: string) => {
+    updateField({
+      maxTicketsPerTransaction: clampMaxTicketsPerTransaction(Number(value), capacity),
+    });
+  };
+
   const [customAmount, setCustomAmount] = useState(centsToDollars(price));
 
   const handleCustomAmountChange = (amount: number) => {
@@ -276,15 +290,21 @@ export function BasicInformation({
 
   const handlePaymentsActiveChange = (paymentsActive: string) => {
     const isActive = paymentsActive.toLowerCase() === "true";
-    updateField({ 
+    updateField({
       paymentsActive: isActive,
+      ...(isActive && {
+        maxTicketsPerTransaction: clampMaxTicketsPerTransaction(DEFAULT_MAX_TICKETS_PER_ORDER, capacity),
+      }),
       // Reset payment-related fields when payments are disabled
       ...(!isActive && {
         stripeFeeToCustomer: true,
-        promotionalCodesEnabled: false
-      })
+        promotionalCodesEnabled: false,
+        maxTicketsPerTransaction: clampMaxTicketsPerTransaction(DEFAULT_MAX_TICKETS_PER_ORDER, capacity),
+      }),
     });
   };
+
+  const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(capacity);
 
   return (
     <FormWrapper>
@@ -463,9 +483,12 @@ export function BasicInformation({
                   const value = parseInt(e.target.value);
                   if (!isNaN(value)) {
                     const maxValue = Math.max(value, 0);
-                    updateField({ capacity: maxValue });
+                    updateField({
+                      capacity: maxValue,
+                      maxTicketsPerTransaction: clampMaxTicketsPerTransaction(maxTicketsPerTransaction, maxValue),
+                    });
                   } else {
-                    updateField({ capacity: 0 });
+                    updateField({ capacity: 0, maxTicketsPerTransaction: 1 });
                   }
                 }}
                 className="rounded-md focus:ring-0"
@@ -689,6 +712,32 @@ export function BasicInformation({
                       </div>
                     </div>
                   )}
+                  <div>
+                    <label className="text-black text-lg font-semibold">
+                      What is the max number of tickets per transaction?
+                    </label>
+                    <p className="text-sm mb-5 mt-2">
+                      Customers can purchase up to this many tickets in a single checkout (up to {maxTicketsAllowed} for
+                      this event).
+                    </p>
+                    <div className="mt-4">
+                      <Select
+                        size="md"
+                        label="Max Tickets Per Transaction"
+                        value={`${maxTicketsPerTransaction}`}
+                        onChange={(e) => {
+                          const value = e || `${maxTicketsPerTransaction}`;
+                          handleMaxTicketsPerTransactionChange(value);
+                        }}
+                      >
+                        {getTicketCountOptions(maxTicketsAllowed).map((count) => (
+                          <Option key={`max-tickets-option-${count}`} value={`${count}`}>
+                            {count}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
                 </>
               )}
             </>
