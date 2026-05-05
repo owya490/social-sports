@@ -69,6 +69,10 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;/ul>
 &lt;/li>
 &lt;/ol>
+&lt;h2>Recurring Attendees&lt;span class="hx:absolute hx:-mt-20" id="recurring-attendees">&lt;/span>
+&lt;a href="#recurring-attendees" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Use &lt;strong>Reserved Slots&lt;/strong> to keep places available for attendees who should be included in every future event in the series.&lt;/p>
+&lt;p>For each recurring attendee, enter their email address, attendee name, and the number of slots to reserve. When a future event is created from the recurring template, SPORTSHUB adds those reserved attendees to that event&amp;rsquo;s &lt;strong>Manage Attendees&lt;/strong> list and reduces the available vacancy by the number of reserved slots.&lt;/p>
+&lt;p>Reserved slots are managed on the recurring event template and apply to future generated events. Existing event instances keep their current attendee list unless you update them individually.&lt;/p>
 &lt;h2>Recurrence Preview&lt;span class="hx:absolute hx:-mt-20" id="recurrence-preview">&lt;/span>
 &lt;a href="#recurrence-preview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Once configured, you&amp;rsquo;ll see a preview table showing:&lt;/p>
 &lt;ul>
@@ -97,6 +101,7 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;li>Changes to one recurring event instance don&amp;rsquo;t automatically apply to others&lt;/li>
 &lt;li>Each occurrence maintains its own participant list and registration data&lt;/li>
 &lt;li>You can modify or cancel individual events without affecting the entire series&lt;/li>
+&lt;li>Reserved slots configured on the recurring template are applied when new future instances are created&lt;/li>
 &lt;/ul>
 &lt;h2>Best Practices for Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="best-practices-for-recurring-events">&lt;/span>
 &lt;a href="#best-practices-for-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
@@ -104,6 +109,7 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;li>&lt;strong>Consistent Scheduling&lt;/strong>: Keep timing consistent across recurring events for participant convenience&lt;/li>
 &lt;li>&lt;strong>Regular Monitoring&lt;/strong>: Check each occurrence individually to ensure details remain accurate&lt;/li>
 &lt;li>&lt;strong>Communication&lt;/strong>: Use the series to establish routine but communicate any changes to specific instances clearly&lt;/li>
+&lt;li>&lt;strong>Capacity Planning&lt;/strong>: Leave enough capacity for both reserved recurring attendees and casual bookings&lt;/li>
 &lt;/ul>
 &lt;h2>Modifying Recurrence Settings&lt;span class="hx:absolute hx:-mt-20" id="modifying-recurrence-settings">&lt;/span>
 &lt;a href="#modifying-recurrence-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>To change recurrence settings for future events:&lt;/p>
