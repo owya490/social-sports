@@ -34,16 +34,11 @@ import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface EventPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function EventPage({ params }: EventPageProps) {
+export default function EventPage() {
+  const params = useParams<{ id: string }>();
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [loading, setLoading] = useState<boolean>(true);

@@ -5,16 +5,14 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.firebase.services.FirebaseService;
-import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
-import com.functions.utils.JavaUtils;
 import com.functions.utils.UrlUtils;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCancelParams;
 import com.stripe.param.PaymentIntentCaptureParams;
@@ -22,14 +20,9 @@ import com.stripe.param.checkout.SessionCreateParams.PaymentIntentData.CaptureMe
 
 /**
  * Service class for Stripe operations.
- * Now uses the Java CheckoutService directly instead of calling Python
- * functions.
  */
 public class StripeService {
     private static final Logger logger = LoggerFactory.getLogger(StripeService.class);
-
-    public static final String FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID = "get_stripe_checkout_url_by_event_id";
-    public static final String ERROR_URL = "/error";
 
     // https://docs.stripe.com/api/charges#:~:text=The%20minimum%20amount%20is%20%240.50%20US%20or%20equivalent%20in%20charge%20currency.
     public static final int MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT = 50;
@@ -46,9 +39,13 @@ public class StripeService {
      * @param fulfilmentSessionId   The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
      * @return The Stripe checkout URL
-     * @throws RuntimeException if checkout creation fails
+     * @throws CheckoutDateTimeException if getStripeCheckoutFromEventId rejects checkout
+     *                                   because the event is not currently open
+     * @throws CheckoutVacancyException  if getStripeCheckoutFromEventId rejects checkout
+     *                                   because capacity is unavailable
+     * @throws RuntimeException          if checkout creation fails for any other reason
      */
-    public static String getStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
+    public static CreateStripeCheckoutSessionResponse getStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
             String endFulfilmentEntityId) {
 
@@ -71,7 +68,6 @@ public class StripeService {
                 numTickets,
                 newCancelUrl,
                 newSuccessUrl,
-                true,
                 fulfilmentSessionId,
                 endFulfilmentEntityId,
                 CaptureMethod.AUTOMATIC);
@@ -92,9 +88,13 @@ public class StripeService {
      * @param fulfilmentSessionId   The fulfilment session ID
      * @param endFulfilmentEntityId The end fulfilment entity ID
      * @return The Stripe checkout URL
-     * @throws RuntimeException if checkout creation fails
+     * @throws CheckoutDateTimeException if getStripeCheckoutFromEventId rejects checkout
+     *                                   because the event is not currently open
+     * @throws CheckoutVacancyException  if getStripeCheckoutFromEventId rejects checkout
+     *                                   because capacity is unavailable
+     * @throws RuntimeException          if checkout creation fails for any other reason
      */
-    public static String getDelayedStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
+    public static CreateStripeCheckoutSessionResponse getDelayedStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
             String endFulfilmentEntityId) {
 
@@ -117,7 +117,6 @@ public class StripeService {
                 numTickets,
                 newCancelUrl,
                 newSuccessUrl,
-                true,
                 fulfilmentSessionId,
                 endFulfilmentEntityId,
                 CaptureMethod.MANUAL);
@@ -125,62 +124,71 @@ public class StripeService {
         return getStripeCheckoutFromEventId(request);
     }
 
-    public static String getStripeCheckoutFromEventId(CreateStripeCheckoutSessionRequest request) {
-        if (StripeConfig.JAVA_STRIPE_ENABLED) {
-            try {
-                CreateStripeCheckoutSessionResponse response = CheckoutService.createStripeCheckoutSession(request);
+    public static CreateStripeCheckoutSessionResponse getStripeCheckoutFromEventId(CreateStripeCheckoutSessionRequest request) {
+        try {
+            CreateStripeCheckoutSessionResponse response = CheckoutService.createStripeCheckoutSession(request);
 
-                if (response == null || response.url() == null) {
-                    logger.error("Received null or invalid response from CheckoutService for event ID: {}",
-                            request.eventId());
-                    throw new RuntimeException("Failed to get Stripe checkout URL - null response");
-                }
-
-                logger.info("Successfully retrieved Stripe checkout URL for event ID: {}", request.eventId());
-
-                return response.url();
-            } catch (CheckoutDateTimeException e) {
-                // We don't need to log error and alert for this error because this
-                // time based error is out of our direct control.
-                // We should just reject silently and prevent the entire checkout transaction
-                // from going ahead.
-                logger.warn("Cannot checkout for event {}: time based error: {}", request.eventId(), e);
-                throw e;
-            } catch (CheckoutVacancyException e) {
-                // We don't need to log error and alert for this error because this
-                // vacancy based error is out of our direct control.
-                // We should just reject silently and prevent the entire checkout transaction
-                // from going ahead.
-                logger.warn("Cannot checkout for event {}: vacancy based error: {}", request.eventId(), e);
-                throw e;
-            } catch (Exception e) {
-                logger.error("Failed to create Stripe checkout session for event ID {}: {}", request.eventId(),
-                        e.getMessage());
-                throw new RuntimeException("Failed to create Stripe checkout session", e);
+            if (response == null || response.url() == null) {
+                logger.error("Received null or invalid response from CheckoutService for event ID: {}",
+                        request.eventId());
+                throw new RuntimeException("Failed to get Stripe checkout URL - null response");
             }
+
+            logger.info("Successfully retrieved Stripe checkout URL for event ID: {}", request.eventId());
+
+            return response;
+        } catch (CheckoutDateTimeException e) {
+            // We don't need to log error and alert for this error because this
+            // time based error is out of our direct control.
+            // We should just reject silently and prevent the entire checkout transaction
+            // from going ahead.
+            logger.warn("Cannot checkout for event {}: time based error: {}", request.eventId(), e);
+            throw e;
+        } catch (CheckoutVacancyException e) {
+            // We don't need to log error and alert for this error because this
+            // vacancy based error is out of our direct control.
+            // We should just reject silently and prevent the entire checkout transaction
+            // from going ahead.
+            logger.warn("Cannot checkout for event {}: vacancy based error: {}", request.eventId(), e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Failed to create Stripe checkout session for event ID {}: {}", request.eventId(),
+                    e.getMessage());
+            throw new RuntimeException("Failed to create Stripe checkout session", e);
+        }
+    }
+
+    /**
+     * Expires a Stripe Checkout Session for a connected account.
+     * Stripe's expire endpoint is synchronous and returns the updated Checkout Session.
+     * Only sessions in {@code open} status are expireable; if the session is already
+     * {@code expired}, this is treated as success.
+     *
+     * @return true when the session is in {@code expired} status (already expired or
+     *         expired by this call), false when Stripe returns an unexpected status.
+     * @throws StripeException if retrieval or expiry fails
+     */
+    public static boolean expireCheckoutSession(String checkoutSessionId, String stripeAccountId)
+            throws StripeException {
+        RequestOptions requestOptions = RequestOptions.builder()
+                .setStripeAccount(stripeAccountId)
+                .build();
+
+        Session stripeSession = Session.retrieve(checkoutSessionId, requestOptions);
+        if (isSessionExpired(stripeSession)) {
+            logger.info("Stripe checkout session {} is already expired", checkoutSessionId);
+            return true;
         }
 
-        return FirebaseService.callFirebaseFunction(FIREBASE_FUNCTIONS_GET_STRIPE_CHECKOUT_URL_BY_EVENT_ID, request)
-                .map(response -> {
-                    try {
-                        CreateStripeCheckoutSessionResponse stripeResponse = JavaUtils.objectMapper
-                                .readValue(response.result(), CreateStripeCheckoutSessionResponse.class);
-                        // If the stripe checkout URL is null, error URL, or cancel URL, throw a runtime
-                        // exception
-                        if (stripeResponse.url() == null
-                                || stripeResponse.url().equals(ERROR_URL)
-                                || stripeResponse.url().equals(request.cancelUrl())) {
-                            logger.error(
-                                    "Stripe checkout URL is null or error URL or cancel URL. Throwing runtime exception.");
-                            throw new RuntimeException("Stripe checkout URL is null or error URL or cancel URL.");
-                        }
-                        return stripeResponse.url();
-                    } catch (Exception e) {
-                        logger.error("Failed to parse Stripe checkout response for event ID {}: {}", request.eventId(),
-                                e.getMessage());
-                        throw new RuntimeException("Failed to parse Stripe checkout response", e);
-                    }
-                }).orElseThrow(() -> new RuntimeException("Failed to get Stripe checkout URL"));
+        Session expiredSession = stripeSession.expire(requestOptions);
+        if (isSessionExpired(expiredSession)) {
+            logger.info("Expired Stripe checkout session {}", checkoutSessionId);
+            return true;
+        }
+
+        logger.error("Stripe checkout session {} expire call failed with status: {}",
+                checkoutSessionId, expiredSession.getStatus());
+        return false;
     }
 
     /**
@@ -249,5 +257,9 @@ public class StripeService {
                 canceledPaymentIntent.getId(), canceledPaymentIntent.getStatus());
 
         return canceledPaymentIntent;
+    }
+
+    private static boolean isSessionExpired(Session session) {
+        return "expired".equals(session.getStatus());
     }
 }

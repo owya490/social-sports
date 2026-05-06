@@ -33,18 +33,13 @@ import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/r
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-interface RecurrenceTemplatePageProps {
-  params: {
-    id: string;
-  };
-}
 
 const logger = new Logger("RecurrenceTemplatePage");
 
-export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePageProps) {
+export default function RecurrenceTemplatePage() {
+  const params = useParams<{ id: string }>();
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [_eventData, setEventData] = useState<NewEventData>();
   const [loading, setLoading] = useState<boolean>(true);

@@ -11,11 +11,10 @@ import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
-import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
+import com.functions.stripe.handlers.StripeWebhookHandler;
 import com.functions.utils.JavaUtils;
-import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
@@ -24,11 +23,12 @@ import com.google.cloud.functions.HttpResponse;
  * <p>
  * This provides a single entry point for all function calls while maintaining type safety.
  */
-public class GlobalAppController implements HttpFunction {
+public class GlobalAppController extends AbstractConfiguredHttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(GlobalAppController.class);
 
-    public GlobalAppController() {
-        StripeConfig.initialize();
+    @FunctionalInterface
+    interface StripeWebhookProcessor {
+        void handle(HttpRequest request, HttpResponse response) throws Exception;
     }
 
     @Override
@@ -38,6 +38,11 @@ public class GlobalAppController implements HttpFunction {
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(204); // No Content
+            return;
+        }
+
+        if (shouldRouteToStripeWebhook(request)) {
+            handleStripeWebhook(request, response);
             return;
         }
 
@@ -122,6 +127,32 @@ public class GlobalAppController implements HttpFunction {
 
         var handler = HandlerRegistry.getHandler(endpointType);
         return handler.handle(handler.parse(unifiedRequest));
+    }
+
+    static boolean shouldRouteToStripeWebhook(HttpRequest request) {
+        return "POST".equalsIgnoreCase(request.getMethod())
+                && request.getFirstHeader("Stripe-Signature")
+                        .map(signature -> !signature.trim().isEmpty())
+                        .orElse(false);
+    }
+
+    static void handleStripeWebhook(HttpRequest request, HttpResponse response) throws Exception {
+        handleStripeWebhook(request, response, StripeWebhookHandler::handleWebhook);
+    }
+
+    static void handleStripeWebhook(
+            HttpRequest request,
+            HttpResponse response,
+            StripeWebhookProcessor stripeWebhookProcessor) throws Exception {
+        logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
+        try {
+            stripeWebhookProcessor.handle(request, response);
+        } catch (Exception e) {
+            logger.error("Unhandled exception while processing Stripe webhook. uri={}", request.getUri(), e);
+            response.setStatusCode(500);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse("Internal server error")));
+        }
     }
 
     private void setResponseHeaders(HttpResponse response) {

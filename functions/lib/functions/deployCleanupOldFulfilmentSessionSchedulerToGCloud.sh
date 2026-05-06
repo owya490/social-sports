@@ -9,11 +9,11 @@ FUNCTION_URL=${3:-"https://australia-southeast1-socialsports-44162.cloudfunction
 
 JOB_NAME=cleanup-old-fulfilment-sessions-job
 
-# Create or update Cloud Scheduler job to hit the cleanup function every 10 minutes
+# Create or update Cloud Scheduler job to hit the cleanup function every 5 minutes
 if gcloud scheduler jobs describe "$JOB_NAME" --location="$REGION" --project "$PROJECT_ID" >/dev/null 2>&1; then
   echo "Updating existing scheduler job: $JOB_NAME"
   gcloud scheduler jobs update http "$JOB_NAME" \
-    --schedule="*/10 * * * *" \
+    --schedule="*/5 * * * *" \
     --time-zone="Australia/Sydney" \
     --uri="$FUNCTION_URL" \
     --http-method=GET \
@@ -22,7 +22,7 @@ if gcloud scheduler jobs describe "$JOB_NAME" --location="$REGION" --project "$P
 else
   echo "Creating scheduler job: $JOB_NAME"
   gcloud scheduler jobs create http "$JOB_NAME" \
-    --schedule="*/10 * * * *" \
+    --schedule="*/5 * * * *" \
     --time-zone="Australia/Sydney" \
     --uri="$FUNCTION_URL" \
     --http-method=GET \
