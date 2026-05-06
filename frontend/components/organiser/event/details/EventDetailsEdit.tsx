@@ -21,8 +21,8 @@ import { Input, Option, Select, Spinner } from "@material-tailwind/react";
 import { useUser } from "@/components/utility/UserContext";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
   formatDateToString,
@@ -36,7 +36,7 @@ import {
 import { updateEventCapacityById } from "@/services/src/events/eventsService";
 import { getActiveFormsForUser, getForm } from "@/services/src/forms/formsServices";
 import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
-import { displayPrice, dollarsToCents } from "@/utilities/priceUtils";
+import { displayPrice, dollarsToCents, getEventPriceDisplay } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -768,7 +768,7 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
                   </div>
                 ) : (
                   <div className="mt-2">
-                    ${displayPrice(newEditPrice)}
+                    {getEventPriceDisplay(newEditPrice)}
                     {isActive &&
                       (updateLoading ? (
                         <Spinner className="absolute top-2 right-2 w-5" />

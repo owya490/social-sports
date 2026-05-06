@@ -262,6 +262,7 @@ export default function RecurrenceTemplatePage() {
                   maxTicketsPerTransaction={eventMaxTicketsPerTransaction}
                   setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
                   eventCapacity={eventCapacity}
+                  eventPrice={eventPrice}
                 />
               </>
             )}
