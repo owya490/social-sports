@@ -31,6 +31,7 @@ import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
+import com.functions.waitlist.services.WaitlistService;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -1040,6 +1041,8 @@ public class WebhookService {
                     logger.warn("Was unable to send purchase email after EmailClient retries. orderId={}, customer={}",
                             orderId, customerEmail);
                 }
+
+                WaitlistService.removeUserFromWaitlistIfBooked(eventId, customerEmail);
             }
             
             logger.info("Successfully handled checkout.session.completed webhook event. session={}", checkoutSessionId);
