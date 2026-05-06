@@ -30,6 +30,8 @@ export interface SportsSeoLandingPageProps {
 
 const HIGHLIGHTED_EVENT_COUNT = 6;
 const ORGANISER_COUNT = 6;
+const OPERA_HOUSE_IMAGE_URL = "https://upload.wikimedia.org/wikipedia/commons/9/9c/Sydney_Opera_House_01.jpg";
+const OPERA_HOUSE_IMAGE_SOURCE_URL = "https://commons.wikimedia.org/wiki/File:Sydney_Opera_House_01.jpg";
 
 function eventMatchesSport(event: EventData, sport: SportFilter) {
   const searchableFields = [event.sport, event.name, event.description, ...(event.eventTags || [])]
@@ -81,49 +83,49 @@ function buildUniqueOrganisers(events: EventData[]) {
     .slice(0, ORGANISER_COUNT);
 }
 
-function SydneyOperaHouseMark() {
+function SydneyHeroImagePanel({
+  displayedEventCount,
+  organiserCount,
+  loading,
+}: {
+  displayedEventCount: number;
+  organiserCount: number;
+  loading: boolean;
+}) {
   return (
-    <div className="relative h-full min-h-[320px] overflow-hidden rounded-[2rem] border border-black bg-black text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.24),transparent_28%),linear-gradient(135deg,rgba(255,255,255,0.12),transparent_42%)]" />
-      <div className="absolute left-6 top-6 rounded-full border border-white/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em]">
-        Sydney
+    <div className="relative min-h-[560px] overflow-hidden rounded-[2rem] border border-white/20 bg-white/5 text-white shadow-2xl shadow-black/30">
+      <div
+        className="absolute inset-0 scale-105 bg-cover bg-center"
+        style={{ backgroundImage: `url(${OPERA_HOUSE_IMAGE_URL})` }}
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.82)),linear-gradient(90deg,rgba(0,0,0,0.45),rgba(0,0,0,0.08))]" />
+      <div className="absolute left-5 top-5 rounded-full border border-white/50 bg-black/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] backdrop-blur-md">
+        Sydney Harbour
       </div>
-      <svg
-        className="absolute bottom-14 left-1/2 w-[120%] max-w-[720px] -translate-x-1/2"
-        viewBox="0 0 800 360"
-        fill="none"
-        role="img"
-        aria-label="Minimal Sydney Opera House line artwork"
-      >
-        <path
-          d="M98 272C176 239 236 177 274 86C311 157 323 220 310 272"
-          stroke="white"
-          strokeWidth="14"
-          strokeLinecap="round"
-        />
-        <path
-          d="M250 274C337 221 402 146 446 48C492 150 504 226 481 274"
-          stroke="white"
-          strokeWidth="14"
-          strokeLinecap="round"
-        />
-        <path
-          d="M433 274C511 231 570 167 610 84C653 162 665 225 646 274"
-          stroke="white"
-          strokeWidth="14"
-          strokeLinecap="round"
-        />
-        <path d="M68 278H720" stroke="white" strokeWidth="14" strokeLinecap="round" />
-        <path d="M34 322C160 302 244 302 370 322C502 343 610 337 766 306" stroke="white" strokeWidth="10" />
-      </svg>
-      <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-6">
-        <p className="max-w-xs text-sm text-white/70">
-          A clean black-and-white guide to social sport sessions, clubs and community events across Sydney.
-        </p>
-        <div className="hidden rounded-2xl border border-white/30 px-5 py-4 text-right md:block">
-          <p className="text-4xl font-bold">AU</p>
-          <p className="text-xs uppercase tracking-[0.25em] text-white/60">SPORTSHUB</p>
+
+      <div className="absolute bottom-0 left-0 right-0 p-5 md:p-7">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/25 bg-black/50 p-4 backdrop-blur-md">
+            <p className="text-3xl font-bold">{loading ? "-" : displayedEventCount}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-white/70">Live events</p>
+          </div>
+          <div className="rounded-2xl border border-white/25 bg-black/50 p-4 backdrop-blur-md">
+            <p className="text-3xl font-bold">{loading ? "-" : organiserCount}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-white/70">Organisers</p>
+          </div>
+          <div className="rounded-2xl border border-white/25 bg-black/50 p-4 backdrop-blur-md">
+            <p className="text-3xl font-bold">SYD</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-white/70">Sydney only</p>
+          </div>
         </div>
+        <a
+          href={OPERA_HOUSE_IMAGE_SOURCE_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 block text-xs text-white/60 underline-offset-4 hover:text-white hover:underline"
+        >
+          Sydney Opera House image: Bernard Gagnon, Wikimedia Commons
+        </a>
       </div>
     </div>
   );
@@ -131,8 +133,8 @@ function SydneyOperaHouseMark() {
 
 function LoadingEventCard() {
   return (
-    <div className="rounded-3xl border border-core-outline bg-white p-4">
-      <div className="aspect-[4/3] animate-pulse rounded-2xl bg-core-hover" />
+    <div className="rounded-[2rem] border border-core-outline bg-white p-4 shadow-sm">
+      <div className="aspect-[4/3] animate-pulse rounded-[1.4rem] bg-core-hover" />
       <div className="mt-4 h-3 w-24 animate-pulse rounded bg-core-hover" />
       <div className="mt-3 h-5 w-4/5 animate-pulse rounded bg-core-hover" />
       <div className="mt-3 h-3 w-3/5 animate-pulse rounded bg-core-hover" />
@@ -147,14 +149,14 @@ function EventLandingCard({ event, priority = false }: { event: EventData; prior
   return (
     <Link
       href={`/event/${event.eventId}`}
-      className={`group flex h-full flex-col rounded-3xl border border-core-outline bg-white p-4 transition duration-300 hover:-translate-y-1 hover:border-black hover:shadow-xl ${
-        priority ? "md:p-5" : ""
+      className={`group flex h-full flex-col overflow-hidden rounded-[2rem] border border-core-outline bg-white transition duration-300 hover:-translate-y-1 hover:border-black hover:shadow-2xl ${
+        priority ? "md:col-span-2 lg:col-span-1" : ""
       }`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-black">
+      <div className="relative aspect-[4/3] overflow-hidden bg-black">
         {image ? (
           <div
-            className="absolute inset-0 bg-cover bg-center grayscale transition duration-500 group-hover:scale-105 group-hover:grayscale-0"
+            className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105"
             style={{ backgroundImage: `url(${image})` }}
           />
         ) : (
@@ -163,11 +165,14 @@ function EventLandingCard({ event, priority = false }: { event: EventData; prior
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" />
-        <div className="absolute bottom-3 left-3 rounded-full bg-white px-3 py-1 text-xs font-semibold text-black">
+        <div className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-black shadow">
+          {priority ? "Highlighted" : "Sydney"}
+        </div>
+        <div className="absolute bottom-4 left-4 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
           {event.sport || "Sydney sport"}
         </div>
       </div>
-      <div className="flex flex-1 flex-col pt-4">
+      <div className="flex flex-1 flex-col p-5">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-gray-500">
           {timestampToEventCardDateString(event.startDate)}
         </p>
@@ -178,7 +183,7 @@ function EventLandingCard({ event, priority = false }: { event: EventData; prior
             <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0" />
             <span className="line-clamp-2">{event.location || "Sydney"}</span>
           </div>
-          <div className="flex items-center justify-between border-t border-core-outline pt-3">
+          <div className="mt-auto flex items-center justify-between border-t border-core-outline pt-4">
             <span className="font-semibold">${displayPrice(event.price)}</span>
             <span className="flex items-center gap-1 font-semibold">
               View event <ArrowRightIcon className="h-4 w-4 transition group-hover:translate-x-1" />
@@ -204,11 +209,11 @@ function OrganiserCard({
   return (
     <Link
       href={`/user/${organiserId}`}
-      className="group rounded-3xl border border-core-outline bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-black hover:shadow-xl"
+      className="group rounded-[2rem] border border-core-outline bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-black hover:shadow-xl"
     >
       <div className="flex items-center gap-4">
         <div
-          className="h-14 w-14 shrink-0 rounded-full border border-core-outline bg-core-hover bg-cover bg-center grayscale"
+          className="h-14 w-14 shrink-0 rounded-full border border-core-outline bg-core-hover bg-cover bg-center"
           style={{ backgroundImage: organiser.profilePicture ? `url(${organiser.profilePicture})` : undefined }}
         />
         <div className="min-w-0">
@@ -296,66 +301,85 @@ export default function SportsSeoLandingPage({
 
   return (
     <div className="bg-white text-core-text">
-      <section className="flex justify-center px-3 py-10 md:py-16">
-        <div className="screen-width-dashboard">
-          <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:items-stretch">
-            <div className="flex flex-col justify-center rounded-[2rem] border border-core-outline bg-white p-6 md:p-10">
-              <div className="w-fit rounded-full border border-black px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em]">
-                {eyebrow}
-              </div>
-              <h1 className="mt-8 max-w-4xl text-5xl font-bold leading-[0.95] tracking-[-0.04em] md:text-7xl">
-                {title}
-              </h1>
-              <p className="mt-6 max-w-2xl text-lg font-light leading-8 text-gray-600 md:text-xl">{subtitle}</p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="#events"
-                  className="rounded-xl bg-black px-6 py-3 text-center font-semibold text-white transition hover:bg-gray-800"
-                >
-                  {primaryCtaLabel}
-                </Link>
-                <Link
-                  href="/"
-                  className="rounded-xl border border-core-outline px-6 py-3 text-center font-semibold text-black transition hover:border-black hover:bg-core-hover"
-                >
-                  {secondaryCtaLabel}
-                </Link>
-              </div>
-              <div className="mt-10 grid grid-cols-3 gap-3 border-t border-core-outline pt-6 text-sm">
-                <div>
-                  <p className="text-3xl font-bold">{loading ? "-" : displayedEvents.length}</p>
-                  <p className="mt-1 text-gray-500">Live {totalEventsLabel}</p>
+      <section className="relative overflow-hidden bg-black px-3 py-10 text-white md:py-16">
+        <div className="pointer-events-none absolute inset-0 opacity-40">
+          <div className="absolute -left-40 top-10 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+        </div>
+        <div className="relative mx-auto screen-width-dashboard">
+          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
+            <div className="flex flex-col justify-between rounded-[2rem] border border-white/20 bg-white/[0.03] p-6 shadow-2xl shadow-black/30 backdrop-blur md:p-10">
+              <div>
+                <div className="w-fit rounded-full border border-white/40 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em]">
+                  {eyebrow}
                 </div>
-                <div>
-                  <p className="text-3xl font-bold">{loading ? "-" : organisers.length}</p>
-                  <p className="mt-1 text-gray-500">Clubs</p>
+                <h1 className="mt-8 max-w-4xl text-5xl font-bold leading-[0.92] tracking-[-0.055em] md:text-7xl">
+                  {title}
+                </h1>
+                <p className="mt-6 max-w-2xl text-lg font-light leading-8 text-white/70 md:text-xl">{subtitle}</p>
+              </div>
+
+              <div>
+                <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href="#events"
+                    className="rounded-xl bg-white px-6 py-3 text-center font-semibold text-black transition hover:bg-gray-200"
+                  >
+                    {primaryCtaLabel}
+                  </Link>
+                  <Link
+                    href="/"
+                    className="rounded-xl border border-white/25 px-6 py-3 text-center font-semibold text-white transition hover:border-white hover:bg-white/10"
+                  >
+                    {secondaryCtaLabel}
+                  </Link>
                 </div>
-                <div>
-                  <p className="text-3xl font-bold">SYD</p>
-                  <p className="mt-1 text-gray-500">Location</p>
+                <div className="mt-10 grid gap-3 border-t border-white/20 pt-6 text-sm sm:grid-cols-3">
+                  <div className="rounded-2xl bg-white/10 p-4">
+                    <p className="text-3xl font-bold">{loading ? "-" : displayedEvents.length}</p>
+                    <p className="mt-1 text-white/60">Live {totalEventsLabel}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 p-4">
+                    <p className="text-3xl font-bold">{loading ? "-" : organisers.length}</p>
+                    <p className="mt-1 text-white/60">Sydney clubs</p>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 p-4">
+                    <p className="text-3xl font-bold">SEO</p>
+                    <p className="mt-1 text-white/60">Sydney pages</p>
+                  </div>
                 </div>
               </div>
             </div>
-            <SydneyOperaHouseMark />
+            <SydneyHeroImagePanel
+              displayedEventCount={displayedEvents.length}
+              organiserCount={organisers.length}
+              loading={loading}
+            />
           </div>
-          <p className="mt-4 text-sm text-gray-500">{heroLabel}</p>
+          <p className="mt-4 max-w-3xl text-sm text-white/60">{heroLabel}</p>
         </div>
       </section>
 
-      <section className="flex justify-center px-3 py-10">
+      <section className="flex justify-center px-3 py-16 md:py-24">
         <div className="screen-width-dashboard">
-          <div className="grid gap-6 md:grid-cols-[0.9fr_1.1fr] md:items-start">
-            <div>
+          <div className="grid gap-8 md:grid-cols-[0.82fr_1.18fr] md:items-stretch">
+            <div className="rounded-[2rem] border border-core-outline bg-white p-6 md:p-8">
               <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-gray-500">
                 <SparklesIcon className="h-4 w-4" /> Sydney sport guide
               </p>
-              <h2 className="mt-4 text-3xl font-bold tracking-[-0.02em] md:text-5xl">{introTitle}</h2>
+              <h2 className="mt-5 text-4xl font-bold tracking-[-0.04em] md:text-6xl">{introTitle}</h2>
             </div>
             <div className="rounded-[2rem] border border-core-outline bg-core-hover p-6 md:p-8">
-              <p className="text-lg font-light leading-8 text-gray-700">{introCopy}</p>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                {benefits.map((benefit) => (
-                  <div key={benefit} className="rounded-2xl border border-core-outline bg-white p-4 font-medium">
+              <p className="text-lg font-light leading-8 text-gray-700 md:text-xl">{introCopy}</p>
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {benefits.map((benefit, index) => (
+                  <div
+                    key={benefit}
+                    className="rounded-2xl border border-core-outline bg-white p-5 font-medium shadow-sm"
+                  >
+                    <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+                      {index + 1}
+                    </span>
                     {benefit}
                   </div>
                 ))}

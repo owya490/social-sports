@@ -5,6 +5,7 @@ const pageUrl = "https://www.sportshub.net.au/sydney-events";
 const title = "Sydney Sports Events | Find Social Sport Sessions in Sydney | SPORTSHUB";
 const description =
   "Find Sydney sports events, social sport sessions and local clubs on SPORTSHUB. Browse upcoming events across badminton, volleyball, pickleball and more.";
+const operaHouseImageUrl = "https://upload.wikimedia.org/wikipedia/commons/9/9c/Sydney_Opera_House_01.jpg";
 
 const faqs = [
   {
@@ -35,12 +36,21 @@ export const metadata: Metadata = {
     description,
     url: pageUrl,
     siteName: "SPORTSHUB",
+    images: [
+      {
+        url: operaHouseImageUrl,
+        width: 5144,
+        height: 3429,
+        alt: "Sydney Opera House seen from Harbour Bridge",
+      },
+    ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title,
     description,
+    images: [operaHouseImageUrl],
   },
   keywords: [
     "Sydney events",
@@ -94,9 +104,9 @@ export default function SydneyEventsPage() {
       <SportsSeoLandingPage
         eyebrow="Sydney events"
         title="Find your next Sydney sports event"
-        subtitle="A minimalist guide to social sport sessions, community games and club-hosted events across Sydney."
+        subtitle="A polished guide to social sport sessions, community games and club-hosted events across Sydney."
         primaryCtaLabel="See highlighted Sydney events"
-        heroLabel="Sydney Opera House inspired hero artwork for SPORTSHUB's Sydney events guide."
+        heroLabel="Featuring a Sydney Opera House photo sourced from Wikimedia Commons to anchor SPORTSHUB's Sydney events guide."
         introTitle="Built for people looking for sport in Sydney"
         introCopy="SPORTSHUB helps players discover local sports events and helps organisers reach the Sydney community. Browse upcoming sessions, compare clubs and jump into the event that fits your week."
         benefits={[

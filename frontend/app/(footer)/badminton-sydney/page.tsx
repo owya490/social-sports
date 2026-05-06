@@ -91,7 +91,7 @@ export default function BadmintonSydneyPage() {
         subtitle="Browse social badminton sessions, local organisers and community sports events on SPORTSHUB."
         primaryCtaLabel="View badminton events"
         sportFilter="badminton"
-        heroLabel="Sydney badminton landing page with live event listings from SPORTSHUB."
+        heroLabel="Sydney badminton landing page featuring a real Sydney Opera House hero image and live SPORTSHUB listings."
         introTitle="A cleaner way to discover Sydney badminton"
         introCopy="SPORTSHUB helps players find local badminton sessions without digging through group chats and scattered club pages. Explore events, compare session details and book through the organiser's event page."
         benefits={[

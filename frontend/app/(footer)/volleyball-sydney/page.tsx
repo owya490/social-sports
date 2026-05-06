@@ -103,11 +103,11 @@ export default function VolleyballSydneyPage() {
       />
       <SportsSeoLandingPage
         eyebrow="Volleyball Sydney"
-        title="Find volleyball events in Sydney."
-        subtitle="A minimalist SPORTSHUB guide to Sydney volleyball games, clubs, training sessions and community competitions."
+        title="Find volleyball events in Sydney"
+        subtitle="A polished SPORTSHUB guide to Sydney volleyball games, clubs, training sessions and community competitions."
         primaryCtaLabel="View volleyball events"
         sportFilter="volleyball"
-        heroLabel="Sydney volleyball landing page featuring Opera House inspired black-and-white artwork."
+        heroLabel="Sydney volleyball landing page featuring a Sydney Opera House hero image and live SPORTSHUB listings."
         introTitle="Social volleyball in Sydney, listed in one place."
         introCopy="Use SPORTSHUB to discover Sydney volleyball events hosted by local clubs, social organisers and community groups. Event listings can include session details, booking options, organiser profiles and venue information."
         benefits={[
