@@ -17,6 +17,7 @@ import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
 import com.functions.users.models.UserData;
 import com.functions.users.services.Users;
+import com.functions.waitlist.services.WaitlistService;
 import com.stripe.exception.StripeException;
 
 public class BookingApprovalService {
@@ -102,6 +103,7 @@ public class BookingApprovalService {
                 logger.warn("Failed to send purchase email after approving booking for orderId: {}", orderId);
             }
 
+            WaitlistService.removeUserFromWaitlistIfBooked(eventData.getEventId(), order.getEmail());
             return true;
         } catch (StripeException e) {
             logger.error(
