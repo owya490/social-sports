@@ -2,7 +2,7 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { displayPrice } from "@/utilities/priceUtils";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
@@ -89,7 +89,7 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
                 </div>
                 <div className="flex items-center">
                   <CurrencyDollarIcon className="w-5 shrink-0" />
-                  <p className="ml-1 font-light text-sm">{`$${displayPrice(props.price)} AUD`}</p>
+                  <p className="ml-1 font-light text-sm">{getEventPriceDisplay(props.price, true)}</p>
                 </div>
               </div>
               <div className="flex items-center">

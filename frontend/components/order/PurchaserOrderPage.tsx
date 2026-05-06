@@ -7,7 +7,7 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getOrderById } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
-import { displayPrice } from "@/utilities/priceUtils";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -249,7 +249,7 @@ export default function PurchaserOrderPage() {
                   <p className="text-sm text-gray-600">{formatFirestoreTimestamp(ticket.purchaseDate)}</p>
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <StatusChip status={ticket.status} />
-                    <span className="text-sm font-medium text-core-text">${displayPrice(ticket.price).toFixed(2)}</span>
+                    <span className="text-sm font-medium text-core-text">{getEventPriceDisplay(ticket.price)}</span>
                   </div>
                 </div>
                 {ticket.formResponseId && event.formId ? (
@@ -270,7 +270,7 @@ export default function PurchaserOrderPage() {
           {tickets.length > 0 && (
             <div className="mt-4 flex items-center justify-between border-t border-core-outline pt-4 text-sm font-semibold text-core-text">
               <span>Order total</span>
-              <span>${displayPrice(orderTotalCents).toFixed(2)}</span>
+              <span>{getEventPriceDisplay(orderTotalCents)}</span>
             </div>
           )}
         </section>
