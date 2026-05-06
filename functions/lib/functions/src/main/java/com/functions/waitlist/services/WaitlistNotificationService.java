@@ -110,7 +110,7 @@ public class WaitlistNotificationService {
         Timestamp registrationDeadline = event.getRegistrationDeadline();
         if (registrationDeadline != null) {
             Instant registrationEnd = Instant.ofEpochSecond(registrationDeadline.getSeconds(), registrationDeadline.getNanos());
-            if (notificationTime.isAfter(registrationEnd)) {
+            if (!notificationTime.isBefore(registrationEnd)) {
                 logger.info("[WaitlistNotificationService] Skipping event past registration deadline: {}", eventId);
                 return new NotificationResult(0, 0);
             }

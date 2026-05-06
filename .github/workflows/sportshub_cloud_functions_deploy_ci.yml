@@ -75,6 +75,7 @@ jobs:
             --entry-point com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint \
             --runtime java17 \
             --trigger-http \
+            --gen2 \
             --allow-unauthenticated \
             --region australia-southeast1 \
             --project $PROJECT_ID \
@@ -88,6 +89,7 @@ jobs:
             --entry-point com.functions.events.controllers.CreateRecurrenceTemplateEndpoint \
             --runtime java17 \
             --trigger-http \
+            --gen2 \
             --allow-unauthenticated \
             --region australia-southeast1 \
             --project $PROJECT_ID \
@@ -101,6 +103,7 @@ jobs:
             --entry-point com.functions.events.controllers.RecurringEventsCronEndpoint \
             --runtime java17 \
             --trigger-http \
+            --gen2 \
             --allow-unauthenticated \
             --region australia-southeast1 \
             --project $PROJECT_ID \
@@ -115,6 +118,7 @@ jobs:
             --entry-point com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint \
             --runtime java17 \
             --trigger-http \
+            --gen2 \
             --allow-unauthenticated \
             --region australia-southeast1 \
             --project $PROJECT_ID \
@@ -129,6 +133,7 @@ jobs:
             --entry-point com.functions.fulfilment.controllers.DeleteFulfilmentSessionEndpoint \
             --runtime java17 \
             --trigger-http \
+            --gen2 \
             --allow-unauthenticated \
             --region australia-southeast1 \
             --project $PROJECT_ID \
@@ -143,6 +148,7 @@ jobs:
             --entry-point com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint \
             --runtime java17 \
             --trigger-http \
+            --gen2 \
             --allow-unauthenticated \
             --region australia-southeast1 \
             --project $PROJECT_ID \
@@ -158,6 +164,7 @@ jobs:
               --entry-point com.functions.global.controllers.GlobalAppController \
               --runtime java17 \
               --trigger-http \
+              --gen2 \
               --allow-unauthenticated \
               --region australia-southeast1 \
               --project $PROJECT_ID \
@@ -173,6 +180,7 @@ jobs:
               --entry-point com.functions.global.controllers.GlobalAppController \
               --runtime java17 \
               --trigger-http \
+              --gen2 \
               --allow-unauthenticated \
               --region australia-southeast1 \
               --project $PROJECT_ID \
