@@ -18,12 +18,12 @@ import {
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
 interface CreateRecurrenceTemplateResponse {
-  eventId: string;
-  recurrenceTemplateId: string;
+  eventId: EventId;
+  recurrenceTemplateId: RecurrenceTemplateId;
 }
 
 interface UpdateRecurrenceTemplateResponse {
-  recurrenceTemplateId: string;
+  recurrenceTemplateId: RecurrenceTemplateId;
 }
 
 export async function createRecurrenceTemplate(
@@ -94,7 +94,7 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
 // Should be a partial of eventData or NewRecurrenceFormData
 export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId, updatedData: any) {
   recurringEventsServiceLogger.info(`Updating Recurrence Template ${recurrenceTemplateId}`);
-  var eventData = null;
+  let eventData = null;
   if (updatedData.eventData) {
     eventData = {
       ...updatedData.eventData,

@@ -1,4 +1,5 @@
 import { EndpointType } from "@/interfaces/FunctionsTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import { GetWrappedRequest, GetWrappedResponse, SportshubWrapped } from "@/interfaces/WrappedTypes";
 import { Logger } from "@/observability/logger";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
@@ -17,7 +18,11 @@ const wrappedServiceLogger = new Logger("wrappedServiceLogger");
  * @param wrappedId - Optional wrappedId for verification (for public share links)
  * @returns The SportshubWrapped data for the organiser
  */
-export async function getWrappedData(organiserId: string, year: number, wrappedId?: string): Promise<SportshubWrapped> {
+export async function getWrappedData(
+  organiserId: UserId,
+  year: number,
+  wrappedId?: string
+): Promise<SportshubWrapped> {
   wrappedServiceLogger.info(
     `getWrappedData: Fetching wrapped data for organiserId: ${organiserId}, year: ${year}, wrappedId: ${
       wrappedId ?? "none"

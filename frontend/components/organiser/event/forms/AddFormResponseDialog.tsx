@@ -38,11 +38,6 @@ const AddFormResponseDialog = ({ isOpen, onClose, formId, eventId, refreshRespon
       setSaving(true);
       setError(null);
       const savedId = await formResponderRef.current.save();
-      if (!savedId) {
-        logger.error("Failed to save form response: save() returned null");
-        setError("Failed to save form response. Please try again.");
-        return;
-      }
       await submitManualFormResponse(formId, eventId, savedId);
       refreshResponses();
       onClose();

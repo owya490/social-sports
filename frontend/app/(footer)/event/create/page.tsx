@@ -14,6 +14,7 @@ import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
 import {
   getImageAndThumbnailUrlsWithDefaults,
@@ -26,6 +27,8 @@ import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+
+const createEventLogger = new Logger("CreateEvent");
 
 export type FormData = {
   startDate: string;
@@ -169,7 +172,7 @@ export default function CreateEvent() {
     return true;
   }
 
-  function submit(e: FormEvent, stepIndex?: number) {
+  async function submit(e: FormEvent, stepIndex?: number) {
     e.preventDefault();
     if (!validateForm()) {
       return;
@@ -186,22 +189,23 @@ export default function CreateEvent() {
     }
 
     try {
-      createEventWorkflow(data, user).then((eventId) => {
+      const eventId = await createEventWorkflow(data, user);
+      if (eventId !== null) {
         router.push(`/event/${eventId}`);
-      });
+      }
     } catch (e) {
-      console.log(e);
+      createEventLogger.error(`Error creating event: ${e}`);
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId> {
+  async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId | null> {
     setLoading(true);
     const [imageUrl, thumbnailUrl] = getImageAndThumbnailUrlsWithDefaults({ ...formData });
 
     const newEventData = convertFormDataToEventData(formData, user, imageUrl, thumbnailUrl);
     const newRecurrenceData = formData.newRecurrenceData;
-    let newEventId = "";
+    let newEventId: EventId | null = null;
     try {
       if (newRecurrenceData.recurrenceEnabled) {
         const [firstEventId, _newRecurrenceTemplateId] = await createRecurrenceTemplate(
@@ -212,14 +216,19 @@ export default function CreateEvent() {
       } else {
         newEventId = await createEvent(newEventData);
       }
+      if (newEventId === null) {
+        return null;
+      }
       await sendEmailOnCreateEventV2(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
+        return null;
       } else if (error == "Sendgrid failed") {
         return newEventId;
       } else {
         router.push("/error");
+        return null;
       }
     }
     return newEventId;
@@ -272,7 +281,7 @@ export default function CreateEvent() {
   }
 
   function convertDateAndTimeStringToTimestamp(date: string, time: string): Timestamp {
-    let dateObject = new Date(date);
+    const dateObject = new Date(date);
     const timeArr = time.split(":");
     dateObject.setHours(parseInt(timeArr[0]));
     dateObject.setMinutes(parseInt(timeArr[1]));

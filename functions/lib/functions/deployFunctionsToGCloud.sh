@@ -4,7 +4,6 @@
 # updateRecurrenceTemplate
 # createRecurrenceTemplate
 # recurringEventsCron
-# deleteFulfilmentSession
 # cleanupOldFulfilmentSessionsCron
 # completeFulfilmentSession
 # globalAppController
@@ -16,7 +15,6 @@ VALID_FUNCTIONS=(
     "updateRecurrenceTemplate" 
     "createRecurrenceTemplate" 
     "recurringEventsCron"
-    "deleteFulfilmentSession"
     "cleanupOldFulfilmentSessionsCron"
     "completeFulfilmentSession"
     "globalAppController"
@@ -27,7 +25,6 @@ VALID_ENDPOINTS=(
     "com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint" 
     "com.functions.events.controllers.CreateRecurrenceTemplateEndpoint" 
     "com.functions.events.controllers.RecurringEventsCronEndpoint"
-    "com.functions.fulfilment.controllers.DeleteFulfilmentSessionEndpoint"
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"

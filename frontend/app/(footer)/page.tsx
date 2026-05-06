@@ -2,8 +2,8 @@
 import FilterBanner from "@/components/Filter/FilterBanner";
 import EventCard from "@/components/events/EventCard";
 import { UserCard } from "@/components/users/UserCard";
-import { EmptyEventData, EventData, SearchType } from "@/interfaces/EventTypes";
-import { PublicUserData } from "@/interfaces/UserTypes";
+import { EmptyEventData, EventData, EventId, SearchType } from "@/interfaces/EventTypes";
+import { PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
 import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
@@ -18,10 +18,20 @@ import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useState } from "react";
+
+const SPORTSHUB_ORGANISER_ID = "ZzuRS5v8hhWonnp2qdIOZG8R7f12";
+const logger = new Logger("DashboardLogger");
 
 export default function Dashboard() {
-  const logger = new Logger("DashboardLogger");
+  return (
+    <Suspense fallback={<div className="min-h-[60vh]" />}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
   const [eventDataList, setEventDataList] = useState<EventData[]>([
@@ -67,7 +77,7 @@ export default function Dashboard() {
     locationParameter: string | null,
     userParameter: string | null
   ): SearchType {
-    var type = SearchType.EVENT;
+    let type = SearchType.EVENT;
     if (eventParameter !== null) {
       type = SearchType.EVENT;
     } else if (userParameter !== null) {
@@ -113,11 +123,9 @@ export default function Dashboard() {
         } else {
           try {
             const events = await searchEventsByKeyword(event, location);
-            let tempEventDataList: EventData[] = [];
-            for (const singleEvent of events) {
-              const eventData = await getEventById(singleEvent.eventId);
-              tempEventDataList.push(eventData);
-            }
+            const tempEventDataList = await Promise.all(
+              events.map((singleEvent) => getEventById(singleEvent.eventId as EventId))
+            );
             setEventDataList(tempEventDataList);
             setSearchDataList(tempEventDataList);
             setPublicUserDataList([]);
@@ -149,7 +157,7 @@ export default function Dashboard() {
           } else {
             // the search is not empty
             // 1. try search the user up by username and if so add it to the first element of the list
-            var users: PublicUserData[] = [];
+            let users: PublicUserData[] = [];
             try {
               const { userId } = await getUsernameMapping(user);
               users.push(await getPublicUserById(userId));
@@ -260,7 +268,7 @@ export default function Dashboard() {
                     return (
                       <UserCard
                         key={userIdx}
-                        userId={user.userId}
+                        userId={user.userId as UserId}
                         firstName={user.firstName}
                         surname={user.surname}
                         username={user.username}
@@ -272,7 +280,19 @@ export default function Dashboard() {
                     );
                   })
               : eventDataList
-                  .sort((a, b) => b.accessCount - a.accessCount)
+                  .sort((a, b) => {
+                    const aIsNonSportHub = a.organiserId !== SPORTSHUB_ORGANISER_ID;
+                    const bIsNonSportHub = b.organiserId !== SPORTSHUB_ORGANISER_ID;
+                    // Non-SportHub clubs first
+                    if (aIsNonSportHub && !bIsNonSportHub) return -1;
+                    if (!aIsNonSportHub && bIsNonSportHub) return 1;
+                    // Same group: sort by closest date (ascending)
+                    const aTime = a.startDate?.toMillis?.() ?? 0;
+                    const bTime = b.startDate?.toMillis?.() ?? 0;
+                    if (aTime !== bTime) return aTime - bTime;
+                    // Same date: sort by accessCount descending
+                    return b.accessCount - a.accessCount;
+                  })
                   .map((event, eventIdx) => {
                     return (
                       <EventCard

@@ -1,6 +1,6 @@
 package com.functions.events.controllers;
 
-import com.google.cloud.functions.HttpFunction;
+import com.functions.global.controllers.AbstractConfiguredHttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 import org.slf4j.Logger;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static com.functions.events.services.RecurringEventsCronService.createEventsFromRecurrenceTemplates;
 
-public class RecurringEventsCronEndpoint implements HttpFunction {
+public class RecurringEventsCronEndpoint extends AbstractConfiguredHttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronEndpoint.class);
 
     @Override

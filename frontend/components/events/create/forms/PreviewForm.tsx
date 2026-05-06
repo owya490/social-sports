@@ -17,10 +17,10 @@ type PreviewFormProps = BasicData & {
 
 export const PreviewForm = ({ form, user }: PreviewFormProps) => {
   const dateString = form.startDate + " " + form.startTime;
-  var [datePart, timePart] = dateString.split(" ");
-  var [year, month, day] = datePart.split("-");
-  var [hours, minutes] = timePart.split(":");
-  var myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+  const [datePart, timePart] = dateString.split(" ");
+  const [year, month, day] = datePart.split("-");
+  const [hours, minutes] = timePart.split(":");
+  const myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
 
   return (
     <div className="lg:grid lg:grid-cols-3 mt-20 space-y-6">
@@ -85,7 +85,6 @@ export const PreviewForm = ({ form, user }: PreviewFormProps) => {
         <div className="w-full">
           <div className="text-lg lg:text-lg font-bold mb-2 text-gray-600 text-center">Your EventCard preview:</div>
           <EventCard
-            eventId=""
             image={
               form.image === "" || form.image === undefined
                 ? "https://firebasestorage.googleapis.com/v0/b/socialsports-44162.appspot.com/o/users%2Fgeneric%2Fgeneric-sports.jpeg?alt=media&token=045e6ecd-8ca7-4c18-a136-71e4aab7aaa5"

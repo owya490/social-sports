@@ -17,6 +17,7 @@ import {
 } from "@/interfaces/RecurringEventTypes";
 import { useUser } from "@/components/utility/UserContext";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
 import {
   calculateRecurrenceEnded,
   getRecurrenceTemplate,
@@ -27,16 +28,13 @@ import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/r
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface RecurrenceTemplatePageProps {
-  params: {
-    id: string;
-  };
-}
+const logger = new Logger("RecurrenceTemplatePage");
 
-export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePageProps) {
+export default function RecurrenceTemplatePage() {
+  const params = useParams<{ id: string }>();
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [_eventData, setEventData] = useState<NewEventData>();
   const [loading, setLoading] = useState<boolean>(true);
@@ -76,10 +74,11 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
   const [showErrorAlert, setShowErrorAlert] = useState<boolean>(false);
 
-  const recurrenceTemplateId: RecurrenceTemplateId = params.id;
+  const recurrenceTemplateId = params.id as RecurrenceTemplateId;
   useEffect(() => {
-    getRecurrenceTemplate(recurrenceTemplateId)
-      .then((recurrenceTemplate) => {
+    const loadRecurrenceTemplate = async () => {
+      try {
+        const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
         setEventData(recurrenceTemplate.eventData);
         setEventName(recurrenceTemplate.eventData.name);
         setEventStartDate(recurrenceTemplate.eventData.startDate);
@@ -119,16 +118,17 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
             recurrenceEnabled: false,
           });
         }
-      })
-      .finally(async () => {
+      } catch (error) {
+        logger.error(`Failed to load recurrence template ${recurrenceTemplateId}: ${error}`);
+        router.push("/error");
+      } finally {
         await sleep(500);
         setLoading(false);
-      })
-      .catch((_error) => {
-        // dont need to log here as we should have caught all the necessary logs in the service layer
-        router.push("/error");
-      });
-  }, []);
+      }
+    };
+
+    void loadRecurrenceTemplate();
+  }, [recurrenceTemplateId, router]);
 
   const submitNewRecurrenceData = async () => {
     setUpdatingRecurrenceData(true);
@@ -140,7 +140,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
       setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
       setShowSuccessAlert(true);
     } catch (error) {
-      console.error("Failed to update recurrence data:", error);
+      logger.error(`Failed to update recurrence data for ${recurrenceTemplateId}: ${error}`);
       setShowErrorAlert(true);
     } finally {
       setUpdatingRecurrenceData(false);
@@ -192,7 +192,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   isActive={eventIsActive}
                   eventRegistrationDeadline={eventRegistrationDeadline}
                   eventEventLink={eventEventLink}
-                  updateData={updateRecurrenceTemplateEventData}
+                  updateData={async (id, data) => { await updateRecurrenceTemplateEventData(id, data); }}
                   isRecurrenceTemplate={true}
                   eventFormId={eventFormId}
                 />

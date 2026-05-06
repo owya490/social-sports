@@ -1,23 +1,25 @@
 "use client";
 import { CheckIcon, PencilSquareIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
+import { EventData, EventId } from "@/interfaces/EventTypes";
+import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 
 import { Input, Spinner } from "@material-tailwind/react";
 
 import Skeleton from "react-loading-skeleton";
 
-export const EventNameEdit = ({
+export const EventNameEdit = <T extends EventId | RecurrenceTemplateId>({
   eventId,
   eventName,
   loading,
   isActive,
   updateData,
 }: {
-  eventId: string;
+  eventId: T;
   eventName: string;
   loading: boolean;
   isActive: boolean;
-  updateData: (id: string, data: any) => any;
+  updateData: (id: T, data: Partial<EventData>) => Promise<void>;
 }) => {
   const [updateLoading, setUpdateLoading] = useState<boolean>(false);
   const [editTitle, setEditTitle] = useState(false);

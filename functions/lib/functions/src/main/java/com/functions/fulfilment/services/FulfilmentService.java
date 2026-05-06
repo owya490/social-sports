@@ -17,6 +17,9 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
+import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
+import com.functions.fulfilment.exceptions.FulfilmentProgressionBlockedException;
+import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
 import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
@@ -31,6 +34,7 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
+import com.functions.stripe.services.StripeService;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
 
@@ -38,6 +42,14 @@ public class FulfilmentService {
 
     private static final Logger logger = LoggerFactory.getLogger((FulfilmentService.class));
     private static final int CLEANUP_CUTOFF_MINUTES = 35;
+    /**
+     * Fulfilment sessions older than this get their Stripe Checkout Session expired
+     * via cron (webhook restocks).
+     */
+    private static final int STRIPE_EXPIRY_CUTOFF_MINUTES = 15;
+
+    private record StripeCheckoutCredentials(String checkoutSessionId, String stripeAccountId) {
+    }
 
     /**
      * Cleanup fulfilment sessions older than the default cutoff minutes.
@@ -80,6 +92,106 @@ public class FulfilmentService {
             logger.error("[FulfilmentService] Error during cleanup of old fulfilment sessions", e);
             throw e;
         }
+    }
+
+    /**
+     * Expires Stripe Checkout Sessions for CHECKOUT / BOOKING_APPROVAL fulfilment
+     * sessions older than
+     * {@link #STRIPE_EXPIRY_CUTOFF_MINUTES}. Stripe sends
+     * {@code checkout.session.expired}; existing webhook restocks.
+     * If the Stripe expiry succeeds, the fulfilment session is also deleted to
+     * avoid repeatedly scanning it.
+     *
+     * @return number of sessions for which Stripe {@code expire} succeeded and
+     *         fulfilment session deletion was attempted
+     */
+    public static int expireStaleStripeCheckoutSessions() throws Exception {
+        return expireStaleStripeCheckoutSessions(STRIPE_EXPIRY_CUTOFF_MINUTES);
+    }
+
+    /**
+     * @param cutoffMinutes age threshold vs {@code fulfilmentSessionStartTime}
+     * @return number of sessions for which Stripe {@code expire} succeeded and
+     *         fulfilment session deletion was attempted
+     */
+    public static int expireStaleStripeCheckoutSessions(int cutoffMinutes) throws Exception {
+        logger.info(
+                "Starting Stripe checkout expiry scan for fulfilment sessions older than {} minutes",
+                cutoffMinutes);
+        long nowSeconds = Instant.now().getEpochSecond();
+        long cutoffSeconds = nowSeconds - TimeUnit.MINUTES.toSeconds(cutoffMinutes);
+        Timestamp cutoff = Timestamp.ofTimeSecondsAndNanos(cutoffSeconds, 0);
+
+        List<String> candidateIds = FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(cutoff);
+        logger.info("Fulfilment session candidates for Stripe expiry: {}", candidateIds.size());
+
+        int expiredCount = 0;
+        for (String sessionId : candidateIds) {
+            try {
+                Optional<FulfilmentSession> maybe = FulfilmentSessionRepository.getFulfilmentSession(sessionId,
+                        Optional.empty());
+                if (maybe.isEmpty()) {
+                    continue;
+                }
+                FulfilmentSession session = maybe.get();
+                FulfilmentSessionType type = session.getType();
+                if (type != FulfilmentSessionType.CHECKOUT && type != FulfilmentSessionType.BOOKING_APPROVAL) {
+                    continue;
+                }
+
+                Optional<StripeCheckoutCredentials> creds = findStripeCheckoutCredentials(session);
+                if (creds.isEmpty()) {
+                    continue;
+                }
+                String checkoutSessionId = creds.get().checkoutSessionId();
+                String stripeAccountId = creds.get().stripeAccountId();
+                if (checkoutSessionId.isBlank() || stripeAccountId.isBlank()) {
+                    continue;
+                }
+
+                try {
+                    boolean expired = StripeService.expireCheckoutSession(checkoutSessionId, stripeAccountId);
+                    if (expired) {
+                        expiredCount++;
+                        logger.info(
+                                "Expired Stripe checkout session {} for fulfilment session {}",
+                                checkoutSessionId,
+                                sessionId);
+                        deleteFulfilmentSessionAndTempFormResponses(sessionId);
+                    }
+                } catch (Exception e) {
+                    logger.warn(
+                            "Stripe expire failed for fulfilment session {} checkout {}: {}",
+                            sessionId,
+                            checkoutSessionId,
+                            e.getMessage());
+                }
+            } catch (Exception e) {
+                logger.error("[FulfilmentService] Error processing Stripe expiry for session {}", sessionId, e);
+            }
+        }
+        return expiredCount;
+    }
+
+    private static Optional<StripeCheckoutCredentials> findStripeCheckoutCredentials(FulfilmentSession session) {
+        Map<String, FulfilmentEntity> map = session.getFulfilmentEntityMap();
+        if (map == null) {
+            return Optional.empty();
+        }
+        for (FulfilmentEntity entity : map.values()) {
+            if (entity instanceof StripeFulfilmentEntity s) {
+                if (s.getStripeCheckoutSessionId() != null && s.getStripeAccountId() != null) {
+                    return Optional.of(new StripeCheckoutCredentials(
+                            s.getStripeCheckoutSessionId(), s.getStripeAccountId()));
+                }
+            } else if (entity instanceof DelayedStripeFulfilmentEntity d) {
+                if (d.getStripeCheckoutSessionId() != null && d.getStripeAccountId() != null) {
+                    return Optional.of(new StripeCheckoutCredentials(
+                            d.getStripeCheckoutSessionId(), d.getStripeAccountId()));
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     public static String initFulfilmentSession(String eventId, Integer numTickets) throws Exception {
@@ -145,7 +257,8 @@ public class FulfilmentService {
         }
         EventData eventData = maybeEventData.get();
 
-        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && eventData.getVacancy() != null && eventData.getVacancy() <= 0) {
+        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && eventData.getVacancy() != null
+                && eventData.getVacancy() <= 0) {
             return FulfilmentSessionType.WAITLIST;
         }
 
@@ -166,7 +279,7 @@ public class FulfilmentService {
             Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId,
                     Optional.empty());
             if (maybeFulfilmentSession.isEmpty()) {
-                return Optional.empty();
+                throw new FulfilmentSessionNotFoundException(fulfilmentSessionId);
             }
 
             FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
@@ -174,9 +287,8 @@ public class FulfilmentService {
 
             // Validate current index
             if (currentIndex < -1 || currentIndex >= fulfilmentEntityIds.size()) {
-                logger.error("Invalid current index: {} for fulfilment session ID: {}",
-                        currentIndex, fulfilmentSessionId);
-                return Optional.empty();
+                throw new IllegalArgumentException("Invalid current index " + currentIndex
+                        + " for fulfilment session ID: " + fulfilmentSessionId);
             }
 
             // Calculate next index
@@ -185,7 +297,7 @@ public class FulfilmentService {
                 logger.info(
                         "Reached end of fulfilment workflow for session ID: {} because next index {} is out of bounds of number of entities {}",
                         fulfilmentSessionId, nextIndex, fulfilmentEntityIds.size());
-                return Optional.empty();
+                return Optional.of(new GetNextFulfilmentEntityResponse(null));
             }
 
             // Get next entity
@@ -195,17 +307,25 @@ public class FulfilmentService {
                     nextEntityId);
 
             FulfilmentEntity nextEntity = fulfilmentSession.getFulfilmentEntityMap().get(nextEntityId);
-            
+            if (nextEntity == null) {
+                throw new FulfilmentEntityNotFoundException(nextEntityId);
+            }
+
             if (nextEntity.onStartHook().isPresent()) {
-                boolean result = nextEntity.onStartHook().get().apply(new FulfilmentEntityHookInput(nextEntityId, fulfilmentSession));
+                boolean result = nextEntity.onStartHook().get()
+                        .apply(new FulfilmentEntityHookInput(nextEntityId, fulfilmentSession));
                 if (!result) {
-                    logger.warn("Next fulfilment entity onStartHook failed, preventing progression to next entity: {}", nextEntityId);
-                    return Optional.empty();
+                    throw new FulfilmentProgressionBlockedException(
+                            "Next fulfilment entity onStartHook blocked progression for session: "
+                                    + fulfilmentSessionId + ", entity: " + nextEntityId);
                 }
             }
 
             return Optional.of(new GetNextFulfilmentEntityResponse(
                     nextEntityId));
+        } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
+                | IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity for session ID: {}",
                     fulfilmentSessionId, e);
@@ -329,7 +449,7 @@ public class FulfilmentService {
             Optional<FulfilmentSession> maybeFulfilmentSession = getFulfilmentSessionById(fulfilmentSessionId,
                     Optional.empty());
             if (maybeFulfilmentSession.isEmpty()) {
-                return Optional.empty();
+                throw new FulfilmentSessionNotFoundException(fulfilmentSessionId);
             }
 
             FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
@@ -338,23 +458,29 @@ public class FulfilmentService {
             // Find the index of the current entity
             int currentIndex = fulfilmentEntityIds.indexOf(currentEntityId);
             if (currentIndex == -1) {
-                logger.error("Current entity ID not found in session: {} -> {}",
-                        fulfilmentSessionId, currentEntityId);
-                return Optional.empty();
+                throw new FulfilmentEntityNotFoundException(currentEntityId);
             }
 
             FulfilmentEntity currentEntity = fulfilmentSession.getFulfilmentEntityMap().get(currentEntityId);
-            
+            if (currentEntity == null) {
+                throw new FulfilmentEntityNotFoundException(currentEntityId);
+            }
+
             if (currentEntity.onEndHook().isPresent()) {
-                boolean result = currentEntity.onEndHook().get().apply(new FulfilmentEntityHookInput(currentEntityId, fulfilmentSession));
+                boolean result = currentEntity.onEndHook().get()
+                        .apply(new FulfilmentEntityHookInput(currentEntityId, fulfilmentSession));
                 if (!result) {
-                    logger.warn("Current fulfilment entity onEndHook failed, preventing progression to next entity: {}", currentEntityId);
-                    return Optional.empty();
+                    throw new FulfilmentProgressionBlockedException(
+                            "Current fulfilment entity is incomplete for session: "
+                                    + fulfilmentSessionId + ", entity: " + currentEntityId);
                 }
             }
 
             // Get the next entity
             return getNextFulfilmentEntity(fulfilmentSessionId, currentIndex);
+        } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
+                | IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity by current ID for session: {}",
                     fulfilmentSessionId, e);

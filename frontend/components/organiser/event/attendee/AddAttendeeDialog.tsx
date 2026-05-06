@@ -1,33 +1,38 @@
 import Loading from "@/components/loading/Loading";
-import { EventMetadata } from "@/interfaces/EventTypes";
-import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { getEventById } from "@/services/src/events/eventsService";
-import { addAttendee } from "@/services/src/organiser/organiserService";
+import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
+import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
+import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
+import { addAttendee } from "@/services/src/attendee/attendeeService";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert, Input } from "@material-tailwind/react";
+import { Timestamp } from "firebase/firestore";
 import React, { Fragment, useEffect, useState } from "react";
 
 interface InviteAttendeeDialogProps {
+  eventData: EventData;
+  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setIsFilterModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
   isFilterModalOpen: boolean;
-  eventId: string;
-  setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
+  eventId: EventId;
   setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
+  setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 const InviteAttendeeDialog = ({
+  eventData,
+  setEventMetadata,
   closeModal,
   isFilterModalOpen,
   eventId,
-  setEventMetadata,
   setEventVacancy,
+  setOrderTicketsMap,
 }: InviteAttendeeDialogProps) => {
   const [attendeeEmail, setAttendeeEmail] = useState<string>("");
   const [attendeeName, setAttendeeName] = useState<string>("");
   const [attendeePhoneNumber, setAttendeePhoneNumber] = useState<string>("");
-  const [numTickets, setNumTickets] = useState<string>("0");
+  const [numTickets, setNumTickets] = useState<string>("1");
 
   const [loading, setLoading] = useState<boolean>(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
@@ -46,17 +51,47 @@ const InviteAttendeeDialog = ({
     setAttendeeEmail("");
     setAttendeeName("");
     setAttendeePhoneNumber("");
-    setNumTickets("0");
+    setNumTickets("1");
   };
 
   const handleAddAttendee = async () => {
     try {
       setLoading(true);
-      await addAttendee(attendeeEmail, attendeeName, attendeePhoneNumber, parseInt(numTickets), eventId);
-      const updatedEventMetadata = await getEventsMetadataByEventId(eventId);
-      setEventMetadata(updatedEventMetadata);
-      const updatedEventData = await getEventById(eventId);
-      setEventVacancy(updatedEventData.vacancy);
+      const { orderId, ticketIds } = await addAttendee({
+        eventId,
+        email: attendeeEmail,
+        fullName: attendeeName,
+        phone: attendeePhoneNumber,
+        numTickets: parseInt(numTickets),
+        price: 0, // price is free as it is being added manually
+      });
+      const now = Timestamp.now();
+      const newOrder: Order = {
+        ...EMPTY_ORDER_DEFAULTS,
+        orderId: orderId as OrderId,
+        email: attendeeEmail,
+        fullName: attendeeName,
+        phone: attendeePhoneNumber,
+        tickets: ticketIds as TicketId[],
+        datePurchased: now,
+        status: OrderAndTicketStatus.APPROVED,
+        type: OrderAndTicketType.MANUAL,
+      };
+      const newTickets: Ticket[] = ticketIds.map((ticketId) => ({
+        ...EMPTY_TICKET,
+        ticketId: ticketId as TicketId,
+        eventId,
+        orderId: orderId as OrderId,
+        purchaseDate: now,
+        status: OrderAndTicketStatus.APPROVED,
+        type: OrderAndTicketType.MANUAL,
+      }));
+      setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
+      setEventVacancy(eventData.vacancy - parseInt(numTickets));
+      setEventMetadata((prev) => ({
+        ...prev,
+        completeTicketCount: prev.completeTicketCount + parseInt(numTickets),
+      }));
       resetInputFields();
       setShowSuccessAlert(true);
       setShowErrorMessage(false);
@@ -125,7 +160,12 @@ const InviteAttendeeDialog = ({
                       <Loading inline={true} />
                     </div>
                   ) : (
-                    <form onSubmit={handleAddAttendee}>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        await handleAddAttendee();
+                      }}
+                    >
                       <DialogTitle
                         as="h3"
                         className="text-2xl font-medium leading-6 text-gray-900 pb-3 border-b-[0px] border-gray-500 w-full text-center flex justify-center items-center"
@@ -178,13 +218,15 @@ const InviteAttendeeDialog = ({
                           required
                           value={numTickets}
                           type="number"
+                          min={1}
+                          max={eventData.vacancy}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
                             if (!isNaN(value)) {
-                              const maxValue = Math.max(value, 0);
-                              setNumTickets(maxValue.toString());
+                              const capped = Math.min(Math.max(value, 1), eventData.vacancy);
+                              setNumTickets(capped.toString());
                             } else {
-                              setNumTickets("0");
+                              setNumTickets("1");
                             }
                           }}
                           className="focus:ring-0"

@@ -10,8 +10,7 @@ import { useEffect, useState } from "react";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
 import { UserInlineDisplay } from "../users/UserInlineDisplay";
 
-interface EventCardProps {
-  eventId: EventId;
+interface EventCardBaseProps {
   image: string;
   thumbnail: string;
   name: string;
@@ -21,12 +20,22 @@ interface EventCardProps {
   price: number;
   vacancy: number;
   loading: boolean;
-  isClickable?: boolean;
 }
+
+type ClickableEventCardProps = EventCardBaseProps & {
+  eventId: EventId;
+  isClickable?: true;
+};
+
+type PreviewEventCardProps = EventCardBaseProps & {
+  isClickable: false;
+  eventId?: never;
+};
+
+type EventCardProps = ClickableEventCardProps | PreviewEventCardProps;
 
 export default function EventCard(props: EventCardProps) {
   const {
-    eventId,
     image,
     thumbnail,
     name,
@@ -35,10 +44,10 @@ export default function EventCard(props: EventCardProps) {
     location,
     price,
     loading,
-    isClickable = true,
   } = props;
 
   const [imageLoaded, setImageLoaded] = useState(false);
+  const isCardClickable = props.isClickable !== false;
 
   // Preload images for better performance
   useEffect(() => {
@@ -74,7 +83,7 @@ export default function EventCard(props: EventCardProps) {
               <h4 className="font-light text-gray-500 text-xs ml-auto">{`$${displayPrice(price)}`}</h4>
             </div>
             <h2 className="text-lg font-semibold mt-0.5 whitespace-nowrap overflow-hidden text-core-text">{name}</h2>
-            <UserInlineDisplay organiser={organiser} />
+            <UserInlineDisplay organiser={organiser} isLinkEnabled={!isCardClickable} />
             <div className="mt-1 space-y-3">
               <div className="flex items-center ml-0.5">
                 <MapPinIcon className="w-4 shrink-0" />
@@ -87,5 +96,9 @@ export default function EventCard(props: EventCardProps) {
     </div>
   );
 
-  return isClickable ? <Link href={`/event/${eventId}`}>{cardContent}</Link> : cardContent;
+  if (!isCardClickable) {
+    return cardContent;
+  }
+
+  return <Link href={`/event/${props.eventId}`}>{cardContent}</Link>;
 }

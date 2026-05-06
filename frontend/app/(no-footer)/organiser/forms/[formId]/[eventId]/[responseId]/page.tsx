@@ -5,10 +5,10 @@ import { FormId, FormResponseId } from "@/interfaces/FormTypes";
 import { useParams } from "next/navigation";
 
 const OrganiserViewFormResponse = () => {
-  const params = useParams();
-  const formId = params?.formId as FormId;
-  const eventId = params?.eventId as EventId;
-  const responseId = params?.responseId as FormResponseId;
+  const params = useParams<{ formId: string; eventId: string; responseId: string }>();
+  const formId = params.formId as FormId;
+  const eventId = params.eventId as EventId;
+  const responseId = params.responseId as FormResponseId;
 
   return (
     <div className="bg-core-hover h-screen overflow-hidden">

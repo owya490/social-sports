@@ -1,7 +1,7 @@
 // TODO: functions to abstract away editing forms
 
 import { EventId } from "@/interfaces/EventTypes";
-import { FormId, FormResponseId, SectionId } from "@/interfaces/FormTypes";
+import { FormId, FormResponseId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { doc, DocumentData, DocumentReference, getDoc, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import { FormResponsePaths, FormTemplatePaths } from "../formsConstants";
@@ -103,4 +103,29 @@ export async function findFormResponseDoc(
 }
 export function archiveSection(sectionId: SectionId): void {
   // TODO
+}
+
+/** Human-readable value for a single form section (matches organiser tooling). */
+export function getFormSectionAnswerDisplay(section: FormSection | undefined): string {
+  if (!section) return "—";
+
+  switch (section.type) {
+    case FormSectionType.TEXT:
+    case FormSectionType.DROPDOWN_SELECT:
+    case FormSectionType.MULTIPLE_CHOICE:
+      return section.answer || "—";
+    case FormSectionType.TICKBOX:
+      return section.answer?.join(", ") || "—";
+    case FormSectionType.DATE_TIME:
+      if (!section.timestamp) return "—";
+      try {
+        return new Date(section.timestamp).toLocaleString();
+      } catch {
+        return section.timestamp;
+      }
+    case FormSectionType.FILE_UPLOAD:
+      return section.fileUrl || "—";
+    default:
+      return "—";
+  }
 }

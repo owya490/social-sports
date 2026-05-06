@@ -97,7 +97,7 @@ export function WrappedLoading() {
         </div>
 
         {/* Animated phrase */}
-        <div className="h-16 flex items-center justify-center">
+        <div className="relative h-16 w-full overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={phraseIndex}
@@ -105,7 +105,7 @@ export function WrappedLoading() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
-              className="text-white text-xl font-medium"
+              className="absolute inset-0 flex items-center justify-center text-white text-xl font-medium text-center"
             >
               {loadingPhrases[phraseIndex].text}
             </motion.div>

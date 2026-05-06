@@ -7,9 +7,10 @@ import lombok.Data;
 
 @Data
 public class EventMetadata {
-	private Map<String, Purchaser> purchaserMap;
-	private Integer completeTicketCount;
-	private List<String> completedStripeCheckoutSession;
-	private String organiserId;
-	private List<String> orderIds;
+    private Map<String, Purchaser> purchaserMap;
+    private Integer completeTicketCount;
+    private List<String> completedStripeCheckoutSessionIds;
+    private List<String> completedStripePaymentIntentIds;
+    private String organiserId;
+    private List<String> orderIds;
 }

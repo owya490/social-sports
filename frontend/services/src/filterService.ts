@@ -1,4 +1,4 @@
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { QueryFieldFilterConstraint, Timestamp, collection, getDocs, limit, query, where } from "firebase/firestore";
 import geofire from "geofire-common";
 import { SortByCategory } from "../../components/Filter/FilterDialog";
@@ -150,7 +150,7 @@ export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
   Object.keys(filterFieldsMap).forEach(async (key: string) => {
     switch (key) {
       case "startDate":
-        let startDate: Timestamp = filterFieldsMap["startDate"].startDate;
+        const startDate: Timestamp = filterFieldsMap["startDate"].startDate;
         let endDate: Timestamp | null = null;
         if ("endDate" in filterFieldsMap["startDate"]) {
           endDate = filterFieldsMap["startDate"].endDate;
@@ -195,14 +195,14 @@ async function filterEventsByWhereClausesAndProximity(
   try {
     const eventsRef = collection(db, "Events");
 
-    let filterEventsQuery = query(eventsRef, ...whereClauseList, limit(NUM_DOCS_QUERY_LIMIT));
+    const filterEventsQuery = query(eventsRef, ...whereClauseList, limit(NUM_DOCS_QUERY_LIMIT));
 
     const filteredEventsSnapshot = await getDocs(filterEventsQuery);
     const filteredEventsData: EventData[] = [];
 
     filteredEventsSnapshot.forEach((doc) => {
       const filteredEventData = doc.data() as EventData;
-      filteredEventData.eventId = doc.id;
+      filteredEventData.eventId = doc.id as EventId;
       filteredEventsData.push(filteredEventData);
     });
 

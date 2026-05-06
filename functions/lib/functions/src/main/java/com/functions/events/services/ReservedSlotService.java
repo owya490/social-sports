@@ -1,32 +1,33 @@
 package com.functions.events.services;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.events.models.Attendee;
 import com.functions.events.models.EventData;
-import com.functions.events.models.EventMetadata;
-import com.functions.events.models.Purchaser;
 import com.functions.events.models.ReservedSlot;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.tickets.models.Order;
+import com.functions.tickets.models.OrderAndTicketStatus;
+import com.functions.tickets.models.OrderAndTicketType;
+import com.functions.tickets.models.Ticket;
+import com.functions.tickets.repositories.OrdersRepository;
+import com.functions.tickets.repositories.TicketsRepository;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Transaction;
-
-import static com.functions.waitlist.repositories.WaitlistRepository.hashEmail;
 
 public class ReservedSlotService {
     private static final Logger logger = LoggerFactory.getLogger(ReservedSlotService.class);
 
     /**
-     * Processes reserved slots for an event: validates, caps to capacity, reduces vacancy, and adds as attendees.
-     * All operations happen in one transaction.
+     * Processes reserved slots for an event: validates, caps to capacity, reduces vacancy,
+     * and creates Orders and Tickets for each slot. All operations happen in one transaction.
      *
      * @param eventId The event ID
      * @param rawReservedSlots The raw reserved slots to process
@@ -37,24 +38,13 @@ public class ReservedSlotService {
             return;
         }
 
-        // Read event data and metadata using EventsRepository
-        // IMPORTANT: All reads must happen before any writes in Firestore transactions
+        // Read event data - IMPORTANT: All reads must happen before any writes in Firestore transactions
         Optional<EventData> eventDataOpt = EventsRepository.getEventById(eventId, Optional.of(transaction));
         if (eventDataOpt.isEmpty()) {
             throw new Exception("Event not found for eventId: " + eventId);
         }
         EventData eventData = eventDataOpt.get();
         int currentVacancy = eventData.getVacancy();
-
-        Optional<EventMetadata> eventMetadataOpt = EventsRepository.getEventMetadataById(eventId, Optional.of(transaction));
-        if (eventMetadataOpt.isEmpty()) {
-            throw new Exception("Event metadata not found for eventId: " + eventId);
-        }
-        EventMetadata eventMetadata = eventMetadataOpt.get();
-        
-        // Get the DocumentReference for event metadata before any writes
-        // This ensures we can update it later without violating read-before-write rule
-        DocumentReference eventMetadataDocRef = EventsRepository.getEventMetadataDocumentReference(eventId);
 
         // Validate and normalize reserved slots
         List<ReservedSlot> reservedSlots = rawReservedSlots.stream()
@@ -72,7 +62,7 @@ public class ReservedSlotService {
 
         // Cap reserved slots to available capacity if needed
         if (totalReservedSlots > currentVacancy) {
-            logger.warn("Reserved slots ({}) exceed vacancy ({}). Capping to available capacity.", 
+            logger.warn("Reserved slots ({}) exceed vacancy ({}). Capping to available capacity.",
                     totalReservedSlots, currentVacancy);
             reservedSlots = capReservedSlotsToCapacity(reservedSlots, currentVacancy);
             totalReservedSlots = reservedSlots.stream().mapToInt(ReservedSlot::getSlots).sum();
@@ -83,59 +73,54 @@ public class ReservedSlotService {
         EventsRepository.updateEventById(eventId, "vacancy", newVacancy, transaction);
         logger.info("Reduced vacancy from {} to {} for event {}", currentVacancy, newVacancy, eventId);
 
-        // Add reserved slots as attendees
-        Map<String, Purchaser> purchaserMap = eventMetadata.getPurchaserMap();
-        if (purchaserMap == null) {
-            purchaserMap = new HashMap<>();
-        }
-
+        // Create Order and Tickets for each reserved slot
         int totalTicketsAdded = 0;
+        Timestamp now = Timestamp.now();
+        DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(eventId);
+
         for (ReservedSlot reservedSlot : reservedSlots) {
             String email = reservedSlot.getEmail().toLowerCase().trim();
             String name = reservedSlot.getName().trim();
             int slots = reservedSlot.getSlots();
 
-            String emailHash = hashEmail(email);
+            String orderId = OrdersRepository.generateOrderId();
 
-            Attendee attendee = new Attendee();
-            attendee.setPhone("");
-            attendee.setTicketCount(slots);
+            Order order = new Order();
+            order.setEmail(email);
+            order.setFullName(name);
+            order.setPhone("");
+            order.setStripePaymentIntentId("");
+            order.setDatePurchased(now);
+            order.setApplicationFees(0);
+            order.setDiscounts(0);
+            order.setStatus(OrderAndTicketStatus.APPROVED);
+            order.setType(OrderAndTicketType.MANUAL);
 
-            if (purchaserMap.containsKey(emailHash)) {
-                Purchaser existingPurchaser = purchaserMap.get(emailHash);
-                Map<String, Attendee> attendees = existingPurchaser.getAttendees();
-                if (attendees == null) {
-                    attendees = new HashMap<>();
-                }
-                if (attendees.containsKey(name)) {
-                    Attendee existingAttendee = attendees.get(name);
-                    existingAttendee.setTicketCount(existingAttendee.getTicketCount() + slots);
-                } else {
-                    attendees.put(name, attendee);
-                }
-                existingPurchaser.setAttendees(attendees);
-                existingPurchaser.setTotalTicketCount(existingPurchaser.getTotalTicketCount() + slots);
-            } else {
-                Purchaser purchaser = new Purchaser();
-                purchaser.setEmail(email);
-                Map<String, Attendee> attendees = new HashMap<>();
-                attendees.put(name, attendee);
-                purchaser.setAttendees(attendees);
-                purchaser.setTotalTicketCount(slots);
-                purchaserMap.put(emailHash, purchaser);
+            List<String> ticketIds = new ArrayList<>();
+            for (int i = 0; i < slots; i++) {
+                Ticket ticket = new Ticket();
+                ticket.setEventId(eventId);
+                ticket.setOrderId(orderId);
+                ticket.setPrice(0);
+                ticket.setPurchaseDate(now);
+                ticket.setStatus(OrderAndTicketStatus.APPROVED);
+                ticket.setType(OrderAndTicketType.MANUAL);
+
+                String ticketId = TicketsRepository.createTicket(ticket, transaction);
+                ticketIds.add(ticketId);
             }
 
+            order.setTickets(ticketIds);
+            OrdersRepository.createOrder(order, eventId, orderId, transaction);
+
             totalTicketsAdded += slots;
-            logger.info("Added reserved slot as attendee: email={}, name={}, slots={}", email, name, slots);
+            logger.info("Created order {} with {} tickets for reserved slot: email={}, name={}", orderId, slots, email, name);
         }
 
-        // Update event metadata using the pre-fetched DocumentReference
-        // This avoids reading again after writes have been performed
-        eventMetadata.setPurchaserMap(purchaserMap);
-        eventMetadata.setCompleteTicketCount(eventMetadata.getCompleteTicketCount() + totalTicketsAdded);
-        EventsRepository.updateEventMetadataByReference(eventMetadataDocRef, eventMetadata, transaction);
+        // Increment completeTicketCount
+        transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(totalTicketsAdded));
 
-        logger.info("Successfully processed {} reserved slots ({} tickets) for event {}", 
+        logger.info("Successfully processed {} reserved slots ({} tickets) for event {}",
                 reservedSlots.size(), totalTicketsAdded, eventId);
     }
 
@@ -151,7 +136,7 @@ public class ReservedSlotService {
             if (slot == null || slot.getSlots() == null || slot.getSlots() <= 0) {
                 continue;
             }
-            
+
             if (remainingCapacity <= 0) {
                 logger.warn("Skipping reserved slot for {} - no capacity remaining", slot.getEmail());
                 break;

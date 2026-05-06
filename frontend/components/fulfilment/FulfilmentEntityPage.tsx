@@ -1,7 +1,7 @@
 "use client";
 
 import { FulfilmentSessionId, GetFulfilmentSessionInfoResponse } from "@/interfaces/FulfilmentTypes";
-import { deleteFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
+import { FULFILMENT_SESSION_EXPIRY_MILLIS } from "@/services/src/fulfilment/fulfilmentConstants";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,7 @@ interface FulfilmentEntityPageProps {
   fulfilmentSessionInfo: GetFulfilmentSessionInfoResponse | null;
   areAllRequiredFieldsFilled?: boolean;
   isSaving?: boolean;
+  nextDisabledMessage?: string;
   fulfilmentSessionId: FulfilmentSessionId;
 }
 
@@ -31,6 +32,7 @@ const FulfilmentEntityPage = ({
   fulfilmentSessionInfo,
   areAllRequiredFieldsFilled = true,
   isSaving = false,
+  nextDisabledMessage,
   fulfilmentSessionId,
 }: FulfilmentEntityPageProps) => {
   const router = useRouter();
@@ -51,7 +53,7 @@ const FulfilmentEntityPage = ({
       ? (fulfilmentSessionInfo.fulfilmentSessionStartTime as any).toMillis()
       : new Date((fulfilmentSessionInfo!.fulfilmentSessionStartTime as unknown as string) ?? Date.now()).getTime();
 
-    const expiryMs = startMs + 30 * 60 * 1000; // 30 minutes
+    const expiryMs = startMs + FULFILMENT_SESSION_EXPIRY_MILLIS;
 
     const update = () => {
       const now = Date.now();
@@ -86,7 +88,6 @@ const FulfilmentEntityPage = ({
     if (remainingMs <= 0) {
       // Small delay to ensure the timer shows 00:00 before redirecting
       const timeoutId = setTimeout(async () => {
-        await deleteFulfilmentSession(fulfilmentSessionId);
         router.push("/timeout");
       }, 100);
 
@@ -107,6 +108,7 @@ const FulfilmentEntityPage = ({
 
   const getNextTooltipMessage = () => {
     if (!showNextButton) return "No next step available";
+    if (nextDisabledMessage) return nextDisabledMessage;
     if (!areAllRequiredFieldsFilled) return "Please fill out all required sections before continuing";
     if (isSaving) return "Please wait while saving...";
     return "";
@@ -121,7 +123,7 @@ const FulfilmentEntityPage = ({
   };
 
   const handleDisabledNextClick = () => {
-    if (!showNextButton || !areAllRequiredFieldsFilled || isSaving) {
+    if (!showNextButton || !areAllRequiredFieldsFilled || isSaving || !!nextDisabledMessage) {
       setShowMobileTooltip("next");
       setTimeout(() => setShowMobileTooltip(null), 3000);
     }
@@ -227,14 +229,16 @@ const FulfilmentEntityPage = ({
                     <InvertedHighlightButton
                       type="submit"
                       className={`border-1 px-4 ${
-                        showNextButton && areAllRequiredFieldsFilled && !isSaving
+                        showNextButton && areAllRequiredFieldsFilled && !isSaving && !nextDisabledMessage
                           ? "bg-white"
                           : "bg-gray-100 text-gray-400 cursor-not-allowed"
                       }`}
                       onClick={
-                        showNextButton && areAllRequiredFieldsFilled && !isSaving ? onNext : handleDisabledNextClick
+                        showNextButton && areAllRequiredFieldsFilled && !isSaving && !nextDisabledMessage
+                          ? onNext
+                          : handleDisabledNextClick
                       }
-                      disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving}
+                      disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving || !!nextDisabledMessage}
                     >
                       <span className="text-sm flex items-center gap-2">
                         Next <ChevronRightIcon className="h-4 w-4" />
@@ -257,14 +261,16 @@ const FulfilmentEntityPage = ({
                     <InvertedHighlightButton
                       type="submit"
                       className={`border-1 px-4 ${
-                        showNextButton && areAllRequiredFieldsFilled && !isSaving
+                        showNextButton && areAllRequiredFieldsFilled && !isSaving && !nextDisabledMessage
                           ? "bg-white"
                           : "bg-gray-100 text-gray-400 cursor-not-allowed"
                       }`}
                       onClick={
-                        showNextButton && areAllRequiredFieldsFilled && !isSaving ? onNext : handleDisabledNextClick
+                        showNextButton && areAllRequiredFieldsFilled && !isSaving && !nextDisabledMessage
+                          ? onNext
+                          : handleDisabledNextClick
                       }
-                      disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving}
+                      disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving || !!nextDisabledMessage}
                     >
                       <span className="text-sm flex items-center gap-2">
                         Next <ChevronRightIcon className="h-4 w-4" />

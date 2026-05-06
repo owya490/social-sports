@@ -8,8 +8,7 @@ import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import LoadingSkeletonOrganiserEventCard from "../../loading/LoadingSkeletonOrganiserEventCard";
 
-export interface RecurringTemplateCardProps {
-  recurrenceTemplateId: RecurrenceTemplateId;
+interface RecurringTemplateCardBaseProps {
   image: string;
   name: string;
   startTime: Timestamp;
@@ -21,29 +20,29 @@ export interface RecurringTemplateCardProps {
   createDaysBefore: number;
   recurrenceEnabled: boolean;
   disabled: boolean;
-  disableLink?: boolean;
   openInNewTab?: boolean;
 }
 
+export type LinkedRecurringTemplateCardProps = RecurringTemplateCardBaseProps & {
+  recurrenceTemplateId: RecurrenceTemplateId;
+  disableLink?: false;
+};
+
+export type UnlinkedRecurringTemplateCardProps = RecurringTemplateCardBaseProps & {
+  disableLink: true;
+  recurrenceTemplateId?: RecurrenceTemplateId;
+};
+
+export type RecurringTemplateCardProps = LinkedRecurringTemplateCardProps | UnlinkedRecurringTemplateCardProps;
+
 export default function RecurringTemplateCard(props: RecurringTemplateCardProps) {
-  if (props.loading === undefined) {
-    props = {
-      ...props,
-      loading: false,
-    };
-  }
-  if (props.disableLink === undefined) {
-    props = {
-      ...props,
-      disableLink: false,
-    };
-  }
-  if (props.openInNewTab === undefined) {
-    props = {
-      ...props,
-      openInNewTab: false,
-    };
-  }
+  const loading = props.loading ?? false;
+  const disableLink = props.disableLink ?? false;
+  const openInNewTab = props.openInNewTab ?? false;
+  const url =
+    disableLink || !("recurrenceTemplateId" in props)
+      ? ""
+      : `/organiser/event/recurring-events/${props.recurrenceTemplateId}`;
 
   const MaybeDisabledLink = ({
     children,
@@ -67,12 +66,12 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
   };
   return (
     <MaybeDisabledLink
-      disableLink={props.disableLink}
-      openInNewTab={props.openInNewTab}
-      url={`/organiser/event/recurring-events/${props.recurrenceTemplateId}`}
+      disableLink={disableLink}
+      openInNewTab={openInNewTab}
+      url={url}
     >
       <div className="bg-white rounded-lg text-left border-gray-300 border w-full hover:cursor-pointer">
-        {props.loading ? (
+        {loading ? (
           <div>
             <LoadingSkeletonOrganiserEventCard />
           </div>

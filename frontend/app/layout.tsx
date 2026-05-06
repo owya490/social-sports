@@ -7,6 +7,7 @@ import { Environment, getEnvironment } from "@/utilities/environment";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
 import "./globals.css";
 
@@ -95,13 +96,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <GrafanaFaro>
         <UserContext>
-          <body className={`${satoshi.className}`}>
+          {/* Browser extensions such as Grammarly add attributes to <body> before hydration. */}
+          <body className={`${satoshi.className}`} suppressHydrationWarning>
             <AccessibilitySkipNavigation />
             <div className="md:hidden">
-              <MobileNavbar />
+              <Suspense
+                fallback={<div className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-white" />}
+              >
+                <MobileNavbar />
+              </Suspense>
             </div>
             <div className="hidden md:block">
-              <Navbar />
+              <Suspense
+                fallback={<div className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-white" />}
+              >
+                <Navbar />
+              </Suspense>
             </div>
             <main id="main-content" className="min-h-screen pt-[var(--navbar-height)]">
               {children}

@@ -1,9 +1,9 @@
-import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
 import {
   FulfilmentEntityId,
-  FulfilmentSessionId,
   FulfilmentSessionDataType,
+  FulfilmentSessionId,
+  FulfilmentSessionType,
   GetFulfilmentEntityInfoRequest,
   GetFulfilmentEntityInfoResponse,
   GetFulfilmentSessionInfoRequest,
@@ -14,7 +14,6 @@ import {
   GetPrevFulfilmentEntityResponse,
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
-  FulfilmentSessionType,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
@@ -22,13 +21,9 @@ import { executeGlobalAppControllerFunction } from "../functions/functionsUtils"
 import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
   clearStoredFulfilmentSessionId,
-  getDeleteFulfilmentSessionUrl,
   getStoredFulfilmentSessionId,
   storeFulfilmentSessionId,
 } from "./fulfilmentUtils/fulfilmentUtils";
-
-// Flag for development purposes to enable or disable fulfilment session functionality.
-export const FULFILMENT_SESSION_ENABLED = true;
 
 const fulfilmentSessionEnabledUserIdList = [
   // "tihrtHXNCKVkYpmJIVijKDWkkvq2", // syrio prod
@@ -47,16 +42,6 @@ const fulfilmentSessionEnabledEventIdList: string[] = [
   // "5p3V3XRykiYZava8WAM8",
   // "0kcqoQMnRE9OV3ezstZt", // syrio jersey
 ];
-
-export const evaluateFulfilmentSessionEnabled = (userId: string, eventId: EventId) => {
-  // if (userId && fulfilmentSessionEnabledUserIdList.includes(userId)) {
-  //   return true;
-  // }
-  // if (eventId && fulfilmentSessionEnabledEventIdList.includes(eventId)) {
-  //   return true;
-  // }
-  return FULFILMENT_SESSION_ENABLED;
-};
 
 export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
 
@@ -311,43 +296,6 @@ export async function getFulfilmentEntityInfo(
     return response;
   } catch (error) {
     fulfilmentServiceLogger.error(`getFulfilmentEntityInfo: Failed to fetch fulfilment entity info: ${error}`);
-    throw error;
-  }
-}
-
-// TODO: deprecate and remove this function in favour of `completeFulfilmentSession`
-export async function deleteFulfilmentSession(fulfilmentSessionId: FulfilmentSessionId): Promise<void> {
-  fulfilmentServiceLogger.info(`deleteFulfilmentSession: Deleting fulfilment session with ID: ${fulfilmentSessionId}`);
-
-  const request: { fulfilmentSessionId: FulfilmentSessionId } = {
-    fulfilmentSessionId,
-  };
-
-  try {
-    const rawResponse = await fetch(getDeleteFulfilmentSessionUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `deleteFulfilmentSession: Cloud function error: Failed to delete fulfilment session: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`deleteFulfilmentSession: ${errorResponse.errorMessage}`);
-    }
-
-    fulfilmentServiceLogger.info(
-      `deleteFulfilmentSession: Successfully deleted fulfilment session with ID: ${fulfilmentSessionId}`
-    );
-  } catch (error) {
-    fulfilmentServiceLogger.error(
-      `deleteFulfilmentSession: Failed to delete fulfilment session with ID ${fulfilmentSessionId}: ${error}`
-    );
     throw error;
   }
 }

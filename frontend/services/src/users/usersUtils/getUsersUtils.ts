@@ -54,7 +54,7 @@ export function setUsersDataIntoLocalStorage(userId: UserId, userData: PublicUse
     const usersDataString = JSON.stringify({});
     localStorage.setItem(UsersLocalStorageKeys.UsersData, usersDataString);
   }
-  let usersDataObject: IUsersDataLocalStorage = JSON.parse(localStorage.getItem(UsersLocalStorageKeys.UsersData)!);
+  const usersDataObject: IUsersDataLocalStorage = JSON.parse(localStorage.getItem(UsersLocalStorageKeys.UsersData)!);
   usersDataObject[userId] = userData;
   localStorage.setItem(UsersLocalStorageKeys.UsersData, JSON.stringify(usersDataObject));
   localStorage.setItem(UsersLocalStorageKeys.LastFetchedUserData, new Date().valueOf().toString());
@@ -71,8 +71,9 @@ export async function fetchUsersByTokenMatch(
       const querySnapshot = await getDocs(q);
       querySnapshot.forEach((publicUserDoc) => {
         const publicUserData = publicUserDoc.data() as PublicUserData;
-        publicUserData.userId = publicUserDoc.id;
-        publicUserDataById.set(publicUserData.userId, publicUserData);
+        const userId = publicUserDoc.id as UserId;
+        publicUserData.userId = userId;
+        publicUserDataById.set(userId, publicUserData);
       });
     }
     userServiceLogger.info("User token matches fetched successfully.");
