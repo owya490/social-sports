@@ -1,7 +1,7 @@
 "use client";
 import { Frequency, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { displayPrice } from "@/utilities/priceUtils";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Switch } from "@mantine/core";
 import { Timestamp } from "firebase/firestore";
@@ -95,7 +95,7 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
                 </div>
                 <div className="flex items-center">
                   <CurrencyDollarIcon className="w-5 shrink-0" />
-                  <p className="ml-1 font-light text-sm">{`$${displayPrice(props.price)} AUD`}</p>
+                  <p className="ml-1 font-light text-sm">{getEventPriceDisplay(props.price, true)}</p>
                 </div>
               </div>
               <div className="grid md:grid-cols-2 gap-2">

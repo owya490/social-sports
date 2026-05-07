@@ -289,6 +289,7 @@ export default function EventPage() {
                 maxTicketsPerTransaction={eventMaxTicketsPerTransaction}
                 setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
                 eventCapacity={eventCapacity}
+                eventPrice={eventPrice}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

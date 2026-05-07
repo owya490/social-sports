@@ -11,6 +11,7 @@ import {
 } from "@/services/src/events/eventsUtils/ticketLimits";
 import { Option, Select, Spinner } from "@material-tailwind/react";
 import { useState } from "react";
+import { isFreeEvent } from "@/utilities/priceUtils";
 
 interface RecurringTemplateSettingsProps {
   recurrenceTemplateId: RecurrenceTemplateId;
@@ -31,6 +32,7 @@ interface RecurringTemplateSettingsProps {
   maxTicketsPerTransaction: number;
   setMaxTicketsPerTransaction: (n: number) => void;
   eventCapacity: number;
+  eventPrice: number;
 }
 
 export const RecurringTemplateSettings = ({
@@ -52,8 +54,10 @@ export const RecurringTemplateSettings = ({
   maxTicketsPerTransaction,
   setMaxTicketsPerTransaction,
   eventCapacity,
+  eventPrice,
 }: RecurringTemplateSettingsProps) => {
   const [loading, setLoading] = useState<boolean>(false);
+  const isFree = isFreeEvent(eventPrice);
 
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
 
@@ -75,8 +79,12 @@ export const RecurringTemplateSettings = ({
     <div className="relative">
       <div className="flex flex-col space-y-4 mb-6 px-4 md:px-0">
         <LabelledSwitch
-          title={"Enable Event Payments"}
-          description={"Enable for customers to purchase paid tickets for this event."}
+          title={isFree ? "Enable Event Bookings" : "Enable Event Payments"}
+          description={
+            isFree
+              ? "Enable for customers to book spots for this event."
+              : "Enable for customers to purchase paid tickets for this event."
+          }
           state={paymentsActive}
           setState={setPaymentsActive}
           updateData={async (event: boolean) => {
@@ -91,42 +99,46 @@ export const RecurringTemplateSettings = ({
             }
           }}
         />
-        <LabelledSwitch
-          title={"Pass Stripe Fee to Customer"}
-          description={
-            "Once enabled, card surcharges and Stripe fees will be added at checkout and paid by the customer."
-          }
-          state={stripeFeeToCustomer}
-          setState={setStripeFeeToCustomer}
-          updateData={async (event: boolean) => {
-            setLoading(true);
-            const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
-              stripeFeeToCustomer: event,
-            });
-            if (success) {
-              setLoading(false);
-            } else {
-              window.location.reload();
-            }
-          }}
-        />
-        <LabelledSwitch
-          title={"Enable Promotional Codes"}
-          description={"Enable to allow customers to apply promotional codes at checkout."}
-          state={promotionalCodesEnabled}
-          setState={setPromotionalCodesEnabled}
-          updateData={async (event: boolean) => {
-            setLoading(true);
-            const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
-              promotionalCodesEnabled: event,
-            });
-            if (success) {
-              setLoading(false);
-            } else {
-              window.location.reload();
-            }
-          }}
-        />
+        {!isFree && (
+          <>
+            <LabelledSwitch
+              title={"Pass Stripe Fee to Customer"}
+              description={
+                "Once enabled, card surcharges and Stripe fees will be added at checkout and paid by the customer."
+              }
+              state={stripeFeeToCustomer}
+              setState={setStripeFeeToCustomer}
+              updateData={async (event: boolean) => {
+                setLoading(true);
+                const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+                  stripeFeeToCustomer: event,
+                });
+                if (success) {
+                  setLoading(false);
+                } else {
+                  window.location.reload();
+                }
+              }}
+            />
+            <LabelledSwitch
+              title={"Enable Promotional Codes"}
+              description={"Enable to allow customers to apply promotional codes at checkout."}
+              state={promotionalCodesEnabled}
+              setState={setPromotionalCodesEnabled}
+              updateData={async (event: boolean) => {
+                setLoading(true);
+                const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+                  promotionalCodesEnabled: event,
+                });
+                if (success) {
+                  setLoading(false);
+                } else {
+                  window.location.reload();
+                }
+              }}
+            />
+          </>
+        )}
         <LabelledSwitch
           title={"Hide Vacancy"}
           description={"Enable to hide the vacant ticket count from the event page."}

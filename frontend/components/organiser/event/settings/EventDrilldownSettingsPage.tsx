@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LabelledSwitch } from "../../../elements/LabelledSwitch";
 import DeleteEventModal from "./DeleteEventModal";
+import { isFreeEvent } from "@/utilities/priceUtils";
 
 interface EventDrilldownSettingsPageProps {
   eventId: EventId;
@@ -46,6 +47,7 @@ interface EventDrilldownSettingsPageProps {
   maxTicketsPerTransaction: number;
   setMaxTicketsPerTransaction: (n: number) => void;
   eventCapacity: number;
+  eventPrice: number;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -73,6 +75,7 @@ const EventDrilldownSettingsPage = ({
   maxTicketsPerTransaction,
   setMaxTicketsPerTransaction,
   eventCapacity,
+  eventPrice,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
@@ -107,6 +110,7 @@ const EventDrilldownSettingsPage = ({
   };
 
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
+  const isFree = isFreeEvent(eventPrice);
 
   const saveEventSettings = async (data: Partial<EventData>) => {
     setSaving(true);
@@ -137,8 +141,12 @@ const EventDrilldownSettingsPage = ({
         }}
       />
       <LabelledSwitch
-        title={"Enable Event Payments"}
-        description={"Enable for customers to purchase paid tickets for this event."}
+        title={isFree ? "Enable Event Bookings" : "Enable Event Payments"}
+        description={
+          isFree
+            ? "Enable for customers to book spots for this event."
+            : "Enable for customers to purchase paid tickets for this event."
+        }
         state={paymentsActive}
         setState={setPaymentsActive}
         updateData={(event: boolean) => {
@@ -147,30 +155,34 @@ const EventDrilldownSettingsPage = ({
           });
         }}
       />
-      <LabelledSwitch
-        title={"Pass Stripe Fee to Customer"}
-        description={
-          "Once enabled, card surcharges and Stripe fees will be added at checkout and paid by the customer."
-        }
-        state={stripeFeeToCustomer}
-        setState={setStripeFeeToCustomer}
-        updateData={(event: boolean) => {
-          void saveEventSettings({
-            stripeFeeToCustomer: event,
-          });
-        }}
-      />
-      <LabelledSwitch
-        title={"Enable Promotional Codes"}
-        description={"Enable to allow customers to apply promotional codes at checkout."}
-        state={promotionalCodesEnabled}
-        setState={setPromotionalCodesEnabled}
-        updateData={(event: boolean) => {
-          void saveEventSettings({
-            promotionalCodesEnabled: event,
-          });
-        }}
-      />
+      {!isFree && (
+        <>
+          <LabelledSwitch
+            title={"Pass Stripe Fee to Customer"}
+            description={
+              "Once enabled, card surcharges and Stripe fees will be added at checkout and paid by the customer."
+            }
+            state={stripeFeeToCustomer}
+            setState={setStripeFeeToCustomer}
+            updateData={(event: boolean) => {
+              void saveEventSettings({
+                stripeFeeToCustomer: event,
+              });
+            }}
+          />
+          <LabelledSwitch
+            title={"Enable Promotional Codes"}
+            description={"Enable to allow customers to apply promotional codes at checkout."}
+            state={promotionalCodesEnabled}
+            setState={setPromotionalCodesEnabled}
+            updateData={(event: boolean) => {
+              void saveEventSettings({
+                promotionalCodesEnabled: event,
+              });
+            }}
+          />
+        </>
+      )}
       <LabelledSwitch
         title={"Hide Vacancy"}
         description={"Enable to hide the vacant ticket count from the event page."}

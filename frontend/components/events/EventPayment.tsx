@@ -8,7 +8,7 @@ import {
   getTicketCountOptions,
 } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getStoredFulfilmentSessionId } from "@/services/src/fulfilment/fulfilmentUtils/fulfilmentUtils";
-import { displayPrice } from "@/utilities/priceUtils";
+import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import {
   CalendarDaysIcon,
   ClockIcon,
@@ -44,6 +44,7 @@ interface EventPaymentProps {
 
 export default function EventPayment(props: EventPaymentProps) {
   const { startDate, endDate, registrationEndDate, paused } = props;
+  const isFree = isFreeEvent(props.price);
 
   const effectiveMax = getBuyerMaxTicketsPerTransaction(props.maxTicketsPerTransaction);
 
@@ -101,7 +102,7 @@ export default function EventPayment(props: EventPaymentProps) {
           <h3 className="text-sm font-semibold text-core-text mb-2">Price</h3>
           <div className="flex items-center gap-2 text-gray-700">
             <CurrencyDollarIcon className="w-4 h-4 text-gray-500" />
-            <p className="text-sm font-medium">${displayPrice(props.price)} AUD</p>
+            <p className="text-sm font-medium">{getEventPriceDisplay(props.price, true)}</p>
           </div>
         </div>
 
@@ -127,14 +128,14 @@ export default function EventPayment(props: EventPaymentProps) {
                   <div className="mb-4 !text-black">
                     <Select
                       className="text-black"
-                      label="Number of Attendees"
+                      label={isFree ? "Number of Bookings" : "Number of Attendees"}
                       size="lg"
                       value={`${waitlistAttendeeCount}`}
                       onChange={handleWaitlistAttendeeCount}
                     >
                       {getTicketCountOptions(effectiveMax).map((count) => (
                         <Option key={`attendee-option-${count}`} value={`${count}`}>
-                          {count} Attendee{count > 1 ? "s" : ""}
+                          {count} {isFree ? `Booking${count > 1 ? "s" : ""}` : `Attendee${count > 1 ? "s" : ""}`}
                         </Option>
                       ))}
                     </Select>
@@ -160,14 +161,14 @@ export default function EventPayment(props: EventPaymentProps) {
                   <div className="mb-4 !text-black">
                     <Select
                       className="text-black"
-                      label="Number of tickets"
+                      label={isFree ? "Number of bookings" : "Number of tickets"}
                       size="lg"
                       value={`${attendeeCount}`}
                       onChange={handleAttendeeCount}
                     >
                       {allCounts.map((count) => (
                         <Option key={`attendee-option-${count}`} value={`${count}`}>
-                          {count} Ticket{count > 1 ? "s" : ""}
+                          {count} {isFree ? `Booking${count > 1 ? "s" : ""}` : `Ticket${count > 1 ? "s" : ""}`}
                         </Option>
                       ))}
                     </Select>
