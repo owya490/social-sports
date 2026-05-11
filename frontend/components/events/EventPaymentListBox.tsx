@@ -1,4 +1,5 @@
 "use client";
+import { getBuyerTicketCountOptions } from "@/services/src/events/eventsUtils/ticketLimits";
 import { SortByCategory } from "../Filter/FilterDialog";
 import ListBox from "../ListBox";
 
@@ -8,12 +9,10 @@ interface EventPaymentListBoxProps {
 }
 
 export default function EventPaymentListBox(props: EventPaymentListBoxProps) {
-  const MAX_OPTION_SIZE = 7;
-  const options = [];
-
-  for (let i = 1; i <= Math.min(MAX_OPTION_SIZE, props.vacancy); i++) {
-    options.push({ name: `${i} ${i == 1 ? "Guest" : "Guests"}`, value: i });
-  }
+  const options = getBuyerTicketCountOptions(props.vacancy).map((count) => ({
+    name: `${count} ${count === 1 ? "Guest" : "Guests"}`,
+    value: count,
+  }));
 
   return (
     <div className="p-[9%] mb-5 w-full">

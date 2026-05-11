@@ -145,13 +145,15 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                                         .orElse(UrlUtils.SPORTSHUB_URL))
                         : UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId).orElse(UrlUtils.SPORTSHUB_URL);
 
-                String delayedStripeCheckoutLink = StripeService.getDelayedStripeCheckoutUrl(eventId,
+                var delayedStripeCheckout = StripeService.getDelayedStripeCheckoutUrl(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
                         fulfilmentSessionId, endFulfilmentEntityId);
 
                 logger.info("Created delayed Stripe checkout link for event ID {}", eventId);
-                logger.debug("Delayed Stripe checkout link: {}", delayedStripeCheckoutLink);
-                entity = DelayedStripeFulfilmentEntity.builder().url(delayedStripeCheckoutLink)
+                logger.debug("Delayed Stripe checkout link: {}", delayedStripeCheckout.url());
+                entity = DelayedStripeFulfilmentEntity.builder().url(delayedStripeCheckout.url())
+                        .stripeCheckoutSessionId(delayedStripeCheckout.stripeCheckoutSessionId())
+                        .stripeAccountId(delayedStripeCheckout.stripeAccountId())
                         .type(FulfilmentEntityType.DELAYED_STRIPE).build();
                 fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
             } else {

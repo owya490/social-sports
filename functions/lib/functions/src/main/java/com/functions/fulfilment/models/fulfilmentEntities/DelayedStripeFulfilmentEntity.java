@@ -11,7 +11,11 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class DelayedStripeFulfilmentEntity extends FulfilmentEntity {
     private String url;
-    
+    /** Stripe Checkout Session id (cs_...), for manual expiry via cron. */
+    private String stripeCheckoutSessionId;
+    /** Connected account id used when creating the session (Session.expire requires it). */
+    private String stripeAccountId;
+
     {
         setType(FulfilmentEntityType.DELAYED_STRIPE);
     }

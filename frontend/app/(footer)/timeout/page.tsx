@@ -1,6 +1,7 @@
 "use client";
 
 import { HighlightButton } from "@/components/elements/HighlightButton";
+import { FULFILMENT_SESSION_EXPIRY_MINUTES } from "@/services/src/fulfilment/fulfilmentConstants";
 import { ClockIcon, HomeIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
@@ -19,7 +20,8 @@ const TimeoutPage = () => {
         <div className="max-w-md mx-auto mb-12">
           <h1 className="text-3xl font-bold text-core-text mb-4">Session Timed Out</h1>
           <p className="text-lg text-gray-600 mb-4 font-light">
-            Your fulfilment session has expired. For security reasons, sessions are limited to 30 minutes.
+            Your fulfilment session has expired. For security reasons, sessions are limited to{" "}
+            {FULFILMENT_SESSION_EXPIRY_MINUTES} minutes.
           </p>
         </div>
 

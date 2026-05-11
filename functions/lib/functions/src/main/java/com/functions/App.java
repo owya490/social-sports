@@ -1,5 +1,7 @@
 package com.functions;
 
+import com.functions.stripe.config.StripeConfig;
+
 /**
  * Hello world!
  *

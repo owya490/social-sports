@@ -12,6 +12,7 @@ import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse
 import com.functions.utils.UrlUtils;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCancelParams;
 import com.stripe.param.PaymentIntentCaptureParams;
@@ -44,7 +45,7 @@ public class StripeService {
      *                                   because capacity is unavailable
      * @throws RuntimeException          if checkout creation fails for any other reason
      */
-    public static String getStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
+    public static CreateStripeCheckoutSessionResponse getStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
             String endFulfilmentEntityId) {
 
@@ -93,7 +94,7 @@ public class StripeService {
      *                                   because capacity is unavailable
      * @throws RuntimeException          if checkout creation fails for any other reason
      */
-    public static String getDelayedStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
+    public static CreateStripeCheckoutSessionResponse getDelayedStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
             String endFulfilmentEntityId) {
 
@@ -123,7 +124,7 @@ public class StripeService {
         return getStripeCheckoutFromEventId(request);
     }
 
-    public static String getStripeCheckoutFromEventId(CreateStripeCheckoutSessionRequest request) {
+    public static CreateStripeCheckoutSessionResponse getStripeCheckoutFromEventId(CreateStripeCheckoutSessionRequest request) {
         try {
             CreateStripeCheckoutSessionResponse response = CheckoutService.createStripeCheckoutSession(request);
 
@@ -135,7 +136,7 @@ public class StripeService {
 
             logger.info("Successfully retrieved Stripe checkout URL for event ID: {}", request.eventId());
 
-            return response.url();
+            return response;
         } catch (CheckoutDateTimeException e) {
             // We don't need to log error and alert for this error because this
             // time based error is out of our direct control.
@@ -155,6 +156,39 @@ public class StripeService {
                     e.getMessage());
             throw new RuntimeException("Failed to create Stripe checkout session", e);
         }
+    }
+
+    /**
+     * Expires a Stripe Checkout Session for a connected account.
+     * Stripe's expire endpoint is synchronous and returns the updated Checkout Session.
+     * Only sessions in {@code open} status are expireable; if the session is already
+     * {@code expired}, this is treated as success.
+     *
+     * @return true when the session is in {@code expired} status (already expired or
+     *         expired by this call), false when Stripe returns an unexpected status.
+     * @throws StripeException if retrieval or expiry fails
+     */
+    public static boolean expireCheckoutSession(String checkoutSessionId, String stripeAccountId)
+            throws StripeException {
+        RequestOptions requestOptions = RequestOptions.builder()
+                .setStripeAccount(stripeAccountId)
+                .build();
+
+        Session stripeSession = Session.retrieve(checkoutSessionId, requestOptions);
+        if (isSessionExpired(stripeSession)) {
+            logger.info("Stripe checkout session {} is already expired", checkoutSessionId);
+            return true;
+        }
+
+        Session expiredSession = stripeSession.expire(requestOptions);
+        if (isSessionExpired(expiredSession)) {
+            logger.info("Expired Stripe checkout session {}", checkoutSessionId);
+            return true;
+        }
+
+        logger.error("Stripe checkout session {} expire call failed with status: {}",
+                checkoutSessionId, expiredSession.getStatus());
+        return false;
     }
 
     /**
@@ -223,5 +257,9 @@ public class StripeService {
                 canceledPaymentIntent.getId(), canceledPaymentIntent.getStatus());
 
         return canceledPaymentIntent;
+    }
+
+    private static boolean isSessionExpired(Session session) {
+        return "expired".equals(session.getStatus());
     }
 }

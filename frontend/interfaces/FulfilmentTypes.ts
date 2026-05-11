@@ -153,13 +153,6 @@ export type UpdateFulfilmentEntityWithWaitlistDataResponse = {
 };
 
 /**
- * Payload we send to java deleteFulfilmentSession function
- */
-export type DeleteFulfilmentSessionRequest = {
-  fulfilmentSessionId: FulfilmentSessionId;
-};
-
-/**
  * Payload we send to java getFulfilmentSessionInfo function
  */
 export type GetFulfilmentSessionInfoRequest = {
@@ -186,4 +179,3 @@ export type CompleteFulfilmentSessionRequest = {
    */
   fulfilmentEntityId: FulfilmentEntityId;
 };
-

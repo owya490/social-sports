@@ -15,30 +15,26 @@ import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
 import com.functions.global.services.AuthService;
-import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.handlers.StripeWebhookHandler;
 import com.functions.utils.JavaUtils;
-import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
 /**
- * Unified endpoint that routes requests to specific handlers based on the endpoint type.
+ * Unified endpoint that routes requests to specific handlers based on the
+ * endpoint type.
  * <p>
- * This provides a single entry point for all function calls while maintaining type safety.
+ * This provides a single entry point for all function calls while maintaining
+ * type safety.
  */
-public class GlobalAppController implements HttpFunction {
+public class GlobalAppController extends AbstractConfiguredHttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(GlobalAppController.class);
 
     @FunctionalInterface
     interface StripeWebhookProcessor {
         void handle(HttpRequest request, HttpResponse response) throws Exception;
-    }
-
-    public GlobalAppController() {
-        StripeConfig.initialize();
     }
 
     @Override
@@ -67,8 +63,7 @@ public class GlobalAppController implements HttpFunction {
         try {
             UnifiedRequest unifiedRequest;
             try {
-                unifiedRequest =
-                        JavaUtils.objectMapper.readValue(request.getReader(), UnifiedRequest.class);
+                unifiedRequest = JavaUtils.objectMapper.readValue(request.getReader(), UnifiedRequest.class);
             } catch (Exception e) {
                 response.setStatusCode(400); // Bad Request
                 logger.error("Could not parse request input:", e);
