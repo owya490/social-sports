@@ -21,6 +21,7 @@ import { collection, doc, getDoc, getDocs, Timestamp, updateDoc, WriteBatch, wri
 import { getEventById } from "../events/eventsService";
 import { db } from "../firebase";
 import { fulfilmentServiceLogger } from "../fulfilment/fulfilmentServices";
+import { getStoredFulfilmentSessionSecret } from "../fulfilment/fulfilmentUtils/fulfilmentUtils";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormResponsePaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
@@ -412,7 +413,10 @@ export async function updateFulfilmentEntityWithFormResponseId(
   try {
     const response = await executeGlobalAppControllerFunction<UpdateFulfilmentEntityWithFormResponseIdRequest, void>(
       EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
-      request
+      request,
+      {
+        sessionSecret: requireFulfilmentSessionSecret(fulfilmentSessionId),
+      }
     );
 
     fulfilmentServiceLogger.info(
@@ -425,4 +429,12 @@ export async function updateFulfilmentEntityWithFormResponseId(
     );
     throw error;
   }
+}
+
+function requireFulfilmentSessionSecret(fulfilmentSessionId: FulfilmentSessionId): string {
+  const sessionSecret = getStoredFulfilmentSessionSecret(fulfilmentSessionId);
+  if (!sessionSecret) {
+    throw new Error(`Missing fulfilment session secret for session ${fulfilmentSessionId}`);
+  }
+  return sessionSecret;
 }

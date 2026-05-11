@@ -25,7 +25,8 @@ export async function addAttendee(request: AddAttendeeRequest): Promise<AddAtten
   try {
     const response = await executeGlobalAppControllerFunction<AddAttendeeRequest, AddAttendeeResponse>(
       EndpointType.ADD_ATTENDEE,
-      request
+      request,
+      { firebaseAuth: true }
     );
     attendeeServiceLogger.info(`addAttendeeViaBackend: success orderId=${response.orderId}`);
     return response;
@@ -56,7 +57,8 @@ export async function setAttendeeTickets(
   try {
     const response = await executeGlobalAppControllerFunction<SetAttendeeTicketsRequest, SetAttendeeTicketsResponse>(
       EndpointType.SET_ATTENDEE_TICKETS,
-      request
+      request,
+      { firebaseAuth: true }
     );
     attendeeServiceLogger.info(`setAttendeeTicketsViaBackend: success`);
     return response;
