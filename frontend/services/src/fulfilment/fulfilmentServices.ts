@@ -75,6 +75,8 @@ export async function initFulfilmentSession(
           );
 
           try {
+            const existingSessionSecret = requireFulfilmentSessionSecret(existingSessionId);
+
             // Verify the session still exists on the backend
             await getFulfilmentSessionInfo(existingSessionId, null);
 
@@ -84,6 +86,7 @@ export async function initFulfilmentSession(
 
             return {
               fulfilmentSessionId: existingSessionId,
+              fulfilmentSessionSecret: existingSessionSecret,
             };
           } catch (error) {
             fulfilmentServiceLogger.warn(
