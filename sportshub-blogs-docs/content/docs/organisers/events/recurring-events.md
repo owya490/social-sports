@@ -1,7 +1,7 @@
 ---
 title: Recurring Events
-weight: 2
-prev: /docs/organiser/events/create-event
+weight: 3
+prev: /docs/organiser/events/free-vs-paid-events
 next: /docs/organiser/events/custom-links
 ---
 

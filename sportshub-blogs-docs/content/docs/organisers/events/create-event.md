@@ -3,7 +3,7 @@ title: Create Event
 weight: 1
 description: Learn to create your very first SPORTSHUB event!
 prev: /docs/organiser/events
-next: /docs/organiser/events/recurring-events
+next: /docs/organiser/events/free-vs-paid-events
 ---
 
 ## Overview
@@ -37,7 +37,7 @@ Complete the essential event details including:
 - Privacy settings (public/private)
 
 > [!TIP]
-> To create paid events, you'll need to have Stripe connected to your account. You can choose to absorb Stripe processing fees yourself or pass them on to participants by adjusting the settings in the Additional Settings during event creation.
+> Need help choosing between free and paid setup options? See [Free vs Paid Events](/docs/organiser/events/free-vs-paid-events).
 
 ### 3. Upload Event Images
 
