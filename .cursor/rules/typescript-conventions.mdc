@@ -1,0 +1,67 @@
+---
+globs: *.ts,*.tsx
+---
+
+# TypeScript Conventions
+
+- Use strict TypeScript configuration
+- Provide explicit types for all functions
+- Follow similar naming patterns to those already existing in the codebase
+- Use types where possible and only use interfaces if the use case suits it
+- Avoid `any` and `unknown` types
+- Implement proper error handling
+
+## File Organization
+
+### File Contents Order (when present)
+
+1. imports
+2. constants
+3. enums
+4. interfaces
+5. useStates
+6. useEffects
+7. function(s)
+8. helper functions
+
+### Formatting Standards
+
+- Use double quotes for strings
+- 2 space indentation
+- See `.prettierrc` for complete formatting rules
+
+## Naming Conventions
+
+### File Naming
+
+- **Components**: PascalCase (`EventCard.tsx`, `UserProfile.tsx`)
+- **Files/Images**: kebab-case (`page.tsx`, `main-layout.tsx`)
+
+### Syntactical Naming
+
+- **Variables**: camelCase (`let currentSport = "Volleyball"`)
+- **Functions**: camelCase (`function setDateRange()`)
+- **Constants**: CAPITAL_LETTERS_WITH_UNDERSCORES (`const MAX_PRICE = 100`)
+- **Enums**: Enum name in PascalCase; members in CAPITAL_LETTERS_WITH_UNDERSCORES
+- **Interfaces**: PascalCase + "Props" (`EventCardProps`)
+
+## Props Conventions
+
+### Interface Naming
+
+Use pattern: `<ComponentName>Props` (e.g., `EventCardProps`)
+
+### Destructuring
+
+Always destructure props in React functional components:
+
+```typescript
+interface EventCardProps {
+  eventId: string;
+  name: string;
+}
+
+export default function EventCard({ eventId, name }: EventCardProps) {
+  // Component implementation
+}
+```
