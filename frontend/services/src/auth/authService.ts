@@ -15,7 +15,7 @@ import {
   UserCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
 import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
@@ -23,6 +23,23 @@ import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUs
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 
 const authServiceLogger = new Logger("authServiceLogger");
+
+/** Firestore rejects `undefined` in document payloads (including nested maps). */
+function omitUndefinedForFirestore(value: unknown): unknown {
+  if (value === undefined) return undefined;
+  if (value === null || typeof value !== "object") return value;
+  if (value instanceof Timestamp) return value;
+  if (Array.isArray(value)) {
+    return value.map((item) => omitUndefinedForFirestore(item)).filter((item) => item !== undefined);
+  }
+  const obj = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === undefined) continue;
+    out[k] = omitUndefinedForFirestore(v);
+  }
+  return out;
+}
 
 export async function handleEmailAndPasswordSignUp(data: NewUserData) {
   let userCredential; // Declare userCredential outside the try block to access it in the catch block
@@ -173,7 +190,8 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
 }
 
 export async function saveTempUserData(userId: UserId, data: UserData) {
-  await setDoc(doc(db, "TempUsers", userId), data);
+  const payload = omitUndefinedForFirestore(data) as Record<string, unknown>;
+  await setDoc(doc(db, "TempUsers", userId), payload);
 }
 
 export async function getTempUserData(userId: UserId): Promise<UserData | null> {
