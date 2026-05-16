@@ -12,7 +12,7 @@ interface ChecklistItem {
 const initialChecklist: ChecklistItem[] = [
   { id: 0, checked: false, label: "Add a picture", link: "/profile" },
   { id: 1, checked: false, label: "Add a description", link: "/profile" },
-  { id: 2, checked: false, label: "Add a Stripe Account", link: "/event/create" },
+  { id: 2, checked: false, label: "Set up payment details", link: "/event/create" },
   { id: 3, checked: false, label: "Create your first event", link: "/event/create" },
 ];
 

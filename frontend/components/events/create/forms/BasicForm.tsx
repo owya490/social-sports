@@ -22,7 +22,6 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { CurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { Switch } from "@mantine/core";
 import { Input, Option, Select } from "@material-tailwind/react";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import CreateEventCostSlider from "../CreateEventCostSlider";
 import CustomDateInput from "../CustomDateInput";
@@ -102,7 +101,6 @@ export function BasicInformation({
   setLoading,
   setHasError,
 }: BasicInformationProps) {
-  const router = useRouter();
   const [hasLocationError, setHasLocationError] = useState<boolean>(false);
   const priceInputRef = useRef<HTMLInputElement>(null);
   const [dateWarning, setDateWarning] = useState<string | null>(null);
@@ -613,7 +611,7 @@ export function BasicInformation({
                     getUrlWithCurrentHostname("/organiser/dashboard"),
                     getRefreshAccountLinkUrl()
                   );
-                  router.push(link);
+                  window.location.assign(link);
                 }}
               >
                 Register

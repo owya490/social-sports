@@ -9,11 +9,51 @@ import { ProfilePhotoSelectionModal } from "./ProfilePhotoSelectionModal";
 interface ProfilePhotoPanelProps {
   user: UserData;
   setUser: (user: UserData) => void;
+  /** Smaller avatar, no public-profile link — for organiser onboarding. */
+  compact?: boolean;
 }
 
-export const ProfilePhotoPanel = ({ user, setUser }: ProfilePhotoPanelProps) => {
+export const ProfilePhotoPanel = ({ user, setUser, compact = false }: ProfilePhotoPanelProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  if (compact) {
+    return (
+      <>
+        <div className="mx-auto flex max-w-xs flex-col items-center gap-2 border border-core-outline p-4 rounded-xl">
+          <div
+            className="relative h-28 w-28 rounded-full overflow-hidden cursor-pointer group"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onClick={() => setIsModalOpen(true)}
+          >
+            <Image
+              src={user.profilePicture}
+              alt=""
+              width={112}
+              height={112}
+              className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+              priority
+            />
+            <div
+              className={`absolute inset-0 flex items-center justify-center bg-black transition-opacity ${
+                isHovered ? "bg-opacity-50" : "bg-opacity-0"
+              }`}
+            >
+              {isHovered && <CameraIcon className="w-7 h-7 text-white" />}
+            </div>
+          </div>
+          <p className="text-xs text-center text-gray-600">Tap to change photo</p>
+        </div>
+        <ProfilePhotoSelectionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          user={user}
+          setUser={setUser}
+        />
+      </>
+    );
+  }
 
   return (
     <>
