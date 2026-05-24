@@ -320,7 +320,14 @@ public class BookingApprovalService {
                 .orElseThrow(() -> new RuntimeException("Event not found: " + eventId));
 
         String organiserId = eventData.getOrganiserId();
-        UserData userData = Users.getUserDataById(organiserId);
+        UserData userData;
+        try {
+            userData = Users.getUserDataById(organiserId);
+        } catch (Exception e) {
+            logger.error("Failed to fetch organiser {} for order {}. Leaving as PENDING.",
+                    organiserId, orderId, e);
+            return false;
+        }
         if (userData == null) {
             logger.error("Organiser {} not found for order {}. Cannot expire. Leaving as PENDING.",
                     organiserId, orderId);
