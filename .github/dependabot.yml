@@ -1,0 +1,64 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/functions/lib/functions"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Australia/Sydney"
+    labels: ["dependencies", "java"]
+
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Australia/Sydney"
+    labels: ["dependencies", "npm"]
+
+  - package-ecosystem: "npm"
+    directory: "/sportshub-cli"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Australia/Sydney"
+    labels: ["dependencies", "npm"]
+
+  - package-ecosystem: "npm"
+    directory: "/infrastructure"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Australia/Sydney"
+    labels: ["dependencies", "npm"]
+
+  - package-ecosystem: "pip"
+    directory: "/functions"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Australia/Sydney"
+    labels: ["dependencies", "python"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Australia/Sydney"
+    labels: ["dependencies", "ci"]
+
+  - package-ecosystem: "gitsubmodules"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Australia/Sydney"
+    labels: ["dependencies"]
