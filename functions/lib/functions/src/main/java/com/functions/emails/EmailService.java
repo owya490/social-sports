@@ -30,18 +30,30 @@ public class EmailService {
     private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR =
             "LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID";
 
+    /** Sentinel value used as a default for template IDs not yet created in Loops. */
+    static final String PLACEHOLDER_TEMPLATE_ID = "REPLACE_ME_TODO";
+
     @FunctionalInterface
     interface PurchaseEmailSender {
         boolean send(EmailTemplateType templateType, String email, Map<String, String> variables);
     }
     private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID =
-            resolveCancellationEmailTemplateId(Global.getEnv(LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR));
+            resolveTemplateIdWithDefault(Global.getEnv(LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR),
+                    DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID);
 
-    private static String resolveCancellationEmailTemplateId(String configuredTemplateId) {
+    private static String resolveTemplateIdWithDefault(String configuredTemplateId, String defaultTemplateId) {
         if (configuredTemplateId == null || configuredTemplateId.isBlank()) {
-            return DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID;
+            return defaultTemplateId;
         }
         return configuredTemplateId;
+    }
+
+    /**
+     * Returns true when a template ID has not yet been replaced with a real Loops ID.
+     * Methods should skip sending and log a warning in this case.
+     */
+    private static boolean isPlaceholderTemplateId(String templateId) {
+        return PLACEHOLDER_TEMPLATE_ID.equals(templateId);
     }
 
     /**
@@ -315,7 +327,7 @@ public class EmailService {
         return formatted.contains(".") ? formatted : formatted + ".0";
     }
 
-    private static Optional<String> getOrganiserEmailForTicketEmail(Firestore db, String organiserId) throws ExecutionException, InterruptedException {
+    static Optional<String> getOrganiserEmailForTicketEmail(Firestore db, String organiserId) throws ExecutionException, InterruptedException {
         DocumentSnapshot organiserSnapshot = fetchNestedDocument(
                 db,
                 CollectionPaths.USERS,
@@ -379,6 +391,188 @@ public class EmailService {
         }
 
         return true;
+    }
+
+    /**
+     * Sends a "booking request received — awaiting organiser approval" email to the buyer.
+     * Triggered on {@code checkout.session.completed} when the Stripe capture method is manual.
+     *
+     * <p>The email template ID is taken from {@link EmailTemplateType#BOOKING_APPROVAL_TENTATIVE}.
+     * While the template ID is still the {@link #PLACEHOLDER_TEMPLATE_ID} placeholder the method
+     * skips sending and logs a warning.
+     *
+     * @param eventId    The event ID
+     * @param visibility Either "Private" or "Public"
+     * @param email      The buyer's email address
+     * @param firstName  The buyer's first name
+     * @param orderId    The order ID
+     * @return true if the email was sent successfully, false otherwise
+     */
+    public static boolean sendBookingApprovalTentativeEmail(String eventId, String visibility,
+            String email, String firstName, String orderId) {
+        String templateId = EmailTemplateType.BOOKING_APPROVAL_TENTATIVE.templateId;
+        if (isPlaceholderTemplateId(templateId)) {
+            logger.warn("BOOKING_APPROVAL_TENTATIVE template id is not yet configured (still placeholder). "
+                    + "Skipping tentative booking email. orderId={}", orderId);
+            return false;
+        }
+        return sendBookingApprovalEmailWithTemplate(templateId, eventId, visibility, email, firstName, orderId);
+    }
+
+    /**
+     * Sends a "your booking has been approved — you're confirmed!" email to the buyer.
+     * Triggered when an organiser approves a pending booking.
+     *
+     * <p>The email template ID is taken from {@link EmailTemplateType#BOOKING_APPROVED}.
+     * While the template ID is still the {@link #PLACEHOLDER_TEMPLATE_ID} placeholder the method
+     * skips sending and logs a warning.
+     *
+     * @param eventId    The event ID
+     * @param visibility Either "Private" or "Public"
+     * @param email      The buyer's email address
+     * @param firstName  The buyer's first name
+     * @param orderId    The order ID
+     * @return true if the email was sent successfully, false otherwise
+     */
+    public static boolean sendBookingApprovedEmail(String eventId, String visibility,
+            String email, String firstName, String orderId) {
+        String templateId = EmailTemplateType.BOOKING_APPROVED.templateId;
+        if (isPlaceholderTemplateId(templateId)) {
+            logger.warn("BOOKING_APPROVED template id is not yet configured (still placeholder). "
+                    + "Skipping booking approved email. orderId={}", orderId);
+            return false;
+        }
+        return sendBookingApprovalEmailWithTemplate(templateId, eventId, visibility, email, firstName, orderId);
+    }
+
+    /**
+     * Shared implementation for booking-approval flow emails.
+     * Fetches event and order data from Firestore, builds variables, and sends via Loops.
+     */
+    private static boolean sendBookingApprovalEmailWithTemplate(String templateId, String eventId,
+            String visibility, String email, String firstName, String orderId) {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+
+            DocumentSnapshot eventSnapshot = fetchNestedDocument(
+                    db, CollectionPaths.EVENTS, CollectionPaths.ACTIVE, visibility, eventId);
+            if (!eventSnapshot.exists()) {
+                logger.error("Unable to find event in datastore to send booking approval email. eventId={}", eventId);
+                return false;
+            }
+
+            DocumentSnapshot orderSnapshot = fetchRootDocument(db, CollectionPaths.ORDERS, orderId);
+            if (!orderSnapshot.exists()) {
+                logger.error("Unable to find order in datastore to send booking approval email. orderId={}", orderId);
+                return false;
+            }
+
+            Map<String, String> variables = buildEmailVariables(eventSnapshot, orderSnapshot, firstName, orderId);
+            boolean sent = EmailClient.sendEmailWithLoopsWithRetries(templateId, email, variables);
+            if (!sent) {
+                logger.warn("Failed to send booking approval email (template={}) for order {} to {}",
+                        templateId, orderId, email);
+            }
+            return sent;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Booking approval email send interrupted for order {} to {}", orderId, email, e);
+            return false;
+        } catch (Exception e) {
+            logger.error("Failed to send booking approval email (template={}) for order {} to {}: {}",
+                    templateId, orderId, email, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Notifies the organiser that a new booking request is awaiting their approval.
+     * Triggered on {@code checkout.session.completed} when the Stripe capture method is manual.
+     *
+     * <p>The template ID is taken from {@link EmailTemplateType#BOOKING_APPROVAL_ORGANISER}.
+     * While it is still the {@link #PLACEHOLDER_TEMPLATE_ID} placeholder the method skips
+     * sending and logs a warning so dev/CI environments are not affected.
+     *
+     * <p>If the organiser has not opted in to ticket-related emails
+     * ({@code sendOrganiserTicketEmails == false}) the email is silently skipped (not an error).
+     *
+     * @param eventId      The event ID
+     * @param visibility   Either "Private" or "Public"
+     * @param attendeeName The buyer's full name
+     * @param orderId      The order ID
+     * @param quantity     Number of tickets in the order
+     * @return true unless an unexpected error occurred
+     */
+    public static boolean sendOrganiserPendingBookingEmail(String eventId, String visibility,
+            String attendeeName, String orderId, int quantity) {
+        String templateId = EmailTemplateType.BOOKING_APPROVAL_ORGANISER.templateId;
+        if (isPlaceholderTemplateId(templateId)) {
+            logger.warn("BOOKING_APPROVAL_ORGANISER template id is not yet configured (still placeholder). "
+                    + "Skipping organiser notification. orderId={}", orderId);
+            return false;
+        }
+
+        try {
+            Firestore db = FirebaseService.getFirestore();
+
+            DocumentSnapshot eventSnapshot = fetchNestedDocument(
+                    db, CollectionPaths.EVENTS, CollectionPaths.ACTIVE, visibility, eventId);
+            if (!eventSnapshot.exists()) {
+                logger.error("Unable to find event for organiser pending booking email. eventId={}", eventId);
+                return false;
+            }
+
+            String organiserId = eventSnapshot.getString("organiserId");
+            if (organiserId == null || organiserId.isBlank()) {
+                logger.warn("Event {} has no organiserId. Skipping organiser notification. orderId={}", eventId, orderId);
+                return true;
+            }
+
+            Optional<String> organiserEmail = getOrganiserEmailForTicketEmail(db, organiserId);
+            if (organiserEmail.isEmpty()) {
+                logger.info("No organiser notification email configured. organiserId={}, orderId={}",
+                        organiserId, orderId);
+                return true;
+            }
+
+            DocumentSnapshot organiserSnapshot = fetchNestedDocument(
+                    db, CollectionPaths.USERS, CollectionPaths.ACTIVE, CollectionPaths.PRIVATE, organiserId);
+            String organiserName = "";
+            if (organiserSnapshot.exists()) {
+                String firstName = organiserSnapshot.getString("firstName");
+                if (firstName != null) {
+                    organiserName = firstName;
+                }
+            }
+
+            String eventName = defaultString(eventSnapshot.getString("name"));
+            String pendingTabUrl = UrlUtils.getUrlWithCurrentEnvironment("/organiser/event/" + eventId)
+                    .orElse(UrlUtils.SPORTSHUB_URL + "/organiser/event/" + eventId);
+
+            Map<String, String> variables = Map.of(
+                    "organiserName", organiserName,
+                    "attendeeName", defaultString(attendeeName),
+                    "eventName", eventName,
+                    "quantity", String.valueOf(quantity),
+                    "orderId", defaultString(orderId),
+                    "pendingTabUrl", pendingTabUrl,
+                    "autoExpiryHours", "48");
+
+            boolean sent = EmailClient.sendEmailWithLoopsWithRetries(templateId, organiserEmail.get(), variables);
+            if (!sent) {
+                logger.warn("Failed to send organiser pending booking email. orderId={}, organiserId={}",
+                        orderId, organiserId);
+            }
+            return sent;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Organiser pending booking email send interrupted. orderId={}", orderId, e);
+            return false;
+        } catch (Exception e) {
+            logger.error("Failed to send organiser pending booking email. orderId={}: {}",
+                    orderId, e.getMessage(), e);
+            return false;
+        }
     }
 
     /**

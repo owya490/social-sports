@@ -1,12 +1,17 @@
 package com.functions.tickets.services;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.emails.EmailService;
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.models.PaymentIntentStatus;
 import com.functions.stripe.services.StripeService;
 import com.functions.stripe.services.WebhookService;
@@ -19,6 +24,10 @@ import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
 import com.functions.users.models.UserData;
 import com.functions.users.services.Users;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
+import com.stripe.exception.InvalidRequestException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 
@@ -142,7 +151,7 @@ public class BookingApprovalService {
     }
 
     static boolean sendPurchaseEmailAfterApproval(Order order, EventData eventData) {
-        return sendPurchaseEmailAfterApproval(order, eventData, WebhookService::sendPurchaseEmailWithRetries);
+        return sendPurchaseEmailAfterApproval(order, eventData, EmailService::sendBookingApprovedEmail);
     }
 
     static boolean sendPurchaseEmailAfterApproval(
@@ -196,6 +205,162 @@ public class BookingApprovalService {
                 "Stripe Payment has expired or been canceled. Order %s has been automatically rejected.",
                 orderId);
         return new BookingApprovalResponse(false, orderId, operation, message);
+    }
+
+    // -------------------------------------------------------------------------
+    // 48-hour auto-expiry
+    // -------------------------------------------------------------------------
+
+    private static final long EXPIRY_WINDOW_HOURS = 48;
+
+    /**
+     * Result summary returned by {@link #expirePendingOrders()}.
+     *
+     * @param checked number of PENDING orders older than the expiry window that were processed
+     * @param expired number of orders for which a cancellation was successfully triggered
+     * @param errors  number of orders left in PENDING because an error prevented cancellation
+     */
+    public record ExpirePendingOrdersResult(int checked, int expired, int errors) {}
+
+    /**
+     * Queries all {@code PENDING} orders, filters those whose {@code datePurchased}
+     * is older than {@link #EXPIRY_WINDOW_HOURS} hours, and attempts to cancel them.
+     *
+     * <ul>
+     *   <li><b>Happy path</b>: Stripe cancellation succeeds. Stripe fires
+     *       {@code payment_intent.canceled}, which the webhook handles (restock + status update + email).</li>
+     *   <li><b>Redundancy A</b> (PI missing): {@code resource_missing} error from Stripe means the
+     *       PaymentIntent was never created or is gone. Force the order to REJECTED directly via
+     *       {@link WebhookService#fulfilmentWorkflowOnPaymentIntentCanceled}.</li>
+     *   <li><b>Redundancy B</b> (PI exists, cancel failed): log the error and leave the order PENDING
+     *       so we retry on the next cron run rather than losing data.</li>
+     * </ul>
+     *
+     * @return a summary with counts of checked, expired, and errored orders
+     */
+    public static ExpirePendingOrdersResult expirePendingOrders() {
+        int checked = 0;
+        int expired = 0;
+        int errors = 0;
+
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            Date cutoff = new Date(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(EXPIRY_WINDOW_HOURS));
+
+            QuerySnapshot querySnapshot = db.collection(FirebaseService.CollectionPaths.ORDERS)
+                    .whereEqualTo("status", OrderAndTicketStatus.PENDING.name())
+                    .get()
+                    .get();
+
+            for (QueryDocumentSnapshot doc : querySnapshot.getDocuments()) {
+                Order order = doc.toObject(Order.class);
+                if (order == null) {
+                    continue;
+                }
+                order.setOrderId(doc.getId());
+
+                if (order.getDatePurchased() == null
+                        || !order.getDatePurchased().toDate().before(cutoff)) {
+                    continue;
+                }
+
+                // This order has exceeded the 48-hour window
+                checked++;
+                try {
+                    boolean triggered = expireSinglePendingOrder(order);
+                    if (triggered) {
+                        expired++;
+                    } else {
+                        errors++;
+                    }
+                } catch (Exception e) {
+                    logger.error("Unexpected error expiring order {}. Leaving as PENDING.", order.getOrderId(), e);
+                    errors++;
+                }
+            }
+
+            logger.info("expirePendingOrders complete. checked={}, expired={}, errors={}", checked, expired, errors);
+        } catch (Exception e) {
+            logger.error("Failed to query PENDING orders for expiry", e);
+        }
+
+        return new ExpirePendingOrdersResult(checked, expired, errors);
+    }
+
+    /**
+     * Attempts to expire a single PENDING order.
+     *
+     * @return {@code true} if a cancellation was successfully triggered or forced,
+     *         {@code false} if the order should remain PENDING
+     */
+    private static boolean expireSinglePendingOrder(Order order) {
+        String orderId = order.getOrderId();
+        String paymentIntentId = order.getStripePaymentIntentId();
+
+        if (paymentIntentId == null || paymentIntentId.isBlank()) {
+            logger.error("Order {} has no stripePaymentIntentId. Cannot expire. Leaving as PENDING.", orderId);
+            return false;
+        }
+
+        List<String> ticketIds = order.getTickets();
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            logger.error("Order {} has no tickets. Cannot look up stripeAccountId. Leaving as PENDING.", orderId);
+            return false;
+        }
+
+        Optional<Ticket> maybeFirstTicket = TicketsRepository.getTicketById(ticketIds.get(0));
+        if (maybeFirstTicket.isEmpty()) {
+            logger.error("First ticket {} not found for order {}. Cannot look up event. Leaving as PENDING.",
+                    ticketIds.get(0), orderId);
+            return false;
+        }
+
+        String eventId = maybeFirstTicket.get().getEventId();
+        EventData eventData = EventsRepository.getEventById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found: " + eventId));
+
+        String organiserId = eventData.getOrganiserId();
+        UserData userData = Users.getUserDataById(organiserId);
+        if (userData == null) {
+            logger.error("Organiser {} not found for order {}. Cannot expire. Leaving as PENDING.",
+                    organiserId, orderId);
+            return false;
+        }
+
+        String stripeAccountId = userData.getStripeAccount();
+
+        try {
+            StripeService.cancelPaymentIntent(paymentIntentId, stripeAccountId);
+            logger.info("Requested Stripe cancellation for expired PENDING order. orderId={}, paymentIntentId={}",
+                    orderId, paymentIntentId);
+            // Happy path: Stripe will fire payment_intent.canceled, handled by the webhook
+            return true;
+        } catch (InvalidRequestException e) {
+            if ("resource_missing".equals(e.getCode())) {
+                // Redundancy A: PI does not exist in Stripe. Force-reject the order so the
+                // buyer gets their cancellation email and vacancy is restocked.
+                logger.error("Stripe PaymentIntent {} does not exist (resource_missing) for order {}. "
+                        + "Forcing order to REJECTED state directly. orderId={}, paymentIntentId={}",
+                        paymentIntentId, orderId, orderId, paymentIntentId, e);
+                boolean forceRejected = WebhookService.fulfilmentWorkflowOnPaymentIntentCanceled(paymentIntentId);
+                if (!forceRejected) {
+                    logger.error("Force-rejection failed for order {} (resource_missing path). "
+                            + "Manual intervention may be required. orderId={}, paymentIntentId={}",
+                            orderId, orderId, paymentIntentId);
+                }
+                return forceRejected;
+            }
+            // Redundancy B: PI exists but cancellation failed for another reason. Leave PENDING.
+            logger.error("Stripe InvalidRequestException (non-resource_missing) while expiring order {}. "
+                    + "Leaving as PENDING. paymentIntentId={}, stripeCode={}",
+                    orderId, paymentIntentId, e.getCode(), e);
+            return false;
+        } catch (StripeException e) {
+            // Redundancy B: any other Stripe failure — leave as PENDING
+            logger.error("Stripe error while expiring order {}. Leaving as PENDING. paymentIntentId={}",
+                    orderId, paymentIntentId, e);
+            return false;
+        }
     }
 
     private static final int MAX_FIRESTORE_RETRIES = 3;

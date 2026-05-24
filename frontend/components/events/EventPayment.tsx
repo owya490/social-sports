@@ -40,6 +40,7 @@ interface EventPaymentProps {
   organiserId: UserId;
   waitlistEnabled: boolean;
   maxTicketsPerTransaction?: number;
+  bookingApprovalEnabled?: boolean;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
@@ -177,8 +178,14 @@ export default function EventPayment(props: EventPaymentProps) {
                     eventId={props.eventId}
                     ticketCount={attendeeCount}
                     setLoading={props.setLoading}
+                    bookingApprovalEnabled={props.bookingApprovalEnabled}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
+                  {props.bookingApprovalEnabled && (
+                    <p className="text-xs text-gray-600 mt-2 text-center">
+                      This event requires organiser approval. Your card will be authorised but not charged until approved — requests auto-expire in 48 hours.
+                    </p>
+                  )}
                   <p className="text-xs text-gray-600 mt-3 text-center">
                     Registration closes {timestampToTimeOfDay(registrationEndDate)},{" "}
                     {timestampToDateString(registrationEndDate)}

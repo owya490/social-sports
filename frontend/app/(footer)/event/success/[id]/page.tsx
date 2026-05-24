@@ -22,6 +22,7 @@ function SuccessContent() {
   const searchParams = useSearchParams();
   const fulfilmentSessionType = searchParams.get("fulfilmentSessionType");
   const isWaitlist = fulfilmentSessionType === FulfilmentSessionType.WAITLIST;
+  const isBookingApproval = fulfilmentSessionType === FulfilmentSessionType.BOOKING_APPROVAL;
 
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState(EmptyEventData);
@@ -47,6 +48,23 @@ function SuccessContent() {
           <p className="font-light">We will notify you via email if spots open up for this event.</p>
           <p className="text-xs text-gray-500 mt-4">
             Please check your email for waitlist confirmation and event details. If you don&apos;t see it, check your spam or junk folder.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isBookingApproval) {
+    return (
+      <div className="h-screen w-full flex justify-center items-center">
+        <div className="text-center max-w-md px-4">
+          <h2 className="text-2xl">Booking request submitted!</h2>
+          <p className="font-light mt-2">
+            Thanks for booking {event.name}. {event.organiser.firstName} will review and confirm your spot within 48 hours.
+          </p>
+          <p className="font-light">We&apos;ll email you either way — your card won&apos;t be charged until approved.</p>
+          <p className="text-xs text-gray-500 mt-4">
+            Please check your email for your booking request confirmation. If you don&apos;t see it, check your spam or junk folder.
           </p>
         </div>
       </div>

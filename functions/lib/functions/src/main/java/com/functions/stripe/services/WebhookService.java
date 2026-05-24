@@ -357,6 +357,14 @@ public class WebhookService {
         return resolvedMetadata;
     }
 
+    /**
+     * @deprecated purchaserMap is deprecated — orders/tickets are the source of truth
+     *     for ticket activity. This helper is retained only because frontend attendee
+     *     dialogs (AddAttendeeDialog, EditAttendeeTicketsDialog, RemoveAttendeeDialog,
+     *     ViewAttendeeFormResponsesDialog) still read purchaserMap; it is no longer
+     *     called from the checkout flow.
+     */
+    @Deprecated
     static EventMetadata applyAttendanceToEventMetadata(
             EventMetadata eventMetadata,
             String organiserId,
@@ -430,6 +438,12 @@ public class WebhookService {
         return resolvedMetadata;
     }
 
+    /**
+     * @deprecated purchaserMap is deprecated — orders/tickets are the source of truth
+     *     for ticket activity. This helper is retained only because frontend attendee
+     *     dialogs still read purchaserMap; it is no longer called from cancellation flow.
+     */
+    @Deprecated
     static EventMetadata rollbackAttendanceFromEventMetadata(
             EventMetadata eventMetadata,
             String organiserId,
@@ -617,16 +631,12 @@ public class WebhookService {
         
         // Resolve status based on capture method
         OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
-        eventMetadata = applyAttendanceToEventMetadata(
-                eventMetadata,
-                event.getOrganiserId(),
-                customerEmail,
-                fullName,
-                phoneNumber,
-                quantity.intValue(),
-                formResponseIds);
-        logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}",
-                customerEmail, fullName);
+        // completeTicketCount is used by dashboards (EventDrilldownStatBanner, AttendeeService,
+        // ReservedSlotService) so it is kept up to date; purchaserMap is deprecated and no
+        // longer written.
+        eventMetadata.setCompleteTicketCount(eventMetadata.getCompleteTicketCount() + quantity.intValue());
+        logger.info("Incremented completeTicketCount for event {}. email={}, name={}",
+                eventId, customerEmail, fullName);
         
         List<String> ticketIds = new ArrayList<>();
         
@@ -757,12 +767,10 @@ public class WebhookService {
                     tickets.size()));
         }
 
-        eventMetadata = rollbackAttendanceFromEventMetadata(
-                eventMetadata,
-                organiserId,
-                order.getEmail(),
-                order.getFullName(),
-                tickets);
+        // purchaserMap is deprecated — only decrement completeTicketCount.
+        int canceledTicketCount = tickets.size();
+        int currentCount = eventMetadata.getCompleteTicketCount() != null ? eventMetadata.getCompleteTicketCount() : 0;
+        eventMetadata.setCompleteTicketCount(Math.max(0, currentCount - canceledTicketCount));
 
         restockTickets(transaction, eventId, isPrivate, tickets.size());
         updateTicketsStatusToRejected(transaction, ticketIds);
@@ -1027,8 +1035,8 @@ public class WebhookService {
                         fulfilmentSessionId, MAX_FULFILMENT_RETRIES);
             }
             
+            String visibility = isPrivate ? "Private" : "Public";
             if (shouldSendPurchaseEmailAfterCheckout(captureMethod)) {
-                String visibility = isPrivate ? "Private" : "Public";
                 boolean emailSuccess = sendPurchaseEmailWithRetries(
                         eventId,
                         visibility,
@@ -1039,6 +1047,35 @@ public class WebhookService {
                 if (!emailSuccess) {
                     logger.warn("Was unable to send purchase email after EmailClient retries. orderId={}, customer={}",
                             orderId, customerEmail);
+                }
+            } else if ("manual".equalsIgnoreCase(captureMethod)) {
+                // Booking-approval flow: buyer is pending organiser approval, so send a
+                // friendly "request received" email rather than a purchase confirmation.
+                boolean tentativeEmailSuccess = EmailService.sendBookingApprovalTentativeEmail(
+                        eventId,
+                        visibility,
+                        customerEmail,
+                        fullName,
+                        orderId);
+                if (!tentativeEmailSuccess) {
+                    logger.warn("Was unable to send tentative booking email. orderId={}, customer={}",
+                            orderId, customerEmail);
+                }
+
+                // Also notify the organiser that a new booking request is awaiting approval.
+                try {
+                    int quantity = (int) getRequiredCheckoutQuantity(lineItems, checkoutSessionId, false);
+                    boolean organiserEmailSuccess = EmailService.sendOrganiserPendingBookingEmail(
+                            eventId,
+                            visibility,
+                            fullName,
+                            orderId,
+                            quantity);
+                    if (!organiserEmailSuccess) {
+                        logger.warn("Was unable to send organiser pending booking notification. orderId={}", orderId);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to send organiser pending booking notification. orderId={}", orderId, e);
                 }
             }
             

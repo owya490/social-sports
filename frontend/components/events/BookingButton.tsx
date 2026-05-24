@@ -14,9 +14,10 @@ interface BookingButtonProps {
   ticketCount: number;
   setLoading?: (value: boolean) => void;
   className?: string;
+  bookingApprovalEnabled?: boolean;
 }
 
-export default function BookingButton({ eventId, ticketCount, setLoading, className = "" }: BookingButtonProps) {
+export default function BookingButton({ eventId, ticketCount, setLoading, className = "", bookingApprovalEnabled = false }: BookingButtonProps) {
   const router = useRouter();
   const [internalLoading, setInternalLoading] = useState(false);
 
@@ -51,9 +52,11 @@ export default function BookingButton({ eventId, ticketCount, setLoading, classN
     }
   };
 
+  const label = bookingApprovalEnabled ? "Request to Book" : "Book Now";
+
   return (
     <button type="button" className={className} onClick={handleBookNow} disabled={internalLoading}>
-      {internalLoading ? "Booking..." : "Book Now"}
+      {internalLoading ? "Booking..." : label}
     </button>
   );
 }

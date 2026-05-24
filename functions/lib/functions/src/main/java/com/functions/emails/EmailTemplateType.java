@@ -8,7 +8,16 @@ public enum EmailTemplateType {
 
     PURCHASE("cm4r78nk301ehx79nrrxaijgl"),
     WAITLIST_CONFIRMATION("cmjcdaf0h05gt0i56iicea2ys"),
-    WAITLIST_NOTIFICATION("cmjgp5at54ceh0iyg06ddxftt");
+    WAITLIST_NOTIFICATION("cmjgp5at54ceh0iyg06ddxftt"),
+
+    // TODO(SPORTSHUB-454): replace placeholder with real Loops template id once created
+    BOOKING_APPROVAL_TENTATIVE("REPLACE_ME_TODO"),
+
+    // TODO(SPORTSHUB-454): replace placeholder with real Loops template id once created
+    BOOKING_APPROVED("REPLACE_ME_TODO"),
+
+    // TODO(SPORTSHUB-454): replace placeholder with real Loops template id once created
+    BOOKING_APPROVAL_ORGANISER("REPLACE_ME_TODO");
 
     public final String templateId;
 
