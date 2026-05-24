@@ -3,13 +3,22 @@ import Loading from "@/components/loading/Loading";
 import { EmptyEventData, EventId } from "@/interfaces/EventTypes";
 import { FulfilmentSessionType } from "@/interfaces/FulfilmentTypes";
 import { getEventById } from "@/services/src/events/eventsService";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 // Error components must be Client Components
 
-export default function Success({ params }: any) {
-  const eventId: EventId = params.id;
+export default function Success() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <SuccessContent />
+    </Suspense>
+  );
+}
+
+function SuccessContent() {
+  const params = useParams<{ id: string }>();
+  const eventId = params.id as EventId;
   const searchParams = useSearchParams();
   const fulfilmentSessionType = searchParams.get("fulfilmentSessionType");
   const isWaitlist = fulfilmentSessionType === FulfilmentSessionType.WAITLIST;
@@ -21,7 +30,7 @@ export default function Success({ params }: any) {
       setEvent(event);
       setLoading(false);
     });
-  }, []);
+  }, [eventId]);
 
   if (loading) {
     return <Loading />;

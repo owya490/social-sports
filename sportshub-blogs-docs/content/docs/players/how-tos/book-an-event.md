@@ -45,7 +45,7 @@ Booking sports events on SPORTSHUB is quick and secure with our integrated Strip
 - **Payment Security**: All payments are processed securely through Stripe
 - **Ticket Limits**: Events have limited capacity - book early to avoid disappointment
   > [!NOTE] We secure you tickets the moment you click book now.
-  > Your tickets are secured for a **max of 30 minutes** before your session expires.
+  > Your tickets are secured for a **max of 15 minutes** before your session expires.
 
 ### After Booking
 

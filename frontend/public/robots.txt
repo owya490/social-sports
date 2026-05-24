@@ -9,6 +9,7 @@ Allow: /
 Sitemap: https://www.sportshub.net.au/sitemap.xml
 
 # Block crawling of potentially sensitive or unnecessary paths
+Allow: /api/og
 Disallow: /api/
 Disallow: /_next/
 Disallow: /admin/

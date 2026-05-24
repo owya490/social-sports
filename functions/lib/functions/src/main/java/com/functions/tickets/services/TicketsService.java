@@ -89,6 +89,7 @@ public class TicketsService {
             Order order = OrdersRepository.getOrderById(orderId, Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Order not found " + orderId));
             List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets(), Optional.of(transaction));
+
             for (Ticket ticket : tickets) {
                 ticket.setStatus(orderAndTicketStatus);
                 TicketsRepository.updateTicket(ticket.getTicketId(), ticket, Optional.of(transaction));

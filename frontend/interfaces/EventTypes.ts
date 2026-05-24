@@ -13,6 +13,12 @@ export type TicketId = Branded<string, "TicketId">;
 export const INVALID_LAT = -1;
 export const INVALID_LNG = -1;
 
+/** Default max tickets per checkout when an event has no configured value. */
+export const DEFAULT_MAX_TICKETS_PER_ORDER = 7;
+
+/** Organiser-configurable max is capped at this value. */
+export const MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP = 10;
+
 export type EventAttendees = { [emailHash: string]: number };
 
 interface AbstractEventData {
@@ -51,6 +57,7 @@ interface AbstractEventData {
   waitlistEnabled: boolean; // should default to true
   bookingApprovalEnabled: boolean; // should default to false
   showAttendeesOnEventPage: boolean; // should default to false
+  maxTicketsPerTransaction: number; // max tickets per checkout; should default to 7, capped at min(capacity, 10) in UI
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -109,6 +116,7 @@ export const EmptyEventData: EventData = {
   waitlistEnabled: true,
   bookingApprovalEnabled: false,
   showAttendeesOnEventPage: false,
+  maxTicketsPerTransaction: DEFAULT_MAX_TICKETS_PER_ORDER,
 };
 
 export interface EventMetadata {

@@ -3,7 +3,7 @@ import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
 import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
-import { displayPrice } from "@/utilities/priceUtils";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 
 type BasicData = {
@@ -17,10 +17,10 @@ type PreviewFormProps = BasicData & {
 
 export const PreviewForm = ({ form, user }: PreviewFormProps) => {
   const dateString = form.startDate + " " + form.startTime;
-  var [datePart, timePart] = dateString.split(" ");
-  var [year, month, day] = datePart.split("-");
-  var [hours, minutes] = timePart.split(":");
-  var myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+  const [datePart, timePart] = dateString.split(" ");
+  const [year, month, day] = datePart.split("-");
+  const [hours, minutes] = timePart.split(":");
+  const myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
 
   return (
     <div className="lg:grid lg:grid-cols-3 mt-20 space-y-6">
@@ -62,7 +62,7 @@ export const PreviewForm = ({ form, user }: PreviewFormProps) => {
 
           <div>
             <div className="text-lg lg:text-lg font-bold mb-2 border-b-2 border-gray-300 text-gray-600">Price</div>
-            <p className="text-m">${displayPrice(form.price)}</p>
+            <p className="text-m">{getEventPriceDisplay(form.price)}</p>
           </div>
 
           <div>

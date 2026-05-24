@@ -18,12 +18,20 @@ import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useState } from "react";
 
 const SPORTSHUB_ORGANISER_ID = "ZzuRS5v8hhWonnp2qdIOZG8R7f12";
+const logger = new Logger("DashboardLogger");
 
 export default function Dashboard() {
-  const logger = new Logger("DashboardLogger");
+  return (
+    <Suspense fallback={<div className="min-h-[60vh]" />}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const [loading, setLoading] = useState<boolean>(true);
   const [allEventsDataList, setAllEventsDataList] = useState<EventData[]>([]);
   const [eventDataList, setEventDataList] = useState<EventData[]>([
@@ -69,7 +77,7 @@ export default function Dashboard() {
     locationParameter: string | null,
     userParameter: string | null
   ): SearchType {
-    var type = SearchType.EVENT;
+    let type = SearchType.EVENT;
     if (eventParameter !== null) {
       type = SearchType.EVENT;
     } else if (userParameter !== null) {
@@ -149,7 +157,7 @@ export default function Dashboard() {
           } else {
             // the search is not empty
             // 1. try search the user up by username and if so add it to the first element of the list
-            var users: PublicUserData[] = [];
+            let users: PublicUserData[] = [];
             try {
               const { userId } = await getUsernameMapping(user);
               users.push(await getPublicUserById(userId));

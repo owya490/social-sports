@@ -8,15 +8,24 @@ import { SportshubWrapped } from "@/interfaces/WrappedTypes";
 import { Logger } from "@/observability/logger";
 import { getUsernameMapping } from "@/services/src/users/usersService";
 import { getWrappedData } from "@/services/src/wrapped/wrappedServices";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 const WRAPPED_YEAR = 2025;
 const MIN_LOADING_TIME_MS = 10000;
 
 const publicWrappedPageLogger = new Logger("publicWrappedPageLogger");
 
-export default function PublicWrappedPage({ params }: { params: { id: string } }) {
+export default function PublicWrappedPage() {
+  return (
+    <Suspense fallback={<WrappedLoading />}>
+      <PublicWrappedPageContent />
+    </Suspense>
+  );
+}
+
+function PublicWrappedPageContent() {
+  const params = useParams<{ id: string }>();
   const username = params.id;
   const searchParams = useSearchParams();
   const wrappedId = searchParams.get("wrappedId");

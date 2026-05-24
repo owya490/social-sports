@@ -14,6 +14,8 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.Transaction;
 
 /**
@@ -88,6 +90,51 @@ public class OrdersRepository {
         } catch (Exception e) {
             logger.error("Failed to update order: {}", orderId, e);
             throw new RuntimeException("Failed to update order", e);
+        }
+    }
+
+    /**
+     * Gets the unique order matching a Stripe PaymentIntent ID.
+     *
+     * @param paymentIntentId Stripe payment intent ID
+     * @return Optional containing the matched order when exactly one exists, otherwise empty
+     * @throws IllegalStateException when multiple orders share the same payment intent ID
+     */
+    public static Optional<Order> getOrderByStripePaymentIntentId(String paymentIntentId) {
+        if (paymentIntentId == null || paymentIntentId.isBlank()) {
+            logger.warn("Cannot query order by empty paymentIntentId");
+            return Optional.empty();
+        }
+
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            QuerySnapshot querySnapshot = db.collection(ORDERS_COLLECTION)
+                    .whereEqualTo("stripePaymentIntentId", paymentIntentId)
+                    .limit(2)
+                    .get()
+                    .get();
+
+            if (querySnapshot.isEmpty()) {
+                return Optional.empty();
+            }
+
+            if (querySnapshot.size() > 1) {
+                logger.error("Multiple orders found for stripePaymentIntentId: {}", paymentIntentId);
+                throw new IllegalStateException(
+                        "Data integrity violation: multiple orders for stripePaymentIntentId: " + paymentIntentId);
+            }
+
+            QueryDocumentSnapshot document = querySnapshot.getDocuments().get(0);
+            Order order = document.toObject(Order.class);
+            if (order != null) {
+                order.setOrderId(document.getId());
+            }
+            return Optional.ofNullable(order);
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Failed to query order by stripePaymentIntentId: {}", paymentIntentId, e);
+            throw new RuntimeException("Failed to query order by stripePaymentIntentId: " + paymentIntentId, e);
         }
     }
 

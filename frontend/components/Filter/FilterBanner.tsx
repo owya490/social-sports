@@ -81,14 +81,14 @@ export default function FilterBanner({
     console.log(srcLocation);
     // Filter by MAX PRICE
     if (!isAnyPriceBool) {
-      let newEventDataList = filterEventsByPrice([...filteredEventDataList], null, maxPriceSliderValue);
+      const newEventDataList = filterEventsByPrice([...filteredEventDataList], null, maxPriceSliderValue);
       filteredEventDataList = newEventDataList;
     }
     setAppliedMaxPriceSliderValue(maxPriceSliderValue);
 
     // Filter by DATERANGE
     if (dateRange.from && dateRange.to) {
-      let newEventDataList = filterEventsByDate(
+      const newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
         Timestamp.fromDate(new Date(dateRange.from.toISOString().split("T")[0] + DAY_START_TIME_STRING)),
         Timestamp.fromDate(new Date(dateRange.to.toISOString().split("T")[0] + DAY_END_TIME_STRING))
@@ -110,7 +110,7 @@ export default function FilterBanner({
         console.log(error);
       }
 
-      let newEventDataList = filterEventsByMaxProximity(
+      const newEventDataList = filterEventsByMaxProximity(
         [...filteredEventDataList],
         maxProximitySliderValue,
         srcLat,

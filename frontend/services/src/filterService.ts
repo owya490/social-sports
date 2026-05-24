@@ -150,7 +150,7 @@ export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
   Object.keys(filterFieldsMap).forEach(async (key: string) => {
     switch (key) {
       case "startDate":
-        let startDate: Timestamp = filterFieldsMap["startDate"].startDate;
+        const startDate: Timestamp = filterFieldsMap["startDate"].startDate;
         let endDate: Timestamp | null = null;
         if ("endDate" in filterFieldsMap["startDate"]) {
           endDate = filterFieldsMap["startDate"].endDate;
@@ -195,7 +195,7 @@ async function filterEventsByWhereClausesAndProximity(
   try {
     const eventsRef = collection(db, "Events");
 
-    let filterEventsQuery = query(eventsRef, ...whereClauseList, limit(NUM_DOCS_QUERY_LIMIT));
+    const filterEventsQuery = query(eventsRef, ...whereClauseList, limit(NUM_DOCS_QUERY_LIMIT));
 
     const filteredEventsSnapshot = await getDocs(filterEventsQuery);
     const filteredEventsData: EventData[] = [];

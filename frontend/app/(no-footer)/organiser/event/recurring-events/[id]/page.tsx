@@ -8,7 +8,11 @@ import RecurringTemplateDrilldownSettings from "@/components/organiser/recurring
 import RecurringTemplateDrilldownSidePanel from "@/components/organiser/recurring-events/RecurringTemplateDrilldownSidePanel";
 import { RecurringTemplatePastEvents } from "@/components/organiser/recurring-events/RecurringTemplatePastEvents";
 import { RecurringTemplateSettings } from "@/components/organiser/recurring-events/RecurringTemplateSettings";
-import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import {
+  DEFAULT_MAX_TICKETS_PER_ORDER,
+  EventId,
+  NewEventData,
+} from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
@@ -24,22 +28,18 @@ import {
   updateRecurrenceTemplateEventData,
   updateRecurrenceTemplateRecurrenceData,
 } from "@/services/src/recurringEvents/recurringEventsService";
+import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-interface RecurrenceTemplatePageProps {
-  params: {
-    id: string;
-  };
-}
 
 const logger = new Logger("RecurrenceTemplatePage");
 
-export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePageProps) {
+export default function RecurrenceTemplatePage() {
+  const params = useParams<{ id: string }>();
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [_eventData, setEventData] = useState<NewEventData>();
   const [loading, setLoading] = useState<boolean>(true);
@@ -67,6 +67,7 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventBookingApprovalEnabled, setEventBookingApprovalEnabled] = useState<boolean>(false);
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState<boolean>(false);
+  const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] = useState<number>(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
@@ -114,6 +115,12 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
         setEventWaitlistEnabled(recurrenceTemplate.eventData.waitlistEnabled);
         setEventBookingApprovalEnabled(recurrenceTemplate.eventData.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(recurrenceTemplate.eventData.showAttendeesOnEventPage);
+        setEventMaxTicketsPerTransaction(
+          clampMaxTicketsPerTransaction(
+            recurrenceTemplate.eventData.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER,
+            recurrenceTemplate.eventData.capacity
+          )
+        );
         const isRecurrenceEnded = calculateRecurrenceEnded(recurrenceTemplate);
         setRecurrenceEnded(isRecurrenceEnded);
         // Edge case, if the recurrence is ended, it should not be enabled
@@ -252,6 +259,10 @@ export default function RecurrenceTemplatePage({ params }: RecurrenceTemplatePag
                   setBookingApprovalEnabled={setEventBookingApprovalEnabled}
                   showAttendeesOnEventPage={eventShowAttendeesOnEventPage}
                   setShowAttendeesOnEventPage={setEventShowAttendeesOnEventPage}
+                  maxTicketsPerTransaction={eventMaxTicketsPerTransaction}
+                  setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
+                  eventCapacity={eventCapacity}
+                  eventPrice={eventPrice}
                 />
               </>
             )}

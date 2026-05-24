@@ -94,7 +94,7 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
 // Should be a partial of eventData or NewRecurrenceFormData
 export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId, updatedData: any) {
   recurringEventsServiceLogger.info(`Updating Recurrence Template ${recurrenceTemplateId}`);
-  var eventData = null;
+  let eventData = null;
   if (updatedData.eventData) {
     eventData = {
       ...updatedData.eventData,

@@ -16,10 +16,10 @@ function paramString(v: string | string[] | undefined): string {
  * but with real event + response — not under /organiser).
  */
 export default function PublicFormResponsePreviewPage() {
-  const params = useParams();
-  const formId = paramString(params?.formId) as FormId;
-  const eventId = paramString(params?.eventId) as EventId;
-  const responseId = paramString(params?.responseId) as FormResponseId;
+  const params = useParams<{ formId: string | string[]; eventId: string | string[]; responseId: string | string[] }>();
+  const formId = paramString(params.formId) as FormId;
+  const eventId = paramString(params.eventId) as EventId;
+  const responseId = paramString(params.responseId) as FormResponseId;
 
   return (
     <div className="min-h-[calc(100vh-var(--footer-height))] overflow-hidden bg-core-hover">

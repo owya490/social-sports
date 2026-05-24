@@ -1,4 +1,3 @@
-import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { EventId } from "@/interfaces/EventTypes";
 import {
   FulfilmentEntityId,
@@ -17,12 +16,12 @@ import {
   InitCheckoutFulfilmentSessionResponse,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
+import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
 import { Logger } from "@/observability/logger";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
   clearStoredFulfilmentSessionId,
-  getDeleteFulfilmentSessionUrl,
   getStoredFulfilmentSessionId,
   storeFulfilmentSessionId,
 } from "./fulfilmentUtils/fulfilmentUtils";
@@ -297,44 +296,10 @@ export async function getFulfilmentEntityInfo(
 
     return response;
   } catch (error) {
-    fulfilmentServiceLogger.error(`getFulfilmentEntityInfo: Failed to fetch fulfilment entity info: ${error}`);
-    throw error;
-  }
-}
-
-// TODO: deprecate and remove this function in favour of `completeFulfilmentSession`
-export async function deleteFulfilmentSession(fulfilmentSessionId: FulfilmentSessionId): Promise<void> {
-  fulfilmentServiceLogger.info(`deleteFulfilmentSession: Deleting fulfilment session with ID: ${fulfilmentSessionId}`);
-
-  const request: { fulfilmentSessionId: FulfilmentSessionId } = {
-    fulfilmentSessionId,
-  };
-
-  try {
-    const rawResponse = await fetch(getDeleteFulfilmentSessionUrl(), {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!rawResponse.ok) {
-      const errorResponse = (await rawResponse.json()) as ErrorResponse;
-      fulfilmentServiceLogger.error(
-        `deleteFulfilmentSession: Cloud function error: Failed to delete fulfilment session: ${errorResponse.errorMessage}`
-      );
-      throw new Error(`deleteFulfilmentSession: ${errorResponse.errorMessage}`);
+    if (error instanceof NotFoundError) {
+      throw error;
     }
-
-    fulfilmentServiceLogger.info(
-      `deleteFulfilmentSession: Successfully deleted fulfilment session with ID: ${fulfilmentSessionId}`
-    );
-  } catch (error) {
-    fulfilmentServiceLogger.error(
-      `deleteFulfilmentSession: Failed to delete fulfilment session with ID ${fulfilmentSessionId}: ${error}`
-    );
+    fulfilmentServiceLogger.error(`getFulfilmentEntityInfo: Failed to fetch fulfilment entity info: ${error}`);
     throw error;
   }
 }
@@ -365,6 +330,9 @@ export async function getFulfilmentSessionInfo(
     );
     return response;
   } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw error;
+    }
     fulfilmentServiceLogger.error(`getFulfilmentSessionInfo: Failed to fetch fulfilment session info: ${error}`);
     throw error;
   }

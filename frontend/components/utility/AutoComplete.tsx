@@ -1,4 +1,4 @@
-import { getLocationCoordinates, initializeAutocomplete, loadGoogleMapsScript } from "@/services/src/maps/mapsService";
+import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { Input } from "@material-tailwind/react";
 import React, { useEffect, useRef, useState } from "react";
 import { BasicData } from "../events/create/forms/BasicForm";
@@ -14,7 +14,7 @@ const LocationAutocompleteForm: React.FC<AutocompleteFormProps> = ({ location, u
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const scriptLoadResult = loadGoogleMapsScript();
+  const scriptLoadResult = useGoogleMapsScript();
   const isLoaded = scriptLoadResult ? scriptLoadResult.isLoaded : false;
   const loadError = scriptLoadResult ? scriptLoadResult.loadError : undefined;
 

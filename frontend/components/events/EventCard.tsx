@@ -2,7 +2,7 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { displayPrice } from "@/utilities/priceUtils";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
@@ -47,6 +47,7 @@ export default function EventCard(props: EventCardProps) {
   } = props;
 
   const [imageLoaded, setImageLoaded] = useState(false);
+  const isCardClickable = props.isClickable !== false;
 
   // Preload images for better performance
   useEffect(() => {
@@ -79,10 +80,10 @@ export default function EventCard(props: EventCardProps) {
           <div className="p-4">
             <div className="flex">
               <h4 className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>
-              <h4 className="font-light text-gray-500 text-xs ml-auto">{`$${displayPrice(price)}`}</h4>
+              <h4 className="font-light text-gray-500 text-xs ml-auto">{getEventPriceDisplay(price)}</h4>
             </div>
             <h2 className="text-lg font-semibold mt-0.5 whitespace-nowrap overflow-hidden text-core-text">{name}</h2>
-            <UserInlineDisplay organiser={organiser} />
+            <UserInlineDisplay organiser={organiser} isLinkEnabled={!isCardClickable} />
             <div className="mt-1 space-y-3">
               <div className="flex items-center ml-0.5">
                 <MapPinIcon className="w-4 shrink-0" />
@@ -95,7 +96,7 @@ export default function EventCard(props: EventCardProps) {
     </div>
   );
 
-  if (props.isClickable === false) {
+  if (!isCardClickable) {
     return cardContent;
   }
 

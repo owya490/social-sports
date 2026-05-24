@@ -75,29 +75,29 @@ export default function OrganiserDashboard() {
 
     // Filter by SEARCH
     if (searchValue !== DEFAULT_SEARCH) {
-      let newEventDataList = filterEventsBySearch([...filteredEventDataList], searchValue);
+      const newEventDataList = filterEventsBySearch([...filteredEventDataList], searchValue);
       setAppliedSearchValue(searchValue);
       filteredEventDataList = newEventDataList;
     }
     // Filter by STATUS
     if (eventStatusValue !== DEFAULT_EVENT_STATUS) {
-      let newEventDataList = filterEventsByStatus([...filteredEventDataList], eventStatusValue);
+      const newEventDataList = filterEventsByStatus([...filteredEventDataList], eventStatusValue);
       filteredEventDataList = newEventDataList;
     }
 
     // Filter by TYPE
     if (eventTypeValue !== DEFAULT_EVENT_TYPE) {
-      let newEventDataList = filterEventsByType([...filteredEventDataList], eventTypeValue);
+      const newEventDataList = filterEventsByType([...filteredEventDataList], eventTypeValue);
       setAppliedEventTypeValue(eventTypeValue);
       filteredEventDataList = newEventDataList;
     }
 
     // Filter by PRICE
-    let minPrice = minPriceValue !== DEFAULT_MIN_PRICE ? minPriceValue : 0;
-    let maxPrice = maxPriceValue !== DEFAULT_MAX_PRICE ? maxPriceValue : 999999;
+    const minPrice = minPriceValue !== DEFAULT_MIN_PRICE ? minPriceValue : 0;
+    const maxPrice = maxPriceValue !== DEFAULT_MAX_PRICE ? maxPriceValue : 999999;
 
     if (minPriceValue !== DEFAULT_MIN_PRICE || maxPriceValue !== DEFAULT_MAX_PRICE) {
-      let newEventDataList = filterEventsByPrice([...filteredEventDataList], minPrice, maxPrice);
+      const newEventDataList = filterEventsByPrice([...filteredEventDataList], minPrice, maxPrice);
       filteredEventDataList = newEventDataList;
     }
 
@@ -105,7 +105,7 @@ export default function OrganiserDashboard() {
     if (dateRange.from && dateRange.to) {
       const startDateObj = setDateToStartOfDay(dateRange.from);
       const endDateObj = setDateToEndOfDay(dateRange.to);
-      let newEventDataList = filterEventsByDate(
+      const newEventDataList = filterEventsByDate(
         [...filteredEventDataList],
         Timestamp.fromDate(startDateObj),
         Timestamp.fromDate(endDateObj)
@@ -116,7 +116,7 @@ export default function OrganiserDashboard() {
 
     // Filter by SORT BY is done in useEffect below
     setAppliedSortByCategoryValue(sortByCategoryValue);
-    let newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
+    const newEventDataList = filterEventsBySortBy([...filteredEventDataList], sortByCategoryValue);
     filteredEventDataList = newEventDataList;
     setEventDataList([...filteredEventDataList]);
     closeModal();

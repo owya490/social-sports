@@ -5,8 +5,17 @@ import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 export default function ErrorPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <ErrorPageContent />
+    </Suspense>
+  );
+}
+
+function ErrorPageContent() {
   const searchParams = useSearchParams();
   const errorMessage = searchParams?.get("message");
   const router = useRouter();

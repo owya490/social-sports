@@ -5,8 +5,8 @@ import { FormId } from "@/interfaces/FormTypes";
 import { useParams } from "next/navigation";
 
 const FormEditorPage = () => {
-  const params = useParams();
-  const formId = (typeof params?.formId === "string" ? params.formId : params.formId[0]) as FormId;
+  const params = useParams<{ formId: string | string[] }>();
+  const formId = (typeof params.formId === "string" ? params.formId : params.formId[0]) as FormId;
 
   return (
     <>

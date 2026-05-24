@@ -20,7 +20,7 @@ export const RecurringEventsForm = ({ startDate, newRecurrenceData, setRecurrenc
   const [recurrenceDates, setRecurrenceDates] = useState<Timestamp[]>([]);
 
   useEffect(() => {
-    let dateObject = new Date(startDate);
+    const dateObject = new Date(startDate);
     const timestamp = Timestamp.fromDate(dateObject);
     const futureRecurrences: Timestamp[] = calculateRecurrenceDates(newRecurrenceData, timestamp);
     setRecurrenceDates(futureRecurrences);

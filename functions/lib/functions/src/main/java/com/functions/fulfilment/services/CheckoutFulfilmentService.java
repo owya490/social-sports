@@ -148,13 +148,15 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
                                         .orElse(UrlUtils.SPORTSHUB_URL))
                         : UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId).orElse(UrlUtils.SPORTSHUB_URL);
 
-                String stripeCheckoutLink = StripeService.getStripeCheckoutUrl(eventId,
+                var stripeCheckout = StripeService.getStripeCheckoutUrl(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
                         fulfilmentSessionId, endFulfilmentEntityId);
 
                 logger.info("Created Stripe checkout link for event ID {}", eventId);
-                logger.debug("Stripe checkout link: {}", stripeCheckoutLink);
-                entity = StripeFulfilmentEntity.builder().url(stripeCheckoutLink)
+                logger.debug("Stripe checkout link: {}", stripeCheckout.url());
+                entity = StripeFulfilmentEntity.builder().url(stripeCheckout.url())
+                        .stripeCheckoutSessionId(stripeCheckout.stripeCheckoutSessionId())
+                        .stripeAccountId(stripeCheckout.stripeAccountId())
                         .type(FulfilmentEntityType.STRIPE).build();
                 fulfilmentEntities.add(new SimpleEntry<>(entityId, entity));
             } else {

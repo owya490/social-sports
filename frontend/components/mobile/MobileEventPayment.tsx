@@ -7,15 +7,19 @@ import {
   formatMobileSameDayDateTime,
   timestampToDateString,
 } from "@/services/src/datetimeUtils";
+import {
+  getBuyerMaxTicketsPerTransaction,
+  getBuyerTicketCountOptionsWithStoredSessions,
+  getTicketCountOptions,
+} from "@/services/src/events/eventsUtils/ticketLimits";
 import { getStoredFulfilmentSessionId } from "@/services/src/fulfilment/fulfilmentUtils/fulfilmentUtils";
-import { displayPrice } from "@/utilities/priceUtils";
+import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import { CalendarDaysIcon, CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import BookingButton from "../events/BookingButton";
 import ContactEventButton from "../events/ContactEventButton";
-import { MAX_TICKETS_PER_ORDER } from "../events/EventDetails";
 import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 
@@ -34,27 +38,20 @@ interface MobileEventPaymentProps {
   eventLink: string;
   organiserId: UserId;
   waitlistEnabled: boolean;
+  maxTicketsPerTransaction?: number;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const { startDate, endDate, registrationEndDate, paused } = props;
+  const isFree = isFreeEvent(props.price);
 
-  // Memoize to avoid re-running localStorage checks on every render
-  const storedTicketCounts = useMemo(() => {
-    const sessions: number[] = [];
-    for (let i = 1; i <= MAX_TICKETS_PER_ORDER; i++) {
-      const storedSession = getStoredFulfilmentSessionId(props.eventId, i);
-      if (storedSession !== null) {
-        sessions.push(i);
-      }
-    }
-    return sessions;
-  }, [props.eventId]);
+  const effectiveMax = getBuyerMaxTicketsPerTransaction(props.maxTicketsPerTransaction);
 
-  // Get ticket counts from vacancy (1 to min(vacancy, MAX_TICKETS_PER_ORDER))
-  const vacancyBasedCounts = Array.from({ length: Math.min(props.vacancy, MAX_TICKETS_PER_ORDER) }, (_, i) => i + 1);
-  // Merge with stored ticket counts and deduplicate
-  const allCounts = [...new Set([...vacancyBasedCounts, ...storedTicketCounts])].sort((a, b) => a - b);
+  const allCounts = getBuyerTicketCountOptionsWithStoredSessions(
+    props.vacancy,
+    props.maxTicketsPerTransaction,
+    (ticketCount) => getStoredFulfilmentSessionId(props.eventId, ticketCount) !== null
+  );
 
   const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0] ?? 1);
 
@@ -101,7 +98,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
         </a>
         <div className="flex items-center gap-2.5 text-gray-700">
           <CurrencyDollarIcon className="w-5 h-5 text-gray-500" />
-          <p className="text-sm font-medium leading-5">${displayPrice(props.price)} AUD</p>
+          <p className="text-sm font-medium leading-5">{getEventPriceDisplay(props.price, true)}</p>
         </div>
       </div>
 
@@ -127,14 +124,14 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   <div className="mb-4 !text-black">
                     <Select
                       className="text-black"
-                      label="Number of Attendees"
+                      label={isFree ? "Number of Bookings" : "Number of Attendees"}
                       size="lg"
                       value={`${waitlistAttendeeCount}`}
                       onChange={handleWaitlistAttendeeCount}
                     >
-                      {Array.from({ length: MAX_TICKETS_PER_ORDER }, (_, i) => i + 1).map((count) => (
+                      {getTicketCountOptions(effectiveMax).map((count) => (
                         <Option key={`attendee-option-${count}`} value={`${count}`}>
-                          {count} Attendee{count > 1 ? "s" : ""}
+                          {count} {isFree ? `Booking${count > 1 ? "s" : ""}` : `Attendee${count > 1 ? "s" : ""}`}
                         </Option>
                       ))}
                     </Select>
@@ -160,7 +157,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                 <div className="w-3/5 shrink-0">
                   <Select
                     className="text-black"
-                    label="Tickets"
+                    label={isFree ? "Bookings" : "Tickets"}
                     size="lg"
                     value={`${attendeeCount}`}
                     onChange={handleAttendeeCount}

@@ -42,7 +42,7 @@ export default function SearchBar() {
 
   const handleSearchClick = () => {
     // Default to events
-    var searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(location)}`;
+    let searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(location)}`;
     if (searchTypeSelected == SearchType.USER) {
       searchUrl = `/?user=${encodeURIComponent(searchParameter)}`;
     }
@@ -50,7 +50,7 @@ export default function SearchBar() {
   };
   const handleKeyPress = (e: { key: string }) => {
     if (e.key === "Enter") {
-      var searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(location)}`;
+      let searchUrl = `/?event=${encodeURIComponent(searchParameter)}&location=${encodeURIComponent(location)}`;
       if (searchTypeSelected == SearchType.USER) {
         searchUrl = `/?user=${encodeURIComponent(searchParameter)}`;
       }

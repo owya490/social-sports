@@ -89,14 +89,14 @@ export function getThumbnailUrlsBySport(sport: string) {
 
 export function getImageAndThumbnailUrlsWithDefaults(formData: AllImageData & { sport: string }) {
   // If the image field is undefined, it will stay as this default image.
-  var imageUrl =
+  let imageUrl =
     DEFAULT_EVENT_IMAGE_URL;
   // Otherwise if its a string, which means it is already uploaded, reuse the same imageUrl
   if (formData.image !== undefined && typeof formData.image === "string") {
     imageUrl = formData.image;
   }
 
-  var thumbnailUrl = getThumbnailUrlsBySport(formData.sport);
+  let thumbnailUrl = getThumbnailUrlsBySport(formData.sport);
 
   // Otherwise if its a string, which means it is already uploaded, reuse the same imageUrl
   if (formData.thumbnail !== undefined && typeof formData.thumbnail === "string") {
@@ -120,7 +120,7 @@ export async function uploadFormImage(userId: UserId, file: File): Promise<strin
 
 export async function getEventImageLocation(eventID: string): Promise<string[]> {
   const eventRef = ref(storage, "events/" + eventID);
-  let itemArray: string[] = [];
+  const itemArray: string[] = [];
 
   try {
     const res = await listAll(eventRef);

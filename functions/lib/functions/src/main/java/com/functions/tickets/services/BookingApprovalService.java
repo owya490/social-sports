@@ -5,11 +5,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.emails.EmailService;
 import com.functions.events.models.EventData;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.stripe.models.PaymentIntentStatus;
 import com.functions.stripe.services.StripeService;
+import com.functions.stripe.services.WebhookService;
 import com.functions.tickets.models.BookingApprovalOperation;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
@@ -24,6 +24,11 @@ import com.stripe.model.PaymentIntent;
 
 public class BookingApprovalService {
     private static final Logger logger = LoggerFactory.getLogger(BookingApprovalService.class);
+
+    @FunctionalInterface
+    interface PurchaseEmailSender {
+        boolean send(String eventId, String visibility, String customerEmail, String fullName, String orderId);
+    }
 
     public static BookingApprovalResponse handleBookingApproval(String eventId, String organiserId, String orderId,
             BookingApprovalOperation operation) {
@@ -126,11 +131,31 @@ public class BookingApprovalService {
         // Send purchase confirmation email — isolated so a failure doesn't mask the
         // successful approval
         try {
-            EmailService.sendPurchaseConfirmationEmail(order, eventData);
+            boolean purchaseEmailSent = sendPurchaseEmailAfterApproval(order, eventData);
+            if (!purchaseEmailSent) {
+                logger.warn("Failed to send purchase email after approving booking for orderId: {}", orderId);
+            }
         } catch (Exception e) {
             logger.error("Failed to send purchase confirmation email for orderId: {}. "
                     + "Approval was successful but email delivery failed.", orderId, e);
         }
+    }
+
+    static boolean sendPurchaseEmailAfterApproval(Order order, EventData eventData) {
+        return sendPurchaseEmailAfterApproval(order, eventData, WebhookService::sendPurchaseEmailWithRetries);
+    }
+
+    static boolean sendPurchaseEmailAfterApproval(
+            Order order,
+            EventData eventData,
+            PurchaseEmailSender purchaseEmailSender) {
+        String visibility = Boolean.TRUE.equals(eventData.getIsPrivate()) ? "Private" : "Public";
+        return purchaseEmailSender.send(
+                eventData.getEventId(),
+                visibility,
+                order.getEmail(),
+                order.getFullName(),
+                order.getOrderId());
     }
 
     private static void executeRejectionOperation(String stripePaymentIntentId, String stripeAccountId,

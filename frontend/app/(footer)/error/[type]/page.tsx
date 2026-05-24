@@ -1,6 +1,9 @@
 "use client"; // Error components must be Client Components
 
-export default function Error({ params }: any) {
+import { useParams } from "next/navigation";
+
+export default function Error() {
+  const params = useParams<{ type: string }>();
   const type = params.type;
   switch (type) {
     case "CREATE_UPDATE_EVENT_RATELIMITED": {

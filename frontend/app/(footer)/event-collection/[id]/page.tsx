@@ -17,17 +17,12 @@ import { getErrorUrl } from "@/services/src/urlUtils";
 import { getPublicUserById } from "@/services/src/users/usersService";
 import { executeResilientPromises } from "@/utilities/promiseUtils";
 import { startOfDay } from "date-fns";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-interface EventCollectionPageProps {
-  params: {
-    id: string;
-  };
-}
 const logger = new Logger("EventCollectionPage");
 
-export default function EventCollectionPage({ params }: EventCollectionPageProps) {
+export default function EventCollectionPage() {
+  const params = useParams<{ id: string }>();
   const collectionId = params.id as EventCollectionId;
   const router = useRouter();
 

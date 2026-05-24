@@ -13,7 +13,14 @@ import { EventDrilldownImagesPage } from "@/components/organiser/event/images/Ev
 import EventDrilldownSettingsPage from "@/components/organiser/event/settings/EventDrilldownSettingsPage";
 import { MobileEventDrilldownNavTabs } from "@/components/organiser/mobile/MobileEventDrilldownNavTabs";
 import { useUser } from "@/components/utility/UserContext";
-import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import {
+  EmptyEventData,
+  EmptyEventMetadata,
+  EventData,
+  EventId,
+  EventMetadata,
+  DEFAULT_MAX_TICKETS_PER_ORDER,
+} from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
@@ -21,21 +28,17 @@ import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface EventPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function EventPage({ params }: EventPageProps) {
+export default function EventPage() {
+  const params = useParams<{ id: string }>();
   const [currSidebarPage, setCurrSidebarPage] = useState("Details");
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [loading, setLoading] = useState<boolean>(true);
@@ -63,6 +66,7 @@ export default function EventPage({ params }: EventPageProps) {
   const [eventWaitlistEnabled, setEventWaitlistEnabled] = useState<boolean>(true);
   const [eventBookingApprovalEnabled, setEventBookingApprovalEnabled] = useState<boolean>(false);
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState<boolean>(false);
+  const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] = useState<number>(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
@@ -116,6 +120,9 @@ export default function EventPage({ params }: EventPageProps) {
         setEventWaitlistEnabled(event.waitlistEnabled);
         setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
+        setEventMaxTicketsPerTransaction(
+          clampMaxTicketsPerTransaction(event.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER, event.capacity)
+        );
 
         const nextEventMetadata = await getEventsMetadataByEventId(eventId);
         if (!isActive) {
@@ -279,6 +286,10 @@ export default function EventPage({ params }: EventPageProps) {
                 setBookingApprovalEnabled={setEventBookingApprovalEnabled}
                 showAttendeesOnEventPage={eventShowAttendeesOnEventPage}
                 setShowAttendeesOnEventPage={setEventShowAttendeesOnEventPage}
+                maxTicketsPerTransaction={eventMaxTicketsPerTransaction}
+                setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
+                eventCapacity={eventCapacity}
+                eventPrice={eventPrice}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

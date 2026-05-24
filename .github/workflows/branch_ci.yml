@@ -1,4 +1,4 @@
-name: CI
+name: App CI
 
 on: [push, pull_request]
 
@@ -6,6 +6,7 @@ env:
   set_dev_env_variables: |
     cd frontend
     touch .env
+    echo NEXT_PUBLIC_ENVIRONMENT=DEVELOPMENT >> .env
     echo FIREBASE_DEV_API_KEY=${{ secrets.FIREBASE_DEV_API_KEY }} >> .env
     echo FIREBASE_DEV_AUTH_DOMAIN=${{ secrets.FIREBASE_DEV_AUTH_DOMAIN }} >> .env
     echo FIREBASE_DEV_DATABASE_URL=${{ secrets.FIREBASE_DEV_DATABASE_URL }} >> .env

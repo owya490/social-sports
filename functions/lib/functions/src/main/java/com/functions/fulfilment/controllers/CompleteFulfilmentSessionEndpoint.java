@@ -5,13 +5,13 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
 import com.functions.fulfilment.services.FulfilmentService;
+import com.functions.global.controllers.AbstractConfiguredHttpFunction;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.utils.JavaUtils;
-import com.google.cloud.functions.HttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
-public class CompleteFulfilmentSessionEndpoint implements HttpFunction {
+public class CompleteFulfilmentSessionEndpoint extends AbstractConfiguredHttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(CompleteFulfilmentSessionEndpoint.class);
 
     @Override
