@@ -118,6 +118,24 @@ public class WaitlistRepository {
   }
 
   /**
+   * Get a waitlist entry directly by its pre-computed email hash.
+   * Used for the email removal link flow (no re-hash needed).
+   */
+  public static Optional<WaitlistEntry> getWaitlistEntryByHash(String eventId, String emailHash) {
+    try {
+      CollectionReference collectionRef = getWaitlistPoolRef(eventId);
+      DocumentSnapshot snapshot = collectionRef.document(emailHash).get().get();
+      if (snapshot.exists()) {
+        return Optional.of(snapshot.toObject(WaitlistEntry.class));
+      }
+      return Optional.empty();
+    } catch (Exception e) {
+      logger.error("Error retrieving waitlist entry by hash for event: {}", eventId, e);
+      return Optional.empty();
+    }
+  }
+
+  /**
    * Check if a user is on the waitlist
    */
   public static Optional<WaitlistEntry> getWaitlistEntry(String eventId, String email) {

@@ -206,6 +206,21 @@ jobs:
           fi
           PIDS+=($!)  # Capture PID of last background process ($!)
 
+          # Deploy waitlistNotificationCron in background
+          echo "Starting deployment of waitlistNotificationCron..."
+          (gcloud functions deploy waitlistNotificationCron \
+            --entry-point com.functions.waitlist.controllers.WaitlistNotificationCronEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --gen2 \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --memory 512 \
+            --quiet 2>&1 | sed 's/^/[waitlistNotificationCron] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
           # Wait for all background processes to complete and check their exit codes
           echo ""
           echo "Waiting for all deployments to complete..."
@@ -238,6 +253,7 @@ jobs:
         run: |
           bash ./deploySchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/recurringEventsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron' }}
           bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }}
+          bash ./deployWaitlistNotificationSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/waitlistNotificationCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/waitlistNotificationCron' }}
 
       - name: Report scheduler deployment status
         if: failure()

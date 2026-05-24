@@ -31,7 +31,11 @@ import com.functions.tickets.models.requests.get.GetOrdersByEventRequest;
 import com.functions.tickets.models.requests.get.GetTicketRequest;
 import com.functions.tickets.models.responses.get.GetOrderResponse;
 import com.functions.tickets.models.responses.get.GetOrdersByEventResponse;
+import com.functions.waitlist.models.requests.GetWaitlistEntryByHashRequest;
+import com.functions.waitlist.models.requests.RemoveFromWaitlistByHashRequest;
 import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlistDataRequest;
+import com.functions.waitlist.models.responses.GetWaitlistEntryByHashResponse;
+import com.functions.waitlist.models.responses.RemoveFromWaitlistByHashResponse;
 import com.functions.waitlist.models.responses.UpdateFulfilmentEntityWithWaitlistDataResponse;
 import com.functions.wrapped.models.requests.GetWrappedRequest;
 import com.functions.wrapped.models.responses.GetWrappedResponse;
@@ -58,6 +62,8 @@ public enum EndpointType {
     GET_SPORTSHUB_WRAPPED(GetWrappedRequest.class, GetWrappedResponse.class),
     UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA(UpdateFulfilmentEntityWithWaitlistDataRequest.class,
             UpdateFulfilmentEntityWithWaitlistDataResponse.class),
+    GET_WAITLIST_ENTRY_BY_HASH(GetWaitlistEntryByHashRequest.class, GetWaitlistEntryByHashResponse.class),
+    REMOVE_FROM_WAITLIST_BY_HASH(RemoveFromWaitlistByHashRequest.class, RemoveFromWaitlistByHashResponse.class),
     GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class),
     GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class),
     GET_ORDER(GetOrderRequest.class, GetOrderResponse.class),

@@ -87,6 +87,19 @@ def remove_event_from_upcoming_organiser_events(
     public_ref.update({"publicUpcomingOrganiserEvents": upcoming_events})
 
 
+def delete_waitlist_for_event(event_id: str, logger: Logger):
+    """Recursively delete all waitlist data for an event once it goes inactive."""
+    try:
+        waitlist_pool_ref = db.collection("Waitlist").document(event_id).collection("WaitlistPool")
+        pool_docs = waitlist_pool_ref.stream()
+        for doc in pool_docs:
+            doc.reference.delete()
+        db.collection("Waitlist").document(event_id).delete()
+        logger.info(f"Deleted waitlist data for event {event_id}")
+    except Exception as e:
+        logger.error(f"Failed to delete waitlist data for event {event_id}: {e}")
+
+
 def get_and_move_public_inactive_events(today: date, logger: Logger):
     # Get all Active Events in Public
     public_events_ref = db.collection(ACTIVE_PUBLIC)
@@ -116,9 +129,10 @@ def get_and_move_public_inactive_events(today: date, logger: Logger):
                 )
             except ValueError as e:
                 logger.error(f"An error has occured: {e}")
+            delete_waitlist_for_event(event_id, logger)
 
 
-def get_and_move_private_inactive_events(today: date):
+def get_and_move_private_inactive_events(today: date, logger: Logger):
 
     # Get all Active Private Events
     private_events_ref = db.collection(ACTIVE_PRIVATE)
@@ -138,6 +152,7 @@ def get_and_move_private_inactive_events(today: date):
                 old_event_ref=db.collection(ACTIVE_PRIVATE).document(event_id),
                 new_event_ref=db.collection(INACTIVE_PRIVATE).document(event_id),
             )
+            delete_waitlist_for_event(event_id, logger)
 
 
 @scheduler_fn.on_schedule(
@@ -157,7 +172,7 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
     )
 
     get_and_move_public_inactive_events(today, logger)
-    get_and_move_private_inactive_events(today)
+    get_and_move_private_inactive_events(today, logger)
 
     return https_fn.Response(
         f"Moved all Public and Private Active Events which are past their end date to Inactive."

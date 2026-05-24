@@ -141,8 +141,17 @@ public class WaitlistNotificationService {
             return new NotificationResult(0, 0);
         }
 
+        int vacancy = event.getVacancy();
+
         // Send notifications to users
         for (WaitlistEntry entry : waitlistEntries) {
+            // Only notify users whose requested ticket count can be satisfied by current vacancy
+            if (entry.getTicketCount() > vacancy) {
+                logger.info("[WaitlistNotificationService] Skipping user {} for event {} — wants {} tickets but only {} available",
+                        entry.getEmail(), eventId, entry.getTicketCount(), vacancy);
+                continue;
+            }
+
             // Skip users who have already been notified less than 24 hours ago
             if (entry.getNotifiedAt() != null && (notificationTime.toEpochMilli() 
                 - entry.getNotifiedAt().toDate().getTime() < NOTIFICATION_DELAY_MS)) {
@@ -150,6 +159,16 @@ public class WaitlistNotificationService {
             }
 
             try {
+                String hashedEmail;
+                try {
+                    hashedEmail = WaitlistRepository.hashEmail(entry.getEmail());
+                } catch (Exception hashException) {
+                    logger.error("[WaitlistNotificationService] Failed to hash email for user: {} for event: {}",
+                            entry.getEmail(), eventId, hashException);
+                    failedCount++;
+                    continue;
+                }
+
                 boolean emailSent = EmailService.sendWaitlistEmailNotification(
                         event.getName(),
                         entry.getName(),
@@ -157,7 +176,8 @@ public class WaitlistNotificationService {
                         event.getEndDate(),
                         event.getLocation(),
                         entry.getEmail(),
-                        eventId
+                        eventId,
+                        hashedEmail
                     );
 
                 if (emailSent) {
