@@ -105,9 +105,27 @@ public class BookingApprovalService {
                             orderId, stripePaymentIntentId, piStatus,
                             PaymentIntentStatus.REQUIRES_CAPTURE.getStripeStatus()));
                 }
-                executeApprovalOperation(stripePaymentIntentId, stripeAccountId, order, eventData);
+                try {
+                    executeApprovalOperation(stripePaymentIntentId, stripeAccountId, order, eventData);
+                } catch (StripeException stripeError) {
+                    BookingApprovalResponse recovered = recoverIfPaymentIntentCanceledAfterStripeFailure(
+                            stripePaymentIntentId, stripeAccountId, orderId, operation, stripeError);
+                    if (recovered != null) {
+                        return recovered;
+                    }
+                    throw stripeError;
+                }
             } else if (operation == BookingApprovalOperation.REJECT) {
-                executeRejectionOperation(stripePaymentIntentId, stripeAccountId, orderId);
+                try {
+                    executeRejectionOperation(stripePaymentIntentId, stripeAccountId, orderId);
+                } catch (StripeException stripeError) {
+                    BookingApprovalResponse recovered = recoverIfPaymentIntentCanceledAfterStripeFailure(
+                            stripePaymentIntentId, stripeAccountId, orderId, operation, stripeError);
+                    if (recovered != null) {
+                        return recovered;
+                    }
+                    throw stripeError;
+                }
             } else {
                 logger.error("Invalid booking approval operation for orderId: {}, operation: {}", orderId, operation);
                 throw new RuntimeException(String.format(
@@ -199,12 +217,44 @@ public class BookingApprovalService {
         }
 
         logger.warn("PaymentIntent {} is already canceled for orderId: {}. "
-                + "Syncing Firestore status to REJECTED.", stripePaymentIntentId, orderId);
-        updateOrderAndTicketStatusWithRetry(orderId, OrderAndTicketStatus.REJECTED);
+                + "Running cancellation workflow to sync REJECTED status, restock tickets, and idempotency marker.",
+                stripePaymentIntentId, orderId);
+        boolean cancellationWorkflowSynced = WebhookService.fulfilmentWorkflowOnPaymentIntentCanceled(stripePaymentIntentId);
+        if (!cancellationWorkflowSynced) {
+            throw new RuntimeException(String.format(
+                    "PaymentIntent %s is canceled, but cancellation workflow failed for order %s.",
+                    stripePaymentIntentId, orderId));
+        }
         String message = String.format(
                 "Stripe Payment has expired or been canceled. Order %s has been automatically rejected.",
                 orderId);
         return new BookingApprovalResponse(false, orderId, operation, message);
+    }
+
+    private static BookingApprovalResponse recoverIfPaymentIntentCanceledAfterStripeFailure(
+            String stripePaymentIntentId,
+            String stripeAccountId,
+            String orderId,
+            BookingApprovalOperation operation,
+            StripeException stripeError) {
+        logger.warn("Stripe operation failed for order {} and PaymentIntent {}. "
+                + "Checking latest PaymentIntent status for canceled-state recovery.",
+                orderId, stripePaymentIntentId, stripeError);
+        try {
+            PaymentIntent latestPaymentIntent = StripeService.retrievePaymentIntent(stripePaymentIntentId, stripeAccountId);
+            BookingApprovalResponse canceledResponse = checkAndSyncCanceledPaymentIntent(
+                    latestPaymentIntent.getStatus(), stripePaymentIntentId, orderId, operation);
+            if (canceledResponse != null) {
+                logger.info("Recovered from Stripe mutation race for order {}. "
+                        + "PaymentIntent {} transitioned to canceled and cancellation workflow has been synced.",
+                        orderId, stripePaymentIntentId);
+                return canceledResponse;
+            }
+        } catch (Exception recoveryError) {
+            logger.error("Failed recovery check after Stripe operation failure for order {} and PaymentIntent {}.",
+                    orderId, stripePaymentIntentId, recoveryError);
+        }
+        return null;
     }
 
     // -------------------------------------------------------------------------
