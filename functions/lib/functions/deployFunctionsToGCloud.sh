@@ -8,6 +8,7 @@
 # completeFulfilmentSession
 # globalAppController
 # stripeWebhookEndpoint
+# smokeE2eEndpoint
 
 # Check if the function name is valid and it should be a list of function name and another list of endpoint class name
 
@@ -19,6 +20,7 @@ VALID_FUNCTIONS=(
     "completeFulfilmentSession"
     "globalAppController"
     "stripeWebhookEndpoint"
+    "smokeE2eEndpoint"
 )
 
 VALID_ENDPOINTS=(
@@ -29,6 +31,7 @@ VALID_ENDPOINTS=(
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
     "com.functions.stripe.controllers.StripeWebhookEndpoint"
+    "com.functions.smoke.controllers.SmokeE2eEndpoint"
 )
 
 # Check for exactly 2 arguments

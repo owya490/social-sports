@@ -57,6 +57,7 @@ jobs:
           echo "LOOPS_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_LOOPS_API_KEY' || 'SOCIALSPORTSDEV_LOOPS_API_KEY'] }}\"" >> .env
           echo "DEPLOYMENT_ENV=\"${{ matrix.env == 'prod' && 'prod' || 'dev' }}\"" >> .env
           echo "PROJECT_NAME=\"${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}\"" >> .env
+          echo "SMOKE_AUTH_TOKEN=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_BEARER_TOKEN' || 'SOCIALSPORTSDEV_BEARER_TOKEN'] }}\"" >> .env
 
       # Deploy Java Cloud Run functions in parallel
       # All functions deploy simultaneously using & to run commands in the background in a non-blocking way
@@ -199,6 +200,20 @@ jobs:
           fi
           PIDS+=($!)  # Capture PID of last background process ($!)
 
+          # Deploy smokeE2eEndpoint in background
+          echo "Starting deployment of smokeE2eEndpoint..."
+          (gcloud functions deploy smokeE2eEndpoint \
+            --entry-point com.functions.smoke.controllers.SmokeE2eEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --memory 512 \
+            --quiet 2>&1 | sed 's/^/[smokeE2eEndpoint] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
           # Wait for all background processes to complete and check their exit codes
           echo ""
           echo "Waiting for all deployments to complete..."
@@ -231,6 +246,7 @@ jobs:
         run: |
           bash ./deploySchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/recurringEventsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron' }}
           bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }}
+          bash ./deploySmokeE2eSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/smokeE2eEndpoint' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/smokeE2eEndpoint' }} ${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_BEARER_TOKEN' || 'SOCIALSPORTSDEV_BEARER_TOKEN'] }}
 
       - name: Report scheduler deployment status
         if: failure()
