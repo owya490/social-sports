@@ -10,14 +10,13 @@ public enum EmailTemplateType {
     WAITLIST_CONFIRMATION("cmjcdaf0h05gt0i56iicea2ys"),
     WAITLIST_NOTIFICATION("cmjgp5at54ceh0iyg06ddxftt"),
 
-    // TODO(SPORTSHUB-454): replace placeholder with real Loops template id once created
-    BOOKING_APPROVAL_TENTATIVE("REPLACE_ME_TODO"),
+    BOOKING_APPROVAL_TENTATIVE("cmnd2gkqh03ja0ixlz9fx93re"),
 
-    // TODO(SPORTSHUB-454): replace placeholder with real Loops template id once created
-    BOOKING_APPROVED("REPLACE_ME_TODO"),
+    /** Same Loops transactional as {@link #PURCHASE} — sent when an organiser approves a pending booking. */
+    BOOKING_APPROVED(PURCHASE.templateId),
 
-    // TODO(SPORTSHUB-454): replace placeholder with real Loops template id once created
-    BOOKING_APPROVAL_ORGANISER("REPLACE_ME_TODO");
+    /** Same Loops transactional as {@link #BOOKING_APPROVAL_TENTATIVE} — organiser copy at pending checkout. */
+    BOOKING_APPROVAL_ORGANISER(BOOKING_APPROVAL_TENTATIVE.templateId),
 
     public final String templateId;
 

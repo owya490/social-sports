@@ -1064,13 +1064,11 @@ public class WebhookService {
 
                 // Also notify the organiser that a new booking request is awaiting approval.
                 try {
-                    int quantity = (int) getRequiredCheckoutQuantity(lineItems, checkoutSessionId, false);
                     boolean organiserEmailSuccess = EmailService.sendOrganiserPendingBookingEmail(
                             eventId,
                             visibility,
                             fullName,
-                            orderId,
-                            quantity);
+                            orderId);
                     if (!organiserEmailSuccess) {
                         logger.warn("Was unable to send organiser pending booking notification. orderId={}", orderId);
                     }
