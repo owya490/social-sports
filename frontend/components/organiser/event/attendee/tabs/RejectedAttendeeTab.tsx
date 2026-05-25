@@ -71,7 +71,7 @@ export const RejectedAttendeeTab = ({
     ticketCount: order.tickets.length,
     name: order.fullName,
     email: order.email,
-    phone: order.phone ? `${order.phone}` : "N/A",
+    phone: order.phone || null,
     order,
   }));
 
