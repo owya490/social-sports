@@ -151,6 +151,28 @@ export type UpdateFulfilmentEntityWithWaitlistDataResponse = {
   message: string;
 };
 
+export type GetWaitlistEntryByHashRequest = {
+  eventId: string;
+  emailHash: string;
+};
+
+export type GetWaitlistEntryByHashResponse = {
+  found: boolean;
+  name: string;
+  email: string;
+  ticketCount: number;
+};
+
+export type RemoveFromWaitlistByHashRequest = {
+  eventId: string;
+  emailHash: string;
+};
+
+export type RemoveFromWaitlistByHashResponse = {
+  success: boolean;
+  message: string;
+};
+
 /**
  * Payload we send to java getFulfilmentSessionInfo function
  */

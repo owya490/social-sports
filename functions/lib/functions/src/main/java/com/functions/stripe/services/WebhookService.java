@@ -31,6 +31,7 @@ import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
+import com.functions.waitlist.repositories.WaitlistRepository;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -809,6 +810,15 @@ public class WebhookService {
                 true,
                 () -> purchaseEmailSender.send(eventId, visibility, customerEmail, fullName, orderId));
     }
+
+    private static void removePotentialWaitlistEntry(String eventId, String customerEmail) {
+        try {
+            WaitlistRepository.removeFromWaitlist(eventId, customerEmail);
+        } catch (Exception e) {
+            logger.warn("Failed to remove customer {} from waitlist for event {} after ticket purchase: {}",
+                    customerEmail, eventId, e.getMessage());
+        }
+    }
     
     /**
      * Records a checkout session by customer email for tracking purposes.
@@ -1041,6 +1051,8 @@ public class WebhookService {
                             orderId, customerEmail);
                 }
             }
+
+            removePotentialWaitlistEntry(eventId, customerEmail);
             
             logger.info("Successfully handled checkout.session.completed webhook event. session={}", checkoutSessionId);
             return true;

@@ -135,6 +135,7 @@ const WaitlistFulfilmentEntity = ({
       areAllRequiredFieldsFilled={areAllRequiredFieldsFilled}
       isSaving={isSaving}
       fulfilmentSessionId={fulfilmentSessionId}
+      nextButtonLabel="Join Waitlist"
     >
       <div className="bg-core-hover">
         <div className="flex w-screen justify-center">

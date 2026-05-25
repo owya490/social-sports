@@ -22,6 +22,8 @@ import com.functions.global.models.Handler;
 import com.functions.tickets.handlers.GetOrderHandler;
 import com.functions.tickets.handlers.GetOrdersByEventHandler;
 import com.functions.tickets.handlers.GetTicketHandler;
+import com.functions.waitlist.handlers.GetWaitlistEntryByHashHandler;
+import com.functions.waitlist.handlers.RemoveFromWaitlistByHashHandler;
 import com.functions.waitlist.handlers.UpdateFulfilmentEntityWithWaitlistDataHandler;
 import com.functions.wrapped.handlers.GetWrappedHandler;
 
@@ -47,6 +49,8 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED, new GetWrappedHandler());
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA,
                 new UpdateFulfilmentEntityWithWaitlistDataHandler());
+        handlers.put(EndpointType.GET_WAITLIST_ENTRY_BY_HASH, new GetWaitlistEntryByHashHandler());
+        handlers.put(EndpointType.REMOVE_FROM_WAITLIST_BY_HASH, new RemoveFromWaitlistByHashHandler());
         handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());
         handlers.put(EndpointType.GET_EVENT_BY_ID, new GetEventByIdHandler());
         handlers.put(EndpointType.GET_ORDER, new GetOrderHandler());

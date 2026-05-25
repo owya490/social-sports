@@ -73,7 +73,7 @@ public class EmailService {
     }
 
     /**
-     * Sends an email notifications to everyone on the waitlist for an event.
+     * Sends an email notification to a user on the waitlist when spots become available.
      *
      * @param eventName      The name of the event
      * @param name           The name of the user who is on the waitlist
@@ -81,17 +81,21 @@ public class EmailService {
      * @param eventEndDate   The end date of the event
      * @param location       The location of the event
      * @param email          The email of the user who is on the waitlist
+     * @param eventId        The ID of the event
+     * @param hashedEmail    The SHA-256 hash of the user's email, used for the removal link
      * @return true if email was sent successfully, false otherwise
      */
     public static boolean sendWaitlistEmailNotification(String eventName, String name, Timestamp eventStartDate,
-            Timestamp eventEndDate,
-            String location, String email) {
+            Timestamp eventEndDate, String location, String email, String eventId, String hashedEmail) {
         Map<String, String> variables = Map.of(
-                "name", name,
-                "eventName", eventName,
-                "startDate", TimeUtils.getTimestampStringFromTimezone(eventStartDate, ZoneId.of("Australia/Sydney")),
-                "endDate", TimeUtils.getTimestampStringFromTimezone(eventEndDate, ZoneId.of("Australia/Sydney")),
-                "location", location);
+            "name", name,
+            "eventName", eventName,
+            "startDate", TimeUtils.getTimestampStringFromTimezone(eventStartDate, ZoneId.of("Australia/Sydney")),
+            "endDate", TimeUtils.getTimestampStringFromTimezone(eventEndDate, ZoneId.of("Australia/Sydney")),
+            "location", location,
+            "eventId", eventId,
+            "hashedEmail", hashedEmail
+        );
         logger.info("Sending waitlist email notification to {} for event {}", email, eventName);
         return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.WAITLIST_NOTIFICATION, email, variables);
     }

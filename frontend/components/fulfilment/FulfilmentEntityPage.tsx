@@ -21,6 +21,7 @@ interface FulfilmentEntityPageProps {
   isSaving?: boolean;
   nextDisabledMessage?: string;
   fulfilmentSessionId: FulfilmentSessionId;
+  nextButtonLabel?: string;
 }
 
 const FulfilmentEntityPage = ({
@@ -34,6 +35,7 @@ const FulfilmentEntityPage = ({
   isSaving = false,
   nextDisabledMessage,
   fulfilmentSessionId,
+  nextButtonLabel = "Next",
 }: FulfilmentEntityPageProps) => {
   const router = useRouter();
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
@@ -241,7 +243,7 @@ const FulfilmentEntityPage = ({
                       disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving || !!nextDisabledMessage}
                     >
                       <span className="text-sm flex items-center gap-2">
-                        Next <ChevronRightIcon className="h-4 w-4" />
+                        {nextButtonLabel} <ChevronRightIcon className="h-4 w-4" />
                       </span>
                     </InvertedHighlightButton>
                   </div>
@@ -273,7 +275,7 @@ const FulfilmentEntityPage = ({
                       disabled={!showNextButton || !areAllRequiredFieldsFilled || isSaving || !!nextDisabledMessage}
                     >
                       <span className="text-sm flex items-center gap-2">
-                        Next <ChevronRightIcon className="h-4 w-4" />
+                        {nextButtonLabel} <ChevronRightIcon className="h-4 w-4" />
                       </span>
                     </InvertedHighlightButton>
                   </div>

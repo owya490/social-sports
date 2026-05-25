@@ -3,6 +3,7 @@ import Loading from "@/components/loading/Loading";
 import { EmptyEventData, EventId } from "@/interfaces/EventTypes";
 import { FulfilmentSessionType } from "@/interfaces/FulfilmentTypes";
 import { getEventById } from "@/services/src/events/eventsService";
+import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
@@ -39,15 +40,25 @@ function SuccessContent() {
   if (isWaitlist) {
     return (
       <div className="h-screen w-full flex justify-center items-center">
-        <div className="text-center">
+        <div className="text-center max-w-md px-6">
           <h2 className="text-2xl">Thank you for expressing your interest!</h2>
-          <p className="font-light">
-            You have successfully signed up for the waitlist for {event.name} organised by {event.organiser.firstName}.
+          <p className="font-light mt-2">
+            You have successfully signed up for the waitlist for{" "}
+            <span className="font-medium">{event.name}</span> organised by{" "}
+            {event.organiser.firstName}.
           </p>
-          <p className="font-light">We will notify you via email if spots open up for this event.</p>
+          <p className="font-light mt-1">We will notify you via email if spots open up for this event.</p>
           <p className="text-xs text-gray-500 mt-4">
-            Please check your email for waitlist confirmation and event details. If you don&apos;t see it, check your spam or junk folder.
+            Please check your email for your waitlist confirmation — it contains a link to view your
+            registration details or leave the waitlist at any time. If you don&apos;t see it, check your
+            spam or junk folder.
           </p>
+          <Link
+            href={`/event/${eventId}`}
+            className="mt-6 inline-block text-sm text-blue-600 hover:underline"
+          >
+            Back to event
+          </Link>
         </div>
       </div>
     );
