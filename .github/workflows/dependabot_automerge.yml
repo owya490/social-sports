@@ -1,0 +1,52 @@
+# Merges Dependabot PRs every Monday at 18:00 AEST (08:00 UTC).
+# PRs are raised earlier the same day at 08:00 Australia/Sydney via dependabot.yml.
+#
+# Prerequisite: Settings → General → Pull Requests → Allow auto-merge
+name: Dependabot Monday auto-merge
+on:
+  schedule:
+    - cron: "0 8 * * 1" # Monday 08:00 UTC = 18:00 AEST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge eligible Dependabot PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh pr list \
+            --repo "$REPO" \
+            --author "dependabot[bot]" \
+            --state open \
+            --json number,title,statusCheckRollup \
+            --jq '.[]
+              | select(
+                  (.title | test("bump.*from.*to"; "i")) and
+                  (
+                    (.title | test("bump.*from [0-9]+\\.[0-9]+\\.[0-9]+ to [0-9]+\\.[0-9]+\\."; "i")) or
+                    (.title | test("bump.*from [0-9]+\\.[0-9]+ to [0-9]+\\."; "i"))
+                  ) and
+                  (.statusCheckRollup | length > 0) and
+                  (.statusCheckRollup | all(.conclusion == "SUCCESS"))
+                )
+              | .number' \
+          | while read -r pr; do
+              TITLE=$(gh pr view "$pr" --repo "$REPO" --json title --jq '.title')
+              FROM_VERSION=$(echo "$TITLE" | grep -oP 'from \K[0-9]+(\.[0-9]+)*' | head -1)
+              TO_VERSION=$(echo "$TITLE" | grep -oP 'to \K[0-9]+(\.[0-9]+)*' | tail -1)
+              FROM_MAJOR=$(echo "$FROM_VERSION" | cut -d. -f1)
+              TO_MAJOR=$(echo "$TO_VERSION" | cut -d. -f1)
+              if [ "$FROM_MAJOR" = "$TO_MAJOR" ]; then
+                echo "Merging PR #$pr (patch or minor bump)"
+                gh pr merge "$pr" --repo "$REPO" --squash --auto
+              else
+                echo "Skipping PR #$pr (major version bump — needs manual review)"
+              fi
+            done

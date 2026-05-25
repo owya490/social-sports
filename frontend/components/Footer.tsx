@@ -47,6 +47,9 @@ export default function Footer() {
           <Link href="/docs" className="mx-2">
             Docs
           </Link>
+          <Link href="/terms-data-policy" className="mx-2">
+            Terms & Data Policy
+          </Link>
         </ol>
         <Link href="/contact" className="ml-auto flex justify-center items-center mr-4">
           <LightBulbIcon className="h-4 mr-1" />
