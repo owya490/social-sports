@@ -16,7 +16,7 @@ public enum EmailTemplateType {
     BOOKING_APPROVED(PURCHASE.templateId),
 
     /** Same Loops transactional as {@link #BOOKING_APPROVAL_TENTATIVE} — organiser copy at pending checkout. */
-    BOOKING_APPROVAL_ORGANISER(BOOKING_APPROVAL_TENTATIVE.templateId),
+    BOOKING_APPROVAL_ORGANISER(BOOKING_APPROVAL_TENTATIVE.templateId);
 
     public final String templateId;
 
