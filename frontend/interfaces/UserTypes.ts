@@ -4,8 +4,12 @@ import { EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
+import { Timestamp } from "firebase/firestore";
 
 export type UserId = Branded<string, "UserId">;
+
+/** Whether the user primarily hosts events or joins them as a participant (set during onboarding). */
+export type OnboardingPersona = "organiser" | "attendee";
 
 export interface PublicUserData {
   userId: string;
@@ -43,6 +47,18 @@ export interface PrivateUserData {
   forms: FormId[];
   sendOrganiserTicketEmails: boolean;
   privateEventCollections: EventCollectionId[];
+  /** Host vs participant choice from onboarding (unset until chosen). */
+  onboardingPersona?: OnboardingPersona | null;
+  /** Product onboarding finished (attendee welcome done, or organiser created first event). */
+  onboardingCompletedAt?: Timestamp | null;
+  /** Explicit Stripe Connect completion timestamp for onboarding/nudges (set when payments setup is verified). */
+  stripeConnectSetupCompletedAt?: Timestamp | null;
+  /** User skipped optional Stripe setup during organiser onboarding (still encouraged later). */
+  stripeConnectSetupSkippedAt?: Timestamp | null;
+  /** User chose to leave onboarding before finishing (stops funnel prompts). */
+  onboardingSkippedAt?: Timestamp | null;
+  /** Organiser onboarding: user finished the profile basics step before payment setup. */
+  organiserProfileBasicsCompletedAt?: Timestamp | null;
 }
 
 export interface NewUserData extends PublicUserData, PrivateUserData {
@@ -95,6 +111,13 @@ export const EmptyPrivateUserData: PrivateUserData = {
   forms: [],
   sendOrganiserTicketEmails: false,
   privateEventCollections: [],
+  /** Firestore rejects `undefined`; use `null` for unset optional fields so TempUsers/setDoc payloads stay valid. */
+  onboardingPersona: null,
+  onboardingCompletedAt: null,
+  stripeConnectSetupCompletedAt: null,
+  stripeConnectSetupSkippedAt: null,
+  onboardingSkippedAt: null,
+  organiserProfileBasicsCompletedAt: null,
 };
 
 export const EmptyUserData: EmptyUserData = {

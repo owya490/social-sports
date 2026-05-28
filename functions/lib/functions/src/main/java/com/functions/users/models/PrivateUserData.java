@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.functions.users.models.AbstractUserData.ActiveBooking;
 import com.functions.users.models.AbstractUserData.ContactInformation;
 
+import com.google.cloud.Timestamp;
+
 import lombok.Data;
 
 /** 
@@ -17,6 +19,12 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PrivateUserData {
+	private String onboardingPersona;
+	private Timestamp onboardingCompletedAt;
+	private Timestamp stripeConnectSetupCompletedAt;
+	private Timestamp stripeConnectSetupSkippedAt;
+	private Timestamp onboardingSkippedAt;
+	private Timestamp organiserProfileBasicsCompletedAt;
 	private String gender;
 	private String dob;
 	private String age;
