@@ -138,6 +138,35 @@ public class OrdersRepository {
         }
     }
 
+    public static Optional<Order> getMostRecentOrderByFullName(String fullName) {
+        if (fullName == null || fullName.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            QuerySnapshot querySnapshot = db.collection(ORDERS_COLLECTION)
+                    .whereEqualTo("fullName", fullName)
+                    .orderBy("datePurchased", com.google.cloud.firestore.Query.Direction.DESCENDING)
+                    .limit(1)
+                    .get()
+                    .get();
+
+            if (querySnapshot.isEmpty()) {
+                return Optional.empty();
+            }
+
+            QueryDocumentSnapshot document = querySnapshot.getDocuments().get(0);
+            Order order = document.toObject(Order.class);
+            if (order != null) {
+                order.setOrderId(document.getId());
+            }
+            return Optional.ofNullable(order);
+        } catch (Exception e) {
+            logger.error("Failed to query order by fullName: {}", fullName, e);
+            return Optional.empty();
+        }
+    }
+
     /**
      * Generates a new unique order ID without writing to Firestore.
      */
@@ -182,5 +211,20 @@ public class OrdersRepository {
         transaction.update(metadataRef, "orderIds", FieldValue.arrayUnion(orderId));
 
         return orderId;
+    }
+
+    public static void deleteOrderById(String orderId, Optional<Transaction> transaction) {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            DocumentReference docRef = db.collection(ORDERS_COLLECTION).document(orderId);
+            if (transaction.isPresent()) {
+                transaction.get().delete(docRef);
+            } else {
+                docRef.delete().get();
+            }
+        } catch (Exception e) {
+            logger.error("Failed to delete order: {}", orderId, e);
+            throw new RuntimeException("Failed to delete order", e);
+        }
     }
 }

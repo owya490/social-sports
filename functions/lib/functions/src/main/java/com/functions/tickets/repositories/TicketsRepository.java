@@ -133,4 +133,19 @@ public class TicketsRepository {
             return new ArrayList<>();
         }
     }
+
+    public static void deleteTicketById(String ticketId, Optional<Transaction> transaction) {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            DocumentReference docRef = db.collection(TICKETS_COLLECTION).document(ticketId);
+            if (transaction.isPresent()) {
+                transaction.get().delete(docRef);
+            } else {
+                docRef.delete().get();
+            }
+        } catch (Exception e) {
+            logger.error("Failed to delete ticket: {}", ticketId, e);
+            throw new RuntimeException("Failed to delete ticket", e);
+        }
+    }
 }
