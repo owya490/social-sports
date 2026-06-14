@@ -42,7 +42,6 @@ Run commands from the indicated directory. Tee long-running build output to `.tm
 | Java verification | `cd functions/lib/functions && mvn clean verify` |
 | Java single test | `cd functions/lib/functions && mvn -Dtest=RecurringEventsServiceTest test` |
 | CLI build | `cd sportshub-cli && npm run build` |
-| CLI tests | `cd sportshub-cli && npm test -- --runInBand` |
 
 The CI source of truth is `.github/workflows/branch_ci.yml`.
 

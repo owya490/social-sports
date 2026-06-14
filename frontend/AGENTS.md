@@ -30,3 +30,4 @@ Do not directly edit tracked Hugo output under:
 - `public/tags/`
 
 Edit `../sportshub-blogs-docs/` instead. Its `scripts/build-hugo.sh` rewrites tracked frontend assets and must only be run when the task requires those generated changes.
+The script also merges Hugo images and selected top-level files into `public/`; before editing those shared locations, inspect the script and confirm which tree owns the source file.
