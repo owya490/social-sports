@@ -2,10 +2,16 @@
 
 import LocationAutocompleteForm from "@/components/utility/AutoComplete";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
+import { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
+import {
+  clampMaxTicketsPerTransaction,
+  getOrganiserMaxTicketsPerTransactionLimit,
+  getTicketCountOptions,
+} from "@/services/src/events/eventsUtils/ticketLimits";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
@@ -47,6 +53,7 @@ export type BasicData = {
   promotionalCodesEnabled: boolean;
   waitlistEnabled: boolean;
   bookingApprovalEnabled: boolean;
+  maxTicketsPerTransaction: number;
   eventLink: string;
   newRecurrenceData: NewRecurrenceFormData;
 };
@@ -88,6 +95,7 @@ export function BasicInformation({
   promotionalCodesEnabled,
   waitlistEnabled,
   bookingApprovalEnabled,
+  maxTicketsPerTransaction,
   eventLink,
   newRecurrenceData,
   updateField,
@@ -201,12 +209,65 @@ export function BasicInformation({
     });
   };
 
+  const handleMaxTicketsPerTransactionChange = (value: string) => {
+    updateField({
+      maxTicketsPerTransaction: clampMaxTicketsPerTransaction(Number(value), capacity),
+    });
+  };
+
+  const handleCapacityChange = (value: string) => {
+    const parsed = parseInt(value);
+    if (!isNaN(parsed)) {
+      const maxValue = Math.max(parsed, 0);
+      updateField({
+        capacity: maxValue,
+        maxTicketsPerTransaction: clampMaxTicketsPerTransaction(maxTicketsPerTransaction, maxValue),
+      });
+      return;
+    }
+    updateField({
+      capacity: 0,
+      maxTicketsPerTransaction: clampMaxTicketsPerTransaction(DEFAULT_MAX_TICKETS_PER_ORDER, 0),
+    });
+  };
+
   const [customAmount, setCustomAmount] = useState(centsToDollars(price));
+  const [lastPaidAmount, setLastPaidAmount] = useState(
+    centsToDollars(price) > 0 ? centsToDollars(price) : MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100
+  );
+  const isFreeEvent = customAmount === 0;
 
   const handleCustomAmountChange = (amount: number) => {
     amount = Number.isNaN(amount) ? 0 : amount;
     setCustomAmount(amount);
+    if (amount > 0) {
+      setLastPaidAmount(amount);
+    }
     updateField({ price: dollarsToCents(amount) }); // Update the cost field in the parent component
+  };
+
+  const handleFreeEventToggle = (enabled: boolean) => {
+    if (enabled) {
+      if (customAmount > 0) {
+        setLastPaidAmount(customAmount);
+      }
+      setPriceWarning(null);
+      if (priceInputRef.current) {
+        priceInputRef.current.setCustomValidity("");
+      }
+      updateField({
+        price: 0,
+        paymentsActive: true,
+        eventLink: "",
+      });
+      setCustomAmount(0);
+      return;
+    }
+
+    const restoredPrice = lastPaidAmount > 0 ? lastPaidAmount : MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100;
+    setCustomAmount(restoredPrice);
+    updateField({ price: dollarsToCents(restoredPrice) });
+    setPriceWarning(validatePrice(restoredPrice));
   };
 
   useEffect(() => {
@@ -242,7 +303,7 @@ export function BasicInformation({
         hasDateError = true;
       }
 
-      const priceValidationError = validatePrice(customAmount);
+      const priceValidationError = isFreeEvent ? null : validatePrice(customAmount);
       setPriceWarning(priceValidationError);
       const hasPriceError = priceValidationError !== null;
       if (priceInputRef.current) {
@@ -269,6 +330,7 @@ export function BasicInformation({
     registrationEndDate,
     registrationEndTime,
     customAmount,
+    isFreeEvent,
     location,
     name,
     hasLocationError,
@@ -276,15 +338,21 @@ export function BasicInformation({
 
   const handlePaymentsActiveChange = (paymentsActive: string) => {
     const isActive = paymentsActive.toLowerCase() === "true";
-    updateField({ 
+    updateField({
       paymentsActive: isActive,
+      ...(isActive && {
+        maxTicketsPerTransaction: clampMaxTicketsPerTransaction(DEFAULT_MAX_TICKETS_PER_ORDER, capacity),
+      }),
       // Reset payment-related fields when payments are disabled
       ...(!isActive && {
         stripeFeeToCustomer: true,
-        promotionalCodesEnabled: false
-      })
+        promotionalCodesEnabled: false,
+        maxTicketsPerTransaction: clampMaxTicketsPerTransaction(DEFAULT_MAX_TICKETS_PER_ORDER, capacity),
+      }),
     });
   };
+
+  const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(capacity);
 
   return (
     <FormWrapper>
@@ -419,40 +487,57 @@ export function BasicInformation({
             Event price is the cost of each ticket. Event capacity is the total number of tickets you&apos;re willing to
             sell.
           </p>
-          <div className="w-full px-5">
-            <CreateEventCostSlider
-              initialCustomAmount={customAmount}
-              onCustomAmountChange={handleCustomAmountChange}
-              setPriceWarning={setPriceWarning}
-            />
-          </div>
-          <div className="w-full flex flex-col mt-8 md:flex-row md:space-x-3 my-6">
-            <div className="w-full sm:w-1/2 mt-4 sm:mt-0">
-              <Input
-                inputRef={priceInputRef}
-                label="Price"
-                crossOrigin={undefined}
-                value={customAmount}
-                type="number"
-                step=".01"
-                error={!!priceWarning}
-                min={0.5}
-                onChange={(e) => {
-                  let value = parseFloat(parseFloat(e.target.value).toFixed(2));
-                  logger.debug(`Price input value: ${value}`);
-                  if (isNaN(value)) {
-                    value = 0;
-                  }
-                  handleCustomAmountChange(value);
-                  setPriceWarning(validatePrice(value));
+          {user.stripeAccountActive && (
+            <div className="mt-4">
+              <Switch
+                color="teal"
+                label="This is a free event"
+                size="sm"
+                checked={isFreeEvent}
+                onChange={(event) => {
+                  handleFreeEventToggle(event.currentTarget.checked);
                 }}
-                className="rounded-md focus:ring-0"
-                size="lg"
-                icon={<CurrencyDollarIcon />}
               />
-              {priceWarning && <div className="text-red-600 text-sm mt-2">{priceWarning}</div>}
             </div>
-            <div className="w-full md:w-1/2 mt-4 md:mt-0">
+          )}
+          {!isFreeEvent && (
+            <div className="w-full px-5">
+              <CreateEventCostSlider
+                initialCustomAmount={customAmount}
+                onCustomAmountChange={handleCustomAmountChange}
+                setPriceWarning={setPriceWarning}
+              />
+            </div>
+          )}
+          <div className="w-full flex flex-col mt-6 md:flex-row md:space-x-3">
+            {!isFreeEvent && (
+              <div className="w-full md:w-1/2 mt-4 md:mt-0">
+                <Input
+                  inputRef={priceInputRef}
+                  label="Price"
+                  crossOrigin={undefined}
+                  value={customAmount}
+                  type="number"
+                  step=".01"
+                  error={!!priceWarning}
+                  min={0.5}
+                  onChange={(e) => {
+                    let value = parseFloat(parseFloat(e.target.value).toFixed(2));
+                    logger.debug(`Price input value: ${value}`);
+                    if (isNaN(value)) {
+                      value = 0;
+                    }
+                    handleCustomAmountChange(value);
+                    setPriceWarning(validatePrice(value));
+                  }}
+                  className="rounded-md focus:ring-0"
+                  size="lg"
+                  icon={<CurrencyDollarIcon />}
+                />
+                {priceWarning && <div className="text-red-600 text-sm mt-2">{priceWarning}</div>}
+              </div>
+            )}
+            <div className={`w-full mt-4 md:mt-0 ${isFreeEvent ? "md:w-full" : "md:w-1/2"}`}>
               <Input
                 label="Capacity"
                 crossOrigin={undefined}
@@ -460,20 +545,14 @@ export function BasicInformation({
                 value={capacity}
                 type="number"
                 onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (!isNaN(value)) {
-                    const maxValue = Math.max(value, 0);
-                    updateField({ capacity: maxValue });
-                  } else {
-                    updateField({ capacity: 0 });
-                  }
+                  handleCapacityChange(e.target.value);
                 }}
                 className="rounded-md focus:ring-0"
                 size="lg"
               />
             </div>
           </div>
-          <div>
+          <div className="mt-6">
             <label className="text-black text-lg font-semibold">Is your event private?</label>
             <p className="text-sm mb-5 mt-2">
               Private Events will not be shown on the public dashboard and can be accessed by a link. It is not possible
@@ -497,15 +576,18 @@ export function BasicInformation({
         </div>
         {user.stripeAccountActive ? (
           <div>
-            <label className="text-black text-lg font-semibold">Is your event accepting payments?</label>
+            <label className="text-black text-lg font-semibold">
+              {isFreeEvent ? "Is your event accepting bookings?" : "Is your event accepting payments?"}
+            </label>
             <p className="text-sm mb-5 mt-2">
-              If you are accepting payments, ensure your Stripe account is fully set up. Funds transfer will occur
-              through Stripe.
+              {isFreeEvent
+                ? "Enable bookings to let customers reserve spots on Sportshub. Checkout will still be completed through Stripe."
+                : "If you are accepting payments, ensure your Stripe account is fully set up. Funds transfer will occur through Stripe."}
             </p>
             <div className="mt-4">
               <Select
                 size="md"
-                label="Accepting Payments"
+                label={isFreeEvent ? "Accepting Bookings" : "Accepting Payments"}
                 value={paymentsActive.toString()}
                 onChange={(e) => {
                   const paymentsActive = e || "false";
@@ -590,54 +672,58 @@ export function BasicInformation({
               </div>
               {user.stripeAccountActive && paymentsActive && (
                 <>
-                  <div>
-                    <label className="text-black text-lg font-semibold">
-                      Do you want to pass Application Fees onto the Customer?
-                    </label>
-                    <p className="text-sm mb-5 mt-2">
-                      Application Fees include Stripe card surcharges. Selecting yes will mean your customers will be
-                      charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
-                    </p>
-                    <div className="mt-4">
-                      <Select
-                        size="md"
-                        label="Stripe Fee to Customer"
-                        value={stripeFeeToCustomer ? "Yes" : "No"}
-                        onChange={(e) => {
-                          const value = e || "Yes";
-                          handleStripeFeesToCustomerChange(value);
-                        }}
-                      >
-                        <Option value="Yes">Yes</Option>
-                        <Option value="No">No</Option>
-                      </Select>
-                    </div>
-                  </div>
+                  {!isFreeEvent && (
+                    <>
+                      <div>
+                        <label className="text-black text-lg font-semibold">
+                          Do you want to pass Application Fees onto the Customer?
+                        </label>
+                        <p className="text-sm mb-5 mt-2">
+                          Application Fees include Stripe card surcharges. Selecting yes will mean your customers will
+                          be charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
+                        </p>
+                        <div className="mt-4">
+                          <Select
+                            size="md"
+                            label="Stripe Fee to Customer"
+                            value={stripeFeeToCustomer ? "Yes" : "No"}
+                            onChange={(e) => {
+                              const value = e || "Yes";
+                              handleStripeFeesToCustomerChange(value);
+                            }}
+                          >
+                            <Option value="Yes">Yes</Option>
+                            <Option value="No">No</Option>
+                          </Select>
+                        </div>
+                      </div>
 
-                  <div>
-                    <label className="text-black text-lg font-semibold">
-                      Do you want to allow Promotional Codes for this Event?
-                    </label>
-                    <p className="text-sm mb-5 mt-2">
-                      Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for
-                      discounts at the time of checkout. To create a promotional code for your account, please visit
-                      your stripe dashboard.
-                    </p>
-                    <div className="mt-4">
-                      <Select
-                        size="md"
-                        label="Promotional Codes Enabled"
-                        value={promotionalCodesEnabled ? "Yes" : "No"}
-                        onChange={(e) => {
-                          const value = e || "Yes";
-                          handlePromotionalCodesEnabledChange(value);
-                        }}
-                      >
-                        <Option value="Yes">Yes</Option>
-                        <Option value="No">No</Option>
-                      </Select>
-                    </div>
-                  </div>
+                      <div>
+                        <label className="text-black text-lg font-semibold">
+                          Do you want to allow Promotional Codes for this Event?
+                        </label>
+                        <p className="text-sm mb-5 mt-2">
+                          Selecting &quot;Yes&quot; will mean customers will be able to enter promotional codes for
+                          discounts at the time of checkout. To create a promotional code for your account, please
+                          visit your stripe dashboard.
+                        </p>
+                        <div className="mt-4">
+                          <Select
+                            size="md"
+                            label="Promotional Codes Enabled"
+                            value={promotionalCodesEnabled ? "Yes" : "No"}
+                            onChange={(e) => {
+                              const value = e || "Yes";
+                              handlePromotionalCodesEnabledChange(value);
+                            }}
+                          >
+                            <Option value="Yes">Yes</Option>
+                            <Option value="No">No</Option>
+                          </Select>
+                        </div>
+                      </div>
+                    </>
+                  )}
                   {WAITLIST_ENABLED && (
                     <div>
                       <label className="text-black text-lg font-semibold">
@@ -689,6 +775,32 @@ export function BasicInformation({
                       </div>
                     </div>
                   )}
+                  <div>
+                    <label className="text-black text-lg font-semibold">
+                      What is the max number of tickets per transaction?
+                    </label>
+                    <p className="text-sm mb-5 mt-2">
+                      Customers can purchase up to this many tickets in a single checkout (up to {maxTicketsAllowed} for
+                      this event).
+                    </p>
+                    <div className="mt-4">
+                      <Select
+                        size="md"
+                        label="Max Tickets Per Transaction"
+                        value={`${maxTicketsPerTransaction}`}
+                        onChange={(e) => {
+                          const value = e || `${maxTicketsPerTransaction}`;
+                          handleMaxTicketsPerTransactionChange(value);
+                        }}
+                      >
+                        {getTicketCountOptions(maxTicketsAllowed).map((count) => (
+                          <Option key={`max-tickets-option-${count}`} value={`${count}`}>
+                            {count}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  </div>
                 </>
               )}
             </>

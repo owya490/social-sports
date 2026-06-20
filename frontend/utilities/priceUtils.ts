@@ -23,3 +23,15 @@ export function displayPrice(price: number): number {
   // The price in the datastore and in our memory is all cents
   return centsToDollars(price);
 }
+
+export function isFreeEvent(price: number): boolean {
+  return price <= 0;
+}
+
+export function getEventPriceDisplay(price: number, includeCurrency = false): string {
+  if (isFreeEvent(price)) {
+    return "Free";
+  }
+  const amount = displayPrice(price).toFixed(2);
+  return includeCurrency ? `$${amount} AUD` : `$${amount}`;
+}
