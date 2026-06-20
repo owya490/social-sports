@@ -16,7 +16,6 @@ if gcloud scheduler jobs describe "$JOB_NAME" --location="$REGION" --project "$P
     --time-zone="Australia/Sydney" \
     --uri="$FUNCTION_URL" \
     --http-method=GET \
-    --headers="Content-Type=application/json" \
     --project "$PROJECT_ID" \
     --location="$REGION"
 else
@@ -26,7 +25,6 @@ else
     --time-zone="Australia/Sydney" \
     --uri="$FUNCTION_URL" \
     --http-method=GET \
-    --headers="Content-Type=application/json" \
     --project "$PROJECT_ID" \
     --location="$REGION"
 fi

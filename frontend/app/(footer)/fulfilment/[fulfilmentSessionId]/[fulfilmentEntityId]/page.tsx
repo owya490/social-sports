@@ -26,14 +26,15 @@ import { HomeIcon } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * Routing page for fulfilment session entities.
  */
 const FulfilmentSessionEntityPage = () => {
   const params = useParams<{ fulfilmentSessionId: FulfilmentSessionId; fulfilmentEntityId: FulfilmentEntityId }>();
-  const fulfilmentSessionEntityPageLogger = new Logger("fulfilmentSessionEntityPageLogger");
+  const { fulfilmentSessionId, fulfilmentEntityId } = params;
+  const fulfilmentSessionEntityPageLogger = useMemo(() => new Logger("fulfilmentSessionEntityPageLogger"), []);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [getFulfilmentEntityInfoResponse, setGetFulfilmentEntityInfoResponse] =
@@ -52,42 +53,45 @@ const FulfilmentSessionEntityPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const fetchFulfilmentEntityInfo = async () => {
-      const { fulfilmentSessionId, fulfilmentEntityId } = params;
+    let cancelled = false;
+
+    const fetchFulfilmentInfo = async () => {
       try {
         const getFulfilmentEntityInfoResponse = await getFulfilmentEntityInfo(fulfilmentSessionId, fulfilmentEntityId);
-        setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
-      } catch (error) {
-        if (error instanceof NotFoundError) {
-          router.push("/not-found");
+        if (cancelled) {
           return;
         }
-        fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment entity info ${error}`);
-        router.push("/error");
-        return;
-      }
-    };
-    const fetchFulfilmentSessionInfo = async () => {
-      const { fulfilmentSessionId, fulfilmentEntityId } = params;
-      try {
+        setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
+
         const fulfilmentSessionInfo = await getFulfilmentSessionInfo(fulfilmentSessionId, fulfilmentEntityId);
+        if (cancelled) {
+          return;
+        }
         setFulfilmentSessionInfo(fulfilmentSessionInfo);
         fulfilmentSessionEntityPageLogger.info(`fulfilmentSessionInfo: ${JSON.stringify(fulfilmentSessionInfo)}`);
       } catch (error) {
-        if (error instanceof NotFoundError) {
-          router.push("/not-found");
+        if (cancelled) {
           return;
         }
-        fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment session info ${error}`);
-        router.push("/error");
+        if (error instanceof NotFoundError) {
+          router.replace("/not-found");
+          return;
+        }
+        fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment info ${error}`);
+        router.replace("/error");
         return;
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    Promise.all([fetchFulfilmentEntityInfo(), fetchFulfilmentSessionInfo()]).then(() => {
-      setLoading(false);
-    });
-  }, [params.fulfilmentSessionId, params.fulfilmentEntityId, router]);
+    fetchFulfilmentInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, [fulfilmentSessionId, fulfilmentEntityId, fulfilmentSessionEntityPageLogger, router]);
 
   const handleValidationChange = (isValid: boolean) => {
     setAreAllRequiredFieldsFilled(isValid);
@@ -103,7 +107,36 @@ const FulfilmentSessionEntityPage = () => {
 
   useEffect(() => {
     setIsFormReady(false);
-  }, [params.fulfilmentSessionId, params.fulfilmentEntityId]);
+  }, [fulfilmentSessionId, fulfilmentEntityId]);
+
+  useEffect(() => {
+    if (
+      getFulfilmentEntityInfoResponse?.type !== FulfilmentEntityType.STRIPE &&
+      getFulfilmentEntityInfoResponse?.type !== FulfilmentEntityType.DELAYED_STRIPE
+    ) {
+      return;
+    }
+
+    if (getFulfilmentEntityInfoResponse.url === null) {
+      fulfilmentSessionEntityPageLogger.error(
+        `${getFulfilmentEntityInfoResponse.type} Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${
+          fulfilmentSessionId
+        }, fulfilmentEntityId: ${fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
+          getFulfilmentEntityInfoResponse
+        )}`
+      );
+      router.push("/error");
+      return;
+    }
+
+    router.push(getFulfilmentEntityInfoResponse.url.toString());
+  }, [
+    getFulfilmentEntityInfoResponse,
+    fulfilmentSessionId,
+    fulfilmentEntityId,
+    fulfilmentSessionEntityPageLogger,
+    router,
+  ]);
 
   const handleNext = async () => {
     try {
@@ -210,33 +243,13 @@ const FulfilmentSessionEntityPage = () => {
 
   switch (getFulfilmentEntityInfoResponse?.type) {
     case FulfilmentEntityType.STRIPE:
-      if (getFulfilmentEntityInfoResponse.url === null) {
-        fulfilmentSessionEntityPageLogger.error(
-          `Stripe Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${
-            params.fulfilmentSessionId
-          }, fulfilmentEntityId: ${params.fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
-            getFulfilmentEntityInfoResponse
-          )}`
-        );
-        router.push("/error");
-        return renderErrorAlert();
-      }
-      router.push(getFulfilmentEntityInfoResponse.url.toString());
-      return renderErrorAlert();
     case FulfilmentEntityType.DELAYED_STRIPE:
-      if (getFulfilmentEntityInfoResponse.url === null) {
-        fulfilmentSessionEntityPageLogger.error(
-          `Delayed Stripe Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${
-            params.fulfilmentSessionId
-          }, fulfilmentEntityId: ${params.fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
-            getFulfilmentEntityInfoResponse
-          )}`
-        );
-        router.push("/error");
-        return renderErrorAlert();
-      }
-      router.push(getFulfilmentEntityInfoResponse.url.toString());
-      return renderErrorAlert();
+      return (
+        <>
+          <Loading />
+          {renderErrorAlert()}
+        </>
+      );
     case FulfilmentEntityType.FORMS:
       if (getFulfilmentEntityInfoResponse.formId === null || getFulfilmentEntityInfoResponse.eventId === null) {
         fulfilmentSessionEntityPageLogger.error(
@@ -416,7 +429,7 @@ function EndFulfilmentHandler({
     return () => {
       cancelled = true;
     };
-  }, [fulfilmentSessionId, fulfilmentEntityId, url, router]);
+  }, [fulfilmentSessionId, fulfilmentEntityId, url, logger, router]);
 
   return <Loading />;
 }

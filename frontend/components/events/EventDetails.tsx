@@ -6,13 +6,13 @@ import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
 
+export { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
+
 interface EventDetailsProps {
   eventData: EventData;
   eventTags: Tag[];
   setLoading: (value: boolean) => void;
 }
-
-export const MAX_TICKETS_PER_ORDER = 7;
 
 export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
@@ -37,6 +37,7 @@ export function EventDetails(props: EventDetailsProps) {
               eventLink={eventData.eventLink}
               organiserId={eventData.organiserId}
               waitlistEnabled={eventData.waitlistEnabled}
+              maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
             />
           </div>
 
@@ -69,6 +70,7 @@ export function EventDetails(props: EventDetailsProps) {
               eventLink={eventData.eventLink}
               organiserId={eventData.organiserId}
               waitlistEnabled={eventData.waitlistEnabled}
+              maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
             />
           </div>
         </div>

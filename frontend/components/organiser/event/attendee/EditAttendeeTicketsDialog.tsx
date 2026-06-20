@@ -4,6 +4,7 @@ import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
+import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getOrderById } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
@@ -162,7 +163,7 @@ export const EditAttendeeTicketsDialog = ({
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
                             if (!isNaN(value)) {
-                              const capped = Math.min(Math.max(value, 0), numTickets + eventData.vacancy);
+                              const capped = clampTicketQuantity(value, 0, numTickets + eventData.vacancy);
                               setNewNumTickets(capped.toString());
                             } else {
                               setNewNumTickets("0");

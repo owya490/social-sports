@@ -1,4 +1,10 @@
-import { EmptyEventData, EventData, EventDataWithoutOrganiser, EventId } from "@/interfaces/EventTypes";
+import {
+  EmptyEventData,
+  EventData,
+  EventDataWithoutOrganiser,
+  EventId,
+  DEFAULT_MAX_TICKETS_PER_ORDER,
+} from "@/interfaces/EventTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import {
   CollectionReference,
@@ -13,6 +19,7 @@ import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
 import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
+import { clampMaxTicketsPerTransaction } from "./ticketLimits";
 
 // const router = useRouter();
 

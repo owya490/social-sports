@@ -16,6 +16,7 @@ import {
   InitCheckoutFulfilmentSessionResponse,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
+import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
 import { Logger } from "@/observability/logger";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getUrlWithCurrentHostname } from "../urlUtils";
@@ -295,6 +296,9 @@ export async function getFulfilmentEntityInfo(
 
     return response;
   } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw error;
+    }
     fulfilmentServiceLogger.error(`getFulfilmentEntityInfo: Failed to fetch fulfilment entity info: ${error}`);
     throw error;
   }
@@ -326,6 +330,9 @@ export async function getFulfilmentSessionInfo(
     );
     return response;
   } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw error;
+    }
     fulfilmentServiceLogger.error(`getFulfilmentSessionInfo: Failed to fetch fulfilment session info: ${error}`);
     throw error;
   }

@@ -1,10 +1,10 @@
 "use client";
 import BookingButton from "@/components/events/BookingButton";
 import ContactEventButton from "@/components/events/ContactEventButton";
-import { MAX_TICKETS_PER_ORDER } from "@/components/events/EventDetails";
 import { EventData } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { displayPrice } from "@/utilities/priceUtils";
+import { getBuyerTicketCountOptions } from "@/services/src/events/eventsUtils/ticketLimits";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
 import Image from "next/image";
@@ -31,7 +31,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
     <div className="flex gap-3 items-center">
       <div className="flex-shrink-0 md:min-w-64">
         <Select value={ticketCount.toString()} onChange={handleTicketCountChange} label="Tickets" disabled={loading}>
-          {Array.from({ length: Math.min(event.vacancy, MAX_TICKETS_PER_ORDER) }, (_, i) => i + 1).map((num) => (
+          {getBuyerTicketCountOptions(event.vacancy, event.maxTicketsPerTransaction).map((num) => (
             <Option key={num} value={num.toString()}>
               {num}
             </Option>
@@ -77,7 +77,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
           <div className="flex-1 space-y-2 overflow-x-hidden">
             <div className="flex items-center">
               <p className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(event.startDate)}</p>
-              <p className="font-light text-gray-500 text-xs ml-auto">${displayPrice(event.price)}</p>
+              <p className="font-light text-gray-500 text-xs ml-auto">{getEventPriceDisplay(event.price)}</p>
             </div>
 
             <div className="flex items-center">
@@ -129,7 +129,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
           <div>
             <div className="flex items-center">
               <p className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(event.startDate)}</p>
-              <p className="font-light text-gray-500 text-xs ml-auto">${displayPrice(event.price)}</p>
+              <p className="font-light text-gray-500 text-xs ml-auto">{getEventPriceDisplay(event.price)}</p>
             </div>
             {/* Row 1: Title */}
             <Link
