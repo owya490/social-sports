@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.emails.EmailService;
+import com.functions.utils.TimeUtils;
 import com.functions.events.models.Attendee;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
@@ -1239,18 +1240,27 @@ public class WebhookService {
 
             String email = order.getEmail();
             if (email != null && !email.isBlank()) {
-                boolean emailSent = EmailService.sendCancellationEmail(
+                String startDate = formatEventTimestampOrEmpty(eventSnapshot, "startDate");
+                String endDate = formatEventTimestampOrEmpty(eventSnapshot, "endDate");
+                String location = eventSnapshot.exists()
+                        ? Optional.ofNullable(eventSnapshot.getString("location")).orElse("")
+                        : "";
+                boolean emailSent = EmailService.sendRejectBookingEmail(
                         email,
                         order.getFullName(),
                         eventName,
+                        organiserId,
                         orderId,
-                        ticketIds.size());
+                        ticketIds.size(),
+                        startDate,
+                        endDate,
+                        location);
                 if (!emailSent) {
-                    logger.warn("Was unable to send cancellation email to {}. orderId={}",
+                    logger.warn("Was unable to send reject booking email to {}. orderId={}",
                             email, orderId);
                 }
             } else {
-                logger.warn("No email found in order to send cancellation email. orderId={}", orderId);
+                logger.warn("No email found in order to send reject booking email. orderId={}", orderId);
             }
 
             logger.info("Successfully handled payment_intent.canceled webhook event. paymentIntentId={}, orderId={}",
@@ -1261,5 +1271,16 @@ public class WebhookService {
                     paymentIntentId, e.getMessage(), e);
             return false;
         }
+    }
+
+    private static String formatEventTimestampOrEmpty(DocumentSnapshot eventSnapshot, String field) {
+        if (!eventSnapshot.exists()) {
+            return "";
+        }
+        com.google.cloud.Timestamp ts = eventSnapshot.getTimestamp(field);
+        if (ts == null) {
+            return "";
+        }
+        return TimeUtils.formatTimestampForEmail(ts);
     }
 }

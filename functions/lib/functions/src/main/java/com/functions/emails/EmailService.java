@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
-import com.functions.global.handlers.Global;
 import com.functions.utils.TimeUtils;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
@@ -26,9 +25,7 @@ import com.google.cloud.firestore.Firestore;
  */
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
-    private static final String DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID = "cml0rm3t21e8s0ixa21rvcfnx";
-    private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR =
-            "LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID";
+    private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID = "cml0rm3t21e8s0ixa21rvcfnx";
 
     @FunctionalInterface
     interface PurchaseEmailSender {
@@ -39,17 +36,6 @@ public class EmailService {
     private interface BookingApprovalEmailVariablesBuilder {
         Map<String, String> build(DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId);
     }
-    private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID =
-            resolveTemplateIdWithDefault(Global.getEnv(LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR),
-                    DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID);
-
-    private static String resolveTemplateIdWithDefault(String configuredTemplateId, String defaultTemplateId) {
-        if (configuredTemplateId == null || configuredTemplateId.isBlank()) {
-            return defaultTemplateId;
-        }
-        return configuredTemplateId;
-    }
-
     /**
      * Sends an email confirmation to a user who has joined the waitlist for an
      * event.
@@ -566,29 +552,31 @@ public class EmailService {
     }
 
     /**
-     * Sends a payment cancellation email after tickets/order are marked as REJECTED.
+     * Sends a reject-booking email after tickets/order are marked as REJECTED.
      *
      * @param email recipient email
      * @param fullName purchaser full name
      * @param eventName event name
+     * @param organiserId organiser ID
      * @param orderId order ID
-     * @param ticketCount number of canceled tickets
+     * @param ticketCount number of rejected tickets
+     * @param startDate formatted event start date
+     * @param endDate formatted event end date
+     * @param location event location
      * @return true if email was sent successfully, false otherwise
      */
-    public static boolean sendCancellationEmail(String email, String fullName, String eventName,
-                                                String orderId, int ticketCount) {
-        if (LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID == null
-                || LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID.isBlank()) {
-            logger.warn("{} not configured. Skipping cancellation email.",
-                    LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR);
-            return false;
-        }
-
+    public static boolean sendRejectBookingEmail(String email, String fullName, String eventName,
+                                                 String organiserId, String orderId, int ticketCount,
+                                                 String startDate, String endDate, String location) {
         Map<String, String> variables = Map.of(
                 "name", Optional.ofNullable(fullName).orElse(""),
                 "eventName", Optional.ofNullable(eventName).orElse("Event"),
+                "organiserId", Optional.ofNullable(organiserId).orElse(""),
                 "orderId", Optional.ofNullable(orderId).orElse(""),
-                "ticketCount", String.valueOf(ticketCount)
+                "ticketCount", String.valueOf(ticketCount),
+                "startDate", Optional.ofNullable(startDate).orElse(""),
+                "endDate", Optional.ofNullable(endDate).orElse(""),
+                "location", Optional.ofNullable(location).orElse("")
         );
 
         boolean sent;
@@ -596,15 +584,15 @@ public class EmailService {
             sent = EmailClient.sendEmailWithLoopsWithRetries(
                     LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID, email, variables);
         } catch (Exception e) {
-            logger.warn("Failed to send cancellation email for order {} to {}", orderId, email, e);
+            logger.warn("Failed to send reject booking email for order {} to {}", orderId, email, e);
             return false;
         }
 
         if (sent) {
-            logger.info("Successfully sent cancellation email for order {} to {}", orderId, email);
+            logger.info("Successfully sent reject booking email for order {} to {}", orderId, email);
         } else {
-            logger.warn("Failed to send cancellation email for order {} to {}", orderId, email);
-        }
+            logger.warn("Failed to send reject booking email for order {} to {}", orderId, email);
+            }
         return sent;
     }
 }
