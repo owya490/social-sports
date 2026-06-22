@@ -75,10 +75,7 @@ else
 fi
 
 EXTRA_DEPLOY_ARGS=()
-# Prod: keep one always-warm instance for the app API (globalAppController).
-# stripeWebhookEndpoint scales to zero — Stripe retries failed deliveries; GAC also
-# accepts webhooks via Stripe-Signature routing if you point Stripe there instead.
-if [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "globalAppController" ]; then
+if [ "$ENVIRONMENT" == "prod" ] && [[ "$FUNCTION_NAME" == "globalAppController" || "$FUNCTION_NAME" == "stripeWebhookEndpoint" ]]; then
     EXTRA_DEPLOY_ARGS=(
         --concurrency 80
         --min-instances 1
