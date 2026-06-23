@@ -181,8 +181,6 @@ jobs:
               --set-env-vars PROJECT_NAME=$PROJECT_ID \
               --memory 512 \
               --concurrency 80 \
-              --min-instances 1 \
-              --max-instances 5 \
               --cpu 0.5 \
               --quiet 2>&1 | sed 's/^/[stripeWebhookEndpoint] /') &
           else
