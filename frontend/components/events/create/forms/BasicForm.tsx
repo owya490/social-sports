@@ -225,7 +225,10 @@ export function BasicInformation({
       });
       return;
     }
-    updateField({ capacity: 0, maxTicketsPerTransaction: 1 });
+    updateField({
+      capacity: 0,
+      maxTicketsPerTransaction: clampMaxTicketsPerTransaction(DEFAULT_MAX_TICKETS_PER_ORDER, 0),
+    });
   };
 
   const [customAmount, setCustomAmount] = useState(centsToDollars(price));
@@ -484,17 +487,19 @@ export function BasicInformation({
             Event price is the cost of each ticket. Event capacity is the total number of tickets you&apos;re willing to
             sell.
           </p>
-          <div className="mt-4">
-            <Switch
-              color="teal"
-              label="This is a free event"
-              size="sm"
-              checked={isFreeEvent}
-              onChange={(event) => {
-                handleFreeEventToggle(event.currentTarget.checked);
-              }}
-            />
-          </div>
+          {user.stripeAccountActive && (
+            <div className="mt-4">
+              <Switch
+                color="teal"
+                label="This is a free event"
+                size="sm"
+                checked={isFreeEvent}
+                onChange={(event) => {
+                  handleFreeEventToggle(event.currentTarget.checked);
+                }}
+              />
+            </div>
+          )}
           {!isFreeEvent && (
             <div className="w-full px-5">
               <CreateEventCostSlider
