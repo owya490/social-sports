@@ -129,6 +129,45 @@ public class EventsRepository {
     }
 
     /**
+     * Get all active public events with waitlist enabled.
+     */
+    public static List<EventData> getActivePublicEventsWithWaitlistEnabled() {
+        logger.info("Querying active public events with waitlist enabled");
+
+        try {
+            Firestore db = FirebaseService.getFirestore();
+
+            Query query = db.collection(FirebaseService.CollectionPaths.EVENTS)
+                    .document(FirebaseService.CollectionPaths.ACTIVE)
+                    .collection(FirebaseService.CollectionPaths.PUBLIC)
+                    .whereEqualTo("waitlistEnabled", true);
+
+            QuerySnapshot querySnapshot = query.get().get();
+            List<EventData> events = new ArrayList<>();
+
+            for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
+                EventData eventData = document.toObject(EventData.class);
+                if (eventData == null) {
+                    logger.warn("Failed to map document to EventData, skipping document with ID: {}", document.getId());
+                    continue;
+                }
+                eventData.setEventId(document.getId());
+                events.add(eventData);
+            }
+
+            logger.info("Found {} active public events with waitlist enabled", events.size());
+            return events;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Interrupted while fetching active public events with waitlist enabled", e);
+            return Collections.emptyList();
+        } catch (ExecutionException e) {
+            logger.error("Failed to fetch active public events with waitlist enabled", e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * Gets the DocumentReference for an event by ID. Performs a read - must be called
      * before any writes in a transaction to satisfy Firestore's read-before-write rule.
      *
