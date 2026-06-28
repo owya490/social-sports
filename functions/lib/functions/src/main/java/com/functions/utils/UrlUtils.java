@@ -32,7 +32,7 @@ public class UrlUtils {
 
             return Optional.empty();
         } catch (Exception e) {
-            logger.error("Error constructing URL with current environment: {}", e.getMessage());
+            logger.error("Error constructing URL with current environment. url={}", url, e);
             throw new RuntimeException(e);
         }
 

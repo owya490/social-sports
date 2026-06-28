@@ -27,14 +27,12 @@ public class CompleteFulfilmentSessionHandler implements Handler<CompleteFulfilm
   public String handle(CompleteFulfilmentSessionRequest parsedRequestData) {
     boolean isSuccess = FulfilmentService.completeFulfilmentSession(parsedRequestData.fulfilmentSessionId(), parsedRequestData.fulfilmentEntityId());
     if (isSuccess) {
-      logger.info(
-                    "[CompleteFulfilmentSessionEndpoint] Fulfilment session completed successfully: {} for entity: {}",
-                    parsedRequestData.fulfilmentSessionId(), parsedRequestData.fulfilmentEntityId());
+      logger.info("Fulfilment session completed successfully: {} for entity: {}",
+              parsedRequestData.fulfilmentSessionId(), parsedRequestData.fulfilmentEntityId());
       return "Fulfilment session completed successfully";
     } else {
-      logger.error(
-                    "[CompleteFulfilmentSessionEndpoint] Failed to complete fulfilment session: {} for entity: {}",
-                    parsedRequestData.fulfilmentSessionId(), parsedRequestData.fulfilmentEntityId());
+      logger.error("Failed to complete fulfilment session: {} for entity: {}",
+              parsedRequestData.fulfilmentSessionId(), parsedRequestData.fulfilmentEntityId());
       return "Failed to complete fulfilment session";
     }
   }

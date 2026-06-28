@@ -35,31 +35,31 @@ public class FormsUtils {
             });
         } catch (Exception e) {
             logger.error("Error trying to get form ID for event ID {}", eventId, e);
-            throw new RuntimeException(
-                    "[FormsUtils] Failed to retrieve form ID for event ID: " + eventId, e);
+            throw new RuntimeException("Failed to retrieve form ID for event ID: " + eventId, e);
         }
     }
 
     public static boolean isFormResponseComplete(FormResponse formResponse) {
-        logger.info("[FormsUtils] Checking if form response is complete: {}", formResponse);
         if (formResponse == null || formResponse.getResponseMap() == null) {
-            logger.info("[FormsUtils] Form response is null or has no response map: {}",
-                    formResponse);
+            logger.info("Form response is incomplete because it is null or has no response map");
             return false;
         }
+        logger.debug("Checking form response completeness. formId={}, eventId={}, formResponseId={}, sectionCount={}",
+                formResponse.getFormId(), formResponse.getEventId(), formResponse.getFormResponseId(),
+                formResponse.getResponseSectionsOrder().size());
         // Check if all required sections have answers which are non-empty
         for (String sectionId : formResponse.getResponseSectionsOrder()) {
             FormSection section = formResponse.getResponseMap().get(sectionId);
-            logger.info("[FormsUtils] Checking sectionId: {}, section: {}", sectionId, section);
             if (section == null) {
-                logger.error("[FormsUtils] Missing section in response map: {}, returning false",
-                        sectionId);
+                logger.error("Missing section in form response map. formId={}, eventId={}, formResponseId={}, sectionId={}",
+                        formResponse.getFormId(), formResponse.getEventId(), formResponse.getFormResponseId(), sectionId);
                 return false;
             }
 
             if (!section.isRequired()) {
-                logger.info("[FormsUtils] Section {} is not required, skipping: {}", sectionId,
-                        section);
+                logger.debug("Skipping non-required form section. formId={}, eventId={}, formResponseId={}, sectionId={}, sectionType={}",
+                        formResponse.getFormId(), formResponse.getEventId(), formResponse.getFormResponseId(),
+                        sectionId, section.getType());
                 continue;
             }
 
@@ -78,7 +78,8 @@ public class FormsUtils {
                 return false;
             }
         }
-        logger.info("[FormsUtils] Form response is complete: {}", formResponse);
+        logger.info("Form response is complete. formId={}, eventId={}, formResponseId={}",
+                formResponse.getFormId(), formResponse.getEventId(), formResponse.getFormResponseId());
         return true;
     }
 
@@ -111,9 +112,8 @@ public class FormsUtils {
             // Step 3: Save to submitted collection
             FormsRepository.saveSubmittedFormResponse(tempFormResponse, transaction);
             logger.info(
-                    "Successfully saved form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}, formResponse: {}",
-                    transaction.isPresent() ? "transaction" : "regular operation", formId, eventId, formResponseId,
-                    tempFormResponse);
+                    "Successfully saved form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}",
+                    transaction.isPresent() ? "transaction" : "regular operation", formId, eventId, formResponseId);
 
             // Step 4: Delete from temporary collection
             FormsRepository.deleteTempFormResponse(formId, eventId, formResponseId, transaction);
@@ -126,13 +126,12 @@ public class FormsUtils {
                     formResponseId);
         } catch (Exception e) {
             logger.error(
-                    "[FormsUtils] Error copying temporary form response to submitted using {} - formId: {}, eventId: {}, formResponseId: {}: {}",
+                    "Error copying temporary form response to submitted using {} - formId: {}, eventId: {}, formResponseId: {}",
                     transaction.isPresent() ? "transaction" : "regular operation", formId, eventId,
-                    formResponseId, e.getMessage());
+                    formResponseId, e);
             throw new RuntimeException(
-                    "[FormsUtils] Failed to copy temporary form response to submitted - formId: "
-                            + formId + ", eventId: " + eventId + ", formResponseId: "
-                            + formResponseId,
+                    "Failed to copy temporary form response to submitted - formId: "
+                            + formId + ", eventId: " + eventId + ", formResponseId: " + formResponseId,
                     e);
         }
     }
@@ -162,10 +161,9 @@ public class FormsUtils {
             // Step 2: Save to submitted collection
             FormsRepository.saveSubmittedFormResponse(tempFormResponse, transaction);
             logger.info(
-                    "Successfully saved pre-read form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}, formResponse: {}",
+                    "Successfully saved pre-read form response to submitted collection using {} - formId: {}, eventId: {}, formResponseId: {}",
                     transaction.isPresent() ? "transaction" : "regular operation",
-                    tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId(),
-                    tempFormResponse);
+                    tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId());
 
             // Step 3: Delete from temporary collection
             FormsRepository.deleteTempFormResponse(tempFormResponse.getFormId(), tempFormResponse.getEventId(),
@@ -179,15 +177,14 @@ public class FormsUtils {
                     tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId());
         } catch (Exception e) {
             logger.error(
-                    "[FormsUtils] Error copying pre-read temporary form response to submitted using {} - formId: {}, eventId: {}, formResponseId: {}: {}",
+                    "Error copying pre-read temporary form response to submitted using {} - formId: {}, eventId: {}, formResponseId: {}",
                     transaction.isPresent() ? "transaction" : "regular operation",
                     tempFormResponse.getFormId(), tempFormResponse.getEventId(), tempFormResponse.getFormResponseId(),
-                    e.getMessage());
+                    e);
             throw new RuntimeException(
-                    "[FormsUtils] Failed to copy pre-read temporary form response to submitted - formId: "
+                    "Failed to copy pre-read temporary form response to submitted - formId: "
                             + tempFormResponse.getFormId() + ", eventId: " + tempFormResponse.getEventId()
-                            + ", formResponseId: "
-                            + tempFormResponse.getFormResponseId(),
+                            + ", formResponseId: " + tempFormResponse.getFormResponseId(),
                     e);
         }
     }

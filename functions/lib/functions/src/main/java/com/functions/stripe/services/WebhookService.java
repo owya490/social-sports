@@ -1,5 +1,7 @@
 package com.functions.stripe.services;
 
+import static com.functions.firebase.services.FirebaseService.transactionLog;
+
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -31,6 +33,7 @@ import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
+import com.functions.utils.logging.LogFields;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
@@ -114,8 +117,8 @@ public class WebhookService {
             return formResponseIds;
             
         } catch (Exception e) {
-            logger.warn("Failed to retrieve form response IDs from fulfilment session {}: {}. " +
-                       "Continuing without form responses.", fulfilmentSessionId, e.getMessage());
+            logger.warn("Failed to retrieve form response IDs from fulfilment session {}. Continuing without form responses.",
+                    fulfilmentSessionId, e);
             return new ArrayList<>();
         }
     }
@@ -240,7 +243,7 @@ public class WebhookService {
             byte[] hash = md.digest(email.getBytes(StandardCharsets.UTF_8));
             return new BigInteger(1, hash).toString();
         } catch (NoSuchAlgorithmException e) {
-            logger.error("Failed to hash email: {}", e.getMessage(), e);
+            logger.error("Failed to hash email", e);
             throw new RuntimeException("Failed to hash email", e);
         }
     }
@@ -257,8 +260,8 @@ public class WebhookService {
                     Map.class);
             return serializedSession != null ? serializedSession : new HashMap<>();
         } catch (Exception e) {
-            logger.warn("Failed to serialize checkout session {} for Firestore compatibility: {}",
-                    checkoutSession.getId(), e.getMessage());
+            logger.warn("Failed to serialize checkout session {} for Firestore compatibility",
+                    checkoutSession.getId(), e);
             Map<String, Object> fallbackSession = new HashMap<>();
             fallbackSession.put("id", checkoutSession.getId());
             return fallbackSession;
@@ -286,8 +289,8 @@ public class WebhookService {
                         operationName, attempt + 1, maxRetries);
                 return false;
             } catch (Exception e) {
-                logger.warn("{} failed on attempt {}/{}: {}",
-                        operationName, attempt + 1, maxRetries, e.getMessage(), e);
+                logger.warn("{} failed on attempt {}/{}",
+                        operationName, attempt + 1, maxRetries, e);
             }
 
             if (attempt < maxRetries - 1) {
@@ -964,12 +967,19 @@ public class WebhookService {
         
         try {
             // Run the fulfillment logic in a transaction
-            String orderId = FirebaseService.createFirestoreTransaction(transaction -> {
+            String orderId = FirebaseService.createFirestoreTransaction(
+                    transactionLog("fulfilCompletedCheckoutSession",
+                            LogFields.of(
+                                    "checkoutSessionId", checkoutSessionId,
+                                    "eventId", eventId,
+                                    "fulfilmentSessionId", fulfilmentSessionId,
+                                    "paymentIntentId", paymentIntentId == null ? "none" : paymentIntentId)),
+                    transaction -> {
                 try {
                     // Check if already processed
                     if (checkIfSessionHasBeenProcessedAlready(transaction, checkoutSessionId, eventId)) {
-                        logger.info("Current webhook event checkout session has been already processed. " +
-                                   "Returning early. session={}", checkoutSessionId);
+                        logger.info("Current webhook event checkout session has been already processed. Returning early. checkoutSessionId={}",
+                                checkoutSessionId);
                         return null;
                     }
                     
@@ -989,8 +999,8 @@ public class WebhookService {
                     );
                     
                     if (orderIdResult == null) {
-                        logger.error("Fulfillment of event ticket purchase was unsuccessful. session={}, eventId={}, " +
-                                    "customer={}", checkoutSessionId, eventId,
+                        logger.error("Fulfillment of event ticket purchase was unsuccessful. checkoutSessionId={}, eventId={}, customer={}",
+                                checkoutSessionId, eventId,
                                 customerEmail);
                         throw new RuntimeException("Fulfillment failed");
                     }
@@ -1000,7 +1010,7 @@ public class WebhookService {
                     
                     return orderIdResult;
                 } catch (Exception e) {
-                    logger.error("Error in fulfillment transaction: {}", e.getMessage(), e);
+                    logger.error("Error in fulfillment transaction", e);
                     throw new RuntimeException("Transaction failed", e);
                 }
             });
@@ -1046,7 +1056,8 @@ public class WebhookService {
             return true;
             
         } catch (Exception e) {
-            logger.error("Error processing ticket purchase workflow: {}", e.getMessage(), e);
+            logger.error("Error processing ticket purchase workflow. checkoutSessionId={}, eventId={}",
+                    checkoutSessionId, eventId, e);
             return false;
         }
     }
@@ -1068,12 +1079,15 @@ public class WebhookService {
             List<LineItem> lineItems) {
         
         try {
-            Boolean result = FirebaseService.createFirestoreTransaction(transaction -> {
+            Boolean result = FirebaseService.createFirestoreTransaction(
+                    transactionLog("restockExpiredCheckoutSession",
+                            LogFields.of("checkoutSessionId", checkoutSessionId, "eventId", eventId, "isPrivate", isPrivate)),
+                    transaction -> {
                 try {
                     // Check if already processed
                     if (checkIfSessionHasBeenProcessedAlready(transaction, checkoutSessionId, eventId)) {
-                        logger.info("Current webhook event checkout session has been already processed. " +
-                                   "Returning early. session={}", checkoutSessionId);
+                        logger.info("Current webhook event checkout session has been already processed. Returning early. checkoutSessionId={}",
+                                checkoutSessionId);
                         return true;
                     }
                     
@@ -1082,7 +1096,7 @@ public class WebhookService {
                     
                     return true;
                 } catch (Exception e) {
-                    logger.error("Error in expired session transaction: {}", e.getMessage(), e);
+                    logger.error("Error in expired session transaction", e);
                     throw new RuntimeException("Transaction failed", e);
                 }
             });
@@ -1095,7 +1109,8 @@ public class WebhookService {
             return result;
             
         } catch (Exception e) {
-            logger.error("Error processing expired session workflow: {}", e.getMessage(), e);
+            logger.error("Error processing expired session workflow. checkoutSessionId={}, eventId={}",
+                    checkoutSessionId, eventId, e);
             return false;
         }
     }
@@ -1165,7 +1180,13 @@ public class WebhookService {
             String organiserId = eventSnapshot.getString("organiserId");
 
             PaymentIntentCancellationTransactionResult transactionResult =
-                    FirebaseService.createFirestoreTransaction(transaction -> {
+                    FirebaseService.createFirestoreTransaction(
+                            transactionLog("handlePaymentIntentCancellation",
+                                    LogFields.of(
+                                            "paymentIntentId", paymentIntentId,
+                                            "eventId", eventId,
+                                            "orderId", orderId)),
+                            transaction -> {
                         try {
                             if (checkIfPaymentIntentHasBeenProcessedAlready(transaction, paymentIntentId, eventId)) {
                                 logger.info("Payment intent {} has already been processed. Returning early.",
@@ -1184,8 +1205,7 @@ public class WebhookService {
 
                             return PaymentIntentCancellationTransactionResult.PROCESSED;
                         } catch (Exception e) {
-                            logger.error("Error in payment intent cancellation transaction for {}: {}",
-                                    paymentIntentId, e.getMessage(), e);
+                            logger.error("Error in payment intent cancellation transaction for {}", paymentIntentId, e);
                             throw new RuntimeException("Transaction failed", e);
                         }
                     });
@@ -1222,8 +1242,7 @@ public class WebhookService {
                     paymentIntentId, orderId);
             return true;
         } catch (Exception e) {
-            logger.error("Error processing payment_intent.canceled workflow for {}: {}",
-                    paymentIntentId, e.getMessage(), e);
+            logger.error("Error processing payment_intent.canceled workflow for {}", paymentIntentId, e);
             return false;
         }
     }

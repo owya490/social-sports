@@ -38,7 +38,7 @@ public class JavaUtils {
 				currentClass = currentClass.getSuperclass(); // Move up to the superclass
 			}
 		} catch (IllegalAccessException e) {
-			e.printStackTrace();
+			logger.error("Failed to convert object to map. type={}", obj.getClass().getName(), e);
 		}
 		return map;
 	}

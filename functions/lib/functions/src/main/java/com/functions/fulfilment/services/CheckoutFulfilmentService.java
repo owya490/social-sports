@@ -56,10 +56,8 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
                     fulfilmentEntities.stream()
                             .map(e -> e.getValue().getType())
                             .collect(Collectors.toList()));
-            logger.debug("Constructed fulfilment entities (full): {}",
-                    fulfilmentEntities.stream()
-                            .map(SimpleEntry::getValue)
-                            .collect(Collectors.toList()));
+            logger.debug("Constructed checkout fulfilment entity IDs for fulfilmentSessionId: {}: {}",
+                    fulfilmentSessionId, fulfilmentEntities.stream().map(SimpleEntry::getKey).collect(Collectors.toList()));
 
             SimpleEntry<Map<String, FulfilmentEntity>, List<String>> orderedFulfilmentEntities = FulfilmentSessionService
                     .getOrderedFulfilmentEntities(fulfilmentEntities);
@@ -109,9 +107,9 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
                 }
             }
         } catch (Exception e) {
-            logger.error("[FulfilmentService] Error constructing FORMS entities for event ID: {}", eventId, e);
+            logger.error("Error constructing FORMS entities for event ID: {}", eventId, e);
             throw new RuntimeException(
-                    "[FulfilmentService] Failed to construct FORMS entities for event ID: " + eventId, e);
+                    "Failed to construct FORMS entities for event ID: " + eventId, e);
         }
 
         // 2. STRIPE entity (will be updated with correct success URL later)

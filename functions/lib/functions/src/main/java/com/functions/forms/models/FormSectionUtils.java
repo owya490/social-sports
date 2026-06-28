@@ -56,7 +56,8 @@ public class FormSectionUtils {
 
             return section;
         } catch (Exception e) {
-            logger.error("Failed to deserialize FormSection: {}", sectionData, e);
+            Object sectionType = sectionData == null ? null : sectionData.get("type");
+            logger.error("Failed to deserialize FormSection. sectionType={}", sectionType, e);
             throw e;
         }
     }

@@ -35,7 +35,7 @@ public class BookingApprovalHandler implements Handler<BookingApprovalRequest, B
         boolean success = BookingApprovalService.handleBookingApproval(request.eventId(),
                 request.organiserId(), request.orderId(), request.bookingApprovalOperation());
 
-        logger.info("[BookingApprovalHandler] Booking {} operation completed for orderId: {}",
+        logger.info("Booking {} operation completed for orderId: {}",
                 request.bookingApprovalOperation(), request.orderId());
 
         if (!success) {

@@ -3,7 +3,10 @@ package com.functions.firebase.services;
 import static com.functions.utils.JavaUtils.objectMapper;
 
 import java.io.FileInputStream;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -15,14 +18,13 @@ import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
-import com.google.cloud.logging.Logging;
-import com.google.cloud.logging.LoggingOptions;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
 import com.posthog.java.PostHog;
 
 import lombok.Getter;
+import com.functions.utils.logging.RequestLogContext;
 
 public class FirebaseService {
 
@@ -57,8 +59,6 @@ public class FirebaseService {
 
     private static Firestore db;
     @Getter
-    private static Logging logging;
-    @Getter
     private static String posthogApiKey;
     private static String posthogHost;
     @Getter
@@ -72,7 +72,7 @@ public class FirebaseService {
                 initialize();
             }
         } catch (Exception e) {
-            logger.error("Error initializing FirebaseService: " + e.getMessage());
+            logger.error("Error initializing FirebaseService", e);
         }
     }
 
@@ -107,7 +107,6 @@ public class FirebaseService {
             throw new Exception("Firebase not initialized");
         }
         db = FirestoreClient.getFirestore();
-        logging = LoggingOptions.getDefaultInstance().getService();
 
         posthog = new PostHog.Builder(posthogApiKey).host(posthogHost).build();
     }
@@ -116,21 +115,73 @@ public class FirebaseService {
         return db;
     }
 
+    public record FirestoreTransactionLogContext(String operationName, Map<String, ?> fields) {
+        public FirestoreTransactionLogContext {
+            operationName = operationName == null || operationName.isBlank()
+                    ? "firestoreTransaction"
+                    : operationName;
+            fields = fields == null
+                    ? Map.of()
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(fields));
+        }
+    }
+
+    public static FirestoreTransactionLogContext transactionLog(String operationName, Map<String, ?> fields) {
+        return new FirestoreTransactionLogContext(operationName, fields);
+    }
+
     public static <T> T createFirestoreTransaction(Transaction.Function<T> consumer) throws Exception {
+        return createFirestoreTransaction(transactionLog("firestoreTransaction", Map.of()), consumer);
+    }
+
+    public static <T> T createFirestoreTransaction(
+            FirestoreTransactionLogContext transactionLogContext,
+            Transaction.Function<T> consumer) throws Exception {
         Firestore db = FirebaseService.getFirestore();
+        long startNanos = System.nanoTime();
+        RequestLogContext logContext = RequestLogContext.current();
+        FirestoreTransactionLogContext safeTransactionLogContext = transactionLogContext == null
+                ? transactionLog("firestoreTransaction", Map.of())
+                : transactionLogContext;
+
         ApiFuture<T> futureTransaction = db.runTransaction(consumer);
         try {
             // Wait for the transaction to complete
             T result = futureTransaction.get(30, TimeUnit.SECONDS);
-            logger.info("Transaction completed with result: " + result);
+            long durationMs = (System.nanoTime() - startNanos) / 1_000_000;
+            logger.info("Firestore transaction completed {}",
+                    logContext.formatWithFields(
+                            safeTransactionLogContext.fields(),
+                            "event", "firestore_transaction_completed",
+                            "operation", safeTransactionLogContext.operationName(),
+                            "durationMs", durationMs,
+                            "resultType", result == null ? "null" : result.getClass().getSimpleName()));
             return result;
         } catch (ExecutionException e) {
+            long durationMs = (System.nanoTime() - startNanos) / 1_000_000;
+            logger.warn("Firestore transaction failed {}",
+                    logContext.formatWithFields(
+                            safeTransactionLogContext.fields(),
+                            "event", "firestore_transaction_failed",
+                            "operation", safeTransactionLogContext.operationName(),
+                            "durationMs", durationMs,
+                            "exceptionType", e.getCause() == null ? e.getClass().getSimpleName() : e.getCause().getClass().getSimpleName()));
             // Unwrap the ExecutionException to expose the original exception
             // This allows specific exception handlers (e.g., CheckoutVacancyException) to catch it
             Throwable cause = e.getCause();
             if (cause instanceof Exception) {
                 throw (Exception) cause;
             }
+            throw e;
+        } catch (Exception e) {
+            long durationMs = (System.nanoTime() - startNanos) / 1_000_000;
+            logger.warn("Firestore transaction failed {}",
+                    logContext.formatWithFields(
+                            safeTransactionLogContext.fields(),
+                            "event", "firestore_transaction_failed",
+                            "operation", safeTransactionLogContext.operationName(),
+                            "durationMs", durationMs,
+                            "exceptionType", e.getClass().getSimpleName()));
             throw e;
         }
     }

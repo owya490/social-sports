@@ -53,8 +53,8 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
     private static Optional<String> saveTempFormResponse(FormResponse formResponse) {
         if (!FormsUtils.isFormResponseComplete(formResponse)) {
             logger.error(
-                    "[FormsUtils] Trying to save incomplete temp form response for formId: {}, eventId: {}, formResponse: {}",
-                    formResponse.getFormId(), formResponse.getEventId(), formResponse);
+                    "Trying to save incomplete temp form response for formId: {}, eventId: {}, formResponseId: {}",
+                    formResponse.getFormId(), formResponse.getEventId(), formResponse.getFormResponseId());
             throw new IllegalArgumentException("Form response is incomplete. All required fields must be filled.");
         }
 
@@ -83,8 +83,8 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
             // Re-throw validation errors so they propagate to GlobalAppController as 400s
             throw e;
         } catch (Exception e) {
-            logger.error("[FormsUtils] Error saving temporary form response: {} - {}",
-                    formResponse, e.getMessage());
+            logger.error("Error saving temporary form response. formId={}, eventId={}, formResponseId={}",
+                    formResponse.getFormId(), formResponse.getEventId(), formResponse.getFormResponseId(), e);
             return Optional.empty();
         }
     }

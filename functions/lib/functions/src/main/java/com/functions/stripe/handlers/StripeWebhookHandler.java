@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +16,7 @@ import com.functions.stripe.config.StripeCustomFieldKeys;
 import com.functions.stripe.models.SessionMetadata;
 import com.functions.stripe.services.WebhookService;
 import com.functions.utils.JavaUtils;
+import com.functions.utils.logging.RequestLogContext;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 import com.stripe.exception.SignatureVerificationException;
@@ -43,25 +43,29 @@ public class StripeWebhookHandler {
      * Processes a Stripe webhook request.
      */
     public static void handleWebhook(HttpRequest request, HttpResponse response) {
-        String uuid = UUID.randomUUID().toString();
-        logger.info("[Webhook-{}] Received webhook request", uuid);
+        RequestLogContext logContext = RequestLogContext.current().withField("component", "stripeWebhook");
+        String requestId = logContext.field("requestId");
+        logger.info("Received Stripe webhook request {}", logContext.format("event", "stripe_webhook_received"));
         
         // Handle GET requests (health checks from GCP/Firebase)
         if ("GET".equalsIgnoreCase(request.getMethod())) {
-            logger.warn("[Webhook-{}] Received GET request to webhook endpoint. Returning 200 without processing.", uuid);
+            logger.warn("Received GET request to webhook endpoint. Returning 200 without processing. {}",
+                    logContext.format("event", "stripe_webhook_health_check", "statusCode", 200));
             response.setStatusCode(200);
             return;
         }
         
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
-            logger.error("[Webhook-{}] Received non-POST request: {}", uuid, request.getMethod());
+            logger.error("Received non-POST webhook request {}",
+                    logContext.format("event", "stripe_webhook_method_not_allowed", "statusCode", 405));
             response.setStatusCode(405);
             return;
         }
         
         
         if (StripeConfig.STRIPE_WEBHOOK_ENDPOINT_SECRET == null || StripeConfig.STRIPE_WEBHOOK_ENDPOINT_SECRET.isEmpty()) {
-            logger.error("[Webhook-{}] Webhook endpoint secret is not configured", uuid);
+            logger.error("Webhook endpoint secret is not configured {}",
+                    logContext.format("event", "stripe_webhook_config_error", "statusCode", 500));
             response.setStatusCode(500);
             return;
         }
@@ -71,24 +75,28 @@ public class StripeWebhookHandler {
         try (InputStream inputStream = request.getInputStream()) {
             payload = readPayload(inputStream, request.getContentLength());
             if (payload.isEmpty()) {
-                logger.error("[Webhook-{}] Request body is empty", uuid);
+                logger.error("Request body is empty {}",
+                        logContext.format("event", "stripe_webhook_empty_body", "statusCode", 400));
                 response.setStatusCode(400);
                 return;
             }
         } catch (PayloadTooLargeException e) {
-            logger.error("[Webhook-{}] Request payload exceeds maximum size limit of {} bytes",
-                    uuid, MAX_PAYLOAD_SIZE);
+            logger.error("Request payload exceeds maximum size limit {}",
+                    logContext.format("event", "stripe_webhook_payload_too_large", "statusCode", 413,
+                            "maxPayloadBytes", MAX_PAYLOAD_SIZE));
             response.setStatusCode(413);
             return;
         } catch (Exception e) {
-            logger.error("[Webhook-{}] Failed to read request body: {}", uuid, e.getMessage());
+            logger.error("Failed to read request body {}",
+                    logContext.format("event", "stripe_webhook_body_read_failed", "statusCode", 400), e);
             response.setStatusCode(400);
             return;
         }
         
         String sigHeader = request.getFirstHeader("Stripe-Signature").orElse(null);
         if (sigHeader == null || sigHeader.isBlank()) {
-            logger.error("[Webhook-{}] Request headers did not contain valid Stripe-Signature", uuid);
+            logger.error("Request headers did not contain valid Stripe-Signature {}",
+                    logContext.format("event", "stripe_webhook_missing_signature", "statusCode", 401));
             response.setStatusCode(401); // Unauthorized
             return;
         }
@@ -97,29 +105,34 @@ public class StripeWebhookHandler {
         try {
             event = Webhook.constructEvent(payload, sigHeader, StripeConfig.STRIPE_WEBHOOK_ENDPOINT_SECRET);
         } catch (SignatureVerificationException e) {
-            logger.error("[Webhook-{}] SECURITY: Invalid webhook signature - possible spoofing attempt", uuid);
+            logger.error("SECURITY: Invalid webhook signature - possible spoofing attempt {}",
+                    logContext.format("event", "stripe_webhook_invalid_signature", "statusCode", 401));
             response.setStatusCode(401); // Unauthorized
             return;
         } catch (Exception e) {
-            logger.error("[Webhook-{}] Failed to parse webhook payload: {}", uuid, e.getMessage());
+            logger.error("Failed to parse webhook payload {}",
+                    logContext.format("event", "stripe_webhook_parse_failed", "statusCode", 400), e);
             response.setStatusCode(400);
             return;
         }
+
+        logContext.withField("stripeEventType", event.getType()).withField("stripeEventId", event.getId());
         
-        logger.info("[Webhook-{}] Verified webhook signature successfully: type={}, eventId={}", 
-                   uuid, event.getType(), event.getId());
+        logger.info("Verified webhook signature successfully {}",
+                logContext.format("event", "stripe_webhook_verified"));
         
         // Validate event ID format (Stripe event IDs start with evt_)
         String eventId = event.getId();
         if (eventId == null || !eventId.startsWith("evt_")) {
-            logger.error("[Webhook-{}] Invalid event ID format: {}", uuid, eventId);
+            logger.error("Invalid event ID format {}",
+                    logContext.format("event", "stripe_webhook_invalid_event_id", "statusCode", 400));
             response.setStatusCode(400);
             return;
         }
         
         // Check if this is an ignored event
         if (IGNORED_EVENT_IDS.contains(eventId)) {
-            logger.info("[Webhook-{}] Ignoring event {}", uuid, eventId);
+            logger.info("Ignoring configured Stripe event {}", logContext.format("event", "stripe_webhook_ignored", "statusCode", 200));
             response.setStatusCode(200);
             return;
         }
@@ -129,17 +142,17 @@ public class StripeWebhookHandler {
         
         switch (eventType) {
             case "checkout.session.completed":
-                success = handleCheckoutSessionCompleted(uuid, event);
+                success = handleCheckoutSessionCompleted(logContext, event);
                 break;
             case "checkout.session.expired":
-                success = handleCheckoutSessionExpired(uuid, event);
+                success = handleCheckoutSessionExpired(logContext, event);
                 break;
             case "payment_intent.canceled":
-                success = handlePaymentIntentCanceled(uuid, event);
+                success = handlePaymentIntentCanceled(logContext, event);
                 break;
             default:
-                logger.error("[Webhook-{}] Stripe sent a webhook request which does not match any handled events. " +
-                            "eventType={}, eventId={}", uuid, eventType, event.getId());
+                logger.error("Stripe sent a webhook request which does not match any handled events {}",
+                        logContext.format("event", "stripe_webhook_unhandled_event_type", "statusCode", 200));
                 // We intentionally acknowledge unhandled event types so Stripe does not keep retrying
                 // events that this endpoint is not meant to process.
                 response.setStatusCode(200);
@@ -147,8 +160,12 @@ public class StripeWebhookHandler {
         }
         
         if (success) {
+            logger.info("Stripe webhook processed successfully {}",
+                    logContext.format("event", "stripe_webhook_processed", "statusCode", 200, "requestId", requestId));
             response.setStatusCode(200);
         } else {
+            logger.error("Stripe webhook processing failed {}",
+                    logContext.format("event", "stripe_webhook_failed", "statusCode", 500));
             response.setStatusCode(500);
         }
     }
@@ -156,21 +173,25 @@ public class StripeWebhookHandler {
     /**
      * Handles checkout.session.completed webhook event.
      */
-    private static boolean handleCheckoutSessionCompleted(String uuid, Event event) {
-        logger.info("[Webhook-{}] Processing checkout.session.completed for event {}", uuid, event.getId());
+    private static boolean handleCheckoutSessionCompleted(RequestLogContext logContext, Event event) {
+        logger.info("Processing checkout.session.completed {}", logContext.format("event", "stripe_checkout_completed_start"));
         
         try {
-            String checkoutSessionId = extractObjectIdFromEvent(event, uuid);
+            String checkoutSessionId = extractObjectIdFromEvent(event, logContext);
             if (checkoutSessionId == null || checkoutSessionId.isBlank()) {
-                logger.error("[Webhook-{}] Unable to retrieve checkout session ID from event {}", uuid, event.getId());
+                logger.error("Unable to retrieve checkout session ID from event {}",
+                        logContext.format("event", "stripe_checkout_session_id_missing"));
                 return false;
             }
+            logContext.withField("checkoutSessionId", checkoutSessionId);
             String stripeAccount = event.getAccount();
 
             if (stripeAccount == null || stripeAccount.isEmpty()) {
-                logger.error("[Webhook-{}] Stripe account is null or empty for session {}", uuid, checkoutSessionId);
+                logger.error("Stripe account is null or empty for session {}",
+                        logContext.format("event", "stripe_account_missing"));
                 return false;
             }
+            logContext.withField("stripeAccountId", stripeAccount);
             
             // Stripe omits line items by default, so we explicitly expand them here.
             Session fullSession = Session.retrieve(
@@ -184,35 +205,39 @@ public class StripeWebhookHandler {
             );
             
             if (fullSession == null) {
-                logger.error("[Webhook-{}] Unable to retrieve stripe checkout session from webhook event", uuid);
+                logger.error("Unable to retrieve stripe checkout session from webhook event {}",
+                        logContext.format("event", "stripe_checkout_session_retrieve_failed"));
                 return false;
             }
 
-            if (shouldIgnoreNonSportsHubCheckoutEvent(uuid, event, fullSession)) {
+            if (shouldIgnoreNonSportsHubCheckoutEvent(logContext, event, fullSession)) {
                 return true;
             }
             
             // Parse session metadata
             if (fullSession.getMetadata() == null) {
-                logger.error("[Webhook-{}] Unable to retrieve session metadata, returned null. session={}", 
-                            uuid, checkoutSessionId);
+                logger.error("Unable to retrieve session metadata, returned null {}",
+                        logContext.format("event", "stripe_session_metadata_missing"));
                 return false;
             }
             
             SessionMetadata sessionMetadata;
             try {
                 sessionMetadata = SessionMetadata.fromStripeMetadata(fullSession.getMetadata());
-                logger.info("[Webhook-{}] Completed session_metadata for event id {} fulfilment session {}: {}",
-                           uuid, sessionMetadata.getEventId(), sessionMetadata.getFulfilmentSessionId(), sessionMetadata);
+                logContext.withField("eventId", sessionMetadata.getEventId())
+                        .withField("fulfilmentSessionId", sessionMetadata.getFulfilmentSessionId());
+                logger.info("Parsed completed session metadata {}",
+                        logContext.format("event", "stripe_session_metadata_parsed", "sessionMetadata", sessionMetadata));
             } catch (Exception e) {
-                logger.error("[Webhook-{}] Session Metadata validation failed: {}", uuid, e.getMessage(), e);
+                logger.error("Session Metadata validation failed {}",
+                        logContext.format("event", "stripe_session_metadata_invalid"), e);
                 return false;
             }
             
             // Parse custom fields for full name and phone number
             if (fullSession.getCustomFields() == null || fullSession.getCustomFields().isEmpty()) {
-                logger.error("[Webhook-{}] Unable to retrieve custom fields from session. session={}", 
-                            uuid, checkoutSessionId);
+                logger.error("Unable to retrieve custom fields from session {}",
+                        logContext.format("event", "stripe_custom_fields_missing"));
                 return false;
             }
             
@@ -225,40 +250,46 @@ public class StripeWebhookHandler {
                     if (field.getText() != null && field.getText().getValue() != null) {
                         fullName = field.getText().getValue();
                         if (fullName.trim().isEmpty()) {
-                            logger.error("[Webhook-{}] Invalid or empty attendeeFullName", uuid);
+                            logger.error("Invalid or empty attendeeFullName {}",
+                                    logContext.format("event", "stripe_attendee_name_invalid"));
                             return false;
                         }
                     } else {
-                        logger.error("[Webhook-{}] attendeeFullName field text or value is null", uuid);
+                        logger.error("attendeeFullName field text or value is null {}",
+                                logContext.format("event", "stripe_attendee_name_missing"));
                         return false;
                     }
                 } else if (StripeCustomFieldKeys.ATTENDEE_PHONE.equals(key)) {
                     if (field.getText() != null && field.getText().getValue() != null) {
                         phoneNumber = field.getText().getValue();
                         if (phoneNumber.trim().isEmpty()) {
-                            logger.error("[Webhook-{}] Invalid or empty attendeePhone", uuid);
+                            logger.error("Invalid or empty attendeePhone {}",
+                                    logContext.format("event", "stripe_attendee_phone_invalid"));
                             return false;
                         }
                     } else {
-                        logger.error("[Webhook-{}] attendeePhone field text or value is null", uuid);
+                        logger.error("attendeePhone field text or value is null {}",
+                                logContext.format("event", "stripe_attendee_phone_missing"));
                         return false;
                     }
                 } else {
-                    logger.warn("[Webhook-{}] Ignoring unexpected custom field: {}", uuid, key);
+                    logger.warn("Ignoring unexpected custom field {}",
+                            logContext.format("event", "stripe_custom_field_ignored", "customFieldKey", key));
                 }
             }
             
             if (fullName == null || phoneNumber == null) {
-                logger.error("[Webhook-{}] Required fields missing. fullName present: {}, phoneNumber present: {}", 
-                            uuid, fullName != null, phoneNumber != null);
+                logger.error("Required fields missing {}",
+                        logContext.format("event", "stripe_required_fields_missing",
+                                "fullNamePresent", fullName != null, "phoneNumberPresent", phoneNumber != null));
                 return false;
             }
             
             // Get line items
             LineItemCollection lineItemCollection = fullSession.getLineItems();
             if (lineItemCollection == null || lineItemCollection.getData() == null) {
-                logger.error("[Webhook-{}] Unable to obtain line_items from session. session={}", 
-                            uuid, checkoutSessionId);
+                logger.error("Unable to obtain line_items from session {}",
+                        logContext.format("event", "stripe_line_items_missing"));
                 return false;
             }
             
@@ -267,15 +298,16 @@ public class StripeWebhookHandler {
             // Get customer details
             Session.CustomerDetails customerDetails = fullSession.getCustomerDetails();
             if (customerDetails == null || customerDetails.getEmail() == null) {
-                logger.error("[Webhook-{}] Unable to obtain customer details from session. session={}", 
-                            uuid, checkoutSessionId);
+                logger.error("Unable to obtain customer details from session {}",
+                        logContext.format("event", "stripe_customer_details_missing"));
                 return false;
             }
             
             String customerEmail = normalizeCustomerEmail(customerDetails.getEmail());
 
             if (customerEmail == null) {
-                logger.error("[Webhook-{}] Invalid customer email address for session {}", uuid, checkoutSessionId);
+                logger.error("Invalid customer email address for session {}",
+                        logContext.format("event", "stripe_customer_email_invalid"));
                 return false;
             }
             
@@ -284,17 +316,19 @@ public class StripeWebhookHandler {
             if (isFreeCheckoutSession(fullSession.getAmountTotal())) {
                 // Stripe no-cost checkout sessions can complete without a PaymentIntent:
                 // https://docs.stripe.com/payments/checkout/no-cost-orders
-                logger.info("[Webhook-{}] Free checkout session detected for session {}. amountTotal={}. Skipping payment intent lookup.",
-                        uuid, checkoutSessionId, fullSession.getAmountTotal());
+                logger.info("Free checkout session detected. Skipping payment intent lookup. {}",
+                        logContext.format("event", "stripe_free_checkout_detected", "amountTotal", fullSession.getAmountTotal()));
                 paymentIntentId = null;
                 captureMethod = null;
             } else {
                 // Retrieve payment intent and capture method for paid checkouts.
                 paymentIntentId = fullSession.getPaymentIntent();
                 if (paymentIntentId == null || paymentIntentId.isBlank()) {
-                    logger.error("[Webhook-{}] Payment intent ID is null or empty for session {}", uuid, checkoutSessionId);
+                    logger.error("Payment intent ID is null or empty for session {}",
+                            logContext.format("event", "stripe_payment_intent_missing"));
                     return false;
                 }
+                logContext.withField("paymentIntentId", paymentIntentId);
                 
                 try {
                     PaymentIntent paymentIntent = PaymentIntent.retrieve(
@@ -305,25 +339,26 @@ public class StripeWebhookHandler {
                     );
                     
                     if (paymentIntent == null || paymentIntent.getCaptureMethod() == null) {
-                        logger.error("[Webhook-{}] Unable to retrieve payment intent or capture method. paymentIntentId={}", 
-                                    uuid, paymentIntentId);
+                        logger.error("Unable to retrieve payment intent or capture method {}",
+                                logContext.format("event", "stripe_payment_intent_retrieve_failed"));
                         return false;
                     }
                     
                     captureMethod = paymentIntent.getCaptureMethod();
-                    logger.info("[Webhook-{}] Retrieved capture method: {} for payment intent: {}", 
-                               uuid, captureMethod, paymentIntentId);
+                    logContext.withField("captureMethod", captureMethod);
+                    logger.info("Retrieved payment intent capture method {}",
+                            logContext.format("event", "stripe_payment_intent_retrieved"));
                     
                 } catch (Exception e) {
-                    logger.error("[Webhook-{}] Failed to retrieve payment intent: {}", uuid, e.getMessage(), e);
+                    logger.error("Failed to retrieve payment intent {}",
+                            logContext.format("event", "stripe_payment_intent_retrieve_failed"), e);
                     return false;
                 }
             }
             
-            logger.info("[Webhook-{}] Attempting to fulfill completed event ticket purchase. session={}, eventId={}, " +
-                       "customer={}, paymentIntentId={}, captureMethod={}", 
-                       uuid, checkoutSessionId, sessionMetadata.getEventId(),
-                       customerEmail, paymentIntentId, captureMethod);
+            logger.info("Attempting to fulfill completed event ticket purchase {}",
+                    logContext.format("event", "stripe_ticket_purchase_fulfilment_start",
+                            "customer", customerEmail, "paymentIntentId", paymentIntentId, "captureMethod", captureMethod));
             
             // Execute the fulfillment workflow
             boolean success = WebhookService.fulfilmentWorkflowOnTicketPurchase(
@@ -344,7 +379,8 @@ public class StripeWebhookHandler {
             return success;
             
         } catch (Exception e) {
-            logger.error("[Webhook-{}] Error handling checkout.session.completed: {}", uuid, e.getMessage(), e);
+            logger.error("Error handling checkout.session.completed {}",
+                    logContext.format("event", "stripe_checkout_completed_failed"), e);
             return false;
         }
     }
@@ -352,21 +388,25 @@ public class StripeWebhookHandler {
     /**
      * Handles checkout.session.expired webhook event.
      */
-    private static boolean handleCheckoutSessionExpired(String uuid, Event event) {
-        logger.info("[Webhook-{}] Processing checkout.session.expired for event {}", uuid, event.getId());
+    private static boolean handleCheckoutSessionExpired(RequestLogContext logContext, Event event) {
+        logger.info("Processing checkout.session.expired {}", logContext.format("event", "stripe_checkout_expired_start"));
         
         try {
-            String checkoutSessionId = extractObjectIdFromEvent(event, uuid);
+            String checkoutSessionId = extractObjectIdFromEvent(event, logContext);
             if (checkoutSessionId == null || checkoutSessionId.isEmpty()) {
-                logger.error("[Webhook-{}] Checkout session ID is null or empty", uuid);
+                logger.error("Checkout session ID is null or empty {}",
+                        logContext.format("event", "stripe_checkout_session_id_missing"));
                 return false;
             }
+            logContext.withField("checkoutSessionId", checkoutSessionId);
             
             String stripeAccount = event.getAccount();
             if (stripeAccount == null || stripeAccount.isEmpty()) {
-                logger.error("[Webhook-{}] Stripe account is null or empty for session {}", uuid, checkoutSessionId);
+                logger.error("Stripe account is null or empty for session {}",
+                        logContext.format("event", "stripe_account_missing"));
                 return false;
             }
+            logContext.withField("stripeAccountId", stripeAccount);
             
             // Stripe omits line items by default, so we explicitly expand them here.
             Session fullSession = Session.retrieve(
@@ -380,43 +420,47 @@ public class StripeWebhookHandler {
             );
             
             if (fullSession == null) {
-                logger.error("[Webhook-{}] Unable to retrieve stripe checkout session from webhook event", uuid);
+                logger.error("Unable to retrieve stripe checkout session from webhook event {}",
+                        logContext.format("event", "stripe_checkout_session_retrieve_failed"));
                 return false;
             }
 
-            if (shouldIgnoreNonSportsHubCheckoutEvent(uuid, event, fullSession)) {
+            if (shouldIgnoreNonSportsHubCheckoutEvent(logContext, event, fullSession)) {
                 return true;
             }
             
             // Parse session metadata
             if (fullSession.getMetadata() == null) {
-                logger.error("[Webhook-{}] Unable to retrieve session metadata, returned null. session={}", 
-                            uuid, checkoutSessionId);
+                logger.error("Unable to retrieve session metadata, returned null {}",
+                        logContext.format("event", "stripe_session_metadata_missing"));
                 return false;
             }
             
             SessionMetadata sessionMetadata;
             try {
                 sessionMetadata = SessionMetadata.fromStripeMetadata(fullSession.getMetadata());
-                logger.info("[Webhook-{}] Expired session metadata for event id {} fulfilment session {}: {}",
-                           uuid, sessionMetadata.getEventId(), sessionMetadata.getFulfilmentSessionId(), sessionMetadata);
+                logContext.withField("eventId", sessionMetadata.getEventId())
+                        .withField("fulfilmentSessionId", sessionMetadata.getFulfilmentSessionId());
+                logger.info("Parsed expired session metadata {}",
+                        logContext.format("event", "stripe_session_metadata_parsed", "sessionMetadata", sessionMetadata));
             } catch (Exception e) {
-                logger.error("[Webhook-{}] Session Metadata validation failed: {}", uuid, e.getMessage(), e);
+                logger.error("Session Metadata validation failed {}",
+                        logContext.format("event", "stripe_session_metadata_invalid"), e);
                 return false;
             }
             
             // Get line items
             LineItemCollection lineItemCollection = fullSession.getLineItems();
             if (lineItemCollection == null || lineItemCollection.getData() == null) {
-                logger.error("[Webhook-{}] Unable to obtain line_items from session. session={}", 
-                            uuid, checkoutSessionId);
+                logger.error("Unable to obtain line_items from session {}",
+                        logContext.format("event", "stripe_line_items_missing"));
                 return false;
             }
             
             List<LineItem> lineItems = lineItemCollection.getData();
             
-            logger.info("[Webhook-{}] Attempting to restock tickets for expired session. session={}, eventId={}", 
-                       uuid, checkoutSessionId, sessionMetadata.getEventId());
+            logger.info("Attempting to restock tickets for expired session {}",
+                    logContext.format("event", "stripe_expired_session_restock_start"));
             
             // Execute the expired session workflow
             boolean success = WebhookService.fulfilmentWorkflowOnExpiredSession(
@@ -429,7 +473,8 @@ public class StripeWebhookHandler {
             return success;
             
         } catch (Exception e) {
-            logger.error("[Webhook-{}] Error handling checkout.session.expired: {}", uuid, e.getMessage(), e);
+            logger.error("Error handling checkout.session.expired {}",
+                    logContext.format("event", "stripe_checkout_expired_failed"), e);
             return false;
         }
     }
@@ -437,19 +482,21 @@ public class StripeWebhookHandler {
     /**
      * Handles payment_intent.canceled webhook event.
      */
-    private static boolean handlePaymentIntentCanceled(String uuid, Event event) {
-        logger.info("[Webhook-{}] Processing payment_intent.canceled for event {}", uuid, event.getId());
+    private static boolean handlePaymentIntentCanceled(RequestLogContext logContext, Event event) {
+        logger.info("Processing payment_intent.canceled {}", logContext.format("event", "stripe_payment_intent_canceled_start"));
 
-        String paymentIntentId = extractObjectIdFromEvent(event, uuid);
+        String paymentIntentId = extractObjectIdFromEvent(event, logContext);
         if (paymentIntentId == null || paymentIntentId.isBlank()) {
-            logger.error("[Webhook-{}] Unable to retrieve payment intent ID from event {}", uuid, event.getId());
+            logger.error("Unable to retrieve payment intent ID from event {}",
+                    logContext.format("event", "stripe_payment_intent_missing"));
             return false;
         }
+        logContext.withField("paymentIntentId", paymentIntentId);
 
         boolean success = WebhookService.fulfilmentWorkflowOnPaymentIntentCanceled(paymentIntentId);
         if (!success) {
-            logger.error("[Webhook-{}] Failed to process payment_intent.canceled for paymentIntentId={}",
-                    uuid, paymentIntentId);
+            logger.error("Failed to process payment_intent.canceled {}",
+                    logContext.format("event", "stripe_payment_intent_canceled_failed"));
         }
         return success;
     }
@@ -457,7 +504,7 @@ public class StripeWebhookHandler {
     /**
      * Extracts the Stripe object id from an event payload.
      */
-    private static String extractObjectIdFromEvent(Event event, String uuid) {
+    private static String extractObjectIdFromEvent(Event event, RequestLogContext logContext) {
         try {
             String rawJson = event.getDataObjectDeserializer().getRawJson();
             if (rawJson != null && !rawJson.isBlank()) {
@@ -467,15 +514,15 @@ public class StripeWebhookHandler {
                 }
             }
         } catch (Exception e) {
-            logger.error("[Webhook-{}] Failed extracting event object ID for event {}: {}",
-                    uuid, event.getId(), e.getMessage());
+            logger.error("Failed extracting event object ID {}",
+                    logContext.format("event", "stripe_event_object_id_extract_failed"), e);
         }
         return null;
     }
 
-    private static boolean shouldIgnoreNonSportsHubCheckoutEvent(String uuid, Event event, Session session) {
+    private static boolean shouldIgnoreNonSportsHubCheckoutEvent(RequestLogContext logContext, Event event, Session session) {
         String projectName = Global.getEnv("PROJECT_NAME");
-        logger.info("[Webhook-{}] Project name: {}", uuid, projectName);
+        logger.info("Resolved project name {}", logContext.format("event", "stripe_project_resolved", "projectName", projectName));
         boolean isProd = "socialsportsprod".equals(projectName);
         if (!isProd) {
             // Dev should accept all Stripe test events so local/dev verification remains straightforward.
@@ -485,8 +532,9 @@ public class StripeWebhookHandler {
         String successUrl = session.getSuccessUrl() != null ? session.getSuccessUrl().toLowerCase() : "";
         String cancelUrl = session.getCancelUrl() != null ? session.getCancelUrl().toLowerCase() : "";
         if (!successUrl.contains(SPORTSHUB_URL_DOMAIN) && !cancelUrl.contains(SPORTSHUB_URL_DOMAIN)) {
-            logger.info("[Webhook-{}] Ignoring non-SPORTSHUB checkout event. eventId={}, successUrl={}, cancelUrl={}",
-                    uuid, event.getId(), successUrl, cancelUrl);
+            logger.info("Ignoring non-SPORTSHUB checkout event {}",
+                    logContext.format("event", "stripe_non_sportshub_checkout_ignored",
+                            "successUrl", successUrl, "cancelUrl", cancelUrl));
             return true;
         }
         return false;

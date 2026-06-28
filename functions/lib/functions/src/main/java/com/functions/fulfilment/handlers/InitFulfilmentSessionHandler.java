@@ -25,13 +25,13 @@ public class InitFulfilmentSessionHandler implements Handler<InitCheckoutFulfilm
 
     @Override
     public InitCheckoutFulfilmentSessionResponse handle(InitCheckoutFulfilmentSessionRequest request) throws Exception {
-        logger.info("Handling init fulfilment session request for event ID: {}, numTickets: {}, request: {}",
-                request.eventId(), request.numTickets(), request);
+        logger.info("Handling init fulfilment session request for event ID: {}, numTickets: {}",
+                request.eventId(), request.numTickets());
 
         String fulfilmentSessionId = FulfilmentService.initFulfilmentSession(
                 request.eventId(), request.numTickets());
 
-        logger.info("[InitFulfilmentSessionHandler] Fulfilment session successfully created: {}",
+        logger.info("Fulfilment session successfully created: {}",
                 fulfilmentSessionId);
         return new InitCheckoutFulfilmentSessionResponse(fulfilmentSessionId);
     }

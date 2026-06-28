@@ -1,5 +1,7 @@
 package com.functions.attendee.services;
 
+import static com.functions.firebase.services.FirebaseService.transactionLog;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,7 @@ import com.functions.tickets.models.OrderAndTicketType;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
+import com.functions.utils.logging.LogFields;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.FieldValue;
@@ -36,7 +39,10 @@ public class AttendeeService {
         logger.info("Adding attendee for eventId: {}, email: {}, numTickets: {}",
                 request.eventId(), request.email(), request.numTickets());
 
-        return FirebaseService.createFirestoreTransaction(transaction -> {
+        return FirebaseService.createFirestoreTransaction(
+                transactionLog("addManualAttendee",
+                        LogFields.of("eventId", request.eventId(), "numTickets", request.numTickets())),
+                transaction -> {
             EventData eventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Event not found: " + request.eventId()));
 
@@ -105,7 +111,10 @@ public class AttendeeService {
         logger.info("Setting attendee tickets for orderId: {}, eventId: {}, numTickets: {}",
                 request.orderId(), request.eventId(), request.numTickets());
 
-        return FirebaseService.createFirestoreTransaction(transaction -> {
+        return FirebaseService.createFirestoreTransaction(
+                transactionLog("setManualAttendeeTickets",
+                        LogFields.of("eventId", request.eventId(), "orderId", request.orderId(), "numTickets", request.numTickets())),
+                transaction -> {
             EventData eventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Event not found: " + request.eventId()));
 

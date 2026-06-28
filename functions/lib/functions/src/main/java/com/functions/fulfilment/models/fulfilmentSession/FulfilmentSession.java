@@ -114,7 +114,8 @@ public abstract class FulfilmentSession {
 
                 entityMap.put(entityId, entity);
             } catch (Exception e) {
-                logger.error("Failed to deserialize FulfilmentEntity: {}", entityData, e);
+                Object entityType = entityData == null ? null : entityData.get("type");
+                logger.error("Failed to deserialize FulfilmentEntity. entityId={}, entityType={}", entityId, entityType, e);
             }
         }
 

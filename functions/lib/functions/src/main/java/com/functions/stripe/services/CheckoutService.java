@@ -1,5 +1,7 @@
 package com.functions.stripe.services;
 
+import static com.functions.firebase.services.FirebaseService.transactionLog;
+
 import java.time.Instant;
 import java.util.Optional;
 
@@ -20,6 +22,7 @@ import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.services.Users;
 import com.functions.users.utils.UsersUtils;
+import com.functions.utils.logging.LogFields;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
@@ -60,7 +63,10 @@ public class CheckoutService {
         logger.info("Creating checkout session for event {} ({} tickets)", request.eventId(), request.quantity());
 
         // Section A: Perform SPORTSHUB domain specific operations
-        CheckoutTransactionResult checkoutTransactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
+        CheckoutTransactionResult checkoutTransactionResult = FirebaseService.createFirestoreTransaction(
+                transactionLog("reserveCheckoutTickets",
+                        LogFields.of("eventId", request.eventId(), "quantity", request.quantity(), "isPrivate", request.isPrivate())),
+                transaction -> {
             Optional<EventData> maybeEventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction));
 
             if (maybeEventData.isEmpty()) {
@@ -102,7 +108,7 @@ public class CheckoutService {
         EventsUtils.validateEventTiming(eventData);
         
         if (!Boolean.TRUE.equals(eventData.getPaymentsActive())) {
-            logger.error("Event " + eventData.getEventId() + " does not have payments enabled");
+            logger.error("Event {} does not have payments enabled", eventData.getEventId());
             throw new RuntimeException("Event " + eventData.getEventId() + " does not have payments enabled");
         }
 
@@ -113,7 +119,7 @@ public class CheckoutService {
         // Validate price
         Integer price = eventData.getPrice();
         if (price == null || (price < StripeService.MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT && price != 0)) {
-            logger.error("Event " + eventData.getEventId() + " invalid price: " + price);
+            logger.error("Event {} invalid price: {}", eventData.getEventId(), price);
             throw new RuntimeException("Event " + eventData.getEventId() + " invalid price: " + price);
         }
     }
@@ -159,7 +165,10 @@ public class CheckoutService {
      */
     private static void revertReservation(CreateStripeCheckoutSessionRequest request) {
         try {
-            FirebaseService.createFirestoreTransaction(transaction -> {
+            FirebaseService.createFirestoreTransaction(
+                    transactionLog("revertCheckoutReservation",
+                            LogFields.of("eventId", request.eventId(), "quantity", request.quantity(), "isPrivate", request.isPrivate())),
+                    transaction -> {
                 Firestore db = FirebaseService.getFirestore();
                 DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(), request.isPrivate());
                 
@@ -179,7 +188,7 @@ public class CheckoutService {
                 return null;
             });
         } catch (Exception e) {
-            logger.error("Failed to revert reservation for event {}: {}", request.eventId(), e.getMessage(), e);
+            logger.error("Failed to revert reservation for event {}", request.eventId(), e);
             throw new RuntimeException("Failed to revert reservation: " + e.getMessage(), e);
         }
     }
@@ -220,7 +229,7 @@ public class CheckoutService {
                 }
                 backoffMillis *= 2; 
             } catch (Exception e) {
-                logger.error("Unexpected error during Stripe session creation: {}", e.getMessage(), e);
+                logger.error("Unexpected error during Stripe session creation", e);
                 break;
             }
         }
@@ -329,17 +338,16 @@ public class CheckoutService {
      */
     private static void validateVacancy(String eventId, Integer vacancy, Integer quantity) throws CheckoutVacancyException {
         if (quantity == null || quantity <= 0) {
-            logger.error("Event " + eventId + " invalid quantity: " + quantity);
+            logger.error("Event {} invalid quantity: {}", eventId, quantity);
             throw new RuntimeException("Event " + eventId + " invalid quantity: " + quantity);
         }
         if (vacancy == null) {
-            logger.error("Event " + eventId + " missing vacancy field");
+            logger.error("Event {} missing vacancy field", eventId);
             throw new RuntimeException("Event " + eventId + " missing vacancy field");
         }
         
         if (vacancy < quantity) {
-            logger.warn("Event " + eventId + " insufficient tickets: " + 
-                    vacancy + " available, " + quantity + " requested");
+            logger.warn("Event {} insufficient tickets: {} available, {} requested", eventId, vacancy, quantity);
             throw new CheckoutVacancyException("Event " + eventId + " insufficient tickets: " + 
                     vacancy + " available, " + quantity + " requested");
         }
@@ -352,13 +360,13 @@ public class CheckoutService {
     private static String validateAndGetStripeAccount(String organiserId, PrivateUserData organiser) throws StripeException {
         try {
             if (organiser == null) {
-                logger.error("Organiser " + organiserId + " data is null");
+                logger.error("Organiser {} data is null", organiserId);
                 throw new RuntimeException("Organiser " + organiserId + " data is null");
             }
 
             String stripeAccountId = organiser.getStripeAccount();
             if (stripeAccountId == null || stripeAccountId.isEmpty()) {
-                logger.error("Organiser " + organiserId + " has no Stripe account");
+                logger.error("Organiser {} has no Stripe account", organiserId);
                 throw new RuntimeException("Organiser " + organiserId + " has no Stripe account");
             }
 
@@ -366,7 +374,8 @@ public class CheckoutService {
             if (Boolean.FALSE.equals(organiser.getStripeAccountActive())) {
                 Account account = Account.retrieve(stripeAccountId);
                 if (!account.getChargesEnabled() || !account.getDetailsSubmitted()) {
-                    logger.error("Stripe account " + stripeAccountId + " not ready: chargesEnabled=" + account.getChargesEnabled() + ", detailsSubmitted=" + account.getDetailsSubmitted());
+                    logger.error("Stripe account {} not ready: chargesEnabled={}, detailsSubmitted={}",
+                            stripeAccountId, account.getChargesEnabled(), account.getDetailsSubmitted());
                     throw new RuntimeException("Stripe account " + stripeAccountId + 
                             " not ready: chargesEnabled=" + account.getChargesEnabled() + 
                             ", detailsSubmitted=" + account.getDetailsSubmitted());
@@ -376,10 +385,10 @@ public class CheckoutService {
 
             return stripeAccountId;
         } catch (StripeException e) {
-            logger.error("Stripe validation failed for organiser {}: {}", organiserId, e.getMessage(), e);
+            logger.error("Stripe validation failed for organiser {}", organiserId, e);
             throw e;
         } catch (Exception e) {
-            logger.error("Organiser validation failed for {}: {}", organiserId, e.getMessage(), e);
+            logger.error("Organiser validation failed for {}", organiserId, e);
             throw e;
         }
     }

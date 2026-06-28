@@ -51,10 +51,8 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                     fulfilmentEntities.stream()
                             .map(e -> e.getValue().getType())
                             .collect(Collectors.toList()));
-            logger.debug("Constructed fulfilment entities (full): {}",
-                    fulfilmentEntities.stream()
-                            .map(SimpleEntry::getValue)
-                            .collect(Collectors.toList()));
+            logger.debug("Constructed booking approval fulfilment entity IDs for fulfilmentSessionId: {}: {}",
+                    fulfilmentSessionId, fulfilmentEntities.stream().map(SimpleEntry::getKey).collect(Collectors.toList()));
 
             SimpleEntry<Map<String, FulfilmentEntity>, List<String>> orderedFulfilmentEntities = FulfilmentSessionService
                     .getOrderedFulfilmentEntities(fulfilmentEntities);
@@ -106,9 +104,9 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                 }
             }
         } catch (Exception e) {
-            logger.error("[BookingApprovalFulfilmentService] Error constructing FORMS entities for event ID: {}", eventId, e);
+            logger.error("Error constructing FORMS entities for booking approval event ID: {}", eventId, e);
             throw new RuntimeException(
-                    "[BookingApprovalFulfilmentService] Failed to construct FORMS entities for event ID: " + eventId, e);
+                    "Failed to construct FORMS entities for booking approval event ID: " + eventId, e);
         }
 
         // 2. DELAYED_STRIPE entity (will be updated with correct success URL later)

@@ -1,5 +1,7 @@
 package com.functions.tickets.services;
 
+import static com.functions.firebase.services.FirebaseService.transactionLog;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,6 +21,7 @@ import com.functions.tickets.models.requests.create.CreateOrderRequest;
 import com.functions.tickets.models.responses.create.CreateOrderResponse;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
+import com.functions.utils.logging.LogFields;
 import com.google.cloud.Timestamp;
 
 /**
@@ -85,7 +88,10 @@ public class TicketsService {
 
     public static void updateOrderAndTicketStatus(String orderId, OrderAndTicketStatus orderAndTicketStatus)
             throws Exception {
-        FirebaseService.createFirestoreTransaction(transaction -> {
+        FirebaseService.createFirestoreTransaction(
+                transactionLog("updateOrderAndTicketStatus",
+                        LogFields.of("orderId", orderId, "status", orderAndTicketStatus)),
+                transaction -> {
             Order order = OrdersRepository.getOrderById(orderId, Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Order not found " + orderId));
             List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets(), Optional.of(transaction));
@@ -110,7 +116,10 @@ public class TicketsService {
     public static CreateOrderResponse createOrderWithTickets(CreateOrderRequest request) throws Exception {
         logger.info("Creating order with {} tickets for eventId: {}", request.tickets().size(), request.eventId());
 
-        return FirebaseService.createFirestoreTransaction(transaction -> {
+        return FirebaseService.createFirestoreTransaction(
+                transactionLog("createOrderWithTickets",
+                        LogFields.of("eventId", request.eventId(), "ticketCount", request.tickets().size())),
+                transaction -> {
             Timestamp now = Timestamp.now();
             OrderAndTicketStatus status = request.status() != null ? request.status() : OrderAndTicketStatus.PENDING;
             String orderId = OrdersRepository.generateOrderId();

@@ -7,6 +7,8 @@ import com.functions.global.controllers.AbstractConfiguredHttpFunction;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.stripe.handlers.StripeWebhookHandler;
 import com.functions.utils.JavaUtils;
+import com.functions.utils.logging.RequestLogContext;
+import com.functions.utils.logging.StatusTrackingHttpResponse;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
@@ -32,19 +34,36 @@ public class StripeWebhookEndpoint extends AbstractConfiguredHttpFunction {
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         setResponseHeaders(response);
 
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatusCode(204);
-            return;
-        }
+        long startNanos = System.nanoTime();
+        String statusCode = "200";
 
-        try {
-            logger.info("Routing Stripe webhook request to StripeWebhookHandler");
-            stripeWebhookProcessor.handle(request, response);
-        } catch (Exception e) {
-            logger.error("Unhandled exception while processing Stripe webhook. uri={}", request.getUri(), e);
-            response.setStatusCode(500);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Internal server error")));
+        try (RequestLogContext logContext =
+                RequestLogContext.fromHttpRequest("StripeWebhookEndpoint", request).activate()) {
+            logger.info("HTTP request started {}", logContext.format("event", "http_request_start"));
+
+            StatusTrackingHttpResponse trackingResponse = new StatusTrackingHttpResponse(response, 200);
+            try {
+                if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                    statusCode = "204";
+                    response.setStatusCode(204);
+                    return;
+                }
+
+                logger.info("Routing Stripe webhook request {}", logContext.format("event", "stripe_webhook_route"));
+                stripeWebhookProcessor.handle(request, trackingResponse);
+                statusCode = trackingResponse.getStatusCodeString();
+            } catch (Exception e) {
+                statusCode = "500";
+                logger.error("Unhandled exception while processing Stripe webhook {}",
+                        logContext.format("event", "stripe_webhook_unhandled_exception"), e);
+                trackingResponse.setStatusCode(500);
+                trackingResponse.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                        new ErrorResponse("Internal server error")));
+            } finally {
+                long durationMs = (System.nanoTime() - startNanos) / 1_000_000;
+                logger.info("HTTP request finished {}",
+                        logContext.format("event", "http_request_finish", "statusCode", statusCode, "durationMs", durationMs));
+            }
         }
     }
 

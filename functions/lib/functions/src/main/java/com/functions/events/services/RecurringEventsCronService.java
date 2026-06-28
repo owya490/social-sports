@@ -1,5 +1,6 @@
 package com.functions.events.services;
 
+import static com.functions.firebase.services.FirebaseService.transactionLog;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -34,7 +35,8 @@ public class RecurringEventsCronService {
     }
 
     public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, boolean createEventWorkflow) throws Exception {
-        logger.info("Creating events from recurrence templates. today: {}, targetRecurrenceTemplateId: {}, targetRecurrenceTemplate: {}, createEventWorkflow: {}", today, targetRecurrenceTemplateId, createEventWorkflow);
+        logger.info("Creating events from recurrence templates. today: {}, targetRecurrenceTemplateId: {}, createEventWorkflow: {}",
+                today, targetRecurrenceTemplateId, createEventWorkflow);
         Set<String> activeRecurrenceTemplateIds;
         if (targetRecurrenceTemplateId == null) {
             activeRecurrenceTemplateIds = RecurrenceTemplateRepository.getAllActiveRecurrenceTemplateIds();
@@ -42,7 +44,7 @@ public class RecurringEventsCronService {
             activeRecurrenceTemplateIds = Set.of(targetRecurrenceTemplateId);
         }
 
-        logger.info("All Active Recurrence Template Ids {}", activeRecurrenceTemplateIds);
+        logger.info("Recurring event templates selected for processing. templateCount={}", activeRecurrenceTemplateIds.size());
         List<String> moveToInactiveRecurringEvents = new ArrayList<>();
 
         List<String> createdEventIds = new ArrayList<>();
@@ -53,7 +55,10 @@ public class RecurringEventsCronService {
         for (String recurrenceTemplateId : activeRecurrenceTemplateIds) {
 
             // Create new transaction
-            FirebaseService.createFirestoreTransaction(transaction -> {
+            FirebaseService.createFirestoreTransaction(
+                    transactionLog("createRecurringEventFromTemplate",
+                            Map.of("recurrenceTemplateId", recurrenceTemplateId)),
+                    transaction -> {
                 Optional<RecurrenceTemplate> maybeRecurrenceTemplate = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId, transaction);
                 if (maybeRecurrenceTemplate.isEmpty()) {
                     logger.warn("Recurrence template not found for id: {} during transaction. Skipping processing of this recurring event to avoid TOCTOU failures.",
@@ -121,7 +126,7 @@ public class RecurringEventsCronService {
                         try {
                             CustomEventLinksService.updateEventLinksPointedToRecurrence(newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, newEventId);
                         } catch (Exception e) {
-                            logger.error("Failed to update custom event links for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
+                            logger.error("Failed to update custom event links for recurrence template {}", recurrenceTemplateId, e);
                             // Continue with event creation even if custom links update fails
                         }
 
@@ -129,7 +134,7 @@ public class RecurringEventsCronService {
                         try {
                             EventCollectionsService.addEventToEventCollectionsWithRecurrenceTemplate(recurrenceTemplateId, newEventId);
                         } catch (Exception e) {
-                            logger.error("Failed to add event to event collection for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
+                            logger.error("Failed to add event to event collection for recurrence template {}", recurrenceTemplateId, e);
                             // Continue with event creation even if event collection update fails
                         }
                     }
@@ -161,22 +166,30 @@ public class RecurringEventsCronService {
             List<ReservedSlot> reservedSlots = entry.getValue();
             
             try {
-                FirebaseService.createFirestoreTransaction(transaction -> {
+                FirebaseService.createFirestoreTransaction(
+                        transactionLog("processReservedSlotsForRecurringEvent",
+                                Map.of("eventId", eventId, "reservedSlotCount", reservedSlots.size())),
+                        transaction -> {
                     ReservedSlotService.processReservedSlots(eventId, reservedSlots, transaction);
                     return null;
                 });
             } catch (Exception e) {
-                logger.error("Failed to process reserved slots for event {}: {}", eventId, e.getMessage(), e);
+                logger.error("Failed to process reserved slots for event {}", eventId, e);
             }
         }
 
         for (String recurringEventId : moveToInactiveRecurringEvents) {
-            FirebaseService.createFirestoreTransaction(transaction -> {
+            FirebaseService.createFirestoreTransaction(
+                    transactionLog("moveRecurringEventToInactive",
+                            Map.of("recurrenceTemplateId", recurringEventId)),
+                    transaction -> {
                 moveRecurringEventToInactive(recurringEventId, transaction);
                 return null;
             });
         }
 
+        logger.info("Recurring events processing summary. templateCount={}, createdCount={}, reservedSlotEventCount={}, movedInactiveCount={}",
+                activeRecurrenceTemplateIds.size(), createdEventIds.size(), eventsNeedingReservedSlots.size(), moveToInactiveRecurringEvents.size());
         return createdEventIds;
     }
 

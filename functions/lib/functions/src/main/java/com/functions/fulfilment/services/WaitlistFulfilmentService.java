@@ -82,7 +82,7 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
                     .numTickets(numTickets)
                     .build();
         } catch (Exception e) {
-            logger.error("Failed to initialise waitlist fulfilment session: {}", e.getMessage());
+            logger.error("Failed to initialise waitlist fulfilment session. eventId={}", eventId, e);
             throw e;
         }
     }
@@ -116,7 +116,8 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
             waitlistFulfilmentEntity.setEmail(email);
             FulfilmentSessionRepository.updateFulfilmentSession(fulfilmentSessionId, fulfilmentSession);
         } catch (Exception e) {
-            logger.error("Failed to update waitlist fulfilment entity with data: {}", e.getMessage());
+            logger.error("Failed to update waitlist fulfilment entity with data. fulfilmentSessionId={}, fulfilmentEntityId={}",
+                    fulfilmentSessionId, fulfilmentEntityId, e);
             throw e;
         }
     }

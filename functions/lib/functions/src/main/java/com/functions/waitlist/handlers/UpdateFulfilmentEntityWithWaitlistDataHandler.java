@@ -60,7 +60,8 @@ public class UpdateFulfilmentEntityWithWaitlistDataHandler implements
                 .message("Waitlist entity updated successfully")
                 .build();
         } catch (Exception e) {
-            logger.error("Failed to update waitlist fulfilment entity with data: {}", e.getMessage());
+            logger.error("Failed to update waitlist fulfilment entity with data. fulfilmentSessionId={}, fulfilmentEntityId={}",
+                    request.getFulfilmentSessionId(), request.getFulfilmentEntityId(), e);
             throw new RuntimeException("Failed to update waitlist fulfilment entity", e);
         }
 

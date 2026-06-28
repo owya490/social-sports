@@ -15,6 +15,8 @@ import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.handlers.StripeWebhookHandler;
 import com.functions.utils.JavaUtils;
+import com.functions.utils.logging.RequestLogContext;
+import com.functions.utils.logging.StatusTrackingHttpResponse;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
 
@@ -31,94 +33,129 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
         void handle(HttpRequest request, HttpResponse response) throws Exception;
     }
 
+    private final StripeWebhookProcessor stripeWebhookProcessor;
+
+    public GlobalAppController() {
+        this(StripeWebhookHandler::handleWebhook);
+    }
+
+    GlobalAppController(StripeWebhookProcessor stripeWebhookProcessor) {
+        this.stripeWebhookProcessor = stripeWebhookProcessor;
+    }
+
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         setResponseHeaders(response);
 
-        // Handle preflight (OPTIONS) requests
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatusCode(204); // No Content
-            return;
-        }
+        long startNanos = System.nanoTime();
+        String statusCode = "500";
 
-        if (shouldRouteToStripeWebhook(request)) {
-            handleStripeWebhook(request, response);
-            return;
-        }
+        try (RequestLogContext logContext =
+                RequestLogContext.fromHttpRequest("GlobalAppController", request).activate()) {
+            logger.info("HTTP request started {}", logContext.format("event", "http_request_start"));
 
-        if (!"POST".equalsIgnoreCase(request.getMethod())) {
-            response.setStatusCode(405); // Method Not Allowed
-            response.appendHeader("Allow", "POST");
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("The GlobalAppController only supports POST requests.")));
-            return;
-        }
-
-        try {
-            UnifiedRequest unifiedRequest;
             try {
-                unifiedRequest =
-                        JavaUtils.objectMapper.readValue(request.getReader(), UnifiedRequest.class);
-            } catch (Exception e) {
-                response.setStatusCode(400); // Bad Request
-                logger.error("Could not parse request input:", e);
-                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                        new ErrorResponse("Invalid request data: " + e.getMessage())));
-                return;
-            }
+                // Handle preflight (OPTIONS) requests
+                if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                    statusCode = "204";
+                    response.setStatusCode(204); // No Content
+                    return;
+                }
 
-            if (unifiedRequest.endpointType() == null || unifiedRequest.data() == null) {
+                if (shouldRouteToStripeWebhook(request)) {
+                    statusCode = handleStripeWebhook(request, response, logContext, stripeWebhookProcessor);
+                    return;
+                }
+
+                if (!"POST".equalsIgnoreCase(request.getMethod())) {
+                    statusCode = "405";
+                    response.setStatusCode(405); // Method Not Allowed
+                    response.appendHeader("Allow", "POST");
+                    response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                            new ErrorResponse("The GlobalAppController only supports POST requests.")));
+                    return;
+                }
+
+                UnifiedRequest unifiedRequest;
+                try {
+                    unifiedRequest =
+                            JavaUtils.objectMapper.readValue(request.getReader(), UnifiedRequest.class);
+                } catch (Exception e) {
+                    statusCode = "400";
+                    response.setStatusCode(400); // Bad Request
+                    logger.error("Could not parse request input {}", logContext.format("event", "request_parse_failed"), e);
+                    response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                            new ErrorResponse("Invalid request data: " + e.getMessage())));
+                    return;
+                }
+
+                if (unifiedRequest.endpointType() == null || unifiedRequest.data() == null) {
+                    statusCode = "400";
+                    response.setStatusCode(400);
+                    response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                            new ErrorResponse("Both endpointType and data are required.")));
+                    return;
+                }
+
+                logContext.withField("endpointType", unifiedRequest.endpointType());
+                Object result = routeRequest(unifiedRequest, logContext);
+
+                statusCode = "200";
+                response.setStatusCode(200);
+                response.getWriter().write(
+                        JavaUtils.objectMapper.writeValueAsString(UnifiedResponse.success(result)));
+
+            } catch (FulfilmentProgressionBlockedException e) {
+                statusCode = "400";
+                logger.warn("Fulfilment progression blocked {}", logContext.format("event", "request_rejected", "reason", e.getMessage()));
                 response.setStatusCode(400);
                 response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                        new ErrorResponse("Both endpointType and data are required.")));
-                return;
+                        new ErrorResponse(e.getMessage())));
+            } catch (IllegalArgumentException e) {
+                statusCode = "400";
+                logger.warn("Bad request {}", logContext.format("event", "bad_request", "reason", e.getMessage()));
+                response.setStatusCode(400);
+                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                        new ErrorResponse(e.getMessage())));
+            } catch (FulfilmentEntityNotFoundException e) {
+                statusCode = "404";
+                logger.warn("Resource not found {}", logContext.format("event", "resource_not_found", "reason", e.getMessage()));
+                response.setStatusCode(404);
+                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                        new ErrorResponse(e.getMessage())));
+            } catch (FulfilmentSessionNotFoundException e) {
+                statusCode = "404";
+                logger.warn("Resource not found {}", logContext.format("event", "resource_not_found", "reason", e.getMessage()));
+                response.setStatusCode(404);
+                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                        new ErrorResponse(e.getMessage())));
+            } catch (CheckoutVacancyException e) {
+                statusCode = "400";
+                logger.warn("Checkout vacancy error {}", logContext.format("event", "checkout_vacancy_error", "reason", e.getMessage()));
+                response.setStatusCode(400);
+                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                        new ErrorResponse("Checkout vacancy error: " + e.getMessage())));
+            } catch (CheckoutDateTimeException e) {
+                statusCode = "400";
+                logger.warn("Checkout date time error {}", logContext.format("event", "checkout_datetime_error", "reason", e.getMessage()));
+                response.setStatusCode(400);
+                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                        new ErrorResponse("Checkout date time error: " + e.getMessage())));
+            } catch (Exception e) {
+                statusCode = "500";
+                logger.error("Error processing request {}", logContext.format("event", "request_failed"), e);
+                response.setStatusCode(500);
+                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                        new ErrorResponse("Internal server error")));
+            } finally {
+                long durationMs = (System.nanoTime() - startNanos) / 1_000_000;
+                logger.info("HTTP request finished {}",
+                        logContext.format("event", "http_request_finish", "statusCode", statusCode, "durationMs", durationMs));
             }
-
-            Object result = routeRequest(unifiedRequest);
-
-            response.setStatusCode(200);
-            response.getWriter().write(
-                    JavaUtils.objectMapper.writeValueAsString(UnifiedResponse.success(result)));
-
-        } catch (FulfilmentProgressionBlockedException e) {
-            logger.warn("Fulfilment progression blocked: {}", e.getMessage());
-            response.setStatusCode(400);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
-        } catch (IllegalArgumentException e) {
-            logger.warn("Bad request: {}", e.getMessage());
-            response.setStatusCode(400);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
-        } catch (FulfilmentEntityNotFoundException e) {
-            logger.warn("Resource not found: {}", e.getMessage());
-            response.setStatusCode(404);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
-        } catch (FulfilmentSessionNotFoundException e) {
-            logger.warn("Resource not found: {}", e.getMessage());
-            response.setStatusCode(404);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
-        } catch (CheckoutVacancyException e) {
-            logger.warn("Checkout vacancy error: {}", e.getMessage());
-            response.setStatusCode(400);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Checkout vacancy error: " + e.getMessage())));
-        } catch (CheckoutDateTimeException e) {
-            logger.warn("Checkout date time error: {}", e.getMessage());
-            response.setStatusCode(400);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Checkout date time error: " + e.getMessage())));
-        } catch (Exception e) {
-            logger.error("Error processing request", e);
-            response.setStatusCode(500);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Internal server error")));
         }
     }
 
-    private Object routeRequest(UnifiedRequest unifiedRequest) throws Exception {
+    private Object routeRequest(UnifiedRequest unifiedRequest, RequestLogContext logContext) throws Exception {
         EndpointType endpointType = unifiedRequest.endpointType();
 
         if (!HandlerRegistry.hasHandler(endpointType)) {
@@ -126,7 +163,7 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
         }
 
         var handler = HandlerRegistry.getHandler(endpointType);
-        return handler.handle(handler.parse(unifiedRequest));
+        return handler.handle(handler.parse(unifiedRequest), logContext);
     }
 
     static boolean shouldRouteToStripeWebhook(HttpRequest request) {
@@ -137,22 +174,58 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
     }
 
     static void handleStripeWebhook(HttpRequest request, HttpResponse response) throws Exception {
-        handleStripeWebhook(request, response, StripeWebhookHandler::handleWebhook);
+        try (RequestLogContext logContext =
+                RequestLogContext.fromHttpRequest("GlobalAppController", request)
+                        .withField("route", "stripeWebhook")
+                        .activate()) {
+            handleStripeWebhookWithStatus(request, response, logContext, StripeWebhookHandler::handleWebhook);
+        }
     }
 
     static void handleStripeWebhook(
             HttpRequest request,
             HttpResponse response,
             StripeWebhookProcessor stripeWebhookProcessor) throws Exception {
-        logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
+        RequestLogContext logContext = RequestLogContext.current().withField("route", "stripeWebhook");
+        handleStripeWebhookWithStatus(request, response, logContext, stripeWebhookProcessor);
+    }
+
+    static String handleStripeWebhook(
+            HttpRequest request,
+            HttpResponse response,
+            RequestLogContext logContext) throws Exception {
+        return handleStripeWebhook(request, response, logContext, StripeWebhookHandler::handleWebhook);
+    }
+
+    static String handleStripeWebhook(
+            HttpRequest request,
+            HttpResponse response,
+            RequestLogContext logContext,
+            StripeWebhookProcessor stripeWebhookProcessor) throws Exception {
+        return handleStripeWebhookWithStatus(
+                request,
+                response,
+                logContext.withField("route", "stripeWebhook"),
+                stripeWebhookProcessor);
+    }
+
+    static String handleStripeWebhookWithStatus(
+            HttpRequest request,
+            HttpResponse response,
+            RequestLogContext logContext,
+            StripeWebhookProcessor stripeWebhookProcessor) throws Exception {
+        logger.info("Detected Stripe webhook request {}", logContext.format("event", "stripe_webhook_route"));
+        StatusTrackingHttpResponse trackingResponse = new StatusTrackingHttpResponse(response, 200);
         try {
-            stripeWebhookProcessor.handle(request, response);
+            stripeWebhookProcessor.handle(request, trackingResponse);
         } catch (Exception e) {
-            logger.error("Unhandled exception while processing Stripe webhook. uri={}", request.getUri(), e);
-            response.setStatusCode(500);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+            logger.error("Unhandled exception while processing Stripe webhook {}",
+                    logContext.format("event", "stripe_webhook_unhandled_exception"), e);
+            trackingResponse.setStatusCode(500);
+            trackingResponse.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
                     new ErrorResponse("Internal server error")));
         }
+        return trackingResponse.getStatusCodeString();
     }
 
     private void setResponseHeaders(HttpResponse response) {

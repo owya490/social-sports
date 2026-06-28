@@ -134,7 +134,7 @@ public class EmailClient {
             );
             return result;
         } catch (IOException e) {
-            logger.error("Failed to send Loops request. Exception: {}", e.getMessage());
+            logger.error("Failed to send Loops request", e);
             throw e;
         }
     }

@@ -68,7 +68,9 @@ public class FormResponse {
                     FormSection section = FormSectionUtils.fromFirebaseData(sectionData);
                     responseMap.put(sectionId, section);
                 } catch (Exception e) {
-                    logger.error("Failed to deserialize FormSection for sectionId {}: {}", sectionId, sectionData, e);
+                    Object sectionType = sectionData == null ? null : sectionData.get("type");
+                    logger.error("Failed to deserialize FormSection for sectionId {}. sectionType={}",
+                            sectionId, sectionType, e);
                 }
             }
         }
