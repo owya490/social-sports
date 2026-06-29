@@ -77,8 +77,8 @@ fi
 EXTRA_DEPLOY_ARGS=()
 if [ "$ENVIRONMENT" == "prod" ] && [[ "$FUNCTION_NAME" == "globalAppController" || "$FUNCTION_NAME" == "stripeWebhookEndpoint" ]]; then
     EXTRA_DEPLOY_ARGS=(
-        --concurrency 80
-        --min-instances 1
+        --concurrency 1
+        --min-instances 0
         --max-instances 5
         --cpu 0.5
     )
