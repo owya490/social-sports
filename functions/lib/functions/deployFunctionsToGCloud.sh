@@ -75,7 +75,14 @@ else
 fi
 
 EXTRA_DEPLOY_ARGS=()
-if [ "$ENVIRONMENT" == "prod" ] && [[ "$FUNCTION_NAME" == "globalAppController" || "$FUNCTION_NAME" == "stripeWebhookEndpoint" ]]; then
+if [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "globalAppController" ]; then
+    EXTRA_DEPLOY_ARGS=(
+        --concurrency 80
+        --min-instances 1
+        --max-instances 5
+        --cpu 0.5
+    )
+elif [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "stripeWebhookEndpoint" ]; then
     EXTRA_DEPLOY_ARGS=(
         --concurrency 1
         --min-instances 0
