@@ -7,6 +7,7 @@ import {
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { Logger } from "@/observability/logger";  
+import { getStoredFulfilmentSessionSecret } from "../fulfilment/fulfilmentUtils/fulfilmentUtils";
   
 const waitlistServiceLogger = new Logger("waitlistServiceLogger"); 
 
@@ -32,7 +33,9 @@ export async function updateFulfilmentEntityWithWaitlistData(
     const response = await executeGlobalAppControllerFunction<
       UpdateFulfilmentEntityWithWaitlistDataRequest,
       UpdateFulfilmentEntityWithWaitlistDataResponse
-    >(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA, request);
+    >(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA, request, {
+      sessionSecret: requireFulfilmentSessionSecret(fulfilmentSessionId),
+    });
 
     waitlistServiceLogger.info(
       `updateFulfilmentEntityWithWaitlistData: Successfully updated fulfilment entity with waitlist data for session ID: ${fulfilmentSessionId}, entity ID: ${fulfilmentEntityId}, fullName: ${fullName}, email: ${email}`
@@ -44,4 +47,12 @@ export async function updateFulfilmentEntityWithWaitlistData(
     );
     throw error;
   }
+}
+
+function requireFulfilmentSessionSecret(fulfilmentSessionId: FulfilmentSessionId): string {
+  const sessionSecret = getStoredFulfilmentSessionSecret(fulfilmentSessionId);
+  if (!sessionSecret) {
+    throw new Error(`Missing fulfilment session secret for session ${fulfilmentSessionId}`);
+  }
+  return sessionSecret;
 }

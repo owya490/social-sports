@@ -23,6 +23,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
   clearStoredFulfilmentSessionId,
   getStoredFulfilmentSessionId,
+  getStoredFulfilmentSessionSecret,
   storeFulfilmentSessionId,
 } from "./fulfilmentUtils/fulfilmentUtils";
 
@@ -74,6 +75,8 @@ export async function initFulfilmentSession(
           );
 
           try {
+            const existingSessionSecret = requireFulfilmentSessionSecret(existingSessionId);
+
             // Verify the session still exists on the backend
             await getFulfilmentSessionInfo(existingSessionId, null);
 
@@ -83,6 +86,7 @@ export async function initFulfilmentSession(
 
             return {
               fulfilmentSessionId: existingSessionId,
+              fulfilmentSessionSecret: existingSessionSecret,
             };
           } catch (error) {
             fulfilmentServiceLogger.warn(
@@ -97,7 +101,7 @@ export async function initFulfilmentSession(
         const response = await initCheckoutFulfilmentSession(eventId, numTickets);
 
         // Store the new session ID in localStorage with event and ticket context
-        storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets);
+        storeFulfilmentSessionId(response.fulfilmentSessionId, response.fulfilmentSessionSecret, eventId, numTickets);
 
         return response;
       }
@@ -231,7 +235,9 @@ async function getNextFulfilmentEntity(
     const response = await executeGlobalAppControllerFunction<
       GetNextFulfilmentEntityRequest,
       GetNextFulfilmentEntityResponse
-    >(EndpointType.GET_NEXT_FULFILMENT_ENTITY, request);
+    >(EndpointType.GET_NEXT_FULFILMENT_ENTITY, request, {
+      sessionSecret: requireFulfilmentSessionSecret(fulfilmentSessionId),
+    });
 
     return response;
   } catch (error) {
@@ -260,7 +266,9 @@ async function getPrevFulfilmentEntity(
     const response = await executeGlobalAppControllerFunction<
       GetPrevFulfilmentEntityRequest,
       GetPrevFulfilmentEntityResponse
-    >(EndpointType.GET_PREV_FULFILMENT_ENTITY, request);
+    >(EndpointType.GET_PREV_FULFILMENT_ENTITY, request, {
+      sessionSecret: requireFulfilmentSessionSecret(fulfilmentSessionId),
+    });
 
     return response;
   } catch (error) {
@@ -286,7 +294,9 @@ export async function getFulfilmentEntityInfo(
     const response = await executeGlobalAppControllerFunction<
       GetFulfilmentEntityInfoRequest,
       GetFulfilmentEntityInfoResponse
-    >(EndpointType.GET_FULFILMENT_ENTITY_INFO, request);
+    >(EndpointType.GET_FULFILMENT_ENTITY_INFO, request, {
+      sessionSecret: requireFulfilmentSessionSecret(fulfilmentSessionId),
+    });
 
     fulfilmentServiceLogger.info(
       `getFulfilmentEntityInfo: Successfully fetched fulfilment entity info for session ID: ${fulfilmentSessionId} and entity ID: ${fulfilmentEntityId}: ${JSON.stringify(
@@ -321,7 +331,9 @@ export async function getFulfilmentSessionInfo(
     const response = await executeGlobalAppControllerFunction<
       GetFulfilmentSessionInfoRequest,
       GetFulfilmentSessionInfoResponse
-    >(EndpointType.GET_FULFILMENT_SESSION_INFO, request);
+    >(EndpointType.GET_FULFILMENT_SESSION_INFO, request, {
+      sessionSecret: requireFulfilmentSessionSecret(fulfilmentSessionId),
+    });
 
     fulfilmentServiceLogger.info(
       `getFulfilmentSessionInfo: Successfully fetched fulfilment session info for session ID: ${fulfilmentSessionId}: ${JSON.stringify(
@@ -336,4 +348,12 @@ export async function getFulfilmentSessionInfo(
     fulfilmentServiceLogger.error(`getFulfilmentSessionInfo: Failed to fetch fulfilment session info: ${error}`);
     throw error;
   }
+}
+
+function requireFulfilmentSessionSecret(fulfilmentSessionId: FulfilmentSessionId): string {
+  const sessionSecret = getStoredFulfilmentSessionSecret(fulfilmentSessionId);
+  if (!sessionSecret) {
+    throw new Error(`Missing fulfilment session secret for session ${fulfilmentSessionId}`);
+  }
+  return sessionSecret;
 }

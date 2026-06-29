@@ -7,8 +7,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.attendee.models.requests.AddAttendeeRequest;
 import com.functions.attendee.models.responses.AddAttendeeResponse;
 import com.functions.attendee.services.AttendeeService;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.global.services.EventAuthorizationService;
 import com.functions.utils.JavaUtils;
 
 public class AddAttendeeHandler implements Handler<AddAttendeeRequest, AddAttendeeResponse> {
@@ -24,7 +26,7 @@ public class AddAttendeeHandler implements Handler<AddAttendeeRequest, AddAttend
     }
 
     @Override
-    public AddAttendeeResponse handle(AddAttendeeRequest request) throws Exception {
+    public AddAttendeeResponse handle(AddAttendeeRequest request, AuthContext authContext) throws Exception {
         logger.info("Handling add attendee for eventId: {}, email: {}", request.eventId(), request.email());
 
         if (request.eventId() == null || request.eventId().isBlank()) {
@@ -36,6 +38,8 @@ public class AddAttendeeHandler implements Handler<AddAttendeeRequest, AddAttend
         if (request.numTickets() <= 0) {
             throw new IllegalArgumentException("numTickets must be greater than 0");
         }
+
+        EventAuthorizationService.requireOrganiserAccess(authContext.requireUid(), request.eventId());
 
         AddAttendeeResponse response = AttendeeService.addAttendee(request);
 

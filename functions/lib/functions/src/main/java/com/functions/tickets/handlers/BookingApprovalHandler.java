@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.global.models.Handler;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.tickets.models.requests.BookingApprovalRequest;
 import com.functions.tickets.models.responses.BookingApprovalResponse;
@@ -28,7 +29,7 @@ public class BookingApprovalHandler implements Handler<BookingApprovalRequest, B
     }
 
     @Override
-    public BookingApprovalResponse handle(BookingApprovalRequest request) throws Exception {
+    public BookingApprovalResponse handle(BookingApprovalRequest request, AuthContext authContext) throws Exception {
         logger.info("Handling booking approval request for eventId: {}, organiserId: {}, orderId: {}, operation: {}",
                 request.eventId(), request.organiserId(), request.orderId(), request.bookingApprovalOperation());
 

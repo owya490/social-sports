@@ -13,6 +13,7 @@ import com.functions.forms.models.responses.SaveTempFormResponseResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
 import com.functions.global.models.Handler;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 
@@ -29,7 +30,7 @@ public class SaveTempFormResponseHandler implements Handler<SaveTempFormResponse
     }
 
     @Override
-    public SaveTempFormResponseResponse handle(SaveTempFormResponseRequest request) {
+    public SaveTempFormResponseResponse handle(SaveTempFormResponseRequest request, AuthContext authContext) {
         if (request == null || request.getFormResponse() == null) {
             throw new IllegalArgumentException("formResponse is required");
         }

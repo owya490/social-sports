@@ -7,8 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.global.services.EventAuthorizationService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.models.requests.get.GetOrdersByEventRequest;
@@ -29,12 +31,14 @@ public class GetOrdersByEventHandler implements Handler<GetOrdersByEventRequest,
     }
 
     @Override
-    public GetOrdersByEventResponse handle(GetOrdersByEventRequest request) throws Exception {
+    public GetOrdersByEventResponse handle(GetOrdersByEventRequest request, AuthContext authContext) throws Exception {
         logger.info("Getting orders for eventId: {}", request.eventId());
 
         if (request.eventId() == null || request.eventId().isBlank()) {
             throw new IllegalArgumentException("eventId is required");
         }
+
+        EventAuthorizationService.requireOrganiserAccess(authContext.requireUid(), request.eventId());
 
         Map<Order, List<Ticket>> orderTicketsMap = TicketsService.getOrdersAndTicketsByEventId(request.eventId());
 

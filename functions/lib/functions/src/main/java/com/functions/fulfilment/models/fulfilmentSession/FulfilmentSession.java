@@ -46,6 +46,7 @@ public abstract class FulfilmentSession {
     private FulfilmentSessionType type;
 
     private Timestamp fulfilmentSessionStartTime;
+    private String sessionSecret;
     private EventData eventData;
     /**
      * Map of FulfilmentEntityIds to FulfilmentEntity objects.
@@ -142,6 +143,7 @@ public abstract class FulfilmentSession {
                                 EventData.class))
                         .fulfilmentSessionStartTime(
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .sessionSecret(snapshot.getString("sessionSecret"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
                         .numTickets(numTicketsCheckout).build();
             case BOOKING_APPROVAL:
@@ -155,6 +157,7 @@ public abstract class FulfilmentSession {
                                 EventData.class))
                         .fulfilmentSessionStartTime(
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .sessionSecret(snapshot.getString("sessionSecret"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
                         .numTickets(numTicketsBookingApproval).build();
             case WAITLIST:
@@ -169,6 +172,7 @@ public abstract class FulfilmentSession {
                             EventData.class))
                         .fulfilmentSessionStartTime(
                             snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .sessionSecret(snapshot.getString("sessionSecret"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
                         .numTickets(numTicketsWaitlist).build();
             default:
