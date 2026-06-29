@@ -152,7 +152,7 @@ jobs:
               --concurrency 80 \
               --min-instances 1 \
               --max-instances 5 \
-              --cpu 0.5 \
+              --cpu 1 \
               --quiet 2>&1 | sed 's/^/[globalAppController] /') &
           else
             (gcloud functions deploy globalAppController \
