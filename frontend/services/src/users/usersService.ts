@@ -260,11 +260,19 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
 
     // Update public & private user data
     if (transaction) {
-      transaction.update(publicUserDocRef, publicDataToUpdate);
-      transaction.update(privateUserDocRef, privateDataToUpdate);
+      if (Object.keys(publicDataToUpdate).length > 0) {
+        transaction.update(publicUserDocRef, publicDataToUpdate);
+      }
+      if (Object.keys(privateDataToUpdate).length > 0) {
+        transaction.update(privateUserDocRef, privateDataToUpdate);
+      }
     } else {
-      await updateDoc(publicUserDocRef, publicDataToUpdate);
-      await updateDoc(privateUserDocRef, privateDataToUpdate);
+      if (Object.keys(publicDataToUpdate).length > 0) {
+        await updateDoc(publicUserDocRef, publicDataToUpdate);
+      }
+      if (Object.keys(privateDataToUpdate).length > 0) {
+        await updateDoc(privateUserDocRef, privateDataToUpdate);
+      }
     }
 
     userServiceLogger.info(`User updated successfully:", ${userId}`);
