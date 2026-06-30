@@ -258,13 +258,24 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
     const publicDataToUpdate = extractPublicUserData(newData);
     const privateDataToUpdate = extractPrivateUserData(newData);
 
-    // Update public & private user data
+    const hasPublicDataToUpdate = Object.keys(publicDataToUpdate).length > 0;
+    const hasPrivateDataToUpdate = Object.keys(privateDataToUpdate).length > 0;
+
+    // Update public & private user data when their payloads are non-empty.
     if (transaction) {
-      transaction.update(publicUserDocRef, publicDataToUpdate);
-      transaction.update(privateUserDocRef, privateDataToUpdate);
+      if (hasPublicDataToUpdate) {
+        transaction.update(publicUserDocRef, publicDataToUpdate);
+      }
+      if (hasPrivateDataToUpdate) {
+        transaction.update(privateUserDocRef, privateDataToUpdate);
+      }
     } else {
-      await updateDoc(publicUserDocRef, publicDataToUpdate);
-      await updateDoc(privateUserDocRef, privateDataToUpdate);
+      if (hasPublicDataToUpdate) {
+        await updateDoc(publicUserDocRef, publicDataToUpdate);
+      }
+      if (hasPrivateDataToUpdate) {
+        await updateDoc(privateUserDocRef, privateDataToUpdate);
+      }
     }
 
     userServiceLogger.info(`User updated successfully:", ${userId}`);
