@@ -1050,16 +1050,16 @@ public class WebhookService {
                             orderId, customerEmail);
                 }
             } else if ("manual".equalsIgnoreCase(captureMethod)) {
-                // Booking-approval flow: buyer is pending organiser approval, so send a
-                // friendly "request received" email rather than a purchase confirmation.
-                boolean tentativeEmailSuccess = EmailService.sendBookingApprovalTentativeEmail(
+                // Booking-approval flow: buyer is pending organiser approval, so send the
+                // pending booking email rather than a purchase confirmation.
+                boolean pendingEmailSuccess = EmailService.sendBookingPendingEmail(
                         eventId,
                         visibility,
                         customerEmail,
                         fullName,
                         orderId);
-                if (!tentativeEmailSuccess) {
-                    logger.warn("Was unable to send tentative booking email. orderId={}, customer={}",
+                if (!pendingEmailSuccess) {
+                    logger.warn("Was unable to send pending booking email. orderId={}, customer={}",
                             orderId, customerEmail);
                 }
 
