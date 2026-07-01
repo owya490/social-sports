@@ -25,7 +25,6 @@ import com.google.cloud.firestore.Firestore;
  */
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
-    private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID = "cml0rm3t21e8s0ixa21rvcfnx";
 
     @FunctionalInterface
     interface PurchaseEmailSender {
@@ -200,11 +199,11 @@ public class EmailService {
     }
 
     /**
-     * Variables for {@link EmailTemplateType#BOOKING_APPROVAL_TENTATIVE} (and organiser copy).
+     * Variables for {@link EmailTemplateType#BOOKING_PENDING} (and organiser copy).
      * Must match the Loops template: name, eventName, organiserId, orderId, datePurchased,
      * quantity, price, startDate, endDate, location.
      */
-    private static Map<String, String> buildBookingApprovalTentativeEmailVariables(
+    private static Map<String, String> buildBookingPendingEmailVariables(
             DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
         Timestamp startTimestamp = getTimestampField(event, "startDate");
         Timestamp endTimestamp = getTimestampField(event, "endDate");
@@ -226,6 +225,22 @@ public class EmailService {
                 "startDate", TimeUtils.formatTimestampForEmail(startTimestamp),
                 "endDate", TimeUtils.formatTimestampForEmail(endTimestamp),
                 "location", defaultString(event.getString("location")));
+    }
+
+    /**
+     * Variables for {@link EmailTemplateType#BOOKING_APPROVED}.
+     * Must match the Loops template: name, eventName, orderId, ticketCount.
+     */
+    private static Map<String, String> buildBookingApprovedEmailVariables(
+            DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
+        List<?> tickets = (List<?>) order.get("tickets");
+        String ticketCount = tickets != null ? String.valueOf(tickets.size()) : "0";
+
+        return Map.of(
+                "name", defaultString(firstName),
+                "eventName", defaultString(event.getString("name")),
+                "orderId", defaultString(orderId),
+                "ticketCount", ticketCount);
     }
 
     private static Timestamp getTimestampField(DocumentSnapshot snapshot, String fieldName) {
@@ -402,7 +417,7 @@ public class EmailService {
     }
 
     /**
-     * Sends a "booking request received — awaiting organiser approval" email to the buyer.
+     * Sends the pending-booking email to the buyer after checkout when organiser approval is required.
      * Triggered on {@code checkout.session.completed} when the Stripe capture method is manual.
      *
      * @param eventId    The event ID
@@ -412,21 +427,21 @@ public class EmailService {
      * @param orderId    The order ID
      * @return true if the email was sent successfully, false otherwise
      */
-    public static boolean sendBookingApprovalTentativeEmail(String eventId, String visibility,
+    public static boolean sendBookingPendingEmail(String eventId, String visibility,
             String email, String firstName, String orderId) {
         return sendBookingApprovalEmailWithTemplate(
-                EmailTemplateType.BOOKING_APPROVAL_TENTATIVE.templateId,
+                EmailTemplateType.BOOKING_PENDING.templateId,
                 eventId,
                 visibility,
                 email,
                 firstName,
                 orderId,
-                EmailService::buildBookingApprovalTentativeEmailVariables);
+                EmailService::buildBookingPendingEmailVariables);
     }
 
     /**
-     * Sends the standard purchase confirmation email to the buyer after an organiser approves
-     * a pending booking ({@link EmailTemplateType#PURCHASE} / {@link EmailTemplateType#BOOKING_APPROVED}).
+     * Sends the booking-approved email to the buyer after an organiser approves
+     * a pending booking ({@link EmailTemplateType#BOOKING_APPROVED}).
      *
      * @param eventId    The event ID
      * @param visibility Either "Private" or "Public"
@@ -438,13 +453,13 @@ public class EmailService {
     public static boolean sendBookingApprovedEmail(String eventId, String visibility,
             String email, String firstName, String orderId) {
         return sendBookingApprovalEmailWithTemplate(
-                EmailTemplateType.PURCHASE.templateId,
+                EmailTemplateType.BOOKING_APPROVED.templateId,
                 eventId,
                 visibility,
                 email,
                 firstName,
                 orderId,
-                EmailService::buildEmailVariables);
+                EmailService::buildBookingApprovedEmailVariables);
     }
 
     /**
@@ -496,7 +511,7 @@ public class EmailService {
 
     /**
      * Notifies the organiser of a new pending booking using the same Loops template and
-     * variables as the buyer tentative email ({@link EmailTemplateType#BOOKING_APPROVAL_TENTATIVE}).
+     * variables as the buyer pending email ({@link EmailTemplateType#BOOKING_PENDING}).
      *
      * <p>If the organiser has not opted in to ticket-related emails
      * ({@code sendOrganiserTicketEmails == false}) the email is silently skipped (not an error).
@@ -533,13 +548,13 @@ public class EmailService {
             }
 
             return sendBookingApprovalEmailWithTemplate(
-                    EmailTemplateType.BOOKING_APPROVAL_TENTATIVE.templateId,
+                    EmailTemplateType.BOOKING_PENDING.templateId,
                     eventId,
                     visibility,
                     organiserEmail.get(),
                     attendeeName,
                     orderId,
-                    EmailService::buildBookingApprovalTentativeEmailVariables);
+                    EmailService::buildBookingPendingEmailVariables);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.warn("Organiser pending booking email send interrupted. orderId={}", orderId, e);
@@ -582,7 +597,7 @@ public class EmailService {
         boolean sent;
         try {
             sent = EmailClient.sendEmailWithLoopsWithRetries(
-                    LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID, email, variables);
+                    EmailTemplateType.BOOKING_REJECTED, email, variables);
         } catch (Exception e) {
             logger.warn("Failed to send reject booking email for order {} to {}", orderId, email, e);
             return false;
