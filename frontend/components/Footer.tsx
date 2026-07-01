@@ -38,6 +38,15 @@ export default function Footer() {
           <Link href="/landing" className="mx-2">
             Landing
           </Link>
+          <Link href="/sydney-events" className="mx-2">
+            Sydney Events
+          </Link>
+          <Link href="/badminton-sydney" className="mx-2">
+            Badminton Sydney
+          </Link>
+          <Link href="/volleyball-sydney" className="mx-2">
+            Volleyball Sydney
+          </Link>
           <Link href="/event/create" className="mx-2">
             Create Event
           </Link>
