@@ -39,6 +39,7 @@ interface MobileEventPaymentProps {
   organiserId: UserId;
   waitlistEnabled: boolean;
   maxTicketsPerTransaction?: number;
+  bookingApprovalEnabled?: boolean;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
@@ -153,30 +154,38 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   </div>
                 )
               ) : (
-              <div className="flex gap-2">
-                <div className="w-3/5 shrink-0">
-                  <Select
-                    className="text-black"
-                    label={isFree ? "Bookings" : "Tickets"}
-                    size="lg"
-                    value={`${attendeeCount}`}
-                    onChange={handleAttendeeCount}
-                  >
-                    {allCounts.map((count) => (
-                      <Option key={`attendee-option-${count}`} value={`${count}`}>
-                        {count}
-                      </Option>
-                    ))}
-                  </Select>
-                </div>
-                <BookingButton
-                  eventId={props.eventId}
-                  ticketCount={attendeeCount}
-                  setLoading={props.setLoading}
-                  className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"
-                />
-              </div>
-            )}
+                <>
+                  <div className="flex gap-2">
+                    <div className="w-3/5 shrink-0">
+                      <Select
+                        className="text-black"
+                        label={isFree ? "Bookings" : "Tickets"}
+                        size="lg"
+                        value={`${attendeeCount}`}
+                        onChange={handleAttendeeCount}
+                      >
+                        {allCounts.map((count) => (
+                          <Option key={`attendee-option-${count}`} value={`${count}`}>
+                            {count}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                    <BookingButton
+                      eventId={props.eventId}
+                      ticketCount={attendeeCount}
+                      setLoading={props.setLoading}
+                      bookingApprovalEnabled={props.bookingApprovalEnabled}
+                      className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"
+                    />
+                  </div>
+                  {props.bookingApprovalEnabled && (
+                    <p className="text-xs text-gray-600 mt-2 text-center">
+                      This event requires organiser approval. Your card will be authorised but not charged until approved — requests auto-expire in 48 hours.
+                    </p>
+                  )}
+                </>
+              )}
           </div>
         ) : (
           <ContactEventButton

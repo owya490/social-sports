@@ -38,6 +38,7 @@ export function EventDetails(props: EventDetailsProps) {
               organiserId={eventData.organiserId}
               waitlistEnabled={eventData.waitlistEnabled}
               maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
+              bookingApprovalEnabled={eventData.bookingApprovalEnabled}
             />
           </div>
 
@@ -71,6 +72,7 @@ export function EventDetails(props: EventDetailsProps) {
               organiserId={eventData.organiserId}
               waitlistEnabled={eventData.waitlistEnabled}
               maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
+              bookingApprovalEnabled={eventData.bookingApprovalEnabled}
             />
           </div>
         </div>

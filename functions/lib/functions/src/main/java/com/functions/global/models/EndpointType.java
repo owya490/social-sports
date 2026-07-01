@@ -26,9 +26,11 @@ import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
 import com.functions.tickets.models.Ticket;
+import com.functions.tickets.models.requests.BookingApprovalRequest;
 import com.functions.tickets.models.requests.get.GetOrderRequest;
 import com.functions.tickets.models.requests.get.GetOrdersByEventRequest;
 import com.functions.tickets.models.requests.get.GetTicketRequest;
+import com.functions.tickets.models.responses.BookingApprovalResponse;
 import com.functions.tickets.models.responses.get.GetOrderResponse;
 import com.functions.tickets.models.responses.get.GetOrdersByEventResponse;
 import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlistDataRequest;
@@ -65,7 +67,8 @@ public enum EndpointType {
     GET_ORDERS_BY_EVENT(GetOrdersByEventRequest.class, GetOrdersByEventResponse.class),
     ADD_ATTENDEE(AddAttendeeRequest.class, AddAttendeeResponse.class),
     SET_ATTENDEE_TICKETS(SetAttendeeTicketsRequest.class, SetAttendeeTicketsResponse.class),
-    GET_EVENT_ATTENDEE_NAMES(GetEventAttendeeNamesRequest.class, GetEventAttendeeNamesResponse.class);
+    GET_EVENT_ATTENDEE_NAMES(GetEventAttendeeNamesRequest.class, GetEventAttendeeNamesResponse.class),
+    BOOKING_APPROVAL(BookingApprovalRequest.class, BookingApprovalResponse.class);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;
