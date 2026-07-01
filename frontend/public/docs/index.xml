@@ -473,7 +473,7 @@ Once you&amp;rsquo;ve created your form, attaching it to an event is straightfor
 &lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-blue-200 hx:bg-blue-100 hx:text-blue-900 hx:dark:border-blue-200/30 hx:dark:bg-blue-900/30 hx:dark:text-blue-200">
 &lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>&lt;/svg>We secure you tickets the moment you click book now.&lt;/p>
 &lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
-&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Your tickets are secured for a &lt;strong>max of 30 minutes&lt;/strong> before your session expires.&lt;/p>&lt;/div>
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Your tickets are secured for a &lt;strong>max of 15 minutes&lt;/strong> before your session expires.&lt;/p>&lt;/div>
 &lt;/div>
 &lt;/div>
 &lt;/li>
@@ -553,6 +553,10 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;/ul>
 &lt;/li>
 &lt;/ol>
+&lt;h2>Recurring Attendees&lt;span class="hx:absolute hx:-mt-20" id="recurring-attendees">&lt;/span>
+&lt;a href="#recurring-attendees" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Use &lt;strong>Reserved Slots&lt;/strong> to keep places available for attendees who should be included in every future event in the series.&lt;/p>
+&lt;p>For each recurring attendee, enter their email address, attendee name, and the number of slots to reserve. When a future event is created from the recurring template, SPORTSHUB adds those reserved attendees to that event&amp;rsquo;s &lt;strong>Manage Attendees&lt;/strong> list and reduces the available vacancy by the number of reserved slots.&lt;/p>
+&lt;p>Reserved slots are managed on the recurring event template and apply to future generated events. Existing event instances keep their current attendee list unless you update them individually.&lt;/p>
 &lt;h2>Recurrence Preview&lt;span class="hx:absolute hx:-mt-20" id="recurrence-preview">&lt;/span>
 &lt;a href="#recurrence-preview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Once configured, you&amp;rsquo;ll see a preview table showing:&lt;/p>
 &lt;ul>
@@ -581,6 +585,7 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;li>Changes to one recurring event instance don&amp;rsquo;t automatically apply to others&lt;/li>
 &lt;li>Each occurrence maintains its own participant list and registration data&lt;/li>
 &lt;li>You can modify or cancel individual events without affecting the entire series&lt;/li>
+&lt;li>Reserved slots configured on the recurring template are applied when new future instances are created&lt;/li>
 &lt;/ul>
 &lt;h2>Best Practices for Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="best-practices-for-recurring-events">&lt;/span>
 &lt;a href="#best-practices-for-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
@@ -588,6 +593,7 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;li>&lt;strong>Consistent Scheduling&lt;/strong>: Keep timing consistent across recurring events for participant convenience&lt;/li>
 &lt;li>&lt;strong>Regular Monitoring&lt;/strong>: Check each occurrence individually to ensure details remain accurate&lt;/li>
 &lt;li>&lt;strong>Communication&lt;/strong>: Use the series to establish routine but communicate any changes to specific instances clearly&lt;/li>
+&lt;li>&lt;strong>Capacity Planning&lt;/strong>: Leave enough capacity for both reserved recurring attendees and casual bookings&lt;/li>
 &lt;/ul>
 &lt;h2>Modifying Recurrence Settings&lt;span class="hx:absolute hx:-mt-20" id="modifying-recurrence-settings">&lt;/span>
 &lt;a href="#modifying-recurrence-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>To change recurrence settings for future events:&lt;/p>
@@ -635,6 +641,21 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;/tr>
 &lt;/tbody>
 &lt;/table>
+&lt;h2>Recurring Attendees (Reserved Slots)&lt;span class="hx:absolute hx:-mt-20" id="recurring-attendees-reserved-slots">&lt;/span>
+&lt;a href="#recurring-attendees-reserved-slots" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Recurring attendees can be managed from the recurring event template using &lt;strong>Reserved Slots&lt;/strong>. This is useful when the same players, members, or staff should have guaranteed places in every event generated by the series.&lt;/p>
+&lt;p>For each reserved attendee, add:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Email address&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>Attendee name&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>Slots&lt;/strong>: the number of tickets or places to reserve for that attendee&lt;/li>
+&lt;/ul>
+&lt;p>When SPORTSHUB creates a future event from the template, reserved attendees are automatically added to that event&amp;rsquo;s &lt;strong>Manage Attendees&lt;/strong> list and their reserved slots reduce the event&amp;rsquo;s available vacancy.&lt;/p>
+&lt;p>Keep these points in mind:&lt;/p>
+&lt;ul>
+&lt;li>The total number of reserved slots should fit within the event capacity.&lt;/li>
+&lt;li>Reserved slots apply to future events generated from the recurring template.&lt;/li>
+&lt;li>Existing generated events keep their current attendee list and can still be managed individually.&lt;/li>
+&lt;/ul>
 &lt;h2>Preview Your Recurring Schedule&lt;span class="hx:absolute hx:-mt-20" id="preview-your-recurring-schedule">&lt;/span>
 &lt;a href="#preview-your-recurring-schedule" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/recurring-event-schedule.png" alt="recurring-event-schedule" loading="lazy" />&lt;/p>
 &lt;p>During event creation, you&amp;rsquo;ll see a table showing all future recurrence dates based on your settings. This preview helps you verify the schedule is correct before creating the events.&lt;/p>
@@ -643,6 +664,7 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;li>&lt;strong>First Event&lt;/strong>: Created immediately upon submission and is available for booking right away&lt;/li>
 &lt;li>&lt;strong>Future Events&lt;/strong>: Created automatically according to your &amp;ldquo;Create Days Prior&amp;rdquo; setting&lt;/li>
 &lt;li>&lt;strong>Consistent Details&lt;/strong>: Each recurring event uses the same title, description, images, and settings as your original event&lt;/li>
+&lt;li>&lt;strong>Reserved Attendees&lt;/strong>: Any reserved slots on the template are added automatically to each newly generated event&lt;/li>
 &lt;/ul>
 &lt;h2>Managing Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="managing-recurring-events">&lt;/span>
 &lt;a href="#managing-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>After creation, you can view and manage your recurring event template through the &lt;a href="https://www.sportshub.net.au/docs/organisers/organiser-hub/" >Organiser Hub&lt;/a>. This allows you to:&lt;/p>
@@ -650,6 +672,7 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;li>Reference all events in the series&lt;/li>
 &lt;li>Make changes to future events if needed&lt;/li>
 &lt;li>Manage the overall recurring schedule&lt;/li>
+&lt;li>Add or update reserved slots for recurring attendees&lt;/li>
 &lt;/ul>
 &lt;p>Recurring events provide a powerful way to maintain regular activities with minimal ongoing effort, ensuring your community always knows when and where to find your events.&lt;/p></description></item><item><title>Filling out a Form</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/fill-form/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/fill-form/</guid><description>
 &lt;h3>During Checkout&lt;span class="hx:absolute hx:-mt-20" id="during-checkout">&lt;/span>
@@ -865,6 +888,36 @@ All form responses are available in your Event Management page within the Organi
 &lt;p>Event Collections provide a powerful way to organize, share, and manage groups of related events, making it easier for participants to discover and register for your events.&lt;/p></description></item><item><title>Event Settings</title><link>https://www.sportshub.net.au/docs/organisers/events/event-settings/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/event-settings/</guid><description>
 &lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
 &lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Event settings allow you to configure how your event appears and behaves for participants. You can access event settings from the &lt;strong>Settings&lt;/strong> tab when viewing an event (or recurring event template) in your &lt;a href="https://www.sportshub.net.au/organiser" target="_blank" rel="noopener">Organiser Hub&lt;/a>.&lt;/p>
+&lt;h2>Max Tickets Per Transaction&lt;span class="hx:absolute hx:-mt-20" id="max-tickets-per-transaction">&lt;/span>
+&lt;a href="#max-tickets-per-transaction" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This setting controls how many tickets a participant can buy in a single checkout. It is useful when you want to keep group bookings manageable, protect event capacity, or limit how many places one purchaser can reserve at once.&lt;/p>
+&lt;h3>How It Works&lt;span class="hx:absolute hx:-mt-20" id="how-it-works">&lt;/span>
+&lt;a href="#how-it-works" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>The default maximum is &lt;strong>7 tickets per transaction&lt;/strong>.&lt;/li>
+&lt;li>Organisers can set the maximum from &lt;strong>1&lt;/strong> up to the event limit.&lt;/li>
+&lt;li>The highest available value is capped by the smaller of the event capacity and &lt;strong>10 tickets&lt;/strong>.&lt;/li>
+&lt;li>Participants only see ticket quantity options up to this configured maximum, subject to the event&amp;rsquo;s remaining vacancy.&lt;/li>
+&lt;/ul>
+&lt;h3>How to Configure&lt;span class="hx:absolute hx:-mt-20" id="how-to-configure">&lt;/span>
+&lt;a href="#how-to-configure" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;h4>During Event Creation&lt;span class="hx:absolute hx:-mt-20" id="during-event-creation">&lt;/span>
+&lt;a href="#during-event-creation" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h4>&lt;ol>
+&lt;li>Open the event creation form.&lt;/li>
+&lt;li>Go to &lt;strong>Additional Settings&lt;/strong>.&lt;/li>
+&lt;li>Select the value for &lt;strong>&amp;ldquo;Max Tickets Per Transaction&amp;rdquo;&lt;/strong>.&lt;/li>
+&lt;/ol>
+&lt;h4>For Existing Single Events&lt;span class="hx:absolute hx:-mt-20" id="for-existing-single-events">&lt;/span>
+&lt;a href="#for-existing-single-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h4>&lt;ol>
+&lt;li>Head to your &lt;strong>Organiser Hub&lt;/strong> and open the event you want to update.&lt;/li>
+&lt;li>Navigate to the &lt;strong>Settings&lt;/strong> tab.&lt;/li>
+&lt;li>Update &lt;strong>&amp;ldquo;Max Tickets Per Transaction&amp;rdquo;&lt;/strong>.&lt;/li>
+&lt;/ol>
+&lt;h4>For Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="for-recurring-events">&lt;/span>
+&lt;a href="#for-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h4>&lt;p>Recurring event templates also include &lt;strong>&amp;ldquo;Max Tickets Per Transaction&amp;rdquo;&lt;/strong> in their settings. New events generated from the template will use the configured maximum.&lt;/p>
+&lt;ol>
+&lt;li>Open your recurring event template in the Organiser Hub.&lt;/li>
+&lt;li>Go to the &lt;strong>Settings&lt;/strong> tab.&lt;/li>
+&lt;li>Update &lt;strong>&amp;ldquo;Max Tickets Per Transaction&amp;rdquo;&lt;/strong>.&lt;/li>
+&lt;/ol>
+&lt;p>All future events created from that template will inherit the setting. Existing generated events keep their current setting and can be adjusted individually if needed.&lt;/p>
 &lt;h2>Show Attendees on Event Page&lt;span class="hx:absolute hx:-mt-20" id="show-attendees-on-event-page">&lt;/span>
 &lt;a href="#show-attendees-on-event-page" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This setting controls whether a &lt;strong>&amp;ldquo;Who&amp;rsquo;s going&amp;rdquo;&lt;/strong> section appears on your public event page, displaying the names of registered attendees to potential participants.&lt;/p>
 &lt;h3>What Participants See&lt;span class="hx:absolute hx:-mt-20" id="what-participants-see">&lt;/span>
@@ -885,8 +938,8 @@ All form responses are available in your Event Management page within the Organi
 &lt;li>Toggle &lt;strong>&amp;ldquo;Show Attendees on Event Page&amp;rdquo;&lt;/strong> to on.&lt;/li>
 &lt;/ol>
 &lt;p>The attendee list will appear on the public event page immediately.&lt;/p>
-&lt;h4>For Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="for-recurring-events">&lt;/span>
-&lt;a href="#for-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h4>&lt;p>If you manage recurring events, you can enable this on the &lt;strong>recurring event template&lt;/strong> as well. Every new event generated from that template will automatically show attendees.&lt;/p>
+&lt;h4>For Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="for-recurring-events-1">&lt;/span>
+&lt;a href="#for-recurring-events-1" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h4>&lt;p>If you manage recurring events, you can enable this on the &lt;strong>recurring event template&lt;/strong> as well. Every new event generated from that template will automatically show attendees.&lt;/p>
 &lt;ol>
 &lt;li>Open your recurring event template in the Organiser Hub.&lt;/li>
 &lt;li>Go to the &lt;strong>Settings&lt;/strong> tab.&lt;/li>

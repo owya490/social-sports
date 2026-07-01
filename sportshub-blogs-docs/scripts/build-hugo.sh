@@ -25,15 +25,33 @@ fi
 cd "$HUGO_DIR"
 echo "📂 Changed to Hugo directory: $(pwd)"
 
-HUGO_VERSION=0.111.3
+if [ ! -d "$HUGO_DIR/themes/hextra/layouts" ]; then
+    echo "📦 Initializing Hextra theme submodule..."
+    git -C "$PROJECT_ROOT" submodule update --init --recursive "sportshub-blogs-docs/themes/hextra"
+fi
+
+HUGO_VERSION=0.146.0
+HUGO_DEB="hugo_${HUGO_VERSION}_linux-amd64.deb"
+
+install_hugo() {
+    echo "Installing Hugo version $HUGO_VERSION"
+    wget "https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/${HUGO_DEB}"
+    sudo dpkg -i "$HUGO_DEB"
+    rm -f "$HUGO_DEB"
+}
 
 if ! command -v hugo &> /dev/null
 then
-    echo "Hugo not found, installing version $HUGO_VERSION"
-    wget https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_${HUGO_VERSION}_Linux-64bit.deb
-    sudo dpkg -i hugo_${HUGO_VERSION}_Linux-64bit.deb
+    echo "Hugo not found"
+    install_hugo
 else
-    echo "Hugo already installed"
+    CURRENT_HUGO_VERSION="$(hugo version | sed -E 's/^hugo v([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
+    if [ "$CURRENT_HUGO_VERSION" != "$HUGO_VERSION" ]; then
+        echo "Hugo $CURRENT_HUGO_VERSION does not match required version $HUGO_VERSION"
+        install_hugo
+    else
+        echo "Hugo $CURRENT_HUGO_VERSION already installed"
+    fi
 fi
 
 # Delete the public directory
