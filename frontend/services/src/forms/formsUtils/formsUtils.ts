@@ -1,7 +1,10 @@
 // TODO: functions to abstract away editing forms
 
 import { EventId } from "@/interfaces/EventTypes";
-import { FormId, FormResponseId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { FormId, FormResponse, FormResponseId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { OrderAndTicketStatus } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { doc, DocumentData, DocumentReference, getDoc, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import { FormResponsePaths, FormTemplatePaths } from "../formsConstants";
@@ -103,6 +106,44 @@ export async function findFormResponseDoc(
 }
 export function archiveSection(sectionId: SectionId): void {
   // TODO
+}
+
+/** Orders and tickets with APPROVED status only (matches attendee approved tab). */
+export function getApprovedOrderTicketsMap(orderTicketsMap: Map<Order, Ticket[]>): Map<Order, Ticket[]> {
+  const approvedMap = new Map<Order, Ticket[]>();
+  orderTicketsMap.forEach((tickets, order) => {
+    if (order.status !== OrderAndTicketStatus.APPROVED) {
+      return;
+    }
+    const approvedTickets = tickets.filter((ticket) => ticket.status === OrderAndTicketStatus.APPROVED);
+    if (approvedTickets.length > 0) {
+      approvedMap.set(order, approvedTickets);
+    }
+  });
+  return approvedMap;
+}
+
+export function getFormResponseIdsFromOrderTicketsMap(orderTicketsMap: Map<Order, Ticket[]>): Set<FormResponseId> {
+  const formResponseIds = new Set<FormResponseId>();
+  orderTicketsMap.forEach((tickets) => {
+    tickets.forEach((ticket) => {
+      if (ticket.formResponseId) {
+        formResponseIds.add(ticket.formResponseId);
+      }
+    });
+  });
+  return formResponseIds;
+}
+
+/** Only form responses linked to an approved ticket on an approved order. */
+export function filterFormResponsesForApprovedOrders(
+  formResponses: FormResponse[],
+  orderTicketsMap: Map<Order, Ticket[]>
+): FormResponse[] {
+  const approvedFormResponseIds = getFormResponseIdsFromOrderTicketsMap(
+    getApprovedOrderTicketsMap(orderTicketsMap)
+  );
+  return formResponses.filter((response) => approvedFormResponseIds.has(response.formResponseId));
 }
 
 /** Human-readable value for a single form section (matches organiser tooling). */
