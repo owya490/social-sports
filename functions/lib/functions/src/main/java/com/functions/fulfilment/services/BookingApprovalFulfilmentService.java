@@ -147,8 +147,14 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                                         .orElse(UrlUtils.SPORTSHUB_URL))
                         : UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId).orElse(UrlUtils.SPORTSHUB_URL);
 
+                String bookingApprovalSuccessUrl = UrlUtils
+                        .getUrlWithCurrentEnvironment(
+                                String.format("/event/success/%s?fulfilmentSessionType=BOOKING_APPROVAL", eventId))
+                        .orElse(UrlUtils.SPORTSHUB_URL);
+
                 var delayedStripeCheckout = StripeService.getDelayedStripeCheckoutUrl(eventId,
-                        eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
+                        eventData.getIsPrivate(), numTickets, Optional.of(bookingApprovalSuccessUrl),
+                        Optional.of(cancelUrl),
                         fulfilmentSessionId, endFulfilmentEntityId);
 
                 logger.info("Created delayed Stripe checkout link for event ID {}", eventId);
