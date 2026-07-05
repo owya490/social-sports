@@ -23,6 +23,14 @@ Recurrence settings:
    - **Number of recurrences**: Set how many times the event should repeat (up to 99 times)
    - **Days prior for event creation**: Choose how many days before each occurrence the event should be automatically created
 
+## Recurring Attendees
+
+Use **Reserved Slots** to keep places available for attendees who should be included in every future event in the series.
+
+For each recurring attendee, enter their email address, attendee name, and the number of slots to reserve. When a future event is created from the recurring template, SPORTSHUB adds those reserved attendees to that event's **Manage Attendees** list and reduces the available vacancy by the number of reserved slots.
+
+Reserved slots are managed on the recurring event template and apply to future generated events. Existing event instances keep their current attendee list unless you update them individually.
+
 ## Recurrence Preview
 
 Once configured, you'll see a preview table showing:
@@ -55,6 +63,7 @@ Each recurring event instance can be managed independently. All child recurrence
 - Changes to one recurring event instance don't automatically apply to others
 - Each occurrence maintains its own participant list and registration data
 - You can modify or cancel individual events without affecting the entire series
+- Reserved slots configured on the recurring template are applied when new future instances are created
 
 ## Best Practices for Recurring Events
 
@@ -62,6 +71,7 @@ Each recurring event instance can be managed independently. All child recurrence
 - **Consistent Scheduling**: Keep timing consistent across recurring events for participant convenience
 - **Regular Monitoring**: Check each occurrence individually to ensure details remain accurate
 - **Communication**: Use the series to establish routine but communicate any changes to specific instances clearly
+- **Capacity Planning**: Leave enough capacity for both reserved recurring attendees and casual bookings
 
 ## Modifying Recurrence Settings
 
