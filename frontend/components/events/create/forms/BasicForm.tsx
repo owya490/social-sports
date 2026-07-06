@@ -6,7 +6,7 @@ import { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
+import { isBookingApprovalEnabled } from "@/services/featureFlags";
 import {
   clampMaxTicketsPerTransaction,
   getOrganiserMaxTicketsPerTransactionLimit,
@@ -744,7 +744,7 @@ export function BasicInformation({
                       </div>
                     </div>
                   )}
-                  {BOOKING_APPROVAL_ENABLED && (
+                  {isBookingApprovalEnabled(user.userId) && (
                     <div>
                       <label className="text-black text-lg font-semibold">
                         Do you want to enable Booking Approval for this Event?

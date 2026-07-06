@@ -3,7 +3,8 @@ import { LabelledSwitch } from "@/components/elements/LabelledSwitch";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
-import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
+import { useUser } from "@/components/utility/UserContext";
+import { isBookingApprovalEnabled } from "@/services/featureFlags";
 import {
   clampMaxTicketsPerTransaction,
   getOrganiserMaxTicketsPerTransactionLimit,
@@ -56,6 +57,7 @@ export const RecurringTemplateSettings = ({
   eventCapacity,
   eventPrice,
 }: RecurringTemplateSettingsProps) => {
+  const { user } = useUser();
   const [loading, setLoading] = useState<boolean>(false);
   const isFree = isFreeEvent(eventPrice);
 
@@ -175,7 +177,7 @@ export const RecurringTemplateSettings = ({
             }}
           />
         )}
-        {BOOKING_APPROVAL_ENABLED && (
+        {isBookingApprovalEnabled(user.userId) && (
           <LabelledSwitch
             title={"Enable Booking Approval"}
             description={"Enable to require manual approval for bookings before they are confirmed."}
