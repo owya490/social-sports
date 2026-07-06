@@ -4,7 +4,7 @@ import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
-import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
+import { isBookingApprovalEnabled } from "@/services/featureFlags";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import {
@@ -207,7 +207,7 @@ const EventDrilldownSettingsPage = ({
           }}
         />
       )}
-      {BOOKING_APPROVAL_ENABLED && (
+      {isBookingApprovalEnabled(user.userId) && (
         <LabelledSwitch
           title={"Enable Booking Approval"}
           description={"Enable to require manual approval for bookings before they are confirmed."}
