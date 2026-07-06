@@ -10,13 +10,17 @@ public enum EmailTemplateType {
     WAITLIST_CONFIRMATION("cmjcdaf0h05gt0i56iicea2ys"),
     WAITLIST_NOTIFICATION("cmjgp5at54ceh0iyg06ddxftt"),
 
-    BOOKING_APPROVAL_TENTATIVE("cmnd2gkqh03ja0ixlz9fx93re"),
+    /** Sent when a booking request is received and awaiting organiser approval. */
+    BOOKING_PENDING("cmnd2gkqh03ja0ixlz9fx93re"),
 
-    /** Same Loops transactional as {@link #PURCHASE} — sent when an organiser approves a pending booking. */
-    BOOKING_APPROVED(PURCHASE.templateId),
+    /** Sent when an organiser approves a pending booking. */
+    BOOKING_APPROVED("cmqm0fa3719jx0j0fu0ksganb"),
 
-    /** Same Loops transactional as {@link #BOOKING_APPROVAL_TENTATIVE} — organiser copy at pending checkout. */
-    BOOKING_APPROVAL_ORGANISER(BOOKING_APPROVAL_TENTATIVE.templateId);
+    /** Sent when a pending booking is rejected or expires. */
+    BOOKING_REJECTED("cml0rm3t21e8s0ixa21rvcfnx"),
+
+    /** Same Loops transactional as {@link #BOOKING_PENDING} — organiser copy at pending checkout. */
+    BOOKING_APPROVAL_ORGANISER(BOOKING_PENDING.templateId);
 
     public final String templateId;
 
