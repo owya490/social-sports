@@ -4,8 +4,9 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalsService";
 import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import toast, { Toaster } from "react-hot-toast";
+import toast, { ErrorIcon, ToastBar, Toaster } from "react-hot-toast";
 import InviteAttendeeDialog from "./AddAttendeeDialog";
 import { ViewAttendeeFormResponsesDialog } from "./ViewAttendeeFormResponsesDialog";
 import { ApprovedAttendeeTab } from "./tabs/ApprovedAttendeeTab";
@@ -23,6 +24,41 @@ interface EventDrilldownManageAttendeesPageProps {
 }
 
 type TabType = "approved" | "pending" | "rejected";
+
+const showFailureToastWithRefresh = (message: string, toastId: string) => {
+  toast.custom(
+    (t) => (
+      <div
+        className="flex flex-col gap-2 w-full pointer-events-auto rounded-lg bg-white text-[#363636] leading-snug"
+        style={{
+          fontSize: "16px",
+          maxWidth: "500px",
+          padding: "16px 20px",
+          boxShadow: "0 3px 10px rgba(0, 0, 0, 0.1), 0 3px 3px rgba(0, 0, 0, 0.05)",
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="shrink-0 flex items-center justify-center w-5 h-5">
+            <ErrorIcon />
+          </div>
+          <span>{message}</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            toast.dismiss(t.id);
+            window.location.reload();
+          }}
+          className="flex items-center gap-1 self-end px-2.5 py-1 text-sm font-medium rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          <ArrowPathIcon className="w-3.5 h-3.5" />
+          Refresh
+        </button>
+      </div>
+    ),
+    { id: toastId, duration: 10000 }
+  );
+};
 
 export const EventDrilldownManageAttendeesPage = ({
   eventMetadata,
@@ -191,16 +227,16 @@ export const EventDrilldownManageAttendeesPage = ({
         toast.success("Order approved successfully", { id: toastId });
       } else {
         moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
-        toast.error(
+        showFailureToastWithRefresh(
           response.message || "Order could not be approved and has been moved to rejected.",
-          { id: toastId }
+          toastId
         );
       }
     } catch (error) {
       logger.error(`Failed to approve order ${order.orderId}: ${error}`);
-      toast.error(
+      showFailureToastWithRefresh(
         "Failed to approve order. Please try again and contact SPORTSHUB support if the problem persists.",
-        { id: toastId }
+        toastId
       );
     }
   };
@@ -224,9 +260,9 @@ export const EventDrilldownManageAttendeesPage = ({
       }
     } catch (error) {
       logger.error(`Failed to reject order ${order.orderId}: ${error}`);
-      toast.error(
+      showFailureToastWithRefresh(
         "Failed to reject order. Please try again and contact SPORTSHUB support if the problem persists.",
-        { id: toastId }
+        toastId
       );
     }
   };
@@ -245,7 +281,18 @@ export const EventDrilldownManageAttendeesPage = ({
             padding: "16px 20px",
           },
         }}
-      />
+      >
+        {(toastItem) => (
+          <ToastBar toast={toastItem}>
+            {({ icon, message }) => (
+              <>
+                <div className="shrink-0 flex items-center justify-center w-5 h-5">{icon}</div>
+                {message}
+              </>
+            )}
+          </ToastBar>
+        )}
+      </Toaster>
       {/* Tabs */}
       <div className="flex md:space-x-1 border-b border-gray-300">
         <button
