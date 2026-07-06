@@ -9,11 +9,11 @@ tags:
   - SPORTSHUB
   - Features
   - Organiser
-image: https://marketplace.canva.com/9pGSU/MAEJGZ9pGSU/1/tl/canva-basketball-net-with-basketball-near-hoop-MAEJGZ9pGSU.jpg
+image: https://cdn.prod.website-files.com/66de41e2655789935056f9d5/69424632996f3a13c448d636_id-18.png
 description: "Organisers can now approve attendees before they're confirmed. Players request a spot, and their card isn't charged until you say yes."
 ---
 
-![booking-approval](https://marketplace.canva.com/9pGSU/MAEJGZ9pGSU/1/tl/canva-basketball-net-with-basketball-near-hoop-MAEJGZ9pGSU.jpg)
+![booking-approval](https://cdn.prod.website-files.com/66de41e2655789935056f9d5/69424632996f3a13c448d636_id-18.png)
 
 # Booking Approval: You Choose Who Gets In
 
@@ -55,4 +55,4 @@ Running a session where you want to hand-pick participants? [Enable Booking Appr
 
 ---
 
-_Built with_ <3 _by the [SPORTSHUB](https://www.sportshub.net.au/) team._
+_Built with_ ❤️ _by the [SPORTSHUB](https://www.sportshub.net.au/) team._
