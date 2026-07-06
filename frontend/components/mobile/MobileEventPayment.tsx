@@ -181,7 +181,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   </div>
                   {props.bookingApprovalEnabled && (
                     <p className="text-xs text-gray-600 mt-2 text-center">
-                      This event requires organiser approval. Your card will be authorised but not charged until approved — requests auto-expire in 48 hours.
+                      Organiser approval required. Your card won&apos;t be charged until you&apos;re approved.
                     </p>
                   )}
                 </>
