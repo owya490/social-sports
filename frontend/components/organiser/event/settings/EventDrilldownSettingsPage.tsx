@@ -4,7 +4,6 @@ import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
-import { isBookingApprovalEnabled } from "@/services/featureFlags";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import {
@@ -207,19 +206,17 @@ const EventDrilldownSettingsPage = ({
           }}
         />
       )}
-      {isBookingApprovalEnabled(user.userId) && (
-        <LabelledSwitch
-          title={"Enable Booking Approval"}
-          description={"Enable to require manual approval for bookings before they are confirmed."}
-          state={bookingApprovalEnabled}
-          setState={setBookingApprovalEnabled}
-          updateData={(event: boolean) => {
-            void saveEventSettings({
-              bookingApprovalEnabled: event,
-            });
-          }}
-        />
-      )}
+      <LabelledSwitch
+        title={"Enable Booking Approval"}
+        description={"Enable to require manual approval for bookings before they are confirmed."}
+        state={bookingApprovalEnabled}
+        setState={setBookingApprovalEnabled}
+        updateData={(event: boolean) => {
+          void saveEventSettings({
+            bookingApprovalEnabled: event,
+          });
+        }}
+      />
       <LabelledSwitch
         title={"Show Attendees on Event Page"}
         description={"Display registered attendees on the public event page."}
