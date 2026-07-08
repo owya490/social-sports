@@ -21,6 +21,7 @@ import {
   EventMetadata,
   DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
@@ -69,6 +70,7 @@ export default function EventPage() {
   const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] = useState<number>(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [eventIsActive, setEventIsActive] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
+  const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
   const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
   const router = useRouter();
@@ -116,6 +118,7 @@ export default function EventPage() {
         setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
         setEventIsActive(event.isActive);
         setEventFormId(event.formId);
+        setEventTicketTypes(event.eventTicketTypes);
         setEventHideVacancy(event.hideVacancy);
         setEventWaitlistEnabled(event.waitlistEnabled);
         setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
@@ -290,6 +293,15 @@ export default function EventPage() {
                 setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
                 eventCapacity={eventCapacity}
                 eventPrice={eventPrice}
+                eventData={eventData}
+                eventTicketTypes={eventTicketTypes}
+                setEventTicketTypes={(types) => {
+                  setEventTicketTypes(types);
+                  setEventData((prev) => ({ ...prev, eventTicketTypes: types }));
+                }}
+                setEventCapacity={setEventCapacity}
+                setEventVacancy={setEventVacancy}
+                setEventPrice={setEventPrice}
               />
             )}
             {currSidebarPage === "Communication" && <EventDrilldownCommunicationPage />}

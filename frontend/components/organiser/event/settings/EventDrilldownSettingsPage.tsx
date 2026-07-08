@@ -19,7 +19,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LabelledSwitch } from "../../../elements/LabelledSwitch";
 import DeleteEventModal from "./DeleteEventModal";
+import { EventTicketTypesSettingsSection } from "./EventTicketTypesSettingsSection";
 import { isFreeEvent } from "@/utilities/priceUtils";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 
 interface EventDrilldownSettingsPageProps {
   eventId: EventId;
@@ -47,6 +49,12 @@ interface EventDrilldownSettingsPageProps {
   setMaxTicketsPerTransaction: (n: number) => void;
   eventCapacity: number;
   eventPrice: number;
+  eventData: EventData;
+  eventTicketTypes: EventTicketTypesMap | undefined;
+  setEventTicketTypes: (types: EventTicketTypesMap | undefined) => void;
+  setEventCapacity: (capacity: number) => void;
+  setEventVacancy: (vacancy: number) => void;
+  setEventPrice: (price: number) => void;
 }
 
 const EventDrilldownSettingsPage = ({
@@ -75,6 +83,12 @@ const EventDrilldownSettingsPage = ({
   setMaxTicketsPerTransaction,
   eventCapacity,
   eventPrice,
+  eventData,
+  eventTicketTypes,
+  setEventTicketTypes,
+  setEventCapacity,
+  setEventVacancy,
+  setEventPrice,
 }: EventDrilldownSettingsPageProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { user, auth } = useUser();
@@ -128,6 +142,17 @@ const EventDrilldownSettingsPage = ({
 
   return (
     <div className="flex flex-col space-y-4 mb-6 px-4 md:px-0">
+      <EventTicketTypesSettingsSection
+        eventId={eventId}
+        eventData={eventData}
+        orderTicketsMap={orderTicketsMap}
+        eventTicketTypes={eventTicketTypes}
+        setEventTicketTypes={setEventTicketTypes}
+        setEventCapacity={setEventCapacity}
+        setEventVacancy={setEventVacancy}
+        setEventPrice={setEventPrice}
+        onSavingChange={setSaving}
+      />
       <LabelledSwitch
         title={"Pause Event Registration"}
         description={"If enabled, event registration will be closed."}

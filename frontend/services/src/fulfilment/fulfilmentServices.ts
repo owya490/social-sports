@@ -63,14 +63,14 @@ export async function initFulfilmentSession(
   try {
     switch (fulfilmentSessionType.type) {
       case FulfilmentSessionType.CHECKOUT: {
-        const { eventId, numTickets } = fulfilmentSessionType;
+        const { eventId, numTickets, eventTicketTypeId } = fulfilmentSessionType;
 
-        // Check for existing session in localStorage specific to this event and ticket count
-        const existingSessionId = getStoredFulfilmentSessionId(eventId, numTickets);
+        // Check for existing session in localStorage specific to this event, ticket count, and type
+        const existingSessionId = getStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
 
         if (existingSessionId) {
           fulfilmentServiceLogger.info(
-            `initFulfilmentSession: Found existing session in localStorage: ${existingSessionId} for eventId: ${eventId}, numTickets: ${numTickets}, verifying with backend`
+            `initFulfilmentSession: Found existing session in localStorage: ${existingSessionId} for eventId: ${eventId}, numTickets: ${numTickets}, eventTicketTypeId: ${eventTicketTypeId ?? "none"}, verifying with backend`
           );
 
           try {
@@ -88,16 +88,16 @@ export async function initFulfilmentSession(
             fulfilmentServiceLogger.warn(
               `initFulfilmentSession: Existing session ${existingSessionId} is invalid or expired on backend, creating new session: ${error}`
             );
-            clearStoredFulfilmentSessionId(eventId, numTickets);
+            clearStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
             // Session is invalid, continue to create a new one
           }
         }
 
         // No valid existing session, create a new one
-        const response = await initCheckoutFulfilmentSession(eventId, numTickets);
+        const response = await initCheckoutFulfilmentSession(eventId, numTickets, eventTicketTypeId);
 
         // Store the new session ID in localStorage with event and ticket context
-        storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets);
+        storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
 
         return response;
       }
@@ -121,7 +121,8 @@ export async function initFulfilmentSession(
  */
 async function initCheckoutFulfilmentSession(
   eventId: EventId,
-  numTickets: number
+  numTickets: number,
+  eventTicketTypeId?: import("@/interfaces/EventTicketTypeTypes").EventTicketTypeId
 ): Promise<InitCheckoutFulfilmentSessionResponse> {
   fulfilmentServiceLogger.info(
     `initCheckoutFulfilmentSessionNew: Initializing fulfilment session for event ID: ${eventId}`
@@ -133,6 +134,7 @@ async function initCheckoutFulfilmentSession(
     >(EndpointType.INIT_FULFILMENT_SESSION, {
       eventId,
       numTickets,
+      ...(eventTicketTypeId ? { eventTicketTypeId } : {}),
     });
     return response;
   } catch (error) {

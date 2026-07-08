@@ -20,6 +20,7 @@ export enum FulfilmentSessionType {
 export type FulfilmentSessionBase = {
   eventId: EventId;
   numTickets: number;
+  eventTicketTypeId?: import("./EventTicketTypeTypes").EventTicketTypeId;
 };
 
 export type CheckoutFulfilmentSessionType = FulfilmentSessionBase;
@@ -56,6 +57,7 @@ export enum FulfilmentEntityType {
 export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
   numTickets: number;
+  eventTicketTypeId?: import("./EventTicketTypeTypes").EventTicketTypeId;
 };
 
 /**

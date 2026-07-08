@@ -33,7 +33,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
     private static final Logger logger = LoggerFactory.getLogger(BookingApprovalFulfilmentService.class);
 
     public BookingApprovalFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
-            Integer numTickets) throws Exception {
+            Integer numTickets, String eventTicketTypeId) throws Exception {
         try {
 
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);

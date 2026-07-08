@@ -66,6 +66,8 @@ public abstract class AbstractEventData {
 	private Boolean showAttendeesOnEventPage = false; // Optional field
 	@Nullable
 	private Integer maxTicketsPerTransaction = 10; // Max tickets per checkout; optional for legacy docs
+	@Nullable
+	private Map<String, EventTicketType> eventTicketTypes;
 
 	@Data
 	public static class LocationLatLng {

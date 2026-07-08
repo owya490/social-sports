@@ -25,6 +25,7 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentSession.CheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.tickets.models.Order;
@@ -144,6 +145,38 @@ public class WebhookService {
         }
 
         return formResponseIds;
+    }
+
+    private record TicketTypePurchaseInfo(String eventTicketTypeId, String eventTicketTypeName) {}
+
+    private static TicketTypePurchaseInfo getTicketTypeInfoFromFulfilmentSession(
+            Transaction transaction, String fulfilmentSessionId) {
+        if (fulfilmentSessionId == null || fulfilmentSessionId.isEmpty()) {
+            return null;
+        }
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            DocumentReference fulfilmentSessionRef = db.collection(CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)
+                    .document(fulfilmentSessionId);
+            DocumentSnapshot fulfilmentSessionSnapshot = transaction.get(fulfilmentSessionRef).get();
+            if (!fulfilmentSessionSnapshot.exists()) {
+                return null;
+            }
+            FulfilmentSession fulfilmentSession = FulfilmentSession.fromFirestore(fulfilmentSessionSnapshot);
+            if (fulfilmentSession instanceof CheckoutFulfilmentSession checkoutSession) {
+                String eventTicketTypeId = checkoutSession.getEventTicketTypeId();
+                String eventTicketTypeName = checkoutSession.getEventTicketTypeName();
+                if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+                    return null;
+                }
+                return new TicketTypePurchaseInfo(eventTicketTypeId, eventTicketTypeName);
+            }
+            return null;
+        } catch (Exception e) {
+            logger.warn("Failed to retrieve ticket type info from fulfilment session {}: {}",
+                    fulfilmentSessionId, e.getMessage());
+            return null;
+        }
     }
 
     private static void appendFormResponseId(List<String> formResponseIds, FulfilmentEntity fulfilmentEntity) {
@@ -580,6 +613,7 @@ public class WebhookService {
 
         // Retrieve form response IDs from fulfilment session (best effort)
         List<String> formResponseIds = getFormResponseIdsFromFulfilmentSession(transaction, fulfilmentSessionId);
+        TicketTypePurchaseInfo ticketTypeInfo = getTicketTypeInfoFromFulfilmentSession(transaction, fulfilmentSessionId);
         
         // Read event data
         ApiFuture<DocumentSnapshot> eventFuture = transaction.get(eventRef);
@@ -658,6 +692,10 @@ public class WebhookService {
             ticket.setPurchaseDate(purchaseTime);
             ticket.setStatus(status);
             ticket.setFormResponseId(formResponseId);
+            if (ticketTypeInfo != null) {
+                ticket.setEventTicketTypeId(ticketTypeInfo.eventTicketTypeId());
+                ticket.setEventTicketTypeName(ticketTypeInfo.eventTicketTypeName());
+            }
             
             transaction.create(ticketRef, ticket);
             ticketIds.add(ticketRef.getId());
