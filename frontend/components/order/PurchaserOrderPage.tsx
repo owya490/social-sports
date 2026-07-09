@@ -116,6 +116,15 @@ export default function PurchaserOrderPage() {
 
   const orderTotalCents = useMemo(() => tickets.reduce((sum, t) => sum + (t.price ?? 0), 0), [tickets]);
 
+  const getFormLinkForTicket = (ticket: Ticket): string | null => {
+    if (!ticket.formResponseId || !event) return null;
+    const typeFormId =
+      ticket.eventTicketTypeId && event.eventTicketTypes?.[ticket.eventTicketTypeId]?.formId;
+    const formId = typeFormId ?? event.formId;
+    if (!formId) return null;
+    return `/forms/${formId}/${event.eventId}/${ticket.formResponseId}`;
+  };
+
   if (loading) {
     return <Loading />;
   }
@@ -246,24 +255,32 @@ export default function PurchaserOrderPage() {
                   <span className="min-w-0 flex-1 break-all font-mono text-sm text-core-text">{ticket.ticketId}</span>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-gray-600">{formatFirestoreTimestamp(ticket.purchaseDate)}</p>
+                  <div>
+                    {ticket.eventTicketTypeName && (
+                      <p className="text-sm font-medium text-core-text">{ticket.eventTicketTypeName}</p>
+                    )}
+                    <p className="text-sm text-gray-600">{formatFirestoreTimestamp(ticket.purchaseDate)}</p>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <StatusChip status={ticket.status} />
                     <span className="text-sm font-medium text-core-text">{getEventPriceDisplay(ticket.price)}</span>
                   </div>
                 </div>
-                {ticket.formResponseId && event.formId ? (
-                  <div className="pt-1">
-                    <Link
-                      href={`/forms/${event.formId}/${event.eventId}/${ticket.formResponseId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-core-text underline underline-offset-4 decoration-gray-400 hover:decoration-core-text"
-                    >
-                      View Form Responses
-                    </Link>
-                  </div>
-                ) : null}
+                {(() => {
+                  const formLink = getFormLinkForTicket(ticket);
+                  return formLink ? (
+                    <div className="pt-1">
+                      <Link
+                        href={formLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-core-text underline underline-offset-4 decoration-gray-400 hover:decoration-core-text"
+                      >
+                        View Form Responses
+                      </Link>
+                    </div>
+                  ) : null;
+                })()}
               </li>
             ))}
           </ul>

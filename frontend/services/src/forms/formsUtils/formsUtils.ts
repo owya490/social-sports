@@ -146,6 +146,26 @@ export function filterFormResponsesForApprovedOrders(
   return formResponses.filter((response) => approvedFormResponseIds.has(response.formResponseId));
 }
 
+/** Form responses linked to approved tickets for a specific event ticket type. */
+export function filterFormResponsesForTicketType(
+  formResponses: FormResponse[],
+  orderTicketsMap: Map<Order, Ticket[]>,
+  eventTicketTypeId: import("@/interfaces/EventTicketTypeTypes").EventTicketTypeId
+): FormResponse[] {
+  const approvedMap = getApprovedOrderTicketsMap(orderTicketsMap);
+  const typeFormResponseIds = new Set<FormResponseId>();
+
+  approvedMap.forEach((tickets) => {
+    tickets.forEach((ticket) => {
+      if (ticket.eventTicketTypeId === eventTicketTypeId && ticket.formResponseId) {
+        typeFormResponseIds.add(ticket.formResponseId);
+      }
+    });
+  });
+
+  return formResponses.filter((response) => typeFormResponseIds.has(response.formResponseId));
+}
+
 /** Human-readable value for a single form section (matches organiser tooling). */
 export function getFormSectionAnswerDisplay(section: FormSection | undefined): string {
   if (!section) return "—";

@@ -1,12 +1,18 @@
 import Loading from "@/components/loading/Loading";
 import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { addAttendee } from "@/services/src/attendee/attendeeService";
+import {
+  findEventTicketType,
+  getActiveSortedEventTicketTypes,
+  hasEventTicketTypes,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import { Alert, Input } from "@material-tailwind/react";
+import { Alert, Input, Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import React, { Fragment, useEffect, useState } from "react";
 
@@ -34,6 +40,16 @@ const InviteAttendeeDialog = ({
   const [attendeeName, setAttendeeName] = useState<string>("");
   const [attendeePhoneNumber, setAttendeePhoneNumber] = useState<string>("");
   const [numTickets, setNumTickets] = useState<string>("1");
+  const usesTicketTypes = hasEventTicketTypes(eventData);
+  const activeTypes = getActiveSortedEventTicketTypes(eventData.eventTicketTypes);
+  const [selectedTypeId, setSelectedTypeId] = useState<EventTicketTypeId | null>(
+    activeTypes[0]?.eventTicketTypeId ?? null
+  );
+  const selectedType = selectedTypeId
+    ? findEventTicketType(eventData.eventTicketTypes, selectedTypeId)
+    : undefined;
+  const effectiveVacancy = usesTicketTypes ? (selectedType?.vacancy ?? 0) : eventData.vacancy;
+  const effectivePrice = usesTicketTypes ? (selectedType?.price ?? 0) : 0;
 
   const [loading, setLoading] = useState<boolean>(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
@@ -64,9 +80,11 @@ const InviteAttendeeDialog = ({
         fullName: attendeeName,
         phone: attendeePhoneNumber,
         numTickets: parseInt(numTickets),
-        price: 0, // price is free as it is being added manually
+        price: effectivePrice,
+        ...(selectedTypeId ? { eventTicketTypeId: selectedTypeId } : {}),
       });
       const now = Timestamp.now();
+      const typeName = selectedType?.name;
       const newOrder: Order = {
         ...EMPTY_ORDER_DEFAULTS,
         orderId: orderId as OrderId,
@@ -86,6 +104,8 @@ const InviteAttendeeDialog = ({
         purchaseDate: now,
         status: OrderAndTicketStatus.APPROVED,
         type: OrderAndTicketType.MANUAL,
+        price: effectivePrice,
+        ...(selectedTypeId ? { eventTicketTypeId: selectedTypeId, eventTicketTypeName: typeName } : {}),
       }));
       setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
       setEventVacancy(eventData.vacancy - parseInt(numTickets));
@@ -220,11 +240,11 @@ const InviteAttendeeDialog = ({
                           value={numTickets}
                           type="number"
                           min={1}
-                          max={eventData.vacancy}
+                          max={effectiveVacancy}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
                             if (!isNaN(value)) {
-                              const capped = clampTicketQuantity(value, 1, eventData.vacancy);
+                              const capped = clampTicketQuantity(value, 1, effectiveVacancy);
                               setNumTickets(capped.toString());
                             } else {
                               setNumTickets("1");
@@ -232,6 +252,24 @@ const InviteAttendeeDialog = ({
                           }}
                           className="focus:ring-0"
                         />
+                        {usesTicketTypes && activeTypes.length > 0 && (
+                          <Select
+                            label="Ticket type"
+                            value={selectedTypeId ?? ""}
+                            onChange={(value) => {
+                              if (value) {
+                                setSelectedTypeId(value as EventTicketTypeId);
+                                setNumTickets("1");
+                              }
+                            }}
+                          >
+                            {activeTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                              <Option key={eventTicketTypeId} value={eventTicketTypeId}>
+                                {eventTicketType.name} ({eventTicketType.vacancy} remaining)
+                              </Option>
+                            ))}
+                          </Select>
+                        )}
                       </div>
 
                       <div className="mt-2 float-right">

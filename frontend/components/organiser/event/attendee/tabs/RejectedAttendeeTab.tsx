@@ -5,6 +5,7 @@ import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/r
 import { DocumentTextIcon, EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { Fragment } from "react";
 import AttendeeListTable from "../AttendeeListTable";
+import { formatTicketTypeSummary } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 
 interface RejectedAttendeeActionsProps {
   order: Order;
@@ -66,14 +67,18 @@ export const RejectedAttendeeTab = ({
   );
 
   // Convert attendee entries to table data format
-  const tableData = sortedOrders.map((order, index) => ({
+  const tableData = sortedOrders.map((order, index) => {
+    const tickets = rejectedOrderTicketsMap.get(order) ?? [];
+    return {
     key: `${order.email}-${order.fullName}-${index}`,
     ticketCount: order.tickets.length,
     name: order.fullName,
     email: order.email,
     phone: order.phone || null,
+    ticketTypeSummary: formatTicketTypeSummary(tickets),
     order,
-  }));
+  };
+  });
 
   const allAttendeesCsvData = sortedOrders.flatMap((order) => {
     const rows = [

@@ -1,6 +1,9 @@
 "use client";
 import { LabelledSwitch } from "@/components/elements/LabelledSwitch";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
+import { NewEventData } from "@/interfaces/EventTypes";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
+import { syncEventAggregatesFromTicketTypes } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import {
@@ -11,9 +14,16 @@ import {
 import { Option, Select, Spinner } from "@material-tailwind/react";
 import { useState } from "react";
 import { isFreeEvent } from "@/utilities/priceUtils";
+import { EventTicketTypesSettingsSection } from "../event/settings/EventTicketTypesSettingsSection";
 
 interface RecurringTemplateSettingsProps {
   recurrenceTemplateId: RecurrenceTemplateId;
+  eventData: NewEventData;
+  eventTicketTypes: EventTicketTypesMap | undefined;
+  setEventTicketTypes: (types: EventTicketTypesMap | undefined) => void;
+  setEventCapacity: (capacity: number) => void;
+  setEventVacancy: (vacancy: number) => void;
+  setEventPrice: (price: number) => void;
   paymentsActive: boolean;
   setPaymentsActive: (event: boolean) => void;
   stripeFeeToCustomer: boolean;
@@ -36,6 +46,12 @@ interface RecurringTemplateSettingsProps {
 
 export const RecurringTemplateSettings = ({
   recurrenceTemplateId,
+  eventData,
+  eventTicketTypes,
+  setEventTicketTypes,
+  setEventCapacity,
+  setEventVacancy,
+  setEventPrice,
   paymentsActive,
   setPaymentsActive,
   stripeFeeToCustomer,
@@ -77,6 +93,29 @@ export const RecurringTemplateSettings = ({
   return (
     <div className="relative">
       <div className="flex flex-col space-y-4 mb-6 px-4 md:px-0">
+        <EventTicketTypesSettingsSection
+          eventId={recurrenceTemplateId as unknown as import("@/interfaces/EventTypes").EventId}
+          eventData={eventData}
+          orderTicketsMap={new Map()}
+          eventTicketTypes={eventTicketTypes}
+          setEventTicketTypes={setEventTicketTypes}
+          setEventCapacity={setEventCapacity}
+          setEventVacancy={setEventVacancy}
+          setEventPrice={setEventPrice}
+          onSavingChange={setLoading}
+          onPersistTicketTypes={async (nextTypes) => {
+            const aggregates = syncEventAggregatesFromTicketTypes(nextTypes);
+            const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+              eventTicketTypes: nextTypes,
+              price: aggregates.price,
+              capacity: aggregates.capacity,
+              vacancy: aggregates.vacancy,
+            });
+            if (!success) {
+              window.location.reload();
+            }
+          }}
+        />
         <LabelledSwitch
           title={isFree ? "Enable Event Bookings" : "Enable Event Payments"}
           description={

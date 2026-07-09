@@ -21,6 +21,7 @@ import com.functions.events.models.Attendee;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.Purchaser;
+import com.functions.events.utils.EventTicketTypesUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
@@ -741,7 +742,8 @@ public class WebhookService {
             Transaction transaction,
             String eventId,
             boolean isPrivate,
-            int ticketCount) throws Exception {
+            int ticketCount,
+            String eventTicketTypeId) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -756,6 +758,11 @@ public class WebhookService {
         }
 
         transaction.update(eventRef, "vacancy", FieldValue.increment(ticketCount));
+        if (eventTicketTypeId != null && !eventTicketTypeId.isBlank()) {
+            transaction.update(eventRef,
+                    EventTicketTypesUtils.vacancyFieldPath(eventTicketTypeId),
+                    FieldValue.increment(ticketCount));
+        }
     }
 
     private static void updateTicketsStatusToRejected(
@@ -811,7 +818,8 @@ public class WebhookService {
         int currentCount = eventMetadata.getCompleteTicketCount() != null ? eventMetadata.getCompleteTicketCount() : 0;
         eventMetadata.setCompleteTicketCount(Math.max(0, currentCount - canceledTicketCount));
 
-        restockTickets(transaction, eventId, isPrivate, tickets.size());
+        restockTickets(transaction, eventId, isPrivate, tickets.size(),
+                tickets.isEmpty() ? null : tickets.get(0).getEventTicketTypeId());
         updateTicketsStatusToRejected(transaction, ticketIds);
         updateOrderStatusToRejected(transaction, orderId);
 
@@ -942,7 +950,8 @@ public class WebhookService {
             String checkoutSessionId,
             String eventId,
             boolean isPrivate,
-            List<LineItem> lineItems) throws Exception {
+            List<LineItem> lineItems,
+            String fulfilmentSessionId) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -972,8 +981,13 @@ public class WebhookService {
                 eventSnapshot.getString("organiserId"));
         appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
 
-        // Restock the tickets
-        transaction.update(eventRef, "vacancy", FieldValue.increment(quantity));
+        String eventTicketTypeId = null;
+        TicketTypePurchaseInfo ticketTypeInfo = getTicketTypeInfoFromFulfilmentSession(transaction, fulfilmentSessionId);
+        if (ticketTypeInfo != null) {
+            eventTicketTypeId = ticketTypeInfo.eventTicketTypeId();
+        }
+
+        restockTickets(transaction, eventId, isPrivate, (int) quantity, eventTicketTypeId);
         transaction.set(eventMetadataRef, eventMetadata);
     }
     
@@ -1139,7 +1153,8 @@ public class WebhookService {
             String checkoutSessionId,
             String eventId,
             boolean isPrivate,
-            List<LineItem> lineItems) {
+            List<LineItem> lineItems,
+            String fulfilmentSessionId) {
         
         try {
             Boolean result = FirebaseService.createFirestoreTransaction(transaction -> {
@@ -1152,7 +1167,8 @@ public class WebhookService {
                     }
                     
                     // Restock tickets
-                    restockTicketsAfterExpiredCheckout(transaction, checkoutSessionId, eventId, isPrivate, lineItems);
+                    restockTicketsAfterExpiredCheckout(transaction, checkoutSessionId, eventId, isPrivate, lineItems,
+                            fulfilmentSessionId);
                     
                     return true;
                 } catch (Exception e) {

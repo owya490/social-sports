@@ -33,6 +33,8 @@ interface EventTicketTypesSettingsSectionProps {
   setEventVacancy: (vacancy: number) => void;
   setEventPrice: (price: number) => void;
   onSavingChange?: (saving: boolean) => void;
+  /** When set (e.g. recurring templates), saves via this instead of updateEventById. */
+  onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
 }
 
 export function EventTicketTypesSettingsSection({
@@ -45,6 +47,7 @@ export function EventTicketTypesSettingsSection({
   setEventVacancy,
   setEventPrice,
   onSavingChange,
+  onPersistTicketTypes,
 }: EventTicketTypesSettingsSectionProps) {
   const { user } = useUser();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -59,12 +62,16 @@ export function EventTicketTypesSettingsSection({
     setError(null);
     try {
       const aggregates = syncEventAggregatesFromTicketTypes(nextTypes);
-      await updateEventById(eventId, {
-        eventTicketTypes: nextTypes,
-        price: aggregates.price,
-        capacity: aggregates.capacity,
-        vacancy: aggregates.vacancy,
-      });
+      if (onPersistTicketTypes) {
+        await onPersistTicketTypes(nextTypes);
+      } else {
+        await updateEventById(eventId, {
+          eventTicketTypes: nextTypes,
+          price: aggregates.price,
+          capacity: aggregates.capacity,
+          vacancy: aggregates.vacancy,
+        });
+      }
       setEventTicketTypes(nextTypes);
       setEventPrice(aggregates.price);
       setEventCapacity(aggregates.capacity);

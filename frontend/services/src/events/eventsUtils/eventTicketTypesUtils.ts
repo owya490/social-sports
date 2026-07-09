@@ -96,6 +96,20 @@ export function applyCapacityChange(current: EventTicketType, newCapacity: numbe
   };
 }
 
+/** Summarise ticket types for an order's tickets (e.g. "Men's x2, Women's x1"). */
+export function formatTicketTypeSummary(tickets: Ticket[]): string | null {
+  const counts = new Map<string, number>();
+  tickets.forEach((ticket) => {
+    const label = ticket.eventTicketTypeName?.trim();
+    if (!label) return;
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  });
+  if (counts.size === 0) return null;
+  return Array.from(counts.entries())
+    .map(([name, count]) => (count > 1 ? `${name} ×${count}` : name))
+    .join(", ");
+}
+
 export function countSoldTicketsForType(
   orderTicketsMap: Map<Order, Ticket[]>,
   eventTicketTypeId: EventTicketTypeId
