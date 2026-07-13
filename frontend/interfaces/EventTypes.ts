@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { createEmptyEventTicketTypes, EventTicketTypesMap } from "./EventTicketTypeTypes";
 import { FormId } from "./FormTypes";
 import { Branded } from "./index";
 import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
@@ -58,6 +59,8 @@ interface AbstractEventData {
   bookingApprovalEnabled: boolean; // should default to false
   showAttendeesOnEventPage: boolean; // should default to false
   maxTicketsPerTransaction: number; // max tickets per checkout; should default to 7, capped at min(capacity, 10) in UI
+  /** Optional hanging ticket types map; top-level capacity/vacancy/price remain authoritative until migration consumes this. */
+  eventTicketTypes?: EventTicketTypesMap;
 }
 
 export interface NewEventData extends AbstractEventData {}
@@ -117,6 +120,7 @@ export const EmptyEventData: EventData = {
   bookingApprovalEnabled: false,
   showAttendeesOnEventPage: false,
   maxTicketsPerTransaction: DEFAULT_MAX_TICKETS_PER_ORDER,
+  eventTicketTypes: createEmptyEventTicketTypes(),
 };
 
 export interface EventMetadata {
