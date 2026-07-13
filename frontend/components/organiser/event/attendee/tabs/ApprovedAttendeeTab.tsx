@@ -15,6 +15,7 @@ import { Dispatch, Fragment, SetStateAction, useState } from "react";
 import AttendeeListTable from "../AttendeeListTable";
 import { EditAttendeeTicketsDialog } from "../EditAttendeeTicketsDialog";
 import RemoveAttendeeDialog from "../RemoveAttendeeDialog";
+import { formatTicketTypeSummary } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 
 interface ApprovedAttendeeActionsProps {
   order: Order;
@@ -165,19 +166,23 @@ export const ApprovedAttendeeTab = ({
     .sort((a: Order, b: Order) => a.email.localeCompare(b.email));
 
   // Convert attendee entries to table data format
-  const tableData = sortedOrders.map((order, index) => ({
+  const tableData = sortedOrders.map((order, index) => {
+    const tickets = getOrderTickets(order, approvedOrderTicketsMap);
+    return {
     key: `${order.email}-${order.fullName}-${index}`,
-    ticketCount: getOrderTickets(order, approvedOrderTicketsMap).length,
+    ticketCount: tickets.length,
     name: order.fullName,
     email: order.email,
     phone: order.phone || null,
+    ticketTypeSummary: formatTicketTypeSummary(tickets),
     order,
     tickets:
-      getOrderTickets(order, approvedOrderTicketsMap)
+      tickets
         .map((ticket) => ticket.ticketId)
         .map((ticketId) => approvedOrderTicketsMap.get(order)?.find((ticket) => ticket.ticketId === ticketId))
         .filter((ticket): ticket is Ticket => ticket !== undefined) ?? [],
-  }));
+  };
+  });
 
   const allAttendeesCsvData = sortedOrders.flatMap((order) => {
     const rows = [

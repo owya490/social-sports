@@ -1,6 +1,7 @@
 "use client";
 
 import { EventId } from "@/interfaces/EventTypes";
+import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
   formatMobileDifferentDayDateTime,
@@ -9,10 +10,8 @@ import {
 } from "@/services/src/datetimeUtils";
 import {
   getBuyerMaxTicketsPerTransaction,
-  getBuyerTicketCountOptionsWithStoredSessions,
   getTicketCountOptions,
 } from "@/services/src/events/eventsUtils/ticketLimits";
-import { getStoredFulfilmentSessionId } from "@/services/src/fulfilment/fulfilmentUtils/fulfilmentUtils";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import { CalendarDaysIcon, CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
@@ -22,6 +21,7 @@ import BookingButton from "../events/BookingButton";
 import ContactEventButton from "../events/ContactEventButton";
 import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
+import { useEventTicketTypeCheckout } from "../events/useEventTicketTypeCheckout";
 
 interface MobileEventPaymentProps {
   location: string;
@@ -40,25 +40,43 @@ interface MobileEventPaymentProps {
   waitlistEnabled: boolean;
   maxTicketsPerTransaction?: number;
   bookingApprovalEnabled?: boolean;
+  eventTicketTypes?: EventTicketTypesMap;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const { startDate, endDate, registrationEndDate, paused } = props;
-  const isFree = isFreeEvent(props.price);
 
+  const {
+    usesTicketTypes,
+    activeTypes,
+    selectedTypeId,
+    setSelectedTypeId,
+    effectiveVacancy,
+    effectivePrice,
+    effectiveEventTicketTypeId,
+    allCounts,
+    attendeeCount,
+    setAttendeeCount,
+  } = useEventTicketTypeCheckout({
+    eventId: props.eventId,
+    eventTicketTypes: props.eventTicketTypes,
+    vacancy: props.vacancy,
+    price: props.price,
+    maxTicketsPerTransaction: props.maxTicketsPerTransaction,
+  });
+
+  const isFree = isFreeEvent(effectivePrice);
   const effectiveMax = getBuyerMaxTicketsPerTransaction(props.maxTicketsPerTransaction);
-
-  const allCounts = getBuyerTicketCountOptionsWithStoredSessions(
-    props.vacancy,
-    props.maxTicketsPerTransaction,
-    (ticketCount) => getStoredFulfilmentSessionId(props.eventId, ticketCount) !== null
-  );
-
-  const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0] ?? 1);
 
   const handleAttendeeCount = (value?: string) => {
     if (value) {
       setAttendeeCount(parseInt(value));
+    }
+  };
+
+  const handleTicketTypeChange = (value?: string) => {
+    if (value) {
+      setSelectedTypeId(value as EventTicketTypeId);
     }
   };
 
@@ -71,6 +89,8 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
 
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
+  const aggregateSoldOut = props.vacancy === 0 && allCounts.length === 0;
+  const typeSoldOut = usesTicketTypes && effectiveVacancy === 0 && allCounts.length === 0;
 
   return (
     <div className="py-4 px-2">
@@ -99,7 +119,11 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
         </a>
         <div className="flex items-center gap-2.5 text-gray-700">
           <CurrencyDollarIcon className="w-5 h-5 text-gray-500" />
-          <p className="text-sm font-medium leading-5">{getEventPriceDisplay(props.price, true)}</p>
+          <p className="text-sm font-medium leading-5">
+            {usesTicketTypes && activeTypes.length > 1 && !selectedTypeId
+              ? `From ${getEventPriceDisplay(props.price, true)}`
+              : getEventPriceDisplay(effectivePrice, true)}
+          </p>
         </div>
       </div>
 
@@ -119,7 +143,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
           </div>
         ) : props.isPaymentsActive ? (
           <div className="w-full">
-            {props.vacancy === 0 && allCounts.length === 0 ? (
+            {(usesTicketTypes ? typeSoldOut && props.vacancy === 0 : aggregateSoldOut) ? (
                 props.waitlistEnabled && WAITLIST_ENABLED ? (
                 <>
                   <div className="mb-4 !text-black">
@@ -155,6 +179,30 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                 )
               ) : (
                 <>
+                  {usesTicketTypes && activeTypes.length > 0 && (
+                    <div className="mb-4 !text-black">
+                      <Select
+                        className="text-black"
+                        label="Ticket type"
+                        size="lg"
+                        value={selectedTypeId ?? ""}
+                        onChange={handleTicketTypeChange}
+                      >
+                        {activeTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                          <Option key={eventTicketTypeId} value={eventTicketTypeId}>
+                            {eventTicketType.name}
+                            {eventTicketType.vacancy === 0 ? " (Sold out)" : ""}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                  )}
+                  {typeSoldOut ? (
+                    <div className="text-center py-4">
+                      <h3 className="font-semibold text-core-text mb-1">Sold Out</h3>
+                      <p className="text-sm text-gray-600">This ticket type is sold out. Try another type.</p>
+                    </div>
+                  ) : (
                   <div className="flex gap-2">
                     <div className="w-3/5 shrink-0">
                       <Select
@@ -174,12 +222,14 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     <BookingButton
                       eventId={props.eventId}
                       ticketCount={attendeeCount}
+                      eventTicketTypeId={effectiveEventTicketTypeId}
                       setLoading={props.setLoading}
                       bookingApprovalEnabled={props.bookingApprovalEnabled}
                       className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"
                     />
                   </div>
-                  {props.bookingApprovalEnabled && (
+                  )}
+                  {props.bookingApprovalEnabled && !typeSoldOut && (
                     <p className="text-xs text-gray-600 mt-2 text-center">
                       Organiser approval required. Your card won&apos;t be charged until you&apos;re approved.
                     </p>

@@ -1,4 +1,5 @@
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { FC, ReactNode } from "react";
 import { CSVLink } from "react-csv";
 
 interface DownloadCsvButtonProps {
@@ -9,6 +10,14 @@ interface DownloadCsvButtonProps {
   className?: string;
 }
 
+const CsvDownloadLink = CSVLink as unknown as FC<{
+  data: object[];
+  headers: { label: string; key: string }[];
+  filename: string;
+  className?: string;
+  children?: ReactNode;
+}>;
+
 const DownloadCsvButton = ({
   data,
   headers,
@@ -17,7 +26,7 @@ const DownloadCsvButton = ({
   className = "",
 }: DownloadCsvButtonProps) => {
   return (
-    <CSVLink
+    <CsvDownloadLink
       data={data}
       headers={headers}
       filename={filename}
@@ -25,7 +34,7 @@ const DownloadCsvButton = ({
     >
       <ArrowDownTrayIcon className="md:mr-2 h-5 w-5" />
       <span className="hidden md:block">{label}</span>
-    </CSVLink>
+    </CsvDownloadLink>
   );
 };
 

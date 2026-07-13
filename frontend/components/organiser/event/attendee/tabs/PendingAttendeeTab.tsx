@@ -4,6 +4,7 @@ import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/r
 import { CheckIcon, DocumentTextIcon, EllipsisVerticalIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Fragment } from "react";
 import AttendeeListTable from "../AttendeeListTable";
+import { formatTicketTypeSummary } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 
 interface PendingAttendeeTabProps {
   pendingOrderTicketsMap: Map<Order, Ticket[]>;
@@ -21,13 +22,14 @@ export const PendingAttendeeTab = ({
   setSelectedOrderForFormResponses,
 }: PendingAttendeeTabProps) => {
   // Convert orders to table data format
-  const tableData = Array.from(pendingOrderTicketsMap.keys()).map((order) => ({
+  const tableData = Array.from(pendingOrderTicketsMap.entries()).map(([order, tickets]) => ({
     key: order.orderId,
     ticketCount: order.tickets.length,
     name: order.fullName,
     email: order.email,
     phone: order.phone || null,
-    order, // Keep reference to original order for actions
+    ticketTypeSummary: formatTicketTypeSummary(tickets),
+    order,
   }));
 
   const renderActions = (item: (typeof tableData)[0]) => {

@@ -9,6 +9,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class CheckoutFulfilmentSession extends FulfilmentSession {
     private Integer numTickets;
+    private String eventTicketTypeId;
+    private String eventTicketTypeName;
 
     {
         setType(FulfilmentSessionType.CHECKOUT);

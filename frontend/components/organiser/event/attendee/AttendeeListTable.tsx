@@ -11,6 +11,7 @@ interface AttendeeRowData {
   name: string;
   email: string;
   phone: string | null;
+  ticketTypeSummary?: string | null;
 }
 
 interface AttendeeListTableProps<T extends AttendeeRowData> {
@@ -44,6 +45,9 @@ const AttendeeListTable = <T extends AttendeeRowData>({
             <th className="text-left py-2 px-1 md:px-2 text-organiser-title-gray-text font-bold text-xs md:text-base">
               Tickets
             </th>
+            <th className="text-left py-2 px-1 md:px-2 text-organiser-title-gray-text font-bold text-xs md:text-base hidden md:table-cell">
+              Type
+            </th>
             <th className="text-left py-2 px-1 md:px-2 text-organiser-title-gray-text font-bold text-xs md:text-base">
               Name
             </th>
@@ -62,6 +66,9 @@ const AttendeeListTable = <T extends AttendeeRowData>({
           {data.map((item) => (
             <tr key={item.key} className="border-b border-gray-200">
               <td className="py-2 px-1 md:px-2 text-center text-xs md:text-base">{item.ticketCount}</td>
+              <td className="py-2 px-1 md:px-2 text-xs md:text-base hidden md:table-cell text-gray-600">
+                {item.ticketTypeSummary || "—"}
+              </td>
               <td className="py-2 px-1 md:px-2 text-xs md:text-base">
                 <div className="flex flex-row items-center">
                   <UserCircleIcon className="w-8 md:w-10 rounded-full hidden lg:block mr-2 flex-shrink-0" />

@@ -13,6 +13,7 @@ import {
   EventId,
   NewEventData,
 } from "@/interfaces/EventTypes";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
@@ -71,6 +72,7 @@ export default function RecurrenceTemplatePage() {
   const [pastEvents, setPastEvents] = useState<Record<number, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState<boolean>(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
+  const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
 
   const router = useRouter();
   const { user } = useUser();
@@ -102,6 +104,7 @@ export default function RecurrenceTemplatePage() {
         setEventRegistrationDeadline(recurrenceTemplate.eventData.registrationDeadline);
         setEventEventLink(recurrenceTemplate.eventData.eventLink);
         setEventFormId(recurrenceTemplate.eventData.formId);
+        setEventTicketTypes(recurrenceTemplate.eventData.eventTicketTypes);
         const newRecurrenceData = extractNewRecurrenceFormDataFromRecurrenceData(recurrenceTemplate.recurrenceData);
         setNewRecurrenceData(newRecurrenceData);
         // Store original data for change detection (deep copy)
@@ -245,6 +248,15 @@ export default function RecurrenceTemplatePage() {
               <>
                 <RecurringTemplateSettings
                   recurrenceTemplateId={recurrenceTemplateId}
+                  eventData={_eventData!}
+                  eventTicketTypes={eventTicketTypes}
+                  setEventTicketTypes={(types) => {
+                    setEventTicketTypes(types);
+                    setEventData((prev) => (prev ? { ...prev, eventTicketTypes: types } : prev));
+                  }}
+                  setEventCapacity={setEventCapacity}
+                  setEventVacancy={setEventVacancy}
+                  setEventPrice={setEventPrice}
                   paymentsActive={eventPaymentsActive}
                   setPaymentsActive={setEventPaymentsActive}
                   stripeFeeToCustomer={eventStripeFeeToCustomer}
