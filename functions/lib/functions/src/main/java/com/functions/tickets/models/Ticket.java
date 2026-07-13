@@ -28,4 +28,8 @@ public class Ticket {
     @Nullable
     private String formResponseId; // the absence of this means the ticket was purchased without a form response
     private OrderAndTicketType type = OrderAndTicketType.GENERAL;
+    @Nullable
+    private String eventTicketTypeId;
+    @Nullable
+    private String eventTicketTypeName;
 }
