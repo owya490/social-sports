@@ -1,5 +1,5 @@
 import { Timestamp } from "firebase/firestore";
-import { EMPTY_EVENT_TICKET_TYPES, EventTicketTypesMap } from "./EventTicketTypeTypes";
+import { createEmptyEventTicketTypes, EventTicketTypesMap } from "./EventTicketTypeTypes";
 import { FormId } from "./FormTypes";
 import { Branded } from "./index";
 import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
@@ -120,7 +120,7 @@ export const EmptyEventData: EventData = {
   bookingApprovalEnabled: false,
   showAttendeesOnEventPage: false,
   maxTicketsPerTransaction: DEFAULT_MAX_TICKETS_PER_ORDER,
-  eventTicketTypes: EMPTY_EVENT_TICKET_TYPES,
+  eventTicketTypes: createEmptyEventTicketTypes(),
 };
 
 export interface EventMetadata {

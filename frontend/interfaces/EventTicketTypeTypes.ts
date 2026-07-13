@@ -20,5 +20,8 @@ export const EMPTY_EVENT_TICKET_TYPE: EventTicketType = {
   vacancy: 0,
 };
 
-/** Default hanging General Admission map used by EmptyEventData. */
 export const EMPTY_EVENT_TICKET_TYPES: EventTicketTypesMap = {};
+
+export function createEmptyEventTicketTypes(): EventTicketTypesMap {
+  return structuredClone(EMPTY_EVENT_TICKET_TYPES);
+}
