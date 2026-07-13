@@ -11,6 +11,7 @@ export interface AddAttendeeRequest {
   phone: string;
   numTickets: number;
   price: number; // in cents
+  eventTicketTypeId?: string;
 }
 
 export interface AddAttendeeResponse {

@@ -46,6 +46,9 @@ import {
 } from "./eventsUtils/commonEventsUtils";
 import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
 import {
+  ensureDefaultEventTicketTypes,
+} from "./eventsUtils/eventTicketTypesUtils";
+import {
   bustEventsLocalStorageCache,
   findEventDoc,
   getAllEventsFromCollectionRef,
@@ -63,8 +66,9 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
   eventServiceLogger.info(`createEvent`);
   try {
     // Simplified object spreading with tokenized values
+    const eventDataWithDefaults = ensureDefaultEventTicketTypes(data);
     const eventDataWithTokens = {
-      ...data,
+      ...eventDataWithDefaults,
       nameTokens: tokenizeText(data.name),
       locationTokens: tokenizeText(data.location),
     };
