@@ -2,7 +2,7 @@
 
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { useUser } from "@/components/utility/UserContext";
-import { EventData, EventId } from "@/interfaces/EventTypes";
+import { EventId } from "@/interfaces/EventTypes";
 import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
@@ -23,9 +23,17 @@ import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
 import { EventTicketTypeFormDialog } from "./EventTicketTypeFormDialog";
 
+export type EventTicketTypesLegacyEventData = {
+  price: number;
+  capacity: number;
+  vacancy: number;
+  formId: FormId | null;
+  eventTicketTypes?: EventTicketTypesMap;
+};
+
 interface EventTicketTypesSettingsSectionProps {
   eventId: EventId;
-  eventData: EventData;
+  eventData: EventTicketTypesLegacyEventData;
   orderTicketsMap: Map<Order, Ticket[]>;
   eventTicketTypes: EventTicketTypesMap | undefined;
   setEventTicketTypes: (types: EventTicketTypesMap | undefined) => void;

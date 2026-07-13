@@ -113,7 +113,7 @@ export function EventTicketTypeFormDialog({
               <DialogPanel className="w-full max-w-lg transform rounded-2xl bg-white p-6 shadow-xl">
                 <DialogTitle className="text-lg font-bold mb-4">{title}</DialogTitle>
                 <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
-                  <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} required />
+                  <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} required crossOrigin={undefined} />
                   <Textarea
                     label="Description (optional)"
                     value={description}
@@ -126,6 +126,7 @@ export function EventTicketTypeFormDialog({
                     step={0.01}
                     value={priceDollars}
                     onChange={(e) => setPriceDollars(e.target.value)}
+                    crossOrigin={undefined}
                   />
                   <Input
                     label="Capacity"
@@ -133,6 +134,7 @@ export function EventTicketTypeFormDialog({
                     min={1}
                     value={capacity}
                     onChange={(e) => setCapacity(e.target.value)}
+                    crossOrigin={undefined}
                   />
                   <div>
                     <p className="text-sm font-semibold mb-2">Registration Form</p>
