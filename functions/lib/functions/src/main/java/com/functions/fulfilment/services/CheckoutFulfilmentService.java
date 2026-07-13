@@ -14,7 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.EventTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.utils.EventTicketTypesUtils;
 import com.functions.fulfilment.models.FulfilmentSessionService;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
@@ -36,7 +38,7 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
      * Initializes a checkout fulfilment session for the given event ID.
      */
     public CheckoutFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
-            Integer numTickets) throws Exception {
+            Integer numTickets, String eventTicketTypeId) throws Exception {
         try {
 
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
@@ -46,10 +48,15 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
             }
 
             EventData eventData = maybeEventData.get();
+            String resolvedEventTicketTypeId = EventTicketTypesUtils.resolveEventTicketTypeIdForCheckout(
+                    eventData, eventTicketTypeId);
+
+            String eventTicketTypeName = EventTicketTypesUtils.resolveCheckoutTypeName(
+                    eventData, resolvedEventTicketTypeId);
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructCheckoutFulfilmentEntities(
                     eventId,
                     eventData, numTickets,
-                    fulfilmentSessionId);
+                    fulfilmentSessionId, resolvedEventTicketTypeId);
             logger.info(
                     "Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, entityTypes: {}",
                     eventId, numTickets, fulfilmentSessionId,
@@ -71,6 +78,8 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
                     .eventData(eventData)
                     .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityOrder)
                     .numTickets(numTickets)
+                    .eventTicketTypeId(resolvedEventTicketTypeId)
+                    .eventTicketTypeName(eventTicketTypeName)
                     .build();
 
             return session;
@@ -91,7 +100,8 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
     }
 
     private static List<SimpleEntry<String, FulfilmentEntity>> constructCheckoutFulfilmentEntities(
-            String eventId, EventData eventData, Integer numTickets, String fulfilmentSessionId) {
+            String eventId, EventData eventData, Integer numTickets, String fulfilmentSessionId,
+            String eventTicketTypeId) {
         // Pair of FulfilmentEntityId and FulfilmentEntity
         List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = new ArrayList<>();
 
@@ -99,7 +109,7 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
 
         // 1. FORMS entities - one for each ticket
         try {
-            Optional<String> formId = Optional.ofNullable(eventData.getFormId());
+            Optional<String> formId = resolveFormId(eventData, eventTicketTypeId);
             if (formId.isPresent()) {
                 for (int i = 0; i < numTickets; i++) {
                     tempEntities.add(
@@ -150,7 +160,7 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
 
                 var stripeCheckout = StripeService.getStripeCheckoutUrl(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
-                        fulfilmentSessionId, endFulfilmentEntityId);
+                        fulfilmentSessionId, endFulfilmentEntityId, eventTicketTypeId);
 
                 logger.info("Created Stripe checkout link for event ID {}", eventId);
                 logger.debug("Stripe checkout link: {}", stripeCheckout.url());
@@ -165,6 +175,15 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
         }
 
         return fulfilmentEntities;
+    }
+
+    private static Optional<String> resolveFormId(EventData eventData, String eventTicketTypeId) {
+        if (EventTicketTypesUtils.hasEventTicketTypes(eventData)) {
+            return EventTicketTypesUtils.findEventTicketType(eventData, eventTicketTypeId)
+                    .map(EventTicketType::getFormId)
+                    .filter(formId -> formId != null && !formId.isBlank());
+        }
+        return Optional.ofNullable(eventData.getFormId()).filter(formId -> !formId.isBlank());
     }
 
 }

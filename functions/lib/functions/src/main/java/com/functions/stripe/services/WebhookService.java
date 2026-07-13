@@ -21,10 +21,12 @@ import com.functions.events.models.Attendee;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.Purchaser;
+import com.functions.events.utils.EventTicketTypesUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentSession.CheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.tickets.models.Order;
@@ -144,6 +146,38 @@ public class WebhookService {
         }
 
         return formResponseIds;
+    }
+
+    private record TicketTypePurchaseInfo(String eventTicketTypeId, String eventTicketTypeName) {}
+
+    private static TicketTypePurchaseInfo getTicketTypeInfoFromFulfilmentSession(
+            Transaction transaction, String fulfilmentSessionId) {
+        if (fulfilmentSessionId == null || fulfilmentSessionId.isEmpty()) {
+            return null;
+        }
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            DocumentReference fulfilmentSessionRef = db.collection(CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)
+                    .document(fulfilmentSessionId);
+            DocumentSnapshot fulfilmentSessionSnapshot = transaction.get(fulfilmentSessionRef).get();
+            if (!fulfilmentSessionSnapshot.exists()) {
+                return null;
+            }
+            FulfilmentSession fulfilmentSession = FulfilmentSession.fromFirestore(fulfilmentSessionSnapshot);
+            if (fulfilmentSession instanceof CheckoutFulfilmentSession checkoutSession) {
+                String eventTicketTypeId = checkoutSession.getEventTicketTypeId();
+                String eventTicketTypeName = checkoutSession.getEventTicketTypeName();
+                if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+                    return null;
+                }
+                return new TicketTypePurchaseInfo(eventTicketTypeId, eventTicketTypeName);
+            }
+            return null;
+        } catch (Exception e) {
+            logger.warn("Failed to retrieve ticket type info from fulfilment session {}: {}",
+                    fulfilmentSessionId, e.getMessage());
+            return null;
+        }
     }
 
     private static void appendFormResponseId(List<String> formResponseIds, FulfilmentEntity fulfilmentEntity) {
@@ -580,6 +614,7 @@ public class WebhookService {
 
         // Retrieve form response IDs from fulfilment session (best effort)
         List<String> formResponseIds = getFormResponseIdsFromFulfilmentSession(transaction, fulfilmentSessionId);
+        TicketTypePurchaseInfo ticketTypeInfo = getTicketTypeInfoFromFulfilmentSession(transaction, fulfilmentSessionId);
         
         // Read event data
         ApiFuture<DocumentSnapshot> eventFuture = transaction.get(eventRef);
@@ -658,6 +693,10 @@ public class WebhookService {
             ticket.setPurchaseDate(purchaseTime);
             ticket.setStatus(status);
             ticket.setFormResponseId(formResponseId);
+            if (ticketTypeInfo != null) {
+                ticket.setEventTicketTypeId(ticketTypeInfo.eventTicketTypeId());
+                ticket.setEventTicketTypeName(ticketTypeInfo.eventTicketTypeName());
+            }
             
             transaction.create(ticketRef, ticket);
             ticketIds.add(ticketRef.getId());
@@ -703,7 +742,8 @@ public class WebhookService {
             Transaction transaction,
             String eventId,
             boolean isPrivate,
-            int ticketCount) throws Exception {
+            int ticketCount,
+            String eventTicketTypeId) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -718,6 +758,11 @@ public class WebhookService {
         }
 
         transaction.update(eventRef, "vacancy", FieldValue.increment(ticketCount));
+        if (eventTicketTypeId != null && !eventTicketTypeId.isBlank()) {
+            transaction.update(eventRef,
+                    EventTicketTypesUtils.vacancyFieldPath(eventTicketTypeId),
+                    FieldValue.increment(ticketCount));
+        }
     }
 
     private static void updateTicketsStatusToRejected(
@@ -773,7 +818,8 @@ public class WebhookService {
         int currentCount = eventMetadata.getCompleteTicketCount() != null ? eventMetadata.getCompleteTicketCount() : 0;
         eventMetadata.setCompleteTicketCount(Math.max(0, currentCount - canceledTicketCount));
 
-        restockTickets(transaction, eventId, isPrivate, tickets.size());
+        restockTickets(transaction, eventId, isPrivate, tickets.size(),
+                tickets.isEmpty() ? null : tickets.get(0).getEventTicketTypeId());
         updateTicketsStatusToRejected(transaction, ticketIds);
         updateOrderStatusToRejected(transaction, orderId);
 
@@ -904,7 +950,8 @@ public class WebhookService {
             String checkoutSessionId,
             String eventId,
             boolean isPrivate,
-            List<LineItem> lineItems) throws Exception {
+            List<LineItem> lineItems,
+            String fulfilmentSessionId) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -934,8 +981,13 @@ public class WebhookService {
                 eventSnapshot.getString("organiserId"));
         appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
 
-        // Restock the tickets
-        transaction.update(eventRef, "vacancy", FieldValue.increment(quantity));
+        String eventTicketTypeId = null;
+        TicketTypePurchaseInfo ticketTypeInfo = getTicketTypeInfoFromFulfilmentSession(transaction, fulfilmentSessionId);
+        if (ticketTypeInfo != null) {
+            eventTicketTypeId = ticketTypeInfo.eventTicketTypeId();
+        }
+
+        restockTickets(transaction, eventId, isPrivate, (int) quantity, eventTicketTypeId);
         transaction.set(eventMetadataRef, eventMetadata);
     }
     
@@ -1101,7 +1153,8 @@ public class WebhookService {
             String checkoutSessionId,
             String eventId,
             boolean isPrivate,
-            List<LineItem> lineItems) {
+            List<LineItem> lineItems,
+            String fulfilmentSessionId) {
         
         try {
             Boolean result = FirebaseService.createFirestoreTransaction(transaction -> {
@@ -1114,7 +1167,8 @@ public class WebhookService {
                     }
                     
                     // Restock tickets
-                    restockTicketsAfterExpiredCheckout(transaction, checkoutSessionId, eventId, isPrivate, lineItems);
+                    restockTicketsAfterExpiredCheckout(transaction, checkoutSessionId, eventId, isPrivate, lineItems,
+                            fulfilmentSessionId);
                     
                     return true;
                 } catch (Exception e) {

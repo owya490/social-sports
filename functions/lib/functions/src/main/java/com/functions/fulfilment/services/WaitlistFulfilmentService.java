@@ -29,7 +29,7 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
     private static final Logger logger = LoggerFactory.getLogger(WaitlistFulfilmentService.class);
 
     public WaitlistFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
-            Integer numTickets) throws Exception {
+            Integer numTickets, String eventTicketTypeId) throws Exception {
         logger.info("Initialising waitlist fulfilment session {} for event ID: {} with numTickets: {}",
                 fulfilmentSessionId, eventId, numTickets);
         try {
