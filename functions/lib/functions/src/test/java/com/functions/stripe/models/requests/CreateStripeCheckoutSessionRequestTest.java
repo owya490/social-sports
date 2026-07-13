@@ -20,7 +20,8 @@ public class CreateStripeCheckoutSessionRequestTest {
                 "https://sportshub.com/success",
                 "session-123",
                 "entity-123",
-                CaptureMethod.AUTOMATIC);
+                CaptureMethod.AUTOMATIC,
+                null);
 
         assertEquals("session-123", request.fulfilmentSessionId());
         assertEquals("entity-123", request.endFulfilmentEntityId());
@@ -37,7 +38,8 @@ public class CreateStripeCheckoutSessionRequestTest {
                 "https://sportshub.com/success",
                 "",
                 "entity-123",
-                CaptureMethod.AUTOMATIC));
+                CaptureMethod.AUTOMATIC,
+                null));
     }
 
     @Test
@@ -50,7 +52,8 @@ public class CreateStripeCheckoutSessionRequestTest {
                 "https://sportshub.com/success",
                 "session-123",
                 " ",
-                CaptureMethod.AUTOMATIC));
+                CaptureMethod.AUTOMATIC,
+                null));
     }
 
     private static void expectIllegalArgument(String expectedMessagePart, ThrowingRunnable runnable) {

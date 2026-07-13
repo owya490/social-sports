@@ -1,5 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 import { EventId, OrderId, TicketId } from "./EventTypes";
+import { EventTicketTypeId } from "./EventTicketTypeTypes";
 import { FormResponseId } from "./FormTypes";
 import { OrderAndTicketStatus, OrderAndTicketType } from "./OrderTypes";
 
@@ -12,6 +13,8 @@ export interface Ticket {
   status: OrderAndTicketStatus;
   formResponseId: FormResponseId | null; // the absence of this means the ticket was purchased without a form response
   type: OrderAndTicketType;
+  eventTicketTypeId?: EventTicketTypeId;
+  eventTicketTypeName?: string;
 }
 
 export const EMPTY_TICKET: Ticket = {

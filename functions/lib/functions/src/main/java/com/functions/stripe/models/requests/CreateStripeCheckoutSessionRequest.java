@@ -18,7 +18,8 @@ public record CreateStripeCheckoutSessionRequest(
         @JsonProperty("successUrl") String successUrl,
         @JsonProperty("fulfilmentSessionId") @Nonnull String fulfilmentSessionId,
         @JsonProperty("endFulfilmentEntityId") @Nonnull String endFulfilmentEntityId,
-        @JsonProperty("captureMethod") @Nonnull CaptureMethod captureMethod) {
+        @JsonProperty("captureMethod") @Nonnull CaptureMethod captureMethod,
+        @JsonProperty("eventTicketTypeId") String eventTicketTypeId) {
     /**
      * Compact constructor that validates all fields at creation time.
      * 

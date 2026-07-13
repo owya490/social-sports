@@ -143,7 +143,10 @@ public abstract class FulfilmentSession {
                         .fulfilmentSessionStartTime(
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTicketsCheckout).build();
+                        .numTickets(numTicketsCheckout)
+                        .eventTicketTypeId((String) snapshot.get("eventTicketTypeId"))
+                        .eventTicketTypeName((String) snapshot.get("eventTicketTypeName"))
+                        .build();
             case BOOKING_APPROVAL:
                 Integer numTicketsBookingApproval = null;
                 Long numTicketsLongBookingApproval = snapshot.getLong("numTickets");

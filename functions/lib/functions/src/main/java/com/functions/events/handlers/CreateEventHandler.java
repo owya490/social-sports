@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.NewEventData;
+import com.functions.events.utils.EventTicketTypesUtils;
 import com.functions.events.utils.EventsMetadataUtils;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
@@ -72,6 +73,10 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
         final String safeLocation = data.getLocation() == null ? "" : data.getLocation();
         data.setNameTokens(EventsUtils.tokenizeText(safeName));
         data.setLocationTokens(EventsUtils.tokenizeText(safeLocation));
+        if (!EventTicketTypesUtils.hasEventTicketTypes(data)) {
+            data.setEventTicketTypes(EventTicketTypesUtils.buildDefaultEventTicketTypesForNewEvent(
+                    data.getPrice(), data.getCapacity(), data.getVacancy(), data.getFormId()));
+        }
         transaction.set(newEventDocRef, JavaUtils.toMap(data));
         final String eventId = newEventDocRef.getId();
         createEventMetadata(transaction, eventId, data);

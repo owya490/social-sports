@@ -194,7 +194,7 @@ public class FulfilmentService {
         return Optional.empty();
     }
 
-    public static String initFulfilmentSession(String eventId, Integer numTickets) throws Exception {
+    public static String initFulfilmentSession(String eventId, Integer numTickets, String eventTicketTypeId) throws Exception {
         if (numTickets == null || numTickets <= 0) {
             logger.error("Invalid numTickets {} for eventId {}", numTickets, eventId);
             throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
@@ -209,13 +209,13 @@ public class FulfilmentService {
         switch (fulfilmentSessionType) {
             case CHECKOUT ->
                 fulfilmentSession = FulfilmentSessionType.CHECKOUT.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets);
+                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
             case BOOKING_APPROVAL ->
                 fulfilmentSession = FulfilmentSessionType.BOOKING_APPROVAL.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets);
+                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
             case WAITLIST ->
                 fulfilmentSession = FulfilmentSessionType.WAITLIST.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets);
+                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
             default ->
                 throw new Exception("Invalid fulfilment session type: " + fulfilmentSessionType);
         }

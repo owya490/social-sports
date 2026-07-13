@@ -19,16 +19,26 @@ export const COMPLETE_FULFILMENT_SESSION_URL = {
 
 /**
  * Generates localStorage key for fulfilment session ID with event and ticket context.
- * Format: "fulfilmentSessionId#<eventId>#<numTickets>"
+ * Format: "fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId|_>"
  */
-export function getFulfilmentSessionIdKey(eventId: string, numTickets: number): string {
-  return `fulfilmentSessionId#${eventId}#${numTickets}`;
+export function getFulfilmentSessionIdKey(
+  eventId: string,
+  numTickets: number,
+  eventTicketTypeId?: string | null
+): string {
+  const typeKey = eventTicketTypeId ?? "_";
+  return `fulfilmentSessionId#${eventId}#${numTickets}#${typeKey}`;
 }
 
 /**
  * Generates localStorage key for fulfilment session expiry timestamp with event and ticket context.
- * Format: "fulfilmentSessionLocalStorageExpiryTimestamp#<eventId>#<numTickets>"
+ * Format: "fulfilmentSessionLocalStorageExpiryTimestamp#<eventId>#<numTickets>#<eventTicketTypeId|_>"
  */
-export function getFulfilmentSessionExpiryTimestampKey(eventId: string, numTickets: number): string {
-  return `fulfilmentSessionLocalStorageExpiryTimestamp#${eventId}#${numTickets}`;
+export function getFulfilmentSessionExpiryTimestampKey(
+  eventId: string,
+  numTickets: number,
+  eventTicketTypeId?: string | null
+): string {
+  const typeKey = eventTicketTypeId ?? "_";
+  return `fulfilmentSessionLocalStorageExpiryTimestamp#${eventId}#${numTickets}#${typeKey}`;
 }
