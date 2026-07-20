@@ -115,10 +115,12 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
         tempEntities.add(DelayedStripeFulfilmentEntity.builder().url("") // Placeholder URL
                 .type(FulfilmentEntityType.DELAYED_STRIPE).build());
 
-        // 3. END entity
+        // 3. END entity — append ?fulfilmentSessionType=BOOKING_APPROVAL so the success page
+        // renders the "awaiting organiser approval" variant instead of the standard purchase confirmation.
         tempEntities.add(EndFulfilmentEntity.builder()
                 .url(UrlUtils
-                        .getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
+                        .getUrlWithCurrentEnvironment(
+                                String.format("/event/success/%s?fulfilmentSessionType=BOOKING_APPROVAL", eventId))
                         .orElse(UrlUtils.SPORTSHUB_URL + "/dashboard"))
                 .type(FulfilmentEntityType.END).build());
 
@@ -145,8 +147,14 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                                         .orElse(UrlUtils.SPORTSHUB_URL))
                         : UrlUtils.getUrlWithCurrentEnvironment("/event/" + eventId).orElse(UrlUtils.SPORTSHUB_URL);
 
+                String bookingApprovalSuccessUrl = UrlUtils
+                        .getUrlWithCurrentEnvironment(
+                                String.format("/event/success/%s?fulfilmentSessionType=BOOKING_APPROVAL", eventId))
+                        .orElse(UrlUtils.SPORTSHUB_URL);
+
                 var delayedStripeCheckout = StripeService.getDelayedStripeCheckoutUrl(eventId,
-                        eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
+                        eventData.getIsPrivate(), numTickets, Optional.of(bookingApprovalSuccessUrl),
+                        Optional.of(cancelUrl),
                         fulfilmentSessionId, endFulfilmentEntityId);
 
                 logger.info("Created delayed Stripe checkout link for event ID {}", eventId);

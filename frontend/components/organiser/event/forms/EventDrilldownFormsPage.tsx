@@ -11,11 +11,15 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
-import { getFormSectionAnswerDisplay } from "@/services/src/forms/formsUtils/formsUtils";
+import {
+  filterFormResponsesForApprovedOrders,
+  getApprovedOrderTicketsMap,
+  getFormSectionAnswerDisplay,
+} from "@/services/src/forms/formsUtils/formsUtils";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AddFormResponseDialog from "./AddFormResponseDialog";
 import { FormResponsesTable } from "./FormResponsesTable";
 
@@ -56,6 +60,7 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
   const logger = new Logger("EventDrilldownFormsPageLogger");
   const { user, userLoading } = useUser();
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
+  const unfilteredFormResponsesRef = useRef<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [formId, setFormId] = useState<FormId | null>(null);
@@ -64,6 +69,15 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
   const router = useRouter();
   const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
   const [organiserEmail, setOrganiserEmail] = useState<string>("");
+  const approvedOrderTicketsMap = useMemo(() => getApprovedOrderTicketsMap(orderTicketsMap), [orderTicketsMap]);
+
+  const applyApprovedOrderFilter = useCallback(() => {
+    setFormResponses(filterFormResponsesForApprovedOrders(unfilteredFormResponsesRef.current, orderTicketsMap));
+  }, [orderTicketsMap]);
+
+  useEffect(() => {
+    applyApprovedOrderFilter();
+  }, [applyApprovedOrderFilter]);
 
   // useCallback is required here to prevent infinite loops in the useEffect below
   const fetchResponses = useCallback(async () => {
@@ -101,15 +115,16 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
       const form = await getForm(currentFormId);
       setForm(form);
 
-      const formResponse = await getFormResponsesForEvent(currentFormId, eventId);
-      setFormResponses(formResponse);
+      const fetchedFormResponses = await getFormResponsesForEvent(currentFormId, eventId);
+      unfilteredFormResponsesRef.current = fetchedFormResponses;
+      setFormResponses(filterFormResponsesForApprovedOrders(fetchedFormResponses, orderTicketsMap));
     } catch (err) {
       logger.error(`Failed to load form responses: ${err}`);
       setError("Failed to load form responses");
     } finally {
       setLoading(false);
     }
-  }, [eventId, user.userId, userLoading, router]);
+  }, [eventId, orderTicketsMap, user.userId, userLoading, router]);
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
       setAttachingForm(true);
@@ -122,6 +137,7 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
         // Detach form: clear local state
         setFormId(null);
         setForm(null);
+        unfilteredFormResponsesRef.current = [];
         setFormResponses([]);
         return;
       }
@@ -134,8 +150,9 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
       setForm(form);
 
       // Fetch responses for the newly attached form
-      const formResponse = await getFormResponsesForEvent(selectedFormId, eventId);
-      setFormResponses(formResponse);
+      const fetchedFormResponses = await getFormResponsesForEvent(selectedFormId, eventId);
+      unfilteredFormResponsesRef.current = fetchedFormResponses;
+      setFormResponses(filterFormResponsesForApprovedOrders(fetchedFormResponses, orderTicketsMap));
     } catch (err) {
       logger.error(`Failed to ${selectedFormId ? "attach" : "detach"} form: ${err}`);
       setError(`Failed to ${selectedFormId ? "attach" : "detach"} form`);
@@ -195,7 +212,7 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
   );
 
   // Generate CSV data for download
-  const formResponseToPurchaser = createFormResponseMap(orderTicketsMap);
+  const formResponseToPurchaser = createFormResponseMap(approvedOrderTicketsMap);
   const sortedFormResponses = [...formResponses].sort((a, b) => {
     const purchaserA = formResponseToPurchaser.get(a.formResponseId);
     const purchaserB = formResponseToPurchaser.get(b.formResponseId);
@@ -292,7 +309,7 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
         form={form!}
         formId={formId!}
         eventId={eventId}
-        orderTicketsMap={orderTicketsMap}
+        orderTicketsMap={approvedOrderTicketsMap}
         showPurchaserColumn={true}
         organiserEmail={organiserEmail}
       />

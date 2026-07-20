@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { EventTicketTypeId } from "./EventTicketTypeTypes";
 import { EventId } from "./EventTypes";
 import { FormId, FormResponseId } from "./FormTypes";
 import { Branded } from "./index";
@@ -20,6 +21,7 @@ export enum FulfilmentSessionType {
 export type FulfilmentSessionBase = {
   eventId: EventId;
   numTickets: number;
+  eventTicketTypeId?: EventTicketTypeId;
 };
 
 export type CheckoutFulfilmentSessionType = FulfilmentSessionBase;
@@ -56,6 +58,7 @@ export enum FulfilmentEntityType {
 export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
   numTickets: number;
+  eventTicketTypeId?: EventTicketTypeId;
 };
 
 /**

@@ -1,1 +1,1 @@
-export const BOOKING_APPROVAL_ENABLED = false;
+// Feature flags

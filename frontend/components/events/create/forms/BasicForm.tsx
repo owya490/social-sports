@@ -6,7 +6,6 @@ import { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { BOOKING_APPROVAL_ENABLED } from "@/services/featureFlags";
 import {
   clampMaxTicketsPerTransaction,
   getOrganiserMaxTicketsPerTransactionLimit,
@@ -744,32 +743,30 @@ export function BasicInformation({
                       </div>
                     </div>
                   )}
-                  {BOOKING_APPROVAL_ENABLED && (
-                    <div>
-                      <label className="text-black text-lg font-semibold">
-                        Do you want to enable Booking Approval for this Event?
-                      </label>
-                      <p className="text-sm mb-5 mt-2">
-                        Selecting &quot;Yes&quot; will mean bookings will require your approval before they are
-                        confirmed. You will need to manually approve each booking within 48 hours via organiser hub
-                        otherwise the booking will be automatically rejected.
-                      </p>
-                      <div className="mt-4">
-                        <Select
-                          size="md"
-                          label="Booking Approval Enabled"
-                          value={bookingApprovalEnabled ? "Yes" : "No"}
-                          onChange={(e) => {
-                            const value = e || "Yes";
-                            handleBookingApprovalEnabledChange(value);
-                          }}
-                        >
-                          <Option value="Yes">Yes</Option>
-                          <Option value="No">No</Option>
-                        </Select>
-                      </div>
+                  <div>
+                    <label className="text-black text-lg font-semibold">
+                      Do you want to enable Booking Approval for this Event?
+                    </label>
+                    <p className="text-sm mb-5 mt-2">
+                      Selecting &quot;Yes&quot; will mean bookings will require your approval before they are
+                      confirmed. You will need to manually approve each booking within 48 hours via organiser hub
+                      otherwise the booking will be automatically rejected.
+                    </p>
+                    <div className="mt-4">
+                      <Select
+                        size="md"
+                        label="Booking Approval Enabled"
+                        value={bookingApprovalEnabled ? "Yes" : "No"}
+                        onChange={(e) => {
+                          const value = e || "Yes";
+                          handleBookingApprovalEnabledChange(value);
+                        }}
+                      >
+                        <Option value="Yes">Yes</Option>
+                        <Option value="No">No</Option>
+                      </Select>
                     </div>
-                  )}
+                  </div>
                   <div>
                     <label className="text-black text-lg font-semibold">
                       What is the max number of tickets per transaction?

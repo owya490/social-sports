@@ -71,6 +71,7 @@ Complete the essential event details including:&lt;/p>
 &lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>To create paid events, you&amp;rsquo;ll need to have Stripe connected to your account. You can choose to absorb Stripe processing fees yourself or pass them on to participants by adjusting the settings in the Additional Settings during event creation.&lt;/p>&lt;/div>
 &lt;/div>
 &lt;/div>
+&lt;p>In &lt;strong>Additional Settings&lt;/strong>, you can also enable &lt;a href="https://www.sportshub.net.au/docs/organisers/events/booking-approval/" >Booking Approval&lt;/a> — this requires you to manually approve each booking before the player is charged.&lt;/p>
 &lt;h3>3. Upload Event Images&lt;span class="hx:absolute hx:-mt-20" id="3-upload-event-images">&lt;/span>
 &lt;a href="#3-upload-event-images" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/create-event-images.jpg" alt="create-event-images" loading="lazy" />&lt;/p>
 &lt;p>Add visual appeal to your event by uploading:&lt;/p>
@@ -465,6 +466,26 @@ Once you&amp;rsquo;ve created your form, attaching it to an event is straightfor
 &lt;/li>
 &lt;/ol>
 &lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/players/how-tos/booking-confirmation-email.png" alt="booking-confirmation-email" loading="lazy" />&lt;/p>
+&lt;h3>Events That Require Organiser Approval&lt;span class="hx:absolute hx:-mt-20" id="events-that-require-organiser-approval">&lt;/span>
+&lt;a href="#events-that-require-organiser-approval" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Some events require the organiser to approve your booking before it&amp;rsquo;s confirmed. Here&amp;rsquo;s what to expect:&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>Find your event&lt;/strong> and select your tickets as usual&lt;/li>
+&lt;li>Click &lt;strong>Request to Book&lt;/strong> instead of &lt;strong>Book Now&lt;/strong>&lt;/li>
+&lt;li>You&amp;rsquo;ll see a message that organiser approval is required and that &lt;strong>your card won&amp;rsquo;t be charged until you&amp;rsquo;re approved&lt;/strong>&lt;/li>
+&lt;li>Complete checkout — your card details are collected, but you are not charged yet&lt;/li>
+&lt;li>You&amp;rsquo;ll receive an email confirming your request was submitted&lt;/li>
+&lt;/ol>
+&lt;p>The organiser has &lt;strong>48 hours&lt;/strong> to review your request. After that:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>If approved&lt;/strong> — your card is charged and you&amp;rsquo;ll receive a booking confirmation&lt;/li>
+&lt;li>&lt;strong>If rejected&lt;/strong> — the hold on your card is released and you won&amp;rsquo;t be charged&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-blue-200 hx:bg-blue-100 hx:text-blue-900 hx:dark:border-blue-200/30 hx:dark:bg-blue-900/30 hx:dark:text-blue-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>&lt;/svg>Note&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Not all events require approval. If you see &lt;strong>Book Now&lt;/strong>, your booking is confirmed immediately after payment.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
 &lt;h3>Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes">&lt;/span>
 &lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
 &lt;li>&lt;strong>Registration Deadlines&lt;/strong>: Pay attention to registration closing times&lt;/li>
@@ -473,7 +494,7 @@ Once you&amp;rsquo;ve created your form, attaching it to an event is straightfor
 &lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-blue-200 hx:bg-blue-100 hx:text-blue-900 hx:dark:border-blue-200/30 hx:dark:bg-blue-900/30 hx:dark:text-blue-200">
 &lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>&lt;/svg>We secure you tickets the moment you click book now.&lt;/p>
 &lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
-&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Your tickets are secured for a &lt;strong>max of 30 minutes&lt;/strong> before your session expires.&lt;/p>&lt;/div>
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Your tickets are secured for a &lt;strong>max of 15 minutes&lt;/strong> before your session expires.&lt;/p>&lt;/div>
 &lt;/div>
 &lt;/div>
 &lt;/li>
@@ -900,4 +921,85 @@ All form responses are available in your Event Management page within the Organi
 &lt;li>Your events attract a community where attendees may know each other&lt;/li>
 &lt;li>You run regular events where participants like to see who else is coming&lt;/li>
 &lt;/ul>
-&lt;p>You can toggle the setting on or off at any time, and the change takes effect immediately.&lt;/p></description></item></channel></rss>
+&lt;p>You can toggle the setting on or off at any time, and the change takes effect immediately.&lt;/p>
+&lt;h2>Enable Booking Approval&lt;span class="hx:absolute hx:-mt-20" id="enable-booking-approval">&lt;/span>
+&lt;a href="#enable-booking-approval" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This setting lets you require manual approval before a booking is confirmed. When enabled, players click &lt;strong>Request to Book&lt;/strong> instead of &lt;strong>Book Now&lt;/strong>, and their payment method is &lt;strong>not charged unless you accept them&lt;/strong>.&lt;/p>
+&lt;h3>How to Enable&lt;span class="hx:absolute hx:-mt-20" id="how-to-enable-1">&lt;/span>
+&lt;a href="#how-to-enable-1" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;h4>For Single Events&lt;span class="hx:absolute hx:-mt-20" id="for-single-events-1">&lt;/span>
+&lt;a href="#for-single-events-1" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h4>&lt;ol>
+&lt;li>Head to your &lt;strong>Organiser Hub&lt;/strong> and open the event you want to update.&lt;/li>
+&lt;li>Navigate to the &lt;strong>Settings&lt;/strong> tab.&lt;/li>
+&lt;li>Toggle &lt;strong>Enable Booking Approval&lt;/strong> to on.&lt;/li>
+&lt;/ol>
+&lt;h4>For Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="for-recurring-events-1">&lt;/span>
+&lt;a href="#for-recurring-events-1" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h4>&lt;p>Enable this on the &lt;strong>recurring event template&lt;/strong> under the &lt;strong>Settings&lt;/strong> tab. All future events generated from that template will inherit the setting.&lt;/p>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-blue-200 hx:bg-blue-100 hx:text-blue-900 hx:dark:border-blue-200/30 hx:dark:bg-blue-900/30 hx:dark:text-blue-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>&lt;/svg>Note&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>You have &lt;strong>48 hours&lt;/strong> to approve or reject each request in the Organiser Hub. Unreviewed requests are automatically declined.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;p>For the full workflow — including how to review pending requests — see &lt;a href="https://www.sportshub.net.au/docs/organisers/events/booking-approval/" >Booking Approval&lt;/a>.&lt;/p></description></item><item><title>Booking Approval</title><link>https://www.sportshub.net.au/docs/organisers/events/booking-approval/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/booking-approval/</guid><description>
+&lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Booking Approval lets you review and approve attendees before their booking is confirmed. When enabled, players &lt;strong>request&lt;/strong> a spot instead of booking instantly — and &lt;strong>their payment method is not charged unless you accept them&lt;/strong>.&lt;/p>
+&lt;p>This is ideal for events where you need to verify skill level, check membership, or curate the right group of participants.&lt;/p>
+&lt;h2>How It Works&lt;span class="hx:absolute hx:-mt-20" id="how-it-works">&lt;/span>
+&lt;a href="#how-it-works" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;h3>For organisers&lt;span class="hx:absolute hx:-mt-20" id="for-organisers">&lt;/span>
+&lt;a href="#for-organisers" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ol>
+&lt;li>Enable Booking Approval on a paid event (requires Stripe)&lt;/li>
+&lt;li>Players submit booking requests through the normal checkout flow&lt;/li>
+&lt;li>Requests appear in &lt;strong>Organiser Hub → your event → Attendees → Pending&lt;/strong>&lt;/li>
+&lt;li>Review each request and click &lt;strong>Approve&lt;/strong> or &lt;strong>Reject&lt;/strong>&lt;/li>
+&lt;li>You have &lt;strong>48 hours&lt;/strong> to respond — unreviewed requests are automatically declined&lt;/li>
+&lt;/ol>
+&lt;h3>For players&lt;span class="hx:absolute hx:-mt-20" id="for-players">&lt;/span>
+&lt;a href="#for-players" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
+&lt;li>The booking button changes from &lt;strong>Book Now&lt;/strong> to &lt;strong>Request to Book&lt;/strong>&lt;/li>
+&lt;li>A message confirms: &lt;em>&amp;ldquo;Organiser approval required. Your card won&amp;rsquo;t be charged until you&amp;rsquo;re approved.&amp;rdquo;&lt;/em>&lt;/li>
+&lt;li>After submitting, they receive an email confirming their request is pending&lt;/li>
+&lt;li>If approved, their card is charged and they receive a booking confirmation&lt;/li>
+&lt;li>If rejected, the hold on their card is released and the spot is made available again&lt;/li>
+&lt;/ul>
+&lt;h2>Enable Booking Approval&lt;span class="hx:absolute hx:-mt-20" id="enable-booking-approval">&lt;/span>
+&lt;a href="#enable-booking-approval" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Booking Approval is available on paid events with an active Stripe account.&lt;/p>
+&lt;h3>When creating an event&lt;span class="hx:absolute hx:-mt-20" id="when-creating-an-event">&lt;/span>
+&lt;a href="#when-creating-an-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ol>
+&lt;li>In the event creation form, expand &lt;strong>Additional Settings&lt;/strong>&lt;/li>
+&lt;li>Set &lt;strong>Booking Approval Enabled&lt;/strong> to &lt;strong>Yes&lt;/strong>&lt;/li>
+&lt;/ol>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-blue-200 hx:bg-blue-100 hx:text-blue-900 hx:dark:border-blue-200/30 hx:dark:bg-blue-900/30 hx:dark:text-blue-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>&lt;/svg>Note&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>Bookings require your approval within &lt;strong>48 hours&lt;/strong> via the Organiser Hub. Requests not reviewed in time are automatically rejected.&lt;/p>&lt;/div>
+&lt;/div>
+&lt;/div>
+&lt;h3>On an existing event&lt;span class="hx:absolute hx:-mt-20" id="on-an-existing-event">&lt;/span>
+&lt;a href="#on-an-existing-event" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ol>
+&lt;li>Open the event in your &lt;a href="https://www.sportshub.net.au/organiser" target="_blank" rel="noopener">Organiser Hub&lt;/a>&lt;/li>
+&lt;li>Go to the &lt;strong>Settings&lt;/strong> tab&lt;/li>
+&lt;li>Toggle &lt;strong>Enable Booking Approval&lt;/strong> on&lt;/li>
+&lt;/ol>
+&lt;p>The change takes effect immediately for new bookings.&lt;/p>
+&lt;h3>For recurring events&lt;span class="hx:absolute hx:-mt-20" id="for-recurring-events">&lt;/span>
+&lt;a href="#for-recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>Enable Booking Approval on the &lt;strong>recurring event template&lt;/strong> under the &lt;strong>Settings&lt;/strong> tab. All future events generated from that template will inherit the setting.&lt;/p>
+&lt;h2>Manage Pending Requests&lt;span class="hx:absolute hx:-mt-20" id="manage-pending-requests">&lt;/span>
+&lt;a href="#manage-pending-requests" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
+&lt;li>Open your event in the Organiser Hub&lt;/li>
+&lt;li>Navigate to the &lt;strong>Attendees&lt;/strong> tab&lt;/li>
+&lt;li>Select the &lt;strong>Pending&lt;/strong> tab to see all requests awaiting your review&lt;/li>
+&lt;/ol>
+&lt;p>Each pending request shows the attendee&amp;rsquo;s name, contact details, and ticket count. You can also view their form responses before deciding.&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Approve&lt;/strong> — confirms the booking and charges the player&amp;rsquo;s card&lt;/li>
+&lt;li>&lt;strong>Reject&lt;/strong> — declines the request and releases the hold on their card&lt;/li>
+&lt;/ul>
+&lt;p>Approved and rejected requests move to their respective tabs for your records.&lt;/p>
+&lt;h2>When to Use Booking Approval&lt;span class="hx:absolute hx:-mt-20" id="when-to-use-booking-approval">&lt;/span>
+&lt;a href="#when-to-use-booking-approval" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Consider enabling this when:&lt;/p>
+&lt;ul>
+&lt;li>You run skill-based or competitive sessions and need to vet participants&lt;/li>
+&lt;li>Your event is members-only or requires eligibility checks&lt;/li>
+&lt;li>You want to review form responses before confirming a spot&lt;/li>
+&lt;li>You&amp;rsquo;d rather approve players upfront than issue refunds later&lt;/li>
+&lt;/ul>
+&lt;p>For open, casual events where anyone can join, leave Booking Approval off for the fastest booking experience.&lt;/p></description></item></channel></rss>

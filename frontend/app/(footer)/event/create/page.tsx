@@ -16,6 +16,7 @@ import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interface
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
+import { buildEventTicketTypesFromLegacyEvent } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import {
   getImageAndThumbnailUrlsWithDefaults,
@@ -284,6 +285,11 @@ export default function CreateEvent() {
         formData.maxTicketsPerTransaction,
         formData.capacity
       ),
+      eventTicketTypes: buildEventTicketTypesFromLegacyEvent({
+        price: formData.price,
+        capacity: formData.capacity,
+        vacancy: formData.capacity,
+      }),
     };
   }
 

@@ -40,9 +40,11 @@ export const ViewAttendeeFormResponsesDialog = ({
       .filter((formResponseId): formResponseId is FormResponseId => formResponseId !== null)
       .forEach((formResponseId) => orderFormResponseIds.add(formResponseId as FormResponseId));
 
-    // get legacy form response Ids in the legacyAttendeeMap
-    const legacyAttendee = eventMetadata.purchaserMap[getPurchaserEmailHash(order.email)].attendees[order.fullName];
-    const legacyFormResponseIds = legacyAttendee.formResponseIds || [];
+    // get legacy form response Ids stored in purchaserMap (pre-deprecation orders).
+    // New orders no longer populate purchaserMap; the modern path above covers them via
+    // ticket.formResponseId. Use optional chaining so missing entries don't crash.
+    const legacyAttendee = eventMetadata.purchaserMap?.[getPurchaserEmailHash(order.email)]?.attendees?.[order.fullName];
+    const legacyFormResponseIds = legacyAttendee?.formResponseIds ?? [];
     legacyFormResponseIds.forEach((formResponseId: string) =>
       orderFormResponseIds.add(formResponseId as FormResponseId)
     );

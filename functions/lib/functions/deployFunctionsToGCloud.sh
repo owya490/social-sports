@@ -5,6 +5,7 @@
 # createRecurrenceTemplate
 # recurringEventsCron
 # cleanupOldFulfilmentSessionsCron
+# expirePendingBookingsCron
 # completeFulfilmentSession
 # globalAppController
 # stripeWebhookEndpoint
@@ -16,6 +17,7 @@ VALID_FUNCTIONS=(
     "createRecurrenceTemplate" 
     "recurringEventsCron"
     "cleanupOldFulfilmentSessionsCron"
+    "expirePendingBookingsCron"
     "completeFulfilmentSession"
     "globalAppController"
     "stripeWebhookEndpoint"
@@ -26,6 +28,7 @@ VALID_ENDPOINTS=(
     "com.functions.events.controllers.CreateRecurrenceTemplateEndpoint" 
     "com.functions.events.controllers.RecurringEventsCronEndpoint"
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
+    "com.functions.tickets.controllers.ExpirePendingBookingsCronEndpoint"
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
     "com.functions.stripe.controllers.StripeWebhookEndpoint"
@@ -75,12 +78,19 @@ else
 fi
 
 EXTRA_DEPLOY_ARGS=()
-if [ "$ENVIRONMENT" == "prod" ] && [[ "$FUNCTION_NAME" == "globalAppController" || "$FUNCTION_NAME" == "stripeWebhookEndpoint" ]]; then
+if [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "globalAppController" ]; then
     EXTRA_DEPLOY_ARGS=(
         --concurrency 80
         --min-instances 1
         --max-instances 5
         --cpu 1
+    )
+elif [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "stripeWebhookEndpoint" ]; then
+    EXTRA_DEPLOY_ARGS=(
+        --concurrency 1
+        --min-instances 0
+        --max-instances 5
+        --cpu 0.5
     )
 fi
 
