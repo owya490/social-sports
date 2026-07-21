@@ -75,7 +75,7 @@ public class ReservedSlotService {
         // Update General Admission vacancy
         int newVacancy = currentVacancy - totalReservedSlots;
         DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(eventId, transaction);
-        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(), newVacancy);
+        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType, newVacancy);
         logger.info("Reduced vacancy from {} to {} for event {} type {}", currentVacancy, newVacancy, eventId,
                 ticketType.getId());
 

@@ -30,9 +30,9 @@ interface AbstractEventData {
     lat: number;
     lng: number;
   };
-  capacity: number;
-  vacancy: number;
-  price: number;
+  capacity?: number;
+  vacancy?: number;
+  price?: number;
   organiserId: UserId;
   registrationDeadline: Timestamp;
   name: string;
@@ -59,7 +59,7 @@ interface AbstractEventData {
   bookingApprovalEnabled: boolean; // should default to false
   showAttendeesOnEventPage: boolean; // should default to false
   maxTicketsPerTransaction: number; // max tickets per checkout; should default to 7, capped at min(capacity, 10) in UI
-  /** Per-type pricing and vacancy. Purchase flows use General Admission from this map. */
+  /** Source of truth for pricing and vacancy (General Admission). */
   eventTicketTypes?: EventTicketTypesMap;
 }
 

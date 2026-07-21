@@ -72,7 +72,15 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
         final String safeLocation = data.getLocation() == null ? "" : data.getLocation();
         data.setNameTokens(EventsUtils.tokenizeText(safeName));
         data.setLocationTokens(EventsUtils.tokenizeText(safeLocation));
-        transaction.set(newEventDocRef, JavaUtils.toMap(data));
+        // Inventory lives only under eventTicketTypes (General Admission).
+        data.setPrice(null);
+        data.setCapacity(null);
+        data.setVacancy(null);
+        java.util.Map<String, Object> eventMap = JavaUtils.toMap(data);
+        eventMap.remove("price");
+        eventMap.remove("capacity");
+        eventMap.remove("vacancy");
+        transaction.set(newEventDocRef, eventMap);
         final String eventId = newEventDocRef.getId();
         createEventMetadata(transaction, eventId, data);
         EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), eventId);

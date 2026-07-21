@@ -246,9 +246,6 @@ export default function CreateEvent() {
   ): NewEventData {
     return {
       location: formData.location,
-      capacity: formData.capacity,
-      vacancy: formData.capacity,
-      price: formData.price,
       name: formData.name,
       description: formData.description,
       image: imageUrl,

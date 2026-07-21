@@ -67,7 +67,8 @@ public abstract class AbstractEventData {
 	@Nullable
 	private Integer maxTicketsPerTransaction = 10; // Max tickets per checkout; optional for legacy docs
 	/**
-	 * Per-type pricing and vacancy. Purchase flows resolve General Admission from this map.
+	 * Source of truth for pricing and vacancy (General Admission).
+	 * Top-level price/capacity/vacancy are unused for new events.
 	 */
 	@Nullable
 	private Map<String, EventTicketType> eventTicketTypes;

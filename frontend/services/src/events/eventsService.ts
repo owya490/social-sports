@@ -46,6 +46,12 @@ import {
 } from "./eventsUtils/commonEventsUtils";
 import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
 import {
+  applyGeneralAdmissionInventoryFields,
+  buildGeneralAdmissionInventoryUpdates,
+  findGeneralAdmissionTicketType,
+  omitTopLevelInventoryFields,
+} from "./eventsUtils/eventTicketTypesUtils";
+import {
   bustEventsLocalStorageCache,
   findEventDoc,
   getAllEventsFromCollectionRef,
@@ -64,7 +70,7 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
   try {
     // Simplified object spreading with tokenized values
     const eventDataWithTokens = {
-      ...data,
+      ...omitTopLevelInventoryFields(data),
       nameTokens: tokenizeText(data.name),
       locationTokens: tokenizeText(data.location),
     };
@@ -115,7 +121,7 @@ export async function createEventV2(data: NewEventData) {
   }
   eventServiceLogger.info("createEventV2");
   const content = {
-    eventData: data,
+    eventData: omitTopLevelInventoryFields(data),
   };
   const createEventFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_EVENT);
   return createEventFunction(content).then((result) => {
@@ -154,13 +160,13 @@ export async function getEventById(
       throw error;
     }
 
-    const event: EventData = {
+    const event: EventData = applyGeneralAdmissionInventoryFields({
       ...EmptyEventData, // initiate default values
       ...eventWithoutOrganiser,
       organiser: organiser,
-    };
+      eventId: eventId,
+    });
 
-    event.eventId = eventId;
     return event;
   } catch (error) {
     eventServiceLogger.error(`getEventById ${error}`);
@@ -266,8 +272,14 @@ export async function updateEventById(eventId: EventId, updatedData: Partial<Eve
     }
 
     const eventDoc = eventDocSnapshot.data() as EventDataWithoutOrganiser;
+    const { price, capacity, vacancy, ...restUpdatedData } = updatedData;
+    const inventoryUpdates = buildGeneralAdmissionInventoryUpdates(eventDoc.eventTicketTypes, {
+      price,
+      capacity,
+      vacancy,
+    });
 
-    await updateDoc(eventDocRef, updatedData);
+    await updateDoc(eventDocRef, { ...restUpdatedData, ...inventoryUpdates });
 
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
@@ -473,14 +485,20 @@ export async function updateEventCapacityById(eventId: EventId, capacity: number
       const eventDoc: EventDataWithoutOrganiser = (
         await transaction.get(eventDocRef)
       ).data() as EventDataWithoutOrganiser;
+      const inventory = findGeneralAdmissionTicketType(eventDoc.eventTicketTypes);
+      const currentCapacity = inventory?.capacity ?? eventDoc.capacity ?? 0;
+      const currentVacancy = inventory?.vacancy ?? eventDoc.vacancy ?? 0;
 
-      if (capacity >= eventDoc.capacity - eventDoc.vacancy) {
-        const changeAmount = eventDoc.capacity - capacity;
-        const newVacancy = eventDoc.vacancy - changeAmount;
-        transaction.update(eventDocRef, {
-          capacity: capacity,
-          vacancy: newVacancy,
-        });
+      if (capacity >= currentCapacity - currentVacancy) {
+        const changeAmount = currentCapacity - capacity;
+        const newVacancy = currentVacancy - changeAmount;
+        transaction.update(
+          eventDocRef,
+          buildGeneralAdmissionInventoryUpdates(eventDoc.eventTicketTypes, {
+            capacity,
+            vacancy: newVacancy,
+          })
+        );
         valid = true;
       }
     });

@@ -1,8 +1,12 @@
 package com.functions.events.services;
 
 import java.util.Map;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
@@ -12,9 +16,12 @@ import com.functions.tickets.models.Ticket;
 
 /**
  * Resolves the General Admission ticket type for purchase and inventory flows.
- * Assumes {@code eventTicketTypes} is present and synced (seeded on create / migrated at deploy).
+ * Prefers {@code eventTicketTypes}; falls back to top-level price/capacity/vacancy for
+ * legacy events that have not been migrated yet.
  */
 public class EventTicketTypeService {
+    private static final Logger logger = LoggerFactory.getLogger(EventTicketTypeService.class);
+
     public static final String GENERAL_TICKET_TYPE_NAME = "General Admission";
 
     private EventTicketTypeService() {
@@ -29,26 +36,34 @@ public class EventTicketTypeService {
         }
 
         Map<String, EventTicketType> ticketTypes = event.getEventTicketTypes();
-        if (ticketTypes == null || ticketTypes.isEmpty()) {
-            throw new IllegalStateException(
-                    "Event " + event.getEventId() + " is missing eventTicketTypes (expected General Admission)");
+        if (ticketTypes != null && !ticketTypes.isEmpty()) {
+            EventTicketType general = findByName(ticketTypes, GENERAL_TICKET_TYPE_NAME);
+            if (general == null && ticketTypes.size() == 1) {
+                general = ticketTypes.values().iterator().next();
+            }
+            if (general == null) {
+                throw new IllegalStateException(
+                        "Event " + event.getEventId() + " has no General Admission ticket type");
+            }
+
+            return ResolvedEventTicketType.builder()
+                    .id(general.getId())
+                    .name(general.getName())
+                    .price(general.getPrice())
+                    .vacancy(general.getVacancy())
+                    .capacity(general.getCapacity())
+                    .build();
         }
 
-        EventTicketType general = findByName(ticketTypes, GENERAL_TICKET_TYPE_NAME);
-        if (general == null && ticketTypes.size() == 1) {
-            general = ticketTypes.values().iterator().next();
-        }
-        if (general == null) {
-            throw new IllegalStateException(
-                    "Event " + event.getEventId() + " has no General Admission ticket type");
-        }
-
+        logger.info(
+                "Event {} missing eventTicketTypes; falling back to top-level price/capacity/vacancy",
+                event.getEventId());
         return ResolvedEventTicketType.builder()
-                .id(general.getId())
-                .name(general.getName())
-                .price(general.getPrice())
-                .vacancy(general.getVacancy())
-                .capacity(general.getCapacity())
+                .id(UUID.nameUUIDFromBytes(("legacy-general:" + event.getEventId()).getBytes()).toString())
+                .name(GENERAL_TICKET_TYPE_NAME)
+                .price(event.getPrice())
+                .vacancy(event.getVacancy())
+                .capacity(event.getCapacity())
                 .build();
     }
 

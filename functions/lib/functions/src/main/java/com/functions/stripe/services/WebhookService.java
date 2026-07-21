@@ -732,7 +732,7 @@ public class WebhookService {
         eventData.setEventId(eventId);
 
         ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
-        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType.getId(), ticketCount);
+        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, ticketCount);
     }
 
     private static void updateTicketsStatusToRejected(
@@ -958,7 +958,7 @@ public class WebhookService {
         appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
 
         // Restock General Admission vacancy
-        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType.getId(), quantity);
+        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, quantity);
         transaction.set(eventMetadataRef, eventMetadata);
     }
     

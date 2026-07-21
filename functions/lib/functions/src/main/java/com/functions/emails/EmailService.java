@@ -261,12 +261,15 @@ public class EmailService {
     }
 
     /**
-     * Extracts price from a Firestore document, handling multiple possible types.
-     *
-     * @param event The event document snapshot
-     * @return The price in cents as a double, or 0.0 if not found or invalid
+     * Extracts price from General Admission in {@code eventTicketTypes}, falling back to
+     * top-level {@code price} for legacy events.
      */
     private static double extractPrice(DocumentSnapshot event) {
+        Double ticketTypePrice = extractGeneralAdmissionPrice(event);
+        if (ticketTypePrice != null) {
+            return ticketTypePrice;
+        }
+
         Long longPrice = event.getLong("price");
         if (longPrice != null) {
             return longPrice.doubleValue();
@@ -278,24 +281,53 @@ public class EmailService {
         }
 
         Object priceObj = event.get("price");
-
-        if (priceObj == null) {
-            return 0.0;
-        }
-
         if (priceObj instanceof Number numericPrice) {
             return numericPrice.doubleValue();
-        } else if (priceObj instanceof String) {
+        }
+        if (priceObj instanceof String) {
             try {
                 return Double.parseDouble((String) priceObj);
             } catch (NumberFormatException e) {
                 logger.warn("Failed to parse price string '{}', defaulting to 0.0", priceObj);
                 return 0.0;
             }
-        } else {
-            logger.warn("Unexpected price type '{}', defaulting to 0.0", priceObj.getClass().getName());
-            return 0.0;
         }
+        if (priceObj != null) {
+            logger.warn("Unexpected price type '{}', defaulting to 0.0", priceObj.getClass().getName());
+        }
+        logger.warn("Missing price for event {}, defaulting to 0.0", event.getId());
+        return 0.0;
+    }
+
+    private static Double extractGeneralAdmissionPrice(DocumentSnapshot event) {
+        Object ticketTypesObj = event.get("eventTicketTypes");
+        if (!(ticketTypesObj instanceof Map<?, ?> ticketTypes) || ticketTypes.isEmpty()) {
+            return null;
+        }
+
+        Map<?, ?> general = null;
+        for (Object value : ticketTypes.values()) {
+            if (value instanceof Map<?, ?> ticketType
+                    && "General Admission".equals(ticketType.get("name"))) {
+                general = ticketType;
+                break;
+            }
+        }
+        if (general == null && ticketTypes.size() == 1) {
+            Object only = ticketTypes.values().iterator().next();
+            if (only instanceof Map<?, ?> ticketType) {
+                general = ticketType;
+            }
+        }
+        if (general == null) {
+            return null;
+        }
+
+        Object priceObj = general.get("price");
+        if (priceObj instanceof Number numericPrice) {
+            return numericPrice.doubleValue();
+        }
+        return null;
     }
 
     private static Map<String, String> buildPurchaseEmailVariables(

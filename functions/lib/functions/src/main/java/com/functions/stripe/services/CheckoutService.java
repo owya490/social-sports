@@ -153,7 +153,7 @@ public class CheckoutService {
 
         // Reserve tickets on General Admission vacancy
         Integer newVacancy = currentVacancy - request.quantity();
-        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(), newVacancy);
+        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType, newVacancy);
         logger.info("Reserved {} tickets for event {} type {} at {} cents (vacancy: {} -> {})",
                 request.quantity(), request.eventId(), ticketType.getId(), ticketType.getPrice(), currentVacancy,
                 newVacancy);
@@ -186,7 +186,7 @@ public class CheckoutService {
                     }
                     eventData.setEventId(request.eventId());
                     ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
-                    EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType.getId(),
+                    EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType,
                             request.quantity());
                     logger.info("Reverted reservation of {} tickets for event {} type {}",
                             request.quantity(), request.eventId(), ticketType.getId());

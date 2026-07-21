@@ -9,6 +9,7 @@ import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { Timestamp } from "firebase/firestore";
 import { getPrivateUserById } from "../users/usersService";
+import { applyGeneralAdmissionInventoryFields, findGeneralAdmissionTicketType, omitTopLevelInventoryFields } from "../events/eventsUtils/eventTicketTypesUtils";
 import {
   findRecurrenceTemplateDoc,
   getCreateRecurringTemplateUrl,
@@ -33,7 +34,7 @@ export async function createRecurrenceTemplate(
   recurringEventsServiceLogger.info("createRecurrenceTemplate");
   const content = {
     eventData: {
-      ...eventData,
+      ...omitTopLevelInventoryFields(eventData),
       startDate: eventData.startDate.toDate(),
       endDate: eventData.endDate.toDate(),
       registrationDeadline: eventData.registrationDeadline.toDate(),
@@ -82,7 +83,10 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
   try {
     const recurrenceTemplateDoc = await findRecurrenceTemplateDoc(recurrenceTemplateId);
     const recurrenceTemplate = { ...recurrenceTemplateDoc.data(), recurrenceTemplateId } as RecurrenceTemplate;
-    return recurrenceTemplate;
+    return {
+      ...recurrenceTemplate,
+      eventData: applyGeneralAdmissionInventoryFields(recurrenceTemplate.eventData),
+    };
   } catch (error) {
     recurringEventsServiceLogger.error(
       `Error getting Recurrence Template by Id, id=${recurrenceTemplateId}, error=${error}`
@@ -97,7 +101,7 @@ export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceT
   let eventData = null;
   if (updatedData.eventData) {
     eventData = {
-      ...updatedData.eventData,
+      ...omitTopLevelInventoryFields(updatedData.eventData),
       startDate: updatedData.eventData.startDate.toDate(),
       endDate: updatedData.eventData.endDate.toDate(),
       registrationDeadline: updatedData.eventData.registrationDeadline.toDate(),
@@ -129,11 +133,24 @@ export async function updateRecurrenceTemplateEventData(
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} event data`);
   try {
     const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+    const mergedEventData = {
+      ...recurrenceTemplate.eventData,
+      ...updatedData,
+    };
+    const general = findGeneralAdmissionTicketType(mergedEventData.eventTicketTypes);
+    if (general) {
+      mergedEventData.eventTicketTypes = {
+        ...mergedEventData.eventTicketTypes,
+        [general.id]: {
+          ...general,
+          ...(updatedData.price !== undefined ? { price: updatedData.price } : {}),
+          ...(updatedData.capacity !== undefined ? { capacity: updatedData.capacity } : {}),
+          ...(updatedData.vacancy !== undefined ? { vacancy: updatedData.vacancy } : {}),
+        },
+      };
+    }
     const response = await updateRecurrenceTemplate(recurrenceTemplateId, {
-      eventData: {
-        ...recurrenceTemplate.eventData,
-        ...updatedData,
-      },
+      eventData: mergedEventData,
     });
     return response ? true : false;
   } catch (error) {

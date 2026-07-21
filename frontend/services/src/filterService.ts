@@ -21,9 +21,14 @@ export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory:
       /// Will currently use 1/3 of accessCount, 1/3 of tickets sold, and 1/3 of % full an event is to sort.
       eventDataListDeepClone.sort((eventA, eventB) => {
         const accessCountDiff = eventB.accessCount - eventA.accessCount;
-        const ticketsSoldDiff = eventB.capacity - eventB.vacancy - (eventA.capacity - eventA.vacancy);
-        const eventAPercentageSold = (eventA.capacity - eventA.vacancy) / eventA.capacity;
-        const eventBPercentageSold = (eventB.capacity - eventB.vacancy) / eventB.capacity;
+        const ticketsSoldDiff =
+          (eventB.capacity ?? 0) -
+          (eventB.vacancy ?? 0) -
+          ((eventA.capacity ?? 0) - (eventA.vacancy ?? 0));
+        const eventAPercentageSold =
+          (eventA.capacity ?? 0) === 0 ? 0 : ((eventA.capacity ?? 0) - (eventA.vacancy ?? 0)) / (eventA.capacity ?? 0);
+        const eventBPercentageSold =
+          (eventB.capacity ?? 0) === 0 ? 0 : ((eventB.capacity ?? 0) - (eventB.vacancy ?? 0)) / (eventB.capacity ?? 0);
         const eventPercentageSoldDiff = eventBPercentageSold - eventAPercentageSold;
         return accessCountDiff + ticketsSoldDiff + eventPercentageSoldDiff;
       });
@@ -37,11 +42,11 @@ export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory:
       break;
 
     case SortByCategory.PRICE_ASCENDING:
-      eventDataListDeepClone.sort((eventA, eventB) => eventA.price - eventB.price);
+      eventDataListDeepClone.sort((eventA, eventB) => (eventA.price ?? 0) - (eventB.price ?? 0));
       break;
 
     case SortByCategory.PRICE_DESCENDING:
-      eventDataListDeepClone.sort((eventA, eventB) => eventB.price - eventA.price);
+      eventDataListDeepClone.sort((eventA, eventB) => (eventB.price ?? 0) - (eventA.price ?? 0));
       break;
 
     case SortByCategory.DATE_ASCENDING:
@@ -97,10 +102,10 @@ export function filterEventsByPrice(
 ): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
   if (minPrice !== null) {
-    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price >= minPrice * 100);
+    eventDataListDeepClone = eventDataListDeepClone.filter((event) => (event.price ?? 0) >= minPrice * 100);
   }
 
-  eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price <= maxPrice * 100);
+  eventDataListDeepClone = eventDataListDeepClone.filter((event) => (event.price ?? 0) <= maxPrice * 100);
   return eventDataListDeepClone;
 }
 
@@ -253,12 +258,11 @@ async function createWhereClauseEventPrice(
     throw new Error("No minPrice and no maxPrice provided. Please provide at least one!");
   }
 
-  if (minPrice) {
-    currWhereClauseList.push(where("price", ">=", minPrice));
-  }
-  if (maxPrice) {
-    currWhereClauseList.push(where("price", "<=", maxPrice));
-  }
+  // Price lives under eventTicketTypes; use client-side filterEventsByPrice instead of
+  // querying removed top-level price fields.
+  void currWhereClauseList;
+  void minPrice;
+  void maxPrice;
 }
 
 // TODO: add more createWhereClause functions here

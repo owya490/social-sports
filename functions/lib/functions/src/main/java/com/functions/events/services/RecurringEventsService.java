@@ -25,8 +25,18 @@ import java.util.stream.IntStream;
 public class RecurringEventsService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsService.class);
 
+    private static void clearTopLevelInventory(NewEventData eventData) {
+        if (eventData == null) {
+            return;
+        }
+        eventData.setPrice(null);
+        eventData.setCapacity(null);
+        eventData.setVacancy(null);
+    }
+
     // Returns Map.Entry<RecurrenceTemplateId, EventId>
     public static Optional<Map.Entry<String, String>> createRecurrenceTemplate(NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
+        clearTopLevelInventory(newEventData);
         // Calculate all future recurrence Dates
         RecurrenceData recurrenceData = calculateRecurrenceDataForCreate(newRecurrenceData, newEventData.getStartDate());
         RecurrenceTemplate recurrenceTemplate = RecurrenceTemplate.builder()
@@ -71,6 +81,8 @@ public class RecurringEventsService {
         if (newRecurrenceData == null) {
             newRecurrenceData = currentRecurrenceTemplate.getRecurrenceData().extractNewRecurrenceData();
         }
+
+        clearTopLevelInventory(newEventData);
 
         // Calculate all future recurrence Dates
         RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate(), pastRecurrences, false);

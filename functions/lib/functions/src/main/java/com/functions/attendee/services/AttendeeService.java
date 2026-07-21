@@ -83,7 +83,7 @@ public class AttendeeService {
 
             DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
             transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(request.numTickets()));
-            EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(),
+            EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType,
                     ticketType.getVacancy() - request.numTickets());
 
             logger.info("Added attendee: orderId={}, ticketCount={}, eventId={}",
@@ -139,7 +139,7 @@ public class AttendeeService {
                 DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-currentApproved));
 
-                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(),
+                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType,
                         ticketType.getVacancy() + currentApproved);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
@@ -175,7 +175,7 @@ public class AttendeeService {
                 DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(delta));
 
-                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(),
+                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType,
                         ticketType.getVacancy() - delta);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
@@ -193,7 +193,7 @@ public class AttendeeService {
                 DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-toReject));
 
-                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(),
+                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType,
                         ticketType.getVacancy() + toReject);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
