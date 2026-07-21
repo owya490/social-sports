@@ -15,9 +15,8 @@ import com.google.cloud.firestore.Transaction;
  * Firestore dual-write helpers for top-level event fields and nested
  * {@code eventTicketTypes.{typeId}} fields.
  *
- * <p>For types that {@link ResolvedEventTicketType#isMirrorsTopLevel()}, every write also
- * reconciles ticket-type price/capacity/vacancy to the values being applied (top-level source of
- * truth), so stale map entries from the rollout period are corrected on first inventory touch.
+ * <p>Until multi-type inventory ships, every write keeps both sources in sync and upserts
+ * ticket-type id/name/price/capacity so legacy events without a map still get a General entry.
  */
 public class EventTicketTypeRepository {
     private static final Logger logger = LoggerFactory.getLogger(EventTicketTypeRepository.class);
@@ -27,19 +26,17 @@ public class EventTicketTypeRepository {
 
     /**
      * Writes vacancy to both {@code event.vacancy} and
-     * {@code eventTicketTypes.{typeId}.vacancy}.
-     * For General-like types, also forces ticket-type price/capacity to match the resolved
-     * (top-level) values.
+     * {@code eventTicketTypes.{typeId}.vacancy}, and reconciles map metadata/price/capacity.
      */
     public static void setVacancy(Transaction transaction, DocumentReference eventRef,
             ResolvedEventTicketType type, int vacancy) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("vacancy", vacancy);
         putTicketTypeField(updates, type.getId(), "vacancy", vacancy);
-        putGeneralReconcileFields(updates, type);
+        putReconcileFields(updates, type);
         transaction.update(eventRef, updates);
-        logger.info("Set vacancy={} for event {} ticketTypeId={} mirrorsTopLevel={}",
-                vacancy, eventRef.getId(), type.getId(), type.isMirrorsTopLevel());
+        logger.info("Set vacancy={} for event {} ticketTypeId={}",
+                vacancy, eventRef.getId(), type.getId());
     }
 
     /**
@@ -61,7 +58,7 @@ public class EventTicketTypeRepository {
         // still touch only event.vacancy; map gets the absolute reconciled value.
         updates.put("vacancy", FieldValue.increment(delta));
         putTicketTypeField(updates, type.getId(), "vacancy", newVacancy);
-        putGeneralReconcileFields(updates, type);
+        putReconcileFields(updates, type);
         transaction.update(eventRef, updates);
         logger.info("Incremented vacancy by {} (map reconciled to {}) for event {} ticketTypeId={}",
                 delta, newVacancy, eventRef.getId(), type.getId());
@@ -75,15 +72,13 @@ public class EventTicketTypeRepository {
         Map<String, Object> updates = new HashMap<>();
         updates.put("price", price);
         putTicketTypeField(updates, type.getId(), "price", price);
-        if (type.isMirrorsTopLevel() || type.isSynthesized()) {
-            putTicketTypeField(updates, type.getId(), "id", type.getId());
-            putTicketTypeField(updates, type.getId(), "name", type.getName());
-            if (type.getCapacity() != null) {
-                putTicketTypeField(updates, type.getId(), "capacity", type.getCapacity());
-            }
-            if (type.getVacancy() != null) {
-                putTicketTypeField(updates, type.getId(), "vacancy", type.getVacancy());
-            }
+        putTicketTypeField(updates, type.getId(), "id", type.getId());
+        putTicketTypeField(updates, type.getId(), "name", type.getName());
+        if (type.getCapacity() != null) {
+            putTicketTypeField(updates, type.getId(), "capacity", type.getCapacity());
+        }
+        if (type.getVacancy() != null) {
+            putTicketTypeField(updates, type.getId(), "vacancy", type.getVacancy());
         }
         transaction.update(eventRef, updates);
     }
@@ -100,10 +95,8 @@ public class EventTicketTypeRepository {
         putTicketTypeField(updates, type.getId(), "price", price);
         putTicketTypeField(updates, type.getId(), "capacity", capacity);
         putTicketTypeField(updates, type.getId(), "vacancy", vacancy);
-        if (type.isMirrorsTopLevel() || type.isSynthesized()) {
-            putTicketTypeField(updates, type.getId(), "id", type.getId());
-            putTicketTypeField(updates, type.getId(), "name", type.getName());
-        }
+        putTicketTypeField(updates, type.getId(), "id", type.getId());
+        putTicketTypeField(updates, type.getId(), "name", type.getName());
         transaction.update(eventRef, updates);
     }
 
@@ -113,13 +106,10 @@ public class EventTicketTypeRepository {
     }
 
     /**
-     * Force General-like ticket type id/name/price/capacity to match the resolved top-level snapshot.
+     * Force ticket type id/name/price/capacity to match the resolved top-level snapshot.
      * Vacancy is written by the caller to the post-update value.
      */
-    private static void putGeneralReconcileFields(Map<String, Object> updates, ResolvedEventTicketType type) {
-        if (!type.isMirrorsTopLevel() && !type.isSynthesized()) {
-            return;
-        }
+    private static void putReconcileFields(Map<String, Object> updates, ResolvedEventTicketType type) {
         putTicketTypeField(updates, type.getId(), "id", type.getId());
         putTicketTypeField(updates, type.getId(), "name", type.getName());
         if (type.getPrice() != null) {

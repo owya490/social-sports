@@ -17,25 +17,24 @@ import com.functions.tickets.models.Ticket;
 
 /**
  * Resolves event ticket types for purchase and inventory flows.
- * Defaults to the General ticket type when no type ID is provided.
+ * Defaults to the General Admission ticket type when no type ID is provided.
  *
- * <p>For General (and legacy sole-map defaults), price/capacity/vacancy always mirror the
+ * <p>For General Admission (and sole-map defaults), price/capacity/vacancy always mirror the
  * event's top-level fields so stale {@code eventTicketTypes} maps from the rollout period
- * cannot diverge from organiser edits.
+ * cannot diverge from organiser edits. Until multi-type inventory ships, writers keep both
+ * sources in sync on every update.
  */
 public class EventTicketTypeService {
     private static final Logger logger = LoggerFactory.getLogger(EventTicketTypeService.class);
 
-    public static final String GENERAL_TICKET_TYPE_NAME = "General";
-    /** Legacy name used by older frontend event create helpers. */
-    public static final String LEGACY_GENERAL_ADMISSION_NAME = "General Admission";
+    public static final String GENERAL_TICKET_TYPE_NAME = "General Admission";
 
     private EventTicketTypeService() {
     }
 
     /**
-     * Resolve a ticket type for a purchase. Null/blank {@code eventTicketTypeId} → General.
-     * General-like types always use top-level price/capacity/vacancy.
+     * Resolve a ticket type for a purchase. Null/blank {@code eventTicketTypeId} → General Admission.
+     * General Admission types always use top-level price/capacity/vacancy.
      */
     public static ResolvedEventTicketType resolve(EventData event, @Nullable String eventTicketTypeId) {
         if (event == null) {
@@ -50,21 +49,16 @@ public class EventTicketTypeService {
                 throw new IllegalArgumentException(
                         "Unknown eventTicketTypeId: " + eventTicketTypeId + " for event " + event.getEventId());
             }
-            if (isGeneralLikeName(explicit.getName())) {
+            if (isGeneralAdmissionName(explicit.getName())) {
                 return fromMapEntryMirroringTopLevel(event, explicit);
             }
-            return fromEventTicketType(explicit, false, false);
+            return fromEventTicketType(explicit);
         }
 
         if (ticketTypes != null && !ticketTypes.isEmpty()) {
             EventTicketType general = findByName(ticketTypes, GENERAL_TICKET_TYPE_NAME);
             if (general != null) {
                 return fromMapEntryMirroringTopLevel(event, general);
-            }
-
-            EventTicketType legacyGeneral = findByName(ticketTypes, LEGACY_GENERAL_ADMISSION_NAME);
-            if (legacyGeneral != null) {
-                return fromMapEntryMirroringTopLevel(event, legacyGeneral);
             }
 
             if (ticketTypes.size() == 1) {
@@ -76,18 +70,17 @@ public class EventTicketTypeService {
 
             throw new IllegalStateException(
                     "Event " + event.getEventId()
-                            + " has multiple ticket types but no General ticket type to default to");
+                            + " has multiple ticket types but no General Admission ticket type to default to");
         }
 
-        logger.info("Synthesizing General ticket type from top-level fields for event {}", event.getEventId());
+        logger.info("Synthesizing General Admission ticket type from top-level fields for event {}",
+                event.getEventId());
         return ResolvedEventTicketType.builder()
                 .id(UUID.nameUUIDFromBytes(("legacy-general:" + event.getEventId()).getBytes()).toString())
                 .name(GENERAL_TICKET_TYPE_NAME)
                 .price(event.getPrice())
                 .vacancy(event.getVacancy())
                 .capacity(event.getCapacity())
-                .synthesized(true)
-                .mirrorsTopLevel(true)
                 .build();
     }
 
@@ -121,8 +114,8 @@ public class EventTicketTypeService {
         ticket.setEventTicketTypeName(type.getName());
     }
 
-    public static boolean isGeneralLikeName(@Nullable String name) {
-        return GENERAL_TICKET_TYPE_NAME.equals(name) || LEGACY_GENERAL_ADMISSION_NAME.equals(name);
+    public static boolean isGeneralAdmissionName(@Nullable String name) {
+        return GENERAL_TICKET_TYPE_NAME.equals(name);
     }
 
     private static EventTicketType findByName(Map<String, EventTicketType> ticketTypes, String name) {
@@ -155,21 +148,16 @@ public class EventTicketTypeService {
                 .price(event.getPrice())
                 .vacancy(event.getVacancy())
                 .capacity(event.getCapacity())
-                .synthesized(false)
-                .mirrorsTopLevel(true)
                 .build();
     }
 
-    private static ResolvedEventTicketType fromEventTicketType(EventTicketType ticketType, boolean synthesized,
-            boolean mirrorsTopLevel) {
+    private static ResolvedEventTicketType fromEventTicketType(EventTicketType ticketType) {
         return ResolvedEventTicketType.builder()
                 .id(ticketType.getId())
                 .name(ticketType.getName())
                 .price(ticketType.getPrice())
                 .vacancy(ticketType.getVacancy())
                 .capacity(ticketType.getCapacity())
-                .synthesized(synthesized)
-                .mirrorsTopLevel(mirrorsTopLevel)
                 .build();
     }
 }

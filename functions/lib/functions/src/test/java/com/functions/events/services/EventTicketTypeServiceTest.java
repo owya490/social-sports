@@ -1,7 +1,6 @@
 package com.functions.events.services;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -19,7 +18,7 @@ import com.functions.tickets.models.Ticket;
 public class EventTicketTypeServiceTest {
 
     @Test
-    public void resolveDefaultsToGeneralByName() {
+    public void resolveDefaultsToGeneralAdmissionByName() {
         EventData event = baseEvent();
         event.setPrice(1000);
         event.setCapacity(10);
@@ -34,8 +33,6 @@ public class EventTicketTypeServiceTest {
         assertEquals(EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, resolved.getName());
         assertEquals(Integer.valueOf(1000), resolved.getPrice());
         assertEquals(Integer.valueOf(8), resolved.getVacancy());
-        assertTrue(resolved.isMirrorsTopLevel());
-        assertFalse(resolved.isSynthesized());
     }
 
     @Test
@@ -54,7 +51,6 @@ public class EventTicketTypeServiceTest {
         assertEquals(Integer.valueOf(2500), resolved.getPrice());
         assertEquals(Integer.valueOf(40), resolved.getCapacity());
         assertEquals(Integer.valueOf(22), resolved.getVacancy());
-        assertTrue(resolved.isMirrorsTopLevel());
     }
 
     @Test
@@ -71,7 +67,6 @@ public class EventTicketTypeServiceTest {
         assertEquals(Integer.valueOf(900), resolved.getPrice());
         assertEquals(Integer.valueOf(15), resolved.getCapacity());
         assertEquals(Integer.valueOf(7), resolved.getVacancy());
-        assertTrue(resolved.isMirrorsTopLevel());
     }
 
     @Test
@@ -89,24 +84,23 @@ public class EventTicketTypeServiceTest {
         assertEquals("v1", resolved.getId());
         assertEquals(Integer.valueOf(5000), resolved.getPrice());
         assertEquals(Integer.valueOf(4), resolved.getVacancy());
-        assertFalse(resolved.isMirrorsTopLevel());
     }
 
     @Test
-    public void resolveFallsBackToLegacyGeneralAdmissionName() {
+    public void resolveFallsBackToSoleMapEntry() {
         EventData event = baseEvent();
         event.setPrice(500);
         event.setCapacity(20);
         event.setVacancy(15);
-        EventTicketType legacy = ticketType("legacy-1", EventTicketTypeService.LEGACY_GENERAL_ADMISSION_NAME, 500, 20,
-                15);
-        event.setEventTicketTypes(mapOf(legacy));
+        EventTicketType only = ticketType("sole-1", "Standard", 500, 20, 15);
+        event.setEventTicketTypes(mapOf(only));
 
         ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event, null);
 
-        assertEquals("legacy-1", resolved.getId());
-        assertEquals(EventTicketTypeService.LEGACY_GENERAL_ADMISSION_NAME, resolved.getName());
-        assertTrue(resolved.isMirrorsTopLevel());
+        assertEquals("sole-1", resolved.getId());
+        assertEquals("Standard", resolved.getName());
+        assertEquals(Integer.valueOf(500), resolved.getPrice());
+        assertEquals(Integer.valueOf(15), resolved.getVacancy());
     }
 
     @Test
@@ -122,20 +116,16 @@ public class EventTicketTypeServiceTest {
         assertEquals(EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, resolved.getName());
         assertEquals(Integer.valueOf(2500), resolved.getPrice());
         assertEquals(Integer.valueOf(12), resolved.getVacancy());
-        assertTrue(resolved.isSynthesized());
-        assertTrue(resolved.isMirrorsTopLevel());
     }
 
     @Test
     public void validateAvailabilityThrowsWhenInsufficient() {
         ResolvedEventTicketType type = ResolvedEventTicketType.builder()
                 .id("g1")
-                .name("General")
+                .name(EventTicketTypeService.GENERAL_TICKET_TYPE_NAME)
                 .price(1000)
                 .vacancy(1)
                 .capacity(10)
-                .synthesized(false)
-                .mirrorsTopLevel(true)
                 .build();
 
         try {
@@ -151,18 +141,16 @@ public class EventTicketTypeServiceTest {
         Ticket ticket = new Ticket();
         ResolvedEventTicketType type = ResolvedEventTicketType.builder()
                 .id("g1")
-                .name("General")
+                .name(EventTicketTypeService.GENERAL_TICKET_TYPE_NAME)
                 .price(1000)
                 .vacancy(5)
                 .capacity(10)
-                .synthesized(false)
-                .mirrorsTopLevel(true)
                 .build();
 
         EventTicketTypeService.stampTicket(ticket, type);
 
         assertEquals("g1", ticket.getEventTicketTypeId());
-        assertEquals("General", ticket.getEventTicketTypeName());
+        assertEquals(EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, ticket.getEventTicketTypeName());
     }
 
     private static EventData baseEvent() {
