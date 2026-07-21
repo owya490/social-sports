@@ -48,7 +48,10 @@ public class ReservedSlotService {
         }
         EventData eventData = eventDataOpt.get();
         ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
-        int currentVacancy = ticketType.getVacancy() != null ? ticketType.getVacancy() : 0;
+        if (ticketType.getVacancy() == null) {
+            throw new IllegalStateException("Ticket type " + ticketType.getId() + " is missing vacancy");
+        }
+        int currentVacancy = ticketType.getVacancy();
 
         // Validate and normalize reserved slots
         List<ReservedSlot> reservedSlots = rawReservedSlots.stream()
