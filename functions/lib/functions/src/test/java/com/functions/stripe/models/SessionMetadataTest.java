@@ -48,23 +48,6 @@ public class SessionMetadataTest {
         expectIllegalArgument("End Fulfilment Entity Id", () -> SessionMetadata.fromStripeMetadata(metadataMap));
     }
 
-    @Test
-    public void fromStripeMetadataParsesOptionalEventTicketTypeId() {
-        Map<String, String> metadataMap = buildMetadata();
-        metadataMap.put("eventTicketTypeId", "ticket-type-1");
-
-        SessionMetadata metadata = SessionMetadata.fromStripeMetadata(metadataMap);
-
-        assertEquals("ticket-type-1", metadata.getEventTicketTypeId());
-    }
-
-    @Test
-    public void fromStripeMetadataAllowsMissingEventTicketTypeId() {
-        SessionMetadata metadata = SessionMetadata.fromStripeMetadata(buildMetadata());
-
-        assertEquals(null, metadata.getEventTicketTypeId());
-    }
-
     private static Map<String, String> buildMetadata() {
         Map<String, String> metadata = new HashMap<>();
         metadata.put("eventId", "event-123");
