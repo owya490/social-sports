@@ -1,8 +1,6 @@
 import { EventTicketType, EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 
-export const GENERAL_TICKET_TYPE_NAME = "General";
-/** Legacy name used by older event create helpers before rename to General. */
-export const LEGACY_GENERAL_ADMISSION_NAME = "General Admission";
+export const GENERAL_TICKET_TYPE_NAME = "General Admission";
 
 export function createEventTicketTypeId(): EventTicketTypeId {
   return crypto.randomUUID() as EventTicketTypeId;
@@ -24,7 +22,7 @@ export function createEventTicketType(params: {
   };
 }
 
-/** Mirror top-level price/capacity/vacancy into a single General ticket type. */
+/** Mirror top-level price/capacity/vacancy into a single General Admission ticket type. */
 export function buildEventTicketTypesFromLegacyEvent(params: {
   price: number;
   capacity: number;
@@ -47,8 +45,8 @@ function findByName(ticketTypes: EventTicketTypesMap, name: string): EventTicket
 }
 
 /**
- * Resolves the General ticket type ID from an event's ticket types map.
- * Falls back to legacy "General Admission" or the sole map entry.
+ * Resolves the General Admission ticket type ID from an event's ticket types map.
+ * Falls back to the sole map entry when present.
  */
 export function findGeneralTicketTypeId(
   eventTicketTypes?: EventTicketTypesMap | null
@@ -62,11 +60,6 @@ export function findGeneralTicketTypeId(
     return general.id;
   }
 
-  const legacy = findByName(eventTicketTypes, LEGACY_GENERAL_ADMISSION_NAME);
-  if (legacy) {
-    return legacy.id;
-  }
-
   const entries = Object.values(eventTicketTypes);
   if (entries.length === 1 && entries[0]) {
     return entries[0].id;
@@ -76,7 +69,7 @@ export function findGeneralTicketTypeId(
 }
 
 /**
- * Returns extra Firestore field paths to co-update on the General ticket type
+ * Returns extra Firestore field paths to co-update on the General Admission ticket type
  * whenever top-level price/capacity/vacancy are written.
  *
  * Always reconciles all three fields onto the General type (using the new partial values
