@@ -36,7 +36,6 @@ import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../f
 import { getFullUserById, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
-import { appendGeneralTicketTypeCoUpdates } from "./eventTicketTypesUtils";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -45,6 +44,7 @@ import {
   processEventData,
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
+import { appendGeneralTicketTypeCoUpdates } from "./eventsUtils/eventTicketTypesUtils";
 import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
 import {
   bustEventsLocalStorageCache,
