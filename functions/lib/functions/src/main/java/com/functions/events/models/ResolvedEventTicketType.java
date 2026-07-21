@@ -15,4 +15,9 @@ public class ResolvedEventTicketType {
     Integer vacancy;
     Integer capacity;
     boolean synthesized;
+    /**
+     * True for General (and legacy/sole-map defaults). Price/capacity/vacancy are taken from
+     * top-level event fields and must stay dual-written with them.
+     */
+    boolean mirrorsTopLevel;
 }

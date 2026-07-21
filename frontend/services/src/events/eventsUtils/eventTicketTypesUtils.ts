@@ -77,7 +77,11 @@ export function findGeneralTicketTypeId(
 
 /**
  * Returns extra Firestore field paths to co-update on the General ticket type
- * whenever top-level price/capacity/vacancy are written. Merge into the same updateDoc.
+ * whenever top-level price/capacity/vacancy are written.
+ *
+ * Always reconciles all three fields onto the General type (using the new partial values
+ * when provided, otherwise current top-level event values) so stale map entries from the
+ * rollout period are corrected on any organiser edit.
  */
 export function appendGeneralTicketTypeCoUpdates(
   event: {
@@ -95,33 +99,32 @@ export function appendGeneralTicketTypeCoUpdates(
     return {};
   }
 
+  const reconciledPrice = partialFields.price ?? event.price ?? 0;
+  const reconciledCapacity = partialFields.capacity ?? event.capacity ?? 0;
+  const reconciledVacancy = partialFields.vacancy ?? event.vacancy ?? reconciledCapacity;
+
   const updates: Record<string, string | number> = {};
   let typeId = findGeneralTicketTypeId(event.eventTicketTypes);
 
   if (!typeId) {
     const created = createEventTicketType({
       name: GENERAL_TICKET_TYPE_NAME,
-      price: partialFields.price ?? event.price ?? 0,
-      capacity: partialFields.capacity ?? event.capacity ?? 0,
-      vacancy: partialFields.vacancy ?? event.vacancy ?? partialFields.capacity ?? event.capacity ?? 0,
+      price: reconciledPrice,
+      capacity: reconciledCapacity,
+      vacancy: reconciledVacancy,
     });
     typeId = created.id;
     updates[`eventTicketTypes.${typeId}.id`] = created.id;
     updates[`eventTicketTypes.${typeId}.name`] = created.name;
-    updates[`eventTicketTypes.${typeId}.price`] = created.price;
-    updates[`eventTicketTypes.${typeId}.capacity`] = created.capacity;
-    updates[`eventTicketTypes.${typeId}.vacancy`] = created.vacancy;
-    return updates;
+  } else {
+    updates[`eventTicketTypes.${typeId}.id`] = typeId;
+    const existing = event.eventTicketTypes?.[typeId];
+    updates[`eventTicketTypes.${typeId}.name`] = existing?.name ?? GENERAL_TICKET_TYPE_NAME;
   }
 
-  if (hasPrice) {
-    updates[`eventTicketTypes.${typeId}.price`] = partialFields.price as number;
-  }
-  if (hasCapacity) {
-    updates[`eventTicketTypes.${typeId}.capacity`] = partialFields.capacity as number;
-  }
-  if (hasVacancy) {
-    updates[`eventTicketTypes.${typeId}.vacancy`] = partialFields.vacancy as number;
-  }
+  // Always force all three fields onto the General type so stale maps catch up to top-level.
+  updates[`eventTicketTypes.${typeId}.price`] = reconciledPrice;
+  updates[`eventTicketTypes.${typeId}.capacity`] = reconciledCapacity;
+  updates[`eventTicketTypes.${typeId}.vacancy`] = reconciledVacancy;
   return updates;
 }
