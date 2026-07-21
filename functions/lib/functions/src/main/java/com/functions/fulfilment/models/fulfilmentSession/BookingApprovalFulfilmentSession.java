@@ -1,5 +1,7 @@
 package com.functions.fulfilment.models.fulfilmentSession;
 
+import javax.annotation.Nullable;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.SuperBuilder;
@@ -9,6 +11,10 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class BookingApprovalFulfilmentSession extends FulfilmentSession {
     private Integer numTickets;
+    @Nullable
+    private String eventTicketTypeId;
+    @Nullable
+    private String eventTicketTypeName;
 
     {
         setType(FulfilmentSessionType.BOOKING_APPROVAL);

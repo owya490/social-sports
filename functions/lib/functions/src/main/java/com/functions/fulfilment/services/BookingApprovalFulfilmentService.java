@@ -14,7 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.fulfilment.models.FulfilmentSessionService;
 import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
@@ -43,6 +45,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
             }
 
             EventData eventData = maybeEventData.get();
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, null);
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructBookingApprovalFulfilmentEntities(
                     eventId, eventData, numTickets, fulfilmentSessionId);
             logger.info(
@@ -66,6 +69,8 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                     .eventData(eventData)
                     .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityOrder)
                     .numTickets(numTickets)
+                    .eventTicketTypeId(ticketType.getId())
+                    .eventTicketTypeName(ticketType.getName())
                     .build();
 
             return session;

@@ -36,6 +36,7 @@ import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../f
 import { getFullUserById, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
+import { appendGeneralTicketTypeCoUpdates } from "./eventTicketTypesUtils";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -265,7 +266,14 @@ export async function updateEventById(eventId: EventId, updatedData: Partial<Eve
       throw new Error(`Event with id '${eventId}' not found.`);
     }
 
-    await updateDoc(eventDocRef, updatedData);
+    const eventDoc = eventDocSnapshot.data() as EventDataWithoutOrganiser;
+    const ticketTypeCoUpdates = appendGeneralTicketTypeCoUpdates(eventDoc, {
+      price: updatedData.price,
+      capacity: updatedData.capacity,
+      vacancy: updatedData.vacancy,
+    });
+
+    await updateDoc(eventDocRef, { ...updatedData, ...ticketTypeCoUpdates });
 
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
@@ -471,11 +479,19 @@ export async function updateEventCapacityById(eventId: EventId, capacity: number
       const eventDoc: EventDataWithoutOrganiser = (
         await transaction.get(eventDocRef)
       ).data() as EventDataWithoutOrganiser;
-      eventDoc.vacancy;
 
       if (capacity >= eventDoc.capacity - eventDoc.vacancy) {
         const changeAmount = eventDoc.capacity - capacity;
-        transaction.update(eventDocRef, { capacity: capacity, vacancy: eventDoc.vacancy - changeAmount });
+        const newVacancy = eventDoc.vacancy - changeAmount;
+        const ticketTypeCoUpdates = appendGeneralTicketTypeCoUpdates(eventDoc, {
+          capacity,
+          vacancy: newVacancy,
+        });
+        transaction.update(eventDocRef, {
+          capacity: capacity,
+          vacancy: newVacancy,
+          ...ticketTypeCoUpdates,
+        });
         valid = true;
       }
     });

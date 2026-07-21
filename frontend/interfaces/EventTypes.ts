@@ -59,7 +59,7 @@ interface AbstractEventData {
   bookingApprovalEnabled: boolean; // should default to false
   showAttendeesOnEventPage: boolean; // should default to false
   maxTicketsPerTransaction: number; // max tickets per checkout; should default to 7, capped at min(capacity, 10) in UI
-  /** Optional hanging ticket types map; top-level capacity/vacancy/price remain authoritative until migration consumes this. */
+  /** Per-type pricing and vacancy. Top-level capacity/vacancy/price are co-updated with the General type. */
   eventTicketTypes?: EventTicketTypesMap;
 }
 

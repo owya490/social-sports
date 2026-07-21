@@ -200,6 +200,19 @@ public class FulfilmentService {
             throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
         }
 
+        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
+        if (maybeEventData.isEmpty()) {
+            logger.error("Failed to find event data for event ID: {}", eventId);
+            throw new Exception("Failed to find event data for event ID: " + eventId);
+        }
+        EventData eventDataForLimits = maybeEventData.get();
+        Integer maxTickets = eventDataForLimits.getMaxTicketsPerTransaction();
+        if (maxTickets != null && numTickets > maxTickets) {
+            throw new IllegalArgumentException(String.format(
+                    "Requested %d tickets exceeds maxTicketsPerTransaction (%d) for event %s",
+                    numTickets, maxTickets, eventId));
+        }
+
         FulfilmentSessionType fulfilmentSessionType = classifyFulfilmentSessionType(eventId);
 
         String fulfilmentSessionId = UUID.randomUUID().toString();

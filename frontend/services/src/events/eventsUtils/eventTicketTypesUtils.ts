@@ -1,5 +1,9 @@
 import { EventTicketType, EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 
+export const GENERAL_TICKET_TYPE_NAME = "General";
+/** Legacy name used by older event create helpers before rename to General. */
+export const LEGACY_GENERAL_ADMISSION_NAME = "General Admission";
+
 export function createEventTicketTypeId(): EventTicketTypeId {
   return crypto.randomUUID() as EventTicketTypeId;
 }
@@ -20,7 +24,7 @@ export function createEventTicketType(params: {
   };
 }
 
-/** Mirror legacy top-level price/capacity/vacancy into a single hanging General Admission ticket type. */
+/** Mirror top-level price/capacity/vacancy into a single General ticket type. */
 export function buildEventTicketTypesFromLegacyEvent(params: {
   price: number;
   capacity: number;
@@ -28,7 +32,7 @@ export function buildEventTicketTypesFromLegacyEvent(params: {
   name?: string;
 }): EventTicketTypesMap {
   const eventTicketType = createEventTicketType({
-    name: params.name ?? "General Admission",
+    name: params.name ?? GENERAL_TICKET_TYPE_NAME,
     price: params.price,
     capacity: params.capacity,
     vacancy: params.vacancy,
@@ -36,4 +40,88 @@ export function buildEventTicketTypesFromLegacyEvent(params: {
   return {
     [eventTicketType.id]: eventTicketType,
   };
+}
+
+function findByName(ticketTypes: EventTicketTypesMap, name: string): EventTicketType | undefined {
+  return Object.values(ticketTypes).find((ticketType) => ticketType?.name === name);
+}
+
+/**
+ * Resolves the General ticket type ID from an event's ticket types map.
+ * Falls back to legacy "General Admission" or the sole map entry.
+ */
+export function findGeneralTicketTypeId(
+  eventTicketTypes?: EventTicketTypesMap | null
+): EventTicketTypeId | null {
+  if (!eventTicketTypes || Object.keys(eventTicketTypes).length === 0) {
+    return null;
+  }
+
+  const general = findByName(eventTicketTypes, GENERAL_TICKET_TYPE_NAME);
+  if (general) {
+    return general.id;
+  }
+
+  const legacy = findByName(eventTicketTypes, LEGACY_GENERAL_ADMISSION_NAME);
+  if (legacy) {
+    return legacy.id;
+  }
+
+  const entries = Object.values(eventTicketTypes);
+  if (entries.length === 1 && entries[0]) {
+    return entries[0].id;
+  }
+
+  return null;
+}
+
+/**
+ * Returns extra Firestore field paths to co-update on the General ticket type
+ * whenever top-level price/capacity/vacancy are written. Merge into the same updateDoc.
+ */
+export function appendGeneralTicketTypeCoUpdates(
+  event: {
+    eventTicketTypes?: EventTicketTypesMap;
+    price?: number;
+    capacity?: number;
+    vacancy?: number;
+  },
+  partialFields: Partial<{ price: number; capacity: number; vacancy: number }>
+): Record<string, string | number> {
+  const hasPrice = partialFields.price !== undefined;
+  const hasCapacity = partialFields.capacity !== undefined;
+  const hasVacancy = partialFields.vacancy !== undefined;
+  if (!hasPrice && !hasCapacity && !hasVacancy) {
+    return {};
+  }
+
+  const updates: Record<string, string | number> = {};
+  let typeId = findGeneralTicketTypeId(event.eventTicketTypes);
+
+  if (!typeId) {
+    const created = createEventTicketType({
+      name: GENERAL_TICKET_TYPE_NAME,
+      price: partialFields.price ?? event.price ?? 0,
+      capacity: partialFields.capacity ?? event.capacity ?? 0,
+      vacancy: partialFields.vacancy ?? event.vacancy ?? partialFields.capacity ?? event.capacity ?? 0,
+    });
+    typeId = created.id;
+    updates[`eventTicketTypes.${typeId}.id`] = created.id;
+    updates[`eventTicketTypes.${typeId}.name`] = created.name;
+    updates[`eventTicketTypes.${typeId}.price`] = created.price;
+    updates[`eventTicketTypes.${typeId}.capacity`] = created.capacity;
+    updates[`eventTicketTypes.${typeId}.vacancy`] = created.vacancy;
+    return updates;
+  }
+
+  if (hasPrice) {
+    updates[`eventTicketTypes.${typeId}.price`] = partialFields.price as number;
+  }
+  if (hasCapacity) {
+    updates[`eventTicketTypes.${typeId}.capacity`] = partialFields.capacity as number;
+  }
+  if (hasVacancy) {
+    updates[`eventTicketTypes.${typeId}.vacancy`] = partialFields.vacancy as number;
+  }
+  return updates;
 }
