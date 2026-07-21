@@ -282,6 +282,10 @@ export default function CreateEvent() {
         formData.maxTicketsPerTransaction,
         formData.capacity
       ),
+      // Included for in-memory typing; stripped before Firestore write by omitTopLevelInventoryFields.
+      price: formData.price,
+      capacity: formData.capacity,
+      vacancy: formData.capacity,
       eventTicketTypes: buildEventTicketTypesFromLegacyEvent({
         price: formData.price,
         capacity: formData.capacity,

@@ -30,9 +30,10 @@ interface AbstractEventData {
     lat: number;
     lng: number;
   };
-  capacity?: number;
-  vacancy?: number;
-  price?: number;
+  // Hydrated from eventTicketTypes for UI; omitted from Firestore writes for new events.
+  capacity: number;
+  vacancy: number;
+  price: number;
   organiserId: UserId;
   registrationDeadline: Timestamp;
   name: string;

@@ -78,15 +78,16 @@ export function findGeneralTicketTypeId(
  * Copies General Admission price/capacity/vacancy onto the in-memory event object for UI.
  * If {@code eventTicketTypes} is missing, keeps existing top-level fields (legacy events).
  */
-export function applyGeneralAdmissionInventoryFields<
-  T extends {
+export function applyGeneralAdmissionInventoryFields<T extends object>(
+  event: T
+): T {
+  const inventoryEvent = event as T & {
     eventTicketTypes?: EventTicketTypesMap | null;
     price?: number;
     capacity?: number;
     vacancy?: number;
-  },
->(event: T): T {
-  const general = findGeneralAdmissionTicketType(event.eventTicketTypes);
+  };
+  const general = findGeneralAdmissionTicketType(inventoryEvent.eventTicketTypes);
   if (!general) {
     return event;
   }
