@@ -47,7 +47,7 @@ public class ReservedSlotService {
             throw new Exception("Event not found for eventId: " + eventId);
         }
         EventData eventData = eventDataOpt.get();
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, null);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
         int currentVacancy = ticketType.getVacancy() != null ? ticketType.getVacancy() : 0;
 
         // Validate and normalize reserved slots
@@ -72,10 +72,10 @@ public class ReservedSlotService {
             totalReservedSlots = reservedSlots.stream().mapToInt(ReservedSlot::getSlots).sum();
         }
 
-        // Update event vacancy (top-level + General ticket type)
+        // Update General Admission vacancy
         int newVacancy = currentVacancy - totalReservedSlots;
         DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(eventId, transaction);
-        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType, newVacancy);
+        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(), newVacancy);
         logger.info("Reduced vacancy from {} to {} for event {} type {}", currentVacancy, newVacancy, eventId,
                 ticketType.getId());
 

@@ -44,7 +44,6 @@ import {
   processEventData,
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
-import { appendGeneralTicketTypeCoUpdates } from "./eventsUtils/eventTicketTypesUtils";
 import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
 import {
   bustEventsLocalStorageCache,
@@ -267,13 +266,8 @@ export async function updateEventById(eventId: EventId, updatedData: Partial<Eve
     }
 
     const eventDoc = eventDocSnapshot.data() as EventDataWithoutOrganiser;
-    const ticketTypeCoUpdates = appendGeneralTicketTypeCoUpdates(eventDoc, {
-      price: updatedData.price,
-      capacity: updatedData.capacity,
-      vacancy: updatedData.vacancy,
-    });
 
-    await updateDoc(eventDocRef, { ...updatedData, ...ticketTypeCoUpdates });
+    await updateDoc(eventDocRef, updatedData);
 
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
@@ -483,14 +477,9 @@ export async function updateEventCapacityById(eventId: EventId, capacity: number
       if (capacity >= eventDoc.capacity - eventDoc.vacancy) {
         const changeAmount = eventDoc.capacity - capacity;
         const newVacancy = eventDoc.vacancy - changeAmount;
-        const ticketTypeCoUpdates = appendGeneralTicketTypeCoUpdates(eventDoc, {
-          capacity,
-          vacancy: newVacancy,
-        });
         transaction.update(eventDocRef, {
           capacity: capacity,
           vacancy: newVacancy,
-          ...ticketTypeCoUpdates,
         });
         valid = true;
       }

@@ -48,7 +48,7 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
             }
 
             EventData eventData = maybeEventData.get();
-            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, null);
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructCheckoutFulfilmentEntities(
                     eventId,
                     eventData, numTickets,

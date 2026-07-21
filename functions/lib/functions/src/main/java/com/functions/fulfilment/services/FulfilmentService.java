@@ -12,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
@@ -270,8 +272,9 @@ public class FulfilmentService {
         }
         EventData eventData = maybeEventData.get();
 
-        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && eventData.getVacancy() != null
-                && eventData.getVacancy() <= 0) {
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && ticketType.getVacancy() != null
+                && ticketType.getVacancy() <= 0) {
             return FulfilmentSessionType.WAITLIST;
         }
 

@@ -20,14 +20,11 @@ public class EventTicketTypeServiceTest {
     @Test
     public void resolveDefaultsToGeneralAdmissionByName() {
         EventData event = baseEvent();
-        event.setPrice(1000);
-        event.setCapacity(10);
-        event.setVacancy(8);
         EventTicketType general = ticketType("g1", EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, 1000, 10, 8);
         EventTicketType vip = ticketType("v1", "VIP", 5000, 5, 5);
         event.setEventTicketTypes(mapOf(general, vip));
 
-        ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event, null);
+        ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event);
 
         assertEquals("g1", resolved.getId());
         assertEquals(EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, resolved.getName());
@@ -36,16 +33,12 @@ public class EventTicketTypeServiceTest {
     }
 
     @Test
-    public void resolveReconcilesStaleGeneralMapToTopLevelFields() {
+    public void resolveUsesMapValues() {
         EventData event = baseEvent();
-        event.setPrice(2500);
-        event.setCapacity(40);
-        event.setVacancy(22);
-        // Map deliberately stale vs top-level (common after 2-week hanging rollout)
-        EventTicketType staleGeneral = ticketType("g1", EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, 1000, 10, 3);
-        event.setEventTicketTypes(mapOf(staleGeneral));
+        EventTicketType general = ticketType("g1", EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, 2500, 40, 22);
+        event.setEventTicketTypes(mapOf(general));
 
-        ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event, null);
+        ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event);
 
         assertEquals("g1", resolved.getId());
         assertEquals(Integer.valueOf(2500), resolved.getPrice());
@@ -54,48 +47,12 @@ public class EventTicketTypeServiceTest {
     }
 
     @Test
-    public void resolveExplicitGeneralIdAlsoReconcilesToTopLevel() {
-        EventData event = baseEvent();
-        event.setPrice(900);
-        event.setCapacity(15);
-        event.setVacancy(7);
-        EventTicketType staleGeneral = ticketType("g1", EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, 100, 5, 1);
-        event.setEventTicketTypes(mapOf(staleGeneral));
-
-        ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event, "g1");
-
-        assertEquals(Integer.valueOf(900), resolved.getPrice());
-        assertEquals(Integer.valueOf(15), resolved.getCapacity());
-        assertEquals(Integer.valueOf(7), resolved.getVacancy());
-    }
-
-    @Test
-    public void resolveExplicitNonGeneralKeepsMapValues() {
-        EventData event = baseEvent();
-        event.setPrice(1000);
-        event.setCapacity(10);
-        event.setVacancy(8);
-        EventTicketType general = ticketType("g1", EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, 1000, 10, 8);
-        EventTicketType vip = ticketType("v1", "VIP", 5000, 5, 4);
-        event.setEventTicketTypes(mapOf(general, vip));
-
-        ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event, "v1");
-
-        assertEquals("v1", resolved.getId());
-        assertEquals(Integer.valueOf(5000), resolved.getPrice());
-        assertEquals(Integer.valueOf(4), resolved.getVacancy());
-    }
-
-    @Test
     public void resolveFallsBackToSoleMapEntry() {
         EventData event = baseEvent();
-        event.setPrice(500);
-        event.setCapacity(20);
-        event.setVacancy(15);
         EventTicketType only = ticketType("sole-1", "Standard", 500, 20, 15);
         event.setEventTicketTypes(mapOf(only));
 
-        ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event, null);
+        ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event);
 
         assertEquals("sole-1", resolved.getId());
         assertEquals("Standard", resolved.getName());
@@ -104,18 +61,16 @@ public class EventTicketTypeServiceTest {
     }
 
     @Test
-    public void resolveSynthesizesWhenMapMissing() {
+    public void resolveThrowsWhenMapMissing() {
         EventData event = baseEvent();
-        event.setPrice(2500);
-        event.setCapacity(30);
-        event.setVacancy(12);
         event.setEventTicketTypes(null);
 
-        ResolvedEventTicketType resolved = EventTicketTypeService.resolve(event, null);
-
-        assertEquals(EventTicketTypeService.GENERAL_TICKET_TYPE_NAME, resolved.getName());
-        assertEquals(Integer.valueOf(2500), resolved.getPrice());
-        assertEquals(Integer.valueOf(12), resolved.getVacancy());
+        try {
+            EventTicketTypeService.resolve(event);
+            fail("Expected IllegalStateException");
+        } catch (IllegalStateException e) {
+            assertTrue(e.getMessage().contains("missing eventTicketTypes"));
+        }
     }
 
     @Test

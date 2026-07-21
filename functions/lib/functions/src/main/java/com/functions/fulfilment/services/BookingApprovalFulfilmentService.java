@@ -45,7 +45,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
             }
 
             EventData eventData = maybeEventData.get();
-            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, null);
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructBookingApprovalFulfilmentEntities(
                     eventId, eventData, numTickets, fulfilmentSessionId);
             logger.info(

@@ -602,7 +602,7 @@ public class WebhookService {
         }
         event.setEventId(eventId);
 
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(event, eventTicketTypeId);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(event);
         
         LineItem item = getSingleCheckoutLineItem(lineItems, checkoutSessionId, false);
         if (item == null) {
@@ -731,8 +731,8 @@ public class WebhookService {
         }
         eventData.setEventId(eventId);
 
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, null);
-        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, ticketCount);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType.getId(), ticketCount);
     }
 
     private static void updateTicketsStatusToRejected(
@@ -948,7 +948,7 @@ public class WebhookService {
             throw new IllegalStateException("Event data is null for expired checkout restock. eventId=" + eventId);
         }
         eventData.setEventId(eventId);
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, eventTicketTypeId);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
         
         // Firestore transactions require all reads to complete before the first write.
         EventMetadata eventMetadata = getOrInitializeEventMetadata(
@@ -957,8 +957,8 @@ public class WebhookService {
                 eventSnapshot.getString("organiserId"));
         appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
 
-        // Restock the tickets (top-level + ticket type)
-        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, quantity);
+        // Restock General Admission vacancy
+        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType.getId(), quantity);
         transaction.set(eventMetadataRef, eventMetadata);
     }
     

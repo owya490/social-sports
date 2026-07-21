@@ -139,7 +139,7 @@ public class CheckoutService {
      * @param privateUserData Private user data - contains organiser details
      */
     private static void commitReservation(Transaction transaction, CreateStripeCheckoutSessionRequest request, EventData eventData, PrivateUserData privateUserData) throws Exception {
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, null);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
         validateEventForCheckout(eventData, ticketType, request.quantity());
 
         Firestore db = FirebaseService.getFirestore();
@@ -151,10 +151,9 @@ public class CheckoutService {
         boolean needsActivation = Boolean.FALSE.equals(privateUserData.getStripeAccountActive());
         Integer currentVacancy = ticketType.getVacancy();
 
-        // PHASE 2: WRITE - Reserve tickets and track session (top-level + General ticket type)
+        // Reserve tickets on General Admission vacancy
         Integer newVacancy = currentVacancy - request.quantity();
-        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType, newVacancy);
-        eventData.setVacancy(newVacancy);
+        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(), newVacancy);
         logger.info("Reserved {} tickets for event {} type {} at {} cents (vacancy: {} -> {})",
                 request.quantity(), request.eventId(), ticketType.getId(), ticketType.getPrice(), currentVacancy,
                 newVacancy);
@@ -186,8 +185,8 @@ public class CheckoutService {
                                 "Could not revert reservation: Event data null for " + request.eventId());
                     }
                     eventData.setEventId(request.eventId());
-                    ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, null);
-                    EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType,
+                    ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+                    EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType.getId(),
                             request.quantity());
                     logger.info("Reverted reservation of {} tickets for event {} type {}",
                             request.quantity(), request.eventId(), ticketType.getId());
@@ -259,7 +258,7 @@ public class CheckoutService {
     private static StripeSessionResult createStripeSession(
             CreateStripeCheckoutSessionRequest request, EventData eventData, String stripeAccountId) throws StripeException {
         
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, null);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
         long unitAmount = ticketType.getPrice() != null ? ticketType.getPrice().longValue() : 0L;
 
         // Build Stripe checkout session parameters

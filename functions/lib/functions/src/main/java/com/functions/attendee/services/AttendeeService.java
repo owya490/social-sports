@@ -33,7 +33,7 @@ public class AttendeeService {
 
     /**
      * Adds an attendee by creating a new APPROVED Order with N APPROVED Tickets,
-     * and atomically decrementing the event vacancy (top-level + General ticket type).
+     * and atomically decrementing General Admission vacancy.
      */
     public static AddAttendeeResponse addAttendee(AddAttendeeRequest request) throws Exception {
         logger.info("Adding attendee for eventId: {}, email: {}, numTickets: {}",
@@ -46,7 +46,7 @@ public class AttendeeService {
             DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(request.eventId(),
                     transaction);
 
-            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData, null);
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
             EventTicketTypeService.validateAvailability(ticketType, request.numTickets());
 
             Timestamp now = Timestamp.now();
@@ -83,7 +83,7 @@ public class AttendeeService {
 
             DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
             transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(request.numTickets()));
-            EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType,
+            EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(),
                     ticketType.getVacancy() - request.numTickets());
 
             logger.info("Added attendee: orderId={}, ticketCount={}, eventId={}",
@@ -122,7 +122,7 @@ public class AttendeeService {
                     .filter(t -> t.getStatus() == OrderAndTicketStatus.APPROVED)
                     .collect(Collectors.toList());
 
-            ResolvedEventTicketType ticketType = resolveTicketTypeForOrder(eventData, approvedTickets);
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
 
             int currentApproved = approvedTickets.size();
             int target = request.numTickets();
@@ -139,7 +139,7 @@ public class AttendeeService {
                 DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-currentApproved));
 
-                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType,
+                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(),
                         ticketType.getVacancy() + currentApproved);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
@@ -175,7 +175,7 @@ public class AttendeeService {
                 DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(delta));
 
-                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType,
+                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(),
                         ticketType.getVacancy() - delta);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
@@ -193,7 +193,7 @@ public class AttendeeService {
                 DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-toReject));
 
-                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType,
+                EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType.getId(),
                         ticketType.getVacancy() + toReject);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
@@ -204,24 +204,5 @@ public class AttendeeService {
                         "No change needed. Ticket count already matches.");
             }
         });
-    }
-
-  private static ResolvedEventTicketType resolveTicketTypeForOrder(EventData eventData,
-            List<Ticket> approvedTickets) {
-        String existingTypeId = approvedTickets.stream()
-                .map(Ticket::getEventTicketTypeId)
-                .filter(id -> id != null && !id.isBlank())
-                .findFirst()
-                .orElse(null);
-        if (existingTypeId == null) {
-            return EventTicketTypeService.resolve(eventData, null);
-        }
-        try {
-            return EventTicketTypeService.resolve(eventData, existingTypeId);
-        } catch (IllegalArgumentException e) {
-            logger.warn("Stored eventTicketTypeId {} not found on event {}; falling back to General",
-                    existingTypeId, eventData.getEventId());
-            return EventTicketTypeService.resolve(eventData, null);
-        }
     }
 }

@@ -1,13 +1,8 @@
 package com.functions.events.services;
 
 import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
 
 import javax.annotation.Nullable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
@@ -16,71 +11,44 @@ import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.tickets.models.Ticket;
 
 /**
- * Resolves event ticket types for purchase and inventory flows.
- * Defaults to the General Admission ticket type when no type ID is provided.
- *
- * <p>For General Admission (and sole-map defaults), price/capacity/vacancy always mirror the
- * event's top-level fields so stale {@code eventTicketTypes} maps from the rollout period
- * cannot diverge from organiser edits. Until multi-type inventory ships, writers keep both
- * sources in sync on every update.
+ * Resolves the General Admission ticket type for purchase and inventory flows.
+ * Assumes {@code eventTicketTypes} is present and synced (seeded on create / migrated at deploy).
  */
 public class EventTicketTypeService {
-    private static final Logger logger = LoggerFactory.getLogger(EventTicketTypeService.class);
-
     public static final String GENERAL_TICKET_TYPE_NAME = "General Admission";
 
     private EventTicketTypeService() {
     }
 
     /**
-     * Resolve a ticket type for a purchase. Null/blank {@code eventTicketTypeId} → General Admission.
-     * General Admission types always use top-level price/capacity/vacancy.
+     * Always resolves to the General Admission ticket type for the event.
      */
-    public static ResolvedEventTicketType resolve(EventData event, @Nullable String eventTicketTypeId) {
+    public static ResolvedEventTicketType resolve(EventData event) {
         if (event == null) {
             throw new IllegalArgumentException("Event data is required to resolve a ticket type");
         }
 
         Map<String, EventTicketType> ticketTypes = event.getEventTicketTypes();
-
-        if (eventTicketTypeId != null && !eventTicketTypeId.isBlank()) {
-            EventTicketType explicit = ticketTypes != null ? ticketTypes.get(eventTicketTypeId) : null;
-            if (explicit == null) {
-                throw new IllegalArgumentException(
-                        "Unknown eventTicketTypeId: " + eventTicketTypeId + " for event " + event.getEventId());
-            }
-            if (isGeneralAdmissionName(explicit.getName())) {
-                return fromMapEntryMirroringTopLevel(event, explicit);
-            }
-            return fromEventTicketType(explicit);
-        }
-
-        if (ticketTypes != null && !ticketTypes.isEmpty()) {
-            EventTicketType general = findByName(ticketTypes, GENERAL_TICKET_TYPE_NAME);
-            if (general != null) {
-                return fromMapEntryMirroringTopLevel(event, general);
-            }
-
-            if (ticketTypes.size() == 1) {
-                EventTicketType only = ticketTypes.values().iterator().next();
-                logger.info("Resolving sole ticket type '{}' for event {} (mirroring top-level fields)",
-                        only.getName(), event.getEventId());
-                return fromMapEntryMirroringTopLevel(event, only);
-            }
-
+        if (ticketTypes == null || ticketTypes.isEmpty()) {
             throw new IllegalStateException(
-                    "Event " + event.getEventId()
-                            + " has multiple ticket types but no General Admission ticket type to default to");
+                    "Event " + event.getEventId() + " is missing eventTicketTypes (expected General Admission)");
         }
 
-        logger.info("Synthesizing General Admission ticket type from top-level fields for event {}",
-                event.getEventId());
+        EventTicketType general = findByName(ticketTypes, GENERAL_TICKET_TYPE_NAME);
+        if (general == null && ticketTypes.size() == 1) {
+            general = ticketTypes.values().iterator().next();
+        }
+        if (general == null) {
+            throw new IllegalStateException(
+                    "Event " + event.getEventId() + " has no General Admission ticket type");
+        }
+
         return ResolvedEventTicketType.builder()
-                .id(UUID.nameUUIDFromBytes(("legacy-general:" + event.getEventId()).getBytes()).toString())
-                .name(GENERAL_TICKET_TYPE_NAME)
-                .price(event.getPrice())
-                .vacancy(event.getVacancy())
-                .capacity(event.getCapacity())
+                .id(general.getId())
+                .name(general.getName())
+                .price(general.getPrice())
+                .vacancy(general.getVacancy())
+                .capacity(general.getCapacity())
                 .build();
     }
 
@@ -125,39 +93,5 @@ public class EventTicketTypeService {
             }
         }
         return null;
-    }
-
-    /**
-     * Keep map entry identity (id/name) but force price/capacity/vacancy from top-level event fields.
-     */
-    private static ResolvedEventTicketType fromMapEntryMirroringTopLevel(EventData event,
-            EventTicketType ticketType) {
-        if (!Objects.equals(ticketType.getPrice(), event.getPrice())
-                || !Objects.equals(ticketType.getCapacity(), event.getCapacity())
-                || !Objects.equals(ticketType.getVacancy(), event.getVacancy())) {
-            logger.info(
-                    "Reconciling stale ticket type {} for event {}: map(price={}, capacity={}, vacancy={}) "
-                            + "→ topLevel(price={}, capacity={}, vacancy={})",
-                    ticketType.getId(), event.getEventId(),
-                    ticketType.getPrice(), ticketType.getCapacity(), ticketType.getVacancy(),
-                    event.getPrice(), event.getCapacity(), event.getVacancy());
-        }
-        return ResolvedEventTicketType.builder()
-                .id(ticketType.getId())
-                .name(ticketType.getName())
-                .price(event.getPrice())
-                .vacancy(event.getVacancy())
-                .capacity(event.getCapacity())
-                .build();
-    }
-
-    private static ResolvedEventTicketType fromEventTicketType(EventTicketType ticketType) {
-        return ResolvedEventTicketType.builder()
-                .id(ticketType.getId())
-                .name(ticketType.getName())
-                .price(ticketType.getPrice())
-                .vacancy(ticketType.getVacancy())
-                .capacity(ticketType.getCapacity())
-                .build();
     }
 }
