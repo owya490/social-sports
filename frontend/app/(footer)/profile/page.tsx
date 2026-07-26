@@ -1,12 +1,11 @@
 "use client";
 import Loading from "@/components/loading/Loading";
-import { FieldTypes, RenderEditableField, RenderNonEditableField } from "@/components/users/profile/ProfileFields";
+import { ProfileEditableDetails } from "@/components/users/profile/ProfileEditableDetails";
 import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel";
 import { EmailChangeModal } from "@/components/users/profile/EmailChangeModal";
 import { useUser } from "@/components/utility/UserContext";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
-import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
 import { Switch } from "@mantine/core";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
@@ -29,7 +28,6 @@ import { useEffect, useState } from "react";
 const Profile = () => {
   const { user, setUser } = useUser();
   const [loading, setLoading] = useState(true);
-  const [usernameWarning, setUsernameWarning] = useState(false);
   const [emailChangeModalOpened, setEmailChangeModalOpened] = useState(false);
 
   useEffect(() => {
@@ -107,116 +105,7 @@ const Profile = () => {
           </div>
 
           <div className="basis-3/5 mt-6 md:mt-16 3xl:mt-20 3xl:text-lg">
-            <h2 className="mb-1 md:mb-2 lg:mt-1 text-xl">Personal Details</h2>
-            <div className="h-[1px] bg-[#ccc] mb-2"></div>
-            <ul className="w-full">
-              <RenderEditableField
-                label="First Name"
-                value={user.firstName}
-                type={FieldTypes.SHORT_TEXT}
-                onSubmit={async (value) => {
-                  await handleUserProfileUpdate("firstName", value);
-                  await handleUserProfileUpdate("nameTokens", value.toLowerCase().split(" "));
-                  return true;
-                }}
-              />
-              <RenderEditableField
-                label="Last Name"
-                value={user.surname}
-                type={FieldTypes.SHORT_TEXT}
-                onSubmit={(value) => handleUserProfileUpdate("surname", value)}
-              />
-              <RenderEditableField
-                label="Location"
-                value={user.location}
-                type={FieldTypes.SHORT_TEXT}
-                onSubmit={(value) => handleUserProfileUpdate("location", value)}
-              />
-              <RenderEditableField
-                label="Date of Birth"
-                value={user.dob}
-                type={FieldTypes.DATE}
-                onSubmit={(value) => handleUserProfileUpdate("dob", value)}
-              />
-              <RenderEditableField
-                label="Gender"
-                value={user.gender}
-                type={FieldTypes.SELECT}
-                options={["Male", "Female"]}
-                onSubmit={(value) => handleUserProfileUpdate("gender", value)}
-              />
-            </ul>
-            <h2 className="mb-1 md:mb-2 lg:mt-1 text-xl">Public Info</h2>
-            <div className="h-[1px] bg-[#ccc] mb-2"></div>
-            <ul className="w-full">
-              <RenderEditableField
-                label="Contact Email"
-                value={user.publicContactInformation.email}
-                type={FieldTypes.SHORT_TEXT}
-                onSubmit={(value) =>
-                  handleUserProfileUpdate("publicContactInformation", {
-                    ...user.publicContactInformation,
-                    email: value,
-                  })
-                }
-              />
-              <RenderEditableField
-                label="Phone Number"
-                value={user.publicContactInformation.mobile}
-                type={FieldTypes.SHORT_TEXT}
-                customValidation={(input) => /^\d*$/.test(input)} // Only allow numbers and empty string, no decimal or commas
-                onSubmit={(value) =>
-                  handleUserProfileUpdate("publicContactInformation", {
-                    ...user.publicContactInformation,
-                    mobile: value,
-                  })
-                }
-              />
-              <RenderEditableField
-                label="Bio"
-                value={user.bio}
-                type={FieldTypes.LONG_TEXT}
-                onSubmit={(value) => handleUserProfileUpdate("bio", value)}
-              />
-            </ul>
-            <h2 className="mb-1 md:mb-2 lg:mt-1 text-xl">Private Info</h2>
-            <div className="h-[1px] bg-[#ccc] mb-2"></div>
-            <ul className="w-full">
-              <RenderNonEditableField label="User ID" value={user.userId} />
-              {usernameWarning && (
-                <div className="text-red-900 text-xs font-light">Username update failed, try another username.</div>
-              )}
-              <RenderEditableField
-                label="Username"
-                value={user.username}
-                type={FieldTypes.SHORT_TEXT}
-                onSubmit={async (value) => {
-                  // if update username fails, we want to display warning
-                  const isUsernameExist = await updateUsername(user.userId, value);
-                  if (!isUsernameExist) {
-                    setUsernameWarning(true);
-                    return false;
-                  }
-                  setUsernameWarning(false);
-                  bustUserLocalStorageCache();
-                  setUser({
-                    ...user,
-                    username: value,
-                  });
-                  return true;
-                }}
-              />
-              <RenderNonEditableField label="Private Email" value={user.contactInformation.email} />
-              <RenderEditableField
-                label="Private Phone Number"
-                value={user.contactInformation.mobile}
-                type={FieldTypes.SHORT_TEXT}
-                customValidation={(input) => /^\d*$/.test(input)} // Only allow numbers and empty string, no decimal or commas
-                onSubmit={(value) =>
-                  handleUserProfileUpdate("contactInformation", { ...user.contactInformation, mobile: value })
-                }
-              />
-            </ul>
+            <ProfileEditableDetails user={user} setUser={setUser} />
           </div>
         </div>
       </div>
