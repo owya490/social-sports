@@ -30,14 +30,18 @@ export async function getWrappedData(
   );
 
   try {
+    // A share link authenticates with the wrappedId itself, so it uses the public
+    // endpoint. Reading your own wrapped data requires a signed-in user whose uid
+    // the backend checks against organiserId.
+    const isShareLink = Boolean(wrappedId);
     const response = await executeGlobalAppControllerFunction<GetWrappedRequest, GetWrappedResponse>(
-      EndpointType.GET_SPORTSHUB_WRAPPED,
+      isShareLink ? EndpointType.GET_SPORTSHUB_WRAPPED_BY_SHARE_ID : EndpointType.GET_SPORTSHUB_WRAPPED,
       {
         organiserId,
         year,
         wrappedId,
       },
-      wrappedId ? undefined : { firebaseAuth: true }
+      isShareLink ? undefined : { firebaseAuth: true }
     );
 
     wrappedServiceLogger.info(

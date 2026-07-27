@@ -4,9 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.functions.global.models.Handler;
 import com.functions.global.models.AuthContext;
+import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.global.services.EventAuthorizationService;
 import com.functions.tickets.models.requests.BookingApprovalRequest;
 import com.functions.tickets.models.responses.BookingApprovalResponse;
 import com.functions.tickets.services.BookingApprovalService;
@@ -30,11 +31,25 @@ public class BookingApprovalHandler implements Handler<BookingApprovalRequest, B
 
     @Override
     public BookingApprovalResponse handle(BookingApprovalRequest request, AuthContext authContext) throws Exception {
+        // The organiserId in the request body is untrusted and deliberately ignored:
+        // it is public data, so trusting it would let any signed-in user capture or
+        // cancel any other organiser's payments. Everything downstream uses the uid
+        // established from the verified Firebase ID token.
+        String organiserId = authContext.requireUid();
+
         logger.info("Handling booking approval request for eventId: {}, organiserId: {}, orderId: {}, operation: {}",
-                request.eventId(), request.organiserId(), request.orderId(), request.bookingApprovalOperation());
+                request.eventId(), organiserId, request.orderId(), request.bookingApprovalOperation());
+
+        if (request.organiserId() != null && !organiserId.equals(request.organiserId())) {
+            logger.warn("Booking approval organiserId mismatch: authenticated uid {} does not match "
+                    + "requested organiserId {} for eventId {}. Using authenticated uid.",
+                    organiserId, request.organiserId(), request.eventId());
+        }
+
+        EventAuthorizationService.requireOrganiserAccess(organiserId, request.eventId());
 
         BookingApprovalResponse response = BookingApprovalService.handleBookingApproval(request.eventId(),
-                request.organiserId(), request.orderId(), request.bookingApprovalOperation());
+                organiserId, request.orderId(), request.bookingApprovalOperation());
 
         logger.info("[BookingApprovalHandler] Booking {} operation completed for orderId: {}, success: {}",
                 request.bookingApprovalOperation(), request.orderId(), response.success());

@@ -1,7 +1,6 @@
 package com.functions.global.services;
 
-import java.util.Arrays;
-
+import com.functions.firebase.services.FirebaseService;
 import com.functions.global.exceptions.AuthenticationException;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.AuthLevel;
@@ -13,7 +12,14 @@ import com.google.firebase.auth.FirebaseToken;
 public final class AuthService {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String SESSION_SECRET_HEADER = "X-Session-Secret";
-    public static final String SESSION_SECRET_COOKIE = "fulfilmentSessionSecret";
+
+    /**
+     * When true, every ID token is additionally checked against the Firebase Auth
+     * backend for revocation (disabled user, forced sign-out). This costs one extra
+     * network round trip per authenticated request; it is enabled because the
+     * AUTHENTICATED tier includes operations that capture and cancel payments.
+     */
+    private static final boolean CHECK_TOKEN_REVOKED = true;
 
     private AuthService() {
     }
@@ -28,18 +34,31 @@ public final class AuthService {
 
     private static String verifyFirebaseIdToken(HttpRequest request) {
         String idToken = extractBearerToken(request);
+        // FirebaseAuth needs the default FirebaseApp, which only FirebaseService
+        // creates. Auth runs before routing, so on a cold instance nothing else has
+        // loaded that class yet.
+        FirebaseService.ensureInitialized();
         try {
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken, CHECK_TOKEN_REVOKED);
             return decodedToken.getUid();
-        } catch (FirebaseAuthException e) {
+        } catch (FirebaseAuthException | IllegalArgumentException e) {
+            // verifyIdToken throws FirebaseAuthException for invalid/expired/revoked
+            // tokens but IllegalArgumentException for malformed ones. Both are
+            // authentication failures (401), not internal errors (500). Anything else
+            // (e.g. an uninitialised FirebaseApp) is deliberately left to propagate as
+            // a 500 rather than being masked as a bad credential.
             throw new AuthenticationException("Invalid Firebase ID token");
         }
     }
 
+    /**
+     * The session secret is only accepted from an explicit header. It is
+     * deliberately not read from a cookie: the browser calls this function
+     * cross-site, so a SameSite=Lax cookie would never be sent, and a cookie
+     * readable by JavaScript would add XSS surface for no benefit.
+     */
     private static String extractRequiredSessionSecret(HttpRequest request) {
         return request.getFirstHeader(SESSION_SECRET_HEADER)
-                .filter(value -> !value.isBlank())
-                .or(() -> extractCookie(request, SESSION_SECRET_COOKIE))
                 .filter(value -> !value.isBlank())
                 .orElseThrow(() -> new AuthenticationException("Session secret is required"));
     }
@@ -56,16 +75,5 @@ public final class AuthService {
             throw new AuthenticationException("Bearer token is required");
         }
         return token;
-    }
-
-    private static java.util.Optional<String> extractCookie(HttpRequest request, String cookieName) {
-        return request.getFirstHeader("Cookie")
-                .stream()
-                .flatMap(cookieHeader -> Arrays.stream(cookieHeader.split(";")))
-                .map(String::trim)
-                .map(cookie -> cookie.split("=", 2))
-                .filter(parts -> parts.length == 2 && parts[0].equals(cookieName))
-                .map(parts -> parts[1])
-                .findFirst();
     }
 }

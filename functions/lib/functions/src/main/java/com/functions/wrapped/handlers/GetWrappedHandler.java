@@ -4,7 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.functions.global.exceptions.AuthenticationException;
 import com.functions.global.models.AuthContext;
+import com.functions.global.models.AuthLevel;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.services.EventAuthorizationService;
@@ -34,12 +36,17 @@ public class GetWrappedHandler implements Handler<GetWrappedRequest, GetWrappedR
         logger.info("Handling get wrapped request for organiserId: {}, year: {}, wrappedId: {}", 
                 request.organiserId(), request.year(), request.wrappedId());
 
-        boolean isPublicShareRequest = request.wrappedId() != null && !request.wrappedId().isBlank();
-        if (!isPublicShareRequest) {
+        // This handler serves two endpoints. GET_SPORTSHUB_WRAPPED is AUTHENTICATED and
+        // may only read the caller's own data. GET_SPORTSHUB_WRAPPED_BY_SHARE_ID is
+        // PUBLIC and requires a wrappedId, which WrappedService verifies against the
+        // stored record — the share id is the capability.
+        if (authContext.level() == AuthLevel.AUTHENTICATED) {
             EventAuthorizationService.requireMatchingUser(
                     authContext.requireUid(),
                     request.organiserId(),
                     "You are not allowed to access another organiser's wrapped data");
+        } else if (request.wrappedId() == null || request.wrappedId().isBlank()) {
+            throw new AuthenticationException("wrappedId is required to access wrapped data via a share link");
         }
 
         try {

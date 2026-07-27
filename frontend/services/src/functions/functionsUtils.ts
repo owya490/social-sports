@@ -45,10 +45,13 @@ export async function executeGlobalAppControllerFunction<S, T>(
     headers["X-Session-Secret"] = authOptions.sessionSecret;
   }
 
+  // NOTE: do not add `credentials: "include"` here. The GlobalAppController responds
+  // with `Access-Control-Allow-Origin: *`, and the CORS spec rejects a wildcard origin
+  // on a credentialed request, which would block every call from the browser. All auth
+  // travels in explicit headers above, so no cookies are needed.
   const rawResponse = await fetch(getGlobalAppControllerUrl(), {
     method: "POST",
     headers,
-    credentials: "include",
     body: JSON.stringify(request),
   });
 

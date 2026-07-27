@@ -23,7 +23,7 @@ import { getUrlWithCurrentHostname } from "../urlUtils";
 import {
   clearStoredFulfilmentSessionId,
   getStoredFulfilmentSessionId,
-  getStoredFulfilmentSessionSecret,
+  requireFulfilmentSessionSecret,
   storeFulfilmentSessionId,
 } from "./fulfilmentUtils/fulfilmentUtils";
 
@@ -348,12 +348,4 @@ export async function getFulfilmentSessionInfo(
     fulfilmentServiceLogger.error(`getFulfilmentSessionInfo: Failed to fetch fulfilment session info: ${error}`);
     throw error;
   }
-}
-
-function requireFulfilmentSessionSecret(fulfilmentSessionId: FulfilmentSessionId): string {
-  const sessionSecret = getStoredFulfilmentSessionSecret(fulfilmentSessionId);
-  if (!sessionSecret) {
-    throw new Error(`Missing fulfilment session secret for session ${fulfilmentSessionId}`);
-  }
-  return sessionSecret;
 }
