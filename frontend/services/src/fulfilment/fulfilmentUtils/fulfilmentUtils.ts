@@ -10,6 +10,7 @@ import {
 } from "../fulfilmentConstants";
 
 const fulfilmentUtilsLogger = new Logger("fulfilmentUtilsLogger");
+const FULFILMENT_SESSION_SECRET_STORAGE_PREFIX = "fulfilmentSessionSecret#";
 
 export function getCompleteFulfilmentSessionUrl(): string {
   const env = getEnvironment();
@@ -73,6 +74,7 @@ export function purgeExpiredFulfilmentSessions(): void {
  */
 export function storeFulfilmentSessionId(
   fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentSessionSecret: string,
   eventId: EventId,
   numTickets: number
 ): void {
@@ -85,6 +87,7 @@ export function storeFulfilmentSessionId(
 
   localStorage.setItem(sessionIdKey, fulfilmentSessionId);
   localStorage.setItem(timestampKey, now.toUTCString());
+  localStorage.setItem(getFulfilmentSessionSecretKey(fulfilmentSessionId), fulfilmentSessionSecret);
   fulfilmentUtilsLogger.info(
     `Stored fulfilment session ID: ${fulfilmentSessionId} for eventId: ${eventId}, numTickets: ${numTickets}`
   );
@@ -149,8 +152,32 @@ export function getStoredFulfilmentSessionId(eventId: EventId, numTickets: numbe
 export function clearStoredFulfilmentSessionId(eventId: EventId, numTickets: number): void {
   const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets);
   const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets);
+  const storedSessionId = localStorage.getItem(sessionIdKey);
 
   localStorage.removeItem(sessionIdKey);
   localStorage.removeItem(timestampKey);
+  if (storedSessionId) {
+    localStorage.removeItem(getFulfilmentSessionSecretKey(storedSessionId as FulfilmentSessionId));
+  }
   fulfilmentUtilsLogger.info(`Cleared stored fulfilment session for eventId: ${eventId}, numTickets: ${numTickets}`);
+}
+
+export function getStoredFulfilmentSessionSecret(fulfilmentSessionId: FulfilmentSessionId): string | null {
+  return localStorage.getItem(getFulfilmentSessionSecretKey(fulfilmentSessionId));
+}
+
+/**
+ * Throws if no secret is stored for the session. Callers treat this as a signal to
+ * re-initialise the fulfilment session rather than as a fatal error.
+ */
+export function requireFulfilmentSessionSecret(fulfilmentSessionId: FulfilmentSessionId): string {
+  const sessionSecret = getStoredFulfilmentSessionSecret(fulfilmentSessionId);
+  if (!sessionSecret) {
+    throw new Error(`Missing fulfilment session secret for session ${fulfilmentSessionId}`);
+  }
+  return sessionSecret;
+}
+
+function getFulfilmentSessionSecretKey(fulfilmentSessionId: FulfilmentSessionId): string {
+  return `${FULFILMENT_SESSION_SECRET_STORAGE_PREFIX}${fulfilmentSessionId}`;
 }

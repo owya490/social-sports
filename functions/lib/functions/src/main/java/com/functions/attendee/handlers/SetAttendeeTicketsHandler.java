@@ -7,8 +7,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.attendee.models.requests.SetAttendeeTicketsRequest;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
 import com.functions.attendee.services.AttendeeService;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.global.services.EventAuthorizationService;
 import com.functions.utils.JavaUtils;
 
 public class SetAttendeeTicketsHandler implements Handler<SetAttendeeTicketsRequest, SetAttendeeTicketsResponse> {
@@ -24,7 +26,7 @@ public class SetAttendeeTicketsHandler implements Handler<SetAttendeeTicketsRequ
     }
 
     @Override
-    public SetAttendeeTicketsResponse handle(SetAttendeeTicketsRequest request) throws Exception {
+    public SetAttendeeTicketsResponse handle(SetAttendeeTicketsRequest request, AuthContext authContext) throws Exception {
         logger.info("Handling set attendee tickets for orderId: {}, eventId: {}, numTickets: {}",
                 request.orderId(), request.eventId(), request.numTickets());
 
@@ -37,6 +39,8 @@ public class SetAttendeeTicketsHandler implements Handler<SetAttendeeTicketsRequ
         if (request.numTickets() < 0) {
             throw new IllegalArgumentException("numTickets cannot be negative");
         }
+
+        EventAuthorizationService.requireOrganiserAccess(authContext.requireUid(), request.eventId());
 
         SetAttendeeTicketsResponse response = AttendeeService.setAttendeeTickets(request);
 

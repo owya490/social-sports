@@ -6,8 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.global.services.EventAuthorizationService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.models.requests.get.GetOrderRequest;
@@ -29,7 +31,7 @@ public class GetOrderHandler implements Handler<GetOrderRequest, GetOrderRespons
     }
 
     @Override
-    public GetOrderResponse handle(GetOrderRequest request) throws Exception {
+    public GetOrderResponse handle(GetOrderRequest request, AuthContext authContext) throws Exception {
         logger.info("Getting order: {}", request.orderId());
 
         if (request.orderId() == null || request.orderId().isBlank()) {
@@ -40,6 +42,10 @@ public class GetOrderHandler implements Handler<GetOrderRequest, GetOrderRespons
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + request.orderId()));
 
         List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets());
+        if (tickets.isEmpty()) {
+            throw new IllegalArgumentException("Order has no tickets: " + request.orderId());
+        }
+        EventAuthorizationService.requireOrganiserAccess(authContext.requireUid(), tickets.get(0).getEventId());
 
         return new GetOrderResponse(order, tickets);
     }

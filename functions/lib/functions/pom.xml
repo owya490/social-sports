@@ -158,6 +158,18 @@
       </plugins>
     </pluginManagement>
       <plugins>
+          <!-- Runs a function locally for manual/smoke testing, e.g.
+               mvn function:run -Drun.functionTarget=com.functions.global.controllers.GlobalAppController
+               Requires functions_key.json and .env in this directory. -->
+          <plugin>
+              <groupId>com.google.cloud.functions</groupId>
+              <artifactId>function-maven-plugin</artifactId>
+              <version>0.11.0</version>
+              <configuration>
+                  <functionTarget>com.functions.global.controllers.GlobalAppController</functionTarget>
+                  <port>8080</port>
+              </configuration>
+          </plugin>
           <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-compiler-plugin</artifactId>

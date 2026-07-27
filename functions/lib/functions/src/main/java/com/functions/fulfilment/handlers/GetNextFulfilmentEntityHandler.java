@@ -10,6 +10,7 @@ import com.functions.fulfilment.models.requests.GetNextFulfilmentEntityRequest;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.global.models.Handler;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 
@@ -26,8 +27,9 @@ public class GetNextFulfilmentEntityHandler implements Handler<GetNextFulfilment
     }
 
     @Override
-    public GetNextFulfilmentEntityResponse handle(GetNextFulfilmentEntityRequest request) {
-  
+    public GetNextFulfilmentEntityResponse handle(GetNextFulfilmentEntityRequest request, AuthContext authContext) {
+        FulfilmentService.requireSessionAccess(request.fulfilmentSessionId(), authContext);
+
         Optional<GetNextFulfilmentEntityResponse> maybeResponse = FulfilmentService.getNextFulfilmentEntityByCurrentId(
                 request.fulfilmentSessionId(), request.currentFulfilmentEntityId());
 

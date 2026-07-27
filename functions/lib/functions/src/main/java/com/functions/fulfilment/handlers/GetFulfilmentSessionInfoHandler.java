@@ -6,6 +6,7 @@ import com.functions.fulfilment.models.requests.GetFulfilmentSessionInfoRequest;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.global.models.Handler;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
 import org.slf4j.Logger;
@@ -25,7 +26,8 @@ public class GetFulfilmentSessionInfoHandler implements Handler<GetFulfilmentSes
     }
 
     @Override
-    public GetFulfilmentSessionInfoResponse handle(GetFulfilmentSessionInfoRequest request) {
+    public GetFulfilmentSessionInfoResponse handle(GetFulfilmentSessionInfoRequest request, AuthContext authContext) {
+        FulfilmentService.requireSessionAccess(request.fulfilmentSessionId(), authContext);
         Optional<GetFulfilmentSessionInfoResponse> maybeResponse = FulfilmentService.getFulfilmentSessionInfo(
                 request.fulfilmentSessionId(), request.currentFulfilmentEntityId());
 
