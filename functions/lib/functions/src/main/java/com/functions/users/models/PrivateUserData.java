@@ -10,6 +10,11 @@ import com.google.cloud.Timestamp;
 
 import lombok.Data;
 
+/** 
+ * Private User Data fields
+ * NEEDS TO MATCH AbstractUserData.java AND PrivateUserData in UserTypes.ts
+ * REMEBER TO UPDATE UsersUtils.java
+ */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PrivateUserData {
@@ -26,9 +31,7 @@ public class PrivateUserData {
 	private Boolean sendOrganiserTicketEmails = false;
 	private List<String> forms = new ArrayList<>();
 	private List<String> privateEventCollections = new ArrayList<>();
-	/** Host vs participant choice from onboarding (unset until chosen). Matches UserTypes.ts. */
 	private String onboardingPersona;
-	/** Product onboarding finished. `null` means in cohort for new signups. */
 	private Timestamp onboardingCompletedAt;
 	private Timestamp stripeConnectSetupCompletedAt;
 	private Timestamp stripeConnectSetupSkippedAt;

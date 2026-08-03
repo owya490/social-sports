@@ -32,14 +32,10 @@ public class JavaUtils {
 			while (currentClass != null && currentClass != Object.class) {
 				Field[] fields = currentClass.getDeclaredFields();
 				for (Field field : fields) {
-					field.setAccessible(true);
-					Object value = field.get(obj);
-					// Omit nulls so Firestore updates do not write absent fields (e.g. onboarding cohort flags on legacy users).
-					if (value != null) {
-						map.put(field.getName(), value);
-					}
+					field.setAccessible(true); // To access private fields
+					map.put(field.getName(), field.get(obj)); // Add field name and value to the map
 				}
-				currentClass = currentClass.getSuperclass();
+				currentClass = currentClass.getSuperclass(); // Move up to the superclass
 			}
 		} catch (IllegalAccessException e) {
 			e.printStackTrace();
