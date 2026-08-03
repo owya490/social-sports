@@ -40,6 +40,11 @@ export default function AttendeeOnboardingPage() {
     }
   }, [userLoading, user, router]);
 
+  const goBackToPersonaChoice = () => {
+    if (submitting || skipFooterBusy) return;
+    router.push("/onboarding");
+  };
+
   const explore = async () => {
     if (!user.userId || submitting || skipFooterBusy) return;
     setSubmitting(true);
@@ -98,11 +103,19 @@ export default function AttendeeOnboardingPage() {
       <div className="flex flex-wrap gap-4">
         <HighlightButton
           type="button"
+          className="border border-core-outline bg-transparent"
+          disabled={submitting || skipFooterBusy}
+          onClick={goBackToPersonaChoice}
+        >
+          Back
+        </HighlightButton>
+        <HighlightButton
+          type="button"
           className="bg-core-text text-white hover:bg-black"
           disabled={submitting || skipFooterBusy}
           onClick={() => void explore()}
         >
-          Explore events
+          {submitting ? "Working…" : "Finish onboarding"}
         </HighlightButton>
       </div>
 

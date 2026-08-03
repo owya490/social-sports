@@ -5,7 +5,6 @@ import OnboardingStripeSetup from "@/components/onboarding/OnboardingStripeSetup
 import { useUser } from "@/components/utility/UserContext";
 import { UserId } from "@/interfaces/UserTypes";
 import {
-  clearOnboardingPersonaChoice,
   markProductOnboardingCompleted,
   skipProductOnboarding,
   syncStripeConnectSetupCompletedIfNeeded,
@@ -28,7 +27,6 @@ export default function OrganiserOnboardingPage() {
   const { user, userLoading, refreshUser } = useUser();
   const router = useRouter();
   const [stripeLoading, setStripeLoading] = useState(false);
-  const [resettingPersona, setResettingPersona] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [continueBusy, setContinueBusy] = useState(false);
 
@@ -64,20 +62,13 @@ export default function OrganiserOnboardingPage() {
     refreshUser,
   ]);
 
-  const changeHowIUseSportshub = async () => {
-    if (!user.userId || resettingPersona || skipBusy || continueBusy) return;
-    setResettingPersona(true);
-    try {
-      await clearOnboardingPersonaChoice(user.userId as UserId);
-      await refreshUser();
-      router.replace("/onboarding");
-    } finally {
-      setResettingPersona(false);
-    }
+  const goBackToPersonaChoice = () => {
+    if (skipBusy || continueBusy) return;
+    router.push("/onboarding");
   };
 
   const skipEntireOnboarding = async () => {
-    if (!user.userId || skipBusy || resettingPersona || continueBusy) return;
+    if (!user.userId || skipBusy || continueBusy) return;
     const confirmed = window.confirm(SKIP_PRODUCT_ONBOARDING_CONFIRM_MESSAGE);
     if (!confirmed) return;
     setSkipBusy(true);
@@ -91,7 +82,7 @@ export default function OrganiserOnboardingPage() {
   };
 
   const completeOrganiserOnboarding = async () => {
-    if (!user.userId || continueBusy || skipBusy || resettingPersona) return;
+    if (!user.userId || continueBusy || skipBusy) return;
 
     const stripeReady = hasCompletedStripeConnectSetup(user);
     const skippedPaymentSetup = user.stripeConnectSetupSkippedAt != null;
@@ -114,7 +105,7 @@ export default function OrganiserOnboardingPage() {
     }
   };
 
-  const navDisabled = skipBusy || resettingPersona || continueBusy;
+  const navDisabled = skipBusy || continueBusy;
   const stripeReady = hasCompletedStripeConnectSetup(user);
 
   if (userLoading || !hasProvisionedFirestoreProfile(user)) {
@@ -169,7 +160,7 @@ export default function OrganiserOnboardingPage() {
               type="button"
               className="border border-core-outline bg-transparent"
               disabled={navDisabled}
-              onClick={() => void changeHowIUseSportshub()}
+              onClick={goBackToPersonaChoice}
             >
               Back
             </HighlightButton>
@@ -181,7 +172,7 @@ export default function OrganiserOnboardingPage() {
               disabled={navDisabled}
               onClick={() => void completeOrganiserOnboarding()}
             >
-              {continueBusy ? "Working…" : "Continue"}
+              {continueBusy ? "Working…" : "Finish onboarding"}
             </HighlightButton>
           </div>
         </div>

@@ -1,10 +1,8 @@
 "use client";
 
-import { HighlightButton } from "@/components/elements/HighlightButton";
-import { OnboardingPrimaryLink } from "@/components/onboarding/OnboardingPrimaryLink";
 import { useUser } from "@/components/utility/UserContext";
-import { OnboardingPersona, UserId } from "@/interfaces/UserTypes";
-import { clearOnboardingPersonaChoice, updateUser } from "@/services/src/users/usersService";
+import { OnboardingPersona } from "@/interfaces/UserTypes";
+import { updateUser } from "@/services/src/users/usersService";
 import {
   hasProvisionedFirestoreProfile,
   needsAttendeeOnboarding,
@@ -19,7 +17,6 @@ export default function OnboardingPersonaPage() {
   const { user, userLoading, refreshUser } = useUser();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  const [changingPersona, setChangingPersona] = useState(false);
 
   useEffect(() => {
     if (userLoading) return;
@@ -34,8 +31,7 @@ export default function OnboardingPersonaPage() {
       needsOrganiserOnboarding(user) ||
       needsAttendeeOnboarding(user);
 
-    // Only bounce finished users away — do not replace forward from here when persona is already chosen,
-    // or browser Back from /onboarding/organiser or /onboarding/attendee hits this URL and immediately loses history.
+    // Bounce finished users away; keep persona choice reachable via Back from organiser/attendee steps.
     if (!stillInProductOnboarding) {
       router.replace("/");
     }
@@ -61,67 +57,12 @@ export default function OnboardingPersonaPage() {
     );
   }
 
-  const changeHowIUseSportshub = async () => {
-    if (!user.userId || changingPersona || submitting) return;
-    setChangingPersona(true);
-    try {
-      await clearOnboardingPersonaChoice(user.userId as UserId);
-      await refreshUser();
-    } finally {
-      setChangingPersona(false);
-    }
-  };
+  const stillInProductOnboarding =
+    needsOnboardingPersonaChoice(user) ||
+    needsOrganiserOnboarding(user) ||
+    needsAttendeeOnboarding(user);
 
-  if (needsOrganiserOnboarding(user)) {
-    return (
-      <div className="mx-auto flex min-h-[calc(100vh-var(--navbar-height))] max-w-3xl flex-col gap-10 px-6 py-16 sm:py-24">
-        <div className="rounded-2xl border border-core-outline/60 bg-organiser-light-gray/40 p-6 sm:p-8">
-          <h1 className="text-3xl font-bold tracking-tight">Continue organiser setup</h1>
-          <p className="mt-3 text-gray-700">
-            You chose <span className="font-semibold">hosting events</span>. Next is optional paid-event setup if you want ticket sales — or change how you plan to use SPORTSHUB.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <OnboardingPrimaryLink href="/onboarding/organiser">Continue setup</OnboardingPrimaryLink>
-          <HighlightButton
-            type="button"
-            className="border border-core-outline bg-transparent"
-            disabled={changingPersona}
-            onClick={() => void changeHowIUseSportshub()}
-          >
-            Change how I use SPORTSHUB
-          </HighlightButton>
-        </div>
-      </div>
-    );
-  }
-
-  if (needsAttendeeOnboarding(user)) {
-    return (
-      <div className="mx-auto flex min-h-[calc(100vh-var(--navbar-height))] max-w-3xl flex-col gap-10 px-6 py-16 sm:py-24">
-        <div className="rounded-2xl border border-core-outline/60 bg-organiser-light-gray/40 p-6 sm:p-8">
-          <h1 className="text-3xl font-bold tracking-tight">Continue attendee setup</h1>
-          <p className="mt-3 text-gray-700">
-            You chose <span className="font-semibold">joining sessions</span>. Continue the quick welcome steps, or
-            switch if that was a mistake.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <OnboardingPrimaryLink href="/onboarding/attendee">Continue setup</OnboardingPrimaryLink>
-          <HighlightButton
-            type="button"
-            className="border border-core-outline bg-transparent"
-            disabled={changingPersona}
-            onClick={() => void changeHowIUseSportshub()}
-          >
-            Change how I use SPORTSHUB
-          </HighlightButton>
-        </div>
-      </div>
-    );
-  }
-
-  if (!needsOnboardingPersonaChoice(user)) {
+  if (!stillInProductOnboarding) {
     return (
       <div className="flex min-h-[calc(100vh-var(--navbar-height))] items-center justify-center px-6">
         <p className="text-gray-600">Loading…</p>
