@@ -19,7 +19,8 @@ export default function RefreshAccountLink() {
     const returnUrl = getUrlWithCurrentHostname("/organiser/dashboard");
     const refreshUrl = getRefreshAccountLinkUrl();
     getStripeStandardAccountLink(user.userId, returnUrl, refreshUrl).then((link) => {
-      router.push(link);
+      // Replace so this intermediate page is not in session history — otherwise Back from Stripe returns here and immediately forwards again.
+      window.location.replace(link);
     });
   }, []);
   return (

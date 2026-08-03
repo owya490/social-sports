@@ -3,7 +3,7 @@ import { auth } from "@/services/src/firebase";
 import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 
-import { getTempUserData } from "@/services/src/auth/authService";
+import { getTempUserData, resolveAuthenticatedUserData } from "@/services/src/auth/authService";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
 import { Auth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
@@ -24,13 +24,15 @@ export const LoginUserContext = createContext<LoginUserContextType>({
   refreshUser: async () => {},
 });
 
+export const useUser = () => useContext(LoginUserContext);
+
 export default function UserContext({ children }: { children: any }) {
   const [user, setUser] = useState<UserData>(EmptyUserData as UserData);
   const router = useRouter();
   const pathname = usePathname();
   const [userLoading, setUserLoading] = useState(true);
 
-  const protectedRoutes = ["/organiser", "/profile", "/event/create"];
+  const protectedRoutes = ["/organiser", "/profile", "/event/create", "/onboarding"];
   const LoginRegisterRoutes = ["/register", "/login"];
 
   const refreshUser = async () => {
@@ -48,31 +50,15 @@ export default function UserContext({ children }: { children: any }) {
 
   useEffect(() => {
     const unsubscriber = onAuthStateChanged(auth, async (userAuth) => {
-      //need this because on user creation, if the user hasn't changed browsers since register
-      // they might still have the firebase userobject, which after clicking the verify email,
-      // will satify both the above conditions and then skip the create user workflow due to this
-      // redirecting to dashboard, hence we need to do another check to see if they are in the create
-      // user workflow
       setUserLoading(true);
       if (userAuth && auth.currentUser?.emailVerified) {
         const { uid } = userAuth;
         try {
-          try {
-            const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-            setUser(userData);
-          } catch {
-            try {
-              const userData = await getTempUserData(uid as UserId);
-              if (!userData) {
-                router.push("/error");
-                return;
-              }
-              setUser(userData);
-            } catch {
-              router.push("/error");
-              return;
-            }
-          }
+          const userData = await resolveAuthenticatedUserData(uid as UserId);
+          setUser(userData);
+        } catch {
+          router.push("/error");
+          return;
         } finally {
           setUserLoading(false);
         }
@@ -94,11 +80,6 @@ export default function UserContext({ children }: { children: any }) {
 
       if (LoginRegisterRoutes.some((prefix) => pathname.startsWith(prefix))) {
         if (auth.currentUser && auth.currentUser.emailVerified) {
-          //need this because on user creation, if the user hasn't changed browsers since register
-          // they might still have the firebase userobject, which after clicking the verify email,
-          // will satify both the above conditions and then skip the create user workflow due to this
-          // redirecting to dashboard, hence we need to do another check to see if they are in the create
-          // user workflow
           const { uid } = auth.currentUser;
           try {
             const userData = await getTempUserData(uid as UserId);
@@ -121,5 +102,3 @@ export default function UserContext({ children }: { children: any }) {
     </LoginUserContext.Provider>
   );
 }
-
-export const useUser = () => useContext(LoginUserContext);

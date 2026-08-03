@@ -15,14 +15,32 @@ import {
   UserCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
 import { auth, db } from "../firebase";
 import { UserNotFoundError } from "../users/userErrors";
-import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
+import { createUser, deleteUser, getFullUserById, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
+import { sleep } from "@/utilities/sleepUtil";
 
 const authServiceLogger = new Logger("authServiceLogger");
+
+/** Firestore rejects `undefined` in document payloads (including nested maps). */
+function omitUndefinedForFirestore(value: unknown): unknown {
+  if (value === undefined) return undefined;
+  if (value === null || typeof value !== "object") return value;
+  if (value instanceof Timestamp) return value;
+  if (Array.isArray(value)) {
+    return value.map((item) => omitUndefinedForFirestore(item)).filter((item) => item !== undefined);
+  }
+  const obj = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === undefined) continue;
+    out[k] = omitUndefinedForFirestore(v);
+  }
+  return out;
+}
 
 export async function handleEmailAndPasswordSignUp(data: NewUserData) {
   let userCredential; // Declare userCredential outside the try block to access it in the catch block
@@ -173,7 +191,8 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
 }
 
 export async function saveTempUserData(userId: UserId, data: UserData) {
-  await setDoc(doc(db, "TempUsers", userId), data);
+  const payload = omitUndefinedForFirestore(data) as Record<string, unknown>;
+  await setDoc(doc(db, "TempUsers", userId), payload);
 }
 
 export async function getTempUserData(userId: UserId): Promise<UserData | null> {
@@ -184,13 +203,42 @@ export async function getTempUserData(userId: UserId): Promise<UserData | null> 
     if (docSnap.exists()) {
       return docSnap.data() as UserData;
     } else {
-      authServiceLogger.error(`User ID=${userId} did not exist when expected by reference.`);
       return null;
     }
   } catch (error) {
     authServiceLogger.error(`Error fetching user data for ID=${userId}: ${error}`);
     return null;
   }
+}
+
+/** Load Firestore user for auth context — handles first-login race with createUser on sign-in. */
+export async function resolveAuthenticatedUserData(userId: UserId): Promise<UserData> {
+  try {
+    return await getFullUserById(userId);
+  } catch (error) {
+    if (!(error instanceof UserNotFoundError)) {
+      throw error;
+    }
+  }
+
+  const tempUser = await getTempUserData(userId);
+  if (tempUser) {
+    return tempUser;
+  }
+
+  // Sign-in may have just created the user and deleted TempUsers before we read Active users.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    await sleep(100 * (attempt + 1));
+    try {
+      return await getFullUserById(userId);
+    } catch (error) {
+      if (!(error instanceof UserNotFoundError)) {
+        throw error;
+      }
+    }
+  }
+
+  throw new UserNotFoundError(userId);
 }
 
 async function deleteTempUserData(userId: UserId) {
