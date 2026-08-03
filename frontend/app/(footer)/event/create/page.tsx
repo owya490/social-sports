@@ -25,8 +25,6 @@ import {
 } from "@/services/src/images/imageService";
 import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
-import { markProductOnboardingCompleted } from "@/services/src/users/usersService";
-import { isInOnboardingCohort } from "@/utilities/onboardingUtils";
 import { Alert } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
@@ -101,7 +99,7 @@ const INITIAL_DATA: FormData = {
 };
 
 export default function CreateEvent() {
-  const { user, refreshUser } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const showForm = user.userId !== "";
 
@@ -197,14 +195,6 @@ export default function CreateEvent() {
     try {
       const eventId = await createEventWorkflow(data, user);
       if (eventId !== null) {
-        if (user.onboardingPersona === "organiser" && isInOnboardingCohort(user)) {
-          try {
-            await markProductOnboardingCompleted(user.userId);
-            await refreshUser();
-          } catch (completionErr) {
-            createEventLogger.error(`Onboarding completion persist failed: ${completionErr}`);
-          }
-        }
         router.push(`/event/${eventId}`);
       }
     } catch (e) {

@@ -7,7 +7,7 @@ import { getPublicUserById, getUsernameMapping, updateUser } from "../usersServi
 export async function isUsernameExists(username: string, transaction?: Transaction): Promise<boolean> {
   try {
     // This function will throw UserNotFoundError if the username does not exist
-    await getUsernameMapping(username.toLowerCase(), true, transaction);
+    await getUsernameMapping(username.toLowerCase(), false, transaction);
   } catch (error) {
     console.log("Username does not exists!");
     return false;

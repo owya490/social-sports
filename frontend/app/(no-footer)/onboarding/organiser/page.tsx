@@ -1,7 +1,7 @@
 "use client";
 
 import { HighlightButton } from "@/components/elements/HighlightButton";
-import StripeSetup from "@/components/elements/StripeSetup";
+import OnboardingStripeSetup from "@/components/onboarding/OnboardingStripeSetup";
 import { useUser } from "@/components/utility/UserContext";
 import { UserId } from "@/interfaces/UserTypes";
 import {
@@ -146,11 +146,10 @@ export default function OrganiserOnboardingPage() {
             </h2>
             <div className="mt-4">
               {!stripeReady ? (
-                <StripeSetup
+                <OnboardingStripeSetup
                   userId={user.userId}
                   setLoading={setStripeLoading}
                   userLoading={userLoading || stripeLoading}
-                  stripeReturnPath="/onboarding/organiser"
                 />
               ) : (
                 <div className="rounded-xl border border-green-200 bg-green-50 p-5">
