@@ -30,7 +30,7 @@ export default function UserContext({ children }: { children: any }) {
   const pathname = usePathname();
   const [userLoading, setUserLoading] = useState(true);
 
-  const protectedRoutes = ["/organiser", "/profile", "/event/create"];
+  const protectedRoutes = ["/organiser", "/profile", "/event/create", "/onboarding"];
   const LoginRegisterRoutes = ["/register", "/login"];
 
   const refreshUser = async () => {
