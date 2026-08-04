@@ -46,6 +46,11 @@ import {
 } from "./eventsUtils/commonEventsUtils";
 import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
 import {
+  applyGeneralAdmissionInventoryFields,
+  buildGeneralAdmissionInventoryUpdates,
+  resolveGeneralAdmissionInventory,
+} from "./eventsUtils/eventTicketTypesUtils";
+import {
   bustEventsLocalStorageCache,
   findEventDoc,
   getAllEventsFromCollectionRef,
@@ -154,13 +159,13 @@ export async function getEventById(
       throw error;
     }
 
-    const event: EventData = {
+    const event: EventData = applyGeneralAdmissionInventoryFields({
       ...EmptyEventData, // initiate default values
       ...eventWithoutOrganiser,
       organiser: organiser,
-    };
+      eventId: eventId,
+    });
 
-    event.eventId = eventId;
     return event;
   } catch (error) {
     eventServiceLogger.error(`getEventById ${error}`);
@@ -265,7 +270,15 @@ export async function updateEventById(eventId: EventId, updatedData: Partial<Eve
       throw new Error(`Event with id '${eventId}' not found.`);
     }
 
-    await updateDoc(eventDocRef, updatedData);
+    const eventDoc = eventDocSnapshot.data() as EventDataWithoutOrganiser;
+    const { price, capacity, vacancy, ...restUpdatedData } = updatedData;
+    const inventoryUpdates = buildGeneralAdmissionInventoryUpdates(eventDoc.eventTicketTypes, {
+      price,
+      capacity,
+      vacancy,
+    });
+
+    await updateDoc(eventDocRef, { ...restUpdatedData, ...inventoryUpdates });
 
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
@@ -471,11 +484,19 @@ export async function updateEventCapacityById(eventId: EventId, capacity: number
       const eventDoc: EventDataWithoutOrganiser = (
         await transaction.get(eventDocRef)
       ).data() as EventDataWithoutOrganiser;
-      eventDoc.vacancy;
+      const { capacity: currentCapacity, vacancy: currentVacancy } =
+        resolveGeneralAdmissionInventory(eventDoc);
 
-      if (capacity >= eventDoc.capacity - eventDoc.vacancy) {
-        const changeAmount = eventDoc.capacity - capacity;
-        transaction.update(eventDocRef, { capacity: capacity, vacancy: eventDoc.vacancy - changeAmount });
+      if (capacity >= currentCapacity - currentVacancy) {
+        const changeAmount = currentCapacity - capacity;
+        const newVacancy = currentVacancy - changeAmount;
+        transaction.update(
+          eventDocRef,
+          buildGeneralAdmissionInventoryUpdates(eventDoc.eventTicketTypes, {
+            capacity,
+            vacancy: newVacancy,
+          })
+        );
         valid = true;
       }
     });
