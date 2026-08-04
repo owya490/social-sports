@@ -136,11 +136,11 @@ export function mergeInventoryIntoEventData<T extends EventWithInventory>(
     return { ...event, ...patch };
   }
 
-  return applyGeneralAdmissionInventoryFields({
+  return {
     ...event,
     eventTicketTypes: {
       ...event.eventTicketTypes!,
       [general.id]: { ...general, ...patch },
     },
-  });
+  };
 }
