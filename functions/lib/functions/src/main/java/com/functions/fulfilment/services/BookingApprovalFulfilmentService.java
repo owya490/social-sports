@@ -35,7 +35,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
     private static final Logger logger = LoggerFactory.getLogger(BookingApprovalFulfilmentService.class);
 
     public BookingApprovalFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
-            Integer numTickets) throws Exception {
+            Integer numTickets, String eventTicketTypeId) throws Exception {
         try {
 
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
@@ -45,9 +45,9 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
             }
 
             EventData eventData = maybeEventData.get();
-            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructBookingApprovalFulfilmentEntities(
-                    eventId, eventData, numTickets, fulfilmentSessionId);
+                    eventId, eventData, numTickets, fulfilmentSessionId, eventTicketTypeId);
             logger.info(
                     "Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, entityTypes: {}",
                     eventId, numTickets, fulfilmentSessionId,
@@ -93,7 +93,8 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
     }
 
     private static List<SimpleEntry<String, FulfilmentEntity>> constructBookingApprovalFulfilmentEntities(
-            String eventId, EventData eventData, Integer numTickets, String fulfilmentSessionId) throws Exception {
+            String eventId, EventData eventData, Integer numTickets, String fulfilmentSessionId,
+            String eventTicketTypeId) throws Exception {
         // Pair of FulfilmentEntityId and FulfilmentEntity
         List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = new ArrayList<>();
 
@@ -160,7 +161,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                 var delayedStripeCheckout = StripeService.getDelayedStripeCheckoutUrl(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.of(bookingApprovalSuccessUrl),
                         Optional.of(cancelUrl),
-                        fulfilmentSessionId, endFulfilmentEntityId);
+                        fulfilmentSessionId, endFulfilmentEntityId, eventTicketTypeId);
 
                 logger.info("Created delayed Stripe checkout link for event ID {}", eventId);
                 logger.debug("Delayed Stripe checkout link: {}", delayedStripeCheckout.url());

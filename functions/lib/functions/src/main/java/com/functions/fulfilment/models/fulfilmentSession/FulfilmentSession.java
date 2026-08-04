@@ -176,7 +176,9 @@ public abstract class FulfilmentSession {
                         .fulfilmentSessionStartTime(
                             snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTicketsWaitlist).build();
+                        .numTickets(numTicketsWaitlist)
+                        .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
+                        .build();
             default:
                 throw new IllegalArgumentException(
                         "Unknown FulfilmentSession type: " + sessionType);

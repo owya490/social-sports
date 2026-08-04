@@ -10,5 +10,6 @@ public record AddAttendeeRequest(
         @JsonProperty("fullName") String fullName,
         @JsonProperty("phone") String phone,
         @JsonProperty("numTickets") int numTickets,
-        @JsonProperty("price") long price) {
+        @JsonProperty("price") long price,
+        @JsonProperty("eventTicketTypeId") String eventTicketTypeId) {
 }

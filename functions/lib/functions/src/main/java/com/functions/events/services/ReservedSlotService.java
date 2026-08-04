@@ -47,7 +47,7 @@ public class ReservedSlotService {
             throw new Exception("Event not found for eventId: " + eventId);
         }
         EventData eventData = eventDataOpt.get();
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveForReservedSlots(eventData);
         if (ticketType.getVacancy() == null) {
             throw new IllegalStateException("Ticket type " + ticketType.getId() + " is missing vacancy");
         }

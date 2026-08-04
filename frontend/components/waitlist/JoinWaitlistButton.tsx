@@ -1,5 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { FulfilmentSessionType } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { getNextFulfilmentEntityUrl, initFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
@@ -12,15 +13,17 @@ const logger = new Logger("JoinWaitlistButtonLogger");
 interface JoinWaitlistButtonProps {
   eventId: EventId;
   ticketCount: number;
+  eventTicketTypeId: EventTicketTypeId;
   setLoading?: (value: boolean) => void;
   className?: string;
 }
 
-export default function JoinWaitlistButton({ 
-  eventId, 
-  ticketCount, 
-  setLoading, 
-  className = "" 
+export default function JoinWaitlistButton({
+  eventId,
+  ticketCount,
+  eventTicketTypeId,
+  setLoading,
+  className = "",
 }: JoinWaitlistButtonProps) {
   const router = useRouter();
   const [internalLoading, setInternalLoading] = useState(false);
@@ -34,6 +37,7 @@ export default function JoinWaitlistButton({
         type: FulfilmentSessionType.WAITLIST,
         eventId: eventId,
         numTickets: ticketCount,
+        eventTicketTypeId,
       });
 
       if (!fulfilmentSessionId) {

@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class WaitlistFulfilmentSession extends FulfilmentSession {
     private Integer numTickets;
+    private String eventTicketTypeId;
 
     {
         setType(FulfilmentSessionType.WAITLIST);

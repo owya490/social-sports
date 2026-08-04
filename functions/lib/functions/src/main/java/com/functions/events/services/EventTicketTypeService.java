@@ -15,9 +15,7 @@ import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.tickets.models.Ticket;
 
 /**
- * Resolves the General Admission ticket type for purchase and inventory flows.
- * Prefers {@code eventTicketTypes}; falls back to top-level price/capacity/vacancy for
- * legacy events that have not been migrated yet.
+ * Resolves event ticket types for purchase, inventory, and admin flows.
  */
 public class EventTicketTypeService {
     private static final Logger logger = LoggerFactory.getLogger(EventTicketTypeService.class);
@@ -28,7 +26,9 @@ public class EventTicketTypeService {
     }
 
     /**
-     * Always resolves to the General Admission ticket type for the event.
+     * Resolves the General Admission ticket type for legacy/admin flows that still default to GA.
+     * Prefers {@code eventTicketTypes}; falls back to top-level price/capacity/vacancy for
+     * legacy events that have not been migrated yet.
      */
     public static ResolvedEventTicketType resolve(EventData event) {
         if (event == null) {
@@ -46,14 +46,7 @@ public class EventTicketTypeService {
                         "Event " + event.getEventId() + " has no General Admission ticket type");
             }
 
-            return ResolvedEventTicketType.builder()
-                    .id(general.getId())
-                    .name(general.getName())
-                    .price(general.getPrice())
-                    .vacancy(general.getVacancy())
-                    .capacity(general.getCapacity())
-                    .legacy(false)
-                    .build();
+            return toResolved(general, false);
         }
 
         logger.info(
@@ -67,6 +60,54 @@ public class EventTicketTypeService {
                 .capacity(event.getCapacity())
                 .legacy(true)
                 .build();
+    }
+
+    /**
+     * Resolves a ticket type by ID from {@code eventTicketTypes}. Used for checkout and attendee flows.
+     */
+    public static ResolvedEventTicketType resolveById(EventData event, String eventTicketTypeId) {
+        if (event == null) {
+            throw new IllegalArgumentException("Event data is required to resolve a ticket type");
+        }
+        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+            throw new IllegalArgumentException("eventTicketTypeId is required");
+        }
+
+        Map<String, EventTicketType> ticketTypes = event.getEventTicketTypes();
+        if (ticketTypes == null || ticketTypes.isEmpty()) {
+            throw new IllegalStateException(
+                    "Event " + event.getEventId() + " has no eventTicketTypes");
+        }
+
+        EventTicketType ticketType = findById(ticketTypes, eventTicketTypeId);
+        if (ticketType == null) {
+            throw new IllegalArgumentException(
+                    "Ticket type " + eventTicketTypeId + " not found for event " + event.getEventId());
+        }
+
+        return toResolved(ticketType, false);
+    }
+
+    /**
+     * Resolves the ticket type for reserved slots: General Admission by name, else first in map.
+     */
+    public static ResolvedEventTicketType resolveForReservedSlots(EventData event) {
+        if (event == null) {
+            throw new IllegalArgumentException("Event data is required to resolve a ticket type");
+        }
+
+        Map<String, EventTicketType> ticketTypes = event.getEventTicketTypes();
+        if (ticketTypes == null || ticketTypes.isEmpty()) {
+            throw new IllegalStateException(
+                    "Event " + event.getEventId() + " has no eventTicketTypes");
+        }
+
+        EventTicketType ticketType = findByName(ticketTypes, GENERAL_TICKET_TYPE_NAME);
+        if (ticketType == null) {
+            ticketType = ticketTypes.values().iterator().next();
+        }
+
+        return toResolved(ticketType, false);
     }
 
     /**
@@ -103,9 +144,33 @@ public class EventTicketTypeService {
         return GENERAL_TICKET_TYPE_NAME.equals(name);
     }
 
+    private static ResolvedEventTicketType toResolved(EventTicketType ticketType, boolean legacy) {
+        return ResolvedEventTicketType.builder()
+                .id(ticketType.getId())
+                .name(ticketType.getName())
+                .price(ticketType.getPrice())
+                .vacancy(ticketType.getVacancy())
+                .capacity(ticketType.getCapacity())
+                .legacy(legacy)
+                .build();
+    }
+
     private static EventTicketType findByName(Map<String, EventTicketType> ticketTypes, String name) {
         for (EventTicketType ticketType : ticketTypes.values()) {
             if (ticketType != null && name.equals(ticketType.getName())) {
+                return ticketType;
+            }
+        }
+        return null;
+    }
+
+    private static EventTicketType findById(Map<String, EventTicketType> ticketTypes, String eventTicketTypeId) {
+        EventTicketType byKey = ticketTypes.get(eventTicketTypeId);
+        if (byKey != null) {
+            return byKey;
+        }
+        for (EventTicketType ticketType : ticketTypes.values()) {
+            if (ticketType != null && eventTicketTypeId.equals(ticketType.getId())) {
                 return ticketType;
             }
         }

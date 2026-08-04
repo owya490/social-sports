@@ -1,6 +1,7 @@
 "use client";
 
 import { EventId } from "@/interfaces/EventTypes";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
   formatMobileDifferentDayDateTime,
@@ -41,6 +42,7 @@ interface MobileEventPaymentProps {
   waitlistEnabled: boolean;
   maxTicketsPerTransaction?: number;
   bookingApprovalEnabled?: boolean;
+  eventTicketTypeId: EventTicketTypeId;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
@@ -149,6 +151,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   <JoinWaitlistButton
                     eventId={props.eventId}
                     ticketCount={waitlistAttendeeCount}
+                    eventTicketTypeId={props.eventTicketTypeId}
                     setLoading={props.setLoading}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
@@ -183,6 +186,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     <BookingButton
                       eventId={props.eventId}
                       ticketCount={attendeeCount}
+                      eventTicketTypeId={props.eventTicketTypeId}
                       setLoading={props.setLoading}
                       bookingApprovalEnabled={props.bookingApprovalEnabled}
                       className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"
