@@ -303,8 +303,7 @@ public class EmailService {
         return null;
     }
 
-    private static String resolveEventTicketTypeIdFromOrder(Firestore db, DocumentSnapshot order)
-            throws ExecutionException, InterruptedException {
+    private static String resolveEventTicketTypeIdFromOrder(Firestore db, DocumentSnapshot order) {
         List<?> ticketIds = (List<?>) order.get("tickets");
         if (ticketIds == null || ticketIds.isEmpty()) {
             throw new IllegalStateException("Order " + order.getId() + " has no tickets");
@@ -313,15 +312,24 @@ public class EmailService {
         if (firstTicketId == null) {
             throw new IllegalStateException("Order " + order.getId() + " has null first ticket id");
         }
-        DocumentSnapshot ticketSnapshot = fetchRootDocument(db, CollectionPaths.TICKETS, firstTicketId.toString());
-        if (!ticketSnapshot.exists()) {
-            throw new IllegalStateException("Ticket " + firstTicketId + " not found for order " + order.getId());
+        try {
+            DocumentSnapshot ticketSnapshot = fetchRootDocument(db, CollectionPaths.TICKETS,
+                    firstTicketId.toString());
+            if (!ticketSnapshot.exists()) {
+                throw new IllegalStateException(
+                        "Ticket " + firstTicketId + " not found for order " + order.getId());
+            }
+            String eventTicketTypeId = ticketSnapshot.getString("eventTicketTypeId");
+            if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+                throw new IllegalStateException("Ticket " + firstTicketId + " is missing eventTicketTypeId");
+            }
+            return eventTicketTypeId;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while loading ticket for order " + order.getId(), e);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException("Failed to load ticket for order " + order.getId(), e);
         }
-        String eventTicketTypeId = ticketSnapshot.getString("eventTicketTypeId");
-        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
-            throw new IllegalStateException("Ticket " + firstTicketId + " is missing eventTicketTypeId");
-        }
-        return eventTicketTypeId;
     }
 
     private static Map<String, String> buildPurchaseEmailVariables(
