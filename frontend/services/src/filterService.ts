@@ -1,8 +1,16 @@
-import { EventData } from "@/interfaces/EventTypes";
-import { Timestamp } from "firebase/firestore";
+import { EventData, EventId } from "@/interfaces/EventTypes";
+import { QueryFieldFilterConstraint, Timestamp, collection, getDocs, limit, query, where } from "firebase/firestore";
+import geofire from "geofire-common";
 import { SortByCategory } from "../../components/Filter/FilterDialog";
+import { db } from "./firebase";
 import { getDistanceBetweenTwoCoords } from "./maps/mapsService";
 
+interface ProximityInfo {
+  center: geofire.Geopoint;
+  radiusInM: number;
+}
+
+const NUM_DOCS_QUERY_LIMIT = 15;
 export const NO_SPORT_CHOSEN_STRING = "";
 
 export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory: SortByCategory): EventData[] {
@@ -13,14 +21,9 @@ export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory:
       /// Will currently use 1/3 of accessCount, 1/3 of tickets sold, and 1/3 of % full an event is to sort.
       eventDataListDeepClone.sort((eventA, eventB) => {
         const accessCountDiff = eventB.accessCount - eventA.accessCount;
-        const ticketsSoldDiff =
-          (eventB.capacity ?? 0) -
-          (eventB.vacancy ?? 0) -
-          ((eventA.capacity ?? 0) - (eventA.vacancy ?? 0));
-        const eventAPercentageSold =
-          (eventA.capacity ?? 0) === 0 ? 0 : ((eventA.capacity ?? 0) - (eventA.vacancy ?? 0)) / (eventA.capacity ?? 0);
-        const eventBPercentageSold =
-          (eventB.capacity ?? 0) === 0 ? 0 : ((eventB.capacity ?? 0) - (eventB.vacancy ?? 0)) / (eventB.capacity ?? 0);
+        const ticketsSoldDiff = eventB.capacity - eventB.vacancy - (eventA.capacity - eventA.vacancy);
+        const eventAPercentageSold = (eventA.capacity - eventA.vacancy) / eventA.capacity;
+        const eventBPercentageSold = (eventB.capacity - eventB.vacancy) / eventB.capacity;
         const eventPercentageSoldDiff = eventBPercentageSold - eventAPercentageSold;
         return accessCountDiff + ticketsSoldDiff + eventPercentageSoldDiff;
       });
@@ -34,11 +37,11 @@ export function filterEventsBySortBy(eventDataList: EventData[], sortByCategory:
       break;
 
     case SortByCategory.PRICE_ASCENDING:
-      eventDataListDeepClone.sort((eventA, eventB) => (eventA.price ?? 0) - (eventB.price ?? 0));
+      eventDataListDeepClone.sort((eventA, eventB) => eventA.price - eventB.price);
       break;
 
     case SortByCategory.PRICE_DESCENDING:
-      eventDataListDeepClone.sort((eventA, eventB) => (eventB.price ?? 0) - (eventA.price ?? 0));
+      eventDataListDeepClone.sort((eventA, eventB) => eventB.price - eventA.price);
       break;
 
     case SortByCategory.DATE_ASCENDING:
@@ -94,10 +97,10 @@ export function filterEventsByPrice(
 ): EventData[] {
   let eventDataListDeepClone = [...eventDataList];
   if (minPrice !== null) {
-    eventDataListDeepClone = eventDataListDeepClone.filter((event) => (event.price ?? 0) >= minPrice * 100);
+    eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price >= minPrice * 100);
   }
 
-  eventDataListDeepClone = eventDataListDeepClone.filter((event) => (event.price ?? 0) <= maxPrice * 100);
+  eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.price <= maxPrice * 100);
   return eventDataListDeepClone;
 }
 
@@ -133,3 +136,129 @@ export function filterEventsBySport(eventDataList: EventData[], sportType: strin
   eventDataListDeepClone = eventDataListDeepClone.filter((event) => event.sport === sportType);
   return eventDataListDeepClone;
 }
+
+/**
+ * @deprecated This method does not work and should not be used.
+ * Returns a filtered list of up to 15 events from the firebase storage.
+ *
+ * @param filterFieldsMap: Map where the key is the event field name as seen in firebase.
+ * See full documentation here: https://owenyang.atlassian.net/wiki/spaces/SD/pages/20414465/Firebase+Event+Filtering
+ * @returns EventData[]
+ */
+export async function filterEvents(filterFieldsMap: { [key: string]: any }) {
+  const whereClauseList: QueryFieldFilterConstraint[] = [];
+  Object.keys(filterFieldsMap).forEach(async (key: string) => {
+    switch (key) {
+      case "startDate":
+        const startDate: Timestamp = filterFieldsMap["startDate"].startDate;
+        let endDate: Timestamp | null = null;
+        if ("endDate" in filterFieldsMap["startDate"]) {
+          endDate = filterFieldsMap["startDate"].endDate;
+        }
+        await createWhereClauseEventDate(whereClauseList, startDate, endDate);
+
+      case "price":
+        if ("price" in filterFieldsMap) {
+          let minPrice: number | null = null;
+          if ("minPrice" in filterFieldsMap["price"]) {
+            minPrice = filterFieldsMap["price"].minPrice;
+          }
+
+          let maxPrice: number | null = null;
+          if ("maxPrice" in filterFieldsMap["price"]) {
+            maxPrice = filterFieldsMap["price"].maxPrice;
+          }
+
+          await createWhereClauseEventPrice(whereClauseList, minPrice, maxPrice);
+        }
+
+      // TODO: add more filters here
+    }
+  });
+
+  return await filterEventsByWhereClausesAndProximity(whereClauseList);
+}
+
+/**
+ * @deprecated This method does not work and should not be used.
+ * Retrieves the events from the firebase database filtered by
+ * a startDate and an optional endDate.
+ *
+ * @param startDate: Timestamp
+ * @param endDate: Optional<Timestamp>
+ * @returns EventData[]
+ */
+async function filterEventsByWhereClausesAndProximity(
+  whereClauseList: QueryFieldFilterConstraint[],
+  proximityInfo?: ProximityInfo
+): Promise<EventData[]> {
+  try {
+    const eventsRef = collection(db, "Events");
+
+    const filterEventsQuery = query(eventsRef, ...whereClauseList, limit(NUM_DOCS_QUERY_LIMIT));
+
+    const filteredEventsSnapshot = await getDocs(filterEventsQuery);
+    const filteredEventsData: EventData[] = [];
+
+    filteredEventsSnapshot.forEach((doc) => {
+      const filteredEventData = doc.data() as EventData;
+      filteredEventData.eventId = doc.id as EventId;
+      filteredEventsData.push(filteredEventData);
+    });
+
+    return filteredEventsData;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+/**
+ * @deprecated This method does not work and should not be used.
+ * Helper function for the backend filter service.
+ * Creates and appends a query where clause based on startDate onto the currWhereClauseList
+ * Call this function to add the respective filter.
+ *
+ * @param currWhereClauseList
+ * @param startDate
+ * @param endDate
+ */
+async function createWhereClauseEventDate(
+  currWhereClauseList: QueryFieldFilterConstraint[],
+  startDate: Timestamp,
+  endDate: Timestamp | null
+) {
+  currWhereClauseList.push(where("startDate", ">=", startDate));
+  if (endDate) {
+    currWhereClauseList.push(where("endDate", "<=", endDate));
+  }
+}
+
+/**
+ * @deprecated This method does not work and should not be used.
+ * Helper function for the backend filter service.
+ * Creates an appends a query where clause based on price onto the currWhereClauseList
+ * Call this function to add the respective filter.
+ *
+ * @param currWhereClauseList
+ * @param minPrice
+ * @param maxPrice
+ */
+async function createWhereClauseEventPrice(
+  currWhereClauseList: QueryFieldFilterConstraint[],
+  minPrice: number | null,
+  maxPrice: number | null
+) {
+  if (!minPrice && !maxPrice) {
+    throw new Error("No minPrice and no maxPrice provided. Please provide at least one!");
+  }
+
+  if (minPrice) {
+    currWhereClauseList.push(where("price", ">=", minPrice));
+  }
+  if (maxPrice) {
+    currWhereClauseList.push(where("price", "<=", maxPrice));
+  }
+}
+
+// TODO: add more createWhereClause functions here
