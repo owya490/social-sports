@@ -12,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
@@ -200,6 +202,19 @@ public class FulfilmentService {
             throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
         }
 
+        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
+        if (maybeEventData.isEmpty()) {
+            logger.error("Failed to find event data for event ID: {}", eventId);
+            throw new Exception("Failed to find event data for event ID: " + eventId);
+        }
+        EventData eventDataForLimits = maybeEventData.get();
+        Integer maxTickets = eventDataForLimits.getMaxTicketsPerTransaction();
+        if (maxTickets != null && numTickets > maxTickets) {
+            throw new IllegalArgumentException(String.format(
+                    "Requested %d tickets exceeds maxTicketsPerTransaction (%d) for event %s",
+                    numTickets, maxTickets, eventId));
+        }
+
         FulfilmentSessionType fulfilmentSessionType = classifyFulfilmentSessionType(eventId);
 
         String fulfilmentSessionId = UUID.randomUUID().toString();
@@ -257,8 +272,9 @@ public class FulfilmentService {
         }
         EventData eventData = maybeEventData.get();
 
-        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && eventData.getVacancy() != null
-                && eventData.getVacancy() <= 0) {
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && ticketType.getVacancy() != null
+                && ticketType.getVacancy() <= 0) {
             return FulfilmentSessionType.WAITLIST;
         }
 

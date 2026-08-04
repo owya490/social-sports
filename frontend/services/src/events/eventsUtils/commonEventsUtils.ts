@@ -19,6 +19,7 @@ import { getPublicUserById } from "../../users/usersService";
 import { CollectionPaths, EVENT_PATHS, EventPrivacy, EventStatus } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 import { applyGeneralAdmissionInventoryFields } from "./eventTicketTypesUtils";
+
 export function tokenizeText(text: string): string[] {
   // Split the text into words, convert to lowercase, and filter out empty strings
   return text.toLowerCase().split(/\s+/).filter(Boolean);
