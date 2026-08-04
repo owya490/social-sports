@@ -28,8 +28,6 @@ ACTIVE_PUBLIC = "Events/Active/Public"
 ACTIVE_PRIVATE = "Events/Active/Private"
 INACTIVE_PUBLIC = "Events/InActive/Public"
 INACTIVE_PRIVATE = "Events/InActive/Private"
-ACTIVE_RECURRENCE_PUBLIC = "RecurringEvents/Active/Public"
-ACTIVE_RECURRENCE_PRIVATE = "RecurringEvents/Active/Private"
 EVENT_METADATA = "EventsMetadata"
 
 SYDNEY_TIMEZONE = pytz.timezone("Australia/Sydney")
