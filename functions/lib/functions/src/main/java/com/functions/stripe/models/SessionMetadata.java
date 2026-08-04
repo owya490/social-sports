@@ -19,7 +19,7 @@ public class SessionMetadata {
     private Boolean isPrivate;
     private String fulfilmentSessionId;
     private String endFulfilmentEntityId;
-    /** Optional; used to restock the correct ticket type after checkout expiry/cancel. */
+    /** Required; identifies which ticket type was purchased for fulfill and restock. */
     private String eventTicketTypeId;
 
     /**
@@ -39,6 +39,9 @@ public class SessionMetadata {
         }
         if (endFulfilmentEntityId == null || endFulfilmentEntityId.isBlank()) {
             throw new IllegalArgumentException("End Fulfilment Entity Id must be provided as a non-empty string.");
+        }
+        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+            throw new IllegalArgumentException("Event Ticket Type Id must be provided as a non-empty string.");
         }
     }
 

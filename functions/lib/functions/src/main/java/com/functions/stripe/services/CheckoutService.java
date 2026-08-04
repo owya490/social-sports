@@ -139,7 +139,7 @@ public class CheckoutService {
      * @param privateUserData Private user data - contains organiser details
      */
     private static void commitReservation(Transaction transaction, CreateStripeCheckoutSessionRequest request, EventData eventData, PrivateUserData privateUserData) throws Exception {
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, request.eventTicketTypeId());
         validateEventForCheckout(eventData, ticketType, request.quantity());
 
         Firestore db = FirebaseService.getFirestore();
@@ -185,7 +185,7 @@ public class CheckoutService {
                                 "Could not revert reservation: Event data null for " + request.eventId());
                     }
                     eventData.setEventId(request.eventId());
-                    ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+                    ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, request.eventTicketTypeId());
                     EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType,
                             request.quantity());
                     logger.info("Reverted reservation of {} tickets for event {} type {}",
@@ -258,7 +258,7 @@ public class CheckoutService {
     private static StripeSessionResult createStripeSession(
             CreateStripeCheckoutSessionRequest request, EventData eventData, String stripeAccountId) throws StripeException {
         
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, request.eventTicketTypeId());
         long unitAmount = ticketType.getPrice() != null ? ticketType.getPrice().longValue() : 0L;
 
         // Build Stripe checkout session parameters

@@ -38,7 +38,7 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
      * Initializes a checkout fulfilment session for the given event ID.
      */
     public CheckoutFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
-            Integer numTickets) throws Exception {
+            Integer numTickets, String eventTicketTypeId) throws Exception {
         try {
 
             Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
@@ -48,11 +48,11 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
             }
 
             EventData eventData = maybeEventData.get();
-            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructCheckoutFulfilmentEntities(
                     eventId,
                     eventData, numTickets,
-                    fulfilmentSessionId);
+                    fulfilmentSessionId, eventTicketTypeId);
             logger.info(
                     "Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, entityTypes: {}",
                     eventId, numTickets, fulfilmentSessionId,
@@ -96,7 +96,8 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
     }
 
     private static List<SimpleEntry<String, FulfilmentEntity>> constructCheckoutFulfilmentEntities(
-            String eventId, EventData eventData, Integer numTickets, String fulfilmentSessionId) {
+            String eventId, EventData eventData, Integer numTickets, String fulfilmentSessionId,
+            String eventTicketTypeId) {
         // Pair of FulfilmentEntityId and FulfilmentEntity
         List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = new ArrayList<>();
 
@@ -155,7 +156,7 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
 
                 var stripeCheckout = StripeService.getStripeCheckoutUrl(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.empty(), Optional.of(cancelUrl),
-                        fulfilmentSessionId, endFulfilmentEntityId);
+                        fulfilmentSessionId, endFulfilmentEntityId, eventTicketTypeId);
 
                 logger.info("Created Stripe checkout link for event ID {}", eventId);
                 logger.debug("Stripe checkout link: {}", stripeCheckout.url());

@@ -602,7 +602,7 @@ public class WebhookService {
         }
         event.setEventId(eventId);
 
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(event);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, eventTicketTypeId);
         
         LineItem item = getSingleCheckoutLineItem(lineItems, checkoutSessionId, false);
         if (item == null) {
@@ -707,11 +707,24 @@ public class WebhookService {
         return totalDetails.getAmountDiscount();
     }
 
+    private static String resolveEventTicketTypeIdFromTickets(List<Ticket> tickets) {
+        if (tickets == null || tickets.isEmpty()) {
+            throw new IllegalArgumentException("Cannot resolve eventTicketTypeId from empty ticket list");
+        }
+        for (Ticket ticket : tickets) {
+            if (ticket != null && ticket.getEventTicketTypeId() != null && !ticket.getEventTicketTypeId().isBlank()) {
+                return ticket.getEventTicketTypeId();
+            }
+        }
+        throw new IllegalArgumentException("Tickets are missing eventTicketTypeId");
+    }
+
     private static void restockTickets(
             Transaction transaction,
             String eventId,
             boolean isPrivate,
-            int ticketCount) throws Exception {
+            int ticketCount,
+            String eventTicketTypeId) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -731,7 +744,11 @@ public class WebhookService {
         }
         eventData.setEventId(eventId);
 
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+            throw new IllegalArgumentException("eventTicketTypeId is required for restock. eventId=" + eventId);
+        }
+
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
         EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, ticketCount);
     }
 
@@ -788,7 +805,8 @@ public class WebhookService {
         int currentCount = eventMetadata.getCompleteTicketCount() != null ? eventMetadata.getCompleteTicketCount() : 0;
         eventMetadata.setCompleteTicketCount(Math.max(0, currentCount - canceledTicketCount));
 
-        restockTickets(transaction, eventId, isPrivate, tickets.size());
+        restockTickets(transaction, eventId, isPrivate, tickets.size(),
+                resolveEventTicketTypeIdFromTickets(tickets));
         updateTicketsStatusToRejected(transaction, ticketIds);
         updateOrderStatusToRejected(transaction, orderId);
 
@@ -948,7 +966,7 @@ public class WebhookService {
             throw new IllegalStateException("Event data is null for expired checkout restock. eventId=" + eventId);
         }
         eventData.setEventId(eventId);
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
         
         // Firestore transactions require all reads to complete before the first write.
         EventMetadata eventMetadata = getOrInitializeEventMetadata(

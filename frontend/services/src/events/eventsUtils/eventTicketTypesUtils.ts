@@ -72,6 +72,15 @@ export function findGeneralAdmissionTicketType(
   return entries.length === 1 && entries[0] ? entries[0] : null;
 }
 
+/** Resolves the default checkout ticket type ID (General Admission) for API requests. */
+export function resolveCheckoutTicketTypeId(event: EventWithInventory): EventTicketTypeId {
+  const general = findGeneralAdmissionTicketType(event.eventTicketTypes);
+  if (!general?.id) {
+    throw new Error("Event has no General Admission ticket type for checkout");
+  }
+  return general.id;
+}
+
 /** Prefer eventTicketTypes; fall back to top-level fields for legacy events. */
 export function resolveGeneralAdmissionInventory(event: EventWithInventory) {
   const general = findGeneralAdmissionTicketType(event.eventTicketTypes);

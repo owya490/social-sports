@@ -36,6 +36,9 @@ public class AddAttendeeHandler implements Handler<AddAttendeeRequest, AddAttend
         if (request.numTickets() <= 0) {
             throw new IllegalArgumentException("numTickets must be greater than 0");
         }
+        if (request.eventTicketTypeId() == null || request.eventTicketTypeId().isBlank()) {
+            throw new IllegalArgumentException("eventTicketTypeId is required");
+        }
 
         AddAttendeeResponse response = AttendeeService.addAttendee(request);
 

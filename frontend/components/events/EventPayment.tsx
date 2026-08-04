@@ -1,5 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
@@ -42,6 +43,7 @@ interface EventPaymentProps {
   waitlistEnabled: boolean;
   maxTicketsPerTransaction?: number;
   bookingApprovalEnabled?: boolean;
+  eventTicketTypeId: EventTicketTypeId;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
@@ -153,6 +155,7 @@ export default function EventPayment(props: EventPaymentProps) {
                   <JoinWaitlistButton
                     eventId={props.eventId}
                     ticketCount={waitlistAttendeeCount}
+                    eventTicketTypeId={props.eventTicketTypeId}
                     setLoading={props.setLoading}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
@@ -186,6 +189,7 @@ export default function EventPayment(props: EventPaymentProps) {
                   <BookingButton
                     eventId={props.eventId}
                     ticketCount={attendeeCount}
+                    eventTicketTypeId={props.eventTicketTypeId}
                     setLoading={props.setLoading}
                     bookingApprovalEnabled={props.bookingApprovalEnabled}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"

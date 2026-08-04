@@ -33,11 +33,11 @@ public class AttendeeService {
 
     /**
      * Adds an attendee by creating a new APPROVED Order with N APPROVED Tickets,
-     * and atomically decrementing General Admission vacancy.
+     * and atomically decrementing the requested ticket type vacancy.
      */
     public static AddAttendeeResponse addAttendee(AddAttendeeRequest request) throws Exception {
-        logger.info("Adding attendee for eventId: {}, email: {}, numTickets: {}",
-                request.eventId(), request.email(), request.numTickets());
+        logger.info("Adding attendee for eventId: {}, email: {}, numTickets: {}, eventTicketTypeId: {}",
+                request.eventId(), request.email(), request.numTickets(), request.eventTicketTypeId());
 
         return FirebaseService.createFirestoreTransaction(transaction -> {
             EventData eventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction))
@@ -46,7 +46,8 @@ public class AttendeeService {
             DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(request.eventId(),
                     transaction);
 
-            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData,
+                    request.eventTicketTypeId());
             EventTicketTypeService.validateAvailability(ticketType, request.numTickets());
 
             Timestamp now = Timestamp.now();
@@ -93,17 +94,10 @@ public class AttendeeService {
 
     /**
      * Adjusts the ticket count for an existing order.
-     * <ul>
-     * <li>numTickets == 0: REJECT the entire order, restore vacancy</li>
-     * <li>numTickets > current APPROVED count: create additional APPROVED tickets,
-     * decrement vacancy</li>
-     * <li>numTickets < current APPROVED count (but > 0): REJECT excess tickets,
-     * restore vacancy</li>
-     * </ul>
      */
     public static SetAttendeeTicketsResponse setAttendeeTickets(SetAttendeeTicketsRequest request) throws Exception {
-        logger.info("Setting attendee tickets for orderId: {}, eventId: {}, numTickets: {}",
-                request.orderId(), request.eventId(), request.numTickets());
+        logger.info("Setting attendee tickets for orderId: {}, eventId: {}, numTickets: {}, eventTicketTypeId: {}",
+                request.orderId(), request.eventId(), request.numTickets(), request.eventTicketTypeId());
 
         return FirebaseService.createFirestoreTransaction(transaction -> {
             EventData eventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction))
@@ -121,7 +115,8 @@ public class AttendeeService {
                     .filter(t -> t.getStatus() == OrderAndTicketStatus.APPROVED)
                     .collect(Collectors.toList());
 
-            ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+            String eventTicketTypeId = resolveEventTicketTypeIdForOrder(approvedTickets, request.eventTicketTypeId());
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
 
             int currentApproved = approvedTickets.size();
             int target = request.numTickets();
@@ -200,5 +195,17 @@ public class AttendeeService {
                         "No change needed. Ticket count already matches.");
             }
         });
+    }
+
+    private static String resolveEventTicketTypeIdForOrder(List<Ticket> approvedTickets, String requestTicketTypeId) {
+        for (Ticket ticket : approvedTickets) {
+            if (ticket != null && ticket.getEventTicketTypeId() != null && !ticket.getEventTicketTypeId().isBlank()) {
+                return ticket.getEventTicketTypeId();
+            }
+        }
+        if (requestTicketTypeId == null || requestTicketTypeId.isBlank()) {
+            throw new IllegalArgumentException("eventTicketTypeId is required when order has no stamped tickets");
+        }
+        return requestTicketTypeId;
     }
 }

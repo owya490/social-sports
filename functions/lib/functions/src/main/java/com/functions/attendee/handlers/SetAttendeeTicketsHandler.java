@@ -37,6 +37,9 @@ public class SetAttendeeTicketsHandler implements Handler<SetAttendeeTicketsRequ
         if (request.numTickets() < 0) {
             throw new IllegalArgumentException("numTickets cannot be negative");
         }
+        if (request.eventTicketTypeId() == null || request.eventTicketTypeId().isBlank()) {
+            throw new IllegalArgumentException("eventTicketTypeId is required");
+        }
 
         SetAttendeeTicketsResponse response = AttendeeService.setAttendeeTickets(request);
 

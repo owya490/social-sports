@@ -4,6 +4,7 @@ import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
+import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getEventById } from "@/services/src/events/eventsService";
 import { getOrderById } from "@/services/src/tickets/orderService";
@@ -63,6 +64,7 @@ export const EditAttendeeTicketsDialog = ({
         eventId,
         orderId: order.orderId,
         numTickets: parseInt(newNumTickets),
+        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
       });
       const updatedOrder = await getOrderById(order.orderId);
       const updatedTickets = await getTicketsByIds(updatedOrder.tickets);

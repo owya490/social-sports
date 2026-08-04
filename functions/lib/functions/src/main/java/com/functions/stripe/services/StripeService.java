@@ -47,7 +47,7 @@ public class StripeService {
      */
     public static CreateStripeCheckoutSessionResponse getStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
-            String endFulfilmentEntityId) {
+            String endFulfilmentEntityId, String eventTicketTypeId) {
 
         String newSuccessUrl = successUrl.orElse(
                 UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
@@ -59,8 +59,8 @@ public class StripeService {
 
         logger.info(
                 "Getting Stripe checkout URL for event ID: {}, isPrivate: {}, numTickets: {}, " +
-                        "successUrl: {}, cancelUrl: {}, fulfilmentSessionId: {}",
-                eventId, isPrivate, numTickets, newSuccessUrl, newCancelUrl, fulfilmentSessionId);
+                        "successUrl: {}, cancelUrl: {}, fulfilmentSessionId: {}, eventTicketTypeId: {}",
+                eventId, isPrivate, numTickets, newSuccessUrl, newCancelUrl, fulfilmentSessionId, eventTicketTypeId);
 
         CreateStripeCheckoutSessionRequest request = new CreateStripeCheckoutSessionRequest(
                 eventId,
@@ -70,7 +70,8 @@ public class StripeService {
                 newSuccessUrl,
                 fulfilmentSessionId,
                 endFulfilmentEntityId,
-                CaptureMethod.AUTOMATIC);
+                CaptureMethod.AUTOMATIC,
+                eventTicketTypeId);
 
         return getStripeCheckoutFromEventId(request);
     }
@@ -96,7 +97,7 @@ public class StripeService {
      */
     public static CreateStripeCheckoutSessionResponse getDelayedStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
-            String endFulfilmentEntityId) {
+            String endFulfilmentEntityId, String eventTicketTypeId) {
 
         String newSuccessUrl = successUrl.orElse(
                 UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
@@ -108,8 +109,8 @@ public class StripeService {
 
         logger.info(
                 "Getting delayed Stripe checkout URL for event ID: {}, isPrivate: {}, numTickets: {}, " +
-                        "successUrl: {}, cancelUrl: {}, fulfilmentSessionId: {}",
-                eventId, isPrivate, numTickets, newSuccessUrl, newCancelUrl, fulfilmentSessionId);
+                        "successUrl: {}, cancelUrl: {}, fulfilmentSessionId: {}, eventTicketTypeId: {}",
+                eventId, isPrivate, numTickets, newSuccessUrl, newCancelUrl, fulfilmentSessionId, eventTicketTypeId);
 
         CreateStripeCheckoutSessionRequest request = new CreateStripeCheckoutSessionRequest(
                 eventId,
@@ -119,7 +120,8 @@ public class StripeService {
                 newSuccessUrl,
                 fulfilmentSessionId,
                 endFulfilmentEntityId,
-                CaptureMethod.MANUAL);
+                CaptureMethod.MANUAL,
+                eventTicketTypeId);
 
         return getStripeCheckoutFromEventId(request);
     }

@@ -7,5 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record SetAttendeeTicketsRequest(
         @JsonProperty("eventId") String eventId,
         @JsonProperty("orderId") String orderId,
-        @JsonProperty("numTickets") int numTickets) {
+        @JsonProperty("numTickets") int numTickets,
+        @JsonProperty("eventTicketTypeId") String eventTicketTypeId) {
 }
