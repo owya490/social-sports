@@ -12,14 +12,14 @@ export const OrganiserAnnouncementBanner = () => {
     <div className="relative isolate flex items-center gap-x-6 overflow-hidden bg-gradient-to-r from-[#f8f8f8] to-[#f8f8f8] px-6 py-2.5 sm:px-3.5 sm:before:flex-1">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <p className="text-sm leading-6 text-black">
-          <strong className="font-semibold">New: Order page</strong>
+          <strong className="font-semibold">New: Booking Approvals</strong>
           <svg viewBox="0 0 2 2" aria-hidden="true" className="mx-2 inline h-0.5 w-0.5 fill-current">
             <circle r={1} cx={1} cy={1} />
           </svg>
-          You can now review full order details in one place. Open an event, go to the{" "}
-          <strong className="font-semibold">Attendees</strong> table, and click the{" "}
-          <strong className="font-semibold">order ID</strong> under each attendee&apos;s email (the linked value beside{" "}
-          <span className="whitespace-nowrap">Id:</span>). It opens in a new tab so your dashboard stays open.
+          You can now require manual approval before bookings are confirmed. Enable{" "}
+          <strong className="font-semibold">Booking Approval</strong> in your event{" "}
+          <strong className="font-semibold">Settings</strong> or when creating a new event, then review pending requests
+          from the <strong className="font-semibold">Attendees</strong> tab.
         </p>
       </div>
       <div className="flex flex-1 justify-end">
