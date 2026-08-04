@@ -1,0 +1,75 @@
+{
+  "title": "Organiser dashboard — visual world",
+  "question": "The roll assigned Match Day Programme. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Match Day Programme",
+      "kicker": "THE ROLL",
+      "lineage": "folded community tournament programmes",
+      "thesis": "Your hub reads like the official programme handed out at the gate—fixtures, stats, and sales as printed listings inside a folded card.",
+      "palette": ["#F3EAD8", "#1A1A1A", "#C41E24", "#2D5A3D"],
+      "materials": ["newsprint stock", "ruled programme grids"],
+      "viewport": "Programme cover with organiser name and today's date stamp; inside fold shows KPI stat boxes, weekly attendance grid, and numbered fixture rows with court and fill counts.",
+      "risk": "Feels static if the fold metaphor never earns its keep on mobile scroll.",
+      "sketch": ".impeccable/sketches/assigned.webp",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-cassette-j-card-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/vernacular-ephemera-cassette-j-card.webp"
+    },
+    {
+      "id": "challenger-six-pack",
+      "label": "Night Instrument Six-Pack",
+      "lineage": "aviation night-flight gauges",
+      "thesis": "Six trusted dials hold the organiser's truth through cloud—sales, tickets, views, conversion cross-checked in one sweep.",
+      "case": "Strongest product clarity: each KPI is a gauge with trend needle, not a number in a card.",
+      "palette": ["#0D0D0D", "#E8F0E8", "#39FF14", "#FF6B00"],
+      "materials": ["matte instrument panel", "luminous dial faces"],
+      "viewport": "Matte black panel with six round gauges in two rows; amber caution lamp only on low conversion; upcoming events as terse placard list beneath.",
+      "risk": "Aviation metaphor may feel distant from grassroots community sport.",
+      "sketch": ".impeccable/sketches/challenger-six-pack.webp",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-night-flight-six-pack-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/signals-instruments-night-flight-six-pack.webp"
+    },
+    {
+      "id": "challenger-metro",
+      "label": "Metro Typographic Tiles",
+      "lineage": "flat tile panorama interfaces",
+      "thesis": "Giant cropped session names on color fields—panorama swipe between sales, chart, and fixtures with zero chrome.",
+      "case": "Strongest mobile identification: between-session glance reads one tile at poster scale.",
+      "palette": ["#000000", "#00BCF2", "#FFFFFF", "#7CBB00"],
+      "materials": ["flat color tiles", "cropped lowercase headlines"],
+      "viewport": "Black ground with cyan sales tile dominating left third; lime chart tile and white fixtures tile peek from the right edge of a horizontal panorama.",
+      "risk": "Bold type can bury honest metric labels if density isn't disciplined.",
+      "sketch": ".impeccable/sketches/challenger-metro.webp",
+      "hero": "https://impeccable.style/worlds/cards/digital-design-canon-metro-typographic-tiles-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/digital-design-canon-metro-typographic-tiles.webp"
+    },
+    {
+      "id": "challenger-jcard",
+      "label": "Cassette J-Card",
+      "lineage": "hand-lettered mixtape inlays",
+      "thesis": "Side A lists this week's sessions with running times; Side B holds quick links—timed like a forty-five-minute tape.",
+      "case": "Fuses poorly: sequential Side A/B flip fights an always-on dashboard glance.",
+      "palette": ["#FFFFFF", "#1E3A8A", "#DC2626", "#9CA3AF"],
+      "materials": ["lined inlay stock", "ballpoint ink"],
+      "viewport": "Folded j-card with handwritten block caps; tracklist rows for upcoming events with right-aligned times; KPI totals inked in the margin.",
+      "risk": "Handwritten metaphor can read playful when organisers need sober numbers.",
+      "sketch": ".impeccable/sketches/challenger-jcard.webp",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-cassette-j-card-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/vernacular-ephemera-cassette-j-card.webp"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "lineage": "SaaS analytics dashboard",
+    "thesis": "Four KPI cards, bar chart, event list, quick-nav strip—the arrangement every organiser tool ships.",
+    "palette": ["#F7F7F7", "#FFFFFF", "#0A0A0A", "#F2B705"],
+    "materials": ["outlined cards", "flat bar chart"],
+    "viewport": "Grey canvas with four-up metric row, chart left and event panel right, bottom quick links—current Honest Clubhouse tokens.",
+    "risk": "Safe and familiar; may not earn a second look from organisers who live in spreadsheets.",
+    "sketch": ".impeccable/sketches/canon.webp"
+  },
+  "steer": true
+}

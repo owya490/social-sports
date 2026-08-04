@@ -9,9 +9,6 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  // experimental: {
-  //   optimizeUniversalDefaults: true,
-  // },
   theme: {
     extend: {
       backgroundImage: {
@@ -26,27 +23,58 @@ const config: Config = {
       animation: {
         "spin-slow": "spin 2s linear infinite",
       },
-    },
-    colors: {
-      core: {
-        outline: "#DDDDDD",
-        text: "#000000",
-        hover: "#F7F7F7",
+      fontFamily: {
+        sans: ["var(--font-satoshi)", ...defaultTheme.fontFamily.sans],
+        display: ["var(--font-space-grotesk)", ...defaultTheme.fontFamily.sans],
       },
-      organiser: {
-        "light-gray": "#F8F8F8",
-        "darker-light-gray": "#E8E8E8",
-        "dark-gray-text": "#404040",
-        "title-gray-text": "#969696",
+      borderRadius: {
+        // Unified product radius — prefer rounded-xl
+        xl: "var(--radius)",
       },
-      highlight: {
-        yellow: "#F2B705",
-        red: "#FF0000",
-        black: "#000000",
+      boxShadow: {
+        searchbar: "0 1px 2px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.05)",
       },
-    },
-    boxShadow: {
-      searchbar: "0 1px 2px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.05)",
+      colors: {
+        // App-wide design system — use these for all new UI
+        background: "var(--color-background)",
+        surface: {
+          DEFAULT: "var(--color-surface)",
+          muted: "var(--color-surface-muted)",
+          hover: "var(--color-surface-hover)",
+        },
+        border: {
+          DEFAULT: "var(--color-border)",
+        },
+        foreground: {
+          DEFAULT: "var(--color-foreground)",
+          secondary: "var(--color-foreground-secondary)",
+          muted: "var(--color-foreground-muted)",
+        },
+        accent: {
+          DEFAULT: "var(--color-accent)",
+          contrast: "var(--color-accent-contrast)",
+        },
+        danger: "var(--color-danger)",
+        focus: "var(--color-focus)",
+
+        // Legacy aliases → design system (keep until full site migration)
+        core: {
+          outline: "var(--color-border)",
+          text: "var(--color-foreground)",
+          hover: "var(--color-surface-hover)",
+        },
+        organiser: {
+          "light-gray": "var(--color-surface)",
+          "darker-light-gray": "var(--color-surface-muted)",
+          "dark-gray-text": "var(--color-foreground-secondary)",
+          "title-gray-text": "var(--color-foreground-muted)",
+        },
+        highlight: {
+          yellow: "var(--color-accent)",
+          red: "var(--color-danger)",
+          black: "var(--color-foreground)",
+        },
+      },
     },
   },
   plugins: [require("@tailwindcss/forms")],

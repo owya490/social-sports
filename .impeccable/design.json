@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-04T20:45:00+10:00",
+  "title": "Design System: SPORTSHUB",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#0a0a0a", "#525252", "#8a8a8a", "#e0e0e0", "#f0f0f0", "#f7f7f7", "#ebebeb", "#ffffff"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Clubhouse Grey",
+        "canonical": "#f7f7f7",
+        "tonalRamp": ["#0a0a0a", "#525252", "#8a8a8a", "#d0d0d0", "#e0e0e0", "#ebebeb", "#f0f0f0", "#f7f7f7"]
+      },
+      "surface-muted": {
+        "role": "neutral",
+        "displayName": "Bench Grey",
+        "canonical": "#ebebeb",
+        "tonalRamp": ["#0a0a0a", "#525252", "#8a8a8a", "#c8c8c8", "#d8d8d8", "#e0e0e0", "#e8e8e8", "#ebebeb"]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Hover Wash",
+        "canonical": "#f0f0f0",
+        "tonalRamp": ["#0a0a0a", "#525252", "#8a8a8a", "#c0c0c0", "#d4d4d4", "#e0e0e0", "#e8e8e8", "#f0f0f0"]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Line Grey",
+        "canonical": "#e0e0e0",
+        "tonalRamp": ["#0a0a0a", "#404040", "#525252", "#8a8a8a", "#b0b0b0", "#c8c8c8", "#d8d8d8", "#e0e0e0"]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Near Black",
+        "canonical": "#0a0a0a",
+        "tonalRamp": ["#0a0a0a", "#1a1a1a", "#2a2a2a", "#3a3a3a", "#525252", "#6a6a6a", "#8a8a8a", "#b0b0b0"]
+      },
+      "foreground-secondary": {
+        "role": "neutral",
+        "displayName": "Court Grey",
+        "canonical": "#525252",
+        "tonalRamp": ["#0a0a0a", "#1f1f1f", "#333333", "#424242", "#525252", "#6b6b6b", "#8a8a8a", "#adadad"]
+      },
+      "foreground-muted": {
+        "role": "neutral",
+        "displayName": "Chalk Grey",
+        "canonical": "#8a8a8a",
+        "tonalRamp": ["#0a0a0a", "#2e2e2e", "#454545", "#5c5c5c", "#737373", "#8a8a8a", "#a3a3a3", "#bdbdbd"]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Sports Yellow",
+        "canonical": "#f2b705",
+        "tonalRamp": ["#3d2e00", "#5c4500", "#7a5c00", "#997300", "#b88900", "#d6a000", "#f2b705", "#ffda4a"]
+      },
+      "accent-contrast": {
+        "role": "neutral",
+        "displayName": "Near Black on Accent",
+        "canonical": "#0a0a0a",
+        "tonalRamp": ["#0a0a0a", "#1a1a1a", "#2a2a2a", "#3a3a3a", "#525252", "#6a6a6a", "#8a8a8a", "#b0b0b0"]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Stop Red",
+        "canonical": "#dc2626",
+        "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fecaca"]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "Focus Ring",
+        "canonical": "#f2b705",
+        "tonalRamp": ["#3d2e00", "#5c4500", "#7a5c00", "#997300", "#b88900", "#d6a000", "#f2b705", "#ffda4a"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Dashboard greeting headline; bold Satoshi." },
+      "headline": { "displayName": "Headline", "purpose": "KPI values in icon-led cells." },
+      "title": { "displayName": "Title", "purpose": "Section titles, event names, sidebar title." },
+      "body": { "displayName": "Body", "purpose": "Supporting copy, empty states, error messages." },
+      "label": { "displayName": "Label", "purpose": "KPI labels and detail lines, chart axis, quick-nav tiles." }
+    },
+    "shadows": [
+      {
+        "name": "searchbar",
+        "value": "0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05)",
+        "purpose": "Legacy search field elevation only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default transition on buttons and sidebar width."
+      },
+      {
+        "name": "duration-fast",
+        "value": "200ms",
+        "purpose": "Hover colour shifts on tiles and list rows."
+      },
+      {
+        "name": "duration-chart",
+        "value": "300ms",
+        "purpose": "Chart bar height, fill-bar width, and range-toggle opacity fade."
+      },
+      {
+        "name": "ease-out",
+        "value": "ease-out",
+        "purpose": "Chart bar and fill-bar width animations."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main CTA — create event, retry on error. Black text on yellow.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Create event</button>",
+      "css": ".ds-btn-primary { background: var(--color-accent); color: var(--color-accent-contrast); font-family: Satoshi, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; padding: 10px 16px; border: none; border-radius: var(--radius); cursor: pointer; transition: filter 200ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { filter: brightness(0.95); } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "KPI Cell",
+      "kind": "card",
+      "refersTo": "kpi-cell",
+      "description": "Icon-led metric tile — label, bold value, detail line. Not a stacked hero metric.",
+      "html": "<div class=\"ds-kpi-cell\"><div class=\"ds-kpi-icon-well\"><svg class=\"ds-kpi-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.172-.879-1.172-2.303 0-3.182s2.9-.879 4.242 0l.879.659\"/></svg></div><div class=\"ds-kpi-body\"><p class=\"ds-kpi-label\">Net sales</p><p class=\"ds-kpi-value\">$1,284.50</p><p class=\"ds-kpi-detail\">Last 30 days</p></div></div>",
+      "css": ".ds-kpi-cell { display: flex; gap: 12px; align-items: flex-start; background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 12px 16px; font-family: Satoshi, system-ui, sans-serif; min-width: 0; } .ds-kpi-icon-well { flex-shrink: 0; background: var(--color-surface); border-radius: 0.5rem; padding: 8px; } .ds-kpi-icon { width: 16px; height: 16px; color: var(--color-foreground-secondary); } .ds-kpi-body { min-width: 0; flex: 1; } .ds-kpi-label { font-size: 0.75rem; font-weight: 500; color: var(--color-foreground-muted); margin: 0; } .ds-kpi-value { font-size: 1.5rem; font-weight: 700; color: var(--color-foreground); margin: 2px 0 0; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.2; } .ds-kpi-detail { font-size: 0.75rem; color: var(--color-foreground-muted); margin: 2px 0 0; }"
+    },
+    {
+      "name": "Neutral Fill Bar",
+      "kind": "custom",
+      "refersTo": "fill-bar-fill",
+      "description": "Progress bar for top events and upcoming capacity — never accent yellow.",
+      "html": "<div class=\"ds-fill-bar\"><div class=\"ds-fill-track\"><div class=\"ds-fill-progress\" style=\"width: 68%\"></div></div><span class=\"ds-fill-meta\">34 sold · 68%</span></div>",
+      "css": ".ds-fill-bar { display: flex; align-items: center; gap: 8px; font-family: Satoshi, system-ui, sans-serif; } .ds-fill-track { flex: 1; height: 4px; border-radius: 9999px; background: var(--color-surface-muted); overflow: hidden; } .ds-fill-progress { height: 100%; border-radius: 9999px; background: var(--color-foreground-secondary); transition: width 300ms ease-out; } .ds-fill-meta { font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--color-foreground-muted); flex-shrink: 0; }"
+    },
+    {
+      "name": "Chart Range Toggle",
+      "kind": "custom",
+      "refersTo": "button-ghost",
+      "description": "Segmented 1W/4W control; active pill inverts to near-black on white.",
+      "html": "<div class=\"ds-range-toggle\" role=\"group\" aria-label=\"Chart range\"><button class=\"ds-range-btn\" type=\"button\" aria-pressed=\"false\">This week</button><button class=\"ds-range-btn ds-range-btn-active\" type=\"button\" aria-pressed=\"true\">4 weeks</button></div>",
+      "css": ".ds-range-toggle { display: flex; background: var(--color-surface); border-radius: 0.5rem; padding: 2px; font-family: Satoshi, system-ui, sans-serif; } .ds-range-btn { border: none; background: transparent; border-radius: 0.375rem; padding: 4px 10px; font-size: 0.75rem; font-weight: 600; color: var(--color-foreground-secondary); cursor: pointer; transition: color 200ms ease, background 200ms ease; } .ds-range-btn:hover { color: var(--color-foreground); } .ds-range-btn-active { background: var(--color-foreground); color: var(--color-background); } .ds-range-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }"
+    },
+    {
+      "name": "Weekly Chart Bar",
+      "kind": "custom",
+      "refersTo": "card-outlined",
+      "description": "Flat vertical bar — accent for current week, bench grey for prior weeks.",
+      "html": "<div class=\"ds-chart-bar-group\"><span class=\"ds-chart-value\">12</span><div class=\"ds-chart-slot\"><div class=\"ds-chart-bar ds-chart-bar-current\" style=\"height: 72%\"></div></div><span class=\"ds-chart-label\">Wk 4</span></div>",
+      "css": ".ds-chart-bar-group { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 0; font-family: Satoshi, system-ui, sans-serif; } .ds-chart-value { font-size: 0.75rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-foreground); } .ds-chart-slot { width: 100%; max-width: 48px; height: 112px; display: flex; align-items: flex-end; justify-content: center; } .ds-chart-bar { width: 100%; border-radius: 0.5rem 0.5rem 0 0; background: var(--color-surface-muted); transition: height 300ms ease-out; min-height: 10%; } .ds-chart-bar-current { background: var(--color-accent); } .ds-chart-label { font-size: 0.75rem; font-weight: 500; color: var(--color-foreground-muted); }"
+    },
+    {
+      "name": "Upcoming Event Row",
+      "kind": "custom",
+      "refersTo": "card-outlined",
+      "description": "Compact row with thumbnail, meta, fill bar, and trailing status dot.",
+      "html": "<a class=\"ds-event-row\" href=\"#\"><div class=\"ds-event-thumb\"></div><div class=\"ds-event-content\"><p class=\"ds-event-name\">Tuesday Social Volleyball</p><p class=\"ds-event-meta\">Sat 12 Aug · 7:00 PM</p><div class=\"ds-fill-bar\"><div class=\"ds-fill-track\"><div class=\"ds-fill-progress\" style=\"width: 55%\"></div></div><span class=\"ds-fill-meta\">11/20</span></div></div><span class=\"ds-status-dot ds-status-dot-partial\" aria-label=\"11 of 20 filled\"></span></a>",
+      "css": ".ds-event-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border-radius: var(--radius); text-decoration: none; font-family: Satoshi, system-ui, sans-serif; transition: background 200ms ease; } .ds-event-row:hover { background: var(--color-surface-hover); } .ds-event-row:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-event-thumb { width: 40px; height: 40px; border-radius: 0.5rem; background: var(--color-surface-muted); border: 1px solid var(--color-border); flex-shrink: 0; } .ds-event-content { min-width: 0; flex: 1; } .ds-event-name { font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); margin: 0; } .ds-event-meta { font-size: 0.75rem; color: var(--color-foreground-muted); margin: 2px 0 0; } .ds-status-dot { width: 10px; height: 10px; border-radius: 9999px; flex-shrink: 0; margin-top: 6px; } .ds-status-dot-partial { background: var(--color-surface-muted); border: 1px solid var(--color-border); } .ds-status-dot-near { background: var(--color-foreground-secondary); } .ds-status-dot-full { background: var(--color-foreground); }"
+    },
+    {
+      "name": "Quick Nav Tile",
+      "kind": "nav",
+      "refersTo": "card-outlined",
+      "description": "Equal-width shortcut tile in five-column grid.",
+      "html": "<a class=\"ds-quick-tile\" href=\"#\"><svg class=\"ds-quick-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M12 4.5v15m7.5-7.5h-15\"/></svg><span class=\"ds-quick-label\">Create event</span></a>",
+      "css": ".ds-quick-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 4.5rem; padding: 12px 8px; background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius); text-decoration: none; font-family: Satoshi, system-ui, sans-serif; transition: background 200ms ease; } .ds-quick-tile:hover { background: var(--color-surface-hover); } .ds-quick-tile:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-quick-icon { width: 20px; height: 20px; color: var(--color-foreground-secondary); } .ds-quick-label { font-size: 0.75rem; font-weight: 500; color: var(--color-foreground); text-align: center; line-height: 1.25; }"
+    },
+    {
+      "name": "Error Recovery Card",
+      "kind": "card",
+      "refersTo": "card-outlined",
+      "description": "Inline metrics fetch failure with retry and fallback link.",
+      "html": "<div class=\"ds-error-card\"><p class=\"ds-error-title\">Could not load dashboard metrics</p><p class=\"ds-error-hint\">Check your connection and try again.</p><button class=\"ds-error-retry\" type=\"button\">Retry</button><p class=\"ds-error-fallback\">Or <a href=\"#\">manage events</a> while this resolves.</p></div>",
+      "css": ".ds-error-card { background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 24px; text-align: center; font-family: Satoshi, system-ui, sans-serif; } .ds-error-title { font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); margin: 0; } .ds-error-hint { font-size: 0.75rem; color: var(--color-foreground-muted); margin: 4px 0 0; } .ds-error-retry { margin-top: 16px; background: var(--color-accent); color: var(--color-accent-contrast); font-size: 0.875rem; font-weight: 600; padding: 8px 16px; border: none; border-radius: var(--radius); cursor: pointer; transition: filter 200ms ease; } .ds-error-retry:hover { filter: brightness(0.95); } .ds-error-fallback { font-size: 0.75rem; color: var(--color-foreground-muted); margin: 12px 0 0; } .ds-error-fallback a { color: inherit; text-decoration: underline; } .ds-error-fallback a:hover { color: var(--color-foreground); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Honest Clubhouse",
+    "overview": "SPORTSHUB looks like the digital front desk of a well-run local sports club—not enterprise SaaS, not a neon fitness app. The interface is calm, compact, and legible on a phone between sessions. White cards sit on a soft grey canvas; near-black text stays readable without harsh pure-black slabs. Sports yellow appears only where action or focus is needed: primary CTAs, the current-week chart bar, and focus rings.",
+    "keyCharacteristics": [
+      "Black, white, and a short grey ladder—no decorative gradients in app chrome",
+      "One corner radius (12px) across panels, cards, and controls; 8px for nested wells",
+      "Satoshi for all typography roles",
+      "Yellow accent with black text on filled accent surfaces; yellow only on CTAs and current-week chart bars",
+      "Neutral fill bars (surface-muted track, foreground-secondary fill) for progress encoding",
+      "Borders over shadows; elevation is rare",
+      "Icon-led KPI cells, five-tile quick nav, inline error recovery on organiser v2 dashboard"
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Yellow appears on primary actions, focus, and the current-week chart bar—not on fill bars, status dots, KPI icons, or nav hover fills.",
+        "section": "colors"
+      },
+      {
+        "name": "The Neutral Bar Rule",
+        "body": "Progress and ranking bars use surface-muted tracks with foreground-secondary fills. Accent yellow never encodes fill percentage.",
+        "section": "colors"
+      },
+      {
+        "name": "The 16px Input Rule",
+        "body": "Form controls on mobile use ≥16px font size to prevent iOS zoom-on-focus.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Stack Rule",
+        "body": "Do not combine filled grey panels, heavy borders, and shadows on the same component.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do write SPORTSHUB in all caps in UI and marketing copy.",
+      "Do use semantic tokens from globals.css for new UI.",
+      "Do keep yellow for primary CTAs, focus, and the current-week chart bar—not fill bars or status encoding.",
+      "Do use black (#0A0A0A) text on yellow buttons.",
+      "Do label metrics honestly when data is lifetime or approximate.",
+      "Do use icon-led KPI cells with sentence-case labels—not uppercase hero-metric stacks.",
+      "Do offer inline retry when dashboard data fails to load."
+    ],
+    "donts": [
+      "Don't introduce new greys or radii outside the token ladder without updating :root.",
+      "Don't use Space Grotesk or other display fonts—Satoshi only.",
+      "Don't stack shadow + thick border + grey fill on one element.",
+      "Don't use legacy organiser-light-gray, raw gray-*, or hardcoded greys on new organiser surfaces.",
+      "Don't use accent yellow on fill bars, KPI icon wells, or status dots—neutral encoding only.",
+      "Don't fabricate social proof, benchmarks, or analytics the product cannot source."
+    ]
+  }
+}

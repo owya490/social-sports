@@ -1,10 +1,12 @@
-import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
+import OrganiserSidebar from "@/components/organiser/OrganiserSidebar";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function OrganiserLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <OrganiserNavbar />
-      <div className="pb-28 sm:ml-14 sm:pb-0">{children}</div>
-    </>
+    <div className="min-h-screen bg-background">
+      <OrganiserSidebar />
+      <div className="min-h-screen transition-[padding] duration-200 lg:pl-[var(--organiser-sidebar-width)]">
+        <div className="pt-16 lg:pt-0">{children}</div>
+      </div>
+    </div>
   );
 }

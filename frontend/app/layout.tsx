@@ -1,4 +1,5 @@
 import AccessibilitySkipNavigation from "@/components/accessibility/SkipNavigation";
+import { AppMain } from "@/components/layout/AppMain";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
 import UserContext from "@/components/utility/UserContext";
@@ -6,6 +7,7 @@ import GrafanaFaro from "@/observability/GrafanaFaro";
 import { Environment, getEnvironment } from "@/utilities/environment";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import type { Metadata } from "next";
+import { Space_Grotesk } from "next/font/google";
 import localFont from "next/font/local";
 import { Suspense } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -26,6 +28,12 @@ const satoshi = localFont({
   ],
   variable: "--font-satoshi",
 });
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
 export const metadata: Metadata = {
   title: "SPORTSHUB | Find your next social sport session!",
   description:
@@ -38,7 +46,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${satoshi.variable} ${spaceGrotesk.variable}`}>
       <head>
         {/* Sitelinks Search Box for Google Hierarchical Display */}
         <script
@@ -97,7 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <GrafanaFaro>
         <UserContext>
           {/* Browser extensions such as Grammarly add attributes to <body> before hydration. */}
-          <body className={`${satoshi.className}`} suppressHydrationWarning>
+          <body className="font-sans antialiased" suppressHydrationWarning>
             <AccessibilitySkipNavigation />
             <div className="md:hidden">
               <Suspense
@@ -113,10 +121,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Navbar />
               </Suspense>
             </div>
-            <main id="main-content" className="min-h-screen pt-[var(--navbar-height)]">
-              {children}
-            </main>
-          </body>
+            <AppMain>{children}</AppMain>
+          {/* impeccable-live-start */}
+<script src="http://localhost:8400/live.js?token=e3c887ae-13ec-4858-9df9-b99e7d31231f"></script>
+{/* impeccable-live-end */}
+</body>
         </UserContext>
       </GrafanaFaro>
       {/* Google Analytics only in production */}

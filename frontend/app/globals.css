@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+   SportsHub design tokens (app-wide)
+   Change values here — Tailwind semantic colours / radius read these variables.
+   ============================================================================= */
+:root {
+  /* Colour */
+  --color-background: #ffffff;
+  --color-surface: #f7f7f7;
+  --color-surface-muted: #ebebeb;
+  --color-surface-hover: #f0f0f0;
+  --color-border: #e0e0e0;
+  --color-foreground: #0a0a0a;
+  --color-foreground-secondary: #525252;
+  --color-foreground-muted: #8a8a8a;
+  --color-accent: #f2b705;
+  --color-accent-contrast: #0a0a0a;
+  --color-danger: #dc2626;
+  --color-focus: #f2b705;
+
+  /* Shape */
+  --radius: 0.75rem; /* unified — Tailwind rounded-xl */
+
+  /* Layout chrome */
+  --navbar-height: 56px; /* Match h-14 (3.5rem = 56px) */
+  --footer-height: 32px; /* Match h-8 (2rem = 32px) */
+  --organiser-sidebar-width-expanded: 220px;
+  --organiser-sidebar-width-collapsed: 64px;
+  --organiser-sidebar-width: var(--organiser-sidebar-width-expanded);
+}
+
 @layer components {
   .screen-width-primary {
     @apply w-screen px-3 sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1200px];
@@ -9,10 +39,29 @@
   .screen-width-dashboard {
     @apply w-screen px-3 sm:mx-0 sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1200px];
   }
+
+  /* Typography scale — reuse across the site */
+  .type-display {
+    @apply font-display text-4xl font-bold text-foreground;
+  }
+  .type-section {
+    @apply font-display text-2xl font-semibold text-foreground;
+  }
+  .type-body {
+    @apply font-sans text-lg font-semibold text-foreground;
+  }
+  .type-meta {
+    @apply font-sans text-sm font-normal text-foreground-muted;
+  }
 }
+
 @layer base {
   .list-style-circle {
     list-style: circle;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
   }
 }
 
@@ -29,11 +78,6 @@
       scrollbar-width: none; /* Firefox */
     }
   }
-}
-
-:root {
-  --navbar-height: 56px; /* Match h-14 (3.5rem = 56px) */
-  --footer-height: 32px; /* Match h-8 (2rem = 32px) */
 }
 
 html {

@@ -63,12 +63,12 @@ export default function OrganiserChecklist() {
   const allItemsChecked = checklist.every((item) => item.checked);
 
   return (
-    <div className="bg-organiser-light-gray p-4 sm:p-8 rounded-2xl ">
+    <div className="bg-surface p-6 rounded-xl">
       {!isMounted ? (
         <>
-          <h1 className="text-2xl font-bold">
+          <h2 className="type-section">
             <Skeleton width={200} className="mb-1" />
-          </h1>
+          </h2>
           {initialChecklist.map((item) => (
             <div key={item.id} className="flex items-center mb-4">
               <Skeleton
@@ -87,7 +87,7 @@ export default function OrganiserChecklist() {
         <>
           {!allItemsChecked && (
             <>
-              <h1 className="text-2xl font-bold">Finish setting up</h1>
+              <h2 className="type-section">Finish setting up</h2>
               {checklist.map((checkbox) => (
                 <OrganiserCheckbox
                   key={checkbox.id}
@@ -101,13 +101,13 @@ export default function OrganiserChecklist() {
           )}
           {allItemsChecked && (
             <>
-              <h1 className="text-center py-6 sm:py-16 font-bold text-xl sm:text-2xl">
+              <h2 className="type-section text-center py-6 sm:py-16">
                 Good job you have finished setting up ✅ <br></br>
                 Go out there and make more events
-              </h1>
+              </h2>
               <button
                 type="button"
-                className="text-[#BABABA] text-end hover:underline hover:cursor-pointer bg-transparent border-0 p-0 w-full font-inherit"
+                className="text-foreground-muted text-end hover:underline hover:cursor-pointer bg-transparent border-0 p-0 w-full font-sans"
                 onClick={resetChecklist}
               >
                 Reset

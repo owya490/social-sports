@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const HIDDEN_NAVBAR_ROUTES = [
+  /^\/organiser/, // Organiser hub uses its own sidebar chrome
   /^\/organiser\/wrapped/, // Organiser wrapped page
   /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
 ];
