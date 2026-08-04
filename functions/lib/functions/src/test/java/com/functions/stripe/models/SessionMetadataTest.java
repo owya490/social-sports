@@ -19,6 +19,7 @@ public class SessionMetadataTest {
         assertTrue(metadata.getIsPrivate());
         assertEquals("session-123", metadata.getFulfilmentSessionId());
         assertEquals("entity-123", metadata.getEndFulfilmentEntityId());
+        assertEquals("ticket-type-123", metadata.getEventTicketTypeId());
     }
 
     @Test
@@ -48,12 +49,21 @@ public class SessionMetadataTest {
         expectIllegalArgument("End Fulfilment Entity Id", () -> SessionMetadata.fromStripeMetadata(metadataMap));
     }
 
+    @Test
+    public void fromStripeMetadataRequiresEventTicketTypeId() {
+        Map<String, String> metadataMap = buildMetadata();
+        metadataMap.put("eventTicketTypeId", "");
+
+        expectIllegalArgument("Event Ticket Type Id", () -> SessionMetadata.fromStripeMetadata(metadataMap));
+    }
+
     private static Map<String, String> buildMetadata() {
         Map<String, String> metadata = new HashMap<>();
         metadata.put("eventId", "event-123");
         metadata.put("isPrivate", "true");
         metadata.put("fulfilmentSessionId", "session-123");
         metadata.put("endFulfilmentEntityId", "entity-123");
+        metadata.put("eventTicketTypeId", "ticket-type-123");
         return metadata;
     }
 
