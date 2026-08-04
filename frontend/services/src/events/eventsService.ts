@@ -48,7 +48,7 @@ import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtil
 import {
   applyGeneralAdmissionInventoryFields,
   buildGeneralAdmissionInventoryUpdates,
-  findGeneralAdmissionTicketType,
+  resolveGeneralAdmissionInventory,
 } from "./eventsUtils/eventTicketTypesUtils";
 import {
   bustEventsLocalStorageCache,
@@ -484,9 +484,8 @@ export async function updateEventCapacityById(eventId: EventId, capacity: number
       const eventDoc: EventDataWithoutOrganiser = (
         await transaction.get(eventDocRef)
       ).data() as EventDataWithoutOrganiser;
-      const inventory = findGeneralAdmissionTicketType(eventDoc.eventTicketTypes);
-      const currentCapacity = inventory?.capacity ?? eventDoc.capacity ?? 0;
-      const currentVacancy = inventory?.vacancy ?? eventDoc.vacancy ?? 0;
+      const { capacity: currentCapacity, vacancy: currentVacancy } =
+        resolveGeneralAdmissionInventory(eventDoc);
 
       if (capacity >= currentCapacity - currentVacancy) {
         const changeAmount = currentCapacity - capacity;

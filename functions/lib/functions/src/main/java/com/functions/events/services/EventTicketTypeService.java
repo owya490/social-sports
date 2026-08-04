@@ -52,6 +52,7 @@ public class EventTicketTypeService {
                     .price(general.getPrice())
                     .vacancy(general.getVacancy())
                     .capacity(general.getCapacity())
+                    .legacy(false)
                     .build();
         }
 
@@ -64,6 +65,7 @@ public class EventTicketTypeService {
                 .price(event.getPrice())
                 .vacancy(event.getVacancy())
                 .capacity(event.getCapacity())
+                .legacy(true)
                 .build();
     }
 

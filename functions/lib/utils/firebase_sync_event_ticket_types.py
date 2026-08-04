@@ -2,13 +2,16 @@
 Sync inventory into eventTicketTypes from top-level fields.
 
 Covers:
-  - Active events: Events/Active/{Public,Private}
+  - All active events: Events/Active/{Public,Private} (full collection scan)
+  - Inactive events with eventTicketTypes: Events/InActive/{Public,Private}
+    (full scan; processes docs where eventTicketTypes is present)
   - Active recurrence templates: RecurringEvents/Active/{Public,Private}
     (writes eventData.eventTicketTypes from eventData.price/capacity/vacancy)
 
 Direction: top-level price/capacity/vacancy -> eventTicketTypes.General Admission
+Adds General Admission when missing (other ticket types are left unchanged).
 
-Usage (after uncommenting the import in functions/main.py and deploying):
+Usage (after deploying with import in functions/main.py):
   Events:
     GET ?start=true&dryRun=true
     GET ?start=true&dryRun=false
@@ -26,12 +29,15 @@ from lib.constants import (
     ACTIVE_PUBLIC,
     ACTIVE_RECURRENCE_PRIVATE,
     ACTIVE_RECURRENCE_PUBLIC,
+    INACTIVE_PRIVATE,
+    INACTIVE_PUBLIC,
     db,
 )
 from lib.logging import Logger
 
 GENERAL_TICKET_TYPE_NAME = "General Admission"
 ACTIVE_EVENT_PATHS = [ACTIVE_PUBLIC, ACTIVE_PRIVATE]
+INACTIVE_EVENT_PATHS = [INACTIVE_PUBLIC, INACTIVE_PRIVATE]
 ACTIVE_RECURRENCE_TEMPLATE_PATHS = [ACTIVE_RECURRENCE_PUBLIC, ACTIVE_RECURRENCE_PRIVATE]
 
 
@@ -40,17 +46,12 @@ def _is_truthy(value: str) -> bool:
 
 
 def _find_general_ticket_type(event_ticket_types: dict) -> tuple[str | None, dict | None]:
-    """Return (type_id, type_data) for General Admission, or the sole map entry."""
+    """Return (type_id, type_data) for General Admission by name only."""
     if not event_ticket_types:
         return None, None
 
     for type_id, type_data in event_ticket_types.items():
         if isinstance(type_data, dict) and type_data.get("name") == GENERAL_TICKET_TYPE_NAME:
-            return type_id, type_data
-
-    if len(event_ticket_types) == 1:
-        type_id, type_data = next(iter(event_ticket_types.items()))
-        if isinstance(type_data, dict):
             return type_id, type_data
 
     return None, None
@@ -99,18 +100,6 @@ def _plan_inventory_sync(
         }
 
     type_id, existing = _find_general_ticket_type(event_ticket_types)
-
-    if event_ticket_types and type_id is None:
-        return {
-            **base,
-            "action": "skip_ambiguous_ticket_types",
-            "reason": "Multiple ticket types and none named General Admission",
-            "existingTypeNames": [
-                (v or {}).get("name")
-                for v in event_ticket_types.values()
-                if isinstance(v, dict)
-            ],
-        }
 
     created = type_id is None
     if created:
@@ -165,6 +154,43 @@ def _plan_recurrence_template_sync(template_id: str, collection_path: str, data:
     )
 
 
+def _stream_inactive_events_with_ticket_types(collection_path: str):
+    """
+    Inactive events that already have an eventTicketTypes field.
+
+    Firestore's Python client rejects != None; scan and filter in-process instead.
+    """
+    for doc in db.collection(collection_path).stream():
+        data = doc.to_dict() or {}
+        if data.get("eventTicketTypes") is not None:
+            yield doc
+
+
+def _process_event_document(
+    doc,
+    collection_path: str,
+    buckets: dict,
+    dry_run: bool,
+    logger: Logger,
+) -> None:
+    event_id = doc.id
+    try:
+        data = doc.to_dict() or {}
+        plan = _plan_event_sync(event_id, collection_path, data)
+        if plan["action"] in ("create_ticket_type", "update_ticket_type") and not dry_run:
+            doc.reference.update({"eventTicketTypes": plan["eventTicketTypes"]})
+        _accumulate_plan(plan, buckets)
+    except Exception as exc:
+        logger.error(f"Failed syncing {collection_path}/{event_id}: {exc}")
+        buckets["failed"].append(
+            {
+                "eventId": event_id,
+                "collectionPath": collection_path,
+                "error": str(exc),
+            }
+        )
+
+
 def _accumulate_plan(plan: dict, buckets: dict) -> None:
     action = plan["action"]
     if action == "create_ticket_type":
@@ -214,40 +240,41 @@ def sync_event_ticket_types(req: https_fn.Request) -> https_fn.Response:
         return skipped_response
 
     dry_run = _dry_run_flag(req)
-    logger.info(f"Starting Active eventTicketTypes sync. dryRun={dry_run}")
+    logger.info(
+        f"Starting eventTicketTypes sync (active scan + inactive eventTicketTypes query). "
+        f"dryRun={dry_run}"
+    )
 
     buckets = {"created": [], "updated": [], "noop": [], "skipped": [], "failed": []}
+    processed_keys: set[str] = set()
 
     for collection_path in ACTIVE_EVENT_PATHS:
-        docs = db.collection(collection_path).stream()
-        for doc in docs:
-            event_id = doc.id
-            try:
-                data = doc.to_dict() or {}
-                plan = _plan_event_sync(event_id, collection_path, data)
-                if plan["action"] in ("create_ticket_type", "update_ticket_type") and not dry_run:
-                    doc.reference.update({"eventTicketTypes": plan["eventTicketTypes"]})
-                _accumulate_plan(plan, buckets)
-            except Exception as exc:
-                logger.error(f"Failed syncing {collection_path}/{event_id}: {exc}")
-                buckets["failed"].append(
-                    {
-                        "eventId": event_id,
-                        "collectionPath": collection_path,
-                        "error": str(exc),
-                    }
-                )
+        for doc in db.collection(collection_path).stream():
+            processed_keys.add(f"{collection_path}/{doc.id}")
+            _process_event_document(doc, collection_path, buckets, dry_run, logger)
+
+    for collection_path in INACTIVE_EVENT_PATHS:
+        for doc in _stream_inactive_events_with_ticket_types(collection_path):
+            key = f"{collection_path}/{doc.id}"
+            if key in processed_keys:
+                continue
+            processed_keys.add(key)
+            _process_event_document(doc, collection_path, buckets, dry_run, logger)
 
     summary = {
         "started": True,
         "dryRun": dry_run,
-        "collections": ACTIVE_EVENT_PATHS,
+        "activeCollections": ACTIVE_EVENT_PATHS,
+        "inactiveCollectionsQueried": INACTIVE_EVENT_PATHS,
+        "inactiveFilter": "eventTicketTypes is not null (client-side)",
+        "processedDocumentCount": len(processed_keys),
         "counts": {key: len(value) for key, value in buckets.items()},
         **buckets,
     }
     logger.info(
-        "Finished Active eventTicketTypes sync. "
-        f"dryRun={dry_run} created={len(buckets['created'])} updated={len(buckets['updated'])} "
+        "Finished eventTicketTypes sync. "
+        f"dryRun={dry_run} processed={len(processed_keys)} "
+        f"created={len(buckets['created'])} updated={len(buckets['updated'])} "
         f"noop={len(buckets['noop'])} skipped={len(buckets['skipped'])} failed={len(buckets['failed'])}"
     )
     return https_fn.Response(json.dumps(summary, default=str), status=200, content_type="application/json")

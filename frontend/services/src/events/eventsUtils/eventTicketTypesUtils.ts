@@ -2,6 +2,15 @@ import { EventTicketType, EventTicketTypeId, EventTicketTypesMap } from "@/inter
 
 export const GENERAL_TICKET_TYPE_NAME = "General Admission";
 
+type InventoryFields = Partial<{ price: number; capacity: number; vacancy: number }>;
+
+type EventWithInventory = {
+  eventTicketTypes?: EventTicketTypesMap | null;
+  price?: number;
+  capacity?: number;
+  vacancy?: number;
+};
+
 export function createEventTicketTypeId(): EventTicketTypeId {
   return crypto.randomUUID() as EventTicketTypeId;
 }
@@ -22,7 +31,16 @@ export function createEventTicketType(params: {
   };
 }
 
-/** Seed a single General Admission ticket type from event price/capacity/vacancy. */
+/** New events: write top-level fields and a matching General Admission ticket type. */
+export function buildNewEventInventory(price: number, capacity: number) {
+  return {
+    price,
+    capacity,
+    vacancy: capacity,
+    eventTicketTypes: buildEventTicketTypesFromLegacyEvent({ price, capacity, vacancy: capacity }),
+  };
+}
+
 export function buildEventTicketTypesFromLegacyEvent(params: {
   price: number;
   capacity: number;
@@ -35,19 +53,9 @@ export function buildEventTicketTypesFromLegacyEvent(params: {
     capacity: params.capacity,
     vacancy: params.vacancy,
   });
-  return {
-    [eventTicketType.id]: eventTicketType,
-  };
+  return { [eventTicketType.id]: eventTicketType };
 }
 
-function findByName(ticketTypes: EventTicketTypesMap, name: string): EventTicketType | undefined {
-  return Object.values(ticketTypes).find((ticketType) => ticketType?.name === name);
-}
-
-/**
- * Resolves the General Admission ticket type from an event's ticket types map.
- * Falls back to the sole map entry when present.
- */
 export function findGeneralAdmissionTicketType(
   eventTicketTypes?: EventTicketTypesMap | null
 ): EventTicketType | null {
@@ -55,83 +63,87 @@ export function findGeneralAdmissionTicketType(
     return null;
   }
 
-  const general = findByName(eventTicketTypes, GENERAL_TICKET_TYPE_NAME);
-  if (general) {
-    return general;
+  const byName = Object.values(eventTicketTypes).find((type) => type?.name === GENERAL_TICKET_TYPE_NAME);
+  if (byName) {
+    return byName;
   }
 
   const entries = Object.values(eventTicketTypes);
-  if (entries.length === 1 && entries[0]) {
-    return entries[0];
-  }
-
-  return null;
+  return entries.length === 1 && entries[0] ? entries[0] : null;
 }
 
-export function findGeneralTicketTypeId(
-  eventTicketTypes?: EventTicketTypesMap | null
-): EventTicketTypeId | null {
-  return findGeneralAdmissionTicketType(eventTicketTypes)?.id ?? null;
-}
-
-/**
- * Copies General Admission price/capacity/vacancy onto the in-memory event object for UI.
- * When {@code eventTicketTypes} is present it is preferred; otherwise existing top-level fields
- * are kept (legacy events).
- */
-export function applyGeneralAdmissionInventoryFields<T extends object>(
-  event: T
-): T {
-  const inventoryEvent = event as T & {
-    eventTicketTypes?: EventTicketTypesMap | null;
-    price?: number;
-    capacity?: number;
-    vacancy?: number;
-  };
-  const general = findGeneralAdmissionTicketType(inventoryEvent.eventTicketTypes);
-  if (!general) {
-    return event;
+/** Prefer eventTicketTypes; fall back to top-level fields for legacy events. */
+export function resolveGeneralAdmissionInventory(event: EventWithInventory) {
+  const general = findGeneralAdmissionTicketType(event.eventTicketTypes);
+  if (general) {
+    return {
+      price: general.price,
+      capacity: general.capacity,
+      vacancy: general.vacancy,
+      typeId: general.id,
+    };
   }
   return {
-    ...event,
-    price: general.price,
-    capacity: general.capacity,
-    vacancy: general.vacancy,
+    price: event.price ?? 0,
+    capacity: event.capacity ?? 0,
+    vacancy: event.vacancy ?? 0,
+    typeId: null,
   };
 }
 
-/**
- * Firestore updates for inventory. Writes top-level price/capacity/vacancy and, when present,
- * the General Admission entry in eventTicketTypes so both stay aligned.
- */
+/** Copies resolved inventory onto top-level fields for UI components. */
+export function applyGeneralAdmissionInventoryFields<T extends object>(event: T): T {
+  const { price, capacity, vacancy, typeId } = resolveGeneralAdmissionInventory(event as EventWithInventory);
+  if (!typeId) {
+    return event;
+  }
+  return { ...event, price, capacity, vacancy };
+}
+
+/** Firestore updates: nested when eventTicketTypes exists, otherwise top-level. */
 export function buildGeneralAdmissionInventoryUpdates(
   eventTicketTypes: EventTicketTypesMap | null | undefined,
-  fields: Partial<{ price: number; capacity: number; vacancy: number }>
+  fields: InventoryFields
 ): Record<string, number> {
-  const typeId = findGeneralTicketTypeId(eventTicketTypes);
+  const typeId = findGeneralAdmissionTicketType(eventTicketTypes)?.id ?? null;
   const updates: Record<string, number> = {};
 
-  if (fields.price !== undefined) {
-    updates.price = fields.price;
-  }
-  if (fields.capacity !== undefined) {
-    updates.capacity = fields.capacity;
-  }
-  if (fields.vacancy !== undefined) {
-    updates.vacancy = fields.vacancy;
-  }
-
-  if (typeId) {
-    if (fields.price !== undefined) {
-      updates[`eventTicketTypes.${typeId}.price`] = fields.price;
+  for (const key of ["price", "capacity", "vacancy"] as const) {
+    const value = fields[key];
+    if (value === undefined) {
+      continue;
     }
-    if (fields.capacity !== undefined) {
-      updates[`eventTicketTypes.${typeId}.capacity`] = fields.capacity;
-    }
-    if (fields.vacancy !== undefined) {
-      updates[`eventTicketTypes.${typeId}.vacancy`] = fields.vacancy;
-    }
+    updates[typeId ? `eventTicketTypes.${typeId}.${key}` : key] = value;
   }
 
   return updates;
+}
+
+/** In-memory merge for APIs that send full event objects (e.g. recurrence templates). */
+export function mergeInventoryIntoEventData<T extends EventWithInventory>(
+  event: T,
+  fields: InventoryFields
+): T {
+  const patch: InventoryFields = {};
+  for (const key of ["price", "capacity", "vacancy"] as const) {
+    if (fields[key] !== undefined) {
+      patch[key] = fields[key];
+    }
+  }
+  if (Object.keys(patch).length === 0) {
+    return event;
+  }
+
+  const general = findGeneralAdmissionTicketType(event.eventTicketTypes);
+  if (!general) {
+    return { ...event, ...patch };
+  }
+
+  return {
+    ...event,
+    eventTicketTypes: {
+      ...event.eventTicketTypes!,
+      [general.id]: { ...general, ...patch },
+    },
+  };
 }

@@ -14,4 +14,6 @@ public class ResolvedEventTicketType {
     Integer price;
     Integer vacancy;
     Integer capacity;
+    /** True when inventory is stored on top-level event fields (no eventTicketTypes map). */
+    boolean legacy;
 }
