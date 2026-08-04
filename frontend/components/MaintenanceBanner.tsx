@@ -19,11 +19,15 @@ export const MaintenanceBanner = () => {
           </>
         ) : (
           <>
-            If you run into issues booking, please reach out to{" "}
+            <strong className="font-semibold">Something exciting is on the way!</strong>
+            <svg viewBox="0 0 2 2" aria-hidden="true" className="mx-2 inline h-0.5 w-0.5 fill-current">
+              <circle r={1} cx={1} cy={1} />
+            </svg>
+            We&apos;re in the middle of rolling out some exciting new features. If you run into any issues booking, reach out to{" "}
             <a href="mailto:info@sportshub.net.au" className="font-semibold underline underline-offset-2">
               info@sportshub.net.au
-            </a>
-            . We are rolling out some exciting new features.
+            </a>{" "}
+            and we&apos;ll get you sorted.
           </>
         )}
       </p>
