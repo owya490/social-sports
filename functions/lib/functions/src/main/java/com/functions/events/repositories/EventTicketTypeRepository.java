@@ -35,7 +35,7 @@ public class EventTicketTypeRepository {
 
         Map<String, Object> updates = new HashMap<>();
         putTicketTypeSnapshot(updates, type);
-        // Absolute map write avoids stale nested increments; top-level not used for new events.
+        // Absolute map write avoids stale nested increments; top-level fields stay in sync on writes.
         putTicketTypeField(updates, type.getId(), "vacancy", newVacancy);
         transaction.update(eventRef, updates);
     }

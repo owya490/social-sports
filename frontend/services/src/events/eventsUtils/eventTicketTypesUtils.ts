@@ -76,7 +76,8 @@ export function findGeneralTicketTypeId(
 
 /**
  * Copies General Admission price/capacity/vacancy onto the in-memory event object for UI.
- * If {@code eventTicketTypes} is missing, keeps existing top-level fields (legacy events).
+ * When {@code eventTicketTypes} is present it is preferred; otherwise existing top-level fields
+ * are kept (legacy events).
  */
 export function applyGeneralAdmissionInventoryFields<T extends object>(
   event: T
@@ -100,8 +101,8 @@ export function applyGeneralAdmissionInventoryFields<T extends object>(
 }
 
 /**
- * Firestore updates for inventory. Prefers the General Admission map entry; falls back to
- * top-level price/capacity/vacancy for legacy events without eventTicketTypes.
+ * Firestore updates for inventory. Writes top-level price/capacity/vacancy and, when present,
+ * the General Admission entry in eventTicketTypes so both stay aligned.
  */
 export function buildGeneralAdmissionInventoryUpdates(
   eventTicketTypes: EventTicketTypesMap | null | undefined,
@@ -109,6 +110,16 @@ export function buildGeneralAdmissionInventoryUpdates(
 ): Record<string, number> {
   const typeId = findGeneralTicketTypeId(eventTicketTypes);
   const updates: Record<string, number> = {};
+
+  if (fields.price !== undefined) {
+    updates.price = fields.price;
+  }
+  if (fields.capacity !== undefined) {
+    updates.capacity = fields.capacity;
+  }
+  if (fields.vacancy !== undefined) {
+    updates.vacancy = fields.vacancy;
+  }
 
   if (typeId) {
     if (fields.price !== undefined) {
@@ -120,29 +131,7 @@ export function buildGeneralAdmissionInventoryUpdates(
     if (fields.vacancy !== undefined) {
       updates[`eventTicketTypes.${typeId}.vacancy`] = fields.vacancy;
     }
-    return updates;
   }
 
-  if (fields.price !== undefined) {
-    updates.price = fields.price;
-  }
-  if (fields.capacity !== undefined) {
-    updates.capacity = fields.capacity;
-  }
-  if (fields.vacancy !== undefined) {
-    updates.vacancy = fields.vacancy;
-  }
   return updates;
-}
-
-/** Strip top-level inventory fields so they are never written to Firestore. */
-export function omitTopLevelInventoryFields<T extends object>(
-  data: T
-): Omit<T, "price" | "capacity" | "vacancy"> {
-  const { price: _price, capacity: _capacity, vacancy: _vacancy, ...rest } = data as T & {
-    price?: number;
-    capacity?: number;
-    vacancy?: number;
-  };
-  return rest;
 }

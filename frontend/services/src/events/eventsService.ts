@@ -49,7 +49,6 @@ import {
   applyGeneralAdmissionInventoryFields,
   buildGeneralAdmissionInventoryUpdates,
   findGeneralAdmissionTicketType,
-  omitTopLevelInventoryFields,
 } from "./eventsUtils/eventTicketTypesUtils";
 import {
   bustEventsLocalStorageCache,
@@ -70,7 +69,7 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
   try {
     // Simplified object spreading with tokenized values
     const eventDataWithTokens = {
-      ...omitTopLevelInventoryFields(data),
+      ...data,
       nameTokens: tokenizeText(data.name),
       locationTokens: tokenizeText(data.location),
     };
@@ -121,7 +120,7 @@ export async function createEventV2(data: NewEventData) {
   }
   eventServiceLogger.info("createEventV2");
   const content = {
-    eventData: omitTopLevelInventoryFields(data),
+    eventData: data,
   };
   const createEventFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_EVENT);
   return createEventFunction(content).then((result) => {

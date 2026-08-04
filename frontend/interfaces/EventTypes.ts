@@ -30,7 +30,7 @@ interface AbstractEventData {
     lat: number;
     lng: number;
   };
-  // Hydrated from eventTicketTypes for UI; omitted from Firestore writes for new events.
+  // Prefer eventTicketTypes on read (see applyGeneralAdmissionInventoryFields); kept on writes for legacy compatibility.
   capacity: number;
   vacancy: number;
   price: number;

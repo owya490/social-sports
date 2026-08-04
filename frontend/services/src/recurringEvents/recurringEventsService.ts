@@ -9,7 +9,7 @@ import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { Timestamp } from "firebase/firestore";
 import { getPrivateUserById } from "../users/usersService";
-import { applyGeneralAdmissionInventoryFields, findGeneralAdmissionTicketType, omitTopLevelInventoryFields } from "../events/eventsUtils/eventTicketTypesUtils";
+import { applyGeneralAdmissionInventoryFields, findGeneralAdmissionTicketType } from "../events/eventsUtils/eventTicketTypesUtils";
 import {
   findRecurrenceTemplateDoc,
   getCreateRecurringTemplateUrl,
@@ -34,7 +34,7 @@ export async function createRecurrenceTemplate(
   recurringEventsServiceLogger.info("createRecurrenceTemplate");
   const content = {
     eventData: {
-      ...omitTopLevelInventoryFields(eventData),
+      ...eventData,
       startDate: eventData.startDate.toDate(),
       endDate: eventData.endDate.toDate(),
       registrationDeadline: eventData.registrationDeadline.toDate(),
@@ -101,7 +101,7 @@ export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceT
   let eventData = null;
   if (updatedData.eventData) {
     eventData = {
-      ...omitTopLevelInventoryFields(updatedData.eventData),
+      ...updatedData.eventData,
       startDate: updatedData.eventData.startDate.toDate(),
       endDate: updatedData.eventData.endDate.toDate(),
       registrationDeadline: updatedData.eventData.registrationDeadline.toDate(),
