@@ -27,9 +27,19 @@ export const MaintenanceBanner = () => {
           </>
         ) : (
           <>
-            <strong className="block font-semibold sm:inline">Something exciting is on the way!</strong>
-            <BannerSeparator />
-            <span className="mt-1 block sm:mt-0 sm:inline">
+            <span className="sm:hidden">
+              If you run into any issues booking, reach out to{" "}
+              <a
+                href="mailto:info@sportshub.net.au"
+                className="font-semibold text-gray-900 underline underline-offset-2"
+              >
+                info@sportshub.net.au
+              </a>
+              .
+            </span>
+            <span className="hidden sm:contents">
+              <strong className="font-semibold">Something exciting is on the way!</strong>
+              <BannerSeparator />
               We&apos;re in the middle of rolling out some exciting new features. If you run into any issues booking,
               reach out to{" "}
               <a
