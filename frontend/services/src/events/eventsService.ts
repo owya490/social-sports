@@ -405,7 +405,20 @@ export async function updateEventFromDocRef(
   updatedData: Partial<EventData>
 ): Promise<void> {
   try {
-    await updateDoc(eventRef, updatedData);
+    const eventDocSnapshot = await getDoc(eventRef);
+    if (!eventDocSnapshot.exists()) {
+      throw new Error(`Event not found at ${eventRef.path}`);
+    }
+
+    const eventDoc = eventDocSnapshot.data() as EventDataWithoutOrganiser;
+    const { price, capacity, vacancy, ...restUpdatedData } = updatedData;
+    const inventoryUpdates = buildGeneralAdmissionInventoryUpdates(eventDoc.eventTicketTypes, {
+      price,
+      capacity,
+      vacancy,
+    });
+
+    await updateDoc(eventRef, { ...restUpdatedData, ...inventoryUpdates });
     eventServiceLogger.info("Event updated successfully.");
   } catch (error) {
     eventServiceLogger.error(`Error updating event from document reference: ${error}`);

@@ -118,49 +118,45 @@ export async function getAllEventsFromCollectionRef(
 
 function getEventsDataFromLocalStorage(): EventData[] {
   const eventsData: EventData[] = JSON.parse(localStorage.getItem(LocalStorageKeys.EventsData)!);
-  const eventsDataFinal: EventData[] = [];
-  eventsData.map((event) => {
-    eventsDataFinal.push(
-      applyGeneralAdmissionInventoryFields({
-        eventId: event.eventId,
-        organiser: event.organiser as PublicUserData,
-        startDate: new Timestamp(event.startDate.seconds, event.startDate.nanoseconds),
-        endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
-        location: event.location,
-        capacity: event.capacity,
-        vacancy: event.vacancy,
-        price: event.price,
-        organiserId: event.organiserId,
-        registrationDeadline: new Timestamp(event.registrationDeadline.seconds, event.registrationDeadline.nanoseconds),
-        name: event.name,
-        description: event.description,
-        image: event.image,
-        thumbnail: event.thumbnail,
-        eventTags: event.eventTags,
-        isActive: event.isActive,
-        attendees: event.attendees,
-        attendeesMetadata: event.attendeesMetadata,
-        accessCount: event.accessCount,
-        sport: event.sport,
-        locationLatLng: {
-          lat: event.locationLatLng.lat,
-          lng: event.locationLatLng.lng,
-        },
-        isPrivate: event.isPrivate,
-        paymentsActive: event.paymentsActive,
-        stripeFeeToCustomer: event.stripeFeeToCustomer,
-        promotionalCodesEnabled: event.promotionalCodesEnabled,
-        paused: event.paused,
-        eventLink: event.eventLink,
-        formId: event.formId,
-        hideVacancy: event.hideVacancy,
-        waitlistEnabled: event.waitlistEnabled,
-        bookingApprovalEnabled: event.bookingApprovalEnabled,
-        showAttendeesOnEventPage: event.showAttendeesOnEventPage,
-        maxTicketsPerTransaction: event.maxTicketsPerTransaction,
-        eventTicketTypes: event.eventTicketTypes,
-      })
-    );
-  });
-  return eventsDataFinal;
+  return eventsData.map((event) =>
+    applyGeneralAdmissionInventoryFields({
+      eventId: event.eventId,
+      organiser: event.organiser as PublicUserData,
+      startDate: new Timestamp(event.startDate.seconds, event.startDate.nanoseconds),
+      endDate: new Timestamp(event.endDate.seconds, event.endDate.nanoseconds),
+      location: event.location,
+      capacity: event.capacity,
+      vacancy: event.vacancy,
+      price: event.price,
+      organiserId: event.organiserId,
+      registrationDeadline: new Timestamp(event.registrationDeadline.seconds, event.registrationDeadline.nanoseconds),
+      name: event.name,
+      description: event.description,
+      image: event.image,
+      thumbnail: event.thumbnail,
+      eventTags: event.eventTags,
+      isActive: event.isActive,
+      attendees: event.attendees,
+      attendeesMetadata: event.attendeesMetadata,
+      accessCount: event.accessCount,
+      sport: event.sport,
+      locationLatLng: {
+        lat: event.locationLatLng.lat,
+        lng: event.locationLatLng.lng,
+      },
+      isPrivate: event.isPrivate,
+      paymentsActive: event.paymentsActive,
+      stripeFeeToCustomer: event.stripeFeeToCustomer,
+      promotionalCodesEnabled: event.promotionalCodesEnabled,
+      paused: event.paused,
+      eventLink: event.eventLink,
+      formId: event.formId,
+      hideVacancy: event.hideVacancy,
+      waitlistEnabled: event.waitlistEnabled,
+      bookingApprovalEnabled: event.bookingApprovalEnabled,
+      showAttendeesOnEventPage: event.showAttendeesOnEventPage,
+      maxTicketsPerTransaction: event.maxTicketsPerTransaction,
+      eventTicketTypes: event.eventTicketTypes,
+    })
+  );
 }

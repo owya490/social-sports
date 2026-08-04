@@ -9,7 +9,10 @@ import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { Timestamp } from "firebase/firestore";
 import { getPrivateUserById } from "../users/usersService";
-import { applyGeneralAdmissionInventoryFields, mergeInventoryIntoEventData } from "../events/eventsUtils/eventTicketTypesUtils";
+import {
+  applyGeneralAdmissionInventoryFields,
+  mergeInventoryIntoEventData,
+} from "../events/eventsUtils/eventTicketTypesUtils";
 import {
   findRecurrenceTemplateDoc,
   getCreateRecurringTemplateUrl,

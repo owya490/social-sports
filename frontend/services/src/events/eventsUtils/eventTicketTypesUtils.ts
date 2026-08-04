@@ -93,10 +93,7 @@ export function resolveGeneralAdmissionInventory(event: EventWithInventory) {
 
 /** Copies resolved inventory onto top-level fields for UI components. */
 export function applyGeneralAdmissionInventoryFields<T extends object>(event: T): T {
-  const { price, capacity, vacancy, typeId } = resolveGeneralAdmissionInventory(event as EventWithInventory);
-  if (!typeId) {
-    return event;
-  }
+  const { price, capacity, vacancy } = resolveGeneralAdmissionInventory(event as EventWithInventory);
   return { ...event, price, capacity, vacancy };
 }
 
