@@ -10,7 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.ReservedSlot;
+import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.OrderAndTicketType;
@@ -44,7 +47,11 @@ public class ReservedSlotService {
             throw new Exception("Event not found for eventId: " + eventId);
         }
         EventData eventData = eventDataOpt.get();
-        int currentVacancy = eventData.getVacancy();
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        if (ticketType.getVacancy() == null) {
+            throw new IllegalStateException("Ticket type " + ticketType.getId() + " is missing vacancy");
+        }
+        int currentVacancy = ticketType.getVacancy();
 
         // Validate and normalize reserved slots
         List<ReservedSlot> reservedSlots = rawReservedSlots.stream()
@@ -68,10 +75,12 @@ public class ReservedSlotService {
             totalReservedSlots = reservedSlots.stream().mapToInt(ReservedSlot::getSlots).sum();
         }
 
-        // Update event vacancy
+        // Update General Admission vacancy
         int newVacancy = currentVacancy - totalReservedSlots;
-        EventsRepository.updateEventById(eventId, "vacancy", newVacancy, transaction);
-        logger.info("Reduced vacancy from {} to {} for event {}", currentVacancy, newVacancy, eventId);
+        DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(eventId, transaction);
+        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType, newVacancy);
+        logger.info("Reduced vacancy from {} to {} for event {} type {}", currentVacancy, newVacancy, eventId,
+                ticketType.getId());
 
         // Create Order and Tickets for each reserved slot
         int totalTicketsAdded = 0;
@@ -105,6 +114,7 @@ public class ReservedSlotService {
                 ticket.setPurchaseDate(now);
                 ticket.setStatus(OrderAndTicketStatus.APPROVED);
                 ticket.setType(OrderAndTicketType.MANUAL);
+                EventTicketTypeService.stampTicket(ticket, ticketType);
 
                 String ticketId = TicketsRepository.createTicket(ticket, transaction);
                 ticketIds.add(ticketId);

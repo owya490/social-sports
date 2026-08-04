@@ -9,6 +9,7 @@ import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { Timestamp } from "firebase/firestore";
 import { getPrivateUserById } from "../users/usersService";
+import { applyGeneralAdmissionInventoryFields, mergeInventoryIntoEventData } from "../events/eventsUtils/eventTicketTypesUtils";
 import {
   findRecurrenceTemplateDoc,
   getCreateRecurringTemplateUrl,
@@ -82,7 +83,10 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
   try {
     const recurrenceTemplateDoc = await findRecurrenceTemplateDoc(recurrenceTemplateId);
     const recurrenceTemplate = { ...recurrenceTemplateDoc.data(), recurrenceTemplateId } as RecurrenceTemplate;
-    return recurrenceTemplate;
+    return {
+      ...recurrenceTemplate,
+      eventData: applyGeneralAdmissionInventoryFields(recurrenceTemplate.eventData),
+    };
   } catch (error) {
     recurringEventsServiceLogger.error(
       `Error getting Recurrence Template by Id, id=${recurrenceTemplateId}, error=${error}`
@@ -129,11 +133,13 @@ export async function updateRecurrenceTemplateEventData(
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} event data`);
   try {
     const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+    const { price, capacity, vacancy, ...restUpdatedData } = updatedData;
+    const mergedEventData = mergeInventoryIntoEventData(
+      { ...recurrenceTemplate.eventData, ...restUpdatedData },
+      { price, capacity, vacancy }
+    );
     const response = await updateRecurrenceTemplate(recurrenceTemplateId, {
-      eventData: {
-        ...recurrenceTemplate.eventData,
-        ...updatedData,
-      },
+      eventData: mergedEventData,
     });
     return response ? true : false;
   } catch (error) {

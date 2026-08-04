@@ -21,6 +21,9 @@ import com.functions.events.models.Attendee;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.Purchaser;
+import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.repositories.EventTicketTypeRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
@@ -568,7 +571,8 @@ public class WebhookService {
             Session.TotalDetails totalDetails,
             String fulfilmentSessionId,
             String paymentIntentId,
-            String captureMethod) throws Exception {
+            String captureMethod,
+            String eventTicketTypeId) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -596,6 +600,9 @@ public class WebhookService {
             logger.error("Event data is null for eventId={}", eventId);
             return null;
         }
+        event.setEventId(eventId);
+
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(event);
         
         LineItem item = getSingleCheckoutLineItem(lineItems, checkoutSessionId, false);
         if (item == null) {
@@ -658,6 +665,7 @@ public class WebhookService {
             ticket.setPurchaseDate(purchaseTime);
             ticket.setStatus(status);
             ticket.setFormResponseId(formResponseId);
+            EventTicketTypeService.stampTicket(ticket, ticketType);
             
             transaction.create(ticketRef, ticket);
             ticketIds.add(ticketRef.getId());
@@ -717,7 +725,14 @@ public class WebhookService {
             throw new IllegalStateException("Event does not exist for restock. eventId=" + eventId);
         }
 
-        transaction.update(eventRef, "vacancy", FieldValue.increment(ticketCount));
+        EventData eventData = eventSnapshot.toObject(EventData.class);
+        if (eventData == null) {
+            throw new IllegalStateException("Event data is null for restock. eventId=" + eventId);
+        }
+        eventData.setEventId(eventId);
+
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
+        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, ticketCount);
     }
 
     private static void updateTicketsStatusToRejected(
@@ -904,7 +919,8 @@ public class WebhookService {
             String checkoutSessionId,
             String eventId,
             boolean isPrivate,
-            List<LineItem> lineItems) throws Exception {
+            List<LineItem> lineItems,
+            String eventTicketTypeId) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -926,6 +942,13 @@ public class WebhookService {
                         eventId, isPrivate);
             throw new IllegalStateException("Event does not exist: eventId=" + eventId);
         }
+
+        EventData eventData = eventSnapshot.toObject(EventData.class);
+        if (eventData == null) {
+            throw new IllegalStateException("Event data is null for expired checkout restock. eventId=" + eventId);
+        }
+        eventData.setEventId(eventId);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolve(eventData);
         
         // Firestore transactions require all reads to complete before the first write.
         EventMetadata eventMetadata = getOrInitializeEventMetadata(
@@ -934,8 +957,8 @@ public class WebhookService {
                 eventSnapshot.getString("organiserId"));
         appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
 
-        // Restock the tickets
-        transaction.update(eventRef, "vacancy", FieldValue.increment(quantity));
+        // Restock General Admission vacancy
+        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, quantity);
         transaction.set(eventMetadataRef, eventMetadata);
     }
     
@@ -969,7 +992,8 @@ public class WebhookService {
             String fulfilmentSessionId,
             String endFulfilmentEntityId,
             String paymentIntentId,
-            String captureMethod) {
+            String captureMethod,
+            String eventTicketTypeId) {
         
         try {
             // Run the fulfillment logic in a transaction
@@ -994,7 +1018,8 @@ public class WebhookService {
                         checkoutSession.getTotalDetails(),
                         fulfilmentSessionId,
                         paymentIntentId,
-                        captureMethod
+                        captureMethod,
+                        eventTicketTypeId
                     );
                     
                     if (orderIdResult == null) {
@@ -1101,7 +1126,8 @@ public class WebhookService {
             String checkoutSessionId,
             String eventId,
             boolean isPrivate,
-            List<LineItem> lineItems) {
+            List<LineItem> lineItems,
+            String eventTicketTypeId) {
         
         try {
             Boolean result = FirebaseService.createFirestoreTransaction(transaction -> {
@@ -1114,7 +1140,8 @@ public class WebhookService {
                     }
                     
                     // Restock tickets
-                    restockTicketsAfterExpiredCheckout(transaction, checkoutSessionId, eventId, isPrivate, lineItems);
+                    restockTicketsAfterExpiredCheckout(transaction, checkoutSessionId, eventId, isPrivate, lineItems,
+                            eventTicketTypeId);
                     
                     return true;
                 } catch (Exception e) {

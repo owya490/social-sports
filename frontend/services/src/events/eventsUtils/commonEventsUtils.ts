@@ -18,6 +18,8 @@ import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
 import { CollectionPaths, EVENT_PATHS, EventPrivacy, EventStatus } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
+import { applyGeneralAdmissionInventoryFields } from "./eventTicketTypesUtils";
+
 export function tokenizeText(text: string): string[] {
   // Split the text into words, convert to lowercase, and filter out empty strings
   return text.toLowerCase().split(/\s+/).filter(Boolean);
@@ -100,12 +102,16 @@ export async function processEventData(
       };
       try {
         const organiser = await getPublicUserById(eventData.organiserId);
-        extendedEventData.organiser = organiser;
+        eventsData.push(
+          applyGeneralAdmissionInventoryFields({
+            ...extendedEventData,
+            organiser,
+          })
+        );
       } catch {
         // this is a no op, we don't want to process fault events with undefined organisers
         continue;
       }
-      eventsData.push(extendedEventData);
       eventServiceLogger.debug(`Processed event data for eventId: ${eventId}`);
     }
   }

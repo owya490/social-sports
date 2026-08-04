@@ -19,6 +19,8 @@ public class SessionMetadata {
     private Boolean isPrivate;
     private String fulfilmentSessionId;
     private String endFulfilmentEntityId;
+    /** Optional; used to restock the correct ticket type after checkout expiry/cancel. */
+    private String eventTicketTypeId;
 
     /**
      * Validates the session metadata.
@@ -63,6 +65,7 @@ public class SessionMetadata {
             .isPrivate(isPrivate)
             .fulfilmentSessionId(normalizeBlankToNull(metadata.get("fulfilmentSessionId")))
             .endFulfilmentEntityId(normalizeBlankToNull(metadata.get("endFulfilmentEntityId")))
+            .eventTicketTypeId(normalizeBlankToNull(metadata.get("eventTicketTypeId")))
             .build();
         sessionMetadata.validate();
         return sessionMetadata;
