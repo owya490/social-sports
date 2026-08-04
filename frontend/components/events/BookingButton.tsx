@@ -2,6 +2,7 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { FulfilmentSessionType } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
+import { isBookingMaintenanceActive } from "@/services/featureFlags";
 import { getNextFulfilmentEntityUrl, initFulfilmentSession } from "@/services/src/fulfilment/fulfilmentServices";
 import { getErrorUrl } from "@/services/src/urlUtils";
 import { useRouter } from "next/navigation";
@@ -22,6 +23,10 @@ export default function BookingButton({ eventId, ticketCount, setLoading, classN
   const [internalLoading, setInternalLoading] = useState(false);
 
   const handleBookNow = async () => {
+    if (isBookingMaintenanceActive()) {
+      return;
+    }
+
     setInternalLoading(true);
     setLoading?.(true);
 
@@ -52,10 +57,17 @@ export default function BookingButton({ eventId, ticketCount, setLoading, classN
     }
   };
 
-  const label = bookingApprovalEnabled ? "Request to Book" : "Book Now";
+  const maintenanceActive = isBookingMaintenanceActive();
+  const label = maintenanceActive ? "Booking Paused" : bookingApprovalEnabled ? "Request to Book" : "Book Now";
 
   return (
-    <button type="button" className={className} onClick={handleBookNow} disabled={internalLoading}>
+    <button
+      type="button"
+      className={className}
+      onClick={handleBookNow}
+      disabled={internalLoading || maintenanceActive}
+      aria-disabled={maintenanceActive}
+    >
       {internalLoading ? "Booking..." : label}
     </button>
   );

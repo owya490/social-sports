@@ -21,6 +21,7 @@ import { useState } from "react";
 import BookingButton from "../events/BookingButton";
 import ContactEventButton from "../events/ContactEventButton";
 import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
+import { isBookingMaintenanceActive } from "@/services/featureFlags";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 
 interface MobileEventPaymentProps {
@@ -71,6 +72,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
 
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
+  const bookingMaintenanceActive = isBookingMaintenanceActive();
 
   return (
     <div className="py-4 px-2">
@@ -107,7 +109,14 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
 
       {/* Booking Section */}
       <div className="w-full">
-        {eventRegistrationClosed ? (
+        {bookingMaintenanceActive ? (
+          <div className="text-center py-2">
+            <h3 className="font-semibold text-black mb-1">Booking Paused</h3>
+            <p className="text-sm text-gray-600">
+              We&apos;re on a maintenance break. Bookings will reopen at 6am AEST, Tuesday 5 August.
+            </p>
+          </div>
+        ) : eventRegistrationClosed ? (
           <div className="text-center py-2">
             <h3 className="font-semibold text-black mb-1">Registration Closed</h3>
             <p className="text-sm text-gray-600">Please check with the organiser for more details.</p>
