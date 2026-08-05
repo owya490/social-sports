@@ -25,7 +25,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-satoshi)", ...defaultTheme.fontFamily.sans],
-        display: ["var(--font-space-grotesk)", ...defaultTheme.fontFamily.sans],
+        display: ["var(--font-satoshi)", ...defaultTheme.fontFamily.sans],
       },
       borderRadius: {
         // Unified product radius — prefer rounded-xl

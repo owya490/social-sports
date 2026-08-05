@@ -1,0 +1,124 @@
+"use client";
+
+import { Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
+import { calculateRecurrenceEnded } from "@/services/src/recurringEvents/recurringEventsService";
+import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
+import { ArrowPathIcon, CalendarDaysIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import Skeleton from "react-loading-skeleton";
+
+function frequencyLabel(frequency: Frequency): string {
+  switch (frequency) {
+    case Frequency.WEEKLY:
+      return "Weekly";
+    case Frequency.FORTNIGHTLY:
+      return "Fortnightly";
+    case Frequency.MONTHLY:
+      return "Monthly";
+    default:
+      return frequency;
+  }
+}
+
+function statusMeta(template: RecurrenceTemplate): {
+  label: string;
+  dotClass: string;
+  ariaLabel: string;
+} {
+  const ended = calculateRecurrenceEnded(template);
+  if (ended) {
+    return {
+      label: "Ended",
+      dotClass: "bg-surface-muted border border-border",
+      ariaLabel: "Recurrence ended",
+    };
+  }
+  if (template.recurrenceData.recurrenceEnabled) {
+    return {
+      label: "Active",
+      dotClass: "bg-foreground",
+      ariaLabel: "Recurrence enabled",
+    };
+  }
+  return {
+    label: "Paused",
+    dotClass: "bg-foreground-secondary",
+    ariaLabel: "Recurrence paused",
+  };
+}
+
+type RecurringTemplateRowProps = {
+  template: RecurrenceTemplate;
+};
+
+export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
+  const { eventData, recurrenceData, recurrenceTemplateId } = template;
+  const thumbnailSrc = eventData.thumbnail || eventData.image;
+  const status = statusMeta(template);
+  const scheduleLine = `${frequencyLabel(recurrenceData.frequency)} · ${recurrenceData.recurrenceAmount} times · creates ${recurrenceData.createDaysBefore}d before`;
+
+  return (
+    <Link
+      href={`/organiser/event/recurring-events/${recurrenceTemplateId}`}
+      className="group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
+    >
+      <div
+        className="h-[4.25rem] w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem] shrink-0 rounded-lg border border-border bg-surface-muted bg-cover bg-center"
+        style={{ backgroundImage: thumbnailSrc ? `url(${thumbnailSrc})` : undefined }}
+        role="img"
+        aria-label=""
+      />
+
+      <div className="min-w-0 flex-1 py-0.5">
+        <div className="flex items-start justify-between gap-3">
+          <p className="min-w-0 text-sm font-semibold text-foreground font-sans truncate leading-snug">
+            {eventData.name}
+          </p>
+          <div className="shrink-0 flex items-center gap-2">
+            <span className="text-xs font-medium text-foreground-muted font-sans tabular-nums whitespace-nowrap">
+              {getEventPriceDisplay(eventData.price, true)}
+            </span>
+            <span
+              className={`h-2.5 w-2.5 rounded-full shrink-0 ${status.dotClass}`}
+              aria-label={status.ariaLabel}
+              title={status.label}
+            />
+          </div>
+        </div>
+
+        <p className="text-xs text-foreground-muted font-sans truncate mt-1 flex items-center gap-1">
+          <CalendarDaysIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
+          Next: {timestampToEventCardDateString(eventData.startDate)}
+        </p>
+        <p className="text-xs text-foreground-muted font-sans truncate mt-0.5 flex items-center gap-1">
+          <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
+          {eventData.location}
+        </p>
+        <p className="text-xs text-foreground-muted font-sans truncate mt-1.5 flex items-center gap-1">
+          <ArrowPathIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span className="truncate">
+            {status.label} · {scheduleLine}
+          </span>
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+export function RecurringTemplateRowSkeleton() {
+  return (
+    <div className="flex w-full items-center gap-3 p-2.5 sm:p-3">
+      <Skeleton height={68} width={68} className="!rounded-lg shrink-0 sm:!h-[4.75rem] sm:!w-[4.75rem]" />
+      <div className="min-w-0 flex-1 py-0.5 space-y-2">
+        <div className="flex items-start justify-between gap-3">
+          <Skeleton height={14} width="62%" />
+          <Skeleton height={14} width={56} />
+        </div>
+        <Skeleton height={12} width="55%" />
+        <Skeleton height={12} width="65%" />
+        <Skeleton height={12} width="70%" />
+      </div>
+    </div>
+  );
+}

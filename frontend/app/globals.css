@@ -27,8 +27,8 @@
   /* Layout chrome */
   --navbar-height: 56px; /* Match h-14 (3.5rem = 56px) */
   --footer-height: 32px; /* Match h-8 (2rem = 32px) */
-  --organiser-sidebar-width-expanded: 220px;
-  --organiser-sidebar-width-collapsed: 64px;
+  --organiser-sidebar-width-expanded: 200px;
+  --organiser-sidebar-width-collapsed: 52px;
   --organiser-sidebar-width: var(--organiser-sidebar-width-expanded);
 }
 

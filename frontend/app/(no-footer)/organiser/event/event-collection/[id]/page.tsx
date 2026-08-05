@@ -293,7 +293,7 @@ export default function CollectionPage() {
   const handleDeleteCollection = async () => {
     try {
       await deleteEventCollection(collectionId, user.userId, collection.isPrivate);
-      router.push("/organiser/event/event-collection");
+      router.push("/organiser/v2/event/event-collection");
     } catch (error) {
       logger.error(`Failed to delete collection: ${error}`);
       router.push(getErrorUrl(error));
@@ -325,7 +325,7 @@ export default function CollectionPage() {
         {/* Header */}
         <div className="mb-6">
           <Link
-            href="/organiser/event/event-collection"
+            href="/organiser/v2/event/event-collection"
             className="inline-flex items-center text-gray-600 hover:text-core-text mb-4"
           >
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
@@ -372,7 +372,7 @@ export default function CollectionPage() {
                             setIsEditingTitle(false);
                           }
                         }}
-                        className="flex-1 text-2xl md:text-3xl lg:text-4xl font-bold text-core-text border-b-1 border-gray-300 focus:outline-none focus:border-black focus:ring-1 focus:ring-black rounded"
+                        className="flex-1 text-2xl md:text-3xl lg:text-4xl font-bold text-core-text border-b border-gray-300 focus:outline-none focus:border-black"
                       />
                     ) : (
                       <h1
@@ -404,7 +404,7 @@ export default function CollectionPage() {
                       <button
                         type="button"
                         onClick={() => setShowDeleteDialog(true)}
-                        className="p-2 bg-gray-100 hover:bg-red-600 text-gray-600 hover:text-white rounded-full transition-colors"
+                        className="p-2 bg-gray-100 hover:bg-red-600 text-core-text hover:text-white rounded-full transition-colors"
                         title="Delete collection"
                       >
                         <TrashIcon className="w-5 h-5" />

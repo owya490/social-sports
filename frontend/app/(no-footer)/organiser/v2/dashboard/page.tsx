@@ -1,9 +1,9 @@
 "use client";
 
+import { ActivityFeedSection } from "@/components/organiser/v2/dashboard/ActivityFeedSection";
 import { DashboardHeader } from "@/components/organiser/v2/dashboard/DashboardHeader";
 import { DashboardKpiGrid } from "@/components/organiser/v2/dashboard/DashboardKpiGrid";
-import { DashboardQuickNav } from "@/components/organiser/v2/dashboard/DashboardQuickNav";
-import { TopEventsSection } from "@/components/organiser/v2/dashboard/TopEventsSection";
+import { DashboardSetupSection } from "@/components/organiser/v2/dashboard/DashboardSetupSection";
 import { UpcomingEventsSection } from "@/components/organiser/v2/dashboard/UpcomingEventsSection";
 import { WeeklyTicketsChart } from "@/components/organiser/v2/dashboard/WeeklyTicketsChart";
 import { splitEventsByTime } from "@/components/organiser/v2/dashboard/computeDashboardStats";
@@ -25,6 +25,7 @@ const emptyMetrics: OrganiserDashboardMetrics = {
   conversionRate: 0,
   weeklyTickets: [],
   topEvents: [],
+  recentActivity: [],
   events: [],
 };
 
@@ -64,8 +65,8 @@ export default function OrganiserDashboardV2Page() {
     <>
       {/* THESIS: A calm operational snapshot organisers trust between sessions—no decoration, no invented data.
           OWN-WORLD: Honest Clubhouse tokens—white cards on soft grey canvas, Satoshi, sports yellow on primary actions and current-week bars only.
-          STORY: Greet the organiser, surface 30-day sales and ticket truth, chart weekly momentum, show what's next and what's selling.
-          FIRST VIEWPORT: Greeting + create CTA, 2×2 KPI grid on phone, chart and coming-up stack below; primary action top-right.
+          STORY: Greet the organiser, surface 30-day sales and ticket truth, chart weekly momentum, show live ticket activity and what's coming up, then finish setup or catch SPORTSHUB announcements.
+          FIRST VIEWPORT: Greeting + create CTA, 2×2 KPI grid on phone, chart and recent activity stack below; primary action top-right.
           FORM: Category-standard SaaS dashboard, canon exit, seed key n/a (user-selected canon). */}
       <div className="min-h-screen bg-surface text-foreground pb-2">
         <DashboardHeader firstName={user.firstName} loading={loading && !metrics} />
@@ -96,7 +97,7 @@ export default function OrganiserDashboardV2Page() {
               </button>
               <p className="mt-3 text-xs text-foreground-muted font-sans">
                 Or{" "}
-                <Link href="/organiser/event/dashboard" className="underline hover:text-foreground">
+                <Link href="/organiser/v2/event/dashboard" className="underline hover:text-foreground">
                   manage events
                 </Link>{" "}
                 while this resolves.
@@ -107,17 +108,20 @@ export default function OrganiserDashboardV2Page() {
           <div className="space-y-5 sm:space-y-6">
             <DashboardKpiGrid metrics={displayMetrics} loading={loading} />
 
-            <div className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-3 lg:gap-4 items-stretch">
-              <div className="lg:col-span-3 min-h-[16rem]">
+            <div className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-start">
+              <div className="lg:col-span-8">
                 <WeeklyTicketsChart weeklyTickets={displayMetrics.weeklyTickets} loading={loading} />
               </div>
-              <div className="lg:col-span-2 min-h-[16rem]">
-                <UpcomingEventsSection events={upcoming} loading={loading} variant="panel" />
+              <div className="lg:col-span-4">
+                <ActivityFeedSection activity={displayMetrics.recentActivity} loading={loading} />
               </div>
             </div>
 
-            <TopEventsSection topEvents={displayMetrics.topEvents} loading={loading} />
-            <DashboardQuickNav />
+            <UpcomingEventsSection events={upcoming} loading={loading} variant="full" />
+            <DashboardSetupSection
+              hasEvents={displayMetrics.events.length > 0}
+              loading={loading}
+            />
           </div>
         )}
       </div>

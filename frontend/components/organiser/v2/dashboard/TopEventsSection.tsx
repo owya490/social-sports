@@ -21,7 +21,7 @@ export function TopEventsSection({ topEvents, loading }: TopEventsSectionProps) 
             <p className="text-xs text-foreground-muted font-sans mt-0.5">By total tickets sold</p>
           </div>
           <Link
-            href="/organiser/event/dashboard"
+            href="/organiser/v2/event/dashboard"
             className="text-xs font-medium text-foreground-secondary hover:text-foreground font-sans shrink-0"
           >
             Manage

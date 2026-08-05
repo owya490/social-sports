@@ -1,10 +1,10 @@
 "use client";
 
 import { EventData } from "@/interfaces/EventTypes";
-import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { CalendarDaysIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { OrganiserEventListPanel } from "@/components/organiser/v2/events/OrganiserEventListPanel";
+import { OrganiserEventRow, OrganiserEventRowSkeleton } from "@/components/organiser/v2/events/OrganiserEventRow";
+import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import Skeleton from "react-loading-skeleton";
 
 type UpcomingEventsSectionProps = {
   events: EventData[];
@@ -12,79 +12,10 @@ type UpcomingEventsSectionProps = {
   variant?: "panel" | "full";
 };
 
-function statusDotClass(filled: number, capacity: number): string {
-  if (capacity <= 0) return "bg-foreground-muted";
-  const ratio = filled / capacity;
-  if (ratio >= 1) return "bg-foreground";
-  if (ratio >= 0.75) return "bg-foreground-secondary";
-  return "bg-surface-muted border border-border";
-}
-
-function FillBar({ filled, capacity }: { filled: number; capacity: number }) {
-  const percent = capacity > 0 ? Math.min(100, Math.round((filled / capacity) * 100)) : 0;
-  return (
-    <div className="mt-2 flex items-center gap-2">
-      <div
-        className="h-1 flex-1 rounded-full bg-surface-muted overflow-hidden"
-        role="progressbar"
-        aria-valuenow={percent}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`${percent}% filled`}
-      >
-        <div
-          className="h-full rounded-full bg-foreground-secondary transition-[width] duration-300 ease-out"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-      <span className="text-xs tabular-nums text-foreground-muted font-sans shrink-0">
-        {filled}/{capacity}
-      </span>
-    </div>
-  );
-}
-
-function EventRowCompact({ event }: { event: EventData }) {
-  const filled = Math.max(0, event.capacity - event.vacancy);
-
-  return (
-    <Link
-      href={`/organiser/event/${event.eventId}`}
-      className="flex items-start gap-2.5 rounded-xl p-2.5 -mx-1 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-    >
-      <div
-        className="h-10 w-10 shrink-0 rounded-lg bg-surface-muted bg-cover bg-center border border-border"
-        style={{ backgroundImage: event.image ? `url(${event.image})` : undefined }}
-        role="img"
-        aria-label=""
-      />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-foreground font-sans truncate leading-snug">
-          {event.name}
-        </p>
-        <p className="text-xs text-foreground-muted font-sans truncate mt-0.5 flex items-center gap-1">
-          <CalendarDaysIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
-          {timestampToEventCardDateString(event.startDate)}
-        </p>
-        <p className="text-xs text-foreground-muted font-sans truncate flex items-center gap-1">
-          <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
-          {event.location}
-        </p>
-        <FillBar filled={filled} capacity={event.capacity} />
-      </div>
-      <span
-        className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${statusDotClass(filled, event.capacity)}`}
-        aria-label={
-          filled >= event.capacity && event.capacity > 0 ? "Sold out" : `${filled} of ${event.capacity} filled`
-        }
-      />
-    </Link>
-  );
-}
-
 export function UpcomingEventsSection({ events, loading, variant = "full" }: UpcomingEventsSectionProps) {
   const isPanel = variant === "panel";
-  const limit = isPanel ? 4 : 4;
+  const limit = 4;
+  const visibleEvents = events.slice(0, limit);
 
   return (
     <section
@@ -103,21 +34,21 @@ export function UpcomingEventsSection({ events, loading, variant = "full" }: Upc
           )}
         </div>
         <Link
-          href="/organiser/event/dashboard"
+          href="/organiser/v2/event/dashboard"
           className="text-xs font-medium text-foreground-secondary hover:text-foreground font-sans shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded"
         >
           All events
         </Link>
       </div>
 
-      <div className={isPanel ? "flex-1" : undefined}>
+      <div className={isPanel ? "flex-1 min-h-0" : undefined}>
         {loading ? (
-          <div className="space-y-2">
-            <Skeleton height={72} className="rounded-xl" />
-            <Skeleton height={72} className="rounded-xl" />
-            <Skeleton height={72} className="rounded-xl" />
+          <div className="space-y-0.5">
+            <OrganiserEventRowSkeleton />
+            <OrganiserEventRowSkeleton />
+            <OrganiserEventRowSkeleton />
           </div>
-        ) : events.length === 0 ? (
+        ) : visibleEvents.length === 0 ? (
           <div
             className={`text-center ${
               isPanel ? "py-8 rounded-lg bg-surface" : "rounded-xl border border-border bg-background p-8"
@@ -135,12 +66,14 @@ export function UpcomingEventsSection({ events, loading, variant = "full" }: Upc
               Create event
             </Link>
           </div>
-        ) : (
-          <div className={isPanel ? "space-y-0.5" : "grid gap-2 sm:grid-cols-2"}>
-            {events.slice(0, limit).map((event) => (
-              <EventRowCompact key={event.eventId} event={event} />
+        ) : isPanel ? (
+          <div className="divide-y divide-border">
+            {visibleEvents.map((event) => (
+              <OrganiserEventRow key={event.eventId} event={event} />
             ))}
           </div>
+        ) : (
+          <OrganiserEventListPanel events={visibleEvents} />
         )}
       </div>
     </section>

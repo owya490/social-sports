@@ -4,17 +4,31 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const HIDDEN_NAVBAR_ROUTES = [
-  /^\/organiser/, // Organiser hub uses its own sidebar chrome
   /^\/organiser\/wrapped/, // Organiser wrapped page
   /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
 ];
 
+/** Routes that use the organiser v2 sidebar chrome (no global SPORTSHUB navbar). */
+export function usesOrganiserV2Chrome(pathname: string): boolean {
+  if (pathname.startsWith("/organiser/v2")) return true;
+  if (pathname.startsWith("/organiser/forms")) return true;
+  if (pathname.startsWith("/organiser/gallery")) return true;
+  if (pathname.startsWith("/organiser/settings")) return true;
+  if (pathname.startsWith("/organiser/event/recurring-events")) return true;
+  if (pathname.startsWith("/organiser/event/custom-links")) return true;
+  if (pathname.startsWith("/organiser/event/event-collection")) return true;
+  if (pathname.startsWith("/organiser/event/dashboard")) return true;
+  return false;
+}
+
 const HIDE_SPORTSHUB_NAVBAR_KEY = "hideSportshubNavbar";
 
+function pathnameHidesNavbar(pathname: string): boolean {
+  return usesOrganiserV2Chrome(pathname) || HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname));
+}
+
 export function shouldHideNavbar(pathname: string): boolean {
-  if (HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname))) {
-    return true;
-  }
+  if (pathnameHidesNavbar(pathname)) return true;
   if (typeof window !== "undefined") {
     if (sessionStorage.getItem(HIDE_SPORTSHUB_NAVBAR_KEY) === "true") {
       return true;
@@ -36,7 +50,7 @@ export function useNavbarVisibility(): boolean {
   // Initial state must only use pathname/searchParams so server and client render the same
   // (avoids hydration mismatch). sessionStorage is synced in useEffect after mount.
   const [isNavbarHidden, setIsNavbarHidden] = useState<boolean>(() => {
-    if (HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname))) {
+    if (pathnameHidesNavbar(pathname)) {
       return true;
     }
     if (searchParams.get(HIDE_SPORTSHUB_NAVBAR_KEY) === "true") {

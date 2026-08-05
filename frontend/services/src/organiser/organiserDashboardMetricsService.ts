@@ -1,5 +1,5 @@
 import { EventData, EventId, OrderId } from "@/interfaces/EventTypes";
-import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
+import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
@@ -25,6 +25,15 @@ export type TopEventRow = {
   fillPercent: number;
 };
 
+export type ActivityFeedItem = {
+  id: string;
+  purchaserName: string;
+  eventId: EventId;
+  eventName: string;
+  purchaseDate: Timestamp;
+  type: OrderAndTicketType;
+};
+
 export type OrganiserDashboardMetrics = {
   netSales30dCents: number;
   ticketsSold30d: number;
@@ -32,6 +41,7 @@ export type OrganiserDashboardMetrics = {
   conversionRate: number;
   weeklyTickets: WeeklyTicketBucket[];
   topEvents: TopEventRow[];
+  recentActivity: ActivityFeedItem[];
   events: EventData[];
 };
 
@@ -71,6 +81,35 @@ function buildWeeklyTicketBuckets(nowSeconds: number, tickets: Ticket[]): Weekly
       isCurrent: weeksAgo === 0,
     };
   });
+}
+
+function buildRecentActivity(
+  tickets: Ticket[],
+  orders: Order[],
+  events: EventData[],
+  limit = 8,
+): ActivityFeedItem[] {
+  const orderById = new Map(orders.map((order) => [order.orderId, order]));
+  const eventById = new Map(events.map((event) => [event.eventId, event]));
+
+  return tickets
+    .filter(isApprovedTicket)
+    .sort((a, b) => b.purchaseDate.seconds - a.purchaseDate.seconds)
+    .slice(0, limit)
+    .map((ticket) => {
+      const order = orderById.get(ticket.orderId);
+      const event = eventById.get(ticket.eventId);
+      const purchaserName = order?.fullName?.trim() || order?.email || "Someone";
+
+      return {
+        id: ticket.ticketId,
+        purchaserName,
+        eventId: ticket.eventId,
+        eventName: event?.name ?? "an event",
+        purchaseDate: ticket.purchaseDate,
+        type: order?.type ?? ticket.type,
+      };
+    });
 }
 
 function buildTopEvents(events: EventData[], metadataByEventId: Map<EventId, number>): TopEventRow[] {
@@ -130,6 +169,7 @@ export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<Or
     conversionRate,
     weeklyTickets: buildWeeklyTicketBuckets(nowSeconds, approvedTickets),
     topEvents: buildTopEvents(events, metadataByEventId),
+    recentActivity: buildRecentActivity(approvedTickets, approvedOrders, events),
     events,
   };
 }
