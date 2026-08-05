@@ -1,0 +1,36 @@
+{
+  "title": "Mobile top bar composition",
+  "question": "Integrated top bar is locked. Which composition should we build? Approve, combine, revise, or reject — say what feels false.",
+  "options": [
+    {
+      "id": "brand-led",
+      "label": "Brand-led bar",
+      "kicker": "COMP A",
+      "thesis": "SPORTSHUB + ORGANISER HUB own the chrome; menu is a quiet glyph beside the avatar — no floating tile.",
+      "viewport": "Flush white sticky bar → greeting + Create event → KPI grid. Drawer closed.",
+      "risk": "Hub wordmark competes with the page greeting for attention.",
+      "hero": ".impeccable/mocks/mobile-nav-comp-a-brand-led.png"
+    },
+    {
+      "id": "section-title",
+      "label": "Section-title bar",
+      "kicker": "COMP B",
+      "thesis": "The bar names where you are (Dashboard); Menu is labeled text — chrome serves wayfinding, not brand shout.",
+      "viewport": "Logo mark + Dashboard + Menu + avatar → greeting and KPIs flush underneath.",
+      "risk": "Loses ORGANISER HUB identity on every screen.",
+      "hero": ".impeccable/mocks/mobile-nav-comp-b-section-title.png"
+    },
+    {
+      "id": "avatar-sheet",
+      "label": "Avatar opens sheet",
+      "kicker": "COMP C",
+      "thesis": "Same brand bar, but the avatar is the menu — tap opens the full sidebar sheet. No hamburger at all.",
+      "viewport": "Brand bar + open left sheet with profile and full nav over dimmed dashboard.",
+      "risk": "Avatar may read as profile-only until learned.",
+      "hero": ".impeccable/mocks/mobile-nav-comp-c-sheet-open.png"
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

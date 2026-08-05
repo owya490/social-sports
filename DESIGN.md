@@ -90,6 +90,57 @@ components:
     backgroundColor: "{colors.foreground-secondary}"
     rounded: "{rounded.unified}"
     height: "4px"
+  preference-switch-on:
+    backgroundColor: "{colors.accent}"
+    rounded: "9999px"
+    height: "28px"
+    width: "48px"
+  preference-switch-off:
+    backgroundColor: "{colors.surface-muted}"
+    rounded: "9999px"
+    height: "28px"
+    width: "48px"
+  upload-tile:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.unified}"
+    padding: "16px"
+  settings-panel:
+    backgroundColor: "{colors.background}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.unified}"
+    padding: "16px 20px"
+  catalogue-list-panel:
+    backgroundColor: "{colors.background}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.unified}"
+    padding: "0"
+  entity-hover-preview:
+    backgroundColor: "{colors.background}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.unified}"
+    padding: "14px"
+    width: "360px"
+  hover-metrics:
+    backgroundColor: "transparent"
+    textColor: "{colors.foreground}"
+    rounded: "0"
+    padding: "0"
+  event-hub-stage:
+    backgroundColor: "transparent"
+    textColor: "{colors.foreground}"
+    rounded: "0"
+    padding: "0"
+  event-hub-filter-active:
+    backgroundColor: "transparent"
+    textColor: "{colors.foreground}"
+    rounded: "0"
+    padding: "10px"
+  event-hub-expand-row:
+    backgroundColor: "transparent"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.inner}"
+    padding: "14px 0"
 ---
 
 # Design System: SPORTSHUB
@@ -112,6 +163,7 @@ Density is **compact-operate**: tight padding on dashboards and organiser chrome
 - Yellow accent (`#F2B705`) with black text on filled accent surfaces; yellow only on CTAs and current-week chart bars
 - Neutral fill bars (`surface-muted` track, `foreground-secondary` fill) for progress—not accent colour
 - Borders over shadows for separation; elevation is rare
+- Event hub operate bodies are a continuous workbench: flush lists + expand-in-place on the surface canvas—no nested card stacks
 - Mobile-first organiser flows; honest metric labels; inline error recovery when data fails to load
 
 ## Reference Points
@@ -200,6 +252,7 @@ A restrained neutral field with a single warm sports accent. Colour communicates
 - **Chart + coming-up:** `lg:grid-cols-5`—chart spans 3 columns, upcoming panel spans 2; stacks on mobile.
 - **Setup + announcements:** Checklist (`lg:col-span-5`) beside announcement panel (`lg:col-span-7`); stacks on mobile. Announcements render as a divided technical list (mono tags), not accent tiles.
 - **Organiser sidebar:** Expanded `200px`, collapsed `64px` (`--organiser-sidebar-width-*`); main content `lg:pl-[var(--organiser-sidebar-width)]`.
+- **Event hub shell:** Page canvas `bg-surface`. Chrome + peer tabs share one white band (`bg-background border-b border-border`). Tab bodies sit in `max-w-6xl` with `px-4`–`px-8` and `pt-6`–`pt-8` on the surface—flush stage, not a second white panel. Section switches fade ~120–200ms opacity.
 - **Breakpoints:** Tailwind defaults—`lg` (1024px) for persistent sidebar and multi-column dashboard grids.
 
 ## Elevation & Depth
@@ -209,8 +262,11 @@ A restrained neutral field with a single warm sports accent. Colour communicates
 ### Shadow Vocabulary
 
 - **Search lift** (`0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05)`): Legacy searchbar only (`boxShadow.searchbar` in Tailwind config).
+- **Hover dossier** (`0 8px 28px rgba(10,10,10,0.12)`): Floating `EntityHoverPreview` card only—soft offset lift so the portaled mini-dossier reads above the list. Never on resting catalogue rows or dashboard panels.
 
 **The No Stack Rule.** Do not combine filled grey panels, heavy borders, and shadows on the same component.
+
+**The Flush Stage Rule.** Event hub tab bodies (Attendees, Listing, Forms, Images, Settings) sit flush on the surface canvas under chrome. Hairline dividers and tonal washes (`surface-hover` / `surface-muted`) separate rows—not nested white cards, side inspectors, or 1D stacked panels.
 
 ## Shapes
 
@@ -266,6 +322,115 @@ A restrained neutral field with a single warm sports accent. Colour communicates
 - **Setup + announcements:** Auto-complete checklist (picture, bio, Stripe, first event) with fill-bar progress; dismissible when done. Announcement rows from `dashboardAnnouncements.ts` (SPORTSHUB → organiser feed: mono tags like Feature/Wrapped, hairline dividers, external blog links open in a new tab).
 - **Error recovery:** When metrics fetch fails, inline card replaces dashboard body: error title, connection hint, accent “Retry” button, fallback “manage events” link—no full-page error shell.
 
+### Organiser catalogue pages (v2 operate)
+
+List-only Hub surfaces that share one shell with Event collections and Custom links: Forms, Image gallery, and Settings. Same tokens as the dashboard—no new palette or radius.
+
+- **Page canvas:** `bg-surface` full height; content `max-w-6xl` with `px-4`–`px-8` gutters (same as dashboard).
+- **Catalogue header:** `text-2xl sm:text-3xl` bold title (`tracking-tight`); one `text-sm text-foreground-secondary` subtitle that reflects load/count/empty state; optional primary yellow CTA (`Create form`, etc.) full-width on phone, trailing on `sm+`. No kicker or eyebrow above the title.
+- **Divided list panel:** Single outlined white panel (`rounded-xl border-border bg-background overflow-hidden`) with `divide-y divide-border` rows—not a card grid of previews.
+- **Catalogue row:** Compact padding (`p-2.5 sm:p-3`); hover `bg-surface-hover`. Leading mark is either a bordered icon well (`rounded-lg bg-surface`, ~44–48px) or a cover thumb. Title `text-sm font-semibold`; optional meta chip (`rounded-lg bg-surface px-2 py-0.5 text-xs`); description and timestamps `text-xs text-foreground-muted`. Trailing icon actions (`rounded-lg p-2`) for edit/preview—not a second primary CTA per row.
+- **Empty / error:** Centered copy inside the same outlined panel language; accent Retry or Create when recovery/create is the next step. Same inline error card pattern as the dashboard.
+- **Skeleton:** Row skeletons mirror live row geometry inside the divided panel—not a separate loading shell.
+
+**The List-Not-Preview Rule.** Catalogue pages are scannable rows (or a media library). Do not ship miniature document/form previews or multi-card dashboards as the list layout itself.
+
+### Entity hover preview
+
+Cover-led mini-dossier for organiser catalogue rows where a glance answers “open or not?” Shared shell: `EntityHoverPreview`. Used on **events, recurring templates, collections, and forms**. Custom links and dashboard top-events stay row-only—no hover card.
+
+- **Trigger:** Fine-pointer hover or keyboard focus on the row, after a ~650ms open delay (~160ms close). Touch / coarse pointer: compact row only—no floating card.
+- **Card:** Portaled `fixed` panel at **360px** wide. Opens near the **cursor** (14px gap), then **pins**—does not follow further movement. Flips left/above near viewport edges (12px pad). If it would cover the list row, nudges above/below while keeping cursor-side X. Closes on scroll/resize. Soft open (~180ms, slight blur/scale; respect `prefers-reduced-motion`). `pointer-events: none` on the card; `role="tooltip"`.
+- **Chrome:** White card (`bg-background`), `rounded-xl` (12px), `border-border`, soft hover-dossier shadow—elevation for the floating layer only.
+- **Cover-led stack (top → bottom):**
+  1. **Cover band** — full-width edge-to-edge photo (`EntityHoverCover`, `7.5rem` tall, `bg-cover`) or icon-on-muted fallback (`EntityHoverCoverIcon`, `5.5rem`) for entities without imagery (e.g. forms). Prefer cover over a leading thumb—the dossier identity.
+  2. **Title block** — `p-3.5` pad; title `text-sm font-semibold` (2-line clamp); optional one-line subtitle (`text-xs text-foreground-muted`).
+  3. **KPI strip** — optional. Events keep a flush three-cell strip (reg close / ends / views). Recurring, collections, and forms skip metrics and put glance content in the body instead.
+  4. **Body** — short prose and/or a small labelled list (`HoverList`): recurring shows schedule settings + next 2 dates; collections list the first 2 members; forms list the first 2 questions. Cover uses `event.image` (not thumbnail) for events and series.
+  5. **Flags** — middot-joined exception/status line under a hairline `border-t border-border`. Omit when redundant.
+- **Slots:** Rows compose `cover` / `title` / `metrics?` / `body` / `flags`. Shared primitives: `HoverMetrics`, `HoverMetric`, `HoverList`, `HoverFacts`/`HoverFact`.
+- **Shared shell:** One `EntityHoverPreview` owns open/close, cursor pin, portal, and motion. Rows only compose props.
+
+**The No Second Row Rule.** The dossier adds cover + KPIs + prose + flags the compact row does not already show. Do not restate fill rate, price, section-count chips, or other row-visible facts as the hover’s main content.
+
+**The List-Not-Preview Rule** still bans grid-of-preview-cards as the catalogue layout. Cover-led hover dossiers are progressive disclosure on top of rows—not a substitute list layout.
+
+### Event hub — continuous workbench
+
+Session operate surface at `/organiser/v2/event/[id]`. Same Honest Clubhouse tokens as catalogue and settings; body grammar extends flush lists and preference rows—without inventing a new world.
+
+#### Chrome (approved B)
+
+White band under the page canvas. Constrained 16:9 cover (`rounded-xl border-border`, ~15–19rem wide on `sm+`) beside title/meta—not a full-bleed hero and not a card collage.
+
+- **Title:** `text-xl sm:text-2xl` bold, `tracking-tight`.
+- **Meta:** Date and location as `text-xs text-foreground-muted` with outline icons.
+- **Actions:** Share + Pause/Resume as quiet text controls (`text-foreground-muted`)—not yellow.
+- **Capacity:** Neutral fill bar (`surface-muted` track, `foreground` fill, `h-1`) with tabular `filled/capacity · %` meta.
+- **Status dots:** Near-black when on, `surface-muted` + border when off—Live/Paused, Public/Private, Payments. Same neutral encoding as upcoming-event dots; never yellow.
+
+#### Peer tabs
+
+Hairline `border-t border-border` under chrome. Underline tabs (`border-b-2`): active = `border-foreground` + semibold; inactive = transparent border, `foreground-secondary`, hover toward foreground. Horizontal scroll on narrow viewports. Yellow never marks the active tab.
+
+#### Stage toolbar + hairline filters
+
+Shared primitives in `EventHubStage`:
+
+- **Toolbar:** Leading meta (`text-sm text-foreground-muted`) + trailing primary yellow CTA when needed (`Add attendee`, `Save images`). Compact `pb-3`.
+- **Filters:** Hairline `border-b` strip; same underline grammar as peer tabs; optional tabular counts in muted/near-black. Used for Approved / Pending / Declined on Attendees.
+- **Primary / ghost buttons:** Same as catalogue—yellow primary (`rounded-xl`, black text); ghost = white + `border-border`.
+- **Empty:** Centered muted copy (`py-14`), no outlined empty card.
+
+#### Flush list + expand-in-place (Attendees)
+
+Edge-to-edge divided rows on the stage (`divide-y divide-border`)—catalogue row density without the outlined list-panel shell.
+
+- **Row:** Avatar icon (`40px` muted), name `text-sm font-semibold`, handle `text-xs muted`, optional ticket count, chevron that rotates 90° when open. Hover `surface-hover`; expanded resting wash `surface-muted/70`.
+- **Inspector:** Opens under the same row (`grid-template-rows` + opacity ~200ms). Content indented under the avatar (`pl-[3.25rem]`). Approve = yellow primary; Decline = ghost; secondary links (form responses) stay muted text. Collapse other rows when switching filters.
+- **Not:** Side-by-side inspector pane, nested bordered detail cards, or a second white panel around the list.
+
+**The Expand-In-Place Rule.** Detail for a flush workbench row opens under that row on the same plane. Do not ship a persistent side inspector or nested card stack for session attendee detail.
+
+#### Listing as document
+
+Toolbar meta (“Public listing — tap to edit”) + Preview text link. Title edits inline at display scale (`text-2xl sm:text-3xl`); description is an “About” block with hairline separators; field rows use `EventHubMetaRow` (fixed muted label column ~96px + value). Advanced session fields expand in-place under a quiet text control—same motion grammar as attendee expand.
+
+#### Event hub settings — flush preference stack
+
+Preference switches reuse the account Settings switch (accent on / `surface-muted` off, `28×48px`). Rows stack with `divide-y divide-border` directly on the stage—no outlined settings-panel shell, no header strip. Destructive “Delete event” is a danger text link below a hairline, not a yellow button.
+
+**The Workbench Extension Rule.** Event hub bodies extend catalogue list density and settings preference-row language onto a flush stage. Do not reintroduce dashboard card grids or account-settings outlined panels as the default event-hub body chrome.
+
+### Preference switch
+
+Binary account preference control (Settings → email preferences).
+
+- **Shape:** Pill track `h-7 w-12` (`28×48px`), fully rounded; thumb `h-6 w-6` white with `border-border`, offset `2px` from the track edge.
+- **On:** Track `bg-accent` (checked-control yellow); thumb translates toward the trailing edge.
+- **Off:** Track `bg-surface-muted`; thumb at the leading edge.
+- **A11y:** Native `role="switch"` + `aria-checked`; yellow focus ring. Disabled while saving (`opacity-60`).
+- **Layout:** Label + supporting sentence on the left; switch trailing. Optimistic toggle with rollback on failure—no modal confirm.
+
+### Settings panel anatomy
+
+Stacked account sections under the catalogue header (`space-y-4`).
+
+- **Shell:** Outlined white panel (`rounded-xl border-border bg-background overflow-hidden`)—one panel per concern (preferences, Stripe).
+- **Header strip:** `px-4 sm:px-5 py-4` with `border-b border-border`; section title `text-sm font-semibold`; supporting line `text-xs text-foreground-muted`. Optional trailing text link (e.g. Open Stripe dashboard) in `foreground-secondary`.
+- **Body:** `p-4 sm:p-5`. Preference rows and Connect CTAs live here—not in the header strip.
+- **Connect CTA:** Same primary yellow button as catalogue create actions when Stripe is not linked.
+
+### Media upload tile & gallery panel
+
+Image gallery library (thumbnails + event images) inside one outlined panel.
+
+- **Panel:** `rounded-xl border-border bg-background p-4 sm:p-5`; sections stacked with `space-y-8`. Section title `text-sm font-semibold` + muted description.
+- **Upload tile:** First cell in each grid—`border-dashed border-border`, `bg-surface`, hover `bg-surface-hover`, unified `12px` radius, aspect ratio from image type. Centered Plus icon (`28px`, muted), bold `text-xs` “Add …” label, muted aspect hint. Focus-within yellow outline. Disabled (dimmed) while an upload is in flight.
+- **Image cell:** Solid `border-border`, `bg-surface-muted`, `object-cover` fill, same radius and aspect as the upload tile—no floating badges on the media.
+- **Grids:** Thumbnails denser (`grid-cols-2` → `lg:grid-cols-4`); event images wider (`grid-cols-1` → `lg:grid-cols-3`); gap `12px`.
+- **Status:** Inline outlined status/alert rows for “Uploading…” and upload failures—not toasts or full-page blockers.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -279,6 +444,11 @@ A restrained neutral field with a single warm sports accent. Colour communicates
 - **Do** offer inline retry when dashboard data fails to load.
 - **Do** use Linear, Stripe, and Airbnb as craft references per the Reference Points section—Airbnb simplicity is the default tone; Linear and Stripe sharpen operate and payments surfaces.
 - **Do** let content (event imagery, session details, metrics) lead—chrome stays flat and quiet, Airbnb-style.
+- **Do** reuse the catalogue header + divided list panel (or gallery upload grid) for new organiser list surfaces—same shell as Forms, collections, and custom links.
+- **Do** treat preference switches as checked controls: accent yellow when on, `surface-muted` when off.
+- **Do** use the cover-led hover dossier (`EntityHoverPreview` + `HoverMetrics`) on catalogue rows that need a glanceable open decision—events, series, collections, forms.
+- **Do** build event hub tab bodies as a continuous workbench: stage toolbar, hairline filters, flush divided rows, expand-in-place inspectors, and flush preference stacks.
+- **Do** keep event hub chrome capacity and status encoding neutral (near-black / muted)—yellow stays on primary CTAs only.
 
 ### Don't:
 
@@ -289,3 +459,9 @@ A restrained neutral field with a single warm sports accent. Colour communicates
 - **Don't** use legacy `organiser-light-gray`, raw `gray-*`, or hardcoded `#BABABA` on new organiser surfaces.
 - **Don't** use accent yellow on fill bars, KPI icon wells, or status dots—neutral encoding only.
 - **Don't** fabricate social proof, benchmarks, or analytics the product cannot source.
+- **Don't** add kickers/eyebrows above catalogue page titles, or replace catalogue rows with a grid of miniature form/document preview cards.
+- **Don't** invent a second settings visual language—stacked outlined panels with header strip + body only (account Settings). Event hub Settings uses flush preference rows on the stage instead—do not mix the two shells on one surface.
+- **Don't** duplicate the list row inside the hover card, or add hover dossiers to custom links / top-events rows.
+- **Don't** put nested bordered panels or fetch-on-hover data inside the mini-dossier—cover, three KPIs, short prose, middot flags only.
+- **Don't** wrap event hub Attendees/Listing/Settings bodies in nested white card stacks, side inspector panes, or 1D panel columns—flush stage only.
+- **Don't** mark peer tabs or Attendees filters with yellow—active state is near-black underline + weight.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-04T20:45:00+10:00",
+  "generatedAt": "2026-08-06T01:23:00+10:00",
   "title": "Design System: SPORTSHUB",
   "extensions": {
     "colorMeta": {
@@ -8,87 +8,215 @@
         "role": "neutral",
         "displayName": "Paper White",
         "canonical": "#ffffff",
-        "tonalRamp": ["#0a0a0a", "#525252", "#8a8a8a", "#e0e0e0", "#f0f0f0", "#f7f7f7", "#ebebeb", "#ffffff"]
+        "tonalRamp": [
+          "#0a0a0a",
+          "#525252",
+          "#8a8a8a",
+          "#e0e0e0",
+          "#f0f0f0",
+          "#f7f7f7",
+          "#ebebeb",
+          "#ffffff"
+        ]
       },
       "surface": {
         "role": "neutral",
         "displayName": "Clubhouse Grey",
         "canonical": "#f7f7f7",
-        "tonalRamp": ["#0a0a0a", "#525252", "#8a8a8a", "#d0d0d0", "#e0e0e0", "#ebebeb", "#f0f0f0", "#f7f7f7"]
+        "tonalRamp": [
+          "#0a0a0a",
+          "#525252",
+          "#8a8a8a",
+          "#d0d0d0",
+          "#e0e0e0",
+          "#ebebeb",
+          "#f0f0f0",
+          "#f7f7f7"
+        ]
       },
       "surface-muted": {
         "role": "neutral",
         "displayName": "Bench Grey",
         "canonical": "#ebebeb",
-        "tonalRamp": ["#0a0a0a", "#525252", "#8a8a8a", "#c8c8c8", "#d8d8d8", "#e0e0e0", "#e8e8e8", "#ebebeb"]
+        "tonalRamp": [
+          "#0a0a0a",
+          "#525252",
+          "#8a8a8a",
+          "#c8c8c8",
+          "#d8d8d8",
+          "#e0e0e0",
+          "#e8e8e8",
+          "#ebebeb"
+        ]
       },
       "surface-hover": {
         "role": "neutral",
         "displayName": "Hover Wash",
         "canonical": "#f0f0f0",
-        "tonalRamp": ["#0a0a0a", "#525252", "#8a8a8a", "#c0c0c0", "#d4d4d4", "#e0e0e0", "#e8e8e8", "#f0f0f0"]
+        "tonalRamp": [
+          "#0a0a0a",
+          "#525252",
+          "#8a8a8a",
+          "#c0c0c0",
+          "#d4d4d4",
+          "#e0e0e0",
+          "#e8e8e8",
+          "#f0f0f0"
+        ]
       },
       "border": {
         "role": "neutral",
         "displayName": "Line Grey",
         "canonical": "#e0e0e0",
-        "tonalRamp": ["#0a0a0a", "#404040", "#525252", "#8a8a8a", "#b0b0b0", "#c8c8c8", "#d8d8d8", "#e0e0e0"]
+        "tonalRamp": [
+          "#0a0a0a",
+          "#404040",
+          "#525252",
+          "#8a8a8a",
+          "#b0b0b0",
+          "#c8c8c8",
+          "#d8d8d8",
+          "#e0e0e0"
+        ]
       },
       "foreground": {
         "role": "neutral",
         "displayName": "Near Black",
         "canonical": "#0a0a0a",
-        "tonalRamp": ["#0a0a0a", "#1a1a1a", "#2a2a2a", "#3a3a3a", "#525252", "#6a6a6a", "#8a8a8a", "#b0b0b0"]
+        "tonalRamp": [
+          "#0a0a0a",
+          "#1a1a1a",
+          "#2a2a2a",
+          "#3a3a3a",
+          "#525252",
+          "#6a6a6a",
+          "#8a8a8a",
+          "#b0b0b0"
+        ]
       },
       "foreground-secondary": {
         "role": "neutral",
         "displayName": "Court Grey",
         "canonical": "#525252",
-        "tonalRamp": ["#0a0a0a", "#1f1f1f", "#333333", "#424242", "#525252", "#6b6b6b", "#8a8a8a", "#adadad"]
+        "tonalRamp": [
+          "#0a0a0a",
+          "#1f1f1f",
+          "#333333",
+          "#424242",
+          "#525252",
+          "#6b6b6b",
+          "#8a8a8a",
+          "#adadad"
+        ]
       },
       "foreground-muted": {
         "role": "neutral",
         "displayName": "Chalk Grey",
         "canonical": "#8a8a8a",
-        "tonalRamp": ["#0a0a0a", "#2e2e2e", "#454545", "#5c5c5c", "#737373", "#8a8a8a", "#a3a3a3", "#bdbdbd"]
+        "tonalRamp": [
+          "#0a0a0a",
+          "#2e2e2e",
+          "#454545",
+          "#5c5c5c",
+          "#737373",
+          "#8a8a8a",
+          "#a3a3a3",
+          "#bdbdbd"
+        ]
       },
       "accent": {
         "role": "primary",
         "displayName": "Sports Yellow",
         "canonical": "#f2b705",
-        "tonalRamp": ["#3d2e00", "#5c4500", "#7a5c00", "#997300", "#b88900", "#d6a000", "#f2b705", "#ffda4a"]
+        "tonalRamp": [
+          "#3d2e00",
+          "#5c4500",
+          "#7a5c00",
+          "#997300",
+          "#b88900",
+          "#d6a000",
+          "#f2b705",
+          "#ffda4a"
+        ]
       },
       "accent-contrast": {
         "role": "neutral",
         "displayName": "Near Black on Accent",
         "canonical": "#0a0a0a",
-        "tonalRamp": ["#0a0a0a", "#1a1a1a", "#2a2a2a", "#3a3a3a", "#525252", "#6a6a6a", "#8a8a8a", "#b0b0b0"]
+        "tonalRamp": [
+          "#0a0a0a",
+          "#1a1a1a",
+          "#2a2a2a",
+          "#3a3a3a",
+          "#525252",
+          "#6a6a6a",
+          "#8a8a8a",
+          "#b0b0b0"
+        ]
       },
       "danger": {
         "role": "tertiary",
         "displayName": "Stop Red",
         "canonical": "#dc2626",
-        "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fecaca"]
+        "tonalRamp": [
+          "#450a0a",
+          "#7f1d1d",
+          "#991b1b",
+          "#b91c1c",
+          "#dc2626",
+          "#ef4444",
+          "#f87171",
+          "#fecaca"
+        ]
       },
       "focus": {
         "role": "primary",
         "displayName": "Focus Ring",
         "canonical": "#f2b705",
-        "tonalRamp": ["#3d2e00", "#5c4500", "#7a5c00", "#997300", "#b88900", "#d6a000", "#f2b705", "#ffda4a"]
+        "tonalRamp": [
+          "#3d2e00",
+          "#5c4500",
+          "#7a5c00",
+          "#997300",
+          "#b88900",
+          "#d6a000",
+          "#f2b705",
+          "#ffda4a"
+        ]
       }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Dashboard greeting headline; bold Satoshi." },
-      "headline": { "displayName": "Headline", "purpose": "KPI values in icon-led cells." },
-      "title": { "displayName": "Title", "purpose": "Section titles, event names, sidebar title." },
-      "body": { "displayName": "Body", "purpose": "Supporting copy, empty states, error messages." },
-      "label": { "displayName": "Label", "purpose": "KPI labels and detail lines, chart axis, quick-nav tiles." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Dashboard greeting headline; bold Satoshi."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "KPI values in icon-led cells."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section titles, event names, sidebar title."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Supporting copy, empty states, error messages."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "KPI labels and detail lines, chart axis, quick-nav tiles."
+      }
     },
     "shadows": [
       {
         "name": "searchbar",
         "value": "0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05)",
         "purpose": "Legacy search field elevation only."
+      },
+      {
+        "name": "hover-dossier",
+        "value": "0 8px 28px rgba(10,10,10,0.12)",
+        "purpose": "Soft lift for the portaled EntityHoverPreview mini-dossier only—not resting rows."
       }
     ],
     "motion": [
@@ -111,13 +239,45 @@
         "name": "ease-out",
         "value": "ease-out",
         "purpose": "Chart bar and fill-bar width animations."
+      },
+      {
+        "name": "ease-hover-dossier",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "EntityHoverPreview open/close (blur + scale + vertical settle)."
+      },
+      {
+        "name": "duration-hover-dossier",
+        "value": "180ms",
+        "purpose": "EntityHoverPreview enter/exit duration; open delay 650ms, close delay 160ms."
+      },
+      {
+        "name": "duration-expand-inplace",
+        "value": "200ms",
+        "purpose": "Event hub expand-in-place inspector and listing advanced fields (grid-template-rows + opacity)."
+      },
+      {
+        "name": "duration-hub-section",
+        "value": "120ms–200ms",
+        "purpose": "Event hub peer-tab body opacity handoff when switching sections."
       }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "xl", "value": "1280px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
     ]
   },
   "components": [
@@ -184,6 +344,70 @@
       "description": "Inline metrics fetch failure with retry and fallback link.",
       "html": "<div class=\"ds-error-card\"><p class=\"ds-error-title\">Could not load dashboard metrics</p><p class=\"ds-error-hint\">Check your connection and try again.</p><button class=\"ds-error-retry\" type=\"button\">Retry</button><p class=\"ds-error-fallback\">Or <a href=\"#\">manage events</a> while this resolves.</p></div>",
       "css": ".ds-error-card { background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius); padding: 24px; text-align: center; font-family: Satoshi, system-ui, sans-serif; } .ds-error-title { font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); margin: 0; } .ds-error-hint { font-size: 0.75rem; color: var(--color-foreground-muted); margin: 4px 0 0; } .ds-error-retry { margin-top: 16px; background: var(--color-accent); color: var(--color-accent-contrast); font-size: 0.875rem; font-weight: 600; padding: 8px 16px; border: none; border-radius: var(--radius); cursor: pointer; transition: filter 200ms ease; } .ds-error-retry:hover { filter: brightness(0.95); } .ds-error-fallback { font-size: 0.75rem; color: var(--color-foreground-muted); margin: 12px 0 0; } .ds-error-fallback a { color: inherit; text-decoration: underline; } .ds-error-fallback a:hover { color: var(--color-foreground); }"
+    },
+    {
+      "name": "Catalogue List Row",
+      "kind": "custom",
+      "refersTo": "catalogue-list-panel",
+      "description": "Divided-panel row for Forms/collections-style catalogues—icon well, title, meta chip, trailing icon actions.",
+      "html": "<div class=\"ds-catalogue-panel\"><div class=\"ds-catalogue-row\"><div class=\"ds-catalogue-well\"><svg class=\"ds-catalogue-well-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z\"/></svg></div><div class=\"ds-catalogue-body\"><div class=\"ds-catalogue-title-row\"><p class=\"ds-catalogue-title\">Registration form</p><span class=\"ds-catalogue-chip\">3 sections</span></div><p class=\"ds-catalogue-meta\">Updated 12 Aug 2026</p></div><div class=\"ds-catalogue-actions\"><button class=\"ds-catalogue-action\" type=\"button\" aria-label=\"Edit\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" width=\"16\" height=\"16\"><path d=\"M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z\"/></svg></button></div></div></div>",
+      "css": ".ds-catalogue-panel { background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; font-family: Satoshi, system-ui, sans-serif; } .ds-catalogue-row { display: flex; align-items: center; gap: 12px; padding: 12px; transition: background 200ms ease; } .ds-catalogue-row:hover { background: var(--color-surface-hover); } .ds-catalogue-well { width: 48px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem; background: var(--color-surface); border: 1px solid var(--color-border); } .ds-catalogue-well-icon { width: 20px; height: 20px; color: var(--color-foreground-secondary); } .ds-catalogue-body { min-width: 0; flex: 1; } .ds-catalogue-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; } .ds-catalogue-title { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-catalogue-chip { flex-shrink: 0; border-radius: 0.5rem; background: var(--color-surface); padding: 2px 8px; font-size: 0.75rem; font-weight: 500; color: var(--color-foreground-secondary); } .ds-catalogue-meta { margin: 4px 0 0; font-size: 0.75rem; color: var(--color-foreground-muted); } .ds-catalogue-actions { flex-shrink: 0; } .ds-catalogue-action { border: none; background: transparent; border-radius: 0.5rem; padding: 8px; color: var(--color-foreground-secondary); cursor: pointer; } .ds-catalogue-action:hover { background: var(--color-surface-muted); color: var(--color-foreground); } .ds-catalogue-action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Preference Switch",
+      "kind": "custom",
+      "refersTo": "preference-switch-on",
+      "description": "Binary settings toggle—accent track when on, surface-muted when off.",
+      "html": "<button class=\"ds-switch ds-switch-on\" type=\"button\" role=\"switch\" aria-checked=\"true\" aria-label=\"Ticket confirmation emails\"><span class=\"ds-switch-thumb\"></span></button>",
+      "css": ".ds-switch { position: relative; flex-shrink: 0; width: 48px; height: 28px; border: none; border-radius: 9999px; background: var(--color-surface-muted); cursor: pointer; transition: background 200ms ease; padding: 0; } .ds-switch-on { background: var(--color-accent); } .ds-switch-thumb { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 9999px; background: var(--color-background); border: 1px solid var(--color-border); transition: transform 200ms ease; } .ds-switch-on .ds-switch-thumb { transform: translateX(20px); } .ds-switch:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-switch:disabled { opacity: 0.6; cursor: not-allowed; }"
+    },
+    {
+      "name": "Settings Panel",
+      "kind": "card",
+      "refersTo": "settings-panel",
+      "description": "Outlined settings section with header strip and body—preferences and Stripe.",
+      "html": "<section class=\"ds-settings-panel\"><div class=\"ds-settings-header\"><h2 class=\"ds-settings-title\">Email preferences</h2><p class=\"ds-settings-subtitle\">Choose what SPORTSHUB sends you about ticket sales.</p></div><div class=\"ds-settings-body\"><p class=\"ds-settings-row-title\">Ticket confirmation emails</p><p class=\"ds-settings-row-hint\">Get the same confirmation email as the attendee whenever someone buys a ticket.</p></div></section>",
+      "css": ".ds-settings-panel { background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; font-family: Satoshi, system-ui, sans-serif; } .ds-settings-header { padding: 16px 20px; border-bottom: 1px solid var(--color-border); } .ds-settings-title { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); } .ds-settings-subtitle { margin: 2px 0 0; font-size: 0.75rem; color: var(--color-foreground-muted); } .ds-settings-body { padding: 16px 20px; } .ds-settings-row-title { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); } .ds-settings-row-hint { margin: 4px 0 0; font-size: 0.75rem; color: var(--color-foreground-muted); line-height: 1.5; }"
+    },
+    {
+      "name": "Media Upload Tile",
+      "kind": "custom",
+      "refersTo": "upload-tile",
+      "description": "Dashed gallery upload cell—Plus icon, add label, aspect hint; first cell in media grids.",
+      "html": "<label class=\"ds-upload-tile\"><svg class=\"ds-upload-plus\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M12 4.5v15m7.5-7.5h-15\"/></svg><span class=\"ds-upload-label\">Add thumbnail</span><span class=\"ds-upload-aspect\">1:1</span></label>",
+      "css": ".ds-upload-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 1 / 1; border: 1px dashed var(--color-border); border-radius: var(--radius); background: var(--color-surface); cursor: pointer; font-family: Satoshi, system-ui, sans-serif; transition: background 200ms ease; padding: 16px; text-align: center; } .ds-upload-tile:hover { background: var(--color-surface-hover); } .ds-upload-tile:focus-within { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-upload-plus { width: 28px; height: 28px; color: var(--color-foreground-muted); } .ds-upload-label { margin-top: 8px; font-size: 0.75rem; font-weight: 600; color: var(--color-foreground); } .ds-upload-aspect { margin-top: 2px; font-size: 0.75rem; color: var(--color-foreground-muted); }"
+    },
+    {
+      "name": "Entity Hover Preview",
+      "kind": "custom",
+      "refersTo": "entity-hover-preview",
+      "description": "Cover-led mini-dossier—full-width cover, title, three-cell HoverMetrics, short prose, middot flags. Events/series/collections/forms only.",
+      "html": "<div class=\"ds-hover-dossier\" role=\"tooltip\"><div class=\"ds-hover-cover\" role=\"img\" aria-label=\"Event cover\"></div><div class=\"ds-hover-pad\"><p class=\"ds-hover-title\">Tuesday Social Volleyball</p><div class=\"ds-hover-metrics\"><div class=\"ds-hover-metric\"><p class=\"ds-hover-metric-label\">Reg closes</p><p class=\"ds-hover-metric-value\">Fri</p></div><div class=\"ds-hover-metric\"><p class=\"ds-hover-metric-label\">Ends</p><p class=\"ds-hover-metric-value\">Sat</p></div><div class=\"ds-hover-metric\"><p class=\"ds-hover-metric-label\">Page views</p><p class=\"ds-hover-metric-value\">1.2k</p></div></div><p class=\"ds-hover-body\">Casual mixed social — all levels welcome. Bring indoor shoes.</p><p class=\"ds-hover-flags\">Waitlist · Form attached</p></div></div>",
+      "css": ".ds-hover-dossier { width: 360px; background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: 0 8px 28px rgba(10,10,10,0.12); overflow: hidden; font-family: Satoshi, system-ui, sans-serif; pointer-events: none; } .ds-hover-cover { height: 7.5rem; width: 100%; background: linear-gradient(135deg, #ebebeb 0%, #d0d0d0 100%); background-size: cover; background-position: center; } .ds-hover-pad { padding: 14px; } .ds-hover-title { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); line-height: 1.375; } .ds-hover-subtitle { margin: 2px 0 0; font-size: 0.75rem; color: var(--color-foreground-muted); } .ds-hover-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; } .ds-hover-metric { min-width: 0; text-align: center; } .ds-hover-metric-label { margin: 0; font-size: 0.75rem; line-height: 1.25; color: var(--color-foreground-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-hover-metric-value { margin: 2px 0 0; font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-foreground); line-height: 1.375; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-hover-body { margin: 12px 0 0; font-size: 0.75rem; line-height: 1.625; color: var(--color-foreground-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } .ds-hover-flags { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--color-border); font-size: 0.75rem; line-height: 1.375; color: var(--color-foreground-secondary); }"
+    },
+    {
+      "name": "Event Hub Stage Toolbar",
+      "kind": "custom",
+      "refersTo": "event-hub-stage",
+      "description": "Flush workbench toolbar—muted meta leading, yellow primary CTA trailing. No nested white card.",
+      "html": "<div class=\"ds-hub-toolbar\"><p class=\"ds-hub-meta\">12 people</p><button class=\"ds-hub-primary\" type=\"button\">Add attendee</button></div>",
+      "css": ".ds-hub-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; font-family: Satoshi, system-ui, sans-serif; } .ds-hub-meta { margin: 0; font-size: 0.875rem; color: var(--color-foreground-muted); min-width: 0; } .ds-hub-primary { display: inline-flex; align-items: center; gap: 6px; background: var(--color-accent); color: var(--color-accent-contrast); font-size: 0.875rem; font-weight: 600; padding: 8px 12px; border: none; border-radius: var(--radius); cursor: pointer; transition: filter 200ms ease; } .ds-hub-primary:hover { filter: brightness(0.95); } .ds-hub-primary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Event Hub Hairline Filters",
+      "kind": "custom",
+      "refersTo": "event-hub-filter-active",
+      "description": "Underline filter tabs with counts—near-black active underline, never yellow. Same grammar as peer tabs.",
+      "html": "<div class=\"ds-hub-filters\" role=\"tablist\"><button class=\"ds-hub-filter ds-hub-filter-active\" type=\"button\" role=\"tab\" aria-selected=\"true\">Approved <span>(8)</span></button><button class=\"ds-hub-filter\" type=\"button\" role=\"tab\" aria-selected=\"false\">Pending <span>(2)</span></button><button class=\"ds-hub-filter\" type=\"button\" role=\"tab\" aria-selected=\"false\">Declined <span>(0)</span></button></div>",
+      "css": ".ds-hub-filters { display: flex; gap: 4px; border-bottom: 1px solid var(--color-border); overflow-x: auto; font-family: Satoshi, system-ui, sans-serif; } .ds-hub-filter { flex-shrink: 0; border: none; background: transparent; border-bottom: 2px solid transparent; padding: 10px; font-size: 0.875rem; font-weight: 400; color: var(--color-foreground-secondary); cursor: pointer; transition: color 200ms ease; } .ds-hub-filter span { margin-left: 4px; font-variant-numeric: tabular-nums; color: var(--color-foreground-muted); } .ds-hub-filter:hover { color: var(--color-foreground); } .ds-hub-filter-active { border-bottom-color: var(--color-foreground); color: var(--color-foreground); font-weight: 600; } .ds-hub-filter-active span { color: var(--color-foreground); } .ds-hub-filter:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }"
+    },
+    {
+      "name": "Event Hub Expand Row",
+      "kind": "custom",
+      "refersTo": "event-hub-expand-row",
+      "description": "Flush attendee row with expand-in-place inspector—hairline dividers, tonal wash when open, actions under the avatar.",
+      "html": "<ul class=\"ds-hub-list\"><li class=\"ds-hub-row\"><button class=\"ds-hub-row-btn ds-hub-row-open\" type=\"button\" aria-expanded=\"true\"><svg class=\"ds-hub-avatar\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z\"/></svg><span class=\"ds-hub-row-text\"><span class=\"ds-hub-row-name\">Alex Chen</span><span class=\"ds-hub-row-handle\">@alex.chen</span></span><span class=\"ds-hub-row-meta\">2 tickets</span><svg class=\"ds-hub-chevron ds-hub-chevron-open\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M8.25 4.5l7.5 7.5-7.5 7.5\"/></svg></button><div class=\"ds-hub-inspector\"><button class=\"ds-hub-approve\" type=\"button\">Approve</button><button class=\"ds-hub-decline\" type=\"button\">Decline</button></div></li></ul>",
+      "css": ".ds-hub-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-border); font-family: Satoshi, system-ui, sans-serif; } .ds-hub-row { border-bottom: 1px solid var(--color-border); } .ds-hub-row-btn { display: flex; width: 100%; align-items: center; gap: 12px; padding: 14px 4px; border: none; background: transparent; text-align: left; cursor: pointer; border-radius: 0.5rem; transition: background 200ms ease; } .ds-hub-row-btn:hover { background: color-mix(in srgb, var(--color-surface-hover) 60%, transparent); } .ds-hub-row-open { background: color-mix(in srgb, var(--color-surface-muted) 70%, transparent); } .ds-hub-row-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-hub-avatar { width: 40px; height: 40px; flex-shrink: 0; color: var(--color-foreground-muted); } .ds-hub-row-text { min-width: 0; flex: 1; display: flex; flex-direction: column; } .ds-hub-row-name { font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-hub-row-handle { font-size: 0.75rem; color: var(--color-foreground-muted); } .ds-hub-row-meta { font-size: 0.75rem; font-variant-numeric: tabular-nums; color: var(--color-foreground-muted); flex-shrink: 0; } .ds-hub-chevron { width: 16px; height: 16px; color: var(--color-foreground-muted); flex-shrink: 0; transition: transform 200ms ease-out; } .ds-hub-chevron-open { transform: rotate(90deg); } .ds-hub-inspector { padding: 4px 4px 16px 52px; display: flex; flex-wrap: wrap; gap: 8px; } .ds-hub-approve { background: var(--color-accent); color: var(--color-accent-contrast); font-size: 0.875rem; font-weight: 600; padding: 8px 12px; border: none; border-radius: var(--radius); cursor: pointer; } .ds-hub-approve:hover { filter: brightness(0.95); } .ds-hub-decline { background: var(--color-background); color: var(--color-foreground); font-size: 0.875rem; font-weight: 500; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: var(--radius); cursor: pointer; } .ds-hub-decline:hover { background: var(--color-surface-hover); }"
     }
   ],
   "narrative": {
@@ -194,8 +418,9 @@
       "One corner radius (12px) across panels, cards, and controls; 8px for nested wells",
       "Satoshi for all typography roles",
       "Yellow accent with black text on filled accent surfaces; yellow only on CTAs and current-week chart bars",
-      "Neutral fill bars (surface-muted track, foreground-secondary fill) for progress encoding",
+      "Neutral fill bars (surface-muted track, foreground-secondary or near-black fill) for progress encoding",
       "Borders over shadows; elevation is rare",
+      "Event hub operate bodies are a continuous workbench: flush lists + expand-in-place on the surface canvas—no nested card stacks",
       "Icon-led KPI cells, five-tile quick nav, inline error recovery on organiser v2 dashboard"
     ],
     "rules": [
@@ -218,6 +443,31 @@
         "name": "The No Stack Rule",
         "body": "Do not combine filled grey panels, heavy borders, and shadows on the same component.",
         "section": "elevation"
+      },
+      {
+        "name": "The List-Not-Preview Rule",
+        "body": "Catalogue pages are scannable rows (or a media library). Do not ship miniature document/form previews or multi-card dashboards on these routes.",
+        "section": "components"
+      },
+      {
+        "name": "The No Second Row Rule",
+        "body": "The dossier adds cover + KPIs + prose + flags the compact row does not already show. Do not restate fill rate, price, section-count chips, or other row-visible facts as the hover’s main content.",
+        "section": "components"
+      },
+      {
+        "name": "The Flush Stage Rule",
+        "body": "Event hub tab bodies sit flush on the surface canvas under chrome. Hairline dividers and tonal washes separate rows—not nested white cards, side inspectors, or 1D stacked panels.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Expand-In-Place Rule",
+        "body": "Detail for a flush workbench row opens under that row on the same plane. Do not ship a persistent side inspector or nested card stack for session attendee detail.",
+        "section": "components"
+      },
+      {
+        "name": "The Workbench Extension Rule",
+        "body": "Event hub bodies extend catalogue list density and settings preference-row language onto a flush stage. Do not reintroduce dashboard card grids or account-settings outlined panels as the default event-hub body chrome.",
+        "section": "components"
       }
     ],
     "dos": [
@@ -227,7 +477,12 @@
       "Do use black (#0A0A0A) text on yellow buttons.",
       "Do label metrics honestly when data is lifetime or approximate.",
       "Do use icon-led KPI cells with sentence-case labels—not uppercase hero-metric stacks.",
-      "Do offer inline retry when dashboard data fails to load."
+      "Do offer inline retry when dashboard data fails to load.",
+      "Do reuse the catalogue header + divided list panel (or gallery upload grid) for new organiser list surfaces—same shell as Forms, collections, and custom links.",
+      "Do treat preference switches as checked controls: accent yellow when on, surface-muted when off.",
+      "Do use the cover-led hover dossier (EntityHoverPreview + HoverMetrics) on catalogue rows that need a glanceable open decision—events, series, collections, forms.",
+      "Do build event hub tab bodies as a continuous workbench: stage toolbar, hairline filters, flush divided rows, expand-in-place inspectors, and flush preference stacks.",
+      "Do keep event hub chrome capacity and status encoding neutral (near-black / muted)—yellow stays on primary CTAs only."
     ],
     "donts": [
       "Don't introduce new greys or radii outside the token ladder without updating :root.",
@@ -235,7 +490,13 @@
       "Don't stack shadow + thick border + grey fill on one element.",
       "Don't use legacy organiser-light-gray, raw gray-*, or hardcoded greys on new organiser surfaces.",
       "Don't use accent yellow on fill bars, KPI icon wells, or status dots—neutral encoding only.",
-      "Don't fabricate social proof, benchmarks, or analytics the product cannot source."
+      "Don't fabricate social proof, benchmarks, or analytics the product cannot source.",
+      "Don't add kickers/eyebrows above catalogue page titles, or miniature form/document preview cards on list routes.",
+      "Don't invent a second settings visual language—stacked outlined panels with header strip + body only (account Settings). Event hub Settings uses flush preference rows on the stage instead—do not mix the two shells on one surface.",
+      "Don't duplicate the list row inside the hover card, or add hover dossiers to custom links / top-events rows.",
+      "Don't put nested bordered panels or fetch-on-hover data inside the mini-dossier—cover, three KPIs, short prose, middot flags only.",
+      "Don't wrap event hub Attendees/Listing/Settings bodies in nested white card stacks, side inspector panes, or 1D panel columns—flush stage only.",
+      "Don't mark peer tabs or Attendees filters with yellow—active state is near-black underline + weight."
     ]
   }
 }

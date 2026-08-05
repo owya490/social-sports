@@ -8,21 +8,19 @@ import {
   ArrowRightIcon,
   CalendarIcon,
   CameraIcon,
-  ChevronDownIcon,
   Cog6ToothIcon,
   LinkIcon,
   PencilSquareIcon,
   QuestionMarkCircleIcon,
   RectangleStackIcon,
   Squares2X2Icon,
-  StarIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Bars3Icon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const SIDEBAR_COLLAPSED_KEY = "organiser-sidebar-collapsed";
 
@@ -33,16 +31,29 @@ type NavItem = {
   isActive: (pathname: string) => boolean;
 };
 
-const isEventsSection = (pathname: string) =>
-  pathname.startsWith("/organiser/v2/event") || pathname.startsWith("/organiser/event");
+const EVENT_STATIC_ROUTES = new Set(["dashboard", "recurring-events", "event-collection", "custom-links"]);
 
-const EVENTS_CHILDREN: NavItem[] = [
+const isEventDetailPage = (pathname: string) => {
+  const match = pathname.match(/^\/organiser\/(v2\/)?event\/([^/]+)/);
+  if (!match) return false;
+  return !EVENT_STATIC_ROUTES.has(match[2]);
+};
+
+const MAIN_NAV: NavItem[] = [
+  {
+    href: "/organiser/v2/dashboard",
+    label: "Dashboard",
+    icon: Squares2X2Icon,
+    isActive: (pathname) => /^\/organiser\/(v2\/)?dashboard/.test(pathname),
+  },
   {
     href: "/organiser/v2/event/dashboard",
-    label: "Event dashboard",
-    icon: StarIcon,
+    label: "Events",
+    icon: CalendarIcon,
     isActive: (pathname) =>
-      pathname.startsWith("/organiser/v2/event/dashboard") || pathname.startsWith("/organiser/event/dashboard"),
+      pathname.startsWith("/organiser/v2/event/dashboard") ||
+      pathname.startsWith("/organiser/event/dashboard") ||
+      isEventDetailPage(pathname),
   },
   {
     href: "/organiser/v2/event/recurring-events",
@@ -69,27 +80,20 @@ const EVENTS_CHILDREN: NavItem[] = [
   },
 ];
 
-const TOP_NAV: NavItem[] = [
-  {
-    href: "/organiser/v2/dashboard",
-    label: "Dashboard",
-    icon: Squares2X2Icon,
-    isActive: (pathname) => /^\/organiser\/(v2\/)?dashboard/.test(pathname),
-  },
-];
-
 const BOTTOM_NAV: NavItem[] = [
   {
-    href: "/organiser/forms/gallery",
+    href: "/organiser/v2/forms/gallery",
     label: "Forms",
     icon: PencilSquareIcon,
-    isActive: (pathname) => pathname.startsWith("/organiser/forms"),
+    isActive: (pathname) =>
+      pathname.startsWith("/organiser/v2/forms") || pathname.startsWith("/organiser/forms"),
   },
   {
-    href: "/organiser/gallery",
+    href: "/organiser/v2/gallery",
     label: "Gallery",
     icon: CameraIcon,
-    isActive: (pathname) => pathname.startsWith("/organiser/gallery"),
+    isActive: (pathname) =>
+      pathname.startsWith("/organiser/v2/gallery") || pathname === "/organiser/gallery",
   },
 ];
 
@@ -100,9 +104,9 @@ function applySidebarWidth(collapsed: boolean) {
   );
 }
 
-const navItemClass = (active: boolean, collapsed?: boolean, nested?: boolean) =>
+const navItemClass = (active: boolean, collapsed?: boolean) =>
   `flex items-center rounded-xl text-xs font-medium font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-    collapsed ? "justify-center px-2 py-2" : nested ? "gap-2 px-2.5 py-1.5 pl-5" : "gap-2.5 px-2.5 py-1.5"
+    collapsed ? "justify-center px-2 py-2" : "gap-2.5 px-2.5 py-1.5"
   } ${
     active
       ? "bg-surface-muted text-foreground"
@@ -114,13 +118,11 @@ function NavLink({
   pathname,
   onNavigate,
   collapsed,
-  nested,
 }: {
   item: NavItem;
   pathname: string;
   onNavigate?: () => void;
   collapsed?: boolean;
-  nested?: boolean;
 }) {
   const active = item.isActive(pathname);
   const Icon = item.icon;
@@ -130,138 +132,11 @@ function NavLink({
       href={item.href}
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
-      className={navItemClass(active, collapsed, nested)}
+      className={navItemClass(active, collapsed)}
     >
       <Icon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
       {!collapsed && item.label}
     </Link>
-  );
-}
-
-function EventsNavGroup({
-  pathname,
-  onNavigate,
-  collapsed,
-}: {
-  pathname: string;
-  onNavigate?: () => void;
-  collapsed?: boolean;
-}) {
-  const sectionActive = isEventsSection(pathname);
-  const [expanded, setExpanded] = useState(sectionActive);
-  const [flyoutOpen, setFlyoutOpen] = useState(false);
-  const flyoutRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelId = useId();
-
-  useEffect(() => {
-    if (sectionActive) setExpanded(true);
-  }, [sectionActive]);
-
-  useEffect(() => {
-    if (!flyoutOpen) return;
-
-    const onPointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (flyoutRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
-      setFlyoutOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setFlyoutOpen(false);
-    };
-
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [flyoutOpen]);
-
-  useEffect(() => {
-    setFlyoutOpen(false);
-  }, [pathname, collapsed]);
-
-  if (collapsed) {
-    return (
-      <div className="relative">
-        <button
-          ref={triggerRef}
-          type="button"
-          title="Events"
-          aria-label="Events"
-          aria-expanded={flyoutOpen}
-          aria-controls={panelId}
-          onClick={() => setFlyoutOpen((open) => !open)}
-          className={navItemClass(sectionActive || flyoutOpen, true)}
-        >
-          <CalendarIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
-        </button>
-        {flyoutOpen && (
-          <div
-            ref={flyoutRef}
-            id={panelId}
-            role="menu"
-            aria-label="Events"
-            className="absolute left-full top-0 z-50 ml-2 w-52 rounded-xl border border-border bg-background p-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.08),0_4px_12px_rgba(0,0,0,0.05)]"
-          >
-            {EVENTS_CHILDREN.map((item) => {
-              const active = item.isActive(pathname);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  role="menuitem"
-                  onClick={() => {
-                    setFlyoutOpen(false);
-                    onNavigate?.();
-                  }}
-                  className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-medium font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-                    active
-                      ? "bg-surface-muted text-foreground"
-                      : "text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <button
-        type="button"
-        aria-expanded={expanded}
-        aria-controls={panelId}
-        onClick={() => setExpanded((open) => !open)}
-        className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-xs font-medium font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-          sectionActive ? "text-foreground" : "text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
-        }`}
-      >
-        <CalendarIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
-        <span className="min-w-0 flex-1 text-left">Events</span>
-        <ChevronDownIcon
-          className={`h-3.5 w-3.5 shrink-0 stroke-[1.5] text-foreground-muted transition-transform duration-200 ease-out ${
-            expanded ? "rotate-0" : "-rotate-90"
-          }`}
-          aria-hidden
-        />
-      </button>
-      {expanded && (
-        <div id={panelId} className="mt-0.5 flex flex-col gap-0.5" role="group" aria-label="Events">
-          {EVENTS_CHILDREN.map((item) => (
-            <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} nested />
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -335,10 +210,9 @@ function SidebarContent({
       </Link>
 
       <nav className="mt-4 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="Organiser navigation">
-        {TOP_NAV.map((item) => (
+        {MAIN_NAV.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} collapsed={collapsed} />
         ))}
-        <EventsNavGroup pathname={pathname} onNavigate={onNavigate} collapsed={collapsed} />
         {BOTTOM_NAV.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} collapsed={collapsed} />
         ))}
@@ -365,10 +239,11 @@ function SidebarContent({
           <div className={collapsed ? undefined : "min-w-0 flex-1"}>
             <NavLink
               item={{
-                href: "/organiser/settings",
+                href: "/organiser/v2/settings",
                 label: "Settings",
                 icon: Cog6ToothIcon,
-                isActive: (path) => path.startsWith("/organiser/settings"),
+                isActive: (path) =>
+                  path.startsWith("/organiser/v2/settings") || path.startsWith("/organiser/settings"),
               }}
               pathname={pathname}
               onNavigate={onNavigate}
@@ -395,6 +270,42 @@ function SidebarContent({
         </div>
       </div>
     </div>
+  );
+}
+
+function MobileTopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
+  const { user } = useUser();
+  const displayName = [user.firstName, user.surname].filter(Boolean).join(" ").trim() || user.username || "Organiser";
+
+  return (
+    <header
+      className="fixed inset-x-0 top-0 z-40 flex h-[var(--organiser-mobile-chrome-height)] items-center gap-2 border-b border-border bg-background px-3 lg:hidden"
+      aria-label="Organiser hub"
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <Image src={Logo} alt="" className="h-7 w-auto shrink-0" priority />
+        <p className="truncate font-sans text-sm font-semibold leading-none text-foreground">ORGANISER HUB</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-0.5">
+        <button
+          type="button"
+          onClick={onOpenMenu}
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-foreground transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          aria-label="Open organiser menu"
+        >
+          <Bars3Icon className="h-5 w-5" aria-hidden />
+        </button>
+        <Link
+          href="/profile"
+          className="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-muted transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          aria-label={`${displayName} profile`}
+        >
+          {user.profilePicture ? (
+            <Image src={user.profilePicture} alt="" fill className="object-cover" sizes="32px" />
+          ) : null}
+        </Link>
+      </div>
+    </header>
   );
 }
 
@@ -438,21 +349,14 @@ export default function OrganiserSidebar() {
 
   return (
     <>
-      {/* Mobile menu trigger */}
-      <button
-        type="button"
-        className="fixed top-4 left-4 z-40 flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background text-foreground shadow-sm lg:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-        onClick={() => setMobileOpen(true)}
-        aria-label="Open organiser menu"
-      >
-        <Bars3Icon className="h-6 w-6" aria-hidden />
-      </button>
+      {/* Brand-led mobile chrome — approved comp A */}
+      <MobileTopBar onOpenMenu={() => setMobileOpen(true)} />
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-foreground/20 lg:hidden"
           aria-label="Close menu"
           onClick={() => setMobileOpen(false)}
         />
@@ -464,10 +368,11 @@ export default function OrganiserSidebar() {
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-label="Organiser sidebar"
+        aria-hidden={!mobileOpen}
       >
         <button
           type="button"
-          className="absolute top-4 right-3 flex h-8 w-8 items-center justify-center rounded-lg text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
+          className="absolute top-3 right-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-foreground-secondary transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           onClick={() => setMobileOpen(false)}
           aria-label="Close menu"
         >

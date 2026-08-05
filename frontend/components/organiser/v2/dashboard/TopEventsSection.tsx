@@ -43,7 +43,7 @@ export function TopEventsSection({ topEvents, loading }: TopEventsSectionProps) 
             {topEvents.map((event, index) => (
               <li key={event.eventId}>
                 <Link
-                  href={`/organiser/event/${event.eventId}`}
+                  href={`/organiser/v2/event/${event.eventId}`}
                   className="flex items-center gap-3 rounded-lg px-2 py-2 -mx-2 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   <span className="w-5 text-xs font-semibold tabular-nums text-foreground-muted font-sans shrink-0">

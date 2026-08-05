@@ -1,0 +1,33 @@
+{
+  "title": "Organiser v2 mobile nav",
+  "question": "The floating burger sits outside the clubhouse. Which mobile pattern should replace it? Desktop sidebar stays.",
+  "options": [
+    {
+      "id": "integrated-top-bar",
+      "label": "Integrated top bar",
+      "kicker": "AIRBNB-LED",
+      "thesis": "A flush page chrome holds logo, title, and menu — the trigger lives inside the layout, not as a floating orphan.",
+      "viewport": "Thin sticky bar: SPORTSHUB mark + ORGANISER HUB + avatar/menu. Sheet slides from the bar; content starts under it with no dead pt-16.",
+      "risk": "Steals vertical space from every mobile screen."
+    },
+    {
+      "id": "bottom-primary-dock",
+      "label": "Bottom primary dock",
+      "kicker": "THUMB-LED",
+      "thesis": "Primary destinations sit in a calm bottom dock; deeper items open a sheet — navigation where the thumb already is.",
+      "viewport": "Dock: Dashboard, Events, Forms, Gallery, More. More opens the full organiser menu (settings, help, profile). No top burger.",
+      "risk": "Crowds the bottom of dense list screens; Events needs a clear expand path."
+    },
+    {
+      "id": "avatar-led-sheet",
+      "label": "Avatar-led sheet",
+      "kicker": "LINEAR-LED",
+      "thesis": "A quiet top identity chip opens the full nav sheet — chrome almost disappears until you need it.",
+      "viewport": "Small avatar (or mark) flush in the top-left of the content plane; tap opens the same full sidebar sheet. No bordered burger tile.",
+      "risk": "Discoverability if the chip looks like profile-only."
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

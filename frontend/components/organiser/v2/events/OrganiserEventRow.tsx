@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  EventHoverDescription,
+  EventHoverFlags,
+  EventHoverMetrics,
+} from "@/components/organiser/v2/events/EventHoverBody";
+import {
+  EntityHoverCover,
+  EntityHoverPreview,
+} from "@/components/organiser/v2/shared/EntityHoverPreview";
 import { EventData } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -43,44 +52,52 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
   const thumbnailSrc = event.thumbnail || event.image;
 
   return (
-    <Link
-      href={`/organiser/event/${event.eventId}`}
-      className={`group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus ${className}`}
+    <EntityHoverPreview
+      cover={<EntityHoverCover src={event.image || event.thumbnail} />}
+      title={event.name}
+      metrics={<EventHoverMetrics event={event} />}
+      body={<EventHoverDescription event={event} />}
+      flags={<EventHoverFlags event={event} />}
     >
-      <div
-        className="h-[4.25rem] w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem] shrink-0 rounded-lg border border-border bg-surface-muted bg-cover bg-center"
-        style={{ backgroundImage: thumbnailSrc ? `url(${thumbnailSrc})` : undefined }}
-        role="img"
-        aria-label=""
-      />
+      <Link
+        href={`/organiser/v2/event/${event.eventId}`}
+        className={`group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus ${className}`}
+      >
+        <div
+          className="h-[4.25rem] w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem] shrink-0 rounded-lg border border-border bg-surface-muted bg-cover bg-center"
+          style={{ backgroundImage: thumbnailSrc ? `url(${thumbnailSrc})` : undefined }}
+          role="img"
+          aria-label=""
+        />
 
-      <div className="min-w-0 flex-1 py-0.5">
-        <div className="flex items-start justify-between gap-3">
-          <p className="min-w-0 text-sm font-semibold text-foreground font-sans truncate leading-snug">
-            {event.name}
-          </p>
-          <div className="shrink-0 text-right">
-            {isSoldOut ? (
-              <span className="text-xs font-medium text-foreground-muted font-sans">Sold out</span>
-            ) : (
-              <span className="text-xs font-medium text-foreground-muted font-sans tabular-nums whitespace-nowrap">
-                {getEventPriceDisplay(event.price, true)}
-              </span>
-            )}
+        <div className="min-w-0 flex-1 py-0.5">
+          <div className="flex items-start justify-between gap-3">
+            <p className="min-w-0 text-sm font-semibold text-foreground font-sans truncate leading-snug">
+              {event.name}
+            </p>
+            <div className="shrink-0 text-right">
+              {isSoldOut ? (
+                <span className="text-xs font-medium text-foreground-muted font-sans">Sold out</span>
+              ) : (
+                <span className="text-xs font-medium text-foreground-muted font-sans tabular-nums whitespace-nowrap">
+                  {getEventPriceDisplay(event.price, true)}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
 
-        <p className="text-xs text-foreground-muted font-sans truncate mt-1 flex items-center gap-1">
-          <CalendarDaysIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
-          {timestampToEventCardDateString(event.startDate)}
-        </p>
-        <p className="text-xs text-foreground-muted font-sans truncate mt-0.5 flex items-center gap-1">
-          <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
-          {event.location}
-        </p>
-        <OrganiserEventFillBar filled={filled} capacity={event.capacity} />
-      </div>
-    </Link>
+          <p className="text-xs text-foreground-muted font-sans truncate mt-1 flex items-center gap-1">
+            <CalendarDaysIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
+            {timestampToEventCardDateString(event.startDate)}
+          </p>
+          <p className="text-xs text-foreground-muted font-sans truncate mt-0.5 flex items-center gap-1">
+            <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
+            {event.location}
+          </p>
+          <OrganiserEventFillBar filled={filled} capacity={event.capacity} />
+        </div>
+      </Link>
+    </EntityHoverPreview>
   );
 }
 

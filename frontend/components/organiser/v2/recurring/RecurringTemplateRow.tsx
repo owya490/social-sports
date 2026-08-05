@@ -1,8 +1,16 @@
 "use client";
 
+import {
+  RecurringHoverBody,
+  RecurringHoverFlags,
+} from "@/components/organiser/v2/recurring/RecurringHoverBody";
+import {
+  EntityHoverCover,
+  EntityHoverPreview,
+} from "@/components/organiser/v2/shared/EntityHoverPreview";
 import { Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
-import { calculateRecurrenceEnded } from "@/services/src/recurringEvents/recurringEventsService";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import { calculateRecurrenceEnded } from "@/services/src/recurringEvents/recurringEventsService";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { ArrowPathIcon, CalendarDaysIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -59,57 +67,66 @@ export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
   const scheduleLine = `${frequencyLabel(recurrenceData.frequency)} · ${recurrenceData.recurrenceAmount} times · creates ${recurrenceData.createDaysBefore}d before`;
 
   return (
-    <Link
-      href={`/organiser/event/recurring-events/${recurrenceTemplateId}`}
-      className="group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
+    <EntityHoverPreview
+      cover={<EntityHoverCover src={eventData.image || eventData.thumbnail} />}
+      title={eventData.name}
+      body={<RecurringHoverBody template={template} />}
+      flags={<RecurringHoverFlags template={template} />}
     >
-      <div
-        className="h-[4.25rem] w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem] shrink-0 rounded-lg border border-border bg-surface-muted bg-cover bg-center"
-        style={{ backgroundImage: thumbnailSrc ? `url(${thumbnailSrc})` : undefined }}
-        role="img"
-        aria-label=""
-      />
+      <Link
+        href={`/organiser/event/recurring-events/${recurrenceTemplateId}`}
+        className="group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
+      >
+        <div
+          className="aspect-square size-[4.25rem] sm:size-[4.75rem] shrink-0 self-center overflow-hidden rounded-lg border border-border bg-surface-muted bg-cover bg-center"
+          style={{ backgroundImage: thumbnailSrc ? `url(${thumbnailSrc})` : undefined }}
+          role="img"
+          aria-label=""
+        />
 
-      <div className="min-w-0 flex-1 py-0.5">
-        <div className="flex items-start justify-between gap-3">
-          <p className="min-w-0 text-sm font-semibold text-foreground font-sans truncate leading-snug">
-            {eventData.name}
-          </p>
-          <div className="shrink-0 flex items-center gap-2">
-            <span className="text-xs font-medium text-foreground-muted font-sans tabular-nums whitespace-nowrap">
-              {getEventPriceDisplay(eventData.price, true)}
-            </span>
-            <span
-              className={`h-2.5 w-2.5 rounded-full shrink-0 ${status.dotClass}`}
-              aria-label={status.ariaLabel}
-              title={status.label}
-            />
+        <div className="min-w-0 flex-1 py-0.5">
+          <div className="flex items-start justify-between gap-3">
+            <p className="min-w-0 text-sm font-semibold text-foreground font-sans truncate leading-snug">
+              {eventData.name}
+            </p>
+            <div className="shrink-0 flex items-center gap-2">
+              <span className="text-xs font-medium text-foreground-muted font-sans tabular-nums whitespace-nowrap">
+                {getEventPriceDisplay(eventData.price, true)}
+              </span>
+              <span
+                className={`h-2.5 w-2.5 rounded-full shrink-0 ${status.dotClass}`}
+                aria-label={status.ariaLabel}
+                title={status.label}
+              />
+            </div>
           </div>
-        </div>
 
-        <p className="text-xs text-foreground-muted font-sans truncate mt-1 flex items-center gap-1">
-          <CalendarDaysIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
-          Next: {timestampToEventCardDateString(eventData.startDate)}
-        </p>
-        <p className="text-xs text-foreground-muted font-sans truncate mt-0.5 flex items-center gap-1">
-          <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
-          {eventData.location}
-        </p>
-        <p className="text-xs text-foreground-muted font-sans truncate mt-1.5 flex items-center gap-1">
-          <ArrowPathIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span className="truncate">
-            {status.label} · {scheduleLine}
-          </span>
-        </p>
-      </div>
-    </Link>
+          <p className="text-xs text-foreground-muted font-sans truncate mt-1 flex items-center gap-1">
+            <CalendarDaysIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
+            Next: {timestampToEventCardDateString(eventData.startDate)}
+          </p>
+          <p className="text-xs text-foreground-muted font-sans truncate mt-0.5 flex items-center gap-1">
+            <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
+            {eventData.location}
+          </p>
+          <p className="text-xs text-foreground-muted font-sans truncate mt-1.5 flex items-center gap-1">
+            <ArrowPathIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
+            <span className="truncate">
+              {status.label} · {scheduleLine}
+            </span>
+          </p>
+        </div>
+      </Link>
+    </EntityHoverPreview>
   );
 }
 
 export function RecurringTemplateRowSkeleton() {
   return (
     <div className="flex w-full items-center gap-3 p-2.5 sm:p-3">
-      <Skeleton height={68} width={68} className="!rounded-lg shrink-0 sm:!h-[4.75rem] sm:!w-[4.75rem]" />
+      <div className="aspect-square size-[4.25rem] sm:size-[4.75rem] shrink-0 self-center overflow-hidden rounded-lg">
+        <Skeleton height="100%" width="100%" className="!rounded-lg !leading-none block" />
+      </div>
       <div className="min-w-0 flex-1 py-0.5 space-y-2">
         <div className="flex items-start justify-between gap-3">
           <Skeleton height={14} width="62%" />

@@ -1,0 +1,33 @@
+{
+  "title": "Event hub body redesign",
+  "question": "Chrome stays. Which body language should Attendees, Listing, Forms, Images, and Settings share?",
+  "options": [
+    {
+      "id": "continuous-workbench",
+      "label": "Continuous workbench",
+      "kicker": "LINEAR-LED",
+      "thesis": "One calm stage under the chrome—no nested white cards. Dividers and density do the work.",
+      "viewport": "Attendees: toolbar + segmented filters flush to the content plane; rows edge-to-edge; yellow only on Add.",
+      "risk": "Can feel sparse if spacing is lazy."
+    },
+    {
+      "id": "editorial-listing-led",
+      "label": "Editorial twin + quiet ops",
+      "kicker": "AIRBNB-LED",
+      "thesis": "Listing feels like the public event page; ops tabs stay quieter and denser beside that twin.",
+      "viewport": "Listing leads with large title and inline edit; Attendees/Forms/Images/Settings use the same quiet list grammar.",
+      "risk": "Ops tabs can feel like a different product if the twin is too expressive."
+    },
+    {
+      "id": "task-planes",
+      "label": "Task planes",
+      "kicker": "UBER-LED",
+      "thesis": "Each tab is one clear job surface with a strong primary action and ruthless hierarchy.",
+      "viewport": "Every tab opens on the action that matters most that day; secondary controls recede until needed.",
+      "risk": "Can feel pushy if every tab invents a hero CTA."
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

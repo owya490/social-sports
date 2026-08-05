@@ -87,7 +87,7 @@ const SETUP_ITEMS: SetupItem[] = [
   {
     id: "stripe",
     label: "Connect Stripe for payouts",
-    href: "/organiser/settings",
+    href: "/organiser/v2/settings",
     isComplete: (user) => hasCompletedStripeConnectSetup(user),
   },
   {

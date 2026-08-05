@@ -1,0 +1,230 @@
+"use client";
+
+import { ReactNode } from "react";
+
+/**
+ * Continuous workbench primitives for event hub tab bodies (A+B).
+ * Flush plane under chrome — no nested white cards. Yellow only on primary CTAs.
+ */
+
+type EventHubStageProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+export function EventHubStage({ children, className = "" }: EventHubStageProps) {
+  return <div className={`min-w-0 ${className}`}>{children}</div>;
+}
+
+type EventHubToolbarProps = {
+  meta: ReactNode;
+  action?: ReactNode;
+};
+
+export function EventHubToolbar({ meta, action }: EventHubToolbarProps) {
+  return (
+    <div className="flex items-center justify-between gap-3 pb-3">
+      <div className="min-w-0 text-sm text-foreground-muted font-sans">{meta}</div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+  );
+}
+
+type EventHubFilterTab = {
+  id: string;
+  label: string;
+  count?: number;
+};
+
+type EventHubFiltersProps = {
+  tabs: EventHubFilterTab[];
+  activeId: string;
+  onChange: (id: string) => void;
+  action?: ReactNode;
+};
+
+export function EventHubFilters({ tabs, activeId, onChange, action }: EventHubFiltersProps) {
+  return (
+    <div className="flex items-end gap-3 border-b border-border">
+      <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto scrollbar-none" role="tablist">
+        {tabs.map((tab) => {
+          const active = activeId === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(tab.id)}
+              className={`shrink-0 px-2.5 py-2.5 text-sm font-sans border-b-2 -mb-px transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus ${
+                active
+                  ? "border-foreground text-foreground font-semibold"
+                  : "border-transparent text-foreground-secondary hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+              {typeof tab.count === "number" ? (
+                <span className={`ml-1 tabular-nums ${active ? "text-foreground" : "text-foreground-muted"}`}>
+                  ({tab.count})
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+      {action ? <div className="shrink-0 pb-1.5">{action}</div> : null}
+    </div>
+  );
+}
+
+export function EventHubPrimaryButton({
+  children,
+  onClick,
+  disabled,
+  type = "button",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: "button" | "submit";
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+    >
+      {children}
+    </button>
+  );
+}
+
+export function EventHubGhostButton({
+  children,
+  onClick,
+  disabled,
+  type = "button",
+  className = "",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: "button" | "submit";
+  className?: string;
+}) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function EventHubEmpty({ children }: { children: ReactNode }) {
+  return (
+    <div className="py-14 text-center">
+      <p className="text-sm text-foreground-muted font-sans max-w-sm mx-auto leading-relaxed">{children}</p>
+    </div>
+  );
+}
+
+type PreferenceRowProps = {
+  title: string;
+  description: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (next: boolean) => void;
+};
+
+export function EventHubPreferenceRow({
+  title,
+  description,
+  checked,
+  disabled,
+  onChange,
+}: PreferenceRowProps) {
+  return (
+    <div className="flex items-start gap-4 py-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-foreground font-sans">{title}</p>
+        <p className="mt-1 text-xs text-foreground-muted font-sans leading-relaxed">{description}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={title}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={`relative shrink-0 h-7 w-12 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 ${
+          checked ? "bg-accent" : "bg-surface-muted"
+        }`}
+      >
+        <span
+          aria-hidden
+          className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-background border border-border transition-transform duration-200 ease-out ${
+            checked ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
+export function EventHubInitials({ name }: { name: string }) {
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
+  return (
+    <span
+      aria-hidden
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-semibold text-foreground-secondary font-sans tabular-nums"
+    >
+      {initials || "?"}
+    </span>
+  );
+}
+
+export function EventHubMetaRow({
+  label,
+  children,
+  onClick,
+  editable,
+}: {
+  label: string;
+  children: ReactNode;
+  onClick?: () => void;
+  editable?: boolean;
+}) {
+  const content = (
+    <>
+      <span className="text-xs font-medium text-foreground-muted font-sans w-24 shrink-0 pt-0.5">{label}</span>
+      <div className="min-w-0 flex-1 text-sm text-foreground font-sans">{children}</div>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={!editable}
+        className="flex w-full items-start gap-3 py-3.5 text-left hover:bg-surface-hover/50 transition-colors rounded-lg px-1 -mx-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:hover:bg-transparent"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <div className="flex items-start gap-3 py-3.5">{content}</div>;
+}

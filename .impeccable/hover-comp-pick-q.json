@@ -1,0 +1,36 @@
+{
+  "title": "Hover dossier composition",
+  "question": "Which mini-dossier composition should the hover cards ship?",
+  "options": [
+    {
+      "id": "cover-led",
+      "label": "Cover-led stack",
+      "kicker": "COMP A",
+      "thesis": "Full-width cover, then title, a three-cell KPI strip, short description, and exception chips.",
+      "viewport": "Identity from the photo; ops facts scan as a horizontal strip under the title.",
+      "risk": "Tall card if description and chips both stay.",
+      "hero": ".impeccable/mocks/hover-mini-dossier-comp-a-cover-led.png"
+    },
+    {
+      "id": "split",
+      "label": "Split dossier",
+      "kicker": "COMP B",
+      "thesis": "Tall cover on the left; definition-list ops facts and status chips on the right.",
+      "viewport": "Photo and facts share one glance without stacking height.",
+      "risk": "Narrow fact column truncates longer labels.",
+      "hero": ".impeccable/mocks/hover-mini-dossier-comp-b-split.png"
+    },
+    {
+      "id": "metrics",
+      "label": "Metric-first grid",
+      "kicker": "COMP C",
+      "thesis": "Compact cover strip, then a 2×2 metric grid as the hero, with a one-line description and footer flags.",
+      "viewport": "Numbers lead; photo is atmosphere, not the main mass.",
+      "risk": "Can feel like a KPI widget if the grid gets too large.",
+      "hero": ".impeccable/mocks/hover-mini-dossier-comp-c-metrics.png"
+    }
+  ],
+  "reroll": false,
+  "canon": false,
+  "steer": true
+}

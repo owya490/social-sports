@@ -395,54 +395,54 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
                 key={link.id}
                 className="flex flex-col gap-3 p-2.5 sm:p-3 sm:flex-row sm:items-center sm:gap-3 hover:bg-surface-hover transition-colors"
               >
-                <div className="min-w-0 flex-1 py-0.5 px-1 sm:px-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="min-w-0 text-sm font-semibold text-foreground font-sans truncate leading-snug">
-                      {link.customEventLinkName}
+                  <div className="min-w-0 flex-1 py-0.5 px-1 sm:px-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 text-sm font-semibold text-foreground font-sans truncate leading-snug">
+                        {link.customEventLinkName}
+                      </p>
+                      <span className="shrink-0 rounded-lg bg-surface px-2 py-0.5 text-xs font-medium text-foreground-secondary font-sans">
+                        {link.type === "event" ? "Event" : "Recurring"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-foreground-muted font-sans truncate">{fullUrl}</p>
+                    <p className="mt-0.5 text-xs text-foreground-muted font-sans truncate">
+                      Points to: {link.referenceName || "—"}
                     </p>
-                    <span className="shrink-0 rounded-lg bg-surface px-2 py-0.5 text-xs font-medium text-foreground-secondary font-sans">
-                      {link.type === "event" ? "Event" : "Recurring"}
-                    </span>
                   </div>
-                  <p className="mt-1 text-xs text-foreground-muted font-sans truncate">{fullUrl}</p>
-                  <p className="mt-0.5 text-xs text-foreground-muted font-sans truncate">
-                    Points to: {link.referenceName || "—"}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-0.5 self-end sm:self-center">
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(link.id)}
-                    className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                    aria-label={`Edit ${link.customEventLinkName}`}
-                  >
-                    <PencilIcon className="h-4 w-4" aria-hidden />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handleCopyLink(link.id, link.customEventLink);
-                    }}
-                    className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                    aria-label={copiedId === link.id ? "Copied" : `Copy ${link.customEventLinkName}`}
-                  >
-                    {copiedId === link.id ? (
-                      <CheckIcon className="h-4 w-4 text-foreground" aria-hidden />
-                    ) : (
-                      <DocumentDuplicateIcon className="h-4 w-4" aria-hidden />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handleDelete(link.id);
-                    }}
-                    className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-danger transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                    aria-label={`Delete ${link.customEventLinkName}`}
-                  >
-                    <TrashIcon className="h-4 w-4" aria-hidden />
-                  </button>
-                </div>
+                  <div className="flex shrink-0 items-center gap-0.5 self-end sm:self-center">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(link.id)}
+                      className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      aria-label={`Edit ${link.customEventLinkName}`}
+                    >
+                      <PencilIcon className="h-4 w-4" aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleCopyLink(link.id, link.customEventLink);
+                      }}
+                      className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      aria-label={copiedId === link.id ? "Copied" : `Copy ${link.customEventLinkName}`}
+                    >
+                      {copiedId === link.id ? (
+                        <CheckIcon className="h-4 w-4 text-foreground" aria-hidden />
+                      ) : (
+                        <DocumentDuplicateIcon className="h-4 w-4" aria-hidden />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleDelete(link.id);
+                      }}
+                      className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-danger transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      aria-label={`Delete ${link.customEventLinkName}`}
+                    >
+                      <TrashIcon className="h-4 w-4" aria-hidden />
+                    </button>
+                  </div>
               </div>
             );
           })}

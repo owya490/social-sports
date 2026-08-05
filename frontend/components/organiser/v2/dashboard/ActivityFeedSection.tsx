@@ -45,7 +45,7 @@ function ActivityRow({
 }) {
   return (
     <Link
-      href={`/organiser/event/${item.eventId}`}
+      href={`/organiser/v2/event/${item.eventId}`}
       className="group grid grid-cols-[2.75rem_0.75rem_1fr] gap-x-2 px-1 -mx-1 rounded-lg hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <time

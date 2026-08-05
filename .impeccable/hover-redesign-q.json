@@ -1,0 +1,33 @@
+{
+  "title": "Hover card content",
+  "question": "Rows already show name, date, place, fill, and price. What should the hover prove in one glance that the row cannot?",
+  "options": [
+    {
+      "id": "ops-status",
+      "label": "Ops status board",
+      "kicker": "RECOMMENDED",
+      "thesis": "Lead with booking health: fill remaining, registration deadline urgency, privacy/paused/waitlist flags, page views, and whether a form is attached—skip description prose.",
+      "viewport": "Compact KPI strip + exception chips; no repeated title/media chrome when the row already shows them.",
+      "risk": "Feels sparse if an event has no exceptions and a distant deadline."
+    },
+    {
+      "id": "schedule-depth",
+      "label": "Schedule depth",
+      "kicker": "TIME-LED",
+      "thesis": "Lead with the timeline the row truncates: end time, registration close, and (for series) the next 3 dates still to come.",
+      "viewport": "Timeline stack first; secondary facts below in a quiet definition list.",
+      "risk": "Less useful mid-week when organisers already know the schedule by heart."
+    },
+    {
+      "id": "mini-dossier",
+      "label": "Mini dossier",
+      "kicker": "RICHER",
+      "thesis": "Hero image strip + short description + ops facts + flags—more surface area, still one card.",
+      "viewport": "Wider preview with cover band; body mixes prose and facts.",
+      "risk": "Easiest to clutter; fights the List-Not-Preview rule if it starts feeling like a card grid."
+    }
+  ],
+  "reroll": false,
+  "canon": false,
+  "steer": true
+}

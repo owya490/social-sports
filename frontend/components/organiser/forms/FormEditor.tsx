@@ -170,12 +170,12 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       setShowBackWarning(true);
       return;
     }
-    router.push(`/organiser/forms/gallery`);
+    router.push(`/organiser/v2/forms/gallery`);
   };
 
   const handleConfirmBack = () => {
     setShowBackWarning(false);
-    router.push(`/organiser/forms/gallery`);
+    router.push(`/organiser/v2/forms/gallery`);
   };
 
   const updateFormTitle = (newTitle: FormTitle) => {

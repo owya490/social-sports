@@ -219,22 +219,22 @@ export default function OrganiserNavbar() {
           }}
         </Menu>{" "}
         <NavButton
-          href="/organiser/forms/gallery"
-          isActive={currPage.startsWith("/organiser/forms")}
+          href="/organiser/v2/forms/gallery"
+          isActive={currPage.startsWith("/organiser/v2/forms") || currPage.startsWith("/organiser/forms")}
           tooltipContent="Forms"
         >
           <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
         <NavButton
-          href="/organiser/gallery"
-          isActive={currPage.startsWith("/organiser/gallery")}
+          href="/organiser/v2/gallery"
+          isActive={currPage.startsWith("/organiser/v2/gallery") || currPage === "/organiser/gallery"}
           tooltipContent="Gallery"
         >
           <CameraIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
         <NavButton
-          href="/organiser/settings"
-          isActive={currPage.startsWith("/organiser/settings")}
+          href="/organiser/v2/settings"
+          isActive={currPage.startsWith("/organiser/v2/settings") || currPage.startsWith("/organiser/settings")}
           tooltipContent="Settings"
         >
           <Cog6ToothIcon className="w-6 stroke-1 stroke-core-text" />

@@ -30,6 +30,7 @@
   --organiser-sidebar-width-expanded: 200px;
   --organiser-sidebar-width-collapsed: 52px;
   --organiser-sidebar-width: var(--organiser-sidebar-width-expanded);
+  --organiser-mobile-chrome-height: 52px; /* Brand-led mobile top bar (lg:hidden) */
 }
 
 @layer components {

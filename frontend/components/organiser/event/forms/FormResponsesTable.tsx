@@ -23,6 +23,8 @@ interface FormResponsesTableProps {
   orderTicketsMap: Map<Order, Ticket[]>;
   showPurchaserColumn?: boolean;
   organiserEmail?: string;
+  /** Flush workbench shell — no bordered card chrome */
+  flush?: boolean;
 }
 
 type SortDirection = "asc" | "desc";
@@ -260,6 +262,7 @@ export const FormResponsesTable = ({
   orderTicketsMap,
   showPurchaserColumn = true,
   organiserEmail = "",
+  flush = false,
 }: FormResponsesTableProps) => {
   const [headersExpanded, setHeadersExpanded] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -361,15 +364,26 @@ export const FormResponsesTable = ({
 
   if (sortedFormResponses.length === 0) {
     return (
-      <div className="border border-core-outline rounded-lg p-6 text-center">
-        <p className="text-gray-600">No form responses found</p>
+      <div
+        className={
+          flush
+            ? "py-10 text-center text-sm text-foreground-muted font-sans"
+            : "border border-core-outline rounded-lg p-6 text-center"
+        }
+      >
+        <p className={flush ? undefined : "text-gray-600"}>No form responses found</p>
       </div>
     );
   }
 
   return (
-    <div className="border border-core-outline rounded-lg max-h-[600px] overflow-x-auto overflow-y-auto w-full">
-      <table className="table-auto text-left w-full">
+    <div
+      className={
+        flush
+          ? "max-h-[600px] overflow-x-auto overflow-y-auto w-full border-t border-border"
+          : "border border-core-outline rounded-lg max-h-[600px] overflow-x-auto overflow-y-auto w-full"
+      }
+    >      <table className="table-auto text-left w-full">
         {/* Header */}
         <thead className="text-organiser-title-gray-text font-bold text-sm bg-core-hover border-b border-core-outline sticky top-0 z-20">
           <tr>
