@@ -10,15 +10,7 @@ export const HIDDEN_NAVBAR_ROUTES = [
 
 /** Routes that use the organiser v2 sidebar chrome (no global SPORTSHUB navbar). */
 export function usesOrganiserV2Chrome(pathname: string): boolean {
-  if (pathname.startsWith("/organiser/v2")) return true;
-  if (pathname.startsWith("/organiser/forms")) return true;
-  if (pathname.startsWith("/organiser/gallery")) return true;
-  if (pathname.startsWith("/organiser/settings")) return true;
-  if (pathname.startsWith("/organiser/event/recurring-events")) return true;
-  if (pathname.startsWith("/organiser/event/custom-links")) return true;
-  if (pathname.startsWith("/organiser/event/event-collection")) return true;
-  if (pathname.startsWith("/organiser/event/dashboard")) return true;
-  return false;
+  return pathname.startsWith("/organiser/v2");
 }
 
 const HIDE_SPORTSHUB_NAVBAR_KEY = "hideSportshubNavbar";

@@ -13,7 +13,7 @@ export function CustomLinksHeader({ linkCount, loading, username, onAdd }: Custo
   const subtitle = loading
     ? "Loading your links…"
     : linkCount === 0
-      ? "Share a short vanity URL for any session"
+      ? "Short URLs that open your events or series"
       : `${linkCount} custom link${linkCount === 1 ? "" : "s"} · /event/${username || "you"}/…`;
 
   return (

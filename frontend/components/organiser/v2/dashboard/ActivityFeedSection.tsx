@@ -46,7 +46,7 @@ function ActivityRow({
   return (
     <Link
       href={`/organiser/v2/event/${item.eventId}`}
-      className="group grid grid-cols-[2.75rem_0.75rem_1fr] gap-x-2 px-1 -mx-1 rounded-lg hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      className="group grid min-w-0 grid-cols-[2.75rem_0.75rem_1fr] gap-x-2 rounded-lg hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <time
         dateTime={new Date(item.purchaseDate.seconds * 1000).toISOString()}
@@ -64,7 +64,7 @@ function ActivityRow({
         <span className="font-mono text-xs uppercase tracking-wide text-foreground-muted">
           {actionLabel(item.type)}
         </span>
-        <p className="mt-1 text-xs text-foreground font-sans leading-snug">
+        <p className="mt-1 text-xs text-foreground font-sans leading-snug truncate">
           <span className="font-semibold">{item.purchaserName}</span>
           <span className="text-foreground-muted"> → </span>
           <span className="text-foreground-secondary group-hover:text-foreground transition-colors">
@@ -102,7 +102,7 @@ export function ActivityFeedSection({ activity, loading }: ActivityFeedSectionPr
         </Link>
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 min-h-0 flex flex-col overflow-x-hidden">
         {loading ? (
           <div className="space-y-3 flex-1">
             <Skeleton height={52} className="rounded-lg" />
@@ -120,7 +120,7 @@ export function ActivityFeedSection({ activity, loading }: ActivityFeedSectionPr
             </p>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 overflow-y-auto pr-0.5">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
             {visibleActivity.map((item, index) => (
               <ActivityRow
                 key={item.id}

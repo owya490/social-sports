@@ -8,16 +8,16 @@ related_targets: ["frontend/components/organiser/v2/collections/CollectionsHeade
 # Surface brief: Organiser v2 event collections list
 
 ## Scope & mode
-Operate. Catalogue list for event collections under Organiser Hub v2. Detail/edit remains on legacy `/organiser/event/event-collection/[id]`.
+Operate. Catalogue list for event collections under Organiser Hub v2. Detail opens `/organiser/v2/event/event-collection/[id]`.
 
 ## Audience & job
 Organisers grouping sessions to share one link; create quickly, open a collection to manage membership.
 
 ## Content & constraints
-Same collection service as legacy. Create still lands on legacy detail. Back/delete return to this v2 list.
+Same collection service as legacy. Create lands on v2 collection hub. Back/delete return to this v2 list.
 
 ## Direction
 Established Organiser Hub extension. Header + yellow create CTA + outlined rows with image, privacy, item count.
 
 ## Unresolved
-Detail page restyle deferred.
+None — detail restyle shipped as collection hub Comp A.

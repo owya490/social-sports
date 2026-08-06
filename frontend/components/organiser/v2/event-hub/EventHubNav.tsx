@@ -13,7 +13,7 @@ export function EventHubNav({ current, onChange }: EventHubNavProps) {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           role="tablist"
-          className="flex gap-1 overflow-x-auto scrollbar-none border-t border-border"
+          className="flex gap-1 overflow-x-auto overflow-y-hidden no-scrollbar border-t border-border"
         >
           {EVENT_HUB_SECTIONS.map((section) => {
             const active = section === current;

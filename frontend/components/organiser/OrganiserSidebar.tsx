@@ -34,9 +34,9 @@ type NavItem = {
 const EVENT_STATIC_ROUTES = new Set(["dashboard", "recurring-events", "event-collection", "custom-links"]);
 
 const isEventDetailPage = (pathname: string) => {
-  const match = pathname.match(/^\/organiser\/(v2\/)?event\/([^/]+)/);
+  const match = pathname.match(/^\/organiser\/v2\/event\/([^/]+)/);
   if (!match) return false;
-  return !EVENT_STATIC_ROUTES.has(match[2]);
+  return !EVENT_STATIC_ROUTES.has(match[1]);
 };
 
 const MAIN_NAV: NavItem[] = [
@@ -44,39 +44,32 @@ const MAIN_NAV: NavItem[] = [
     href: "/organiser/v2/dashboard",
     label: "Dashboard",
     icon: Squares2X2Icon,
-    isActive: (pathname) => /^\/organiser\/(v2\/)?dashboard/.test(pathname),
+    isActive: (pathname) => pathname.startsWith("/organiser/v2/dashboard"),
   },
   {
     href: "/organiser/v2/event/dashboard",
     label: "Events",
     icon: CalendarIcon,
     isActive: (pathname) =>
-      pathname.startsWith("/organiser/v2/event/dashboard") ||
-      pathname.startsWith("/organiser/event/dashboard") ||
-      isEventDetailPage(pathname),
+      pathname.startsWith("/organiser/v2/event/dashboard") || isEventDetailPage(pathname),
   },
   {
     href: "/organiser/v2/event/recurring-events",
     label: "Recurring events",
     icon: ArrowPathIcon,
-    isActive: (pathname) =>
-      pathname.startsWith("/organiser/v2/event/recurring-events") ||
-      pathname.startsWith("/organiser/event/recurring-events"),
+    isActive: (pathname) => pathname.startsWith("/organiser/v2/event/recurring-events"),
   },
   {
     href: "/organiser/v2/event/event-collection",
     label: "Event collections",
     icon: RectangleStackIcon,
-    isActive: (pathname) =>
-      pathname.startsWith("/organiser/v2/event/event-collection") ||
-      pathname.startsWith("/organiser/event/event-collection"),
+    isActive: (pathname) => pathname.startsWith("/organiser/v2/event/event-collection"),
   },
   {
     href: "/organiser/v2/event/custom-links",
     label: "Custom event links",
     icon: LinkIcon,
-    isActive: (pathname) =>
-      pathname.startsWith("/organiser/v2/event/custom-links") || pathname.startsWith("/organiser/event/custom-links"),
+    isActive: (pathname) => pathname.startsWith("/organiser/v2/event/custom-links"),
   },
 ];
 
@@ -85,15 +78,13 @@ const BOTTOM_NAV: NavItem[] = [
     href: "/organiser/v2/forms/gallery",
     label: "Forms",
     icon: PencilSquareIcon,
-    isActive: (pathname) =>
-      pathname.startsWith("/organiser/v2/forms") || pathname.startsWith("/organiser/forms"),
+    isActive: (pathname) => pathname.startsWith("/organiser/v2/forms"),
   },
   {
     href: "/organiser/v2/gallery",
     label: "Gallery",
     icon: CameraIcon,
-    isActive: (pathname) =>
-      pathname.startsWith("/organiser/v2/gallery") || pathname === "/organiser/gallery",
+    isActive: (pathname) => pathname.startsWith("/organiser/v2/gallery"),
   },
 ];
 
@@ -242,8 +233,7 @@ function SidebarContent({
                 href: "/organiser/v2/settings",
                 label: "Settings",
                 icon: Cog6ToothIcon,
-                isActive: (path) =>
-                  path.startsWith("/organiser/v2/settings") || path.startsWith("/organiser/settings"),
+                isActive: (path) => path.startsWith("/organiser/v2/settings"),
               }}
               pathname={pathname}
               onNavigate={onNavigate}

@@ -77,14 +77,14 @@ export function FormRow({ form }: FormRowProps) {
 
         <div className="flex shrink-0 items-center gap-0.5 self-end sm:self-center">
           <Link
-            href={`/organiser/forms/${form.formId}/editor`}
+            href={`/organiser/forms/${form.formId}/editor?returnTo=/organiser/v2/forms/gallery`}
             className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             aria-label={`Edit ${title}`}
           >
             <PencilSquareIcon className="h-4 w-4" aria-hidden />
           </Link>
           <Link
-            href={`/organiser/forms/${form.formId}/preview`}
+            href={`/organiser/forms/${form.formId}/preview?returnTo=/organiser/v2/forms/gallery`}
             className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             aria-label={`Preview ${title}`}
           >

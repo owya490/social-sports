@@ -74,7 +74,7 @@ export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
       flags={<RecurringHoverFlags template={template} />}
     >
       <Link
-        href={`/organiser/event/recurring-events/${recurrenceTemplateId}`}
+        href={`/organiser/v2/event/recurring-events/${recurrenceTemplateId}`}
         className="group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
       >
         <div

@@ -1,0 +1,33 @@
+{
+  "title": "Custom link card",
+  "question": "Clicking a link opens the edit side panel, and the destination field will pre-select what’s already saved. Which destination wording should the card use?",
+  "options": [
+    {
+      "id": "opens",
+      "label": "Opens",
+      "kicker": "PLAIN",
+      "thesis": "Card reads “Opens Friday Social” — guests know what the short URL lands on.",
+      "viewport": "Name + URL on the card; one line “Opens · Friday Social” with Event/Series chip.",
+      "risk": "Slightly casual if someone expects admin jargon."
+    },
+    {
+      "id": "sends-guests-to",
+      "label": "Sends guests to",
+      "kicker": "GUEST-LED",
+      "thesis": "Card reads “Sends guests to Friday Social” — frames the organiser’s job as directing people.",
+      "viewport": "Same card anatomy; destination line leads with “Sends guests to”.",
+      "risk": "Longer line truncates earlier on phones."
+    },
+    {
+      "id": "destination",
+      "label": "Destination",
+      "kicker": "NEUTRAL",
+      "thesis": "Card labels the field “Destination” then the event name — admin-clear, no metaphor.",
+      "viewport": "Muted “Destination” label beside the event name and type chip.",
+      "risk": "Slightly colder than the rest of the organiser hub voice."
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

@@ -2,55 +2,69 @@
 version: 1
 slug: "ntend-app-no-footer-organiser-v2-event-id-page-tsx"
 primary_target: "frontend/app/(no-footer)/organiser/v2/event/[id]/page.tsx"
+related_targets: ["frontend/components/organiser/v2/event-hub/EventHubChrome.tsx","frontend/components/organiser/v2/event-hub/EventHubNav.tsx","frontend/components/organiser/v2/event-hub/EventHubAttendees.tsx","frontend/components/organiser/v2/event-hub/EventHubListing.tsx","frontend/components/organiser/v2/event-hub/EventHubForms.tsx","frontend/components/organiser/v2/event-hub/EventHubSettings.tsx","frontend/components/organiser/v2/event-hub/EventHubStage.tsx","frontend/components/organiser/v2/event-hub/EventHubPanel.tsx","frontend/components/organiser/v2/event-hub/EventHubEditForm.tsx","frontend/components/organiser/v2/event-hub/EventHubDescriptionEditor.tsx","frontend/components/organiser/event/forms/FormResponsesTable.tsx"]
+---
+
+---
+version: 1
+slug: "ntend-app-no-footer-organiser-v2-event-id-page-tsx"
+primary_target: "frontend/app/(no-footer)/organiser/v2/event/[id]/page.tsx"
 related_targets:
   - "frontend/components/organiser/v2/event-hub/EventHubChrome.tsx"
   - "frontend/components/organiser/v2/event-hub/EventHubNav.tsx"
   - "frontend/components/organiser/v2/event-hub/EventHubAttendees.tsx"
   - "frontend/components/organiser/v2/event-hub/EventHubListing.tsx"
   - "frontend/components/organiser/v2/event-hub/EventHubForms.tsx"
-  - "frontend/components/organiser/v2/event-hub/EventHubImages.tsx"
   - "frontend/components/organiser/v2/event-hub/EventHubSettings.tsx"
   - "frontend/components/organiser/v2/event-hub/EventHubStage.tsx"
+  - "frontend/components/organiser/v2/event-hub/EventHubPanel.tsx"
+  - "frontend/components/organiser/v2/event-hub/EventHubEditForm.tsx"
+  - "frontend/components/organiser/v2/event-hub/EventHubDescriptionEditor.tsx"
+  - "frontend/components/organiser/event/forms/FormResponsesTable.tsx"
 ---
 
 # Organiser v2 event hub
 
 ## Scope & mode
-Operate. Full single-event hub at `/organiser/v2/event/[id]`. Port from legacy `/organiser/event/[id]`.
+Operate. Single-event hub at `/organiser/v2/event/[id]`.
 
 ## Audience & job
-Organisers from v2 events dashboard. First job: manage attendees. Second: edit listing inline. Forms, Images, Settings are peer-nav findable.
+Organisers from v2 events. First job: scan Details. Second: manage Registrations. Forms and Settings peer-nav findable.
 
 ## Direction
-Chrome-led (approved chrome comp B) + continuous workbench bodies (A+B): flush list plane with expand-in-place inspector. Honest Clubhouse. No nested white cards under chrome.
+Luma overview-led (approved Comp A) in Honest Clubhouse. Quiet chrome (no cover). Tabs: Details · Registrations · Forms · Settings. Registrations expand in place for order/ticket IDs; deep work in right drawer / bottom sheet. Edit details uses sectioned Comp A (Basic / Time / Location / Booking) with TipTap bubble-on-selection — no sticky toolbar, no Appearance themes.
 
-## Comp refinements (approved)
-- Quieter Share / Pause in chrome
-- 16:9 banner constrained
-- Body: flush toolbar + hairline filters + edge-to-edge rows
-- Body: expand-in-place for pending Approve/Decline and listing advanced fields
+## Confirmed choices
+- Overview-led Details (chrome sheds cover)
+- Forms: flush response table on stage; Change form + Add answers open EventHubPanel
+- Settings: flush switches on stage
+- Registrations: expand-in-place; Form responses / Edit tickets open EventHubPanel
+- Edit details: sectioned timeline Comp A + bubble TipTap; single Update event saves all Sportshub fields
 
 ## Approved comps
-- Chrome: `.impeccable/mocks/event-hub-v2-comp-b-chrome-led.png`
-- Body: `.impeccable/mocks/event-hub-body-comp-a-flush-list.png` (A+B with expand from B)
+- Details overview: `.impeccable/mocks/event-hub-luma-comp-a-details-overview.png`
+- Edit details: `.impeccable/mocks/event-hub-edit-comp-a-sectioned-timeline.png`
 
 ## Memorable moment
-Open event → calm chrome → attendees as a Continuous Linear-style plane; expand a pending row to approve without leaving the list.
+Open event → Details preview card → Edit details slides from the right (sheet on phone); title-led sectioned form; formatting only on text selection.
 
 ## Unresolved
-Share in chrome vs nav; Communication return; exact max banner width.
+None blocking.
 
 ## Implementation fidelity inventory
 | Ingredient | Medium |
 |---|---|
-| Event chrome | HTML/CSS tokens |
-| Constrained 16:9 banner | img + aspect-video |
-| Quiet Share / Pause | ghost buttons |
-| Peer section nav | HTML tabs |
-| Stage toolbar / filters / preference rows | HTML/CSS (`EventHubStage`) |
-| Attendees flush list + expand | HTML/CSS + existing dialogs |
-| Listing document plane | HTML/CSS + existing editors |
-| Forms flush shell | HTML/CSS + FormResponsesTable |
-| Images flush shell | HTML/CSS + ImageForm |
-| Settings preference rows | HTML/CSS switches |
-| Yellow primary CTA | Add / Save / Approve only |
+| Quiet chrome | HTML/CSS |
+| Peer tabs | HTML tabs |
+| Details overview card | HTML/CSS + next/image |
+| Hosts row | HTML + user avatar |
+| Visibility read-only | HTML |
+| EventHubPanel drawer/sheet | Headless UI Dialog |
+| Edit details sectioned form | EventHubEditForm HTML/CSS |
+| TipTap bubble menu | @tiptap/react BubbleMenu |
+| Change photo panel | ImageForm |
+| Registrations expand + form/ticket panels | HTML + EventHubPanel |
+| Forms flush response table | Shared FormResponsesTable (flush) |
+| Change form panel | FormSelector in EventHubPanel |
+| Settings flush switches | Existing preference rows |
+| Yellow primary | Update / Save / Add / Approve only |

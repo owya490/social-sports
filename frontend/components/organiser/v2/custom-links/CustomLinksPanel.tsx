@@ -1,5 +1,6 @@
 "use client";
 
+import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import { CustomEventLink, CustomEventLinkType, EMPTY_CUSTOM_EVENT_LINK } from "@/interfaces/CustomLinkTypes";
 import { EventData } from "@/interfaces/EventTypes";
 import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
@@ -11,11 +12,10 @@ import {
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import {
   CheckIcon,
+  ChevronRightIcon,
   DocumentDuplicateIcon,
   LinkIcon,
-  PencilIcon,
   TrashIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -32,43 +32,85 @@ type CustomLinksPanelProps = {
   setLinks: (links: Record<string, CustomEventLink>) => void;
 };
 
+type DestinationOption = { id: string; name: string };
+
 const fieldClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2.5 text-base sm:text-sm text-foreground font-sans placeholder:text-foreground-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
 const selectClass =
   "w-full rounded-lg border border-border bg-background px-3 py-2.5 text-base sm:text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
+function typeLabel(type: CustomEventLinkType) {
+  return type === "event" ? "Event" : "Series";
+}
+
+function resolveReferenceId(link: CustomEventLink): string | null {
+  if (link.referenceId) return link.referenceId;
+  // Legacy event links sometimes only stored eventReference (= event id).
+  if (link.type === "event" && link.eventReference) return link.eventReference;
+  return null;
+}
+
+function normalizeLink(link: CustomEventLink): CustomEventLink {
+  const referenceId = resolveReferenceId(link);
+  return { ...link, referenceId };
+}
+
 export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPanelProps>(function CustomLinksPanel(
   { user, activeEvents, activeRecurringTemplates, links, setLinks },
   ref,
 ) {
-  const [updatedLinks, setUpdatedLinks] = useState<Record<string, CustomEventLink>>(links);
-  const [editIds, setEditIds] = useState<string[]>([]);
+  const [list, setList] = useState<Record<string, CustomEventLink>>(links);
+  const [draft, setDraft] = useState<CustomEventLink | null>(null);
+  const [isNewDraft, setIsNewDraft] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    setUpdatedLinks(links);
+    setList(links);
   }, [links]);
 
-  const handleEdit = (id: string) => {
+  const openDraft = (link: CustomEventLink, isNew: boolean) => {
     setFormError(null);
-    setEditIds((prev) => [...prev, id]);
+    setIsNewDraft(isNew);
+    setDraft(normalizeLink(link));
+  };
+
+  const closePanel = () => {
+    setFormError(null);
+    setDraft(null);
+    setIsNewDraft(false);
   };
 
   const handleAddLink = () => {
-    const newId = uuidv4();
-    const newLink: CustomEventLink = {
-      ...EMPTY_CUSTOM_EVENT_LINK,
-      id: newId,
-    };
-    setFormError(null);
-    setUpdatedLinks((prev) => ({ ...prev, [newId]: newLink }));
-    setEditIds((prev) => [...prev, newId]);
+    openDraft({ ...EMPTY_CUSTOM_EVENT_LINK, id: uuidv4() }, true);
   };
 
   useImperativeHandle(ref, () => ({ addLink: handleAddLink }));
+
+  const destinationOptions = (link: CustomEventLink): DestinationOption[] => {
+    const base: DestinationOption[] =
+      link.type === "event"
+        ? activeEvents.map((event) => ({ id: event.eventId, name: event.name }))
+        : activeRecurringTemplates.map((template) => ({
+            id: template.recurrenceTemplateId,
+            name: template.eventData.name,
+          }));
+
+    const referenceId = resolveReferenceId(link);
+    if (referenceId && !base.some((option) => option.id === referenceId)) {
+      return [
+        {
+          id: referenceId,
+          name: link.referenceName?.trim() || "Current destination (unavailable)",
+        },
+        ...base,
+      ];
+    }
+    return base;
+  };
 
   const validateCustomLink = (link: CustomEventLink) => {
     const missingFields = [];
@@ -127,43 +169,72 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
       return false;
     }
 
-    if (!link.referenceId) {
-      setFormError(`Select a ${link.type === "event" ? "event" : "recurring template"}.`);
+    if (!resolveReferenceId(link)) {
+      setFormError(`Choose which ${link.type === "event" ? "event" : "series"} this link opens.`);
       return false;
     }
 
     return true;
   };
 
-  const handleSave = async (id: string) => {
-    const updatedLink = updatedLinks[id];
-    if (!validateCustomLink(updatedLink)) {
-      return;
-    }
+  const applyReference = (type: CustomEventLinkType, referenceId: string) => {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      if (!referenceId) {
+        return {
+          ...prev,
+          type,
+          referenceId: null,
+          referenceName: null,
+          eventReference: null,
+        };
+      }
 
-    setSavingId(id);
+      if (type === "event") {
+        const event = activeEvents.find((item) => item.eventId === referenceId);
+        return {
+          ...prev,
+          type,
+          referenceId,
+          referenceName: event?.name ?? prev.referenceName,
+          eventReference: referenceId,
+        };
+      }
+
+      const template = activeRecurringTemplates.find((item) => item.recurrenceTemplateId === referenceId);
+      const latestOccurrence = template
+        ? Object.entries(template.recurrenceData.pastRecurrences ?? {})
+            .map(([dateStr, occurrenceId]) => ({ date: new Date(dateStr), id: occurrenceId }))
+            .sort((a, b) => b.date.getTime() - a.date.getTime())[0]
+        : undefined;
+
+      return {
+        ...prev,
+        type,
+        referenceId,
+        referenceName: template?.eventData.name ?? prev.referenceName,
+        // Keep the stored occurrence when the series is no longer in the active list.
+        eventReference: latestOccurrence?.id ?? prev.eventReference,
+      };
+    });
+  };
+
+  const handleSave = async () => {
+    if (!draft || !validateCustomLink(draft)) return;
+
+    setSaving(true);
     setFormError(null);
     try {
-      await saveCustomEventLink(user.userId, updatedLink);
-      setEditIds((prev) => prev.filter((editId) => editId !== id));
-      setLinks({ ...links, [id]: updatedLink });
+      await saveCustomEventLink(user.userId, draft);
+      const next = { ...links, [draft.id]: draft };
+      setLinks(next);
+      setList(next);
+      closePanel();
     } catch (error) {
       console.error("Error saving custom event link:", error);
       setFormError("Could not save this link. Try again.");
     } finally {
-      setSavingId(null);
-    }
-  };
-
-  const handleCancel = (id: string) => {
-    setFormError(null);
-    setEditIds((prev) => prev.filter((editId) => editId !== id));
-    if (Object.keys(links).includes(id)) {
-      setUpdatedLinks({ ...updatedLinks, [id]: links[id] });
-    } else {
-      const updatedLinkCopy = { ...updatedLinks };
-      delete updatedLinkCopy[id];
-      setUpdatedLinks(updatedLinkCopy);
+      setSaving(false);
     }
   };
 
@@ -178,90 +249,45 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const link = updatedLinks[id];
-    const confirmed = window.confirm(`Delete “${link.customEventLinkName || link.customEventLink}”?`);
+  const handleDelete = async () => {
+    if (!draft || isNewDraft) return;
+    const confirmed = window.confirm(`Delete “${draft.customEventLinkName || draft.customEventLink}”?`);
     if (!confirmed) return;
 
+    setDeleting(true);
+    setFormError(null);
     try {
-      await deleteCustomEventLink(user.userId, link);
+      await deleteCustomEventLink(user.userId, draft);
+      const next = { ...links };
+      delete next[draft.id];
+      setLinks(next);
+      setList(next);
+      closePanel();
     } catch (error) {
       console.error("Error deleting custom event link:", error);
       setFormError("Could not delete this link. Try again.");
-      return;
+    } finally {
+      setDeleting(false);
     }
-    const updatedLinkCopy = { ...updatedLinks };
-    delete updatedLinkCopy[id];
-    setUpdatedLinks(updatedLinkCopy);
-    const linksCopy = { ...links };
-    delete linksCopy[id];
-    setLinks(linksCopy);
-    setEditIds((prev) => prev.filter((editId) => editId !== id));
   };
 
-  const handleFieldChange = <T extends keyof CustomEventLink>(
-    id: string,
-    field: T,
-    value: CustomEventLink[T],
-  ) => setUpdatedLinks((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
-
-  const applyReference = (id: string, type: CustomEventLinkType, referenceId: string) => {
-    setUpdatedLinks((prev) => {
-      if (!referenceId) {
-        return {
-          ...prev,
-          [id]: {
-            ...prev[id],
-            referenceId: null,
-            referenceName: null,
-            eventReference: null,
-          },
-        };
-      }
-
-      if (type === "event") {
-        const event = activeEvents.find((item) => item.eventId === referenceId);
-        return {
-          ...prev,
-          [id]: {
-            ...prev[id],
-            referenceId,
-            referenceName: event?.name ?? null,
-            eventReference: referenceId,
-          },
-        };
-      }
-
-      const template = activeRecurringTemplates.find((item) => item.recurrenceTemplateId === referenceId);
-      const latestOccurrence = Object.entries(template?.recurrenceData.pastRecurrences ?? {})
-        .map(([dateStr, occurrenceId]) => ({ date: new Date(dateStr), id: occurrenceId }))
-        .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
-
-      return {
-        ...prev,
-        [id]: {
-          ...prev[id],
-          referenceId,
-          referenceName: template?.eventData.name ?? null,
-          eventReference: latestOccurrence?.id ?? null,
-        },
-      };
-    });
-  };
-
-  const linkList = Object.values(updatedLinks);
+  const linkList = Object.values(list);
+  const baseUrl = getUrlWithCurrentHostname(`/event/${user.username || "username"}/`);
+  const panelOpen = draft !== null;
+  const draftOptions = draft ? destinationOptions(draft) : [];
+  const draftReferenceId = draft ? resolveReferenceId(draft) ?? "" : "";
 
   return (
     <section aria-label="Custom event links" className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto pb-10 space-y-4">
       <p className="text-xs text-foreground-muted font-sans">
-        Public URL format:{" "}
+        Public URL:{" "}
         <span className="text-foreground-secondary">
-          {getUrlWithCurrentHostname(`/event/${user.username || "username"}/`)}
+          {baseUrl}
           <span className="text-foreground">your-slug</span>
         </span>
       </p>
 
-      {formError ? (
+      {formError && !panelOpen ? (
         <div
           role="alert"
           className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground font-sans"
@@ -275,7 +301,7 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
           <LinkIcon className="mx-auto h-10 w-10 text-foreground-muted" aria-hidden />
           <p className="mt-4 text-sm font-semibold text-foreground font-sans">No custom links yet</p>
           <p className="mt-1 text-xs text-foreground-muted font-sans max-w-sm mx-auto">
-            Create a short slug that points to an upcoming event or active recurring template.
+            Create a short URL that opens an upcoming event or active series.
           </p>
           <button
             type="button"
@@ -286,145 +312,55 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
           </button>
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-background overflow-hidden divide-y divide-border">
+        <ul className="rounded-xl border border-border bg-background overflow-hidden divide-y divide-border">
           {linkList.map((link) => {
-            const isEditing = editIds.includes(link.id);
             const fullUrl = getUrlWithCurrentHostname(`/event/${user.username}/${link.customEventLink}`);
-
-            if (isEditing) {
-              return (
-                <div key={link.id} className="p-4 sm:p-5 space-y-3 bg-surface/40">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="block space-y-1.5">
-                      <span className="text-xs font-medium text-foreground-muted font-sans">Name</span>
-                      <input
-                        className={fieldClass}
-                        value={link.customEventLinkName}
-                        onChange={(e) => handleFieldChange(link.id, "customEventLinkName", e.target.value)}
-                        placeholder="Friday social"
-                        maxLength={50}
-                      />
-                    </label>
-                    <label className="block space-y-1.5">
-                      <span className="text-xs font-medium text-foreground-muted font-sans">Slug</span>
-                      <input
-                        className={fieldClass}
-                        value={link.customEventLink}
-                        onChange={(e) =>
-                          handleFieldChange(
-                            link.id,
-                            "customEventLink",
-                            e.target.value.toLowerCase().replace(/\s/g, ""),
-                          )
-                        }
-                        placeholder="friday-social"
-                        maxLength={30}
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                        spellCheck={false}
-                      />
-                    </label>
-                    <label className="block space-y-1.5">
-                      <span className="text-xs font-medium text-foreground-muted font-sans">Type</span>
-                      <select
-                        className={selectClass}
-                        value={link.type}
-                        onChange={(e) => {
-                          const nextType = e.target.value as CustomEventLinkType;
-                          handleFieldChange(link.id, "type", nextType);
-                          handleFieldChange(link.id, "referenceId", null);
-                          handleFieldChange(link.id, "referenceName", null);
-                          handleFieldChange(link.id, "eventReference", null);
-                        }}
-                      >
-                        <option value="event">Event</option>
-                        <option value="recurring">Recurring</option>
-                      </select>
-                    </label>
-                    <label className="block space-y-1.5">
-                      <span className="text-xs font-medium text-foreground-muted font-sans">
-                        {link.type === "event" ? "Event" : "Recurring template"}
-                      </span>
-                      <select
-                        className={selectClass}
-                        value={link.referenceId ?? ""}
-                        onChange={(e) => applyReference(link.id, link.type, e.target.value)}
-                      >
-                        <option value="">Select…</option>
-                        {link.type === "event"
-                          ? activeEvents.map((event) => (
-                              <option key={event.eventId} value={event.eventId}>
-                                {event.name}
-                              </option>
-                            ))
-                          : activeRecurringTemplates.map((template) => (
-                              <option key={template.recurrenceTemplateId} value={template.recurrenceTemplateId}>
-                                {template.eventData.name}
-                              </option>
-                            ))}
-                      </select>
-                    </label>
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void handleSave(link.id);
-                      }}
-                      disabled={savingId === link.id}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-3.5 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
-                    >
-                      <CheckIcon className="h-4 w-4" aria-hidden />
-                      {savingId === link.id ? "Saving…" : "Save"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCancel(link.id)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                    >
-                      <XMarkIcon className="h-4 w-4" aria-hidden />
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              );
-            }
+            const destination = link.referenceName?.trim();
 
             return (
-              <div
-                key={link.id}
-                className="flex flex-col gap-3 p-2.5 sm:p-3 sm:flex-row sm:items-center sm:gap-3 hover:bg-surface-hover transition-colors"
-              >
-                  <div className="min-w-0 flex-1 py-0.5 px-1 sm:px-0">
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="min-w-0 text-sm font-semibold text-foreground font-sans truncate leading-snug">
-                        {link.customEventLinkName}
-                      </p>
-                      <span className="shrink-0 rounded-lg bg-surface px-2 py-0.5 text-xs font-medium text-foreground-secondary font-sans">
-                        {link.type === "event" ? "Event" : "Recurring"}
-                      </span>
+              <li key={link.id}>
+                <div className="flex items-stretch gap-0 hover:bg-surface-hover transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => openDraft(link, false)}
+                    className="min-w-0 flex-1 text-left px-3.5 py-3.5 sm:px-4 sm:py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
+                    aria-label={`Edit ${link.customEventLinkName || "custom link"}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p className="min-w-0 text-sm font-semibold text-foreground font-sans truncate leading-snug">
+                            {link.customEventLinkName || "Untitled link"}
+                          </p>
+                          <span className="shrink-0 rounded-md bg-surface px-1.5 py-0.5 text-xs font-medium text-foreground-secondary font-sans">
+                            {typeLabel(link.type)}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-foreground-muted font-sans truncate">{fullUrl}</p>
+                        <p className="mt-1.5 text-xs text-foreground-secondary font-sans truncate">
+                          {destination ? (
+                            <>
+                              Opens <span className="text-foreground font-medium">{destination}</span>
+                            </>
+                          ) : (
+                            <span className="text-foreground-muted">No destination set</span>
+                          )}
+                        </p>
+                      </div>
+                      <ChevronRightIcon
+                        className="mt-1 h-4 w-4 shrink-0 text-foreground-muted"
+                        aria-hidden
+                      />
                     </div>
-                    <p className="mt-1 text-xs text-foreground-muted font-sans truncate">{fullUrl}</p>
-                    <p className="mt-0.5 text-xs text-foreground-muted font-sans truncate">
-                      Points to: {link.referenceName || "—"}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-0.5 self-end sm:self-center">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(link.id)}
-                      className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                      aria-label={`Edit ${link.customEventLinkName}`}
-                    >
-                      <PencilIcon className="h-4 w-4" aria-hidden />
-                    </button>
+                  </button>
+                  <div className="flex shrink-0 items-center pr-2 sm:pr-3">
                     <button
                       type="button"
                       onClick={() => {
                         void handleCopyLink(link.id, link.customEventLink);
                       }}
                       className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                      aria-label={copiedId === link.id ? "Copied" : `Copy ${link.customEventLinkName}`}
+                      aria-label={copiedId === link.id ? "Copied" : `Copy ${link.customEventLinkName || "link"}`}
                     >
                       {copiedId === link.id ? (
                         <CheckIcon className="h-4 w-4 text-foreground" aria-hidden />
@@ -432,22 +368,178 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
                         <DocumentDuplicateIcon className="h-4 w-4" aria-hidden />
                       )}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void handleDelete(link.id);
-                      }}
-                      className="rounded-lg p-2 text-foreground-secondary hover:bg-surface-muted hover:text-danger transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                      aria-label={`Delete ${link.customEventLinkName}`}
-                    >
-                      <TrashIcon className="h-4 w-4" aria-hidden />
-                    </button>
                   </div>
-              </div>
+                </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
+
+      <EventHubPanel
+        open={panelOpen}
+        onClose={closePanel}
+        title={isNewDraft ? "New custom link" : "Edit custom link"}
+        footer={
+          draft ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  void handleSave();
+                }}
+                disabled={saving || deleting}
+                className="inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={closePanel}
+                disabled={saving || deleting}
+                className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              {!isNewDraft ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleDelete();
+                  }}
+                  disabled={saving || deleting}
+                  className="ml-auto inline-flex items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-medium text-danger font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+                >
+                  <TrashIcon className="h-4 w-4" aria-hidden />
+                  {deleting ? "Deleting…" : "Delete"}
+                </button>
+              ) : null}
+            </div>
+          ) : null
+        }
+      >
+        {draft ? (
+          <div className="space-y-5">
+            {formError ? (
+              <div
+                role="alert"
+                className="rounded-xl border border-border bg-surface px-3.5 py-3 text-sm text-foreground font-sans"
+              >
+                {formError}
+              </div>
+            ) : null}
+
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-foreground-muted font-sans">Name</span>
+              <input
+                className={fieldClass}
+                value={draft.customEventLinkName}
+                onChange={(e) => setDraft((prev) => (prev ? { ...prev, customEventLinkName: e.target.value } : prev))}
+                placeholder="Friday social"
+                maxLength={50}
+              />
+            </label>
+
+            <div className="space-y-1.5">
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-foreground-muted font-sans">Slug</span>
+                <input
+                  className={fieldClass}
+                  value={draft.customEventLink}
+                  onChange={(e) =>
+                    setDraft((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            customEventLink: e.target.value.toLowerCase().replace(/\s/g, ""),
+                          }
+                        : prev,
+                    )
+                  }
+                  placeholder="friday-social"
+                  maxLength={30}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+              </label>
+              <p className="text-xs text-foreground-muted font-sans break-all">
+                {baseUrl}
+                <span className="text-foreground">{draft.customEventLink || "your-slug"}</span>
+              </p>
+            </div>
+
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-medium text-foreground-muted font-sans">What it opens</legend>
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    { value: "event", label: "Event" },
+                    { value: "recurring", label: "Series" },
+                  ] as const
+                ).map((option) => {
+                  const selected = draft.type === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        if (draft.type === option.value) return;
+                        setDraft((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                type: option.value,
+                                referenceId: null,
+                                referenceName: null,
+                                eventReference: null,
+                              }
+                            : prev,
+                        );
+                      }}
+                      className={`rounded-xl border px-3 py-2.5 text-sm font-medium font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                        selected
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border bg-background text-foreground hover:bg-surface-hover"
+                      }`}
+                      aria-pressed={selected}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-foreground-muted font-sans">
+                {draft.type === "event" ? "Event" : "Series"}
+              </span>
+              <select
+                className={selectClass}
+                value={draftReferenceId}
+                onChange={(e) => applyReference(draft.type, e.target.value)}
+              >
+                <option value="">Choose…</option>
+                {draftOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+              {draftReferenceId && draft.referenceName ? (
+                <p className="text-xs text-foreground-secondary font-sans">
+                  Opens <span className="text-foreground font-medium">{draft.referenceName}</span>
+                </p>
+              ) : (
+                <p className="text-xs text-foreground-muted font-sans">
+                  Guests who open this link will land on the {draft.type === "event" ? "event" : "series"} you choose.
+                </p>
+              )}
+            </label>
+          </div>
+        ) : null}
+      </EventHubPanel>
     </section>
   );
 });

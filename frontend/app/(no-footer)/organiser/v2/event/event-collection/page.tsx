@@ -58,7 +58,7 @@ export default function OrganiserEventCollectionsV2Page() {
         true,
         DEFAULT_EVENT_IMAGE_URL,
       );
-      router.push(`/organiser/event/event-collection/${collectionId}`);
+      router.push(`/organiser/v2/event/event-collection/${collectionId}`);
     } catch (createError) {
       logger.error(`Failed to create collection: ${createError}`);
       setError(true);
@@ -71,9 +71,9 @@ export default function OrganiserEventCollectionsV2Page() {
     <>
       {/* THESIS: A scannable collection catalogue—privacy and item count clear, open any group in one tap.
           OWN-WORLD: Honest Clubhouse tokens—shared row language with Your events.
-          STORY: Create or open a collection; edit details on the legacy drilldown.
+          STORY: Create or open a collection; manage in the v2 collection hub.
           FIRST VIEWPORT: Title + create CTA, unified row panel below.
-          FORM: Established v2 operate extension; list-only port (drilldowns stay legacy).
+          FORM: Established v2 operate extension; opens collection hub detail.
           FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md */}
       <div className="min-h-screen bg-surface text-foreground pb-2">
         <CollectionsHeader

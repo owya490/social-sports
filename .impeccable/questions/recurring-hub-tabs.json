@@ -1,0 +1,36 @@
+{
+  "title": "Recurring template hub — tabs",
+  "question": "Event hub uses Details · Registrations · Forms · Settings (Images live in Details panels; no attendees on a template). How should the recurring template hub’s peer tabs work?",
+  "options": [
+    {
+      "id": "mirror-plus-series",
+      "label": "Details · Past events · Recurrence · Settings",
+      "kicker": "CLOSEST MIRROR",
+      "thesis": "Same quiet chrome and overview-led Details as the event hub. Past events and Recurrence stay peer tabs; Images folds into Details via Change photo like event hub.",
+      "viewport": "Title + peer tabs. Details: preview + when/where + Edit / Change photo panels. Past events list. Recurrence schedule form. Settings flush switches.",
+      "risk": "Four tabs instead of event hub’s four — but different jobs, so parity is conceptual not identical.",
+      "materials": ["EventHubChrome", "EventHubNav", "EventHubListing reuse", "Past events", "Recurrence"]
+    },
+    {
+      "id": "recurrence-in-settings",
+      "label": "Details · Past events · Settings",
+      "kicker": "TIGHTER",
+      "thesis": "Three peer tabs. Recurrence schedule lives inside Settings (or a Settings sub-section); Details matches event hub including photo panel.",
+      "viewport": "Quieter nav. Settings stage holds template preferences + recurrence schedule blocks.",
+      "risk": "Schedule edits compete with payment/waitlist toggles on one tab.",
+      "materials": ["3 tabs", "Settings absorbs Recurrence"]
+    },
+    {
+      "id": "keep-five-tabs",
+      "label": "Keep all five legacy tabs",
+      "kicker": "FULL PORT",
+      "thesis": "Restyle Details · Past Events · Recurrence · Images · Settings in event-hub chrome, but keep Images as its own peer tab.",
+      "viewport": "Same five destinations as today; only the shell and Details overview change.",
+      "risk": "Diverges from event hub’s Images-in-Details decision; two photo surfaces.",
+      "materials": ["5 tabs", "legacy IA"]
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

@@ -64,7 +64,7 @@ export function CollectionRow({ collection }: CollectionRowProps) {
   const eventCount = collection.eventIds.length;
   const templateCount = collection.recurringEventTemplateIds.length;
   const totalItems = eventCount + templateCount;
-  const href = `/organiser/event/event-collection/${collection.eventCollectionId}`;
+  const href = `/organiser/v2/event/event-collection/${collection.eventCollectionId}`;
   const itemsLabel =
     totalItems === 0
       ? "No events yet"

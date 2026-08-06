@@ -175,7 +175,7 @@ export default function OrganiserNavbar() {
                       <Menu.Item>
                         {({ active }) => (
                           <Link
-                            href="/organiser/v2/event/recurring-events"
+                            href="/organiser/event/recurring-events"
                             className={`${
                               active ? "text-core-text bg-core-hover" : "text-core-text"
                             } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
@@ -188,7 +188,7 @@ export default function OrganiserNavbar() {
                       <Menu.Item>
                         {({ active }) => (
                           <Link
-                            href="/organiser/v2/event/custom-links"
+                            href="/organiser/event/custom-links"
                             className={`${
                               active ? "text-core-text bg-core-hover" : "text-core-text"
                             } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
@@ -201,7 +201,7 @@ export default function OrganiserNavbar() {
                       <Menu.Item>
                         {({ active }) => (
                           <Link
-                            href="/organiser/v2/event/event-collection"
+                            href="/organiser/event/event-collection"
                             className={`${
                               active ? "text-core-text bg-core-hover" : "text-core-text"
                             } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
@@ -219,22 +219,18 @@ export default function OrganiserNavbar() {
           }}
         </Menu>{" "}
         <NavButton
-          href="/organiser/v2/forms/gallery"
-          isActive={currPage.startsWith("/organiser/v2/forms") || currPage.startsWith("/organiser/forms")}
+          href="/organiser/forms/gallery"
+          isActive={currPage.startsWith("/organiser/forms")}
           tooltipContent="Forms"
         >
           <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
-        <NavButton
-          href="/organiser/v2/gallery"
-          isActive={currPage.startsWith("/organiser/v2/gallery") || currPage === "/organiser/gallery"}
-          tooltipContent="Gallery"
-        >
+        <NavButton href="/organiser/gallery" isActive={currPage === "/organiser/gallery"} tooltipContent="Gallery">
           <CameraIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
         <NavButton
-          href="/organiser/v2/settings"
-          isActive={currPage.startsWith("/organiser/v2/settings") || currPage.startsWith("/organiser/settings")}
+          href="/organiser/settings"
+          isActive={currPage.startsWith("/organiser/settings")}
           tooltipContent="Settings"
         >
           <Cog6ToothIcon className="w-6 stroke-1 stroke-core-text" />

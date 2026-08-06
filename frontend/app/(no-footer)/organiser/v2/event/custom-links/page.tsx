@@ -64,11 +64,11 @@ export default function OrganiserCustomLinksV2Page() {
 
   return (
     <>
-      {/* THESIS: Manage vanity event URLs in a phone-first list—edit inline, copy in one tap.
-          OWN-WORLD: Honest Clubhouse tokens—outlined panel rows, accent primary actions, no Material table chrome.
-          STORY: Add or edit a slug that points at an event or recurring template; share the short URL.
-          FIRST VIEWPORT: Title + add CTA, format hint, stack of link rows.
-          FORM: Established v2 operate extension; list/editor port.
+      {/* THESIS: Manage vanity event URLs as tappable cards—click opens a side panel, not inline edit.
+          OWN-WORLD: Honest Clubhouse tokens—outlined list rows, Event Hub drawer grammar, accent Save.
+          STORY: See what each short URL opens; edit name, slug, and destination in one panel; copy in one tap.
+          FIRST VIEWPORT: Title + add CTA, format hint, stack of clickable link cards with “Opens …” destination.
+          FORM: Established v2 operate extension; panel editor replaces inline form.
           FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md */}
       <div className="min-h-screen bg-surface text-foreground pb-2">
         <CustomLinksHeader

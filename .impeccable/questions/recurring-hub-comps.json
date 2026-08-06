@@ -1,0 +1,39 @@
+{
+  "title": "Recurring hub — Details composition",
+  "question": "Tabs are locked (Details · Past events · Recurrence · Settings). Which Details composition should we build?",
+  "options": [
+    {
+      "id": "overview-twin",
+      "label": "Overview twin",
+      "kicker": "CLOSEST TO EVENT HUB",
+      "thesis": "Same two-column Details overview as the event hub. Series lives only in chrome meta (Weekly · next).",
+      "viewport": "Quiet chrome + peer tabs. Details: photo | when/where card, Hosts, Visibility. Edit / Change photo panels.",
+      "risk": "Series cadence is easy to miss until you open Recurrence.",
+      "hero": ".impeccable/mocks/recurring-hub-comp-a-overview-twin.png",
+      "sketch": ".impeccable/mocks/recurring-hub-comp-a-overview-twin.png"
+    },
+    {
+      "id": "series-strip",
+      "label": "Series strip",
+      "kicker": "SERIES AT A GLANCE",
+      "thesis": "Event-hub twin overview plus one quiet Active series strip above the card (frequency, remaining, create-before).",
+      "viewport": "Same shell; thin series bar then two-column overview.",
+      "risk": "Strip can feel like a second header if it gets too loud.",
+      "hero": ".impeccable/mocks/recurring-hub-comp-b-series-strip.png",
+      "sketch": ".impeccable/mocks/recurring-hub-comp-b-series-strip.png"
+    },
+    {
+      "id": "stacked-series",
+      "label": "Stacked series",
+      "kicker": "VERTICAL",
+      "thesis": "Full-width cover, then when/where and Series as stacked text — denser, less Luma two-column.",
+      "viewport": "Cover on top; series facts as plain rows under details.",
+      "risk": "Diverges from the approved event-hub overview grammar.",
+      "hero": ".impeccable/mocks/recurring-hub-comp-c-stacked-series.png",
+      "sketch": ".impeccable/mocks/recurring-hub-comp-c-stacked-series.png"
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

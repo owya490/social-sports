@@ -2,7 +2,7 @@
 
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
-import AddFormResponseDialog from "@/components/organiser/event/forms/AddFormResponseDialog";
+import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventId } from "@/interfaces/EventTypes";
@@ -11,19 +11,21 @@ import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
-import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
+import { getForm, getFormResponsesForEvent, submitManualFormResponse } from "@/services/src/forms/formsServices";
 import {
   filterFormResponsesForApprovedOrders,
   getApprovedOrderTicketsMap,
   getFormSectionAnswerDisplay,
 } from "@/services/src/forms/formsUtils/formsUtils";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
+import { EventHubPanel } from "./EventHubPanel";
 import {
   EventHubEmpty,
+  EventHubGhostButton,
   EventHubPrimaryButton,
   EventHubStage,
   EventHubToolbar,
@@ -68,7 +70,11 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
   const [form, setForm] = useState<Form | null>(null);
   const [attachingForm, setAttachingForm] = useState(false);
   const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
+  const [isChangeFormPanelOpen, setIsChangeFormPanelOpen] = useState(false);
   const [organiserEmail, setOrganiserEmail] = useState("");
+  const [addSaving, setAddSaving] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const formResponderRef = useRef<FormResponderRef>(null);
   const approvedOrderTicketsMap = useMemo(() => getApprovedOrderTicketsMap(orderTicketsMap), [orderTicketsMap]);
 
   const applyApprovedOrderFilter = useCallback(() => {
@@ -130,6 +136,7 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
         setForm(null);
         unfilteredFormResponsesRef.current = [];
         setFormResponses([]);
+        setIsChangeFormPanelOpen(false);
         return;
       }
 
@@ -139,6 +146,7 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
       const fetched = await getFormResponsesForEvent(selectedFormId, eventId);
       unfilteredFormResponsesRef.current = fetched;
       setFormResponses(filterFormResponsesForApprovedOrders(fetched, orderTicketsMap));
+      setIsChangeFormPanelOpen(false);
     } catch (err) {
       logger.error(`Failed to ${selectedFormId ? "attach" : "detach"} form: ${err}`);
       setError(`Failed to ${selectedFormId ? "attach" : "detach"} form`);
@@ -267,8 +275,17 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
         }
         action={
           <div className="flex items-center gap-2">
+            <EventHubGhostButton onClick={() => setIsChangeFormPanelOpen(true)}>
+              <span className="hidden sm:inline">Change form</span>
+              <span className="sm:hidden">Form</span>
+            </EventHubGhostButton>
             {formResponses.length > 0 ? (
-              <DownloadCsvButton data={csvData} headers={csvHeaders} filename={`FormResponses_${eventId}.csv`} />
+              <DownloadCsvButton
+                data={csvData}
+                headers={csvHeaders}
+                filename={`FormResponses_${eventId}.csv`}
+                className="!rounded-xl !bg-background !text-foreground border border-border hover:!bg-surface-hover !font-sans !font-medium px-3 py-2 focus-visible:!outline focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-focus focus-visible:!ring-0"
+              />
             ) : null}
             <EventHubPrimaryButton onClick={() => setIsAddFormResponseDialogOpen(true)}>
               <PlusIcon className="h-4 w-4" aria-hidden />
@@ -280,39 +297,85 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
       />
 
       {formResponses.length === 0 ? (
-        <>
-          <EventHubEmpty>No responses yet. Answers from approved bookings will show here.</EventHubEmpty>
-          <div className="border-t border-border pt-4">
-            <p className="text-xs font-medium text-foreground-muted font-sans mb-3">Change attached form</p>
-            {attachingForm ? (
-              <p className="text-sm text-foreground-muted font-sans">Updating…</p>
-            ) : (
-              <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
-            )}
-          </div>
-        </>
-      ) : (
-        <div className="pt-2 -mx-1 overflow-x-auto">
-          <FormResponsesTable
-            formResponses={formResponses}
-            form={form!}
+        <EventHubEmpty>No responses yet. Answers from approved bookings will show here.</EventHubEmpty>
+      ) : form ? (
+        <FormResponsesTable
+          formResponses={formResponses}
+          form={form}
+          formId={formId}
+          eventId={eventId}
+          orderTicketsMap={approvedOrderTicketsMap}
+          showPurchaserColumn={true}
+          organiserEmail={organiserEmail}
+          flush
+        />
+      ) : null}
+
+      <EventHubPanel
+        open={isChangeFormPanelOpen}
+        onClose={() => setIsChangeFormPanelOpen(false)}
+        title="Change attached form"
+        wide
+      >
+        {attachingForm ? (
+          <p className="text-sm text-foreground-muted font-sans">Updating…</p>
+        ) : (
+          <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
+        )}
+      </EventHubPanel>
+
+      <EventHubPanel
+        open={isAddFormResponseDialogOpen}
+        onClose={() => {
+          setIsAddFormResponseDialogOpen(false);
+          setAddError(null);
+        }}
+        title="Add answers"
+        wide
+        footer={
+          <EventHubPrimaryButton
+            disabled={addSaving}
+            onClick={async () => {
+              if (!formResponderRef.current || !formId) return;
+              if (!formResponderRef.current.areAllRequiredFieldsFilled()) {
+                setAddError("Please fill out all required fields.");
+                return;
+              }
+              try {
+                setAddSaving(true);
+                setAddError(null);
+                const savedId = await formResponderRef.current.save();
+                await submitManualFormResponse(formId, eventId, savedId);
+                await fetchResponses();
+                setIsAddFormResponseDialogOpen(false);
+              } catch (err: unknown) {
+                logger.error(`Failed to save form response: ${err}`);
+                setAddError(
+                  `Failed to save. ${err instanceof Error ? err.message : "Please try again."}`
+                );
+              } finally {
+                setAddSaving(false);
+              }
+            }}
+          >
+            <CheckIcon className="h-4 w-4" aria-hidden />
+            {addSaving ? "Saving…" : "Save response"}
+          </EventHubPrimaryButton>
+        }
+      >
+        <div className="space-y-3">
+          {addError ? <p className="text-sm text-danger font-sans">{addError}</p> : null}
+          <FormResponder
+            ref={formResponderRef}
             formId={formId}
             eventId={eventId}
-            orderTicketsMap={approvedOrderTicketsMap}
-            showPurchaserColumn={true}
-            organiserEmail={organiserEmail}
-            flush
+            formResponseId={null}
+            canEditForm={true}
+            isEmbedded={true}
+            hideSaveButton={true}
           />
         </div>
-      )}
-
-      <AddFormResponseDialog
-        isOpen={isAddFormResponseDialogOpen}
-        onClose={() => setIsAddFormResponseDialogOpen(false)}
-        formId={formId}
-        eventId={eventId}
-        refreshResponses={fetchResponses}
-      />
+      </EventHubPanel>
     </EventHubStage>
   );
 }

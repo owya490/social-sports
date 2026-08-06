@@ -1,0 +1,33 @@
+{
+  "title": "Event hub — Luma pattern",
+  "question": "Luma’s tabs + right/bottom panels are locked. How should Details and chrome compose in Honest Clubhouse?",
+  "options": [
+    {
+      "id": "luma-overview-led",
+      "label": "Overview-led Details",
+      "kicker": "CLOSEST TO LUMA",
+      "thesis": "Chrome sheds the cover. Details owns the event: preview + when/where, Edit / Change photo panels, Hosts, read-only Visibility.",
+      "viewport": "Title + peer tabs (Details · Registrations · Forms · Settings). Details opens on a two-column overview; Edit and Change photo slide a drawer / sheet.",
+      "risk": "Chrome loses the glanceable cover until you open Details."
+    },
+    {
+      "id": "chrome-cover-kept",
+      "label": "Keep cover chrome",
+      "kicker": "HYBRID",
+      "thesis": "Approved chrome cover stays for session identity. Details still gets Luma overview sections and panel edits; cover isn’t duplicated in the body.",
+      "viewport": "Constrained 16:9 chrome + tabs. Details: when/where summary, Hosts, Visibility; Edit / Change photo open panels.",
+      "risk": "Can feel like two headers if Details also shows a big preview."
+    },
+    {
+      "id": "preview-in-details-quiet-chrome",
+      "label": "Quiet chrome + preview card",
+      "kicker": "AIRBNB CALM",
+      "thesis": "Chrome is title, meta, Event page only—no cover. Details leads with one quiet preview card beside when/where, then Hosts and Visibility.",
+      "viewport": "Minimal header band. Details overview card with photo; actions open the same drawer / sheet grammar as Registrations.",
+      "risk": "Less Luma density if the preview card is too soft."
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

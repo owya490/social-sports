@@ -92,7 +92,7 @@ const EventDrilldownSettingsPage = ({
       await sendEmailOnDeleteEventV2(eventId);
       bustEventsLocalStorageCache();
       setDeleteLoading(false);
-      router.push("/organiser/v2/event/dashboard");
+      router.push("/organiser/event/dashboard");
     } catch (error) {
       if (error === "Rate Limited") {
         router.push("/error/Delete_UPDATE_EVENT_RATELIMITED");

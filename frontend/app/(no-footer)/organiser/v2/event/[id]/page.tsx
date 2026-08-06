@@ -1,18 +1,17 @@
 "use client";
 
 /**
- * THESIS: Continuous workbench under chrome—flush lists + expand-in-place; refuses nested card stacks and 1D panels.
- * OWN-WORLD: Honest Clubhouse v2—surface canvas, Satoshi, hairline dividers, yellow only on primary actions.
- * STORY: Organiser opens a session, manages who's coming on an edge-to-edge plane, then edits details side-by-side.
- * FIRST VIEWPORT: Chrome (approved B) + peer tabs; Attendees filters with inline Add; expand inspector.
- * FORM: Continuous workbench A+B (flush list + inspector); chrome-led seed 2cd7ba31; body comps A+B approved.
+ * THESIS: Tabs guide the session; Details owns the event overview; deep work opens a right drawer / bottom sheet — refuses expand-in-place and cover-in-chrome.
+ * OWN-WORLD: Honest Clubhouse — surface canvas, Satoshi, 12px radius, yellow only on primary panel CTAs.
+ * STORY: Organiser lands on Details (preview, hosts, read-only visibility), edits via panels; Registrations and Forms use the same panel grammar.
+ * FIRST VIEWPORT: Quiet chrome (title + Event page) + peer tabs; Details two-column overview with Edit details / Change photo.
+ * FORM: Luma overview-led canon; seed luma-overview-led; Comp A approved; drawers from steer.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
  */
 
 import { EventHubAttendees } from "@/components/organiser/v2/event-hub/EventHubAttendees";
 import { EventHubChrome } from "@/components/organiser/v2/event-hub/EventHubChrome";
 import { EventHubForms } from "@/components/organiser/v2/event-hub/EventHubForms";
-import { EventHubImages } from "@/components/organiser/v2/event-hub/EventHubImages";
 import { EventHubListing } from "@/components/organiser/v2/event-hub/EventHubListing";
 import { EventHubNav } from "@/components/organiser/v2/event-hub/EventHubNav";
 import { EventHubSettings } from "@/components/organiser/v2/event-hub/EventHubSettings";
@@ -47,7 +46,7 @@ export default function OrganiserEventHubV2Page() {
   const router = useRouter();
   const { user } = useUser();
 
-  const [section, setSection] = useState<EventHubSection>("Attendees");
+  const [section, setSection] = useState<EventHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [loading, setLoading] = useState(true);
@@ -190,8 +189,6 @@ export default function OrganiserEventHubV2Page() {
     }, 120);
   };
 
-  const filled = Math.max(0, eventCapacity - eventVacancy);
-
   return (
     <div className="min-h-screen bg-surface text-foreground pb-8">
       <div className="bg-background border-b border-border">
@@ -201,13 +198,8 @@ export default function OrganiserEventHubV2Page() {
           name={eventName}
           startDate={eventStartDate}
           location={eventLocation}
-          image={eventImage || eventThumbnail}
-          filled={filled}
-          capacity={eventCapacity}
           paused={eventPaused}
           isActive={eventIsActive}
-          isPrivate={eventIsPrivate}
-          paymentsActive={eventPaymentsActive}
           onTogglePause={handleTogglePause}
           pauseUpdating={pauseUpdating}
         />
@@ -220,18 +212,6 @@ export default function OrganiserEventHubV2Page() {
           sectionReady ? "opacity-100" : "opacity-0"
         }`}
       >
-        {section === "Attendees" && (
-          <EventHubAttendees
-            eventData={eventData}
-            eventMetadata={eventMetadata}
-            setEventMetadata={setEventMetadata}
-            eventId={eventId}
-            orderTicketsMap={orderTicketsMap}
-            setEventVacancy={setEventVacancy}
-            setOrderTicketsMap={setOrderTicketsMap}
-          />
-        )}
-
         {section === "Details" && (
           <EventHubListing
             loading={loading}
@@ -247,7 +227,10 @@ export default function OrganiserEventHubV2Page() {
             eventPrice={eventPrice}
             eventRegistrationDeadline={eventRegistrationDeadline}
             eventEventLink={eventEventLink}
+            eventImage={eventImage}
+            eventThumbnail={eventThumbnail}
             isActive={eventIsActive}
+            isPrivate={eventIsPrivate}
             eventFormId={eventFormId}
             updateData={async (id, data) => {
               await updateEventById(id, data);
@@ -273,23 +256,20 @@ export default function OrganiserEventHubV2Page() {
           />
         )}
 
-        {section === "Forms" && (
-          <EventHubForms eventId={eventId} orderTicketsMap={orderTicketsMap} />
+        {section === "Registrations" && (
+          <EventHubAttendees
+            eventData={eventData}
+            eventMetadata={eventMetadata}
+            setEventMetadata={setEventMetadata}
+            eventId={eventId}
+            orderTicketsMap={orderTicketsMap}
+            setEventVacancy={setEventVacancy}
+            setOrderTicketsMap={setOrderTicketsMap}
+          />
         )}
 
-        {section === "Images" && (
-          <EventHubImages
-            user={user}
-            eventId={eventId}
-            eventImage={eventImage}
-            eventThumbnail={eventThumbnail}
-            updateData={async (id, data) => {
-              await updateEventById(id, data);
-              bustEventsLocalStorageCache();
-              if (data.image !== undefined) setEventImage(data.image);
-              if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
-            }}
-          />
+        {section === "Forms" && (
+          <EventHubForms eventId={eventId} orderTicketsMap={orderTicketsMap} />
         )}
 
         {section === "Settings" && (

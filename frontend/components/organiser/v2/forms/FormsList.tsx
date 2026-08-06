@@ -29,7 +29,7 @@ export function FormsList({ forms, loading }: FormsListProps) {
             Create a form to collect info when people book your sessions.
           </p>
           <Link
-            href="/organiser/forms/create-form/editor"
+            href="/organiser/forms/create-form/editor?returnTo=/organiser/v2/forms/gallery"
             className="mt-4 inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             Create form

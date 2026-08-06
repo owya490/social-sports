@@ -1,0 +1,36 @@
+{
+  "title": "Edit panel composition",
+  "question": "Which Edit details drawer composition should we build? All keep TipTap bubble-on-selection and every Sportshub field.",
+  "options": [
+    {
+      "id": "comp-a",
+      "label": "Sectioned timeline",
+      "kicker": "CLOSEST TO REF",
+      "thesis": "Labeled Basic / Time / Location / Booking. Time uses a start–end timeline with pill date/time controls; Booking is a quiet grid.",
+      "viewport": "Right drawer over Details: large title, seamless description with bubble menu, timeline Time, address Location, sport/capacity/price/form/link, yellow Update event.",
+      "risk": "Four sections can feel longer on mobile sheets.",
+      "hero": ".impeccable/mocks/event-hub-edit-comp-a-sectioned-timeline.png"
+    },
+    {
+      "id": "comp-b",
+      "label": "Dense flush",
+      "kicker": "SCAN FAST",
+      "thesis": "Hero title, minimal section chrome, compact time inset, Booking as flush divided rows so more fields fit the first viewport.",
+      "viewport": "Same drawer grammar; denser stack; TipTap still bubble-only; yellow Update event footer.",
+      "risk": "Can feel tighter than the Luma reference’s calm.",
+      "hero": ".impeccable/mocks/event-hub-edit-comp-b-dense-flush.png"
+    },
+    {
+      "id": "comp-c",
+      "label": "Airy document",
+      "kicker": "MOST FLUID",
+      "thesis": "Generous section spacing, tall prose description, timeline rail—reads like editing a document more than filling a form.",
+      "viewport": "Spacious Basic → Time → Location → Booking; bubble TipTap; yellow Update event.",
+      "risk": "Booking fields may sit below the fold on laptop heights.",
+      "hero": ".impeccable/mocks/event-hub-edit-comp-c-airy-document.png"
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

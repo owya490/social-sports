@@ -1,29 +1,32 @@
 "use client";
 
-import DescriptionRichTextEditor from "@/components/editor/DescriptionRichTextEditor";
-import OrganiserEventDescription from "@/components/events/OrganiserEventDescription";
-import { EventDetailsEdit } from "@/components/organiser/event/details/EventDetailsEdit";
+import { ImageForm } from "@/components/events/create/forms/ImageForm";
+import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
-import {
-  timestampToDateString,
-  timestampToTimeOfDay,
-} from "@/services/src/datetimeUtils";
+import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import {
+  ArrowTopRightOnSquareIcon,
   CheckIcon,
+  CurrencyDollarIcon,
+  GlobeAltIcon,
+  LockClosedIcon,
+  MapPinIcon,
   PencilSquareIcon,
-  XMarkIcon,
+  PhotoIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
-import {
-  EventHubGhostButton,
-  EventHubMetaRow,
-  EventHubPrimaryButton,
-  EventHubStage,
-} from "./EventHubStage";
+import { EVENT_HUB_EDIT_FORM_ID, EventHubEditForm } from "./EventHubEditForm";
+import { EventHubPanel } from "./EventHubPanel";
+import { EventHubShareControl } from "./EventHubShareControl";
+import { EventHubGhostButton, EventHubPrimaryButton, EventHubStage } from "./EventHubStage";
 
 type EventHubListingProps = {
   loading: boolean;
@@ -39,8 +42,13 @@ type EventHubListingProps = {
   eventPrice: number;
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
+  eventImage: string;
+  eventThumbnail: string;
   isActive: boolean;
+  isPrivate: boolean;
   eventFormId: FormId | null;
+  /** Templates have no public `/event/[id]` page — hide share + glass URL. */
+  mode?: "event" | "template";
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
 };
 
@@ -58,224 +66,379 @@ export function EventHubListing({
   eventPrice,
   eventRegistrationDeadline,
   eventEventLink,
+  eventImage,
+  eventThumbnail,
   isActive,
+  isPrivate,
   eventFormId,
+  mode = "event",
   updateData,
 }: EventHubListingProps) {
-  const [name, setName] = useState(eventName);
-  const [editingName, setEditingName] = useState(false);
-  const [draftName, setDraftName] = useState(eventName);
-  const [nameSaving, setNameSaving] = useState(false);
+  const { user } = useUser();
+  const [editOpen, setEditOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [publicUrl, setPublicUrl] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const isTemplate = mode === "template";
 
-  const [description, setDescription] = useState(eventDescription);
-  const [editingDescription, setEditingDescription] = useState(false);
-  const [draftDescription, setDraftDescription] = useState(eventDescription);
-  const [descriptionSaving, setDescriptionSaving] = useState(false);
-
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  useEffect(() => {
-    setName(eventName);
-    setDraftName(eventName);
-  }, [eventName]);
-
-  useEffect(() => {
-    setDescription(eventDescription);
-    setDraftDescription(eventDescription);
-  }, [eventDescription]);
-
-  const saveName = async () => {
-    setNameSaving(true);
-    const next = draftName.trim();
-    setName(next);
-    setEditingName(false);
-    try {
-      await updateData(eventId, { name: next, nameTokens: next.toLowerCase().split(" ") });
-    } catch {
-      setName(eventName);
-      setDraftName(eventName);
-    } finally {
-      setNameSaving(false);
-    }
-  };
-
-  const saveDescription = async () => {
-    setDescriptionSaving(true);
-    setDescription(draftDescription);
-    setEditingDescription(false);
-    try {
-      await updateData(eventId, { description: draftDescription });
-    } catch {
-      setDescription(eventDescription);
-      setDraftDescription(eventDescription);
-    } finally {
-      setDescriptionSaving(false);
-    }
-  };
-
+  const cover = eventImage || eventThumbnail;
+  const hostName = [user.firstName, user.surname].filter(Boolean).join(" ") || user.username || "You";
+  const hostEmail = user.contactInformation?.email || "";
+  const monthShort = loading ? "" : eventStartDate.toDate().toLocaleString("en-AU", { month: "short" }).toUpperCase();
+  const dayNum = loading ? "" : String(eventStartDate.toDate().getDate());
   const filled = Math.max(0, eventCapacity - eventVacancy);
-  const whenLabel = loading
-    ? ""
-    : `${timestampToDateString(eventStartDate)} · ${timestampToTimeOfDay(eventStartDate)} – ${timestampToTimeOfDay(eventEndDate)}`;
+  const priceLabel = getEventPriceDisplay(eventPrice, true);
+  const capacityLabel = eventCapacity > 0 ? `${filled} / ${eventCapacity} spots` : "Capacity not set";
+  const publicHost = publicUrl.replace(/^https?:\/\//, "");
+
+  useEffect(() => {
+    if (isTemplate) {
+      setPublicUrl("");
+      return;
+    }
+    setPublicUrl(getUrlWithCurrentHostname(`/event/${eventId}`));
+  }, [eventId, isTemplate]);
+
+  const copyLink = async () => {
+    if (!publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* ignore */
+    }
+  };
 
   return (
-    <EventHubStage>
-      <div className="lg:flex lg:gap-10 lg:items-start">
-        <div className="lg:flex-1 lg:min-w-0 space-y-5">
-          <div>
+    <EventHubStage className="space-y-8">
+      <section className="rounded-xl border border-border bg-background overflow-hidden">
+        <div className="grid lg:grid-cols-2 gap-0 lg:divide-x divide-border">
+          <div className="p-4 sm:p-5">
             {loading ? (
-              <Skeleton height={36} width="70%" />
-            ) : editingName ? (
-              <div className="flex items-start gap-2">
-                <input
-                  value={draftName}
-                  onChange={(e) => setDraftName(e.target.value)}
-                  maxLength={100}
-                  className="w-full text-2xl sm:text-3xl font-bold text-foreground font-sans tracking-tight leading-tight bg-transparent border-b border-border focus:border-focus outline-none py-0.5"
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  onClick={saveName}
-                  disabled={nameSaving}
-                  className="p-1.5 rounded-lg text-foreground-secondary hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus"
-                  aria-label="Save name"
-                >
-                  <CheckIcon className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDraftName(name);
-                    setEditingName(false);
-                  }}
-                  className="p-1.5 rounded-lg text-foreground-secondary hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus"
-                  aria-label="Cancel"
-                >
-                  <XMarkIcon className="h-5 w-5" />
-                </button>
-              </div>
+              <Skeleton className="!rounded-xl aspect-video w-full" />
             ) : (
-              <button
-                type="button"
-                disabled={!isActive}
-                onClick={() => isActive && setEditingName(true)}
-                className="w-full text-left group/title focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-lg"
-              >
-                <span className="text-2xl sm:text-3xl font-bold text-foreground font-sans tracking-tight leading-tight inline-flex items-start gap-2">
-                  {name}
-                  {isActive ? (
-                    <PencilSquareIcon className="h-4 w-4 mt-2 text-foreground-muted opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
-                  ) : null}
-                </span>
-              </button>
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface-muted">
+                {cover ? (
+                  <Image src={cover} alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 28rem" />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center pb-10">
+                    <PhotoIcon className="h-10 w-10 text-foreground-muted" aria-hidden />
+                  </div>
+                )}
+                {!isTemplate ? (
+                  <div className="absolute inset-x-2 bottom-2 flex items-center gap-3 rounded-xl border border-white/50 bg-white/55 px-3 py-2 shadow-sm backdrop-blur-xl">
+                    <a
+                      href={publicUrl || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="min-w-0 flex-1 inline-flex items-center gap-1.5 text-xs text-foreground font-sans hover:text-foreground-secondary transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded"
+                    >
+                      <span className="truncate">{publicHost || "…"}</span>
+                      <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5 shrink-0 text-foreground-muted" aria-hidden />
+                      <span className="sr-only">Open event page</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={copyLink}
+                      disabled={!publicUrl}
+                      className="shrink-0 text-xs font-semibold tracking-wide uppercase text-foreground hover:text-foreground-secondary transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded disabled:opacity-50 font-sans"
+                    >
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             )}
           </div>
 
-          <div>
+          <div className="p-4 sm:p-5 space-y-4 border-t lg:border-t-0 border-border">
+            <h3 className="text-base font-semibold text-foreground font-sans">When & Where</h3>
             {loading ? (
               <Skeleton count={4} />
-            ) : editingDescription ? (
-              <div className="space-y-3">
-                <DescriptionRichTextEditor
-                  description={draftDescription}
-                  updateDescription={setDraftDescription}
-                />
-                <div className="flex gap-2">
-                  <EventHubPrimaryButton onClick={saveDescription} disabled={descriptionSaving}>
-                    <CheckIcon className="h-4 w-4" aria-hidden />
-                    Save description
-                  </EventHubPrimaryButton>
-                  <EventHubGhostButton
-                    onClick={() => {
-                      setDraftDescription(description);
-                      setEditingDescription(false);
-                    }}
+            ) : (
+              <ul className="space-y-4">
+                <li className="flex gap-3 items-start">
+                  <div
+                    className="flex h-11 w-10 shrink-0 flex-col overflow-hidden rounded-xl border border-border text-center"
+                    aria-hidden
                   >
-                    Cancel
-                  </EventHubGhostButton>
-                </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                disabled={!isActive}
-                onClick={() => isActive && setEditingDescription(true)}
-                className="w-full text-left group/desc focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-lg"
-              >
-                <div className="flex items-start justify-end gap-2 mb-1">
-                  {isActive ? (
-                    <PencilSquareIcon className="h-4 w-4 text-foreground-muted opacity-0 group-hover/desc:opacity-100 transition-opacity" />
-                  ) : null}
-                </div>
-                <div className="text-sm text-foreground-secondary font-sans leading-relaxed">
-                  <OrganiserEventDescription description={description} />
-                </div>
-              </button>
-            )}
-          </div>
-        </div>
+                    <span className="bg-accent text-accent-contrast flex items-center justify-center leading-none">
+                      <span className="text-xs font-semibold tracking-wide scale-75 origin-center">{monthShort}</span>
+                    </span>
+                    <span className="flex-1 flex items-center justify-center bg-background text-base font-bold text-foreground tabular-nums leading-none">
+                      {dayNum}
+                    </span>
+                  </div>
+                  <div className="min-w-0 pt-0.5">
+                    <p className="text-sm font-semibold text-foreground font-sans">
+                      {timestampToDateString(eventStartDate)}
+                    </p>
+                    <p className="text-sm text-foreground-secondary font-sans">
+                      {timestampToTimeOfDay(eventStartDate)} – {timestampToTimeOfDay(eventEndDate)}
+                    </p>
+                  </div>
+                </li>
 
-        <aside className="lg:w-[20rem] xl:w-[22rem] shrink-0 mt-8 lg:mt-0 pt-6 lg:pt-0 border-t lg:border-t-0 border-border">
-          <div className="divide-y divide-border">
-            {loading ? (
-              <div className="py-4">
-                <Skeleton count={4} />
-              </div>
-            ) : (
-              <>
-                <EventHubMetaRow label="When">{whenLabel}</EventHubMetaRow>
-                <EventHubMetaRow label="Location">{eventLocation}</EventHubMetaRow>
-                <EventHubMetaRow label="Price">{getEventPriceDisplay(eventPrice, true)}</EventHubMetaRow>
-                <EventHubMetaRow label="Capacity">
-                  <span className="tabular-nums">
-                    {filled}/{eventCapacity}
-                    {eventSport ? ` · ${eventSport}` : ""}
+                <li className="flex gap-3 items-start">
+                  <span
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
+                    aria-hidden
+                  >
+                    <MapPinIcon className="h-5 w-5" />
                   </span>
-                </EventHubMetaRow>
-              </>
+                  <div className="min-w-0 pt-0.5">
+                    {eventLocation ? (
+                      <p className="text-sm font-semibold text-foreground font-sans">{eventLocation}</p>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-foreground font-sans">Location missing</p>
+                        <p className="text-sm text-foreground-secondary font-sans">Add a location in Edit details</p>
+                      </>
+                    )}
+                  </div>
+                </li>
+
+                <li className="flex gap-3 items-start">
+                  <span
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
+                    aria-hidden
+                  >
+                    <UserGroupIcon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 pt-0.5">
+                    <p className="text-sm font-semibold text-foreground font-sans">Capacity</p>
+                    <p className="text-sm text-foreground-secondary font-sans">{capacityLabel}</p>
+                  </div>
+                </li>
+
+                <li className="flex gap-3 items-start">
+                  <span
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
+                    aria-hidden
+                  >
+                    <CurrencyDollarIcon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 pt-0.5">
+                    <p className="text-sm font-semibold text-foreground font-sans">Price</p>
+                    <p className="text-sm text-foreground-secondary font-sans">{priceLabel}</p>
+                  </div>
+                </li>
+              </ul>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setShowAdvanced((v) => !v)}
-            className="mt-4 text-xs font-medium text-foreground-secondary font-sans hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus rounded"
-          >
-            {showAdvanced ? "Hide session fields" : "Edit session details"}
-          </button>
-        </aside>
-      </div>
-
-      <div
-        className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out ${
-          showAdvanced ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
-      >
-        <div className="overflow-hidden">
-          {showAdvanced ? (
-            <div className="pt-6 mt-4 border-t border-border">
-              <EventDetailsEdit
-                eventId={eventId}
-                eventStartDate={eventStartDate}
-                eventEndDate={eventEndDate}
-                eventLocation={eventLocation}
-                eventSport={eventSport}
-                eventCapacity={eventCapacity}
-                eventVacancy={eventVacancy}
-                eventPrice={eventPrice}
-                eventRegistrationDeadline={eventRegistrationDeadline}
-                eventEventLink={eventEventLink}
-                loading={loading}
-                isActive={isActive}
-                updateData={updateData}
-                isRecurrenceTemplate={false}
-                eventFormId={eventFormId}
-              />
-            </div>
-          ) : null}
         </div>
-      </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 sm:px-5 py-3">
+          {isTemplate ? <span aria-hidden className="w-px" /> : <EventHubShareControl eventId={eventId} />}
+          <div className="flex flex-wrap items-center gap-2">
+            <EventHubGhostButton onClick={() => setEditOpen(true)} disabled={!isActive || loading}>
+              <PencilSquareIcon className="h-4 w-4" aria-hidden />
+              Edit details
+            </EventHubGhostButton>
+            <EventHubGhostButton onClick={() => setPhotoOpen(true)} disabled={!isActive || loading}>
+              <PhotoIcon className="h-4 w-4" aria-hidden />
+              Change photo
+            </EventHubGhostButton>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground font-sans mb-3">Hosts</h3>
+        <div className="rounded-xl border border-border bg-background px-4 py-3 flex items-center gap-3">
+          {user.profilePicture ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.profilePicture}
+              alt=""
+              className="h-10 w-10 rounded-full object-cover border border-border"
+            />
+          ) : (
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-xs font-semibold text-foreground-secondary font-sans">
+              {hostName.slice(0, 1).toUpperCase()}
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-semibold text-foreground font-sans truncate">{hostName}</p>
+              <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-xs font-medium font-sans">
+                Creator
+              </span>
+            </div>
+            {hostEmail ? <p className="text-xs text-foreground-muted font-sans truncate">{hostEmail}</p> : null}
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground font-sans">Visibility & Discovery</h3>
+        <p className="mt-1 text-xs text-foreground-muted font-sans mb-3">
+          {isTemplate
+            ? "How people can find occurrences created from this template on SPORTSHUB."
+            : "How people can find this event on SPORTSHUB."}
+        </p>
+        <div className="rounded-xl border border-border bg-background px-4 py-4 flex items-start gap-3">
+          {isPrivate ? (
+            <LockClosedIcon className="h-5 w-5 text-foreground-secondary shrink-0 mt-0.5" aria-hidden />
+          ) : (
+            <GlobeAltIcon className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground font-sans">
+              {isPrivate ? <span>Private</span> : <span className="text-emerald-700">Public</span>}
+              <span className="text-foreground-secondary font-normal">
+                {isPrivate
+                  ? isTemplate
+                    ? " — Only people with the link can view created occurrences."
+                    : " — Only people with the link can view this event."
+                  : isTemplate
+                    ? " — Occurrences are listed on your profile and discoverable on SPORTSHUB."
+                    : " — This event is listed on your profile and discoverable on SPORTSHUB."}
+              </span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <EventHubPanel
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title={isTemplate ? "Edit template" : "Edit Event"}
+        wide
+        footer={
+          <EventHubPrimaryButton
+            type="submit"
+            form={EVENT_HUB_EDIT_FORM_ID}
+            disabled={savingEdit || !isActive || loading}
+          >
+            <CheckIcon className="h-4 w-4" aria-hidden />
+            {isTemplate ? "Update template" : "Update event"}
+          </EventHubPrimaryButton>
+        }
+      >
+        {editOpen ? (
+          <EventHubEditForm
+            eventId={eventId}
+            eventName={eventName}
+            eventDescription={eventDescription}
+            eventStartDate={eventStartDate}
+            eventEndDate={eventEndDate}
+            eventLocation={eventLocation}
+            eventSport={eventSport}
+            eventCapacity={eventCapacity}
+            eventVacancy={eventVacancy}
+            eventPrice={eventPrice}
+            eventRegistrationDeadline={eventRegistrationDeadline}
+            eventEventLink={eventEventLink}
+            eventFormId={eventFormId}
+            isActive={isActive}
+            updateData={updateData}
+            onSaved={() => setEditOpen(false)}
+            onSavingChange={setSavingEdit}
+          />
+        ) : null}
+      </EventHubPanel>
+
+      <ChangePhotoPanel
+        open={photoOpen}
+        onClose={() => setPhotoOpen(false)}
+        eventId={eventId}
+        eventImage={eventImage}
+        eventThumbnail={eventThumbnail}
+        updateData={updateData}
+      />
     </EventHubStage>
+  );
+}
+
+function ChangePhotoPanel({
+  open,
+  onClose,
+  eventId,
+  eventImage,
+  eventThumbnail,
+  updateData,
+}: {
+  open: boolean;
+  onClose: () => void;
+  eventId: EventId;
+  eventImage: string;
+  eventThumbnail: string;
+  updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
+}) {
+  const { user } = useUser();
+  const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
+  const [eventThumbnailUrls, setEventThumbnailUrls] = useState<string[]>([]);
+  const [allImageData, setAllImageData] = useState<AllImageData>({
+    image: eventImage || undefined,
+    thumbnail: eventThumbnail || undefined,
+  });
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open || !user.userId) return;
+    let active = true;
+    (async () => {
+      const thumbs = await getUsersEventThumbnailsUrls(user.userId);
+      const images = await getUsersEventImagesUrls(user.userId);
+      if (!active) return;
+      setEventThumbnailUrls(eventThumbnail ? [eventThumbnail, ...thumbs.filter((u) => u !== eventThumbnail)] : thumbs);
+      setEventImageUrls(eventImage ? [eventImage, ...images.filter((u) => u !== eventImage)] : images);
+      setAllImageData({
+        image: eventImage || undefined,
+        thumbnail: eventThumbnail || undefined,
+      });
+      setDirty(false);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [open, user.userId, eventImage, eventThumbnail]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await updateData(eventId, {
+        image: allImageData.image,
+        thumbnail: allImageData.thumbnail,
+      });
+      setDirty(false);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <EventHubPanel
+      open={open}
+      onClose={onClose}
+      title="Change photo"
+      wide
+      footer={
+        <EventHubPrimaryButton onClick={save} disabled={!dirty || saving}>
+          <CheckIcon className="h-4 w-4" aria-hidden />
+          Save photos
+        </EventHubPrimaryButton>
+      }
+    >
+      <ImageForm
+        user={user}
+        image={allImageData.image}
+        thumbnail={allImageData.thumbnail}
+        updateField={(fields) => {
+          setAllImageData((prev) => ({ ...prev, ...fields }));
+          setDirty(true);
+        }}
+        eventThumbnailsUrls={eventThumbnailUrls}
+        eventImageUrls={eventImageUrls}
+        setThumbnailUrls={setEventThumbnailUrls}
+        setImageUrls={setEventImageUrls}
+        flush
+      />
+    </EventHubPanel>
   );
 }

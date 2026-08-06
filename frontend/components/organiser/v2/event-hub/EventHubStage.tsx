@@ -46,7 +46,7 @@ type EventHubFiltersProps = {
 export function EventHubFilters({ tabs, activeId, onChange, action }: EventHubFiltersProps) {
   return (
     <div className="flex items-end gap-3 border-b border-border">
-      <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto scrollbar-none" role="tablist">
+      <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto overflow-y-hidden no-scrollbar" role="tablist">
         {tabs.map((tab) => {
           const active = activeId === tab.id;
           return (
@@ -82,15 +82,18 @@ export function EventHubPrimaryButton({
   onClick,
   disabled,
   type = "button",
+  form,
 }: {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   type?: "button" | "submit";
+  form?: string;
 }) {
   return (
     <button
       type={type}
+      form={form}
       onClick={onClick}
       disabled={disabled}
       className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"

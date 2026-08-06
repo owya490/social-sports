@@ -8,16 +8,19 @@ related_targets: ["frontend/components/organiser/v2/custom-links/CustomLinksHead
 # Surface brief: Organiser v2 custom event links
 
 ## Scope & mode
-Operate. Full list/editor for vanity event URLs under Organiser Hub v2 (no separate drilldown).
+Operate. Full list/editor for vanity event URLs under Organiser Hub v2.
 
 ## Audience & job
-Organisers creating short `/event/{username}/{slug}` links that point at an upcoming event or active recurring template; copy to share.
+Organisers creating short `/event/{username}/{slug}` links that open an upcoming event or active recurring series; copy to share.
 
 ## Content & constraints
-Same save/delete/validation rules as legacy table. Native inputs/selects; no Material Tailwind. Phone-first stacked rows with inline edit.
+Same save/delete/validation rules as legacy table. Native inputs/selects; no Material Tailwind. Click a card to edit in the shared Event Hub side panel (drawer desktop / sheet mobile). Destination select must pre-select the saved reference, including orphaned destinations still stored on the link.
 
 ## Direction
-Established Organiser Hub extension. Header + add CTA, format hint, outlined editable list.
+Established Organiser Hub extension. Header + add CTA, format hint, outlined tappable cards with “Opens {name}” destination copy. Add and edit both open the panel.
+
+## Memorable moment
+Tap a row → panel opens already filled with the current destination.
 
 ## Unresolved
-None for list scope.
+None for list/panel scope.

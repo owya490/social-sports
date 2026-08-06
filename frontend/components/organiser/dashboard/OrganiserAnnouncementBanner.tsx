@@ -1,4 +1,5 @@
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
 import { useState } from "react";
 
 export const OrganiserAnnouncementBanner = () => {
@@ -12,14 +13,18 @@ export const OrganiserAnnouncementBanner = () => {
     <div className="relative isolate flex items-center gap-x-6 overflow-hidden bg-surface px-6 py-2.5 sm:px-3.5 sm:before:flex-1 rounded-none">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <p className="text-sm leading-6 text-foreground font-sans">
-          <strong className="font-semibold">New: Order page</strong>
+          <strong className="font-semibold">Try out our v2 organiser hub</strong>
           <svg viewBox="0 0 2 2" aria-hidden="true" className="mx-2 inline h-0.5 w-0.5 fill-current">
             <circle r={1} cx={1} cy={1} />
           </svg>
-          You can now review full order details in one place. Open an event, go to the{" "}
-          <strong className="font-semibold">Attendees</strong> table, and click the{" "}
-          <strong className="font-semibold">order ID</strong> under each attendee&apos;s email (the linked value beside{" "}
-          <span className="whitespace-nowrap">Id:</span>). It opens in a new tab so your dashboard stays open.
+          A redesigned workspace for managing events, attendees, and more.{" "}
+          <Link
+            href="/organiser/v2/dashboard"
+            className="font-semibold text-foreground underline underline-offset-2 hover:text-foreground/80"
+          >
+            Open v2 organiser hub
+            <span aria-hidden="true"> &rarr;</span>
+          </Link>
         </p>
       </div>
       <div className="flex flex-1 justify-end">
