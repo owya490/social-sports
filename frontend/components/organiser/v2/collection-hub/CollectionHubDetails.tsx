@@ -1,32 +1,46 @@
 "use client";
 
-import { ImageSelectionDialog } from "@/components/forms/sections/image-section/ImageSelectionDialog";
+import { ImageSection } from "@/components/gallery/ImageSection";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import {
   EventHubGhostButton,
   EventHubPrimaryButton,
   EventHubStage,
 } from "@/components/organiser/v2/event-hub/EventHubStage";
+import { EntityRowThumbnail } from "@/components/organiser/v2/shared/EntityRowThumbnail";
+import { ImagePickerReveal } from "@/components/organiser/v2/shared/ImagePickerLoading";
 import { useUser } from "@/components/utility/UserContext";
 import { EventCollectionId } from "@/interfaces/EventCollectionTypes";
-import { ImageType } from "@/interfaces/ImageTypes";
+import { EventData } from "@/interfaces/EventTypes";
+import { ImageConfig, ImageType } from "@/interfaces/ImageTypes";
+import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
+import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { getUsersEventImagesUrls, uploadEventImage } from "@/services/src/images/imageService";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import {
+  ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
   CheckIcon,
   GlobeAltIcon,
   LockClosedIcon,
   PencilSquareIcon,
   PhotoIcon,
-  RectangleStackIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { CollectionHubShareControl } from "./CollectionHubShareControl";
 
 const EDIT_FORM_ID = "collection-hub-edit-form";
+const PEEK_LIMIT = 3;
+
+type PeekItem = {
+  id: string;
+  name: string;
+  thumbnail: string;
+  meta: string;
+  kind: "event" | "recurring";
+};
 
 type CollectionHubDetailsProps = {
   loading: boolean;
@@ -37,9 +51,14 @@ type CollectionHubDetailsProps = {
   itemCount: number;
   eventCount: number;
   templateCount: number;
+  events: EventData[];
+  templates: RecurrenceTemplate[];
   isPrivate: boolean;
+  privacyUpdating: boolean;
   onSaveDetails: (data: { name: string; description: string }) => Promise<void>;
   onSaveImage: (imageUrl: string) => Promise<void>;
+  onTogglePrivacy: (nextPrivate: boolean) => Promise<void>;
+  onOpenEvents: () => void;
 };
 
 export function CollectionHubDetails({
@@ -51,9 +70,14 @@ export function CollectionHubDetails({
   itemCount,
   eventCount,
   templateCount,
+  events,
+  templates,
   isPrivate,
+  privacyUpdating,
   onSaveDetails,
   onSaveImage,
+  onTogglePrivacy,
+  onOpenEvents,
 }: CollectionHubDetailsProps) {
   const { user } = useUser();
   const [editOpen, setEditOpen] = useState(false);
@@ -67,13 +91,33 @@ export function CollectionHubDetails({
   const publicHost = publicUrl.replace(/^https?:\/\//, "");
   const membershipLine =
     itemCount === 0
-      ? "No events yet"
+      ? "Add sessions on the Events tab"
       : [
           eventCount > 0 ? `${eventCount} event${eventCount === 1 ? "" : "s"}` : null,
           templateCount > 0 ? `${templateCount} recurring` : null,
         ]
           .filter(Boolean)
           .join(" · ");
+
+  const peekItems = useMemo(() => {
+    const fromEvents: PeekItem[] = events.map((event) => ({
+      id: event.eventId,
+      name: event.name,
+      thumbnail: event.thumbnail || event.image,
+      meta: timestampToEventCardDateString(event.startDate),
+      kind: "event" as const,
+    }));
+    const fromTemplates: PeekItem[] = templates.map((template) => ({
+      id: template.recurrenceTemplateId,
+      name: template.eventData.name,
+      thumbnail: template.eventData.thumbnail || template.eventData.image,
+      meta: "Recurring template",
+      kind: "recurring" as const,
+    }));
+    return [...fromEvents, ...fromTemplates].slice(0, PEEK_LIMIT);
+  }, [events, templates]);
+
+  const moreCount = Math.max(0, itemCount - peekItems.length);
 
   useEffect(() => {
     setPublicUrl(getUrlWithCurrentHostname(`/event-collection/${collectionId}`));
@@ -152,54 +196,82 @@ export function CollectionHubDetails({
 
           <div className="p-4 sm:p-5 space-y-5 border-t lg:border-t-0 border-border">
             <div>
-              <h3 className="text-base font-semibold text-foreground font-sans">About</h3>
+              <h3 className="text-base font-semibold text-foreground font-sans">Collection</h3>
               {loading ? (
                 <Skeleton count={3} className="mt-2" />
               ) : (
                 <p className="mt-2 text-sm text-foreground-secondary font-sans leading-relaxed whitespace-pre-wrap">
-                  {description || "No description yet."}
+                  {description || "No description yet. Add a short note so players know what this collection groups."}
                 </p>
               )}
             </div>
 
-            <ul className="space-y-4 border-t border-border pt-4">
-              <li className="flex gap-3 items-start">
-                <span
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
-                  aria-hidden
-                >
-                  <RectangleStackIcon className="h-5 w-5" />
-                </span>
-                <div className="min-w-0 pt-0.5">
-                  <p className="text-sm font-semibold text-foreground font-sans">
-                    {loading ? "…" : `${itemCount} item${itemCount === 1 ? "" : "s"}`}
-                  </p>
-                  <p className="text-sm text-foreground-secondary font-sans">
-                    {loading ? "…" : membershipLine || "Add events on the Events tab"}
-                  </p>
-                </div>
-              </li>
-
-              <li className="flex gap-3 items-start">
-                <span
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
-                  aria-hidden
-                >
-                  {isPrivate ? <LockClosedIcon className="h-5 w-5" /> : <GlobeAltIcon className="h-5 w-5" />}
-                </span>
-                <div className="min-w-0 pt-0.5">
-                  <p className="text-sm font-semibold text-foreground font-sans">
-                    {isPrivate ? "Private" : "Public"}
-                  </p>
-                  <p className="text-sm text-foreground-secondary font-sans">
-                    {isPrivate
-                      ? "Only people with the link can view."
-                      : "Listed on your profile and discoverable on SPORTSHUB."}
-                  </p>
-                </div>
-              </li>
-            </ul>
+            <p className="text-sm text-foreground-secondary font-sans border-t border-border pt-4">
+              {loading ? (
+                <Skeleton width={180} />
+              ) : itemCount === 0 ? (
+                "No items yet — add sessions on the Events tab"
+              ) : (
+                <>
+                  <span className="font-semibold text-foreground">
+                    {itemCount} item{itemCount === 1 ? "" : "s"}
+                  </span>
+                  <span>{` · ${membershipLine}`}</span>
+                </>
+              )}
+            </p>
           </div>
+        </div>
+
+        <div className="border-t border-border pt-4 pb-1">
+          <div className="flex items-center justify-between gap-3 px-4 sm:px-5 mb-1">
+            <h3 className="text-sm font-semibold text-foreground font-sans">In this collection</h3>
+            <button
+              type="button"
+              onClick={onOpenEvents}
+              disabled={loading}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-foreground font-sans hover:text-foreground-secondary transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded disabled:opacity-50"
+            >
+              Manage on Events
+              <ArrowRightIcon className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="space-y-2 px-4 sm:px-5 py-2">
+              <Skeleton className="!rounded-xl h-14" />
+              <Skeleton className="!rounded-xl h-14" />
+            </div>
+          ) : peekItems.length === 0 ? (
+            <p className="text-sm text-foreground-muted font-sans px-4 sm:px-5 py-3">
+              Nothing in this collection yet. Add events on the Events tab.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border border-t border-border mt-3">
+              {peekItems.map((item) => (
+                <li key={`${item.kind}-${item.id}`} className="flex items-center gap-3 px-4 sm:px-5 py-2.5">
+                  <EntityRowThumbnail src={item.thumbnail} className="h-11 w-11" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground font-sans truncate">{item.name}</p>
+                    <p className="text-xs text-foreground-muted font-sans truncate">{item.meta}</p>
+                  </div>
+                  {item.kind === "recurring" ? (
+                    <span className="shrink-0 text-xs text-foreground-muted font-sans">Recurring</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {!loading && moreCount > 0 ? (
+            <button
+              type="button"
+              onClick={onOpenEvents}
+              className="mt-2 mb-1 w-full text-center text-xs font-semibold text-foreground-secondary font-sans hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded px-4"
+            >
+              +{moreCount} more on Events
+            </button>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 sm:px-5 py-3">
@@ -219,24 +291,54 @@ export function CollectionHubDetails({
 
       <section>
         <h3 className="text-base font-semibold text-foreground font-sans">Visibility</h3>
-        <p className="mt-1 text-xs text-foreground-muted font-sans mb-3">
-          How people can find this collection on SPORTSHUB. Change this in Settings.
+        <p className="mt-1 text-xs text-foreground-muted font-sans mb-1">
+          How people can find this collection on SPORTSHUB.
         </p>
-        <div className="rounded-xl border border-border bg-background px-4 py-4 flex items-start gap-3">
-          {isPrivate ? (
-            <LockClosedIcon className="h-5 w-5 text-foreground-secondary shrink-0 mt-0.5" aria-hidden />
-          ) : (
-            <GlobeAltIcon className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden />
-          )}
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground font-sans">
-              {isPrivate ? <span>Private</span> : <span className="text-emerald-700">Public</span>}
-              <span className="text-foreground-secondary font-normal">
+        {privacyUpdating ? (
+          <p className="text-xs text-foreground-muted font-sans mb-2" aria-live="polite">
+            Saving…
+          </p>
+        ) : null}
+        <div className="rounded-xl border border-border bg-background px-4">
+          <div className="flex items-start gap-3 py-4">
+            <span
+              className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border ${
+                isPrivate ? "bg-surface text-foreground-secondary" : "bg-surface text-emerald-700"
+              }`}
+              aria-hidden
+            >
+              {isPrivate ? <LockClosedIcon className="h-5 w-5" /> : <GlobeAltIcon className="h-5 w-5" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground font-sans">
+                {isPrivate ? "Private collection" : "Public collection"}
+              </p>
+              <p className="mt-1 text-xs text-foreground-muted font-sans leading-relaxed">
                 {isPrivate
-                  ? " — Only people with the link can view this collection."
-                  : " — This collection is listed on your profile and discoverable on SPORTSHUB."}
-              </span>
-            </p>
+                  ? "Only people with the link can view. Turn off to list it on your public profile."
+                  : "Listed on your profile and discoverable on SPORTSHUB. Turn on to keep it link-only."}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isPrivate}
+              aria-label="Private collection"
+              disabled={privacyUpdating || loading}
+              onClick={() => {
+                void onTogglePrivacy(!isPrivate);
+              }}
+              className={`relative shrink-0 h-7 w-12 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 ${
+                isPrivate ? "bg-accent" : "bg-surface-muted"
+              }`}
+            >
+              <span
+                aria-hidden
+                className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-background border border-border transition-transform duration-200 ease-out ${
+                  isPrivate ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
           </div>
         </div>
       </section>
@@ -275,20 +377,122 @@ export function CollectionHubDetails({
         </form>
       </EventHubPanel>
 
-      <ImageSelectionDialog
-        isOpen={photoOpen}
+      <CollectionChangePhotoPanel
+        open={photoOpen}
         onClose={() => setPhotoOpen(false)}
-        onImageSelected={async (imageUrl) => {
-          await onSaveImage(imageUrl);
-          setPhotoOpen(false);
-        }}
-        imageType={ImageType.IMAGE}
-        imageUrls={[]}
-        onLoadImages={async () => await getUsersEventImagesUrls(user.userId)}
-        onUploadImage={async (file: File) => await uploadEventImage(user.userId, file)}
-        title="Select collection image"
-        buttonText="Save image"
+        image={image}
+        onSaveImage={onSaveImage}
       />
     </EventHubStage>
+  );
+}
+
+function CollectionChangePhotoPanel({
+  open,
+  onClose,
+  image,
+  onSaveImage,
+}: {
+  open: boolean;
+  onClose: () => void;
+  image: string;
+  onSaveImage: (imageUrl: string) => Promise<void>;
+}) {
+  const { user } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [draftImage, setDraftImage] = useState<string | undefined>(image || undefined);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !user.userId) return;
+    let active = true;
+    setLoading(true);
+    (async () => {
+      try {
+        const images = await getUsersEventImagesUrls(user.userId);
+        if (!active) return;
+        setImageUrls(image ? [image, ...images.filter((url) => url !== image)] : images);
+        setDraftImage(image || undefined);
+        setDirty(false);
+        setErrorMessage(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [open, user.userId, image]);
+
+  const handleUpload = async (file: File) => {
+    const config = ImageConfig[ImageType.IMAGE];
+    if (!config.supportedTypes.includes(file.type)) {
+      setErrorMessage("Please upload a valid image file (jpg, png).");
+      return;
+    }
+    try {
+      let fileToUpload = file;
+      const fileSizeInMB = file.size / (1024 * 1024);
+      if (fileSizeInMB >= 2) {
+        const imageCompression = (await import("browser-image-compression")).default;
+        fileToUpload = await imageCompression(file, { maxSizeMB: 2, useWebWorker: true });
+      }
+      const downloadUrl = await uploadEventImage(user.userId, fileToUpload);
+      setImageUrls((prev) => [downloadUrl, ...prev.filter((url) => url !== downloadUrl)]);
+      setDraftImage(downloadUrl);
+      setDirty(true);
+      setErrorMessage(null);
+    } catch {
+      setErrorMessage("Failed to upload the image. Please try again.");
+    }
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await onSaveImage(draftImage || "");
+      setDirty(false);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <EventHubPanel
+      open={open}
+      onClose={onClose}
+      title="Change photo"
+      wide
+      footer={
+        <EventHubPrimaryButton onClick={save} disabled={!dirty || saving || loading}>
+          <CheckIcon className="h-4 w-4" aria-hidden />
+          Save photo
+        </EventHubPrimaryButton>
+      }
+    >
+      <ImagePickerReveal loading={loading} variant="image-only">
+        <div className="space-y-4 pb-4">
+          <p className="text-xs text-foreground-muted font-sans">
+            If upload stalls, close and reopen the browser, then try again.
+          </p>
+          <ImageSection
+            type={ImageType.IMAGE}
+            imageUrls={imageUrls.slice(0, 8)}
+            onImageUploaded={handleUpload}
+            gridCols="grid-cols-2"
+            selectedImageUrl={draftImage}
+            onImageSelect={(url) => {
+              setDraftImage(draftImage === url ? undefined : url);
+              setDirty(true);
+            }}
+          />
+          {errorMessage ? <p className="text-sm text-danger font-sans">{errorMessage}</p> : null}
+        </div>
+      </ImagePickerReveal>
+    </EventHubPanel>
   );
 }

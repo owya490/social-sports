@@ -1,13 +1,13 @@
 /**
- * Framework-neutral Impeccable live chrome contract.
+ * Framework-neutral Impeccable live shell contract.
  *
  * The production browser bundle is intentionally plain DOM so Svelte, React,
- * Vue, and static adapters can all mount the same chrome. This module is the
+ * Vue, and static adapters can all mount the same shell. This module is the
  * testable contract/inventory for that bundle; live-browser.js mirrors these
  * values at runtime because it is served as a standalone script.
  */
 
-export const LIVE_CHROME_MOUNT_CONTRACT = Object.freeze([
+export const LIVE_SHELL_MOUNT_CONTRACT = Object.freeze([
   'root',
   'transport',
   'state',
@@ -37,7 +37,7 @@ export const LIVE_UI_SURFACES = Object.freeze([
     states: ['closed', 'open', 'hover', 'pressed', 'loading', 'rollback', 'keep-fixing'],
   },
   {
-    key: 'element-selection-chrome',
+    key: 'element-selection-shell',
     ids: [
       'impeccable-live-highlight',
       'impeccable-live-tooltip',
@@ -55,7 +55,7 @@ export const LIVE_UI_SURFACES = Object.freeze([
     states: ['closed', 'open', 'option-hover', 'option-focus'],
   },
   {
-    key: 'edit-chrome',
+    key: 'edit-shell',
     ids: ['impeccable-live-edit-badge'],
     states: ['enabled', 'disabled', 'editing', 'cancel', 'save', 'edited-content'],
   },
@@ -80,7 +80,7 @@ export const LIVE_UI_SURFACES = Object.freeze([
     states: ['saving', 'applying-variant', 'confirmed'],
   },
   {
-    key: 'insert-mode-chrome',
+    key: 'insert-mode-shell',
     ids: [
       'impeccable-live-insert-line',
       'impeccable-live-insert-placeholder',
@@ -93,7 +93,7 @@ export const LIVE_UI_SURFACES = Object.freeze([
     states: ['toggle-active', 'line', 'placeholder', 'resize', 'enabled', 'disabled', 'tooltip'],
   },
   {
-    key: 'annotation-chrome',
+    key: 'annotation-shell',
     ids: [
       'impeccable-live-annot',
       'impeccable-live-annot-svg',

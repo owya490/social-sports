@@ -7,7 +7,7 @@ Operate. Single recurrence-template hub at `/organiser/v2/event/recurring-events
 Organisers from v2 recurring list. First job: scan/edit template Details like a single event. Second: manage Past events and Recurrence schedule. Settings for payment/waitlist prefs.
 
 ## Direction
-Approved Comp A overview twin. Quiet chrome (← Recurring, title, Weekly · location meta, Template chip, Pause). Tabs: Details · Past events · Recurrence · Settings. Images fold into Details Change photo panel. Reuse EventHubListing / EventHubPanel / EventHubEditForm grammar.
+Approved Comp A overview twin. Quiet header (← Recurring, title, Weekly · location meta, Template chip, Pause). Tabs: Details · Past events · Recurrence · Settings. Images fold into Details Change photo panel. Reuse EventHubListing / EventHubPanel / EventHubEditForm grammar.
 
 ## Confirmed choices
 - Tabs: mirror-plus-series (Details · Past events · Recurrence · Settings)
@@ -26,7 +26,7 @@ None blocking. Public `/event/[id]` URL for templates may not resolve — hide E
 ## Implementation fidelity inventory
 | Ingredient | Medium |
 |---|---|
-| Quiet chrome | HTML/CSS (RecurringHubChrome) |
+| Quiet header | HTML/CSS (RecurringHubHeader) |
 | Peer tabs | HTML tabs (RecurringHubNav) |
 | Details overview twin | Reuse EventHubListing |
 | Past events list | HTML table / flush rows |

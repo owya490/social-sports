@@ -2,7 +2,7 @@
 
 /**
  * THESIS: Edit details is a calm sectioned operate sheet — Basic / Time / Location / Booking —
- * not a sticky-toolbar document chrome or a view/edit toggle card.
+ * not a sticky document toolbar or a view/edit toggle card.
  * OWN-WORLD: Honest Clubhouse light tokens, Satoshi, 12px radius, yellow Update event only;
  * TipTap bubble-on-selection; Luma section rhythm without Appearance themes.
  * STORY: Organiser opens Edit details, adjusts any Sportshub field, taps Update event once.

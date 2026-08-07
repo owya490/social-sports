@@ -6,7 +6,7 @@
       "id": "brand-led",
       "label": "Brand-led bar",
       "kicker": "COMP A",
-      "thesis": "SPORTSHUB + ORGANISER HUB own the chrome; menu is a quiet glyph beside the avatar — no floating tile.",
+      "thesis": "SPORTSHUB + ORGANISER HUB own the header; menu is a quiet glyph beside the avatar — no floating tile.",
       "viewport": "Flush white sticky bar → greeting + Create event → KPI grid. Drawer closed.",
       "risk": "Hub wordmark competes with the page greeting for attention.",
       "hero": ".impeccable/mocks/mobile-nav-comp-a-brand-led.png"
@@ -15,7 +15,7 @@
       "id": "section-title",
       "label": "Section-title bar",
       "kicker": "COMP B",
-      "thesis": "The bar names where you are (Dashboard); Menu is labeled text — chrome serves wayfinding, not brand shout.",
+      "thesis": "The bar names where you are (Dashboard); Menu is labeled text — header serves wayfinding, not brand shout.",
       "viewport": "Logo mark + Dashboard + Menu + avatar → greeting and KPIs flush underneath.",
       "risk": "Loses ORGANISER HUB identity on every screen.",
       "hero": ".impeccable/mocks/mobile-nav-comp-b-section-title.png"

@@ -17,11 +17,11 @@ Method: dual-agent (A: eba38532-e904-480b-bbc7-4b9bbf6bd3d1 · B: 3400ccca-404b-
 | 1 | Visibility of System Status | 3 | Skeletons work; header drops to generic "Dashboard" while loading; no aria-live when metrics resolve |
 | 2 | Match System / Real World | 2 | Chart labels W1–W4 are ops jargon; Conversion (Approx.) unexplained for volunteer organisers |
 | 3 | User Control and Freedom | 3 | Sidebar collapse, mobile drawer Esc, chart range toggle, error Retry + fallback link |
-| 4 | Consistency and Standards | 2 | Chrome bg-background vs page bg-surface; Create event triplicated; v1 navbar vs v2 sidebar mental models |
+| 4 | Consistency and Standards | 2 | Shell bg-background vs page bg-surface; Create event triplicated; v1 navbar vs v2 sidebar mental models |
 | 5 | Error Prevention | 3 | Read-only dashboard with solid loading/error guards |
 | 6 | Recognition Rather Than Recall | 2 | Sidebar + quick nav duplicate destinations; chart week labels require decoding |
 | 7 | Flexibility and Efficiency | 2 | No keyboard shortcuts or power paths for repeat organisers |
-| 8 | Aesthetic and Minimalist Design | 3 | Calm B&W hierarchy; bottom quick-nav row adds redundant chrome |
+| 8 | Aesthetic and Minimalist Design | 3 | Calm B&W hierarchy; bottom quick-nav row adds redundant header |
 | 9 | Error Recovery | 4 | Error card with Retry and "manage events" escape is reassuring and actionable |
 | 10 | Help and Documentation | 2 | No inline help on Conversion, page views, or chart semantics |
 | **Total** | | **26/40** | **Good — solid foundation, clear refinement targets** |
@@ -32,7 +32,7 @@ Method: dual-agent (A: eba38532-e904-480b-bbc7-4b9bbf6bd3d1 · B: 3400ccca-404b-
 
 The dashboard earns partial SPORTSHUB identity through domain copy ("sessions," "players"), AU dollar formatting, capacity fill bars in Coming up, and disciplined Honest Clubhouse tokens (Satoshi, grey canvas, yellow only on Create event CTAs and the current-week chart bar). The surface brief targets "category-standard canon… refined SaaS dashboard at Stripe/Linear craft level," and the built artifact delivers that: icon-led KPI grid, segmented bar chart, ranked list, five-tile shortcut strip. Nothing in layout or interaction would signal community sports organiser if you swapped the nouns for "customers" and "orders." The memorable moment (fill bars at a glance) lives only in Coming up and Top events—not enough to escape generic dashboard territory.
 
-**Deterministic scan:** CLI scans of the page and all seven dashboard components returned zero findings. Browser overlay (detect.js on live page) reported 15 anti-patterns—predominantly `low-contrast` on `text-foreground-muted` (#8a8a8a on #ffffff at 3.5:1) across KPI subtitles ("Last 30 days," "All time per event," "Approx."), loading copy, and section meta. One `skipped-heading` hit is a false positive from global mobile search markup, not dashboard code. Four `layout-transition` hits trace to sidebar collapse animation in organiser chrome.
+**Deterministic scan:** CLI scans of the page and all seven dashboard components returned zero findings. Browser overlay (detect.js on live page) reported 15 anti-patterns—predominantly `low-contrast` on `text-foreground-muted` (#8a8a8a on #ffffff at 3.5:1) across KPI subtitles ("Last 30 days," "All time per event," "Approx."), loading copy, and section meta. One `skipped-heading` hit is a false positive from global mobile search markup, not dashboard code. Four `layout-transition` hits trace to sidebar collapse animation in organiser shell.
 
 **Visual overlays:** detect.js injection succeeded; overlays highlight low-contrast muted text on KPI cells and loading states. MCP browser tab was unavailable; evidence collected via Puppeteer fallback at desktop (1280×800) and mobile (390×844).
 
@@ -90,7 +90,7 @@ The v2 dashboard is a credible Operate surface: honest metrics, calm visual syst
 
 - DashboardHeader loading fallback "Dashboard" loses warmth vs skeleton greeting.
 - Conversion KPI may alarm organisers (page views all-time vs tickets 30-day)—honest but cognitively mismatched periods.
-- OrganiserChrome bg-background vs page bg-surface creates a subtle canvas seam at layout edge.
+- OrganiserShell bg-background vs page bg-surface creates a subtle canvas seam at layout edge.
 - Top events rank bars are correctly neutral per design system but feel inert for new organisers with zero sales.
 
 ## Questions to Consider

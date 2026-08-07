@@ -16,11 +16,19 @@ import {
 import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { isFreeEvent } from "@/utilities/priceUtils";
+import {
+  CheckBadgeIcon,
+  CreditCardIcon,
+  QueueListIcon,
+  TicketIcon,
+} from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { ReactNode, useMemo, useState } from "react";
 import {
   EventHubPreferenceRow,
+  EventHubSettingTile,
+  EventHubSettingTileRow,
   EventHubStage,
 } from "./EventHubStage";
 
@@ -51,11 +59,23 @@ type EventHubSettingsProps = {
   eventPrice: number;
 };
 
-function SettingsGroup({ title, children }: { title: string; children: ReactNode }) {
+function SettingsGroup({
+  title,
+  children,
+  flush,
+}: {
+  title: string;
+  children: ReactNode;
+  flush?: boolean;
+}) {
   return (
     <section className="pt-6 first:pt-0">
       <h3 className="text-sm font-semibold text-foreground font-sans mb-1">{title}</h3>
-      <div className="divide-y divide-border border-t border-border">{children}</div>
+      {flush ? (
+        <div className="border-t border-border">{children}</div>
+      ) : (
+        <div className="divide-y divide-border border-t border-border">{children}</div>
+      )}
     </section>
   );
 }
@@ -145,37 +165,55 @@ export function EventHubSettings({
       ) : null}
 
       <div className="space-y-2">
-        <SettingsGroup title="Registration">
-          <EventHubPreferenceRow
-            title="Pause registration"
-            description="Close new bookings while keeping the listing visible."
-            checked={paused}
-            onChange={persistToggle(setPaused, "paused")}
-          />
-          <EventHubPreferenceRow
-            title={isFree ? "Enable bookings" : "Enable payments"}
-            description={
-              isFree
-                ? "Allow customers to book spots for this event."
-                : "Allow customers to purchase paid tickets for this event."
-            }
-            checked={paymentsActive}
-            onChange={persistToggle(setPaymentsActive, "paymentsActive")}
-          />
-          <EventHubPreferenceRow
-            title="Booking approval"
-            description="Require manual approval before bookings are confirmed."
-            checked={bookingApprovalEnabled}
-            onChange={persistToggle(setBookingApprovalEnabled, "bookingApprovalEnabled")}
-          />
-          {WAITLIST_ENABLED ? (
-            <EventHubPreferenceRow
-              title="Waitlist"
-              description="Allow customers to join a waitlist when the event is full."
-              checked={waitlistEnabled}
-              onChange={persistToggle(setWaitlistEnabled, "waitlistEnabled")}
+        <SettingsGroup title="Registration" flush>
+          <EventHubSettingTileRow>
+            <EventHubSettingTile
+              title="Registration"
+              description="Close new bookings while keeping the listing visible."
+              icon={<TicketIcon />}
+              tone="green"
+              checked={!paused}
+              onLabel="Open"
+              offLabel="Paused"
+              onChange={(open) => persistToggle(setPaused, "paused")(!open)}
             />
-          ) : null}
+            <EventHubSettingTile
+              title={isFree ? "Bookings" : "Payments"}
+              description={
+                isFree
+                  ? "Allow customers to book spots for this event."
+                  : "Allow customers to purchase paid tickets for this event."
+              }
+              icon={isFree ? <TicketIcon /> : <CreditCardIcon />}
+              tone="stripe"
+              checked={paymentsActive}
+              onLabel="On"
+              offLabel="Off"
+              onChange={persistToggle(setPaymentsActive, "paymentsActive")}
+            />
+            <EventHubSettingTile
+              title="Booking approval"
+              description="Require manual approval before bookings are confirmed."
+              icon={<CheckBadgeIcon />}
+              tone="blue"
+              checked={bookingApprovalEnabled}
+              onLabel="On"
+              offLabel="Off"
+              onChange={persistToggle(setBookingApprovalEnabled, "bookingApprovalEnabled")}
+            />
+            {WAITLIST_ENABLED ? (
+              <EventHubSettingTile
+                title="Waitlist"
+                description="Allow customers to join a waitlist when the event is full."
+                icon={<QueueListIcon />}
+                tone="sky"
+                checked={waitlistEnabled}
+                onLabel="On"
+                offLabel="Off"
+                onChange={persistToggle(setWaitlistEnabled, "waitlistEnabled")}
+              />
+            ) : null}
+          </EventHubSettingTileRow>
         </SettingsGroup>
 
         {!isFree ? (

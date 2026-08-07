@@ -1,0 +1,74 @@
+{
+  "title": "Welcome page structure",
+  "question": "Locked brief: one cinematic Event-hub old/new reveal, primary CTA to Events, secondary to Dashboard, Gemini-star tab. Keep Honest Clubhouse (Satoshi, B/W/grey, yellow accent). The roll assigned Peel Reveal — keep it, take a fused challenger, re-roll, or play it straight.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Peel Reveal",
+      "kicker": "THE ROLL",
+      "lineage": "Sticker-sheet peel · Event hub proof",
+      "thesis": "A diamond-handled diagonal peel lifts v1 Event hub off v2 — welcome copy rides the sticker edge, not a boring header stack.",
+      "palette": ["#ffffff", "#f7f7f7", "#0a0a0a", "#f2b705"],
+      "materials": ["Clubhouse yellow", "Satoshi", "real Event hub screenshots", "diagonal peel seam", "Gemini star handle"],
+      "viewport": "First viewport: oversized Event hub stage with diagonal peel at ~40%; “Welcome to Organisers Hub v2!” arcs the peeled corner; yellow Enter Events docks under the stage.",
+      "risk": "Diagonal mask can feel gimmicky if the peel isn’t buttery and the screenshots aren’t crisp.",
+      "sketch": ".impeccable/sketches/welcome-peel.webp"
+    },
+    {
+      "id": "challenger-massin",
+      "label": "Stage Voices",
+      "kicker": "CHALLENGER",
+      "lineage": "Massin stage page · fused into Clubhouse",
+      "thesis": "Old and New argue across a vertical reveal seam like two speakers — size is volume, the Event hub is the stage, Enter Events is the curtain call.",
+      "case": "Beats Peel on theatrical energy; weaker if shouty type fights Satoshi restraint.",
+      "palette": ["#ffffff", "#0a0a0a", "#f2b705", "#525252"],
+      "materials": ["speaker-sized Satoshi", "vertical scrub seam", "stamp-quiet host portrait accents", "yellow CTA"],
+      "viewport": "BEFORE / AFTER labels collide at different scales across a center seam; Event hub fills both halves; CTA under the proscenium.",
+      "risk": "Typographic theater can overshadow the UI proof organisers came to judge.",
+      "sketch": ".impeccable/sketches/welcome-massin.webp",
+      "hero": ".impeccable/quality-bars/massin-stage-page-hero.webp",
+      "board": ".impeccable/quality-bars/massin-stage-page.webp"
+    },
+    {
+      "id": "challenger-darkroom",
+      "label": "Develop Reveal",
+      "kicker": "CHALLENGER",
+      "lineage": "Darkroom safelight · fused into Clubhouse",
+      "thesis": "Drag develops the new Event hub out of a silver ghost of v1 — yellow safelight wash, timer tick, print snaps into v2.",
+      "case": "Strongest metaphor for reveal; may read too moody for a bright sports welcome.",
+      "palette": ["#f7f7f7", "#0a0a0a", "#f2b705", "#8a8a8a"],
+      "materials": ["yellow safelight field", "develop wipe", "timer digits", "wet-print Event hub"],
+      "viewport": "Amber-yellow washed stage; horizontal develop wipe; Welcome title as grease-pencil notes; Enter Events as the fixer bath commit.",
+      "risk": "Safelight mood can feel dark-mode adjacent against Clubhouse daylight.",
+      "sketch": ".impeccable/sketches/welcome-darkroom.webp",
+      "hero": ".impeccable/quality-bars/darkroom-safelight-hero.webp",
+      "board": ".impeccable/quality-bars/darkroom-safelight.webp"
+    },
+    {
+      "id": "challenger-hardware",
+      "label": "Desk Instrument",
+      "kicker": "CHALLENGER",
+      "lineage": "Creator-hardware bench · fused into Clubhouse",
+      "thesis": "The reveal is a knurled scrub on a keycap grid; one yellow commit key is Enter Events; amber readout says NOW.",
+      "case": "Clearest tactile control for the slider; cooler/nerdier than sports-club energy.",
+      "palette": ["#ebebeb", "#0a0a0a", "#f2b705", "#525252"],
+      "materials": ["keycap grid frame", "knurled scrub", "amber NOW readout", "yellow commit key"],
+      "viewport": "Instrument bezel frames the Event hub pair; knob/scrub owns the reveal; yellow key under the bezel.",
+      "risk": "Hardware metaphor may feel foreign to community-sport organisers.",
+      "sketch": ".impeccable/sketches/welcome-hardware.webp",
+      "hero": ".impeccable/quality-bars/creator-hardware-hero.webp",
+      "board": ".impeccable/quality-bars/creator-hardware.webp"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A familiar What’s-new SaaS welcome: centered headline, feature cards, one CTA — executed at full craft, no peel theater.",
+    "viewport": "Centered Welcome to Organisers Hub v2, three feature cards with before/after thumbs, yellow Enter Events.",
+    "palette": ["#ffffff", "#f7f7f7", "#0a0a0a", "#f2b705"],
+    "materials": ["Honest Clubhouse tokens", "straight feature grid", "static before/after thumbs"],
+    "sketch": ".impeccable/sketches/welcome-canon.webp"
+  },
+  "steer": true
+}

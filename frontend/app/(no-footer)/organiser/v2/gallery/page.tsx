@@ -89,7 +89,7 @@ export default function OrganiserGalleryV2Page() {
 
   return (
     <>
-      {/* THESIS: A quiet media library—upload tiles and crops lead, chrome stays out of the way.
+      {/* THESIS: A quiet media library—upload tiles and crops lead, shell stays out of the way.
           OWN-WORLD: Honest Clubhouse tokens—outlined panel, dashed upload tiles, muted meta.
           STORY: Upload thumbnails and event images; crop modal stays shared with legacy.
           FIRST VIEWPORT: Title + count subtitle, thumbnail then image sections in one panel.

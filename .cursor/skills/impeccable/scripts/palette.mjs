@@ -296,7 +296,7 @@ const SEEDS = [
     strategy: "Pure white surface lets the muted sky-blue primary carry the meteorological calm, with a deep-navy accent providing readable weight against the soft primary." },
   { id: "seed-187", oklch: [0.350, 0.078, 240.0],
     mood: "deep harbor at blue hour — wet stone, cold steel, the quiet before night fully lands",
-    strategy: "Near-black architectural bg with a hint of marine chroma lets the seed read as ambient atmosphere rather than UI chrome; a cooler steel accent sits opposite the warmer-shifted primary for navigational clarity." },
+    strategy: "Near-black architectural bg with a hint of marine chroma lets the seed read as ambient atmosphere rather than UI shell; a cooler steel accent sits opposite the warmer-shifted primary for navigational clarity." },
   { id: "seed-077", oklch: [0.578, 0.130, 241.7],
     mood: "pre-dawn signal tower — cold blue solitude, instruments glowing against the dark",
     strategy: "Pure near-black bg lets the seed's cold tower-light blue glow as the sole emotional source, with a frost-cyan accent acting as a secondary indicator light." },

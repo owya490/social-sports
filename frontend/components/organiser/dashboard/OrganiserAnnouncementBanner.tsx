@@ -19,7 +19,7 @@ export const OrganiserAnnouncementBanner = () => {
           </svg>
           A redesigned workspace for managing events, attendees, and more.{" "}
           <Link
-            href="/organiser/v2/dashboard"
+            href="/organiser/v2/welcome"
             className="font-semibold text-foreground underline underline-offset-2 hover:text-foreground/80"
           >
             Open v2 organiser hub

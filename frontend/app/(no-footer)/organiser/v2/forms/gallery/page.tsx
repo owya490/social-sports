@@ -51,11 +51,11 @@ export default function OrganiserFormsGalleryV2Page() {
 
   return (
     <>
-      {/* THESIS: A scannable form catalogue—open edit or preview in one tap, no miniature document previews.
-          OWN-WORLD: Honest Clubhouse tokens—shared row language with Event collections and Custom links.
-          STORY: Create or open a form; editor and preview stay on legacy paths.
-          FIRST VIEWPORT: Title + create CTA, unified row panel below.
-          FORM: Established v2 operate extension; list-only port (editor/preview stay legacy).
+      {/* THESIS: A Docs/Forms-style document gallery—each form is a paper thumbnail you can recognise, not a lifeless row.
+          OWN-WORLD: Honest Clubhouse tokens; paper cards on surface; blank create tile owns creation (no header CTA).
+          STORY: Scan real question miniatures; hover expands the footer up to reveal description + Edit/Preview; click edits.
+          FIRST VIEWPORT: Title; blank tile + form cards in a responsive grid of centered document previews.
+          FORM: Established Organiser Hub extension; Google Forms / Docs craft bar (live-preview-edit).
           FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md */}
       <div className="min-h-screen bg-surface text-foreground pb-2">
         <FormsGalleryHeader formCount={forms.length} loading={loading} />

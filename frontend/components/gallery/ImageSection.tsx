@@ -16,6 +16,62 @@ interface ImageSectionProps {
   description?: string;
 }
 
+function SelectableImageTile({
+  url,
+  index,
+  type,
+  selected,
+  onSelect,
+}: {
+  url: string;
+  index: number;
+  type: ImageType;
+  selected: boolean;
+  onSelect?: (url: string) => void;
+}) {
+  const config = ImageConfig[type];
+  const [decoded, setDecoded] = useState(false);
+  const [orientation, setOrientation] = useState<ImageOrientation | null>(null);
+  const isPortraitForm = type === ImageType.FORM && orientation === ImageOrientation.PORTRAIT;
+
+  return (
+    <div
+      className={`relative group overflow-hidden rounded-lg ${config.containerAspect} bg-surface-muted border ${
+        selected ? "border-4 border-accent" : "border-border"
+      }`}
+    >
+      {!decoded ? (
+        <div className="absolute inset-0 overflow-hidden" aria-hidden>
+          <div className="image-picker-shimmer absolute inset-0 motion-reduce:animate-none" />
+        </div>
+      ) : null}
+      <Image
+        src={url}
+        alt={`Image ${index + 1}`}
+        width={config.defaultImageWidth}
+        height={config.defaultImageHeight}
+        className={`w-full h-full ${
+          isPortraitForm ? "object-contain bg-white" : "object-cover"
+        } cursor-pointer transition-opacity duration-300 ease-out motion-reduce:transition-none ${
+          decoded ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={() => {
+          onSelect?.(url);
+        }}
+        onLoad={(e) => {
+          setDecoded(true);
+          if (type === ImageType.FORM) {
+            setOrientation(determineOrientation(e.target as HTMLImageElement));
+          }
+        }}
+        onError={() => {
+          setDecoded(true);
+        }}
+      />
+    </div>
+  );
+}
+
 export const ImageSection = ({
   type,
   imageUrls,
@@ -26,16 +82,7 @@ export const ImageSection = ({
   title,
   description,
 }: ImageSectionProps) => {
-  const [imageOrientations, setImageOrientations] = useState<{ [key: string]: ImageOrientation }>({});
   const config = ImageConfig[type];
-
-  const handleImageLoad = (url: string, e: any) => {
-    if (type === ImageType.FORM) {
-      const img: HTMLImageElement = e.target;
-      const orientation = determineOrientation(img);
-      setImageOrientations((prev) => ({ ...prev, [url]: orientation }));
-    }
-  };
 
   return (
     <div>
@@ -45,31 +92,16 @@ export const ImageSection = ({
       <div className={`grid ${gridCols} gap-4`}>
         <ImageUploadCard type={type} onImageUploaded={onImageUploaded} />
 
-        {imageUrls.map((url, index) => {
-          const config = ImageConfig[type];
-          const orientation = imageOrientations[url];
-          const isPortraitForm = type === ImageType.FORM && orientation === ImageOrientation.PORTRAIT;
-
-          return (
-            <div key={index} className="relative group">
-              <Image
-                src={url}
-                alt={`Image ${index + 1}`}
-                width={config.defaultImageWidth}
-                height={config.defaultImageHeight}
-                className={`w-full ${config.containerAspect} ${
-                  selectedImageUrl === url ? "border-4 border-light-blue-400" : ""
-                } ${
-                  isPortraitForm ? "object-contain bg-white" : "object-cover"
-                } rounded-lg border border-gray-200 cursor-pointer`}
-                onClick={() => {
-                  onImageSelect?.(url);
-                }}
-                onLoad={(e) => handleImageLoad(url, e)}
-              />
-            </div>
-          );
-        })}
+        {imageUrls.map((url, index) => (
+          <SelectableImageTile
+            key={url}
+            url={url}
+            index={index}
+            type={type}
+            selected={selectedImageUrl === url}
+            onSelect={onImageSelect}
+          />
+        ))}
       </div>
     </div>
   );

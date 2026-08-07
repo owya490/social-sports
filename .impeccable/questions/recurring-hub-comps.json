@@ -6,8 +6,8 @@
       "id": "overview-twin",
       "label": "Overview twin",
       "kicker": "CLOSEST TO EVENT HUB",
-      "thesis": "Same two-column Details overview as the event hub. Series lives only in chrome meta (Weekly · next).",
-      "viewport": "Quiet chrome + peer tabs. Details: photo | when/where card, Hosts, Visibility. Edit / Change photo panels.",
+      "thesis": "Same two-column Details overview as the event hub. Series lives only in header meta (Weekly · next).",
+      "viewport": "Quiet header + peer tabs. Details: photo | when/where card, Hosts, Visibility. Edit / Change photo panels.",
       "risk": "Series cadence is easy to miss until you open Recurrence.",
       "hero": ".impeccable/mocks/recurring-hub-comp-a-overview-twin.png",
       "sketch": ".impeccable/mocks/recurring-hub-comp-a-overview-twin.png"

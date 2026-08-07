@@ -12,7 +12,7 @@ type ImageFormProps = AllImageData & {
   eventImageUrls: string[];
   setThumbnailUrls: (v: string[]) => void;
   setImageUrls: (v: string[]) => void;
-  /** Flush workbench — skip warning card chrome */
+  /** Flush workbench — skip warning card frame */
   flush?: boolean;
 };
 

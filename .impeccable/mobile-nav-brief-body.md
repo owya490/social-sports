@@ -1,7 +1,7 @@
-# Organiser v2 mobile chrome (integrated top bar)
+# Organiser v2 mobile header (integrated top bar)
 
 ## Scope & mode
-Operate — mobile-only navigation chrome for organiser v2 routes (`lg` and below). Desktop sidebar unchanged.
+Operate — mobile-only navigation header for organiser v2 routes (`lg` and below). Desktop sidebar unchanged.
 
 ## Audience / job
 Organiser on phone between sessions needs hub navigation without a floating orphan control that breaks the clubhouse plane.
@@ -10,7 +10,7 @@ Organiser on phone between sessions needs hub navigation without a floating orph
 Approved: Brand-led bar (`.impeccable/mocks/mobile-nav-comp-a-brand-led.png`). Flush sticky white top bar: SPORTSHUB mark + ORGANISER HUB left; quiet menu glyph + avatar right; hairline bottom border. Left sheet reuses full sidebar content. No bordered burger tile, no `pt-16` dead spacer.
 
 ## Memorable moment
-The menu lives inside the page chrome — same plane as the dashboard — not a floating card above it.
+The menu lives inside the page shell — same plane as the dashboard — not a floating card above it.
 
 ## Inventory
 | Ingredient | Medium |

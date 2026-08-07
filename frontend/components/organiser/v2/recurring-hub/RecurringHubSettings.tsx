@@ -2,6 +2,8 @@
 
 import {
   EventHubPreferenceRow,
+  EventHubSettingTile,
+  EventHubSettingTileRow,
   EventHubStage,
 } from "@/components/organiser/v2/event-hub/EventHubStage";
 import { NewEventData } from "@/interfaces/EventTypes";
@@ -14,6 +16,12 @@ import {
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { isFreeEvent } from "@/utilities/priceUtils";
+import {
+  CheckBadgeIcon,
+  CreditCardIcon,
+  QueueListIcon,
+  TicketIcon,
+} from "@heroicons/react/24/outline";
 import { ReactNode, useState } from "react";
 
 type RecurringHubSettingsProps = {
@@ -38,11 +46,23 @@ type RecurringHubSettingsProps = {
   eventPrice: number;
 };
 
-function SettingsGroup({ title, children }: { title: string; children: ReactNode }) {
+function SettingsGroup({
+  title,
+  children,
+  flush,
+}: {
+  title: string;
+  children: ReactNode;
+  flush?: boolean;
+}) {
   return (
     <section className="pt-6 first:pt-0">
       <h3 className="text-sm font-semibold text-foreground font-sans mb-1">{title}</h3>
-      <div className="divide-y divide-border border-t border-border">{children}</div>
+      {flush ? (
+        <div className="border-t border-border">{children}</div>
+      ) : (
+        <div className="divide-y divide-border border-t border-border">{children}</div>
+      )}
     </section>
   );
 }
@@ -105,31 +125,45 @@ export function RecurringHubSettings({
       ) : null}
 
       <div className="space-y-2">
-        <SettingsGroup title="Registration">
-          <EventHubPreferenceRow
-            title={isFree ? "Enable bookings" : "Enable payments"}
-            description={
-              isFree
-                ? "Allow customers to book spots on future occurrences."
-                : "Allow customers to purchase paid tickets on future occurrences."
-            }
-            checked={paymentsActive}
-            onChange={persistToggle(setPaymentsActive, "paymentsActive")}
-          />
-          <EventHubPreferenceRow
-            title="Booking approval"
-            description="Require manual approval before bookings are confirmed."
-            checked={bookingApprovalEnabled}
-            onChange={persistToggle(setBookingApprovalEnabled, "bookingApprovalEnabled")}
-          />
-          {WAITLIST_ENABLED ? (
-            <EventHubPreferenceRow
-              title="Waitlist"
-              description="Allow customers to join a waitlist when an occurrence is full."
-              checked={waitlistEnabled}
-              onChange={persistToggle(setWaitlistEnabled, "waitlistEnabled")}
+        <SettingsGroup title="Registration" flush>
+          <EventHubSettingTileRow>
+            <EventHubSettingTile
+              title={isFree ? "Bookings" : "Payments"}
+              description={
+                isFree
+                  ? "Allow customers to book spots on future occurrences."
+                  : "Allow customers to purchase paid tickets on future occurrences."
+              }
+              icon={isFree ? <TicketIcon /> : <CreditCardIcon />}
+              tone="stripe"
+              checked={paymentsActive}
+              onLabel="On"
+              offLabel="Off"
+              onChange={persistToggle(setPaymentsActive, "paymentsActive")}
             />
-          ) : null}
+            <EventHubSettingTile
+              title="Booking approval"
+              description="Require manual approval before bookings are confirmed."
+              icon={<CheckBadgeIcon />}
+              tone="blue"
+              checked={bookingApprovalEnabled}
+              onLabel="On"
+              offLabel="Off"
+              onChange={persistToggle(setBookingApprovalEnabled, "bookingApprovalEnabled")}
+            />
+            {WAITLIST_ENABLED ? (
+              <EventHubSettingTile
+                title="Waitlist"
+                description="Allow customers to join a waitlist when an occurrence is full."
+                icon={<QueueListIcon />}
+                tone="sky"
+                checked={waitlistEnabled}
+                onLabel="On"
+                offLabel="Off"
+                onChange={persistToggle(setWaitlistEnabled, "waitlistEnabled")}
+              />
+            ) : null}
+          </EventHubSettingTileRow>
         </SettingsGroup>
 
         {!isFree ? (

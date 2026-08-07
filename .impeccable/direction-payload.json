@@ -34,7 +34,7 @@
       "id": "challenger-metro",
       "label": "Metro Typographic Tiles",
       "lineage": "flat tile panorama interfaces",
-      "thesis": "Giant cropped session names on color fields—panorama swipe between sales, chart, and fixtures with zero chrome.",
+      "thesis": "Giant cropped session names on color fields—panorama swipe between sales, chart, and fixtures with zero shell.",
       "case": "Strongest mobile identification: between-session glance reads one tile at poster scale.",
       "palette": ["#000000", "#00BCF2", "#FFFFFF", "#7CBB00"],
       "materials": ["flat color tiles", "cropped lowercase headlines"],

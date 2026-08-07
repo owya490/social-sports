@@ -47,7 +47,7 @@
     mist:      'oklch(90% 0.008 82 / 0.6)',     // light hairline
     white:     'oklch(99% 0 0)',
   };
-  // Picker bar chrome - mirrors .live-demo-gbar / .live-demo-ctx in kinpaku-kit.css.
+  // Picker bar shell - mirrors .live-demo-gbar / .live-demo-ctx in kinpaku-kit.css.
   // Quiet neutral elevation: no gold halo ring (gold is reserved for the brand
   // mark and the active control, not the container outline).
   const PICKER_SHADOW =
@@ -97,19 +97,19 @@
     return { value: c.value, label: c.label };
   });
 
-  const LIVE_CHROME_MOUNT_CONTRACT = ['root', 'transport', 'state', 'actions'];
+  const LIVE_SHELL_MOUNT_CONTRACT = ['root', 'transport', 'state', 'actions'];
   const LIVE_UI_SURFACES = [
     { key: 'global-bottom-bar', ids: [PREFIX + '-global-bar', PREFIX + '-global-bar-brand', PREFIX + '-pick-toggle', PREFIX + '-insert-toggle', PREFIX + '-detect-toggle', PREFIX + '-detect-badge', PREFIX + '-design-toggle', PREFIX + '-page-chat', PREFIX + '-page-chat-input', PREFIX + '-page-chat-voice', PREFIX + '-page-chat-send'] },
     { key: 'pending-copy-edit-dock', ids: [PREFIX + '-pending-dock'] },
-    { key: 'element-selection-chrome', ids: [PREFIX + '-highlight', PREFIX + '-tooltip', PREFIX + '-bar', PREFIX + '-selection-pill', PREFIX + '-input', PREFIX + '-configure-voice', PREFIX + '-configure-bar-tooltip'] },
+    { key: 'element-selection-shell', ids: [PREFIX + '-highlight', PREFIX + '-tooltip', PREFIX + '-bar', PREFIX + '-selection-pill', PREFIX + '-input', PREFIX + '-configure-voice', PREFIX + '-configure-bar-tooltip'] },
     { key: 'action-picker', ids: [PREFIX + '-picker'] },
-    { key: 'edit-chrome', ids: [PREFIX + '-edit-badge'] },
+    { key: 'edit-shell', ids: [PREFIX + '-edit-badge'] },
     { key: 'generating-row', ids: [PREFIX + '-bar', PREFIX + '-shader'] },
     { key: 'variant-cycling-row', ids: [PREFIX + '-bar', PREFIX + '-params-panel'] },
     { key: 'variant-params-panel', ids: [PREFIX + '-params-panel'] },
     { key: 'saving-confirmed-rows', ids: [PREFIX + '-bar'] },
-    { key: 'insert-mode-chrome', ids: [PREFIX + '-insert-line', PREFIX + '-insert-placeholder', PREFIX + '-placeholder-resize', PREFIX + '-insert-input', PREFIX + '-insert-voice', PREFIX + '-insert-create', PREFIX + '-insert-create-tooltip'] },
-    { key: 'annotation-chrome', ids: [PREFIX + '-annot', PREFIX + '-annot-svg', PREFIX + '-annot-pins', PREFIX + '-annot-clear'] },
+    { key: 'insert-mode-shell', ids: [PREFIX + '-insert-line', PREFIX + '-insert-placeholder', PREFIX + '-placeholder-resize', PREFIX + '-insert-input', PREFIX + '-insert-voice', PREFIX + '-insert-create', PREFIX + '-insert-create-tooltip'] },
+    { key: 'annotation-shell', ids: [PREFIX + '-annot', PREFIX + '-annot-svg', PREFIX + '-annot-pins', PREFIX + '-annot-clear'] },
     { key: 'design-system-panel', ids: [PREFIX + '-design-host'] },
     { key: 'toasts-and-errors', ids: [PREFIX + '-toast', PREFIX + '-mount-error'] },
     { key: 'css-isolation-boundary', ids: [PREFIX + '-root'] },
@@ -283,10 +283,10 @@
     defangOutsideHandlers,
   } = domHelpers;
 
-  window.__IMPECCABLE_LIVE_CHROME_CORE__ = {
+  window.__IMPECCABLE_LIVE_SHELL_CORE__ = {
     version: 1,
     adapter: window.__IMPECCABLE_LIVE_ADAPTER__ || 'dom',
-    mountContract: LIVE_CHROME_MOUNT_CONTRACT,
+    mountContract: LIVE_SHELL_MOUNT_CONTRACT,
     surfaces: LIVE_UI_SURFACES,
     componentIds: LIVE_UI_COMPONENT_IDS,
     root: liveUiRoot,
@@ -1160,9 +1160,9 @@
     if (mode === 'configure') {
       barEl.appendChild(configureKind === 'insert' ? buildInsertConfigureRow() : buildConfigureRow());
       if (configureKind === 'insert') syncInsertCreateButton();
-      applyConfigureBarChrome();
+      applyConfigureBarShell();
     } else {
-      restorePickerBarChrome();
+      restorePickerBarShell();
       if (mode === 'generating') {
         if (recoveryWaitingForAnchor) dismissToast();
         barEl.appendChild(buildGeneratingRow());
@@ -1200,9 +1200,9 @@
     if (mode === 'configure') {
       barEl.appendChild(configureKind === 'insert' ? buildInsertConfigureRow() : buildConfigureRow());
       if (configureKind === 'insert') syncInsertCreateButton();
-      applyConfigureBarChrome();
+      applyConfigureBarShell();
     } else {
-      restorePickerBarChrome();
+      restorePickerBarShell();
       if (mode === 'generating') barEl.appendChild(buildGeneratingRow());
       else if (mode === 'cycling') barEl.appendChild(buildCyclingRow());
       else if (mode === 'saving') barEl.appendChild(buildSavingRow());
@@ -1231,16 +1231,16 @@
   const ICON_CONFIGURE_SUBMIT =
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
 
-  function applyConfigureBarChrome() {
+  function applyConfigureBarShell() {
     if (!barEl) return;
     barEl.dataset.configureSurface = 'true';
     barEl.style.padding = '0';
     barEl.style.background = CONFIGURE_BAR_SURFACE;
     barEl.style.overflow = 'hidden';
-    syncConfigureInputChrome();
+    syncConfigureInputShell();
   }
 
-  function restorePickerBarChrome() {
+  function restorePickerBarShell() {
     if (!barEl) return;
     barEl.dataset.configureSurface = 'false';
     barEl.removeAttribute('data-input-focused');
@@ -1253,7 +1253,7 @@
     barEl.style.boxShadow = BP.shadow;
   }
 
-  function syncConfigureInputChrome() {
+  function syncConfigureInputShell() {
     const input = uiGetById(PREFIX + '-input') || uiGetById(PREFIX + '-insert-input');
     const surface = barEl?.dataset.configureSurface === 'true' ? barEl : null;
     if (!surface || !input) return;
@@ -2002,7 +2002,7 @@
     if (!style) {
       style = document.createElement('style');
       style.id = PICK_CURSOR_STYLE_ID;
-      // Styles the host page, not the chrome - inside the adapter's shadow UI
+      // Styles the host page, not the shell - inside the adapter's shadow UI
       // root (uiAppendStyle's target) these selectors would match nothing.
       (document.head || document.documentElement).appendChild(style);
     }
@@ -2417,8 +2417,8 @@
 
     ensureConfigureInputStyle();
 
-    input.addEventListener('focus', () => syncConfigureInputChrome());
-    input.addEventListener('blur', () => syncConfigureInputChrome());
+    input.addEventListener('focus', () => syncConfigureInputShell());
+    input.addEventListener('blur', () => syncConfigureInputShell());
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.stopPropagation(); e.preventDefault(); handleGo(); return; }
       if (e.key === 'Escape') {
@@ -2450,7 +2450,7 @@
 
     row.appendChild(inputShell);
     row.appendChild(buildConfigureTrailingCluster([action, count], voiceBtn, go));
-    syncConfigureInputChrome();
+    syncConfigureInputShell();
 
     if (!controlsLocked) setTimeout(() => input.focus(), 60);
 
@@ -2518,8 +2518,8 @@
       }
       e.stopPropagation();
     });
-    input.addEventListener('focus', () => syncConfigureInputChrome());
-    input.addEventListener('blur', () => syncConfigureInputChrome());
+    input.addEventListener('focus', () => syncConfigureInputShell());
+    input.addEventListener('blur', () => syncConfigureInputShell());
 
     const voiceBtn = buildConfigureVoiceButton({
       id: PREFIX + '-insert-voice',
@@ -2555,7 +2555,7 @@
     row.appendChild(inputShell);
     row.appendChild(buildConfigureTrailingCluster([count], voiceBtn, create));
     syncInsertCreateButton(create, input);
-    syncConfigureInputChrome();
+    syncConfigureInputShell();
     if (!controlsLocked) setTimeout(() => input.focus(), 60);
     return row;
   }
@@ -3543,7 +3543,7 @@
     syncPageChatFocus('editing-outside-click');
   }
 
-  function teardownConfigureChrome() {
+  function teardownConfigureShell() {
     hideConfigureBarTooltip();
     // hideBar() restores unsaved EDITING drafts before it disables inline
     // edit; disabling here first would wipe the draft metadata it needs.
@@ -3555,7 +3555,7 @@
   }
 
   function exitConfigureToPicking(reason, opts = {}) {
-    teardownConfigureChrome();
+    teardownConfigureShell();
     setLiveState('PICKING');
     if (opts.clearHover) {
       hoveredElement = null;
@@ -4474,7 +4474,7 @@
     '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>' +
     '</svg>';
 
-  function usesShadowChromeRoot() {
+  function usesShadowShellRoot() {
     const root = liveUiRoot();
     return root && root !== document.body && root.host && root.host.id === PREFIX + '-root';
   }
@@ -4484,7 +4484,7 @@
   }
 
   function initEditBadgeHitProxies() {
-    if (!usesShadowChromeRoot() || editBadgeProxyRoot) return;
+    if (!usesShadowShellRoot() || editBadgeProxyRoot) return;
     editBadgeProxyRoot = document.createElement('div');
     editBadgeProxyRoot.id = PREFIX + '-edit-badge-hit-proxies';
     editBadgeProxyRoot.setAttribute('aria-hidden', 'true');
@@ -4585,7 +4585,7 @@
   }
 
   function editBadgeProxyTargets() {
-    if (!usesShadowChromeRoot() || !editBadgeEl || editBadgeEl.style.display === 'none') return [];
+    if (!usesShadowShellRoot() || !editBadgeEl || editBadgeEl.style.display === 'none') return [];
     return [...editBadgeEl.querySelectorAll('button')].filter((target) => {
       if (target.disabled) return false;
       const rect = target.getBoundingClientRect();
@@ -4596,7 +4596,7 @@
   }
 
   function syncEditBadgeHitProxies() {
-    if (!usesShadowChromeRoot()) {
+    if (!usesShadowShellRoot()) {
       if (editBadgeProxyRoot) editBadgeProxyRoot.remove();
       editBadgeProxyRoot = null;
       editBadgeProxyByTarget = new Map();
@@ -6185,7 +6185,7 @@
     console.warn('[impeccable] Discarding orphaned session ' + sessionId + ': ' + reason);
     sendEvent({ type: 'discard', id: sessionId, orphaned: true }).catch(() => {});
     markSessionHandled();
-    cleanup({ instantChrome: true });
+    cleanup({ instantShell: true });
     showToast('The previous live session no longer matches the source file, so it was discarded. Pick an element to start fresh.', 6000);
   }
 
@@ -7190,7 +7190,7 @@
     abandonedForeignSessionId = sessionId;
     console.warn('[impeccable] The live server has no record of session ' + sessionId + '; clearing stale local state.');
     markSessionHandled();
-    cleanup({ instantChrome: true });
+    cleanup({ instantShell: true });
     showToast('A saved live session belonged to a different project, so it was cleared. Pick an element to start fresh.', 6000);
   }
 
@@ -7844,7 +7844,7 @@
     return '#ffffff';
   }
 
-  function captureChromeNodes() {
+  function captureShellNodes() {
     const nodes = [];
     const add = (node) => {
       if (!node || node === document.body || nodes.includes(node)) return;
@@ -7868,8 +7868,8 @@
     return nodes;
   }
 
-  async function hideCaptureChromeForShaderProxy(fn) {
-    const saved = captureChromeNodes().map((node) => ({
+  async function hideCaptureShellForShaderProxy(fn) {
+    const saved = captureShellNodes().map((node) => ({
       node,
       visibility: node.style.visibility,
       priority: node.style.getPropertyPriority('visibility'),
@@ -7974,7 +7974,7 @@
       };
       if (shouldUseAncestorCropShaderProxy(el)) {
         try {
-          return await hideCaptureChromeForShaderProxy(() => captureElementFromRenderedAncestor(ms, el, opts));
+          return await hideCaptureShellForShaderProxy(() => captureElementFromRenderedAncestor(ms, el, opts));
         } catch (err) {
           console.warn('[impeccable] Svelte ancestor crop capture failed, falling back to element capture:', err);
         }
@@ -8692,7 +8692,7 @@ void main() {
     sendEvent({ type: 'discard', id: currentSessionId }, { throwOnError: true })
       .then(() => {
         markSessionHandled();
-        cleanup({ restoreOriginal: true, instantChrome: true });
+        cleanup({ restoreOriginal: true, instantShell: true });
       })
       .catch(() => showToast('Could not confirm discard with the live server. Session kept for recovery.', 5000));
   }
@@ -8992,7 +8992,7 @@ void main() {
 
   function cleanup(options) {
     const restoreOriginal = options?.restoreOriginal === true;
-    const instantChrome = options?.instantChrome === true;
+    const instantShell = options?.instantShell === true;
     const cleanupSessionId = currentSessionId;
     clearMountErrorCard();
     lastReportedMountFailure = null;
@@ -9026,7 +9026,7 @@ void main() {
         lateWrapper.remove();
       }, 2000);
     }
-    hideBar(instantChrome);
+    hideBar(instantShell);
     hideHighlight();
     stopScrollTracking();
     if (variantObserver) { variantObserver.disconnect(); variantObserver = null; }
@@ -9423,7 +9423,7 @@ void main() {
   }
 
   function barPaletteForTheme(_theme) {
-    // Picker chrome always uses neo-kinpaku styling (homepage /live-mode demo
+    // Picker shell always uses neo-kinpaku styling (homepage /live-mode demo
     // bars in kinpaku-kit.css), regardless of host page light/dark theme.
     return {
       surface: C.ink,
@@ -9501,7 +9501,7 @@ void main() {
     pageChatEl.style.width = pageChatExpandedWidth();
   }
 
-  function syncPageChatChrome() {
+  function syncPageChatShell() {
     if (!pageChatEl) return;
     const P = pageChatPalette();
     const inputFocused = pageChatInput && activeElementDeep() === pageChatInput;
@@ -9833,7 +9833,7 @@ void main() {
     try { window.focus(); } catch { /* embed may block */ }
     try { pageChatInput.focus({ preventScroll: true }); } catch { pageChatInput.focus(); }
     syncPageChatFocusRing();
-    syncPageChatChrome();
+    syncPageChatShell();
     steerFocusLog('focusSteerChat result', {
       reason,
       before: steerFocusTargetLabel(before),
@@ -9899,11 +9899,11 @@ void main() {
     const focus = opts.focus !== false;
     if (expand && !pageChatExpanded) {
       preparePageChatInputForTyping();
-      syncPageChatChrome();
+      syncPageChatShell();
     }
     if (focus) return focusPageChatInput('arm-page-chat');
     syncPageChatFocusRing();
-    syncPageChatChrome();
+    syncPageChatShell();
     return true;
   }
 
@@ -9975,7 +9975,7 @@ void main() {
     }
     syncSteerQueueHint();
     syncPageChatFocusRing();
-    syncPageChatChrome();
+    syncPageChatShell();
   }
 
   function unlockSteerChat(opts) {
@@ -10021,7 +10021,7 @@ void main() {
     }
     steerPendingMessage = keepExpanded ? restoreMessage : '';
     steerInputWasFocused = false;
-    syncPageChatChrome();
+    syncPageChatShell();
     syncPageChatFocusRing();
     if (opts?.error) showToast(String(opts.error), 5000);
     else if (opts?.message) showToast(String(opts.message), 4000);
@@ -10084,7 +10084,7 @@ void main() {
         pageChatVoiceBtn.setAttribute('aria-pressed', listening ? 'true' : 'false');
       }
       if (pageChatEl) pageChatEl.dataset.voiceListening = listening ? 'true' : 'false';
-      syncPageChatChrome();
+      syncPageChatShell();
     } else if (voiceCtx?.mode === 'configure') {
       // The bar shows either the replace row's voice button or the insert
       // row's - both run voice through the 'configure' mode.
@@ -10095,7 +10095,7 @@ void main() {
         voiceBtn.setAttribute('aria-label', listening ? 'Stop voice input' : 'Voice input');
         voiceBtn.setAttribute('aria-pressed', listening ? 'true' : 'false');
       }
-      syncConfigureInputChrome();
+      syncConfigureInputShell();
     }
   }
 
@@ -10180,7 +10180,7 @@ void main() {
       }
       voiceCtx.input.value = (voiceInterimBase + transcript).trim();
       if (voiceCtx.mode === 'steer') syncPageChatVisual();
-      else syncConfigureInputChrome();
+      else syncConfigureInputShell();
     };
 
     rec.onerror = (event) => {
@@ -10299,7 +10299,7 @@ void main() {
     const focus = !opts || opts.focus !== false;
     if (!pageChatEl || !pageChatInput || steerLocked) return;
     preparePageChatInputForTyping();
-    syncPageChatChrome();
+    syncPageChatShell();
     syncPageChatFocusRing();
     if (focus) focusPageChatInput('expand-page-chat');
   }
@@ -10324,7 +10324,7 @@ void main() {
       pageChatHint.style.opacity = '1';
     }
     if (pageChatVoiceBtn) pageChatVoiceBtn.dataset.active = 'false';
-    syncPageChatChrome();
+    syncPageChatShell();
     syncPageChatFocusRing();
   }
 
@@ -10480,7 +10480,7 @@ void main() {
     pageChatInput.addEventListener('focus', () => {
       steerInputWasFocused = true;
       syncPageChatFocusRing();
-      syncPageChatChrome();
+      syncPageChatShell();
     });
 
     pageChatInput.addEventListener('blur', () => {
@@ -10833,7 +10833,7 @@ void main() {
     initPageChat(inner, P);
 
     // Pending manual edits live outside the bar so applying staged copy edits
-    // reads as a distinct next step instead of another chrome toggle.
+    // reads as a distinct next step instead of another shell toggle.
     pendingDockEl = el('div', {
       position: 'fixed',
       left: '0',
@@ -11024,7 +11024,7 @@ void main() {
     // `button { padding: 0.5rem 1rem; }` (very common in resets) would
     // otherwise inflate this 24x24 button into 56x40 and push the SVG out
     // of the visible bar - the X stays invisible even though the styles in
-    // DevTools look fine. Every other chrome button sets padding inline;
+    // DevTools look fine. Every other shell button sets padding inline;
     // this one needed it too.
     const exitBtn = el('button', {
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -11183,7 +11183,7 @@ void main() {
         cancelInsertConfigure();
         return;
       }
-      teardownConfigureChrome();
+      teardownConfigureShell();
       hideHighlight();
       hideActionPicker();
       selectedElement = null;
@@ -11373,7 +11373,7 @@ void main() {
     designShadow = designHost.attachShadow({ mode: 'open' });
 
     const style = document.createElement('style');
-    // Theme-match the bar: dark chrome on light pages, light chrome on dark pages.
+    // Theme-match the bar: dark shell on light pages, light shell on dark pages.
     const theme = detectPageTheme();
     style.textContent = designPanelCss(barPaletteForTheme(theme));
     designShadow.appendChild(style);
@@ -11390,7 +11390,7 @@ void main() {
     defangOutsideHandlers(designHost, { setPointerEvents: false });
 
     loadDesignPrefs();
-    renderDesignChrome();
+    renderDesignShell();
     if (designState.open) {
       fetchDesignSystem();
     }
@@ -11424,7 +11424,7 @@ void main() {
       .root * { box-sizing: border-box; }
       button { font: inherit; color: inherit; }
 
-      /* Panel shell: chrome matches the bar; body canvas stays neutral */
+      /* Panel shell: frame matches the bar; body canvas stays neutral */
       .panel {
         position: fixed; top: 12px; bottom: 72px; right: 12px;
         width: ${DESIGN_PANEL_WIDTH}px; max-width: calc(100vw - 24px);
@@ -11686,7 +11686,7 @@ void main() {
     `;
   }
 
-  function renderDesignChrome() {
+  function renderDesignShell() {
     const root = designShadow.querySelector('.root');
     root.innerHTML = '';
 
@@ -11725,7 +11725,7 @@ void main() {
         if (designState.tab === t[0]) return;
         designState.tab = t[0];
         saveDesignPrefs();
-        renderDesignChrome();
+        renderDesignShell();
         if (t[0] === 'raw' && designState.raw === null && !designState.loading) {
           fetchDesignSystem(); // raw is part of the same fetch pair
         }
@@ -11747,7 +11747,7 @@ void main() {
   function toggleDesignPanel() {
     if (pendingApplyInFlight) { showManualApplyBusyToast(); return; }
     designState.open = !designState.open;
-    renderDesignChrome();
+    renderDesignShell();
     updateGlobalBarState();
     if (designState.open && designState.present === null && !designState.loading) {
       fetchDesignSystem();
@@ -11776,7 +11776,7 @@ void main() {
       designState.error = err?.message || 'Failed to load design system.';
     } finally {
       designState.loading = false;
-      renderDesignChrome(); // refresh title from data
+      renderDesignShell(); // refresh title from data
     }
   }
 

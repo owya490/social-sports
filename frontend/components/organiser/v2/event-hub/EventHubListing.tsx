@@ -23,6 +23,7 @@ import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
+import { ImagePickerReveal } from "../shared/ImagePickerLoading";
 import { EVENT_HUB_EDIT_FORM_ID, EventHubEditForm } from "./EventHubEditForm";
 import { EventHubPanel } from "./EventHubPanel";
 import { EventHubShareControl } from "./EventHubShareControl";
@@ -369,6 +370,7 @@ function ChangePhotoPanel({
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
 }) {
   const { user } = useUser();
+  const [loading, setLoading] = useState(true);
   const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
   const [eventThumbnailUrls, setEventThumbnailUrls] = useState<string[]>([]);
   const [allImageData, setAllImageData] = useState<AllImageData>({
@@ -381,17 +383,24 @@ function ChangePhotoPanel({
   useEffect(() => {
     if (!open || !user.userId) return;
     let active = true;
+    setLoading(true);
     (async () => {
-      const thumbs = await getUsersEventThumbnailsUrls(user.userId);
-      const images = await getUsersEventImagesUrls(user.userId);
-      if (!active) return;
-      setEventThumbnailUrls(eventThumbnail ? [eventThumbnail, ...thumbs.filter((u) => u !== eventThumbnail)] : thumbs);
-      setEventImageUrls(eventImage ? [eventImage, ...images.filter((u) => u !== eventImage)] : images);
-      setAllImageData({
-        image: eventImage || undefined,
-        thumbnail: eventThumbnail || undefined,
-      });
-      setDirty(false);
+      try {
+        const [thumbs, images] = await Promise.all([
+          getUsersEventThumbnailsUrls(user.userId),
+          getUsersEventImagesUrls(user.userId),
+        ]);
+        if (!active) return;
+        setEventThumbnailUrls(eventThumbnail ? [eventThumbnail, ...thumbs.filter((u) => u !== eventThumbnail)] : thumbs);
+        setEventImageUrls(eventImage ? [eventImage, ...images.filter((u) => u !== eventImage)] : images);
+        setAllImageData({
+          image: eventImage || undefined,
+          thumbnail: eventThumbnail || undefined,
+        });
+        setDirty(false);
+      } finally {
+        if (active) setLoading(false);
+      }
     })();
     return () => {
       active = false;
@@ -419,26 +428,28 @@ function ChangePhotoPanel({
       title="Change photo"
       wide
       footer={
-        <EventHubPrimaryButton onClick={save} disabled={!dirty || saving}>
+        <EventHubPrimaryButton onClick={save} disabled={!dirty || saving || loading}>
           <CheckIcon className="h-4 w-4" aria-hidden />
           Save photos
         </EventHubPrimaryButton>
       }
     >
-      <ImageForm
-        user={user}
-        image={allImageData.image}
-        thumbnail={allImageData.thumbnail}
-        updateField={(fields) => {
-          setAllImageData((prev) => ({ ...prev, ...fields }));
-          setDirty(true);
-        }}
-        eventThumbnailsUrls={eventThumbnailUrls}
-        eventImageUrls={eventImageUrls}
-        setThumbnailUrls={setEventThumbnailUrls}
-        setImageUrls={setEventImageUrls}
-        flush
-      />
+      <ImagePickerReveal loading={loading}>
+        <ImageForm
+          user={user}
+          image={allImageData.image}
+          thumbnail={allImageData.thumbnail}
+          updateField={(fields) => {
+            setAllImageData((prev) => ({ ...prev, ...fields }));
+            setDirty(true);
+          }}
+          eventThumbnailsUrls={eventThumbnailUrls}
+          eventImageUrls={eventImageUrls}
+          setThumbnailUrls={setEventThumbnailUrls}
+          setImageUrls={setEventImageUrls}
+          flush
+        />
+      </ImagePickerReveal>
     </EventHubPanel>
   );
 }

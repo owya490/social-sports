@@ -2,22 +2,25 @@
 version: 1
 slug: "app-no-footer-organiser-v2-forms-gallery-page-tsx"
 primary_target: "frontend/app/(no-footer)/organiser/v2/forms/gallery/page.tsx"
-related_targets: ["frontend/components/organiser/v2/forms/FormsGalleryHeader.tsx","frontend/components/organiser/v2/forms/FormsList.tsx","frontend/components/organiser/v2/forms/FormRow.tsx"]
+related_targets: ["frontend/components/organiser/v2/forms/FormsGalleryHeader.tsx","frontend/components/organiser/v2/forms/FormsList.tsx","frontend/components/organiser/v2/forms/FormGalleryCard.tsx","frontend/components/organiser/v2/forms/FormMiniaturePreview.tsx"]
 ---
 
 # Surface brief: Organiser v2 forms gallery
 
 ## Scope & mode
-Operate. Catalogue list for organiser forms under Hub v2. Create/edit/preview stay on legacy `/organiser/forms/*` paths.
+Operate (document-gallery craft). Catalogue for organiser forms under Hub v2. Create/edit/preview stay on legacy `/organiser/forms/*` paths.
 
 ## Audience & job
-Organisers scanning reusable booking forms; create quickly, open edit or preview.
+Organisers scanning reusable booking forms; recognise a form by its questions, create from the blank tile, open edit (primary) or preview.
 
 ## Content & constraints
-Same forms service as legacy. List-only port—no miniature document previews. Sidebar and form editor exit land here.
+Same forms service as legacy. Live miniature previews of real questions (not list rows). Sidebar and form editor exit land here. No header Create CTA — blank create tile owns creation.
 
 ## Direction
-Established Organiser Hub extension. Header + yellow create CTA + outlined rows with section count and updated date.
+Google Forms / Docs craft bar inside Honest Clubhouse tokens. Responsive paper-card grid: blank create tile + form thumbnails with centered miniatures. Hover expands the bottom details panel upward to reveal description and Edit/Preview (v1 pattern).
+
+## Memorable moment
+Footer expand on hover — the details panel rises over the miniature, revealing description and actions.
 
 ## Unresolved
 Form editor/preview restyle deferred.

@@ -1,0 +1,38 @@
+{
+  "title": "Settings control shape",
+  "question": "Replace every settings toggle on event + recurring event Settings with an icon button that shows On / Off (grey when off, coloured when on). How should that control sit in the row?",
+  "options": [
+    {
+      "id": "row-status-chip",
+      "label": "Keep rows · status chip right",
+      "kicker": "OPERATE",
+      "thesis": "Title + description stay on the left. The switch becomes a compact icon + On/Off button on the right — same scan path, clearer state.",
+      "viewport": "Pause registration · description · [🎫 Off]   Enable payments · description · [💳 On]",
+      "risk": "Less like the Luma tile reference; denser list stays familiar.",
+      "materials": ["Flush list", "Heroicons", "Accent On / muted Off"],
+      "hero": "/Users/owenyang/.cursor/projects/Users-owenyang-Documents-Github-social-sports/assets/image-5d994020-1789-4202-87a3-8bea8850ed02.png"
+    },
+    {
+      "id": "tile-grid",
+      "label": "Icon tiles · name + status",
+      "kicker": "REFERENCE",
+      "thesis": "Each setting becomes a tappable tile: coloured icon well + setting name + On/Off subtitle. Descriptions move to aria or a quieter line under the grid.",
+      "viewport": "Grid of tiles like your reference — Registration / Open, Booking approval / On — greyed when Off.",
+      "risk": "Loses the explanatory subcopy unless we keep a small hint under each tile; busier on long lists.",
+      "materials": ["Tile grid", "Icon wells", "Per-setting accent tint"],
+      "hero": "/Users/owenyang/.cursor/projects/Users-owenyang-Documents-Github-social-sports/assets/image-8f06ee60-0238-4c5d-a21e-0de0f4b7dbe2.png"
+    },
+    {
+      "id": "hybrid",
+      "label": "Tiles for Registration · chips elsewhere",
+      "kicker": "HYBRID",
+      "thesis": "Registration group becomes a horizontal/wrapping tile strip. Checkout, Visibility, Limits keep title + description with status chips.",
+      "viewport": "Top: tile strip. Below: familiar preference rows with icon On/Off chips.",
+      "risk": "Two control languages on one Settings tab.",
+      "materials": ["Mixed grammar"]
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

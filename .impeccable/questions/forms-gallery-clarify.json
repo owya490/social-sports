@@ -1,0 +1,36 @@
+{
+  "title": "Forms gallery — two locks",
+  "question": "Google Forms / Docs is the craft bar. Pick the preview depth and primary click for the v2 gallery.",
+  "options": [
+    {
+      "id": "live-preview-edit",
+      "label": "Live scaled form → Edit",
+      "kicker": "RECOMMENDED",
+      "thesis": "Each card shows a miniature of the real questions; hover lifts and subtly pans the preview; click opens the editor.",
+      "viewport": "Grid of paper-like cards: large preview pane, title + opened/updated footer, Edit/Preview on hover.",
+      "risk": "Heavy forms may cost layout work; keep preview non-interactive and capped.",
+      "materials": ["scaled FormResponder sections", "hover lift + preview drift", "Honest Clubhouse tokens"]
+    },
+    {
+      "id": "live-preview-preview",
+      "label": "Live scaled form → Preview",
+      "kicker": "ALTERNATE",
+      "thesis": "Same miniature document cards, but the primary click opens responder preview; Edit stays a secondary action.",
+      "viewport": "Same gallery grid; footer actions emphasize Preview first.",
+      "risk": "Organisers usually want to edit—extra hop if Preview is primary.",
+      "materials": ["scaled FormResponder sections", "hover lift + preview drift", "Honest Clubhouse tokens"]
+    },
+    {
+      "id": "stylized-mock-edit",
+      "label": "Stylized mock → Edit",
+      "kicker": "LIGHTER",
+      "thesis": "Cards use a lightweight document mock (title + question lines) instead of rendering real section components; click opens editor.",
+      "viewport": "Same Docs-like grid, faster and more uniform previews, less fidelity to the real form.",
+      "risk": "Loses the ‘this is my form’ recognition that live previews give.",
+      "materials": ["CSS document mock", "hover lift", "Honest Clubhouse tokens"]
+    }
+  ],
+  "reroll": false,
+  "canon": false,
+  "steer": true
+}

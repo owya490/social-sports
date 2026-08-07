@@ -16,7 +16,7 @@
       "kicker": "ALWAYS VISIBLE",
       "thesis": "Same Luma sections and full Sportshub fields. TipTap keeps a compact non-sticky toolbar inside the description field only (bold, italic, list, link)—never sticky to the viewport.",
       "viewport": "Description shows a quiet one-row control strip under the label; scroll never floats a bar over Time/Location.",
-      "risk": "Even a tiny bar adds chrome the reference avoided."
+      "risk": "Even a tiny bar adds header the reference avoided."
     },
     {
       "id": "fluid-bubble",

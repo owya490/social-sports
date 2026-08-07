@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 
 /**
  * Continuous workbench primitives for event hub tab bodies (A+B).
- * Flush plane under chrome — no nested white cards. Yellow only on primary CTAs.
+ * Flush plane under header — no nested white cards. Yellow only on primary CTAs.
  */
 
 type EventHubStageProps = {
@@ -177,6 +177,111 @@ export function EventHubPreferenceRow({
       </button>
     </div>
   );
+}
+
+/** Registration strip tones — colour when on, muted grey when off. */
+export type EventHubSettingTileTone = "green" | "stripe" | "blue" | "sky";
+
+const SETTING_TILE_TONES: Record<
+  EventHubSettingTileTone,
+  { onWell: string; onIcon: string; onBorder: string }
+> = {
+  green: {
+    onWell: "bg-[#EEF8E8]",
+    onIcon: "text-[#73C358]",
+    onBorder: "border-[#C5E8B0]",
+  },
+  /** Stripe brand purple ≈ #635BFF */
+  stripe: {
+    onWell: "bg-[#EEEDFF]",
+    onIcon: "text-[#635BFF]",
+    onBorder: "border-[#C7C3FF]",
+  },
+  blue: {
+    onWell: "bg-[#EFF6FF]",
+    onIcon: "text-[#2563EB]",
+    onBorder: "border-[#BFDBFE]",
+  },
+  sky: {
+    onWell: "bg-[#F0F9FF]",
+    onIcon: "text-[#0284C7]",
+    onBorder: "border-[#BAE6FD]",
+  },
+};
+
+type SettingTileProps = {
+  title: string;
+  description?: string;
+  icon: ReactNode;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (next: boolean) => void;
+  tone?: EventHubSettingTileTone;
+  /** Label when checked (default On). */
+  onLabel?: string;
+  /** Label when unchecked (default Off). */
+  offLabel?: string;
+};
+
+export function EventHubSettingTile({
+  title,
+  description,
+  icon,
+  checked,
+  disabled,
+  onChange,
+  tone = "green",
+  onLabel = "On",
+  offLabel = "Off",
+}: SettingTileProps) {
+  const status = checked ? onLabel : offLabel;
+  const toneStyles = SETTING_TILE_TONES[tone];
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={`${title}: ${status}`}
+      title={description}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`flex min-w-[9.5rem] flex-1 items-center gap-3 rounded-xl border px-3 py-3 text-left transition-[border-color,background-color,opacity] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60 ${
+        checked
+          ? `bg-background ${toneStyles.onBorder} hover:bg-surface-hover`
+          : "border-border bg-surface text-foreground-muted hover:bg-surface-hover"
+      }`}
+    >
+      <span
+        aria-hidden
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors duration-200 ease-out ${
+          checked ? `${toneStyles.onWell} ${toneStyles.onIcon}` : "bg-surface-muted text-foreground-muted"
+        }`}
+      >
+        <span className="[&>svg]:h-5 [&>svg]:w-5">{icon}</span>
+      </span>
+      <span className="min-w-0">
+        <span
+          className={`block truncate text-sm font-semibold font-sans leading-tight ${
+            checked ? "text-foreground" : "text-foreground-secondary"
+          }`}
+        >
+          {title}
+        </span>
+        <span
+          className={`mt-0.5 block text-xs font-sans leading-tight ${
+            checked ? "text-foreground-secondary" : "text-foreground-muted"
+          }`}
+        >
+          {status}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+export function EventHubSettingTileRow({ children }: { children: ReactNode }) {
+  return <div className="flex flex-wrap gap-2 pt-3 pb-1">{children}</div>;
 }
 
 export function EventHubInitials({ name }: { name: string }) {

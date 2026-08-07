@@ -303,7 +303,7 @@ DevTools device emulation is useful for layout but misses:
 - Real CPU/memory constraints
 - Network latency patterns
 - Font rendering differences
-- Browser chrome/keyboard appearances
+- Browser UI / keyboard appearances
 
 **Test on at least**: One real iPhone, one real Android, a tablet if relevant. Cheap Android phones reveal performance issues you'll never see on simulators.
 

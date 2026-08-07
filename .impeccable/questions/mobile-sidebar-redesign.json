@@ -6,7 +6,7 @@
       "id": "integrated-top-bar",
       "label": "Integrated top bar",
       "kicker": "AIRBNB-LED",
-      "thesis": "A flush page chrome holds logo, title, and menu — the trigger lives inside the layout, not as a floating orphan.",
+      "thesis": "A flush page shell holds logo, title, and menu — the trigger lives inside the layout, not as a floating orphan.",
       "viewport": "Thin sticky bar: SPORTSHUB mark + ORGANISER HUB + avatar/menu. Sheet slides from the bar; content starts under it with no dead pt-16.",
       "risk": "Steals vertical space from every mobile screen."
     },
@@ -22,7 +22,7 @@
       "id": "avatar-led-sheet",
       "label": "Avatar-led sheet",
       "kicker": "LINEAR-LED",
-      "thesis": "A quiet top identity chip opens the full nav sheet — chrome almost disappears until you need it.",
+      "thesis": "A quiet top identity chip opens the full nav sheet — header almost disappears until you need it.",
       "viewport": "Small avatar (or mark) flush in the top-left of the content plane; tap opens the same full sidebar sheet. No bordered burger tile.",
       "risk": "Discoverability if the chip looks like profile-only."
     }

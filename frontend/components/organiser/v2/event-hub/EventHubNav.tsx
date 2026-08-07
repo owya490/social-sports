@@ -9,7 +9,7 @@ type EventHubNavProps = {
 
 export function EventHubNav({ current, onChange }: EventHubNavProps) {
   return (
-    <nav className="bg-background" aria-label="Event sections">
+    <nav className="bg-background" aria-label="Event sections" data-tour="event-hub-nav">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           role="tablist"

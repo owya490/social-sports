@@ -55,12 +55,16 @@ export function DashboardKpiGrid({ metrics, loading }: DashboardKpiGridProps) {
   const items: KpiItem[] = [
     { label: "Net sales", value: netSales, detail: "Last 30 days", icon: CurrencyDollarIcon },
     { label: "Tickets sold", value: tickets, detail: "Last 30 days", icon: TicketIcon },
-    { label: "Page views", value: views, detail: "All time per event", icon: EyeIcon },
-    { label: "Conversion", value: conversion, detail: "Approx.", icon: ArrowTrendingUpIcon },
+    { label: "Page views", value: views, detail: "Last 10 events", icon: EyeIcon },
+    { label: "Conversion", value: conversion, detail: "Last 10 events", icon: ArrowTrendingUpIcon },
   ];
 
   return (
-    <section aria-label="Key metrics" className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+    <section
+      aria-label="Key metrics"
+      data-tour="dashboard-kpis"
+      className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto"
+    >
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         {items.map((item) => (
           <KpiCell key={item.label} item={item} loading={loading} />

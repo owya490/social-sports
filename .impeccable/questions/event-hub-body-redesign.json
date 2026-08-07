@@ -1,12 +1,12 @@
 {
   "title": "Event hub body redesign",
-  "question": "Chrome stays. Which body language should Attendees, Listing, Forms, Images, and Settings share?",
+  "question": "Header stays. Which body language should Attendees, Listing, Forms, Images, and Settings share?",
   "options": [
     {
       "id": "continuous-workbench",
       "label": "Continuous workbench",
       "kicker": "LINEAR-LED",
-      "thesis": "One calm stage under the chrome—no nested white cards. Dividers and density do the work.",
+      "thesis": "One calm stage under the header—no nested white cards. Dividers and density do the work.",
       "viewport": "Attendees: toolbar + segmented filters flush to the content plane; rows edge-to-edge; yellow only on Add.",
       "risk": "Can feel sparse if spacing is lazy."
     },

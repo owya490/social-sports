@@ -158,9 +158,15 @@ export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<Or
   const recentOrderTicketsMap = buildOrderTicketsMap(recentOrders, recentTickets);
   const netSales30dCents = await calculateNetSales(recentOrderTicketsMap);
 
-  const totalPageViews = events.reduce((sum, event) => sum + (event.accessCount || 0), 0);
+  const last10Events = [...events]
+    .sort((a, b) => b.startDate.seconds - a.startDate.seconds)
+    .slice(0, 10);
+  const last10EventIds = new Set(last10Events.map((event) => event.eventId));
+  const last10Tickets = approvedTickets.filter((ticket) => last10EventIds.has(ticket.eventId));
+
+  const totalPageViews = last10Events.reduce((sum, event) => sum + (event.accessCount || 0), 0);
   const conversionRate =
-    totalPageViews > 0 ? Math.round((recentTickets.length / totalPageViews) * 1000) / 10 : 0;
+    totalPageViews > 0 ? Math.round((last10Tickets.length / totalPageViews) * 1000) / 10 : 0;
 
   return {
     netSales30dCents,

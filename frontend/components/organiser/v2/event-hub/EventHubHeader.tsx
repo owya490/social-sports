@@ -1,71 +1,59 @@
 "use client";
 
-import { Frequency } from "@/interfaces/RecurringEventTypes";
-import { PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/outline";
+import { EventId } from "@/interfaces/EventTypes";
+import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import {
+  ArrowTopRightOnSquareIcon,
+  PauseCircleIcon,
+  PlayCircleIcon,
+} from "@heroicons/react/24/outline";
+import { welcomeAwareEventsListHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Skeleton from "react-loading-skeleton";
 
 /**
- * Quiet Luma-style chrome for recurrence templates — twin of EventHubChrome.
- * THESIS: Series identity in chrome meta; Template chip replaces Event page.
+ * Quiet Luma-style header — title + meta + Event page. Cover lives in Details.
  */
 
-function frequencyLabel(frequency: Frequency): string {
-  switch (frequency) {
-    case Frequency.WEEKLY:
-      return "Weekly";
-    case Frequency.FORTNIGHTLY:
-      return "Fortnightly";
-    case Frequency.MONTHLY:
-      return "Monthly";
-    default:
-      return frequency;
-  }
-}
-
-function nextOccurrenceLabel(startDate: Timestamp): string {
-  const date = startDate.toDate();
-  const weekday = date.toLocaleString("en-AU", { weekday: "short" });
-  const time = date.toLocaleString("en-AU", { hour: "numeric", minute: "2-digit" });
-  return `Next ${weekday} ${time}`;
-}
-
-type RecurringHubChromeProps = {
+type EventHubHeaderProps = {
   loading: boolean;
+  eventId: EventId;
   name: string;
   startDate: Timestamp;
   location: string;
-  frequency: Frequency;
   paused: boolean;
   isActive: boolean;
   onTogglePause: () => void;
   pauseUpdating?: boolean;
 };
 
-export function RecurringHubChrome({
+export function EventHubHeader({
   loading,
+  eventId,
   name,
   startDate,
   location,
-  frequency,
   paused,
   isActive,
   onTogglePause,
   pauseUpdating = false,
-}: RecurringHubChromeProps) {
+}: EventHubHeaderProps) {
+  const pathname = usePathname();
+  const eventsHref = welcomeAwareEventsListHref(pathname);
   const meta = loading
     ? ""
-    : [frequencyLabel(frequency), nextOccurrenceLabel(startDate), location].filter(Boolean).join(" · ");
+    : [timestampToEventCardDateString(startDate), location].filter(Boolean).join(" · ");
 
   return (
     <header className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 max-w-6xl mx-auto">
       <div className="mb-3">
         <Link
-          href="/organiser/v2/event/recurring-events"
+          href={eventsHref}
           className="text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded"
         >
-          ← Recurring
+          ← Events
         </Link>
       </div>
 
@@ -84,9 +72,15 @@ export function RecurringHubChrome({
         </div>
 
         <div className="flex items-center gap-0.5 shrink-0">
-          <span className="inline-flex items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
-            Template
-          </span>
+          <Link
+            href={`/event/${eventId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            Event page
+            <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden />
+          </Link>
           <button
             type="button"
             onClick={onTogglePause}

@@ -9,11 +9,14 @@ import {
   EntityHoverCover,
   EntityHoverPreview,
 } from "@/components/organiser/v2/shared/EntityHoverPreview";
+import { EntityRowThumbnail } from "@/components/organiser/v2/shared/EntityRowThumbnail";
+import { welcomeAwareEventHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { EventData } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { CalendarDaysIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Skeleton from "react-loading-skeleton";
 
 export function OrganiserEventFillBar({ filled, capacity }: { filled: number; capacity: number }) {
@@ -47,9 +50,11 @@ type OrganiserEventRowProps = {
 };
 
 export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowProps) {
+  const pathname = usePathname();
   const filled = Math.max(0, event.capacity - event.vacancy);
   const isSoldOut = event.capacity > 0 && filled >= event.capacity;
   const thumbnailSrc = event.thumbnail || event.image;
+  const href = welcomeAwareEventHref(pathname, event.eventId);
 
   return (
     <EntityHoverPreview
@@ -60,14 +65,13 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
       flags={<EventHoverFlags event={event} />}
     >
       <Link
-        href={`/organiser/v2/event/${event.eventId}`}
+        href={href}
+        data-event-id={event.eventId}
         className={`group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus ${className}`}
       >
-        <div
-          className="h-[4.25rem] w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem] shrink-0 rounded-lg border border-border bg-surface-muted bg-cover bg-center"
-          style={{ backgroundImage: thumbnailSrc ? `url(${thumbnailSrc})` : undefined }}
-          role="img"
-          aria-label=""
+        <EntityRowThumbnail
+          src={thumbnailSrc}
+          className="h-[4.25rem] w-[4.25rem] sm:h-[4.75rem] sm:w-[4.75rem]"
         />
 
         <div className="min-w-0 flex-1 py-0.5">

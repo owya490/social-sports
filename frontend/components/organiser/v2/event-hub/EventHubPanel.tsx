@@ -1,7 +1,7 @@
 "use client";
 
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
-import { ChevronDoubleRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Fragment, ReactNode } from "react";
 
 /**
@@ -61,7 +61,7 @@ export function EventHubPanel({ open, onClose, title, children, footer, wide = f
                     className="hidden md:inline-flex rounded-lg p-1.5 text-foreground-muted hover:text-foreground hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                     aria-label="Close panel"
                   >
-                    <ChevronDoubleRightIcon className="h-5 w-5" aria-hidden />
+                    <ChevronRightIcon className="h-5 w-5" aria-hidden />
                   </button>
                   <DialogTitle className="flex-1 min-w-0 text-base font-semibold text-foreground font-sans tracking-tight">
                     {title}

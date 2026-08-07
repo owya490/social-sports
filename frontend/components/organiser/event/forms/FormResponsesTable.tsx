@@ -23,7 +23,7 @@ interface FormResponsesTableProps {
   orderTicketsMap: Map<Order, Ticket[]>;
   showPurchaserColumn?: boolean;
   organiserEmail?: string;
-  /** Flush workbench shell — no bordered card chrome; Honest Clubhouse tokens */
+  /** Flush workbench shell — no bordered card frame; Honest Clubhouse tokens */
   flush?: boolean;
 }
 

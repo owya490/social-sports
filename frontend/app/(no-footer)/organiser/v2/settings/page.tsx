@@ -52,7 +52,7 @@ export default function OrganiserSettingsV2Page() {
 
   return (
     <>
-      {/* THESIS: Account controls in quiet panels—preferences and payouts without card chrome noise.
+      {/* THESIS: Account controls in quiet panels—preferences and payouts without card frame noise.
           OWN-WORLD: Honest Clubhouse tokens—outlined sections, accent switch, yellow connect CTA.
           STORY: Toggle ticket emails; connect or open Stripe.
           FIRST VIEWPORT: Title + subtitle, preference panel then Stripe panel.

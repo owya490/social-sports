@@ -1,7 +1,9 @@
 "use client";
 
+import { EventsToolbar } from "@/components/organiser/v2/events/EventsToolbar";
 import { RecurringTemplatesHeader } from "@/components/organiser/v2/recurring/RecurringTemplatesHeader";
 import { RecurringTemplatesList } from "@/components/organiser/v2/recurring/RecurringTemplatesList";
+import { useOrganiserRecurringFilters } from "@/components/organiser/v2/recurring/useOrganiserRecurringFilters";
 import { useUser } from "@/components/utility/UserContext";
 import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { Logger } from "@/observability/logger";
@@ -15,6 +17,17 @@ export default function OrganiserRecurringEventsV2Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [templates, setTemplates] = useState<RecurrenceTemplate[]>([]);
+
+  const {
+    sortBy,
+    setSortBy,
+    search,
+    setSearch,
+    timeSegment,
+    handleTimeSegmentChange,
+    filteredTemplates,
+    clearAll,
+  } = useOrganiserRecurringFilters(templates);
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
@@ -45,9 +58,9 @@ export default function OrganiserRecurringEventsV2Page() {
     <>
       {/* THESIS: A scannable recurring-template catalogue—status at a glance, open any schedule in one tap.
           OWN-WORLD: Honest Clubhouse tokens—shared row language with Your events (thumbnail, meta, status dot).
-          STORY: Scan active/paused/ended templates, open legacy drilldown to edit recurrence.
-          FIRST VIEWPORT: Title + create CTA, unified row panel below.
-          FORM: Established v2 operate extension; list-only port (drilldowns stay legacy).
+          STORY: Search and segment templates, scroll the same row pattern as Your events, open drilldown to edit.
+          FIRST VIEWPORT: Title + create CTA, search toolbar with time pills (no Filters), scrollable row panel below.
+          FORM: Established v2 operate extension; list-only port matching events toolbar minus advanced filters.
           FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md */}
       <div className="min-h-screen bg-surface text-foreground pb-2">
         <RecurringTemplatesHeader templateCount={templates.length} loading={loading} />
@@ -71,7 +84,28 @@ export default function OrganiserRecurringEventsV2Page() {
             </div>
           </div>
         ) : (
-          <RecurringTemplatesList templates={templates} loading={loading} />
+          <div className="space-y-5 sm:space-y-6">
+            <EventsToolbar
+              search={search}
+              onSearchChange={setSearch}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              timeSegment={timeSegment}
+              onTimeSegmentChange={handleTimeSegmentChange}
+              showFilters={false}
+              resultCount={filteredTemplates.length}
+              loading={loading}
+              searchAriaLabel="Search recurring templates"
+              loadingLabel="Loading templates…"
+              sectionAriaLabel="Search and sort recurring templates"
+            />
+            <RecurringTemplatesList
+              templates={filteredTemplates}
+              loading={loading}
+              hasAnyTemplates={templates.length > 0}
+              onClearControls={clearAll}
+            />
+          </div>
         )}
       </div>
     </>

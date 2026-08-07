@@ -11,7 +11,7 @@ import {
 } from "@/components/Filter/OrganiserFilterDialog";
 import { Listbox, Transition } from "@headlessui/react";
 import { AdjustmentsHorizontalIcon, CheckIcon, ChevronUpDownIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import { TimeSegment } from "./useOrganiserEventFilters";
 
 const SORT_OPTIONS = [
@@ -36,11 +36,19 @@ type EventsToolbarProps = {
   onSortChange: (value: SortByCategory) => void;
   timeSegment: TimeSegment;
   onTimeSegmentChange: (value: TimeSegment) => void;
-  filtersOpen: boolean;
-  onToggleFilters: () => void;
-  activeFilterCount: number;
   resultCount: number;
   loading: boolean;
+  /** When false, hides the Filters control (search / time / sort only). */
+  showFilters?: boolean;
+  filtersOpen?: boolean;
+  onToggleFilters?: () => void;
+  activeFilterCount?: number;
+  searchPlaceholder?: string;
+  searchAriaLabel?: string;
+  loadingLabel?: string;
+  sectionAriaLabel?: string;
+  /** Advanced filters strip — rendered under search controls, above the result count. */
+  filtersPanel?: ReactNode;
 };
 
 export function EventsToolbar({
@@ -50,17 +58,24 @@ export function EventsToolbar({
   onSortChange,
   timeSegment,
   onTimeSegmentChange,
-  filtersOpen,
-  onToggleFilters,
-  activeFilterCount,
   resultCount,
   loading,
+  showFilters = true,
+  filtersOpen = false,
+  onToggleFilters,
+  activeFilterCount = 0,
+  searchPlaceholder = "Search by name, location, or sport",
+  searchAriaLabel = "Search events",
+  loadingLabel = "Loading events…",
+  sectionAriaLabel = "Search and filter events",
+  filtersPanel,
 }: EventsToolbarProps) {
   const selectedSort = SORT_OPTIONS.find((option) => option.value === sortBy) ?? SORT_OPTIONS[0];
 
   return (
     <section
-      aria-label="Search and filter events"
+      aria-label={sectionAriaLabel}
+      data-tour="events-toolbar"
       className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-3"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -73,9 +88,9 @@ export function EventsToolbar({
             type="search"
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search by name, location, or sport"
+            placeholder={searchPlaceholder}
             className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-3 text-base sm:text-sm text-foreground placeholder:text-foreground-muted font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            aria-label="Search events"
+            aria-label={searchAriaLabel}
           />
         </div>
 
@@ -150,33 +165,37 @@ export function EventsToolbar({
             </div>
           </Listbox>
 
-          <button
-            type="button"
-            onClick={onToggleFilters}
-            aria-expanded={filtersOpen}
-            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-              filtersOpen
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-background text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
-            }`}
-          >
-            <AdjustmentsHorizontalIcon className="h-4 w-4" aria-hidden />
-            Filters
-            {activeFilterCount > 0 ? (
-              <span
-                className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums ${
-                  filtersOpen ? "bg-background text-foreground" : "bg-foreground text-background"
-                }`}
-              >
-                {activeFilterCount}
-              </span>
-            ) : null}
-          </button>
+          {showFilters && onToggleFilters ? (
+            <button
+              type="button"
+              onClick={onToggleFilters}
+              aria-expanded={filtersOpen}
+              className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                filtersOpen
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
+              }`}
+            >
+              <AdjustmentsHorizontalIcon className="h-4 w-4" aria-hidden />
+              Filters
+              {activeFilterCount > 0 ? (
+                <span
+                  className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums ${
+                    filtersOpen ? "bg-background text-foreground" : "bg-foreground text-background"
+                  }`}
+                >
+                  {activeFilterCount}
+                </span>
+              ) : null}
+            </button>
+          ) : null}
         </div>
       </div>
 
+      {filtersPanel}
+
       <p className="text-xs text-foreground-muted font-sans">
-        {loading ? "Loading events…" : `${resultCount} result${resultCount === 1 ? "" : "s"}`}
+        {loading ? loadingLabel : `${resultCount} result${resultCount === 1 ? "" : "s"}`}
       </p>
     </section>
   );

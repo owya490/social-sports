@@ -8,6 +8,7 @@ import {
   EntityHoverCover,
   EntityHoverPreview,
 } from "@/components/organiser/v2/shared/EntityHoverPreview";
+import { EntityRowThumbnail } from "@/components/organiser/v2/shared/EntityRowThumbnail";
 import { Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { calculateRecurrenceEnded } from "@/services/src/recurringEvents/recurringEventsService";
@@ -77,11 +78,9 @@ export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
         href={`/organiser/v2/event/recurring-events/${recurrenceTemplateId}`}
         className="group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
       >
-        <div
-          className="aspect-square size-[4.25rem] sm:size-[4.75rem] shrink-0 self-center overflow-hidden rounded-lg border border-border bg-surface-muted bg-cover bg-center"
-          style={{ backgroundImage: thumbnailSrc ? `url(${thumbnailSrc})` : undefined }}
-          role="img"
-          aria-label=""
+        <EntityRowThumbnail
+          src={thumbnailSrc}
+          className="aspect-square size-[4.25rem] sm:size-[4.75rem] self-center"
         />
 
         <div className="min-w-0 flex-1 py-0.5">

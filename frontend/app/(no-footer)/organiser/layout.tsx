@@ -1,5 +1,5 @@
-import OrganiserChrome from "@/components/organiser/OrganiserChrome";
+import OrganiserShell from "@/components/organiser/OrganiserShell";
 
 export default function OrganiserLayout({ children }: { children: React.ReactNode }) {
-  return <OrganiserChrome>{children}</OrganiserChrome>;
+  return <OrganiserShell>{children}</OrganiserShell>;
 }

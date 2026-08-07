@@ -1,15 +1,15 @@
 "use client";
 
 /**
- * THESIS: Tabs guide the collection; Details owns overview; membership lives on Events; deep work opens a right drawer / bottom sheet — refuses legacy card grids and inline title edits.
- * OWN-WORLD: Honest Clubhouse — surface canvas, Satoshi, 12px radius, yellow only on primary panel CTAs (Save / Add).
- * STORY: Organiser lands on Details (cover, about, share, visibility), edits via panels; Events manages membership with flush rows.
- * FIRST VIEWPORT: Quiet chrome (title + Collection page) + peer tabs; Details two-column overview with Edit details / Change photo.
- * FORM: Overview-led Comp A; seed mirror-details-events-settings; approved collection-hub-comp-a-overview-led.
+ * THESIS: Collection hub is a container for sessions — Details leads with 16:9 cover + membership peek, not a session twin; Events owns membership; deep work opens drawers.
+ * OWN-WORLD: Honest Clubhouse — surface canvas, Satoshi, 12px radius, yellow only on primary panel CTAs (Save / Add) and the Private switch when on.
+ * STORY: Organiser lands on Details (cover, collection brief, In this collection peek, share, Visibility with lock/globe + toggle), jumps to Events to manage; Settings is delete-only.
+ * FIRST VIEWPORT: Quiet header + peer tabs; Details equal two-column 16:9 cover | Collection brief; In this collection sneak peek; Visibility owns Private toggle with icons.
+ * FORM: Membership-led overview + peek (extends Comp A/B); privacy on Details Visibility; Change photo in EventHubPanel.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
  */
 
-import { CollectionHubChrome } from "@/components/organiser/v2/collection-hub/CollectionHubChrome";
+import { CollectionHubHeader } from "@/components/organiser/v2/collection-hub/CollectionHubHeader";
 import { CollectionHubDetails } from "@/components/organiser/v2/collection-hub/CollectionHubDetails";
 import { CollectionHubEvents } from "@/components/organiser/v2/collection-hub/CollectionHubEvents";
 import { CollectionHubNav } from "@/components/organiser/v2/collection-hub/CollectionHubNav";
@@ -192,10 +192,10 @@ export default function OrganiserCollectionHubV2Page() {
     }
   };
 
-  const chrome = useMemo(
+  const header = useMemo(
     () => (
       <div className="bg-background border-b border-border">
-        <CollectionHubChrome
+        <CollectionHubHeader
           loading={loading}
           collectionId={collectionId}
           name={collection.name}
@@ -210,7 +210,7 @@ export default function OrganiserCollectionHubV2Page() {
 
   return (
     <div className="min-h-screen bg-surface text-foreground pb-10">
-      {chrome}
+      {header}
 
       <div
         className={`px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto pt-6 sm:pt-8 transition-opacity duration-200 ease-out ${
@@ -228,12 +228,29 @@ export default function OrganiserCollectionHubV2Page() {
             eventCount={collection.eventIds.length}
             templateCount={collection.recurringEventTemplateIds.length}
             isPrivate={collection.isPrivate}
+            privacyUpdating={privacyUpdating}
+            events={events}
+            templates={templates}
             onSaveDetails={async ({ name, description }) => {
               await persistCollection({ name, description });
             }}
             onSaveImage={async (image) => {
               await persistCollection({ image });
             }}
+            onTogglePrivacy={async (nextPrivate) => {
+              if (nextPrivate === collection.isPrivate) return;
+              setPrivacyUpdating(true);
+              try {
+                await updateEventCollectionAccessModifier(collectionId, user.userId, nextPrivate);
+                setCollection((prev) => ({ ...prev, isPrivate: nextPrivate }));
+              } catch (error) {
+                logger.error(`Failed to toggle privacy: ${error}`);
+                router.push(getErrorUrl(error));
+              } finally {
+                setPrivacyUpdating(false);
+              }
+            }}
+            onOpenEvents={() => handleSectionChange("Events")}
           />
         )}
 
@@ -301,22 +318,7 @@ export default function OrganiserCollectionHubV2Page() {
         {section === "Settings" && (
           <CollectionHubSettings
             name={collection.name}
-            isPrivate={collection.isPrivate}
-            privacyUpdating={privacyUpdating}
             deleteLoading={deleteLoading}
-            onTogglePrivacy={async (nextPrivate) => {
-              if (nextPrivate === collection.isPrivate) return;
-              setPrivacyUpdating(true);
-              try {
-                await updateEventCollectionAccessModifier(collectionId, user.userId, nextPrivate);
-                setCollection((prev) => ({ ...prev, isPrivate: nextPrivate }));
-              } catch (error) {
-                logger.error(`Failed to toggle privacy: ${error}`);
-                router.push(getErrorUrl(error));
-              } finally {
-                setPrivacyUpdating(false);
-              }
-            }}
             onDelete={async () => {
               setDeleteLoading(true);
               try {

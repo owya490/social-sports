@@ -53,7 +53,7 @@ function partitionAdvisory(findings) {
   return { primary, advisory };
 }
 
-// ANSI dim, when stderr is a TTY. Advisory output is chrome, so keep it quiet.
+// ANSI dim, when stderr is a TTY. Advisory output is shell, so keep it quiet.
 function dim(text) {
   return process.stderr.isTTY ? `\x1b[2m${text}\x1b[0m` : text;
 }

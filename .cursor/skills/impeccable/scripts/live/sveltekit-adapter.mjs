@@ -2,9 +2,9 @@
  * SvelteKit live-mode adapter.
  *
  * SvelteKit must not be patched through src/app.html. That file is a document
- * template, not framework-owned component chrome. The adapter keeps SvelteKit
+ * template, not framework-owned component shell. The adapter keeps SvelteKit
  * work limited to mounting a dev-only shadow host from +layout.svelte; the
- * actual live UI remains the shared plain-DOM browser chrome.
+ * actual live UI remains the shared plain-DOM browser shell.
  */
 
 import crypto from 'node:crypto';
@@ -217,7 +217,7 @@ export function buildSvelteLiveRootComponent(port, token) {
 
     window.__IMPECCABLE_LIVE_ADAPTER__ = 'sveltekit';
     window.__IMPECCABLE_LIVE_UI_ROOT__ = root;
-    window.__IMPECCABLE_LIVE_CHROME_MOUNT__ = {
+    window.__IMPECCABLE_LIVE_SHELL_MOUNT__ = {
       adapter: 'sveltekit',
       version: 1,
       host,
@@ -238,7 +238,7 @@ export function buildSvelteLiveRootComponent(port, token) {
     return () => {
       script.remove();
       if (window.__IMPECCABLE_LIVE_UI_ROOT__ === root) delete window.__IMPECCABLE_LIVE_UI_ROOT__;
-      if (window.__IMPECCABLE_LIVE_CHROME_MOUNT__?.root === root) delete window.__IMPECCABLE_LIVE_CHROME_MOUNT__;
+      if (window.__IMPECCABLE_LIVE_SHELL_MOUNT__?.root === root) delete window.__IMPECCABLE_LIVE_SHELL_MOUNT__;
       if (window.__IMPECCABLE_LIVE_ADAPTER__ === 'sveltekit') delete window.__IMPECCABLE_LIVE_ADAPTER__;
     };
   });

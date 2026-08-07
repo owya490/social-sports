@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-06T19:15:00+10:00",
+  "generatedAt": "2026-08-07T00:51:00+10:00",
   "title": "Design System: SPORTSHUB",
   "extensions": {
     "colorMeta": {
@@ -192,7 +192,7 @@
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "KPI values and event hub chrome title."
+        "purpose": "KPI values and event hub header title."
       },
       "title": {
         "displayName": "Title",
@@ -214,9 +214,24 @@
         "purpose": "Legacy search field elevation only."
       },
       {
+        "name": "paper-gallery-rest",
+        "value": "0 1px 2px rgba(10,10,10,0.04)",
+        "purpose": "Resting Forms gallery paper cards and blank create tile—whisper only."
+      },
+      {
+        "name": "paper-gallery-hover",
+        "value": "0 12px 28px rgba(10,10,10,0.12)",
+        "purpose": "Forms gallery card / blank tile hover and focus-within lift (with -translate-y-1)."
+      },
+      {
+        "name": "paper-gallery-menu",
+        "value": "0 8px 24px rgba(10,10,10,0.12)",
+        "purpose": "Forms gallery card overflow menu panel."
+      },
+      {
         "name": "hover-dossier",
         "value": "0 8px 28px rgba(10,10,10,0.12)",
-        "purpose": "Soft lift for the portaled EntityHoverPreview mini-dossier only—not resting rows."
+        "purpose": "Soft lift for the portaled EntityHoverPreview mini-dossier only—not resting rows or Forms paper cards."
       },
       {
         "name": "panel-sheet",
@@ -243,7 +258,7 @@
       {
         "name": "duration-fast",
         "value": "200ms",
-        "purpose": "Hover colour shifts on tiles and list rows."
+        "purpose": "Hover colour shifts on tiles and list rows; Forms paper-card lift."
       },
       {
         "name": "duration-chart",
@@ -253,17 +268,22 @@
       {
         "name": "ease-out",
         "value": "ease-out",
-        "purpose": "Chart bar and fill-bar width animations; panel enter."
+        "purpose": "Chart bar and fill-bar width animations; panel enter; Forms paper-card motion."
       },
       {
         "name": "ease-hover-dossier",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "EntityHoverPreview open/close (blur + scale + vertical settle)."
+        "purpose": "EntityHoverPreview open/close (blur + scale + vertical settle); Forms miniature preview drift."
       },
       {
         "name": "duration-hover-dossier",
         "value": "180ms",
         "purpose": "EntityHoverPreview enter/exit duration; open delay 650ms, close delay 160ms."
+      },
+      {
+        "name": "duration-paper-preview-drift",
+        "value": "500ms",
+        "purpose": "Forms gallery miniature preview vertical drift on card hover/focus-within (-translate-y-8)."
       },
       {
         "name": "duration-panel-enter",
@@ -342,9 +362,25 @@
       "name": "Catalogue List Row",
       "kind": "custom",
       "refersTo": "catalogue-list-panel",
-      "description": "Divided-panel row for Forms/collections-style catalogues—icon well, title, meta chip, trailing icon actions.",
+      "description": "Divided-panel row for Event collections / Custom links-style catalogues—icon well, title, meta chip, trailing icon actions. Not Forms.",
       "html": "<div class=\"ds-catalogue-panel\"><div class=\"ds-catalogue-row\"><div class=\"ds-catalogue-well\"><svg class=\"ds-catalogue-well-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z\"/></svg></div><div class=\"ds-catalogue-body\"><div class=\"ds-catalogue-title-row\"><p class=\"ds-catalogue-title\">Registration form</p><span class=\"ds-catalogue-chip\">3 sections</span></div><p class=\"ds-catalogue-meta\">Updated 12 Aug 2026</p></div><div class=\"ds-catalogue-actions\"><button class=\"ds-catalogue-action\" type=\"button\" aria-label=\"Edit\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" width=\"16\" height=\"16\"><path d=\"M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z\"/></svg></button></div></div></div>",
       "css": ".ds-catalogue-panel { background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; font-family: Satoshi, system-ui, sans-serif; } .ds-catalogue-row { display: flex; align-items: center; gap: 12px; padding: 12px; transition: background 200ms ease; } .ds-catalogue-row:hover { background: var(--color-surface-hover); } .ds-catalogue-well { width: 48px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem; background: var(--color-surface); border: 1px solid var(--color-border); } .ds-catalogue-well-icon { width: 20px; height: 20px; color: var(--color-foreground-secondary); } .ds-catalogue-body { min-width: 0; flex: 1; } .ds-catalogue-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; } .ds-catalogue-title { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-catalogue-chip { flex-shrink: 0; border-radius: 0.5rem; background: var(--color-surface); padding: 2px 8px; font-size: 0.75rem; font-weight: 500; color: var(--color-foreground-secondary); } .ds-catalogue-meta { margin: 4px 0 0; font-size: 0.75rem; color: var(--color-foreground-muted); } .ds-catalogue-actions { flex-shrink: 0; } .ds-catalogue-action { border: none; background: transparent; border-radius: 0.5rem; padding: 8px; color: var(--color-foreground-secondary); cursor: pointer; } .ds-catalogue-action:hover { background: var(--color-surface-muted); color: var(--color-foreground); } .ds-catalogue-action:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }"
+    },
+    {
+      "name": "Forms Paper Gallery Card",
+      "kind": "card",
+      "refersTo": "form-gallery-card",
+      "description": "Docs/Forms paper thumbnail—4:3 scaled question miniature, metadata footer, hover lift + preview drift; primary click opens editor.",
+      "html": "<article class=\"ds-form-card\"><button class=\"ds-form-preview\" type=\"button\" aria-label=\"Edit Registration form\"><div class=\"ds-form-preview-window\"><div class=\"ds-form-mini\"><p class=\"ds-form-mini-title\">Registration form</p><p class=\"ds-form-mini-q\">Full name <span>*</span></p><div class=\"ds-form-mini-line\"></div><p class=\"ds-form-mini-q\">Experience level</p><div class=\"ds-form-mini-opt\"><span class=\"ds-form-radio\"></span><span>Beginner</span></div></div><div class=\"ds-form-fade\" aria-hidden=\"true\"></div></div></button><div class=\"ds-form-footer\"><svg class=\"ds-form-doc\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><path d=\"M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z\"/></svg><div class=\"ds-form-meta\"><p class=\"ds-form-name\">Registration form</p><p class=\"ds-form-updated\">Updated 12 Aug 2026</p></div></div></article>",
+      "css": ".ds-form-card { display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--color-border); background: var(--color-background); box-shadow: 0 1px 2px rgba(10,10,10,0.04); font-family: Satoshi, system-ui, sans-serif; transition: transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out; } .ds-form-card:hover, .ds-form-card:focus-within { transform: translateY(-4px); border-color: color-mix(in srgb, var(--color-foreground-muted) 35%, var(--color-border)); box-shadow: 0 12px 28px rgba(10,10,10,0.12); } .ds-form-preview { display: block; width: 100%; border: none; padding: 0; background: var(--color-surface); text-align: left; cursor: pointer; } .ds-form-preview:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-form-preview-window { position: relative; aspect-ratio: 4 / 3; overflow: hidden; padding: 12px 12px 0; } .ds-form-mini { width: 420px; transform: scale(0.42); transform-origin: top left; border-radius: 0.5rem; border: 1px solid var(--color-border); background: var(--color-background); padding: 16px 20px 40px; box-shadow: 0 1px 2px rgba(10,10,10,0.04); transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-form-card:hover .ds-form-mini, .ds-form-card:focus-within .ds-form-mini { transform: scale(0.42) translateY(-32px); } .ds-form-mini-title { margin: 0 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border); font-size: 1.125rem; font-weight: 700; letter-spacing: -0.02em; color: var(--color-foreground); } .ds-form-mini-q { margin: 0 0 8px; font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); } .ds-form-mini-q span { color: var(--color-danger); } .ds-form-mini-line { height: 32px; border-bottom: 1px solid var(--color-border); margin-bottom: 20px; } .ds-form-mini-opt { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--color-foreground-secondary); } .ds-form-radio { width: 12px; height: 12px; border-radius: 9999px; border: 1px solid var(--color-foreground-muted); flex-shrink: 0; } .ds-form-fade { position: absolute; inset-inline: 0; bottom: 0; height: 56px; background: linear-gradient(to top, var(--color-surface), color-mix(in srgb, var(--color-surface) 80%, transparent), transparent); pointer-events: none; } .ds-form-footer { display: flex; align-items: flex-start; gap: 8px; border-top: 1px solid var(--color-border); padding: 10px 12px; } .ds-form-doc { width: 16px; height: 16px; margin-top: 2px; color: var(--color-foreground-secondary); flex-shrink: 0; } .ds-form-meta { min-width: 0; flex: 1; } .ds-form-name { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-form-updated { margin: 2px 0 0; font-size: 0.75rem; color: var(--color-foreground-muted); }"
+    },
+    {
+      "name": "Forms Blank Create Tile",
+      "kind": "card",
+      "refersTo": "form-gallery-create-card",
+      "description": "First cell in the Forms paper grid—blank create tile with Plus well; same hover lift as form cards.",
+      "html": "<a class=\"ds-form-blank\" href=\"#\"><div class=\"ds-form-blank-well\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" width=\"40\" height=\"40\"><path d=\"M12 4.5v15m7.5-7.5h-15\"/></svg></div><div class=\"ds-form-blank-footer\"><p class=\"ds-form-blank-title\">Blank form</p><p class=\"ds-form-blank-sub\">Start from scratch</p></div></a>",
+      "css": ".ds-form-blank { display: flex; flex-direction: column; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--color-border); background: var(--color-background); box-shadow: 0 1px 2px rgba(10,10,10,0.04); text-decoration: none; font-family: Satoshi, system-ui, sans-serif; color: var(--color-foreground); transition: transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out; } .ds-form-blank:hover, .ds-form-blank:focus-visible { transform: translateY(-4px); border-color: color-mix(in srgb, var(--color-foreground-muted) 35%, var(--color-border)); box-shadow: 0 12px 28px rgba(10,10,10,0.12); } .ds-form-blank:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; } .ds-form-blank-well { aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; background: var(--color-surface); color: var(--color-foreground-secondary); transition: color 200ms ease; } .ds-form-blank:hover .ds-form-blank-well { color: var(--color-foreground); } .ds-form-blank-footer { border-top: 1px solid var(--color-border); padding: 10px 12px; } .ds-form-blank-title { margin: 0; font-size: 0.875rem; font-weight: 600; } .ds-form-blank-sub { margin: 2px 0 0; font-size: 0.75rem; color: var(--color-foreground-muted); }"
     },
     {
       "name": "Preference Switch",
@@ -358,7 +394,7 @@
       "name": "Entity Hover Preview",
       "kind": "custom",
       "refersTo": "entity-hover-preview",
-      "description": "Cover-led mini-dossier—full-width cover, title, three-cell HoverMetrics, short prose, middot flags. Events/series/collections/forms only.",
+      "description": "Cover-led mini-dossier—full-width cover, title, three-cell HoverMetrics, short prose, middot flags. Events/series/collections only—not Forms.",
       "html": "<div class=\"ds-hover-dossier\" role=\"tooltip\"><div class=\"ds-hover-cover\" role=\"img\" aria-label=\"Event cover\"></div><div class=\"ds-hover-pad\"><p class=\"ds-hover-title\">Tuesday Social Volleyball</p><div class=\"ds-hover-metrics\"><div class=\"ds-hover-metric\"><p class=\"ds-hover-metric-label\">Reg closes</p><p class=\"ds-hover-metric-value\">Fri</p></div><div class=\"ds-hover-metric\"><p class=\"ds-hover-metric-label\">Ends</p><p class=\"ds-hover-metric-value\">Sat</p></div><div class=\"ds-hover-metric\"><p class=\"ds-hover-metric-label\">Page views</p><p class=\"ds-hover-metric-value\">1.2k</p></div></div><p class=\"ds-hover-body\">Casual mixed social — all levels welcome. Bring indoor shoes.</p><p class=\"ds-hover-flags\">Waitlist · Form attached</p></div></div>",
       "css": ".ds-hover-dossier { width: 360px; background: var(--color-background); border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: 0 8px 28px rgba(10,10,10,0.12); overflow: hidden; font-family: Satoshi, system-ui, sans-serif; pointer-events: none; } .ds-hover-cover { height: 7.5rem; width: 100%; background: linear-gradient(135deg, #ebebeb 0%, #d0d0d0 100%); background-size: cover; background-position: center; } .ds-hover-pad { padding: 14px; } .ds-hover-title { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--color-foreground); line-height: 1.375; } .ds-hover-subtitle { margin: 2px 0 0; font-size: 0.75rem; color: var(--color-foreground-muted); } .ds-hover-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; } .ds-hover-metric { min-width: 0; text-align: center; } .ds-hover-metric-label { margin: 0; font-size: 0.75rem; line-height: 1.25; color: var(--color-foreground-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-hover-metric-value { margin: 2px 0 0; font-size: 0.875rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-foreground); line-height: 1.375; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-hover-body { margin: 12px 0 0; font-size: 0.75rem; line-height: 1.625; color: var(--color-foreground-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } .ds-hover-flags { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--color-border); font-size: 0.75rem; line-height: 1.375; color: var(--color-foreground-secondary); }"
     },
@@ -413,16 +449,17 @@
   ],
   "narrative": {
     "northStar": "The Honest Clubhouse",
-    "overview": "SPORTSHUB looks like the digital front desk of a well-run local sports club—not enterprise SaaS, not a neon fitness app. The interface is calm, compact, and legible on a phone between sessions. White cards sit on a soft grey canvas; near-black text stays readable without harsh pure-black slabs. Sports yellow appears only where action or focus is needed: primary CTAs, the current-week chart bar, focus rings, and the Comp A When & Where month stamp on the event hub date chip.\n\nDensity is compact-operate: tight padding on dashboards and organiser chrome, icon-led KPI cells in a responsive grid, sidebar navigation that can collapse to icons. The organiser v2 dashboard is the reference surface for metrics and lists; the event hub at /organiser/v2/event/[id] is the Luma overview-led operate surface—quiet chrome, peer tabs, Details overview, and deep work in EventHubPanel drawers/sheets. Edit Event is a calm sectioned sheet (Basic Info / Time / Location / Booking) with TipTap bubble-on-selection and a single yellow Update event footer—not document chrome.",
+    "overview": "SPORTSHUB looks like the digital front desk of a well-run local sports club—not enterprise SaaS, not a neon fitness app. The interface is calm, compact, and legible on a phone between sessions. White cards sit on a soft grey canvas; near-black text stays readable without harsh pure-black slabs. Sports yellow appears only where action or focus is needed: primary CTAs, the current-week chart bar, focus rings, and the Comp A When & Where month stamp on the event hub date chip.\n\nDensity is compact-operate: tight padding on dashboards and organiser shell, icon-led KPI cells in a responsive grid, sidebar navigation that can collapse to icons. The organiser v2 dashboard is the reference surface for metrics and lists; the event hub at /organiser/v2/event/[id] is the Luma overview-led operate surface—quiet header, peer tabs, Details overview, and deep work in EventHubPanel drawers/sheets. Edit Event is a calm sectioned sheet (Basic Info / Time / Location / Booking) with TipTap bubble-on-selection and a single yellow Update event footer—not a sticky document toolbar.",
     "keyCharacteristics": [
-      "Black, white, and a short grey ladder—no decorative gradients in app chrome",
+      "Black, white, and a short grey ladder—no decorative gradients in app shell",
       "One corner radius (12px) across panels, cards, and controls; 8px for nested wells; sheet top 16px on mobile panels",
       "Satoshi for all typography roles",
       "Yellow accent with black text on filled accent surfaces; yellow only on CTAs, focus, current-week chart bars, and the Details date-chip month stamp",
       "Neutral fill bars (surface-muted track, foreground-secondary fill) for progress encoding",
-      "Borders over shadows for resting separation; elevation for floating layers only (hover dossier, operate panels)",
-      "Event hub: Luma overview-led Details + flush list tabs; Registrations expand for order/ticket IDs; deep work opens a right drawer / bottom sheet—never cover-in-chrome",
+      "Borders over shadows for resting separation; elevation for floating layers (hover dossier, operate panels) and Forms paper-gallery cards (rest whisper + hover lift)",
+      "Event hub: Luma overview-led Details + flush list tabs; Registrations expand for order/ticket IDs; deep work opens a right drawer / bottom sheet—never cover-in-header",
       "Edit Event panel: sectioned operate sheet (Basic Info / Time / Location / Booking); TipTap bubble-on-selection; single yellow Update event in the panel footer",
+      "Forms gallery: Docs/Forms-style paper grid—blank create tile + live question miniatures; yellow only on Create; primary click → editor",
       "Mobile-first organiser flows; honest metric labels; inline error recovery"
     ],
     "rules": [
@@ -448,12 +485,17 @@
       },
       {
         "name": "The Surface Stage Rule",
-        "body": "Event hub list tabs (Registrations, Forms, Settings) sit flush on the surface canvas under chrome—hairline dividers and tonal washes separate rows. Details may use outlined overview cards on that same stage. Registrations may expand a row for order/ticket identity; Forms browses responses in a flush table on stage; deep work never covers the chrome with a full-bleed hero—it opens EventHubPanel.",
+        "body": "Event hub list tabs (Registrations, Forms, Settings) sit flush on the surface canvas under the header—hairline dividers and tonal washes separate rows. Details may use outlined overview cards on that same stage. Registrations may expand a row for order/ticket identity; Forms browses responses in a flush table on stage; deep work never covers the header with a full-bleed hero—it opens EventHubPanel.",
         "section": "elevation"
       },
       {
         "name": "The List-Not-Preview Rule",
-        "body": "Catalogue pages are scannable rows (or a media library). Do not ship miniature document/form previews or multi-card dashboards on these routes.",
+        "body": "Event collections, Custom links, and Settings stay scannable rows (Image gallery = media library). Do not ship multi-card dashboards as those list layouts. Forms is the exception: /organiser/v2/forms/gallery is a paper-grid of live question miniatures—not a divided row catalogue.",
+        "section": "components"
+      },
+      {
+        "name": "The Paper Gallery Rule",
+        "body": "Forms are recognised by live question miniatures in a paper grid. Do not revert Forms to divided catalogue rows or EntityHoverPreview. Do not put yellow on paper cards—Create (and Retry) only.",
         "section": "components"
       },
       {
@@ -462,13 +504,13 @@
         "section": "components"
       },
       {
-        "name": "The Quiet Chrome Rule",
-        "body": "Event hub chrome is title + meta + Event page + Pause. Do not put the cover, capacity bar, or status-dot cluster in chrome—cover belongs in Details.",
+        "name": "The Quiet Header Rule",
+        "body": "Event hub header is title + meta + Event page + Pause. Do not put the cover, capacity bar, or status-dot cluster in header—cover belongs in Details.",
         "section": "components"
       },
       {
         "name": "The Panel Grammar Rule",
-        "body": "Deep work (edit details, change photo, add attendee, per-attendee form responses, edit tickets, add answers, change attached form) opens EventHubPanel. The Forms tab browses responses in a flush table on stage—not a response inspector panel. Registrations may expand a row for order/ticket identity and action entry points; do not invent a persistent side inspector or cover-in-chrome hero.",
+        "body": "Deep work (edit details, change photo, add attendee, per-attendee form responses, edit tickets, add answers, change attached form) opens EventHubPanel. The Forms tab browses responses in a flush table on stage—not a response inspector panel. Registrations may expand a row for order/ticket identity and action entry points; do not invent a persistent side inspector or cover-in-header hero.",
         "section": "components"
       },
       {
@@ -478,7 +520,7 @@
       },
       {
         "name": "The Sectioned Edit Rule",
-        "body": "Edit Event is four calm sections—Basic Info / Time / Location / Booking—in one submit. Not a sticky-toolbar document chrome, not a view/edit toggle card, and not Appearance themes.",
+        "body": "Edit Event is four calm sections—Basic Info / Time / Location / Booking—in one submit. Not a sticky document toolbar, not a view/edit toggle card, and not Appearance themes.",
         "section": "components"
       },
       {
@@ -496,10 +538,11 @@
       "Do use icon-led KPI cells with sentence-case labels—not uppercase hero-metric stacks.",
       "Do offer inline retry when dashboard data fails to load.",
       "Do use Linear, Stripe, Airbnb, and Luma (event hub) as craft references per the Reference Points section—Airbnb simplicity is the default tone; Linear and Stripe sharpen operate and payments; Luma shapes session overview + panel grammar.",
-      "Do let content (event imagery, session details, metrics) lead—chrome stays flat and quiet, Airbnb-style.",
-      "Do reuse the catalogue header + divided list panel (or gallery upload grid) for new organiser list surfaces—same shell as Forms, collections, and custom links.",
+      "Do let content (event imagery, session details, metrics) lead—shell stays flat and quiet, Airbnb-style.",
+      "Do reuse the catalogue header + divided list panel (or gallery upload grid) for row-style organiser list surfaces—collections, custom links, Settings; Image gallery keeps the media upload grid.",
+      "Do build the Forms index as the Docs/Forms paper gallery—blank create tile first, live question miniatures, metadata footer, hover lift + preview drift, primary click → editor; Preview via overflow menu only.",
       "Do treat preference switches as checked controls: accent yellow when on, surface-muted when off.",
-      "Do use the cover-led hover dossier (EntityHoverPreview + HoverMetrics) on catalogue rows that need a glanceable open decision—events, series, collections, forms.",
+      "Do use the cover-led hover dossier (EntityHoverPreview + HoverMetrics) on catalogue rows that need a glanceable open decision—events, series, collections (not forms).",
       "Do build event hub Details as an overview-led card with Edit details / Change photo opening EventHubPanel; build Registrations as expand-in-place rows (order/ticket IDs) with Form responses / Edit tickets opening the panel; Forms as a flush response table on stage (Change form + Add answers open the panel).",
       "Do build Edit Event as a sectioned sheet (Basic Info / Time / Location / Booking) with TipTap bubble-on-selection and a single yellow Update event in the panel footer.",
       "Do keep event hub share as circular channel icons—not a center modal.",
@@ -513,11 +556,12 @@
       "Don't use legacy organiser-light-gray, raw gray-*, or hardcoded #BABABA on new organiser surfaces.",
       "Don't use accent yellow on fill bars, KPI icon wells, status dots, peer tabs, or share channels—neutral encoding only (date-chip month stamp is the Comp A exception).",
       "Don't fabricate social proof, benchmarks, or analytics the product cannot source.",
-      "Don't add kickers/eyebrows above catalogue page titles, or replace catalogue rows with a grid of miniature form/document preview cards.",
+      "Don't add kickers/eyebrows above catalogue page titles, or turn Event collections / Custom links / Settings into multi-card preview dashboards.",
+      "Don't revert Forms to divided catalogue rows or EntityHoverPreview—keep the paper-grid miniature gallery.",
       "Don't invent a second settings visual language—stacked outlined panels with header strip + body only (account Settings). Event hub Settings uses flush preference rows on the stage instead—do not mix the two shells on one surface.",
-      "Don't duplicate the list row inside the hover card, or add hover dossiers to custom links / top-events rows.",
+      "Don't duplicate the list row inside the hover card, or add hover dossiers to custom links / top-events / Forms gallery cards.",
       "Don't put nested bordered panels or fetch-on-hover data inside the mini-dossier—cover, three KPIs, short prose, middot flags only.",
-      "Don't put a cover in event hub chrome or ship a persistent side inspector—use EventHubPanel for deep work.",
+      "Don't put a cover in event hub header or ship a persistent side inspector—use EventHubPanel for deep work.",
       "Don't restore an Images peer tab; photos edit through Change photo on Details.",
       "Don't mark peer tabs or Registrations filters with yellow—active state is near-black underline + weight.",
       "Don't put a sticky TipTap toolbar, view/edit toggle card, or Appearance themes inside Edit Event—sections + bubble-on-selection + one Update event only.",

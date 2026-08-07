@@ -1181,7 +1181,7 @@ function stripReducedMotionBlocks(content) {
 
 // Source-index ranges of <header> and <nav> landmark elements in an HTML
 // string. Lets string-level scans decide whether a matched element sits in
-// the page chrome (the hero/nav region) without needing a DOM.
+// the page shell (the hero/nav region) without needing a DOM.
 function landmarkSourceRanges(content) {
   const ranges = [];
   for (const tag of ['header', 'nav']) {
@@ -4950,7 +4950,7 @@ function checkElementBlinkingCursorDOM(el) {
   if (!glyphCursor && !blockCursor) return [];
 
   // Hero-region promotion: a fake caret blinking in the first ~900px or
-  // inside the page chrome is the shipped hero cliché, not an incidental
+  // inside the page shell is the shipped hero cliché, not an incidental
   // flourish. Promote those from the registry's advisory to warning;
   // lower first-viewport occurrences keep the default severity.
   const inHeroRegion = pageTop <= 900

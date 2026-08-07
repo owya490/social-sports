@@ -1,6 +1,6 @@
 {
   "title": "Hover preview scope",
-  "question": "Entity hover previews will use Honest Clubhouse chrome (not the dark Linear look). Confirm where they should appear.",
+  "question": "Entity hover previews will use Honest Clubhouse shell (not the dark Linear look). Confirm where they should appear.",
   "options": [
     {
       "id": "all-hub-lists",

@@ -1,0 +1,36 @@
+{
+  "title": "Back to SPORTSHUB — placement",
+  "question": "The exit link currently sits under ORGANISER HUB in the brand band, which steals first-read attention from hub work. Where should leaving the hub live instead?",
+  "options": [
+    {
+      "id": "bottom-footer",
+      "label": "Bottom footer cluster",
+      "kicker": "RECOMMENDED",
+      "thesis": "Move the quiet text link into the sidebar footer with Get Help and Settings — where secondary exits belong in operate shell. Brand header stays identity-only.",
+      "viewport": "Top: logo + ORGANISER HUB. Bottom: Get Help · Settings · Back to SPORTSHUB as a muted text link (or icon when collapsed).",
+      "risk": "Slightly less discoverable for first-time organisers who expect a top back affordance.",
+      "materials": ["Footer cluster", "Muted text link", "Collapsed icon/logo"]
+    },
+    {
+      "id": "logo-is-home",
+      "label": "Logo is the exit",
+      "kicker": "QUIETEST",
+      "thesis": "Delete the text link. The SPORTSHUB mark links to `/` with aria-label “Back to SPORTSHUB” (already true when collapsed). Zero extra shell.",
+      "viewport": "Top: clickable logo + ORGANISER HUB wordmark. No “Back to…” copy anywhere.",
+      "risk": "Lowest discoverability — only users who know logo→home will find it.",
+      "materials": ["Clickable logo", "No text exit"]
+    },
+    {
+      "id": "under-profile",
+      "label": "Under profile",
+      "kicker": "MID",
+      "thesis": "Park a muted link between the profile chip and main nav — out of the brand band, still above the scroll of destinations.",
+      "viewport": "Brand → profile → Back to SPORTSHUB → Dashboard…",
+      "risk": "Still high in reading order; can feel like a fourth identity row.",
+      "materials": ["Muted text under profile"]
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

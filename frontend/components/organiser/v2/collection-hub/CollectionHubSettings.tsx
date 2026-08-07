@@ -1,52 +1,27 @@
 "use client";
 
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
-import { EventHubPreferenceRow, EventHubStage } from "@/components/organiser/v2/event-hub/EventHubStage";
+import { EventHubStage } from "@/components/organiser/v2/event-hub/EventHubStage";
 import { useState } from "react";
 
 type CollectionHubSettingsProps = {
   name: string;
-  isPrivate: boolean;
-  privacyUpdating: boolean;
   deleteLoading: boolean;
-  onTogglePrivacy: (nextPrivate: boolean) => Promise<void>;
   onDelete: () => Promise<void>;
 };
 
-export function CollectionHubSettings({
-  name,
-  isPrivate,
-  privacyUpdating,
-  deleteLoading,
-  onTogglePrivacy,
-  onDelete,
-}: CollectionHubSettingsProps) {
+export function CollectionHubSettings({ name, deleteLoading, onDelete }: CollectionHubSettingsProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <EventHubStage>
-      {(privacyUpdating || deleteLoading) && (
+      {deleteLoading ? (
         <p className="text-xs text-foreground-muted font-sans pb-2" aria-live="polite">
-          {deleteLoading ? "Deleting…" : "Saving…"}
+          Deleting…
         </p>
-      )}
+      ) : null}
 
       <section className="pt-0">
-        <h3 className="text-sm font-semibold text-foreground font-sans mb-1">Visibility</h3>
-        <div className="divide-y divide-border border-t border-border">
-          <EventHubPreferenceRow
-            title="Private collection"
-            description="When on, only people with the link can view. When off, the collection appears on your public profile."
-            checked={isPrivate}
-            disabled={privacyUpdating}
-            onChange={(next) => {
-              void onTogglePrivacy(next);
-            }}
-          />
-        </div>
-      </section>
-
-      <section className="pt-6">
         <h3 className="text-sm font-semibold text-foreground font-sans mb-1">Danger zone</h3>
         <div className="divide-y divide-border border-t border-border">
           <div className="py-4">

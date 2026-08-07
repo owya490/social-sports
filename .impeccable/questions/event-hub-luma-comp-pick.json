@@ -6,7 +6,7 @@
       "id": "comp-a-details-overview",
       "label": "Details overview",
       "kicker": "COMP A",
-      "thesis": "Quiet chrome, two-column Details card, Hosts, read-only Visibility — the resting state.",
+      "thesis": "Quiet header, two-column Details card, Hosts, read-only Visibility — the resting state.",
       "viewport": "Tabs guide; Details owns preview + when/where; Edit / Change photo sit in the card footer.",
       "risk": "Doesn’t show the drawer interaction itself.",
       "hero": ".impeccable/mocks/event-hub-luma-comp-a-details-overview.png"

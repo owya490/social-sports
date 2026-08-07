@@ -19,6 +19,7 @@ export function UpcomingEventsSection({ events, loading, variant = "full" }: Upc
 
   return (
     <section
+      data-tour="coming-up"
       className={
         isPanel
           ? "rounded-xl border border-border bg-background p-4 sm:p-5 h-full flex flex-col"

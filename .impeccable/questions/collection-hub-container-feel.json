@@ -1,0 +1,36 @@
+{
+  "title": "Collection Details — container feel",
+  "question": "Privacy toggle moves into Details → Visibility (Settings keeps delete only). Comp A’s two-column overview currently mirrors the event hub too closely. How should Details read as a container of sessions, not a standalone event?",
+  "options": [
+    {
+      "id": "membership-led-overview",
+      "label": "Membership-led overview",
+      "kicker": "RECOMMENDED",
+      "thesis": "Keep quiet header + tabs. Replace the event-like About column with a container brief: description, then a short membership strip (counts + jump to Events). Cover stays, but smaller / less session-hero. Visibility card owns the Private toggle inline.",
+      "viewport": "Details: cover | container brief + membership glance → Visibility with Private switch. Duplicate Private row in the overview goes away. Settings = danger zone only.",
+      "risk": "Membership glance can feel duplicated with the Events tab if it lists too many rows.",
+      "materials": ["Smaller cover", "Membership strip", "Visibility toggle", "Settings delete-only"]
+    },
+    {
+      "id": "identity-strip-then-members",
+      "label": "Identity strip + members first",
+      "kicker": "STRONGER CONTAINER",
+      "thesis": "Drop the two-column event overview. Details opens with a compact identity band (cover thumbnail, name/desc, share, edit) then a membership preview list. Visibility with Private toggle sits after the band.",
+      "viewport": "Horizontal identity strip → preview of contained events → Visibility switch. Events tab still owns full Add/Remove.",
+      "risk": "Bigger departure from Comp A / event-hub grammar; more layout rewrite.",
+      "materials": ["Identity strip", "Preview list", "Visibility toggle"]
+    },
+    {
+      "id": "light-polish-only",
+      "label": "Light polish only",
+      "kicker": "MINIMAL",
+      "thesis": "Keep Comp A layout. Only move the Private switch into Visibility, remove the duplicate Private meta in About, and retune labels/copy so it says collection/items—not session language.",
+      "viewport": "Same two-column card. Visibility becomes interactive. Settings = delete only.",
+      "risk": "May still feel event-like because the composition stays session-overview shaped.",
+      "materials": ["Visibility toggle", "Copy/labels", "Deduped privacy"]
+    }
+  ],
+  "steer": true,
+  "reroll": false,
+  "canon": false
+}

@@ -7,6 +7,7 @@ import StripeLogo from "@/public/images/stripe-logo.svg";
 import { ArrowTopRightOnSquareIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Skeleton from "react-loading-skeleton";
+import { SportshubStripeIntegrationIcon } from "./SportshubStripeIntegrationIcon";
 
 type SettingsStripePanelProps = {
   stripeId: string;
@@ -30,7 +31,8 @@ export function SettingsStripePanel({
     <section aria-label="Stripe payments" className="rounded-xl border border-border bg-background overflow-hidden">
       <div className="px-4 sm:px-5 py-4 border-b border-border flex items-center justify-between gap-3">
         <div className="min-w-0 flex items-center gap-3">
-          <Image src={StripeLogo} alt="Stripe" className="w-16 sm:w-20" />
+          <SportshubStripeIntegrationIcon />
+          <Image src={StripeLogo} alt="Stripe" className="h-8 w-auto sm:h-10" />
           {connected ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground font-sans">
               <CheckCircleIcon className="h-4 w-4" aria-hidden />

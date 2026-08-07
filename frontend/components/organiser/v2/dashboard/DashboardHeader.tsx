@@ -31,6 +31,7 @@ export function DashboardHeader({ firstName, loading }: DashboardHeaderProps) {
         </div>
         <Link
           href="/event/create"
+          data-tour="create-event"
           className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans shrink-0 hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           <PlusIcon className="h-4 w-4" aria-hidden />

@@ -6,10 +6,10 @@ import Link from "next/link";
 import Skeleton from "react-loading-skeleton";
 
 /**
- * Quiet Luma-style chrome — title + meta + Collection page. Cover lives in Details.
+ * Quiet Luma-style header — title + meta + Collection page. Cover lives in Details.
  */
 
-type CollectionHubChromeProps = {
+type CollectionHubHeaderProps = {
   loading: boolean;
   collectionId: EventCollectionId;
   name: string;
@@ -17,13 +17,13 @@ type CollectionHubChromeProps = {
   isPrivate: boolean;
 };
 
-export function CollectionHubChrome({
+export function CollectionHubHeader({
   loading,
   collectionId,
   name,
   itemCount,
   isPrivate,
-}: CollectionHubChromeProps) {
+}: CollectionHubHeaderProps) {
   const itemsLabel =
     itemCount === 0 ? "No items yet" : `${itemCount} item${itemCount === 1 ? "" : "s"}`;
   const meta = loading ? "" : `${itemsLabel} · ${isPrivate ? "Private" : "Public"}`;

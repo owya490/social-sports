@@ -8,15 +8,15 @@ export const HIDDEN_NAVBAR_ROUTES = [
   /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
 ];
 
-/** Routes that use the organiser v2 sidebar chrome (no global SPORTSHUB navbar). */
-export function usesOrganiserV2Chrome(pathname: string): boolean {
+/** Routes that use the organiser v2 sidebar shell (no global SPORTSHUB navbar). */
+export function usesOrganiserV2Shell(pathname: string): boolean {
   return pathname.startsWith("/organiser/v2");
 }
 
 const HIDE_SPORTSHUB_NAVBAR_KEY = "hideSportshubNavbar";
 
 function pathnameHidesNavbar(pathname: string): boolean {
-  return usesOrganiserV2Chrome(pathname) || HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname));
+  return usesOrganiserV2Shell(pathname) || HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname));
 }
 
 export function shouldHideNavbar(pathname: string): boolean {

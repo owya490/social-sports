@@ -21,7 +21,7 @@
       "thesis": "Each metric lives in its own draggable window on a dithered desktop—marching ants around your selection, pixel icons for quick links.",
       "case": "Strongest modular clarity: KPIs, chart, and fixtures each own a window you can scan independently.",
       "palette": ["#FFFFFF", "#000000", "#808080"],
-      "materials": ["ordered dither patterns", "one-pixel window chrome"],
+      "materials": ["ordered dither patterns", "one-pixel window frame"],
       "viewport": "Dithered grey desktop with three overlapping windows titled Sales, Tickets, Fixtures; Chicago caps in title bars; 32px pixel icons along the bottom dock.",
       "risk": "Nostalgia can read as gimmick if dither patterns slow comprehension.",
       "sketch": ".impeccable/sketches/r2-challenger-onebit.webp",

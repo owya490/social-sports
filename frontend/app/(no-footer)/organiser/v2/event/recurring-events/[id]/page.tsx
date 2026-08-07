@@ -4,13 +4,13 @@
  * THESIS: Tabs guide the series; Details twins the event hub overview; Past events / Recurrence / Settings are peer work — refuses legacy sidebar drilldown.
  * OWN-WORLD: Honest Clubhouse — surface canvas, Satoshi, 12px radius, yellow only on Save / Update.
  * STORY: Organiser lands on Details (preview, hosts, visibility), edits via panels; schedule and prefs stay peer-findable.
- * FIRST VIEWPORT: Quiet chrome (← Recurring, title, Template chip, Pause) + peer tabs; Details two-column overview.
+ * FIRST VIEWPORT: Quiet header (← Recurring, title, Template chip, Pause) + peer tabs; Details two-column overview.
  * FORM: Event-hub overview twin; Comp A approved; tabs mirror-plus-series; seed overview-twin.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
  */
 
 import { EventHubListing } from "@/components/organiser/v2/event-hub/EventHubListing";
-import { RecurringHubChrome } from "@/components/organiser/v2/recurring-hub/RecurringHubChrome";
+import { RecurringHubHeader } from "@/components/organiser/v2/recurring-hub/RecurringHubHeader";
 import { RecurringHubNav } from "@/components/organiser/v2/recurring-hub/RecurringHubNav";
 import { RecurringHubPastEvents } from "@/components/organiser/v2/recurring-hub/RecurringHubPastEvents";
 import { RecurringHubRecurrence } from "@/components/organiser/v2/recurring-hub/RecurringHubRecurrence";
@@ -206,7 +206,7 @@ export default function OrganiserRecurringHubV2Page() {
   return (
     <div className="min-h-screen bg-surface text-foreground pb-8">
       <div className="bg-background border-b border-border">
-        <RecurringHubChrome
+        <RecurringHubHeader
           loading={loading}
           name={eventName}
           startDate={eventStartDate}

@@ -6,7 +6,7 @@
       "id": "list-only-match-hub",
       "label": "List pages only — match hub",
       "kicker": "RECOMMENDED",
-      "thesis": "Port the three catalogue/settings screens into v2 chrome; form editor, crop modal, and Stripe setup keep working via the same services.",
+      "thesis": "Port the three catalogue/settings screens into v2 shell; form editor, crop modal, and Stripe setup keep working via the same services.",
       "viewport": "Same header + panel language as Event collections / Custom links; sidebar points at the new routes.",
       "risk": "Drilldowns and create-form still live on legacy paths until a later pass."
     },
@@ -22,7 +22,7 @@
       "id": "full-subtree",
       "label": "Full forms + gallery + settings subtree",
       "kicker": "DEEPER",
-      "thesis": "Also restyle form create/editor/preview shells and gallery upload chrome under v2 routes in this pass.",
+      "thesis": "Also restyle form create/editor/preview shells and gallery upload shell under v2 routes in this pass.",
       "viewport": "End-to-end v2 paths for forms and gallery, not just the catalogue screens.",
       "risk": "Much larger scope; editor UX is a separate operate surface and may dilute the hub consistency win."
     }

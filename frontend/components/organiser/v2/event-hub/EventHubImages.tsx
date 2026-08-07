@@ -7,12 +7,12 @@ import { Logger } from "@/observability/logger";
 import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
 import { sleep } from "@/utilities/sleepUtil";
 import { useEffect, useMemo, useState } from "react";
-import Skeleton from "react-loading-skeleton";
 import {
   EventHubPrimaryButton,
   EventHubStage,
   EventHubToolbar,
 } from "./EventHubStage";
+import { ImagePickerReveal } from "../shared/ImagePickerLoading";
 
 type EventHubImagesProps = {
   user: UserData;
@@ -42,23 +42,29 @@ export function EventHubImages({
 
   useEffect(() => {
     const fetchUserImages = async () => {
-      const userEventThumbnailsUrls = await getUsersEventThumbnailsUrls(user.userId);
-      const userEventImageUrls = await getUsersEventImagesUrls(user.userId);
-      if (eventThumbnail) {
-        setEventThumbnailUrls([eventThumbnail, ...userEventThumbnailsUrls.filter((url) => url !== eventThumbnail)]);
-      } else {
-        setEventThumbnailUrls(userEventThumbnailsUrls);
+      setLoading(true);
+      try {
+        const [userEventThumbnailsUrls, userEventImageUrls] = await Promise.all([
+          getUsersEventThumbnailsUrls(user.userId),
+          getUsersEventImagesUrls(user.userId),
+        ]);
+        if (eventThumbnail) {
+          setEventThumbnailUrls([eventThumbnail, ...userEventThumbnailsUrls.filter((url) => url !== eventThumbnail)]);
+        } else {
+          setEventThumbnailUrls(userEventThumbnailsUrls);
+        }
+        if (eventImage) {
+          setEventImageUrls([eventImage, ...userEventImageUrls.filter((url) => url !== eventImage)]);
+        } else {
+          setEventImageUrls(userEventImageUrls);
+        }
+        setAllImageData({
+          image: eventImage || undefined,
+          thumbnail: eventThumbnail || undefined,
+        });
+      } finally {
+        setLoading(false);
       }
-      if (eventImage) {
-        setEventImageUrls([eventImage, ...userEventImageUrls.filter((url) => url !== eventImage)]);
-      } else {
-        setEventImageUrls(userEventImageUrls);
-      }
-      setAllImageData({
-        image: eventImage || undefined,
-        thumbnail: eventThumbnail || undefined,
-      });
-      setLoading(false);
     };
     void fetchUserImages();
   }, [user.userId, eventImage, eventThumbnail]);
@@ -86,13 +92,7 @@ export function EventHubImages({
         }
       />
 
-      {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
-          <Skeleton className="aspect-video rounded-xl" />
-          <Skeleton className="aspect-video rounded-xl" />
-          <Skeleton className="aspect-video rounded-xl" />
-        </div>
-      ) : (
+      <ImagePickerReveal loading={loading}>
         <div className="pt-1">
           <ImageForm
             {...allImageData}
@@ -108,7 +108,7 @@ export function EventHubImages({
             flush
           />
         </div>
-      )}
+      </ImagePickerReveal>
     </EventHubStage>
   );
 }

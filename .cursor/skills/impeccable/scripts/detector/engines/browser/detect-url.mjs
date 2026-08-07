@@ -13,7 +13,7 @@ import { checkContentHiddenAtRest } from '../../rules/checks.mjs';
 // Chrome then crash-loops the GPU process, and each relaunch briefly flashes a
 // compositor surface, the black window users report during `detect <url>`
 // (issue #372). The system-installed Chrome runs from a trusted location with a
-// healthy GPU, so channel:'chrome' avoids the crash entirely; both use hardware
+// healthy GPU, so channel: 'chrome' avoids the crash entirely; both use hardware
 // GPU, so contrast measurement is unaffected. Scope this to Windows only: other
 // platforms do not have the bug, so they keep the pinned bundled build for
 // consistent measurement across machines. Fall back to bundled when the switch

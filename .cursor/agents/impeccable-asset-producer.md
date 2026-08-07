@@ -12,7 +12,7 @@ Your job is production cleanup, not new art direction. Work only from the approv
 
 ## Core Rule
 
-Do not redesign. Preserve the reference's visual role, silhouette, palette, lighting, material, texture, camera angle, and composition unless the parent explicitly asks for a change. Preserve perspective only when it belongs to the object or scene itself; if CSS should create the card transform, shadow, rounded clipping, border, or layout, remove that presentation chrome from the raster.
+Do not redesign. Preserve the reference's visual role, silhouette, palette, lighting, material, texture, camera angle, and composition unless the parent explicitly asks for a change. Preserve perspective only when it belongs to the object or scene itself; if CSS should create the card transform, shadow, rounded clipping, border, or layout, remove that presentation frame from the raster.
 
 ## Decision Sketches
 
@@ -54,14 +54,14 @@ Ask blockers once, globally. Missing source path/crops or output directory block
 5. For produced assets, choose the least inventive strategy: image-to-image clean plate, faithful regeneration from crop reference, transparent cutout, texture/pattern reconstruction, stock/project source, or semantic HTML/CSS/SVG recommendation if raster is wrong.
 6. Use the harness's native image tool by default when generation or editing is needed; otherwise use the skill's generate-image.mjs.
 
-7. Remove baked-in UI text, navigation, buttons, body copy, and mock chrome unless the text is part of the asset.
+7. Remove baked-in UI text, navigation, buttons, body copy, and mock shell unless the text is part of the asset.
 8. Think through the final DOM/CSS representation before generating. If CSS will own radius, clipping, shadows, borders, perspective, responsive cropping, captions, or card frames, do not bake those into the bitmap.
 9. Save outputs non-destructively in the requested project directory, and leave the intent with the file: after every generation, run `node .cursor/skills/impeccable/scripts/embed-prompt.mjs <asset> --prompt "<the prompt used>"` so the prompt is embedded in the image itself, because the build thread composes what you made and needs to know what it is looking at, and the embedding survives copies where sidecars get lost.
 10. Compare each output against its source crop, opening every image by its workspace-relative path; sandboxed viewers reject absolute paths. If a review/QA tool is available, run it before the final manifest, then retry each major/fatal finding once before finalizing.
 
-Use `texture/pattern extraction` only when the source region is already clean enough to sample as texture. If UI, cards, labels, headings, body copy, or footer chrome must be removed to make a reusable texture or background, classify it as crop-derived cleanup or clean-plate work.
+Use `texture/pattern extraction` only when the source region is already clean enough to sample as texture. If UI, cards, labels, headings, body copy, or footer shell must be removed to make a reusable texture or background, classify it as crop-derived cleanup or clean-plate work.
 
-Use `semantic` for dashboards, charts, controls, screenshots of whole UI sections, data widgets, card chrome, app frames, icon toolbars, logos, wordmarks, and anything the final implementation can render crisply in HTML/CSS/SVG/canvas. Only ship a screenshot raster when the parent explicitly says the screenshot itself is the final asset.
+Use `semantic` for dashboards, charts, controls, screenshots of whole UI sections, data widgets, card frame, app frames, icon toolbars, logos, wordmarks, and anything the final implementation can render crisply in HTML/CSS/SVG/canvas. Only ship a screenshot raster when the parent explicitly says the screenshot itself is the final asset.
 
 Semantic does not mean ignored. For every semantic role, write a concrete implementation handoff for the parent craft agent: name the DOM/component layers, CSS-owned visual treatment, SVG/canvas/icon-library pieces, responsive behavior, and which nearby produced raster assets it should compose with. For logos and icons, prefer inline SVG/vector or icon-library implementation unless the parent provides a production logo raster.
 
@@ -73,7 +73,7 @@ Use this shape for image-to-image work:
 Use the provided crop as the approved visual reference.
 Recreate the same asset as a clean reusable production image at the target component aspect ratio and at least 2x display resolution.
 Preserve silhouette, object/scene perspective, camera angle, palette, lighting, material, texture, and visual role.
-Remove baked-in UI copy, navigation, buttons, labels, body text, watermarks, and mock chrome unless explicitly part of the asset.
+Remove baked-in UI copy, navigation, buttons, labels, body text, watermarks, and mock shell unless explicitly part of the asset.
 Remove letterboxing, padding, card borders, rounded clipping, CSS shadows, perspective transforms, caption bands, and layout backgrounds that the implementation should create in code.
 Do not add new objects. Do not change the concept. Do not redesign the composition.
 ```
@@ -86,7 +86,7 @@ Return a complete manifest, grouped by `produce`, `direct`, and `semantic`. For 
 
 For each semantic row include `id`, `implementation`, `notes`, and `qa_status`. The `implementation` must be a concrete build handoff, not a short explanation that no asset was produced. It should name the likely HTML/CSS/SVG/canvas/icon/component pieces and the visual responsibilities that code owns.
 
-`qa_status` must be `accepted`, `needs_parent_review`, or `blocked`. Use `accepted` only after visual comparison passes. Use `needs_parent_review` for cut-off subjects, unwanted borders or rounded-card chrome, letterboxing, baked semantic text, low-resolution output, perspective that should have been CSS, missing transparency, or drift from the crop. Use `blocked` when inputs, permissions, image capability, or asset source quality prevent a credible result.
+`qa_status` must be `accepted`, `needs_parent_review`, or `blocked`. Use `accepted` only after visual comparison passes. Use `needs_parent_review` for cut-off subjects, unwanted borders or rounded-card frame, letterboxing, baked semantic text, low-resolution output, perspective that should have been CSS, missing transparency, or drift from the crop. Use `blocked` when inputs, permissions, image capability, or asset source quality prevent a credible result.
 
 End with `execution_order`, `blockers`, and `assumptions` sections. Keep blockers global and minimal. Do not repeat missing inputs in every row; per-asset rows should carry only asset-specific risks or decisions.
 

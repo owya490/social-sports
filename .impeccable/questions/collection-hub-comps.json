@@ -7,7 +7,7 @@
       "label": "Overview-led Details",
       "kicker": "CLOSEST TO EVENT HUB",
       "thesis": "Details owns a two-column overview (cover | About). Membership lives only on Events. Edit / Change photo / Add open drawers.",
-      "viewport": "Quiet chrome + tabs. Details: preview card, share row, Visibility. Events: flush lists. Settings: privacy + delete.",
+      "viewport": "Quiet header + tabs. Details: preview card, share row, Visibility. Events: flush lists. Settings: privacy + delete.",
       "risk": "Organisers must switch to Events to see membership — same as event hub sending attendees to Registrations.",
       "hero": ".impeccable/mocks/collection-hub-comp-a-overview-led.png",
       "materials": ["Two-column overview", "Events tab ownership", "EventHubPanel"]
