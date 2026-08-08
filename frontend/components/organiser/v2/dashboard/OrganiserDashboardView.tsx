@@ -6,6 +6,7 @@ import { DashboardKpiGrid } from "@/components/organiser/v2/dashboard/DashboardK
 import { DashboardSetupSection } from "@/components/organiser/v2/dashboard/DashboardSetupSection";
 import { UpcomingEventsSection } from "@/components/organiser/v2/dashboard/UpcomingEventsSection";
 import { TicketSalesChart } from "@/components/organiser/v2/dashboard/TicketSalesChart";
+import { TopSalesDonutSection } from "@/components/organiser/v2/dashboard/TopSalesDonutSection";
 import { splitEventsByTime } from "@/components/organiser/v2/dashboard/computeDashboardStats";
 import { useUser } from "@/components/utility/UserContext";
 import { Logger } from "@/observability/logger";
@@ -26,6 +27,7 @@ const emptyMetrics: OrganiserDashboardMetrics = {
   weekTickets: [],
   monthTickets: [],
   topEvents: [],
+  salesByEvent30d: [],
   recentActivity: [],
   events: [],
 };
@@ -116,6 +118,8 @@ export function OrganiserDashboardView() {
               <ActivityFeedSection activity={displayMetrics.recentActivity} loading={loading} />
             </div>
           </div>
+
+          <TopSalesDonutSection slices={displayMetrics.salesByEvent30d} loading={loading} />
 
           <UpcomingEventsSection events={upcoming} loading={loading} variant="full" />
           <DashboardSetupSection

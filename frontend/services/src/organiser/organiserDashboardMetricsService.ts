@@ -34,6 +34,14 @@ export type TopEventRow = {
   fillPercent: number;
 };
 
+/** Event share of ticket sales dollars in the last 30 days (for the hub donut). */
+export type TopSalesEventSlice = {
+  eventId: EventId | "__other__";
+  name: string;
+  salesCents: number;
+  percent: number;
+};
+
 export type ActivityFeedItem = {
   id: string;
   purchaserName: string;
@@ -53,6 +61,8 @@ export type OrganiserDashboardMetrics = {
   /** Rolling last 30 local days, ending today. */
   monthTickets: DailyTicketBucket[];
   topEvents: TopEventRow[];
+  /** Top events by ticket sales $ in the last 30 days (for the donut). */
+  salesByEvent30d: TopSalesEventSlice[];
   recentActivity: ActivityFeedItem[];
   events: EventData[];
 };
@@ -220,6 +230,56 @@ function buildTopEvents(events: EventData[], metadataByEventId: Map<EventId, num
     .slice(0, 5);
 }
 
+const TOP_SALES_SLICE_LIMIT = 7;
+
+/** Rank events by ticket price sum over the last 30 days; bucket the rest as Other. */
+function buildSalesByEvent30d(
+  recentTickets: Ticket[],
+  events: EventData[],
+  limit = TOP_SALES_SLICE_LIMIT,
+): TopSalesEventSlice[] {
+  const eventById = new Map(events.map((event) => [event.eventId, event]));
+  const salesByEvent = new Map<EventId, number>();
+
+  recentTickets.forEach((ticket) => {
+    salesByEvent.set(ticket.eventId, (salesByEvent.get(ticket.eventId) ?? 0) + ticket.price);
+  });
+
+  const ranked = [...salesByEvent.entries()]
+    .map(([eventId, salesCents]) => ({
+      eventId,
+      name: eventById.get(eventId)?.name ?? "Event",
+      salesCents,
+    }))
+    .filter((row) => row.salesCents > 0)
+    .sort((a, b) => b.salesCents - a.salesCents);
+
+  if (ranked.length === 0) {
+    return [];
+  }
+
+  const head = ranked.slice(0, limit);
+  const tail = ranked.slice(limit);
+  const slices =
+    tail.length > 0
+      ? [
+          ...head,
+          {
+            eventId: "__other__" as const,
+            name: "Other",
+            salesCents: tail.reduce((sum, row) => sum + row.salesCents, 0),
+          },
+        ]
+      : head;
+
+  const total = slices.reduce((sum, row) => sum + row.salesCents, 0);
+
+  return slices.map((row) => ({
+    ...row,
+    percent: total > 0 ? Math.round((row.salesCents / total) * 1000) / 10 : 0,
+  }));
+}
+
 export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserDashboardMetrics> {
   const events = await getOrganiserEvents(userId);
   const nowSeconds = Timestamp.now().seconds;
@@ -267,6 +327,7 @@ export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<Or
     weekTickets: buildWeekTicketBuckets(approvedTickets, events),
     monthTickets: buildMonthTicketBuckets(approvedTickets, events),
     topEvents: buildTopEvents(events, metadataByEventId),
+    salesByEvent30d: buildSalesByEvent30d(recentTickets, events),
     recentActivity: buildRecentActivity(approvedTickets, approvedOrders, events),
     events,
   };
