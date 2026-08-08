@@ -1,5 +1,6 @@
 "use client";
 import FilterBanner from "@/components/Filter/FilterBanner";
+import { MaintenanceBanner } from "@/components/MaintenanceBanner";
 import EventCard from "@/components/events/EventCard";
 import { UserCard } from "@/components/users/UserCard";
 import { EmptyEventData, EventData, EventId, SearchType } from "@/interfaces/EventTypes";
@@ -222,6 +223,7 @@ function DashboardContent() {
 
   return (
     <>
+      <MaintenanceBanner />
       <div>
         <div className="flex justify-center">
           <FilterBanner
