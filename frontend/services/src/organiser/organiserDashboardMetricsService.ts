@@ -27,13 +27,6 @@ export type DailyTicketBucket = {
   events: DailyTicketEventBreakdown[];
 };
 
-export type TopEventRow = {
-  eventId: EventId;
-  name: string;
-  ticketsSold: number;
-  fillPercent: number;
-};
-
 /** Event share of ticket sales dollars in the last 30 days (for the hub donut). */
 export type TopSalesEventSlice = {
   eventId: EventId | "__other__";
@@ -60,7 +53,6 @@ export type OrganiserDashboardMetrics = {
   weekTickets: DailyTicketBucket[];
   /** Rolling last 30 local days, ending today. */
   monthTickets: DailyTicketBucket[];
-  topEvents: TopEventRow[];
   /** Top events by ticket sales $ in the last 30 days (for the donut). */
   salesByEvent30d: TopSalesEventSlice[];
   recentActivity: ActivityFeedItem[];
@@ -213,23 +205,6 @@ function buildRecentActivity(
     });
 }
 
-function buildTopEvents(events: EventData[], metadataByEventId: Map<EventId, number>): TopEventRow[] {
-  return events
-    .map((event) => {
-      const ticketsSold = metadataByEventId.get(event.eventId) ?? Math.max(0, event.capacity - event.vacancy);
-      const fillPercent =
-        event.capacity > 0 ? Math.round((ticketsSold / event.capacity) * 100) : 0;
-      return {
-        eventId: event.eventId,
-        name: event.name,
-        ticketsSold,
-        fillPercent: Math.min(100, fillPercent),
-      };
-    })
-    .sort((a, b) => b.ticketsSold - a.ticketsSold)
-    .slice(0, 5);
-}
-
 const TOP_SALES_SLICE_LIMIT = 7;
 
 /** Rank events by ticket price sum over the last 30 days; bucket the rest as Other. */
@@ -287,11 +262,9 @@ export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<Or
 
   const metadataList = await Promise.all(events.map((event) => getEventsMetadataByEventId(event.eventId)));
 
-  const metadataByEventId = new Map<EventId, number>();
   const allOrderIds = new Set<string>();
 
-  metadataList.forEach((metadata, index) => {
-    metadataByEventId.set(events[index].eventId, metadata.completeTicketCount);
+  metadataList.forEach((metadata) => {
     metadata.orderIds.forEach((orderId) => allOrderIds.add(orderId));
   });
 
@@ -326,7 +299,6 @@ export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<Or
     conversionRate,
     weekTickets: buildWeekTicketBuckets(approvedTickets, events),
     monthTickets: buildMonthTicketBuckets(approvedTickets, events),
-    topEvents: buildTopEvents(events, metadataByEventId),
     salesByEvent30d: buildSalesByEvent30d(recentTickets, events),
     recentActivity: buildRecentActivity(approvedTickets, approvedOrders, events),
     events,

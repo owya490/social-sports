@@ -26,7 +26,6 @@ const emptyMetrics: OrganiserDashboardMetrics = {
   conversionRate: 0,
   weekTickets: [],
   monthTickets: [],
-  topEvents: [],
   salesByEvent30d: [],
   recentActivity: [],
   events: [],

@@ -302,37 +302,3 @@ export function EventHubInitials({ name }: { name: string }) {
     </span>
   );
 }
-
-export function EventHubMetaRow({
-  label,
-  children,
-  onClick,
-  editable,
-}: {
-  label: string;
-  children: ReactNode;
-  onClick?: () => void;
-  editable?: boolean;
-}) {
-  const content = (
-    <>
-      <span className="text-xs font-medium text-foreground-muted font-sans w-24 shrink-0 pt-0.5">{label}</span>
-      <div className="min-w-0 flex-1 text-sm text-foreground font-sans">{children}</div>
-    </>
-  );
-
-  if (onClick) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={!editable}
-        className="flex w-full items-start gap-3 py-3.5 text-left hover:bg-surface-hover/50 transition-colors rounded-lg px-1 -mx-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:hover:bg-transparent"
-      >
-        {content}
-      </button>
-    );
-  }
-
-  return <div className="flex items-start gap-3 py-3.5">{content}</div>;
-}

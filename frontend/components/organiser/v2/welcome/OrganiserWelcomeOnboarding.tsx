@@ -534,6 +534,3 @@ export function OrganiserWelcomeTour() {
     </>
   );
 }
-
-/** @deprecated Use OrganiserWelcomeTour — kept as alias for existing imports. */
-export const OrganiserWelcomeOnboarding = OrganiserWelcomeTour;

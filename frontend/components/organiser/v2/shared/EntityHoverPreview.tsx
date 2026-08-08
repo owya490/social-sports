@@ -345,15 +345,6 @@ export function EntityHoverCover({ src, alt = "" }: { src?: string; alt?: string
   );
 }
 
-/** Cover band for entities without a photo — icon on muted field. */
-export function EntityHoverCoverIcon({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex h-[5.5rem] w-full items-center justify-center bg-surface text-foreground-secondary">
-      {children}
-    </div>
-  );
-}
-
 /** Three-cell (or fewer) KPI strip under the title — flush, no nested panel. */
 export function HoverMetrics({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-3 gap-2">{children}</div>;
@@ -367,20 +358,6 @@ export function HoverMetric({ label, value }: { label: string; value: ReactNode 
         {value}
       </p>
     </div>
-  );
-}
-
-/** Flat label/value pairs when a strip is the wrong shape. */
-export function HoverFacts({ children }: { children: ReactNode }) {
-  return <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">{children}</dl>;
-}
-
-export function HoverFact({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <>
-      <dt className="text-foreground-muted">{label}</dt>
-      <dd className="min-w-0 text-foreground font-medium">{value}</dd>
-    </>
   );
 }
 

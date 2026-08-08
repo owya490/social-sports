@@ -2,7 +2,6 @@ export const WELCOME_PATH = "/organiser/v2/welcome";
 export const WELCOME_EVENTS_PATH = `${WELCOME_PATH}/events`;
 export const DASHBOARD_PATH = "/organiser/v2/dashboard";
 export const EVENTS_LIST_PATH = "/organiser/v2/event/dashboard";
-export const CREATE_EVENT_PATH = "/event/create";
 export const WELCOME_SEEN_KEY = "organiser-v2-welcome-seen";
 export const TOUR_SESSION_KEY = "organiser-v2-tour-session";
 
@@ -155,19 +154,6 @@ export function welcomeAwareHref(pathname: string, href: string): string {
 export function welcomeAwareEventHref(pathname: string, eventId: string): string {
   if (isWelcomeFlowPath(pathname)) return welcomeEventPath(eventId);
   return `/organiser/v2/event/${eventId}`;
-}
-
-export function welcomeAwareEventsListHref(pathname: string): string {
-  return isWelcomeFlowPath(pathname) ? WELCOME_EVENTS_PATH : EVENTS_LIST_PATH;
-}
-
-export function hasSeenWelcome(): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    return window.localStorage.getItem(WELCOME_SEEN_KEY) === "1";
-  } catch {
-    return false;
-  }
 }
 
 export function markWelcomeSeen(): void {

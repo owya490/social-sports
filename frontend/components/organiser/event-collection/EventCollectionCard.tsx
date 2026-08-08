@@ -71,7 +71,7 @@ export default function EventCollectionCard({
 
   const href = isPublicView
     ? `/event-collection/${collection.eventCollectionId}`
-    : `/organiser/v2/event/event-collection/${collection.eventCollectionId}`;
+    : `/organiser/event/event-collection/${collection.eventCollectionId}`;
 
   return <Link href={href}>{cardContent}</Link>;
 }
