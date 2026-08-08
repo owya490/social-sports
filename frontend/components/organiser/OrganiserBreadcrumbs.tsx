@@ -23,7 +23,7 @@ const crumbMutedClass =
   "inline-flex shrink-0 items-center gap-1.5 text-sm font-normal text-foreground-muted";
 
 /**
- * Compact trail above a page title — integrated into page headers, not chrome.
+ * Compact trail above a page title — integrated into page headers, not the app shell.
  * Organiser Hub › section › entity (when nested).
  * The leading "Organiser Hub" crumb is always static context — not a link.
  * On mobile, a sidebar trigger sits to the left of the trail (same IconLayoutSidebar as desktop).

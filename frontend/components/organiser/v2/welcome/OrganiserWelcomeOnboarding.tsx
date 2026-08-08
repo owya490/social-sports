@@ -12,7 +12,7 @@ import {
   WelcomePrimaryButton,
   WelcomeSpotlight,
   type SpotlightRect,
-} from "@/components/organiser/v2/welcome/WelcomeTourChrome";
+} from "@/components/organiser/v2/welcome/WelcomeTourOverlay";
 import {
   CLICK_EVENT_STEP,
   CLICK_EVENTS_NAV_STEP,
@@ -69,7 +69,7 @@ function phaseFromPath(pathname: string): Phase {
 }
 
 /**
- * Welcome-layout-mounted tour. Black-and-white chrome.
+ * Welcome-layout-mounted tour. Black-and-white overlay UI.
  * Entire journey stays under /organiser/v2/welcome/* so the rest of the hub stays clean.
  */
 export function OrganiserWelcomeTour() {
@@ -152,7 +152,7 @@ export function OrganiserWelcomeTour() {
     };
   }, [phase]);
 
-  // Hide SSR blackout once tour chrome owns the screen.
+  // Hide SSR blackout once the tour overlay owns the screen.
   useEffect(() => {
     document.documentElement.setAttribute("data-welcome-tour", phase ? "1" : "0");
     return () => document.documentElement.removeAttribute("data-welcome-tour");

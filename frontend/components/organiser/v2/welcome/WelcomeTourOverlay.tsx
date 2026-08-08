@@ -130,7 +130,7 @@ function ClickBlockCutout({ spot }: { spot: SpotlightRect }) {
 }
 
 /**
- * Spotlight chrome: highlight box moves first, tip card pops in after the move settles.
+ * Spotlight overlay: highlight box moves first, tip card pops in after the move settles.
  * Keep this mounted across steps (stable key) so the box can animate between targets.
  */
 export function WelcomeSpotlight({
